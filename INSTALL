@@ -1,0 +1,81 @@
+$Id: INSTALL 12291 2012-01-11 22:41:20Z mccann $
+
+Notes for installing and configuring STOQS
+
+1. Set up your Django environment:
+
+	export DJANGO_SETTINGS_MODULE=settings
+	export PYTHONPATH="<the parent directory where the settings.py file resides>"
+	e.g.
+	export PYTHONPATH="~/dev"
+	
+	
+2. Copy the 'privateSettings.template' file to 'privateSettings' and edit it
+   with the confidential information that is specific to your installation.
+   This is also where you would add additional campaign-specific databases
+   to the project.  Follow the instructions in the file.
+       
+       
+3. Using Postgres's psql command with administrator priveledges make sure that
+   there is a spatial types database named "template_postgis", you may need
+   to make a copy of it, if it has a different name, with a psql command like:
+   
+		create database template_postgis with template postgis;
+
+	(The Django test runner requires the spatial types template to have this name.)
+	
+	
+4. Create your STOQS database(s) and assign permissions at the psql prompt (assuming 
+   that the DATABASE_USER setting in privateSettings is 'stoqsadm'):
+
+	create database stoqs owner=stoqsadm template=postgis;
+	alter database stoqs set standard_conforming_strings to off;	# Not needed with Django patch #16778
+	\c stoqs
+	grant all on all tables in schema public to stoqsadm;
+	
+	[repeat for additional campaign specific databases]
+
+
+5. Sync the model with the database at the (venv-stoqs) shell prompt:
+
+	python manage.py syncdb								# For the default stoqs database
+	
+	Answer 'no' when asked to create a superuser.  The admin interface has not (yet) been
+	implemented for stoqs.  If you have additional databases sync them with the --database option:
+	
+	python manage.py syncdb --database=stoqs_<campaign>	# For campaign specific databases 
+	
+
+7. Start the development web server:
+
+	python manage.py runserver 0.0.0.0:8000 
+	
+	
+8. Start the celerey daemon (which services long-running tasks) in another window:
+
+	python manage.py celeryd -l INFO
+
+
+6. Load some data:
+
+	Execute loaders/DAPloaders.py at the command line.  This loads some data from MBARI's
+	AUVCTD Dorado OPeNDAP data archive.  You should be able to see the Activity that was
+	loaded at:
+
+		http://localhost:8000/default/activities		# Test the get data links in the Comment column
+	and
+		http://localhost:8000/default/mgmt
+	
+	The former link provides some links where you can experiment with retrieving data by
+	parameter name.  The latter link provides a link deleting the Activity - confirm
+	in the celeryd window that Activity gets deleted - execute loaders/DAPloaders.py to
+	reload the data.
+	
+
+If you've made it this far you have a working STOQS installation on your computer.  Congratulations!
+
+To continue on to the next steps please read the instructions in the DEVELOPMENT or PRODUCTION files.
+
+--
+Mike McCann
+MBARI 5 January 2012

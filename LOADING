@@ -1,0 +1,36 @@
+$Id: LOADING 12249 2012-01-06 20:31:29Z mccann $
+
+Instructions for loading your data in STOQS
+
+These instructions will cover loading in situ point observation data from
+OPeNDAP accessible data sources.
+
+1. Add a new file to the loaders directory named to describe the campaign that is 
+   the source of the data.  The campaign name may be a project name or a month_year
+   combination.  It can really be anything you want.  At MBARI for the CANON project
+   we typically have fields programs where intensive measurements are collected in
+   an area of the ocean over a several week period, so we name our campaigns like
+   'sept2010' and our stoqs databases like 'stoqs_sept2010' and 'stoqs_june2011'.
+   The point of using separate databases for campaigns is to constrain the size
+   of the databases, which helps in managing them and in evolving stoqs applications
+   while maintaining some level of consistent functionality of access for databases
+   that are not under development.
+   
+2. In your new loadXXXX.py file instantiate a DAPloaders object with accurate attributes
+   for each activity to be loaded.  There are several examples of other load files in
+   the loaders/ directory.  Feel free to use them as a basis for the data you wish to load.
+   
+3. Execute your load script.
+
+4. Notes:
+
+	- Use the stride attribute to subsample data to be loaded if the density is too great
+	  for the purpose of your database
+	- Update the comment on the Activity after the load to provide useful information about
+	  the Activity.  The showActivities view code uses the comment to render a useful web
+	  response.
+	  
+	  
+--
+Mike McCann
+MBARI 5 January 2012     

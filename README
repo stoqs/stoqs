@@ -1,0 +1,40 @@
+$Id: README 12277 2012-01-11 02:48:21Z mccann $
+
+Spatial Temporal Oceanographic Query System (STOQS)
+---------------------------------------------------
+
+STOQS is a geospatial database web application designed for providing efficient 
+acccess to in situ oceanographic data across any dimension - e.g., retrieving
+a common parameter from all measuring platforms in a specific area over a 
+specific for a span of time.  STOQS complements other data management technologies
+such as NetCDF and OPeNDAP by providing an ability to index data retrieval 
+across parameter and spatial dimensions in addition to the a priori indexed
+coordinate dimensions in NetCDF.  It also provides a functional bridge between 
+NetCDF and Geographic Information Systems technologies.
+
+After installation, data is loaded into STOQS from a variety of data sources,
+including OPeNDAP data sets, other relational databases, and flat files.  
+Products are delivered in a variety of formats, including KML, via REST-style 
+web requests.
+
+This software was checked out of subversion into this directory thusly:
+
+	cd ~/dev
+	svn co svn+ssh://mccann@kahuna.shore.mbari.org/svn/repos/stoqs/trunk stoqsproj
+	
+Further information is in these files:
+
+	PREREQUISITES - System level requirements, e.g. Postgis, Django, Python modules
+	INSTALL       - Steps to install the Django stoqs application
+	DEVELOPMENT   - Instructions on running a development environment
+	PRODUCTION    - Instructions on setting up a production environment
+	LOADING       - Loading your data
+	LICENSE       - GNU General Public License text, how this software is licensed
+	
+
+--
+Mike McCann
+MBARI 4 January 2012
+
+
+

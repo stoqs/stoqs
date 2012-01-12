@@ -1,0 +1,47 @@
+$Id: PRODUCTION 12291 2012-01-11 22:41:20Z mccann $
+
+Notes for installing STOQS on a production server
+
+You should already have completed the tasks described in PREREQUISITES and INSTALL.
+
+STOQS can be installed on a standard Apache httpd web server employing the wsgi module.
+Here are the steps:
+
+1. Add a stoqs.conf file to the server's /etc/httpd/conf.d/ directory.  With this 
+   configuration the system administrator can assign sudo priveledges to administrator
+   of the STOQS application, and he/she can make changes without affecting the master
+   httpd.conf.
+   
+   
+2. Add these lines to the stoqs.conf file in /etc/httpd/conf.d/:
+
+WSGISocketPrefix /var/run/wsgi
+
+WSGIDaemonProcess stoqs user=apache group=root threads=25
+WSGIProcessGroup stoqs
+
+# Map web server path to location of the stoqs.wsgi file:
+# WSGIScriptAlias /<parent_web_site> <path_to_stoqs.wsgi_file>, e.g.:
+# WSGIScriptAlias /canon /home/student/dev/stoqsproj/stoqs.wsgi
+# (Uncomment above line, edited with web parent and stoqs.wsgi location)
+ 
+
+3. Edit privateSettings if the DATABASE_* settings are different.  (Your Postgres
+   server will most likely may have tighter access controls in a production environment.)
+   
+   Make sure that you have DEBUG set to False
+   
+   
+4. Test as with a DEVELOPMENT installation:
+
+	python manage.py test stoqs
+	
+	Interact with the activities and measurement requests to get data
+
+
+TODO: Instructions for setting up celery to run as a daemon
+
+
+--
+Mike McCann
+MBARI 5 January 2012
