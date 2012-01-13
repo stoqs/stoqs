@@ -41,7 +41,7 @@ in making changes that you 'think might work'.
    	(Note: in a production environment with Apache WSGI, the httpd server does need to be
    	restarted in order to deploy the changed code.)
    
-   	Third, run the Django unit tests:
+   	Third, run the Django unit tests (NOTE: Django patch #16778 must be installed for this to work):
    
     	python manage.py test stoqs -v 2
     
