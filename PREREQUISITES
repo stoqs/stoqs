@@ -13,14 +13,9 @@ su -c "rabbitmqctl add_user stoqs stoqs"		# Note: You may want different credent
 su -c "rabbitmqctl add_vhost stoqs"				# for the Rabbitmq account - here we use 'stoqs'.
 su -c 'rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"'
 
-# Go to the directory where you have checked out the stoqs project, probably with a set of 
-# commands like this:
-	cd ~
-	mkdir dev && cd dev
-	svn co svn+ssh://mccann@kahuna.shore.mbari.org/svn/repos/stoqs/trunk stoqsproj
+# Go to the directory where you have checked out the stoqs project, e.g.:
 
-
-cd stoqsproj
+cd ~/dev/stoqshg
 
 # Instructions below are for setting up a development environment.  If you are running 
 # in a production environment then it's likely that all of these Python libraries have 
