@@ -1,0 +1,50 @@
+# PREREQUISITES 
+# =============
+
+# These commands need to be executed once on your system, they have been tested on CentOS 6.
+# It is assumed that Postgres 9.1 is already installed.  A production environment will most
+# likely have all of these packages installed.  Check with your system administrator to be 
+# sure.
+
+su -c "easy_install virtualenv"
+su -c "yum -y install rabbitmq-server gdal scipy mod_wsgi"
+su -c "/sbin/chkconfig rabbitmq-server on"
+su -c "/sbin/service rabbitmq-server start"
+su -c "rabbitmqctl add_user stoqs stoqs"		# Note: You may want different credentials
+su -c "rabbitmqctl add_vhost stoqs"				# for the Rabbitmq account - here we use 'stoqs'.
+su -c 'rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"'
+
+# Go to the directory where you have checked out the stoqs project, e.g.:
+
+cd ~/dev/stoqshg
+
+# Instructions below are for setting up a development environment.  If you are running 
+# in a production environment then it's likely that all of these Python libraries have 
+# been installed at the system level and you will not need to do the following steps.
+# Proceed to the instructions in the INSTALL file.
+ 
+# Create a venv for a development environment
+virtualenv venv-stoqs
+source venv-stoqs/bin/activate
+
+# Install additional Python packages required by STOQS:
+easy_install numpy
+easy_install paste
+easy_install pydap
+easy_install django==1.3
+easy_install django-celery
+easy_install coards
+easy_install seawater
+easy_install gdal-python
+export PATH=/usr/pgsql-9.1/bin:$PATH
+easy_install psycopg2==2.4.1
+
+# When running django-admin.py or 'python manage.py' do it in your virtualenv, making
+# sure you prompt looks something like "(venv-stoqs)[student@localhost stoqsproj]$ "
+# Proceed to the instructions in the INSTALL file.
+
+--
+Mike McCann
+MBARI 5 January 2012
+
+
