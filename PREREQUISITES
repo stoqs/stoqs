@@ -1,4 +1,5 @@
-# $Id: PREREQUISITES 12246 2012-01-06 20:26:21Z mccann $
+# PREREQUISITES 
+# =============
 
 # These commands need to be executed once on your system, they have been tested on CentOS 6.
 # It is assumed that Postgres 9.1 is already installed.  A production environment will most
