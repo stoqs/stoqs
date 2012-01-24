@@ -42,9 +42,11 @@ in making changes that you 'think might work'.
    	(Note: in a production environment with Apache WSGI, the httpd server does need to be
    	restarted in order to deploy the changed code.)
    
-   	Third, run the Django unit tests (NOTE: Django patch #16778 must be installed for this to work):
+   	Third, run the Django unit tests
+	NOTE: 	Django patch #16778 must be installed (if using Django 1.3) and the DATABASE_USER 
+		specified in privateSettings must have root priveledges in the postgresql database.
    
-    	python manage.py test stoqs -v 2
+    		python manage.py test stoqs -v 2
     
    	If they all pass you are good.  If you get a failure, fix it and then repeat the test.
    	Iterate on these last two steps.  You may also test the links from the activities and
@@ -75,3 +77,4 @@ in making changes that you 'think might work'.
 --
 Mike McCann
 MBARI 5 January 2012
+
