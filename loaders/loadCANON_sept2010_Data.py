@@ -20,8 +20,12 @@ MBARI 29 June 2011
 @license: GPL
 '''
 
+import os
 import sys
-sys.path.insert(0, "../loaders")
+os.environ['DJANGO_SETTINGS_MODULE']='settings'
+project_dir = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))	# settings.py is one dir up
+
 
 import DAPloaders
 from datetime import datetime
