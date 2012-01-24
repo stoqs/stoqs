@@ -7,7 +7,7 @@ Spatial Temporal Oceanographic Query System (STOQS)
 STOQS is a geospatial database web application designed for providing efficient 
 acccess to in situ oceanographic data across any dimension - e.g., retrieving
 a common parameter from all measuring platforms in a specific area over a 
-specific for a span of time.  STOQS complements other data management technologies
+specific span of time.  STOQS complements other data management technologies
 such as NetCDF and OPeNDAP by providing an ability to index data retrieval 
 across parameter and spatial dimensions in addition to the a priori indexed
 coordinate dimensions in NetCDF.  It also provides a functional bridge between 
