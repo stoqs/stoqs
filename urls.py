@@ -64,7 +64,7 @@ urlpatterns = patterns('',
     url(pre + r'position/(\w+)/last/(\d{1,10})([smhdw]?)/count$', 'stoqs.views.showLastPositions', {'countFlag': True}, name='show-last-positions'),
 
     url(pre + r'position/(?P<name>\w+)/since/(?P<startDate>\w+)/data.(?P<format>\w{0,4})$', 'stoqs.views.showSincePositions', {}, name='show-since-positions'),
-    url(pre + r'position/(\w+)/since/(\w+)/stride/(\d+)/data.(\w{0,4})$', 'stoqsviews.showSincePositions', {}, name='show-since-positions'),
+    url(pre + r'position/(\w+)/since/(\w+)/stride/(\d+)/data.(\w{0,4})$', 'stoqs.views.showSincePositions', {}, name='show-since-positions'),
     url(pre + r'position/(\w+)/since/(\w+)/count$', 'stoqs.views.showSincePositions', {'countFlag': True}, name='show-since-positions'),
 
     url(pre + r'position/(?P<name>\w+)/between/(?P<startDate>\w+)/(?P<endDate>\w+)/data.(?P<format>\w{0,4})$', 'stoqs.views.showBetweenPositions', {}, name='show-between-positions'),
@@ -100,30 +100,30 @@ urlpatterns = patterns('',
 	   'stoqs.views.showPositionsOfActivity', {}, name='show-positions-of-activity'),
 
     # Measurements  
-    url(pre + r'parameterNames.?(\w{0,4})$', 'views.measurement.showParameterNames', {}, name='show-parameter-names'),
+    url(pre + r'parameterNames.?(\w{0,4})$', 'stoqs.views.measurement.showParameterNames', {}, name='show-parameter-names'),
     
     url(pre + 'measurement/' + btwnCl + formatCl, 
-        'views.measurement.showBetweenMeasurements', {}, name='show-between-meas'),
+        'stoqs.views.measurement.showBetweenMeasurements', {}, name='show-between-meas'),
     url(pre + r'measurement/' + btwnCl + '/stride/(?P<stride>\d+)' + formatCl, 
-        'views.measurement.showBetweenMeasurements', {}, name='show-between-meas-stride'),
+        'stoqs.views.measurement.showBetweenMeasurements', {}, name='show-between-meas-stride'),
                        
     url(pre + 'measurement/sn/' + btwnCl + formatCl, 
-        'views.measurement.showBetweenMeasurements', {'snFlag': True}, name='show-between-sn-meas'),
+        'stoqs.views.measurement.showBetweenMeasurements', {'snFlag': True}, name='show-between-sn-meas'),
     url(pre + r'measurement/sn/' + btwnCl + '/stride/(?P<stride>\d+)' + formatCl, 
-        'views.measurement.showBetweenMeasurements', {'snFlag': True}, name='show-between-sn-meas-stride'),
+        'stoqs.views.measurement.showBetweenMeasurements', {'snFlag': True}, name='show-between-sn-meas-stride'),
                        
     url(pre + r'measurement/' + btwnCl + '/count$', 
-        'views.measurement.showBetweenMeasurements', {'countFlag': True}, name='show-between-meas-count'),
+        'stoqs.views.measurement.showBetweenMeasurements', {'countFlag': True}, name='show-between-meas-count'),
     url(pre + r'measurement/sn/' + btwnCl + '/count$', 
-        'views.measurement.showBetweenMeasurements', {'countFlag': True, 'snFlag': True}, name='show-between-sn-meas-count'),
+        'stoqs.views.measurement.showBetweenMeasurements', {'countFlag': True, 'snFlag': True}, name='show-between-sn-meas-count'),
     ##(r'^measurementOfActivity/name/(?P<aName>\w+)/type/(?P<aType>\w+)/data.(?P<format>\w{0,4})$', views.showMeasurementsOfActivity),
     ##(r'^measurementOfActivity/name/(\w+)/type/(\w+)/stride/(\d+)/data.(\w{0,4})$', views.showMeasurementsOfActivity),
 
     # Management
-    url(r'campaigns', 'views.management.showCampaigns', {}, name='show-campaigns'),
-    url(pre + r'mgmt$', 'views.management.showDatabase', {}, name='show-database'),
-    url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'views.management.deleteActivity', {}, name='delete-activity'),
-    url(pre + r'activities$', 'views.management.showActivities', {}, name='show-activities'),
+    url(r'campaigns', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
+    url(pre + r'mgmt$', 'stoqs.views.management.showDatabase', {}, name='show-database'),
+    url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'stoqs.views.management.deleteActivity', {}, name='delete-activity'),
+    url(pre + r'activities$', 'stoqs.views.management.showActivities', {}, name='show-activities'),
 
 )
 

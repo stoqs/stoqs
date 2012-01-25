@@ -23,7 +23,7 @@ MBARI Jan 3, 2012
 '''
 
 
-from django.contrib.gis import admin
+from stoqs import custom_admin as admin
 from stoqs import models
 
 class ActivityAdmin(admin.OSMGeoAdmin):
