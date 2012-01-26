@@ -22,6 +22,12 @@ DATABASE_HOST = ''
 #     ''.join([choice(string.letters + string.digits + '-_+=*') for i in range(50)])
 MY_SECRET_KEY = ''
 
+# These default settings correspond to the example RabbitMQ install and configuration
+# documented in the PREREQUISITES file.  If you have a different setup, set the credentials here.
+RABBITMQ_HOST = 'localhost'
+RABBITMQ_PORT = 5672
+RABBITMQ_USER = 'stoqs'
+
 # Define all of your STOQS databases here.  Uncomment 'stoqs_campaign' example
 # and rename it to describe the collection of data. 
 MY_DATABASES = {
@@ -42,3 +48,4 @@ MY_DATABASES = {
 #        'PORT': '5432',
 #    },
 }
+
