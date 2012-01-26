@@ -91,7 +91,7 @@ def readCLT(fileName):
 
     cltList = []
     for rgb in open(fileName, 'r'):
-        ##logger.debug("rgb = %s" % rgb)
+        ##logger.debug("rgb = %s", rgb)
         (r, g, b) = rgb.split('  ')[1:]
         cltList.append([float(r), float(g), float(b)])
 
@@ -184,8 +184,8 @@ def buildKMLpoints(plat, data, clt, clim):
     for c in clt:
         ge_color = "ff%02x%02x%02x" % ((round(c[2] * 255), round(c[1] * 255), round(c[0] * 255)))
         if _debug:
-            logger.debug("c = %s" % c)
-            logger.debug("ge_color = %s" % ge_color)
+            logger.debug("c = %s", c)
+            logger.debug("ge_color = %s", ge_color)
 
         style = '''<Style id="%s">
 <IconStyle>
@@ -210,8 +210,8 @@ def buildKMLpoints(plat, data, clt, clim):
         coordStr = "%.6f, %.6f,-%.1f" % (lon, lat, depth)
 
         if _debug:
-            logger.debug("datavalue = %f" % float(datavalue))
-            logger.debug("clim = %s" % clim)
+            logger.debug("datavalue = %f", float(datavalue))
+            logger.debug("clim = %s", clim)
 
         clt_index = int(round((float(datavalue) - clim[0]) * ((len(clt) - 1) / float(numpy.diff(clim)))))
         if clt_index < 0:
@@ -219,7 +219,7 @@ def buildKMLpoints(plat, data, clt, clim):
         if clt_index > (len(clt) - 1):
             clt_index = int(len(clt) - 1);
         if _debug:
-            logger.debug("clt_index = %d" % clt_index)
+            logger.debug("clt_index = %d", clt_index)
         ge_color_val = "ff%02x%02x%02x" % ((round(clt[clt_index][2] * 255), round(clt[clt_index][1] * 255), round(clt[clt_index][0] * 255)));
 
         placemark = """
