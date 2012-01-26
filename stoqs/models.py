@@ -36,6 +36,8 @@ class Campaign(models.Model):
 	objects = models.GeoManager()
 	class Meta:
 		app_label = 'stoqs'
+		verbose_name='Campaign'
+		verbose_name_plural='Campaigns'
 		
 class CampaignLog(models.Model):
 	'''Placeholder for potential integration of various logging systems into STOQS.  The
@@ -48,11 +50,15 @@ class CampaignLog(models.Model):
 	objects = models.GeoManager()
 	class Meta:
 		app_label = 'stoqs'
+		verbose_name='Campaign Log'
+		verbose_name_plural='Campaign Logs'
 
 class ActivityType(models.Model):
 	name = models.CharField(max_length=128, db_index=True, unique=True)
 	objects = models.GeoManager()
 	class Meta:
+		verbose_name='Activity Type'
+		verbose_name_plural='Activity Types'
 		app_label = 'stoqs'
 
 class PlatformType(models.Model):
@@ -89,7 +95,11 @@ class Activity(models.Model):
 	maptrack = models.LineStringField(null=True)
 	objects = models.GeoManager()
 	class Meta:
+		verbose_name='Activity'
+		verbose_name_plural='Activities'
 		app_label = 'stoqs'
+	def __str__(self):
+		return "Experiment of %s" % (self.platform.name,)
 
 class InstantPoint(models.Model):
 	activity = models.ForeignKey(Activity) 

@@ -196,7 +196,7 @@ def showActivities(request):
         commStr += a.comment.split(':')[0] + a.comment.split('.')[1].split('.')[0] + ' GMT'
         act.comment = commStr
 
-        # Construct some useful links to the original activity for display on the avtivities page
+        # Construct some useful links to the original activity for display on the activities page
         # It's probably better to do this in the template file - but I know how to do it this way
         tethysLogBase = 'http://aosn.mbari.org/TethysLogs'
         doradoSurveyBase = 'http://dods.mbari.org/data/auvctd/surveys/'
