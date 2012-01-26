@@ -141,11 +141,14 @@ INSTALLED_APPS = (
     'stoqs',
 )
 
-BROKER_HOST='localhost'
-BROKER_PORT=5672
-BROKER_USER='stoqs'
-BROKER_PASSWORD=BROKER_USER
-BROKER_VHOST=BROKER_USER
+# RabbitMQ settings - required for Celery to process long-running tasks
+# the values on the rhs of '=' should be set in your privateSettings file.
+BROKER_HOST = RABBITMQ_HOST
+BROKER_PORT = RABBITMQ_PORT
+BROKER_USER = RABBITMQ_USER
+
+BROKER_PASSWORD = BROKER_USER
+BROKER_VHOST = BROKER_USER
 
 
 # A sample logging configuration. The only tangible logging
