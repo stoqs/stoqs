@@ -182,24 +182,24 @@ class Base_Loader(object):
 		if not platformName:
 			platformName = name
 			platformTypeName = type
-			logger.warn("Platform name %s not found in tracking database.  Creating new platform anyway." % platformName)
+			logger.warn("Platform name %s not found in tracking database.  Creating new platform anyway.", platformName)
 
 		# Create PlatformType
-		logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s" % (self.dbName, self.platformTypeName))
+		logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", (self.dbName, self.platformTypeName))
 		(platformType, created) = m.PlatformType.objects.db_manager(self.dbName).get_or_create(name = self.platformTypeName)
 		if created:
-			logger.debug("Created platformType.name %s in database %s" % (platformType.name, self.dbName))
+			logger.debug("Created platformType.name %s in database %s", (platformType.name, self.dbName))
 		else:
-			logger.debug("Retrived platformType.name %s from database %s" % (platformType.name, self.dbName))
+			logger.debug("Retrived platformType.name %s from database %s", (platformType.name, self.dbName))
 
 
 		# Create Platform 
 		(platform, created) = m.Platform.objects.db_manager(self.dbName).get_or_create(name = platformName, platformtype = platformType)
 
 		if created:
-			logger.info("Created platform %s in database %s" % (platformName, self.dbName))
+			logger.info("Created platform %s in database %s", platformName, self.dbName)
 		else:
-			logger.info("Retrived platform %s from database %s" % (platformName, self.dbName))
+			logger.info("Retrived platform %s from database %s", platformName, self.dbName)
 
 		return platform
 
@@ -215,11 +215,11 @@ class Base_Loader(object):
 
 		# Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
 		for key in parmDict.keys():
-			logger.debug("key = %s" % key)
+			logger.debug("key = %s", key)
 			if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
 				continue
 			v = parmDict[key].attributes
-			logger.debug("v = %s" % v)
+			logger.debug("v = %s", v)
 			try:
 				self.getParameterByName(key)
 			except ParameterNotFound as e:
@@ -250,7 +250,7 @@ class Base_Loader(object):
 					raise Exception('''Failed to add parameter for %s
 						%s\nEither add parameter manually, or add to ignored_names''' % (key,
 						'\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
-				logger.debug("Added parameter %s from data set to database %s" % (key, self.dbName))
+				logger.debug("Added parameter %s from data set to database %s", (key, self.dbName))
 #       
 		transaction.rollback()
  
@@ -259,7 +259,7 @@ class Base_Loader(object):
 		Use provided activity information to add the activity to the database.
 		'''
 		
-		logger.info("Creating Activity with startDate = %s and endDate = %s" % (self.startDatetime, self.endDatetime))
+		logger.info("Creating Activity with startDate = %s and endDate = %s", self.startDatetime, self.endDatetime)
 		comment = 'Loaded on %s with these include_names: %s' % (datetime.now(), ' '.join(self.include_names))
 		logger.info("comment = " + comment)
 
@@ -272,9 +272,9 @@ class Base_Loader(object):
 										enddate = self.endDatetime)
 
 		if created:
-			logger.info("Created activity %s in database %s" % (self.activityName, self.dbName))
+			logger.info("Created activity %s in database %s", self.activityName, self.dbName)
 		else:
-			logger.info("Retrived activity %s from database %s" % (self.activityName, self.dbName))
+			logger.info("Retrived activity %s from database %s", self.activityName, self.dbName)
 
 		# Get or create activityType 
 		if self.activitytypeName is not None:
@@ -305,31 +305,31 @@ class Base_Loader(object):
 		'''
 		# First try to locate the parameter using the standard name (if we have one)
 		if not self.parameter_dict.has_key(name):
-			logger.debug("'%s' is not in self.parameter_dict" % name)
+			logger.debug("'%s' is not in self.parameter_dict", name)
 			if self.standard_names.get(name) is not None:
-				logger.debug("self.standard_names.get('%s') is not None" % name)
+				logger.debug("self.standard_names.get('%s') is not None", name)
 				try:
-					logger.debug("For name = %s " % name)
-					logger.debug("standard_names = %s" % self.standard_names[name])
-					logger.debug("retreiving from database %s" % self.dbName)
+					logger.debug("For name = %s ", name)
+					logger.debug("standard_names = %s", self.standard_names[name])
+					logger.debug("retreiving from database %s", self.dbName)
 					self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbName).get(standard_name = self.standard_names[name][0])
 				except ObjectDoesNotExist:
 					pass
 		# If we still haven't found the parameter using the standard_name, start looking using the name
 		if not self.parameter_dict.has_key(name):
-			logger.debug("Again '%s' is not in self.parameter_dict" % name)
+			logger.debug("Again '%s' is not in self.parameter_dict", name)
 			try:
-				logger.debug("trying to get '%s' from database %s..." % (name, self.dbName))
+				logger.debug("trying to get '%s' from database %s...", name, self.dbName)
 				##(parameter, created) = m.Parameter.objects.get(name = name)
 				self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbName).get(name = name)
-				logger.debug("self.parameter_dict[name].name = %s" % self.parameter_dict[name].name)
+				logger.debug("self.parameter_dict[name].name = %s", self.parameter_dict[name].name)
 			except ObjectDoesNotExist:
 				##print >> sys.stderr, "Unable to locate parameter with name %s.  Adding to ignored_names list." % (name,)
 				self.ignored_names.append(name)
 				raise ParameterNotFound('Parameter %s not found in the cache nor the database' % (name,))
 		# Finally, since we haven't had an error, we MUST have a parameter for this name.  Return it.
 
-		logger.debug("Returning self.parameter_dict[name].units = %s" % self.parameter_dict[name].units)
+		logger.debug("Returning self.parameter_dict[name].units = %s", self.parameter_dict[name].units)
 		self.parameter_dict[name].save(using=self.dbName)
 		return self.parameter_dict[name]
 
@@ -369,19 +369,19 @@ class Base_Loader(object):
 
 		s = to_udunits(self.dataStartDatetime, timeAxis.units)
 
-		logger.info("For dataStartDatetime = %s, the udunits value is %f" % (self.dataStartDatetime, s))
+		logger.info("For dataStartDatetime = %s, the udunits value is %f", self.dataStartDatetime, s)
 		if self.endDatetime:
 			'endDatetime may be None, in which case just read until the end'
 			e = to_udunits(self.endDatetime, timeAxis.units)
-			logger.info("For endDatetime = %s, the udunits value is %f" % (self.endDatetime, e))
+			logger.info("For endDatetime = %s, the udunits value is %f", self.endDatetime, e)
 		else:
 			e = timeAxis[-1]
-			logger.info("endDatetime not given, using the last value of timeAxis = %f" % (e))
+			logger.info("endDatetime not given, using the last value of timeAxis = %f", e)
 
 		tf = (s <= timeAxis) & (timeAxis <= e)		# This re
 		tIndx = numpy.nonzero(tf == True)[0]
-		logger.debug("tIndx = %s" % tIndx)
-		logger.debug("tIndx[0] = %i, tIndx[-1] = %i" % (tIndx[0], tIndx[-1]))
+		logger.debug("tIndx = %s", tIndx)
+		logger.debug("tIndx[0] = %i, tIndx[-1] = %i", tIndx[0], tIndx[-1])
 		
 		'''
 		Build iterators for each of the parameters that will be returned.  This will allow us to iterate
@@ -389,31 +389,31 @@ class Base_Loader(object):
 		'''
 		for k in keys:
 			v = self.ds[k]
-			logger.debug("k in keys = %s, shape = %s, type = %s" % (k, self.ds[k].shape, type(v)))
+			logger.debug("k in keys = %s, shape = %s, type = %s", k, self.ds[k].shape, type(v))
 			if k.find('%2E') != -1:
-				logger.debug("Skipping variable %s that has '.' in it as TDS can't retrieve it anyway." % k)
+				logger.debug("Skipping variable %s that has '.' in it as TDS can't retrieve it anyway.", k)
 				continue
 
 			# Only build iterators for included names and the required non-parameter coordinate variables in ignored_names
 			if (len(self.include_names) and k not in self.include_names) and k not in self.ignored_names:
-				logger.debug("Skipping %s as is not in our include list and is not ignored (i.e. a coordinate)" % k)
+				logger.debug("Skipping %s as is not in our include list and is not ignored (i.e. a coordinate)", k)
 				continue
 			
 			if type(v) is pydap.model.GridType:
 				try:
 					v = self.ds[k][tIndx[0]:tIndx[-1]:self.stride]		# Subselect along the time axis
 				except ValueError, err:
-					logger.error('''\nGot error '%s' reading data from URL: %s." % (err, self.url)
+					logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
 					If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
 					then the cache files must be removed and the tomcat hosting TDS restarted.''')
 					sys.exit(1)
 
-				logger.debug("Loading %s into parts dictionary" % k)
+				logger.debug("Loading %s into parts dictionary", k)
 				parts[k] = iter(v[k][:])				# Load the dictionary of everything for this
 											# variable (axes, etc.) into the parts dict.
 			else:
-				logger.debug("%s is not pydap.model.GridType, it is %s" % (v, type(v)))
-				logger.debug("self.ds[k][:].ndim = %s" % self.ds[k][:].ndim)
+				logger.debug("%s is not pydap.model.GridType, it is %s", v, type(v))
+				logger.debug("self.ds[k][:].ndim = %s", self.ds[k][:].ndim)
 				# TDS may fail here with a NPE for aggregated Dorado data for variables that may be missing.
 				# Hitting a shoter aggregation seems to avoid these problems.
 				##v = self.ds[k][:]			# Get array from the BaseType axis variable
@@ -421,21 +421,21 @@ class Base_Loader(object):
 					'We have a 1-dimensional coordinate variable, construct the proper constrant expression'
 					try:
 						# This works for Trajectory data, (AUV, drifter, Glider, etc.)
-						logger.info("Reading %s.ascii?%s[%d:%d:%d]" % (self.url, k, tIndx[0], self.stride, tIndx[-1]))
+						logger.info("Reading %s.ascii?%s[%d:%d:%d]", self.url, k, tIndx[0], self.stride, tIndx[-1])
 						v = self.ds[k][tIndx[0]:tIndx[-1]:self.stride]		# Subselect along the time axis for BaseType variables
 					except pydap.exceptions.ServerError:
 						logger.debug("Got pydap.exceptions.ServerError.  Continuning to next key.")
 						continue						# skip over variables with '.' (%2e) in name, as from Tethys
 
-					logger.debug("Loading %s into parts dictionary" % k)
-					logger.debug("v = %s" % v)
+					logger.debug("Loading %s into parts dictionary", k)
+					logger.debug("v = %s", v)
 					parts[k.lower()] = iter(v)	# Key coordinates on lower case version of the name so that
 									# follow-on processing can be simpler, eg. 'time' vice 'TIME'
 				elif self.ds[k][:].ndim == 0:
-					logger.debug("Loading %s into scalars dictionary" % k.lower())
+					logger.debug("Loading %s into scalars dictionary", k.lower())
 					scalars[k.lower()] = float(v[0])
 				else:
-					logger.warn("v.ndim = %s (not 0 or 1) in trying to get part of %s" %(v.ndim, v))
+					logger.warn("v.ndim = %s (not 0 or 1) in trying to get part of %s", v.ndim, v)
 					continue
 
 
@@ -443,13 +443,13 @@ class Base_Loader(object):
 		while True:
 			values = {}
 			for k in parts.keys():
-				logger.debug("k in parts.keys() = %s" % k)
+				logger.debug("k in parts.keys() = %s", k)
 				try:
 					values[k] = parts[k].next()
 				except StopIteration: # Really just here for completeness...
 					raise StopIteration
 			for k,v in scalars.iteritems(): # Add any scalar values in...
-				logger.debug("k, in scalars.iteritems() = %s, %s" % (k, v))
+				logger.debug("k, in scalars.iteritems() = %s, %s", k, v)
 				values[k] = v
 				##raw_input("PAUSED")
 
@@ -485,8 +485,8 @@ class Base_Loader(object):
 		try:
 			measurement.save(using=self.dbName)
 		except Exception, e:
-			logger.error('Exception %s' % e)
-			logger.error("Cannot save measurement time = %s, long = %s, lat = %s, depth = %s" % (time, repr(long), repr(lat), repr(depth)))
+			logger.error('Exception %s', e)
+			logger.error("Cannot save measurement time = %s, long = %s, lat = %s, depth = %s", time, repr(long), repr(lat), repr(depth))
 			raise SkipRecord
 
 		return measurement
@@ -518,10 +518,10 @@ class Base_Loader(object):
 
 		allNaNFlag = {}
 		anyValidData = False
-		logger.info("Checking for valid data from %s" % (self.url))
-		logger.debug("include_names = %s" % (self.include_names))
+		logger.info("Checking for valid data from %s", self.url)
+		logger.debug("include_names = %s", self.include_names)
 		for v in self.include_names:
-			logger.debug("v = %s" % v)
+			logger.debug("v = %s", v)
 			try:
 				vVals = self.ds[v][:]
 				logger.debug(len(vVals))
@@ -533,11 +533,11 @@ class Base_Loader(object):
 			except ValueError:
 				pass
 
-		logger.debug("allNaNFlag = %s" % allNaNFlag)
+		logger.debug("allNaNFlag = %s", allNaNFlag)
 		for v in allNaNFlag.keys():
 			if not allNaNFlag[v]:
 				self.varsLoaded.append(v)
-		logger.info("Variables that have data: self.varsLoaded = %s" % self.varsLoaded)
+		logger.info("Variables that have data: self.varsLoaded = %s", self.varsLoaded)
 
 		return anyValidData
 	
@@ -586,7 +586,7 @@ class Base_Loader(object):
 					logger.debug("Got SkipRecord Exception from self.createMeasurement().  Skipping")
 					continue
 				else:
-					logger.debug("longitude = %s, latitude = %s, time = %s, depth = %s" % (longitude, latitude, time, depth))
+					logger.debug("longitude = %s, latitude = %s, time = %s, depth = %s", longitude, latitude, time, depth)
 			for key, value in row.iteritems():
 				try:
 					if len(self.include_names) and key not in self.include_names:
@@ -595,7 +595,7 @@ class Base_Loader(object):
 						continue
 
 					# If the data have a Z dependence (e.g. mooring tstring/adcp) then value will be an array.
-					logger.debug("value = %s " % value)
+					logger.debug("value = %s ", value)
 					if value == missing_value or value == 'null': # absence of a value
 						continue
 					try:
@@ -606,21 +606,21 @@ class Base_Loader(object):
 					# End try
 					##p2 = self.getParameterByName(key)
 					##print "p2.name = %s" % p2.name
-					logger.debug("measurement._state.db = %s" % measurement._state.db)
-					logger.debug("key = %s" % key)
-					logger.debug("parameter._state.db = %s" % self.getParameterByName(key)._state.db)
+					logger.debug("measurement._state.db = %s", measurement._state.db)
+					logger.debug("key = %s", key)
+					logger.debug("parameter._state.db = %s", self.getParameterByName(key)._state.db)
 					mp = m.MeasuredParameter(measurement = measurement,
 								parameter = self.getParameterByName(key),
 								datavalue = str(value))
 					try:
 						mp.save(using=self.dbName)
 					except Exception, e:
-						logger.error('Exception %s. Skipping this record.' % e)
-						logger.error("Bad value (id=%(id)s) for %(key)s = %(value)s" % {'key': key, 'value': value, 'id': mp.pk})
+						logger.error('Exception %s. Skipping this record.', e)
+						logger.error("Bad value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
 						continue
 					else:
 						loaded += 1
-						logger.debug("Inserted value (id=%(id)s) for %(key)s = %(value)s" % {'key': key, 'value': value, 'id': mp.pk})
+						logger.debug("Inserted value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
 
 				except ParameterNotFound:
 					print "Unable to locate parameter for %s, skipping" % (key,)
@@ -631,10 +631,10 @@ class Base_Loader(object):
 				# end try
 				if loaded:
 					if (loaded % 500) == 0:
-						logger.info("%d records loaded." % loaded)
+						logger.info("%d records loaded.", loaded)
 			# End for key, value
 		# End for row
-		logger.info("Data load complete, %d records loaded." % loaded)
+		logger.info("Data load complete, %d records loaded.", loaded)
 		##sys.stdout.write('\n')
 
 		return loaded
@@ -682,10 +682,10 @@ class Auvctd_Loader(Base_Loader):
 			if self.startDatetime == None:
 				self.startDatetime = datetime.utcfromtimestamp(ds.time[0])
 				self.dataStartDatetime = datetime.utcfromtimestamp(ds.time[0])
-				logger.info("Setting startDatetime for the Activity from the ds url to %s" % self.startDatetime)
+				logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
 			if self.endDatetime == None:
 				self.endDatetime = datetime.utcfromtimestamp(ds.time[-1])
-				logger.info("Setting endDatetime for the Activity from the ds url to %s" % self.endDatetime)
+				logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
 
 		self.addParameters(self.parmDict)
 		for k in self.parmDict.keys():
@@ -725,10 +725,10 @@ class Lrauv_Loader(Base_Loader):
 			if self.startDatetime == None:
 				self.startDatetime = datetime.utcfromtimestamp(ds.Time[0])
 				self.dataStartDatetime = datetime.utcfromtimestamp(ds.Time[0])
-				logger.info("Setting startDatetime for the Activity from the ds url to %s" % self.startDatetime)
+				logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
 			if self.endDatetime == None:
 				self.endDatetime = datetime.utcfromtimestamp(ds.Time[-1])
-				logger.info("Setting endDatetime for the Activity from the ds url to %s" % self.endDatetime)
+				logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
 
 		return super(Lrauv_Loader, self).initDB()
 
@@ -751,7 +751,7 @@ class Mooring_Loader(Base_Loader):
 	def preProcessParams(self, row):
 
 		for v in ('Time','TIME','LATITUDE','LONGITUDE','DEPTH','Longitude','Latitude','NominalDepth'):
-			logger.debug("v = %s" % v)
+			logger.debug("v = %s", v)
 			if row.has_key(v):
 				value = row.pop(v)
 				row[v.lower()] = value

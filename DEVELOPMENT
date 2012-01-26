@@ -21,8 +21,8 @@ in making changes that you 'think might work'.
 		stoqs/			- Contains STOQS data model and other python support code
 			fixtures/ 	- JSON formatted database data used for tests
 			templates/	- HTML templates used by views
-		views/			- Contains Python code to render data in web responses
-		urls.py			- 
+			views/		- Contains Python code to render data in web responses
+		urls.py			- The routing of the urls
 		
 	New development of STOQS will occur mainly in the loaders and views directories.
 	There may be times when models.py in stoqs/ will be modified, but this must be
@@ -43,7 +43,7 @@ in making changes that you 'think might work'.
    	restarted in order to deploy the changed code.)
    
    	Third, run the Django unit tests
-	NOTE: 	Django patch #16778 must be installed (if using Django 1.3) and the DATABASE_USER 
+	  NOTE: Django patch #16778 must be installed (if using Django 1.3) and the DATABASE_USER 
 		specified in privateSettings must have root priveledges in the postgresql database.
    
     		python manage.py test stoqs -v 2

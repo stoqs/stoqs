@@ -32,14 +32,14 @@ from stoqs import models
 def delete_activity(dbName, activity_id):
     activityId = int(activity_id)
     logger = delete_activity.get_logger()
-    logger.info('dbName = %s' % dbName)
+    logger.info('dbName = %s', dbName)
     
     # Must use using for both get() and delete(), irregardless of what it states at:
     # https://docs.djangoproject.com/en/dev/topics/db/multi-db/#selecting-a-database-to-delete-from
     try:
         activity = models.Activity.objects.using(dbName).get(id = activityId)
     except models.Activity.DoesNotExist:
-        logger.error("Activity with id = %d in dbName = '%s' DoesNotExist" % (activityId, dbName))
+        logger.error("Activity with id = %d in dbName = '%s' DoesNotExist", (activityId, dbName))
     else:
         activity.delete(using=dbName)
     

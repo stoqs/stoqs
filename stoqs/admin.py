@@ -29,7 +29,11 @@ from stoqs import models
 class ActivityAdmin(admin.OSMGeoAdmin):
     list_display=('platform', 'activitytype', 'comment')
 
+class CampaignAdmin(admin.OSMGeoAdmin):
+    list_display=('name', 'description', 'startdate', 'enddate')
+
 
 admin.site.register(models.Activity, ActivityAdmin)
+admin.site.register(models.Campaign, CampaignAdmin)
 
 
