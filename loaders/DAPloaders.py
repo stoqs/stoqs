@@ -29,6 +29,7 @@ MBARI Dec 29, 2011
 # Force lookup of models to THE specific stoqs module.
 import os
 import sys
+from django.contrib.gis.geos import GEOSGeometry, LineString
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))	# settings.py is one dir up
@@ -311,7 +312,7 @@ class Base_Loader(object):
 				try:
 					logger.debug("For name = %s ", name)
 					logger.debug("standard_names = %s", self.standard_names[name])
-					logger.debug("retreiving from database %s", self.dbName)
+					logger.debug("retrieving from database %s", self.dbName)
 					self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbName).get(standard_name = self.standard_names[name][0])
 				except ObjectDoesNotExist:
 					pass
@@ -353,7 +354,7 @@ class Base_Loader(object):
 
 		'''
 		Get list of indices to read based on the start & end time and stride specified.
-		Get the list first based on the start and end, then subsample with the stride.
+		Get the list first based on the start and end, then sub-sample with the stride.
 		'''
 		try:
 			timeAxis = self.ds.TIME
@@ -369,11 +370,11 @@ class Base_Loader(object):
 
 		s = to_udunits(self.dataStartDatetime, timeAxis.units)
 
-		logger.info("For dataStartDatetime = %s, the udunits value is %f", self.dataStartDatetime, s)
+		logger.info("For dataStartDatetime = %s, the units value is %f", self.dataStartDatetime, s)
 		if self.endDatetime:
 			'endDatetime may be None, in which case just read until the end'
 			e = to_udunits(self.endDatetime, timeAxis.units)
-			logger.info("For endDatetime = %s, the udunits value is %f", self.endDatetime, e)
+			logger.info("For endDatetime = %s, the units value is %f", self.endDatetime, e)
 		else:
 			e = timeAxis[-1]
 			logger.info("endDatetime not given, using the last value of timeAxis = %f", e)
@@ -557,7 +558,7 @@ class Base_Loader(object):
 		self.initDB()
 
 		loaded = 0
-
+		linestringPoints=[]
 		for row in self._genData():
 			logger.debug(row)
 			try:
@@ -582,6 +583,7 @@ class Base_Loader(object):
 									depth = depth,
 									lat = latitude,
 									long = longitude)
+					linestringPoints.append(measurement.geom)
 				except SkipRecord:
 					logger.debug("Got SkipRecord Exception from self.createMeasurement().  Skipping")
 					continue
@@ -634,10 +636,14 @@ class Base_Loader(object):
 						logger.info("%d records loaded.", loaded)
 			# End for key, value
 		# End for row
+		#
+		# now linestringPoints contains all the points
+		#
+		path=LineString(linestringPoints).simplify(tolerance=.001)
 		logger.info("Data load complete, %d records loaded.", loaded)
 		##sys.stdout.write('\n')
 
-		return loaded
+		return loaded, path
 
 	def build_standard_names(self):
 		'''
@@ -841,7 +847,7 @@ if __name__ == '__main__':
 	##		startDatetime = datetime(2009,1,1),
 	##		endDatetime = datetime(2009,1,10),
 	##		stride=10)
-	nMP = al.process_data()
+	nMP, path = al.process_data()
 	
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	# The ':' is important, this is where the string is split.
@@ -850,6 +856,7 @@ if __name__ == '__main__':
 	print "Updating comment with newComment = %s" % newComment
 	m.Activity.objects.using(dbName).filter(name = file).update(comment = newComment, 
 												num_measuredparameters = nMP,
+												maptrack=path,
 												loaded_date = datetime.utcnow())
 
 
