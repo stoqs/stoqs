@@ -1,0 +1,9 @@
+Genshi==0.6
+Paste==1.7.5.1
+PasteDeploy==1.5.0
+PasteScript==1.7.5
+Pydap==3.0.2
+coards==0.2.2
+httplib2==0.7.2
+numpy==1.6.1
+seawater==2.0.1
