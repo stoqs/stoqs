@@ -47,17 +47,20 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def generateWMS(request, activity_id):
+def generateWMS(request, activity_id, dbname):
+	mappath=os.path.join(mappath, 'activity_%s.map' % (activity_id,))
 	response=render_to_response('activity.map', {'activity_id': activity_id,
 									    'activity_name': 'Sample Activity',
 									    'activity_title': 'Sample Activity',
+									    'dbname': dbname,
+									    'mappath': mappath,
 									    'r': 200,
 									    'g': 100,
 									    'b': 99 },
 				         		context_instance=RequestContext(request))
 	# Note that an HttpResponse (what you get back from render_to_response) can be treated as a file-like object (you can read from it)
 	# You'd likely choose a "better" location than "/tmp", but as long as the file is someplace mapserver can read from, you're all set!
-	open('/tmp/activity_%s.map' % (activity_id,),'w').write(response)  # Create the MapFile, now you would just need to reference it in your OL map, etc.
+	open(mappath,'w').write(response)  # Create the MapFile, now you would just need to reference it in your OL map, etc.
 
 def showPlatformTypes(request, format = 'html'):
 	ptList = mod.PlatformType.objects.all().order_by('name')
