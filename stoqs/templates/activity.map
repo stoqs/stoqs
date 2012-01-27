@@ -24,14 +24,14 @@ MAP
   END # PROJECTION
   LAYER
   CONNECTIONTYPE POSTGIS
-  CONNECTION "host=localhost port=5432 user=mbari password=stoqs dbname=stoqs2"
-  DATA "maptrack from stoqs_activity using unique id using srid=4326"
+  CONNECTION "host=localhost port=5432 user=mbari password=stoqs dbname={{dbname}}"
+  DATA "maptrack from (select * from stoqs_activity where id={{activity_id}}) as subquery using unique id using srid=4326"
    TYPE line
    STATUS on
    DUMP true
    METADATA
-    "wfs_title"     "Sample_Track" # Short description
-    "wms_title"     "Sample_Track" # Short description
+    "wfs_title"     "{{activity_name}}" # Short description
+    "wms_title"     "{{activity_title}}" # Short description
     "wms_include_items"  "all"        # Include all attributes
     "gml_featureid"  "id"     # id is the primary key
     "gml_include_items"  "all"        # Include all attributes
@@ -40,11 +40,11 @@ MAP
    PROJECTION
       "init=epsg:4326"
    END # PROJECTION
-  NAME "Sample_Track"
+  NAME "activity_{{activity_id}}"
    CLASS
-      NAME "Sample_Track"
+      NAME "Activity {{activity_id}}"
       STYLE
-         COLOR 255 0 0
+         COLOR {{r}} {{g}} {{b}}
       END # STYLE
    END # CLASS
   END # LAYER
