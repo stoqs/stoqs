@@ -145,10 +145,9 @@ INSTALLED_APPS = (
 # the values on the rhs of '=' should be set in your privateSettings file.
 BROKER_HOST = RABBITMQ_HOST
 BROKER_PORT = RABBITMQ_PORT
+BROKER_VHOST = RABBITMQ_VHOST
 BROKER_USER = RABBITMQ_USER
-
-BROKER_PASSWORD = BROKER_USER
-BROKER_VHOST = BROKER_USER
+BROKER_PASSWORD = RABBITMQ_PASSWORD
 
 
 # A sample logging configuration. The only tangible logging
