@@ -140,4 +140,11 @@ class MeasurementViewsTestCase(TestCase):
 #        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 #        self.assertTrue(response.content.find(loadedText) == -1, 'Should not find "%s" string at %s' % (loadedText, req))
 
+    
+#    def test_admin_stoqs_that_should_be_there(self):
+#	'''Need to pass login credentials, and create the login...'''
+#        req='http://localhost:8000/test_stoqs/admin/stoqs'
+#        response = self.client.get(req)
+#        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+#        logger.debug(response.content)
         
