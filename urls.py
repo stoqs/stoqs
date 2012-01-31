@@ -124,6 +124,7 @@ urlpatterns = patterns('',
     url(pre + r'mgmt$', 'stoqs.views.management.showDatabase', {}, name='show-database'),
     url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'stoqs.views.management.deleteActivity', {}, name='delete-activity'),
     url(pre + r'activities$', 'stoqs.views.management.showActivities', {}, name='show-activities'),
+    url(pre + r'activitiesWMS$', 'stoqs.views.showActivitiesWMS', {}, name='show-activities-wms'),
 
 )
 
