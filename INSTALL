@@ -39,10 +39,10 @@ Notes for installing and configuring STOQS
 
 5. Sync the model with the database at the (venv-stoqs) shell prompt:
 
-	python manage.py syncdb								# For the default stoqs database
+	python manage.py syncdb					# For the default stoqs database
 	
-	Answer 'no' when asked to create a superuser.  The admin interface has not (yet) been
-	implemented for stoqs.  If you have additional databases sync them with the --database option:
+	Answer 'yes' when asked to create a superuser if you wish to be able to use the admin interface.
+	If you have additional databases sync them with the --database option:
 	
 	python manage.py syncdb --database=stoqs_<campaign>	# For campaign specific databases 
 	
