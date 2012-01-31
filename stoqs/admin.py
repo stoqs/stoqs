@@ -28,6 +28,7 @@ from stoqs import models
 
 class ActivityAdmin(admin.OSMGeoAdmin):
     list_display=('platform', 'activitytype', 'comment')
+    fields = ('name', 'maptrack', 'comment')
 
 class CampaignAdmin(admin.OSMGeoAdmin):
     list_display=('name', 'description', 'startdate', 'enddate')
