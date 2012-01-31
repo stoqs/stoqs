@@ -1,0 +1,52 @@
+MAP
+  IMAGETYPE PNG24
+  EXTENT -125.817514 28.649011  -88.417199 36.901181
+  SIZE 1024 1024
+  IMAGECOLOR 255 255 255
+  NAME 'MBARI STOQS'
+  UNITS dd
+  WEB
+    IMAGEPATH "/tmp"
+    METADATA
+          "wfs_title"       "{{ activity_title }}"
+          "wfs_onlineresource"   "http://{{ mapserver_host }}/cgi-bin/mapserv?map=/tmp/stoqs.map&" 
+          "wfs_srs"         "EPSG:4326 EPSG:900913 "  
+          "wfs_abstract"    "MBARI STOQS"
+          "wms_title"       "MBARI_STOQS"
+          "wms_onlineresource"   "http://{{ mapserver_host }}/cgi-bin/mapserv?map=/tmp/stoqs.map&" 
+          "wms_srs"         "EPSG:4326 EPSG:900913 "  
+          "wms_abstract"    "MBARI STOQS"
+          "wms_feature_info_mime_type" "text/html"
+        END # METADATA
+  END # WEB
+  PROJECTION
+    "init=epsg:4326"
+  END # PROJECTION
+  LAYER
+  CONNECTIONTYPE POSTGIS
+  CONNECTION "host={{ DS.DATABASE_HOST }} port={{ DS.DATABASE_PORT }} user={{ DS.DATABASE_USER }} password={{ DS.DATABASE_PASSWORD }} dbname={{ dbname }}"
+  DATA "maptrack from stoqs_activity using unique id using srid=4326"
+   TYPE line
+   STATUS on
+   DUMP true
+   METADATA
+    "wfs_title"     "{{ activity_name }}" # Short description
+    "wms_title"     "{{ activity_name }}" # Short description
+    "wms_include_items"  "all"        # Include all attributes
+    "gml_featureid"  "{{ activity_id }}"     # id is the primary key
+    "gml_include_items"  "all"        # Include all attributes
+    "wfs_abstract"       "{{ activity_name }} Activity Track."
+   END
+   PROJECTION
+      "init=epsg:4326"
+   END # PROJECTION
+  NAME "{{ activity_name }}"
+   CLASS
+      NAME "{{ activity_name }}"
+      STYLE
+         COLOR {{ r }} {{ g }} {{ b }}
+      END # STYLE
+   END # CLASS
+  END # LAYER
+END # MAP
+
