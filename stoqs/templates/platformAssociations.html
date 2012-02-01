@@ -1,0 +1,17 @@
+<html>
+
+<head>
+<title>All Platform Associations</title>
+</head>
+
+<body>
+<h1>All Platform Associations</h1>
+<table border="1">
+<tr><th>Type</th><th>Platform Name</th></tr>
+{% for ppt in ppt_list %}
+<tr><td>{{ ppt.0 }}</td><td>{{ ppt.1 }}</td></tr>
+{% endfor %}
+</table>
+</body>
+
+</html>
