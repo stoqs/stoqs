@@ -34,6 +34,7 @@ import stoqs.models as mod
 import csv
 import sys
 import logging 
+import os
 
 
 # Set up logging
@@ -45,6 +46,42 @@ handler.setLevel(log_level)
 formatter = logging.Formatter('%(levelname)s %(name)s %(asctime)s %(lineno)d: %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+
+def generateWMS(request, activity, mappath):
+	'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.'''
+
+	response = render_to_response('activity.map', {'mapserver_host': 'localhost',
+							'DS': settings,
+							'activity_id': activity.id,
+									    'activity_name': activity.name,
+									    'activity_title': 'Sample Activity',
+									    'dbname': request.META['dbName'],
+									    'mappath': mappath,
+									    'r': 200,
+									    'g': 100,
+									    'b': 99 },
+				         		context_instance = RequestContext(request))
+	# Note that an HttpResponse (what you get back from render_to_response) can be treated as a generator.
+	fh = open(mappath, 'w')	
+	for line in response:
+		fh.write(line) 
+
+
+def showActivitiesWMS(request):
+	'''Render Activities as WMS via mapserver'''
+
+	# You'd likely choose a "better" location than "/tmp", but as long as the file is someplace mapserver can read from, you're all set!
+	mappath = '/tmp'
+
+	aList = mod.Activity.objects.all().order_by('-startdate')       # Reverse order so that they pop off list in order
+	for a in aList:
+		mappath = os.path.join(mappath, 'activity_%s.map' % (a.id,))
+		generateWMS(request, a, mappath)
+
+	return render_to_response('activity_mapserver.html', {'mapserver_host': 'localhost', 'dbName': request.META['dbName'], 'mappath': mappath})
+
+	# End showActivities()
 
 
 def showPlatformTypes(request, format = 'html'):
@@ -345,5 +382,4 @@ def showPositionsOfActivity(request, aName, aType, stride = '1', format = 'html'
 		return render_to_response('position.html', {'pList': posList})
 
 	# End showPositionsOfActivity()	
-
 

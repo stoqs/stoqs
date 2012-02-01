@@ -87,7 +87,7 @@ class Activity(models.Model):
 	platform = models.ForeignKey(Platform) 
 	activitytype = models.ForeignKey(ActivityType, blank=True, null=True, default=None) 
 	name = models.CharField(max_length=128)
-	comment = models.CharField(max_length=2048)
+	comment = models.TextField(max_length=2048)
 	startdate = models.DateTimeField()
 	enddate = models.DateTimeField(null=True)
 	num_measuredparameters = models.IntegerField(null=True)
