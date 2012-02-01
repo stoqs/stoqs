@@ -91,5 +91,5 @@ for (aName, file) in zip(['Mooring ' +  a + ' (stride=1)' for a in files], files
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	newComment = "%d MeasuredParameters loaded for Parameters: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
 	print "Updating comment with newComment = %s" % newComment
-	mod.Activity.objects.filter(name = aName).update(comment = newComment)
+	mod.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment)
 
