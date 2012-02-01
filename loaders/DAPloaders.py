@@ -377,11 +377,11 @@ class Base_Loader(object):
 
 		s = to_udunits(self.dataStartDatetime, timeAxis.units)
 
-		logger.info("For dataStartDatetime = %s, the units value is %f", self.dataStartDatetime, s)
+		logger.info("For dataStartDatetime = %s, the udnits value is %f", self.dataStartDatetime, s)
 		if self.endDatetime:
 			'endDatetime may be None, in which case just read until the end'
 			e = to_udunits(self.endDatetime, timeAxis.units)
-			logger.info("For endDatetime = %s, the units value is %f", self.endDatetime, e)
+			logger.info("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
 		else:
 			e = timeAxis[-1]
 			logger.info("endDatetime not given, using the last value of timeAxis = %f", e)
@@ -665,8 +665,39 @@ class Base_Loader(object):
 			else:
 				self.standard_names[var]=None # Indicate those without a standard name
 
-
 class Auvctd_Loader(Base_Loader):
+	include_names = ['temperature', 'conductivity']
+
+	def initDB(self):
+		'Needs to use the exact name for the time coordinate in the AUVCTD data'
+		if self.startDatetime == None or self.endDatetime == None:
+			ds = open_url(self.url)
+			if self.startDatetime == None:
+				self.startDatetime = datetime.utcfromtimestamp(ds.time[0])
+				self.dataStartDatetime = datetime.utcfromtimestamp(ds.time[0])
+				logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
+			if self.endDatetime == None:
+				self.endDatetime = datetime.utcfromtimestamp(ds.time[-1])
+				logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
+
+		return super(Auvctd_Loader, self).initDB()
+
+	def preProcessParams(self, row):
+		'Compute on-the-fly any additional parameters for loading into the database'
+
+		# Compute salinity if it's not in the record and we have temperature, conductivity, and pressure
+		##if row.has_key('temperature') and row.has_key('pressure') and row.has_key('latitude'):
+		##	conductivity_ratio = row['conductivity'] / 
+		##	row['salinity'] = sw.salt(conductivity_ratio, sw.T90conv(row['temperature']), row['pressure'])
+
+		if row.has_key('salinity') and row.has_key('temperature') and row.has_key('depth') and row.has_key('latitude'):
+			row['sea_water_sigma_t'] = sw.dens(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
+
+		return super(Auvctd_Loader, self).preProcessParams(row)
+
+
+
+class Dorado_Loader(Base_Loader):
 	include_names = ['temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
 			'fl700_uncorr', 'salinity', 'biolume']
 
@@ -715,12 +746,8 @@ class Auvctd_Loader(Base_Loader):
 		if row.has_key('salinity') and row.has_key('temperature') and row.has_key('depth') and row.has_key('latitude'):
 			row['sea_water_sigma_t'] = sw.dens(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
 
-		# Compute salinity if it's not in the record and we have temperature, conductivity, and pressure
-		##if row.has_key('temperature') and row.has_key('pressure') and row.has_key('latitude'):
-		##	conductivity_ratio = row['conductivity'] / 
-		##	row['salinity'] = sw.salt(conductivity_ratio, sw.T90conv(row['temperature']), row['pressure'])
 
-		return super(Auvctd_Loader, self).preProcessParams(row)
+		return super(Dorado_Loader, self).preProcessParams(row)
 
 
 class Lrauv_Loader(Base_Loader):
@@ -839,7 +866,7 @@ if __name__ == '__main__':
 	##dbName = 'stoqs_june2011'
 	dbName = 'default'
 	
-	al = Auvctd_Loader(activityName = file,
+	al = Dorado_Loader(activityName = file,
                 url = baseUrl + file,
                 campaignName = dbName,
                 platformName = 'dorado',
