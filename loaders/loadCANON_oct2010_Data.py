@@ -33,22 +33,22 @@ from stoqs import models as mod
 
 # ------------------------- Dorado loads -------------------------
 baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
-##files =      [  'Dorado389_2010_277_01_277_01_decim.nc',
-##		'Dorado389_2010_278_01_278_01_decim.nc',
-##		'Dorado389_2010_279_02_279_02_decim.nc',
-##		'Dorado389_2010_280_01_280_01_decim.nc',
-##		'Dorado389_2010_284_00_284_00_decim.nc',
-##files = [	'Dorado389_2010_285_00_285_00_decim.nc',
-##		'Dorado389_2010_286_01_286_02_decim.nc',
-##		'Dorado389_2010_287_00_287_00_decim.nc',
+files =      [  'Dorado389_2010_277_01_277_01_decim.nc',
+		'Dorado389_2010_278_01_278_01_decim.nc',
+		'Dorado389_2010_279_02_279_02_decim.nc',
+		'Dorado389_2010_280_01_280_01_decim.nc',
+		'Dorado389_2010_284_00_284_00_decim.nc',
+		'Dorado389_2010_285_00_285_00_decim.nc',
+		'Dorado389_2010_286_01_286_02_decim.nc',
+		'Dorado389_2010_287_00_287_00_decim.nc',
 ##files = [	'Dorado389_2010_291_00_291_00_decim.nc',
 ##		'Dorado389_2010_292_01_292_01_decim.nc',
 ##files = [	'Dorado389_2010_293_00_293_00_decim.nc',
 ##		'Dorado389_2010_294_01_294_01_decim.nc',
 ##		'Dorado389_2010_298_01_298_01_decim.nc',
-files = [	'Dorado389_2010_299_00_299_00_decim.nc',
-		'Dorado389_2010_300_00_300_00_decim.nc',
-		'Dorado389_2010_301_00_301_00_decim.nc',
+##files = [	'Dorado389_2010_299_00_299_00_decim.nc',
+##		'Dorado389_2010_300_00_300_00_decim.nc',
+##		'Dorado389_2010_301_00_301_00_decim.nc',
 		]
 dbName = 'stoqs_oct2010'
 stride = 1
@@ -65,7 +65,7 @@ for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
 				platformTypeName = 'auv',
 				stride = stride)
 
-	nMP = loader.process_data()
+	(nMP, path) = loader.process_data()
 
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	# The ':' is important, this is where the string is split.
@@ -73,7 +73,8 @@ for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
 	newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
 	print "Updating comment with newComment = %s" % newComment
 	mod.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment, 
-												num_measuredparameters = nMP,
-												loaded_date = datetime.utcnow())
+									maptrack=path,
+									num_measuredparameters = nMP,
+									loaded_date = datetime.utcnow())
 
 

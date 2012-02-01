@@ -51,12 +51,15 @@ for (aName, file) in zip([ a + ' (stride=1)' for a in files], files):
 				stride = 1)
 
 	loader.include_names = ['temperature', 'conductivity']
-	nMP = loader.process_data()
+	(nMP, path) = loader.process_data()
 
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	newComment = "%d MeasuredParameters loaded for Parameters: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
 	print "Updating comment with newComment = %s" % newComment
-	mod.Activity.objects.filter(name = aName).update(comment = newComment)
+	mod.Activity.objects.filter(name = aName).update(comment = newComment,
+								maptrack = path,
+								num_measuredparameters = nMP,
+								loaded_date = datetime.utcnow())
 
 
 # http://odss.mbari.org:8080/thredds/dodsC/agg/Castaway.html
@@ -74,12 +77,15 @@ if True:	# Do just once
 				stride = 1)
 
 	loader.include_names = ['temperature', 'conductivity', 'salinity']
-	nMP = loader.process_data()
+	(nMP, path) = loader.process_data()
 
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	newComment = "%d MeasuredParameters loaded for Parameters: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
 	print "Updating comment with newComment = %s" % newComment
-	mod.Activity.objects.filter(name = aName).update(comment = newComment)
+	mod.Activity.objects.filter(name = aName).update(comment = newComment,
+								maptrack = path,
+								num_measuredparameters = nMP,
+								loaded_date = datetime.utcnow())
 
 
 # University of Villanova
@@ -98,12 +104,15 @@ for (aName, file) in zip([ a + ' (stride=1)' for a in files], files):
 				stride = 1)
 
 	loader.include_names = ['temperature', 'conductivity', 'salinity']
-	nMP = loader.process_data()
+	(nMP, path) = loader.process_data()
 
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	newComment = "%d MeasuredParameters loaded for Parameters: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
 	print "Updating comment with newComment = %s" % newComment
-	mod.Activity.objects.filter(name = aName).update(comment = newComment)
+	mod.Activity.objects.filter(name = aName).update(comment = newComment,
+								maptrack = path,
+								num_measuredparameters = nMP,
+								loaded_date = datetime.utcnow())
 
 
 # University of Porto
@@ -125,10 +134,13 @@ for (aName, file) in zip([ a + ' (stride=1)' for a in files], files):
 				stride = 1)
 
 	loader.include_names = ['temperature', 'conductivity', 'salinity']
-	nMP = loader.process_data()
+	(nMP, path) = loader.process_data()
 
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	newComment = "%d MeasuredParameters loaded for Parameters: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
 	print "Updating comment with newComment = %s" % newComment
-	mod.Activity.objects.filter(name = aName).update(comment = newComment)
+	mod.Activity.objects.filter(name = aName).update(comment = newComment,
+								maptrack = path,
+								num_measuredparameters = nMP,
+								loaded_date = datetime.utcnow())
 
