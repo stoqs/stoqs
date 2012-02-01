@@ -331,7 +331,14 @@ class Base_Loader(object):
 		# Finally, since we haven't had an error, we MUST have a parameter for this name.  Return it.
 
 		logger.debug("Returning self.parameter_dict[name].units = %s", self.parameter_dict[name].units)
-		self.parameter_dict[name].save(using=self.dbName)
+		try:
+			self.parameter_dict[name].save(using=self.dbName)
+		except Exception, e:
+			print sys.exc_info(e)[2]
+			print name
+			pprint.pprint( self.parameter_dict[name])
+
+
 		return self.parameter_dict[name]
 
 	def _genData(self):
