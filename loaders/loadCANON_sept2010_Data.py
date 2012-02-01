@@ -54,7 +54,7 @@ for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
 				platformTypeName = 'auv',
 				stride = stride)
 
-	nMP = loader.process_data()
+	(nMP, path) = loader.process_data()
 
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	# The ':' is important, this is where the string is split.
@@ -62,8 +62,9 @@ for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
 	newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
 	print "Updating comment with newComment = %s" % newComment
 	mod.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment, 
-												num_measuredparameters = nMP,
-												loaded_date = datetime.utcnow())
+									maptrack = path,
+									num_measuredparameters = nMP,
+									loaded_date = datetime.utcnow())
 
 
 sys.exit(11)
