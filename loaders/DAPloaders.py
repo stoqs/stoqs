@@ -740,7 +740,7 @@ class Dorado_Loader(Base_Loader):
 		for k in self.parmDict.keys():
 			self.varsLoaded.append(k)		# Make sure to add the derived parameters to the list that gets put in the comment
 
-		return super(Auvctd_Loader, self).initDB()
+		return super(Dorado_Loader, self).initDB()
 
 	def preProcessParams(self, row):
 		'Compute on-the-fly any additional parameters for loading into the database'
@@ -849,6 +849,51 @@ class Glider_Loader(Base_Loader):
 		return super(Glider_Loader,self).preProcessParams(row)
 
 
+def runAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride):
+	'''Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
+	attributes resulting from the load into dbName. Designed to be called from script
+	that loads the data.  Following the load important updates are made to the database.'''
+
+	logger.debug("Instantiating Auvctd_Loader for url = %s", url)
+	loader = Auvctd_Loader(
+			url = url,
+			campaignName = cName,
+			dbName = dbName,
+			activityName = aName,
+			activitytypeName = aTypeName,
+			platformName = pName,
+			platformTypeName = pTypeName,
+			stride = stride)
+
+	logger.debug("runLoader(): Setting include_names to %s", parmList)
+	loader.include_names = parmList
+	(nMP, path, parmCountHash) = loader.process_data()
+	logger.debug("runLoader(): Loaded Activity with name = %s", aName)
+
+	# Update the Activity with information we now have following the load
+	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
+	newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
+	logger.debug("runLoader(): Updating its comment with newComment = %s", newComment)
+
+	num_updated = m.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment,
+						maptrack = path,
+						num_measuredparameters = nMP,
+						loaded_date = datetime.utcnow())
+	logger.debug("runLoader(): %d activities updated with new attributes." % num_updated)
+
+	if num_updated != 1:
+		logger.debug("runLoader(): We should have just one Activity with name = %s", aName)
+		return
+	else:
+		# Add links back to paraemters with stats on the partameters of the activity
+		activity = m.Activity.objects.using(dbName).get(name = aName)
+		for key in parmCountHash.keys():
+			logger.debug("runLoader(): key = %s, count = %d", (key, parmCountHash[key]))
+			ap = m.ActivityParameter.objects.db_manager(dbName).get_or_create(activity = activity,
+						parameter = loader.getParameterByName(key),
+						number = parmCountHash[key])
+
+
 if __name__ == '__main__':
 	##bl=Base_Loader('Test Survey', 
 			##platform=m.Platform.objects.get(code='vnta'),
@@ -863,15 +908,21 @@ if __name__ == '__main__':
 	##		dbName = 'stoqs_june2011',
 	##		platformName = 'dorado',
 	##		stride = 1000)
-	
+
+	##bl=Mooring_Loader('Test Mooring', 
+	##		platform=m.Platform.objects.get(code='m1'),
+	##		url='http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS',
+	##		startDatetime = datetime(2009,1,1),
+	##		endDatetime = datetime(2009,1,10),
+	##		stride=10)
+
+	# A nice test data load for a northern Monterey Bay survey	
 	baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
-	##file = 'Dorado389_2010_257_01_258_04_decim.nc'
 	file = 'Dorado389_2010_300_00_300_00_decim.nc'
 	stride = 1000		# Make large for quicker runs, smaller for denser data
-	##dbName = 'stoqs_june2011'
 	dbName = 'default'
 	
-	al = Dorado_Loader(activityName = file,
+	dl = Dorado_Loader(activityName = file,
                 url = baseUrl + file,
                 campaignName = dbName,
                 platformName = 'dorado',
@@ -880,23 +931,29 @@ if __name__ == '__main__':
                 dbName = dbName,
                 stride = stride)
 	
-	##bl=Mooring_Loader('Test Mooring', 
-	##		platform=m.Platform.objects.get(code='m1'),
-	##		url='http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS',
-	##		startDatetime = datetime(2009,1,1),
-	##		endDatetime = datetime(2009,1,10),
-	##		stride=10)
-	nMP, path = al.process_data()
+	nMP, path, parmCountHash = dl.process_data()
 	
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	# The ':' is important, this is where the string is split.
 	# Making this dependency is bad -- we really need to put this kind of information in the model as attributes of Activity
-	newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(al.varsLoaded), datetime.utcnow())
-	print "Updating comment with newComment = %s" % newComment
-	m.Activity.objects.using(dbName).filter(name = file).update(comment = newComment, 
-												num_measuredparameters = nMP,
-												maptrack=path,
-												loaded_date = datetime.utcnow())
+	newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(dl.varsLoaded), datetime.utcnow())
+	logger.info("Updating comment with newComment = %s", newComment)
 
+	num_updated = m.Activity.objects.using(dbName).filter(name = file).update(comment = newComment,
+						maptrack = path,
+						num_measuredparameters = nMP,
+						loaded_date = datetime.utcnow())
+	logger.info("%d activities updated with new attributes.", num_updated)
 
+	if num_updated != 1:
+		logger.info("We should have just one Activity with name = %s", file)
+		sys.exit(1)
+	else:
+		# Add links back to paraemters with stats on the partameters of the activity
+		activity = m.Activity.objects.using(dbName).get(name = file)
+		for key in parmCountHash.keys():
+			logger.info("key = %s, count = %d", key, parmCountHash[key])
+			ap = m.ActivityParameter.objects.db_manager(dbName).get_or_create(activity = activity,
+						parameter = dl.getParameterByName(key),
+						number = parmCountHash[key])
 
