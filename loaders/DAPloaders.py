@@ -580,7 +580,7 @@ class Base_Loader(object):
 				try:
 					longitude, latitude, time, depth = (row.pop('longitude'), 
 									row.pop('latitude'),
-									datetime.fromtimestamp(row.pop('time')),
+									datetime.utcfromtimestamp(row.pop('time')),
 									row.pop('depth'))
 				except ValueError:
 					logger.info('Bad time value')
