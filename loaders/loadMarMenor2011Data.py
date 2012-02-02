@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 __author__    = 'Mike McCann'
-__version__ = '$Revision: 12152 $'.split()[1]
-__date__ = '$Date: 2011-12-29 16:35:55 -0800 (Thu, 29 Dec 2011) $'.split()[1]
 __copyright__ = '2011'
 __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
@@ -30,50 +28,6 @@ import DAPloaders
 from datetime import datetime
 from stoqs import models as mod
 
-def runLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride):
-	'''Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
-	attributes resulting from the load into dbName'''
-
-	print "Instantiating Auvctd_Loader for url = %s" % url
-	loader = DAPloaders.Auvctd_Loader(
-			url = url,
-			campaignName = cName,
-			dbName = dbName,
-			activityName = aName,
-			activitytypeName = aTypeName,
-			platformName = pName,
-			platformTypeName = pTypeName,
-			stride = stride)
-
-	print "runLoader(): Setting include_names to %s" % parmList
-	loader.include_names = parmList
-	(nMP, path, parmCountHash) = loader.process_data()
-	print "runLoader(): Loaded Activity with name = %s" % aName
-
-	# Update the Activity with information we now have following the load
-	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
-	newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
-	print "runLoader(): Updating its comment with newComment = %s" % newComment
-
-	num_updated = mod.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment,
-						maptrack = path,
-						num_measuredparameters = nMP,
-						loaded_date = datetime.utcnow())
-	print "runLoader(): %d activities updated with new attributes." % num_updated
-
-	if num_updated != 1:
-		print "runLoader(): We should have just one Activity with name = %s" % aName
-		return
-	else:
-		# Add links back to paraemters with stats on the partameters of the activity
-		activity = mod.Activity.objects.using(dbName).get(name = aName)
-		for key in parmCountHash.keys():
-			print "runLoader(): key = %s, count = %d" % (key, parmCountHash[key])
-			ap = mod.ActivityParameter(activity = activity,
-						parameter = loader.getParameterByName(key),
-						number = parmCountHash[key])
-			ap.save(using=dbName)
-
 
 def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pTypeName, aTypeName, parmList, dbName, stride = 1):
 	'''Load missions from OPeNDAP url from either a list of files from a base or a single URL with a given activityName '''
@@ -82,18 +36,18 @@ def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pTypeName
 		for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], fileList):
 			url = baseUrl + file
 			print "loadMissions(): Calling runLoader() with parmList = %s" % parmList
-			runLoader(url, campaignName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride)
+			DAPloaders.runAuvctdLoader(url, campaignName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride)
 	elif activityName:
 		url = baseUrl
-		runLoader(url, campaignName, activityName, pName, pTypeName, aTypeName, parmList, dbName, stride)
+		DAPloaders.runAuvctdLoader(url, campaignName, activityName, pName, pTypeName, aTypeName, parmList, dbName, stride)
 	else:
 		print "loadMissions(): Must specify either a fileList or an activityName"
 
 
-# Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
 if __name__ == '__main__':
 	'''Mar Menor In Situ (AUV and Castaway) data loads '''
 
+	# Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
 	dbName = 'stoqs_nov2011'
 	campaignName = 'Mar Menor - November 2011'
 
