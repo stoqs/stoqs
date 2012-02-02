@@ -31,7 +31,8 @@ from datetime import datetime
 from stoqs import models as mod
 
 def runLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride):
-	'''Run the DAPloader for AUVCTD trajectory data and update the Activity with attributes resulting from the load into dbName'''
+	'''Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
+	attributes resulting from the load into dbName'''
 
 	print "Instantiating Auvctd_Loader for url = %s" % url
 	loader = DAPloaders.Auvctd_Loader(
@@ -46,9 +47,10 @@ def runLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbName, 
 
 	print "runLoader(): Setting include_names to %s" % parmList
 	loader.include_names = parmList
-	(nMP, path) = loader.process_data()
+	(nMP, path, parmCountHash) = loader.process_data()
 	print "runLoader(): Loaded Activity with name = %s" % aName
 
+	# Update the Activity with information we now have following the load
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
 	print "runLoader(): Updating its comment with newComment = %s" % newComment
@@ -57,8 +59,20 @@ def runLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbName, 
 						maptrack = path,
 						num_measuredparameters = nMP,
 						loaded_date = datetime.utcnow())
-
 	print "runLoader(): %d activities updated with new attributes." % num_updated
+
+	if num_updated != 1:
+		print "runLoader(): We should have just one Activity with name = %s" % aName
+		return
+	else:
+		# Add links back to paraemters with stats on the partameters of the activity
+		activity = mod.Activity.objects.using(dbName).get(name = aName)
+		for key in parmCountHash.keys():
+			print "runLoader(): key = %s, count = %d" % (key, parmCountHash[key])
+			ap = mod.ActivityParameter(activity = activity,
+						parameter = loader.getParameterByName(key),
+						number = parmCountHash[key])
+			ap.save(using=dbName)
 
 
 def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pTypeName, aTypeName, parmList, dbName, stride = 1):
