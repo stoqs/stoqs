@@ -59,7 +59,6 @@ def runLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbName, 
 						loaded_date = datetime.utcnow())
 
 	print "runLoader(): %d activities updated with new attributes." % num_updated
-	raw_input('paused')
 
 
 def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pTypeName, aTypeName, parmList, dbName, stride = 1):
