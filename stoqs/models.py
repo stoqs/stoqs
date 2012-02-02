@@ -129,14 +129,14 @@ class Measurement(models.Model):
 	class Meta:
 		app_label = 'stoqs'
 
-#class ActivityParameter(models.Model):
-#	'''Association class pairing Parameters that have been loaded for an Activity'''
-#	activity = models.ForeignKey(Activity)
-#	parameter = models.ForeignKey(Parameter)
-#	number = models.IntegerField(null=True)
-#	class Meta:
-#			app_label = 'stoqs'
-#			unique_together = ['activity', 'parameter']
+class ActivityParameter(models.Model):
+	'''Association class pairing Parameters that have been loaded for an Activity'''
+	activity = models.ForeignKey(Activity)
+	parameter = models.ForeignKey(Parameter)
+	number = models.IntegerField(null=True)
+	class Meta:
+			app_label = 'stoqs'
+			unique_together = ['activity', 'parameter']
 			
 class MeasuredParameter(models.Model):
 	measurement = models.ForeignKey(Measurement) 

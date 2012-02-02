@@ -566,6 +566,10 @@ class Base_Loader(object):
 
 		loaded = 0
 		linestringPoints=[]
+		parmCount = {}
+		for key in self.include_names:
+			parmCount[key] = 0
+
 		for row in self._genData():
 			logger.debug(row)
 			try:
@@ -630,6 +634,7 @@ class Base_Loader(object):
 					else:
 						loaded += 1
 						logger.debug("Inserted value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
+						parmCount[key] += 1
 
 				except ParameterNotFound:
 					print "Unable to locate parameter for %s, skipping" % (key,)
@@ -646,11 +651,11 @@ class Base_Loader(object):
 		#
 		# now linestringPoints contains all the points
 		#
-		path=LineString(linestringPoints).simplify(tolerance=.001)
+		path = LineString(linestringPoints).simplify(tolerance=.001)
 		logger.info("Data load complete, %d records loaded.", loaded)
 		##sys.stdout.write('\n')
 
-		return loaded, path
+		return loaded, path, parmCount
 
 	def build_standard_names(self):
 		'''
