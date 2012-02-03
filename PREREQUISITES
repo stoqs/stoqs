@@ -14,6 +14,11 @@ su -c "rabbitmqctl add_user stoqs stoqs"		# Note: You may want different credent
 su -c "rabbitmqctl add_vhost stoqs"				# for the Rabbitmq account - here we use 'stoqs'.
 su -c 'rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"'
 
+# For ability to generate ER diagrams
+su -c "yum -y install graphviz-devel"
+su -c "yum i-yinstall graphviz-python"
+
+
 # Build GDAL from source.  Download latest (v1.9 or higher) tar ball from http://download.osgeo.org/gdal/
 # Unpack, and in the top level directory (e.g. gdal-1.9.0/) run:
 ./configure --with-python
@@ -45,6 +50,7 @@ easy_install seawater
 export PATH=/usr/pgsql-9.1/bin:$PATH
 easy_install gdal
 easy_install psycopg2==2.4.1
+easy_install pygraphviz
 
 # When running django-admin.py or 'python manage.py' do it in your virtualenv, making
 # sure you prompt looks something like "(venv-stoqs)[student@localhost stoqsproj]$ "
