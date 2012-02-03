@@ -139,6 +139,7 @@ INSTALLED_APPS = (
     'django.contrib.gis',
     'djcelery',
     'stoqs',
+    'django_extensions',
 )
 
 # RabbitMQ settings - required for Celery to process long-running tasks
