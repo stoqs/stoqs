@@ -29,7 +29,7 @@ MBARI Jan 10, 2012
 from django.contrib.gis.db import models
 
 class Campaign(models.Model):
-	name = models.CharField(max_length=30, db_index=True, unique_for_date='startdate')
+	name = models.CharField(max_length=128, db_index=True, unique_for_date='startdate')
 	description = models.CharField(max_length=4096, blank=True, null=True)
 	startdate = models.DateTimeField(null=True)
 	enddate = models.DateTimeField(null=True)
@@ -76,7 +76,7 @@ class PlatformType(models.Model):
 #		super(PlatformType, self).save(kwds) # Call the "real" save() method.
 
 class Platform(models.Model):
-	name = models.CharField(max_length=30)
+	name = models.CharField(max_length=128)
 	platformtype = models.ForeignKey(PlatformType) 
 	objects = models.GeoManager()
 	class Meta:
