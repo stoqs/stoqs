@@ -38,6 +38,7 @@ def makeKML(dataHash, pName, title, desc, startDate, endDate):
             , 'mass_concentration_of_oxygen_in_sea_water': [0, 10]
             , 'mole_concentration_of_nitrate_in_sea_water': [0, 30]
             , 'Biolume': [8.8, 10.5]
+            , 'oxygen': [0, 10]
             }
 
     pointKMLHash = {}
