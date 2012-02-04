@@ -38,6 +38,8 @@ class Campaign(models.Model):
 		app_label = 'stoqs'
 		verbose_name='Campaign'
 		verbose_name_plural='Campaigns'
+        def __str__(self):
+                return "%s" % (self.name,)
 		
 class CampaignLog(models.Model):
 	'''Placeholder for potential integration of various logging systems into STOQS.  The
@@ -60,12 +62,16 @@ class ActivityType(models.Model):
 		verbose_name='Activity Type'
 		verbose_name_plural='Activity Types'
 		app_label = 'stoqs'
+        def __str__(self):
+                return "%s" % (self.name,)
 
 class PlatformType(models.Model):
 	name = models.CharField(max_length=128, db_index=True, unique=True)
 	objects = models.GeoManager()
 	class Meta:
 		app_label = 'stoqs'
+        def __str__(self):
+                return "%s" % (self.name,)
 
 #   Does not work with db_routing
 #	def save(self, **kwds):
@@ -81,6 +87,8 @@ class Platform(models.Model):
 	objects = models.GeoManager()
 	class Meta:
 		app_label = 'stoqs'
+        def __str__(self):
+                return "%s" % (self.name,)
 
 class Activity(models.Model):
 	campaign = models.ForeignKey(Campaign, blank=True, null=True, default=None) 
@@ -99,7 +107,7 @@ class Activity(models.Model):
 		verbose_name_plural='Activities'
 		app_label = 'stoqs'
 	def __str__(self):
-		return "Experiment of %s" % (self.platform.name,)
+		return "%s" % (self.name,)
 
 class InstantPoint(models.Model):
 	activity = models.ForeignKey(Activity) 
@@ -120,6 +128,8 @@ class Parameter(models.Model):
 	objects = models.GeoManager()
 	class Meta:
 		app_label = 'stoqs'
+        def __str__(self):
+                return "%s" % (self.name,)
 
 class Measurement(models.Model):
 	instantpoint = models.ForeignKey(InstantPoint)
@@ -128,6 +138,8 @@ class Measurement(models.Model):
 	objects = models.GeoManager()
 	class Meta:
 		app_label = 'stoqs'
+        def __str__(self):
+                return "Measurement at %s" % (self.geom,)
 
 class ActivityParameter(models.Model):
 	'''Association class pairing Parameters that have been loaded for an Activity'''

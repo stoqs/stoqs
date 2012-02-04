@@ -26,15 +26,52 @@ MBARI Jan 3, 2012
 from stoqs import custom_admin as admin
 from stoqs import models
 
-class ActivityAdmin(admin.OSMGeoAdmin):
-    list_display=('platform', 'activitytype', 'comment')
-    fields = ('name', 'maptrack', 'comment')
-
 class CampaignAdmin(admin.OSMGeoAdmin):
     list_display=('name', 'description', 'startdate', 'enddate')
 
+class CampaignLogAdmin(admin.OSMGeoAdmin):
+    list_display=('message', 'timevalue', 'campaign')
 
-admin.site.register(models.Activity, ActivityAdmin)
+class ActivityAdmin(admin.OSMGeoAdmin):
+    list_display=('name', 'comment', 'activitytype')
+    fields = ('name', 'maptrack', 'comment')
+
+class ActivityTypeAdmin(admin.OSMGeoAdmin):
+    list_display=('name',)
+
+class PlatformTypeAdmin(admin.OSMGeoAdmin):
+    list_display=('name',)
+
+class PlatformAdmin(admin.OSMGeoAdmin):
+    list_display=('name', 'platformtype')
+
+class InstantPointAdmin(admin.OSMGeoAdmin):
+    list_display=('activity', 'timevalue')
+
+class MeasurementAdmin(admin.OSMGeoAdmin):
+    list_display=('depth', 'geom', 'instantpoint')
+
+class MeasuredParameterAdmin(admin.OSMGeoAdmin):
+    list_display=('datavalue', 'measurement', 'parameter')
+
+class ParameterAdmin(admin.OSMGeoAdmin):
+    list_display=('name', 'standard_name', 'units')
+
+class ActivityParameterAdmin(admin.OSMGeoAdmin):
+    list_display=('activity', 'parameter', 'number')
+
+
+
 admin.site.register(models.Campaign, CampaignAdmin)
+admin.site.register(models.CampaignLog, CampaignLogAdmin)
+admin.site.register(models.Activity, ActivityAdmin)
+admin.site.register(models.ActivityType, ActivityTypeAdmin)
+admin.site.register(models.Platform, PlatformAdmin)
+admin.site.register(models.InstantPoint, InstantPointAdmin)
+admin.site.register(models.PlatformType, PlatformTypeAdmin)
+admin.site.register(models.Measurement, MeasurementAdmin)
+admin.site.register(models.MeasuredParameter, MeasuredParameterAdmin)
+admin.site.register(models.Parameter, ParameterAdmin)
+admin.site.register(models.ActivityParameter, ActivityParameterAdmin)
 
 
