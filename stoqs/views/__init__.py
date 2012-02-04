@@ -1,6 +1,4 @@
 __author__    = 'Mike McCann'
-__version__ = '$Revision: 12265 $'.split()[1]
-__date__ = '$Date: 2012-01-09 13:49:46 -0800 (Mon, 09 Jan 2012) $'.split()[1]
 __copyright__ = '2011'
 __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
@@ -17,7 +15,6 @@ the most recent position reports.
 This web app derives from the MBARItracking web app.  I addition to delivering platform names, types, and
 positions, it also delivers measured_paramaters based on various common query criteria.
 
-@var __date__: Date of last svn commit
 @undocumented: __doc__ parser
 @status: production
 @license: GPL
@@ -72,11 +69,11 @@ def showActivitiesWMS(request):
 	'''Render Activities as WMS via mapserver'''
 
 	# You'd likely choose a "better" location than "/tmp", but as long as the file is someplace mapserver can read from, you're all set!
-	mappath = '/tmp'
+	mappathBase = '/tmp'
 
 	aList = mod.Activity.objects.all().order_by('-startdate')       # Reverse order so that they pop off list in order
 	for a in aList:
-		mappath = os.path.join(mappath, 'activity_%s.map' % (a.id,))
+		mappath = os.path.join(mappathBase, 'activity_%s.map' % (a.id,))
 		generateWMS(request, a, mappath)
 
 	return render_to_response('activity_mapserver.html', {'mapserver_host': 'localhost', 'dbName': request.META['dbName'], 'mappath': mappath})
