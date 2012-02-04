@@ -25,6 +25,7 @@ MBARI Jan 9, 2012
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.conf import settings
+from django.db import DatabaseError
 import stoqs.models as mod
 from stoqs import tasks
 import socket
@@ -32,7 +33,7 @@ import logging
 import sys
 
 # Set up logging
-log_level = logging.DEBUG
+log_level = logging.INFO
 logger = logging.getLogger('STOQS_views_management')
 logger.setLevel(log_level)
 handler = logging.StreamHandler(sys.stderr)
@@ -130,14 +131,44 @@ def showCampaigns(request):
     logger.debug(settings.DATABASES)
     logger.debug("DATABASES.keys()")
     logger.debug(settings.DATABASES.keys())
-    
-    cList = []
+  
+    # Data structure hash of lists.  Possible to have multiple campaigns in a database
+    cHash = {}
+    for dbName in settings.DATABASES.keys():
+        # Initialize Campaign hassh list
+        cHash[dbName] = []
+
     for dbName in settings.DATABASES.keys():
         try:
-            c = mod.Campaign.objects.using(dbName).get(name=dbName)
+            logger.debug("Getting Campaign from dbName = %s", dbName)
+            cqs = mod.Campaign.objects.using(dbName).all()
+            for c in cqs:
+                logger.debug("Appending campaign name = %s to cHash with key (dbName) = %s", c.name, dbName)
+                cHash[dbName].append(c)
         except mod.Campaign.DoesNotExist:
+            logger.warn("Database %s does not exist", dbName)
             continue
-        cList.append(c)
+        except DatabaseError:
+            # Will happen if database defined in privateSettings does not exist yet
+            logger.warn("Database %s returns django.db.DatabaseError", dbName)
+            continue
+
+    # Preprocess hash for template (basically, flatten it)
+    cList = []
+    class Cam(object):
+        pass
+    for k in cHash.keys():
+        for c in cHash[k]:
+	    cam = Cam()
+            cam.dbName = k
+            cam.name = c.name
+            cam.description = c.description
+            cam.startdate = c.startdate
+            cam.enddate = c.enddate
+            logger.debug("Appending to cList cam with dbName = %s and name = %s", cam.dbName, cam.name)
+            cList.append(cam)
+
+    logger.debug("cList = %s", cList)
 
     return render_to_response('campaigns.html', {'cList': cList } ) 
 
