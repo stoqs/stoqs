@@ -30,9 +30,16 @@ MBARI Jan 5, 2012
 '''
 
 
+import os
 import sys
 import site
-import os
+
+# For some reason the Python 2.6 installation on odss-staging (MBARI's shared dev server) is missing these dirs. 
+# These probably cause no harm, but nevertheless if your installation doesn't need them they should be removed.
+sys.path.append('/opt/python/lib/python2.6/lib-dynload') 	# to load _functools
+sys.path.append('/opt/python/lib/python2.6/dist-packages') 	# cautionary to load django
+sys.path.append('/opt/python/lib/python2.6') # to load os
+
 import logging
 
 prev_sys_path = list(sys.path)
