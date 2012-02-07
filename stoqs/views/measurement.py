@@ -32,19 +32,17 @@ import time
 import sys
 import csv
 import stoqs.models as mod
+from stoqs import query_wrapper
+from django.db.backends import util
 import logging
 
 from KML import makeKML
 
-# Set up logging
-logger = logging.getLogger('stoqs.views.measurement')
-log_level=settings.DEBUG
-logger.setLevel(log_level)
-handler = logging.StreamHandler(sys.stderr)
-handler.setLevel(log_level)
-formatter = logging.Formatter('%(levelname)s %(name)s %(asctime)s %(funcName)s()%(lineno)d: %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logger = logging.getLogger(__name__)
+
+# Control util.CursorDebugWrapper - setting to True will cause all db queries to have their stack trace logged
+connection.use_debug_cursor = False
+util.CursorDebugWrapper = query_wrapper.PrintQueryWrapper
 
 def showParameterNames(request, format = 'html'):
     pList = mod.Parameter.objects.all().order_by('name')

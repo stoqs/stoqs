@@ -49,15 +49,15 @@ if __name__ == '__main__':
 
 	# Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
 	dbName = 'stoqs_oct2010'
-	stride = 100
+	stride = 1
 	campaignName = 'CANON/Biospace/Latmix - October 2010'
 
 	# ------------------------- Dorado loads -------------------------
 	baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
-	files =      [  'Dorado389_2010_277_01_277_01_decim.nc',
-			'Dorado389_2010_278_01_278_01_decim.nc',
-			'Dorado389_2010_279_02_279_02_decim.nc',
-			'Dorado389_2010_280_01_280_01_decim.nc',
+	##files =      [  'Dorado389_2010_277_01_277_01_decim.nc',
+	##		'Dorado389_2010_278_01_278_01_decim.nc',
+	##		'Dorado389_2010_279_02_279_02_decim.nc',
+	files = [		'Dorado389_2010_280_01_280_01_decim.nc',
 			'Dorado389_2010_284_00_284_00_decim.nc',
 			'Dorado389_2010_285_00_285_00_decim.nc',
 			'Dorado389_2010_286_01_286_02_decim.nc',

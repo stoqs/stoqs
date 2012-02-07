@@ -25,15 +25,7 @@ MBARI Jan 3, 2012
 
 import logging
 
-# Set up logging 
-log_level = logging.INFO
-logger = logging.getLogger('RouterLogger')
-fh = logging.StreamHandler()
-f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-fh.setFormatter(f)
-logger.addHandler(fh)
-logger.setLevel(log_level)
-
+logger = logging.getLogger(__name__)
 
 import threading
 _thread_local_vars = threading.local()

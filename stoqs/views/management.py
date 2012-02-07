@@ -32,15 +32,7 @@ import socket
 import logging
 import sys
 
-# Set up logging
-log_level = logging.INFO
-logger = logging.getLogger('STOQS_views_management')
-logger.setLevel(log_level)
-handler = logging.StreamHandler(sys.stderr)
-handler.setLevel(log_level)
-formatter = logging.Formatter('%(levelname)s %(name)s %(asctime)s %(lineno)d: %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logger = logging.getLogger(__name__)
 
 def deleteActivity(request, activityId):
     '''Do a cascade delete of an activity given the `activityId`.  This will delete everything that has a foreign
