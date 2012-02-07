@@ -56,7 +56,7 @@ urlpatterns = patterns('',
     url(pre + r'platformAssociations.?(\w{0,4})$', 'stoqs.views.showPlatformAssociations', {}, name='show-platform-associations'),
 
     # Parameters
-    url(pre + r'parameters.?(\w{0,4})$', 'stoqs.views.showParameters', {}, name='show-parameters'),
+    url(pre + r'parameters.?(?P<format>\w{0,4})$', 'stoqs.views.showParameters', {}, name='show-parameters'),
 
     # Position queries (last, since, between)
     url(pre + r'position/(?P<name>\w+)/last/(?P<number>\d{1,10})(?P<unit>[smhdw]?)/data.?(?P<format>\w{0,4})$', 'stoqs.views.showLastPositions', {}, name='show-last-positions'),
