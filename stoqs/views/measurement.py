@@ -26,6 +26,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse
 from django.conf import settings
+from django.db import connection
 from datetime import datetime, timedelta
 import time
 import sys
@@ -36,12 +37,12 @@ import logging
 from KML import makeKML
 
 # Set up logging
-logger = logging.getLogger('STOQS_views')
+logger = logging.getLogger('stoqs.views.measurement')
 log_level=settings.DEBUG
 logger.setLevel(log_level)
 handler = logging.StreamHandler(sys.stderr)
 handler.setLevel(log_level)
-formatter = logging.Formatter('%(levelname)s %(name)s %(asctime)s %(lineno)d: %(message)s')
+formatter = logging.Formatter('%(levelname)s %(name)s %(asctime)s %(funcName)s()%(lineno)d: %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
@@ -161,7 +162,7 @@ def showBetweenMeasurements(request, pName, startDate, endDate, dmin, dmax, stri
             start = time.clock()
             data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y, 
                  mp.measurement.depth, pName, mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
-                    for mp in mpList]
+                    for mp in list(mpList)]
             perfDict['makeDataListBuildTime'] = time.clock() - start
 
             dataHash = {}
@@ -180,11 +181,12 @@ def showBetweenMeasurements(request, pName, startDate, endDate, dmin, dmax, stri
             perfDict['makeKMLBuildTime'] = time.clock() - start
         else:
             start = time.clock()
+            # This statement causes many SQL queries in order to look up all of the attributes
             measList.extend([ (mp.parameter.name, mp.measurement.instantpoint.activity.platform.name,
                         time.mktime(mp.measurement.instantpoint.timevalue.timetuple()), 
                         '%.6f' % mp.measurement.geom.x, '%.6f' %  mp.measurement.geom.y, '%.1f' %  mp.measurement.depth,
                         '%f' % mp.datavalue,
-                        mp.measurement.instantpoint.timevalue.strftime('%Y-%m-%dT%H:%M:%SZ')) for mp in mpList ])
+                        mp.measurement.instantpoint.timevalue.strftime('%Y-%m-%dT%H:%M:%SZ')) for mp in list(mpList[::]) ])
             perfDict['measListBuildTime'] = time.clock() - start
 
     if countFlag:
