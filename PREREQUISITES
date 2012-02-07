@@ -51,6 +51,7 @@ export PATH=/usr/pgsql-9.1/bin:$PATH
 easy_install gdal
 easy_install psycopg2==2.4.1
 easy_install pygraphviz
+easy_install django_extensions
 
 # When running django-admin.py or 'python manage.py' do it in your virtualenv, making
 # sure you prompt looks something like "(venv-stoqs)[student@localhost stoqsproj]$ "
