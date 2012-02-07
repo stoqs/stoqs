@@ -25,6 +25,9 @@ from django.template import RequestContext
 from django.http import HttpResponse
 from django.conf import settings
 from django.db import connection
+from django.utils import simplejson
+from django.core import serializers
+
 from datetime import datetime, timedelta
 import time
 import stoqs.models as mod
@@ -33,17 +36,7 @@ import sys
 import logging 
 import os
 
-
-# Set up logging
-logger = logging.getLogger('STOQS_views')
-log_level=settings.DEBUG
-logger.setLevel(log_level)
-handler = logging.StreamHandler(sys.stderr)
-handler.setLevel(log_level)
-formatter = logging.Formatter('%(levelname)s %(name)s %(asctime)s %(lineno)d: %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
+logger = logging.getLogger(__name__)
 
 def generateWMS(request, activity, mappath):
 	'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.'''
@@ -119,6 +112,7 @@ def showPlatformNamesOfType(request, ptn, format = 'html'):
 
 def showParameters(request, format = 'html'):
 	pList = mod.Parameter.objects.all().order_by('name')
+	logger.debug("format = %s", format)
 	if format == 'csv':
 		response = HttpResponse(mimetype='text/csv')
 		response['Content-Disposition'] = 'attachment; filename=parameters.csv'
@@ -127,6 +121,10 @@ def showParameters(request, format = 'html'):
 		writer.writerow(['id', 'name', 'type', 'description', 'standard_name', 'long_name', 'units', 'origin'])
 		writer.writerows(pList)
 		return response
+	elif format == 'xml':
+		return HttpResponse(serializers.serialize('xml', pList), 'application/xml')
+	elif format == 'json':
+		return HttpResponse(serializers.serialize('json', pList), 'application/json')
 	else:
 		return render_to_response('parameters.html', {'p_list': pList})
 
