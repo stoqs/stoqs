@@ -66,7 +66,7 @@ logger = logging.getLogger('')
 logger.setLevel(log_level)
 handler = logging.StreamHandler(sys.stderr)
 handler.setLevel(log_level)
-formatter = logging.Formatter('%(levelname)-8s %(name)s - %(message)s')
+formatter = logging.Formatter('%(levelname)-8s %(name)s %(funcName)s():%(lineno)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
