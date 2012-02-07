@@ -41,14 +41,7 @@ from loaders import DAPloaders
 import logging
 import time
 
-# Set up global variables for logging output to STDOUT
-logger = logging.getLogger('TestLogger')
-fh = logging.StreamHandler()
-f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-fh.setFormatter(f)
-logger.addHandler(fh)
-logger.setLevel(logging.DEBUG)
-
+logger = logging.getLogger('__name__')
 
 class MeasurementViewsTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']

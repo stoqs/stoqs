@@ -55,13 +55,13 @@ import seawater.csiro as sw
 missing_value = 1e-34
 
 # Set up logging
-log_level = logging.INFO
-logger = logging.getLogger('DAPLoaderLogger')
-fh = logging.StreamHandler()
-f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-fh.setFormatter(f)
-logger.addHandler(fh)
-logger.setLevel(log_level)
+##log_level = logging.INFO
+logger = logging.getLogger(__file__)
+##fh = logging.StreamHandler()
+##f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
+##fh.setFormatter(f)
+##logger.addHandler(fh)
+##logger.setLevel(log_level)
 
 
 class ParameterNotFound(Exception): 

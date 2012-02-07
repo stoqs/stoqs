@@ -5,15 +5,7 @@ import numpy
 import settings
 import logging
 
-# Set up logging
-log_level = logging.DEBUG
-logger = logging.getLogger('STOQS_KML')
-logger.setLevel(log_level)
-handler = logging.StreamHandler(sys.stderr)
-handler.setLevel(log_level)
-formatter = logging.Formatter('%(levelname)s %(name)s %(asctime)s %(lineno)d: %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logger = logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------------------------------------
 # Support functions for rendering measurements into KML
