@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 def generateWMS(request, activity, mappath):
 	'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.'''
 
-	response = render_to_response('activity.map', {'mapserver_host': 'localhost',
+	response = render_to_response('activity.map', {'mapserver_host': 'odss-staging.shore.mbari.org',
 							'DS': settings,
 							'activity_id': activity.id,
 									    'activity_name': activity.name,
