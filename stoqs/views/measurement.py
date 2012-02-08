@@ -44,22 +44,6 @@ logger = logging.getLogger(__name__)
 connection.use_debug_cursor = False
 util.CursorDebugWrapper = query_wrapper.PrintQueryWrapper
 
-def showParameterNames(request, format = 'html'):
-    pList = mod.Parameter.objects.all().order_by('name')
-    if format == 'csv':
-        response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=parameterNames.csv'
-        writer = csv.writer(response)
-
-        writer.writerow(['ParameterName'])
-        for p in pList:
-            writer.writerow([p.name])
-        return response
-        
-    else:
-        return render_to_response('parameterName.html', {'p_list': pList})
-
-
 def showMeasurementsOfActivity(request, aName, aType, stride = '1', format = 'html', ofType = False, countFlag = False):
     '''Return measurements in specified format of specified Activity Name and Activity Type
     '''

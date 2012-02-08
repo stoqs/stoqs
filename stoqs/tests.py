@@ -55,8 +55,8 @@ class MeasurementViewsTestCase(TestCase):
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
-    def test_parameterNames(self):
-        req = '/test_stoqs/parameterNames'
+    def test_parameters(self):
+        req = '/test_stoqs/parameters'
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
