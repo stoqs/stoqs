@@ -41,16 +41,21 @@ logger = logging.getLogger(__name__)
 def generateWMS(request, activity, mappath):
 	'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.'''
 
+	if request.META['dbName'] == 'default':
+		dbName = 'stoqs'
+	else:
+		dbName = request.META['dbName']
+
 	response = render_to_response('activity.map', {'mapserver_host': 'odss-staging.shore.mbari.org',
 							'DS': settings,
 							'activity_id': activity.id,
-									    'activity_name': activity.name,
-									    'activity_title': 'Sample Activity',
-									    'dbname': request.META['dbName'],
-									    'mappath': mappath,
-									    'r': 200,
-									    'g': 100,
-									    'b': 99 },
+							'activity_name': activity.name,
+							'activity_title': 'Sample Activity',
+							'dbname': dbName,
+							'mappath': mappath,
+							'r': 200,
+							'g': 100,
+							'b': 99 },
 				         		context_instance = RequestContext(request))
 	# Note that an HttpResponse (what you get back from render_to_response) can be treated as a generator.
 	fh = open(mappath, 'w')	
@@ -64,12 +69,20 @@ def showActivitiesWMS(request):
 	# You'd likely choose a "better" location than "/tmp", but as long as the file is someplace mapserver can read from, you're all set!
 	mappathBase = '/tmp'
 
+	if request.META['dbName'] == 'default':
+		dbName = 'stoqs'
+	else:
+		dbName = request.META['dbName']
+
 	aList = mod.Activity.objects.all().order_by('-startdate')       # Reverse order so that they pop off list in order
 	for a in aList:
 		mappath = os.path.join(mappathBase, 'activity_%s.map' % (a.id,))
 		generateWMS(request, a, mappath)
-
-	return render_to_response('activity_mapserver.html', {'mapserver_host': 'localhost', 'dbName': request.META['dbName'], 'mappath': mappath})
+		# DEBUGGIN: return just the first one for now...
+		return render_to_response('activity_mapserver.html', {'mapserver_host': 'odss-staging.shore.mbari.org', 
+									'dbName': dbName,
+									'activity_name': a.name,
+									'mappath': mappath})
 
 	# End showActivities()
 

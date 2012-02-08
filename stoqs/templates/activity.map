@@ -5,15 +5,18 @@ MAP
   IMAGECOLOR 255 255 255
   NAME 'MBARI STOQS'
   UNITS dd
+  CONFIG "MS_ERRORFILE" "/tmp/mapserver_stoqshg.log"
+  CONFIG "PROJ_LIB" "/usr/local/Proj4/share/proj"
+  DEBUG 5
   WEB
     IMAGEPATH "/tmp"
     METADATA
           "wfs_title"       "{{ activity_title }}"
-          "wfs_onlineresource"   "http://{{ mapserver_host }}/cgi-bin/mapserv?map=/tmp/stoqs.map&" 
+          "wfs_onlineresource"   "http://{{ mapserver_host }}/cgi-bin/mapserv?map={{ mappath }}&" 
           "wfs_srs"         "EPSG:4326 EPSG:900913 "  
           "wfs_abstract"    "MBARI STOQS"
           "wms_title"       "MBARI_STOQS"
-          "wms_onlineresource"   "http://{{ mapserver_host }}/cgi-bin/mapserv?map=/tmp/stoqs.map&" 
+          "wms_onlineresource"   "http://{{ mapserver_host }}/cgi-bin/mapserv?map={{ mappath }}&" 
           "wms_srs"         "EPSG:4326 EPSG:900913 "  
           "wms_abstract"    "MBARI STOQS"
           "wms_feature_info_mime_type" "text/html"
@@ -23,30 +26,31 @@ MAP
     "init=epsg:4326"
   END # PROJECTION
   LAYER
-  CONNECTIONTYPE POSTGIS
-  CONNECTION "host={{ DS.DATABASE_HOST }} port={{ DS.DATABASE_PORT }} user={{ DS.DATABASE_USER }} password={{ DS.DATABASE_PASSWORD }} dbname={{ dbname }}"
-  DATA "maptrack from stoqs_activity using unique id using srid=4326"
-   TYPE line
-   STATUS on
-   DUMP true
-   METADATA
-    "wfs_title"     "{{ activity_name }}" # Short description
-    "wms_title"     "{{ activity_name }}" # Short description
-    "wms_include_items"  "all"        # Include all attributes
-    "gml_featureid"  "{{ activity_id }}"     # id is the primary key
-    "gml_include_items"  "all"        # Include all attributes
-    "wfs_abstract"       "{{ activity_name }} Activity Track."
-   END
-   PROJECTION
+    CONNECTIONTYPE POSTGIS
+    CONNECTION "host={{ DS.DATABASE_HOST }} port={{ DS.DATABASE_PORT }} user={{ DS.DATABASE_USER }} password={{ DS.DATABASE_PASSWORD }} dbname={{ dbname }}"
+    DUMP true
+    DATA "maptrack from stoqs_activity using unique id using srid=4326"
+    FILTER "id={{ activity_id }}"
+      TYPE line
+      STATUS on
+      METADATA
+      "wfs_title"     "{{ activity_name }}"    # Short description
+      "wms_title"     "{{ activity_name }}"    # Short description
+      "wms_include_items"  "all"               # Include all attributes
+      "gml_featureid"  "{{ activity_id }}"     # id is the primary key
+      "gml_include_items"  "all"               # Include all attributes
+      "wfs_abstract"       "{{ activity_name }} Activity Track."
+     END # DATA
+    PROJECTION
       "init=epsg:4326"
-   END # PROJECTION
-  NAME "{{ activity_name }}"
-   CLASS
+    END # PROJECTION
+    NAME "{{ activity_name }}"
+    CLASS
       NAME "{{ activity_name }}"
       STYLE
-         COLOR {{ r }} {{ g }} {{ b }}
+        COLOR {{ r }} {{ g }} {{ b }}
       END # STYLE
-   END # CLASS
+    END # CLASS
   END # LAYER
 END # MAP
 
