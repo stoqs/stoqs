@@ -43,8 +43,7 @@ def generateMapFile(request, dbAlias, activity_list, mappath):
         The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
 	'''
 
-	response = render_to_response('activity.map', {'mapserver_host': 'odss-staging.shore.mbari.org',
-							'DS': settings,
+	response = render_to_response('activity.map', {'mapserver_host': settings.MAPSERVER_HOST,
 							'activity_list': activity_list,
 		     					'wfs_title': 'WFS title for an Activity',
 							'dbconn': settings.DATABASES[dbAlias],
