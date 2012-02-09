@@ -38,19 +38,13 @@ import os
 
 logger = logging.getLogger(__name__)
 
-def generateWMS(request, activity, mappath):
+def generateMapFile(request, dbName, activity_list, mappath):
 	'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.'''
-
-	if request.META['dbName'] == 'default':
-		dbName = 'stoqs'
-	else:
-		dbName = request.META['dbName']
 
 	response = render_to_response('activity.map', {'mapserver_host': 'odss-staging.shore.mbari.org',
 							'DS': settings,
-							'activity_id': activity.id,
-							'activity_name': activity.name,
-							'activity_title': 'Sample Activity',
+							'activity_list': activity_list,
+							'wfs_title': 'WFS title for an Activity',
 							'dbname': dbName,
 							'mappath': mappath,
 							'r': 200,
@@ -74,15 +68,14 @@ def showActivitiesWMS(request):
 	else:
 		dbName = request.META['dbName']
 
-	aList = mod.Activity.objects.all().order_by('-startdate')       # Reverse order so that they pop off list in order
-	for a in aList:
-		mappath = os.path.join(mappathBase, 'activity_%s.map' % (a.id,))
-		generateWMS(request, a, mappath)
-		# DEBUGGIN: return just the first one for now...
-		return render_to_response('activity_mapserver.html', {'mapserver_host': 'odss-staging.shore.mbari.org', 
-									'dbName': dbName,
-									'activity_name': a.name,
-									'mappath': mappath})
+	aList = mod.Activity.objects.all().order_by('startdate')  
+	mappath = os.path.join(mappathBase, 'activity.map')
+	generateMapFile(request, dbName, aList, mappath)
+
+	return render_to_response('activity_mapserver.html', {'mapserver_host': 'odss-staging.shore.mbari.org', 
+								'activity_list': aList,
+								'dbName': dbName,
+								'mappath': mappath})
 
 	# End showActivities()
 

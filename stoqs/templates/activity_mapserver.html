@@ -47,10 +47,11 @@
                 {'type': G_SATELLITE_MAP, 
                  'sphericalMercator': true}
             );
-            stoqs_test = new OpenLayers.Layer.WMS(
-                    "{{ activity_name }}",
+            {% for a in activity_list %}
+            actid_{{ a.id }} = new OpenLayers.Layer.WMS(
+                    "{{ a.name }}",
                     "http://{{ mapserver_host }}/cgi-bin/mapserv",
-                    { layers: '{{ activity_name }}',
+                    { layers: '{{ a.name }}',
                       map: '{{ mappath }}',
                       transparent: 'True' },
                     { units: 'degrees',
@@ -59,28 +60,32 @@
                       reproject: false,
                       visibility: false,
                       displayOutsideMaxExtent: true });
-            map.addLayers([gsat,gphy,stoqs_test]);
+             map.addLayers([actid_{{ a.id }}]); 
+            {% endfor %}
+            map.addLayers([gsat,gphy]);
             update_date();
             map.setCenter(new OpenLayers.LonLat(-13594478.3, 4411945.3), 9);
                     map.addControl(new OpenLayers.Control.LayerSwitcher());
                     map.addControl(new OpenLayers.Control.MousePosition());
                     map.addControl(new OpenLayers.Control.PanZoomBar());
+              {% for a in activity_list %}
                     map.events.register('click', map, function (e) {
                     OpenLayers.Util.getElement('nodeList').innerHTML = "Loading... please wait...";
-                    var url =  stoqs_test.getFullRequestString({
+                    var url =  actid_{{ a.id }}.getFullRequestString({
                                     REQUEST: "GetFeatureInfo",
                                     EXCEPTIONS: "application/vnd.ogc.se_xml",
-                                    BBOX: stoqs_test.map.getExtent().toBBOX(),
+                                    BBOX: actid_{{ a.id }}.map.getExtent().toBBOX(),
                                     X: e.xy.x,
                                     Y: e.xy.y,
                                     FEATURE_COUNT: 1000,
                                     INFO_FORMAT: 'text/html',
-                                    QUERY_LAYERS: stoqs_test.params.LAYERS,
-                                    WIDTH: stoqs_test.map.size.w,
-                                    HEIGHT: stoqs_test.map.size.h});
+                                    QUERY_LAYERS: actid_{{ a.id }}.params.LAYERS,
+                                    WIDTH: actid_{{ a.id }}.map.size.w,
+                                    HEIGHT: actid_{{ a.id }}.map.size.h});
                     OpenLayers.loadURL(url, '', this, setHTML);
                     OpenLayers.Event.stop(e);
               });
+             {% endfor %}
              update_date();
       }
       function setHTML(response) {
@@ -94,7 +99,9 @@
                        OpenLayers.Util.getElement('emonth').value + "-" +
                        OpenLayers.Util.getElement('eday').value 
 
-          stoqs_test.mergeNewParams({'time':string});
+          {% for a in activity_list %}
+          actid_{{ a.id }}.mergeNewParams({'time':string});
+          {% endfor %}
       }
     </script> 
     </head> 
@@ -102,7 +109,7 @@
          has completed loading -->
     <body onload="init()"> 
         <input size="4" type='text' id='year' value="2010" onchange="update_date()"/>-<input size="2" type="text" id="month" value="08" onchange="update_date()"/>-<input size="2" type="text" id="day" value="29" onchange="update_date()" /> /
-        <input size="4" type='text' id='eyear' value="2010" onchange="update_date()"/>-<input size="2" type="text" id="emonth" value="09" onchange="update_date()"/>-<input size="2" type="text" id="eday" value="29" onchange="update_date()" />
+        <input size="4" type='text' id='eyear' value="2012" onchange="update_date()"/>-<input size="2" type="text" id="emonth" value="09" onchange="update_date()"/>-<input size="2" type="text" id="eday" value="29" onchange="update_date()" />
 
         <div id="map"></div> 
         <div> 
