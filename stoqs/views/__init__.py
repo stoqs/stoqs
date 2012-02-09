@@ -38,20 +38,22 @@ import os
 
 logger = logging.getLogger(__name__)
 
-def generateMapFile(request, dbName, activity_list, mappath):
-	'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.'''
+def generateMapFile(request, dbAlias, activity_list, mappath):
+	'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.
+        The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
+	'''
 
 	response = render_to_response('activity.map', {'mapserver_host': 'odss-staging.shore.mbari.org',
 							'DS': settings,
 							'activity_list': activity_list,
-							'wfs_title': 'WFS title for an Activity',
-							'dbname': dbName,
+		     					'wfs_title': 'WFS title for an Activity',
+							'dbconn': settings.DATABASES[dbAlias],
 							'mappath': mappath,
 							'r': 200,
 							'g': 100,
 							'b': 99 },
 				         		context_instance = RequestContext(request))
-	# Note that an HttpResponse (what you get back from render_to_response) can be treated as a generator.
+
 	fh = open(mappath, 'w')	
 	for line in response:
 		fh.write(line) 
@@ -60,24 +62,17 @@ def generateMapFile(request, dbName, activity_list, mappath):
 def showActivitiesWMS(request):
 	'''Render Activities as WMS via mapserver'''
 
-	# You'd likely choose a "better" location than "/tmp", but as long as the file is someplace mapserver can read from, you're all set!
+	# As long as the file is someplace mapserver can read from, you're all set!
 	mappathBase = '/tmp'
-
-	if request.META['dbName'] == 'default':
-		dbName = 'stoqs'
-	else:
-		dbName = request.META['dbName']
 
 	aList = mod.Activity.objects.all().order_by('startdate')  
 	mappath = os.path.join(mappathBase, 'activity.map')
-	generateMapFile(request, dbName, aList, mappath)
+	generateMapFile(request, request.META['dbAlias'], aList, mappath)
 
 	return render_to_response('activity_mapserver.html', {'mapserver_host': 'odss-staging.shore.mbari.org', 
 								'activity_list': aList,
-								'dbName': dbName,
+								'dbAlias': request.META['dbAlias'],
 								'mappath': mappath})
-
-	# End showActivities()
 
 
 def showPlatformTypes(request, format = 'html'):

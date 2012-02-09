@@ -35,7 +35,8 @@ from django.contrib.gis import admin
 
 admin.autodiscover()
 
-pre = r'^(?P<dbName>[^/]+)/'    # The database name will prefix all of our requests
+# The database alias (the key of the DATABASES dictionary) will prefix all of our requests
+pre = r'^(?P<dbAlias>[^/]+)/'  
 
 # Repeated between clause for measurement queries
 btwnCl = r'(?P<pName>[^/]+)/between/(?P<startDate>\w+)/(?P<endDate>\w+)/depth/(?P<dmin>[0-9\.]+)/(?P<dmax>[0-9\.]+)'
