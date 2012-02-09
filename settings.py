@@ -19,6 +19,8 @@ ADMIN_EMAIL = ''
 MY_DATABASES = ''
 MY_SECRET_KEY = ''
 
+# Mapserver hostname, just the name.  Assumes that mapserv is install in /cgi-bin
+MAPSERVER_HOST = ''
 
 # Load above sensitive settings from a local file that has tight file system permissions.
 execfile(os.path.join(project_dir, 'privateSettings'))
