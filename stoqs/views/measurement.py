@@ -32,8 +32,8 @@ import time
 import sys
 import csv
 import stoqs.models as mod
-from stoqs import query_wrapper
-from django.db.backends import util
+##from stoqs import query_wrapper
+##from django.db.backends import util
 import logging
 
 from KML import makeKML
@@ -41,8 +41,8 @@ from KML import makeKML
 logger = logging.getLogger(__name__)
 
 # Control util.CursorDebugWrapper - setting to True will cause all db queries to have their stack trace logged
-connection.use_debug_cursor = False
-util.CursorDebugWrapper = query_wrapper.PrintQueryWrapper
+##connection.use_debug_cursor = False
+##util.CursorDebugWrapper = query_wrapper.PrintQueryWrapper
 
 def showMeasurementsOfActivity(request, aName, aType, stride = '1', format = 'html', ofType = False, countFlag = False):
     '''Return measurements in specified format of specified Activity Name and Activity Type

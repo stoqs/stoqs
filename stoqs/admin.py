@@ -34,7 +34,6 @@ class CampaignLogAdmin(admin.OSMGeoAdmin):
 
 class ActivityAdmin(admin.OSMGeoAdmin):
     list_display=('name', 'comment', 'activitytype')
-    fields = ('name', 'maptrack', 'comment')
 
 class ActivityTypeAdmin(admin.OSMGeoAdmin):
     list_display=('name',)
