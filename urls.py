@@ -58,8 +58,9 @@ urlpatterns = patterns('',
     url(pre + r'platformNamesOfType/(?P<ptn>[^/]+).?' + formatPat, 'stoqs.views.showPlatformNamesOfType', {}, name='show-platform-names-of-type'),
     url(pre + r'platformAssociations.?' + formatPat, 'stoqs.views.showPlatformAssociations', {}, name='show-platform-associations'),
 
-    # Parameters
+    # Parameters, Platforms,      - full object queries with .json and .xml responses
     url(pre + r'parameters.?' + formatPat, 'stoqs.views.showParameters', {}, name='show-parameters'),
+    url(pre + r'platforms.?' + formatPat, 'stoqs.views.showPlatforms', {}, name='show-platforms'),
 
     # Position queries (last, since, between)
     url(pre + r'position/(?P<name>[^/]+)/last/(?P<number>\d{1,10})(?P<unit>[smhdw]?)/data.' + formatPat, 'stoqs.views.showLastPositions', {}, name='show-last-positions'),
