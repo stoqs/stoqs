@@ -7,11 +7,10 @@ MAP
   UNITS dd
   CONFIG "MS_ERRORFILE" "/tmp/mapserver_stoqshg.log"
   CONFIG "PROJ_LIB" "/usr/local/Proj4/share/proj"
-  DEBUG 5
   WEB
     IMAGEPATH "/tmp"
     METADATA
-          "wfs_title"       "{{ activity_title }}"
+          "wfs_title"       "{{ wfs_title }}"
           "wfs_onlineresource"   "http://{{ mapserver_host }}/cgi-bin/mapserv?map={{ mappath }}&" 
           "wfs_srs"         "EPSG:4326 EPSG:900913 "  
           "wfs_abstract"    "MBARI STOQS"
@@ -25,32 +24,35 @@ MAP
   PROJECTION
     "init=epsg:4326"
   END # PROJECTION
+  {% for a in activity_list %}
   LAYER
     CONNECTIONTYPE POSTGIS
     CONNECTION "host={{ DS.DATABASE_HOST }} port={{ DS.DATABASE_PORT }} user={{ DS.DATABASE_USER }} password={{ DS.DATABASE_PASSWORD }} dbname={{ dbname }}"
-    DUMP true
     DATA "maptrack from stoqs_activity using unique id using srid=4326"
-    FILTER "id={{ activity_id }}"
+      FILTER "id={{ a.id }}"
+      DEBUG 2
+      DUMP true
       TYPE line
       STATUS on
       METADATA
-      "wfs_title"     "{{ activity_name }}"    # Short description
-      "wms_title"     "{{ activity_name }}"    # Short description
-      "wms_include_items"  "all"               # Include all attributes
-      "gml_featureid"  "{{ activity_id }}"     # id is the primary key
-      "gml_include_items"  "all"               # Include all attributes
-      "wfs_abstract"       "{{ activity_name }} Activity Track."
-     END # DATA
+       "wfs_title"     "{{ a.name }}"    # Short description
+       "wms_title"     "{{ a.name }}"    # Short description
+       "wms_include_items"  "all"               # Include all attributes
+       "gml_featureid"  "{{ a.id }}"     # id is the primary key
+       "gml_include_items"  "all"               # Include all attributes
+       "wfs_abstract"       "{{ a.name }} Activity Track."
+    END # DATA
     PROJECTION
       "init=epsg:4326"
     END # PROJECTION
-    NAME "{{ activity_name }}"
+    NAME "{{ a.name }}"
     CLASS
-      NAME "{{ activity_name }}"
+      NAME "{{ a.name }}"
       STYLE
         COLOR {{ r }} {{ g }} {{ b }}
       END # STYLE
     END # CLASS
   END # LAYER
+  {% endfor %}
 END # MAP
 
