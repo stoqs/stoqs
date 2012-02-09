@@ -105,6 +105,25 @@ def showPlatformNames(request, format = 'html'):
 		return render_to_response('platformName.html', {'p_list': pList})
 
 
+def showPlatforms(request, format = 'html'):
+	pList = mod.Platform.objects.all().order_by('name')
+	logger.debug("format = %s", format)
+	if format == 'csv':
+		response = HttpResponse(mimetype='text/csv')
+		response['Content-Disposition'] = 'attachment; filename=parameters.csv'
+		writer = csv.writer(response)
+
+		writer.writerow(['id', 'name', 'platformtype'])
+		writer.writerows(pList)
+		return response
+	elif format == 'xml':
+		return HttpResponse(serializers.serialize('xml', pList), 'application/xml')
+	elif format == 'json':
+		return HttpResponse(serializers.serialize('json', pList), 'application/json')
+	else:
+		return render_to_response('parameters.html', {'p_list': pList})
+
+
 def showPlatformNamesOfType(request, ptn, format = 'html'):
 	pList = mod.Platform.objects.filter(platformtype__name = ptn).order_by('name')
 	return render_to_response('platformNamesOfType.html', {'p_list': pList, 'type': ptn})

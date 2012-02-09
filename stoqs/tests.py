@@ -56,9 +56,16 @@ class MeasurementViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_parameters(self):
-        req = '/test_stoqs/parameters'
-        response = self.client.get(req)
-        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+	for fmt in ('html', 'json', 'xml'):
+            req = '/test_stoqs/parameters.%s' % fmt
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+   
+    def test_platforms(self):
+	for fmt in ('html', 'json', 'xml'):
+            req = '/test_stoqs/platforms.%s' % fmt
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_measurementStandardNameBetween(self):
         # For the load of:
