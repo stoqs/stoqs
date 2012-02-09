@@ -27,7 +27,7 @@ MAP
   {% for a in activity_list %}
   LAYER
     CONNECTIONTYPE POSTGIS
-    CONNECTION "host={{ DS.DATABASE_HOST }} port={{ DS.DATABASE_PORT }} user={{ DS.DATABASE_USER }} password={{ DS.DATABASE_PASSWORD }} dbname={{ dbname }}"
+    CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
     DATA "maptrack from stoqs_activity using unique id using srid=4326"
       FILTER "id={{ a.id }}"
       DEBUG 2

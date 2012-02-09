@@ -4,10 +4,9 @@ __author__ = "Mike McCann"
 __copyright__ = "Copyright 2012, MBARI"
 __credits__ = ["Chander Ganesan, Open Technology Group"]
 __license__ = "GPL"
-__version__ = "$Revision: 12293 $".split()[1]
 __maintainer__ = "Mike McCann"
 __email__ = "mccann at mbari.org"
-__status__ = "Development"
+__status__ = "Production"
 __doc__ = '''
 
 Automatically route requests to the proper database and named in the first
@@ -16,7 +15,6 @@ parameter parsed from the request url.
 Mike McCann
 MBARI Jan 3, 2012
 
-@var __date__: Date of last svn commit
 @undocumented: __doc__ parser
 @author: __author__
 @status: __status__
@@ -36,24 +34,24 @@ class RouterMiddleware(object):
         logger.debug(pargs)
         logger.debug("kwargs =")
         logger.debug(kwargs)
-        if kwargs.has_key('dbName'):
-            # Add a thread local variable, and remove the dbName, since it's handled by the middleware.
-            _thread_local_vars.dbName = kwargs.pop('dbName')
-            # If 'stoqs' is used make it 'default', for every other dbName the convention is that
-            # the Django alias is the same as the database name.
-            if _thread_local_vars.dbName == 'stoqs':
-                _thread_local_vars.dbName = 'default'
+        if kwargs.has_key('dbAlias'):
+            # Add a thread local variable, and remove the dbAlias, since it's handled by the middleware.
+            _thread_local_vars.dbAlias = kwargs.pop('dbAlias')
+            # If 'stoqs' is used make it 'default', for every other dbAlias the convention is that
+            # the Django alias is the same as the database name. (Need to standardize on using alias...)
+            if _thread_local_vars.dbAlias == 'stoqs':
+                _thread_local_vars.dbAlias = 'default'
             
-            logger.debug("_thread_local_vars.dbName = " + _thread_local_vars.dbName)
-            # Add as a META tag for those views that wish to use the dbName
+            logger.debug("_thread_local_vars.dbAlias = " + _thread_local_vars.dbAlias)
+            # Add as a META tag for those views that wish to use the dbAlias
             
-            request.META['dbName'] = _thread_local_vars.dbName
+            request.META['dbAlias'] = _thread_local_vars.dbAlias
         return view_func(request, *pargs, **kwargs)
     
     def process_response(self, request, response):
         # Get rid of the thread local variable, since it isn't needed anymore.
-        if hasattr(_thread_local_vars, 'dbName'):
-            del _thread_local_vars.dbName
+        if hasattr(_thread_local_vars, 'dbAlias'):
+            del _thread_local_vars.dbAlias
         return response
 
 
@@ -61,9 +59,9 @@ class RouterMiddleware(object):
 class DatabaseRouter(object):
     def _default_db( self ):
         from django.conf import settings
-        if hasattr( _thread_local_vars, 'dbName' ) and _thread_local_vars.dbName in settings.DATABASES:
-            logger.debug("DatabaseRouter: Returning dbName = " + _thread_local_vars.dbName)
-            return _thread_local_vars.dbName
+        if hasattr( _thread_local_vars, 'dbAlias' ) and _thread_local_vars.dbAlias in settings.DATABASES:
+            logger.debug("DatabaseRouter: Returning dbAlias = " + _thread_local_vars.dbAlias)
+            return _thread_local_vars.dbAlias
         else:
             logger.debug("DatabaseRouter: Returning default")
             return 'default'

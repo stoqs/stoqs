@@ -40,8 +40,8 @@ def deleteActivity(request, activityId):
     associated with the activity.
     '''
     
-    tasks.delete_activity.delay(request.META['dbName'], activityId)
-    return render_to_response('deletion.html', {'dbName': request.META['dbName'], 'activityId': activityId})
+    tasks.delete_activity.delay(request.META['dbAlias'], activityId)
+    return render_to_response('deletion.html', {'dbAlias': request.META['dbAlias'], 'activityId': activityId})
     
     
 class Act():
@@ -105,7 +105,7 @@ def showDatabase(request):
     pList = mod.Parameter.objects.all().order_by('name')    
 
     return render_to_response('management.html', 
-                {'dbName': request.META['dbName'], 
+                {'dbAlias': request.META['dbAlias'], 
                  'actList': actList,
                  'pList': pList,
                  }
@@ -126,23 +126,23 @@ def showCampaigns(request):
   
     # Data structure hash of lists.  Possible to have multiple campaigns in a database
     cHash = {}
-    for dbName in settings.DATABASES.keys():
+    for dbAlias in settings.DATABASES.keys():
         # Initialize Campaign hassh list
-        cHash[dbName] = []
+        cHash[dbAlias] = []
 
-    for dbName in settings.DATABASES.keys():
+    for dbAlias in settings.DATABASES.keys():
         try:
-            logger.debug("Getting Campaign from dbName = %s", dbName)
-            cqs = mod.Campaign.objects.using(dbName).all()
+            logger.debug("Getting Campaign from dbAlias = %s", dbAlias)
+            cqs = mod.Campaign.objects.using(dbAlias).all()
             for c in cqs:
-                logger.debug("Appending campaign name = %s to cHash with key (dbName) = %s", c.name, dbName)
-                cHash[dbName].append(c)
+                logger.debug("Appending campaign name = %s to cHash with key (dbAlias) = %s", c.name, dbAlias)
+                cHash[dbAlias].append(c)
         except mod.Campaign.DoesNotExist:
-            logger.warn("Database %s does not exist", dbName)
+            logger.warn("Database alias %s does not exist", dbAlias)
             continue
         except DatabaseError:
             # Will happen if database defined in privateSettings does not exist yet
-            logger.warn("Database %s returns django.db.DatabaseError", dbName)
+            logger.warn("Database alias %s returns django.db.DatabaseError", dbAlias)
             continue
 
     # Preprocess hash for template (basically, flatten it)
@@ -152,12 +152,12 @@ def showCampaigns(request):
     for k in cHash.keys():
         for c in cHash[k]:
 	    cam = Cam()
-            cam.dbName = k
+            cam.dbAlias = k
             cam.name = c.name
             cam.description = c.description
             cam.startdate = c.startdate
             cam.enddate = c.enddate
-            logger.debug("Appending to cList cam with dbName = %s and name = %s", cam.dbName, cam.name)
+            logger.debug("Appending to cList cam with dbAlias = %s and name = %s", cam.dbAlias, cam.name)
             cList.append(cam)
 
     logger.debug("cList = %s", cList)
@@ -245,7 +245,7 @@ def showActivities(request):
         actList.append(act)
 
     return render_to_response('activities.html', 
-                {'aList': actList, 'dbName': request.META['dbName']},
+                {'aList': actList, 'dbAlias': request.META['dbAlias']},
                 context_instance=RequestContext(request)
                 ) 
     
