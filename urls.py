@@ -52,6 +52,10 @@ urlpatterns = patterns('',
     # Admin interface
     url(pre + r'admin/', include(admin.site.urls)),
 
+    # Map interfaces
+    url(pre + r'activitiesWMS$', 'stoqs.views.showActivitiesWMS', {}, name='show-activities-wms'),
+    url(pre + r'parametersWMS$', 'stoqs.views.showParametersWMS', {}, name='show-parameters-wms'),
+
     # Type and name queries
     url(pre + r'platformTypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platform-types'),
     url(pre + r'platformNames.?' + formatPat, 'stoqs.views.showPlatformNames', {}, name='show-platform-names'),
@@ -126,7 +130,6 @@ urlpatterns = patterns('',
     url(pre + r'mgmt$', 'stoqs.views.management.showDatabase', {}, name='show-database'),
     url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'stoqs.views.management.deleteActivity', {}, name='delete-activity'),
     url(pre + r'activities$', 'stoqs.views.management.showActivities', {}, name='show-activities'),
-    url(pre + r'activitiesWMS$', 'stoqs.views.showActivitiesWMS', {}, name='show-activities-wms'),
 
 )
 

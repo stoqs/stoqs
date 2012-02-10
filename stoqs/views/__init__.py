@@ -38,12 +38,32 @@ import os
 
 logger = logging.getLogger(__name__)
 
-def generateMapFile(request, dbAlias, activity_list, mappath):
+def generateActivityMapFile(request, dbAlias, activity_list, mappath):
 	'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.
         The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
 	'''
 
 	response = render_to_response('activity.map', {'mapserver_host': settings.MAPSERVER_HOST,
+							'activity_list': activity_list,
+		     					'wfs_title': 'WFS title for an Activity',
+							'dbconn': settings.DATABASES[dbAlias],
+							'mappath': mappath,
+							'r': 200,
+							'g': 100,
+							'b': 99 },
+				         		context_instance = RequestContext(request))
+
+	fh = open(mappath, 'w')	
+	for line in response:
+		fh.write(line) 
+
+
+def generateParameterMapFile(request, dbAlias, activity_list, mappath):
+	'''Build mapfile for parameters from template.  Write it to a location that mapserver can see it.
+        The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
+	'''
+
+	response = render_to_response('parameter.map', {'mapserver_host': settings.MAPSERVER_HOST,
 							'activity_list': activity_list,
 		     					'wfs_title': 'WFS title for an Activity',
 							'dbconn': settings.DATABASES[dbAlias],
@@ -66,9 +86,25 @@ def showActivitiesWMS(request):
 
 	aList = mod.Activity.objects.all().order_by('startdate')  
 	mappath = os.path.join(mappathBase, 'activity.map')
-	generateMapFile(request, request.META['dbAlias'], aList, mappath)
+	generateActivityMapFile(request, request.META['dbAlias'], aList, mappath)
 
 	return render_to_response('activitiesWMS.html', {'mapserver_host': 'odss-staging.shore.mbari.org', 
+								'activity_list': aList,
+								'dbAlias': request.META['dbAlias'],
+								'mappath': mappath})
+
+
+def showParametersWMS(request):
+	'''Render Activities that have specified parameter as WMS via mapserver'''
+
+	# As long as the file is someplace mapserver can read from, you're all set!
+	mappathBase = '/tmp'
+
+	aList = mod.Parameter.objects.all().order_by('startdate')  
+	mappath = os.path.join(mappathBase, 'parameter.map')
+	generateParameterMapFile(request, request.META['dbAlias'], aList, mappath)
+
+	return render_to_response('parametersWMS.html', {'mapserver_host': 'odss-staging.shore.mbari.org', 
 								'activity_list': aList,
 								'dbAlias': request.META['dbAlias'],
 								'mappath': mappath})
