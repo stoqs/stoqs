@@ -88,7 +88,7 @@ def showActivitiesWMS(request):
 	mappath = os.path.join(mappathBase, 'activity.map')
 	generateActivityMapFile(request, request.META['dbAlias'], aList, mappath)
 
-	return render_to_response('activitiesWMS.html', {'mapserver_host': 'odss-staging.shore.mbari.org', 
+	return render_to_response('activitiesWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
 								'activity_list': aList,
 								'dbAlias': request.META['dbAlias'],
 								'mappath': mappath})
@@ -104,7 +104,7 @@ def showParametersWMS(request):
 	mappath = os.path.join(mappathBase, 'parameter.map')
 	generateParameterMapFile(request, request.META['dbAlias'], aList, mappath)
 
-	return render_to_response('parametersWMS.html', {'mapserver_host': 'odss-staging.shore.mbari.org', 
+	return render_to_response('parametersWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
 								'activity_list': aList,
 								'dbAlias': request.META['dbAlias'],
 								'mappath': mappath})
