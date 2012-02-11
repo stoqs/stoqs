@@ -49,9 +49,9 @@
 
             {% for p in parameter_list %}
             parmid_{{ p.id }} = new OpenLayers.Layer.WMS(
-                    "{{ a.name }}",
+                    "{{ p.name }}",
                     "http://{{ mapserver_host }}/cgi-bin/mapserv",
-                    { layers: '{{ a.name }}',
+                    { layers: '{{ p.name }}',
                       map: '{{ mappath }}',
                       transparent: 'True' },
                     { units: 'degrees',
@@ -100,7 +100,7 @@
                        OpenLayers.Util.getElement('emonth').value + "-" +
                        OpenLayers.Util.getElement('eday').value 
 
-            {% for a in parameter_list %}
+            {% for p in parameter_list %}
             parmid_{{ p.id }}.mergeNewParams({'time':string});
             {% endfor %}
       }
