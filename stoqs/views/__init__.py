@@ -58,13 +58,13 @@ def generateActivityMapFile(request, dbAlias, activity_list, mappath):
 		fh.write(line) 
 
 
-def generateParameterMapFile(request, dbAlias, activity_list, mappath):
+def generateParameterMapFile(request, dbAlias, list, mappath):
 	'''Build mapfile for parameters from template.  Write it to a location that mapserver can see it.
         The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
 	'''
 
 	response = render_to_response('parameter.map', {'mapserver_host': settings.MAPSERVER_HOST,
-							'activity_list': activity_list,
+							'parameter_list': list,
 		     					'wfs_title': 'WFS title for an Activity',
 							'dbconn': settings.DATABASES[dbAlias],
 							'mappath': mappath,
@@ -87,6 +87,7 @@ def showActivitiesWMS(request):
 	aList = mod.Activity.objects.all().order_by('startdate')  
 	mappath = os.path.join(mappathBase, 'activity.map')
 	generateActivityMapFile(request, request.META['dbAlias'], aList, mappath)
+	logger.debug("Building web page pointing to mapserver at %s", settings.MAPSERVER_HOST)
 
 	return render_to_response('activitiesWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
 								'activity_list': aList,
@@ -100,12 +101,13 @@ def showParametersWMS(request):
 	# As long as the file is someplace mapserver can read from, you're all set!
 	mappathBase = '/tmp'
 
-	aList = mod.Parameter.objects.all().order_by('startdate')  
+	pList = mod.Parameter.objects.all().order_by('name')  
 	mappath = os.path.join(mappathBase, 'parameter.map')
-	generateParameterMapFile(request, request.META['dbAlias'], aList, mappath)
+	generateParameterMapFile(request, request.META['dbAlias'], pList, mappath)
+	logger.debug("Building web page pointing to mapserver at %s", settings.MAPSERVER_HOST)
 
 	return render_to_response('parametersWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
-								'activity_list': aList,
+								'parameter_list': pList,
 								'dbAlias': request.META['dbAlias'],
 								'mappath': mappath})
 
