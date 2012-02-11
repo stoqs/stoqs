@@ -47,11 +47,11 @@
                  'sphericalMercator': true}
             );
 
-            {% for a in activity_list %}
-            actid_{{ a.id }} = new OpenLayers.Layer.WMS(
-                    "{{ a.name }}",
+            {% for item in list %}
+            itemid_{{ item.id }} = new OpenLayers.Layer.WMS(
+                    "{{ item.name }}",
                     "http://{{ mapserver_host }}/cgi-bin/mapserv",
-                    { layers: '{{ a.name }}',
+                    { layers: '{{ item.name }}',
                       map: '{{ mappath }}',
                       transparent: 'True' },
                     { units: 'degrees',
@@ -60,7 +60,7 @@
                       reproject: false,
                       visibility: false,
                       displayOutsideMaxExtent: true });
-            map.addLayers([actid_{{ a.id }}]); 
+            map.addLayers([itemid_{{ item.id }}]); 
             {% endfor %}
 
             map.addLayers([gsat,gphy,ghyb]);
@@ -69,20 +69,20 @@
             map.addControl(new OpenLayers.Control.LayerSwitcher({'div':OpenLayers.Util.getElement('activities-layerswitcher')}));
             map.addControl(new OpenLayers.Control.MousePosition());
             map.addControl(new OpenLayers.Control.PanZoomBar());
-            {% for a in activity_list %}
+            {% for item in list %}
             map.events.register('click', map, function (e) {
                     OpenLayers.Util.getElement('nodeList').innerHTML = "Loading... please wait...";
-                    var url =  actid_{{ a.id }}.getFullRequestString({
+                    var url =  itemid_{{ item.id }}.getFullRequestString({
                                     REQUEST: "GetFeatureInfo",
                                     EXCEPTIONS: "application/vnd.ogc.se_xml",
-                                    BBOX: actid_{{ a.id }}.map.getExtent().toBBOX(),
+                                    BBOX: itemid_{{ item.id }}.map.getExtent().toBBOX(),
                                     X: e.xy.x,
                                     Y: e.xy.y,
                                     FEATURE_COUNT: 1000,
                                     INFO_FORMAT: 'text/html',
-                                    QUERY_LAYERS: actid_{{ a.id }}.params.LAYERS,
-                                    WIDTH: actid_{{ a.id }}.map.size.w,
-                                    HEIGHT: actid_{{ a.id }}.map.size.h});
+                                    QUERY_LAYERS: itemid_{{ item.id }}.params.LAYERS,
+                                    WIDTH: itemid_{{ item.id }}.map.size.w,
+                                    HEIGHT: itemid_{{ item.id }}.map.size.h});
                     OpenLayers.loadURL(url, '', this, setHTML);
                     OpenLayers.Event.stop(e);
             });
@@ -100,8 +100,8 @@
                        OpenLayers.Util.getElement('emonth').value + "-" +
                        OpenLayers.Util.getElement('eday').value 
 
-            {% for a in activity_list %}
-            actid_{{ a.id }}.mergeNewParams({'time':string});
+            {% for item in list %}
+            itemid_{{ item.id }}.mergeNewParams({'time':string});
             {% endfor %}
       }
     </script> 
