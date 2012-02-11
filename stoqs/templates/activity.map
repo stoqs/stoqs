@@ -26,32 +26,32 @@ MAP
   PROJECTION
     "init=epsg:4326"
   END # PROJECTION
-  {% for a in activity_list %}
+  {% for item in list %}
   LAYER
     CONNECTIONTYPE POSTGIS
     CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
-    DATA "maptrack from stoqs_activity using unique id using srid=4326"
-      FILTER "id={{ a.id }}"
+    DATA "{{ geo_query }}"
+      FILTER "gid={{ item.id }}"
       ##DEBUG 2
       ##DUMP true
       TYPE line
       STATUS on
       METADATA
-       "wfs_title"     "{{ a.name }}"    # Short description
-       "wms_title"     "{{ a.name }}"    # Short description
+       "wfs_title"     "{{ item.name }}"    # Short description
+       "wms_title"     "{{ item.name }}"    # Short description
        "wms_include_items"  "all"               # Include all attributes
-       "gml_featureid"  "{{ a.id }}"     # id is the primary key
+       "gml_featureid"  "{{ item.id }}"     # id is the primary key
        "gml_include_items"  "all"               # Include all attributes
-       "wfs_abstract"       "{{ a.name }} Activity Track."
+       "wfs_abstract"       "{{ item.name }} Activity Track."
     END # DATA
     PROJECTION
       "init=epsg:4326"
     END # PROJECTION
-    NAME "{{ a.name }}"
+    NAME "{{ item.name }}"
     CLASS
-      NAME "{{ a.name }}"
+      NAME "{{ item.name }}"
       STYLE
-        COLOR {{ r }} {{ g }} {{ b }}
+        COLOR {{ item.r }} {{ item.g }} {{ item.b }}
       END # STYLE
     END # CLASS
   END # LAYER

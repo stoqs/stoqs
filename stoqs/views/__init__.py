@@ -35,22 +35,33 @@ import csv
 import sys
 import logging 
 import os
+from random import randint
 
 logger = logging.getLogger(__name__)
 
-def generateActivityMapFile(request, dbAlias, activity_list, mappath):
+
+class ItemHasColorComponentAttribute(Exception):
+	pass
+
+
+def generateActivityMapFile(request, list, mappath, geo_query):
 	'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.
         The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
+	This creates a dynamic 
+
+	@param request: Web server request object
+	@param list: List of items that produces activities, e.g. Activities, Paramaters, Platforms, ...
+	@param mappath: Fully qualified path to the mapfile that will be created
+	@param geo_query: The SQL to be placed in the DATA directive.  It must return a geometry object and a gid for the filter.
 	'''
 
+	# mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
 	response = render_to_response('activity.map', {'mapserver_host': settings.MAPSERVER_HOST,
-							'activity_list': activity_list,
+							'list': list,
 		     					'wfs_title': 'WFS title for an Activity',
-							'dbconn': settings.DATABASES[dbAlias],
+							'dbconn': settings.DATABASES[request.META['dbAlias']],
 							'mappath': mappath,
-							'r': 200,
-							'g': 100,
-							'b': 99 },
+							'geo_query': geo_query},
 				         		context_instance = RequestContext(request))
 
 	fh = open(mappath, 'w')	
@@ -58,24 +69,22 @@ def generateActivityMapFile(request, dbAlias, activity_list, mappath):
 		fh.write(line) 
 
 
-def generateParameterMapFile(request, dbAlias, list, mappath):
-	'''Build mapfile for parameters from template.  Write it to a location that mapserver can see it.
-        The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
-	'''
+def assignColors(list):
+	'''For each item in list create a unique rgb color and add it as an attribute to the list'''
 
-	response = render_to_response('parameter.map', {'mapserver_host': settings.MAPSERVER_HOST,
-							'parameter_list': list,
-		     					'wfs_title': 'WFS title for an Activity',
-							'dbconn': settings.DATABASES[dbAlias],
-							'mappath': mappath,
-							'r': 200,
-							'g': 100,
-							'b': 99 },
-				         		context_instance = RequestContext(request))
+	newList = []
+	for item in list:
+		for comp in (['r', 'g', 'b']):
+			try:
+				getattr(item, comp)
+			except:
+				setattr(item, comp, randint(100, 255))
+			else:
+				raise ItemHasColorComponentAttribute
 
-	fh = open(mappath, 'w')	
-	for line in response:
-		fh.write(line) 
+		newList.append(item)
+
+	return newList
 
 
 def showActivitiesWMS(request):
@@ -85,12 +94,16 @@ def showActivitiesWMS(request):
 	mappathBase = '/tmp'
 
 	aList = mod.Activity.objects.all().order_by('startdate')  
+	aList = assignColors(aList)
 	mappath = os.path.join(mappathBase, 'activity.map')
-	generateActivityMapFile(request, request.META['dbAlias'], aList, mappath)
+	geo_query = '''geom from (select a.maptrack as geom, a.id as gid
+		from stoqs_activity a)
+		as subquery using unique gid using srid=4326'''
+	generateActivityMapFile(request, aList, mappath, geo_query)
 	logger.debug("Building web page pointing to mapserver at %s", settings.MAPSERVER_HOST)
 
 	return render_to_response('activitiesWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
-								'activity_list': aList,
+								'list': aList,
 								'dbAlias': request.META['dbAlias'],
 								'mappath': mappath})
 
@@ -102,12 +115,20 @@ def showParametersWMS(request):
 	mappathBase = '/tmp'
 
 	pList = mod.Parameter.objects.all().order_by('name')  
-	mappath = os.path.join(mappathBase, 'parameter.map')
-	generateParameterMapFile(request, request.META['dbAlias'], pList, mappath)
-	logger.debug("Building web page pointing to mapserver at %s", settings.MAPSERVER_HOST)
+	pList = assignColors(pList)
+	mappath = os.path.join(mappathBase, 'activity.map')
+	# Must select for a geometry field and a 'gid' that is used in the filter for the list
+	geo_query = '''geom from (select a.maptrack as geom, a.id as aid, p.id as gid
+                from stoqs_activity a
+                inner join stoqs_activityparameter ap on (a.id = ap.activity_id)
+                inner join stoqs_parameter p on (ap.parameter_id = p.id)
+                order by p.name)
+          	as subquery using unique gid using srid=4326'''
+	generateActivityMapFile(request, pList, mappath, geo_query)
+	logger.debug("Building web page with parameters switched of activities pointing to mapserver at %s", settings.MAPSERVER_HOST)
 
-	return render_to_response('parametersWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
-								'parameter_list': pList,
+	return render_to_response('activitiesWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
+								'list': pList,
 								'dbAlias': request.META['dbAlias'],
 								'mappath': mappath})
 
