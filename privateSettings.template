@@ -15,7 +15,7 @@ DATABASE_USER = ''
 DATABASE_PASSWORD = ''
 DATABASE_HOST = ''
 
-# Mapserver hostname, just the name.  Assumes that mapserv is install in /cgi-bin
+# Mapserver hostname, just the name or address.  Assumes that mapserv is installed in /cgi-bin
 MAPSERVER_HOST = ''
 
 # Make this unique, and don't share it with anybody
