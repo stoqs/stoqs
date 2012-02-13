@@ -25,12 +25,16 @@ su -c "yum -y install graphviz-python"
 make
 make install
 
-# Install MapServer folling the instructions for your system at http://mapserver.org/.  It is typical to
+# Install MapServer following the instructions for your system at http://mapserver.org/.  It is typical to
 # build it from source and then copy the 'mapserv' executable to the cgi-bin directory for your web server.
 # The .map templates assume that this is where the mapserv executable is located.  You will set the MapServer
-# host name for your privateSettings file.  It _can_ be a separate server from your Django server, but it must
-# be able to see the .map files produced by Django through a network mount or some other mechanism.
+# host name (MAPSERVER_HOST) for your privateSettings file.  It _can_ be a separate server from your Django 
+# server, but it must be able to see the .map files produced by Django through a network mount or some other 
+# mechanism.
 
+# Install OpenLayers following the instructions at http://openlayers.org/.  The templates are configured for
+# the JavaScript library to be installed in the root directory of the MAPSERVER_HOST.  Follow readme.txt 
+# instructions from the tar ball and you should be all set to go.
 
 # Go to the directory where you have checked out the stoqs project, e.g.:
 
