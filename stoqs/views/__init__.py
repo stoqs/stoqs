@@ -133,7 +133,8 @@ def showParametersWMS(request):
 	return render_to_response('activitiesWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
 								'list': pList,
 								'dbAlias': request.META['dbAlias'],
-								'mappath': mappath})
+								'mappath': mappath},
+                                                context_instance=RequestContext(request))
 
 
 def showPlatformTypes(request, format = 'html'):
