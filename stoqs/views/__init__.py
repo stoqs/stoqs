@@ -96,7 +96,8 @@ def showActivitiesWMS(request):
 	aList = mod.Activity.objects.all().order_by('startdate')  
 	aList = assignColors(aList)
 	mappath = os.path.join(mappathBase, 'activity.map')
-	geo_query = '''geom from (select a.maptrack as geom, a.id as gid
+	geo_query = '''geom from (select a.maptrack as geom, a.id as gid, 
+		a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
 		from stoqs_activity a)
 		as subquery using unique gid using srid=4326'''
 	generateActivityMapFile(request, aList, mappath, geo_query)
@@ -105,7 +106,8 @@ def showActivitiesWMS(request):
 	return render_to_response('activitiesWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
 								'list': aList,
 								'dbAlias': request.META['dbAlias'],
-								'mappath': mappath})
+								'mappath': mappath},
+						context_instance=RequestContext(request))
 
 
 def showParametersWMS(request):
@@ -118,7 +120,8 @@ def showParametersWMS(request):
 	pList = assignColors(pList)
 	mappath = os.path.join(mappathBase, 'activity.map')
 	# Must select for a geometry field and a 'gid' that is used in the filter for the list
-	geo_query = '''geom from (select a.maptrack as geom, a.id as aid, p.id as gid
+	geo_query = '''geom from (select a.maptrack as geom, a.id as aid, p.id as gid,
+		a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
                 from stoqs_activity a
                 inner join stoqs_activityparameter ap on (a.id = ap.activity_id)
                 inner join stoqs_parameter p on (ap.parameter_id = p.id)
