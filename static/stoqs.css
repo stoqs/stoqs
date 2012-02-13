@@ -181,6 +181,12 @@ td
 }
 
 /* MISC	FONT SIZE CONTROLS */
+.stoqsLayerSwitcher
+{
+	font-size: .8em;
+	font-family: Geneva, Helvetica,	Arial, sans-serif;
+	background-color: #FFFFFF;
+}
 .smallText
 {
 	font-size: .8em;
