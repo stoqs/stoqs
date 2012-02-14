@@ -1,0 +1,24 @@
+@CHARSET "UTF-8";
+.treetitle {
+	padding:2px;
+	cursor:default;	
+	font-family: Times;
+	font-size: 12px;
+	color: #000000;
+}
+.treetitleselected {
+	padding:2px;
+	cursor:default;
+	background-color: #abefcd;
+	color: highlighttext;
+	font-family: Times;
+	font-size: 12px;
+}
+.treetitlehighlighted {
+	padding:2px;
+	cursor:default;
+	background-color: #dbfeca;
+	color: highlighttext;
+	font-family: Times;
+	font-size: 12px;
+}
