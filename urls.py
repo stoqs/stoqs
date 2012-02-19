@@ -55,6 +55,7 @@ urlpatterns = patterns('',
     # Map interfaces
     url(pre + r'activitiesWMS$', 'stoqs.views.wms.showActivitiesWMS', {}, name='show-activities-wms'),
     url(pre + r'parametersWMS$', 'stoqs.views.wms.showParametersWMS', {}, name='show-parameters-wms'),
+    url(pre + r'platformsWMS$', 'stoqs.views.wms.showPlatformsWMS', {}, name='show-platforms-wms'),
 
     # Type and name queries
     url(pre + r'platformTypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platform-types'),
