@@ -167,3 +167,18 @@ def showParametersWMS(request):
 	av = ActivityView(request, list, geo_query)
 	return av.process_request()
 
+
+def showPlatformsWMS(request):
+	'''Render Activities that have specified platform as WMS via mapserver'''
+
+	list = mod.Platform.objects.all().order_by('name')  
+	geo_query = '''geom from (select a.maptrack as geom, a.id as aid, p.id as gid,
+		a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
+		from stoqs_activity a
+		inner join stoqs_platform p on (a.platform_id = p.id)
+		order by p.name)
+		as subquery using unique gid using srid=4326'''
+
+	av = ActivityView(request, list, geo_query)
+	return av.process_request()
+#
