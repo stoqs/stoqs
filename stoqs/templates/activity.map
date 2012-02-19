@@ -56,7 +56,7 @@ MAP
     CLASS
       NAME "{{ item.name }}"
       STYLE
-        COLOR {{ item.r }} {{ item.g }} {{ item.b }}
+        COLOR {{ item.color }} 
       END # STYLE
     END # CLASS
   END # LAYER

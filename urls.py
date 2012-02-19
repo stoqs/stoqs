@@ -53,8 +53,8 @@ urlpatterns = patterns('',
     url(pre + r'admin/', include(admin.site.urls)),
 
     # Map interfaces
-    url(pre + r'activitiesWMS$', 'stoqs.views.showActivitiesWMS', {}, name='show-activities-wms'),
-    url(pre + r'parametersWMS$', 'stoqs.views.showParametersWMS', {}, name='show-parameters-wms'),
+    url(pre + r'activitiesWMS$', 'stoqs.views.wms.showActivitiesWMS', {}, name='show-activities-wms'),
+    url(pre + r'parametersWMS$', 'stoqs.views.wms.showParametersWMS', {}, name='show-parameters-wms'),
 
     # Type and name queries
     url(pre + r'platformTypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platform-types'),
