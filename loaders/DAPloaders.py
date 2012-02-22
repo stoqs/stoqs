@@ -896,7 +896,7 @@ def runAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, db
 
 
 def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stride):
-	'''Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
+	'''Run the DAPloader for Dorado AUVCTD trajectory data and update the Activity with 
 	attributes resulting from the load into dbName. Designed to be called from script
 	that loads the data.  Following the load important updates are made to the database.'''
 
@@ -933,6 +933,49 @@ def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stri
 		activity = m.Activity.objects.using(dbName).get(name = aName)
 		for key in parmCountHash.keys():
 			logger.debug("runDoradoLoader(): key = %s, count = %d", (key, parmCountHash[key]))
+			ap = m.ActivityParameter.objects.db_manager(dbName).get_or_create(activity = activity,
+						parameter = loader.getParameterByName(key),
+						number = parmCountHash[key])
+
+
+def runLRAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stride):
+	'''Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
+	attributes resulting from the load into dbName. Designed to be called from script
+	that loads the data.  Following the load important updates are made to the database.'''
+
+	logger.debug("Instantiating Lrauv_Loader for url = %s", url)
+	loader = Lrauv_Loader(
+			url = url,
+			campaignName = cName,
+			dbName = dbName,
+			activityName = aName,
+			activitytypeName = aTypeName,
+			platformName = pName,
+			platformTypeName = pTypeName,
+			stride = stride)
+
+	(nMP, path, parmCountHash) = loader.process_data()
+	logger.debug("runLRAuvctdLoader(): Loaded Activity with name = %s", aName)
+
+	# Update the Activity with information we now have following the load
+	# Careful with the structure of this comment.  It is parsed (for now) in views.py to give some useful links in showActivities()
+	newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
+	logger.debug("runLRAuvctdLoader(): Updating its comment with newComment = %s", newComment)
+
+	num_updated = m.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment,
+						maptrack = path,
+						num_measuredparameters = nMP,
+						loaded_date = datetime.utcnow())
+	logger.debug("runLRAuvctdLoader(): %d activities updated with new attributes." % num_updated)
+
+	if num_updated != 1:
+		logger.debug("runLRAuvctdLoader(): We should have just one Activity with name = %s", aName)
+		return
+	else:
+		# Add links back to paraemters with stats on the partameters of the activity
+		activity = m.Activity.objects.using(dbName).get(name = aName)
+		for key in parmCountHash.keys():
+			logger.debug("runLRAuvctdLoader(): key = %s, count = %d", (key, parmCountHash[key]))
 			ap = m.ActivityParameter.objects.db_manager(dbName).get_or_create(activity = activity,
 						parameter = loader.getParameterByName(key),
 						number = parmCountHash[key])
