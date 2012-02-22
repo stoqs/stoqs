@@ -97,8 +97,8 @@ class ActivityView(object):
 			logger.debug("Creating a random color for item with id = %d", item.id)
 			c = Color()
 			c.r = randint(100, 255)
-			c.g = randint(10, 100)
-			c.b = randint(10, 100)
+			c.g = randint(100, 255)
+			c.b = randint(50, 150)
 			self.itemColor_dict[item.id] = c
 		else:
 			logger.debug("Returing saved color for item with id = %d", item.id)
