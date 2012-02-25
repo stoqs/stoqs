@@ -54,3 +54,8 @@ MY_DATABASES = {
 #    },
 }
 
+# Modify default logging settings, e.g. to help in debugging stoqs or django
+#LOGGING['loggers']['django']['level'] = 'DEBUG'
+#LOGGING['loggers']['stoqs']['level'] = 'INFO'
+
+#

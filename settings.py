@@ -22,6 +22,58 @@ MY_SECRET_KEY = ''
 # Mapserver hostname, just the name.  Assumes that mapserv is install in /cgi-bin
 MAPSERVER_HOST = ''
 
+# The logging defined here can be overridden in the privateSettings file, as needed
+# See http://docs.djangoproject.com/en/dev/topics/logging for more details
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(filename)s %(funcName)s():%(lineno)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'null': {
+            'level':'DEBUG',
+            'class':'django.utils.log.NullHandler',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'console':{
+            'level':'DEBUG',
+            'class':'logging.StreamHandler',
+            'formatter': 'verbose'
+        },
+    },
+    'loggers': {
+        'stoqs': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'ERROR',
+        },
+        'stoqs.db_router': {
+            'handlers':['null'],
+            'propagate': False,
+            'level':'ERROR',
+        },
+        'django': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'DEBUG',
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}
+
 # Load above sensitive settings from a local file that has tight file system permissions.
 execfile(os.path.join(project_dir, 'privateSettings'))
 
@@ -152,61 +204,6 @@ BROKER_VHOST = RABBITMQ_VHOST
 BROKER_USER = RABBITMQ_USER
 BROKER_PASSWORD = RABBITMQ_PASSWORD
 
-
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(filename)s %(funcName)s():%(lineno)d %(message)s'
-        },
-        'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
-    },
-    'handlers': {
-        'null': {
-            'level':'DEBUG',
-            'class':'django.utils.log.NullHandler',
-        },
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler'
-        },
-        'console':{
-            'level':'DEBUG',
-            'class':'logging.StreamHandler',
-            'formatter': 'verbose'
-        },
-    },
-    'loggers': {
-        'stoqs': {
-            'handlers':['console'],
-            'propagate': True,
-            'level':'DEBUG',
-        },
-        'stoqs.db_router': {
-            'handlers':['null'],
-            'propagate': False,
-            'level':'DEBUG',
-        },
-        'django': {
-            'handlers':['console'],
-            'propagate': True,
-            'level':'DEBUG',
-        },
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    }
-}
 
 
 TEMPLATE_CONTEXT_PROCESSORS=("django.contrib.auth.context_processors.auth",
