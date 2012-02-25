@@ -101,6 +101,8 @@ class Activity(models.Model):
 	num_measuredparameters = models.IntegerField(null=True)
 	loaded_date = models.DateTimeField(null=True)
 	maptrack = models.LineStringField(null=True)
+	mindepth = models.FloatField(null=True)
+	maxdepth = models.FloatField(null=True)
 	objects = models.GeoManager()
 	class Meta:
 		verbose_name='Activity'

@@ -567,6 +567,8 @@ class Base_Loader(object):
 		loaded = 0
 		linestringPoints=[]
 		parmCount = {}
+		mindepth = 8000.0
+		maxdepth = -8000.0
 		for key in self.include_names:
 			parmCount[key] = 0
 
@@ -600,6 +602,10 @@ class Base_Loader(object):
 					continue
 				else:
 					logger.debug("longitude = %s, latitude = %s, time = %s, depth = %s", longitude, latitude, time, depth)
+					if depth < mindepth:
+						mindepth = depth
+					if depth > maxdepth:
+						maxdepth = depth
 			for key, value in row.iteritems():
 				try:
 					if len(self.include_names) and key not in self.include_names:
@@ -655,7 +661,7 @@ class Base_Loader(object):
 		logger.info("Data load complete, %d records loaded.", loaded)
 		##sys.stdout.write('\n')
 
-		return loaded, path, parmCount
+		return loaded, path, parmCount, mindepth, maxdepth
 
 	def build_standard_names(self):
 		'''
@@ -867,7 +873,7 @@ def runAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, db
 
 	logger.debug("runAuvctdLoader(): Setting include_names to %s", parmList)
 	loader.include_names = parmList
-	(nMP, path, parmCountHash) = loader.process_data()
+	(nMP, path, parmCountHash, mind, maxd) = loader.process_data()
 	logger.debug("runAuvctdLoader(): Loaded Activity with name = %s", aName)
 
 	# Update the Activity with information we now have following the load
@@ -877,6 +883,8 @@ def runAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, db
 
 	num_updated = m.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment,
 						maptrack = path,
+						mindepth = mind,
+						maxdepth = maxd,
 						num_measuredparameters = nMP,
 						loaded_date = datetime.utcnow())
 	logger.debug("runAuvctdLoader(): %d activities updated with new attributes." % num_updated)
@@ -911,7 +919,7 @@ def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stri
 			platformTypeName = pTypeName,
 			stride = stride)
 
-	(nMP, path, parmCountHash) = loader.process_data()
+	(nMP, path, parmCountHash, mind, maxd) = loader.process_data()
 	logger.debug("runDoradoLoader(): Loaded Activity with name = %s", aName)
 
 	# Update the Activity with information we now have following the load
@@ -921,6 +929,8 @@ def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stri
 
 	num_updated = m.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment,
 						maptrack = path,
+						mindepth = mind,
+						maxdepth = maxd,
 						num_measuredparameters = nMP,
 						loaded_date = datetime.utcnow())
 	logger.debug("runDoradoLoader(): %d activities updated with new attributes." % num_updated)
@@ -954,7 +964,7 @@ def runLRAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, st
 			platformTypeName = pTypeName,
 			stride = stride)
 
-	(nMP, path, parmCountHash) = loader.process_data()
+	(nMP, path, parmCountHash, mind, maxd) = loader.process_data()
 	logger.debug("runLRAuvctdLoader(): Loaded Activity with name = %s", aName)
 
 	# Update the Activity with information we now have following the load
@@ -964,6 +974,8 @@ def runLRAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, st
 
 	num_updated = m.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment,
 						maptrack = path,
+						mindepth = mind,
+						maxdepth = maxd,
 						num_measuredparameters = nMP,
 						loaded_date = datetime.utcnow())
 	logger.debug("runLRAuvctdLoader(): %d activities updated with new attributes." % num_updated)
@@ -1017,7 +1029,7 @@ if __name__ == '__main__':
                 dbName = dbName,
                 stride = stride)
 	
-	nMP, path, parmCountHash = dl.process_data()
+	nMP, path, parmCountHash, mind, maxd = dl.process_data()
 	
 	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
 	# The ':' is important, this is where the string is split.
@@ -1027,6 +1039,8 @@ if __name__ == '__main__':
 
 	num_updated = m.Activity.objects.using(dbName).filter(name = file).update(comment = newComment,
 						maptrack = path,
+						mindepth = mind,
+						maxdepth = maxd,
 						num_measuredparameters = nMP,
 						loaded_date = datetime.utcnow())
 	logger.info("%d activities updated with new attributes.", num_updated)
