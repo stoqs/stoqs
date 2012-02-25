@@ -77,7 +77,7 @@ class MeasurementViewsTestCase(TestCase):
                     ):
             req = '/test_stoqs/measurement/sn/%s/between/20101028T075155/20101029T015157/depth/0/300/count' % parm
             response = self.client.get(req)
-            self.assertEqual(response.content, '36', 'Measurement between count for %s' % req)  # ?
+            self.assertEqual(response.content, '39', 'Measurement between count for %s' % req)  # ?
             
         # Make sure all the formats return 200
         for fmt in ('html', 'csv', 'kml'):
@@ -101,7 +101,7 @@ class MeasurementViewsTestCase(TestCase):
                     'nitrate', 'oxygen', 'salinity', 'sea_water_sigma_t', 'temperature'):
             req = '/test_stoqs/measurement/%s/between/20101028T075155/20101029T015157/depth/0/300/count' % parm
             response = self.client.get(req)
-            self.assertEqual(response.content, '36', 'Measurement between count for %s' % req)  # ?
+            self.assertEqual(response.content, '39', 'Measurement between count for %s' % req)  # ?
            
         # Make sure all the formats return 200
         for fmt in ('html', 'csv', 'kml'):
