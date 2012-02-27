@@ -18,6 +18,9 @@ including OPeNDAP data sets, other relational databases, and flat files.
 Products are delivered in a variety of formats, including KML, via REST-style 
 web requests.
 
+The first thing you'll need is the source code revision control software Mercurial
+which can be installed from http://mercurial.selenic.com/wiki/Download.
+
 This software can be checked out of Google Code thusly:
 
 	cd ~/dev
