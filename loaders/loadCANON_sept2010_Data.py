@@ -24,7 +24,6 @@ os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))	# settings.py is one dir up
 
-
 import DAPloaders
 from datetime import datetime
 from stoqs import models as mod
@@ -50,7 +49,7 @@ if __name__ == '__main__':
 
 	# Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
 	dbName = 'stoqs_sept2010'
-	stride = 100
+	stride = 1
 	campaignName = 'ESP Drifter Tracking - September 2010'
 
 
