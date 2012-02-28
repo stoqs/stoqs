@@ -54,14 +54,14 @@ if __name__ == '__main__':
 
 	# ------------------------- Dorado loads -------------------------
 	baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
-	##files =      [  'Dorado389_2010_277_01_277_01_decim.nc',
-	##		'Dorado389_2010_278_01_278_01_decim.nc',
-	##		'Dorado389_2010_279_02_279_02_decim.nc',
-	##files = [		'Dorado389_2010_280_01_280_01_decim.nc',
-	##		'Dorado389_2010_284_00_284_00_decim.nc',
-	##		'Dorado389_2010_285_00_285_00_decim.nc',
-	##		'Dorado389_2010_286_01_286_02_decim.nc',
-	files = [	'Dorado389_2010_287_00_287_00_decim.nc',
+	files =      [  'Dorado389_2010_277_01_277_01_decim.nc',
+			'Dorado389_2010_278_01_278_01_decim.nc',
+			'Dorado389_2010_279_02_279_02_decim.nc',
+			'Dorado389_2010_280_01_280_01_decim.nc',
+			'Dorado389_2010_284_00_284_00_decim.nc',
+			'Dorado389_2010_285_00_285_00_decim.nc',
+			'Dorado389_2010_286_01_286_02_decim.nc',
+			'Dorado389_2010_287_00_287_00_decim.nc',
 			'Dorado389_2010_291_00_291_00_decim.nc',
 			'Dorado389_2010_292_01_292_01_decim.nc',
 			'Dorado389_2010_293_00_293_00_decim.nc',
