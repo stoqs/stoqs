@@ -61,6 +61,11 @@ LOGGING = {
             'propagate': False,
             'level':'ERROR',
         },
+        'DAPloaders': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'ERROR',
+        },
         'django': {
             'handlers':['console'],
             'propagate': True,
