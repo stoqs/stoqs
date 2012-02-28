@@ -28,7 +28,31 @@ MBARI Jan 10, 2012
 
 from django.contrib.gis.db import models
 
+try:
+	import uuid
+except ImportError:
+	from django.utils import uuid
+
+
+class UUIDField(models.CharField) :
+    
+	def __init__(self, *args, **kwargs):
+		kwargs['max_length'] = kwargs.get('max_length', 32 )
+		models.CharField.__init__(self, *args, **kwargs)
+    
+	def pre_save(self, model_instance, add):
+		if add :
+			value=getattr(model_instance,self.attname)
+			if not value:
+				value = unicode(uuid.uuid4()).replace('-','')
+			setattr(model_instance, self.attname, value)
+			return value
+		else:
+			return super(models.CharField, self).pre_save(model_instance, add)
+
+
 class Campaign(models.Model):
+	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128, db_index=True, unique_for_date='startdate')
 	description = models.CharField(max_length=4096, blank=True, null=True)
 	startdate = models.DateTimeField(null=True)
@@ -46,6 +70,7 @@ class CampaignLog(models.Model):
 	idea is that salient messages would be mined from other sources and loaded into the
 	stoqs database the same way measurements are loaded.
 	'''
+	uuid = UUIDField(editable=False)
 	campaign = models.ForeignKey(Campaign)
 	timevalue = models.DateTimeField(db_index=True)
 	message = models.CharField(max_length=2048)
@@ -56,6 +81,7 @@ class CampaignLog(models.Model):
 		verbose_name_plural='Campaign Logs'
 
 class ActivityType(models.Model):
+	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128, db_index=True, unique=True)
 	objects = models.GeoManager()
 	class Meta:
@@ -66,6 +92,7 @@ class ActivityType(models.Model):
                 return "%s" % (self.name,)
 
 class PlatformType(models.Model):
+	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128, db_index=True, unique=True)
 	objects = models.GeoManager()
 	class Meta:
@@ -82,6 +109,7 @@ class PlatformType(models.Model):
 #		super(PlatformType, self).save(kwds) # Call the "real" save() method.
 
 class Platform(models.Model):
+	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128)
 	platformtype = models.ForeignKey(PlatformType) 
 	objects = models.GeoManager()
@@ -91,6 +119,7 @@ class Platform(models.Model):
                 return "%s" % (self.name,)
 
 class Activity(models.Model):
+	uuid = UUIDField(editable=False)
 	campaign = models.ForeignKey(Campaign, blank=True, null=True, default=None) 
 	platform = models.ForeignKey(Platform) 
 	activitytype = models.ForeignKey(ActivityType, blank=True, null=True, default=None) 
@@ -119,6 +148,7 @@ class InstantPoint(models.Model):
 		app_label = 'stoqs'
 
 class Parameter(models.Model):
+	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128, unique=True)
 	type = models.CharField(max_length=128, blank=True, null=True)
 	description= models.CharField(max_length=128, blank=True, null=True)
@@ -145,6 +175,7 @@ class Measurement(models.Model):
 
 class ActivityParameter(models.Model):
 	'''Association class pairing Parameters that have been loaded for an Activity'''
+	uuid = UUIDField(editable=False)
 	activity = models.ForeignKey(Activity)
 	parameter = models.ForeignKey(Parameter)
 	number = models.IntegerField(null=True)
