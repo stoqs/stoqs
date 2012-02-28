@@ -8,7 +8,7 @@ MAP
   CONFIG "MS_ERRORFILE" "/tmp/mapserver_stoqshg.log"
   DEBUG 5
   # Not needed with mapserver 6.0.1 and default proj4 install
-  ##CONFIG "PROJ_LIB" "/usr/local/Proj4/share/proj"
+  CONFIG "PROJ_LIB" "/usr/local/Proj4/share/proj"
   WEB
     IMAGEPATH "/tmp"
     METADATA
