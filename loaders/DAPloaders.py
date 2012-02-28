@@ -33,9 +33,8 @@ from django.contrib.gis.geos import GEOSGeometry, LineString
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))	# settings.py is one dir up
+from django.conf import settings
 
-#
-#import ChlCal
 from django.contrib.gis.geos import Point
 from django.db import transaction
 from stoqs import models as m
@@ -52,17 +51,22 @@ import urllib2
 import logging
 import seawater.csiro as sw
 
-missing_value = 1e-34
 
 # Set up logging
-##log_level = logging.INFO
-logger = logging.getLogger(__file__)
-##fh = logging.StreamHandler()
-##f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
-##fh.setFormatter(f)
-##logger.addHandler(fh)
-##logger.setLevel(log_level)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
+# When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
+# "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
+# See http://stackoverflow.com/questions/7768027/turn-off-sql-logging-while-keeping-settings-debug
+from django.db.backends import BaseDatabaseWrapper
+from django.db.backends.util import CursorWrapper
+
+if settings.DEBUG:
+	BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
+
+
+missing_value = 1e-34
 
 class ParameterNotFound(Exception): 
 	pass
