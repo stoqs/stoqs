@@ -63,9 +63,12 @@ urlpatterns = patterns('',
     url(pre + r'platformNamesOfType/(?P<ptn>[^/]+).?' + formatPat, 'stoqs.views.showPlatformNamesOfType', {}, name='show-platform-names-of-type'),
     url(pre + r'platformAssociations.?' + formatPat, 'stoqs.views.showPlatformAssociations', {}, name='show-platform-associations'),
 
-    # Parameters, Platforms,      - full object queries with .json and .xml responses
+    # All STOQS objects - full object queries with .json, .xml, .html, and .csv responses
     url(pre + r'parameters.?' + formatPat, 'stoqs.views.showParameters', {}, name='show-parameters'),
     url(pre + r'platforms.?' + formatPat, 'stoqs.views.showPlatforms', {}, name='show-platforms'),
+    url(pre + r'platformtypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platformtypes'),
+    url(pre + r'activities.?' + formatPat, 'stoqs.views.showActivities', {}, name='show-activities'),
+    url(pre + r'activitytypes.?' + formatPat, 'stoqs.views.showActivityTypes', {}, name='show-activitytypes'),
 
     # Position queries (last, since, between)
     url(pre + r'position/(?P<name>[^/]+)/last/(?P<number>\d{1,10})(?P<unit>[smhdw]?)/data.' + formatPat, 'stoqs.views.showLastPositions', {}, name='show-last-positions'),
@@ -130,7 +133,7 @@ urlpatterns = patterns('',
     url(r'campaigns', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
     url(pre + r'mgmt$', 'stoqs.views.management.showDatabase', {}, name='show-database'),
     url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'stoqs.views.management.deleteActivity', {}, name='delete-activity'),
-    url(pre + r'activities$', 'stoqs.views.management.showActivities', {}, name='show-activities'),
+    url(pre + r'activitiesMBARICustom$', 'stoqs.views.management.showActivitiesMBARICustom', {}, name='show-activities'),
 
 )
 
