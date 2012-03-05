@@ -100,20 +100,14 @@ class PlatformType(models.Model):
         def __str__(self):
                 return "%s" % (self.name,)
 
-#   Does not work with db_routing
-#	def save(self, **kwds):
-#		'''
-#		Force the name to be lower case when creating a new platform type.
-#		'''
-#		self.name=self.name.lower()
-#		super(PlatformType, self).save(kwds) # Call the "real" save() method.
-
 class Platform(models.Model):
 	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128)
 	platformtype = models.ForeignKey(PlatformType) 
 	objects = models.GeoManager()
 	class Meta:
+		verbose_name = 'Platform'
+		verbose_name_plural = 'Platforms'
 		app_label = 'stoqs'
         def __str__(self):
                 return "%s" % (self.name,)
@@ -159,6 +153,8 @@ class Parameter(models.Model):
  
 	objects = models.GeoManager()
 	class Meta:
+		verbose_name = 'Parameter'
+		verbose_name_plural = 'Parameters'
 		app_label = 'stoqs'
         def __str__(self):
                 return "%s" % (self.name,)
@@ -169,6 +165,8 @@ class Measurement(models.Model):
 	geom = models.PointField(srid=4326, spatial_index=True, dim=2)
 	objects = models.GeoManager()
 	class Meta:
+		verbose_name = 'Measurement'
+		verbose_name_plural = 'Measurements'
 		app_label = 'stoqs'
         def __str__(self):
                 return "Measurement at %s" % (self.geom,)
@@ -180,8 +178,10 @@ class ActivityParameter(models.Model):
 	parameter = models.ForeignKey(Parameter)
 	number = models.IntegerField(null=True)
 	class Meta:
-			app_label = 'stoqs'
-			unique_together = ['activity', 'parameter']
+		verbose_name = 'Activity Parameter association'
+		verbose_name_plural = 'Activity Parameter association'
+		app_label = 'stoqs'
+		unique_together = ['activity', 'parameter']
 			
 class MeasuredParameter(models.Model):
 	measurement = models.ForeignKey(Measurement) 
@@ -189,6 +189,8 @@ class MeasuredParameter(models.Model):
 	datavalue = models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
 	objects = models.GeoManager()
 	class Meta:
+		verbose_name = 'Measured Parameter'
+		verbose_name_plural = 'Measured Parameter'
 		app_label = 'stoqs'
 		unique_together = ['measurement','parameter']
 
