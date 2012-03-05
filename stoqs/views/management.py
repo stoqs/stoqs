@@ -164,7 +164,7 @@ def showCampaigns(request):
 
     return render_to_response('campaigns.html', {'cList': cList } ) 
 
-def showActivities(request):
+def showActivitiesMBARICustom(request):
     '''Present list of Activities in the database.  Unlike showDatabase(), show show the Activities and their
     local attributes, no counts, or delete link.  This is so that it will display more quickly.
     
