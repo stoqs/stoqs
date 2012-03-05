@@ -181,4 +181,4 @@ def showPlatformsWMS(request):
 
 	av = ActivityView(request, list, geo_query)
 	return av.process_request()
-#
+
