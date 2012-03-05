@@ -39,119 +39,85 @@ from random import randint
 
 logger = logging.getLogger(__name__)
 
-
-class ItemHasColorComponentAttribute(Exception):
-	pass
-
-
-def generateActivityMapFile(request, list, mappath, geo_query):
-	'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.
-        The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
-	This creates a dynamic 
-
-	@param request: Web server request object
-	@param list: List of items that produces activities, e.g. Activities, Paramaters, Platforms, ...
-	@param mappath: Fully qualified path to the mapfile that will be created
-	@param geo_query: The SQL to be placed in the DATA directive.  It must return a geometry object and a gid for the filter.
+class BaseOutputer(object):
+	'''Base methods for supported responses for all STOQS objects: csv, json, kml, html, etc
 	'''
 
-	# mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
-	response = render_to_response('activity.map', {'mapserver_host': settings.MAPSERVER_HOST,
-							'list': list,
-		     					'wfs_title': 'WFS title for an Activity',
-							'dbconn': settings.DATABASES[request.META['dbAlias']],
-							'mappath': mappath,
-							'geo_query': geo_query},
-				         		context_instance = RequestContext(request))
+	def __init__(self, request, format, query_set, stoqs_object=None):
+		self.request = request
+		self.format = format
+		self.query_set = query_set
+		self.stoqs_object = stoqs_object
+		self.stoqs_object_name = stoqs_object._meta.verbose_name.lower().replace(' ', '_')
+		self.template = '%s.html' % self.stoqs_object_name
 
-	fh = open(mappath, 'w')	
-	for line in response:
-		fh.write(line) 
+	def process_request(self):
+		logger.debug("format = %s", self.format)
+		if self.format == 'csv':
+			response = HttpResponse(mimetype='text/csv')
+			response['Content-Disposition'] = 'attachment; filename=%s.csv' % self.stoqs_object_name
+			writer = csv.writer(response)
+			logger.info('instance._meta.fields = %s', self.stoqs_object._meta.fields)
+			writer.writerow([field.name for field in self.stoqs_object._meta.fields])
+			for rec in self.query_set:
+				row = []
+				for field in self.stoqs_object._meta.fields:
+					row.append(getattr(rec, field.name))
+				logger.debug('row = %s', row)
+				writer.writerow(row)
+			return response
+		elif self.format == 'xml':
+			return HttpResponse(serializers.serialize('xml', self.query_set), 'application/xml')
+		elif self.format == 'json':
+			return HttpResponse(serializers.serialize('json', self.query_set), 'application/json')
+		else:
+			return render_to_response(self.template, {'list': self.query_set})
 
+def showPlatforms(request, format = 'html'):
+	stoqs_object = mod.Platform
+	query_set = stoqs_object.objects.all().order_by('name')
 
-def assignColors(list):
-	'''For each item in list create a unique rgb color and add it as an attribute to the list'''
-
-	newList = []
-	for item in list:
-		for comp in (['r', 'g', 'b']):
-			try:
-				getattr(item, comp)
-			except:
-				setattr(item, comp, randint(100, 255))
-			else:
-				raise ItemHasColorComponentAttribute
-
-		newList.append(item)
-
-	return newList
-
-
-def showActivitiesWMS(request):
-	'''Render Activities as WMS via mapserver'''
-
-	# As long as the file is someplace mapserver can read from, you're all set!
-	mappathBase = '/tmp'
-
-	aList = mod.Activity.objects.all().order_by('startdate')  
-	aList = assignColors(aList)
-	mappath = os.path.join(mappathBase, 'activity.map')
-	geo_query = '''geom from (select a.maptrack as geom, a.id as gid, 
-		a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
-		from stoqs_activity a)
-		as subquery using unique gid using srid=4326'''
-	generateActivityMapFile(request, aList, mappath, geo_query)
-	logger.debug("Building web page pointing to mapserver at %s", settings.MAPSERVER_HOST)
-
-	return render_to_response('activitiesWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
-								'list': aList,
-								'dbAlias': request.META['dbAlias'],
-								'mappath': mappath},
-						context_instance=RequestContext(request))
-
-
-def showParametersWMS(request):
-	'''Render Activities that have specified parameter as WMS via mapserver'''
-
-	# As long as the file is someplace mapserver can read from, you're all set!
-	mappathBase = '/tmp'
-
-	pList = mod.Parameter.objects.all().order_by('name')  
-	pList = assignColors(pList)
-	mappath = os.path.join(mappathBase, 'activity.map')
-	# Must select for a geometry field and a 'gid' that is used in the filter for the list
-	geo_query = '''geom from (select a.maptrack as geom, a.id as aid, p.id as gid,
-		a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
-                from stoqs_activity a
-                inner join stoqs_activityparameter ap on (a.id = ap.activity_id)
-                inner join stoqs_parameter p on (ap.parameter_id = p.id)
-                order by p.name)
-          	as subquery using unique gid using srid=4326'''
-	generateActivityMapFile(request, pList, mappath, geo_query)
-	logger.debug("Building web page with parameters switched of activities pointing to mapserver at %s", settings.MAPSERVER_HOST)
-
-	return render_to_response('activitiesWMS.html', {'mapserver_host': settings.MAPSERVER_HOST, 
-								'list': pList,
-								'dbAlias': request.META['dbAlias'],
-								'mappath': mappath},
-                                                context_instance=RequestContext(request))
-
+	o = BaseOutputer(request, format, query_set, stoqs_object)
+	return o.process_request()
 
 def showPlatformTypes(request, format = 'html'):
-	ptList = mod.PlatformType.objects.all().order_by('name')
-	if format == 'csv':
-		response = HttpResponse(mimetype='text/csv')
-		response['Content-Disposition'] = 'attachment; filename=platformTypes.csv'
-		writer = csv.writer(response)
+	stoqs_object = mod.PlatformType
+	query_set = stoqs_object.objects.all().order_by('name')
 
-		writer.writerow(['PlatformType'])
-		for pt in ptList:
-			writer.writerow([pt.name.rstrip()])
-		return response
-	else:
-		return render_to_response('platformType.html', {'ptype_list': ptList})
+	o = BaseOutputer(request, format, query_set, stoqs_object)
+	return o.process_request()
+
+def showParameters(request, format = 'html'):
+	stoqs_object = mod.Parameter
+	query_set = stoqs_object.objects.all().order_by('name')
+
+	o = BaseOutputer(request, format, query_set, stoqs_object)
+	return o.process_request()
+
+def showActivities(request, format = 'html'):
+	stoqs_object = mod.Activity
+	query_set = stoqs_object.objects.all().order_by('name')
+
+	o = BaseOutputer(request, format, query_set, stoqs_object)
+	return o.process_request()
+
+def showActivityTypes(request, format = 'html'):
+	stoqs_object = mod.ActivityType
+	query_set = stoqs_object.objects.all().order_by('name')
+
+	o = BaseOutputer(request, format, query_set, stoqs_object)
+	return o.process_request()
+
+def showCampaigns(request, format = 'html'):
+	stoqs_object = mod.Campaign
+	query_set = stoqs_object.objects.all().order_by('name')
+
+	o = BaseOutputer(request, format, query_set, stoqs_object)
+	return o.process_request()
 
 
+
+# Following are older views that should be migrated to the new way of doing them above.
 def showPlatformNames(request, format = 'html'):
 	pList = mod.Platform.objects.using('default').all().order_by('name')
 	if format == 'csv':
@@ -168,47 +134,11 @@ def showPlatformNames(request, format = 'html'):
 		return render_to_response('platformName.html', {'p_list': pList})
 
 
-def showPlatforms(request, format = 'html'):
-	pList = mod.Platform.objects.all().order_by('name')
-	logger.debug("format = %s", format)
-	if format == 'csv':
-		response = HttpResponse(mimetype='text/csv')
-		response['Content-Disposition'] = 'attachment; filename=parameters.csv'
-		writer = csv.writer(response)
-
-		writer.writerow(['id', 'name', 'platformtype'])
-		writer.writerows(pList)
-		return response
-	elif format == 'xml':
-		return HttpResponse(serializers.serialize('xml', pList), 'application/xml')
-	elif format == 'json':
-		return HttpResponse(serializers.serialize('json', pList), 'application/json')
-	else:
-		return render_to_response('parameters.html', {'p_list': pList})
-
 
 def showPlatformNamesOfType(request, ptn, format = 'html'):
 	pList = mod.Platform.objects.filter(platformtype__name = ptn).order_by('name')
 	return render_to_response('platformNamesOfType.html', {'p_list': pList, 'type': ptn})
 
-
-def showParameters(request, format = 'html'):
-	pList = mod.Parameter.objects.all().order_by('name')
-	logger.debug("format = %s", format)
-	if format == 'csv':
-		response = HttpResponse(mimetype='text/csv')
-		response['Content-Disposition'] = 'attachment; filename=parameters.csv'
-		writer = csv.writer(response)
-
-		writer.writerow(['id', 'name', 'type', 'description', 'standard_name', 'long_name', 'units', 'origin'])
-		writer.writerows(pList)
-		return response
-	elif format == 'xml':
-		return HttpResponse(serializers.serialize('xml', pList), 'application/xml')
-	elif format == 'json':
-		return HttpResponse(serializers.serialize('json', pList), 'application/json')
-	else:
-		return render_to_response('parameters.html', {'p_list': pList})
 
 
 def showPlatformAssociations(request, format = 'html'):
