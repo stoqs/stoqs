@@ -1,0 +1,17 @@
+<html>
+
+<head>
+<title>Activities</title>
+</head>
+
+<body>
+<h1>Activities</h1>
+<table border="1">
+<tr><th>Id</th><th>Name</th><th>Type</th><th>Campaign</th><th>Platform (/sn)</th><th>Comment</th><th>startDate</th><th>endDate</th></tr>
+{% for a in list %}
+<tr><td>{{ a.id }}</td><td>{{ a.name }}</td><td>{{ a.type }}</td><td>{{ a.campaign }}</td><td>{{ a.platform }}</td><td>{{ a.comment }}</td><td>{{ a.startdate }}</td><td>{{ a.cwenddate }}</td></tr>
+{% endfor %}
+</table>
+</body>
+
+</html>
