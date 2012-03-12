@@ -49,7 +49,21 @@ class BaseOutputer(object):
 		self.query_set = query_set
 		self.stoqs_object = stoqs_object
 		self.stoqs_object_name = stoqs_object._meta.verbose_name.lower().replace(' ', '_')
-		self.template = '%s.html' % self.stoqs_object_name
+		self.htmlTemplate = '%s.html' % self.stoqs_object_name
+
+	def build_html_template(self):
+		response = render_to_response(self.htmlTemplate, {'mapserver_host': settings.MAPSERVER_HOST,
+							'list': self.itemList,
+							'wfs_title': 'WFS title for an Activity',
+							'dbconn': settings.DATABASES[self.request.META['dbAlias']],
+							'mappath': self.mappath,
+							'geo_query': self.geo_query},
+						context_instance = RequestContext(self.request))
+
+		fh = open(self.mappath, 'w')
+		for line in response:
+			fh.write(line)
+
 
 	def process_request(self):
 		logger.debug("format = %s", self.format)
@@ -71,7 +85,7 @@ class BaseOutputer(object):
 		elif self.format == 'json':
 			return HttpResponse(serializers.serialize('json', self.query_set), 'application/json')
 		else:
-			return render_to_response(self.template, {'list': self.query_set})
+			return render_to_response(self.htmlTemplate, {'list': self.query_set})
 
 def showPlatforms(request, format = 'html'):
 	stoqs_object = mod.Platform
