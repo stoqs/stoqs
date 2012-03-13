@@ -50,20 +50,38 @@ class MeasurementViewsTestCase(TestCase):
         ##call_setup_methods()
         pass
         
-    def test_campaigns(self):
-        req = '/test_stoqs/campaigns'
+    def test_campaign(self):
+        req = '/test_stoqs/campaign'
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
-    def test_parameters(self):
+    def test_parameter(self):
 	for fmt in ('html', 'json', 'xml'):
-            req = '/test_stoqs/parameters.%s' % fmt
+            req = '/test_stoqs/parameter.%s' % fmt
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
-    def test_platforms(self):
+    def test_platform(self):
 	for fmt in ('html', 'json', 'xml'):
-            req = '/test_stoqs/platforms.%s' % fmt
+            req = '/test_stoqs/platform.%s' % fmt
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_platformType(self):
+	for fmt in ('html', 'json', 'xml'):
+            req = '/test_stoqs/platformType.%s' % fmt
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+   
+    def test_activity(self):
+	for fmt in ('html', 'json', 'xml'):
+            req = '/test_stoqs/activity.%s' % fmt
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_activityType(self):
+	for fmt in ('html', 'json', 'xml'):
+            req = '/test_stoqs/activityType.%s' % fmt
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
@@ -120,7 +138,7 @@ class MeasurementViewsTestCase(TestCase):
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
         
-        req = '/test_stoqs/activities'
+        req = '/test_stoqs/activitiesMBARICustom'
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
         loadedText = '498 MeasuredParameters'
