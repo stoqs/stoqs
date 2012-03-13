@@ -40,8 +40,12 @@ from random import randint
 logger = logging.getLogger(__name__)
 
 class BaseOutputer(object):
-	'''Base methods for supported responses for all STOQS objects: csv, json, kml, html, etc
+	'''Base methods for supported responses for all STOQS objects: csv, json, kml, html, etc.
 	'''
+	# This directory (and the files in it) must be writable by the server running this Django app
+	# and be readable by the mapserv app on MAPSERVER_HOST.
+	html_tmpl_base = '/tmp'
+	html_tmpl_file = 'html_template.html'
 
 	def __init__(self, request, format, query_set, stoqs_object=None):
 		self.request = request
@@ -49,18 +53,18 @@ class BaseOutputer(object):
 		self.query_set = query_set
 		self.stoqs_object = stoqs_object
 		self.stoqs_object_name = stoqs_object._meta.verbose_name.lower().replace(' ', '_')
-		self.htmlTemplate = '%s.html' % self.stoqs_object_name
+		self.html_template = '%s_tmpl.html' % self.stoqs_object_name
+		self.html_tmpl_path = os.path.join(self.html_tmpl_base, '%s.html' % self.stoqs_object_name)
 
 	def build_html_template(self):
-		response = render_to_response(self.htmlTemplate, {'mapserver_host': settings.MAPSERVER_HOST,
-							'list': self.itemList,
-							'wfs_title': 'WFS title for an Activity',
-							'dbconn': settings.DATABASES[self.request.META['dbAlias']],
-							'mappath': self.mappath,
-							'geo_query': self.geo_query},
+		'''Build template for stoqs_object using generic html template with a column for each attribute
+		'''
+
+		response = render_to_response(self.html_tmpl_file, {'cols': [field.name for field in self.stoqs_object._meta.fields] },
 						context_instance = RequestContext(self.request))
 
-		fh = open(self.mappath, 'w')
+		logger.debug("Writing template: %s", self.html_tmpl_path)
+		fh = open(self.html_tmpl_path, 'w')
 		for line in response:
 			fh.write(line)
 
@@ -85,44 +89,45 @@ class BaseOutputer(object):
 		elif self.format == 'json':
 			return HttpResponse(serializers.serialize('json', self.query_set), 'application/json')
 		else:
-			return render_to_response(self.htmlTemplate, {'list': self.query_set})
+			self.build_html_template()
+			return render_to_response(self.html_tmpl_path, {'list': self.query_set})
 
-def showPlatforms(request, format = 'html'):
+def showPlatform(request, format = 'html'):
 	stoqs_object = mod.Platform
 	query_set = stoqs_object.objects.all().order_by('name')
 
 	o = BaseOutputer(request, format, query_set, stoqs_object)
 	return o.process_request()
 
-def showPlatformTypes(request, format = 'html'):
+def showPlatformType(request, format = 'html'):
 	stoqs_object = mod.PlatformType
 	query_set = stoqs_object.objects.all().order_by('name')
 
 	o = BaseOutputer(request, format, query_set, stoqs_object)
 	return o.process_request()
 
-def showParameters(request, format = 'html'):
+def showParameter(request, format = 'html'):
 	stoqs_object = mod.Parameter
 	query_set = stoqs_object.objects.all().order_by('name')
 
 	o = BaseOutputer(request, format, query_set, stoqs_object)
 	return o.process_request()
 
-def showActivities(request, format = 'html'):
+def showActivity(request, format = 'html'):
 	stoqs_object = mod.Activity
 	query_set = stoqs_object.objects.all().order_by('name')
 
 	o = BaseOutputer(request, format, query_set, stoqs_object)
 	return o.process_request()
 
-def showActivityTypes(request, format = 'html'):
+def showActivityType(request, format = 'html'):
 	stoqs_object = mod.ActivityType
 	query_set = stoqs_object.objects.all().order_by('name')
 
 	o = BaseOutputer(request, format, query_set, stoqs_object)
 	return o.process_request()
 
-def showCampaigns(request, format = 'html'):
+def showCampaign(request, format = 'html'):
 	stoqs_object = mod.Campaign
 	query_set = stoqs_object.objects.all().order_by('name')
 

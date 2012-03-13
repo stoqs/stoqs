@@ -64,6 +64,13 @@ urlpatterns = patterns('',
     url(pre + r'platformAssociations.?' + formatPat, 'stoqs.views.showPlatformAssociations', {}, name='show-platform-associations'),
 
     # All STOQS objects - full object queries with .json, .xml, .html, and .csv responses
+    url(pre + r'platform.?' + formatPat, 'stoqs.views.showPlatform', {}, name='show-platform'),
+    url(pre + r'platformType.?' + formatPat, 'stoqs.views.showPlatformType', {}, name='show-platformtype'),
+    url(pre + r'parameter.?' + formatPat, 'stoqs.views.showParameter', {}, name='show-parameter'),
+    url(pre + r'activity.?' + formatPat, 'stoqs.views.showActivity', {}, name='show-activity'),
+    url(pre + r'activityType.?' + formatPat, 'stoqs.views.showActivityType', {}, name='show-activitytype'),
+    url(pre + r'campaign.?' + formatPat, 'stoqs.views.showCampaign', {}, name='show-campaign'),
+
     url(pre + r'parameters.?' + formatPat, 'stoqs.views.showParameters', {}, name='show-parameters'),
     url(pre + r'platforms.?' + formatPat, 'stoqs.views.showPlatforms', {}, name='show-platforms'),
     url(pre + r'platformtypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platformtypes'),
