@@ -46,7 +46,7 @@ class Color(object):
 class ActivityView(object):
 
 	# This directory (and the files in it) must be writable by the server running this Django app
-	# and be readable by the mapserv app on MAPSERER_HOST.
+	# and be readable by the mapserv app on MAPSERVER_HOST.
 	mappathBase = '/tmp'
 	mapfileTemplate = 'activity.map'
 	olWebPageTemplate = 'activitiesWMS.html'

@@ -182,6 +182,7 @@ TEMPLATE_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     os.path.join(project_dir, 'stoqs/templates'),
+    '/tmp',
 )
 
 INSTALLED_APPS = (
