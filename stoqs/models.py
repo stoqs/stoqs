@@ -4,20 +4,19 @@ __author__ = "Mike McCann"
 __copyright__ = "Copyright 2012, MBARI"
 __credits__ = ["Chander Ganesan, Open Technology Group"]
 __license__ = "GPL"
-__version__ = "$Revision: 1234$".split()[1]
 __maintainer__ = "Mike McCann"
 __email__ = "mccann at mbari.org"
 __status__ = "Development"
 __doc__ = '''
 
-STOQS database model.  The STOQS database schema derives from this module.
-To evolve the schema make changes here then syncdb and run unit tests.
-Note that data in existing databases will be lost following this methodology.
-You will need to reload data if following this brute force approach.
-
+This is the STOQS database model. The database schema derives from this module.
+To evolve the schema you may make changes here then run syncdb and the unit tests.
+To preserve data in existing databases you will need to make corresponding changes
+in those databases, either by hand, or with a tool such as South.  Otherwise, you
+may simply drop your databases and reload the data.
 
 Mike McCann
-MBARI Jan 10, 2012
+MBARI 17 March 2012
 
 @var __date__: Date of last svn commit
 @undocumented: __doc__ parser
@@ -35,6 +34,8 @@ except ImportError:
 
 
 class UUIDField(models.CharField) :
+	'''Major classes in the model have been given a uuid field, which may prove helpful as web accessible resource identifiers.
+	'''
     
 	def __init__(self, *args, **kwargs):
 		kwargs['max_length'] = kwargs.get('max_length', 32 )
@@ -52,6 +53,9 @@ class UUIDField(models.CharField) :
 
 
 class Campaign(models.Model):
+	'''A Campaign holds a collection of Activities and can have a name, description and start and end time.  An example name is "CANON October 2010".
+	'''
+
 	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128, db_index=True, unique_for_date='startdate')
 	description = models.CharField(max_length=4096, blank=True, null=True)
@@ -81,6 +85,9 @@ class CampaignLog(models.Model):
 		verbose_name_plural='Campaign Logs'
 
 class ActivityType(models.Model):
+	'''Type of Activity.  Example names: AUV Survey, Mooring Deployment, Ship Cruse, GLider Mission.
+	'''
+
 	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128, db_index=True, unique=True)
 	objects = models.GeoManager()
@@ -92,6 +99,9 @@ class ActivityType(models.Model):
                 return "%s" % (self.name,)
 
 class PlatformType(models.Model):
+	'''Type of platform. Example names: auv, mooring, drifter, ship.
+	'''
+
 	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128, db_index=True, unique=True)
 	objects = models.GeoManager()
@@ -101,6 +111,9 @@ class PlatformType(models.Model):
                 return "%s" % (self.name,)
 
 class Platform(models.Model):
+	'''Platform.  Example names (use lower case): dorado, tethys, martin.
+	'''
+
 	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128)
 	platformtype = models.ForeignKey(PlatformType) 
@@ -113,6 +126,9 @@ class Platform(models.Model):
                 return "%s" % (self.name,)
 
 class Activity(models.Model):
+	'''An Activity is anything that may produce data.  Example Activity names include:  Dorado389_2011_117_01_117_01_decim.nc (stride=10), 20110415_20110418/20110418T192351/slate.nc (stride=10), 27710_jhmudas_v1.nc (stride=1).
+	'''
+
 	uuid = UUIDField(editable=False)
 	campaign = models.ForeignKey(Campaign, blank=True, null=True, default=None) 
 	platform = models.ForeignKey(Platform) 
@@ -135,6 +151,9 @@ class Activity(models.Model):
 		return "%s" % (self.name,)
 
 class InstantPoint(models.Model):
+	'''An instance in time for an Activity.  This InstantPoint may have a measurement associated with it.
+	'''
+
 	activity = models.ForeignKey(Activity) 
 	timevalue = models.DateTimeField(db_index=True)
 	objects = models.GeoManager()
@@ -142,6 +161,9 @@ class InstantPoint(models.Model):
 		app_label = 'stoqs'
 
 class Parameter(models.Model):
+	'''A Parameter is something that can be measured producing a numeric value.  Example names include: temperature, salinity, fluoresence.
+	'''
+
 	uuid = UUIDField(editable=False)
 	name = models.CharField(max_length=128, unique=True)
 	type = models.CharField(max_length=128, blank=True, null=True)
@@ -160,6 +182,10 @@ class Parameter(models.Model):
                 return "%s" % (self.name,)
 
 class Measurement(models.Model):
+	'''A Measurement may have a depth value (this is an Oceanographic Query System) and a location (represented by the geom field), 
+	be associated with an InstantPoint and and a MeasuredParameter (where the measured datavalue is stored).
+	'''
+
 	instantpoint = models.ForeignKey(InstantPoint)
 	depth= models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
 	geom = models.PointField(srid=4326, spatial_index=True, dim=2)
@@ -184,6 +210,9 @@ class ActivityParameter(models.Model):
 		unique_together = ['activity', 'parameter']
 			
 class MeasuredParameter(models.Model):
+	'''Association class pairing Measurements with Parameters.  This is where the measured values are stored -- in the datavalue field.
+	'''
+
 	measurement = models.ForeignKey(Measurement) 
 	parameter = models.ForeignKey(Parameter) 
 	datavalue = models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
