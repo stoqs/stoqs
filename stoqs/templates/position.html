@@ -1,0 +1,17 @@
+<html>
+
+<head>
+<title>Position</title>
+</head>
+
+<body>
+<h1>Position</h1>
+<table>
+<tr><th>Platform Name</th><th>Epoch Seconds</th><th>Longitude</th><th>Latitude</th><th align="right">Depth</th><th>ISO-8601</th></tr>
+{% for p in pList %}
+<tr><td>{{ p.0 }}</td><td>{{ p.1 }}</td><td>{{ p.2 }}</td><td>{{ p.3 }}</td><td align="right">{{ p.4 }}</td><td>{{ p.5 }}</td></tr>
+{% endfor %}
+</table>
+</body>
+
+</html>

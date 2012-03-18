@@ -1,0 +1,61 @@
+#######################################################
+# privateSettings
+#
+# *** This file should *not* be in version control! ***
+#
+# Ensure this file is read-only and accessible only to 
+# you and/or the webserver process that will need to read it.
+
+# Web site admin contact
+ADMIN_NAME = ''
+ADMIN_EMAIL = ''
+
+# Database credentials - assume that all databases use the same login
+DATABASE_USER = ''
+DATABASE_PASSWORD = ''
+DATABASE_HOST = ''
+
+# Mapserver hostname, just the name or address.  Assumes that mapserv is installed in /cgi-bin
+MAPSERVER_HOST = ''
+
+# Make this unique, and don't share it with anybody
+# May generate with: 
+#     import string
+#     from random import choice
+#     ''.join([choice(string.letters + string.digits + '-_+=*') for i in range(50)])
+MY_SECRET_KEY = ''
+
+# These default settings correspond to the example RabbitMQ install and configuration documented 
+# in the PREREQUISITES file.  If you have a different setup, set the credentials here.
+RABBITMQ_HOST = 'localhost'
+RABBITMQ_PORT = 5672
+RABBITMQ_VHOST = 'stoqs'
+RABBITMQ_USER = 'stoqs'
+RABBITMQ_PASSWORD = 'stoqs'
+
+# Define all of your STOQS databases here.  Uncomment 'stoqs_campaign' example
+# and rename it to describe the collection of data. 
+MY_DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs',
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+#    'stoqs_campaign': {
+#        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+#        'NAME': 'stoqs_campaign',                           
+#        'USER': DATABASE_USER,                               
+#        'PASSWORD': DATABASE_PASSWORD,
+#        'HOST': DATABASE_HOST,
+#        'PORT': '5432',
+#    },
+}
+
+# Modify default logging settings, e.g. to help in debugging stoqs or django
+#LOGGING['loggers']['django']['level'] = 'DEBUG'
+#LOGGING['loggers']['stoqs']['level'] = 'INFO'
+
+#

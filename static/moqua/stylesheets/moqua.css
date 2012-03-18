@@ -1,0 +1,5 @@
+@CHARSET "UTF-8";
+div,p,a {
+    font-family: Times;
+    font-size: 12px;
+}
