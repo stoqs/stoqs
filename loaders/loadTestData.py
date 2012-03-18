@@ -45,13 +45,15 @@ for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
     loader = DAPloaders.Auvctd_Loader(aName,
                 url = baseUrl + file,
                 platformName = 'dorado',
+                platformTypeName='auv',
                 activitytypeName = 'AUV Mission',
                 dbName = dbName,
                 stride = stride)
 
     nMP = loader.process_data()
-
+    print nMP
     # Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
-    newComment = "%d MeasuredParameters loaded for Parameters: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
+    
+    newComment = "%d MeasuredParameters loaded for Parameters: %s. Loaded on %sZ" % (nMP[0], ' '.join(loader.varsLoaded), datetime.utcnow())
     print "Updating comment with newComment = %s" % newComment
     mod.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment)
