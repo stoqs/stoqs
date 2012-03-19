@@ -43,48 +43,76 @@ import time
 
 logger = logging.getLogger('__name__')
 
-class MeasurementViewsTestCase(TestCase):
+
+class BaseAndMeasurementViewsTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
+    format_types = ['html', 'json', 'xml', 'csv']
     
     def setup(self):
         ##call_setup_methods()
         pass
-        
+
+    # Base class view tests
     def test_campaign(self):
         req = '/test_stoqs/campaign'
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_parameter(self):
-	for fmt in ('html', 'json', 'xml'):
+	for fmt in self.format_types:
             req = '/test_stoqs/parameter.%s' % fmt
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_platform(self):
-	for fmt in ('html', 'json', 'xml'):
+	for fmt in self.format_types:
             req = '/test_stoqs/platform.%s' % fmt
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_platformType(self):
-	for fmt in ('html', 'json', 'xml'):
+	for fmt in self.format_types:
             req = '/test_stoqs/platformType.%s' % fmt
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_activity(self):
-	for fmt in ('html', 'json', 'xml'):
+	for fmt in self.format_types:
             req = '/test_stoqs/activity.%s' % fmt
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_activityType(self):
-	for fmt in ('html', 'json', 'xml'):
+	for fmt in self.format_types:
             req = '/test_stoqs/activityType.%s' % fmt
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
+    def test_activity_parameter(self):
+	for fmt in self.format_types:
+            req = '/test_stoqs/activity_parameter.%s' % fmt
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+   
+    def test_resource(self):
+	for fmt in self.format_types:
+            req = '/test_stoqs/resource.%s' % fmt
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+    
+    def test_resourceType(self):
+	for fmt in self.format_types:
+            req = '/test_stoqs/resourceType.%s' % fmt
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+   
+    def test_activity_resource(self):
+	for fmt in self.format_types:
+            req = '/test_stoqs/activity_resource.%s' % fmt
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+   
+    # Measurement view tests 
     def test_measurementStandardNameBetween(self):
         # For the load of:
         #   http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
@@ -132,7 +160,8 @@ class MeasurementViewsTestCase(TestCase):
             req = '/test_stoqs/measurement/temperature/between/20101028T075155/20101029T015157/depth/0/300/stride/10/data.%s' % fmt
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-    
+   
+    # Management tests 
     def test_manage(self):
         req = '/test_stoqs/mgmt'
         response = self.client.get(req)
