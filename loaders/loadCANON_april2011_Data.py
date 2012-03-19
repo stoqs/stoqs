@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
 	# Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
 	dbName = 'stoqs_april2011'
-	stride = 100
+	stride = 10
 	campaignName = 'CANON - April 2011'
 
 	# ------------------------- Dorado loads -------------------------
