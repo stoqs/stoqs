@@ -154,7 +154,7 @@ def showBetweenMeasurements(request, pName, startDate, endDate, dmin, dmax, stri
                     dataHash[d[6]] = []
                     dataHash[d[6]].append(d)
             perfDict['makeDataHashBuildTime'] = time.clock() - start
-            logger.info('makeDataHashBuildTime = %f seconds', (time.clock() - start))
+            logger.debug('makeDataHashBuildTime = %f seconds', (time.clock() - start))
 
             start = time.clock()
             kml = makeKML(dataHash, pName, title, desc, startDate, endDate)
