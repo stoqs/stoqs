@@ -181,6 +181,50 @@ class Parameter(models.Model):
         def __str__(self):
                 return "%s" % (self.name,)
 
+class ResourceType(models.Model):
+	'''Type of Resource. Example names: nc_global, quick-look-plot.
+	'''
+
+	uuid = UUIDField(editable=False)
+	name = models.CharField(max_length=128, db_index=True, unique=True)
+	description = models.CharField(max_length=256, blank=True, null=True)
+	objects = models.GeoManager()
+	class Meta:
+		app_label = 'stoqs'
+        def __str__(self):
+                return "%s" % (self.name,)
+
+class Resource(models.Model):
+	'''A catchall class for saving any bit of information that may be associated with an Activity, or other STOQS model class.
+	This is useful for collecting web resources that may be shown in a popup window for an activity.  Examples include: NC_GLOBAL data set
+	attributes or quick-look plots.  The ResoureType class may be used to help categorize the display of resources.
+	'''
+	uuid = UUIDField(editable=False)
+	name = models.CharField(max_length=128, null=True)
+	value = models.TextField(null=True)
+	resourcetype = models.ForeignKey(ResourceType, blank=True, null=True, default=None)
+	uristring = models.CharField(max_length=256, null=True)
+	objects = models.GeoManager()
+	class Meta:
+		verbose_name = 'Resource'
+		verbose_name_plural = 'Resources'
+		app_label = 'stoqs'
+        def __str__(self):
+                return "%s" % (self.name,)
+
+class ActivityResource(models.Model):
+	'''Association class pairing Activities and Resources.
+	'''
+	uuid = UUIDField(editable=False)
+	activity = models.ForeignKey(Activity)
+	resource = models.ForeignKey(Resource)
+	number = models.IntegerField(null=True)
+	class Meta:
+		verbose_name = 'Activity Resource association'
+		verbose_name_plural = 'Activity Resource association'
+		app_label = 'stoqs'
+		unique_together = ['activity', 'resource']
+
 class Measurement(models.Model):
 	'''A Measurement may have a depth value (this is an Oceanographic Query System) and a location (represented by the geom field), 
 	be associated with an InstantPoint and and a MeasuredParameter (where the measured datavalue is stored).
