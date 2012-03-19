@@ -64,7 +64,8 @@ if __name__ == '__main__':
 	campaignName = 'CANON/Biospace/Latmix - October 2010'
 
 	# --------------------------------- Dorado loads -------------------------------
-	baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
+	##baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'	# salinity.units = "", pydap can't handle
+	baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'				# NCML to make salinity.units = "1"
 	files =      [  'Dorado389_2010_277_01_277_01_decim.nc',
 			'Dorado389_2010_278_01_278_01_decim.nc',
 			'Dorado389_2010_279_02_279_02_decim.nc',

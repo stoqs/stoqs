@@ -54,7 +54,7 @@ import seawater.csiro as sw
 
 # Set up logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -156,6 +156,9 @@ class Base_Loader(object):
 			self.createActivity()
 		else:
 			raise NoValidData
+
+		self.addResources()
+
 	
 	def getPlatform(self, name, type):
 		'''Given just a platform name get a platform object from the STOQS database.  If no such object is in the
@@ -300,6 +303,23 @@ class Base_Loader(object):
 				self.activity.campaign = self.campaign
 	
 			self.activity.save(using=self.dbName)	# Resave with the campaign
+
+	def addResources(self):
+		'''Add Resources for this activity, namely the NC_GLOBAL attribute names and values.
+		'''
+
+		# The NC_GLOBAL attributes from the OPeNDAP URL.  Save them all.
+		logger.debug("Getting or Creating ResourceType nc_global...")
+		(resourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(name = 'nc_global')
+		logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
+		for rn in self.ds.attributes['NC_GLOBAL'].keys():
+			value = self.ds.attributes['NC_GLOBAL'][rn]
+			logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
+			(resource, created) = m.Resource.objects.db_manager(self.dbName).get_or_create(
+						name=rn, value=value, resourcetype=resourceType)
+			(ar, created) = m.ActivityResource.objects.db_manager(self.dbName).get_or_create(
+						activity=self.activity, resource=resource)
+
         
 	def getParameterByName(self, name):
 		'''
@@ -764,6 +784,59 @@ class Dorado_Loader(Base_Loader):
 
 		return super(Dorado_Loader, self).preProcessParams(row)
 
+	def addResources(self):
+		'''In addition to the NC_GLOBAL attributes that are added in the base class also add the quick-look plots that are on the dods server.
+		'''
+
+		baseUrl = 'http://dods.mbari.org/data/auvctd/surveys'
+		survey = self.url.split('/')[-1].split('.nc')[0].split('_decim')[0]	# Works for both .nc and _decim.nc files
+		yyyy = int(survey.split('_')[1])
+		# Quick-look plots
+		logger.debug("Getting or Creating ResourceType quick_look...")
+		(resourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(
+						name = 'quick_look', description='Quick Look plot of data from this AUV survey')
+		for ql in ['2column', 'biolume', 'hist_stats', 'lopc', 'nav_adjust', 'prof_stats']:
+			url = '%s/%4d/images/%s_%s.png' % (baseUrl, yyyy, survey, ql)
+			logger.debug("Getting or Creating Resource with name = %s, url = %s", ql, url )
+			(resource, created) = m.Resource.objects.db_manager(self.dbName).get_or_create(
+						name=ql, uristring=url, resourcetype=resourceType)
+			(ar, created) = m.ActivityResource.objects.db_manager(self.dbName).get_or_create(
+						activity=self.activity, resource=resource)
+
+		# kml, odv, mat
+		(kmlResourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(
+						name = 'kml', description='Keyhole Markup Language file of data from this AUV survey')
+		(odvResourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(
+						name = 'odv', description='Ocean Data View spreadsheet text file')
+		(matResourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(
+						name = 'mat', description='Matlab data file')
+		for res in ['kml', 'odv', 'odvGulper', 'mat', 'mat_gridded']:
+			if res == 'kml':
+				url = '%s/%4d/kml/%s.kml' % (baseUrl, yyyy, survey)
+				rt = kmlResourceType
+			elif res == 'odv':
+				url = '%s/%4d/odv/%s.txt' % (baseUrl, yyyy, survey)
+				rt = odvResourceType
+			elif res == 'odvGulper':
+				url = '%s/%4d/odv/%s_Gulper.txt' % (baseUrl, yyyy, survey)
+				rt = odvResourceType
+			elif res == 'mat':
+				url = '%s/%4d/mat/%s.mat' % (baseUrl, yyyy, survey)
+				rt = matResourceType
+			elif res == 'mat_gridded':
+				url = '%s/%4d/mat/%s_gridded.mat' % (baseUrl, yyyy, survey)
+				rt = matResourceType
+			else:
+				logger.warn('No handler for res = %s', res)
+
+			logger.debug("Getting or Creating Resource with name = %s, url = %s", res, url )
+			(resource, created) = m.Resource.objects.db_manager(self.dbName).get_or_create(
+						name=res, uristring=url, resourcetype=rt)
+			(ar, created) = m.ActivityResource.objects.db_manager(self.dbName).get_or_create(
+						activity=self.activity, resource=resource)
+
+		return super(Dorado_Loader, self).addResources()
+
 
 class Lrauv_Loader(Base_Loader):
 	include_names = ['mass_concentration_of_oxygen_in_sea_water',
@@ -1019,7 +1092,8 @@ if __name__ == '__main__':
 	##		stride=10)
 
 	# A nice test data load for a northern Monterey Bay survey	
-	baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
+	##baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
+	baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'				# NCML to make salinity.units = "1"
 	file = 'Dorado389_2010_300_00_300_00_decim.nc'
 	stride = 1000		# Make large for quicker runs, smaller for denser data
 	dbName = 'default'
