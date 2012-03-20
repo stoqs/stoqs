@@ -59,8 +59,8 @@ urlpatterns = patterns('',
     url(pre + r'platformsWMS$', 'stoqs.views.wms.showPlatformsWMS', {}, name='show-platforms-wms'),
 
     # Type and name queries
-    url(pre + r'platformTypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platform-types'),
-    url(pre + r'platformNames.?' + formatPat, 'stoqs.views.showPlatformNames', {}, name='show-platform-names'),
+    #url(pre + r'platformTypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platform-types'),
+    #url(pre + r'platformNames.?' + formatPat, 'stoqs.views.showPlatformNames', {}, name='show-platform-names'),
     url(pre + r'platformNamesOfType/(?P<ptn>[^/]+).?' + formatPat, 'stoqs.views.showPlatformNamesOfType', {}, name='show-platform-names-of-type'),
     url(pre + r'platformAssociations.?' + formatPat, 'stoqs.views.showPlatformAssociations', {}, name='show-platform-associations'),
 
@@ -71,16 +71,16 @@ urlpatterns = patterns('',
     url(pre + r'activity.?' + formatPat, 'stoqs.views.showActivity', {}, name='show-activity'),
     url(pre + r'activityType.?' + formatPat, 'stoqs.views.showActivityType', {}, name='show-activitytype'),
     url(pre + r'campaign.?' + formatPat, 'stoqs.views.showCampaign', {}, name='show-campaign'),
-    url(pre + r'resource.?' + formatPat, 'stoqs.views.showResource', {}, name='show-resource'),
-    url(pre + r'resourceType.?' + formatPat, 'stoqs.views.showResourceType', {}, name='show-resourcetype'),
-    url(pre + r'activity_resource.?' + formatPat, 'stoqs.views.showActivityResource', {}, name='show-activityresource'),
-    url(pre + r'activity_parameter.?' + formatPat, 'stoqs.views.showActivityParameter', {}, name='show-activityparameter'),
+    #url(pre + r'resource.?' + formatPat, 'stoqs.views.showResource', {}, name='show-resource'),
+    #url(pre + r'resourceType.?' + formatPat, 'stoqs.views.showResourceType', {}, name='show-resourcetype'),
+    #url(pre + r'activity_resource.?' + formatPat, 'stoqs.views.showActivityResource', {}, name='show-activityresource'),
+    #url(pre + r'activity_parameter.?' + formatPat, 'stoqs.views.showActivityParameter', {}, name='show-activityparameter'),
 
-    url(pre + r'parameters.?' + formatPat, 'stoqs.views.showParameters', {}, name='show-parameters'),
-    url(pre + r'platforms.?' + formatPat, 'stoqs.views.showPlatforms', {}, name='show-platforms'),
-    url(pre + r'platformtypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platformtypes'),
-    url(pre + r'activities.?' + formatPat, 'stoqs.views.showActivities', {}, name='show-activities'),
-    url(pre + r'activitytypes.?' + formatPat, 'stoqs.views.showActivityTypes', {}, name='show-activitytypes'),
+    #url(pre + r'parameters.?' + formatPat, 'stoqs.views.showParameters', {}, name='show-parameters'),
+    #url(pre + r'platforms.?' + formatPat, 'stoqs.views.showPlatforms', {}, name='show-platforms'),
+    #url(pre + r'platformtypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platformtypes'),
+    #url(pre + r'activities.?' + formatPat, 'stoqs.views.showActivities', {}, name='show-activities'),
+    #url(pre + r'activitytypes.?' + formatPat, 'stoqs.views.showActivityTypes', {}, name='show-activitytypes'),
 
     # Position queries (last, since, between)
     url(pre + r'position/(?P<name>[^/]+)/last/(?P<number>\d{1,10})(?P<unit>[smhdw]?)/data.' + formatPat, 'stoqs.views.showLastPositions', {}, name='show-last-positions'),
@@ -142,8 +142,9 @@ urlpatterns = patterns('',
     ##(r'^measurementOfActivity/name/(\w+)/type/(\w+)/stride/(\d+)/data.(\w{0,4})$', views.showMeasurementsOfActivity),
 
     # URL For Chander's STOQQManager related views
-    url(pre + r'query/?$', 'stoqs.views.queryData', {}, name='stoqs-query-summary'),
+    url(pre + r'query/summary/?$', 'stoqs.views.queryData', {}, name='stoqs-query-summary'),
     url(pre + r'query/(?P<format>[^/]+)/?$', 'stoqs.views.queryData', {}, name='stoqs-query-results'),
+    url(pre + r'query/', 'stoqs.views.queryUI', {}, name='stoqs-query-ui'),
 
     # Management
     url(r'campaigns', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
