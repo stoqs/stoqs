@@ -33,6 +33,7 @@ MBARI Jan 5, 2012
 import os
 import sys
 import site
+import logging
 
 # For some reason the Python 2.6 installation on odss-staging (MBARI's shared dev server) is missing these dirs. 
 # These probably cause no harm, but nevertheless if your installation doesn't need them they should be removed.
@@ -40,25 +41,15 @@ sys.path.append('/opt/python/lib/python2.6/lib-dynload') 	# to load _functools
 sys.path.append('/opt/python/lib/python2.6/dist-packages') 	# cautionary to load django
 sys.path.append('/opt/python/lib/python2.6') # to load os
 
-import logging
-
-prev_sys_path = list(sys.path)
+project_path=os.path.dirname(__file__)
 
 # Add the site-packages of our virtualenv as a site dir
-vepath=os.path.join(os.path.dirname(__file__),'venv-stoqs/lib/python2.6/site-packages')
+vepath=os.path.join(project_path, 'venv-stoqs/lib/python2.6/site-packages')
+prev_sys_path=sys.path[:]
 site.addsitedir(vepath)
-
-# add the app's directory to the PYTHONPATH
-sys.path.append(os.path.dirname(__file__))
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
-# Reorder sys.path so new directories from the addsitedir show up first
-new_sys_path = [p for p in sys.path if p not in prev_sys_path]
-
-for item in new_sys_path:
-     sys.path.remove(item)
-
-sys.path[:0] = new_sys_path
+sys.path[:0] = [sys.path.pop(pos) for pos, p in enumerate(sys.path) if p not in prev_sys_path]
+del prev_sys_path
+print sys.path
 
 # Configure logging settings for Apache logs
 log_level=logging.DEBUG
@@ -70,9 +61,35 @@ formatter = logging.Formatter('%(levelname)-8s %(name)s %(funcName)s():%(lineno)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-# import from down here to pull in possible virtualenv django install
-from django.core.handlers.wsgi import WSGIHandler
+
+# Avoid ``[Errno 13] Permission denied: '/var/www/.python-eggs'`` messages
+os.environ['PYTHON_EGG_CACHE'] =  os.path.join(project_path, 'egg-cache')
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 os.environ['CELERY_LOADER'] = 'django'
-application = WSGIHandler()
+
+# add the app's directory to the PYTHONPATH
+sys.path.append(project_path)
+
+# import from down here to pull in possible virtualenv django install
+import django.core.handlers.wsgi
+application = django.core.handlers.wsgi.WSGIHandler()
+
+
+
+# Don't uncomment this line, it masks print statements that shouldn't be in code to start with.
+#sys.stdout = sys.stderr  
+
+# Add the virtual Python environment site-packages directory to the path
+wsgi_dir=os.path.dirname(__file__)
+project_dir=os.path.dirname(wsgi_dir) # Find the project directory
+
+
+
+# Set up the virtualenv components.
+venv_dir=os.path.join(project_dir, 'venv/lib/python2.6/site-packages')
+prev_sys_path=sys.path[:]
+site.addsitedir(venv_dir)
+sys.path[:0] = [sys.path.pop(pos) for pos, p in enumerate(sys.path) if p not in prev_sys_path]
+
+
 
