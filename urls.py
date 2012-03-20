@@ -142,7 +142,7 @@ urlpatterns = patterns('',
     ##(r'^measurementOfActivity/name/(\w+)/type/(\w+)/stride/(\d+)/data.(\w{0,4})$', views.showMeasurementsOfActivity),
 
     # URL For Chander's STOQQManager related views
-    url(pre + r'query/summary/?$', 'stoqs.views.queryData', {}, name='stoqs-query-summary'),
+    url(pre + r'query/summary/$', 'stoqs.views.queryData', {}, name='stoqs-query-summary'),
     url(pre + r'query/(?P<format>[^/]+)/?$', 'stoqs.views.queryData', {}, name='stoqs-query-results'),
     url(pre + r'query/', 'stoqs.views.queryUI', {}, name='stoqs-query-ui'),
 
