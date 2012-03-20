@@ -220,8 +220,8 @@ class ActivityResource(models.Model):
 	resource = models.ForeignKey(Resource)
 	number = models.IntegerField(null=True)
 	class Meta:
-		verbose_name = 'Activity Resource association'
-		verbose_name_plural = 'Activity Resource association'
+		verbose_name = 'Activity Resource'
+		verbose_name_plural = 'Activity Resource'
 		app_label = 'stoqs'
 		unique_together = ['activity', 'resource']
 
@@ -248,8 +248,8 @@ class ActivityParameter(models.Model):
 	parameter = models.ForeignKey(Parameter)
 	number = models.IntegerField(null=True)
 	class Meta:
-		verbose_name = 'Activity Parameter association'
-		verbose_name_plural = 'Activity Parameter association'
+		verbose_name = 'Activity Parameter'
+		verbose_name_plural = 'Activity Parameter'
 		app_label = 'stoqs'
 		unique_together = ['activity', 'parameter']
 			
