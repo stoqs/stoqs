@@ -31,6 +31,7 @@ MBARI Jan 3, 2012
 
 from django.conf.urls.defaults import *
 from django.contrib.gis import admin
+from django.conf import settings
 ##import views
 
 admin.autodiscover()
@@ -139,6 +140,10 @@ urlpatterns = patterns('',
         'stoqs.views.measurement.showBetweenMeasurements', {'countFlag': True, 'snFlag': True}, name='show-between-sn-meas-count'),
     ##(r'^measurementOfActivity/name/(?P<aName>\w+)/type/(?P<aType>\w+)/data.(?P<format>\w{0,4})$', views.showMeasurementsOfActivity),
     ##(r'^measurementOfActivity/name/(\w+)/type/(\w+)/stride/(\d+)/data.(\w{0,4})$', views.showMeasurementsOfActivity),
+
+    # URL For Chander's STOQQManager related views
+    url(pre + r'query/?$', 'stoqs.views.queryData', {}, name='stoqs-query-summary'),
+    url(pre + r'query/(?P<format>[^/]+)/?$', 'stoqs.views.queryData', {}, name='stoqs-query-results'),
 
     # Management
     url(r'campaigns', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
