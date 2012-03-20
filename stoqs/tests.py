@@ -131,13 +131,13 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         # For the load of:
         #   http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
         #   with stride = 1000    
-        # there are 31 measurements for each parameter
+        # there are 47 measurements for each parameter
         for parm in ('sea_water_salinity', 'sea_water_temperature', 'sea_water_sigma_t', 
                      'mass_concentration_of_chlorophyll_in_sea_water',
                     ):
-            req = '/test_stoqs/measurement/sn/%s/between/20101028T075155/20101029T015157/depth/0/300/count' % parm
+            req = '/test_stoqs/measurement/sn/%s/between/20101027T215155/20101028T155157/depth/0/300/count' % parm
             response = self.client.get(req)
-            self.assertEqual(response.content, '39', 'Measurement between count for %s' % req)  # ?
+            self.assertEqual(response.content, '47', 'Measurement between count for %s' % req)  # ?
             
         # Make sure all the formats return 200
         for fmt in ('html', 'csv', 'kml'):
@@ -156,12 +156,12 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         # For the load of:
         #   http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
         #   with stride = 1000    
-        # there are 31 measurements for each parameter
+        # there are 47 measurements for each parameter
         for parm in ('bbp420', 'bbp700', 'biolume', 'fl700_uncorr', 'mass_concentration_of_chlorophyll_in_sea_water',
                     'nitrate', 'oxygen', 'salinity', 'sea_water_sigma_t', 'temperature'):
-            req = '/test_stoqs/measurement/%s/between/20101028T075155/20101029T015157/depth/0/300/count' % parm
+            req = '/test_stoqs/measurement/%s/between/20101027T215155/20101028T155157/depth/0/300/count' % parm
             response = self.client.get(req)
-            self.assertEqual(response.content, '39', 'Measurement between count for %s' % req)  # ?
+            self.assertEqual(response.content, '47', 'Measurement between count for %s' % req)  # ?
            
         # Make sure all the formats return 200
         for fmt in ('html', 'csv', 'kml'):
