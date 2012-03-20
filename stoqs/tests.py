@@ -35,6 +35,7 @@ import DAPloaders
 from django.utils import unittest
 from django.test.client import Client
 from django.test import TestCase
+from django.core.urlresolvers import reverse
 
 from stoqs.models import Activity
 from loaders import DAPloaders
@@ -113,13 +114,14 @@ class BaseAndMeasurementViewsTestCase(TestCase):
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_query_jsonencoded(self):
-        req = '/test_stoqs/query/json/'
+        req = reverse('stoqs-query-results', kwargs={'format': 'json',
+                                                     'dbAlias': 'test_stoqs'})
         response = self.client.get(req)
         json.loads(response.content) # Verify we don't get an exception when we load the data.
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_query_summary(self):
-        req = '/test_stoqs/query/'
+        req = reverse('stoqs-query-summary', kwargs={'dbAlias': 'test_stoqs'})
         response = self.client.get(req)
         json.loads(response.content) # Verify we don't get an exception when we load the data.
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
