@@ -27,6 +27,7 @@ MBARI Dec 29, 2011
 import os
 import sys
 import time
+import json
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../loaders'))
 
@@ -115,13 +116,13 @@ class BaseAndMeasurementViewsTestCase(TestCase):
 
     def test_query_jsonencoded(self):
         req = reverse('stoqs-query-results', kwargs={'format': 'json',
-                                                     'dbAlias': 'test_stoqs'})
+                                                     'dbAlias': 'default'})
         response = self.client.get(req)
         json.loads(response.content) # Verify we don't get an exception when we load the data.
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_query_summary(self):
-        req = reverse('stoqs-query-summary', kwargs={'dbAlias': 'test_stoqs'})
+        req = reverse('stoqs-query-summary', kwargs={'dbAlias': 'default'})
         response = self.client.get(req)
         json.loads(response.content) # Verify we don't get an exception when we load the data.
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
