@@ -27,6 +27,8 @@ from django.conf import settings
 from django.db import connection
 from django.utils import simplejson
 from django.core import serializers
+from utils.STOQSQManager import STOQSQManager
+from utils import encoders
 
 from datetime import datetime, timedelta
 import time
@@ -436,4 +438,32 @@ def showPositionsOfActivity(request, aName, aType, stride = '1', format = 'html'
 		return render_to_response('position.html', {'pList': posList})
 
 	# End showPositionsOfActivity()	
+
+
+def queryData(request, format=None):
+	response=HttpResponse()
+	query_parms={'parameters': 'parameters', # This should be specified once in the query string for each parameter.
+				 'time': ('start_time','end_time'), # Single values
+				 'depth': ('min_depth', 'max_depth'), # Single values
+				 'platforms': 'platforms', # Specified once in the query string for each platform.
+				 }
+	params={}
+	for key, value in query_parms.iteritems():
+		if type(value) in (list, tuple):
+			params[key]=[request.GET.get(p, None) for p in value]
+		else:
+			params[key]=request.GET.getlist(key)
+	qm=STOQSQManager(request, response, request.META['dbAlias'])
+	qm.buildQuerySet(**params)
+	
+	if not format: # here we export in a given format, or just provide summary data if no format is given.
+		response['Content-Type']='text/json'
+		response.write(simplejson.dumps(qm.generateOptions(),
+					   					cls=encoders.STOQSJSONEncoder))
+										# use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
+	elif format == 'json':
+		response['Content-Type']='text/json'
+		response.write(serializers.serialize('json', qm.qs))
+	return response
+	
 
