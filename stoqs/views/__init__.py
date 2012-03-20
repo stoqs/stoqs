@@ -77,7 +77,7 @@ class BaseOutputer(object):
 			response = HttpResponse(mimetype='text/csv')
 			response['Content-Disposition'] = 'attachment; filename=%s.csv' % self.stoqs_object_name
 			writer = csv.writer(response)
-			logger.info('instance._meta.fields = %s', self.stoqs_object._meta.fields)
+			logger.debug('instance._meta.fields = %s', self.stoqs_object._meta.fields)
 			writer.writerow([field.name for field in self.stoqs_object._meta.fields])
 			for rec in self.query_set:
 				row = []
@@ -132,6 +132,34 @@ def showActivityType(request, format = 'html'):
 def showCampaign(request, format = 'html'):
 	stoqs_object = mod.Campaign
 	query_set = stoqs_object.objects.all().order_by('name')
+
+	o = BaseOutputer(request, format, query_set, stoqs_object)
+	return o.process_request()
+
+def showResource(request, format = 'html'):
+	stoqs_object = mod.Resource
+	query_set = stoqs_object.objects.all().order_by('name')
+
+	o = BaseOutputer(request, format, query_set, stoqs_object)
+	return o.process_request()
+
+def showResourceType(request, format = 'html'):
+	stoqs_object = mod.ResourceType
+	query_set = stoqs_object.objects.all().order_by('name')
+
+	o = BaseOutputer(request, format, query_set, stoqs_object)
+	return o.process_request()
+
+def showActivityResource(request, format = 'html'):
+	stoqs_object = mod.ActivityResource
+	query_set = stoqs_object.objects.all()
+
+	o = BaseOutputer(request, format, query_set, stoqs_object)
+	return o.process_request()
+
+def showActivityParameter(request, format = 'html'):
+	stoqs_object = mod.ActivityParameter
+	query_set = stoqs_object.objects.all()
 
 	o = BaseOutputer(request, format, query_set, stoqs_object)
 	return o.process_request()
