@@ -59,58 +59,70 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_parameter(self):
-	for fmt in self.format_types:
-            req = '/test_stoqs/parameter.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+       for fmt in self.format_types:
+           req = '/test_stoqs/parameter.%s' % fmt
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_platform(self):
-	for fmt in self.format_types:
-            req = '/test_stoqs/platform.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+       for fmt in self.format_types:
+           req = '/test_stoqs/platform.%s' % fmt
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_platformType(self):
-	for fmt in self.format_types:
+       for fmt in self.format_types:
             req = '/test_stoqs/platformType.%s' % fmt
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_activity(self):
-	for fmt in self.format_types:
-            req = '/test_stoqs/activity.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+       for fmt in self.format_types:
+           req = '/test_stoqs/activity.%s' % fmt
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_activityType(self):
-	for fmt in self.format_types:
-            req = '/test_stoqs/activityType.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+       for fmt in self.format_types:
+           req = '/test_stoqs/activityType.%s' % fmt
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_activity_parameter(self):
-	for fmt in self.format_types:
-            req = '/test_stoqs/activity_parameter.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+       for fmt in self.format_types:
+           req = '/test_stoqs/activity_parameter.%s' % fmt
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_resource(self):
-	for fmt in self.format_types:
-            req = '/test_stoqs/resource.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+       for fmt in self.format_types:
+           req = '/test_stoqs/resource.%s' % fmt
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_resourceType(self):
-	for fmt in self.format_types:
-            req = '/test_stoqs/resourceType.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+       for fmt in self.format_types:
+           req = '/test_stoqs/resourceType.%s' % fmt
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_activity_resource(self):
-	for fmt in self.format_types:
-            req = '/test_stoqs/activity_resource.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+       for fmt in self.format_types:
+           req = '/test_stoqs/activity_resource.%s' % fmt
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_query_jsonencoded(self):
+        req = '/test_stoqs/query/json/'
+        response = self.client.get(req)
+        json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_query_summary(self):
+        req = '/test_stoqs/query/'
+        response = self.client.get(req)
+        json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     # Measurement view tests 
     def test_measurementStandardNameBetween(self):
