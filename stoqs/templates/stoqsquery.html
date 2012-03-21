@@ -78,7 +78,7 @@
 										<thead>
 										    <tr>
 										      <th width="10%">Display</th>
-										      <th width="10%">Filter</th>
+										      <th width="10%">Select</th>
 										      <th>Parameter</th>
 										    </tr>
 									  </thead>
@@ -100,7 +100,6 @@
 										<thead>
 										    <tr>
 										      <th width="10%">Display</th>
-										      <th width="10%">Filter</th>
 										      <th>Platform</th>
 										    </tr>
 									  </thead>
@@ -349,7 +348,6 @@
 	    					$.each(data[key], function (index, value) {
 							    					$('#platform-table > tbody:last').append('<tr id="' + value[1] +'">' +
 							    							  '<th><input type="checkbox"></th>' +
-														      '<th><input name="'+key+'" type="radio"></th>' +
 														      '<th class="platform"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></th>' +
 														      '</tr>');
 	    					});
