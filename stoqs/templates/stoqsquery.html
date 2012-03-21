@@ -13,6 +13,12 @@
       body {
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
       }
+      .stoqs-toggle {
+        width: 100%;
+      }
+      th {
+      	align: center; /* Doesn't seem to work '*/
+   	  }
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
     <link type="text/css" href="{{ STATIC_URL }}/jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet" />	
@@ -59,40 +65,85 @@
          </div><!-- span -->
 
       	 		<div class="span6">
-		      	 	<div class="accordion" id="accordion2">
+		      	 	<div class="accordion well" id="accordion2">
 		      	 		<div class="accordian-group">
 		      	 			<div class="accordian-heading">
-			      	 			<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+			      	 			<h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
 			                  	Parameters
-			                	</a>
+			                	</a></h3>
 		                	</div>
 		                	<div id="collapseOne" class="accordion-body collapse in">
 		                		<div class="accordion-inner">
-Parameter selector would appear here.									
+									<table id="parameter-table" class="table table-condensed table-bordered">
+										<thead>
+										    <tr>
+										      <th width="10%">Display</th>
+										      <th width="10%">Filter</th>
+										      <th>Parameter</th>
+										    </tr>
+									  </thead>
+									  <tbody>
+									  </tbody>
+									</table>
 		                		</div>
 		              		</div>
 		      	 		</div><!-- accordian-group -->
 		   	 		    <div class="accordian-group">
 		      	 			<div class="accordian-heading">
-			      	 			<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
+			      	 			<h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
 			                  	Platforms
-			                	</a>
+			                	</a></h3>
 		                	</div>
 		                	<div id="collapseTwo" class="accordion-body collapse in">
 		                		<div class="accordion-inner">
-		                  			Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
-		                		</div>
+									<table id="platform-table" class="table table-condensed table-bordered">
+										<thead>
+										    <tr>
+										      <th width="10%">Display</th>
+										      <th width="10%">Filter</th>
+										      <th>Platform</th>
+										    </tr>
+									  </thead>
+									  <tbody>
+									  </tbody>
+									</table>		                		
+								</div>
 		              		</div>
 		      	 		</div><!-- accordian-group -->
 		   	 		    <div class="accordian-group">
 		      	 			<div class="accordian-heading">
-			      	 			<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
-			                  	Depth &amp; Time
-			                	</a>
+			      	 			<h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
+			                  	Range Parameters
+			                	</a></h3>
 		                	</div>
 		                	<div id="collapseThree" class="accordion-body collapse in">
 		                		<div class="accordion-inner">
-		                  			Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+									<table id="range-table" class="table table-condensed">
+									<tbody>
+										<tr>
+											<td colspan="2"><strong>Time Range</strong></td>
+										</tr>
+										<tr>
+											<td colspan="2"><div id="slider-time"></div></td>
+										</tr>
+										<tr>
+											<td><input class="span2 slider-values" type="text" id="start-time" "name="start-time"></td>
+											<td><input class="span2 slider-values" type="text" id="end-time" name="end-time"></td> 
+										</tr>
+										
+										<tr>
+											<td colspan="2"><strong>Depth Range</strong></td>
+										</tr>
+										<tr>
+											<td colspan="2"><div id="slider-depth"></div></td>
+										</tr>
+										<tr>
+											<td><input class="span2 slider-values" type="text" id="start-depth" "name="start-depth"></td>
+											<td><input class="span2 slider-values" type="text" id="end-depth" name="end-depth"></td> 
+										</tr>
+										
+									</tbody>
+									</table>
 		                		</div>
 		              		</div>
 		      	 		</div><!-- accordian-group -->   
@@ -101,18 +152,18 @@ Parameter selector would appear here.
 		    	     </div><!-- span -->
       </div><!-- row-fluid -->
 		    <div class="row-fluid">
-		        <div class="span10 page-header">
+		        <div class="span12 page-header">
 		        	
-					    <form class="well">
-					    <p><strong id="result_count">0</strong> data points found.</p>
+					    <div class="well">
+					    <h3><strong id="result_count">0</strong> data points found.</h3>
 					    <h4>Copy the links below to save them, click on the buttons to download in the specified format.</h4>
 					    {% for format, description in formats.items %}
 					    <div class="row-fluid">
-					    <input type="text" class="span6" readonly="readonly" value="{{site_uri}}{% url stoqs-query-results dbAlias=request.META.dbAlias format=format %}">
-   					    <span class="help-inline span4"><a target="_blank" class="btn btn-info btn-small" href="{{site_uri}}{% url stoqs-query-results dbAlias=request.META.dbAlias format=format %}">{{description}}</a></span>
+					    <input id="{{format}}-field" type="text" class="span6" readonly="readonly">
+   					    <span class="help-inline span4"><a target="_blank" id="{{format}}-link" class="btn btn-info btn-small" href=""><i class="icon-file"></i> {{description}}</a></span>
 						{% endfor %}			
 						</div>		    
-					    </form><!-- form -->
+					    </div><!-- well -->
 				</div><!-- span -->
   	 		</div><!-- row-fluid --> 
 
@@ -123,6 +174,7 @@ Parameter selector would appear here.
     <!-- Placed at the end of the document so the pages load faster -->
 	<script type="text/javascript" src="{{ STATIC_URL }}/jquery/js/jquery-1.7.1.min.js"></script>
 	<script type="text/javascript" src="{{ STATIC_URL }}/jquery/js/jquery-ui-1.8.17.custom.min.js"></script>
+	<script type="text/javascript" src="{{ STATIC_URL }}/jquery/js/jquery.dateFormat-1.0.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
@@ -138,14 +190,253 @@ Parameter selector would appear here.
 	<script type="text/javascript" src="{{STATIC_URL}}/OpenLayers-2.11/OpenLayers.js"></script> 
     <script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script>
     <script type="text/javascript">
+    
+    var stoqsQuery='{{site_uri}}{% url stoqs-query-summary dbAlias=request.META.dbAlias  %}';
+    var params={}
+    
+    // Called with an element that was selectable, should make that element non-selectable.
+    function disableButton(element) {
+    	if (! $(element).is('.disabled')) {
+    		$(element).removeClass('btn-primary'); // Unselect if it's selected.
+    		$(element).addClass('disabled'); // Add the disabled class to it.
+    	}
+    }
+    
+    // Called with an element that was selectable, should make that element selectable.
+    function enableButton(element) {
+    	if ($(element).is('.disabled')) {
+    		$(element).removeClass('disabled');
+    	}
+    }
+    
+    // Set the URL fields and buttons to use the current queried URL
+    function setUrls() {
+    	var base_url='{{site_uri}}{% url stoqs-query-ui dbAlias=request.META.dbAlias %}';
+    	var param=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
+    	if (param != '') {
+    		param = '?' + param;
+    	} 
+    	// Use the Django variable to populate the supported query formats.
+    	var formats=[{% for format, description in formats.items %}'{{format}}'{% if not forloop.last %},{% endif %}{%endfor%}]
+    	// Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
+    	$.each(formats, function (index, value) {
+    		var url=base_url + value + param;
+    		$('#'+value+'-field').val(url);
+    		$('#'+value+'-link').attr('href',url);
+    	});
+    }
+    
+    function toggleField(element) {
+    	var $element=$(element);
+    	if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
+	    	if ($element.is('.btn-primary')) {
+	    		$element.removeClass('btn-primary');
+	    	} else {
+	    		$element.addClass('btn-primary');
+	    	}
+    	}
+    }
+    
+    function makeSlider(divid, type, data){
+    	if (type == 'time') {
+    		var start=new Date(data[0]);
+    		var end=new Date(data[1]);
+    		var max=Math.abs((start.getTime() - end.getTime()));
+    		var min=0
+    	} else if (type == 'depth') {
+    		// Float/Decimal type
+    		var min=Math.floor(data[0]*10000);
+    		var max=Math.ceil(data[1]*10000);
+    	}
+    	if (type == 'time') {
+    		var formatter=function (value) { 
+        		var start=new Date(data[0]);
+    			var cur=new Date(start.getTime() + value);
+    			return $.format.date(cur,'yyyy-MM-dd hh:mm:ss');
+    		};
+    		var reverseformatter=function (value) {
+    			var start=new Date(data[0]);
+    			try {
+    				var end=new Date(value);
+    			} catch (err) {
+    				var end=new Data(data[1]).getTime();
+    			}
+    			var cur=Math.abs((start.getTime() - end.getTime()));
+    			return cur;
+    		};
+    	} else if (type == 'depth') {
+            // Float/Decimal type
+            var formatter=function(value) { return value/10000; };
+            var reverseformatter=function(value) { return value *10000; };
+    	}
+    	var options={max: max,
+    		         min: min,
+    		         values: [min, max],
+                     range: true
+    	};
+    	
+    	var div=$('#' + divid);
+    	div.bind({
+    		slide : function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, false); },
+    		slidechange:function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, true); }
+    	})
+    	div.slider(options);
+    	
+    	div.data("reverseformatter", reverseformatter);
+    	if (typeof postaddfunc != "undefined") {
+    	   //div.data("postaddfunction", postaddfunc);
+    	}
+    	return div;
+    }
+    
+    function recordUpdatedValues(values, divid, type, formatter, updateTable) {
+    	var min=formatter(values[0])
+    	var max=formatter(values[1])
+    	$('#start-' + type).val(min)
+ 	 	$('#end-' + type).val(max)
+ 	 	rebuildFilters();
+    }
+    
+    function rebuildFilters() {
+    	params={}
+    	params['start_time']=$('#start-time').val()
+    	params['end_time']=$('#end-time').val()
+    	params['start_depth']=$('#start-depth').val()
+    	params['end_depth']=$('#end-depth').val()
+    	params['parameters']=[]
+    	params['platforms']=[]
+    	$('tr',$('#parameter-table')).each(function (index, element) {
+    		if ($('.btn-primary', $(element)).length) {
+    			params['parameters'].push(element.id);
+    		}
+    	});
+    	$('tr',$('#platform-table')).each(function (index, element) {
+    		if ($('.btn-primary', $(element)).length) {
+    			params['platforms'].push(element.id);
+    		}
+    	});
+    	updateSummaryData();
+    }
+    
+    $(document).on('click', ".stoqs-toggle", function (event) {
+    	toggleField(this);
+    	rebuildFilters();
+    });
+    
+    /*
+     * Perform the AJAX call to get a list of parameters, and enable/disable them
+     * If "init" is true then this is the initial page load, and we need to populate the fields rather than toggle them.
+     */
+    function updateSummaryData(init) {
+    	var init = typeof init !== 'undefined' ? init : false;
+    	var qstring=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
+    	$.ajax({
+    		type : 'GET',
+    		url : stoqsQuery + '?' + qstring,
+    		success: function (data) {
+    			setUrls();
+    			for (var key in data) {
+    				if (init == true) {
+	    				if (key == 'platforms') {
+	    					$.each(data[key], function (index, value) {
+							    					$('#platform-table > tbody:last').append('<tr id="' + value[1] +'">' +
+							    							  '<th><input type="checkbox"></th>' +
+														      '<th><input name="'+key+'" type="radio"></th>' +
+														      '<th class="platform"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></th>' +
+														      '</tr>');
+	    					});
+	    				}
+	    				else if (key == 'parameters') {
+	    					$.each(data[key], function (index, value) {
+							    					$('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
+							    							  '<th><input type="checkbox"></th>' +
+														      '<th><input name="'+key+'" type="radio"></th>' +
+														      '<th class="parameter"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></th>' +
+														      '</tr>');
+	    					});
+	    				}
+	    				else if (key == 'time') { 
+	    					var start=new Date(data[key][0]);
+    						var end=new Date(data[key][1]);
+	    					$('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
+	    					$('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
+	    					makeSlider('slider-' + key, key, data[key])
+	    				}
+	    				else if (key == 'depth') {
+	    					$('#start-' + key).val(data[key][0]);
+	    					$('#end-' + key ).val(data[key][1]);
+	    					makeSlider('slider-' + key, key, data[key])
+	    				}
+    				} else {
+    					if (key == 'platforms') {
+    						var ids=[];
+    						$.each(data[key], function (index, value) {
+    							// Here we need to enable those that are still valid.
+    							var element=$('#' + value[1]);
+    							enableButton($('button', element)); // Enable the button in the table row
+    							ids.push(value[1]);
+    						});
+    						$('#platform-table > tbody > tr').each(function (index, elem) { 
+    							if ($.inArray((elem.id).toString(), ids) == -1) {
+    								disableButton($('button', $(elem))); // Disable the button in the table row
+    							}
+   							});
+    					}
+    					else if (key == 'parameters') {
+    						var ids=[];
+    						$.each(data[key], function (index, value) {
+    							// Here we need to enable those that are still valid.
+    							var element=$('#' + value[1]);
+    							enableButton($('button', element)); // Enable the button in the table row
+    							ids.push(value[1]);
+    						});
+    						$('#parameter-table > tbody > tr').each(function (index, elem) { 
+    							if ($.inArray((elem.id).toString(), ids) == -1) {
+    								disableButton($('button', $(elem))); // disable the button in the table row
+    							}
+    						});
+	    				}
+    					else if (key == 'time') {
+    						var start=new Date(data[key][0]);
+    						var end=new Date(data[key][1]);
+	    					$('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
+	    					$('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
+	    				}
+	    				else if (key == 'depth') {
+	    					$('#start-depth').val(data[key][0]);
+	    					$('#end-depth').val(data[key][1]);
+	    				}
+    				}
+    				
+    			}
+    			$('#result_count').html(data['count']);
+    		},
+    		dataType: "json"
+    	});
+    }
+    
+
+    
+    
 	$(function () {	
+		// Initialize the accordian fields.
     	$(".collapse").collapse(); // Collapse the accordian fields.
+    	
+    	// Adjust the height of the map div to 500px
 		$('#map').height(500);
-		// Add this behavior to all text fields
+    	
+		// Add this behavior to all text fields, so when someone clicks on a field it highlights 
+		// all the data so it's easy to copy to the clipboard.
 		$(document).on('focus', 'input[type=text]', function(e) {
 		 	// Select field contents
-		 	this.select();
+		 	var t=this
+		 	// This has to be done after 100ms so that standard bootstrap functionality happens first.
+		 	setTimeout(function() { t.select()}, 100);
 		});
+		
+		/* 
+		 * Setup OpenLayers with some default background layers.
+		 */
 		  OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
 		  OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
 	      var map = null; 
@@ -187,6 +478,30 @@ Parameter selector would appear here.
 	      map.addControl(new OpenLayers.Control.MousePosition());
 	      map.addControl(new OpenLayers.Control.PanZoomBar());
 
+	      /*
+	       *
+	       */
+	      updateSummaryData(true);
+	      
+	      $('body').on('change', '.slider-values', function (e) {
+	  		var $slider=$('#slider-' + this.id.split('-').reverse()[0])
+	  		var setting=$slider.data().reverseformatter($(this).val());
+	  		var pos=0;
+	  		if (this.id.split('-')[0] == 'start') {
+	  			pos=0
+	  		} else {
+	  			pos=1
+	  		}
+	  		var oldvalue=$slider.slider('values',pos);
+	  		var result=$slider.slider('values',pos,[setting]);
+	  		if (Math.abs(setting-result) > 1) {
+	  			jAlert('The data entered was not within the specified range, or exceeds the valid precision for this field. ' +
+	  					'the field has been reset to its original value.')
+	  			$slider.slider("values",pos,[oldvalue])
+	  		}
+	  	});
+	      
+	      
 	      });
     </script>
   </body>
