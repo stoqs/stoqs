@@ -65,6 +65,7 @@ class STOQSQManager(object):
         results={}
         for k,v in options_functions.iteritems():
             results[k]=v()
+        results['parameters']=[('tet',"1"),('test',"2")]
         return results
     
     #
