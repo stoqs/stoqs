@@ -23,8 +23,8 @@ class STOQSQManager(object):
     def buildQuerySet(self, **kwargs):
         '''
         Right now supported keyword arguments are the following:
-        parameter - a list of parameter names to include
-        platform - a list of platform names to include
+        parameters - a list of parameter names to include
+        platforms - a list of platform names to include
         time - a two-tuple consisting of a start and end time, if either is None, the assumption is no start (or end) time
         depth - a two-tuple consisting of a range (start/end depth, if either is None, the assumption is no start (or end) depth
         These are all called internally - so we'll assume that all the validation has been done in advance,
@@ -35,9 +35,11 @@ class STOQSQManager(object):
             '''
             Check to see if there is a "builder" for a Q object using the given parameters.
             '''
+            print k
             if not v:
                 continue
             if hasattr(self, '_%sQ' % (k,)):
+                print "_%sQ" % (k,)
                 # Call the method if it exists, and add the resulting Q object to the filtered
                 # queryset.
                 q=getattr(self,'_%sQ' % (k,))(v)
@@ -66,6 +68,9 @@ class STOQSQManager(object):
         for k,v in options_functions.iteritems():
             results[k]=v()
         #results['parameters']=[('tet',"1"),('test',"2")]
+        import pprint
+        pprint.pprint(str(self.qs.query))
+        pprint.pprint(results)
         return results
     
     #
@@ -130,25 +135,25 @@ class STOQSQManager(object):
     # Methods that generate Q objects used to populate the query.
     #    
         
-    def _parameterQ(self, parameters):
+    def _parametersQ(self, parameters):
         '''
         Build a Q object to be added to the current queryset as a filter.  This should 
         ensure that our result doesn't contain any parameters that were not selected.
         '''
         q=Q()
-        if parameter is None:
+        if parameters is None:
             return q
         else:
             q=Q(activityparameter__parameter__uuid__in=parameters)
         return q
     
-    def _platformQ(self, platforms):
+    def _platformsQ(self, platforms):
         '''
         Build a Q object to be added to the current queryset as a filter.  This will ensure that we
         only generate the other values/sets for platforms that were selected.
         '''
         q=Q()
-        if platform is None:
+        if platforms is None:
             return q
         else:
             q=Q(platform__uuid__in=platforms)
