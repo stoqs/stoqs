@@ -294,7 +294,9 @@
     	var max=formatter(values[1])
     	$('#start-' + type).val(min)
  	 	$('#end-' + type).val(max)
- 	 	rebuildFilters();
+ 	 	if (updateTable) {
+ 	 		rebuildFilters();
+ 	 	}
     }
     
     function rebuildFilters() {
