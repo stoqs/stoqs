@@ -193,6 +193,7 @@
     
     var stoqsQuery='{{site_uri}}{% url stoqs-query-summary dbAlias=request.META.dbAlias  %}';
     var params={}
+    var request=''
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -332,7 +333,12 @@
     function updateSummaryData(init) {
     	var init = typeof init !== 'undefined' ? init : false;
     	var qstring=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
-    	$.ajax({
+    	if (! init) {
+    		if (request.readyState < 3) {
+    			request.abort();
+    		}
+    	}
+    	request=$.ajax({
     		type : 'GET',
     		url : stoqsQuery + '?' + qstring,
     		success: function (data) {
