@@ -54,7 +54,7 @@ import seawater.csiro as sw
 
 # Set up logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -1025,7 +1025,7 @@ def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stri
 						number = parmCountHash[key])
 
 
-def runLRAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stride):
+def runLrauvLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride):
 	'''Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
 	attributes resulting from the load into dbName. Designed to be called from script
 	that loads the data.  Following the load important updates are made to the database.'''
@@ -1041,6 +1041,9 @@ def runLRAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, st
 			platformTypeName = pTypeName,
 			stride = stride)
 
+	if parmList:
+		logger.debug("runAuvctdLoader(): Setting include_names to %s", parmList)
+		loader.include_names = parmList
 	(nMP, path, parmCountHash, mind, maxd) = loader.process_data()
 	logger.debug("runLRAuvctdLoader(): Loaded Activity with name = %s", aName)
 
@@ -1055,7 +1058,7 @@ def runLRAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, st
 						maxdepth = maxd,
 						num_measuredparameters = nMP,
 						loaded_date = datetime.utcnow())
-	logger.debug("runLRAuvctdLoader(): %d activities updated with new attributes." % num_updated)
+	logger.debug("runLRAuvctdLoader(): %d activities updated with new attributes.", num_updated)
 
 	if num_updated != 1:
 		logger.debug("runLRAuvctdLoader(): We should have just one Activity with name = %s", aName)
@@ -1064,7 +1067,7 @@ def runLRAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, st
 		# Add links back to paraemters with stats on the partameters of the activity
 		activity = m.Activity.objects.using(dbName).get(name = aName)
 		for key in parmCountHash.keys():
-			logger.debug("runLRAuvctdLoader(): key = %s, count = %d", (key, parmCountHash[key]))
+			logger.debug("runLRAuvctdLoader(): key = %s, count = %d", key, parmCountHash[key])
 			ap = m.ActivityParameter.objects.db_manager(dbName).get_or_create(activity = activity,
 						parameter = loader.getParameterByName(key),
 						number = parmCountHash[key])
