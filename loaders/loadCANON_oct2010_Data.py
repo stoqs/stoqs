@@ -36,11 +36,15 @@ def loadDoradoMissions(baseUrl, fileList, activityName, campaignName, pName, pTy
 		for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], fileList):
 			url = baseUrl + file
 			DAPloaders.runDoradoLoader(url, campaignName, aName, pName, pTypeName, aTypeName, dbName, stride)
-	elif activityName:
-		url = baseUrl
-		DAPloaders.runCSVLoader(url, campaignName, activityName, pName, pTypeName, aTypeName, dbName, stride)
-	else:
-		print "loadDoradoMissions(): Must specify either a fileList or an activityName"
+
+def loadTethysMissions(baseUrl, fileList, activityName, campaignName, pName, pTypeName, aTypeName, dbName, stride = 1):
+	'''Load missions from OPeNDAP url from either a list of files from a base or a single URL with a given activityName '''
+
+	parmList = ['mass_concentration_of_chlorophyll_in_sea_water']
+	if fileList: 
+		for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], fileList):
+			url = baseUrl + file
+			DAPloaders.runLrauvLoader(url, campaignName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride)
 
 def loadMartinActivities(baseUrl, fileList, activityName, campaignName, pName, pTypeName, aTypeName, dbName, stride = 1):
 	'''Load missions from OPeNDAP url from either a list of files from a base or a single URL with a given activityName '''
@@ -60,7 +64,7 @@ if __name__ == '__main__':
 
 	# Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
 	dbName = 'stoqs_oct2010'
-	stride = 1
+	stride = 1000
 	campaignName = 'CANON/Biospace/Latmix - October 2010'
 
 	# --------------------------------- Dorado loads -------------------------------
@@ -83,7 +87,7 @@ if __name__ == '__main__':
 			'Dorado389_2010_300_00_300_00_decim.nc',
 			'Dorado389_2010_301_00_301_00_decim.nc',
 		]
-	##loadDoradoMissions(baseUrl, files, '', campaignName, 'dorado', 'auv', 'AUV Mission', dbName, stride)
+	loadDoradoMissions(baseUrl, files, '', campaignName, 'dorado', 'auv', 'AUV Mission', dbName, stride)
 
 	# --------------------------- Martin Underway loads ----------------------------
 	baseUrl = 'http://odss.mbari.org/thredds/dodsC/jhm_underway'
@@ -107,6 +111,15 @@ if __name__ == '__main__':
 			'30110_jhmudas_v1.nc',
 		]
 	loadMartinActivities(baseUrl, files, '', campaignName, 'martin', 'ship', 'cruise', dbName, stride)
+
+	# ----------------------------- Tethys LR AUV loads ----------------------------
+	baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/tethys/2010/netcdf/'
+	files =      [  '20101018T143308_Chl_.nc',
+			'20101019T001815_Chl_.nc',
+			'20101019T155117_Chl_.nc',
+			'20101020T113957_Chl_.nc',
+		]
+	loadTethysMissions(baseUrl, files, '', campaignName, 'tethys', 'auv', 'AUV Mission', dbName, stride)
 
 	# ------------------------- Water sample analyses loads ------------------------
 
