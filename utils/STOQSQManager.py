@@ -30,21 +30,25 @@ class STOQSQManager(object):
         These are all called internally - so we'll assume that all the validation has been done in advance,
         and the calls to this method meet the requirements stated above.
         '''
-        qs=models.Activity.objects.using(self.dbname).all()
+        if (not kwargs):
+            qs=models.Activity.objects.using('stoqs_oct2010').select_related(depth=3).filter(activityparameter__parameter__pk__isnull=False,
+                                                                                         activityparameter__activity__pk__isnull=False,
+                                                                                         platform__pk__isnull=False,
+                                                                                         instantpoint__measurement__pk__isnull=False)
+        else:
+            qs=models.Activity.objects.using('stoqs_oct2010').select_related(depth=3).all()
         for k, v in kwargs.iteritems():
             '''
             Check to see if there is a "builder" for a Q object using the given parameters.
             '''
-            print k
             if not v:
                 continue
             if hasattr(self, '_%sQ' % (k,)):
-                print "_%sQ" % (k,)
                 # Call the method if it exists, and add the resulting Q object to the filtered
                 # queryset.
                 q=getattr(self,'_%sQ' % (k,))(v)
                 qs=qs.filter(q)
-        self.qs=qs
+        self.qs=qs.distinct()
         
     def generateOptions(self):
         '''
@@ -81,7 +85,7 @@ class STOQSQManager(object):
         '''
         Get the count of rows to be returned if we ran this entire query.
         '''
-        return len(self.qs)
+        return self.qs.count()
         
     def getParameters(self):
         '''
@@ -202,6 +206,6 @@ class STOQSQManager(object):
         '''
         querystring=str(self.qs.query)
         
-        return predicate
+        return querystring
         
     
