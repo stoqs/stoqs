@@ -31,12 +31,12 @@ class STOQSQManager(object):
         and the calls to this method meet the requirements stated above.
         '''
         if (not kwargs):
-            qs=models.Activity.objects.using('stoqs_oct2010').select_related(depth=3).filter(activityparameter__parameter__pk__isnull=False,
+            qs=models.Activity.objects.using(self.dbname).select_related(depth=3).filter(activityparameter__parameter__pk__isnull=False,
                                                                                          activityparameter__activity__pk__isnull=False,
                                                                                          platform__pk__isnull=False,
                                                                                          instantpoint__measurement__pk__isnull=False)
         else:
-            qs=models.Activity.objects.using('stoqs_oct2010').select_related(depth=3).all()
+            qs=models.Activity.objects.using(self.dbname).select_related(depth=3).all()
         for k, v in kwargs.iteritems():
             '''
             Check to see if there is a "builder" for a Q object using the given parameters.
