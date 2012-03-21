@@ -453,6 +453,7 @@ def queryData(request, format=None):
 			params[key]=[request.GET.get(p, None) for p in value]
 		else:
 			params[key]=request.GET.getlist(key)
+	
 	qm=STOQSQManager(request, response, request.META['dbAlias'])
 	qm.buildQuerySet(**params)
 	
