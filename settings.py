@@ -56,6 +56,11 @@ LOGGING = {
             'propagate': True,
             'level':'ERROR',
         },
+        'utils': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'ERROR',
+        },
         'stoqs.db_router': {
             'handlers':['null'],
             'propagate': False,
