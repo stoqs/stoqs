@@ -455,6 +455,9 @@
 	                                             20037508.34, 20037508.34)
 	      };
 	      map = new OpenLayers.Map('map',options);
+	      var esri=new OpenLayers.Layer.ArcGIS93Rest("Ocean Basemap",
+            "http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/export",
+            {layers: "0"} );
 	      var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
 	      var gphy = new OpenLayers.Layer.Google(
 	          "Google Physical",
@@ -478,7 +481,7 @@
 	           numZoomLevels: 15,
 	           'sphericalMercator': true}
 	      );
-	      map.addLayers([osm,gsat,gphy,ghyb,gmap]);
+	      map.addLayers([esri,osm,gsat,gphy,ghyb,gmap]);
 	      map.setCenter(new OpenLayers.LonLat(-13594478.3, 4411945.3), 9);
 	      map.addControl(new OpenLayers.Control.LayerSwitcher());
 	      map.addControl(new OpenLayers.Control.MousePosition());
