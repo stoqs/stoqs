@@ -37,6 +37,7 @@ class STOQSQManager(object):
                                                                                          instantpoint__measurement__pk__isnull=False)
         else:
             qs=models.Activity.objects.using(self.dbname).select_related(depth=3).all()
+
         for k, v in kwargs.iteritems():
             '''
             Check to see if there is a "builder" for a Q object using the given parameters.
@@ -49,6 +50,7 @@ class STOQSQManager(object):
                 q=getattr(self,'_%sQ' % (k,))(v)
                 qs=qs.filter(q)
         self.qs=qs.distinct()
+        self.kwargs = kwargs
         
     def generateOptions(self):
         '''
@@ -83,9 +85,33 @@ class STOQSQManager(object):
         
     def getCount(self):
         '''
-        Get the count of rows to be returned if we ran this entire query.
+        Get the count of measured parameters giving the exising query
         '''
-        return self.qs.count()
+        qparams={}
+
+        import pprint
+        pprint.pprint(self.kwargs)
+        if self.kwargs.has_key('parameters'):
+            if self.kwargs['parameters'] is not None:
+                qparams['parameter__uuid__in'] = self.kwargs['parameters']
+        if self.kwargs.has_key('time'):
+            if self.kwargs['time'][0] is not None:
+                qparams['measurement__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
+            if self.kwargs['time'][1] is not None:
+                qparams['measurement__instantpoint__timevalue__lte'] = self.kwargs['time'][1]
+        if self.kwargs.has_key('depth'):
+            if self.kwargs['depth'][0] is not None:
+                qparams['measurement__depth__gte'] = self.kwargs['depth'][0]
+            if self.kwargs['depth'][1] is not None:
+                qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
+
+        qs_meas = models.MeasuredParameter.objects.filter(**qparams)
+        if qs_meas:
+            import pprint
+            pprint.pprint(str(qs_meas.query))
+            return qs_meas.count()
+        else:
+            return 0
         
     def getParameters(self):
         '''
@@ -207,5 +233,4 @@ class STOQSQManager(object):
         querystring=str(self.qs.query)
         
         return querystring
-        
-    
+
