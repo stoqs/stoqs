@@ -4,7 +4,11 @@ from django.conf import settings
 from django.db import connections
 from django.db.models import Q, Max, Min
 from stoqs import models
+import logging
+import pprint
 import re
+
+logger = logging.getLogger(__name__)
 
 class STOQSQManager(object):
     '''
@@ -74,9 +78,8 @@ class STOQSQManager(object):
         for k,v in options_functions.iteritems():
             results[k]=v()
         #results['parameters']=[('tet',"1"),('test',"2")]
-        import pprint
-        pprint.pprint(str(self.qs.query))
-        pprint.pprint(results)
+        logger.info(pprint.pformat(str(self.qs.query)))
+        logger.info(pprint.pformat(results))
         return results
     
     #
@@ -89,8 +92,7 @@ class STOQSQManager(object):
         '''
         qparams={}
 
-        import pprint
-        pprint.pprint(self.kwargs)
+        logger.info(pprint.pformat(self.kwargs))
         if self.kwargs.has_key('parameters'):
             if self.kwargs['parameters'] is not None:
                 qparams['parameter__uuid__in'] = self.kwargs['parameters']
@@ -107,8 +109,7 @@ class STOQSQManager(object):
 
         qs_meas = models.MeasuredParameter.objects.filter(**qparams)
         if qs_meas:
-            import pprint
-            pprint.pprint(str(qs_meas.query))
+            logger.info(pprint.pformat(str(qs_meas.query)))
             return qs_meas.count()
         else:
             return 0

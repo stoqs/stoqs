@@ -28,10 +28,6 @@ import os
 import sys
 import time
 import json
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../loaders'))
-
-import DAPloaders
 
 from django.utils import unittest
 from django.test.client import Client
@@ -39,16 +35,16 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 
 from stoqs.models import Activity
-from loaders import DAPloaders
 import logging
 import time
 
-logger = logging.getLogger('__name__')
+logger = logging.getLogger(__name__)
 
 
 class BaseAndMeasurementViewsTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
     format_types = ['html', 'json', 'xml', 'csv']
+    multi_db = False
     
     def setup(self):
         ##call_setup_methods()

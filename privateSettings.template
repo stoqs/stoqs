@@ -59,6 +59,8 @@ MY_DATABASES = {
 TEMPLATE_DEBUG = DEBUG = True         
 
 # Modify default logging settings, e.g. to help in debugging stoqs or django
-#LOGGING['loggers']['django']['level'] = 'DEBUG'
-#LOGGING['loggers']['stoqs']['level'] = 'INFO'
+# Note: Must restart the development server for changes made here to take effect
+# LOGGING['loggers']['django']['level'] = 'INFO'
+# LOGGING['loggers']['stoqs']['level'] = 'INFO'
+# LOGGING['loggers']['utils']['level'] = 'INFO'
 
