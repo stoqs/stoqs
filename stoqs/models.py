@@ -218,7 +218,6 @@ class ActivityResource(models.Model):
 	uuid = UUIDField(editable=False)
 	activity = models.ForeignKey(Activity)
 	resource = models.ForeignKey(Resource)
-	number = models.IntegerField(null=True)
 	class Meta:
 		verbose_name = 'Activity Resource'
 		verbose_name_plural = 'Activity Resource'
@@ -242,17 +241,26 @@ class Measurement(models.Model):
                 return "Measurement at %s" % (self.geom,)
 
 class ActivityParameter(models.Model):
-	'''Association class pairing Parameters that have been loaded for an Activity'''
-	uuid = UUIDField(editable=False)
-	activity = models.ForeignKey(Activity)
-	parameter = models.ForeignKey(Parameter)
-	number = models.IntegerField(null=True)
-	class Meta:
-		verbose_name = 'Activity Parameter'
-		verbose_name_plural = 'Activity Parameter'
-		app_label = 'stoqs'
-		unique_together = ['activity', 'parameter']
-			
+    '''Association class pairing Parameters that have been loaded for an Activity'''
+    uuid = UUIDField(editable=False)
+    activity = models.ForeignKey(Activity)
+    parameter = models.ForeignKey(Parameter)
+    # Parameter statistics for the Activity
+    number = models.IntegerField(null=True)
+    min = models.FloatField(null=True)
+    max = models.FloatField(null=True)
+    mean = models.FloatField(null=True)
+    median = models.FloatField(null=True)
+    mode = models.FloatField(null=True)
+    # Useful for ignoring min & max outliers - 2.5% & 97.5% qualtiles of the parameter
+    min025 = models.FloatField(null=True)
+    max975 = models.FloatField(null=True)
+    class Meta:
+        verbose_name = 'Activity Parameter'
+        verbose_name_plural = 'Activity Parameter'
+        app_label = 'stoqs'
+        unique_together = ['activity', 'parameter']
+		
 class MeasuredParameter(models.Model):
 	'''Association class pairing Measurements with Parameters.  This is where the measured values are stored -- in the datavalue field.
 	'''
