@@ -45,11 +45,12 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler'
         },
         'console':{
-            'level':'ERROR',
+            'level':'DEBUG',
             'class':'logging.StreamHandler',
             'formatter': 'verbose'
         },
     },
+    # These settings may be overriden in privateSettings
     'loggers': {
         '__main__': {
             'handlers':['console'],
@@ -79,7 +80,7 @@ LOGGING = {
         'django': {
             'handlers':['console'],
             'propagate': True,
-            'level':'DEBUG',
+            'level':'ERROR',
         },
         'django.request': {
             'handlers': ['mail_admins'],
@@ -89,9 +90,8 @@ LOGGING = {
     }
 }
 
-# Load above sensitive settings from a local file that has tight file system permissions.
+# Load sensitive settings and modifications to above from a local file that has tight file system permissions
 execfile(os.path.join(project_dir, 'privateSettings'))
-
 
 ADMINS = (
     (ADMIN_NAME, ADMIN_EMAIL),
