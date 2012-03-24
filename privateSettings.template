@@ -54,8 +54,11 @@ MY_DATABASES = {
 #    },
 }
 
+# Setting to False breaks /static file delivery.  Use './manage.py collectstatic' for transition to production.
+# See http://stackoverflow.com/questions/6405173/static-files-wont-load-when-out-of-debug-in-django
+TEMPLATE_DEBUG = DEBUG = True         
+
 # Modify default logging settings, e.g. to help in debugging stoqs or django
 #LOGGING['loggers']['django']['level'] = 'DEBUG'
 #LOGGING['loggers']['stoqs']['level'] = 'INFO'
 
-#
