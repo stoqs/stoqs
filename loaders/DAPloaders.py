@@ -54,7 +54,7 @@ import seawater.csiro as sw
 
 # Set up logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -1073,68 +1073,33 @@ def runLrauvLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbN
 						number = parmCountHash[key])
 
 if __name__ == '__main__':
-	##bl=Base_Loader('Test Survey', 
+    ##bl=Base_Loader('Test Survey', 
 			##platform=m.Platform.objects.get(code='vnta'),
 			##url='http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_081_02_081_02_decim.nc',
 			##stride=1)
-	# The full aggregation of AUVCTD data has "holes" in variables that break the aggregation
-	# Luckily the 2010 aggragetion of Dorado gets around this problem.
-	##bl=Auvctd_Loader('AUV Surveys - September 2010 (stride=1000)', 
-	##		url = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/dorado_2010_ctd',
-	##		startDatetime = datetime(2010, 9, 14),
-	##		endDatetime = datetime(2010,9, 18),
-	##		dbName = 'stoqs_june2011',
-	##		platformName = 'dorado',
-	##		stride = 1000)
+    # The full aggregation of AUVCTD data has "holes" in variables that break the aggregation
+    # Luckily the 2010 aggragetion of Dorado gets around this problem.
+    ##bl=Auvctd_Loader('AUV Surveys - September 2010 (stride=1000)', 
+    ##		url = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/dorado_2010_ctd',
+    ##		startDatetime = datetime(2010, 9, 14),
+    ##		endDatetime = datetime(2010,9, 18),
+    ##		dbName = 'stoqs_june2011',
+    ##		platformName = 'dorado',
+    ##		stride = 1000)
 
-	##bl=Mooring_Loader('Test Mooring', 
-	##		platform=m.Platform.objects.get(code='m1'),
-	##		url='http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS',
-	##		startDatetime = datetime(2009,1,1),
-	##		endDatetime = datetime(2009,1,10),
-	##		stride=10)
+    ##bl=Mooring_Loader('Test Mooring', 
+    ##		platform=m.Platform.objects.get(code='m1'),
+    ##		url='http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS',
+    ##		startDatetime = datetime(2009,1,1),
+    ##		endDatetime = datetime(2009,1,10),
+    ##		stride=10)
 
-	# A nice test data load for a northern Monterey Bay survey	
-	##baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
-	baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'				# NCML to make salinity.units = "1"
-	file = 'Dorado389_2010_300_00_300_00_decim.nc'
-	stride = 1000		# Make large for quicker runs, smaller for denser data
-	dbName = 'default'
-	
-	dl = Dorado_Loader(activityName = file,
-                url = baseUrl + file,
-                campaignName = dbName,
-                platformName = 'dorado',
-                platformTypeName = 'auv',
-                activitytypeName = 'AUV Mission',
-                dbName = dbName,
-                stride = stride)
-	
-	nMP, path, parmCountHash, mind, maxd = dl.process_data()
-	
-	# Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
-	# The ':' is important, this is where the string is split.
-	# Making this dependency is bad -- we really need to put this kind of information in the model as attributes of Activity
-	newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(dl.varsLoaded), datetime.utcnow())
-	logger.info("Updating comment with newComment = %s", newComment)
+    # A nice test data load for a northern Monterey Bay survey	
+    ##baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
+    baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'				# NCML to make salinity.units = "1"
+    file = 'Dorado389_2010_300_00_300_00_decim.nc'
+    stride = 1000		# Make large for quicker runs, smaller for denser data
+    dbName = 'default'
 
-	num_updated = m.Activity.objects.using(dbName).filter(name = file).update(comment = newComment,
-						maptrack = path,
-						mindepth = mind,
-						maxdepth = maxd,
-						num_measuredparameters = nMP,
-						loaded_date = datetime.utcnow())
-	logger.info("%d activities updated with new attributes.", num_updated)
-
-	if num_updated != 1:
-		logger.info("We should have just one Activity with name = %s", file)
-		sys.exit(1)
-	else:
-		# Add links back to paraemters with stats on the partameters of the activity
-		activity = m.Activity.objects.using(dbName).get(name = file)
-		for key in parmCountHash.keys():
-			logger.info("key = %s, count = %d", key, parmCountHash[key])
-			ap = m.ActivityParameter.objects.db_manager(dbName).get_or_create(activity = activity,
-						parameter = dl.getParameterByName(key),
-						number = parmCountHash[key])
+    runDoradoLoader(baseUrl + file, 'Test Load', file, 'dorado', 'auv', 'AUV Mission', dbName, stride)
 
