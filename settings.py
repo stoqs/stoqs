@@ -51,6 +51,11 @@ LOGGING = {
         },
     },
     'loggers': {
+        '__main__': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'ERROR',
+        },
         'stoqs': {
             'handlers':['console'],
             'propagate': True,
