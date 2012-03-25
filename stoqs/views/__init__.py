@@ -195,9 +195,8 @@ def queryData(request, format=None):
     
 def queryUI(request):
     formats={'csv': 'Comma-Separated Values (CSV)',
-             'netcdf': 'NetCDF Format',
-             'KML': 'KML (Google Earth)',
-             'KMZ': 'KMZ (Google Earth Compressed)'}
+             'DAP': 'OPeNDAP Format',
+             'KML': 'KML (Google Earth)'}
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
                                                   'formats': formats,}, 
                             context_instance=RequestContext(request))

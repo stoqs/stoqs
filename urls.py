@@ -88,7 +88,7 @@ urlpatterns = patterns('',
     url(pre + r'query/(?P<format>[^/]+)/?$', 'stoqs.views.queryData', {}, name='stoqs-query-results'),
     url(pre + r'query/', 'stoqs.views.queryUI', {}, name='stoqs-query-ui'),
 
-    # Management
+    # Management, etc.
     url(r'campaigns', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
     url(pre + r'mgmt$', 'stoqs.views.management.showDatabase', {}, name='show-database'),
     url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'stoqs.views.management.deleteActivity', {}, name='delete-activity'),

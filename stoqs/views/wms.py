@@ -29,13 +29,13 @@ import sys
 import logging 
 import os
 from random import randint
+import tempfile
 
 logger = logging.getLogger(__name__)
 
 class Color(object):
 	'''Simple color class to add to add as an attribute to items.  Initialize a nice grey color.
 	'''
-
 	r = 128
 	g = 128
 	b = 128
@@ -45,9 +45,6 @@ class Color(object):
 
 class ActivityView(object):
 
-	# This directory (and the files in it) must be writable by the server running this Django app
-	# and be readable by the mapserv app on MAPSERVER_HOST.
-	mappathBase = '/tmp'
 	mapfileTemplate = 'activity.map'
 	olWebPageTemplate = 'activitiesWMS.html'
 
@@ -62,19 +59,16 @@ class ActivityView(object):
 		@param mappath: Fully qualified path to the mapfile that will be created
 		@param geo_query: The SQL to be placed in the DATA directive.  It must return a geometry object and a gid for the filter.
 		'''
-
 		self.request = request
 		self.itemList = itemList
-		self.mappath = os.path.join(self.mappathBase, 'activity.map')
+		self.mappath = tempfile.NamedTemporaryFile(prefix='activity_', suffix='.map').name
 		self.geo_query = geo_query
 
 	def generateActivityMapFile(self):
 		'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.
 	        The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
 		This creates a dynamic 
-
 		'''
-
 		# mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
 		response = render_to_response(self.mapfileTemplate, {'mapserver_host': settings.MAPSERVER_HOST,
 							'list': self.itemList,
