@@ -25,6 +25,31 @@ import KML
 
 logger = logging.getLogger(__name__)
 
+def kmlResponse(qm, response):
+    logger.info('kml output')
+    qs_mp = qm.getMeasuredParametersQS()
+    if qs_mp is None:
+        response['Content-Type'] = 'text/plain'
+        response.write('qs_mp is None')
+        return response
+
+    pName = qm.getParameters()[0][0]
+    logger.info("pName = %s", pName)
+    data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
+                 mp.measurement.depth, pName, mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
+                 for mp in qs_mp]
+    dataHash = {}
+    for d in data:
+        try:
+            dataHash[d[6]].append(d)
+        except KeyError:
+            dataHash[d[6]] = []
+            dataHash[d[6]].append(d)
+
+    kml = KML.makeKML(dataHash, pName, 'title', 'Description', qm.getTime()[0], qm.getTime()[1])
+    response['Content-Type'] = 'application/vnd.google-earth.kml+xml'
+    response.write(kml)
+    return response
 
 def queryData(request, format=None):
     response = HttpResponse()
@@ -56,29 +81,7 @@ def queryData(request, format=None):
     elif format == 'dap':
         logger.info('dap output')
     elif format == 'kml':
-        logger.info('kml output')
-        qs_mp = qm.getMeasuredParametersQS()
-        if qs_mp is None:
-            response['Content-Type'] = 'text/plain'
-            response.write('qs_mp is None')
-            return response
-
-        pName = qm.getParameters()[0][0]
-        logger.info("pName = %s", pName)
-        data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
-                     mp.measurement.depth, pName, mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
-                     for mp in qs_mp]
-        dataHash = {}
-        for d in data:
-            try:
-                dataHash[d[6]].append(d)
-            except KeyError:
-                dataHash[d[6]] = []
-                dataHash[d[6]].append(d)
-
-        kml = KML.makeKML(dataHash, pName, 'title', 'Description', qm.getTime()[0], qm.getTime()[1])
-        response['Content-Type'] = 'application/vnd.google-earth.kml+xml'
-        response.write(kml)
+        return kmlResponse(qm, response)
 
     return response
     
