@@ -369,8 +369,8 @@
                             makeSlider('slider-' + key, key, data[key])
                         }
                         else if (key == 'depth') {
-                            $('#start-' + key).val(data[key][0]);
-                            $('#end-' + key ).val(data[key][1]);
+                            $('#start-' + key).val(Math.round(data[key][0]*10)/10);
+                            $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
                             makeSlider('slider-' + key, key, data[key])
                         }
                     } else {
@@ -409,8 +409,8 @@
                             $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
                         }
                         else if (key == 'depth') {
-                            $('#start-depth').val(data[key][0]);
-                            $('#end-depth').val(data[key][1]);
+                            $('#start-depth').val(Math.round(data[key][0]*10)/10);
+                            $('#end-depth').val(Math.round(data[key][1]*10)/10);
                         }
                     }
                     
