@@ -90,7 +90,8 @@ class STOQSQManager(object):
         '''
         Get the count of measured parameters giving the exising query
         '''
-        if self.getMeasuredParametersQS():
+        qs_mp = self.getMeasuredParametersQS()
+        if qs_mp:
             return qs_mp.count()
         else:
             return 0
@@ -103,14 +104,10 @@ class STOQSQManager(object):
 
         logger.info(pprint.pformat(self.kwargs))
         if self.kwargs.has_key('parameters'):
-            if self.kwargs['parameters'] is not None:
+            if self.kwargs['parameters']:
                 qparams['parameter__uuid__in'] = self.kwargs['parameters']
-        if not qparams['parameter__uuid__in']:
-            logger.debug('Must have a parameter selected in order to count and retreive  measurements')
-            return None
-
         if self.kwargs.has_key('platforms'):
-            if self.kwargs['platforms'] is not None:
+            if self.kwargs['platforms']:
                 qparams['parameter__activityparameter__activity__platform__uuid__in'] = self.kwargs['platforms']
         if self.kwargs.has_key('time'):
             if self.kwargs['time'][0] is not None:
@@ -127,6 +124,8 @@ class STOQSQManager(object):
         qs_mp = models.MeasuredParameter.objects.filter(**qparams)
         if qs_mp:
             logger.debug(pprint.pformat(str(qs_mp.query)))
+        else:
+            logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
         return qs_mp
 
     def getParameters(self):
