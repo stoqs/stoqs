@@ -20,9 +20,10 @@ class STOQSQManager(object):
         This object should be created by passing in an HTTPRequest Object, an HTTPResponse object
         and the name of the database to be used.
         '''
-        self.request=request
-        self.dbname=dbname
-        self.response=response
+        self.request = request
+        self.dbname = dbname
+        self.response = response
+        self.qs_mp = None
         
     def buildQuerySet(self, **kwargs):
         '''
@@ -35,12 +36,12 @@ class STOQSQManager(object):
         and the calls to this method meet the requirements stated above.
         '''
         if (not kwargs):
-            qs=models.Activity.objects.using(self.dbname).select_related(depth=3).filter(activityparameter__parameter__pk__isnull=False,
-                                                                                         activityparameter__activity__pk__isnull=False,
-                                                                                         platform__pk__isnull=False,
-                                                                                         instantpoint__measurement__pk__isnull=False)
+            qs = models.Activity.objects.using(self.dbname).select_related(depth=3).filter(activityparameter__parameter__pk__isnull=False,
+                                                                                           activityparameter__activity__pk__isnull=False,
+                                                                                           platform__pk__isnull=False,
+                                                                                           instantpoint__measurement__pk__isnull=False)
         else:
-            qs=models.Activity.objects.using(self.dbname).select_related(depth=3).all()
+            qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()
 
         for k, v in kwargs.iteritems():
             '''
@@ -51,9 +52,9 @@ class STOQSQManager(object):
             if hasattr(self, '_%sQ' % (k,)):
                 # Call the method if it exists, and add the resulting Q object to the filtered
                 # queryset.
-                q=getattr(self,'_%sQ' % (k,))(v)
-                qs=qs.filter(q)
-        self.qs=qs.distinct()
+                q = getattr(self,'_%sQ' % (k,))(v)
+                qs = qs.filter(q)
+        self.qs = qs.distinct()
         self.kwargs = kwargs
         
     def generateOptions(self):
@@ -74,9 +75,9 @@ class STOQSQManager(object):
                            'count': self.getCount,
                            }
         
-        results={}
+        results = {}
         for k,v in options_functions.iteritems():
-            results[k]=v()
+            results[k] = v()
         #results['parameters']=[('tet',"1"),('test',"2")]
         logger.info(pprint.pformat(str(self.qs.query)))
         logger.info(pprint.pformat(results))
@@ -90,7 +91,19 @@ class STOQSQManager(object):
         '''
         Get the count of measured parameters giving the exising query
         '''
-        qparams={}
+
+        qs_mp = self.getMeasuredParametersQS()
+        if qs_mp:
+            logger.info(pprint.pformat(str(qs_mp.query)))
+            return qs_mp.count()
+        else:
+            return 0
+        
+    def getMeasuredParametersQS(self):
+        '''
+        Return query set of MeasuremedParameters given the current constraints.
+        '''
+        qparams = {}
 
         logger.info(pprint.pformat(self.kwargs))
         if self.kwargs.has_key('parameters'):
@@ -107,13 +120,8 @@ class STOQSQManager(object):
             if self.kwargs['depth'][1] is not None:
                 qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
 
-        qs_meas = models.MeasuredParameter.objects.filter(**qparams)
-        if qs_meas:
-            logger.info(pprint.pformat(str(qs_meas.query)))
-            return qs_meas.count()
-        else:
-            return 0
-        
+        return models.MeasuredParameter.objects.filter(**qparams)
+
     def getParameters(self):
         '''
         Get a list of the unique parameters that are left based on the current query criteria.  Also
@@ -226,12 +234,12 @@ class STOQSQManager(object):
         '''
         This method will generate a pseudo-query, and then normalize it to a standard SQL query.  While for
         PostgreSQL this is usually the actual query, we might need to massage it a bit to handle quoting
-        issues and such.  The string representation of the querset's query attribute gives us the query.
+        issues and such.  The string representation of the queryset's query attribute gives us the query.
         
         This is really useful when we want to generate a new mapfile based on the current query result.  We just want
         the WHERE clause of the query, since that's where the predicate exists.
         '''
-        querystring=str(self.qs.query)
+        querystring = str(self.qs.query)
         
         return querystring
 
