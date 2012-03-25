@@ -62,8 +62,8 @@ urlpatterns = patterns('',
     url(pre + r'campaign.?' + formatPat, 'stoqs.views.showCampaign', {}, name='show-campaign'),
     url(pre + r'resource.?' + formatPat, 'stoqs.views.showResource', {}, name='show-resource'),
     url(pre + r'resourceType.?' + formatPat, 'stoqs.views.showResourceType', {}, name='show-resourcetype'),
-    url(pre + r'activity_resource.?' + formatPat, 'stoqs.views.showActivityResource', {}, name='show-activityresource'),
-    url(pre + r'activity_parameter.?' + formatPat, 'stoqs.views.showActivityParameter', {}, name='show-activityparameter'),
+    url(pre + r'activityresource.?' + formatPat, 'stoqs.views.showActivityResource', {}, name='show-activityresource'),
+    url(pre + r'activityparameter.?' + formatPat, 'stoqs.views.showActivityParameter', {}, name='show-activityparameter'),
 
     # Position queries (last, since, between)
     url(pre + r'position/(?P<name>[^/]+)/last/(?P<number>\d{1,10})(?P<unit>[smhdw]?)/data.' + formatPat, 'stoqs.views.showLastPositions', {}, name='show-last-positions'),
