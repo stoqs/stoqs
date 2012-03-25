@@ -11,12 +11,7 @@ __status__ = "Development"
 __doc__ = '''
 
 The URL patterns for the stoqs database web application.  The first field specifies the
-database that is automatically routed to the associated database defined in settings.py,
-e.g.:
-
-  http://localhost:8000/stoqs_sept2010/platformTypes
-  http://localhost:8000/stoqs_june2011/platformNames
-  http://localhost:8000/stoqs_nov2011/platformAssociations.csv
+database that is automatically routed to the associated database defined in settings.py.
 
 
 Mike McCann
@@ -58,12 +53,6 @@ urlpatterns = patterns('',
     url(pre + r'parametersWMS$', 'stoqs.views.wms.showParametersWMS', {}, name='show-parameters-wms'),
     url(pre + r'platformsWMS$', 'stoqs.views.wms.showPlatformsWMS', {}, name='show-platforms-wms'),
 
-    # Type and name queries
-    #url(pre + r'platformTypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platform-types'),
-    #url(pre + r'platformNames.?' + formatPat, 'stoqs.views.showPlatformNames', {}, name='show-platform-names'),
-    url(pre + r'platformNamesOfType/(?P<ptn>[^/]+).?' + formatPat, 'stoqs.views.showPlatformNamesOfType', {}, name='show-platform-names-of-type'),
-    url(pre + r'platformAssociations.?' + formatPat, 'stoqs.views.showPlatformAssociations', {}, name='show-platform-associations'),
-
     # All STOQS objects - full object queries with .json, .xml, .html, and .csv responses
     url(pre + r'platform.?' + formatPat, 'stoqs.views.showPlatform', {}, name='show-platform'),
     url(pre + r'platformType.?' + formatPat, 'stoqs.views.showPlatformType', {}, name='show-platformtype'),
@@ -75,12 +64,6 @@ urlpatterns = patterns('',
     url(pre + r'resourceType.?' + formatPat, 'stoqs.views.showResourceType', {}, name='show-resourcetype'),
     url(pre + r'activity_resource.?' + formatPat, 'stoqs.views.showActivityResource', {}, name='show-activityresource'),
     url(pre + r'activity_parameter.?' + formatPat, 'stoqs.views.showActivityParameter', {}, name='show-activityparameter'),
-
-    #url(pre + r'parameters.?' + formatPat, 'stoqs.views.showParameters', {}, name='show-parameters'),
-    #url(pre + r'platforms.?' + formatPat, 'stoqs.views.showPlatforms', {}, name='show-platforms'),
-    #url(pre + r'platformtypes.?' + formatPat, 'stoqs.views.showPlatformTypes', {}, name='show-platformtypes'),
-    #url(pre + r'activities.?' + formatPat, 'stoqs.views.showActivities', {}, name='show-activities'),
-    #url(pre + r'activitytypes.?' + formatPat, 'stoqs.views.showActivityTypes', {}, name='show-activitytypes'),
 
     # Position queries (last, since, between)
     url(pre + r'position/(?P<name>[^/]+)/last/(?P<number>\d{1,10})(?P<unit>[smhdw]?)/data.' + formatPat, 'stoqs.views.showLastPositions', {}, name='show-last-positions'),
