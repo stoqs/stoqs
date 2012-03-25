@@ -71,7 +71,6 @@ class BaseOutputer(object):
 
         fh = open(self.html_tmpl_path, 'w')
         for line in response:
-            logger.debug(line)
             fh.write(line)
 
 

@@ -52,61 +52,72 @@ class BaseAndMeasurementViewsTestCase(TestCase):
 
     # Base class view tests
     def test_campaign(self):
-        req = '/test_stoqs/campaign'
-        response = self.client.get(req)
-        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+        for fmt in self.format_types:
+            req = reverse('show-campaign', kwargs={'format': fmt,
+                                                   'dbAlias': 'default'})
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_parameter(self):
        for fmt in self.format_types:
-           req = '/test_stoqs/parameter.%s' % fmt
+           req = reverse('show-parameter', kwargs={'format': fmt,
+                                                   'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_platform(self):
        for fmt in self.format_types:
-           req = '/test_stoqs/platform.%s' % fmt
+           req = reverse('show-platform', kwargs={'format': fmt,
+                                                  'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_platformType(self):
        for fmt in self.format_types:
-            req = '/test_stoqs/platformType.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+           req = reverse('show-platformtype', kwargs={'format': fmt,
+                                                      'dbAlias': 'default'})
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_activity(self):
        for fmt in self.format_types:
-           req = '/test_stoqs/activity.%s' % fmt
+           req = reverse('show-activity', kwargs={'format': fmt,
+                                                  'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_activityType(self):
        for fmt in self.format_types:
-           req = '/test_stoqs/activityType.%s' % fmt
+           req = reverse('show-activitytype', kwargs={'format': fmt,
+                                                      'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_activity_parameter(self):
        for fmt in self.format_types:
-           req = '/test_stoqs/activity_parameter.%s' % fmt
+           req = reverse('show-activityparameter', kwargs={'format': fmt,
+                                                           'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_resource(self):
        for fmt in self.format_types:
-           req = '/test_stoqs/resource.%s' % fmt
+           req = reverse('show-resource', kwargs={'format': fmt,
+                                                  'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_resourceType(self):
        for fmt in self.format_types:
-           req = '/test_stoqs/resourceType.%s' % fmt
+           req = reverse('show-resourcetype', kwargs={'format': fmt,
+                                                      'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_activity_resource(self):
        for fmt in self.format_types:
-           req = '/test_stoqs/activity_resource.%s' % fmt
+           req = reverse('show-activityresource', kwargs={'format': fmt,
+                                                          'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
