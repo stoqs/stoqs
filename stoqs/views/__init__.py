@@ -167,49 +167,7 @@ def showActivityParameter(request, format = 'html'):
 
 
 # Following are older views that should be migrated to the new way of doing them above.
-def showPlatformNames(request, format = 'html'):
-	pList = mod.Platform.objects.using('default').all().order_by('name')
-	if format == 'csv':
-		response = HttpResponse(mimetype='text/csv')
-		response['Content-Disposition'] = 'attachment; filename=platformNames.csv'
-		writer = csv.writer(response)
 
-		writer.writerow(['PlatformName'])
-		for p in pList:
-			writer.writerow([p.name])
-		return response
-		
-	else:
-		return render_to_response('platformName.html', {'p_list': pList})
-
-
-
-def showPlatformNamesOfType(request, ptn, format = 'html'):
-	pList = mod.Platform.objects.filter(platformtype__name = ptn).order_by('name')
-	return render_to_response('platformNamesOfType.html', {'p_list': pList, 'type': ptn})
-
-
-
-def showPlatformAssociations(request, format = 'html'):
-	ptList = mod.PlatformType.objects.all().order_by('-name')
-	csvList = []
-	pptList = []
-	for pt in ptList:
-		pList = mod.Platform.objects.filter(platformtype__name = pt.name).order_by('name')
-		csvList.extend([ "%s,%s" % (pt.name, p.name) for p in pList ])
-		pptList.extend([ (pt.name, p.name) for p in pList ])
-
-	if format == 'csv':
-		response = HttpResponse(mimetype='text/csv')
-		response['Content-Disposition'] = 'attachment; filename=platformAssociations.csv'
-		writer = csv.writer(response)
-
-		writer.writerow(['PlatformType', 'PlatformName'])
-		for ppt in pptList:
-			writer.writerow([ppt[0], ppt[1]])
-		return response
-	else:
-		return render_to_response('platformAssociations.html', {'ppt_list': pptList})
 
 # The show...() functions started off simple, but then I added options of 'ofType' and 'countFlag' and wished to
 # reuse the query and output format functionality and the logic in the functions became more complicated.  Perhaps
