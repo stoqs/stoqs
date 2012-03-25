@@ -69,9 +69,10 @@ class BaseOutputer(object):
 
         logger.debug("Writing template: %s", self.html_tmpl_path)
 
-        ##fh = open(self.html_tmpl_path, 'w')
+        fh = open(self.html_tmpl_path, 'w')
         for line in response:
-            self.html_tmpl_tmpfile.write(line)
+            logger.debug(line)
+            fh.write(line)
 
 
     def process_request(self):
