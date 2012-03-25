@@ -23,7 +23,6 @@ class STOQSQManager(object):
         self.request = request
         self.dbname = dbname
         self.response = response
-        self.qs_mp = None
         
     def buildQuerySet(self, **kwargs):
         '''
@@ -91,17 +90,14 @@ class STOQSQManager(object):
         '''
         Get the count of measured parameters giving the exising query
         '''
-
-        qs_mp = self.getMeasuredParametersQS()
-        if qs_mp:
-            logger.info(pprint.pformat(str(qs_mp.query)))
+        if self.getMeasuredParametersQS():
             return qs_mp.count()
         else:
             return 0
         
     def getMeasuredParametersQS(self):
         '''
-        Return query set of MeasuremedParameters given the current constraints.
+        Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
         '''
         qparams = {}
 
@@ -109,6 +105,13 @@ class STOQSQManager(object):
         if self.kwargs.has_key('parameters'):
             if self.kwargs['parameters'] is not None:
                 qparams['parameter__uuid__in'] = self.kwargs['parameters']
+        if not qparams['parameter__uuid__in']:
+            logger.debug('Must have a parameter selected in order to count and retreive  measurements')
+            return None
+
+        if self.kwargs.has_key('platforms'):
+            if self.kwargs['platforms'] is not None:
+                qparams['parameter__activityparameter__activity__platform__uuid__in'] = self.kwargs['platforms']
         if self.kwargs.has_key('time'):
             if self.kwargs['time'][0] is not None:
                 qparams['measurement__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
@@ -120,7 +123,11 @@ class STOQSQManager(object):
             if self.kwargs['depth'][1] is not None:
                 qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
 
-        return models.MeasuredParameter.objects.filter(**qparams)
+        logger.debug(pprint.pformat(qparams))
+        qs_mp = models.MeasuredParameter.objects.filter(**qparams)
+        if qs_mp:
+            logger.debug(pprint.pformat(str(qs_mp.query)))
+        return qs_mp
 
     def getParameters(self):
         '''
