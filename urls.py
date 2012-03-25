@@ -65,47 +65,6 @@ urlpatterns = patterns('',
     url(pre + r'activityresource.?' + formatPat, 'stoqs.views.showActivityResource', {}, name='show-activityresource'),
     url(pre + r'activityparameter.?' + formatPat, 'stoqs.views.showActivityParameter', {}, name='show-activityparameter'),
 
-    # Position queries (last, since, between)
-    url(pre + r'position/(?P<name>[^/]+)/last/(?P<number>\d{1,10})(?P<unit>[smhdw]?)/data.' + formatPat, 'stoqs.views.showLastPositions', {}, name='show-last-positions'),
-    url(pre + r'position/([^/]+)/last/(\d{1,10})([smhdw]?)/stride/(\d+)/data.' + formatPat, 'stoqs.views.showLastPositions', {}, name='show-last-positions'),
-    url(pre + r'position/([^/]+)/last/(\d{1,10})([smhdw]?)/count$', 'stoqs.views.showLastPositions', {'countFlag': True}, name='show-last-positions'),
-
-    url(pre + r'position/(?P<name>\w+)/since/(?P<startDate>\w+)/data.' + formatPat, 'stoqs.views.showSincePositions', {}, name='show-since-positions'),
-    url(pre + r'position/([^/]+)/since/([^/]+)/stride/(\d+)/data.' + formatPat, 'stoqs.views.showSincePositions', {}, name='show-since-positions'),
-    url(pre + r'position/([^/]+)/since/([^/]+)/count$', 'stoqs.views.showSincePositions', {'countFlag': True}, name='show-since-positions'),
-
-    url(pre + r'position/(?P<name>\w+)/between/(?P<startDate>[^/]+)/(?P<endDate>[^/]+)/data.' + formatPat, 'stoqs.views.showBetweenPositions', {}, name='show-between-positions'),
-    url(pre + r'position/([^/]+)/between/([^/]+)/([^/]+)/stride/(\d+)/data.' + formatPat, 'stoqs.views.showBetweenPositions', {}, name='show-between-positions'),
-    url(pre + r'position/([^/]+)/between/([^/]+)/([^/]+)/count$', 'stoqs.views.showBetweenPositions', {'countFlag': True}, name='show-between-positions'),
-
-    # Repeat last position queries, but for 'OfType'
-    url(pre + r'positionOfType/(?P<name>\w+)/last/(?P<number>\d{1,10})(?P<unit>[smhdw]?)/data.' + formatPat, 
-	   'stoqs.views.showLastPositions', {'ofType': True}, name='show-last-positions'),
-    url(pre + r'positionOfType/(\w+)/last/(\d{1,10})([smhdw]?)/stride/(\d+)/data.' + formatPat, 
-	   'stoqs.views.showLastPositions', {'ofType': True}, name='show-last-positions'),
-    url(pre + r'positionOfType/([^/]+)/last/(\d{1,10})([smhdw]?)/count$', 
-       'stoqs.views.showLastPositions', {'ofType': True, 'countFlag': True}, name='show-last-positions'),
-
-    url(pre + r'positionOfType/(?P<name>[^/]+)/since/(?P<startDate>\w+)/data.' + formatPat, 
-	   'stoqs.views.showSincePositions', {'ofType': True}, name='show-since-positions'),
-    url(pre + r'positionOfType/(\w+)/since/([^/]+)/stride/(\d+)/data.' + formatPat, 
-	   'stoqs.views.showSincePositions', {'ofType': True}, name='show-since-positions'),
-    url(pre + r'positionOfType/([^/]+)/since/(\w+)/count$', 
-       'stoqs.views.showSincePositions', {'ofType': True, 'countFlag': True}, name='show-since-positions'),
-
-    url(pre + r'positionOfType/(?P<name>[^/]+)/between/(?P<startDate>\w+)/(?P<endDate>\w+)/data.' + formatPat, 
-	   'stoqs.views.showBetweenPositions', {'ofType': True}, name='show-between-positions'),
-    url(pre + r'positionOfType/([^/]+)/between/([^/]+)/([^/]+)/stride/(\d+)/data.' + formatPat, 
-	    'stoqs.views.showBetweenPositions', {'ofType': True}, name='show-between-positions'),
-    url(pre + r'positionOfType/([^/]+)/between/([^/]+)/([^/]+)/count$', 
-        'stoqs.views.showBetweenPositions', {'ofType': True, 'countFlag': True}, name='show-between-positions'),
-
-    # Position 'OfActivity' queries
-    url(pre + r'positionOfActivity/name/(?P<aName>[^/]+)/type/(?P<aType>[^/]+)/data.' + formatPat, 
-	   'stoqs.views.showPositionsOfActivity', {}, name='show-positions-of-activity'),
-    url(pre + r'positionOfActivity/name/([^/]+)/type/([^/]+)/stride/(\d+)/data.' + formatPat, 
-	   'stoqs.views.showPositionsOfActivity', {}, name='show-positions-of-activity'),
-
     # Measurements  
     url(pre + 'measurement/' + btwnCl + formatCl, 
         'stoqs.views.measurement.showBetweenMeasurements', {}, name='show-between-meas'),
