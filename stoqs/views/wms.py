@@ -45,7 +45,6 @@ class Color(object):
 
 class ActivityView(object):
 
-	mapfileTemplate = 'activity.map'
 	olWebPageTemplate = 'activitiesWMS.html'
 
 	# For using the same colors
@@ -64,13 +63,15 @@ class ActivityView(object):
 		self.mappath = tempfile.NamedTemporaryFile(prefix='activity_', suffix='.map').name
 		self.geo_query = geo_query
 
-	def generateActivityMapFile(self):
+	def generateActivityMapFile(self, template = 'activity.map'):
 		'''Build mapfile for activity from template.  Write it to a location that mapserver can see it.
 	        The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
 		This creates a dynamic 
 		'''
 		# mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
-		response = render_to_response(self.mapfileTemplate, {'mapserver_host': settings.MAPSERVER_HOST,
+        logger.debug(pprint.pformat(dbconn))
+        logger.debug(self.geo_query)
+		response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
 							'list': self.itemList,
 		     					'wfs_title': 'WFS title for an Activity',
 							'dbconn': settings.DATABASES[self.request.META['dbAlias']],
