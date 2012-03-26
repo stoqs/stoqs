@@ -85,19 +85,6 @@ def queryData(request, format=None):
     
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     qm.buildQuerySet(**params)
-
-
-    # Build Mapserver mapfile using where clause from qm
-    geo_query = '''geom from (select a.maptrack as geom, a.id as gid, 
-        a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
-        from stoqs_activity a
-        where %s)
-        as subquery using unique gid using srid=4326''' % qm.getSQLWhere()
-
-    logger.debug(geo_query)
-    av = ActivityView(request, qm.qs, geo_query)
-    ##return av.process_request()
-
     
     if not format: # here we export in a given format, or just provide summary data if no format is given.
         response['Content-Type'] = 'text/json'
@@ -121,10 +108,25 @@ def queryUI(request):
     '''
     Build and return main query web page
     '''
-    formats={'csv': 'Comma-Separated Values (CSV)',
-             'dap': 'OPeNDAP Format',
-             'kml': 'KML (Google Earth)'}
+    response = HttpResponse()
+    params = {}
+    qm = STOQSQManager(request, response, request.META['dbAlias'])
+    qm.buildQuerySet(**params)
+
+    # Build Mapserver mapfile using where clause from qm
+    geo_query = '''maptrack as geom from (%s)
+        as subquery using unique gid using srid=4326''' % qm.getSQLWhere().replace('"', '')  # Need add ' around IN and date values, add gid & geom aliases
+
+    logger.debug(geo_query)
+    av = ActivityView(request, [], geo_query)
+    av.generateActivityMapFile('stoqsquery.map')
+
+    ##formats={'csv': 'Comma-Separated Values (CSV)',
+    ##         'dap': 'OPeNDAP Format',
+    ##         'kml': 'KML (Google Earth)'}
+    formats={'kml': 'KML (Google Earth)'}
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
-                                                  'formats': formats,}, 
+                                                  'formats': formats,
+                                                  'mappath': av.mappath,}, 
                             context_instance=RequestContext(request))
 
