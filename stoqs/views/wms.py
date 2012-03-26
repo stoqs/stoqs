@@ -30,6 +30,7 @@ import logging
 import os
 from random import randint
 import tempfile
+import pprint
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ class ActivityView(object):
         This creates a dynamic 
         '''
         # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
-        logger.debug(pprint.pformat(dbconn))
+        logger.debug(pprint.pformat(settings.DATABASES[self.request.META['dbAlias']]))
         logger.debug(self.geo_query)
         response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,

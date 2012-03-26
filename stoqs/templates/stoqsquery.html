@@ -486,23 +486,20 @@
           /*
            * Maptrack layers selected by UI - following the method in activityWMS.html
            */
-          {% for item in list %}
-          itemid_{{ item.id }} = new OpenLayers.Layer.WMS(
-                    "{{ item.name }}",
-                    "http://{{ mapserver_host }}/cgi-bin/mapserv",
-                    { layers: '{{ item.name }}',
-                      map: '{{ mappath }}',
+          track_lines = new OpenLayers.Layer.WMS(
+                    "track_lines",
+                    "http://172.16.130.129/cgi-bin/mapserv",
+                    { layers: 'track_lines',
+                      map: '/tmp/activity_zSZccr.map',
+                      //map: '{{ mappath }}',
                       transparent: 'True' },
                     { units: 'degrees',
                      // displayInLayerSwitcher: false,
                       projection: "EPSG:900913",
                       reproject: false,
-                      visibility: false,
+                      visibility: true,
                       displayOutsideMaxExtent: true });
-          map.addLayers([itemid_{{ item.id }}]); 
-
-          addLayer(itemid_{{item.id}});
-          {% endfor %}
+          map.addLayer(track_lines); 
 
 
 
