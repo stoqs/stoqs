@@ -22,19 +22,30 @@ from utils import encoders
 
 import logging 
 import KML
+from wms import ActivityView
 
 logger = logging.getLogger(__name__)
 
-def kmlResponse(qm, response):
-    logger.info('kml output')
+class InvalidMeasuredParameterQueryException(Exception):
+    pass
+
+class NoParameterSelectedException(Exception):
+    pass
+
+def kmlResponse(request, qm, response):
+    '''
+    Return a response that is a KML represenation of the existing MeasuredParameter query tat is in qm
+    '''
     qs_mp = qm.getMeasuredParametersQS()
     if qs_mp is None:
-        response['Content-Type'] = 'text/plain'
-        response.write('qs_mp is None')
-        return response
+        raise InvalidMeasuredParameterQueryException
 
-    pName = qm.getParameters()[0][0]
-    logger.info("pName = %s", pName)
+    try:
+        pName = qm.getParameters()[0][0]
+        logger.info("pName = %s", pName)
+    except IndexError:
+        raise NoParameterSelectedException
+
     data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
                  mp.measurement.depth, pName, mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
                  for mp in qs_mp]
@@ -46,12 +57,19 @@ def kmlResponse(qm, response):
             dataHash[d[6]] = []
             dataHash[d[6]].append(d)
 
-    kml = KML.makeKML(dataHash, pName, 'title', 'Description', qm.getTime()[0], qm.getTime()[1])
+    folderName = "%s_%.1f_%.1f" % (pName, qm.getDepth()[0], qm.getDepth()[1])
+    descr = request.get_full_path().replace('&', '&amp;')
+    logger.debug(descr)
+    kml = KML.makeKML(dataHash, pName, folderName, descr, qm.getTime()[0], qm.getTime()[1])
     response['Content-Type'] = 'application/vnd.google-earth.kml+xml'
     response.write(kml)
     return response
 
 def queryData(request, format=None):
+    '''
+    Process data requests from the main query web page.  Returns both summary Activity and actual MeasuredParameter data
+    as retreived from STOQSQManager.
+    '''
     response = HttpResponse()
     query_parms = {'parameters': 'parameters', # This should be specified once in the query string for each parameter.
                    'time': ('start_time','end_time'), # Single values
@@ -67,6 +85,19 @@ def queryData(request, format=None):
     
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     qm.buildQuerySet(**params)
+
+
+    # Build Mapserver mapfile using where clause from qm
+    geo_query = '''geom from (select a.maptrack as geom, a.id as gid, 
+        a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
+        from stoqs_activity a
+        where %s)
+        as subquery using unique gid using srid=4326''' % qm.getSQLWhere()
+
+    logger.debug(geo_query)
+    av = ActivityView(request, qm.qs, geo_query)
+    ##return av.process_request()
+
     
     if not format: # here we export in a given format, or just provide summary data if no format is given.
         response['Content-Type'] = 'text/json'
@@ -76,16 +107,20 @@ def queryData(request, format=None):
     elif format == 'json':
         response['Content-Type'] = 'text/json'
         response.write(serializers.serialize('json', qm.qs))
+
     elif format == 'csv':
         logger.info('csv output')
     elif format == 'dap':
         logger.info('dap output')
     elif format == 'kml':
-        return kmlResponse(qm, response)
+        return kmlResponse(request, qm, response)
 
     return response
     
 def queryUI(request):
+    '''
+    Build and return main query web page
+    '''
     formats={'csv': 'Comma-Separated Values (CSV)',
              'dap': 'OPeNDAP Format',
              'kml': 'KML (Google Earth)'}
