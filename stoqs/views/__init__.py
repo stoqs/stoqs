@@ -52,10 +52,9 @@ class BaseOutputer(object):
         self.stoqs_object = stoqs_object
         self.stoqs_object_name = stoqs_object._meta.verbose_name.lower().replace(' ', '_')
         self.html_template = '%s_tmpl.html' % self.stoqs_object_name
-        # The tmpfile  must be writable by the server running this Django app, whereever tempfile puts it should work
-        # (Watch for issues (file ownership) when transitioning to production.)
-        self.html_tmpl_tmpfile = tempfile.NamedTemporaryFile(prefix=self.stoqs_object_name+'_', suffix='.html')
-        self.html_tmpl_path = self.html_tmpl_tmpfile.name
+        # This file must be writable by the server running this Django app, whereever tempfile puts it should work.
+        # /dev/shm should be occasionally be scrubbed of old tempfiles by a cron(1) job.
+        self.html_tmpl_path = tempfile.NamedTemporaryFile(dir='/dev/shm', prefix=self.stoqs_object_name+'_', suffix='.html').name
 
     def build_html_template(self):
         '''Build template for stoqs_object using generic html template with a column for each attribute
