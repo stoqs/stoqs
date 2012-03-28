@@ -234,7 +234,7 @@ class STOQSQManager(object):
         return q
     
     #
-    # Method to get the query used based on the current Q object.
+    # Methods to get the query used based on the current Q object.
     #
     def getSQLWhere(self):
         '''
@@ -248,4 +248,40 @@ class STOQSQManager(object):
         querystring = str(self.qs.query)
         
         return querystring
+
+    def getMapfileDataStatement(self):
+        '''
+        This method generates a string that can be put into a Mapserver mapfile DATA statment.
+        It is customized for Postgresql dialect.
+        '''
+
+        # Remove double quotes from around all table and colum names
+        q = str(self.qs.query).replace('"', '')
+        logger.info('Before: %s', q)
+
+        # Add aliases for geom and gid
+        q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
+        q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
+   
+        # Put quotes around any IN parameters:
+        #  IN (a81563b5f2464a9ab2d5d7d78067c4d4)
+        m = re.search( r' IN \(([\S^\)]+)\)', q)
+        if m:
+            logger.info(m.group(1))
+            q = re.sub( r' IN \((.*)\)', ' IN (\'' + m.group(1) + '\')', q)
+
+        # Put quotes around any DATE TIME parameters:
+        #  2010-10-27 07:12:10
+        m = re.search( r' (\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)', q)
+        if m:
+            logger.info(m.group(1))
+            q = re.sub( r' \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d', ' \'' + m.group(1) + '\'', q)
+
+        logger.info('After: %s', q)
+
+        # Query for mapserver
+        geo_query = '''geom from (%s)
+            as subquery using unique gid using srid=4326''' % q
+        
+        return geo_query
 
