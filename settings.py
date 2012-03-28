@@ -68,7 +68,7 @@ LOGGING = {
             'level':'ERROR',
         },
         'stoqs.db_router': {
-            'handlers':['null'],
+            'handlers':['console'],
             'propagate': False,
             'level':'ERROR',
         },
