@@ -16,13 +16,16 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse
 from django.utils import simplejson
+from django.conf import settings
 from django.core import serializers
 from utils.STOQSQManager import STOQSQManager
 from utils import encoders
 
+
 import logging 
 import KML
 from wms import ActivityView
+from tempfile import NamedTemporaryFile
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +89,11 @@ def queryData(request, format=None):
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     qm.buildQuerySet(**params)
     
+    av = ActivityView(request, [], qm.getMapfileDataStatement())
+    av.generateActivityMapFile(template='stoqsquery.map')
+    logger.info("av.mappath = %s", av.mappath)
+    logger.info("request.session['mappath'] = %s", request.session['mappath'])
+
     if not format: # here we export in a given format, or just provide summary data if no format is given.
         response['Content-Type'] = 'text/json'
         response.write(simplejson.dumps(qm.generateOptions(),
@@ -108,18 +116,13 @@ def queryUI(request):
     '''
     Build and return main query web page
     '''
-    response = HttpResponse()
-    params = {}
-    qm = STOQSQManager(request, response, request.META['dbAlias'])
-    qm.buildQuerySet(**params)
 
-    # Build Mapserver mapfile using where clause from qm
-    geo_query = '''maptrack as geom from (%s)
-        as subquery using unique gid using srid=4326''' % qm.getSQLWhere().replace('"', '')  # Need add ' around IN and date values, add gid & geom aliases
-
-    logger.debug(geo_query)
-    av = ActivityView(request, [], geo_query)
-    av.generateActivityMapFile('stoqsquery.map')
+    ##request.session.flush()
+    if request.session.has_key('mappath'):
+        logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
+    else:
+        request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
+        logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     ##formats={'csv': 'Comma-Separated Values (CSV)',
     ##         'dap': 'OPeNDAP Format',
@@ -127,6 +130,8 @@ def queryUI(request):
     formats={'kml': 'KML (Google Earth)'}
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
                                                   'formats': formats,
-                                                  'mappath': av.mappath,}, 
+                                                  'mapserver_host': settings.MAPSERVER_HOST,
+                                                  'mappath': request.session['mappath'],
+                                                 }, 
                             context_instance=RequestContext(request))
 
