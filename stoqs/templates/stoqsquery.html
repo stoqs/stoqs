@@ -51,7 +51,7 @@
             <ul class="nav">
               <li class="active"><a href="#">Home</a></li>
               <li><a href="http://www.mbari.org">MBARI</a></li>
-              <li><a href="http://www.mbari.org/news/contact_us.html">Contact</a></li>
+              <li><a href="{% url show-campaigns %}">Campaigns</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -500,10 +500,11 @@
            */
           track_lines = new OpenLayers.Layer.WMS(
                     "track_lines",
-                    "http://172.16.130.129/cgi-bin/mapserv",
+                    //"http://172.16.130.129/cgi-bin/mapserv",
+                    "http://{{ mapserver_host }}/cgi-bin/mapserv",
                     { layers: 'track_lines',
-                      map: '/tmp/activity_zSZccr.map',
-                      //map: '{{ mappath }}',
+                      //map: '/tmp/activity_zSZccr.map',
+                      map: '{{ mappath }}',
                       transparent: 'True' },
                     { units: 'degrees',
                      // displayInLayerSwitcher: false,
