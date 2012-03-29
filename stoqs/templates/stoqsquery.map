@@ -32,10 +32,6 @@ MAP
     CONNECTIONTYPE POSTGIS
     CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
     DATA "{{ geo_query }}"
-
-# gid and geom need to be alises
-#    DATA "geom from (SELECT DISTINCT stoqs_activity.id as gid, stoqs_activity.uuid, stoqs_activity.campaign_id, stoqs_activity.platform_id, stoqs_activity.activitytype_id, stoqs_activity.name, stoqs_activity.comment, stoqs_activity.startdate, stoqs_activity.enddate, stoqs_activity.num_measuredparameters, stoqs_activity.loaded_date, stoqs_activity.maptrack as geom, stoqs_activity.mindepth, stoqs_activity.maxdepth, stoqs_platform.id, stoqs_platform.uuid, stoqs_platform.name, stoqs_platform.platformtype_id, stoqs_platformtype.id, stoqs_platformtype.uuid, stoqs_platformtype.name FROM stoqs_activity INNER JOIN stoqs_platform ON (stoqs_activity.platform_id = stoqs_platform.id) INNER JOIN stoqs_platformtype ON (stoqs_platform.platformtype_id = stoqs_platformtype.id)) as subquery using unique gid using srid=4326"
-
       DEBUG 2
       DUMP true
       TYPE line
