@@ -439,26 +439,26 @@
             // This has to be done after 100ms so that standard bootstrap functionality happens first.
             setTimeout(function() { t.select()}, 100);
         });
-        
+                
         /* 
          * Setup OpenLayers with some default background layers.
          */
-          OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
-          OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
-          var map = null; 
-          ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
-          var options = {
-               projection: new OpenLayers.Projection("EPSG:900913"),
-               displayProjection: new OpenLayers.Projection("EPSG:4326"),
-               units: "m",
-               maxResolution: 156543.0339,
-               maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
-                                                 20037508.34, 20037508.34),
-               controls: [ctrlGraticule]
-          };
-          map = new OpenLayers.Map('map',options);
+         OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
+         OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
+         var map = null; 
+         ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
+         var options = {
+             projection: new OpenLayers.Projection("EPSG:900913"),
+             displayProjection: new OpenLayers.Projection("EPSG:4326"),
+             units: "m",
+             maxResolution: 156543.0339,
+             maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
+                                               20037508.34, 20037508.34),
+             controls: [ctrlGraticule]
+         };
+         map = new OpenLayers.Map('map',options);
 
-          var bathyEsri = new OpenLayers.Layer.XYZ(
+         var bathyEsri = new OpenLayers.Layer.XYZ(
             'ESRI Ocean'
             ,'http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
             ,{
@@ -467,53 +467,50 @@
               ,wrapDateLine      : true
               ,opacity           : 1
               ,visibility        : true
-            }
-          );
-          var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
-          var gphy = new OpenLayers.Layer.Google(
-              "Google Physical",
-              {'type': google.maps.MapTypeId.TERRAIN,
-               'sphericalMercator': true}
-          );
-          var gmap = new OpenLayers.Layer.Google(
-              "Google Streets", // the default
-              {'sphericalMercator': true,
-               numZoomLevels: 20}
-          );
-          var ghyb = new OpenLayers.Layer.Google(
-              "Google Hybrid",
-              {'type': google.maps.MapTypeId.HYBRID, 
-               numZoomLevels: 20,
-               'sphericalMercator': true}
-          );
-          var gsat = new OpenLayers.Layer.Google(
-              "Google Satellite",
-              {'type': google.maps.MapTypeId.SATELLITE, 
-               numZoomLevels: 15,
-               'sphericalMercator': true}
-          );
-          map.addLayers([bathyEsri,osm,gsat,gphy,ghyb,gmap]);
-          ctrlGraticule.activate();
+             }
+         );
+         var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
+         var gphy = new OpenLayers.Layer.Google(
+             "Google Physical",
+             {'type': google.maps.MapTypeId.TERRAIN,
+              'sphericalMercator': true}
+         );
+         var gmap = new OpenLayers.Layer.Google(
+             "Google Streets", // the default
+             {'sphericalMercator': true,
+              numZoomLevels: 20}
+         );
+         var ghyb = new OpenLayers.Layer.Google(
+             "Google Hybrid",
+             {'type': google.maps.MapTypeId.HYBRID, 
+              numZoomLevels: 20,
+             'sphericalMercator': true}
+         );
+         var gsat = new OpenLayers.Layer.Google(
+             "Google Satellite",
+             {'type': google.maps.MapTypeId.SATELLITE, 
+              numZoomLevels: 15,
+              'sphericalMercator': true}
+         );
+         map.addLayers([bathyEsri,osm,gsat,gphy,ghyb,gmap]);
+         ctrlGraticule.activate();
 
           /*
-           * Maptrack layers selected by UI - following the method in activityWMS.html
+           * Maptrack layers selected by UI 
            */
           track_lines = new OpenLayers.Layer.WMS(
                     "track_lines",
-                    //"http://172.16.130.129/cgi-bin/mapserv",
                     "http://{{ mapserver_host }}/cgi-bin/mapserv",
                     { layers: 'track_lines',
-                      //map: '/tmp/activity_zSZccr.map',
                       map: '{{ mappath }}',
                       transparent: 'True' },
                     { units: 'degrees',
-                     // displayInLayerSwitcher: false,
+                      displayInLayerSwitcher: true,
                       projection: "EPSG:900913",
                       reproject: false,
                       visibility: true,
                       displayOutsideMaxExtent: true });
           map.addLayer(track_lines); 
-
 
 
           map.setCenter(new OpenLayers.LonLat(-13594478.3, 4411945.3), 9);
