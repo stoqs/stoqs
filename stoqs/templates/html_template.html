@@ -8,15 +8,13 @@
 <h1>{{ verbose_name_plural }}</h1>
 <table border="1">
 <tr>
-{% for col in cols %}
-<th>{{ col }}</th>
+{% for col in cols %}<th>{{ col }}</th>
 {% endfor %}
 </tr>
 
 {% templatetag openbrace %}% for item in list %{% templatetag closebrace %}
 <tr>
-{% for col in cols %}
-<td valign="top">{% templatetag openbrace %}{% templatetag openbrace %} item.{{ col }} {% templatetag closebrace %}{% templatetag closebrace %}</td>
+{% for col in cols %}<td valign="top">{% templatetag openbrace %}{% templatetag openbrace %} item.{{ col }} {% templatetag closebrace %}{% templatetag closebrace %}</td>
 {% endfor %}
 </tr>
 {% templatetag openbrace %}% endfor %{% templatetag closebrace %}
