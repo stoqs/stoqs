@@ -61,7 +61,7 @@ class ActivityView(object):
         '''
         self.request = request
         self.itemList = itemList
-        self.mappath = tempfile.NamedTemporaryFile(prefix='activity_', suffix='.map').name
+        self.mappath = request.session['mappath']
         self.geo_query = geo_query
 
     def generateActivityMapFile(self, template = 'activity.map'):
@@ -74,7 +74,7 @@ class ActivityView(object):
         logger.debug(self.geo_query)
         response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,
-                                'wfs_title': 'WFS title for an Activity',
+                            'wfs_title': 'WFS title for an Activity',
                             'dbconn': settings.DATABASES[self.request.META['dbAlias']],
                             'mappath': self.mappath,
                             'geo_query': self.geo_query},
