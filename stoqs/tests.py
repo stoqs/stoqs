@@ -134,6 +134,12 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         json.loads(response.content) # Verify we don't get an exception when we load the data.
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
+    def test_query_ui(self):
+        req = reverse('stoqs-query-ui', kwargs={'dbAlias': 'default'})
+        response = self.client.get(req)
+        json.loads(response.content) # Verify we don't get an exception when open the main query page
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+   
     # Measurement view tests 
     def test_measurementStandardNameBetween(self):
         # For the load of:
