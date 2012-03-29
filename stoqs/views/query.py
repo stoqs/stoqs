@@ -85,14 +85,20 @@ def queryData(request, format=None):
             params[key] = [request.GET.get(p, None) for p in value]
         else:
             params[key] = request.GET.getlist(key)
-    
+   
+    # 'mappath' should be in the session from the call to queryUI() set it here in case it's not set by queryUI() 
+    if request.session.has_key('mappath'):
+        logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
+    else:
+        request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
+        logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
+
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     qm.buildQuerySet(**params)
     
     av = ActivityView(request, [], qm.getMapfileDataStatement())
     av.generateActivityMapFile(template='stoqsquery.map')
     logger.info("av.mappath = %s", av.mappath)
-    logger.info("request.session['mappath'] = %s", request.session['mappath'])
 
     if not format: # here we export in a given format, or just provide summary data if no format is given.
         response['Content-Type'] = 'text/json'
