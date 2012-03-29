@@ -34,6 +34,7 @@ class RouterMiddleware(object):
         logger.debug(pargs)
         logger.debug("kwargs =")
         logger.debug(kwargs)
+        logger.debug("request.session.keys() = %s", request.session.keys())
         if kwargs.has_key('dbAlias'):
             # Add a thread local variable, and remove the dbAlias, since it's handled by the middleware.
             _thread_local_vars.dbAlias = kwargs.pop('dbAlias')
@@ -42,7 +43,7 @@ class RouterMiddleware(object):
             if _thread_local_vars.dbAlias == 'stoqs':
                 _thread_local_vars.dbAlias = 'default'
             
-            logger.debug("_thread_local_vars.dbAlias = " + _thread_local_vars.dbAlias)
+            logger.debug("_thread_local_vars.dbAlias = %s", _thread_local_vars.dbAlias)
             # Add as a META tag for those views that wish to use the dbAlias
             
             request.META['dbAlias'] = _thread_local_vars.dbAlias
@@ -60,7 +61,7 @@ class DatabaseRouter(object):
     def _default_db( self ):
         from django.conf import settings
         if hasattr( _thread_local_vars, 'dbAlias' ) and _thread_local_vars.dbAlias in settings.DATABASES:
-            logger.debug("DatabaseRouter: Returning dbAlias = " + _thread_local_vars.dbAlias)
+            logger.debug("DatabaseRouter: Returning dbAlias = %s", _thread_local_vars.dbAlias)
             return _thread_local_vars.dbAlias
         else:
             logger.debug("DatabaseRouter: Returning default")
