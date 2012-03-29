@@ -31,6 +31,7 @@ import os
 from random import randint
 import tempfile
 import pprint
+from tempfile import NamedTemporaryFile
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,14 @@ class ActivityView(object):
                             'geo_query': self.geo_query},
                             context_instance = RequestContext(self.request))
 
-        fh = open(self.mappath, 'w')    
+        try:
+            fh = open(self.mappath, 'w')    
+        except IOError:
+            # In case of accessed denied error, create a new mappath and store it in the session, and open that
+            self.request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
+            self.mappath = self.request.session['mappath']
+            fh = open(self.mappath, 'w')
+                
         for line in response:
             fh.write(line) 
 
