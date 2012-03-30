@@ -95,6 +95,9 @@ def queryData(request, format=None):
 
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     qm.buildQuerySet(**params)
+    options = simplejson.dumps(qm.generateOptions(),
+                               cls=encoders.STOQSJSONEncoder)
+                               # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
     
     av = ActivityView(request, [], qm.getMapfileDataStatement())
     av.generateActivityMapFile(template='stoqsquery.map')
@@ -102,13 +105,10 @@ def queryData(request, format=None):
 
     if not format: # here we export in a given format, or just provide summary data if no format is given.
         response['Content-Type'] = 'text/json'
-        response.write(simplejson.dumps(qm.generateOptions(),
-                                        cls=encoders.STOQSJSONEncoder))
-                                        # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
+        response.write(options)
     elif format == 'json':
         response['Content-Type'] = 'text/json'
         response.write(serializers.serialize('json', qm.qs))
-
     elif format == 'csv':
         logger.info('csv output')
     elif format == 'dap':
