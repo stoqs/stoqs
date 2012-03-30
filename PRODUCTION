@@ -25,15 +25,20 @@ WSGIProcessGroup stoqs
 # WSGIScriptAlias /<parent_web_site> <path_to_stoqs.wsgi_file>, e.g.:
 # WSGIScriptAlias /canon /home/student/dev/stoqsproj/stoqs.wsgi
 # (Uncomment above line, edited with web parent and stoqs.wsgi location)
- 
+
 
 3. Edit privateSettings if the DATABASE_* settings are different.  (Your Postgres
    server will most likely may have tighter access controls in a production environment.)
    
    Make sure that you have DEBUG set to False
    
+4. Copy static files to the production web server location off of it's document_root.
+   The STATIC_ROOT in settings.py must be writable by the user that executes this command:
+
+    python manage.py collectstatic
+
    
-4. Test as with a DEVELOPMENT installation:
+5. Test as with a DEVELOPMENT installation:
 
 	python manage.py test stoqs
 	
