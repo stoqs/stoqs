@@ -154,15 +154,18 @@ def showCampaigns(request):
 	    cam = Cam()
             cam.dbAlias = k
             cam.name = c.name
-            cam.description = c.description
-            cam.startdate = c.startdate
-            cam.enddate = c.enddate
+            if c.description:
+                cam.description = c.description
+            if c.startdate: 
+                cam.startdate = c.startdate + " GMT"
+            if c.enddate:
+                cam.enddate = c.enddate + " GMT"
             logger.debug("Appending to cList cam with dbAlias = %s and name = %s", cam.dbAlias, cam.name)
             cList.append(cam)
 
     logger.debug("cList = %s", cList)
 
-    return render_to_response('campaigns.html', {'cList': cList } ) 
+    return render_to_response('campaigns.html', {'cList': cList }, context_instance=RequestContext(request)) 
 
 def showActivitiesMBARICustom(request):
     '''Present list of Activities in the database.  Unlike showDatabase(), show show the Activities and their
