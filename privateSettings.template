@@ -58,9 +58,11 @@ MY_DATABASES = {
 # See http://stackoverflow.com/questions/6405173/static-files-wont-load-when-out-of-debug-in-django
 TEMPLATE_DEBUG = DEBUG = True         
 
-# Modify default logging settings, e.g. to help in debugging stoqs or django
+# Modify default logging settings, e.g. to help in debugging stoqs or django, ignored is DEBUG is False
 # Note: Must restart the development server for changes made here to take effect
-# LOGGING['loggers']['django']['level'] = 'INFO'
-# LOGGING['loggers']['stoqs']['level'] = 'INFO'
-# LOGGING['loggers']['utils']['level'] = 'INFO'
+if DEBUG:
+    LOGGING['loggers']['django']['level'] = 'INFO'
+    LOGGING['loggers']['stoqs']['level'] = 'DEBUG'
+    LOGGING['loggers']['stoqs.db_router']['level'] = 'INFO'
+    LOGGING['loggers']['utils']['level'] = 'DEBUG'
 
