@@ -120,7 +120,7 @@
                                     <table id="range-table" class="table table-condensed">
                                     <tbody>
                                         <tr>
-                                            <td colspan="2"><strong>Time Range</strong></td>
+                                            <td colspan="2"><strong>Time Range (local time)</strong></td>
                                         </tr>
                                         <tr>
                                             <td colspan="2"><div id="slider-time"></div></td>
@@ -296,6 +296,7 @@
         $('#end-' + type).val(max)
         if (updateTable) {
             rebuildFilters();
+            refreshMap();
         }
     }
     
@@ -320,9 +321,16 @@
         updateSummaryData();
     }
     
+    function refreshMap() {
+        track_lines.params.counter++;
+        alert(track_lines.params.counter)
+        track_lines.redraw(true);
+    }
+
     $(document).on('click', ".stoqs-toggle", function (event) {
         toggleField(this);
         rebuildFilters();
+        refreshMap();
     });
     
     /*
@@ -503,7 +511,8 @@
                     "http://{{ mapserver_host }}/cgi-bin/mapserv",
                     { layers: 'track_lines',
                       map: '{{ mappath }}',
-                      transparent: 'True' },
+                      transparent: 'True',
+                      'counter': 0 },
                     { units: 'degrees',
                       displayInLayerSwitcher: true,
                       projection: "EPSG:900913",
