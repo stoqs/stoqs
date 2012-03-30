@@ -6,7 +6,7 @@ MAP
   NAME 'MBARI STOQS'
   UNITS dd
   CONFIG "MS_ERRORFILE" "/tmp/mapserver_stoqshg.log"
-  DEBUG 5
+  DEBUG {{ debug_level }}
   # Not needed with mapserver 6.0.1 and default proj4 install
   ##CONFIG "PROJ_LIB" "/usr/local/Proj4/share/proj"
   WEB
@@ -32,7 +32,7 @@ MAP
     CONNECTIONTYPE POSTGIS
     CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
     DATA "{{ geo_query|safe }}"
-      DEBUG 2
+      DEBUG {{ debug_level }}
       DUMP true
       TYPE line
       STATUS on
