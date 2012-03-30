@@ -31,7 +31,7 @@ MAP
   LAYER
     CONNECTIONTYPE POSTGIS
     CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
-    DATA "{{ geo_query }}"
+    DATA "{{ geo_query|safe }}"
       DEBUG 2
       DUMP true
       TYPE line
