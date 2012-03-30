@@ -71,7 +71,7 @@ class ActivityView(object):
         This creates a dynamic 
         '''
         # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
-        logger.debug(pprint.pformat(settings.DATABASES[self.request.META['dbAlias']]))
+        ##logger.debug(pprint.pformat(settings.DATABASES[self.request.META['dbAlias']]))
         logger.debug(self.geo_query)
         response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,
@@ -90,6 +90,7 @@ class ActivityView(object):
             fh = open(self.mappath, 'w')
                 
         for line in response:
+            logger.debug(line)
             fh.write(line) 
 
     def getColorOfItem(self, item):
