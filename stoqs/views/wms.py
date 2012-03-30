@@ -64,6 +64,7 @@ class ActivityView(object):
         self.itemList = itemList
         self.mappath = request.session['mappath']
         self.geo_query = geo_query
+        self.debug_level = 0             # Mapserver debug level: [off|on|0|1|2|3|4|5]
 
     def generateActivityMapFile(self, template = 'activity.map'):
         '''Build mapfile for activity from template.  Write it to a location that mapserver can see it.
@@ -71,11 +72,22 @@ class ActivityView(object):
         This creates a dynamic 
         '''
         # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
+        # With Apache RewriteBase rule this pattern also works for cleaner URLs:
+        # Allow WMS requests to any file in /dev/shm by providing a URL like /wms/ADFASDFASDF (where /dev/shm/ADFASDFASDF.map is the name of the mapfile)
+        # this means that the "?map=" need not be provided as part of the URL
+        # <Location /wms>
+        #    Options Indexes FollowSymLinks
+        #    RewriteEngine On
+        #    RewriteBase '/wms/'
+        #    RewriteRule .*/(.*) /cgi-bin/mapserv?map=/dev/shm/$1.map [QSA]
+        # </location>
+
         ##logger.debug(pprint.pformat(settings.DATABASES[self.request.META['dbAlias']]))
         logger.debug(self.geo_query)
         response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,
                             'wfs_title': 'WFS title for an Activity',
+                            'debug_level': self.debug_level,
                             'dbconn': settings.DATABASES[self.request.META['dbAlias']],
                             'mappath': self.mappath,
                             'geo_query': self.geo_query},
