@@ -268,14 +268,19 @@ class STOQSQManager(object):
         m = re.search( r' IN \(([\S^\)]+)\)', q)
         if m:
             logger.info(m.group(1))
-            q = re.sub( r' IN \((.*)\)', ' IN (\'' + m.group(1) + '\')', q)
+            q = re.sub( r' IN \([\S^\)]+\)', ' IN (\'' + m.group(1) + '\')', q)
 
-        # Put quotes around any DATE TIME parameters:
-        #  2010-10-27 07:12:10
-        m = re.search( r' (\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)', q)
-        if m:
-            logger.info(m.group(1))
-            q = re.sub( r' \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d', ' \'' + m.group(1) + '\'', q)
+        # Put quotes around the DATE TIME parameters, treat each one separately:
+        #  >= 2010-10-27 07:12:10
+        #  <= 2010-10-28 08:22:52
+        m1 = re.search( r'>= (\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)', q)
+        if m1:
+            logger.info('>= %s', m1.group(1))
+            q = re.sub( r'>= \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d', '>= \'' + m1.group(1) + '\'', q)
+        m2 = re.search( r'<= (\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)', q)
+        if m2:
+            logger.info('<= %s', m2.group(1))
+            q = re.sub( r'<= \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d', '<= \'' + m2.group(1) + '\'', q)
 
         logger.info('After: %s', q)
 
