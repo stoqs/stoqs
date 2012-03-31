@@ -108,7 +108,7 @@ class STOQSQManager(object):
                 qparams['parameter__uuid__in'] = self.kwargs['parameters']
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
-                qparams['parameter__activityparameter__activity__platform__uuid__in'] = self.kwargs['platforms']
+                qparams['measurement__instantpoint__activity__platform__uuid__in'] = self.kwargs['platforms']
         if self.kwargs.has_key('time'):
             if self.kwargs['time'][0] is not None:
                 qparams['measurement__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
