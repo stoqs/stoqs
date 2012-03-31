@@ -64,7 +64,13 @@ class ActivityView(object):
         self.itemList = itemList
         self.mappath = request.session['mappath']
         self.geo_query = geo_query
-        self.debug_level = 0             # Mapserver debug level: [off|on|0|1|2|3|4|5]
+        if settings.DEBUG:
+            self.map_debug_level = 5             # Mapserver debug level: [off|on|0|1|2|3|4|5]
+            self.layer_debug_level = 2           # Mapserver debug level: [off|on|0|1|2|3|4|5]
+        else:
+            self.map_debug_level = 0 
+            self.layer_debug_level = 0
+            
 
     def generateActivityMapFile(self, template = 'activity.map'):
         '''Build mapfile for activity from template.  Write it to a location that mapserver can see it.
@@ -87,7 +93,8 @@ class ActivityView(object):
         response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,
                             'wfs_title': 'WFS title for an Activity',
-                            'debug_level': self.debug_level,
+                            'map_debug_level': self.map_debug_level,
+                            'layer_debug_level': self.layer_debug_level,
                             'dbconn': settings.DATABASES[self.request.META['dbAlias']],
                             'mappath': self.mappath,
                             'geo_query': self.geo_query},
