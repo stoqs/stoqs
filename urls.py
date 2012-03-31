@@ -96,3 +96,10 @@ urlpatterns = patterns('',
 
 )
 
+# Not to be used in Production.  Must start development server with --insecure option to run with DEBUG = False:
+#  python manage.py runserver 0.0.0.0:8000 --insecure
+if settings.DEBUG is False and settings.PRODUCTION is False:   #if DEBUG is True it will be served automatically
+    urlpatterns += patterns('',
+        url(r'^(?P<path>.*)$', 'django.contrib.staticfiles.views.serve', {'document_root': settings.STATIC_ROOT})
+        ##url(r'^static/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_ROOT}),
+    )
