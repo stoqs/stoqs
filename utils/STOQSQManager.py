@@ -41,7 +41,7 @@ class STOQSQManager(object):
                                                                                            instantpoint__measurement__pk__isnull=False)
         else:
             qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()
-
+    
         for k, v in kwargs.iteritems():
             '''
             Check to see if there is a "builder" for a Q object using the given parameters.
@@ -52,6 +52,7 @@ class STOQSQManager(object):
                 # Call the method if it exists, and add the resulting Q object to the filtered
                 # queryset.
                 q = getattr(self,'_%sQ' % (k,))(v)
+                logger.debug('k = %s, v = %s, q = %s', k, v, q)
                 qs = qs.filter(q)
         self.qs = qs.distinct()
         self.kwargs = kwargs
