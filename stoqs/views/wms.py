@@ -64,7 +64,7 @@ class ActivityView(object):
         self.itemList = itemList
         self.mappath = request.session['mappath']
         self.geo_query = geo_query
-        if settings.DEBUG:
+        if settings.LOGGING['loggers']['stoqs']['level'] == 'DEBUG':
             self.map_debug_level = 5             # Mapserver debug level: [off|on|0|1|2|3|4|5]
             self.layer_debug_level = 2           # Mapserver debug level: [off|on|0|1|2|3|4|5]
         else:
