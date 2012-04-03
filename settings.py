@@ -28,8 +28,11 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
+        'veryverbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(filename)s %(funcName)s():%(lineno)d %(message)s'
+        },
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(filename)s %(funcName)s():%(lineno)d %(message)s'
         },
         'simple': {
             'format': '%(levelname)s %(message)s'
