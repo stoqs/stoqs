@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     # Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
     dbName = 'stoqs_june2011'
-    stride = 1000
+    stride = 100
     campaignName = 'CANON - June 2011'
 
     # ------------------------- Dorado loads -------------------------
@@ -72,7 +72,9 @@ if __name__ == '__main__':
                 '20110618_20110623/20110620T190006/slate.nc',
                 '20110618_20110623/20110621T185433/slate.nc'
             ]
-    parmList = ['mass_concentration_of_chlorophyll_in_sea_water']
+    parmList = ['sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm', 
+                'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
+                'mass_concentration_of_chlorophyll_in_sea_water']
     for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
         url = baseUrl + file
         DAPloaders.runLrauvLoader(url, campaignName, aName, 'tethys', 'auv', 'AUV mission', parmList, dbName, stride)
