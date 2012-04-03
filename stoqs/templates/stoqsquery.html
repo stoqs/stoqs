@@ -79,13 +79,6 @@
                             <div id="collapseOne" class="accordion-body collapse in">
                                 <div class="accordion-inner">
                                     <table id="parameter-table" class="table table-condensed table-bordered">
-                                        <thead>
-                                            <tr>
-                                              <th width="10%">Display</th>
-                                              <th width="10%">Select</th>
-                                              <th>Parameter</th>
-                                            </tr>
-                                      </thead>
                                       <tbody>
                                       </tbody>
                                     </table>
@@ -101,12 +94,6 @@
                             <div id="collapseTwo" class="accordion-body collapse in">
                                 <div class="accordion-inner">
                                     <table id="platform-table" class="table table-condensed table-bordered">
-                                        <thead>
-                                            <tr>
-                                              <th width="10%">Display</th>
-                                              <th>Platform</th>
-                                            </tr>
-                                      </thead>
                                       <tbody>
                                       </tbody>
                                     </table>                                
@@ -327,7 +314,6 @@
     
     function refreshMap() {
         track_lines.params.counter++;
-        alert(track_lines.params.counter)
         track_lines.redraw(true);
     }
 
@@ -359,17 +345,15 @@
                         if (key == 'platforms') {
                             $.each(data[key], function (index, value) {
                                                     $('#platform-table > tbody:last').append('<tr id="' + value[1] +'">' +
-                                                              '<th><input type="checkbox"></th>' +
-                                                              '<th class="platform"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></th>' +
+                                                              '<td class="platform"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></td>' +
                                                               '</tr>');
                             });
                         }
                         else if (key == 'parameters') {
                             $.each(data[key], function (index, value) {
                                                     $('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
-                                                              '<th><input type="checkbox"></th>' +
-                                                              '<th><input name="'+key+'" type="radio"></th>' +
-                                                              '<th class="parameter"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></th>' +
+                                                              '<td><input name="'+key+'" type="radio"></th>' +
+                                                              '<td class="parameter"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></td>' +
                                                               '</tr>');
                             });
                         }
@@ -515,14 +499,15 @@
                     "http://{{ mapserver_host }}/cgi-bin/mapserv",
                     { layers: 'track_lines',
                       map: '{{ mappath }}',
-                      transparent: 'True',
-                      'counter': 0 },
+                      'counter': 0,
+                      transparent: 'True' },
                     { units: 'degrees',
                       displayInLayerSwitcher: true,
                       projection: "EPSG:900913",
                       reproject: false,
                       visibility: true,
-                      displayOutsideMaxExtent: true });
+                      displayOutsideMaxExtent: true } );
+
           map.addLayer(track_lines); 
 
 
