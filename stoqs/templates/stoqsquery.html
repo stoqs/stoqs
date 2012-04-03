@@ -14,7 +14,7 @@
         padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
       }
       .stoqs-toggle {
-        width: 100%;
+        width: 50%;
       }
       th {
         align: center; /* Doesn't seem to work '*/
@@ -62,102 +62,102 @@
       </div>
     </div>
 
-    <div class="container-fluid">
+  <div class="container-fluid">
 
-      <div class="row-fluid">
-         <div id="map" class="span6">
-         </div><!-- span -->
-
-                <div class="span6">
-                    <div class="accordion well" id="accordion2">
-                        <div class="accordian-group">
-                            <div class="accordian-heading">
-                                <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
-                                Parameters
-                                </a></h3>
-                            </div>
-                            <div id="collapseOne" class="accordion-body collapse in">
-                                <div class="accordion-inner">
-                                    <table id="parameter-table" class="table table-condensed table-bordered">
-                                      <tbody>
-                                      </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div><!-- accordian-group -->
-                        <div class="accordian-group">
-                            <div class="accordian-heading">
-                                <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
-                                Platforms
-                                </a></h3>
-                            </div>
-                            <div id="collapseTwo" class="accordion-body collapse in">
-                                <div class="accordion-inner">
-                                    <table id="platform-table" class="table table-condensed table-bordered">
-                                      <tbody>
-                                      </tbody>
-                                    </table>                                
-                                </div>
-                            </div>
-                        </div><!-- accordian-group -->
-                        <div class="accordian-group">
-                            <div class="accordian-heading">
-                                <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
-                                Range Parameters
-                                </a></h3>
-                            </div>
-                            <div id="collapseThree" class="accordion-body collapse in">
-                                <div class="accordion-inner">
-                                    <table id="range-table" class="table table-condensed">
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="2"><strong>Time Range (local time)</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="2"><div id="slider-time"></div></td>
-                                        </tr>
-                                        <tr>
-                                            <td><input class="span2 slider-values" type="text" id="start-time" "name="start-time"></td>
-                                            <td><input class="span2 slider-values" type="text" id="end-time" name="end-time"></td> 
-                                        </tr>
+    <div class="row-fluid">
+        <div id="map" class="span6">
+        </div><!-- span -->
+        
+        <div class="span6">
+            <div class="accordion well" id="accordion2">
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+                        Parameter names
+                        </a></h3>
+                    </div>
+                    <div id="collapseOne" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <table id="parameter-table" class="table table-condensed table-bordered">
+                              <tbody>
+                              </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
+                        Platforms
+                        </a></h3>
+                    </div>
+                    <div id="collapseTwo" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <table id="platform-table" class="table table-condensed table-bordered">
+                              <tbody>
+                              </tbody>
+                            </table>                                
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
+                        Range Parameters
+                        </a></h3>
+                    </div>
+                    <div id="collapseThree" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <table id="range-table" class="table table-condensed">
+                            <tbody>
+                                <tr>
+                                    <td colspan="2"><strong>Time Range (local time)</strong></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><div id="slider-time"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><input class="span2 slider-values" type="text" id="start-time" "name="start-time"></td>
+                                    <td><input class="span2 slider-values" type="text" id="end-time" name="end-time"></td> 
+                                </tr>
+                                
+                                <tr>
+                                    <td colspan="2"><strong>Depth Range</strong></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><div id="slider-depth"></div></td>
+                                </tr>
+                                <tr>
+                                    <td><input class="span2 slider-values" type="text" id="start-depth" "name="start-depth"></td>
+                                    <td><input class="span2 slider-values" type="text" id="end-depth" name="end-depth"></td> 
+                                </tr>
                                         
-                                        <tr>
-                                            <td colspan="2"><strong>Depth Range</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="2"><div id="slider-depth"></div></td>
-                                        </tr>
-                                        <tr>
-                                            <td><input class="span2 slider-values" type="text" id="start-depth" "name="start-depth"></td>
-                                            <td><input class="span2 slider-values" type="text" id="end-depth" name="end-depth"></td> 
-                                        </tr>
-                                        
-                                    </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div><!-- accordian-group -->   
-                    </div><!-- accordian -->
+                            </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->   
+            </div><!-- accordian -->
 
-                     </div><!-- span -->
-      </div><!-- row-fluid -->
-            <div class="row-fluid">
-                <div class="span12 page-header">
-                    
-                        <div class="well">
-                        <h3><strong id="result_count">0</strong> data points found.</h3>
-                        <h4>Copy the links below to save them, click on the buttons to download in the specified format.</h4>
-                        {% for format, description in formats.items %}
-                        <div class="row-fluid">
-                        <input id="{{format}}-field" type="text" class="span6" readonly="readonly">
-                        <span class="help-inline span4"><a target="_blank" id="{{format}}-link" class="btn btn-info btn-small" href=""><i class="icon-file"></i> {{description}}</a></span>
-                        {% endfor %}            
-                        </div>          
-                        </div><!-- well -->
-                </div><!-- span -->
-            </div><!-- row-fluid --> 
+        </div><!-- span -->
+    </div><!-- row-fluid -->
 
-    </div> <!-- container -->
+    <div class="row-fluid">
+        <div class="span12 page-header">
+            <div class="well">
+                <h3><strong id="result_count">0</strong> data points found.</h3>
+                <h4>Copy the links below to save them, click on the buttons to download in the specified format.</h4>
+                {% for format, description in formats.items %}
+                <div class="row-fluid">
+                    <input id="{{format}}-field" type="text" class="span6" readonly="readonly">
+                    <span class="help-inline span4"><a target="_blank" id="{{format}}-link" class="btn btn-info btn-small" href=""><i class="icon-file"></i> {{description}}</a></span>
+                {% endfor %}            
+                </div>          
+            </div><!-- well -->
+        </div><!-- span -->
+    </div><!-- row-fluid --> 
+
+  </div> <!-- container -->
 
     <!-- The javascript
     ================================================== -->
