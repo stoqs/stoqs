@@ -29,6 +29,9 @@ prerequisites noted in the PREREQUISITES file.
    there is a spatial types database named "template_postgis", you may need
    to make a copy of it, if it has a different name, with a psql command like:
    
+   To run as user postgres:
+      su root -c "su postgres"
+	
 	create database template_postgis with template postgis;
 	(The Django test runner requires the spatial types template to have this name.)
 
@@ -41,6 +44,7 @@ prerequisites noted in the PREREQUISITES file.
    that the DATABASE_USER setting in privateSettings is 'stoqsadm'):
 
 	create database stoqs owner=stoqsadm template=template_postgis;
+	# use "template=postgis" if postgis was installed via yum
 	alter database stoqs set standard_conforming_strings to off;	# Not needed with Django patch #16778
 	\c stoqs
 	grant all on all tables in schema public to stoqsadm;
@@ -86,11 +90,11 @@ indication that you are in the virtual environment.
 	some data from MBARI's UVCTD Dorado OPeNDAP data archive.  You should be able to see the Activity that was
 	loaded at:
 
-		http://localhost:8000/default/activities	# Test the get data links in the Comment column
+		http://localhost:8000/default/activitiesMBARICustom	# Test the get data links in the Comment column
 	and
 		http://localhost:8000/default/mgmt
 	and 
-		httpd://localhost:8000/default/admin		# Login with the account you created in step 6
+		httpd://localhost:8000/default/admin/		# Login with the account you created in step 6
 	
 	The first link provides some links where you can experiment with retrieving data by
 	parameter name.  The cesecond link provides a link deleting the Activity - confirm
