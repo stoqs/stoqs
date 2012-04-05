@@ -1,0 +1,112 @@
+INSTALL
+=======
+
+Notes for installing and configuring STOQS.  Make sure that your system has all of the
+prerequisites noted in the PREREQUISITES file.
+
+1. Set up your Django environment (bash shell):
+
+	export DJANGO_SETTINGS_MODULE=settings
+
+ 	(If ./ is in your python path then you can run the 'python manage.py' commands 
+ 	from the main stoqs project directory - there is no need to adjust PYTHONPATH.)
+
+	
+2. Copy the 'privateSettings.template' file (in the main stoqs directory)  to 
+   'privateSettings' and edit it with the confidential information that is specific to 
+   your installation.  This is also where you would add additional campaign-specific 
+   databases to the project.  Follow the instructions in the file and do not share the
+   information you put in this file.
+       
+       
+3. Installing and configuring Posgresql and doing it in a secure manner is beyond the scope
+   of this documentation.  Please refer to the appropriate sources (http://www.postgresql.org/
+   or your DBA) in order to connect to the database with system admin priveledges.  You will
+   need these priveleges to create and drop databases.  STOQS is currently being developed
+   using postgresql-9.1.
+	
+   Using Postgres's 'psql' command with administrator priveledges make sure that
+   there is a spatial types database named "template_postgis", you may need
+   to make a copy of it, if it has a different name, with a psql command like:
+   
+   To run as user postgres:
+      su root -c "su postgres"
+	
+	create database template_postgis with template postgis;
+	(The Django test runner requires the spatial types template to have this name.)
+
+   Create a 'stoqsadm' role, e.g.:
+	
+	create role stoqsadm login password 'password_of_your_choice';
+
+	
+4. Create your STOQS database(s) and assign permissions at the psql prompt (assuming 
+   that the DATABASE_USER setting in privateSettings is 'stoqsadm'):
+
+	create database stoqs owner=stoqsadm template=template_postgis;
+	# use "template=postgis" if postgis was installed via yum
+	alter database stoqs set standard_conforming_strings to off;	# Not needed with Django patch #16778
+	\c stoqs
+	grant all on all tables in schema public to stoqsadm;
+	
+	[repeat for additional campaign specific databases]
+
+
+For the following commands where you run 'python manage.py ' with various options you will need your shell
+to be in the virtual environment that you created in PREREQUISITES - unless all of the packages have been
+installed at the system level.  Make sure that you've entered 'source venv-stoqs/bin/activate' in each
+window where you run the following command.  Your shell prompt will begin with '(venv-stoqs)' as an
+indication that you are in the virtual environment.
+
+5. Sync the model with the database:
+
+	python manage.py syncdb					# For the default stoqs database
+	
+	Answer 'yes' when asked to create a superuser if you wish to be able to use the admin interface.
+	If you have additional databases sync them with the --database option:
+	
+	python manage.py syncdb --database=stoqs_<campaign>	# For campaign specific databases 
+	
+
+7. Start the development web server:
+
+	python manage.py runserver 0.0.0.0:8000 
+	
+	
+8. Start the celerey daemon (which services long-running tasks) in another window:
+
+	python manage.py celeryd -l INFO
+
+
+6. Load some data:
+
+	Execute loaders/DAPloaders.py at the command line.  
+
+	(If you get this error: django.db.utils.DatabaseError: invalid byte sequence for encoding "UTF8": 0x00
+	make sure you have installed Django patch #16778 to the django/contrib/gis/db/backends/postgis/adapter.py
+	file in your env-stoqs/lib/python2.6/site-packages/Django-1.3-py2.6.egg folder)
+
+	If you get the message "Data load complete, 498 records loaded." then you will have successfully loaded 
+	some data from MBARI's UVCTD Dorado OPeNDAP data archive.  You should be able to see the Activity that was
+	loaded at:
+
+		http://localhost:8000/default/activitiesMBARICustom	# Test the get data links in the Comment column
+	and
+		http://localhost:8000/default/mgmt
+	and 
+		httpd://localhost:8000/default/admin/		# Login with the account you created in step 6
+	
+	The first link provides some links where you can experiment with retrieving data by
+	parameter name.  The cesecond link provides a link deleting the Activity - confirm
+	in the celeryd window that Activity gets deleted - execute loaders/DAPloaders.py again to
+	reload the data.
+	
+
+If you've made it this far you have a working STOQS installation on your computer.  Congratulations!
+
+To continue on to the next steps please read the instructions in the DEVELOPMENT or PRODUCTION files.
+
+--
+Mike McCann
+MBARI 31 January 2012
+
