@@ -114,9 +114,12 @@ def showParameter(request, format = 'html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showActivity(request, format = 'html'):
+def showActivity(request, format = 'html', order = 'startdate'):
+    '''
+    Other potential order fields: name, startdate, enddate, loadeddate
+    '''
     stoqs_object = mod.Activity
-    query_set = stoqs_object.objects.all().order_by('name')
+    query_set = stoqs_object.objects.all().order_by(order)
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
