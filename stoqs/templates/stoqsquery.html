@@ -91,7 +91,7 @@
                         Platforms
                         </a></h3>
                     </div>
-                    <div id="collapseTwo" class="accordion-body collapse in">
+                    <div id="collapseTwo" class="accordion-body collapse">
                         <div class="accordion-inner">
                             <table id="platform-table" class="table table-condensed table-bordered">
                               <tbody>
@@ -106,7 +106,7 @@
                         Range Parameters
                         </a></h3>
                     </div>
-                    <div id="collapseThree" class="accordion-body collapse in">
+                    <div id="collapseThree" class="accordion-body collapse">
                         <div class="accordion-inner">
                             <table id="range-table" class="table table-condensed">
                             <tbody>
@@ -421,9 +421,6 @@
     
     
     $(function () { 
-        // Initialize the accordian fields.
-        $(".collapse").collapse(); // Collapse the accordian fields.
-        
         // Adjust the height of the map div to 500px
         $('#map').height(500);
         
@@ -442,7 +439,7 @@
          OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
          OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
          var map = null; 
-         ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
+         //ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
          var options = {
              projection: new OpenLayers.Projection("EPSG:900913"),
              displayProjection: new OpenLayers.Projection("EPSG:4326"),
@@ -450,7 +447,7 @@
              maxResolution: 156543.0339,
              maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
                                                20037508.34, 20037508.34),
-             controls: [ctrlGraticule]
+             //controls: [ctrlGraticule]
          };
          map = new OpenLayers.Map('map',options);
 
@@ -489,7 +486,7 @@
               'sphericalMercator': true}
          );
          map.addLayers([bathyEsri,osm,gsat,gphy,ghyb,gmap]);
-         ctrlGraticule.activate();
+         //ctrlGraticule.activate();
 
           /*
            * Maptrack layers selected by UI 
@@ -506,6 +503,7 @@
                       projection: "EPSG:900913",
                       reproject: false,
                       visibility: true,
+                      singleTile: true,
                       displayOutsideMaxExtent: true } );
 
           map.addLayer(track_lines); 
