@@ -47,8 +47,6 @@ class Color(object):
 
 class ActivityView(object):
 
-    olWebPageTemplate = 'activitiesWMS.html'
-
     # For using the same colors
     itemColor_dict = {}
 
@@ -109,7 +107,7 @@ class ActivityView(object):
             fh = open(self.mappath, 'w')
                 
         for line in response:
-            logger.debug(line)
+            ##logger.debug(line)
             fh.write(line) 
 
     def getColorOfItem(self, item):
@@ -148,23 +146,43 @@ class ActivityView(object):
 
         self.list = newList
 
-    def process_request(self):
+    def process_request(self, webPageTemplate='activitiesWMS.html', mapfile='activity.map'):
         '''Build mapfile and return corresponding OpenLayers-powered web page
         '''
 
         self.assignColors(self.itemList)
-        self.generateActivityMapFile()
+        self.generateActivityMapFile(mapfile)
 
-        logger.debug("Building web page pointing to mapserver at %s", settings.MAPSERVER_HOST)
+        logger.debug("Building web page from pointing to mapserver at %s", settings.MAPSERVER_HOST)
     
-        return render_to_response(self.olWebPageTemplate, {'mapserver_host': settings.MAPSERVER_HOST, 
+        return render_to_response(webPageTemplate, {'mapserver_host': settings.MAPSERVER_HOST, 
                                     'list': self.itemList,
                                     'dbAlias': self.request.META['dbAlias'],
                                     'mappath': self.mappath},
                             context_instance=RequestContext(self.request))
 
+def showActivityWMS(request):
+    '''
+    Fuller featured Activities view using bootstrap and ajax features of querystoqs.html.
+    Displays Resources of activity along with tracks on the map and perhaps a get data button.
+    Could be a useful results page from a search of the database.
+    '''
+    logger.debug("inside showActivityWMS")
+
+    # This list could result from a collection of Q objects constructed similar to what STOQSQManager does
+    list = mod.Activity.objects.all().order_by('startdate')  
+    geo_query = '''geom from (select a.maptrack as geom, a.id as gid, 
+        a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
+        from stoqs_activity a)
+        as subquery using unique gid using srid=4326'''
+
+    av = ActivityView(request, list, geo_query)
+    return av.process_request(webPageTemplate = 'activityWMS.html')
+
+
 def showActivitiesWMS(request):
     '''Render Activities as WMS via mapserver'''
+    logger.debug("inside showActivitiesWMS")
 
     list = mod.Activity.objects.all().order_by('startdate')  
     geo_query = '''geom from (select a.maptrack as geom, a.id as gid, 

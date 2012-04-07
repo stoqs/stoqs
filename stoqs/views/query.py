@@ -37,7 +37,7 @@ class NoParameterSelectedException(Exception):
 
 def kmlResponse(request, qm, response):
     '''
-    Return a response that is a KML represenation of the existing MeasuredParameter query tat is in qm
+    Return a response that is a KML represenation of the existing MeasuredParameter query that is in qm
     '''
     qs_mp = qm.getMeasuredParametersQS()
     if qs_mp is None:
@@ -133,6 +133,19 @@ def queryUI(request):
     ##formats={'csv': 'Comma-Separated Values (CSV)',
     ##         'dap': 'OPeNDAP Format',
     ##         'kml': 'KML (Google Earth)'}
+    formats={'kml': 'KML (Google Earth)'}
+    return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
+                                                  'formats': formats,
+                                                  'mapserver_host': settings.MAPSERVER_HOST,
+                                                  'mappath': request.session['mappath'],
+                                                 }, 
+                            context_instance=RequestContext(request))
+
+def queryActivityResource(request):
+    '''
+    Build and return main Activity Resource web page
+    '''
+
     formats={'kml': 'KML (Google Earth)'}
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
                                                   'formats': formats,

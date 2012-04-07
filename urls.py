@@ -48,6 +48,9 @@ urlpatterns = patterns('',
     # Admin interface
     url(pre + r'admin/', include(admin.site.urls)),
 
+    # New Map interfaces with inheritence of bootstrap template
+    url(pre + r'activityWMS$', 'stoqs.views.wms.showActivityWMS', {}, name='show-activity-wms'),
+
     # Map interfaces
     url(pre + r'activitiesWMS$', 'stoqs.views.wms.showActivitiesWMS', {}, name='show-activities-wms'),
     url(pre + r'parametersWMS$', 'stoqs.views.wms.showParametersWMS', {}, name='show-parameters-wms'),
@@ -97,9 +100,8 @@ urlpatterns = patterns('',
 )
 
 # Not to be used in Production.  Must start development server with --insecure option to run with DEBUG = False:
-#  python manage.py runserver 0.0.0.0:8000 --insecure
+#    python manage.py runserver 0.0.0.0:8000 --insecure
 if settings.DEBUG is False and settings.PRODUCTION is False:   #if DEBUG is True it will be served automatically
     urlpatterns += patterns('',
         url(r'^(?P<path>.*)$', 'django.contrib.staticfiles.views.serve', {'document_root': settings.STATIC_ROOT})
-        ##url(r'^static/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_ROOT}),
     )
