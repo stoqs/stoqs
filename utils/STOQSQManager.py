@@ -37,8 +37,7 @@ class STOQSQManager(object):
         if (not kwargs):
             qs = models.Activity.objects.using(self.dbname).select_related(depth=3).filter(activityparameter__parameter__pk__isnull=False,
                                                                                            activityparameter__activity__pk__isnull=False,
-                                                                                           platform__pk__isnull=False,
-                                                                                           instantpoint__measurement__pk__isnull=False)
+                                                                                           platform__pk__isnull=False)
         else:
             qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()
     
@@ -78,7 +77,7 @@ class STOQSQManager(object):
         results = {}
         for k,v in options_functions.iteritems():
             results[k] = v()
-        #results['parameters']=[('tet',"1"),('test',"2")]
+        
         logger.info(pprint.pformat(str(self.qs.query)))
         logger.info(pprint.pformat(results))
         return results
@@ -166,16 +165,56 @@ class STOQSQManager(object):
         Based on the current selected query criteria, determine the available time range.  That'll be
         returned as a 2-tuple as the min and max values that are selectable.
         '''
-        qs=self.qs.aggregate(Max('instantpoint__timevalue'), Min('instantpoint__timevalue'))
-        return (qs['instantpoint__timevalue__min'], qs['instantpoint__timevalue__max'],)
+
+        # Documentation of some query optimization (tested with dorado & tethys data from June 2010 loaded with a stide of 100)
+        # =====================================================================================================================
+        # The statements:
+        #   qs=self.qs.aggregate(Max('instantpoint__timevalue'), Min('instantpoint__timevalue'))
+        #   return (qs['instantpoint__timevalue__min'], qs['instantpoint__timevalue__max'],)
+        # produce this SQL which takes 75.2 ms to execute:
+
+        # stoqs_june2011=# explain analyze SELECT DISTINCT MAX("stoqs_instantpoint"."timevalue") AS "instantpoint__timevalue__max", MIN("stoqs_instantpoint"."timevalue") AS "instantpoint__timevalue__min" FROM "stoqs_activity" LEFT OUTER JOIN "stoqs_instantpoint" ON ("stoqs_activity"."id" = "stoqs_instantpoint"."activity_id");
+        #                                                                                    QUERY PLAN                                                                                    
+        # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        #  HashAggregate  (cost=738.13..738.14 rows=1 width=8) (actual time=75.154..75.154 rows=1 loops=1)
+        #    ->  Aggregate  (cost=738.11..738.12 rows=1 width=8) (actual time=75.144..75.145 rows=1 loops=1)
+        #          ->  Merge Left Join  (cost=0.00..629.34 rows=21755 width=8) (actual time=0.032..51.337 rows=21726 loops=1)
+        #                Merge Cond: (stoqs_activity.id = stoqs_instantpoint.activity_id)
+        #                ->  Index Scan using stoqs_activity_pkey on stoqs_activity  (cost=0.00..17.58 rows=45 width=4) (actual time=0.008..0.058 rows=36 loops=1)
+        #                ->  Index Scan using stoqs_instantpoint_activity_id on stoqs_instantpoint  (cost=0.00..707.58 rows=21755 width=12) (actual time=0.016..19.982 rows=21726 loops=1)
+        #  Total runtime: 75.231 ms
+        # (7 rows)
+        # 
+        # The statements:
+        #   qs=self.qs.aggregate(Max('enddate'), Min('startdate'))
+        #   return (qs['startdate__min'], qs['enddate__max'],)
+        # take 0.22 ms 
+        # stoqs_june2011=# explain analyze SELECT DISTINCT MIN("stoqs_activity"."startdate") AS "startdate__min", MAX("stoqs_activity"."enddate") AS "enddate__max" FROM "stoqs_activity";
+        #                                                      QUERY PLAN                                                       
+        # -----------------------------------------------------------------------------------------------------------------------
+        #  HashAggregate  (cost=5.69..5.70 rows=1 width=16) (actual time=0.154..0.156 rows=1 loops=1)
+        #    ->  Aggregate  (cost=5.67..5.69 rows=1 width=16) (actual time=0.143..0.144 rows=1 loops=1)
+        #          ->  Seq Scan on stoqs_activity  (cost=0.00..5.45 rows=45 width=16) (actual time=0.009..0.064 rows=36 loops=1)
+        #  Total runtime: 0.219 ms
+        # (4 rows)
+        #
+        # While only a fraction of a second different, it is 342 times faster!
+
+        qs=self.qs.aggregate(Max('enddate'), Min('startdate'))
+        return (qs['startdate__min'], qs['enddate__max'],)
     
     def getDepth(self):
         '''
         Based on the current selected query criteria, determine the available depth range.  That'll be
         returned as a 2-tuple as the min and max values that are selectable.
         '''
-        qs=self.qs.aggregate(Max('instantpoint__measurement__depth'), Min('instantpoint__measurement__depth'))
-        return (qs['instantpoint__measurement__depth__min'],qs['instantpoint__measurement__depth__max'])
+        # Original query that dives into the measurment table via instantpoint
+        ##qs=self.qs.aggregate(Max('instantpoint__measurement__depth'), Min('instantpoint__measurement__depth'))
+        ##return (qs['instantpoint__measurement__depth__min'],qs['instantpoint__measurement__depth__max'])
+
+        # Alternate query to use stats stored with the Activity
+        qs=self.qs.aggregate(Max('maxdepth'), Min('mindepth'))
+        return (qs['mindepth__min'],qs['maxdepth__max'])
         
     #
     # Methods that generate Q objects used to populate the query.
@@ -214,9 +253,9 @@ class STOQSQManager(object):
         if not times:
             return q
         if times[0] is not None:
-            q=Q(instantpoint__timevalue__gte=times[0])
+            q=Q(enddate__gte=times[0])
         if times[1] is not None:
-            q=q & Q(instantpoint__timevalue__lte=times[1])
+            q=q & Q(startdate__lte=times[1])
         return q
     
     def _depthQ(self, depth):
@@ -229,9 +268,9 @@ class STOQSQManager(object):
         if not depth:
             return q
         if depth[0] is not None:
-            q=Q(instantpoint__measurement__depth__gte=depth[0])
+            q=Q(maxdepth__gte=depth[0])
         if depth[1] is not None:
-            q=q & Q(instantpoint__measurement__depth__lte=depth[1])
+            q=q & Q(mindepth__lte=depth[1])
         return q
     
     #
