@@ -91,7 +91,7 @@
                         Platforms
                         </a></h3>
                     </div>
-                    <div id="collapseTwo" class="accordion-body collapse">
+                    <div id="collapseTwo" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <table id="platform-table" class="table table-condensed table-bordered">
                               <tbody>
@@ -106,7 +106,7 @@
                         Range Parameters
                         </a></h3>
                     </div>
-                    <div id="collapseThree" class="accordion-body collapse">
+                    <div id="collapseThree" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <table id="range-table" class="table table-condensed">
                             <tbody>
@@ -421,6 +421,9 @@
     
     
     $(function () { 
+        // Initialize the accordian fields.
+        $(".collapse").collapse(); // Collapse the accordian fields.
+        
         // Adjust the height of the map div to 500px
         $('#map').height(500);
         
