@@ -50,6 +50,7 @@ import csv
 import urllib2
 import logging
 import seawater.csiro as sw
+from utils.mathstats import percentile, median, mode, simplify_points
 
 
 # Set up logging
@@ -685,8 +686,13 @@ class Base_Loader(object):
         # now linestringPoints contains all the points
         #
         path = LineString(linestringPoints).simplify(tolerance=.001)
-        logger.info("Data load complete, %d records loaded.", loaded)
         ##sys.stdout.write('\n')
+
+        # 
+        # Update the stats
+        #
+        self.updateActivityParameterStats()
+        logger.info("Data load complete, %d records loaded.", loaded)
 
         return loaded, path, parmCount, mindepth, maxdepth
 
@@ -702,6 +708,34 @@ class Base_Loader(object):
                 self.standard_names[var]=self.ds[var].attributes['standard_name']
             else:
                 self.standard_names[var]=None # Indicate those without a standard name
+
+    def updateActivityParameterStats(self):
+        '''
+        Examine the data for the Activity, compute and update some statistics and produce a simplified
+        geometry of the depth coordinate time series.
+        '''
+
+        data = {}
+        a = self.activity
+        for p in m.Parameter.objects.using(self.dbName).filter(activityparameter__activity=a):
+            data = m.MeasuredParameter.objects.using(self.dbName).filter(parameter=p)
+            numpvar = numpy.array([float(v.datavalue) for v in data])
+            numpvar.sort()
+            listvar = list(numpvar)
+            ##print p, numpvar
+            logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, min025 = %f, max097 = %f',
+                            p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar), 
+                            percentile(listvar, 0.025), percentile(listvar, 0.975))
+            num_updated = m.ActivityParameter.objects.using(self.dbName).filter(activity=a, parameter=p).update(
+                                        min = numpvar.min(),
+                                        max = numpvar.max(),
+                                        mean = numpvar.mean(),
+                                        median = median(listvar),
+                                        mode = mode(numpvar),
+                                        min025 = percentile(listvar, 0.025),
+                                        max975= percentile(listvar, 0.975)
+                                        )
+        logger.info('Updated statistics for activity.name = %s', a.name)
 
 class Auvctd_Loader(Base_Loader):
     include_names = ['temperature', 'conductivity']
@@ -732,7 +766,6 @@ class Auvctd_Loader(Base_Loader):
             row['sea_water_sigma_t'] = sw.dens(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
 
         return super(Auvctd_Loader, self).preProcessParams(row)
-
 
 
 class Dorado_Loader(Base_Loader):
@@ -1022,7 +1055,7 @@ def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stri
         # Add links back to paraemters with stats on the partameters of the activity
         activity = m.Activity.objects.using(dbName).get(name = aName)
         for key in parmCountHash.keys():
-            logger.debug("runDoradoLoader(): key = %s, count = %d", (key, parmCountHash[key]))
+            logger.debug("runDoradoLoader(): key = %s, count = %d", key, parmCountHash[key])
             ap = m.ActivityParameter.objects.db_manager(dbName).get_or_create(activity = activity,
                         parameter = loader.getParameterByName(key),
                         number = parmCountHash[key])
