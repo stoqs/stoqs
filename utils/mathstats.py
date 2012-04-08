@@ -1,5 +1,6 @@
 ## {{{ http://code.activestate.com/recipes/511478/ (r1)
 import math
+import numpy
 import functools
 
 def percentile(N, percent, key=lambda x:x):
@@ -24,9 +25,27 @@ def percentile(N, percent, key=lambda x:x):
     return d0+d1
 
 # median is 50th percentile.
-##median = functools.partial(percentile, percent=0.5)
+median = functools.partial(percentile, percent=0.5)
+
 ## end of http://code.activestate.com/recipes/511478/ }}}
 
+def mode(N):
+    '''
+    Create some bins based on the min and max of the list/array in N
+    compute the histogram and then the mode of the data in N.  
+    Return the edge, which is clo.
+    '''
+    numbins = 100
+    var = numpy.array(N)
+    bins = numpy.linspace(var.min(), var.max(), numbins)
+    hist, bin_edges = numpy.histogram(var, bins)
+    index = numpy.argmax(hist)
+    if index == 0:
+        return bin_edges[index]
+    else:
+        return (bin_edges[index] + bin_edges[index-1]) / 2.0
+
+    
 
 
 # pure-Python Douglas-Peucker line simplification/generalization
