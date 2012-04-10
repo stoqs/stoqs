@@ -149,7 +149,7 @@
                 <h4>Copy the links below to save them, click on the buttons to download in the specified format.</h4>
                 {% for format, description in formats.items %}
                 <div class="row-fluid">
-                    <input id="{{format}}-field" type="text" class="span6" readonly="readonly">
+                    <input id="{{format}}-field" type="text" class="span6">
                     <span class="help-inline span4"><a target="_blank" id="{{format}}-link" class="btn btn-info btn-small" href=""><i class="icon-file"></i> {{description}}</a></span>
                 {% endfor %}            
                 </div>          
@@ -178,7 +178,7 @@
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-carousel.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-typeahead.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/OpenLayers.js"></script> 
-    <script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script>
+    <script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> 
     <script type="text/javascript">
     
     var stoqsQuery='{{site_uri}}{% url stoqs-query-summary dbAlias=request.META.dbAlias  %}';
@@ -287,7 +287,6 @@
         $('#end-' + type).val(max)
         if (updateTable) {
             rebuildFilters();
-            refreshMap();
         }
     }
     
@@ -320,8 +319,8 @@
     $(document).on('click', ".stoqs-toggle", function (event) {
         toggleField(this);
         rebuildFilters();
-        refreshMap();
     });
+
     
     /*
      * Perform the AJAX call to get a list of parameters, and enable/disable them
@@ -335,6 +334,7 @@
                 request.abort();
             }
         }
+        var me = this;
         request=$.ajax({
             type : 'GET',
             url : stoqsQuery + '?' + qstring,
@@ -409,9 +409,12 @@
                             $('#end-depth').val(Math.round(data[key][1]*10)/10);
                         }
                     }
+                    // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
+                    me.refreshMap();
                     
                 }
-                $('#result_count').html(data['count']);
+                $('#result_count').html(data['count']).change();
+
             },
             dataType: "json"
         });
@@ -508,9 +511,7 @@
                       visibility: true,
                       singleTile: true,
                       displayOutsideMaxExtent: true } );
-
           map.addLayer(track_lines); 
-
 
           map.setCenter(new OpenLayers.LonLat(-13594478.3, 4411945.3), 9);
           map.addControl(new OpenLayers.Control.LayerSwitcher());
