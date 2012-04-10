@@ -52,6 +52,11 @@ in making changes that you 'think might work'.
 		specified in privateSettings must have root priveledges in the postgresql database.
    
     		python manage.py test stoqs -v 2
+
+    Note: The user that executes manage.py must have priveleges to create and drop database
+    for Django to run the tests.  From a psql# prompt you can set the privelgese like this:
+
+        ALTER ROLE <user_name> CREATEDB NOSUPERUSER NOCREATEROLE;
     
    	If they all pass you are good.  If you get a failure, fix it and then repeat the test.
    	Iterate on these last two steps.  You may also test the links from the activities and
