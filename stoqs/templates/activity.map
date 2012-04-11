@@ -28,12 +28,28 @@ MAP
   PROJECTION
     "init=epsg:4326"
   END # PROJECTION
+
+  # Union layer needs to have an empty CLASS section for it to draw the connected layer
+  LAYER
+    NAME "track_lines"
+    TYPE line
+    STATUS DEFAULT
+    CONNECTIONTYPE UNION
+    CONNECTION "{{ union_layer_string|safe }}"
+    STYLEITEM "AUTO"
+    CLASS
+    END
+    PROJECTION
+      "init=epsg:4326"
+    END # PROJECTION
+  END # LAYER
+    
   {% for item in list %}
   LAYER
     CONNECTIONTYPE POSTGIS
     CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
-    DATA "{{ geo_query }}"
-      FILTER "gid={{ item.id }}"
+    DATA "{{ item.geo_query|safe }}"
+      ##FILTER "gid={{ item.id }}"
       DEBUG 2
       DUMP true
       TYPE line
