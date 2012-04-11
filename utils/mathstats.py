@@ -1,3 +1,19 @@
+# A collection of various utility functions
+
+def addAttributeToListItems(list_to_modify, name, value):
+    '''
+    For each item in list_to_modify, add new attribute name with value value.
+    Useful for modyfying a django queryset before passing to a template.
+    '''
+    new_list = []
+    for item in list_to_modify:
+        new_item = item
+        new_item.__setattr__(name, value)
+        new_list.append(new_item)
+
+    return new_list
+
+
 ## {{{ http://code.activestate.com/recipes/511478/ (r1)
 import math
 import numpy
