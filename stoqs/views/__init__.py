@@ -25,6 +25,7 @@ from django.template import RequestContext
 from django.http import HttpResponse
 from django.conf import settings
 from django.db import connection
+from django.db.models import Q
 from django.utils import simplejson
 from django.core import serializers
 
@@ -37,6 +38,8 @@ import logging
 import os
 from random import randint
 import tempfile
+from utils.STOQSQManager import STOQSQManager
+from utils import encoders
 
 logger = logging.getLogger(__name__)
 
@@ -114,15 +117,59 @@ def showParameter(request, format = 'html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
+# --------------------------------------------------------------------------------------------------------
+# Work in progress: adding Q object building for Activity requests following the pattern in STOQSQManager.py
+# with the intention of applying the same method in a similar way to the other STOQS model objects.
+
+def _platformsQ(platforms):
+    '''
+    Build a Q object to be added to the current queryset as a filter.
+    '''
+    q = Q()
+    if platforms is None:
+        return q
+    else:
+        q = Q(platform__name__in=platforms)
+    return q
+
 def showActivity(request, format = 'html', order = 'startdate'):
     '''
     Other potential order fields: name, startdate, enddate, loadeddate
     '''
-    stoqs_object = mod.Activity
-    query_set = stoqs_object.objects.all().order_by(order)
+    response = HttpResponse()
+    query_parms = {'platform__name': 'platform__name', 
+                    # Can add additional query parms, which may be multi-valued, e.g. start & end times
+                   }
+    params = {}
+    for key, value in query_parms.iteritems():
+        if type(value) in (list, tuple):
+            params[key] = [request.GET.get(p, None) for p in value]
+        else:
+            qlist = request.GET.getlist(key)
+            if qlist:
+                params[key] = list
 
-    o = BaseOutputer(request, format, query_set, stoqs_object)
+    stoqs_object = mod.Activity
+    qs = stoqs_object.objects.all().order_by(order)
+
+
+    qm = STOQSQManager(request, response, request.META['dbAlias'])
+    qm.buildQuerySet(qs, **params)
+    options = simplejson.dumps(qm.generateOptions(),
+                               cls=encoders.STOQSJSONEncoder)
+                               # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
+
+    if params:
+        for k,v in params.iteritems():
+            logger.debug('k = %s, v = %s', k, str(v))
+            qs = qs.filter(_platformsQ(params['platform__name']))
+    
+    logger.debug('qs = %s', qs )
+    o = BaseOutputer(request, format, qs, stoqs_object)
     return o.process_request()
+
+#---------------------------------------------------------------------------------------------------------------------
+
 
 def showActivityType(request, format = 'html'):
     stoqs_object = mod.ActivityType
