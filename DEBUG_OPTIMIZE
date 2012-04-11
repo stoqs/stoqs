@@ -10,8 +10,8 @@ While developing the stoqs application it's useful to have several separate shel
 open in order to monitor log files, enter sample queries to postgresql, and edit and
 check in code.
 
-Windows environment
--------------------
+Shell window environment
+------------------------
 Here's a list of such windows to leave open uring development (access to several of these 
 files requires relevant permissions - on a development system you can use root):
 
