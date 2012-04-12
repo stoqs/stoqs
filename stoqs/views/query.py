@@ -18,8 +18,11 @@ from django.http import HttpResponse
 from django.utils import simplejson
 from django.conf import settings
 from django.core import serializers
+from django.db.models import Q
 from utils.STOQSQManager import STOQSQManager
 from utils import encoders
+import json
+import pprint
 
 
 import logging 
@@ -68,6 +71,44 @@ def kmlResponse(request, qm, response):
     response.write(kml)
     return response
 
+def buildMapFile(request, qm, options):
+    # 'mappath' should be in the session from the call to queryUI() set it here in case it's not set by queryUI() 
+    if request.session.has_key('mappath'):
+        logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
+    else:
+        request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
+        logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
+
+    # A rudumentary class of items for passing a list of them to the activity.map template
+    class Item(object):
+        def __repr__(self):
+            return '%s %s %s %s' % (self.id, self.name, self.color, self.geo_query,)
+
+    # Colors should be read from a service, database, or UI - for now hard-code them here
+    colors = {}
+    colors['dorado'] = '255 255 0'
+    colors['m1'] = '255 0 255'
+    colors['Martin'] = '255 0 0'
+    colors['tethys'] = '255 69 0'
+
+    item_list = []      # Replicates queryset from an Activity query (needs name & id) with added geo_query & color attrbutes
+    union_layer_string = ''
+    for p in json.loads(options)['platforms']:
+        item = Item()
+        item.id = p[1]
+        item.name = p[0]
+        union_layer_string += str(item.name) + ','
+        item.color = colors[p[0]]
+        item.geo_query = qm.getMapfileDataStatement(Q(platform__name='%s' % p[0]))
+        item_list.append(item)
+
+    union_layer_string = union_layer_string[:-1]
+
+    ##logger.debug('item_list = %s', pprint.pformat(item_list))        
+    logger.debug('union_layer_string = %s', union_layer_string)
+    av = ActivityView(request, item_list, union_layer_string)
+    av.generateActivityMapFile()
+
 def queryData(request, format=None):
     '''
     Process data requests from the main query web page.  Returns both summary Activity and actual MeasuredParameter data
@@ -86,22 +127,12 @@ def queryData(request, format=None):
         else:
             params[key] = request.GET.getlist(key)
    
-    # 'mappath' should be in the session from the call to queryUI() set it here in case it's not set by queryUI() 
-    if request.session.has_key('mappath'):
-        logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
-    else:
-        request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
-        logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
-
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     qm.buildQuerySet(**params)
     options = simplejson.dumps(qm.generateOptions(),
                                cls=encoders.STOQSJSONEncoder)
                                # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
-    
-    av = ActivityView(request, [], qm.getMapfileDataStatement())
-    av.generateActivityMapFile(template='stoqsquery.map')
-    logger.info("av.mappath = %s", av.mappath)
+    buildMapFile(request, qm, options)
 
     if not format: # here we export in a given format, or just provide summary data if no format is given.
         response['Content-Type'] = 'text/json'
@@ -131,7 +162,7 @@ def queryUI(request):
         logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     ##formats={'csv': 'Comma-Separated Values (CSV)',
-    ##         'dap': 'OPeNDAP Format',
+    ##         'dods': 'OPeNDAP Format',
     ##         'kml': 'KML (Google Earth)'}
     formats={'kml': 'KML (Google Earth)'}
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
