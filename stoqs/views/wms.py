@@ -32,6 +32,7 @@ from random import randint
 import tempfile
 import pprint
 from tempfile import NamedTemporaryFile
+from utils.utils import addAttributeToListItems
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ class ActivityView(object):
     # For using the same colors
     itemColor_dict = {}
 
-    def __init__(self, request, itemList, geo_query):
+    def __init__(self, request, itemList, union_layer_string):
         '''Initialize activity object to support building of mapserver mapfiles and openlayers html files.
 
         @param request: Web server request object
@@ -60,8 +61,8 @@ class ActivityView(object):
         '''
         self.request = request
         self.itemList = itemList
+        self.union_layer_string = union_layer_string
         self.mappath = request.session['mappath']
-        self.geo_query = geo_query
         if settings.LOGGING['loggers']['stoqs']['level'] == 'DEBUG':
             self.map_debug_level = 5             # Mapserver debug level: [off|on|0|1|2|3|4|5]
             self.layer_debug_level = 2           # Mapserver debug level: [off|on|0|1|2|3|4|5]
@@ -87,15 +88,14 @@ class ActivityView(object):
         # </location>
 
         ##logger.debug(pprint.pformat(settings.DATABASES[self.request.META['dbAlias']]))
-        logger.debug(self.geo_query)
         response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,
+                            'union_layer_string': self.union_layer_string,
                             'wfs_title': 'WFS title for an Activity',
                             'map_debug_level': self.map_debug_level,
                             'layer_debug_level': self.layer_debug_level,
                             'dbconn': settings.DATABASES[self.request.META['dbAlias']],
-                            'mappath': self.mappath,
-                            'geo_query': self.geo_query},
+                            'mappath': self.mappath},
                             context_instance = RequestContext(self.request))
 
         try:
@@ -161,6 +161,7 @@ class ActivityView(object):
                                     'mappath': self.mappath},
                             context_instance=RequestContext(self.request))
 
+
 def showActivityWMS(request):
     '''
     Fuller featured Activities view using bootstrap and ajax features of querystoqs.html.
@@ -170,13 +171,17 @@ def showActivityWMS(request):
     logger.debug("inside showActivityWMS")
 
     # This list could result from a collection of Q objects constructed similar to what STOQSQManager does
-    list = mod.Activity.objects.all().order_by('startdate')  
+    qs = mod.Activity.objects.all().order_by('startdate')  
     geo_query = '''geom from (select a.maptrack as geom, a.id as gid, 
         a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
         from stoqs_activity a)
         as subquery using unique gid using srid=4326'''
-
-    av = ActivityView(request, list, geo_query)
+    platform_string = ''
+    for p in qs:
+        platform_string += p.name + ','
+    platform_string = platform_string[:-1]
+   
+    av = ActivityView(request, addAttributeToListItems(qs, 'geo_query', geo_query), platform_string)
     return av.process_request(webPageTemplate = 'activityWMS.html')
 
 
