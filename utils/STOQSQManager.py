@@ -24,22 +24,31 @@ class STOQSQManager(object):
         self.dbname = dbname
         self.response = response
         
-    def buildQuerySet(self, **kwargs):
+    def buildQuerySet(self, *args, **kwargs):
         '''
+        Build the query set based on any selections form the UI. For the first time through  kwargs will be empty 
+        and self.qs will be built of a join of activities, parameters, and platforms with no constraints.
+
         Right now supported keyword arguments are the following:
-        parameters - a list of parameter names to include
-        platforms - a list of platform names to include
-        time - a two-tuple consisting of a start and end time, if either is None, the assumption is no start (or end) time
-        depth - a two-tuple consisting of a range (start/end depth, if either is None, the assumption is no start (or end) depth
+            parameters - a list of parameter names to include
+            platforms - a list of platform names to include
+            time - a two-tuple consisting of a start and end time, if either is None, the assumption is no start (or end) time
+            depth - a two-tuple consisting of a range (start/end depth, if either is None, the assumption is no start (or end) depth
+
         These are all called internally - so we'll assume that all the validation has been done in advance,
         and the calls to this method meet the requirements stated above.
         '''
-        if (not kwargs):
-            qs = models.Activity.objects.using(self.dbname).select_related(depth=3).filter(activityparameter__parameter__pk__isnull=False,
+        if 'qs' in args:
+            logger.debug('Using query string passed in to make a non-activity based query')
+            qs = args['qs']
+        else:
+            logger.debug('Making default activity based query')
+            if (not kwargs):
+                qs = models.Activity.objects.using(self.dbname).select_related(depth=3).filter(activityparameter__parameter__pk__isnull=False,
                                                                                            activityparameter__activity__pk__isnull=False,
                                                                                            platform__pk__isnull=False)
-        else:
-            qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()
+            else:
+                qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
     
         for k, v in kwargs.iteritems():
             '''
@@ -56,7 +65,7 @@ class STOQSQManager(object):
         self.qs = qs.distinct()
         self.kwargs = kwargs
         
-    def generateOptions(self):
+    def generateOptions(self, stoqs_object = None):
         '''
         Generate a dictionary of all the selectable parameters by executing each of the functions
         to generate those parameters.  In this case, we'll simply do it by defining the dictionary and it's associated
@@ -67,12 +76,19 @@ class STOQSQManager(object):
         These objects are "simple" dictionaries using only Python's built-in types - so conversion to a
         corresponding JSON object should be trivial.
         '''
-        options_functions={'parameters': self.getParameters,
-                           'platforms': self.getPlatforms,
-                           'time': self.getTime,
-                           'depth': self.getDepth,
-                           'count': self.getCount,
-                           }
+        if stoqs_object:
+            stoqs_object_name = stoqs_object._meta.verbose_name.lower().replace(' ', '_')
+            if stoqs_object_name == 'activity':
+                options_functions={
+                                   'platform_name': self.getPlatforms,
+                                   }
+        else:
+            options_functions={'parameters': self.getParameters,
+                               'platforms': self.getPlatforms,
+                               'time': self.getTime,
+                               'depth': self.getDepth,
+                               'count': self.getCount,
+                               }
         
         results = {}
         for k,v in options_functions.iteritems():
@@ -127,6 +143,22 @@ class STOQSQManager(object):
         else:
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
         return qs_mp
+
+    def getActivities(self):
+        '''
+        Get a list of the unique activities based on the current query criteria.  
+        return the UUID's of those, since we need to return those to perform the query later.
+        Lastly, we assume here that the uuid's and name's have a 1:1 relationship - this should be enforced
+        somewhere in the database hopefully.  If not, we'll return the duplicate name/uuid pairs as well.
+        '''
+        qs = self.qs.values('uuid', 'name').distinct()
+        results=[]
+        for row in qs:
+            name = row['name']
+            uuid = row['uuid']
+            if name is not None and uuid is not None:
+                results.append((name,uuid,))
+        return results
 
     def getParameters(self):
         '''
@@ -289,15 +321,24 @@ class STOQSQManager(object):
         
         return querystring
 
-    def getMapfileDataStatement(self):
+    def getMapfileDataStatement(self, Q_object = None):
         '''
         This method generates a string that can be put into a Mapserver mapfile DATA statment.
         It is customized for Postgresql dialect.
         '''
 
+        qs = self.qs
+
+        # Add any more filters (Q objects) if specified
+        if Q_object:
+            qs = qs.filter(Q_object)
+
+        # Get text of query to quotify for Postgresql
+        q = str(qs.query)
+
         # Remove double quotes from around all table and colum names
-        q = str(self.qs.query).replace('"', '')
-        logger.info('Before: %s', q)
+        q = q.replace('"', '')
+        logger.debug('Before: %s', q)
 
         # Add aliases for geom and gid
         q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
@@ -307,7 +348,7 @@ class STOQSQManager(object):
         #  IN (a81563b5f2464a9ab2d5d7d78067c4d4)
         m = re.search( r' IN \(([\S^\)]+)\)', q)
         if m:
-            logger.info(m.group(1))
+            logger.debug(m.group(1))
             q = re.sub( r' IN \([\S^\)]+\)', ' IN (\'' + m.group(1) + '\')', q)
 
         # Put quotes around the DATE TIME parameters, treat each one separately:
@@ -315,14 +356,22 @@ class STOQSQManager(object):
         #  <= 2010-10-28 08:22:52
         m1 = re.search( r'>= (\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)', q)
         if m1:
-            logger.info('>= %s', m1.group(1))
+            logger.debug('>= %s', m1.group(1))
             q = re.sub( r'>= \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d', '>= \'' + m1.group(1) + '\'', q)
         m2 = re.search( r'<= (\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)', q)
         if m2:
-            logger.info('<= %s', m2.group(1))
+            logger.debug('<= %s', m2.group(1))
             q = re.sub( r'<= \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d', '<= \'' + m2.group(1) + '\'', q)
 
-        logger.info('After: %s', q)
+        # Put quotes around 'platform.name = ' parameters:
+        #  stoqs_platform.name = dorado 
+        m = re.search( r'stoqs_platform.name = (.+?) ', q)
+        if m:
+            logger.debug('stoqs_platform.name =  %s', m.group(1))
+            q = re.sub( r'stoqs_platform.name = .+? ', 'stoqs_platform.name =  \'' + m.group(1) + '\'', q)
+
+
+        logger.debug('After: %s', q)
 
         # Query for mapserver
         geo_query = '''geom from (%s)
