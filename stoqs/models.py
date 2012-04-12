@@ -34,7 +34,8 @@ except ImportError:
 
 
 class UUIDField(models.CharField) :
-    '''Major classes in the model have been given a uuid field, which may prove helpful as web accessible resource identifiers.
+    '''
+    Major classes in the model have been given a uuid field, which may prove helpful as web accessible resource identifiers.
     '''
     
     def __init__(self, *args, **kwargs):
@@ -53,7 +54,9 @@ class UUIDField(models.CharField) :
 
 
 class Campaign(models.Model):
-    '''A Campaign holds a collection of Activities and can have a name, description and start and end time.  An example name is "CANON October 2010".
+    '''
+    A Campaign holds a collection of Activities and can have a name, description and start and end time.  
+    An example name is "CANON October 2010".
     '''
 
     uuid = UUIDField(editable=False)
@@ -70,7 +73,8 @@ class Campaign(models.Model):
                 return "%s" % (self.name,)
         
 class CampaignLog(models.Model):
-    '''Placeholder for potential integration of various logging systems into STOQS.  The
+    '''
+    Placeholder for potential integration of various logging systems into STOQS.  The
     idea is that salient messages would be mined from other sources and loaded into the
     stoqs database the same way measurements are loaded.
     '''
@@ -85,7 +89,8 @@ class CampaignLog(models.Model):
         verbose_name_plural='Campaign Logs'
 
 class ActivityType(models.Model):
-    '''Type of Activity.  Example names: AUV Survey, Mooring Deployment, Ship Cruse, GLider Mission.
+    '''
+    Type of Activity.  Example names: AUV Survey, Mooring Deployment, Ship Cruse, GLider Mission.
     '''
 
     uuid = UUIDField(editable=False)
@@ -99,7 +104,8 @@ class ActivityType(models.Model):
                 return "%s" % (self.name,)
 
 class PlatformType(models.Model):
-    '''Type of platform. Example names: auv, mooring, drifter, ship.
+    '''
+    Type of platform. Example names: auv, mooring, drifter, ship.
     '''
 
     uuid = UUIDField(editable=False)
@@ -111,7 +117,8 @@ class PlatformType(models.Model):
                 return "%s" % (self.name,)
 
 class Platform(models.Model):
-    '''Platform.  Example names (use lower case): dorado, tethys, martin.
+    '''
+    Platform.  Example names (use lower case): dorado, tethys, martin.
     '''
 
     uuid = UUIDField(editable=False)
@@ -126,7 +133,10 @@ class Platform(models.Model):
                 return "%s" % (self.name,)
 
 class Activity(models.Model):
-    '''An Activity is anything that may produce data.  Example Activity names include:  Dorado389_2011_117_01_117_01_decim.nc (stride=10), 20110415_20110418/20110418T192351/slate.nc (stride=10), 27710_jhmudas_v1.nc (stride=1).
+    '''
+    An Activity is anything that may produce data.  Example Activity names include:  
+    Dorado389_2011_117_01_117_01_decim.nc (stride=10), 
+    20110415_20110418/20110418T192351/slate.nc (stride=10), 27710_jhmudas_v1.nc (stride=1).
     '''
 
     uuid = UUIDField(editable=False)
@@ -150,8 +160,22 @@ class Activity(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+class SimpleDepthTime(models.Model):
+    '''
+    A simplified time series of depth values for an Activity
+    '''
+    activity = models.ForeignKey(Activity) 
+    timevalue = models.DateTimeField(db_index=True)
+    depth= models.FloatField()
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name='Simple depth time series'
+        verbose_name_plural='Simple depth time series'
+        app_label = 'stoqs'
+
 class InstantPoint(models.Model):
-    '''An instance in time for an Activity.  This InstantPoint may have a measurement associated with it.
+    '''
+    An instance in time for an Activity.  This InstantPoint may have a measurement or sample associated with it.
     '''
 
     activity = models.ForeignKey(Activity) 
@@ -161,7 +185,9 @@ class InstantPoint(models.Model):
         app_label = 'stoqs'
 
 class Parameter(models.Model):
-    '''A Parameter is something that can be measured producing a numeric value.  Example names include: temperature, salinity, fluoresence.
+    '''
+    A Parameter is something that can be measured producing a numeric value.  Example names include: 
+    temperature, salinity, fluoresence.
     '''
 
     uuid = UUIDField(editable=False)
@@ -182,7 +208,8 @@ class Parameter(models.Model):
                 return "%s" % (self.name,)
 
 class ResourceType(models.Model):
-    '''Type of Resource. Example names: nc_global, quick-look-plot.
+    '''
+    Type of Resource. Example names: nc_global, quick-look-plot.
     '''
 
     uuid = UUIDField(editable=False)
@@ -195,7 +222,8 @@ class ResourceType(models.Model):
                 return "%s" % (self.name,)
 
 class Resource(models.Model):
-    '''A catchall class for saving any bit of information that may be associated with an Activity, or other STOQS model class.
+    '''
+    A catchall class for saving any bit of information that may be associated with an Activity, or other STOQS model class.
     This is useful for collecting web resources that may be shown in a popup window for an activity.  Examples include: NC_GLOBAL data set
     attributes or quick-look plots.  The ResoureType class may be used to help categorize the display of resources.
     '''
@@ -213,7 +241,8 @@ class Resource(models.Model):
                 return "%s" % (self.name,)
 
 class ActivityResource(models.Model):
-    '''Association class pairing Activities and Resources.
+    '''
+    Association class pairing Activities and Resources.
     '''
     uuid = UUIDField(editable=False)
     activity = models.ForeignKey(Activity)
@@ -225,7 +254,8 @@ class ActivityResource(models.Model):
         unique_together = ['activity', 'resource']
 
 class Measurement(models.Model):
-    '''A Measurement may have a depth value (this is an Oceanographic Query System) and a location (represented by the geom field), 
+    '''
+    A Measurement may have a depth value (this is an Oceanographic Query System) and a location (represented by the geom field), 
     be associated with an InstantPoint and and a MeasuredParameter (where the measured datavalue is stored).
     '''
 
@@ -240,8 +270,29 @@ class Measurement(models.Model):
         def __str__(self):
                 return "Measurement at %s" % (self.geom,)
 
+class Sample(models.Model):
+    '''
+    A Sample may have a depth value (this is an Oceanographic Query System) and a location (represented by the geom field), 
+    be associated with an InstantPoint and and a SampledParameter (where the measured datavalue is stored).  A Sample
+    differs from a Measurement in that it represents an actual physical sample from which analyses may be made producing
+    digital values which may be stored in the SampleParameter table.
+    '''
+
+    instantpoint = models.ForeignKey(InstantPoint)
+    depth= models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
+    geom = models.PointField(srid=4326, spatial_index=True, dim=2)
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name = 'Sample'
+        verbose_name_plural = 'Samples'
+        app_label = 'stoqs'
+        def __str__(self):
+                return "Sample at %s" % (self.geom,)
+
 class ActivityParameter(models.Model):
-    '''Association class pairing Parameters that have been loaded for an Activity'''
+    '''
+    Association class pairing Parameters that have been loaded for an Activity
+    '''
     uuid = UUIDField(editable=False)
     activity = models.ForeignKey(Activity)
     parameter = models.ForeignKey(Parameter)
@@ -253,8 +304,8 @@ class ActivityParameter(models.Model):
     median = models.FloatField(null=True)
     mode = models.FloatField(null=True)
     # Useful for ignoring min & max outliers - 2.5% & 97.5% qualtiles of the parameter
-    min025 = models.FloatField(null=True)
-    max975 = models.FloatField(null=True)
+    p025 = models.FloatField(null=True)
+    p975 = models.FloatField(null=True)
     class Meta:
         verbose_name = 'Activity Parameter'
         verbose_name_plural = 'Activity Parameter'
@@ -262,9 +313,9 @@ class ActivityParameter(models.Model):
         unique_together = ['activity', 'parameter']
         
 class MeasuredParameter(models.Model):
-    '''Association class pairing Measurements with Parameters.  This is where the measured values are stored -- in the datavalue field.
     '''
-
+    Association class pairing Measurements with Parameters.  This is where the measured values are stored -- in the datavalue field.
+    '''
     measurement = models.ForeignKey(Measurement) 
     parameter = models.ForeignKey(Parameter) 
     datavalue = models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
@@ -274,4 +325,18 @@ class MeasuredParameter(models.Model):
         verbose_name_plural = 'Measured Parameter'
         app_label = 'stoqs'
         unique_together = ['measurement','parameter']
+
+class SampleedParameter(models.Model):
+    '''
+    Association class pairing Samples with Parameters.  This is where any digital sampled data values are stored -- in the datavalue field.
+    '''
+    sample = models.ForeignKey(Sample) 
+    parameter = models.ForeignKey(Parameter) 
+    datavalue = models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name = 'Sampled Parameter'
+        verbose_name_plural = 'Sampled Parameter'
+        app_label = 'stoqs'
+        unique_together = ['sample','parameter']
 
