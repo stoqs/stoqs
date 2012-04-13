@@ -55,7 +55,7 @@ from utils.mathstats import percentile, median, mode, simplify_points
 
 # Set up logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -259,7 +259,7 @@ class Base_Loader(object):
                     raise Exception('''Failed to add parameter for %s
                         %s\nEither add parameter manually, or add to ignored_names''' % (key,
                         '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
-                logger.debug("Added parameter %s from data set to database %s", (key, self.dbName))
+                logger.debug("Added parameter %s from data set to database %s", key, self.dbName)
 #       
         transaction.rollback()
  
@@ -343,6 +343,8 @@ class Base_Loader(object):
                     logger.debug("retrieving from database %s", self.dbName)
                     self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbName).get(standard_name = self.standard_names[name][0])
                 except ObjectDoesNotExist:
+                    pass
+                except IndexError:
                     pass
         # If we still haven't found the parameter using the standard_name, start looking using the name
         if not self.parameter_dict.has_key(name):
@@ -698,7 +700,7 @@ class Base_Loader(object):
         newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (loaded, ' '.join(self.varsLoaded), datetime.utcnow())
         logger.debug("runDoradoLoader(): Updating its comment with newComment = %s", newComment)
     
-        num_updated = m.Activity.objects.using(dbName).filter(id = self.activity.id).update(
+        num_updated = m.Activity.objects.using(self.dbName).filter(id = self.activity.id).update(
                         comment = newComment,
                         maptrack = path,
                         mindepth = mindepth,
@@ -741,7 +743,7 @@ class Base_Loader(object):
             numpvar.sort()
             listvar = list(numpvar)
             print p, numpvar
-            logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, min025 = %f, max097 = %f',
+            logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f',
                             p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar), 
                             percentile(listvar, 0.025), percentile(listvar, 0.975))
             m.ActivityParameter.objects.using(self.dbName).create(
@@ -753,10 +755,20 @@ class Base_Loader(object):
                                         mean = numpvar.mean(),
                                         median = median(listvar),
                                         mode = mode(numpvar),
-                                        min025 = percentile(listvar, 0.025),
-                                        max975= percentile(listvar, 0.975)
+                                        p025 = percentile(listvar, 0.025),
+                                        p975= percentile(listvar, 0.975)
                                         )
         logger.info('Updated statistics for activity.name = %s', a.name)
+
+    def insertSimpleDepthTimeSeries(self):
+        '''
+        Read the time series of depth values for this activity, simplify it and insert the values in the
+        SimpleDepthTime table that is related to the Activity.
+        '''
+        time, depth = m.Measurment.objects.using(self.dbName).select_related().values(depth, instantpoint__timevalue).filter(instantpoint__activity=self.activity)
+
+        logger.info('Inserted %d values into SimpleDepthTime', count)
+
 
 class Auvctd_Loader(Base_Loader):
     include_names = ['temperature', 'conductivity']
@@ -1005,35 +1017,10 @@ def runAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, db
             platformTypeName = pTypeName,
             stride = stride)
 
-    logger.debug("runAuvctdLoader(): Setting include_names to %s", parmList)
+    logger.debug("Setting include_names to %s", parmList)
     loader.include_names = parmList
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
-    logger.debug("runAuvctdLoader(): Loaded Activity with name = %s", aName)
-
-    # Update the Activity with information we now have following the load
-    # Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
-    newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
-    logger.debug("runAuvctdLoader(): Updating its comment with newComment = %s", newComment)
-
-    num_updated = m.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment,
-                        maptrack = path,
-                        mindepth = mind,
-                        maxdepth = maxd,
-                        num_measuredparameters = nMP,
-                        loaded_date = datetime.utcnow())
-    logger.debug("runAuvctdLoader(): %d activities updated with new attributes." % num_updated)
-
-    if num_updated != 1:
-        logger.debug("runAuvctdLoader(): We should have just one Activity with name = %s", aName)
-        return
-    else:
-        # Add links back to paraemters with stats on the partameters of the activity
-        activity = m.Activity.objects.using(dbName).get(name = aName)
-        for key in parmCountHash.keys():
-            logger.debug("runAuvctdLoader(): key = %s, count = %d", (key, parmCountHash[key]))
-            ap = m.ActivityParameter.objects.db_manager(dbName).get_or_create(activity = activity,
-                        parameter = loader.getParameterByName(key),
-                        number = parmCountHash[key])
+    logger.debug("Loaded Activity with name = %s", aName)
 
 
 
@@ -1054,7 +1041,7 @@ def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stri
             stride = stride)
 
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
-    logger.debug("runDoradoLoader(): Loaded Activity with name = %s", aName)
+    logger.debug("Loaded Activity with name = %s", aName)
 
 
 def runLrauvLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride):
@@ -1074,35 +1061,11 @@ def runLrauvLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbN
             stride = stride)
 
     if parmList:
-        logger.debug("runAuvctdLoader(): Setting include_names to %s", parmList)
+        logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
-    logger.debug("runLRAuvctdLoader(): Loaded Activity with name = %s", aName)
+    logger.debug("Loaded Activity with name = %s", aName)
 
-    # Update the Activity with information we now have following the load
-    # Careful with the structure of this comment.  It is parsed (for now) in views.py to give some useful links in showActivities()
-    newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (nMP, ' '.join(loader.varsLoaded), datetime.utcnow())
-    logger.debug("runLRAuvctdLoader(): Updating its comment with newComment = %s", newComment)
-
-    num_updated = m.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment,
-                        maptrack = path,
-                        mindepth = mind,
-                        maxdepth = maxd,
-                        num_measuredparameters = nMP,
-                        loaded_date = datetime.utcnow())
-    logger.debug("runLRAuvctdLoader(): %d activities updated with new attributes.", num_updated)
-
-    if num_updated != 1:
-        logger.debug("runLRAuvctdLoader(): We should have just one Activity with name = %s", aName)
-        return
-    else:
-        # Add links back to paraemters with stats on the partameters of the activity
-        activity = m.Activity.objects.using(dbName).get(name = aName)
-        for key in parmCountHash.keys():
-            logger.debug("runLRAuvctdLoader(): key = %s, count = %d", key, parmCountHash[key])
-            ap = m.ActivityParameter.objects.db_manager(dbName).get_or_create(activity = activity,
-                        parameter = loader.getParameterByName(key),
-                        number = parmCountHash[key])
 
 if __name__ == '__main__':
     ##bl=Base_Loader('Test Survey', 
