@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     # Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
     dbName = 'stoqs_april2011'
-    stride = 10
+    stride = 1000
     campaignName = 'CANON - April 2011'
 
     # ------------------------- Dorado loads -------------------------
@@ -48,9 +48,9 @@ if __name__ == '__main__':
             'Dorado389_2011_117_01_117_01_decim.nc',
             'Dorado389_2011_118_00_118_00_decim.nc'
             ]
-    ##for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
-    ##    url = baseUrl + file
-    ##    DAPloaders.runDoradoLoader(url, campaignName, aName, 'dorado', 'auv', 'AUV mission', dbName, stride)
+    for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
+        url = baseUrl + file
+        DAPloaders.runDoradoLoader(url, campaignName, aName, 'dorado', 'auv', 'AUV mission', dbName, stride)
 
 
     # ------------------------- Tethys loads -------------------------
@@ -74,8 +74,10 @@ if __name__ == '__main__':
             '20110426_20110502/20110430T132028/slate.nc',
             '20110426_20110502/20110502T040031/slate.nc'
             ]
+    parmList = ['sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
+                'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
+                'mass_concentration_of_chlorophyll_in_sea_water']
     for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
         url = baseUrl + file
-        parmList = ['mass_concentration_of_chlorophyll_in_sea_water']
         DAPloaders.runLrauvLoader(url, campaignName, aName, 'tethys', 'auv', 'AUV mission', parmList, dbName, stride)
 
