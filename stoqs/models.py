@@ -177,7 +177,6 @@ class InstantPoint(models.Model):
     '''
     An instance in time for an Activity.  This InstantPoint may have a measurement or sample associated with it.
     '''
-
     activity = models.ForeignKey(Activity) 
     timevalue = models.DateTimeField(db_index=True)
     objects = models.GeoManager()
@@ -198,7 +197,6 @@ class Parameter(models.Model):
     long_name = models.CharField(max_length=128, blank=True, null=True)
     units = models.CharField(max_length=128, blank=True, null=True)
     origin = models.CharField(max_length=128, blank=True, null=True)
- 
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Parameter'
@@ -206,6 +204,35 @@ class Parameter(models.Model):
         app_label = 'stoqs'
         def __str__(self):
                 return "%s" % (self.name,)
+
+class ParameterGroup(models.Model):
+    '''
+    A grouping of parameters with a many-to-many relationship to the Paramter table.  Useful for showing checkboxes
+    in the User Interface for which kinds of Parameters to show, e.g.: Electronic measured, bottle samples, bio-optical,
+    physical.  Mapping to other ontologies to a ParamterGroup (e.g. GCMD) is also possible.
+    '''
+    uuid = UUIDField(editable=False)
+    name = models.CharField(max_length=128, unique=True)
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name = 'ParameterGroup'
+        verbose_name_plural = 'ParameterGroups'
+        app_label = 'stoqs'
+        def __str__(self):
+                return "%s" % (self.name,)
+
+class ParameterGroupParameter(models.Model):
+    '''
+    Association table pairing ParamterGroup and Parameter
+    '''
+    uuid = UUIDField(editable=False)
+    parametergroup = models.ForeignKey(ParameterGroup)
+    parameter = models.ForeignKey(Parameter)
+    class Meta:
+        verbose_name = 'ParameterGroup Parameter'
+        verbose_name_plural = 'ParameterGroup Parameter'
+        app_label = 'stoqs'
+        unique_together = ['parametergroup', 'parameter']
 
 class ResourceType(models.Model):
     '''
@@ -281,6 +308,7 @@ class Sample(models.Model):
     instantpoint = models.ForeignKey(InstantPoint)
     depth= models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
+    name = models.CharField(max_length=128, db_index=True)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Sample'
@@ -326,7 +354,7 @@ class MeasuredParameter(models.Model):
         app_label = 'stoqs'
         unique_together = ['measurement','parameter']
 
-class SampleedParameter(models.Model):
+class SampledParameter(models.Model):
     '''
     Association class pairing Samples with Parameters.  This is where any digital sampled data values are stored -- in the datavalue field.
     '''
