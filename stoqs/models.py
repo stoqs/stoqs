@@ -314,6 +314,7 @@ class Sample(models.Model):
     digital values which may be stored in the SampleParameter table.
     '''
     instantpoint = models.ForeignKey(InstantPoint)
+    parentsampleid = models.ForeignKey('self')
     depth= models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     name = models.CharField(max_length=128, db_index=True)
