@@ -109,12 +109,12 @@ class CampaignLog(models.Model):
     '''
     uuid = UUIDField(editable=False)
     campaign = models.ForeignKey(Campaign)
+    resource = models.ForeignKey(Resource)
     timevalue = models.DateTimeField(db_index=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2, blank=True, null=True)
     depth = models.FloatField(blank=True, null=True)
     username = models.CharField(max_length=128, blank=True, null=True)
-    description = models.CharField(max_length=2048)
-    resource = models.ForeignKey(Resource, blank=True, null=True)
+    message = models.CharField(max_length=2048)
     objects = models.GeoManager()
     class Meta:
         app_label = 'stoqs'
