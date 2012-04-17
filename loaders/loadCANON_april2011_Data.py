@@ -28,15 +28,15 @@ import DAPloaders
 from datetime import datetime
 from stoqs import models as mod
 
+dbAlias = 'stoqs_april2011'
+campaignName = 'CANON - April 2011'
 
-if __name__ == '__main__':
-    '''load full resolution Dorado and Tethys data from April 2011 experiment into the stoqs_april2011 database
+def loadDorado(stride=1):
+    '''
+    load full resolution Dorado and Tethys data from April 2011 experiment into the stoqs_april2011 database
     '''
 
     # Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
-    dbName = 'stoqs_april2011'
-    stride = 1000
-    campaignName = 'CANON - April 2011'
 
     # ------------------------- Dorado loads -------------------------
     ##baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2011/netcdf/'
@@ -50,9 +50,10 @@ if __name__ == '__main__':
             ]
     for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
         url = baseUrl + file
-        DAPloaders.runDoradoLoader(url, campaignName, aName, 'dorado', 'auv', 'AUV mission', dbName, stride)
+        DAPloaders.runDoradoLoader(url, campaignName, aName, 'dorado', 'auv', 'AUV mission', dbAlias, stride)
 
 
+def loadTethys(stride=1):
     # ------------------------- Tethys loads -------------------------
     # The Hyrax server seems to deliver data from variables with '.' in the name from the DODS access form, but pydap throws an exception
     ##baseUrl = 'http://dods.mbari.org/opendap/data/lrauv/Tethys/missionlogs/2011/'
@@ -79,5 +80,23 @@ if __name__ == '__main__':
                 'mass_concentration_of_chlorophyll_in_sea_water']
     for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
         url = baseUrl + file
-        DAPloaders.runLrauvLoader(url, campaignName, aName, 'tethys', 'auv', 'AUV mission', parmList, dbName, stride)
+        DAPloaders.runLrauvLoader(url, campaignName, aName, 'tethys', 'auv', 'AUV mission', parmList, dbAlias, stride)
+
+
+def loadAll(stride=1):
+    '''
+    Load all the data for this campaign
+    '''
+    loadDorado(stride)
+    loadTethys(stride)
+    ##loadMartin(stride)
+
+if __name__ == '__main__':
+    '''
+    Load this campaign.  Can be called from an outside script to load multiple campaigns with:
+        import loadCANON_april2011
+        loadCANON_april2011.loadAll()
+    '''
+    stride = 1000
+    loadAll(stride)
 
