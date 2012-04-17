@@ -44,9 +44,10 @@ class STOQSQManager(object):
         else:
             logger.debug('Making default activity based query')
             if (not kwargs):
-                qs = models.Activity.objects.using(self.dbname).select_related(depth=3).filter(activityparameter__parameter__pk__isnull=False,
-                                                                                           activityparameter__activity__pk__isnull=False,
-                                                                                           platform__pk__isnull=False)
+                qs = models.Activity.objects.using(self.dbname).select_related(depth=3).filter( activityparameter__parameter__pk__isnull=False,
+                                                                                                activityparameter__activity__pk__isnull=False,
+                                                                                                simpledepthtime__pk__isnull=False,
+                                                                                                platform__pk__isnull=False)
             else:
                 qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
     
@@ -87,6 +88,7 @@ class STOQSQManager(object):
                                'platforms': self.getPlatforms,
                                'time': self.getTime,
                                'depth': self.getDepth,
+                               'simpledepthtime': self.getSimpleDepthTime,
                                'count': self.getCount,
                                }
         
@@ -94,8 +96,8 @@ class STOQSQManager(object):
         for k,v in options_functions.iteritems():
             results[k] = v()
         
-        logger.info(pprint.pformat(str(self.qs.query)))
-        logger.info(pprint.pformat(results))
+        logger.info('qs.query = %s', pprint.pformat(str(self.qs.query)))
+        logger.info('results = %s', pprint.pformat(results))
         return results
     
     #
@@ -248,6 +250,13 @@ class STOQSQManager(object):
         qs=self.qs.aggregate(Max('maxdepth'), Min('mindepth'))
         return (qs['mindepth__min'],qs['maxdepth__max'])
         
+    def getSimpleDepthTime(self):
+        '''
+        Based on the current selected query criteria for activities, return the associated SimpleDepth time series
+        values as a 2-tuple list for plotting by flot in the UI.
+        '''
+        return(self.qs.values_list('simpledepthtime__epochmilliseconds', 'simpledepthtime__depth'))
+
     #
     # Methods that generate Q objects used to populate the query.
     #    
