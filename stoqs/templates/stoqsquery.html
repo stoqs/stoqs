@@ -65,8 +65,21 @@
   <div class="container-fluid">
 
     <div class="row-fluid">
-        <div id="map" class="span6">
-        </div><!-- span -->
+
+        <div class="span6">
+            <div class="row-fluid" id="map">
+            </div>
+            <div class="row-fluid">
+                <h3><strong id="result_count">0</strong> data points found.</h3>
+                <h4>Copy the links below to save them, click on the buttons to download in the specified format.</h4>
+                {% for format, description in formats.items %}
+                <div class="row-fluid">
+                    <input id="{{format}}-field" type="text" class="span6">
+                    <span class="help-inline span4"><a target="_blank" id="{{format}}-link" class="btn btn-info btn-small" href=""><i class="icon-file"></i> {{description}}</a></span>
+                {% endfor %}            
+                </div>          
+            </div><!-- row-fluid -->
+        </div><!-- span6 -->
         
         <div class="span6">
             <div class="accordion well" id="accordion2">
@@ -141,21 +154,6 @@
 
         </div><!-- span -->
     </div><!-- row-fluid -->
-
-    <div class="row-fluid">
-        <div class="span12 page-header">
-            <div class="well">
-                <h3><strong id="result_count">0</strong> data points found.</h3>
-                <h4>Copy the links below to save them, click on the buttons to download in the specified format.</h4>
-                {% for format, description in formats.items %}
-                <div class="row-fluid">
-                    <input id="{{format}}-field" type="text" class="span6">
-                    <span class="help-inline span4"><a target="_blank" id="{{format}}-link" class="btn btn-info btn-small" href=""><i class="icon-file"></i> {{description}}</a></span>
-                {% endfor %}            
-                </div>          
-            </div><!-- well -->
-        </div><!-- span -->
-    </div><!-- row-fluid --> 
 
   </div> <!-- container -->
 
@@ -352,7 +350,6 @@
                         else if (key == 'parameters') {
                             $.each(data[key], function (index, value) {
                                                     $('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
-                                                              '<td><input name="'+key+'" type="radio"></th>' +
                                                               '<td class="parameter"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></td>' +
                                                               '</tr>');
                             });
