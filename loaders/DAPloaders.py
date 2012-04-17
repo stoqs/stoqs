@@ -36,6 +36,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 from django.conf import settings
 
 from django.contrib.gis.geos import Point
+from django.db.utils import IntegrityError
 from django.db import transaction
 from stoqs import models as m
 from datetime import datetime, timedelta
@@ -50,7 +51,7 @@ import csv
 import urllib2
 import logging
 import seawater.csiro as sw
-from utils.mathstats import percentile, median, mode, simplify_points
+from utils.utils import percentile, median, mode, simplify_points
 
 
 # Set up logging
@@ -197,9 +198,9 @@ class Base_Loader(object):
         logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", (self.dbName, self.platformTypeName))
         (platformType, created) = m.PlatformType.objects.db_manager(self.dbName).get_or_create(name = self.platformTypeName)
         if created:
-            logger.debug("Created platformType.name %s in database %s", (platformType.name, self.dbName))
+            logger.debug("Created platformType.name %s in database %s", platformType.name, self.dbName)
         else:
-            logger.debug("Retrived platformType.name %s from database %s", (platformType.name, self.dbName))
+            logger.debug("Retrived platformType.name %s from database %s", platformType.name, self.dbName)
 
 
         # Create Platform 
@@ -459,7 +460,7 @@ class Base_Loader(object):
                     'We have a 1-dimensional coordinate variable, construct the proper constrant expression'
                     try:
                         # This works for Trajectory data, (AUV, drifter, Glider, etc.)
-                        logger.info("Reading %s.ascii?%s[%d:%d:%d]", self.url, k, tIndx[0], self.stride, tIndx[-1])
+                        logger.info("Reading binary equiv from %s.ascii?%s[%d:%d:%d]", self.url, k, tIndx[0], self.stride, tIndx[-1])
                         v = self.ds[k][tIndx[0]:tIndx[-1]:self.stride]      # Subselect along the time axis for BaseType variables
                     except pydap.exceptions.ServerError:
                         logger.debug("Got pydap.exceptions.ServerError.  Continuning to next key.")
@@ -710,9 +711,10 @@ class Base_Loader(object):
         logger.debug("runDoradoLoader(): %d activitie(s) updated with new attributes." % num_updated)
 
         # 
-        # Update the stats
+        # Update the stats and store simple line values
         #
         self.updateActivityParameterStats(parameterCount)
+        self.insertSimpleDepthTimeSeries()
         logger.info("Data load complete, %d records loaded.", loaded)
 
         return loaded, path, parmCount, mindepth, maxdepth
@@ -730,23 +732,24 @@ class Base_Loader(object):
             else:
                 self.standard_names[var]=None # Indicate those without a standard name
 
-    def updateActivityParameterStats(self, parameterCount):
+    @transaction.commit_manually()
+    def updateActivityParameterStats(self, parameterCounts):
         '''
-        Examine the data for the Activity, compute and update some statistics and produce a simplified
-        geometry of the depth coordinate time series.
+        Examine the data for the Activity, compute and update some statistics on the measuredparameters
+        for this activity.
         '''
 
         a = self.activity
-        for p in parameterCount:
+        for p in parameterCounts:
             data = m.MeasuredParameter.objects.using(self.dbName).filter(parameter=p)
             numpvar = numpy.array([float(v.datavalue) for v in data])
             numpvar.sort()
             listvar = list(numpvar)
-            print p, numpvar
             logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f',
                             p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar), 
                             percentile(listvar, 0.025), percentile(listvar, 0.975))
-            m.ActivityParameter.objects.using(self.dbName).create(
+            try:
+                m.ActivityParameter.objects.using(self.dbName).create(
                                         activity = a,
                                         parameter = p,
                                         number = len(listvar),
@@ -758,6 +761,11 @@ class Base_Loader(object):
                                         p025 = percentile(listvar, 0.025),
                                         p975= percentile(listvar, 0.975)
                                         )
+                transaction.commit()
+            except IntegrityError:
+                transaction.rollback()
+                logger.error('Cannot create ActivityParameter.')
+
         logger.info('Updated statistics for activity.name = %s', a.name)
 
     def insertSimpleDepthTimeSeries(self):
@@ -765,9 +773,27 @@ class Base_Loader(object):
         Read the time series of depth values for this activity, simplify it and insert the values in the
         SimpleDepthTime table that is related to the Activity.
         '''
-        time, depth = m.Measurment.objects.using(self.dbName).select_related().values(depth, instantpoint__timevalue).filter(instantpoint__activity=self.activity)
+        vlqs = m.Measurement.objects.using(self.dbName).filter( instantpoint__activity=self.activity,
+                                                              ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk')
+        line = []
+        pklookup = []
+        for dt,dd,pk in vlqs:
+            ems = 1000 * to_udunits(dt, 'seconds since 1970-01-01')
+            d = float(dd)
+            line.append((ems,d,))
+            pklookup.append(pk)
 
-        logger.info('Inserted %d values into SimpleDepthTime', count)
+        logger.debug('line = %s', line)
+        logger.info('Number of points in original depth time series = %d', len(line))
+        simple_line = simplify_points(line, 10)
+        logger.info('Number of points in simplified depth time series = %d', len(simple_line))
+        logger.debug('simple_line = %s', simple_line)
+
+        for t,d,k in simple_line:
+            ip = m.InstantPoint.objects.get(pk = pklookup[k])
+            m.SimpleDepthTime.objects.using(self.dbName).create(activity = self.activity, instantpoint = ip, depth = d, epochmilliseconds = t)
+
+        logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
 
 class Auvctd_Loader(Base_Loader):
@@ -856,7 +882,6 @@ class Dorado_Loader(Base_Loader):
     def addResources(self):
         '''In addition to the NC_GLOBAL attributes that are added in the base class also add the quick-look plots that are on the dods server.
         '''
-
         baseUrl = 'http://dods.mbari.org/data/auvctd/surveys'
         survey = self.url.split('/')[-1].split('.nc')[0].split('_decim')[0] # Works for both .nc and _decim.nc files
         yyyy = int(survey.split('_')[1])
@@ -870,7 +895,8 @@ class Dorado_Loader(Base_Loader):
             (resource, created) = m.Resource.objects.db_manager(self.dbName).get_or_create(
                         name=ql, uristring=url, resourcetype=resourceType)
             (ar, created) = m.ActivityResource.objects.db_manager(self.dbName).get_or_create(
-                        activity=self.activity, resource=resource)
+                        activity=self.activity,
+                        resource=resource)
 
         # kml, odv, mat
         (kmlResourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(
