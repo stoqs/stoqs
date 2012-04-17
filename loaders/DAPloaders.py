@@ -732,7 +732,6 @@ class Base_Loader(object):
             else:
                 self.standard_names[var]=None # Indicate those without a standard name
 
-    @transaction.commit_manually()
     def updateActivityParameterStats(self, parameterCounts):
         '''
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
@@ -749,7 +748,7 @@ class Base_Loader(object):
                             p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar), 
                             percentile(listvar, 0.025), percentile(listvar, 0.975))
             try:
-                m.ActivityParameter.objects.using(self.dbName).create(
+                ap, created = m.ActivityParameter.objects.using(self.dbName).get_or_create(
                                         activity = a,
                                         parameter = p,
                                         number = len(listvar),
@@ -761,11 +760,28 @@ class Base_Loader(object):
                                         p025 = percentile(listvar, 0.025),
                                         p975= percentile(listvar, 0.975)
                                         )
-                transaction.commit()
-            except IntegrityError:
-                transaction.rollback()
-                logger.error('Cannot create ActivityParameter.')
+                if created:
+                    logger.info('Created ActivityParameter for parameter.name = %s', p.name)
+                else:
+                    m.ActivityParameter.objects.using(self.dbName).update(
+                                        activity = a,
+                                        parameter = p,
+                                        number = len(listvar),
+                                        min = numpvar.min(),
+                                        max = numpvar.max(),
+                                        mean = numpvar.mean(),
+                                        median = median(listvar),
+                                        mode = mode(numpvar),
+                                        p025 = percentile(listvar, 0.025),
+                                        p975= percentile(listvar, 0.975)
+                                        )
+                    logger.info('Update ActivityParameter for parameter.name = %s', p.name)
 
+            except IntegrityError:
+                logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
+                continue
+
+        ##transaction.rollback()
         logger.info('Updated statistics for activity.name = %s', a.name)
 
     def insertSimpleDepthTimeSeries(self):
@@ -790,8 +806,11 @@ class Base_Loader(object):
         logger.debug('simple_line = %s', simple_line)
 
         for t,d,k in simple_line:
-            ip = m.InstantPoint.objects.get(pk = pklookup[k])
-            m.SimpleDepthTime.objects.using(self.dbName).create(activity = self.activity, instantpoint = ip, depth = d, epochmilliseconds = t)
+            try:
+                ip = m.InstantPoint.objects.using(self.dbName).get(id = pklookup[k])
+                m.SimpleDepthTime.objects.using(self.dbName).create(activity = self.activity, instantpoint = ip, depth = d, epochmilliseconds = t)
+            except ObjectDoesNotExist:
+                logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
         logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
