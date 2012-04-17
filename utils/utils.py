@@ -145,7 +145,8 @@ def simplify_points (pts, tolerance):
 
     keep = list(keep)
     keep.sort()
-    return [pts[i] for i in keep]
+    # Change from original code: add the index from the original line in the return
+    return [(pts[i] + (i,)) for i in keep]
 
 if __name__ == "__main__":
     import doctest
