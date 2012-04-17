@@ -67,6 +67,7 @@ urlpatterns = patterns('',
     url(pre + r'resourceType.?'      + formatPat, 'stoqs.views.showResourceType',      {}, name='show-resourcetype'),
     url(pre + r'activityresource.?'  + formatPat, 'stoqs.views.showActivityResource',  {}, name='show-activityresource'),
     url(pre + r'activityparameter.?' + formatPat, 'stoqs.views.showActivityParameter', {}, name='show-activityparameter'),
+    url(pre + r'simpledepthtime.?'   + formatPat, 'stoqs.views.showSimpleDepthTime',   {}, name='show-simpledepthtime'),
 
     # Measurements  
     url(pre + 'measurement/' + btwnCl + formatCl, 
