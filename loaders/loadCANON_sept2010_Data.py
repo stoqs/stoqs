@@ -28,29 +28,27 @@ import DAPloaders
 from datetime import datetime
 from stoqs import models as mod
 
+dbAlias = 'stoqs_sept2010'
+campaignName = 'ESP Drifter Tracking - September 2010'
 
-def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pTypeName, aTypeName, dbName, stride = 1):
+def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pTypeName, aTypeName, dbAlias, stride = 1):
     '''Load missions from OPeNDAP url from either a list of files from a base or a single URL with a given activityName '''
 
     if fileList: 
-        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], fileList):
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in fileList], fileList):
             url = baseUrl + file
-            DAPloaders.runDoradoLoader(url, campaignName, aName, pName, pTypeName, aTypeName, dbName, stride)
+            DAPloaders.runDoradoLoader(url, campaignName, aName, pName, pTypeName, aTypeName, dbAlias, stride)
     elif activityName:
         url = baseUrl
-        DAPloaders.runCSVLoader(url, campaignName, activityName, pName, pTypeName, aTypeName, dbName, stride)
+        DAPloaders.runCSVLoader(url, campaignName, activityName, pName, pTypeName, aTypeName, dbAlias, stride)
     else:
         print "loadMissions(): Must specify either a fileList or an activityName"
 
-
-if __name__ == '__main__':
-    '''load full resolution Dorado and ESP data from September 2010 drifter following experiment into the stoqs_sept2010 database
+def loadDorado(stride=1):
     '''
-
+    List of Dorado surveys for September 2010 ESP drifter experiment 
+    '''
     # Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
-    dbName = 'stoqs_sept2010'
-    stride = 100
-    campaignName = 'ESP Drifter Tracking - September 2010'
 
 
     # ------------------------- Dorado loads -------------------------
@@ -62,9 +60,19 @@ if __name__ == '__main__':
             'Dorado389_2010_260_00_260_00_decim.nc',
             'Dorado389_2010_261_00_261_00_decim.nc'
             ]
-    loadMissions(baseUrl, files, '', campaignName, 'dorado', 'auv', 'AUV Mission', dbName, stride)
+    loadMissions(baseUrl, files, '', campaignName, 'dorado', 'auv', 'AUV Mission', dbAlias, stride)
 
+def loadAll(stride=1):
+    '''
+    Load all the data for this campaign
+    '''
+    loadDorado(stride)
 
-
-    # ------------------------- Julio analyses loads -------------------------
-
+if __name__ == '__main__':
+    '''
+    Load this campaign.  Can be called from an outside script to load multiple campaigns with:
+        import loadCANON_sept2010
+        loadCANON_sept2010.loadAll()
+    '''
+    stride = 1000
+    loadAll(stride)

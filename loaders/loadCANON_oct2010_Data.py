@@ -128,8 +128,6 @@ def loadTethys(stride=1):
         ]
     loadTethysMissions(baseUrl, files, '', campaignName, 'tethys', 'auv', 'AUV Mission', dbAlias, stride)
 
-    
-
 def loadAll(stride=1):
     '''
     Load all the data for this campaign
