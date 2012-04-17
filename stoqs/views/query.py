@@ -118,6 +118,7 @@ def queryData(request, format=None):
     query_parms = {'parameters': 'parameters', # This should be specified once in the query string for each parameter.
                    'time': ('start_time','end_time'), # Single values
                    'depth': ('min_depth', 'max_depth'), # Single values
+                   'simpledepthtime': [], # List of x,y values
                    'platforms': 'platforms', # Specified once in the query string for each platform.
                    }
     params = {}
@@ -132,6 +133,8 @@ def queryData(request, format=None):
     options = simplejson.dumps(qm.generateOptions(),
                                cls=encoders.STOQSJSONEncoder)
                                # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
+    ##logger.debug('options = %s', pprint.pformat(options))
+    logger.debug('len(simpledepthtime) = %d', len(json.loads(options)['simpledepthtime']))
     buildMapFile(request, qm, options)
 
     if not format: # here we export in a given format, or just provide summary data if no format is given.
