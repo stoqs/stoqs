@@ -213,3 +213,10 @@ def showActivityParameter(request, format = 'html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
+def showSimpleDepthTime(request, format = 'html'):
+    stoqs_object = mod.SimpleDepthTime
+    query_set = stoqs_object.objects.all()
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
+
