@@ -348,6 +348,14 @@
             }
         }
         var me = this;
+        var simpledepthtime_options = { xaxis: { mode: "time" },
+                                        yaxis: {
+                                            transform: function (v) { return -v; },
+                                            inverseTransform: function (v) { return -v; }
+                                        }
+                                      }
+
+
         request=$.ajax({
             type : 'GET',
             url : stoqsQuery + '?' + qstring,
@@ -382,7 +390,7 @@
                             makeSlider('slider-' + key, key, data[key])
                         }
                         else if (key == 'simpledepthtime') {
-                            $.plot($("#placeholder"), [data[key]], { xaxis: { mode: "time" } });
+                            $.plot($("#placeholder"), [data[key]], simpledepthtime_options);
                         }
                     } else {
                         if (key == 'platforms') {
@@ -424,7 +432,7 @@
                             $('#end-depth').val(Math.round(data[key][1]*10)/10);
                         }
                         else if (key == 'simpledepthtime') {
-                            $.plot($("#placeholder"), [data[key]], { xaxis: { mode: "time" } });
+                            $.plot($("#placeholder"), [data[key]], simpledepthtime_options);
                         }
                     }
                     // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
