@@ -255,7 +255,7 @@ class STOQSQManager(object):
         Based on the current selected query criteria for activities, return the associated SimpleDepth time series
         values as a 2-tuple list for plotting by flot in the UI.
         '''
-        return(self.qs.values_list('simpledepthtime__epochmilliseconds', 'simpledepthtime__depth'))
+        return(self.qs.values_list('simpledepthtime__epochmilliseconds', 'simpledepthtime__depth').order_by('simpledepthtime__epochmilliseconds'))
 
     #
     # Methods that generate Q objects used to populate the query.
