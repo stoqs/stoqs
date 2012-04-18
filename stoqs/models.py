@@ -73,8 +73,8 @@ class Resource(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, null=True)
     value = models.TextField(null=True)
-    resourcetype = models.ForeignKey(ResourceType, blank=True, null=True, default=None)
     uristring = models.CharField(max_length=256, null=True)
+    resourcetype = models.ForeignKey(ResourceType, blank=True, null=True, default=None)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Resource'
@@ -90,9 +90,9 @@ class Campaign(models.Model):
     '''
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique_for_date='startdate')
-    description = models.CharField(max_length=4096, blank=True, null=True)
     startdate = models.DateTimeField(null=True)
     enddate = models.DateTimeField(null=True)
+    description = models.CharField(max_length=4096, blank=True, null=True)
     objects = models.GeoManager()
     class Meta:
         app_label = 'stoqs'
@@ -111,10 +111,10 @@ class CampaignLog(models.Model):
     campaign = models.ForeignKey(Campaign)
     resource = models.ForeignKey(Resource)
     timevalue = models.DateTimeField(db_index=True)
+    message = models.CharField(max_length=2048)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2, blank=True, null=True)
     depth = models.FloatField(blank=True, null=True)
     username = models.CharField(max_length=128, blank=True, null=True)
-    message = models.CharField(max_length=2048)
     objects = models.GeoManager()
     class Meta:
         app_label = 'stoqs'
@@ -137,10 +137,11 @@ class ActivityType(models.Model):
 
 class PlatformType(models.Model):
     '''
-    Type of platform. Example names: auv, mooring, drifter, ship.
+    Type of platform. Example names: auv, mooring, drifter, ship.  The color field is RGB(A) in hex.
     '''
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
+    color = models.CharField(max_length=8, blank=True, null=True)
     objects = models.GeoManager()
     class Meta:
         app_label = 'stoqs'
@@ -149,11 +150,12 @@ class PlatformType(models.Model):
 
 class Platform(models.Model):
     '''
-    Platform.  Example names (use lower case): dorado, tethys, martin.
+    Platform.  Example names (use lower case): dorado, tethys, martin.  The color field is RGB(A) in hex.
     '''
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128)
     platformtype = models.ForeignKey(PlatformType) 
+    color = models.CharField(max_length=8, blank=True, null=True)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Platform'
@@ -169,9 +171,8 @@ class Activity(models.Model):
     20110415_20110418/20110418T192351/slate.nc (stride=10), 27710_jhmudas_v1.nc (stride=1).
     '''
     uuid = UUIDField(editable=False)
-    campaign = models.ForeignKey(Campaign, blank=True, null=True, default=None) 
+    campaign = models.ForeignKey(Campaign) 
     platform = models.ForeignKey(Platform) 
-    activitytype = models.ForeignKey(ActivityType, blank=True, null=True, default=None) 
     name = models.CharField(max_length=128)
     comment = models.TextField(max_length=2048)
     startdate = models.DateTimeField()
@@ -181,6 +182,7 @@ class Activity(models.Model):
     maptrack = models.LineStringField(null=True)
     mindepth = models.FloatField(null=True)
     maxdepth = models.FloatField(null=True)
+    activitytype = models.ForeignKey(ActivityType, blank=True, null=True, default=None) 
     objects = models.GeoManager()
     class Meta:
         verbose_name='Activity'
@@ -306,19 +308,43 @@ class SampleType(models.Model):
         def __str__(self):
             return "%s" % (self.name,)
 
+class AnalysisMethod(models.Model):
+    '''
+    The method used for producing a ParamaterSample.datavlue from a Sample
+    '''
+    uuid = UUIDField(editable=False)
+    name = models.CharField(max_length=256, db_index=True, unique=True)
+    uristring = models.CharField(max_length=256, null=True)
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name='Analysis Method'
+        verbose_name_plural='Analysis Methods'
+        app_label = 'stoqs'
+        def __str__(self):
+            return "%s" % (self.name,)
+
 class Sample(models.Model):
     '''
     A Sample may have a depth value (this is an Oceanographic Query System) and a location (represented by the geom field), 
     be associated with an InstantPoint and and a SampledParameter (where the measured datavalue is stored).  A Sample
     differs from a Measurement in that it represents an actual physical sample from which analyses may be made producing
-    digital values which may be stored in the SampleParameter table.
+    digital values which may be stored in the SampleParameter table.  Some of the fields have units.  The canonical unit
+    values are:
+        volume: ml
+        filterdiameter: mm
+        filterporesize: microns
     '''
+    uuid = UUIDField(editable=False)
     instantpoint = models.ForeignKey(InstantPoint)
-    parentsampleid = models.ForeignKey('self')
     depth= models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     name = models.CharField(max_length=128, db_index=True)
     sampletype = models.ForeignKey(SampleType, blank=True, null=True, default=None) 
+    volume = models.FloatField(blank=True, null=True)
+    filterdiameter = models.FloatField(blank=True, null=True)
+    filterporesize = models.FloatField(blank=True, null=True)
+    laboratory = models.CharField(max_length=128, blank=True, null=True)
+    resesarcher = models.CharField(max_length=128, blank=True, null=True)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Sample'
@@ -326,6 +352,19 @@ class Sample(models.Model):
         app_label = 'stoqs'
         def __str__(self):
             return "Sample at %s" % (self.geom,)
+
+class SampleRelationship(models.Model):
+    '''
+    Association class pairing Samples and Samples for many-to-many parent/child relationships.
+    '''
+    uuid = UUIDField(editable=False)
+    parent = models.ForeignKey(Sample, related_name='child')
+    child = models.ForeignKey(Sample, related_name='parent')
+    class Meta:
+        verbose_name = 'Sample Relationship'
+        verbose_name_plural = 'Sample Relationships'
+        app_label = 'stoqs'
+        unique_together = ['parent', 'child']
 
 class SampleResource(models.Model):
     '''
@@ -381,9 +420,11 @@ class SampledParameter(models.Model):
     '''
     Association class pairing Samples with Parameters.  This is where any digital sampled data values are stored -- in the datavalue field.
     '''
+    uuid = UUIDField(editable=False)
     sample = models.ForeignKey(Sample) 
     parameter = models.ForeignKey(Parameter) 
     datavalue = models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
+    analysismethod = models.ForeignKey(AnalysisMethod)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Sampled Parameter'
