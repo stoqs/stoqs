@@ -150,6 +150,20 @@
                         </div>
                     </div>
                 </div><!-- accordian-group -->   
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseFour">
+                        Depth Time Plot
+                        </a></h3>
+                    </div>
+                    <div id="collapseFour" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <div id="placeholder" style="width:600px;height:300px;"></div>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->   
+
             </div><!-- accordian -->
 
         </div><!-- span -->
@@ -163,6 +177,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery-1.7.1.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery-ui-1.8.17.custom.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.dateFormat-1.0.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.min.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
@@ -366,6 +381,9 @@
                             $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
                             makeSlider('slider-' + key, key, data[key])
                         }
+                        else if (key == 'simpledepthtime') {
+                            $.plot($("#placeholder"), [data[key]], { xaxis: { mode: "time" } });
+                        }
                     } else {
                         if (key == 'platforms') {
                             var ids=[];
@@ -404,6 +422,9 @@
                         else if (key == 'depth') {
                             $('#start-depth').val(Math.round(data[key][0]*10)/10);
                             $('#end-depth').val(Math.round(data[key][1]*10)/10);
+                        }
+                        else if (key == 'simpledepthtime') {
+                            $.plot($("#placeholder"), [data[key]], { xaxis: { mode: "time" } });
                         }
                     }
                     // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
