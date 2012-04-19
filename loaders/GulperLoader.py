@@ -38,7 +38,7 @@ import logging
 
 # Set up logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -78,17 +78,18 @@ def get_closest_instantpoint(aName, tv):
         logger.debug('timevalues = %s', timevalues)
         i = 0
         i_min = 0
+        secdiff = []
         minsecdiff = tol
         for t in timevalues:
-            secdiff = abs(t - tv).seconds
-            if secdiff < minsecdiff:
-                minsecdiff = secdiff
+            secdiff.append(abs(t - tv).seconds)
+            if secdiff[i] < minsecdiff:
+                minsecdiff = secdiff[i]
                 i_min = i
-            logger.debug('i = %d, secdiff = %d', i, secdiff)
+            logger.debug('i = %d, secdiff = %d', i, secdiff[i])
             i = i + 1
 
         logger.debug('i_min = %d', i_min)
-        return qs[i_min]
+        return qs[i_min], secdiff[i_min]
 
 def load_gulps(activityName, file, dbAlias):
     '''
@@ -116,16 +117,20 @@ def load_gulps(activityName, file, dbAlias):
     for row in reader:
         # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
         timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
-        ip = get_closest_instantpoint(activityName, timevalue)
+        ip, seconds_diff = get_closest_instantpoint(activityName, timevalue)
         point = 'POINT(%s %s)' % (row[r'Lon (degrees_east)'], row[r'Lat (degrees_north)'])
-        sample = m.Sample.objects.using(dbAlias).create(name = row[r'Bottle Number [count]'],
-                                                        depth = row[r'DEPTH [m]'],
-                                                        geom = point,
-                                                        instantpoint = ip,
-                                                        sampletype = gulper_type,
-                                                        volume = 2000
-                                                       )
-        logger.info('Loaded Sample, %s', sample)
+        stuple = m.Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
+                                                                depth = row[r'DEPTH [m]'],
+                                                                geom = point,
+                                                                instantpoint = ip,
+                                                                sampletype = gulper_type,
+                                                                volume = 2000
+                                                              )
+        rtuple = m.Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
+                                                                  value = seconds_diff
+                                                                )
+        # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
+        logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
 
 
 if __name__ == '__main__':
