@@ -117,6 +117,27 @@ def showParameter(request, format = 'html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
+def showSample(request, format = 'html'):
+    stoqs_object = mod.Sample
+    query_set = stoqs_object.objects.all().order_by('name')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
+
+def showSampleType(request, format = 'html'):
+    stoqs_object = mod.SampleType
+    query_set = stoqs_object.objects.all().order_by('name')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
+
+def showAnalysisMethod(request, format = 'html'):
+    stoqs_object = mod.AnalysisMethod
+    query_set = stoqs_object.objects.all().order_by('name')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
+
 # --------------------------------------------------------------------------------------------------------
 # Work in progress: adding Q object building for Activity requests following the pattern in STOQSQManager.py
 # with the intention of applying the same method in a similar way to the other STOQS model objects.
