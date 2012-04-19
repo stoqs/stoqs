@@ -2,15 +2,13 @@
 
 __author__ = "Mike McCann"
 __copyright__ = "Copyright 2011, MBARI"
-__credits__ = ["Chander Ganesan, Open Technology Group"]
 __license__ = "GPL"
-__version__ = "$Revision: 12153 $".split()[1]
 __maintainer__ = "Mike McCann"
 __email__ = "mccann at mbari.org"
 __status__ = "Development"
 __doc__ = '''
 
-Load small sample of data from OPeNDAP data sources at MBARI
+Load small sample of data from OPeNDAP and other data sources at MBARI
 for testing purposes.  The collection should be sufficient to
 provide decent test coverage for the STOQS application.
 
@@ -27,33 +25,18 @@ MBARI Dec 28, 2011
 import os
 import sys
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+project_dir = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
 import DAPloaders
-from datetime import datetime
-from stoqs import models as mod
+import GulperLoader
+
+baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'             # NCML to make salinity.units = "1"
+file = 'Dorado389_2010_300_00_300_00_decim.nc'                      # file name is same as activity name
+stride = 1000                                                       # Make large for quicker runs, smaller for denser data
+dbAlias = 'default'
+
+DAPloaders.runDoradoLoader(baseUrl + file, 'Test Load', file, 'dorado', 'auv', 'AUV Mission', dbAlias, stride)
+GulperLoader.load_gulps(file, file, dbAlias)
 
 
-baseUrl = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
-files = [ 'Dorado389_2010_257_01_258_04_decim.nc']
-stride = 1000
-dbName = 'stoqs_june2011'
-              
-for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
-##while False:
-    print "Instantiating Auvctd_Loader for url = %s" % baseUrl + file
-    loader = DAPloaders.Auvctd_Loader(aName,
-                url = baseUrl + file,
-                platformName = 'dorado',
-                platformTypeName='auv',
-                activitytypeName = 'AUV Mission',
-                dbName = dbName,
-                stride = stride)
-
-    nMP = loader.process_data()
-    print nMP
-    # Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
-    
-    newComment = "%d MeasuredParameters loaded for Parameters: %s. Loaded on %sZ" % (nMP[0], ' '.join(loader.varsLoaded), datetime.utcnow())
-    print "Updating comment with newComment = %s" % newComment
-    mod.Activity.objects.using(dbName).filter(name = aName).update(comment = newComment)

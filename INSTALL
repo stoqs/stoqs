@@ -80,26 +80,32 @@ indication that you are in the virtual environment.
 
 6. Load some data:
 
-	Execute loaders/DAPloaders.py at the command line.  
+	Execute loaders/loadTestData.py at the command line.  
 
 	(If you get this error: django.db.utils.DatabaseError: invalid byte sequence for encoding "UTF8": 0x00
 	make sure you have installed Django patch #16778 to the django/contrib/gis/db/backends/postgis/adapter.py
 	file in your env-stoqs/lib/python2.6/site-packages/Django-1.3-py2.6.egg folder)
 
-	If you get the message "Data load complete, 498 records loaded." then you will have successfully loaded 
-	some data from MBARI's UVCTD Dorado OPeNDAP data archive.  You should be able to see the Activity that was
-	loaded at:
+	If you get the message "Data load complete, 498 records loaded" followed by some sample load messages
+    then you will have successfully loaded some data from MBARI's AUVCTD Dorado OPeNDAP data archive.  
+    You should be able to see the Activity that was loaded at:
 
 		http://localhost:8000/default/activitiesMBARICustom	# Test the get data links in the Comment column
 	and
 		http://localhost:8000/default/mgmt
 	and 
 		httpd://localhost:8000/default/admin/		# Login with the account you created in step 6
+    and 
+        pd://localhost:8000/default/activity
+    and 
+        httpd://localhost:8000/default/sample
+    and 
+        httpd://localhost:8000/default/query        # For an ajax-driven query interface to STOQS
 	
-	The first link provides some links where you can experiment with retrieving data by
-	parameter name.  The cesecond link provides a link deleting the Activity - confirm
-	in the celeryd window that Activity gets deleted - execute loaders/DAPloaders.py again to
-	reload the data.
+	The mgmt url provides a link deleting the Activity - confirm in the celeryd window that Activity 
+    gets deleted - execute loaders/DAPloaders.py again to reload the data.
+
+    Refer to urls.py and stoqs/tests.py for a complete list of url patterns supported.
 	
 
 If you've made it this far you have a working STOQS installation on your computer.  Congratulations!

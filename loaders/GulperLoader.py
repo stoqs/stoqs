@@ -23,7 +23,6 @@ MBARI 18 April 2012
 # Force lookup of models to THE specific stoqs module.
 import os
 import sys
-from django.contrib.gis.geos import GEOSGeometry, LineString
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
@@ -37,6 +36,7 @@ import urllib2
 import logging
 
 # Set up logging
+logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -52,7 +52,7 @@ if settings.DEBUG:
 class ClosestTimeNotFoundException(Exception):
     pass
 
-def get_closest_instantpoint(aName, tv):
+def get_closest_instantpoint(aName, tv, dbAlias):
         '''
         Start with a tolerance of 1 second and double it until we get a non-zero count,
         get the values and find the closest one by finding the one with minimum absolute difference.
@@ -117,7 +117,7 @@ def load_gulps(activityName, file, dbAlias):
     for row in reader:
         # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
         timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
-        ip, seconds_diff = get_closest_instantpoint(activityName, timevalue)
+        ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
         point = 'POINT(%s %s)' % (row[r'Lon (degrees_east)'], row[r'Lat (degrees_north)'])
         stuple = m.Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
                                                                 depth = row[r'DEPTH [m]'],
