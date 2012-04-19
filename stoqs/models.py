@@ -61,8 +61,8 @@ class ResourceType(models.Model):
     objects = models.GeoManager()
     class Meta:
         app_label = 'stoqs'
-        def __str__(self):
-            return "%s" % (self.name,)
+    def __str__(self):
+        return "%s" % (self.name,)
 
 class Resource(models.Model):
     '''
@@ -80,8 +80,8 @@ class Resource(models.Model):
         verbose_name = 'Resource'
         verbose_name_plural = 'Resources'
         app_label = 'stoqs'
-        def __str__(self):
-            return "%s" % (self.name,)
+    def __str__(self):
+        return "(%s=%s)" % (self.name, self.value,)
 
 class Campaign(models.Model):
     '''
@@ -98,8 +98,8 @@ class Campaign(models.Model):
         app_label = 'stoqs'
         verbose_name='Campaign'
         verbose_name_plural='Campaigns'
-        def __str__(self):
-            return "%s" % (self.name,)
+    def __str__(self):
+        return "%s" % (self.name,)
         
 class CampaignLog(models.Model):
     '''
@@ -120,6 +120,8 @@ class CampaignLog(models.Model):
         app_label = 'stoqs'
         verbose_name='Campaign Log'
         verbose_name_plural='Campaign Logs'
+    def __str__(self):
+        return "%s at %s" % (self.message, self.timevalue)
 
 class ActivityType(models.Model):
     '''
@@ -132,8 +134,8 @@ class ActivityType(models.Model):
         verbose_name='Activity Type'
         verbose_name_plural='Activity Types'
         app_label = 'stoqs'
-        def __str__(self):
-            return "%s" % (self.name,)
+    def __str__(self):
+        return "%s" % (self.name,)
 
 class PlatformType(models.Model):
     '''
@@ -145,8 +147,8 @@ class PlatformType(models.Model):
     objects = models.GeoManager()
     class Meta:
         app_label = 'stoqs'
-        def __str__(self):
-            return "%s" % (self.name,)
+    def __str__(self):
+        return "%s" % (self.name,)
 
 class Platform(models.Model):
     '''
@@ -161,8 +163,8 @@ class Platform(models.Model):
         verbose_name = 'Platform'
         verbose_name_plural = 'Platforms'
         app_label = 'stoqs'
-        def __str__(self):
-            return "%s" % (self.name,)
+    def __str__(self):
+        return "%s" % (self.name,)
 
 class Activity(models.Model):
     '''
@@ -233,8 +235,8 @@ class Parameter(models.Model):
         verbose_name = 'Parameter'
         verbose_name_plural = 'Parameters'
         app_label = 'stoqs'
-        def __str__(self):
-            return "%s" % (self.name,)
+    def __str__(self):
+        return "%s" % (self.name,)
 
 class ParameterGroup(models.Model):
     '''
@@ -249,8 +251,8 @@ class ParameterGroup(models.Model):
         verbose_name = 'ParameterGroup'
         verbose_name_plural = 'ParameterGroups'
         app_label = 'stoqs'
-        def __str__(self):
-            return "%s" % (self.name,)
+    def __str__(self):
+        return "%s" % (self.name,)
 
 class ParameterGroupParameter(models.Model):
     '''
@@ -291,8 +293,8 @@ class Measurement(models.Model):
         verbose_name = 'Measurement'
         verbose_name_plural = 'Measurements'
         app_label = 'stoqs'
-        def __str__(self):
-            return "Measurement at %s" % (self.geom,)
+    def __str__(self):
+        return "Measurement at %s" % (self.geom,)
 
 class SampleType(models.Model):
     '''
@@ -305,8 +307,8 @@ class SampleType(models.Model):
         verbose_name='Sample Type'
         verbose_name_plural='Sample Types'
         app_label = 'stoqs'
-        def __str__(self):
-            return "%s" % (self.name,)
+    def __str__(self):
+        return "%s" % (self.name,)
 
 class AnalysisMethod(models.Model):
     '''
@@ -320,8 +322,8 @@ class AnalysisMethod(models.Model):
         verbose_name='Analysis Method'
         verbose_name_plural='Analysis Methods'
         app_label = 'stoqs'
-        def __str__(self):
-            return "%s" % (self.name,)
+    def __str__(self):
+        return "%s" % (self.name,)
 
 class Sample(models.Model):
     '''
@@ -350,8 +352,8 @@ class Sample(models.Model):
         verbose_name = 'Sample'
         verbose_name_plural = 'Samples'
         app_label = 'stoqs'
-        def __str__(self):
-            return "Sample at %s" % (self.geom,)
+    def __str__(self):
+        return "%s" % (self.name,)
 
 class SampleRelationship(models.Model):
     '''
