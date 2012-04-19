@@ -121,6 +121,28 @@ class BaseAndMeasurementViewsTestCase(TestCase):
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
+    def test_sample(self):
+       for fmt in self.format_types:
+           req = reverse('show-sample', kwargs={'format': fmt,
+                                                          'dbAlias': 'default'})
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_sample_type(self):
+       for fmt in self.format_types:
+           req = reverse('show-sampletype', kwargs={'format': fmt,
+                                                          'dbAlias': 'default'})
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_analysis_method(self):
+       for fmt in self.format_types:
+           req = reverse('show-analysismethod', kwargs={'format': fmt,
+                                                          'dbAlias': 'default'})
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+    
+    
     def test_query_jsonencoded(self):
         req = reverse('stoqs-query-results', kwargs={'format': 'json',
                                                      'dbAlias': 'default'})

@@ -68,6 +68,9 @@ urlpatterns = patterns('',
     url(pre + r'activityresource.?'  + formatPat, 'stoqs.views.showActivityResource',  {}, name='show-activityresource'),
     url(pre + r'activityparameter.?' + formatPat, 'stoqs.views.showActivityParameter', {}, name='show-activityparameter'),
     url(pre + r'simpledepthtime.?'   + formatPat, 'stoqs.views.showSimpleDepthTime',   {}, name='show-simpledepthtime'),
+    url(pre + r'sample.?'            + formatPat, 'stoqs.views.showSample',            {}, name='show-sample'),
+    url(pre + r'sampletype.?'        + formatPat, 'stoqs.views.showSampleType',        {}, name='show-sampletype'),
+    url(pre + r'analysismethod.?'    + formatPat, 'stoqs.views.showAnalysisMethod',    {}, name='show-analysismethod'),
 
     # Measurements  
     url(pre + 'measurement/' + btwnCl + formatCl, 
