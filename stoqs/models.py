@@ -171,7 +171,7 @@ class Activity(models.Model):
     20110415_20110418/20110418T192351/slate.nc (stride=10), 27710_jhmudas_v1.nc (stride=1).
     '''
     uuid = UUIDField(editable=False)
-    campaign = models.ForeignKey(Campaign) 
+    campaign = models.ForeignKey(Campaign, blank=True, null=True) 
     platform = models.ForeignKey(Platform) 
     name = models.CharField(max_length=128)
     comment = models.TextField(max_length=2048)
