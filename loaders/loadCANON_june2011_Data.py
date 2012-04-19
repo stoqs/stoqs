@@ -27,8 +27,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 import DAPloaders
 from datetime import datetime
 from stoqs import models as mod
+from GulperLoader import load_gulps
 
-dbName = 'stoqs_june2011'
+dbAlias = 'stoqs_june2011'
 campaignName = 'CANON - June 2011'
 
 def loadDorado(stride=1):
@@ -47,7 +48,8 @@ def loadDorado(stride=1):
             ]
     for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
         url = baseUrl + file
-        DAPloaders.runDoradoLoader(url, campaignName, aName, 'dorado', 'auv', 'AUV mission', dbName, stride)
+        DAPloaders.runDoradoLoader(url, campaignName, aName, 'dorado', 'auv', 'AUV mission', dbAlias, stride)
+        load_gulps(aName, file, dbAlias)
 
 def loadTethys(stride=1):
     # ------------------------- Tethys loads -------------------------
@@ -77,7 +79,7 @@ def loadTethys(stride=1):
                 'mass_concentration_of_chlorophyll_in_sea_water']
     for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
         url = baseUrl + file
-        DAPloaders.runLrauvLoader(url, campaignName, aName, 'tethys', 'auv', 'AUV mission', parmList, dbName, stride)
+        DAPloaders.runLrauvLoader(url, campaignName, aName, 'tethys', 'auv', 'AUV mission', parmList, dbAlias, stride)
 
 def loadAll(stride=1):
     '''
@@ -93,6 +95,6 @@ if __name__ == '__main__':
         import loadCANON_june2011
         loadCANON_june2011.loadAll()
     '''
-    stride = 1000
+    stride = 100
     loadAll(stride)
 
