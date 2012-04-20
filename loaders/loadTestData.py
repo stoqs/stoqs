@@ -15,7 +15,6 @@ provide decent test coverage for the STOQS application.
 Mike McCann
 MBARI Dec 28, 2011
 
-@var __date__: Date of last svn commit
 @undocumented: __doc__ parser
 @author: __author__
 @status: __status__
