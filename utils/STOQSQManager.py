@@ -146,6 +146,35 @@ class STOQSQManager(object):
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
         return qs_mp
 
+    def getSampleQS(self):
+        '''
+        Return query set of Samples given the current constraints. 
+        '''
+        qparams = {}
+
+        logger.info(pprint.pformat(self.kwargs))
+        if self.kwargs.has_key('platforms'):
+            if self.kwargs['platforms']:
+                qparams['instantpoint__activity__platform__uuid__in'] = self.kwargs['platforms']
+        if self.kwargs.has_key('time'):
+            if self.kwargs['time'][0] is not None:
+                qparams['instantpoint__timevalue__gte'] = self.kwargs['time'][0]
+            if self.kwargs['time'][1] is not None:
+                qparams['instantpoint__timevalue__lte'] = self.kwargs['time'][1]
+        if self.kwargs.has_key('depth'):
+            if self.kwargs['depth'][0] is not None:
+                qparams['depth__gte'] = self.kwargs['depth'][0]
+            if self.kwargs['depth'][1] is not None:
+                qparams['depth__lte'] = self.kwargs['depth'][1]
+
+        logger.debug(pprint.pformat(qparams))
+        qs_sample = models.Sample.objects.filter(**qparams)
+        if qs_sample:
+            logger.debug(pprint.pformat(str(qs_sample.query)))
+        else:
+            logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
+        return qs_sample
+
     def getActivities(self):
         '''
         Get a list of the unique activities based on the current query criteria.  
@@ -255,7 +284,8 @@ class STOQSQManager(object):
         Based on the current selected query criteria for activities, return the associated SimpleDepth time series
         values as a 2-tuple list for plotting by flot in the UI.
         '''
-        return(self.qs.values_list('simpledepthtime__epochmilliseconds', 'simpledepthtime__depth').order_by('simpledepthtime__epochmilliseconds'))
+        return(self.qs.values_list( 'simpledepthtime__epochmilliseconds', 
+                                    'simpledepthtime__depth').order_by('simpledepthtime__epochmilliseconds'))
 
     #
     # Methods that generate Q objects used to populate the query.
@@ -330,28 +360,25 @@ class STOQSQManager(object):
         
         return querystring
 
-    def getMapfileDataStatement(self, Q_object = None):
+    def postgresifySQL(self, query):
         '''
-        This method generates a string that can be put into a Mapserver mapfile DATA statment.
-        It is customized for Postgresql dialect.
+        Given a generic database agnostic Django query string modify it using regular expressions to work
+        on a PostgreSQL server.
         '''
-
-        qs = self.qs
-
-        # Add any more filters (Q objects) if specified
-        if Q_object:
-            qs = qs.filter(Q_object)
-
         # Get text of query to quotify for Postgresql
-        q = str(qs.query)
+        q = str(query)
 
         # Remove double quotes from around all table and colum names
         q = q.replace('"', '')
         logger.debug('Before: %s', q)
 
-        # Add aliases for geom and gid
+        # Add aliases for geom and gid - Activity
         q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
         q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
+   
+        # Add aliases for geom and gid - Activity
+        q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
+        q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
    
         # Put quotes around any IN parameters:
         #  IN (a81563b5f2464a9ab2d5d7d78067c4d4)
@@ -379,12 +406,43 @@ class STOQSQManager(object):
             logger.debug('stoqs_platform.name =  %s', m.group(1))
             q = re.sub( r'stoqs_platform.name = .+? ', 'stoqs_platform.name =  \'' + m.group(1) + '\'', q)
 
-
         logger.debug('After: %s', q)
+
+        return q
+
+    ##def getMapfileDataStatement(self, Q_object = None):
+    def getActivityGeoQuery(self, Q_object = None):
+        '''
+        This method generates a string that can be put into a Mapserver mapfile DATA statment.
+        It is for returning Activities.
+        '''
+        qs = self.qs
+
+        # Add any more filters (Q objects) if specified
+        if Q_object:
+            qs = qs.filter(Q_object)
 
         # Query for mapserver
         geo_query = '''geom from (%s)
-            as subquery using unique gid using srid=4326''' % q
+            as subquery using unique gid using srid=4326''' % self.postgresifySQL(qs.query)
+        
+        return geo_query
+
+
+    def getSampleGeoQuery(self, Q_object = None):
+        '''
+        This method generates a string that can be put into a Mapserver mapfile DATA statment.
+        It is for returning Samples.
+        '''
+        qs = self.getSampleQS()
+
+        # Add any more filters (Q objects) if specified
+        if Q_object:
+            qs = qs.filter(Q_object)
+
+        # Query for mapserver
+        geo_query = '''geom from (%s)
+            as subquery using unique gid using srid=4326''' % self.postgresifySQL(qs.query)
         
         return geo_query
 
