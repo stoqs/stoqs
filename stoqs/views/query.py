@@ -91,6 +91,7 @@ def buildMapFile(request, qm, options):
     colors['Martin'] = '255 0 0'
     colors['tethys'] = '255 69 0'
 
+    # Add an item (a mapfile layer) for each platform - unioned up
     item_list = []      # Replicates queryset from an Activity query (needs name & id) with added geo_query & color attrbutes
     union_layer_string = ''
     for p in json.loads(options)['platforms']:
@@ -99,9 +100,21 @@ def buildMapFile(request, qm, options):
         item.name = p[0]
         union_layer_string += str(item.name) + ','
         item.color = colors[p[0]]
-        item.geo_query = qm.getMapfileDataStatement(Q(platform__name='%s' % p[0]))
+        item.type = 'line'
+        item.geo_query = qm.getActivityGeoQuery(Q(platform__name='%s' % p[0]))
+        item.extra_style = ''
         item_list.append(item)
 
+    # Add an item for the samples for the existing query - do not add it to the union, it's a different type
+    item = Item()
+    item.id = 'sample_points'
+    item.name = 'sample_points'
+    item.color = '255 255 255'
+    item.type = 'point'
+    item.geo_query = qm.getSampleGeoQuery()
+    item.extra_style = 'SYMBOL "circle"\n        SIZE 7.0\n        OUTLINECOLOR 0 0 0 '
+    item_list.append(item)
+    
     union_layer_string = union_layer_string[:-1]
 
     ##logger.debug('item_list = %s', pprint.pformat(item_list))        
