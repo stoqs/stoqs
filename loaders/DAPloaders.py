@@ -55,7 +55,7 @@ from utils.utils import percentile, median, mode, simplify_points
 
 
 # Set up logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('loaders')
 logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.

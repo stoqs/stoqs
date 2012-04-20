@@ -36,7 +36,7 @@ import urllib2
 import logging
 
 # Set up logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('loaders')
 logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -123,7 +123,7 @@ def load_gulps(activityName, file, dbAlias):
                                                                 geom = point,
                                                                 instantpoint = ip,
                                                                 sampletype = gulper_type,
-                                                                volume = 2000
+                                                                volume = 1800
                                                               )
         rtuple = m.Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
                                                                   value = seconds_diff
