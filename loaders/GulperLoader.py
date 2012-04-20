@@ -117,7 +117,7 @@ def load_gulps(activityName, file, dbAlias):
         # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
         timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
         ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
-        point = 'POINT(%s %s)' % (row[r'Lon (degrees_east)'], row[r'Lat (degrees_north)'])
+        point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
         stuple = m.Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
                                                                 depth = row[r'DEPTH [m]'],
                                                                 geom = point,
