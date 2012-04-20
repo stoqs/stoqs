@@ -7,8 +7,6 @@ MAP
   UNITS dd
   CONFIG "MS_ERRORFILE" "/tmp/mapserver_stoqshg.log"
   DEBUG 5
-  # Not needed with mapserver 6.0.1 and default proj4 install
-  ##CONFIG "PROJ_LIB" "/usr/local/Proj4/share/proj"
   WEB
     IMAGEPATH "/tmp"
     METADATA
@@ -23,17 +21,27 @@ MAP
           "wms_abstract"    "MBARI STOQS"
           "wms_feature_info_mime_type" "text/html"
           "wms_enable_request" "GetMap GetFeature GetFeatureInfo"
-        END # METADATA
+    END # METADATA
   END # WEB
   PROJECTION
     "init=epsg:4326"
   END # PROJECTION
+
+  SYMBOL
+    NAME "circle"
+    TYPE ellipse 
+    POINTS
+      1 1
+    END # POINTS
+    FILLED true
+  END # SYMBOL
 
   # Union layer needs to have an empty CLASS section for it to draw the connected layer
   LAYER
     NAME "track_lines"
     TYPE line
     STATUS DEFAULT
+    TEMPLATE fooOnlyForWMSGetFeatureInfo
     CONNECTIONTYPE UNION
     CONNECTION "{{ union_layer_string|safe }}"
     STYLEITEM "AUTO"
@@ -43,36 +51,28 @@ MAP
       "init=epsg:4326"
     END # PROJECTION
   END # LAYER
-    
   {% for item in list %}
   LAYER
+    NAME "{{ item.name }}"
+    TYPE {{ item.type }}
+    DUMP true
+    TEMPLATE fooOnlyForWMSGetFeatureInfo
     CONNECTIONTYPE POSTGIS
     CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
     DATA "{{ item.geo_query|safe }}"
-      ##FILTER "gid={{ item.id }}"
-      DEBUG 2
-      DUMP true
-      TYPE line
-      STATUS on
-      METADATA
-       "wfs_title"     "{{ item.name }}"    # Short description
-       "wms_title"     "{{ item.name }}"    # Short description
-       "wms_include_items"  "all"               # Include all attributes
-       "gml_featureid"  "{{ item.id }}"     # id is the primary key
-       "gml_include_items"  "all"               # Include all attributes
-       "wfs_abstract"       "{{ item.name }} Activity Track."
-    END # DATA
+    ##DEBUG 2
+    METADATA
+       "ows_title"     "{{ item.name }}"    # Short description
+    END # METADATA
+    STATUS off
     PROJECTION
       "init=epsg:4326"
     END # PROJECTION
-    TEMPLATE data.html
-    HEADER header.html
-    FOOTER footer.html
-    NAME "{{ item.name }}"
     CLASS
       NAME "{{ item.name }}"
       STYLE
-        COLOR {{ item.color }} 
+        COLOR {{ item.color }}
+        {{ item.extra_style|safe }}
       END # STYLE
     END # CLASS
   END # LAYER
