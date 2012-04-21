@@ -27,7 +27,7 @@ os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
 from stoqs import models as m
 from datetime import datetime, timedelta
@@ -104,16 +104,24 @@ def load_gulps(activityName, file, dbAlias):
     except ObjectDoesNotExist:
         logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', activityName)
         return
+    except MultipleObjectsReturned:
+        logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
+        activity = m.Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
+        
 
     # Use the dods server to read over http - works from outside of MABRI's Intranet
     baseUrl = 'http://dods.mbari.org/data/auvctd/surveys/'
     yyyy = file.split('_')[1].split('_')[0]
     survey = file.split(r'_decim')[0]
     # E.g.: http://dods.mbari.org/data/auvctd/surveys/2010/odv/Dorado389_2010_300_00_300_00_Gulper.txt
-    gulperFile = baseUrl + yyyy + '/odv/' + survey + '_Gulper.txt'
+    gulperUrl = baseUrl + yyyy + '/odv/' + survey + '_Gulper.txt'
 
-    logger.debug('Reading gulps from %s', gulperFile)
-    reader = csv.DictReader(urllib2.urlopen(gulperFile), dialect='excel-tab')
+    try:
+        reader = csv.DictReader(urllib2.urlopen(gulperUrl), dialect='excel-tab')
+        logger.debug('Reading gulps from %s', gulperUrl)
+    except urllib2.HTTPError:
+        logger.warn('Failed to find odv-formatted Gulper file: %s.  Skipping GulperLoad.', gulperUrl)
+        return
 
     # Get or create SampleType for Gulper
     (gulper_type, created) = m.SampleType.objects.using(dbAlias).get_or_create(name = 'Gulper')
