@@ -27,18 +27,18 @@ create database stoqs_april2011 owner=stoqsadm template=template_postgis;
 \c stoqs_april2011
 grant all on all tables in schema public to stoqsadm;
 
-drop database stoqs_junel2011;
-create database stoqs_junel2011 owner=stoqsadm template=template_postgis;
-\c stoqs_junel2011
+drop database stoqs_june2011;
+create database stoqs_june2011 owner=stoqsadm template=template_postgis;
+\c stoqs_june2011
 grant all on all tables in schema public to stoqsadm;
 
-drop database stoqs_September2011;
-create database stoqs_Septemberl2011 owner=stoqsadm template=template_postgis;
-\c stoqs_Septemberl2011
+drop database stoqs_september2011;
+create database stoqs_september2011 owner=stoqsadm template=template_postgis;
+\c stoqs_september2011
 grant all on all tables in schema public to stoqsadm;
 
-drop database stoqs_October2011;
-create database stoqs_Octoberl2011 owner=stoqsadm template=template_postgis;
-\c stoqs_Octoberl2011
+drop database stoqs_october2011;
+create database stoqs_october2011 owner=stoqsadm template=template_postgis;
+\c stoqs_october2011
 grant all on all tables in schema public to stoqsadm;
 
