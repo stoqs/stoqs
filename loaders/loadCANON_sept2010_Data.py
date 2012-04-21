@@ -25,6 +25,7 @@ project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
 import DAPloaders
+import GulperLoader
 from datetime import datetime
 from stoqs import models as mod
 
@@ -38,6 +39,7 @@ def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pTypeName
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in fileList], fileList):
             url = baseUrl + file
             DAPloaders.runDoradoLoader(url, campaignName, aName, pName, pTypeName, aTypeName, dbAlias, stride)
+            GulperLoader.load_gulps(file, file, dbAlias)
     elif activityName:
         url = baseUrl
         DAPloaders.runCSVLoader(url, campaignName, activityName, pName, pTypeName, aTypeName, dbAlias, stride)

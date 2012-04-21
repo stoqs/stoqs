@@ -25,9 +25,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 
 import DAPloaders
+from GulperLoader
 from datetime import datetime
 from stoqs import models as mod
-from GulperLoader import load_gulps
 
 dbAlias = 'stoqs_june2011'
 campaignName = 'CANON - June 2011'
@@ -49,7 +49,7 @@ def loadDorado(stride=1):
     for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], files):
         url = baseUrl + file
         DAPloaders.runDoradoLoader(url, campaignName, aName, 'dorado', 'auv', 'AUV mission', dbAlias, stride)
-        load_gulps(aName, file, dbAlias)
+        GulperLoader.load_gulps(aName, file, dbAlias)
 
 def loadTethys(stride=1):
     # ------------------------- Tethys loads -------------------------
