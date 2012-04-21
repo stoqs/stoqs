@@ -61,7 +61,7 @@ def get_closest_instantpoint(aName, tv, dbAlias):
         num_timevalues = 0
         logger.debug('Looking for tv = %s', tv)
         while tol < 86400:                                      # Fail if not found within 24 hours
-            qs = m.InstantPoint.objects.using(dbAlias).filter(  activity__name = aName,
+            qs = m.InstantPoint.objects.using(dbAlias).filter(  activity__name__contains = aName,
                                                                 timevalue__gte = (tv-timedelta(seconds=tol)),
                                                                 timevalue__lte = (tv+timedelta(seconds=tol))
                                                              ).order_by('timevalue')
@@ -129,28 +129,36 @@ def load_gulps(activityName, file, dbAlias):
     for row in reader:
         # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
         timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
-        ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
-        point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
-        stuple = m.Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
+        try:
+            ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
+            point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
+            stuple = m.Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
                                                                 depth = row[r'DEPTH [m]'],
                                                                 geom = point,
                                                                 instantpoint = ip,
                                                                 sampletype = gulper_type,
                                                                 volume = 1800
                                                               )
-        rtuple = m.Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
+            rtuple = m.Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
                                                                   value = seconds_diff
                                                                 )
-        # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
-        logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
+
+            # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
+            logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
+        except ClosestTimeNotFoundException:
+            logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+            raw_input('PAUSED')
 
 
 if __name__ == '__main__':
 
     # A nice test data load for a northern Monterey Bay survey  
-    file = 'Dorado389_2010_300_00_300_00_decim.nc'
+    ##file = 'Dorado389_2010_300_00_300_00_decim.nc'
+    ##dbAlias = 'default'
+    file = 'Dorado389_2010_277_01_277_01_decim.nc'
+    dbAlias = 'stoqs_oct2010'
+
     aName = file
-    dbAlias = 'default'
 
     load_gulps(aName, file, dbAlias)
 
