@@ -7,28 +7,24 @@ __contact__   = 'mccann at mbari.org'
 __doc__ = '''
 
 Script to load all of the CANON campaign data.  Edit individual load script to adjust what gets loaded.
+This could probably be made OO with a loadCANON class to ease the places where things get edited.  For
+example, in the future I'd like to change the database names to be more consistent.  Right now I need to
+edit the individual loadCANON_* files to make this change.
 
 Mike McCann
-MBARI 16 April 2012
+MBARI 20 April 2012
 
-@var __date__: Date of last svn commit
 @undocumented: __doc__ parser
 @status: production
 @license: GPL
 '''
-
-import os
-import sys
-project_dir = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
 import loadCANON_sept2010_Data
 import loadCANON_oct2010_Data
 import loadCANON_april2011_Data
 import loadCANON_june2011_Data
 
-
-stride = 1000
+stride = 10
 loadCANON_sept2010_Data.loadAll(stride)
 loadCANON_oct2010_Data.loadAll(stride)
 loadCANON_april2011_Data.loadAll(stride)

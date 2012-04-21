@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 
 import DAPloaders
+import GulperLoader
 from datetime import datetime
 from stoqs import models as mod
 
@@ -38,6 +39,7 @@ def loadDoradoMissions(baseUrl, fileList, activityName, campaignName, pName, pTy
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in fileList], fileList):
             url = baseUrl + file
             DAPloaders.runDoradoLoader(url, campaignName, aName, pName, pTypeName, aTypeName, dbAlias, stride)
+            GulperLoader.load_gulps(file, file, dbAlias)
 
 def loadTethysMissions(baseUrl, fileList, activityName, campaignName, pName, pTypeName, aTypeName, dbAlias, stride):
     '''Load missions from OPeNDAP url from either a list of files from a base or a single URL with a given activityName '''
