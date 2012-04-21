@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 
 import DAPloaders
-from GulperLoader
+import GulperLoader
 from datetime import datetime
 from stoqs import models as mod
 
