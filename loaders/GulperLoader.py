@@ -27,6 +27,7 @@ os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
 from stoqs import models as m
 from datetime import datetime, timedelta
@@ -97,8 +98,12 @@ def load_gulps(activityName, file, dbAlias):
     '''
 
     # Get the Activity from the Database
-    activity = m.Activity.objects.using(dbAlias).get(name=activityName)
-    logger.debug('Got activity = %s', activity)
+    try:
+        activity = m.Activity.objects.using(dbAlias).get(name__contains=activityName)
+        logger.debug('Got activity = %s', activity)
+    except ObjectDoesNotExist:
+        logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', activityName)
+        return
 
     # Use the dods server to read over http - works from outside of MABRI's Intranet
     baseUrl = 'http://dods.mbari.org/data/auvctd/surveys/'
