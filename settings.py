@@ -75,7 +75,7 @@ LOGGING = {
             'propagate': False,
             'level':'ERROR',
         },
-        'DAPloaders': {
+        'loaders': {
             'handlers':['console'],
             'propagate': True,
             'level':'ERROR',
