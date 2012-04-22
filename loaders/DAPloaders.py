@@ -4,7 +4,7 @@ __author__ = "Mike McCann"
 __copyright__ = "Copyright 2011, MBARI"
 __credits__ = ["Chander Ganesan, Open Technology Group"]
 __license__ = "GPL"
-__version__ = "$Revision: 12292 $".split()[1]
+__version__ = "$Revision: 1.1 $".split()[1]
 __maintainer__ = "Mike McCann"
 __email__ = "mccann at mbari.org"
 __status__ = "Development"
@@ -55,8 +55,9 @@ from utils.utils import percentile, median, mode, simplify_points
 
 
 # Set up logging
-logger = logging.getLogger('loaders')
-logger.setLevel(logging.INFO)
+##logger = logging.getLogger('loaders')
+logger = logging.getLogger('__main__')
+logger.setLevel(logging.DEBUG)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -255,7 +256,8 @@ class Base_Loader(object):
                     self.parameter_dict[key].save(using=self.dbName)
                     self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
                     transaction.commit()
-                except Exception as e:
+                except KeyError as e:
+                ##except Exception as e:
                     transaction.rollback()
                     raise Exception('''Failed to add parameter for %s
                         %s\nEither add parameter manually, or add to ignored_names''' % (key,
