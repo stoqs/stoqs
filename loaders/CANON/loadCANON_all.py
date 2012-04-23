@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-stride = 1000
+stride = 10
 
 # ----------------------------------------------------------------------------------
 cl = CANONLoader('stoqs_september2010', 'ESP Drifter Tracking - September 2010')
@@ -36,7 +36,7 @@ cl.dorado_files = [ 'Dorado389_2010_257_01_258_04_decim.nc',
                     'Dorado389_2010_260_00_260_00_decim.nc',
                     'Dorado389_2010_261_00_261_00_decim.nc'
                   ]
-cl.stride = 1000
+cl.stride = stride
 cl.loadAll()
 
 # ----------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ cl.martin_files = [ '27710_jhmudas_v1.nc',
                     '30110_jhmudas_v1.nc',
                   ]
 cl.martin_parms = [ 'conductivity', 'temperature', 'salinity', 'fluorescence', 'turbidity']
-cl.stride = 1000
+cl.stride = stride
 cl.loadAll()
 
 # ----------------------------------------------------------------------------------
@@ -118,7 +118,7 @@ cl.tethys_files = [ '20110415_20110418/20110415T163108/slate.nc',
 cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
-cl.stride = 1000
+cl.stride = stride
 cl.loadAll()
 
 # ----------------------------------------------------------------------------------
@@ -148,7 +148,7 @@ cl.tethys_files = [ '20110610_20110616/20110610T212639/slate.nc',
 cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
-cl.stride = 1000
+cl.stride = stride
 cl.loadAll()
 
 
