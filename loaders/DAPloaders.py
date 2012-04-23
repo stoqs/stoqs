@@ -37,7 +37,7 @@ from django.conf import settings
 
 from django.contrib.gis.geos import Point
 from django.db.utils import IntegrityError
-from django.db import transaction
+from django.db import connection, transaction
 from stoqs import models as m
 from datetime import datetime, timedelta
 from django.core.exceptions import ObjectDoesNotExist
@@ -57,7 +57,7 @@ from utils.utils import percentile, median, mode, simplify_points
 # Set up logging
 ##logger = logging.getLogger('loaders')
 logger = logging.getLogger('__main__')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -214,6 +214,22 @@ class Base_Loader(object):
 
         return platform
 
+    def resetParameterAutoSequenceId(self):
+        '''
+        In strange case where auto-incrementing primary key gets reset to 1 call this to reset it to  max(id) +1
+        '''
+        sql = r'''SELECT setval(pg_get_serial_sequence('"stoqs_parameter"','id'), coalesce(max("id"), 1), max("id") IS NOT null) FROM "stoqs_parameter";'''
+        logger.info('Attempting to reset id sequence number by executing raw sql:\n%s', sql)
+        raw_input('PAUSED')
+        try:
+            cursor = connection.cursor()
+            cursor.execute(sql)
+            transaction.commit_unless_managed()
+        except Exception as e:
+            logger.warn('%s', e)
+            raise(e)
+
+
     @transaction.commit_manually()
     def addParameters(self, parmDict):
         '''
@@ -253,18 +269,39 @@ class Base_Loader(object):
                 ##print "addParameters(): parms = %s" % parms
                 self.parameter_dict[key] = m.Parameter(**parms)
                 try:
+                    sid = transaction.savepoint()
                     self.parameter_dict[key].save(using=self.dbName)
                     self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                    transaction.commit()
-                except KeyError as e:
-                ##except Exception as e:
-                    transaction.rollback()
+                    transaction.savepoint_commit(sid)
+                except IntegrityError as e:
+                    logger.warn('%s', e)
+                    transaction.savepoint_rollback(sid)
+                    if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
+                        self.resetParameterAutoSequenceId()
+                        try:
+                            sid2 = transaction.savepoint()
+                            self.parameter_dict[key].save(using=self.dbName)
+                            self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
+                            transaction.savepoint_commit(sid2)
+                        except Exception as e:
+                            logger.error('%s', e)
+                            transaction.savepoint_rollback(sid2)
+                            raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
+                    else:
+                        logger.error('Exception %s', e)
+                        raise Exception('''Failed to add parameter for %s
+                            %s\nEither add parameter manually, or add to ignored_names''' % (key,
+                            '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
+                    
+                except Exception as e:
+                    logger.error('%s', e)
+                    transaction.savepoint_rollback(sid)
                     raise Exception('''Failed to add parameter for %s
                         %s\nEither add parameter manually, or add to ignored_names''' % (key,
                         '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
                 logger.debug("Added parameter %s from data set to database %s", key, self.dbName)
-#       
-        transaction.rollback()
+
+        transaction.commit()
  
     def createActivity(self):
         '''
@@ -448,6 +485,9 @@ class Base_Loader(object):
                     If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
                     then the cache files must be removed and the tomcat hosting TDS restarted.''')
                     sys.exit(1)
+                except pydap.exceptions.ServerError as e:
+                    logger.warn('%s', e)
+                    continue
 
                 logger.debug("Loading %s into parts dictionary", k)
                 parts[k] = iter(v[k][:])                # Load the dictionary of everything for this
@@ -470,8 +510,12 @@ class Base_Loader(object):
 
                     logger.debug("Loading %s into parts dictionary", k)
                     logger.debug("v = %s", v)
-                    parts[k.lower()] = iter(v)  # Key coordinates on lower case version of the name so that
-                                    # follow-on processing can be simpler, eg. 'time' vice 'TIME'
+                    try:
+                        parts[k.lower()] = iter(v)  # Key coordinates on lower case version of the name so that
+                                                    # follow-on processing can be simpler, eg. 'time' vice 'TIME'
+                    except TypeError:
+                        continue                    # Likely "iteration over a 0-d array" resulting from a stride that's too big
+
                 elif self.ds[k][:].ndim == 0:
                     logger.debug("Loading %s into scalars dictionary", k.lower())
                     scalars[k.lower()] = float(v[0])
@@ -695,7 +739,14 @@ class Base_Loader(object):
         #
         # now linestringPoints contains all the points
         #
-        path = LineString(linestringPoints).simplify(tolerance=.001)
+        try:
+            path = LineString(linestringPoints).simplify(tolerance=.001)
+        except TypeError:
+            path = None        # Likely "Cannot initialize on empty sequence." resulting from too big a stride
+        except Exception as e:
+            logger.warn('%s', e)
+            path = None        # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
+
         ##sys.stdout.write('\n')
 
         # Update the Activity with information we now have following the load
@@ -803,7 +854,10 @@ class Base_Loader(object):
 
         logger.debug('line = %s', line)
         logger.info('Number of points in original depth time series = %d', len(line))
-        simple_line = simplify_points(line, 10)
+        try:
+            simple_line = simplify_points(line, 10)
+        except IndexError:
+            simple_line = []        # Likely "list index out of range" from a stride that's too big
         logger.info('Number of points in simplified depth time series = %d', len(simple_line))
         logger.debug('simple_line = %s', simple_line)
 
