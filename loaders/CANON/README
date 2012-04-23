@@ -13,7 +13,7 @@ MY_DATABASES = {
     },
     'stoqs_september2010': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis', 
-        'NAME': 'stoqs_sept2010',                           
+        'NAME': 'stoqs_september2010',                           
         'USER': DATABASE_USER,                               
         'PASSWORD': DATABASE_PASSWORD,
         'HOST': DATABASE_HOST,
@@ -21,7 +21,7 @@ MY_DATABASES = {
     },
     'stoqs_october2010': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis', 
-        'NAME': 'stoqs_oct2010',                           
+        'NAME': 'stoqs_october2010',                           
         'USER': DATABASE_USER,                               
         'PASSWORD': DATABASE_PASSWORD,
         'HOST': DATABASE_HOST,
