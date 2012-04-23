@@ -12,14 +12,14 @@
 -- \c stoqs
 -- grant all on all tables in schema public to stoqsadm;
 
-drop database stoqs_sept2010;
-create database stoqs_sept2010 owner=stoqsadm template=template_postgis;
-\c stoqs_sept2010
+drop database stoqs_september2010;
+create database stoqs_september2010 owner=stoqsadm template=template_postgis;
+\c stoqs_september2010
 grant all on all tables in schema public to stoqsadm;
 
-drop database stoqs_oct2010;
-create database stoqs_oct2010 owner=stoqsadm template=template_postgis;
-\c stoqs_oct2010
+drop database stoqs_october2010;
+create database stoqs_october2010 owner=stoqsadm template=template_postgis;
+\c stoqs_october2010
 grant all on all tables in schema public to stoqsadm;
 
 drop database stoqs_april2011;
