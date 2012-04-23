@@ -1,0 +1,82 @@
+This directory contains scripts to manage the loading of all CANON data into
+the stoqs databases.  Your privateSettings file should have a DATABASES section
+that looks like this:
+
+MY_DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs',
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_september2010': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_sept2010',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_october2010': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_oct2010',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_april2011': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_april2011',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_june2011': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_june2011',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_september2011': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_september2011',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_october2011': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_october2011',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+}
+
+
+To load data for all these databases (campaigns) follow these steps:
+
+    1. Create the databases with psql using superuser privedeges on the database:
+
+        psql < recreateCANON_databases.psq
+
+    2. Put the stoqs model into all the datbases
+
+        resyncCANON_databases.sh
+
+    3. Execute the load script:
+
+        loadCANON_all.py
+
+
+-- 
+Mike McCann
+22 April 2012
