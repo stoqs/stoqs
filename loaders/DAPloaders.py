@@ -108,7 +108,7 @@ class Base_Loader(object):
                 'LONGITUDE','LATITUDE','TIME', 'NominalDepth', 'esecs', 'Longitude', 'Latitude',
                 'DEPTH','depth'] # A list of parameters that should not be imported as parameters
     def __init__(self, activityName, platformName, url, dbName= 'default', campaignName=None, 
-                activitytypeName=None, platformTypeName=None, 
+                activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, stride=1 ):
         '''
         Given a URL open the url and store the dataset as an attribute of the object,
@@ -119,6 +119,7 @@ class Base_Loader(object):
         
         @param activityName: A string describing this activity
         @param platformName: A string that is the name of the platform. If that name for a Platform exists in the DB, it will be used.
+        @param platformColor: An RGB hex string represnting the color of the platform. 
         @param url: The OPeNDAP URL for the data source
         @param dbName: The name of the database alias as defined in settings.py
         @param campaignName: A string describing the Campaign in which this activity belongs, If that name for a Campaign exists in the DB, it will be used.
@@ -133,6 +134,7 @@ class Base_Loader(object):
         self.campaignName = campaignName
         self.activitytypeName = activitytypeName
         self.platformName = platformName
+        self.platformColor = platformColor
         self.dbName = dbName
         self.platformTypeName = platformTypeName
         self.activityName = activityName
@@ -205,8 +207,9 @@ class Base_Loader(object):
 
 
         # Create Platform 
-        (platform, created) = m.Platform.objects.db_manager(self.dbName).get_or_create(name = platformName, platformtype = platformType)
-
+        (platform, created) = m.Platform.objects.db_manager(self.dbName).get_or_create( name=platformName, 
+                                                                                        color=self.platformColor, 
+                                                                                        platformtype=platformType)
         if created:
             logger.info("Created platform %s in database %s", platformName, self.dbName)
         else:
@@ -1102,7 +1105,7 @@ class Glider_Loader(Base_Loader):
         return super(Glider_Loader,self).preProcessParams(row)
 
 
-def runAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride):
+def runAuvctdLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbName, stride):
     '''Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbName. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.'''
@@ -1115,6 +1118,7 @@ def runAuvctdLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, db
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
+            platformColor = pColor,
             platformTypeName = pTypeName,
             stride = stride)
 
@@ -1138,6 +1142,7 @@ def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stri
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
+            platformColor = 'ffff00',
             platformTypeName = pTypeName,
             stride = stride)
 
@@ -1158,6 +1163,7 @@ def runLrauvLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbN
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
+            platformColor = 'ff4500',
             platformTypeName = pTypeName,
             stride = stride)
 
