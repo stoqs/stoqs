@@ -29,17 +29,17 @@ from datetime import datetime
 from stoqs import models as mod
 
 
-def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pTypeName, aTypeName, parmList, dbName, stride = 1):
+def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pColor, pTypeName, aTypeName, parmList, dbName, stride = 1):
 	'''Load missions from OPeNDAP url from either a list of files from a base or a single URL with a given activityName '''
 
 	if fileList: 
 		for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in files], fileList):
 			url = baseUrl + file
 			print "loadMissions(): Calling runLoader() with parmList = %s" % parmList
-			DAPloaders.runAuvctdLoader(url, campaignName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride)
+			DAPloaders.runTrajectoryLoader(url, campaignName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbName, stride)
 	elif activityName:
 		url = baseUrl
-		DAPloaders.runAuvctdLoader(url, campaignName, activityName, pName, pTypeName, aTypeName, parmList, dbName, stride)
+		DAPloaders.runTrajectoryLoader(url, campaignName, activityName, pName, pColor, pTypeName, aTypeName, parmList, dbName, stride)
 	else:
 		print "loadMissions(): Must specify either a fileList or an activityName"
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
 	'''Mar Menor In Situ (AUV and Castaway) data loads '''
 
 	# Specific locations of data to be loaded - ideally the only thing that needs to be changed for another campaign
-	dbName = 'stoqs_nov2011'
+	dbName = 'stoqs_marmenor_nov2011'
 	campaignName = 'Mar Menor - November 2011'
 
 	# Sparus, e.g.: http://odss.mbari.org:8080/thredds/dodsC/marmenor/insitu/UniversityOfGirona/exp4_5Nov2011_data.nc.html
@@ -59,7 +59,7 @@ if __name__ == '__main__':
 			'UniversityOfGirona/exp4_5Nov2011_data.nc',
 			]
 	parms = ['temperature', 'conductivity']
-	loadMissions(baseUrl, files, '', campaignName, 'sparus', 'auv', 'AUV Mission', parms, dbName)
+	loadMissions(baseUrl, files, '', campaignName, 'sparus', 'ff00ff', 'auv', 'AUV Mission', parms, dbName)
 
 	# University of Villanova
 	baseUrl = 'http://odss.mbari.org:8080/thredds/dodsC/marmenor/insitu/'
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 			'UniversityOfVillanova/GuanayII-4nov.nc',
 			]
 	parms = ['temperature', 'conductivity', 'salinity']
-	loadMissions(baseUrl, files, '', campaignName, 'guanayii', 'auv', 'AUV Mission', parms, dbName)
+	loadMissions(baseUrl, files, '', campaignName, 'guanayii', 'auv', 'ffff00', 'AUV Mission', parms, dbName)
 
 	# University of Porto
 	baseUrl = 'http://odss.mbari.org:8080/thredds/dodsC/marmenor/insitu/'
@@ -78,11 +78,11 @@ if __name__ == '__main__':
 			'UniversityOfPorto/081952_quad_100m_superficie.nc',
 			]
 	parms = ['temperature', 'conductivity', 'salinity']
-	loadMissions(baseUrl, files, '', campaignName, 'seacon-2', 'auv', 'AUV Mission', parms, dbName)
+	loadMissions(baseUrl, files, '', campaignName, 'seacon-2', 'auv', '0f0f0f', 'AUV Mission', parms, dbName)
 
 	# Castaway: http://odss.mbari.org:8080/thredds/dodsC/agg/Castaway.html
 	baseUrl = 'http://odss.mbari.org:8080/thredds/dodsC/agg/Castaway'
 	aName = 'All Castaway CTD casts done from the Sorell on 5 November 2011'
 	parms = ['temperature', 'conductivity', 'salinity']
-	loadMissions(baseUrl, '', aName, campaignName, 'Castaway', 'ship', 'CTD Casts', parms, dbName)
+	loadMissions(baseUrl, '', aName, campaignName, 'Castaway', 'ship', 'ff0000', 'CTD Casts', parms, dbName)
 

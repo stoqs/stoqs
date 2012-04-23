@@ -874,11 +874,11 @@ class Base_Loader(object):
         logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
 
-class Auvctd_Loader(Base_Loader):
+class Trajectory_Loader(Base_Loader):
     include_names = ['temperature', 'conductivity']
 
     def initDB(self):
-        'Needs to use the exact name for the time coordinate in the AUVCTD data'
+        'Needs to use the exact name for the time coordinate in the Trajectory data'
         if self.startDatetime == None or self.endDatetime == None:
             ds = open_url(self.url)
             if self.startDatetime == None:
@@ -889,7 +889,7 @@ class Auvctd_Loader(Base_Loader):
                 self.endDatetime = datetime.utcfromtimestamp(ds.time[-1])
                 logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
 
-        return super(Auvctd_Loader, self).initDB()
+        return super(Trajectory_Loader, self).initDB()
 
     def preProcessParams(self, row):
         'Compute on-the-fly any additional parameters for loading into the database'
@@ -902,7 +902,7 @@ class Auvctd_Loader(Base_Loader):
         if row.has_key('salinity') and row.has_key('temperature') and row.has_key('depth') and row.has_key('latitude'):
             row['sea_water_sigma_t'] = sw.dens(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
 
-        return super(Auvctd_Loader, self).preProcessParams(row)
+        return super(Trajectory_Loader, self).preProcessParams(row)
 
 
 class Dorado_Loader(Base_Loader):
@@ -1105,13 +1105,13 @@ class Glider_Loader(Base_Loader):
         return super(Glider_Loader,self).preProcessParams(row)
 
 
-def runAuvctdLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbName, stride):
+def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbName, stride):
     '''Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbName. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.'''
 
-    logger.debug("Instantiating Auvctd_Loader for url = %s", url)
-    loader = Auvctd_Loader(
+    logger.debug("Instantiating Trajectory_Loader for url = %s", url)
+    loader = Trajectory_Loader(
             url = url,
             campaignName = cName,
             dbName = dbName,
@@ -1181,7 +1181,7 @@ if __name__ == '__main__':
             ##stride=1)
     # The full aggregation of AUVCTD data has "holes" in variables that break the aggregation
     # Luckily the 2010 aggragetion of Dorado gets around this problem.
-    ##bl=Auvctd_Loader('AUV Surveys - September 2010 (stride=1000)', 
+    ##bl=Trajectory_Loader('AUV Surveys - September 2010 (stride=1000)', 
     ##      url = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/dorado_2010_ctd',
     ##      startDatetime = datetime(2010, 9, 14),
     ##      endDatetime = datetime(2010,9, 18),
