@@ -202,6 +202,8 @@ class InstantPoint(models.Model):
     objects = models.GeoManager()
     class Meta:
         app_label = 'stoqs'
+    def __str__(self):
+        return "%s" % (self.timevalue,)
 
 class SimpleDepthTime(models.Model):
     '''
