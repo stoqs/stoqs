@@ -24,8 +24,8 @@ import loadCANON_oct2010_Data
 import loadCANON_april2011_Data
 import loadCANON_june2011_Data
 
-stride = 10
-loadCANON_sept2010_Data.loadAll(stride)
+stride = 100000
+##loadCANON_sept2010_Data.loadAll(stride)
 loadCANON_oct2010_Data.loadAll(stride)
 loadCANON_april2011_Data.loadAll(stride)
 loadCANON_june2011_Data.loadAll(stride)
