@@ -147,7 +147,6 @@ def load_gulps(activityName, file, dbAlias):
             logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
         except ClosestTimeNotFoundException:
             logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
-            raw_input('PAUSED')
 
 
 if __name__ == '__main__':
