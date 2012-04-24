@@ -352,8 +352,33 @@
                                         yaxis: {
                                             transform: function (v) { return -v; },
                                             inverseTransform: function (v) { return -v; }
-                                        }
+                                        },
+                                        series: {
+                                            lines: { show: true, fill: false, lineWidth: 1 },
+                                            points: { show: false, fill: false },
+                                            shadowSize: 0,
+                                        },
+                                        selection: { mode: "xy" }
                                       }
+
+        function flotPlot(data, key) {
+                var dataset = [];
+                $.each(data['platforms'], function (index, value) {
+                    var rec = [];
+                    rec["label"] = value[0];
+                    rec["data"] = data[key]['sdt'][value[0]];
+                    rec["color"] = "#" + data[key]['colors'][value[0]];
+                    //console.log(rec["fillColor"]);
+                    dataset.push(rec);
+                });
+                // clamp the zooming to prevent eternal zoom
+                if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
+                    ranges.xaxis.to = ranges.xaxis.from + 0.00001;
+                if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
+                    ranges.yaxis.to = ranges.yaxis.from + 0.00001;
+
+                $.plot($("#placeholder"), dataset, simpledepthtime_options);
+        }
 
         function onInit(data, key) {
             // Called from ajax on initial request
@@ -384,15 +409,7 @@
                 makeSlider('slider-' + key, key, data[key])
             }
             else if (key == 'simpledepthtime') {
-                var dataset = [];
-                $.each(data['platforms'], function (index, value) {
-                    var rec = [];
-                    rec["label"] = value[0];
-                    rec["data"] = data[key]['sdt'][value[0]];
-                    rec["color"] = data[key]['colors'][value[0]] ;
-                    dataset.push(rec);
-                });
-                $.plot($("#placeholder"), dataset, simpledepthtime_options);
+                flotPlot(data, key)
             }
         }
 
@@ -437,7 +454,7 @@
                 $('#end-depth').val(Math.round(data[key][1]*10)/10);
             }
             else if (key == 'simpledepthtime') {
-                $.plot($("#placeholder"), [data[key]], simpledepthtime_options);
+                flotPlot(data, key)
             }
         }
 
