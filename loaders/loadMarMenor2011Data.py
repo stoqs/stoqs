@@ -67,7 +67,7 @@ if __name__ == '__main__':
 			'UniversityOfVillanova/GuanayII-4nov.nc',
 			]
 	parms = ['temperature', 'conductivity', 'salinity']
-	loadMissions(baseUrl, files, '', campaignName, 'guanayii', 'auv', 'ffff00', 'AUV Mission', parms, dbName)
+	loadMissions(baseUrl, files, '', campaignName, 'guanayii', 'ffff00', 'auv', 'AUV Mission', parms, dbName)
 
 	# University of Porto
 	baseUrl = 'http://odss.mbari.org:8080/thredds/dodsC/marmenor/insitu/'
@@ -78,11 +78,11 @@ if __name__ == '__main__':
 			'UniversityOfPorto/081952_quad_100m_superficie.nc',
 			]
 	parms = ['temperature', 'conductivity', 'salinity']
-	loadMissions(baseUrl, files, '', campaignName, 'seacon-2', 'auv', '0f0f0f', 'AUV Mission', parms, dbName)
+	loadMissions(baseUrl, files, '', campaignName, 'seacon-2', '0f0f0f', 'auv', 'AUV Mission', parms, dbName)
 
 	# Castaway: http://odss.mbari.org:8080/thredds/dodsC/agg/Castaway.html
 	baseUrl = 'http://odss.mbari.org:8080/thredds/dodsC/agg/Castaway'
 	aName = 'All Castaway CTD casts done from the Sorell on 5 November 2011'
 	parms = ['temperature', 'conductivity', 'salinity']
-	loadMissions(baseUrl, '', aName, campaignName, 'Castaway', 'ship', 'ff0000', 'CTD Casts', parms, dbName)
+	loadMissions(baseUrl, '', aName, campaignName, 'Castaway', 'ff0000', 'ship', 'CTD Casts', parms, dbName)
 

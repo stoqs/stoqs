@@ -71,7 +71,7 @@ MAP
     CLASS
       NAME "{{ item.name }}"
       STYLE
-        COLOR {{ item.color }}
+        COLOR {{ item.color|safe }}
         {{ item.extra_style|safe }}
       END # STYLE
     END # CLASS
