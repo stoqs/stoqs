@@ -84,13 +84,6 @@ def buildMapFile(request, qm, options):
         def __repr__(self):
             return '%s %s %s %s' % (self.id, self.name, self.color, self.geo_query,)
 
-    # Colors should be read from a service, database, or UI - for now hard-code them here
-    colors = {}
-    colors['dorado'] = '255 255 0'
-    colors['m1'] = '255 0 255'
-    colors['Martin'] = '255 0 0'
-    colors['tethys'] = '255 69 0'
-
     # Add an item (a mapfile layer) for each platform - unioned up
     item_list = []      # Replicates queryset from an Activity query (needs name & id) with added geo_query & color attrbutes
     union_layer_string = ''
@@ -99,7 +92,7 @@ def buildMapFile(request, qm, options):
         item.id = p[1]
         item.name = p[0]
         union_layer_string += str(item.name) + ','
-        item.color = colors[p[0]]
+        item.color = '"#%s"' % p[2]
         item.type = 'line'
         item.geo_query = qm.getActivityGeoQuery(Q(platform__name='%s' % p[0]))
         item.extra_style = ''

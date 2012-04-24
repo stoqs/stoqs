@@ -214,13 +214,14 @@ class STOQSQManager(object):
         Lastly, we assume here that the uuid's and name's have a 1:1 relationship - this should be enforced
         somewhere in the database hopefully.  If not, we'll return the duplicate name/uuid pairs as well.
         '''
-        qs=self.qs.values('platform__uuid', 'platform__name').distinct()
+        qs=self.qs.values('platform__uuid', 'platform__name', 'platform__color').distinct()
         results=[]
         for row in qs:
             name=row['platform__name']
             uuid=row['platform__uuid']
+            color=row['platform__color']
             if name is not None and uuid is not None:
-                results.append((name,uuid,))
+                results.append((name,uuid,color,))
         return results
     
     def getTime(self):
