@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>STOQS {{request.META.dbAlias}} Database</title>
+    <title>{{request.META.dbAlias}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -47,7 +47,7 @@
             <span class="icon-bar"></span>
           </a>
           <a class="brand" href="http://www.mbari.org"><img src="{{STATIC_URL}}images/mbari_bw_logo.gif"></a>
-          <a class="brand" href="#">STOQS {{request.META.dbAlias}} Database</a>
+          <a class="brand" href="#">{{request.META.dbAlias}}</a>
           <div class="nav-collapse">
             <ul class="nav">
               <li><a href="{% url show-campaigns %}">Campaign list</a></li>
@@ -355,6 +355,91 @@
                                         }
                                       }
 
+        function onInit(data, key) {
+            // Called from ajax on initial request
+            if (key == 'platforms') {
+                $.each(data[key], function (index, value) {
+                                        $('#platform-table > tbody:last').append('<tr id="' + value[1] +'">' +
+                                                  '<td class="platform"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></td>' +
+                                                  '</tr>');
+                });
+            }
+            else if (key == 'parameters') {
+                $.each(data[key], function (index, value) {
+                                        $('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
+                                                  '<td class="parameter"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></td>' +
+                                                  '</tr>');
+                });
+            }
+            else if (key == 'time') { 
+                var start=new Date(data[key][0]);
+                var end=new Date(data[key][1]);
+                $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
+                $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
+                makeSlider('slider-' + key, key, data[key])
+            }
+            else if (key == 'depth') {
+                $('#start-' + key).val(Math.round(data[key][0]*10)/10);
+                $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
+                makeSlider('slider-' + key, key, data[key])
+            }
+            else if (key == 'simpledepthtime') {
+                var dataset = [];
+                $.each(data['platforms'], function (index, value) {
+                    var rec = [];
+                    rec["label"] = value[0];
+                    rec["data"] = data[key]['sdt'][value[0]];
+                    rec["color"] = data[key]['colors'][value[0]] ;
+                    dataset.push(rec);
+                });
+                $.plot($("#placeholder"), dataset, simpledepthtime_options);
+            }
+        }
+
+        function onUpdate(data, key) {
+            // Called on from ajax to update the selectors base on the new selection
+            if (key == 'platforms') {
+                var ids=[];
+                $.each(data[key], function (index, value) {
+                    // Here we need to enable those that are still valid.
+                    var element=$('#' + value[1]);
+                    enableButton($('button', element)); // Enable the button in the table row
+                    ids.push(value[1]);
+                });
+                $('#platform-table > tbody > tr').each(function (index, elem) { 
+                    if ($.inArray((elem.id).toString(), ids) == -1) {
+                        disableButton($('button', $(elem))); // Disable the button in the table row
+                    }
+                });
+            }
+            else if (key == 'parameters') {
+                var ids=[];
+                $.each(data[key], function (index, value) {
+                    // Here we need to enable those that are still valid.
+                    var element=$('#' + value[1]);
+                    enableButton($('button', element)); // Enable the button in the table row
+                    ids.push(value[1]);
+                });
+                $('#parameter-table > tbody > tr').each(function (index, elem) { 
+                    if ($.inArray((elem.id).toString(), ids) == -1) {
+                        disableButton($('button', $(elem))); // disable the button in the table row
+                    }
+                });
+            }
+            else if (key == 'time') {
+                var start=new Date(data[key][0]);
+                var end=new Date(data[key][1]);
+                $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
+                $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
+            }
+            else if (key == 'depth') {
+                $('#start-depth').val(Math.round(data[key][0]*10)/10);
+                $('#end-depth').val(Math.round(data[key][1]*10)/10);
+            }
+            else if (key == 'simpledepthtime') {
+                $.plot($("#placeholder"), [data[key]], simpledepthtime_options);
+            }
+        }
 
         request=$.ajax({
             type : 'GET',
@@ -363,81 +448,12 @@
                 setUrls();
                 for (var key in data) {
                     if (init == true) {
-                        if (key == 'platforms') {
-                            $.each(data[key], function (index, value) {
-                                                    $('#platform-table > tbody:last').append('<tr id="' + value[1] +'">' +
-                                                              '<td class="platform"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></td>' +
-                                                              '</tr>');
-                            });
-                        }
-                        else if (key == 'parameters') {
-                            $.each(data[key], function (index, value) {
-                                                    $('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
-                                                              '<td class="parameter"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></td>' +
-                                                              '</tr>');
-                            });
-                        }
-                        else if (key == 'time') { 
-                            var start=new Date(data[key][0]);
-                            var end=new Date(data[key][1]);
-                            $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
-                            $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
-                            makeSlider('slider-' + key, key, data[key])
-                        }
-                        else if (key == 'depth') {
-                            $('#start-' + key).val(Math.round(data[key][0]*10)/10);
-                            $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
-                            makeSlider('slider-' + key, key, data[key])
-                        }
-                        else if (key == 'simpledepthtime') {
-                            $.plot($("#placeholder"), [data[key]], simpledepthtime_options);
-                        }
+                        onInit(data, key)
                     } else {
-                        if (key == 'platforms') {
-                            var ids=[];
-                            $.each(data[key], function (index, value) {
-                                // Here we need to enable those that are still valid.
-                                var element=$('#' + value[1]);
-                                enableButton($('button', element)); // Enable the button in the table row
-                                ids.push(value[1]);
-                            });
-                            $('#platform-table > tbody > tr').each(function (index, elem) { 
-                                if ($.inArray((elem.id).toString(), ids) == -1) {
-                                    disableButton($('button', $(elem))); // Disable the button in the table row
-                                }
-                            });
-                        }
-                        else if (key == 'parameters') {
-                            var ids=[];
-                            $.each(data[key], function (index, value) {
-                                // Here we need to enable those that are still valid.
-                                var element=$('#' + value[1]);
-                                enableButton($('button', element)); // Enable the button in the table row
-                                ids.push(value[1]);
-                            });
-                            $('#parameter-table > tbody > tr').each(function (index, elem) { 
-                                if ($.inArray((elem.id).toString(), ids) == -1) {
-                                    disableButton($('button', $(elem))); // disable the button in the table row
-                                }
-                            });
-                        }
-                        else if (key == 'time') {
-                            var start=new Date(data[key][0]);
-                            var end=new Date(data[key][1]);
-                            $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
-                            $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
-                        }
-                        else if (key == 'depth') {
-                            $('#start-depth').val(Math.round(data[key][0]*10)/10);
-                            $('#end-depth').val(Math.round(data[key][1]*10)/10);
-                        }
-                        else if (key == 'simpledepthtime') {
-                            $.plot($("#placeholder"), [data[key]], simpledepthtime_options);
-                        }
+                        onUpdate(data, key)
                     }
                     // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
                     me.refreshMap();
-                    
                 }
                 $('#result_count').html(data['count']).change();
 
