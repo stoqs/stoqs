@@ -140,7 +140,7 @@ def queryData(request, format=None):
                                cls=encoders.STOQSJSONEncoder)
                                # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
     ##logger.debug('options = %s', pprint.pformat(options))
-    logger.debug('len(simpledepthtime) = %d', len(json.loads(options)['simpledepthtime']))
+    ##logger.debug('len(simpledepthtime) = %d', len(json.loads(options)['simpledepthtime']))
     buildMapFile(request, qm, options)
 
     if not format: # here we export in a given format, or just provide summary data if no format is given.
