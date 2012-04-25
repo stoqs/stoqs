@@ -43,7 +43,6 @@ class CANONLoader(object):
         '''
         for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.dorado_files], self.dorado_files):
             url = self.dorado_base + file
-            print url
             DAPloaders.runDoradoLoader(url, self.campaignName, aName, 'dorado', 'auv', 'AUV mission', self.dbAlias, self.stride)
             GulperLoader.load_gulps(aName, file, self.dbAlias)
 
