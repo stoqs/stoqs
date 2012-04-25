@@ -312,6 +312,21 @@ class SampleType(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+class SamplePurpose(models.Model):
+    '''
+    Purpose of Sample.  Example names: random, control, peak
+    '''
+    uuid = UUIDField(editable=False)
+    name = models.CharField(max_length=128, unique=True)
+    description = models.CharField(max_length=1024)
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name='Sample Purpose'
+        verbose_name_plural='Sample Purposes'
+        app_label = 'stoqs'
+    def __str__(self):
+        return "%s" % (self.name,)
+
 class AnalysisMethod(models.Model):
     '''
     The method used for producing a ParamaterSample.datavlue from a Sample
@@ -344,6 +359,7 @@ class Sample(models.Model):
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     name = models.CharField(max_length=128, db_index=True)
     sampletype = models.ForeignKey(SampleType, blank=True, null=True, default=None) 
+    samplepurpose = models.ForeignKey(SamplePurpose, blank=True, null=True, default=None) 
     volume = models.FloatField(blank=True, null=True)
     filterdiameter = models.FloatField(blank=True, null=True)
     filterporesize = models.FloatField(blank=True, null=True)
