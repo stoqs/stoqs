@@ -71,14 +71,17 @@ class CANONLoader(object):
         try:
             self.loadDorado()
         except AttributeError:
+            raw_input("WARNING: No dorado data for dbAlias = %s, campaignName = %s" % (self.dbAlias, self.campaignName))
             pass
         try:
             self.loadTethys()
         except AttributeError:
+            raw_input("WARNING: No tethys data for dbAlias = %s, campaignName = %s" % (self.dbAlias, self.campaignName))
             pass
         try:
             self.loadMartin()
         except AttributeError:
+            raw_input("WARNING: No martin data for dbAlias = %s, campaignName = %s" % (self.dbAlias, self.campaignName))
             pass
 
 if __name__ == '__main__':
