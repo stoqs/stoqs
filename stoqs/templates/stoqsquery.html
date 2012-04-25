@@ -394,15 +394,21 @@
 
         function flotPlot(data, key) {
             var dataset = [];
-            $.each(data['platforms'], function (index, value) {
-                var rec = [];
-                rec["label"] = value[0];
-                rec["data"] = data['simpledepthtime']['sdt'][value[0]],
-                rec["color"] = "#" + data['simpledepthtime']['colors'][value[0]];
-                dataset.push(rec);
+            var platform_seen = [];
+            $.each(data['platforms'], function (index, platform_value) {
+                // Now add each activity for this platform
+                $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (index, depth_time_series) {
+                    var rec = [];
+                    if (! platform_seen[platform_value[0]]) {
+                        rec["label"] = platform_value[0];
+                        platform_seen[platform_value[0]] = true;
+                    }
+                    rec["data"] = depth_time_series,
+                    rec["color"] = "#" + data['simpledepthtime']['colors'][platform_value[0]];
+                    dataset.push(rec);
+                });
             });
             var rec = [];
-            rec["label"] = 'sample';
             rec["data"] = data['sampledepthtime'],
             rec["color"] = "#000000";
             rec["fillColor"] = "#ffffff";

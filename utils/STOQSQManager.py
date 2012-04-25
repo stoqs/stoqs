@@ -293,15 +293,21 @@ class STOQSQManager(object):
         for p in self.getPlatforms():
             qs = self.qs.filter(platform__name = p[0]).values_list(
                                     'simpledepthtime__epochmilliseconds', 
-                                    'simpledepthtime__depth'
+                                    'simpledepthtime__depth',
+                                    'name'
                                 ).order_by('simpledepthtime__epochmilliseconds')
-            sdt[p[0]] = []
+            sdt[p[0]] = {}
             colors[p[0]] = p[2]
+            # Create hash with date-time series organized by activity__name key within a platform__name key
+            # This will let flot plot the series with gaps between the surveys -- not connected
             for s in qs:
                 try:
-                    sdt[p[0]].append( [s[0], '%.1f' % s[1]] )
+                    logger.debug('s[2] = %s', s[2])
+                    sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
+                except KeyError:
+                    sdt[p[0]][s[2]] = []        # First time seeing activity__name, make it a list
                 except TypeError:
-                    continue            # Likely "float argument required, not NoneType"
+                    continue                    # Likely "float argument required, not NoneType"
 
         return({'sdt': sdt, 'colors': colors})
 
@@ -317,7 +323,7 @@ class STOQSQManager(object):
                                 ).order_by('instantpoint__timevalue')
         for s in qs:
             mes = calendar.timegm(s[0].timetuple()) * 1000.0
-            sampledt.append( [mes, '%.1f' % s[1]] )
+            sampledt.append( [mes, '%.2f' % s[1]] )
 
         return(sampledt)
     #
