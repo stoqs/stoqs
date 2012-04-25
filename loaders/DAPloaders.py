@@ -222,15 +222,16 @@ class Base_Loader(object):
         In strange case where auto-incrementing primary key gets reset to 1 call this to reset it to  max(id) +1
         '''
         sql = r'''SELECT setval(pg_get_serial_sequence('"stoqs_parameter"','id'), coalesce(max("id"), 1), max("id") IS NOT null) FROM "stoqs_parameter";'''
+        logger.warn('Somehow the serial_sequence number got reset on the parameter table.  Connect to the %s database and execute: \n%s', self.dbName, sql)
         logger.info('Attempting to reset id sequence number by executing raw sql:\n%s', sql)
         raw_input('PAUSED')
-        try:
-            cursor = connection.cursor()
-            cursor.execute(sql)
-            transaction.commit_unless_managed()
-        except Exception as e:
-            logger.warn('%s', e)
-            raise(e)
+        ##try:
+        ##    cursor = connection.cursor()
+        ##    cursor.execute(sql)
+        ##    transaction.commit_unless_managed()
+        ##except Exception as e:
+        ##    logger.warn('%s', e)
+        ##    raise(e)
 
 
     @transaction.commit_manually()
