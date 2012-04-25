@@ -6,7 +6,7 @@ from django.db.models import Q, Max, Min
 from stoqs import models
 import logging
 import pprint
-import time
+import calendar
 import re
 
 logger = logging.getLogger(__name__)
@@ -298,7 +298,10 @@ class STOQSQManager(object):
             sdt[p[0]] = []
             colors[p[0]] = p[2]
             for s in qs:
-                sdt[p[0]].append( [s[0], '%.1f' % s[1]] )
+                try:
+                    sdt[p[0]].append( [s[0], '%.1f' % s[1]] )
+                except TypeError:
+                    continue            # Likely "float argument required, not NoneType"
 
         return({'sdt': sdt, 'colors': colors})
 
@@ -313,7 +316,7 @@ class STOQSQManager(object):
                                     'depth'
                                 ).order_by('instantpoint__timevalue')
         for s in qs:
-            mes = time.mktime(s[0].timetuple()) * 1000.0
+            mes = calendar.timegm(s[0].timetuple()) * 1000.0
             sampledt.append( [mes, '%.1f' % s[1]] )
 
         return(sampledt)
