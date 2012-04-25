@@ -348,7 +348,8 @@
             }
         }
         var me = this;
-        var simpledepthtime_options = { xaxis: { mode: "time" },
+        var simpledepthtime_options = { grid: { backgroundColor: "rgb(192, 211, 228)" },
+                                        xaxis: { mode: "time" },
                                         yaxis: {
                                             transform: function (v) { return -v; },
                                             inverseTransform: function (v) { return -v; }
@@ -392,20 +393,23 @@
         }
 
         function flotPlot(data, key) {
-
-                
-
-                var dataset = [];
-                $.each(data['platforms'], function (index, value) {
-                    var rec = [];
-                    rec["label"] = value[0];
-                    rec["data"] = data[key]['sdt'][value[0]],
-                    rec["color"] = "#" + data[key]['colors'][value[0]];
-                    //console.log(rec["fillColor"]);
-                    dataset.push(rec);
-                });
-
-                $.plot($("#placeholder"), dataset, simpledepthtime_options);
+            var dataset = [];
+            $.each(data['platforms'], function (index, value) {
+                var rec = [];
+                rec["label"] = value[0];
+                rec["data"] = data['simpledepthtime']['sdt'][value[0]],
+                rec["color"] = "#" + data['simpledepthtime']['colors'][value[0]];
+                dataset.push(rec);
+            });
+            var rec = [];
+            rec["label"] = 'sample';
+            rec["data"] = data['sampledepthtime'],
+            rec["color"] = "#000000";
+            rec["fillColor"] = "#ffffff";
+            rec["points"] = {show: true, fill: true, lineWidth: 1};
+            rec["lines"] = {show: false};
+            dataset.push(rec);
+            $.plot($("#placeholder"), dataset, simpledepthtime_options);
         }
 
         function onInit(data, key) {
@@ -437,6 +441,9 @@
                 makeSlider('slider-' + key, key, data[key])
             }
             else if (key == 'simpledepthtime') {
+                flotPlot(data, key)
+            }
+            else if (key == 'sampledepthtime') {
                 flotPlot(data, key)
             }
         }
@@ -482,6 +489,9 @@
                 $('#end-depth').val(Math.round(data[key][1]*10)/10);
             }
             else if (key == 'simpledepthtime') {
+                flotPlot(data, key)
+            }
+            else if (key == 'sampledepthtime') {
                 flotPlot(data, key)
             }
         }

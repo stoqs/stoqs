@@ -6,6 +6,7 @@ from django.db.models import Q, Max, Min
 from stoqs import models
 import logging
 import pprint
+import time
 import re
 
 logger = logging.getLogger(__name__)
@@ -89,6 +90,7 @@ class STOQSQManager(object):
                                'time': self.getTime,
                                'depth': self.getDepth,
                                'simpledepthtime': self.getSimpleDepthTime,
+                               'sampledepthtime': self.getSampleDepthTime,
                                'count': self.getCount,
                                }
         
@@ -97,7 +99,7 @@ class STOQSQManager(object):
             results[k] = v()
         
         logger.info('qs.query = %s', pprint.pformat(str(self.qs.query)))
-        logger.info('results = %s', pprint.pformat(results))
+        ##logger.info('results = %s', pprint.pformat(results))
         return results
     
     #
@@ -171,6 +173,7 @@ class STOQSQManager(object):
         qs_sample = models.Sample.objects.filter(**qparams)
         if qs_sample:
             logger.debug(pprint.pformat(str(qs_sample.query)))
+            self.qs_sample = qs_sample
         else:
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
         return qs_sample
@@ -283,7 +286,7 @@ class STOQSQManager(object):
     def getSimpleDepthTime(self):
         '''
         Based on the current selected query criteria for activities, return the associated SimpleDepth time series
-        values as a 2-tuple list for plotting by flot in the UI.
+        values as a 2-tuple list along with platform name and color for plotting by flot in the UI.
         '''
         sdt = {}
         colors = {}
@@ -295,10 +298,25 @@ class STOQSQManager(object):
             sdt[p[0]] = []
             colors[p[0]] = p[2]
             for s in qs:
-                sdt[p[0]].append([s[0],s[1]])
+                sdt[p[0]].append( [s[0], '%.1f' % s[1]] )
 
         return({'sdt': sdt, 'colors': colors})
 
+    def getSampleDepthTime(self):
+        '''
+        Based on the current selected query criteria for activities, return the associated SampleDepth time series
+        values as a 2-tuple list.  The similarity to getSimpleDepthTime name is a pure coincidence.
+        '''
+        sampledt = []
+        qs = self.getSampleQS().values_list(
+                                    'instantpoint__timevalue', 
+                                    'depth'
+                                ).order_by('instantpoint__timevalue')
+        for s in qs:
+            mes = time.mktime(s[0].timetuple()) * 1000.0
+            sampledt.append( [mes, '%.1f' % s[1]] )
+
+        return(sampledt)
     #
     # Methods that generate Q objects used to populate the query.
     #    
