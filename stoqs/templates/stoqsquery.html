@@ -565,6 +565,24 @@
               ,visibility        : true
              }
          );
+
+        var gebco_noaa = new OpenLayers.Layer.XYZ(
+            "GEBCO & NOAA Tiles",
+            [
+                "http://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${x}/${y}.png"
+            ], 
+            {
+                attribution: "Sources: General Bathymetric Chart of the Oceans "
+                + "(<a href='http://www.gebco.net/'>GEBCO</a>)"
+                + " &amp; NOAA National Geophysical Data Center"
+                + " (<a href='http://www.ngdc.noaa.gov/mgg/dem/demportal.html'>NGDC</a>)",
+                sphericalMercator: true,
+                wrapDateLine: true,
+                transitionEffect: "resize",
+                buffer: 1,
+                numZoomLevels: 16
+            }
+        );
          var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
          //var gphy = new OpenLayers.Layer.Google(
          //    "Google Physical",
@@ -589,7 +607,7 @@
          //     'sphericalMercator': true}
          //);
          //map.addLayers([bathyEsri,osm,gsat,gphy,ghyb,gmap]);
-         map.addLayers([bathyEsri,osm]);
+         map.addLayers([bathyEsri,gebco_noaa,osm]);
          //ctrlGraticule.activate();
 
           /*
