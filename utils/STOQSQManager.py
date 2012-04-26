@@ -286,7 +286,7 @@ class STOQSQManager(object):
     def getSimpleDepthTime(self):
         '''
         Based on the current selected query criteria for activities, return the associated SimpleDepth time series
-        values as a 2-tuple list along with platform name and color for plotting by flot in the UI.
+        values as a 2-tuple list inside a 2 level hash of platform__name (with its color) and activity__name.
         '''
         sdt = {}
         colors = {}
@@ -302,7 +302,7 @@ class STOQSQManager(object):
             # This will let flot plot the series with gaps between the surveys -- not connected
             for s in qs:
                 try:
-                    logger.debug('s[2] = %s', s[2])
+                    ##logger.debug('s[2] = %s', s[2])
                     sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
                 except KeyError:
                     sdt[p[0]][s[2]] = []        # First time seeing activity__name, make it a list
@@ -316,16 +316,22 @@ class STOQSQManager(object):
         Based on the current selected query criteria for activities, return the associated SampleDepth time series
         values as a 2-tuple list.  The similarity to getSimpleDepthTime name is a pure coincidence.
         '''
-        sampledt = []
+        samples = []
         qs = self.getSampleQS().values_list(
                                     'instantpoint__timevalue', 
-                                    'depth'
+                                    'depth',
+                                    'instantpoint__activity__name',
+                                    'name'
                                 ).order_by('instantpoint__timevalue')
         for s in qs:
             mes = calendar.timegm(s[0].timetuple()) * 1000.0
-            sampledt.append( [mes, '%.2f' % s[1]] )
+            label = '%s %s' % (s[2].split('_decim')[0], s[3],)                # Lop off '_decim.nc (stride=xxx)' part of name
+            rec = {'label': label, 'data': [[mes, '%.2f' % s[1]]]}
+            logger.debug('Appending %s', rec)
+            samples.append(rec)
 
-        return(sampledt)
+        return(samples)
+
     #
     # Methods that generate Q objects used to populate the query.
     #    

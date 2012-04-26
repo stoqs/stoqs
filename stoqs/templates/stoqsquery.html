@@ -11,7 +11,8 @@
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet">
     <style>
       body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+        padding-top: 60px;  /* 60px to make the container go all the way to the bottom of the topbar */
+        height: 100%;       /* make the percentage height on flot placeholder work */
       }
       .stoqs-toggle {
         width: 50%;
@@ -178,6 +179,8 @@
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery-ui-1.8.17.custom.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.dateFormat-1.0.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.selection.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.resize.min.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
@@ -359,6 +362,8 @@
                                             points: { show: false, fill: false },
                                             shadowSize: 0,
                                         },
+                                        legend: { show: false },
+                                        grid: { hoverable: true, clickable: true },
                                         selection: { mode: "xy" }
                                       }
 
@@ -392,30 +397,72 @@
             });
         }
 
-        function flotPlot(data, key) {
+        function showTooltip(x, y, contents) {
+            $('<div id="tooltip">' + contents + '</div>').css( {
+                position: 'absolute',
+                display: 'none',
+                top: y + 5,
+                left: x + 5,
+                border: '1px solid #fdd',
+                padding: '2px',
+                'background-color': '#fee',
+                opacity: 0.80
+            }).appendTo("body").fadeIn(200);
+        }
+
+        $("#placeholder").bind("plothover", function (event, pos, item) {
+            $("#x").text(pos.x.toFixed(2));
+            $("#y").text(pos.y.toFixed(2));
+    
+            if (item) {
+                if (previousPoint != item.dataIndex) {
+                    previousPoint = item.dataIndex;
+                        
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+               
+                    showTooltip(item.pageX, item.pageY,
+                                item.series.label + " at " + y + "m");
+                }
+            }
+            else {
+                $("#tooltip").remove();
+                previousPoint = null;            
+            }
+        });
+
+        function getDataset(data, x1, x2) {
             var dataset = [];
             var platform_seen = [];
             $.each(data['platforms'], function (index, platform_value) {
-                // Now add each activity for this platform
-                $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (index, depth_time_series) {
+                // Now add each activity for this platform - separated so that they are not connected with a line
+                $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
                     var rec = [];
                     if (! platform_seen[platform_value[0]]) {
                         rec["label"] = platform_value[0];
                         platform_seen[platform_value[0]] = true;
                     }
-                    rec["data"] = depth_time_series,
+                    console.log(label);
+                    rec["label"] = label;
+                    rec["data"] = depth_time_series;
                     rec["color"] = "#" + data['simpledepthtime']['colors'][platform_value[0]];
                     dataset.push(rec);
                 });
             });
-            var rec = [];
-            rec["data"] = data['sampledepthtime'],
-            rec["color"] = "#000000";
-            rec["fillColor"] = "#ffffff";
-            rec["points"] = {show: true, fill: true, lineWidth: 1};
-            rec["lines"] = {show: false};
-            dataset.push(rec);
-            $.plot($("#placeholder"), dataset, simpledepthtime_options);
+
+            // Add the sample locations, each with a label
+            $.each(data['sampledepthtime'], function (index, sample) {
+                //rec["data"] = data['sampledepthtime'],
+                sample["color"] = "#000000";
+                sample["fillColor"] = "#ffffff";
+                sample["points"] = {show: true, fill: true, lineWidth: 1};
+                sample["lines"] = {show: false};
+                sample["hoverable"] = true;
+                sample["clickable"] = true;
+                dataset.push(sample);
+            });
+            return dataset;
         }
 
         function onInit(data, key) {
@@ -447,10 +494,10 @@
                 makeSlider('slider-' + key, key, data[key])
             }
             else if (key == 'simpledepthtime') {
-                flotPlot(data, key)
-            }
-            else if (key == 'sampledepthtime') {
-                flotPlot(data, key)
+                //flotPlot(data)
+                var start =new Date(data['time'][0]);
+                var end=new Date(data['time'][1]);
+                $.plot($("#placeholder"), getDataset(data, start.getMilliseconds(), end.getMilliseconds()), simpledepthtime_options);
             }
         }
 
@@ -495,10 +542,10 @@
                 $('#end-depth').val(Math.round(data[key][1]*10)/10);
             }
             else if (key == 'simpledepthtime') {
-                flotPlot(data, key)
-            }
-            else if (key == 'sampledepthtime') {
-                flotPlot(data, key)
+                //flotPlot(data)
+                var start =new Date(data['time'][0]);
+                var end=new Date(data['time'][1]);
+                $.plot($("#placeholder"), getDataset(data, start.getMilliseconds(), end.getMilliseconds()), simpledepthtime_options);
             }
         }
 
@@ -530,8 +577,8 @@
         // Initialize the accordian fields.
         $(".collapse").collapse(); // Collapse the accordian fields.
         
-        // Adjust the height of the map div to 500px
-        $('#map').height(500);
+        // Adjust the height of the map div to 400px
+        $('#map').height(400);
         
         // Add this behavior to all text fields, so when someone clicks on a field it highlights 
         // all the data so it's easy to copy to the clipboard.
