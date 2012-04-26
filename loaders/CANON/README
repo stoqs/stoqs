@@ -75,6 +75,8 @@ To load data for all these databases (campaigns) follow these steps:
     3. Execute the load script:
 
         loadCANON_all.py
+        - or - 
+        loadCANON_all.sh
 
 
 -- 
