@@ -33,7 +33,6 @@ MBARI Jan 5, 2012
 import os
 import sys
 import site
-import logging
 
 # For some reason the Python 2.6 installation on odss-staging (MBARI's shared dev server) is missing these dirs. 
 # These probably cause no harm, but nevertheless if your installation doesn't need them they should be removed.
@@ -52,6 +51,7 @@ del prev_sys_path
 print sys.path
 
 # Configure logging settings for Apache logs
+import logging
 log_level=logging.DEBUG
 logger = logging.getLogger('')
 logger.setLevel(log_level)
