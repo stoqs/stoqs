@@ -25,7 +25,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-stride = 100
+try:
+    stride = int(sys.argv[1])
+except IndexError:
+    stride = 100
 
 # ----------------------------------------------------------------------------------
 cl = CANONLoader('stoqs_april2011', 'CANON - April 2011')
