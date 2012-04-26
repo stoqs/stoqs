@@ -70,7 +70,7 @@ class CANONLoader(object):
         '''
         try:
             self.loadDorado()
-        except AttributeError:
+        except AttributeError as e:
             print e
             raw_input("WARNING: No dorado data for dbAlias = %s, campaignName = %s" % (self.dbAlias, self.campaignName))
             pass
@@ -82,7 +82,7 @@ class CANONLoader(object):
             pass
         try:
             self.loadMartin()
-        except AttributeError:
+        except AttributeError as e:
             print e
             raw_input("WARNING: No martin data for dbAlias = %s, campaignName = %s, martin_parms = %s" % (self.dbAlias, self.campaignName, self.martin_parms))
             pass
