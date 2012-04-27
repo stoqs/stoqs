@@ -94,6 +94,7 @@ class ActivityView(object):
                             'wfs_title': 'WFS title for an Activity',
                             'map_debug_level': self.map_debug_level,
                             'layer_debug_level': self.layer_debug_level,
+                            'copyright_string': 'MBARI %d' % datetime.today().year,
                             'dbconn': settings.DATABASES[self.request.META['dbAlias']],
                             'mappath': self.mappath},
                             context_instance = RequestContext(self.request))
