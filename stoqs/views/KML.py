@@ -4,34 +4,29 @@ import time
 import numpy
 import settings
 import logging
+from stoqs import models as m
+from django.db.models import Avg
+import pprint
 
 logger = logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------------------------------------
 # Support functions for rendering measurements into KML
 
-def makeKML(dataHash, pName, title, desc, startDate, endDate):
+def makeKML(dbAlias, dataHash, pName, title, desc, startDate, endDate):
     '''Generate the KML for the point in mpList'''
 
     #
-    # Define the color lookup table and the color limits for each variable
+    # Define the color lookup table and the color limits from 2.5 and 97.5 percentiles for each variable
     #
     clt = readCLT(os.path.join(settings.MEDIA_ROOT, 'jetplus.txt'))
-    climHash = { 'temperature': [9, 16]
-            , 'sea_water_temperature': [9, 16]
-            , 'Temperature': [9, 16]
-            , 'sea_water_salinity': [32.6, 34]
-            , 'salinity': [32.6, 34]
-            , 'nitrate': [0, 25]
-            , 'bbp420': [0, .01]
-            , 'bbp700': [0, .01]
-            , 'fl700_uncorr': [0, .001]
-            , 'mass_concentration_of_chlorophyll_in_sea_water': [2, 10]
-            , 'mass_concentration_of_oxygen_in_sea_water': [0, 10]
-            , 'mole_concentration_of_nitrate_in_sea_water': [0, 30]
-            , 'Biolume': [8.8, 10.5]
-            , 'oxygen': [0, 10]
-            }
+    climHash = {}
+    for p in m.Parameter.objects.using(dbAlias).all().values_list('name'):
+        pn = p[0]
+        qs = m.ActivityParameter.objects.using(dbAlias).filter(parameter__name=pn).aggregate(Avg('p025'), Avg('p975'))
+        climHash[pn] = (qs['p025__avg'], qs['p975__avg'],)
+
+    logger.debug('Color lookup min, max values:\n' + pprint.pformat(climHash))
 
     pointKMLHash = {}
     lineKMLHash = {}

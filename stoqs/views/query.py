@@ -66,7 +66,7 @@ def kmlResponse(request, qm, response):
     folderName = "%s_%.1f_%.1f" % (pName, qm.getDepth()[0], qm.getDepth()[1])
     descr = request.get_full_path().replace('&', '&amp;')
     logger.debug(descr)
-    kml = KML.makeKML(dataHash, pName, folderName, descr, qm.getTime()[0], qm.getTime()[1])
+    kml = KML.makeKML(request.META['dbAlias'], dataHash, pName, folderName, descr, qm.getTime()[0], qm.getTime()[1])
     response['Content-Type'] = 'application/vnd.google-earth.kml+xml'
     response.write(kml)
     return response
