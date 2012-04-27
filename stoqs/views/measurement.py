@@ -58,7 +58,7 @@ def showMeasurementsOfActivity(request, aName, aType, stride = '1', format = 'ht
             data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y, 
                  mp.measurement.depth, pName, mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
                     for mp in mpList]
-            kml = makeKML(data, pName, title, desc, startDate, endDate)
+            kml = makeKML(request.META['dbAlias'], data, pName, title, desc, startDate, endDate)
         else:
             measList.extend([ (mp.parameter.name, time.mktime(mp.measurement.instantpoint.timevalue.timetuple()), 
                         '%.6f' % mp.measurement.geom.x, '%.6f' %  mp.measurement.geom.y, '%.1f' %  mp.measurement.depth,
@@ -157,7 +157,7 @@ def showBetweenMeasurements(request, pName, startDate, endDate, dmin, dmax, stri
             logger.debug('makeDataHashBuildTime = %f seconds', (time.clock() - start))
 
             start = time.clock()
-            kml = makeKML(dataHash, pName, title, desc, startDate, endDate)
+            kml = makeKML(request.META['dbAlias'], dataHash, pName, title, desc, startDate, endDate)
             perfDict['makeKMLBuildTime'] = time.clock() - start
         else:
             start = time.clock()
