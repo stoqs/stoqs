@@ -430,7 +430,7 @@
                         y = item.datapoint[1].toFixed(2);
                
                     showTooltip(item.pageX, item.pageY,
-                                item.series.label + " at " + y + "m");
+                                item.series.label);
                 }
             }
             else {
@@ -447,21 +447,31 @@
         });
 
         function getDataset(data, x1, x2) {
+            // Return a dataset for flot for only the data betweeh times x1 and x2
             var dataset = [];
             var platform_seen = [];
             $.each(data['platforms'], function (index, platform_value) {
                 // Now add each activity for this platform - separated so that they are not connected with a line
                 $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
                     var rec = [];
-                    if (! platform_seen[platform_value[0]]) {
-                        rec["label"] = platform_value[0];
-                        platform_seen[platform_value[0]] = true;
+                    console.log('Checking time for ' + platform_value + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                    subset_dts = []
+                    $.each(depth_time_series, function (index, td) {
+                        // From each activity push only the times between x1 & x2
+                        if (td[0] > x1 && td[0] < x2) {
+                            subset_dts.push(td);
+                        }
+                    });
+                    if (subset_dts.length > 0) {
+                        if (! platform_seen[platform_value[0]]) {
+                            rec["label"] = platform_value[0];
+                            platform_seen[platform_value[0]] = true;
+                        }
+                        rec["label"] = label;
+                        rec["data"] = depth_time_series;
+                        rec["color"] = "#" + data['simpledepthtime']['colors'][platform_value[0]];
+                        dataset.push(rec);
                     }
-                    console.log(label);
-                    rec["label"] = label;
-                    rec["data"] = depth_time_series;
-                    rec["color"] = "#" + data['simpledepthtime']['colors'][platform_value[0]];
-                    dataset.push(rec);
                 });
             });
 
@@ -509,9 +519,10 @@
             }
             else if (key == 'simpledepthtime') {
                 //flotPlot(data)
-                var start =new Date(data['time'][0]);
-                var end=new Date(data['time'][1]);
-                $.plot($("#placeholder"), getDataset(data, start.getMilliseconds(), end.getMilliseconds()), simpledepthtime_options);
+                var start = new Date(data['time'][0]);
+                var end = new Date(data['time'][1]);
+                console.log('start = ' + start);
+                $.plot($("#placeholder"), getDataset(data, start.getTime(), end.getTime()), simpledepthtime_options);
             }
         }
 
@@ -559,7 +570,7 @@
                 //flotPlot(data)
                 var start =new Date(data['time'][0]);
                 var end=new Date(data['time'][1]);
-                $.plot($("#placeholder"), getDataset(data, start.getMilliseconds(), end.getMilliseconds()), simpledepthtime_options);
+                $.plot($("#placeholder"), getDataset(data, start.getTime(), end.getTime()), simpledepthtime_options);
             }
         }
 
