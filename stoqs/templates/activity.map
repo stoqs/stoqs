@@ -68,7 +68,7 @@ MAP
   LAYER
     NAME "track_lines"
     TYPE line
-    STATUS DEFAULT
+    STATUS off
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     CONNECTIONTYPE UNION
     CONNECTION "{{ union_layer_string|safe }}"
