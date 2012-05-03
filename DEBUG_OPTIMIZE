@@ -84,6 +84,14 @@ done are in the comments of utils/STOQSQManager.py.  Massive performance gains w
 changing the queries to hit the summary Activity information rather than get results from the 
 instantpoint and measurement tables - which have millions of records in them in a typical database.
 
+If you have a long-running query executing you may be "lucky" enough to obseve the actual SQL by
+examinging the current connections on the database with the psql commnd:
+
+    SELECT * FROM pg_stat_activity;
+
+Django has a good web page on optimizing database access:
+
+    https://docs.djangoproject.com/en/1.2/topics/db/optimization/
 
 --
 Mike McCann
