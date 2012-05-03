@@ -355,6 +355,8 @@
             }
         }
         var me = this;
+        var startData;
+
         var simpledepthtime_options = { grid: { 
                                             backgroundColor: "rgb(192, 211, 228)",
                                             hoverable: true, 
@@ -373,36 +375,6 @@
                                         legend: { show: false },
                                         selection: { mode: "xy" }
                                       }
-
-        function getSDTData(allSDTData, x1, x2) {
-            var d = [];
-            for (var i = x1; i <= x2; ++i) {
-                d.push([allSDTData[i]]);
-            }
-
-            return d;
-        }
-
-        function selectData() {
-            placeholder.bind("plotselected", function (event, ranges) {
-                // clamp the zooming to prevent eternal zoom
-                if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
-                    ranges.xaxis.to = ranges.xaxis.from + 0.00001;
-                if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
-                    ranges.yaxis.to = ranges.yaxis.from + 0.00001;
-
-                //    rec["data"] = getSDTData(data[key]['sdt'][value[0]], ranges.xaxis.from, ranges.xaxis.to);
-
-                $("#selection").text(ranges.xaxis.from.toFixed(1) + " to " + ranges.xaxis.to.toFixed(1));
-
-                var zoom = $("#zoom").attr("checked");
-                if (zoom)
-                    plot = $.plot(placeholder, data,
-                                  $.extend(true, {}, options, {
-                                      xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
-                                  }));
-            });
-        }
 
         function showTooltip(x, y, contents) {
             $('<div id="tooltip">' + contents + '</div>').css( {
@@ -442,7 +414,7 @@
         $("#placeholder").bind("plotclick", function (event, pos, item) {
             if (item) {
                 $("#clickdata").text("You clicked point " + item.dataIndex + " in " + item.series.label + ".");
-                plot.highlight(item.series, item.datapoint);
+                //plot.highlight(item.series, item.datapoint);
             }
         });
 
@@ -489,6 +461,30 @@
             return dataset;
         }
 
+        $("#placeholder").bind("plotselected", function (event, ranges) {
+                // clamp the zooming to prevent eternal zoom
+                if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
+                    ranges.xaxis.to = ranges.xaxis.from + 0.00001;
+                if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
+                    ranges.yaxis.to = ranges.yaxis.from + 0.00001;
+
+                $.plot(placeholder, getDataset(startData, ranges.xaxis.from, ranges.xaxis.to),
+                                    $.extend(true, {}, simpledepthtime_options, {
+                                    xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
+                                    yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to }
+                }));
+                $('#start-depth').val(ranges.yaxis.from);
+                $('#end-depth').val(ranges.yaxis.to);
+                ds = new Date(0);
+                ds.setUTCSeconds(ranges.xaxis.from / 1000.0);
+                console.log(ds);
+                $('#start-time').val($.format.date(ds,'yyyy-MM-dd hh:mm:ss'));
+                de = new Date(0);
+                de.setUTCSeconds(ranges.xaxis.to / 1000.0);
+                $('#end-time').val($.format.date(de,'yyyy-MM-dd hh:mm:ss'));
+                rebuildFilters()
+        });
+
         function onInit(data, key) {
             // Called from ajax on initial request
             if (key == 'platforms') {
@@ -522,6 +518,7 @@
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
                 console.log('start = ' + start);
+                startData = data;
                 $.plot($("#placeholder"), getDataset(data, start.getTime(), end.getTime()), simpledepthtime_options);
             }
         }
@@ -602,8 +599,8 @@
         // Initialize the accordian fields.
         $(".collapse").collapse(); // Collapse the accordian fields.
         
-        // Adjust the height of the map div to 400px
-        $('#map').height(400);
+        // Adjust the height of the map div to 500px
+        $('#map').height(500);
         
         // Add this behavior to all text fields, so when someone clicks on a field it highlights 
         // all the data so it's easy to copy to the clipboard.
