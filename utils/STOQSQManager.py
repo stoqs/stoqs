@@ -140,7 +140,7 @@ class STOQSQManager(object):
             if self.kwargs['depth'][1] is not None:
                 qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
 
-        logger.debug(pprint.pformat(qparams))
+        ##logger.debug(pprint.pformat(qparams))
         qs_mp = models.MeasuredParameter.objects.filter(**qparams)
         if qs_mp:
             logger.debug(pprint.pformat(str(qs_mp.query)))
