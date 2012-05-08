@@ -174,11 +174,13 @@ def showActivity(request, format = 'html', order = 'startdate'):
     qs = stoqs_object.objects.all().order_by(order)
 
 
-    qm = STOQSQManager(request, response, request.META['dbAlias'])
-    qm.buildQuerySet(qs, **params)
-    options = simplejson.dumps(qm.generateOptions(),
-                               cls=encoders.STOQSJSONEncoder)
-                               # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
+    # Calling this will execute a measuredparameter count, which can take several seconds with a multi-million measurement database
+    # This is a work in progress to support arbitrary query strings for Acvivity responses
+    ##qm = STOQSQManager(request, response, request.META['dbAlias'])
+    ##qm.buildQuerySet(qs, **params)
+    ##options = simplejson.dumps(qm.generateOptions(),
+    ##                           cls=encoders.STOQSJSONEncoder)
+    ##                           # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
 
     if params:
         for k,v in params.iteritems():
