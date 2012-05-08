@@ -15,6 +15,9 @@
         height: 100%;       /* make the percentage height on flot placeholder work */
       }
       .stoqs-toggle {
+        width: 100%;
+      }
+      .stoqs-parameter-toggle {
         width: 50%;
       }
       th {
@@ -83,6 +86,20 @@
         </div><!-- span6 -->
         
         <div class="span6">
+            <div id="depth-time-plot" style="height:400px" class="disabled">
+                <div id="placeholder" style="width:100%;height:90%;" class="disabled"></div>
+                <div>
+                    <p><button id="zoomed-button" class="btn btn-mini stoqs-toggle disabled">Zoomed</button></p>
+                </div>
+            </div>
+            <input type="hidden" id="start-time" "name="start-time">
+            <input type="hidden" id="end-time" name="end-time"> 
+            <input type="hidden" id="start-depth" "name="start-depth">
+            <input type="hidden" id="end-depth" name="end-depth"> 
+            <div>
+                <span id="clickdata"></span></p>
+            </div>
+
             <div class="accordion well" id="accordion2">
                 <div class="accordian-group">
                     <div class="accordian-heading">
@@ -114,6 +131,8 @@
                         </div>
                     </div>
                 </div><!-- accordian-group -->
+
+<!--
                 <div class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
@@ -150,24 +169,8 @@
                             </table>
                         </div>
                     </div>
-                </div><!-- accordian-group -->   
-
-                <div class="accordian-group">
-                    <div class="accordian-heading">
-                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseFour">
-                        Depth Time Plot
-                        </a></h3>
-                    </div>
-                    <div id="collapseFour" class="accordion-body collapse in">
-                        <div class="accordion-inner">
-                            <div id="placeholder" style="width:600px;height:300px;"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <span id="clickdata"></span></p>
-                    </div>
-                </div><!-- accordian-group -->   
-
+                </div>
+-->
 
             </div><!-- accordian -->
 
@@ -341,6 +344,13 @@
         rebuildFilters();
     });
 
+    // Special handling for unzooming the depth-time-plot
+    $("#zoomed-button").click(function() {
+        if ( ! $('#zoomed-button').is(".disabled") ) {
+            alert("Handler for .click() called.");
+        }
+    });
+
     
     /*
      * Perform the AJAX call to get a list of parameters, and enable/disable them
@@ -390,8 +400,13 @@
         }
 
         $("#placeholder").bind("plothover", function (event, pos, item) {
-            $("#x").text(pos.x.toFixed(2));
-            $("#y").text(pos.y.toFixed(2));
+            if (pos.x && pos.y) {
+                $("#x").text(pos.x.toFixed(2));
+                $("#y").text(pos.y.toFixed(2));
+            }
+            else {
+                return;
+            }
     
             if (item) {
                 if (previousPoint != item.dataIndex) {
@@ -422,11 +437,14 @@
             // Return a dataset for flot for only the data betweeh times x1 and x2
             var dataset = [];
             var platform_seen = [];
+            if ( ! data ) {
+                return;
+            }
             $.each(data['platforms'], function (index, platform_value) {
                 // Now add each activity for this platform - separated so that they are not connected with a line
                 $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
                     var rec = [];
-                    console.log('Checking time for ' + platform_value + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                    //console.log('Checking time for ' + platform_value + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
                     subset_dts = []
                     $.each(depth_time_series, function (index, td) {
                         // From each activity push only the times between x1 & x2
@@ -468,7 +486,12 @@
                 if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
                     ranges.yaxis.to = ranges.yaxis.from + 0.00001;
 
-                $.plot(placeholder, getDataset(startData, ranges.xaxis.from, ranges.xaxis.to),
+                // Zoom the plot
+                theData = getDataset(startData, ranges.xaxis.from, ranges.xaxis.to);
+                if ( ! theData ) {
+                    return;
+                }
+                $.plot(placeholder, theData,
                                     $.extend(true, {}, simpledepthtime_options, {
                                     xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
                                     yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to }
@@ -477,13 +500,20 @@
                 $('#end-depth').val(ranges.yaxis.to);
                 ds = new Date(0);
                 ds.setUTCSeconds(ranges.xaxis.from / 1000.0);
-                console.log(ds);
                 $('#start-time').val($.format.date(ds,'yyyy-MM-dd hh:mm:ss'));
                 de = new Date(0);
                 de.setUTCSeconds(ranges.xaxis.to / 1000.0);
                 $('#end-time').val($.format.date(de,'yyyy-MM-dd hh:mm:ss'));
-                rebuildFilters()
+
+                // Apply new depth & time ranges to the query
+                $('#zoomed-button').addClass('enabled');
+                $('#zoomed-button').removeClass('disabled');
+                $('#zoomed-button').click();
+                toggleField(this);
+                rebuildFilters();
+                
         });
+
 
         function onInit(data, key) {
             // Called from ajax on initial request
@@ -517,9 +547,8 @@
                 //flotPlot(data)
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
-                console.log('start = ' + start);
                 startData = data;
-                $.plot($("#placeholder"), getDataset(data, start.getTime(), end.getTime()), simpledepthtime_options);
+                $.plot($("#placeholder"), getDataset(startData, start.getTime(), end.getTime()), simpledepthtime_options);
             }
         }
 
@@ -564,10 +593,16 @@
                 $('#end-depth').val(Math.round(data[key][1]*10)/10);
             }
             else if (key == 'simpledepthtime') {
-                //flotPlot(data)
-                var start =new Date(data['time'][0]);
-                var end=new Date(data['time'][1]);
-                $.plot($("#placeholder"), getDataset(data, start.getTime(), end.getTime()), simpledepthtime_options);
+                // If depth_time_plot was zoomed do not update
+                if ( $('#zoomed-button').is(".disabled") ) {
+                    var start =new Date(data['time'][0]);
+                    var end=new Date(data['time'][1]);
+                    console.log('Updating plot');
+                    $.plot($("#placeholder"), getDataset(data, start.getTime(), end.getTime()), simpledepthtime_options);
+                }
+                else {
+                    console.log('zoomed.  Not updating the plot.')
+                }
             }
         }
 
