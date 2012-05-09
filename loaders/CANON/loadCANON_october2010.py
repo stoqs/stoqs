@@ -29,9 +29,13 @@ try:
     stride = int(sys.argv[1])
 except IndexError:
     stride = 100
+try:
+    dbAlias = sys.argv[2]
+except IndexError:
+    dbAlias = 'stoqs_october2010'
 
 # ----------------------------------------------------------------------------------
-cl = CANONLoader('stoqs_october2010', 'CANON/Biospace/Latmix - October 2010')
+cl = CANONLoader(dbAlias, 'CANON/Biospace/Latmix - October 2010')
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
 cl.dorado_files = [ 'Dorado389_2010_277_01_277_01_decim.nc',
                     'Dorado389_2010_278_01_278_01_decim.nc',
