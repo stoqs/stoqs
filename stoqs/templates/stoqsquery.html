@@ -71,43 +71,85 @@
     <div class="row-fluid">
 
         <div class="span6">
-            <div class="row-fluid" id="map">
-            </div>
-            <div class="row-fluid">
-                <h3><strong id="result_count">0</strong> data points found.</h3>
-                <h4>Copy the links below to save them, click on the buttons to download in the specified format.</h4>
-                {% for format, description in formats.items %}
-                <div class="row-fluid">
-                    <input id="{{format}}-field" type="text" class="span6">
-                    <span class="help-inline span4"><a target="_blank" id="{{format}}-link" class="btn btn-info btn-small" href=""><i class="icon-file"></i> {{description}}</a></span>
-                {% endfor %}            
-                </div>          
-            </div><!-- row-fluid -->
+
+            <div class="accordion well" id="accordion2">
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="map-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseMap">
+                        Map
+                        </a></h3>
+                    </div>
+                    <div id="collapseMap" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <div class="row-fluid" id="map">
+                            </div>
+                            <h3>Approximately <strong id="result_count">0</strong> measured parameter data values</h3>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseDataAccess">
+                        Data Access
+                        </a></h3>
+                    </div>
+                    <div id="collapseDataAccess" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <div class="row-fluid">
+                                {% for format, description in formats.items %}
+                                <span class="help-inline"><a target="_blank" id="{{format}}-link" class="btn btn-info btn-small" href=""><i class="icon-file"></i> {{description}}</a></span>
+                                <div class="row-fluid">
+                                    <!-- <input id="{{format}}-field" type="text" class="span6"> -->
+                                    <p id="{{format}}-field"></p>
+                                </div>          
+                                {% endfor %}            
+                            </div><!-- row-fluid -->
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+            </div><!-- accordian well -->
+
         </div><!-- span6 -->
         
         <div class="span6">
-            <div id="depth-time-plot" style="height:400px" class="disabled">
-                <div id="placeholder" style="width:100%;height:90%;" class="disabled"></div>
-                <div>
-                    <p><button id="zoomed-button" class="btn btn-mini stoqs-toggle disabled">Zoomed</button></p>
-                </div>
-            </div>
-            <input type="hidden" id="start-time" "name="start-time">
-            <input type="hidden" id="end-time" name="end-time"> 
-            <input type="hidden" id="start-depth" "name="start-depth">
-            <input type="hidden" id="end-depth" name="end-depth"> 
-            <div>
-                <span id="clickdata"></span></p>
-            </div>
-
             <div class="accordion well" id="accordion2">
+
                 <div class="accordian-group">
                     <div class="accordian-heading">
-                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
-                        Parameter names
+                        <h3><a id="depth-time-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+                        Depth Time Selector
                         </a></h3>
                     </div>
                     <div id="collapseOne" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <div id="depth-time-plot" style="height:400px" class="disabled">
+                                <div id="placeholder" style="width:100%;height:90%;" class="disabled"></div>
+                                <div>
+                                    <p><button id="zoomed-button" class="btn btn-mini stoqs-toggle disabled">Zoomed</button></p>
+                                </div>
+                            </div>
+                            <input type="hidden" id="start-time" "name="start-time">
+                            <input type="hidden" id="end-time" name="end-time"> 
+                            <input type="hidden" id="start-depth" "name="start-depth">
+                            <input type="hidden" id="end-depth" name="end-depth"> 
+                            <div>
+                                <span id="clickdata"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
+                        Parameter names
+                        </a></h3>
+                    </div>
+                    <div id="collapseTwo" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <table id="parameter-table" class="table table-condensed table-bordered">
                               <tbody>
@@ -118,11 +160,11 @@
                 </div><!-- accordian-group -->
                 <div class="accordian-group">
                     <div class="accordian-heading">
-                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
+                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
                         Platforms
                         </a></h3>
                     </div>
-                    <div id="collapseTwo" class="accordion-body collapse in">
+                    <div id="collapseThree" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <table id="platform-table" class="table table-condensed table-bordered">
                               <tbody>
@@ -132,47 +174,7 @@
                     </div>
                 </div><!-- accordian-group -->
 
-<!--
-                <div class="accordian-group">
-                    <div class="accordian-heading">
-                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
-                        Range Parameters
-                        </a></h3>
-                    </div>
-                    <div id="collapseThree" class="accordion-body collapse in">
-                        <div class="accordion-inner">
-                            <table id="range-table" class="table table-condensed">
-                            <tbody>
-                                <tr>
-                                    <td colspan="2"><strong>Time Range (local time)</strong></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2"><div id="slider-time"></div></td>
-                                </tr>
-                                <tr>
-                                    <td><input class="span2 slider-values" type="text" id="start-time" "name="start-time"></td>
-                                    <td><input class="span2 slider-values" type="text" id="end-time" name="end-time"></td> 
-                                </tr>
-                                
-                                <tr>
-                                    <td colspan="2"><strong>Depth Range</strong></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2"><div id="slider-depth"></div></td>
-                                </tr>
-                                <tr>
-                                    <td><input class="span2 slider-values" type="text" id="start-depth" "name="start-depth"></td>
-                                    <td><input class="span2 slider-values" type="text" id="end-depth" name="end-depth"></td> 
-                                </tr>
-                                        
-                            </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
--->
-
-            </div><!-- accordian -->
+            </div><!-- accordian well -->
 
         </div><!-- span -->
     </div><!-- row-fluid -->
@@ -235,7 +237,7 @@
         // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
         $.each(formats, function (index, value) {
             var url=base_url + value + param;
-            $('#'+value+'-field').val(url);
+            $('#'+value+'-field').text(url);
             $('#'+value+'-link').attr('href',url);
         });
     }
@@ -627,8 +629,6 @@
         });
     }
     
-
-    
     
     $(function () { 
         // Initialize the accordian fields.
@@ -756,7 +756,7 @@
           map.setCenter(new OpenLayers.LonLat(-13594478.3, 4411945.3), 9);
           map.addControl(new OpenLayers.Control.LayerSwitcher());
           map.addControl(new OpenLayers.Control.MousePosition());
-          map.addControl(new OpenLayers.Control.PanZoomBar());
+          map.addControl(new OpenLayers.Control.PanZoom());
 
           /*
            *
@@ -781,8 +781,9 @@
             }
         });
           
-          
-          });
+        $('#depth-time-anchor').click();
+        $('#map-anchor').click();
+    });
     </script>
   </body>
 </html>
