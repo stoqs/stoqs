@@ -74,7 +74,7 @@ class Resource(models.Model):
     name = models.CharField(max_length=128, null=True)
     value = models.TextField(null=True)
     uristring = models.CharField(max_length=256, null=True)
-    resourcetype = models.ForeignKey(ResourceType, blank=True, null=True, default=None)
+    resourcetype = models.ForeignKey(ResourceType, blank=True, null=True)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Resource'
