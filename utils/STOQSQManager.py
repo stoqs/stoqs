@@ -2,7 +2,7 @@
 '''
 from django.conf import settings
 from django.db import connections
-from django.db.models import Q, Max, Min
+from django.db.models import Q, Max, Min, Sum
 from stoqs import models
 import logging
 import pprint
@@ -110,12 +110,57 @@ class STOQSQManager(object):
         '''
         Get the count of measured parameters giving the exising query
         '''
-        qs_mp = self.getMeasuredParametersQS()
-        if qs_mp:
-            return qs_mp.count()
+        qs_ap = self.getActivityParametersQS()          # Approximate count from ActivityParameter
+        ##qs_mp = self.getMeasuredParametersQS()        # Actual count from MeasuredParameter - needs to do seq scan on large table
+        if qs_ap:
+            return qs_ap.aggregate(Sum('number'))['number__sum']
+        ##elif qs_mp:
+        ##    return qs_mp.count()
         else:
             return 0
         
+        
+    def getActivityParametersQS(self):
+        '''
+        Return query set of ActivityParameters given the current constraints. 
+        '''
+        qparams = {}
+
+        logger.info(pprint.pformat(self.kwargs))
+        qs_ap = models.ActivityParameter.objects.using(self.dbname).all()
+        if self.kwargs.has_key('parameters'):
+            if self.kwargs['parameters']:
+                qs_ap = qs_ap.filter(Q(parameter__uuid__in=self.kwargs['parameters']))
+        if self.kwargs.has_key('platforms'):
+            if self.kwargs['platforms']:
+                qs_ap = qs_ap.filter(Q(activity__platform__uuid__in=self.kwargs['platforms']))
+        if self.kwargs.has_key('time'):
+            if self.kwargs['time'][0] is not None:
+                q1 = Q(activity__startdate__lte=self.kwargs['time'][0]) & Q(activity__enddate__gte=self.kwargs['time'][0])
+            if self.kwargs['time'][1] is not None:
+                q2 = Q(activity__startdate__lte=self.kwargs['time'][1]) & Q(activity__enddate__gte=self.kwargs['time'][1])
+            if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
+                q3 = Q(activity__startdate__gte=self.kwargs['time'][0]) & Q(activity__startdate__lte=self.kwargs['time'][1]) & Q(activity__enddate__gte=self.kwargs['time'][0]) & Q(activity__enddate__lte=self.kwargs['time'][1])
+
+                qs_ap = qs_ap.filter(q1 | q2 | q3)
+
+                logger.debug('ORing Q objects %s, %s, %s', q1, q2, q3)
+
+        if self.kwargs.has_key('depth'):
+            if self.kwargs['depth'][0] is not None:
+                q1 = Q(activity__mindepth__lte=self.kwargs['depth'][0]) & Q(activity__maxdepth__gte=self.kwargs['depth'][0])
+            if self.kwargs['depth'][1] is not None:
+                q2 = Q(activity__mindepth__lte=self.kwargs['depth'][1]) & Q(activity__maxdepth__gte=self.kwargs['depth'][1])
+            if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
+                q3 = Q(activity__mindepth__gte=self.kwargs['depth'][0]) & Q(activity__mindepth__lte=self.kwargs['depth'][1]) & Q(activity__maxdepth__gte=self.kwargs['depth'][0]) & Q(activity__maxdepth__lte=self.kwargs['depth'][1])
+                qs_ap = qs_ap.filter(q1 | q2 | q3)
+
+        if qs_ap:
+            logger.debug(pprint.pformat(str(qs_ap.query)))
+        else:
+            logger.debug("No queryset returned for ")
+        return qs_ap
+
     def getMeasuredParametersQS(self):
         '''
         Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
@@ -141,7 +186,7 @@ class STOQSQManager(object):
                 qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
 
         ##logger.debug(pprint.pformat(qparams))
-        qs_mp = models.MeasuredParameter.objects.filter(**qparams)
+        qs_mp = models.MeasuredParameter.objects.using(self.dbname).filter(**qparams)
         if qs_mp:
             logger.debug(pprint.pformat(str(qs_mp.query)))
         else:
@@ -170,7 +215,7 @@ class STOQSQManager(object):
                 qparams['depth__lte'] = self.kwargs['depth'][1]
 
         logger.debug(pprint.pformat(qparams))
-        qs_sample = models.Sample.objects.filter(**qparams)
+        qs_sample = models.Sample.objects.using(self.dbname).filter(**qparams)
         if qs_sample:
             logger.debug(pprint.pformat(str(qs_sample.query)))
             self.qs_sample = qs_sample
@@ -325,7 +370,8 @@ class STOQSQManager(object):
                                 ).order_by('instantpoint__timevalue')
         for s in qs:
             mes = calendar.timegm(s[0].timetuple()) * 1000.0
-            label = '%s %s' % (s[2].split('_decim')[0], s[3],)                # Lop off '_decim.nc (stride=xxx)' part of name
+            label = '%s %s' % (s[2], s[3],)                                     # Show entire Activity name
+            label = '%s %s' % (s[2].split('_decim')[0], s[3],)                  # Lop off '_decim.nc (stride=xxx)' part of name
             rec = {'label': label, 'data': [[mes, '%.2f' % s[1]]]}
             logger.debug('Appending %s', rec)
             samples.append(rec)
