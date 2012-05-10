@@ -61,7 +61,7 @@ class CANONLoader(object):
         '''
         for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.martin_files], self.martin_files):
             url = self.martin_base + file
-            DAPloaders.runAuvctdLoader(url, self.campaignName, aName, 'martin', 'ff0000', 'ship', 'cruise', self.martin_parms, self.dbAlias, self.stride)
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'martin', 'ff0000', 'ship', 'cruise', self.martin_parms, self.dbAlias, self.stride)
 
 
     def loadAll(self):
