@@ -113,6 +113,7 @@ DATABASE_ROUTERS = ['stoqs.db_router.DatabaseRouter']
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
+USE_TZ = True
 TIME_ZONE = 'GMT'
 
 # Language code for this installation. All choices can be found here:
@@ -205,6 +206,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
