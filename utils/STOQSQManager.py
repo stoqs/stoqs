@@ -4,10 +4,12 @@ from django.conf import settings
 from django.db import connections
 from django.db.models import Q, Max, Min, Sum
 from stoqs import models
+from coards import to_udunits
 import logging
 import pprint
 import calendar
 import re
+import locale
 
 logger = logging.getLogger(__name__)
 
@@ -110,12 +112,25 @@ class STOQSQManager(object):
         '''
         Get the count of measured parameters giving the exising query
         '''
-        qs_ap = self.getActivityParametersQS()          # Approximate count from ActivityParameter
-        ##qs_mp = self.getMeasuredParametersQS()        # Actual count from MeasuredParameter - needs to do seq scan on large table
+        qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
+        locale.setlocale(locale.LC_ALL, 'en_US')
         if qs_ap:
-            return qs_ap.aggregate(Sum('number'))['number__sum']
-        ##elif qs_mp:
-        ##    return qs_mp.count()
+            ap_count = qs_ap.count()
+            logger.debug('ap_count = %d', ap_count)
+            approximate_count = qs_ap.aggregate(Sum('number'))['number__sum']
+            logger.debug('approximate_count = %d', approximate_count)
+            if approximate_count == 0:
+                raw_imput('paused')
+            if ap_count < 5:
+                logger.debug('>>>> Getting actual count')
+                qs_mp = self.getMeasuredParametersQS()          # Actual count from MeasuredParameter - needs to do seq scan on large table
+                actual_count = qs_mp.count()
+                logger.debug('actual_count = %d', actual_count)
+                if actual_count == 0:
+                    raw_imput('paused')
+                return actual_count
+            else:
+                return locale.format("%d", approximate_count, grouping=True)
         else:
             return 0
         
@@ -140,7 +155,8 @@ class STOQSQManager(object):
             if self.kwargs['time'][1] is not None:
                 q2 = Q(activity__startdate__lte=self.kwargs['time'][1]) & Q(activity__enddate__gte=self.kwargs['time'][1])
             if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
-                q3 = Q(activity__startdate__gte=self.kwargs['time'][0]) & Q(activity__startdate__lte=self.kwargs['time'][1]) & Q(activity__enddate__gte=self.kwargs['time'][0]) & Q(activity__enddate__lte=self.kwargs['time'][1])
+                q3 = Q(activity__startdate__gte=self.kwargs['time'][0]) & Q(activity__startdate__lte=self.kwargs['time'][1]
+                    ) & Q(activity__enddate__gte=self.kwargs['time'][0]) & Q(activity__enddate__lte=self.kwargs['time'][1])
 
                 qs_ap = qs_ap.filter(q1 | q2 | q3)
 
@@ -152,7 +168,8 @@ class STOQSQManager(object):
             if self.kwargs['depth'][1] is not None:
                 q2 = Q(activity__mindepth__lte=self.kwargs['depth'][1]) & Q(activity__maxdepth__gte=self.kwargs['depth'][1])
             if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
-                q3 = Q(activity__mindepth__gte=self.kwargs['depth'][0]) & Q(activity__mindepth__lte=self.kwargs['depth'][1]) & Q(activity__maxdepth__gte=self.kwargs['depth'][0]) & Q(activity__maxdepth__lte=self.kwargs['depth'][1])
+                q3 = Q(activity__mindepth__gte=self.kwargs['depth'][0]) & Q(activity__mindepth__lte=self.kwargs['depth'][1]
+                    ) & Q(activity__maxdepth__gte=self.kwargs['depth'][0]) & Q(activity__maxdepth__lte=self.kwargs['depth'][1])
                 qs_ap = qs_ap.filter(q1 | q2 | q3)
 
         if qs_ap:
@@ -369,11 +386,11 @@ class STOQSQManager(object):
                                     'name'
                                 ).order_by('instantpoint__timevalue')
         for s in qs:
-            mes = calendar.timegm(s[0].timetuple()) * 1000.0
+            ems = 1000 * to_udunits(s[0], 'seconds since 1970-01-01')
             label = '%s %s' % (s[2], s[3],)                                     # Show entire Activity name
             label = '%s %s' % (s[2].split('_decim')[0], s[3],)                  # Lop off '_decim.nc (stride=xxx)' part of name
-            rec = {'label': label, 'data': [[mes, '%.2f' % s[1]]]}
-            logger.debug('Appending %s', rec)
+            rec = {'label': label, 'data': [[ems, '%.2f' % s[1]]]}
+            ##logger.debug('Appending %s', rec)
             samples.append(rec)
 
         return(samples)
@@ -461,7 +478,7 @@ class STOQSQManager(object):
 
         # Remove double quotes from around all table and colum names
         q = q.replace('"', '')
-        logger.debug('Before: %s', q)
+        ##logger.debug('Before: %s', q)
 
         # Add aliases for geom and gid - Activity
         q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
@@ -475,7 +492,7 @@ class STOQSQManager(object):
         #  IN (a81563b5f2464a9ab2d5d7d78067c4d4)
         m = re.search( r' IN \(([\S^\)]+)\)', q)
         if m:
-            logger.debug(m.group(1))
+            ##logger.debug(m.group(1))
             q = re.sub( r' IN \([\S^\)]+\)', ' IN (\'' + m.group(1) + '\')', q)
 
         # Put quotes around the DATE TIME parameters, treat each one separately:
@@ -483,21 +500,21 @@ class STOQSQManager(object):
         #  <= 2010-10-28 08:22:52
         m1 = re.search( r'>= (\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)', q)
         if m1:
-            logger.debug('>= %s', m1.group(1))
+            ##logger.debug('>= %s', m1.group(1))
             q = re.sub( r'>= \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d', '>= \'' + m1.group(1) + '\'', q)
         m2 = re.search( r'<= (\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)', q)
         if m2:
-            logger.debug('<= %s', m2.group(1))
+            ##logger.debug('<= %s', m2.group(1))
             q = re.sub( r'<= \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d', '<= \'' + m2.group(1) + '\'', q)
 
         # Put quotes around 'platform.name = ' parameters:
         #  stoqs_platform.name = dorado 
         m = re.search( r'stoqs_platform.name = (.+?) ', q)
         if m:
-            logger.debug('stoqs_platform.name =  %s', m.group(1))
+            ##logger.debug('stoqs_platform.name =  %s', m.group(1))
             q = re.sub( r'stoqs_platform.name = .+? ', 'stoqs_platform.name =  \'' + m.group(1) + '\'', q)
 
-        logger.debug('After: %s', q)
+        ##logger.debug('After: %s', q)
 
         return q
 
