@@ -367,9 +367,10 @@ class STOQSQManager(object):
                     ##logger.debug('s[2] = %s', s[2])
                     sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
                 except KeyError:
-                    sdt[p[0]][s[2]] = []        # First time seeing activity__name, make it a list
+                    sdt[p[0]][s[2]] = []                                # First time seeing activity__name, make it a list
+                    sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value
                 except TypeError:
-                    continue                    # Likely "float argument required, not NoneType"
+                    continue                                            # Likely "float argument required, not NoneType"
 
         return({'sdt': sdt, 'colors': colors})
 
