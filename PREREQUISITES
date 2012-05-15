@@ -18,6 +18,12 @@ su -c 'rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"'
 su -c "yum -y install graphviz-devel"
 su -c "yum -y install graphviz-python"
 
+# For ability to generate animated GIFS
+su -c "yum -y install ImageMagick"
+
+# For ability for persistant storage of GIFS, assuming default location of your web server is /var/www/html
+mkdir /tmp/media
+su -c 'ln -s /tmp/media /var/www/html/media'
 
 # Build GDAL from source.  Download latest (v1.9 or higher) tar ball from http://download.osgeo.org/gdal/
 # Unpack, and in the top level directory (e.g. gdal-1.9.0/) run:
