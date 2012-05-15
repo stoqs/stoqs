@@ -386,7 +386,7 @@
     });
 
     $('#re-init-button').click(function() {
-        for (var key in data) {
+        for (var key in initData) {
             onUpdate(initData, key)
         }
         me.refreshMap();
