@@ -145,10 +145,10 @@ class STOQSQManager(object):
         qs_ap = models.ActivityParameter.objects.using(self.dbname).all()
         if self.kwargs.has_key('parameters'):
             if self.kwargs['parameters']:
-                qs_ap = qs_ap.filter(Q(parameter__uuid__in=self.kwargs['parameters']))
+                qs_ap = qs_ap.filter(Q(parameter__name__in=self.kwargs['parameters']))
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
-                qs_ap = qs_ap.filter(Q(activity__platform__uuid__in=self.kwargs['platforms']))
+                qs_ap = qs_ap.filter(Q(activity__platform__name__in=self.kwargs['platforms']))
         if self.kwargs.has_key('time'):
             if self.kwargs['time'][0] is not None:
                 q1 = Q(activity__startdate__lte=self.kwargs['time'][0]) & Q(activity__enddate__gte=self.kwargs['time'][0])
@@ -187,10 +187,10 @@ class STOQSQManager(object):
         logger.info(pprint.pformat(self.kwargs))
         if self.kwargs.has_key('parameters'):
             if self.kwargs['parameters']:
-                qparams['parameter__uuid__in'] = self.kwargs['parameters']
+                qparams['parameter__name__in'] = self.kwargs['parameters']
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
-                qparams['measurement__instantpoint__activity__platform__uuid__in'] = self.kwargs['platforms']
+                qparams['measurement__instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
         if self.kwargs.has_key('time'):
             if self.kwargs['time'][0] is not None:
                 qparams['measurement__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
@@ -219,7 +219,7 @@ class STOQSQManager(object):
         logger.info(pprint.pformat(self.kwargs))
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
-                qparams['instantpoint__activity__platform__uuid__in'] = self.kwargs['platforms']
+                qparams['instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
         if self.kwargs.has_key('time'):
             if self.kwargs['time'][0] is not None:
                 qparams['instantpoint__timevalue__gte'] = self.kwargs['time'][0]
@@ -260,33 +260,33 @@ class STOQSQManager(object):
         '''
         Get a list of the unique parameters that are left based on the current query criteria.  Also
         return the UUID's of those, since we need to return those to perform the query later.
-        Lastly, we assume here that the uuid's and name's have a 1:1 relationship - this should be enforced
-        somewhere in the database hopefully.  If not, we'll return the duplicate name/uuid pairs as well.
+        Lastly, we assume here that the name is unique and is also used for the id - this is enforced on 
+        data load.
         '''
         qs=self.qs.values('activityparameter__parameter__uuid','activityparameter__parameter__name').distinct()
         results=[]
         for row in qs:
             name=row['activityparameter__parameter__name']
-            uuid=row['activityparameter__parameter__uuid']
-            if name is not None and uuid is not None:
-                results.append((name,uuid,))
+            id=row['activityparameter__parameter__name']
+            if name is not None and id is not None:
+                results.append((name,id,))
         return results
     
     def getPlatforms(self):
         '''
         Get a list of the unique platforms that are left based on the current query criteria.  Also
         return the UUID's of those, since we need to return those to perform the query later.
-        Lastly, we assume here that the uuid's and name's have a 1:1 relationship - this should be enforced
-        somewhere in the database hopefully.  If not, we'll return the duplicate name/uuid pairs as well.
+        Lastly, we assume here that the name is unique and is also used for the id - this is enforced on 
+        data load.
         '''
         qs=self.qs.values('platform__uuid', 'platform__name', 'platform__color').distinct()
         results=[]
         for row in qs:
             name=row['platform__name']
-            uuid=row['platform__uuid']
+            id=row['platform__name']
             color=row['platform__color']
-            if name is not None and uuid is not None:
-                results.append((name,uuid,color,))
+            if name is not None and id is not None:
+                results.append((name,id,color,))
         return results
     
     def getTime(self):
@@ -408,7 +408,7 @@ class STOQSQManager(object):
         if parameters is None:
             return q
         else:
-            q=Q(activityparameter__parameter__uuid__in=parameters)
+            q=Q(activityparameter__parameter__name__in=parameters)
         return q
     
     def _platformsQ(self, platforms):
@@ -420,7 +420,7 @@ class STOQSQManager(object):
         if platforms is None:
             return q
         else:
-            q=Q(platform__uuid__in=platforms)
+            q=Q(platform__name__in=platforms)
         return q    
     
     def _timeQ(self, times):
