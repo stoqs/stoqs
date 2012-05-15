@@ -74,10 +74,16 @@ class BaseOutputer(object):
 
     def process_request(self):
         logger.debug("format = %s", self.format)
-        if self.format == 'csv':
-            response = HttpResponse(mimetype='text/csv')
-            response['Content-Disposition'] = 'attachment; filename=%s.csv' % self.stoqs_object_name
-            writer = csv.writer(response)
+        if self.format == 'csv' or self.format == 'tsv':
+            response = HttpResponse()
+            if self.format == 'tsv':
+                response['Content-type'] = 'text/tab-separated-values'
+                response['Content-Disposition'] = 'attachment; filename=%s.tsv' % self.stoqs_object_name
+                writer = csv.writer(response, delimiter='\t')
+            else:
+                response['Content-type'] = 'text/csv'
+                response['Content-Disposition'] = 'attachment; filename=%s.csv' % self.stoqs_object_name
+                writer = csv.writer(response)
             logger.debug('instance._meta.fields = %s', self.stoqs_object._meta.fields)
             writer.writerow([field.name for field in self.stoqs_object._meta.fields])
             for rec in self.query_set:
@@ -94,6 +100,42 @@ class BaseOutputer(object):
         else:
             self.build_html_template()
             return render_to_response(self.html_tmpl_path, {'list': self.query_set})
+
+class SampleOutputer(BaseOutputer):
+    '''
+    Do special things for Sample responses, such as add Activity name and expand the Instantpoit timevalue.
+    '''
+
+    def process_request(self):
+        logger.debug("format = %s", self.format)
+        if self.format == 'csv' or self.format == 'tsv':
+            response = HttpResponse()
+            if self.format == 'tsv':
+                response['Content-type'] = 'text/tab-separated-values'
+                response['Content-Disposition'] = 'attachment; filename=%s.tsv' % self.stoqs_object_name
+                writer = csv.writer(response, delimiter='\t')
+            else:
+                response['Content-type'] = 'text/csv'
+                response['Content-Disposition'] = 'attachment; filename=%s.csv' % self.stoqs_object_name
+                writer = csv.writer(response)
+            logger.debug('instance._meta.fields = %s', self.stoqs_object._meta.fields)
+            writer.writerow([field.name for field in self.stoqs_object._meta.fields])
+            for rec in self.query_set:
+                row = []
+                for field in self.stoqs_object._meta.fields:
+                    row.append(getattr(rec, field.name))
+                logger.debug('row = %s', row)
+                writer.writerow(row)
+            return response
+        elif self.format == 'xml':
+            return HttpResponse(serializers.serialize('xml', self.query_set), 'application/xml')
+        elif self.format == 'json':
+            return HttpResponse(serializers.serialize('json', self.query_set), 'application/json')
+        else:
+            self.build_html_template()
+            return render_to_response(self.html_tmpl_path, {'list': self.query_set})
+
+        return super(SampleOutputer, self).process_request
 
 
 def showPlatform(request, format = 'html'):
@@ -119,10 +161,10 @@ def showParameter(request, format = 'html'):
 
 def showSample(request, format = 'html'):
     stoqs_object = mod.Sample
-    query_set = stoqs_object.objects.all().order_by('name')
+    query_set = stoqs_object.objects.all().order_by('instantpoint__timevalue')
 
-    o = BaseOutputer(request, format, query_set, stoqs_object)
-    return o.process_request()
+    s = SampleOutputer(request, format, query_set, stoqs_object)
+    return s.process_request()
 
 def showSampleType(request, format = 'html'):
     stoqs_object = mod.SampleType
