@@ -135,7 +135,9 @@
                                     <p><button id="zoomed-button" class="btn btn-mini zoom-toggle disabled">Zoomed</button></p>
                                 </div>
                             </div>
+                            <input type="hidden" id="start-ems" "name="start-ems">
                             <input type="hidden" id="start-time" "name="start-time">
+                            <input type="hidden" id="end-ems" name="end-ems"> 
                             <input type="hidden" id="end-time" name="end-time"> 
                             <input type="hidden" id="start-depth" "name="start-depth">
                             <input type="hidden" id="end-depth" name="end-depth"> 
@@ -358,17 +360,23 @@
         rebuildFilters();
     });
 
+    function resetZoomedValues(resetData) {
+            // Reset zoom to saved resetData values
+            $('#start-depth').val(resetData['depth'][0]);
+            $('#end-depth').val(resetData['depth'][1]);
+            var start=new Date(resetData['time'][0]);
+            $('#start-ems').val(start.getTime());
+            $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
+            var end=new Date(resetData['time'][1]);
+            $('#end-ems').val(end.getTime());
+            $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
+    }
+
     // Special handling for unzooming the depth-time-plot
     $("#zoomed-button").click(function() {
         if ( $('.btn-primary', $('#depth-time-plot').length) ) {
-            // Reset zoom to saved zoomedData values
-            $('#start-depth').val(zoomedData['depth'][0]);
-            $('#end-depth').val(zoomedData['depth'][1]);
-            var start=new Date(zoomedData['time'][0]);
-            var end=new Date(zoomedData['time'][1]);
-            $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
-            $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
             toggleField($("#zoomed-button"));
+            resetZoomedValues(initData);
             rebuildFilters();
             disableButton('button', $("#zoomed-button"));
         }
@@ -519,31 +527,24 @@
                 if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
                     ranges.yaxis.to = ranges.yaxis.from + 0.00001;
 
-                // Zoom the plot
-                theData = getDataset(zoomedData, ranges.xaxis.from, ranges.xaxis.to);
-                if ( ! theData ) {
-                    return;
-                }
-                $.plot(placeholder, theData,
-                                    $.extend(true, {}, simpledepthtime_options, {
-                                    xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
-                                    yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to }
-                }));
+                // Save the zoomed values
                 $('#start-depth').val(ranges.yaxis.from);
                 $('#end-depth').val(ranges.yaxis.to);
                 ds = new Date(0);
                 ds.setUTCSeconds(ranges.xaxis.from / 1000.0);
+                $('#start-ems').val(ranges.xaxis.from);
                 $('#start-time').val($.format.date(ds,'yyyy-MM-dd hh:mm:ss'));
                 de = new Date(0);
                 de.setUTCSeconds(ranges.xaxis.to / 1000.0);
+                $('#end-ems').val(ranges.xaxis.to);
                 $('#end-time').val($.format.date(de,'yyyy-MM-dd hh:mm:ss'));
 
                 // Apply new depth & time ranges to the query
+                rebuildFilters();           // Redraws the plot
                 enableButton('button', $('#zoomed-button')); 
-                toggleField($('#zoomed-button'));
-                rebuildFilters();
+                $('#zoomed-button').addClass('btn-primary');
                 
-        }); //$("#placeholder")
+        }); //$("#placeholder").bind("plotselected"
 
 
         function onInit(data, key) {
@@ -566,8 +567,10 @@
             }
             else if (key == 'time') { 
                 var start=new Date(data[key][0]);
-                var end=new Date(data[key][1]);
+                $('#start-ems').val(start.getTime());
                 $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
+                var end=new Date(data[key][1]);
+                $('#end-ems').val(end.getTime());
                 $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
                 makeSlider('slider-' + key, key, data[key])
             }
@@ -617,12 +620,16 @@
                 });
             }
             else if (key == 'simpledepthtime') {
-                // If depth_time_plot was zoomed do not update
-                if ( ! $('.btn-primary', $('#depth-time-plot')).length) {
-                    var start =new Date(data['time'][0]);
-                    var end=new Date(data['time'][1]);
-                    $.plot($("#placeholder"), getDataset(data, start.getTime(), end.getTime()), simpledepthtime_options);
+                // Redraw the plot given the saved values
+                theData = getDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val());
+                if ( ! theData ) {
+                    return;
                 }
+                $.plot($("#placeholder"), theData,
+                                    $.extend(true, {}, simpledepthtime_options, {
+                                    xaxis: { min: $('#start-ems').val(), max: $('#end-ems').val() },
+                                    yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
+                }));
             }
         } // onUpdate()
 
@@ -644,7 +651,7 @@
             },
             dataType: "json"
         });
-    }
+    } // updateSummaryData()
     
     
     $(function () { 
