@@ -378,10 +378,10 @@
     // Special handling for unzooming the depth-time-plot
     $("#zoomed-button").click(function() {
         if ( $('.btn-primary', $('#depth-time-plot').length) ) {
-            toggleField($("#zoomed-button"));
             resetZoomedValues(initData);
             rebuildFilters();
-            disableButton('button', $("#zoomed-button"));
+            $("#zoomed-button").removeClass('btn-primary');
+            $("#zoomed-button").addClass('disabled');
         }
     });
 
