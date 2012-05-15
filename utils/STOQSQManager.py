@@ -121,8 +121,8 @@ class STOQSQManager(object):
             logger.debug('approximate_count = %d', approximate_count)
             if approximate_count == 0:
                 raw_imput('paused')
-            if ap_count < 5:
-                logger.debug('>>>> Getting actual count')
+            if ap_count < 2:
+                logger.info('>>>> ap_count is < 2.  Switching to getting actual count.')
                 qs_mp = self.getMeasuredParametersQS()          # Actual count from MeasuredParameter - needs to do seq scan on large table
                 actual_count = qs_mp.count()
                 logger.debug('actual_count = %d', actual_count)
