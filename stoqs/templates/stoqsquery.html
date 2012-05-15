@@ -542,7 +542,7 @@
 
                 // Apply new depth & time ranges to the query
                 rebuildFilters();           // Redraws the plot
-                enableButton('button', $('#zoomed-button')); 
+                $('#zoomed-button').removeClass('disabled'); 
                 $('#zoomed-button').addClass('btn-primary');
                 
         }); //$("#placeholder").bind("plotselected"
