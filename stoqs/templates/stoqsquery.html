@@ -17,6 +17,9 @@
       .stoqs-toggle {
         width: 100%;
       }
+      .zoom-toggle {
+        width: 100%;
+      }
       .stoqs-parameter-toggle {
         width: 50%;
       }
@@ -129,7 +132,7 @@
                             <div id="depth-time-plot" style="height:400px" class="disabled">
                                 <div id="placeholder" style="width:100%;height:90%;" class="disabled"></div>
                                 <div>
-                                    <p><button id="zoomed-button" class="btn btn-mini stoqs-toggle disabled">Zoomed</button></p>
+                                    <p><button id="zoomed-button" class="btn btn-mini zoom-toggle disabled">Zoomed</button></p>
                                 </div>
                             </div>
                             <input type="hidden" id="start-time" "name="start-time">
@@ -176,7 +179,10 @@
 
             </div><!-- accordian well -->
 
+            <p><button id="re-init-button" class="btn btn-mini">Reset all selectors</button></p>
+
         </div><!-- span -->
+
     </div><!-- row-fluid -->
 
   </div> <!-- container -->
@@ -208,6 +214,8 @@
     
     var stoqsQuery='{{site_uri}}{% url stoqs-query-summary dbAlias=request.META.dbAlias  %}';
     var params={}
+    var initData;
+    var zoomedData;
     var request=''
     
     // Called with an element that was selectable, should make that element non-selectable.
@@ -253,7 +261,7 @@
         }
     }
     
-    function makeSlider(divid, type, data){
+    function makeSlider(divid, type, data) {
         if (type == 'time') {
             var start=new Date(data[0]);
             var end=new Date(data[1]);
@@ -303,7 +311,8 @@
            //div.data("postaddfunction", postaddfunc);
         }
         return div;
-    }
+
+    } // makeSlider()
     
     function recordUpdatedValues(values, divid, type, formatter, updateTable) {
         var min=formatter(values[0])
@@ -317,10 +326,13 @@
     
     function rebuildFilters() {
         params={}
-        params['start_time']=$('#start-time').val()
-        params['end_time']=$('#end-time').val()
-        params['min_depth']=$('#start-depth').val()
-        params['max_depth']=$('#end-depth').val()
+        if ($('.btn-primary', $('#depth-time-plot')).length) {
+            params['start_time']=$('#start-time').val()
+            params['end_time']=$('#end-time').val()
+            params['min_depth']=$('#start-depth').val()
+            params['max_depth']=$('#end-depth').val()
+        }
+
         params['parameters']=[]
         params['platforms']=[]
         $('tr',$('#parameter-table')).each(function (index, element) {
@@ -348,9 +360,27 @@
 
     // Special handling for unzooming the depth-time-plot
     $("#zoomed-button").click(function() {
-        if ( ! $('#zoomed-button').is(".disabled") ) {
-            alert("Handler for .click() called.");
+        if ( $('.btn-primary', $('#depth-time-plot').length) ) {
+            // Reset zoom to saved zoomedData values
+            $('#start-depth').val(zoomedData['depth'][0]);
+            $('#end-depth').val(zoomedData['depth'][1]);
+            var start=new Date(zoomedData['time'][0]);
+            var end=new Date(zoomedData['time'][1]);
+            $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
+            $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
+            toggleField($("#zoomed-button"));
+            rebuildFilters();
+            disableButton('button', $("#zoomed-button"));
         }
+    });
+
+    $('#re-init-button').click(function() {
+        updateSummaryData(true);
+        
+        for (var key in data) {
+            onUpdate(initData, key)
+        }
+        me.refreshMap();
     });
 
     
@@ -367,7 +397,6 @@
             }
         }
         var me = this;
-        var startData;
 
         var simpledepthtime_options = { grid: { 
                                             backgroundColor: "rgb(192, 211, 228)",
@@ -411,15 +440,17 @@
             }
     
             if (item) {
-                if (previousPoint != item.dataIndex) {
-                    previousPoint = item.dataIndex;
+                if (typeof previousPoint != 'undefined') {
+                    if (previousPoint != item.dataIndex) {
+                        previousPoint = item.dataIndex;
                         
-                    $("#tooltip").remove();
-                    var x = item.datapoint[0].toFixed(2),
-                        y = item.datapoint[1].toFixed(2);
-               
-                    showTooltip(item.pageX, item.pageY,
-                                item.series.label);
+                        $("#tooltip").remove();
+                        var x = item.datapoint[0].toFixed(2),
+                            y = item.datapoint[1].toFixed(2);
+                   
+                        showTooltip(item.pageX, item.pageY,
+                                    item.series.label);
+                    }
                 }
             }
             else {
@@ -489,7 +520,7 @@
                     ranges.yaxis.to = ranges.yaxis.from + 0.00001;
 
                 // Zoom the plot
-                theData = getDataset(startData, ranges.xaxis.from, ranges.xaxis.to);
+                theData = getDataset(zoomedData, ranges.xaxis.from, ranges.xaxis.to);
                 if ( ! theData ) {
                     return;
                 }
@@ -508,17 +539,17 @@
                 $('#end-time').val($.format.date(de,'yyyy-MM-dd hh:mm:ss'));
 
                 // Apply new depth & time ranges to the query
-                $('#zoomed-button').addClass('enabled');
-                $('#zoomed-button').removeClass('disabled');
-                $('#zoomed-button').click();
-                toggleField(this);
+                enableButton('button', $('#zoomed-button')); 
+                toggleField($('#zoomed-button'));
                 rebuildFilters();
                 
-        });
+        }); //$("#placeholder")
 
 
         function onInit(data, key) {
             // Called from ajax on initial request
+            initData = data;
+            zoomedData = initData;
             if (key == 'platforms') {
                 $.each(data[key], function (index, value) {
                                         $('#platform-table > tbody:last').append('<tr id="' + value[1] +'">' +
@@ -549,14 +580,14 @@
                 //flotPlot(data)
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
-                startData = data;
-                $.plot($("#placeholder"), getDataset(startData, start.getTime(), end.getTime()), simpledepthtime_options);
+                $.plot($("#placeholder"), getDataset(initData, start.getTime(), end.getTime()), simpledepthtime_options);
             }
-        }
+        } // onInit()
 
         function onUpdate(data, key) {
-            // Called on from ajax to update the selectors base on the new selection
+            // Called from ajax to update the selectors base on the new selection
             if (key == 'platforms') {
+                zoomedData = data;
                 var ids=[];
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid.
@@ -571,6 +602,7 @@
                 });
             }
             else if (key == 'parameters') {
+                zoomedData = data;
                 var ids=[];
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid.
@@ -584,31 +616,17 @@
                     }
                 });
             }
-            else if (key == 'time') {
-                var start=new Date(data[key][0]);
-                var end=new Date(data[key][1]);
-                $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
-                $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
-            }
-            else if (key == 'depth') {
-                $('#start-depth').val(Math.round(data[key][0]*10)/10);
-                $('#end-depth').val(Math.round(data[key][1]*10)/10);
-            }
             else if (key == 'simpledepthtime') {
                 // If depth_time_plot was zoomed do not update
-                if ( $('#zoomed-button').is(".disabled") ) {
+                if ( ! $('.btn-primary', $('#depth-time-plot')).length) {
                     var start =new Date(data['time'][0]);
                     var end=new Date(data['time'][1]);
-                    console.log('Updating plot');
                     $.plot($("#placeholder"), getDataset(data, start.getTime(), end.getTime()), simpledepthtime_options);
                 }
-                else {
-                    console.log('zoomed.  Not updating the plot.')
-                }
             }
-        }
+        } // onUpdate()
 
-        request=$.ajax({
+        request = $.ajax({
             type : 'GET',
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
@@ -619,11 +637,10 @@
                     } else {
                         onUpdate(data, key)
                     }
-                    // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
-                    me.refreshMap();
                 }
+                // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
+                me.refreshMap();
                 $('#approximate_count').html(data['count']).change();
-
             },
             dataType: "json"
         });
@@ -783,7 +800,9 @@
           
         $('#depth-time-anchor').click();
         $('#map-anchor').click();
+
     });
+
     </script>
   </body>
 </html>
