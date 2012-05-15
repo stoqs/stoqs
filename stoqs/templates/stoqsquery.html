@@ -103,7 +103,10 @@
 
                             <div class="row-fluid">
                                 {% for format, description in formats.items %}
+<!--
                                 <span class="help-inline"><a target="_blank" id="{{format}}-link" class="btn btn-info btn-small" href=""><i class="icon-file"></i> {{description}}</a></span>
+-->
+                                <a target="_blank" id="{{format}}-link" href=""><img src="{{STATIC_URL}}images/earth_client-32.png"/></a>
                                 <div class="row-fluid">
                                     <!-- <input id="{{format}}-field" type="text" class="span6"> -->
                                     <p id="{{format}}-field"></p>
@@ -383,8 +386,6 @@
     });
 
     $('#re-init-button').click(function() {
-        updateSummaryData(true);
-        
         for (var key in data) {
             onUpdate(initData, key)
         }
@@ -718,29 +719,6 @@
             }
         );
          var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
-         //var gphy = new OpenLayers.Layer.Google(
-         //    "Google Physical",
-         //    {'type': google.maps.MapTypeId.TERRAIN,
-         //     'sphericalMercator': true}
-         //);
-         //var gmap = new OpenLayers.Layer.Google(
-         //    "Google Streets", // the default
-         //    {'sphericalMercator': true,
-         //     numZoomLevels: 20}
-         //);
-         //var ghyb = new OpenLayers.Layer.Google(
-         //    "Google Hybrid",
-         //    {'type': google.maps.MapTypeId.HYBRID, 
-         //     numZoomLevels: 20,
-         //    'sphericalMercator': true}
-         //);
-         //var gsat = new OpenLayers.Layer.Google(
-         //    "Google Satellite",
-         //    {'type': google.maps.MapTypeId.SATELLITE, 
-         //     numZoomLevels: 15,
-         //     'sphericalMercator': true}
-         //);
-         //map.addLayers([bathyEsri,osm,gsat,gphy,ghyb,gmap]);
          map.addLayers([bathyEsri,gebco_noaa,osm]);
          //ctrlGraticule.activate();
 
