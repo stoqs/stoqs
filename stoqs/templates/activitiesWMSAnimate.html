@@ -14,6 +14,9 @@
             <script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script>
             <script type="text/javascript" src="{{STATIC_URL}}/OpenLayers-2.11/OpenLayers.js"></script> 
             <script type="text/javascript" src="{{STATIC_URL}}/geoxml3-read-only/ProjectedOverlay.js"></script>
+	    <script type="text/javascript" src="{{STATIC_URL}}/jquery/js/jquery-1.7.1.min.js"></script>
+	    <script type="text/javascript" src="{{STATIC_URL}}/Spin.js"></script>
+	    <script type="text/javascript" src="{{STATIC_URL}}/jquery/js/jquery.spin.js"></script>
             <script type="text/javascript">
                 OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
                 OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
@@ -27,28 +30,16 @@
                         maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
                         20037508.34, 20037508.34)
                     };
-                      map = new OpenLayers.Map('map',options);
-                 
-
-		var gebco_noaa = new OpenLayers.Layer.XYZ(
-		"GEBCO & NOAA Tiles",
-		[
-                "http://localhost/gebco_noaa/tiles/${z}/${x}/${y}.png"
-		], 
-		{
-                attribution: "Sources: General Bathymetric Chart of the Oceans "
-                + "(<a href='http://www.gebco.net/'>GEBCO</a>)"
-                + " &amp; NOAA National Geophysical Data Center"
-                + " (<a href='http://www.ngdc.noaa.gov/mgg/dem/demportal.html'>NGDC</a>)",
-                sphericalMercator: true,
-                wrapDateLine: true,
-                transitionEffect: "resize",
-                buffer: 1,
-                numZoomLevels: 16
-		}
-		);
-		map.addLayer(gebco_noaa);
-
+                    map = new OpenLayers.Map('map',options);                    
+                    
+                    var gphy = new OpenLayers.Layer.Google(
+                    "Google Physical",
+                    {'type': google.maps.MapTypeId.SATELLITE,
+                        'sphericalMercator': true}
+                    );
+                        
+                    map.addLayer(gphy);
+                    
                     {% for item in list %}
                     itemid_{{ item.id }} = new OpenLayers.Layer.WMS(
                     "{{ item.name }}",
@@ -67,6 +58,7 @@
                         singleTile: true,
                         displayOutsideMaxExtent: true
                     });
+                    
                     map.addLayers([itemid_{{ item.id }}]); 
                     {% endfor %}
                     
@@ -74,24 +66,6 @@
                     map.addControl(new OpenLayers.Control.LayerSwitcher({'div':OpenLayers.Util.getElement('overlay-switcher')}));
                     map.addControl(new OpenLayers.Control.MousePosition());
                     map.addControl(new OpenLayers.Control.PanZoomBar());
-                    {% for item in list %}
-                    map.events.register('click', map, function (e) {
-                        OpenLayers.Util.getElement('activityFeatureInfo').innerHTML = "Loading... please wait...";
-                        var url =  itemid_{{ item.id }}.getFullRequestString({
-                            REQUEST: "GetFeatureInfo",
-                            EXCEPTIONS: "application/vnd.ogc.se_xml",
-                            BBOX: itemid_{{ item.id }}.map.getExtent().toBBOX(),
-                            X: e.xy.x,
-                            Y: e.xy.y,
-                            FEATURE_COUNT: 1,
-                            INFO_FORMAT: 'text/html',
-                            QUERY_LAYERS: itemid_{{ item.id }}.params.LAYERS,
-                            WIDTH: itemid_{{ item.id }}.map.size.w,
-                            HEIGHT: itemid_{{ item.id }}.map.size.h});
-                        OpenLayers.loadURL(url, '', this, setHTML);
-                        OpenLayers.Event.stop(e);
-                    });
-                    {% endfor %}
                     update_date();
                 }
                 function setHTML(response) {
@@ -112,19 +86,19 @@
                         OpenLayers.Util.getElement('ehour').value +  ":" +                    
                         OpenLayers.Util.getElement('emin').value +   ":" +                        
                         OpenLayers.Util.getElement('esec').value +   "Z" 
-
+                    
                     OpenLayers.Util.getElement('activityFeatureInfo').innerHTML = string; 
-        
+                    
                     {% for item in list %}
                     itemid_{{ item.id }}.mergeNewParams({'time':string});
                     {% endfor %}
                 }
+                
                 function update_map() {        
-                    OpenLayers.Util.getElement('activityFeatureInfo').innerHTML = "Updating map... please wait...";
                     var string = "";             
                     var layer;
                     var layers = map.layers;  
-
+                    
                     for (var l = 0; l < map.layers.length; l++) {
                         layer = map.layers[l];
                         if (layer.visibility && layer.name != "undefined" && !layer.isBaseLayer) { 
@@ -136,7 +110,7 @@
                             }
                         }
                     }        
-        
+                    
                     if (string === "") { 
                     }
                     else {          
@@ -144,8 +118,8 @@
                         var bbox = map.getExtent() 
                         bbox.transform(map.projection, map.displayProjection); 
                         center.transform(map.projection, map.displayProjection);  
-              
-                        // truncate seconds to simplify
+                        
+                        // truncate seconds
                         var range =  OpenLayers.Util.getElement('year').value + 
                             OpenLayers.Util.getElement('month').value + 
                             OpenLayers.Util.getElement('day').value + "T" +
@@ -156,42 +130,41 @@
                             OpenLayers.Util.getElement('eday').value + "T" + 
                             OpenLayers.Util.getElement('ehour').value +
                             OpenLayers.Util.getElement('emin').value + "00" ; 
-              
+                        
                         createAnimation(true, range)
-                    }
-                    
+                    }                    
                 }
                 
                 function createAnimation(overlay, range) {  
-                
+                    
                     var tiles = [];
                     for (var l = 0; l < map.layers.length; l++) {
-
+                        
                         //grab the layer
                         var layer = map.layers[l];
-		
+                        
                         //skip vector layers	
                         if (layer.isVector) continue;
-
+                        
                         //now check if it is visible and in range 	
                         if (!layer.getVisibility()) continue;
                         if (layer.name == 'GEBCO & NOAA Tiles' || layer.name == 'Google Physical' || layer.name == 'Google Streets' || layer.name == 'Google Hybrid' || layer.name == 'Google Satellite') continue;
                         if (!layer.calculateInRange()) continue;
-  
+                        
                         // iterate through their grid's tiles, collecting each tile's extent and pixel location at this moment
                         for (var r = 0; r < layer.grid.length; r++) { //tile rows (grid is an array of rows) 
- 
+                            
                             for (var c = 0; c < layer.grid[r].length; c++) {//columns
-
+                                
                                 //grab the tile
                                 var tile = layer.grid[r][c];
-
+                                
                                 //when using round there would be some gaps between tiles from time to time so ceil is used instead
                                 var tilePosX = tile.position.x;//Math.ceil((tile.bounds.left - layerB.left) / resolutions[0]);
                                 var tilePosY = tile.position.y;// Math.ceil((layerB.top - tile.bounds.top) / resolution[0]);                 
                                 //get the layer opacity
                                 var opacity = layer.opacity ? parseInt(100 * layer.opacity) : 100;
-                                                          
+                                
                                 //collect data for a tile
                                 tiles[tiles.length] = {
                                     url: tile.url,
@@ -203,7 +176,7 @@
                                 };
                             } 
                         }
-                
+                        
                         r = layer.grid.length;
                         c = layer.grid[0].length;
                     }  
@@ -226,6 +199,7 @@
                         document.location.href=url; 
                     } 
                 }
+                
                 function updateAnimation(animateUrl) {
                     var center =  map.getCenter();
                     var bbox = map.getExtent() 
@@ -243,13 +217,14 @@
                         center: new google.maps.LatLng(latCenter, lonCenter),
                         mapTypeId: google.maps.MapTypeId.SATELLITE 
                     };
-                    map = new google.maps.Map(document.getElementById('google_map'),options);  
+                    map = new google.maps.Map(document.getElementById('map'),options);  
                     imageUrl = animateUrl;
                     var bounds = new google.maps.LatLngBounds(new google.maps.LatLng(south,west), new google.maps.LatLng(north, east));   
                     new ProjectedOverlay(map, imageUrl, bounds, options);  
                 }
                 function xmlHttpPost(strURL) { 
                     var self = this;
+
                     // Mozilla/Safari
                     if (window.XMLHttpRequest) {
                         self.xmlHttpReq = new XMLHttpRequest();
@@ -258,10 +233,13 @@
                     else if (window.ActiveXObject) {
                         self.xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
                     }
+   		    $(".map").spin("large", "white"); // Produces a 'large' Spinner in white
+		     
                     self.xmlHttpReq.open('GET', strURL, true);
                     self.xmlHttpReq.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                    self.xmlHttpReq.onreadystatechange = function() {
+		    self.xmlHttpReq.onreadystatechange = function() {
                         if (self.xmlHttpReq.readyState == 4) {
+			     $(".map").spin(false);
                             updateAnimation(self.xmlHttpReq.responseText);
                         }
                     }
@@ -272,7 +250,7 @@
 
 	<!-- Don't initialize the map until the body has completed loading -->
 	<body onload="init()"> 
-          <table border="1">
+          <table border="1" width="600px" style="height:600px">
             <tr><td colspan="4">
                 <h3 id="title">MBARI {{ dbAlias }} database</h3>
             </td></tr>
@@ -281,7 +259,6 @@
                 <div id="map" class="map"></div> 
               </td>  
               <td valign="top"><div id="overlay-switcher" class="stoqsLayerSwitcher">Overlay Switcher</div></td>
-              <td valign="top"><div id="platformswitcher" class="stoqsLayerSwitcher">Platform Selectors</div></td>
               <td valign="top">
                 <div class="smallText">
                   Time Selector<br>
@@ -309,14 +286,9 @@
                       </td>
                     </tr>	
                     <tr>
-                      <td colspan="4"><div id="activityFeatureInfo">Activity Feature Information</div></td>
+                      <td colspan="4"><div id="activityFeatureInfo" style="width: 500px; overflow: hidden">Activity Feature Information</div></td>
                     </tr> 
-                    <tr> 
-                      <td>            
-                        <div id="google_map" class="map"> </div>
-                      </td>
-                    </tr>
-                  </table>
-		</body>  
-	      </html> 
+          </table>
+        </body>  
+</html> 
                       

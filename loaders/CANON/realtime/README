@@ -1,0 +1,25 @@
+This directory is for scripts to support realtime loading of CANON data
+into realtime databases for CANON-type campaigns.  An example dbAlias for
+such a database is stoqs_may2012_r.
+
+The consumer.py scripts attach to an AMQP exchange to receive Google Protocol
+Buffer messages from the TREX vehicle.
+
+Create the database(s) - at psql prompt:
+----------------------------------------
+
+drop database stoqs_may2012_r;
+create database stoqs_may2012_r owner=stoqsadm template=template_postgis;
+\c stoqs_may2012_r
+grant all on all tables in schema public to stoqsadm;
+
+
+Sync the model to the new database(s) - at shell prompt:
+--------------------------------------------------------
+
+./manage.py syncdb --database=stoqs_may2012_r
+
+
+-- 
+Mike McCann
+15 May 2012
