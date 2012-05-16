@@ -77,22 +77,10 @@ class BaseOutputer(object):
         Apply any constraints specified in the query string.  The BaseOutputer supports only equality filters.
         Override this methid to support '__in', '__gte', '__lte', etc.
         '''
-
         qparams = {}    
-        logger.debug(self.request.GET)
-        logger.debug(type(fields))
-        if type(fields) == 'QueryDict':
-            # fields is self.stoqs_object._meta.fields
-            for f in fields:
-                logger.debug("Adding query filter: %s = %s", f.name, self.request.GET.getlist(f.name))
-                if self.request.GET.getlist(f.name):
-                    qparams[f.name] = self.request.GET.getlist(f.name)[0]
-        else:
-            # Assume fields is a simple list as passed in from an overridden process_request() method
-            for f in fields:
-                logger.debug("Adding query filter: %s = %s", f, self.request.GET.getlist(f))
-                if self.request.GET.getlist(f):
-                    qparams[f] = self.request.GET.getlist(f)[0]
+        for f in fields:
+            if self.request.GET.getlist(f.name):
+                qparams[f.name] = self.request.GET.getlist(f.name)[0]
 
         logger.debug(qparams)
         self.query_set = self.query_set.filter(**qparams)
@@ -132,6 +120,19 @@ class SampleOutputer(BaseOutputer):
     Do special things for Sample responses, such as add Activity name and expand the Instantpoint timevalue,
     and output JSON with expanded foreign key values.
     '''
+
+    def applyQueryParams(self, fields):
+        '''
+        Apply any constraints specified in the query string.  The BaseOutputer supports only equality filters.
+        Override this methid to support '__in', '__gte', '__lte', etc.
+        '''
+        qparams = {}    
+        for f in fields:
+            if self.request.GET.getlist(f):
+                qparams[f] = self.request.GET.getlist(f)[0]
+
+        logger.debug(qparams)
+        self.query_set = self.query_set.filter(**qparams)
 
     def process_request(self):
 
@@ -182,6 +183,13 @@ def showSample(request, format = 'html'):
 
     s = SampleOutputer(request, format, query_set, stoqs_object)
     return s.process_request()
+
+def showInstantPoint(request, format = 'html'):
+    stoqs_object = mod.InstantPoint
+    query_set = stoqs_object.objects.all().order_by('timevalue')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
 
 def showPlatform(request, format = 'html'):
     stoqs_object = mod.Platform
