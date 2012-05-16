@@ -101,6 +101,18 @@ urlpatterns = patterns('',
     url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'stoqs.views.management.deleteActivity', {}, name='delete-activity'),
     url(pre + r'activitiesMBARICustom$', 'stoqs.views.management.showActivitiesMBARICustom', {}, name='show-activities'),
 
+    # Animation  
+    url(pre + r'activitiesWMSAnimate$', 'stoqs.views.wms.showActivitiesWMSAnimate', {}, name='show-activities-wms-animate'),
+        
+    # format is either 'url' or 'image' 
+    # url will return a persistant url for the created animation;  image will return the animaged GIF
+    url(r'animatepoint/between/(?P<startDate>\w+)/(?P<endDate>\w+)/deltaminutes/(?P<deltaMinutes>\d+)/format/(?P<format>\w{3,5})/$', 
+            'stoqs.views.animation.createAnimation',  {'rangeFlag': True}, name='create-animation-point'),  
+    url(r'animatemap/between/(?P<startDate>\w+)/(?P<endDate>\w+)/deltaminutes/(?P<deltaMinutes>\d+)/format/(?P<format>\w{3,5})/$', 
+            'stoqs.views.animation.createAnimation',  {'rangeFlag': False}, name='create-animation-map'),  
+
+    # For testing only 
+    url(r'testAnimateCoastwatch$', 'stoqs.views.wms.showActivitiesWMSAnimateCoastwatch', {} , name='test-animate-wms-coastwatch'),\
 )
 
 # Not to be used in Production.  Must start development server with --insecure option to run with DEBUG = False:

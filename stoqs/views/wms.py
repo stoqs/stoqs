@@ -15,6 +15,9 @@ Support Classes and methods for mapserver mapfile generation for stoqs views.
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.conf import settings 
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 from django.http import HttpResponse
 from django.conf import settings
 from django.db import connection
@@ -35,7 +38,7 @@ from tempfile import NamedTemporaryFile
 from utils.utils import addAttributeToListItems
 
 logger = logging.getLogger(__name__)
-
+    
 class Color(object):
     '''Simple color class to add to add as an attribute to items.  Initialize a nice grey color.
     '''
@@ -48,10 +51,12 @@ class Color(object):
 
 class ActivityView(object):
 
+    olWebPageTemplate = 'activitiesWMS.html'
+    
     # For using the same colors
     itemColor_dict = {}
 
-    def __init__(self, request, itemList, union_layer_string):
+    def __init__(self, request, itemList, union_layer_string, url = olWebPageTemplate):
         '''Initialize activity object to support building of mapserver mapfiles and openlayers html files.
 
         @param request: Web server request object
@@ -59,10 +64,10 @@ class ActivityView(object):
         @param mappath: Fully qualified path to the mapfile that will be created
         @param geo_query: The SQL to be placed in the DATA directive.  It must return a geometry object and a gid for the filter.
         '''
+        self.url = url
         self.request = request
-        self.itemList = itemList
+        self.itemList = itemList 
         self.union_layer_string = union_layer_string
-        self.mappath = request.session['mappath']
         if settings.LOGGING['loggers']['stoqs']['level'] == 'DEBUG':
             self.map_debug_level = 5             # Mapserver debug level: [off|on|0|1|2|3|4|5]
             self.layer_debug_level = 2           # Mapserver debug level: [off|on|0|1|2|3|4|5]
@@ -71,11 +76,14 @@ class ActivityView(object):
             self.layer_debug_level = 0
             
 
+
     def generateActivityMapFile(self, template = 'activity.map'):
         '''Build mapfile for activity from template.  Write it to a location that mapserver can see it.
             The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
-        This creates a dynamic 
         '''
+        filename, ext = os.path.splitext(template)
+        self.request.session['mappath'] = tempfile.NamedTemporaryFile(dir='/dev/shm', prefix=filename + '_' , suffix=ext).name
+        self.mappath = self.request.session['mappath']
         # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
         # With Apache RewriteBase rule this pattern also works for cleaner URLs:
         # Allow WMS requests to any file in /dev/shm by providing a URL like /wms/ADFASDFASDF (where /dev/shm/ADFASDFASDF.map is the name of the mapfile)
@@ -177,6 +185,7 @@ def showActivityWMS(request):
         a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
         from stoqs_activity a)
         as subquery using unique gid using srid=4326'''
+    av = ActivityView(request, list, geo_query)
     platform_string = ''
     for p in qs:
         platform_string += p.name + ','
@@ -188,7 +197,6 @@ def showActivityWMS(request):
 
 def showActivitiesWMS(request):
     '''Render Activities as WMS via mapserver'''
-    logger.debug("inside showActivitiesWMS")
 
     list = mod.Activity.objects.all().order_by('startdate')  
     geo_query = '''geom from (select a.maptrack as geom, a.id as gid, 
@@ -196,8 +204,31 @@ def showActivitiesWMS(request):
         from stoqs_activity a)
         as subquery using unique gid using srid=4326'''
 
-    av = ActivityView(request, list, geo_query)
-    return av.process_request()
+    av = ActivityView(request, addAttributeToListItems(list, 'geo_query', geo_query),'')
+    return av.process_request(webPageTemplate = 'activitiesWMS.html')
+
+
+def showActivitiesWMSAnimate(request):
+    '''Render Activities as WMS via mapserver'''
+
+    list = mod.Activity.objects.all().order_by('startdate')  
+
+    for a in list:
+       a.isostartdate = a.startdate.strftime('%Y-%m-%dT%H:%M:%S')
+       a.isoenddate = a.enddate.strftime('%Y-%m-%dT%H:%M:%S')
+
+    geo_query = '''geom from (select m.geom as geom, ip.id as gid, ip.timevalue as timevalue 
+                from stoqs_instantpoint ip
+                inner join stoqs_measurement m on (m.instantpoint_id = ip.id) order by ip.timevalue )
+                as subquery using unique gid using srid=4326'''                
+
+    av = ActivityView(request, addAttributeToListItems(list, 'geo_query', geo_query), '', 'activitiesWMSAnimate.html')
+    return av.process_request(webPageTemplate='activitiesWMSAnimate.html', mapfile='activitypoint.map')
+
+def showActivitiesWMSAnimateCoastwatch(request):
+    return render_to_response('testAnimateCoastwatch.html',
+                    {'mapserver_host': settings.MAPSERVER_HOST,
+                    },context_instance=RequestContext(request))
 
 
 def showParametersWMS(request):
