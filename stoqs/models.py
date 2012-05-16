@@ -178,10 +178,13 @@ class Activity(models.Model):
     name = models.CharField(max_length=128)
     comment = models.TextField(max_length=2048)
     startdate = models.DateTimeField()
+    plannedstartdate = models.DateTimeField(null=True)
     enddate = models.DateTimeField(null=True)
+    plannedenddate = models.DateTimeField(null=True)
     num_measuredparameters = models.IntegerField(null=True)
     loaded_date = models.DateTimeField(null=True)
     maptrack = models.LineStringField(null=True)
+    plannedtrack = models.LineStringField(null=True)
     mindepth = models.FloatField(null=True)
     maxdepth = models.FloatField(null=True)
     activitytype = models.ForeignKey(ActivityType, blank=True, null=True, default=None) 
@@ -217,6 +220,19 @@ class SimpleDepthTime(models.Model):
     class Meta:
         verbose_name='Simple depth time series'
         verbose_name_plural='Simple depth time series'
+        app_label = 'stoqs'
+
+class PlannedDepthTime(models.Model):
+    '''
+    A simplified time series of depth values for an Activity useful for plotting in the UI
+    '''
+    activity = models.ForeignKey(Activity) 
+    epochmilliseconds = models.FloatField()
+    depth= models.FloatField()
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name='Planned depth time series'
+        verbose_name_plural='Planned depth time series'
         app_label = 'stoqs'
 
 class Parameter(models.Model):
@@ -288,7 +304,7 @@ class Measurement(models.Model):
     be associated with an InstantPoint and and a MeasuredParameter (where the measured datavalue is stored).
     '''
     instantpoint = models.ForeignKey(InstantPoint)
-    depth= models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
+    depth= models.FloatField(db_index=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     objects = models.GeoManager()
     class Meta:
@@ -364,7 +380,7 @@ class Sample(models.Model):
     filterdiameter = models.FloatField(blank=True, null=True)
     filterporesize = models.FloatField(blank=True, null=True)
     laboratory = models.CharField(max_length=128, blank=True, null=True)
-    resesarcher = models.CharField(max_length=128, blank=True, null=True)
+    researcher = models.CharField(max_length=128, blank=True, null=True)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Sample'
@@ -422,13 +438,23 @@ class ActivityParameter(models.Model):
         app_label = 'stoqs'
         unique_together = ['activity', 'parameter']
         
+class ActivityParameterHistogram(models.Model):
+    '''
+    Association class pairing Parameters that have been loaded for an Activity
+    '''
+    uuid = UUIDField(editable=False)
+    activityparameter =  models.ForeignKey(ActivityParameter)
+    binlo = models.FloatField()
+    binhi = models.FloatField()
+    bincount = models.IntegerField()
+
 class MeasuredParameter(models.Model):
     '''
     Association class pairing Measurements with Parameters.  This is where the measured values are stored -- in the datavalue field.
     '''
     measurement = models.ForeignKey(Measurement) 
     parameter = models.ForeignKey(Parameter) 
-    datavalue = models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
+    datavalue = models.FloatField(db_index=True)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Measured Parameter'
