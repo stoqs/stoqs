@@ -72,8 +72,34 @@ class BaseOutputer(object):
             fh.write(line)
         fh.close()
 
+    def applyQueryParams(self, fields):
+        '''
+        Apply any constraints specified in the query string.  The BaseOutputer supports only equality filters.
+        Override this methid to support '__in', '__gte', '__lte', etc.
+        '''
+
+        qparams = {}    
+        logger.debug(self.request.GET)
+        logger.debug(type(fields))
+        if type(fields) == 'QueryDict':
+            # fields is self.stoqs_object._meta.fields
+            for f in fields:
+                logger.debug("Adding query filter: %s = %s", f.name, self.request.GET.getlist(f.name))
+                if self.request.GET.getlist(f.name):
+                    qparams[f.name] = self.request.GET.getlist(f.name)[0]
+        else:
+            # Assume fields is a simple list as passed in from an overridden process_request() method
+            for f in fields:
+                logger.debug("Adding query filter: %s = %s", f, self.request.GET.getlist(f))
+                if self.request.GET.getlist(f):
+                    qparams[f] = self.request.GET.getlist(f)[0]
+
+        logger.debug(qparams)
+        self.query_set = self.query_set.filter(**qparams)
+
     def process_request(self):
         logger.debug("format = %s", self.format)
+        self.applyQueryParams(self.stoqs_object._meta.fields)
         if self.format == 'csv' or self.format == 'tsv':
             response = HttpResponse()
             if self.format == 'tsv':
@@ -113,6 +139,7 @@ class SampleOutputer(BaseOutputer):
                     'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
                     'instantpoint__timevalue', 'instantpoint__activity__name']
         
+        self.applyQueryParams(fields)
         qs = self.query_set
         qs = qs.values(*fields)
 
