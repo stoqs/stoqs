@@ -68,6 +68,8 @@ class ActivityView(object):
         self.request = request
         self.itemList = itemList 
         self.union_layer_string = union_layer_string
+        self.mappath = self.request.session['mappath']
+    
         if settings.LOGGING['loggers']['stoqs']['level'] == 'DEBUG':
             self.map_debug_level = 5             # Mapserver debug level: [off|on|0|1|2|3|4|5]
             self.layer_debug_level = 2           # Mapserver debug level: [off|on|0|1|2|3|4|5]
@@ -82,8 +84,12 @@ class ActivityView(object):
             The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
         '''
         filename, ext = os.path.splitext(template)
-        self.request.session['mappath'] = tempfile.NamedTemporaryFile(dir='/dev/shm', prefix=filename + '_' , suffix=ext).name
-        self.mappath = self.request.session['mappath']
+        if self.request.session.has_key('mappath'):
+            logger.info("Reusing request.session['mappath'] = %s", self.request.session['mappath'])
+        else:
+            self.request.session['mappath'] =  tempfile.NamedTemporaryFile(dir='/dev/shm', prefix=filename + '_' , suffix=ext).name
+            logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
+
         # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
         # With Apache RewriteBase rule this pattern also works for cleaner URLs:
         # Allow WMS requests to any file in /dev/shm by providing a URL like /wms/ADFASDFASDF (where /dev/shm/ADFASDFASDF.map is the name of the mapfile)
