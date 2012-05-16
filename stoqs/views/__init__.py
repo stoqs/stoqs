@@ -103,11 +103,19 @@ class BaseOutputer(object):
 
 class SampleOutputer(BaseOutputer):
     '''
-    Do special things for Sample responses, such as add Activity name and expand the Instantpoit timevalue.
+    Do special things for Sample responses, such as add Activity name and expand the Instantpoint timevalue,
+    and output JSON with expanded foreign key values.
     '''
 
     def process_request(self):
-        logger.debug("format = %s", self.format)
+
+        fields = [  u'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
+                    'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
+                    'instantpoint__timevalue', 'instantpoint__activity__name']
+        
+        qs = self.query_set
+        qs = qs.values(*fields)
+
         if self.format == 'csv' or self.format == 'tsv':
             response = HttpResponse()
             if self.format == 'tsv':
@@ -118,25 +126,35 @@ class SampleOutputer(BaseOutputer):
                 response['Content-type'] = 'text/csv'
                 response['Content-Disposition'] = 'attachment; filename=%s.csv' % self.stoqs_object_name
                 writer = csv.writer(response)
-            logger.debug('instance._meta.fields = %s', self.stoqs_object._meta.fields)
-            writer.writerow([field.name for field in self.stoqs_object._meta.fields])
-            for rec in self.query_set:
-                row = []
-                for field in self.stoqs_object._meta.fields:
-                    row.append(getattr(rec, field.name))
-                logger.debug('row = %s', row)
-                writer.writerow(row)
+            
+            writer.writerow(fields)
+            for obj in qs:
+                writer.writerow([obj[f] for f in fields])
             return response
         elif self.format == 'xml':
+            # serialize does not work on a list, see: https://code.djangoproject.com/ticket/18214, just send the original query_set
             return HttpResponse(serializers.serialize('xml', self.query_set), 'application/xml')
         elif self.format == 'json':
-            return HttpResponse(serializers.serialize('json', self.query_set), 'application/json')
+            return HttpResponse(simplejson.dumps(qs, cls=encoders.STOQSJSONEncoder), 'application/json')
         else:
             self.build_html_template()
-            return render_to_response(self.html_tmpl_path, {'list': self.query_set})
+            response = render_to_response(self.html_tmpl_file, {'cols': [f for f in fields] },
+                                          context_instance = RequestContext(self.request))
+            fh = open(self.html_tmpl_path, 'w')
+            for line in response:
+                fh.write(line)
+            fh.close()
+            return render_to_response(self.html_tmpl_path, {'list': qs})
 
         return super(SampleOutputer, self).process_request
 
+
+def showSample(request, format = 'html'):
+    stoqs_object = mod.Sample
+    query_set = stoqs_object.objects.all().order_by('instantpoint__timevalue')
+
+    s = SampleOutputer(request, format, query_set, stoqs_object)
+    return s.process_request()
 
 def showPlatform(request, format = 'html'):
     stoqs_object = mod.Platform
@@ -158,13 +176,6 @@ def showParameter(request, format = 'html'):
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
-
-def showSample(request, format = 'html'):
-    stoqs_object = mod.Sample
-    query_set = stoqs_object.objects.all().order_by('instantpoint__timevalue')
-
-    s = SampleOutputer(request, format, query_set, stoqs_object)
-    return s.process_request()
 
 def showSampleType(request, format = 'html'):
     stoqs_object = mod.SampleType
