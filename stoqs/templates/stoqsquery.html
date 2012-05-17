@@ -154,7 +154,7 @@
                 <div class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
-                        Parameter names
+                        Parameters
                         </a></h3>
                     </div>
                     <div id="collapseTwo" class="accordion-body collapse in">
@@ -266,6 +266,13 @@
         }
     }
     
+        function getUTCDateString(date) {
+            // $.format.date(date,'yyyy-MM-dd hh:mm:ss') is broken in Safari, construct SQL friendly date string this way
+            var date_str = date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1) + '-' + date.getUTCDate();
+            date_str = date_str + ' ' + date.getUTCHours() + ':' + date.getUTCMinutes() + ':' + date.getUTCSeconds();
+            return date_str
+        }
+
     function makeSlider(divid, type, data) {
         if (type == 'time') {
             var start=new Date(data[0]);
@@ -281,7 +288,7 @@
             var formatter=function (value) { 
                 var start=new Date(data[0]);
                 var cur=new Date(start.getTime() + value);
-                return $.format.date(cur,'yyyy-MM-dd hh:mm:ss');
+                return getUTCDateString(cur);
             };
             var reverseformatter=function (value) {
                 var start=new Date(data[0]);
@@ -367,12 +374,13 @@
             // Reset zoom to saved resetData values
             $('#start-depth').val(resetData['depth'][0]);
             $('#end-depth').val(resetData['depth'][1]);
+
             var start=new Date(resetData['time'][0]);
             $('#start-ems').val(start.getTime());
-            $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
+            $('#start-time').val(getUTCDateString(start));
             var end=new Date(resetData['time'][1]);
             $('#end-ems').val(end.getTime());
-            $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
+            $('#end-time').val(getUTCDateString(end));
     }
 
     // Special handling for unzooming the depth-time-plot
@@ -531,14 +539,14 @@
                 // Save the zoomed values
                 $('#start-depth').val(ranges.yaxis.from);
                 $('#end-depth').val(ranges.yaxis.to);
-                ds = new Date(0);
-                ds.setUTCSeconds(ranges.xaxis.from / 1000.0);
+
                 $('#start-ems').val(ranges.xaxis.from);
-                $('#start-time').val($.format.date(ds,'yyyy-MM-dd hh:mm:ss'));
-                de = new Date(0);
-                de.setUTCSeconds(ranges.xaxis.to / 1000.0);
+                var ds = new Date(ranges.xaxis.from);
+                $('#start-time').val(getUTCDateString(ds));
+
                 $('#end-ems').val(ranges.xaxis.to);
-                $('#end-time').val($.format.date(de,'yyyy-MM-dd hh:mm:ss'));
+                var de = new Date(ranges.xaxis.to);
+                $('#end-time').val(getUTCDateString(de))
 
                 // Apply new depth & time ranges to the query
                 rebuildFilters();           // Redraws the plot
@@ -569,10 +577,10 @@
             else if (key == 'time') { 
                 var start=new Date(data[key][0]);
                 $('#start-ems').val(start.getTime());
-                $('#start-time').val($.format.date(start,'yyyy-MM-dd hh:mm:ss'));
+                $('#start-time').val(getUTCDateString(start));
                 var end=new Date(data[key][1]);
                 $('#end-ems').val(end.getTime());
-                $('#end-time').val($.format.date(end,'yyyy-MM-dd hh:mm:ss'));
+                $('#end-time').val(getUTCDateString(end));
                 makeSlider('slider-' + key, key, data[key])
             }
             else if (key == 'depth') {
