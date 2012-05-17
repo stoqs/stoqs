@@ -138,7 +138,7 @@ class BaseOutputer(object):
 
             return response
         elif self.format == 'xml':
-            return HttpResponse(serializers.serialize('xml', qs), 'application/xml')
+            return HttpResponse(serializers.serialize('xml', self.query_set), 'application/xml')
 
         elif self.format == 'json':
             return HttpResponse(simplejson.dumps(qs, cls=encoders.STOQSJSONEncoder), 'application/json')
