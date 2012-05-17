@@ -127,7 +127,17 @@ class SampleOutputer(BaseOutputer):
         Override this methid to support '__in', '__gte', '__lte', etc.
         '''
         qparams = {}    
-        for f in fields:
+        logger.debug(self.request.GET)
+
+        # Append common additions to the field names used for query: __lte, __gte, __contains - count on client to decide what is appropriate
+        ammendedFields = []
+        ammendedFields.extend(fields)
+        for addition in ('__lte', '__gte', '__contains'):
+            for f in fields:
+                ammendedFields.append(f + addition)
+
+        for f in ammendedFields:
+            logger.debug(f)
             if self.request.GET.getlist(f):
                 qparams[f] = self.request.GET.getlist(f)[0]
 
@@ -136,7 +146,7 @@ class SampleOutputer(BaseOutputer):
 
     def process_request(self):
 
-        fields = [  u'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
+        fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
                     'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
                     'instantpoint__timevalue', 'instantpoint__activity__name']
         
