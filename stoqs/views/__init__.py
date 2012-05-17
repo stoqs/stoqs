@@ -47,6 +47,7 @@ class BaseOutputer(object):
     '''Base methods for supported responses for all STOQS objects: csv, json, kml, html, etc.
     '''
     html_tmpl_file = 'html_template.html'
+    fields = []
 
     def __init__(self, request, format, query_set, stoqs_object=None):
         self.request = request
@@ -74,13 +75,15 @@ class BaseOutputer(object):
 
     def getFields(self):
         '''
-        Default fields for model class retreived by introspection.  Override to add other fields from joined tables.
+        Default fields for model class retreived by introspection.  Override fields in subclasses to add other fields from joined tables.
         '''
-        fields = []
-        for f in self.stoqs_object._meta.fields:
-            fields.append(f.name)
-
-        return fields
+        if self.fields:
+            return self.fields
+        else:
+            fields = []
+            for f in self.stoqs_object._meta.fields:
+                fields.append(f.name)
+            return fields
 
     def ammendFields(self, fields):
 
@@ -102,7 +105,7 @@ class BaseOutputer(object):
         qparams = {}    
         logger.debug(self.request.GET)
         for f in self.ammendFields(fields):
-            logger.debug(f)
+            ##logger.debug(f)
             if self.request.GET.getlist(f):
                 qparams[f] = self.request.GET.getlist(f)[0]     # Get's just first element, will need to change for multiple params
 
@@ -114,6 +117,7 @@ class BaseOutputer(object):
         Default request processing: Apply any query parameters and get fields for the values.  Respond with requested format.
         '''
         fields = self.getFields()
+        logger.debug(fields)
         self.applyQueryParams(self.ammendFields(fields))
         qs = self.query_set
         qs = qs.values(*fields)
@@ -141,21 +145,22 @@ class BaseOutputer(object):
 
         else:
             self.build_html_template()
+            response = render_to_response(self.html_tmpl_file, {'cols': fields },
+                                          context_instance = RequestContext(self.request))
+            fh = open(self.html_tmpl_path, 'w')
+            for line in response:
+                fh.write(line)
+            fh.close()
             return render_to_response(self.html_tmpl_path, {'list': qs})
+
 
 class SampleOutputer(BaseOutputer):
     '''
-    Do special things for Sample responses: Add Activity name and Instantpoint timevalue
+    Add Activity name and Instantpoint timevalue to the default fields
     '''
-
-    def getFields(self):
-        '''
-        Joins needed to get time and activity name
-        '''
-        fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
-                    'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
-                    'instantpoint__timevalue', 'instantpoint__activity__name']
-        return fields
+    fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
+                'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
+                'instantpoint__timevalue', 'instantpoint__activity__name']
 
 
 def showSample(request, format = 'html'):
