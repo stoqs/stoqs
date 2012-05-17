@@ -72,85 +72,49 @@ class BaseOutputer(object):
             fh.write(line)
         fh.close()
 
-    def applyQueryParams(self, fields):
+    def getFields(self):
         '''
-        Apply any constraints specified in the query string.  The BaseOutputer supports only equality filters.
-        Override this methid to support '__in', '__gte', '__lte', etc.
+        Default fields for model class retreived by introspection.  Override to add other fields from joined tables.
         '''
-        qparams = {}    
-        for f in fields:
-            if self.request.GET.getlist(f.name):
-                qparams[f.name] = self.request.GET.getlist(f.name)[0]
+        fields = []
+        for f in self.stoqs_object._meta.fields:
+            fields.append(f.name)
 
-        logger.debug(qparams)
-        self.query_set = self.query_set.filter(**qparams)
+        return fields
 
-    def process_request(self):
-        logger.debug("format = %s", self.format)
-        self.applyQueryParams(self.stoqs_object._meta.fields)
-        if self.format == 'csv' or self.format == 'tsv':
-            response = HttpResponse()
-            if self.format == 'tsv':
-                response['Content-type'] = 'text/tab-separated-values'
-                response['Content-Disposition'] = 'attachment; filename=%s.tsv' % self.stoqs_object_name
-                writer = csv.writer(response, delimiter='\t')
-            else:
-                response['Content-type'] = 'text/csv'
-                response['Content-Disposition'] = 'attachment; filename=%s.csv' % self.stoqs_object_name
-                writer = csv.writer(response)
-            logger.debug('instance._meta.fields = %s', self.stoqs_object._meta.fields)
-            writer.writerow([field.name for field in self.stoqs_object._meta.fields])
-            for rec in self.query_set:
-                row = []
-                for field in self.stoqs_object._meta.fields:
-                    row.append(getattr(rec, field.name))
-                logger.debug('row = %s', row)
-                writer.writerow(row)
-            return response
-        elif self.format == 'xml':
-            return HttpResponse(serializers.serialize('xml', self.query_set), 'application/xml')
-        elif self.format == 'json':
-            return HttpResponse(serializers.serialize('json', self.query_set), 'application/json')
-        else:
-            self.build_html_template()
-            return render_to_response(self.html_tmpl_path, {'list': self.query_set})
+    def ammendFields(self, fields):
 
-class SampleOutputer(BaseOutputer):
-    '''
-    Do special things for Sample responses, such as add Activity name and expand the Instantpoint timevalue,
-    and output JSON with expanded foreign key values.
-    '''
+        # Append Django field lookups to the field names, see: https://docs.djangoproject.com/en/dev/ref/models/querysets/#field-lookups
+        fieldLookups = ('exact', 'iexact', 'contains', 'icontains', 'in', 'gt', 'gte', 'lt', 'lte', 'startswith', 'istartswith',
+                        'endswith', 'iendswith', 'range', 'year', 'month', 'day', 'week_day', 'isnull', 'search', 'regex', 'iregex')
+        ammendedFields = []
+        ammendedFields.extend(fields)
+        for addition in fieldLookups:
+            for f in fields:
+                ammendedFields.append('%s__%s' % (f, addition, ))
+
+        return ammendedFields
 
     def applyQueryParams(self, fields):
         '''
-        Apply any constraints specified in the query string.  The BaseOutputer supports only equality filters.
-        Override this methid to support '__in', '__gte', '__lte', etc.
+        Apply any constraints specified in the query string with ammened Django field lookups
         '''
         qparams = {}    
         logger.debug(self.request.GET)
-
-        # Append common additions to the field names used for query: __lte, __gte, __contains - count on client to decide what is appropriate
-        ammendedFields = []
-        ammendedFields.extend(fields)
-        for addition in ('__lte', '__gte', '__contains'):
-            for f in fields:
-                ammendedFields.append(f + addition)
-
-        for f in ammendedFields:
+        for f in self.ammendFields(fields):
             logger.debug(f)
             if self.request.GET.getlist(f):
-                qparams[f] = self.request.GET.getlist(f)[0]
+                qparams[f] = self.request.GET.getlist(f)[0]     # Get's just first element, will need to change for multiple params
 
         logger.debug(qparams)
         self.query_set = self.query_set.filter(**qparams)
 
     def process_request(self):
-
-        fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
-                    'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
-                    'instantpoint__timevalue', 'instantpoint__activity__name']
-        
-        self.applyQueryParams(fields)
+        '''
+        Default request processing: Apply any query parameters and get fields for the values.  Respond with requested format.
+        '''
+        fields = self.getFields()
+        self.applyQueryParams(self.ammendFields(fields))
         qs = self.query_set
         qs = qs.values(*fields)
 
@@ -164,27 +128,34 @@ class SampleOutputer(BaseOutputer):
                 response['Content-type'] = 'text/csv'
                 response['Content-Disposition'] = 'attachment; filename=%s.csv' % self.stoqs_object_name
                 writer = csv.writer(response)
-            
             writer.writerow(fields)
             for obj in qs:
                 writer.writerow([obj[f] for f in fields])
+
             return response
         elif self.format == 'xml':
-            # serialize does not work on a list, see: https://code.djangoproject.com/ticket/18214, just send the original query_set
-            return HttpResponse(serializers.serialize('xml', self.query_set), 'application/xml')
+            return HttpResponse(serializers.serialize('xml', qs), 'application/xml')
+
         elif self.format == 'json':
             return HttpResponse(simplejson.dumps(qs, cls=encoders.STOQSJSONEncoder), 'application/json')
+
         else:
             self.build_html_template()
-            response = render_to_response(self.html_tmpl_file, {'cols': [f for f in fields] },
-                                          context_instance = RequestContext(self.request))
-            fh = open(self.html_tmpl_path, 'w')
-            for line in response:
-                fh.write(line)
-            fh.close()
             return render_to_response(self.html_tmpl_path, {'list': qs})
 
-        return super(SampleOutputer, self).process_request
+class SampleOutputer(BaseOutputer):
+    '''
+    Do special things for Sample responses: Add Activity name and Instantpoint timevalue
+    '''
+
+    def getFields(self):
+        '''
+        Joins needed to get time and activity name
+        '''
+        fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
+                    'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
+                    'instantpoint__timevalue', 'instantpoint__activity__name']
+        return fields
 
 
 def showSample(request, format = 'html'):
