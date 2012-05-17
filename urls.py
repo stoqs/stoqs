@@ -71,6 +71,7 @@ urlpatterns = patterns('',
     url(pre + r'sample.?'            + formatPat, 'stoqs.views.showSample',            {}, name='show-sample'),
     url(pre + r'sampletype.?'        + formatPat, 'stoqs.views.showSampleType',        {}, name='show-sampletype'),
     url(pre + r'analysismethod.?'    + formatPat, 'stoqs.views.showAnalysisMethod',    {}, name='show-analysismethod'),
+    url(pre + r'instantpoint.?'      + formatPat, 'stoqs.views.showInstantPoint',      {}, name='show-instantpoint'),
 
     # Measurements  
     url(pre + 'measurement/' + btwnCl + formatCl, 

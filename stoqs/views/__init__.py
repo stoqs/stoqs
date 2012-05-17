@@ -72,8 +72,22 @@ class BaseOutputer(object):
             fh.write(line)
         fh.close()
 
+    def applyQueryParams(self, fields):
+        '''
+        Apply any constraints specified in the query string.  The BaseOutputer supports only equality filters.
+        Override this methid to support '__in', '__gte', '__lte', etc.
+        '''
+        qparams = {}    
+        for f in fields:
+            if self.request.GET.getlist(f.name):
+                qparams[f.name] = self.request.GET.getlist(f.name)[0]
+
+        logger.debug(qparams)
+        self.query_set = self.query_set.filter(**qparams)
+
     def process_request(self):
         logger.debug("format = %s", self.format)
+        self.applyQueryParams(self.stoqs_object._meta.fields)
         if self.format == 'csv' or self.format == 'tsv':
             response = HttpResponse()
             if self.format == 'tsv':
@@ -107,12 +121,26 @@ class SampleOutputer(BaseOutputer):
     and output JSON with expanded foreign key values.
     '''
 
+    def applyQueryParams(self, fields):
+        '''
+        Apply any constraints specified in the query string.  The BaseOutputer supports only equality filters.
+        Override this methid to support '__in', '__gte', '__lte', etc.
+        '''
+        qparams = {}    
+        for f in fields:
+            if self.request.GET.getlist(f):
+                qparams[f] = self.request.GET.getlist(f)[0]
+
+        logger.debug(qparams)
+        self.query_set = self.query_set.filter(**qparams)
+
     def process_request(self):
 
         fields = [  u'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
                     'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
                     'instantpoint__timevalue', 'instantpoint__activity__name']
         
+        self.applyQueryParams(fields)
         qs = self.query_set
         qs = qs.values(*fields)
 
@@ -155,6 +183,13 @@ def showSample(request, format = 'html'):
 
     s = SampleOutputer(request, format, query_set, stoqs_object)
     return s.process_request()
+
+def showInstantPoint(request, format = 'html'):
+    stoqs_object = mod.InstantPoint
+    query_set = stoqs_object.objects.all().order_by('timevalue')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
 
 def showPlatform(request, format = 'html'):
     stoqs_object = mod.Platform
