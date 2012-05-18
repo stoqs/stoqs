@@ -631,6 +631,7 @@ class Base_Loader(object):
         return anyValidData
     
     
+    @transaction.commit_manually()
     def process_data(self):
         '''
         Iterate over the data source and load the data in by creating new objects
@@ -739,6 +740,9 @@ class Base_Loader(object):
                     if (loaded % 500) == 0:
                         logger.info("%d records loaded.", loaded)
             # End for key, value
+
+        transaction.commit()
+
         # End for row
         #
         # now linestringPoints contains all the points
@@ -773,6 +777,8 @@ class Base_Loader(object):
         self.updateActivityParameterStats(parameterCount)
         self.insertSimpleDepthTimeSeries()
         logger.info("Data load complete, %d records loaded.", loaded)
+
+        transaction.commit()
 
         return loaded, path, parmCount, mindepth, maxdepth
 
