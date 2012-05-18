@@ -212,6 +212,13 @@ def showAnalysisMethod(request, format = 'html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
+def showActivity(request, format = 'html'):
+    stoqs_object = mod.Activity
+    query_set = stoqs_object.objects.all().order_by('name')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
+
 def showActivityType(request, format = 'html'):
     stoqs_object = mod.ActivityType
     query_set = stoqs_object.objects.all().order_by('name')
