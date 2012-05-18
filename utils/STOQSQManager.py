@@ -10,6 +10,7 @@ import pprint
 import calendar
 import re
 import locale
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -330,7 +331,7 @@ class STOQSQManager(object):
         # While only a fraction of a second different, it is 342 times faster!
 
         qs=self.qs.aggregate(Max('enddate'), Min('startdate'))
-        return (qs['startdate__min'], qs['enddate__max'],)
+        return (time.mktime(qs['startdate__min'].timetuple())*1000, time.mktime(qs['enddate__max'].timetuple())*1000,)
     
     def getDepth(self):
         '''

@@ -575,10 +575,10 @@
                 });
             }
             else if (key == 'time') { 
-                var start=new Date(data[key][0]);
+                var start = new Date(data[key][0]);
                 $('#start-ems').val(start.getTime());
                 $('#start-time').val(getUTCDateString(start));
-                var end=new Date(data[key][1]);
+                var end = new Date(data[key][1]);
                 $('#end-ems').val(end.getTime());
                 $('#end-time').val(getUTCDateString(end));
                 makeSlider('slider-' + key, key, data[key])
