@@ -212,62 +212,6 @@ def showAnalysisMethod(request, format = 'html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-# --------------------------------------------------------------------------------------------------------
-# Work in progress: adding Q object building for Activity requests following the pattern in STOQSQManager.py
-# with the intention of applying the same method in a similar way to the other STOQS model objects.
-
-def _platformsQ(platforms):
-    '''
-    Build a Q object to be added to the current queryset as a filter.
-    '''
-    q = Q()
-    if platforms is None:
-        return q
-    else:
-        q = Q(platform__name__in=platforms)
-    return q
-
-def showActivity(request, format = 'html', order = 'startdate'):
-    '''
-    Other potential order fields: name, startdate, enddate, loadeddate
-    '''
-    response = HttpResponse()
-    query_parms = {'platform__name': 'platform__name', 
-                    # Can add additional query parms, which may be multi-valued, e.g. start & end times
-                   }
-    params = {}
-    for key, value in query_parms.iteritems():
-        if type(value) in (list, tuple):
-            params[key] = [request.GET.get(p, None) for p in value]
-        else:
-            qlist = request.GET.getlist(key)
-            if qlist:
-                params[key] = list
-
-    stoqs_object = mod.Activity
-    qs = stoqs_object.objects.all().order_by(order)
-
-
-    # Calling this will execute a measuredparameter count, which can take several seconds with a multi-million measurement database
-    # This is a work in progress to support arbitrary query strings for Acvivity responses
-    ##qm = STOQSQManager(request, response, request.META['dbAlias'])
-    ##qm.buildQuerySet(qs, **params)
-    ##options = simplejson.dumps(qm.generateOptions(),
-    ##                           cls=encoders.STOQSJSONEncoder)
-    ##                           # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
-
-    if params:
-        for k,v in params.iteritems():
-            logger.debug('k = %s, v = %s', k, str(v))
-            qs = qs.filter(_platformsQ(params['platform__name']))
-    
-    logger.debug('qs = %s', qs )
-    o = BaseOutputer(request, format, qs, stoqs_object)
-    return o.process_request()
-
-#---------------------------------------------------------------------------------------------------------------------
-
-
 def showActivityType(request, format = 'html'):
     stoqs_object = mod.ActivityType
     query_set = stoqs_object.objects.all().order_by('name')
