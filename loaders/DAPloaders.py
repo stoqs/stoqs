@@ -234,8 +234,12 @@ class Base_Loader(object):
         ##    raise(e)
 
 
-    @transaction.commit_manually()
     def addParameters(self, parmDict):
+      '''
+      Wrapper so as to apply self.dbName in the decorator
+      '''
+      @transaction.commit_manually(using=self.dbName)
+      def innerAddParameters(self, parmDict):
         '''
         This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
         parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
@@ -273,23 +277,23 @@ class Base_Loader(object):
                 ##print "addParameters(): parms = %s" % parms
                 self.parameter_dict[key] = m.Parameter(**parms)
                 try:
-                    sid = transaction.savepoint()
+                    sid = transaction.savepoint(using=self.dbName)
                     self.parameter_dict[key].save(using=self.dbName)
                     self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                    transaction.savepoint_commit(sid)
+                    transaction.savepoint_commit(sid,using=self.dbName)
                 except IntegrityError as e:
                     logger.warn('%s', e)
                     transaction.savepoint_rollback(sid)
                     if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
                         self.resetParameterAutoSequenceId()
                         try:
-                            sid2 = transaction.savepoint()
+                            sid2 = transaction.savepoint(using=self.dbName)
                             self.parameter_dict[key].save(using=self.dbName)
                             self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                            transaction.savepoint_commit(sid2)
+                            transaction.savepoint_commit(sid2,using=self.dbName)
                         except Exception as e:
                             logger.error('%s', e)
-                            transaction.savepoint_rollback(sid2)
+                            transaction.savepoint_rollback(sid2,using=self.dbName)
                             raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
                     else:
                         logger.error('Exception %s', e)
@@ -299,13 +303,15 @@ class Base_Loader(object):
                     
                 except Exception as e:
                     logger.error('%s', e)
-                    transaction.savepoint_rollback(sid)
+                    transaction.savepoint_rollback(sid,using=self.dbName)
                     raise Exception('''Failed to add parameter for %s
                         %s\nEither add parameter manually, or add to ignored_names''' % (key,
                         '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
                 logger.debug("Added parameter %s from data set to database %s", key, self.dbName)
 
-        transaction.commit()
+        transaction.commit(using=self.dbName)
+
+      return innerAddParameters(self, parmDict)
  
     def createActivity(self):
         '''
@@ -546,7 +552,7 @@ class Base_Loader(object):
                 yield values
             else:
                 raise StopIteration
-    
+   
 
     def createMeasurement(self, time, depth, lat, long):
         '''
@@ -630,9 +636,13 @@ class Base_Loader(object):
 
         return anyValidData
     
-    
-    @transaction.commit_manually()
-    def process_data(self):
+   
+    def process_data(self): 
+      '''
+      Wrapper so as to apply self.dbName in the decorator
+      '''
+      @transaction.commit_manually(using=self.dbName)
+      def innerProcess_data(self):
         '''
         Iterate over the data source and load the data in by creating new objects
         for each measurement.
@@ -713,7 +723,7 @@ class Base_Loader(object):
                     logger.debug("parameter._state.db = %s", self.getParameterByName(key)._state.db)
                     mp = m.MeasuredParameter(measurement = measurement,
                                 parameter = self.getParameterByName(key),
-                                datavalue = str(value))
+                                datavalue = value)
                     try:
                         mp.save(using=self.dbName)
                     except Exception, e:
@@ -731,6 +741,9 @@ class Base_Loader(object):
 
                 except ParameterNotFound:
                     print "Unable to locate parameter for %s, skipping" % (key,)
+
+                transaction.commit(using=self.dbName)
+
             #   except Exception as e:
             #       print "Failed! %s" % (str(e),)
             #       print row
@@ -741,7 +754,7 @@ class Base_Loader(object):
                         logger.info("%d records loaded.", loaded)
             # End for key, value
 
-        transaction.commit()
+        transaction.commit(using=self.dbName)
 
         # End for row
         #
@@ -778,9 +791,11 @@ class Base_Loader(object):
         self.insertSimpleDepthTimeSeries()
         logger.info("Data load complete, %d records loaded.", loaded)
 
-        transaction.commit()
+        transaction.commit(using=self.dbName)
 
         return loaded, path, parmCount, mindepth, maxdepth
+
+      return innerProcess_data(self)
 
     def build_standard_names(self):
         '''
@@ -844,7 +859,7 @@ class Base_Loader(object):
                 logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
                 continue
 
-        ##transaction.rollback()
+        ##transaction.rollback(using=self.dbName)
         logger.info('Updated statistics for activity.name = %s', a.name)
 
     def insertSimpleDepthTimeSeries(self):
