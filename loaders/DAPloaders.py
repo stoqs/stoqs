@@ -107,7 +107,7 @@ class Base_Loader(object):
     global_ignored_names = ['longitude','latitude', 'time', 'Time',
                 'LONGITUDE','LATITUDE','TIME', 'NominalDepth', 'esecs', 'Longitude', 'Latitude',
                 'DEPTH','depth'] # A list of parameters that should not be imported as parameters
-    def __init__(self, activityName, platformName, url, dbName= 'default', campaignName=None, 
+    def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, 
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, stride=1 ):
         '''
@@ -121,7 +121,7 @@ class Base_Loader(object):
         @param platformName: A string that is the name of the platform. If that name for a Platform exists in the DB, it will be used.
         @param platformColor: An RGB hex string represnting the color of the platform. 
         @param url: The OPeNDAP URL for the data source
-        @param dbName: The name of the database alias as defined in settings.py
+        @param dbAlias: The name of the database alias as defined in settings.py
         @param campaignName: A string describing the Campaign in which this activity belongs, If that name for a Campaign exists in the DB, it will be used.
         @param activitytypeName: A string such as 'mooring deployment' or 'AUV mission' describing type of activity, If that name for a ActivityType exists in the DB, it will be used.
         @param platformTypeName: A string describing the type of platform, e.g.: 'mooring', 'auv'.  If that name for a PlatformType exists in the DB, it will be used.
@@ -135,7 +135,7 @@ class Base_Loader(object):
         self.activitytypeName = activitytypeName
         self.platformName = platformName
         self.platformColor = platformColor
-        self.dbName = dbName
+        self.dbAlias = dbAlias
         self.platformTypeName = platformTypeName
         self.activityName = activityName
         self.startDatetime = startDatetime
@@ -198,22 +198,22 @@ class Base_Loader(object):
             logger.warn("Platform name %s not found in tracking database.  Creating new platform anyway.", platformName)
 
         # Create PlatformType
-        logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", (self.dbName, self.platformTypeName))
-        (platformType, created) = m.PlatformType.objects.db_manager(self.dbName).get_or_create(name = self.platformTypeName)
+        logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", (self.dbAlias, self.platformTypeName))
+        (platformType, created) = m.PlatformType.objects.db_manager(self.dbAlias).get_or_create(name = self.platformTypeName)
         if created:
-            logger.debug("Created platformType.name %s in database %s", platformType.name, self.dbName)
+            logger.debug("Created platformType.name %s in database %s", platformType.name, self.dbAlias)
         else:
-            logger.debug("Retrived platformType.name %s from database %s", platformType.name, self.dbName)
+            logger.debug("Retrived platformType.name %s from database %s", platformType.name, self.dbAlias)
 
 
         # Create Platform 
-        (platform, created) = m.Platform.objects.db_manager(self.dbName).get_or_create( name=platformName, 
+        (platform, created) = m.Platform.objects.db_manager(self.dbAlias).get_or_create( name=platformName, 
                                                                                         color=self.platformColor, 
                                                                                         platformtype=platformType)
         if created:
-            logger.info("Created platform %s in database %s", platformName, self.dbName)
+            logger.info("Created platform %s in database %s", platformName, self.dbAlias)
         else:
-            logger.info("Retrived platform %s from database %s", platformName, self.dbName)
+            logger.info("Retrived platform %s from database %s", platformName, self.dbAlias)
 
         return platform
 
@@ -222,7 +222,7 @@ class Base_Loader(object):
         In strange case where auto-incrementing primary key gets reset to 1 call this to reset it to  max(id) +1
         '''
         sql = r'''SELECT setval(pg_get_serial_sequence('"stoqs_parameter"','id'), coalesce(max("id"), 1), max("id") IS NOT null) FROM "stoqs_parameter";'''
-        logger.warn('Somehow the serial_sequence number got reset on the parameter table.  Connect to the %s database and execute: \n%s', self.dbName, sql)
+        logger.warn('Somehow the serial_sequence number got reset on the parameter table.  Connect to the %s database and execute: \n%s', self.dbAlias, sql)
         logger.info('Attempting to reset id sequence number by executing raw sql:\n%s', sql)
         raw_input('PAUSED')
         ##try:
@@ -236,9 +236,9 @@ class Base_Loader(object):
 
     def addParameters(self, parmDict):
       '''
-      Wrapper so as to apply self.dbName in the decorator
+      Wrapper so as to apply self.dbAlias in the decorator
       '''
-      @transaction.commit_manually(using=self.dbName)
+      @transaction.commit_manually(using=self.dbAlias)
       def innerAddParameters(self, parmDict):
         '''
         This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
@@ -277,23 +277,23 @@ class Base_Loader(object):
                 ##print "addParameters(): parms = %s" % parms
                 self.parameter_dict[key] = m.Parameter(**parms)
                 try:
-                    sid = transaction.savepoint(using=self.dbName)
-                    self.parameter_dict[key].save(using=self.dbName)
+                    sid = transaction.savepoint(using=self.dbAlias)
+                    self.parameter_dict[key].save(using=self.dbAlias)
                     self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                    transaction.savepoint_commit(sid,using=self.dbName)
+                    transaction.savepoint_commit(sid,using=self.dbAlias)
                 except IntegrityError as e:
                     logger.warn('%s', e)
                     transaction.savepoint_rollback(sid)
                     if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
                         self.resetParameterAutoSequenceId()
                         try:
-                            sid2 = transaction.savepoint(using=self.dbName)
-                            self.parameter_dict[key].save(using=self.dbName)
+                            sid2 = transaction.savepoint(using=self.dbAlias)
+                            self.parameter_dict[key].save(using=self.dbAlias)
                             self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                            transaction.savepoint_commit(sid2,using=self.dbName)
+                            transaction.savepoint_commit(sid2,using=self.dbAlias)
                         except Exception as e:
                             logger.error('%s', e)
-                            transaction.savepoint_rollback(sid2,using=self.dbName)
+                            transaction.savepoint_rollback(sid2,using=self.dbAlias)
                             raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
                     else:
                         logger.error('Exception %s', e)
@@ -303,13 +303,13 @@ class Base_Loader(object):
                     
                 except Exception as e:
                     logger.error('%s', e)
-                    transaction.savepoint_rollback(sid,using=self.dbName)
+                    transaction.savepoint_rollback(sid,using=self.dbAlias)
                     raise Exception('''Failed to add parameter for %s
                         %s\nEither add parameter manually, or add to ignored_names''' % (key,
                         '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
-                logger.debug("Added parameter %s from data set to database %s", key, self.dbName)
+                logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
 
-        transaction.commit(using=self.dbName)
+        transaction.commit(using=self.dbAlias)
 
       return innerAddParameters(self, parmDict)
  
@@ -323,7 +323,7 @@ class Base_Loader(object):
         logger.info("comment = " + comment)
 
         # Create Platform 
-        (self.activity, created) = m.Activity.objects.db_manager(self.dbName).get_or_create(    
+        (self.activity, created) = m.Activity.objects.db_manager(self.dbAlias).get_or_create(    
                                         name = self.activityName, 
                                         ##comment = comment,
                                         platform = self.platform,
@@ -331,29 +331,29 @@ class Base_Loader(object):
                                         enddate = self.endDatetime)
 
         if created:
-            logger.info("Created activity %s in database %s", self.activityName, self.dbName)
+            logger.info("Created activity %s in database %s", self.activityName, self.dbAlias)
         else:
-            logger.info("Retrived activity %s from database %s", self.activityName, self.dbName)
+            logger.info("Retrived activity %s from database %s", self.activityName, self.dbAlias)
 
         # Get or create activityType 
         if self.activitytypeName is not None:
-            (activityType, created) = m.ActivityType.objects.db_manager(self.dbName).get_or_create(name = self.activitytypeName)
+            (activityType, created) = m.ActivityType.objects.db_manager(self.dbAlias).get_or_create(name = self.activitytypeName)
             self.activityType = activityType
     
             if self.activityType is not None:
                 self.activity.activitytype = self.activityType
     
-            self.activity.save(using=self.dbName)   # Resave with the activitytype
+            self.activity.save(using=self.dbAlias)   # Resave with the activitytype
         
         # Get or create campaign
         if self.campaignName is not None:
-            (campaign, created) = m.Campaign.objects.db_manager(self.dbName).get_or_create(name = self.campaignName)
+            (campaign, created) = m.Campaign.objects.db_manager(self.dbAlias).get_or_create(name = self.campaignName)
             self.campaign = campaign
     
             if self.campaign is not None:
                 self.activity.campaign = self.campaign
     
-            self.activity.save(using=self.dbName)   # Resave with the campaign
+            self.activity.save(using=self.dbAlias)   # Resave with the campaign
 
     def addResources(self):
         '''Add Resources for this activity, namely the NC_GLOBAL attribute names and values.
@@ -363,13 +363,13 @@ class Base_Loader(object):
         logger.debug("Getting or Creating ResourceType nc_global...")
         logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
         if self.ds.attributes.has_key('NC_GLOBAL'):
-            (resourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(name = 'nc_global')
+            (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name = 'nc_global')
             for rn in self.ds.attributes['NC_GLOBAL'].keys():
                 value = self.ds.attributes['NC_GLOBAL'][rn]
                 logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
-                (resource, created) = m.Resource.objects.db_manager(self.dbName).get_or_create(
+                (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                             name=rn, value=value, resourcetype=resourceType)
-                (ar, created) = m.ActivityResource.objects.db_manager(self.dbName).get_or_create(
+                (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                             activity=self.activity, resource=resource)
         else:
             logger.warn("No NC_GLOBAL attribute in %s", self.url)
@@ -390,8 +390,8 @@ class Base_Loader(object):
                 try:
                     logger.debug("For name = %s ", name)
                     logger.debug("standard_names = %s", self.standard_names[name])
-                    logger.debug("retrieving from database %s", self.dbName)
-                    self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbName).get(standard_name = self.standard_names[name][0])
+                    logger.debug("retrieving from database %s", self.dbAlias)
+                    self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbAlias).get(standard_name = self.standard_names[name][0])
                 except ObjectDoesNotExist:
                     pass
                 except IndexError:
@@ -400,9 +400,9 @@ class Base_Loader(object):
         if not self.parameter_dict.has_key(name):
             logger.debug("Again '%s' is not in self.parameter_dict", name)
             try:
-                logger.debug("trying to get '%s' from database %s...", name, self.dbName)
+                logger.debug("trying to get '%s' from database %s...", name, self.dbAlias)
                 ##(parameter, created) = m.Parameter.objects.get(name = name)
-                self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbName).get(name = name)
+                self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbAlias).get(name = name)
                 logger.debug("self.parameter_dict[name].name = %s", self.parameter_dict[name].name)
             except ObjectDoesNotExist:
                 ##print >> sys.stderr, "Unable to locate parameter with name %s.  Adding to ignored_names list." % (name,)
@@ -412,7 +412,7 @@ class Base_Loader(object):
 
         logger.debug("Returning self.parameter_dict[name].units = %s", self.parameter_dict[name].units)
         try:
-            self.parameter_dict[name].save(using=self.dbName)
+            self.parameter_dict[name].save(using=self.dbAlias)
         except Exception, e:
             print sys.exc_info(e)[2]
             print name
@@ -572,13 +572,13 @@ class Base_Loader(object):
 
         ip = m.InstantPoint(activity = self.activity,
                     timevalue = time)
-        ip.save(using=self.dbName)
+        ip.save(using=self.dbAlias)
         point = 'POINT(%s %s)' % (repr(long), repr(lat))
         measurement = m.Measurement(instantpoint = ip,
                         depth = repr(depth),
                         geom = point)
         try:
-            measurement.save(using=self.dbName)
+            measurement.save(using=self.dbAlias)
         except Exception, e:
             logger.error('Exception %s', e)
             logger.error("Cannot save measurement time = %s, long = %s, lat = %s, depth = %s", time, repr(long), repr(lat), repr(depth))
@@ -639,9 +639,9 @@ class Base_Loader(object):
    
     def process_data(self): 
       '''
-      Wrapper so as to apply self.dbName in the decorator
+      Wrapper so as to apply self.dbAlias in the decorator
       '''
-      @transaction.commit_manually(using=self.dbName)
+      @transaction.commit_manually(using=self.dbAlias)
       def innerProcess_data(self):
         '''
         Iterate over the data source and load the data in by creating new objects
@@ -725,7 +725,7 @@ class Base_Loader(object):
                                 parameter = self.getParameterByName(key),
                                 datavalue = value)
                     try:
-                        mp.save(using=self.dbName)
+                        mp.save(using=self.dbAlias)
                     except Exception, e:
                         logger.error('Exception %s. Skipping this record.', e)
                         logger.error("Bad value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
@@ -742,7 +742,7 @@ class Base_Loader(object):
                 except ParameterNotFound:
                     print "Unable to locate parameter for %s, skipping" % (key,)
 
-                transaction.commit(using=self.dbName)
+                transaction.commit(using=self.dbAlias)
 
             #   except Exception as e:
             #       print "Failed! %s" % (str(e),)
@@ -754,7 +754,7 @@ class Base_Loader(object):
                         logger.info("%d records loaded.", loaded)
             # End for key, value
 
-        transaction.commit(using=self.dbName)
+        transaction.commit(using=self.dbAlias)
 
         # End for row
         #
@@ -775,7 +775,7 @@ class Base_Loader(object):
         newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (loaded, ' '.join(self.varsLoaded), datetime.utcnow())
         logger.debug("runDoradoLoader(): Updating its comment with newComment = %s", newComment)
     
-        num_updated = m.Activity.objects.using(self.dbName).filter(id = self.activity.id).update(
+        num_updated = m.Activity.objects.using(self.dbAlias).filter(id = self.activity.id).update(
                         comment = newComment,
                         maptrack = path,
                         mindepth = mindepth,
@@ -791,7 +791,7 @@ class Base_Loader(object):
         self.insertSimpleDepthTimeSeries()
         logger.info("Data load complete, %d records loaded.", loaded)
 
-        transaction.commit(using=self.dbName)
+        transaction.commit(using=self.dbAlias)
 
         return loaded, path, parmCount, mindepth, maxdepth
 
@@ -818,7 +818,7 @@ class Base_Loader(object):
 
         a = self.activity
         for p in parameterCounts:
-            data = m.MeasuredParameter.objects.using(self.dbName).filter(parameter=p)
+            data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p)
             numpvar = numpy.array([float(v.datavalue) for v in data])
             numpvar.sort()
             listvar = list(numpvar)
@@ -826,7 +826,7 @@ class Base_Loader(object):
                             p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar), 
                             percentile(listvar, 0.025), percentile(listvar, 0.975))
             try:
-                ap, created = m.ActivityParameter.objects.using(self.dbName).get_or_create(
+                ap, created = m.ActivityParameter.objects.using(self.dbAlias).get_or_create(
                                         activity = a,
                                         parameter = p,
                                         number = len(listvar),
@@ -841,7 +841,7 @@ class Base_Loader(object):
                 if created:
                     logger.info('Created ActivityParameter for parameter.name = %s', p.name)
                 else:
-                    m.ActivityParameter.objects.using(self.dbName).update(
+                    m.ActivityParameter.objects.using(self.dbAlias).update(
                                         activity = a,
                                         parameter = p,
                                         number = len(listvar),
@@ -859,7 +859,7 @@ class Base_Loader(object):
                 logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
                 continue
 
-        ##transaction.rollback(using=self.dbName)
+        ##transaction.rollback(using=self.dbAlias)
         logger.info('Updated statistics for activity.name = %s', a.name)
 
     def insertSimpleDepthTimeSeries(self):
@@ -867,7 +867,7 @@ class Base_Loader(object):
         Read the time series of depth values for this activity, simplify it and insert the values in the
         SimpleDepthTime table that is related to the Activity.
         '''
-        vlqs = m.Measurement.objects.using(self.dbName).filter( instantpoint__activity=self.activity,
+        vlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity,
                                                               ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk')
         line = []
         pklookup = []
@@ -888,8 +888,8 @@ class Base_Loader(object):
 
         for t,d,k in simple_line:
             try:
-                ip = m.InstantPoint.objects.using(self.dbName).get(id = pklookup[k])
-                m.SimpleDepthTime.objects.using(self.dbName).create(activity = self.activity, instantpoint = ip, depth = d, epochmilliseconds = t)
+                ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
+                m.SimpleDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = ip, depth = d, epochmilliseconds = t)
             except ObjectDoesNotExist:
                 logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
@@ -987,23 +987,23 @@ class Dorado_Loader(Base_Loader):
         yyyy = int(survey.split('_')[1])
         # Quick-look plots
         logger.debug("Getting or Creating ResourceType quick_look...")
-        (resourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(
+        (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name = 'quick_look', description='Quick Look plot of data from this AUV survey')
         for ql in ['2column', 'biolume', 'hist_stats', 'lopc', 'nav_adjust', 'prof_stats']:
             url = '%s/%4d/images/%s_%s.png' % (baseUrl, yyyy, survey, ql)
             logger.debug("Getting or Creating Resource with name = %s, url = %s", ql, url )
-            (resource, created) = m.Resource.objects.db_manager(self.dbName).get_or_create(
+            (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name=ql, uristring=url, resourcetype=resourceType)
-            (ar, created) = m.ActivityResource.objects.db_manager(self.dbName).get_or_create(
+            (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity,
                         resource=resource)
 
         # kml, odv, mat
-        (kmlResourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(
+        (kmlResourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name = 'kml', description='Keyhole Markup Language file of data from this AUV survey')
-        (odvResourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(
+        (odvResourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name = 'odv', description='Ocean Data View spreadsheet text file')
-        (matResourceType, created) = m.ResourceType.objects.db_manager(self.dbName).get_or_create(
+        (matResourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name = 'mat', description='Matlab data file')
         for res in ['kml', 'odv', 'odvGulper', 'mat', 'mat_gridded']:
             if res == 'kml':
@@ -1025,9 +1025,9 @@ class Dorado_Loader(Base_Loader):
                 logger.warn('No handler for res = %s', res)
 
             logger.debug("Getting or Creating Resource with name = %s, url = %s", res, url )
-            (resource, created) = m.Resource.objects.db_manager(self.dbName).get_or_create(
+            (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name=res, uristring=url, resourcetype=rt)
-            (ar, created) = m.ActivityResource.objects.db_manager(self.dbName).get_or_create(
+            (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity, resource=resource)
 
         return super(Dorado_Loader, self).addResources()
@@ -1112,7 +1112,7 @@ class Glider_Loader(Base_Loader):
                     enddate=end)
         if self.activitytype is not None:
             self.activity.activitytype=self.activitytype
-        self.activity.save(using=self.dbName)
+        self.activity.save(using=self.dbAlias)
         
     def preProcessParams(self, row):
         '''
@@ -1127,16 +1127,16 @@ class Glider_Loader(Base_Loader):
         return super(Glider_Loader,self).preProcessParams(row)
 
 
-def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbName, stride):
+def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride):
     '''Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
-    attributes resulting from the load into dbName. Designed to be called from script
+    attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.'''
 
     logger.debug("Instantiating Trajectory_Loader for url = %s", url)
     loader = Trajectory_Loader(
             url = url,
             campaignName = cName,
-            dbName = dbName,
+            dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
@@ -1151,16 +1151,16 @@ def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
 
 
 
-def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stride):
+def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbAlias, stride):
     '''Run the DAPloader for Dorado AUVCTD trajectory data and update the Activity with 
-    attributes resulting from the load into dbName. Designed to be called from script
+    attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.'''
 
     logger.debug("Instantiating Dorado_Loader for url = %s", url)
     loader = Dorado_Loader(
             url = url,
             campaignName = cName,
-            dbName = dbName,
+            dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
@@ -1172,16 +1172,16 @@ def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbName, stri
     logger.debug("Loaded Activity with name = %s", aName)
 
 
-def runLrauvLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbName, stride):
+def runLrauvLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbAlias, stride):
     '''Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
-    attributes resulting from the load into dbName. Designed to be called from script
+    attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.'''
 
     logger.debug("Instantiating Lrauv_Loader for url = %s", url)
     loader = Lrauv_Loader(
             url = url,
             campaignName = cName,
-            dbName = dbName,
+            dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
@@ -1207,7 +1207,7 @@ if __name__ == '__main__':
     ##      url = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/dorado_2010_ctd',
     ##      startDatetime = datetime(2010, 9, 14),
     ##      endDatetime = datetime(2010,9, 18),
-    ##      dbName = 'stoqs_june2011',
+    ##      dbAlias = 'stoqs_june2011',
     ##      platformName = 'dorado',
     ##      stride = 1000)
 
@@ -1223,7 +1223,7 @@ if __name__ == '__main__':
     baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'             # NCML to make salinity.units = "1"
     file = 'Dorado389_2010_300_00_300_00_decim.nc'
     stride = 1000       # Make large for quicker runs, smaller for denser data
-    dbName = 'default'
+    dbAlias = 'default'
 
-    runDoradoLoader(baseUrl + file, 'Test Load', file, 'dorado', 'auv', 'AUV Mission', dbName, stride)
+    runDoradoLoader(baseUrl + file, 'Test Load', file, 'dorado', 'auv', 'AUV Mission', dbAlias, stride)
 
