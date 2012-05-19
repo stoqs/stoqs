@@ -813,9 +813,8 @@ class Base_Loader(object):
     def updateActivityParameterStats(self, parameterCounts):
         '''
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
-        for this activity.
+        for this activity.  Store the historgram in the associated table.
         '''
-
         a = self.activity
         for p in parameterCounts:
             data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p)
@@ -825,6 +824,9 @@ class Base_Loader(object):
             logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f',
                             p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar), 
                             percentile(listvar, 0.025), percentile(listvar, 0.975))
+
+
+            # Save statistics
             try:
                 ap, created = m.ActivityParameter.objects.using(self.dbAlias).get_or_create(
                                         activity = a,
@@ -838,6 +840,7 @@ class Base_Loader(object):
                                         p025 = percentile(listvar, 0.025),
                                         p975= percentile(listvar, 0.975)
                                         )
+                   
                 if created:
                     logger.info('Created ActivityParameter for parameter.name = %s', p.name)
                 else:
@@ -857,9 +860,25 @@ class Base_Loader(object):
 
             except IntegrityError:
                 logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
-                continue
+                
+            # Compute and save histogram
+            (counts, bins) = numpy.histogram(numpvar,100)
+            logger.info(counts)
+            logger.info(bins)
+            i = 0
+            for count in counts:
+                try:
+                    ##logger.info('Creating ActivityParameterHistogram...')
+                    logger.info('count = %d, binlo = %f, binhi = %f', count, bins[i], bins[i+1])
+                    h, created = m.ActivityParameterHistogram.objects.using(self.dbAlias).get_or_create(
+                                                    activityparameter=ap, bincount=count, binlo=bins[i], binhi=bins[i+1])
+                    i = i + 1
+                    ##if created:
+                    ##    logger.info('Created ActivityParameterHistogram for parameter.name = %s, h = %s', (p.name, h,))
+                except IntegrityError:
+                    logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
 
-        ##transaction.rollback(using=self.dbAlias)
+
         logger.info('Updated statistics for activity.name = %s', a.name)
 
     def insertSimpleDepthTimeSeries(self):
