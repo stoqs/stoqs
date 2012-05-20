@@ -175,29 +175,27 @@
                             <input type="hidden" id="end-time" name="end-time"> 
                             <input type="hidden" id="start-depth" "name="start-depth">
                             <input type="hidden" id="end-depth" name="end-depth"> 
-                            <div class="overflow-x auto;">
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
 
-<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="click-data">
-    <thead>
-        <tr>
-            <th>depth</th>
-            <th>filterdiameter</th>
-            <th>filterporesize</th>
-            <th>geom</th>
-            <th>instantpoint__activity__name</th>
-            <th>instantpoint__timevalue</th>
-            <th>laboratory</th>
-            <th>name</th>
-            <th>researcher</th>
-            <th>samplepurpose__name</th>
-            <th>sampletype__name</th>
-            <th>volume</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-                            </div>
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="sample-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSample">
+                        Samples
+                        </a></h3>
+                    </div>
+                    <div id="collapseSample" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <span id="sample-instructions">Click on Sample locations in depth-time plot to get information here</span>
+                            <table id="sample-table" class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                    </tr>
+                                </thead> 
+                                <tbody>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div><!-- accordian-group -->
@@ -217,6 +215,8 @@
                         </div>
                     </div>
                 </div><!-- accordian-group -->
+
+
                 <div class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
@@ -532,23 +532,44 @@
         $.extend( $.fn.dataTableExt.oStdClasses, {
             "sSortAsc": "header headerSortDown",
             "sSortDesc": "header headerSortUp",
-            "sSortable": "header"
+            "sSortable": "header",
+            "sWrapper": "dataTables_wrapper form-inline"
         });
 
-
-        $("#placeholder").bind("plotclick", function (event, pos, item) {
-            if (item) {
+        function showSampleData(label) {
                 //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
                 var sample_url = '{{site_uri}}{% url show-sample-datatable dbAlias=request.META.dbAlias format=".json" %}';
-                sample_url = sample_url + '?instantpoint__activity__name__contains=' + item.series.label.split(' ')[0] + '&name=' + item.series.label.split(' ')[1];
-                //$("#click-data").text("You clicked point " + item.dataIndex + " in " + item.series.label + ".");
-                $("#click-data").dataTable( {
-                    "sDom": "<'row'<'span8'l><'span8'f>r>t<'row'<'span8'i><'span8'p>>",
+                sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
+                
+                var cols = ['depth', 'filterdiameter', 'filterporesize', 'geom', 'instantpoint__activity__name', 'instantpoint__timevalue', 'laboratory',
+                            'name', 'researcher', 'samplepurpose__name', 'sampletype__name', 'volume'];
+                var ths = '<tr>';
+                $.each(cols, function (index, value) {
+                    ths = ths + '<th>' + value + '</th>';
+                });
+                ths = ths + '</tr>';
+                console.log(ths)
+                $('#sample-table > thead').html(ths);
+
+                $("#sample-table").dataTable( {
+                    "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
                     "bProcessing": true,
                     "bDestroy":    true,
                     "sAjaxSource": sample_url
                 });
-                //plot.highlight(item.series, item.datapoint);
+                $('#sample-instructions').text('')
+                if (! $('#collapseSample').hasClass('in')) {
+                    $('#sample-anchor').click();
+                }
+        }
+
+        $("#placeholder").bind("plotclick", function (event, pos, item) {
+            if (item) {
+                // Crude test whether sample or activity click
+                console.log(item.series.label)
+                if (item.series.label.split(' ').length == 2) {
+                    showSampleData(item.series.label)
+                }
             }
         });
 
