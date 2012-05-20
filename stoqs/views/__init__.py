@@ -112,15 +112,22 @@ class BaseOutputer(object):
         logger.debug(qparams)
         self.query_set = self.query_set.filter(**qparams)
 
-    def process_request(self):
+    def assign_qs(self):
         '''
-        Default request processing: Apply any query parameters and get fields for the values.  Respond with requested format.
+        Assign the processed query string 'qs' with query parameters and fields. May be overridden to restructure response as needed.
         '''
         fields = self.getFields()
         logger.debug(fields)
         self.applyQueryParams(self.ammendFields(fields))
-        qs = self.query_set
-        qs = qs.values(*fields)
+        self.qs = self.query_set
+        self.qs = self.qs.values(*fields)
+
+
+    def process_request(self):
+        '''
+        Default request processing: Apply any query parameters and get fields for the values.  Respond with requested format.
+        '''
+        self.assign_qs()
 
         if self.format == 'csv' or self.format == 'tsv':
             response = HttpResponse()
@@ -133,7 +140,7 @@ class BaseOutputer(object):
                 response['Content-Disposition'] = 'attachment; filename=%s.csv' % self.stoqs_object_name
                 writer = csv.writer(response)
             writer.writerow(fields)
-            for obj in qs:
+            for obj in self.qs:
                 writer.writerow([obj[f] for f in fields])
 
             return response
@@ -141,7 +148,7 @@ class BaseOutputer(object):
             return HttpResponse(serializers.serialize('xml', self.query_set), 'application/xml')
 
         elif self.format == 'json':
-            return HttpResponse(simplejson.dumps(qs, cls=encoders.STOQSJSONEncoder), 'application/json')
+            return HttpResponse(simplejson.dumps(self.qs, cls=encoders.STOQSJSONEncoder), 'application/json')
 
         else:
             self.build_html_template()
@@ -151,7 +158,7 @@ class BaseOutputer(object):
             for line in response:
                 fh.write(line)
             fh.close()
-            return render_to_response(self.html_tmpl_path, {'list': qs})
+            return render_to_response(self.html_tmpl_path, {'list': self.qs})
 
 
 class SampleOutputer(BaseOutputer):
@@ -162,12 +169,56 @@ class SampleOutputer(BaseOutputer):
                 'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
                 'instantpoint__timevalue', 'instantpoint__activity__name']
 
+class SampleDataTable(BaseOutputer):
+    '''
+    Add Activity name and Instantpoint timevalue to the default fields
+    '''
+    fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
+                'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
+                'instantpoint__timevalue', 'instantpoint__activity__name']
+
+    def assign_qs(self):
+        '''
+        Assign the processed query string 'qs' with query parameters and fields. May be overridden to restructure response as needed.
+        '''
+        fields = self.getFields()
+        logger.debug(fields)
+        self.applyQueryParams(self.ammendFields(fields))
+        self.qs = self.query_set
+        table = []
+        for rec in self.qs.values(*fields):
+            row = []
+            row.append(rec['depth'])
+            row.append(rec['filterdiameter'])
+            row.append(rec['filterporesize'])
+            row.append(rec['geom'])
+            row.append(rec['instantpoint__activity__name'])
+            row.append(rec['instantpoint__timevalue'])
+            row.append(rec['laboratory'])
+            row.append(rec['name'])
+            row.append(rec['researcher'])
+            row.append(rec['samplepurpose__name'])
+            row.append(rec['sampletype__name'])
+            row.append(rec['uuid'])
+            row.append(rec['volume'])
+            table.append(row)
+
+        self.qs = {'aaData': table}
+        logger.debug(self.qs)
+
 
 def showSample(request, format = 'html'):
     stoqs_object = mod.Sample
     query_set = stoqs_object.objects.all().order_by('instantpoint__timevalue')
 
     s = SampleOutputer(request, format, query_set, stoqs_object)
+    return s.process_request()
+
+def showSampleDataTable(request, format = 'json'):
+    stoqs_object = mod.Sample
+    query_set = stoqs_object.objects.all().order_by('name')
+
+    s = SampleDataTable(request, format, query_set, stoqs_object)
     return s.process_request()
 
 def showInstantPoint(request, format = 'html'):
