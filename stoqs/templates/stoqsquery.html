@@ -26,6 +26,36 @@
       th {
         align: center; /* Doesn't seem to work '*/
       }
+
+        div.dataTables_length label {
+            width: 460px;
+            float: left;
+            text-align: left;
+        }
+ 
+        div.dataTables_length select {
+            width: 75px;
+        }
+ 
+        div.dataTables_filter label {
+            float: right;
+            width: 460px;
+        }
+ 
+        div.dataTables_info {
+            padding-top: 8px;
+        }
+ 
+        .dataTables_paginate {
+            float: right;
+            margin: 0;
+        }
+ 
+        table {
+            margin: 1em 0;
+            clear: both;
+        }
+
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet" />    
@@ -145,7 +175,50 @@
                             <input type="hidden" id="start-depth" "name="start-depth">
                             <input type="hidden" id="end-depth" name="end-depth"> 
                             <div>
-                                <span id="clickdata"></span></p>
+
+<table cellpadding="0" cellspacing="0" border="0" class="display" id="click-data">
+
+    <thead>
+        <tr>
+<th>depth</th>
+<th>filterdiameter</th>
+filterporesize</th>
+<th>geom</th>
+<th>instantpoint__activity__name</th>
+<th>instantpoint__timevalue</th>
+<th>laboratory</th>
+<th>name</th>
+<th>researcher</th>
+<th>samplepurpose__name</th>
+<th>sampletype__name</th>
+<th>uuid</th>
+<th>volume</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        
+    </tbody>
+    <tfoot>
+        <tr>
+<th>depth</th>
+<th>filterdiameter</th>
+filterporesize</th>
+<th>geom</th>
+<th>instantpoint__activity__name</th>
+<th>instantpoint__timevalue</th>
+<th>laboratory</th>
+<th>name</th>
+<th>researcher</th>
+<th>samplepurpose__name</th>
+<th>sampletype__name</th>
+<th>uuid</th>
+<th>volume</th>
+        </tr>
+    </tfoot>
+
+
+</table>
                             </div>
                         </div>
                     </div>
@@ -201,6 +274,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.selection.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.resize.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.dataTables.min.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
@@ -476,9 +550,26 @@
             }
         });
 
+        /* Default class modification for DataTable*/
+        $.extend( $.fn.dataTableExt.oStdClasses, {
+            "sSortAsc": "header headerSortDown",
+            "sSortDesc": "header headerSortUp",
+            "sSortable": "header"
+        });
+
+
         $("#placeholder").bind("plotclick", function (event, pos, item) {
             if (item) {
-                $("#clickdata").text("You clicked point " + item.dataIndex + " in " + item.series.label + ".");
+                //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
+                var sample_url = '{{site_uri}}{% url show-sample-datatable dbAlias=request.META.dbAlias format=".json" %}';
+                sample_url = sample_url + '?instantpoint__activity__name__contains=' + item.series.label.split(' ')[0] + '&name=' + item.series.label.split(' ')[1];
+                //$("#click-data").text("You clicked point " + item.dataIndex + " in " + item.series.label + ".");
+                $("#click-data").dataTable( {
+                    "sDom": "<'row'<'span8'l><'span8'f>r>t<'row'<'span8'i><'span8'p>>",
+                    "bProcessing": true,
+                    "bDestroy":    true,
+                    "sAjaxSource": sample_url
+                });
                 //plot.highlight(item.series, item.datapoint);
             }
         });
