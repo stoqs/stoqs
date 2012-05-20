@@ -485,9 +485,10 @@ class STOQSQManager(object):
 
         # Add aliases for geom and gid - Activity
         q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
+        q = q.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)       # Fixes problem with above being applied to Sample query join
         q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
    
-        # Add aliases for geom and gid - Activity
+        # Add aliases for geom and gid - Sample
         q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
         q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
    
