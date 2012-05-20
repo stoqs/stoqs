@@ -344,7 +344,7 @@ class STOQSQManager(object):
 
         # Alternate query to use stats stored with the Activity
         qs=self.qs.aggregate(Max('maxdepth'), Min('mindepth'))
-        return (qs['mindepth__min'],qs['maxdepth__max'])
+        return ('%.2f' % qs['mindepth__min'], '%.2f' % qs['maxdepth__max'])
         
     def getSimpleDepthTime(self):
         '''
