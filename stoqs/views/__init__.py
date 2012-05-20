@@ -169,55 +169,11 @@ class SampleOutputer(BaseOutputer):
                 'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
                 'instantpoint__timevalue', 'instantpoint__activity__name']
 
-class SampleDataTable(BaseOutputer):
-    '''
-    Add Activity name and Instantpoint timevalue to the default fields
-    '''
-    fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
-                'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
-                'instantpoint__timevalue', 'instantpoint__activity__name']
-
-    def assign_qs(self):
-        '''
-        Assign the processed query string 'qs' with query parameters and fields. May be overridden to restructure response as needed.
-        '''
-        fields = self.getFields()
-        logger.debug(fields)
-        self.applyQueryParams(self.ammendFields(fields))
-        self.qs = self.query_set
-        table = []
-        for rec in self.qs.values(*fields):
-            row = []
-            row.append('%.2f' % rec['depth'])
-            row.append(rec['filterdiameter'])
-            row.append(rec['filterporesize'])
-            row.append(rec['geom'])
-            row.append(rec['instantpoint__activity__name'])
-            row.append(rec['instantpoint__timevalue'])
-            row.append(rec['laboratory'])
-            row.append(rec['name'])
-            row.append(rec['researcher'])
-            row.append(rec['samplepurpose__name'])
-            row.append(rec['sampletype__name'])
-            row.append(rec['volume'])
-            table.append(row)
-
-        self.qs = {'aaData': table}
-        logger.debug(self.qs)
-
-
 def showSample(request, format = 'html'):
     stoqs_object = mod.Sample
     query_set = stoqs_object.objects.all().order_by('instantpoint__timevalue')
 
     s = SampleOutputer(request, format, query_set, stoqs_object)
-    return s.process_request()
-
-def showSampleDataTable(request, format = 'json'):
-    stoqs_object = mod.Sample
-    query_set = stoqs_object.objects.all().order_by('name')
-
-    s = SampleDataTable(request, format, query_set, stoqs_object)
     return s.process_request()
 
 def showInstantPoint(request, format = 'html'):
