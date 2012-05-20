@@ -188,7 +188,7 @@ class SampleDataTable(BaseOutputer):
         table = []
         for rec in self.qs.values(*fields):
             row = []
-            row.append(rec['depth'])
+            row.append('%.2f' % rec['depth'])
             row.append(rec['filterdiameter'])
             row.append(rec['filterporesize'])
             row.append(rec['geom'])
@@ -199,7 +199,6 @@ class SampleDataTable(BaseOutputer):
             row.append(rec['researcher'])
             row.append(rec['samplepurpose__name'])
             row.append(rec['sampletype__name'])
-            row.append(rec['uuid'])
             row.append(rec['volume'])
             table.append(row)
 
