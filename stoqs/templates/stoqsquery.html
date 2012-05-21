@@ -555,8 +555,8 @@
                 var sample_url = '{{site_uri}}{% url show-sample-datatable dbAlias=request.META.dbAlias format=".json" %}';
                 sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
                 
-                var cols = ['depth', 'filter diameter', 'filter pore size', 'geom', 'activity name', 'time', 'laboratory',
-                            'name', 'researcher', 'samplepurpose__name', 'sampletype__name', 'volume'];
+                var cols = ['depth', 'filter diam', 'filter pore size', 'lon', 'lat', 'activity name', 'time', 'lab',
+                            'name', 'res.', 'purpose', 'type', 'volume'];
                 var ths = '<tr>';
                 $.each(cols, function (index, value) {
                     ths = ths + '<th>' + value + '</th>';
