@@ -127,6 +127,7 @@ class BaseOutputer(object):
         '''
         Default request processing: Apply any query parameters and get fields for the values.  Respond with requested format.
         '''
+        fields = self.getFields()
         self.assign_qs()
 
         if self.format == 'csv' or self.format == 'tsv':
