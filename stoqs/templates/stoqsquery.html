@@ -118,11 +118,9 @@
                         <div class="accordion-inner">
                             <div class="row-fluid" id="map">
                             </div>
-                            {% if ap_count != 1 %}
-                            <h4>Approximately <strong id="approximate_count">0</strong> measured parameter data values from <strong id="ap_count">0</strong> ActivityParameters</h4>
-                            {% else %}
-                            <h4><strong id="approximate_count">0</strong> measured parameter data values from <strong id="ap_count">0</strong> ActivityParameter</h4>
-                            {% endif %}
+                            <p>
+                                <div id="query-stats" class="ajax-wait"></div>
+                            </p>
                         </div>
                     </div>
                 </div><!-- accordian-group -->
@@ -755,6 +753,9 @@
 
         request = $.ajax({
             type : 'GET',
+            beforeSend: function() {
+                $('#query-stats').html('<img src="{{STATIC_URL}}images/ajax-loader.gif">')
+            },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
                 setDataAccess(data['sql']);
@@ -767,8 +768,12 @@
                 }
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
                 me.refreshMap();
-                $('#approximate_count').html(data['count']).change();
-                $('#ap_count').html(data['ap_count']).change();
+                if (data['ap_count'] > 1) {
+                    $('#query-stats').html("<h4>Approximately " + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters</h4>");
+                }
+                else {
+                    $('#query-stats').html("<h4>" + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameter</h4>");
+                }
             },
             dataType: "json"
         });
@@ -790,6 +795,7 @@
             // This has to be done after 100ms so that standard bootstrap functionality happens first.
             setTimeout(function() { t.select()}, 100);
         });
+
                 
         /* 
          * Setup OpenLayers with some default background layers.
