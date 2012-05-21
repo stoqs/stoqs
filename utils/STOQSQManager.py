@@ -95,6 +95,7 @@ class STOQSQManager(object):
                                'simpledepthtime': self.getSimpleDepthTime,
                                'sampledepthtime': self.getSampleDepthTime,
                                'count': self.getCount,
+                               'sql': self.getMeasuredParametersPostgreSQL,
                                }
         
         results = {}
@@ -210,6 +211,17 @@ class STOQSQManager(object):
         else:
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
         return qs_mp
+
+    def getMeasuredParametersPostgreSQL(self):
+        '''
+        Return SQL string that can be executed agaisnt the postgres database
+        '''
+        sql = ''
+        qs_mp = self.getMeasuredParametersQS()
+        if qs_mp:
+            sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
+            sql +=  self.postgresifySQL(str(qs_mp.query)) + ';'
+        return sql
 
     def getSampleQS(self):
         '''

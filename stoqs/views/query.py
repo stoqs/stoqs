@@ -173,7 +173,8 @@ def queryUI(request):
     ##formats={'csv': 'Comma-Separated Values (CSV)',
     ##         'dods': 'OPeNDAP Format',
     ##         'kml': 'KML (Google Earth)'}
-    formats={'kml': 'KML (Google Earth)'}
+    formats={'kml': 'KML (Google Earth)',
+             'sql': 'SQL for database %s' % settings.DATABASES[request.META['dbAlias']]['NAME']}
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
                                                   'formats': formats,
                                                   'mapserver_host': settings.MAPSERVER_HOST,
