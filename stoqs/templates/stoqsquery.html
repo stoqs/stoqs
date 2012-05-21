@@ -118,7 +118,11 @@
                         <div class="accordion-inner">
                             <div class="row-fluid" id="map">
                             </div>
-                            <h3>Approximately <strong id="approximate_count">0</strong> measured parameter data values</h3>
+                            {% if ap_count > 1 %}
+                            <h4>Approximately <strong id="approximate_count">0</strong> measured parameter data values from <strong id="ap_count">0</strong> ActivityParameters</h4>
+                            {% else %}
+                            <h4><strong id="approximate_count">0</strong> measured parameter data values from <strong id="ap_count">0</strong> ActivityParameter</h4>
+                            {% endif %}
                         </div>
                     </div>
                 </div><!-- accordian-group -->
@@ -764,6 +768,7 @@
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
                 me.refreshMap();
                 $('#approximate_count').html(data['count']).change();
+                $('#ap_count').html(data['ap_count']).change();
             },
             dataType: "json"
         });

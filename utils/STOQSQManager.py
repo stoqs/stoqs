@@ -95,6 +95,7 @@ class STOQSQManager(object):
                                'simpledepthtime': self.getSimpleDepthTime,
                                'sampledepthtime': self.getSampleDepthTime,
                                'count': self.getCount,
+                               'ap_count': self.getAPCount,
                                'sql': self.getMeasuredParametersPostgreSQL,
                                }
         
@@ -114,28 +115,37 @@ class STOQSQManager(object):
         '''
         Get the count of measured parameters giving the exising query
         '''
-        qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
         locale.setlocale(locale.LC_ALL, 'en_US')
+        qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
         if qs_ap:
             ap_count = qs_ap.count()
             logger.debug('ap_count = %d', ap_count)
             approximate_count = qs_ap.aggregate(Sum('number'))['number__sum']
             logger.debug('approximate_count = %d', approximate_count)
             if approximate_count == 0:
-                raw_imput('paused')
+                logger.warn('actual_count == 0')
             if ap_count < 2:
                 logger.info('>>>> ap_count is < 2.  Switching to getting actual count.')
                 qs_mp = self.getMeasuredParametersQS()          # Actual count from MeasuredParameter - needs to do seq scan on large table
                 actual_count = qs_mp.count()
                 logger.debug('actual_count = %d', actual_count)
                 if actual_count == 0:
-                    raw_imput('paused')
+                    logger.warn('actual_count == 0')
                 return actual_count
             else:
                 return locale.format("%d", approximate_count, grouping=True)
         else:
             return 0
-        
+      
+    def getAPCount(self):
+        '''
+        Return count of ActivityParameters given the current constraints
+        ''' 
+        qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
+        if qs_ap:
+            return qs_ap.count()
+        else:
+            return 0
         
     def getActivityParametersQS(self):
         '''
@@ -216,11 +226,15 @@ class STOQSQManager(object):
         '''
         Return SQL string that can be executed agaisnt the postgres database
         '''
-        sql = ''
-        qs_mp = self.getMeasuredParametersQS()
-        if qs_mp:
-            sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
-            sql +=  self.postgresifySQL(str(qs_mp.query)) + ';'
+        sql = 'Constrain selection to just 1 ActivityParameter to see the SQL '
+        qs_ap = self.getActivityParametersQS()
+        if qs_ap:
+            if qs_ap.count() < 2:
+                # Return query only if a platform and a parameter have been selected
+                qs_mp = self.getMeasuredParametersQS()
+                if qs_mp:
+                    sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
+                    sql +=  self.postgresifySQL(str(qs_mp.query)) + ';'
         return sql
 
     def getSampleQS(self):
