@@ -134,10 +134,14 @@
 
                             <div class="row-fluid">
                                 {% for format, description in formats.items %}
-                                <a target="_blank" id="{{format}}-link" href=""><img src="{{STATIC_URL}}images/{{format}}-icon.png"/></a>
+                                <table>
+                                    <tr>
+                                        <th><a target="_blank" id="{{format}}-link" href=""><img src="{{STATIC_URL}}images/{{format}}-icon.png"/></a></th>
+                                        <th><h4>{{description}}</h4></th>
+                                    </tr>
+                                </table>
                                 <div class="row-fluid">
-                                    <!-- <input id="{{format}}-field" type="text" class="span6"> -->
-                                    <p id="{{format}}-field"></p>
+                                    <pre id="{{format}}-field"></pre>
                                 </div>          
                                 {% endfor %}            
                             </div><!-- row-fluid -->
@@ -286,7 +290,7 @@
     }
     
     // Set the URL fields and buttons to use the current queried URL
-    function setUrls() {
+    function setDataAccess(sql) {
         var base_url='{{site_uri}}{% url stoqs-query-ui dbAlias=request.META.dbAlias %}';
         var param=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
         if (param != '') {
@@ -297,8 +301,13 @@
         // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
         $.each(formats, function (index, value) {
             var url=base_url + value + param;
-            $('#'+value+'-field').text(url);
-            $('#'+value+'-link').attr('href',url);
+            if (value == 'sql') {
+                $('#'+value+'-field').text(sql);
+            }
+            else {
+                $('#'+value+'-field').text(url);
+                $('#'+value+'-link').attr('href',url);
+            }
         });
     }
     
@@ -739,7 +748,7 @@
             type : 'GET',
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
-                setUrls();
+                setDataAccess(data['sql']);
                 for (var key in data) {
                     if (init == true) {
                         onInit(data, key)
