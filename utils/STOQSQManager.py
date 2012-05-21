@@ -491,32 +491,15 @@ class STOQSQManager(object):
         # Add aliases for geom and gid - Sample
         q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
         q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
-   
-        # Put quotes around any IN parameters:
-        #  IN (a81563b5f2464a9ab2d5d7d78067c4d4)
-        m = re.search( r' IN \(([\S^\)]+)\)', q)
-        if m:
-            ##logger.debug(m.group(1))
-            q = re.sub( r' IN \([\S^\)]+\)', ' IN (\'' + m.group(1) + '\')', q)
 
-        # Put quotes around the DATE TIME parameters, treat each one separately:
-        #  >= 2010-10-27 07:12:10
-        #  <= 2010-10-28 08:22:52
-        m1 = re.search( r'>= (\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)', q)
-        if m1:
-            ##logger.debug('>= %s', m1.group(1))
-            q = re.sub( r'>= \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d', '>= \'' + m1.group(1) + '\'', q)
-        m2 = re.search( r'<= (\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)', q)
-        if m2:
-            ##logger.debug('<= %s', m2.group(1))
-            q = re.sub( r'<= \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d', '<= \'' + m2.group(1) + '\'', q)
+        # Quotify things that need quotes
+        QUOTE_NAMEEQUALS = re.compile('name\s+=\s+(?P<argument>\S+)')
+        QUOTE_DATES = re.compile('(?P<argument>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)')
+        QUOTE_INS = re.compile('IN\s+\((?P<argument>[^\)]+)\)')
 
-        # Put quotes around 'platform.name = ' parameters:
-        #  stoqs_platform.name = dorado 
-        m = re.search( r'stoqs_platform.name = (.+?) ', q)
-        if m:
-            ##logger.debug('stoqs_platform.name =  %s', m.group(1))
-            q = re.sub( r'stoqs_platform.name = .+? ', 'stoqs_platform.name =  \'' + m.group(1) + '\'', q)
+        q = QUOTE_NAMEEQUALS.sub(r"name = '\1'", q)
+        q = QUOTE_DATES.sub(r"'\1'", q)
+        q = QUOTE_INS.sub(r"IN ('\1')", q)
 
         ##logger.debug('After: %s', q)
 
