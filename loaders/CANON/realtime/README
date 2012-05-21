@@ -14,6 +14,19 @@ create database stoqs_may2012_r owner=stoqsadm template=template_postgis;
 grant all on all tables in schema public to stoqsadm;
 
 
+Add the database alias to your privateSettings file:
+----------------------------------------------------
+
+    'stoqs_may2012_r': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': 'stoqs_may2012_r',       
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+
+
 Sync the model to the new database(s) - at shell prompt:
 --------------------------------------------------------
 
@@ -22,4 +35,4 @@ Sync the model to the new database(s) - at shell prompt:
 
 -- 
 Mike McCann
-15 May 2012
+21 May 2012
