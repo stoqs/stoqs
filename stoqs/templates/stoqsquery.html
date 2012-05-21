@@ -26,7 +26,7 @@
       th {
         align: center; /* Doesn't seem to work '*/
       }
-
+<!--
         div.dataTables_length label {
             width: 460px;
             float: left;
@@ -55,7 +55,7 @@
             margin: 1em 0;
             clear: both;
         }
-
+-->
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet" />    
@@ -134,10 +134,7 @@
 
                             <div class="row-fluid">
                                 {% for format, description in formats.items %}
-<!--
-                                <span class="help-inline"><a target="_blank" id="{{format}}-link" class="btn btn-info btn-small" href=""><i class="icon-file"></i> {{description}}</a></span>
--->
-                                <a target="_blank" id="{{format}}-link" href=""><img src="{{STATIC_URL}}images/earth_client-32.png"/></a>
+                                <a target="_blank" id="{{format}}-link" href=""><img src="{{STATIC_URL}}images/{{format}}-icon.png"/></a>
                                 <div class="row-fluid">
                                     <!-- <input id="{{format}}-field" type="text" class="span6"> -->
                                     <p id="{{format}}-field"></p>
@@ -536,7 +533,10 @@
             "sSortAsc": "header headerSortDown",
             "sSortDesc": "header headerSortUp",
             "sSortable": "header",
-            "sWrapper": "dataTables_wrapper form-inline"
+            "sWrapper": "dataTables_wrapper form-inline",
+            "bJQueryUI": true,
+            "aoColumnDefs": [ { "sWidth": "10%", "aTargets": [ -1 ] }
+        ]
         });
 
         function showSampleData(label) {
