@@ -202,7 +202,7 @@
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
-                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
+                        <h3><a id="parameters-label" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
                         Parameters
                         </a></h3>
                     </div>
@@ -219,7 +219,7 @@
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
-                        <h3><a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
+                        <h3><a id="platforms-label" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
                         Platforms
                         </a></h3>
                     </div>
@@ -234,8 +234,6 @@
                 </div><!-- accordian-group -->
 
             </div><!-- accordian well -->
-
-            <p><button id="re-init-button" class="btn btn-mini">Reset all selectors</button></p>
 
         </div><!-- span -->
 
@@ -312,8 +310,20 @@
         if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
             if ($element.is('.btn-primary')) {
                 $element.removeClass('btn-primary');
+                if ($(element).hasClass('parameter')) {
+                    $('#parameters-label').html('Parameters')
+                }
+                if ($(element).hasClass('platform')) {
+                    $('#platforms-label').html('Platforms')
+                }
             } else {
                 $element.addClass('btn-primary');
+                if ($(element).hasClass('parameter')) {
+                    $('#parameters-label').html('Parameter - ' + $(element).html())
+                }
+                if ($(element).hasClass('platform')) {
+                    $('#platforms-label').html('Platform - ' + $(element).html())
+                }
             }
         }
     }
@@ -443,13 +453,6 @@
             $("#zoomed-button").removeClass('btn-primary');
             $("#zoomed-button").addClass('disabled');
         }
-    });
-
-    $('#re-init-button').click(function() {
-        for (var key in initData) {
-            onUpdate(initData, key)
-        }
-        me.refreshMap();
     });
 
     
@@ -653,14 +656,14 @@
             if (key == 'platforms') {
                 $.each(data[key], function (index, value) {
                                         $('#platform-table > tbody:last').append('<tr id="' + value[1] +'">' +
-                                                  '<td class="platform"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></td>' +
+                                                  '<td class="platform"><button class="btn btn-mini stoqs-toggle platform">'+ value[0] +'</button></td>' +
                                                   '</tr>');
                 });
             }
             else if (key == 'parameters') {
                 $.each(data[key], function (index, value) {
                                         $('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
-                                                  '<td class="parameter"><button class="btn btn-mini stoqs-toggle">'+ value[0] +'</button></td>' +
+                                                  '<td class="parameter"><button class="btn btn-mini stoqs-toggle parameter">'+ value[0] +'</button></td>' +
                                                   '</tr>');
                 });
             }
