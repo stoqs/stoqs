@@ -33,6 +33,24 @@ Sync the model to the new database(s) - at shell prompt:
 ./manage.py syncdb --database=stoqs_may2012_r
 
 
+Install Google Protobuf and pyproj (for converting UTM):
+--------------------------------------------------------
+
+Get tarball from http://code.google.com/p/protobuf/downloads/list
+(Run "./configure --prefix=/usr" to avoid having to set your LD_LIBRARY_PATH)
+
+protoc --python_out=. trex_sensor.proto
+protoc --python_out=. trex.proto
+
+From the python dir in the protobuf source tree execute in your virtual-env:
+
+python setup.py test
+python setup.py install
+
+easy_install pyproj
+
+
+
 -- 
 Mike McCann
 21 May 2012
