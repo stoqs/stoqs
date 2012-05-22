@@ -179,7 +179,7 @@ class Consumer():
         (platformType, created) = m.PlatformType.objects.using(self.dbAlias).get_or_create(name = platformType)
         self.platformType = platformType
 
-        (platform, created) = m.Platform.objects.using(self.dbAlias).get_or_create(name = platformName, platformtype = platformType)
+        (platform, created) = m.Platform.objects.using(self.dbAlias).get_or_create(name = platformName, platformtype = platformType, color = 'ffff00')
         self.platform = platform
 
         (activityType, created) = m.ActivityType.objects.using(self.dbAlias).get_or_create(name = activityType)
