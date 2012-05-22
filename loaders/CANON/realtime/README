@@ -50,6 +50,11 @@ python setup.py install
 easy_install pyproj
 
 
+Run the consumer for TREX sensor protobuf messages:
+---------------------------------------------------
+
+./persistTrex.py --en SensorMessagesFromTrex --et fanout --qn macbookvm_persist_trex --vh trackingvhost --persist stoqs_may2012_r
+
 
 -- 
 Mike McCann
