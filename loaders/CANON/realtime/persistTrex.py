@@ -16,6 +16,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))  # sett
 from django.conf import settings
 from stoqs import models as m
 from django.db.utils import IntegrityError
+from django.contrib.gis.geos import LineString
+from coards import to_udunits, from_udunits
 
 logger = logging.getLogger('__main__')
 logger.setLevel(logging.DEBUG)
@@ -101,7 +103,6 @@ class Consumer():
                     if mv == 'gulper_id':
                         logger.info('>>> gulper_id = %s', value)
                         self.persistSample(dt, s.depth, lat, lon, mv, value)
-                        raw_input('paused')
                     else:
                         try:
                             self.persistMeasurement(dt, s.depth, lat, lon, mv, value)
@@ -233,10 +234,36 @@ class Consumer():
         return sample
 
     def updateMaptrack(self):
-        pass
+        '''
+        Read measurement geometry accumulated so far for this activity and compute a maptrack for the path
+        '''
+        qs = m.Measurement.objects.using(self.dbAlias).filter(instantpoint__activity = self.activity)
+        linestringPoints = [q.geom for q in qs]
+        if len(linestringPoints) < 2:
+            return
+        print "linestringPoints = %s" % linestringPoints
+        path = LineString(linestringPoints).simplify(tolerance=.001)
+
+        num_updated = m.Activity.objects.using(self.dbAlias).filter(id = self.activity.id).update(
+                        maptrack = path,
+                        mindepth = 0,
+                        maxdepth = 100,
+                        loaded_date = datetime.datetime.utcnow())
+
+        print "Updated %d Activity" % num_updated
 
     def updateSimpleDepthTime(self):
-        pass
+        '''
+        Read the time series of depth values for this activity, simplify it and insert the values in the
+        SimpleDepthTime table that is related to the Activity.
+        '''
+        measurements = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity)
+        for meas in measurements:
+            ems = 1000 * to_udunits(meas.instantpoint.timevalue, 'seconds since 1970-01-01')
+            d = float(meas.depth)
+            m.SimpleDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = meas.instantpoint, depth = d, epochmilliseconds = ems)
+
+        logger.info('Inserted %d values into SimpleDepthTime', len(measurements))
 
     def signalHandler(self, signum, frame):
         '''Throw exceptoin so as to gracefully close the channel if the process is killed.'''
