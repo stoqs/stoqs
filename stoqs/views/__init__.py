@@ -47,6 +47,9 @@ class BaseOutputer(object):
     '''Base methods for supported responses for all STOQS objects: csv, json, kml, html, etc.
     '''
     html_tmpl_file = 'html_template.html'
+    # Django's additional field lookups
+    fieldLookups = ('exact', 'iexact', 'contains', 'icontains', 'in', 'gt', 'gte', 'lt', 'lte', 'startswith', 'istartswith',
+                    'endswith', 'iendswith', 'range', 'year', 'month', 'day', 'week_day', 'isnull', 'search', 'regex', 'iregex')
     fields = []
 
     def __init__(self, request, format, query_set, stoqs_object=None):
@@ -88,11 +91,9 @@ class BaseOutputer(object):
     def ammendFields(self, fields):
 
         # Append Django field lookups to the field names, see: https://docs.djangoproject.com/en/dev/ref/models/querysets/#field-lookups
-        fieldLookups = ('exact', 'iexact', 'contains', 'icontains', 'in', 'gt', 'gte', 'lt', 'lte', 'startswith', 'istartswith',
-                        'endswith', 'iendswith', 'range', 'year', 'month', 'day', 'week_day', 'isnull', 'search', 'regex', 'iregex')
         ammendedFields = []
         ammendedFields.extend(fields)
-        for addition in fieldLookups:
+        for addition in self.fieldLookups:
             for f in fields:
                 ammendedFields.append('%s__%s' % (f, addition, ))
 
@@ -151,6 +152,11 @@ class BaseOutputer(object):
         elif self.format == 'json':
             return HttpResponse(simplejson.dumps(self.qs, cls=encoders.STOQSJSONEncoder), 'application/json')
 
+        elif self.format == 'help':
+            helpText = 'Fields: %s\n\nField Lookups: %s' % (self.fields, self.fieldLookups)
+            response = HttpResponse(helpText, mimetype="text/plain")
+            return response
+
         else:
             self.build_html_template()
             response = render_to_response(self.html_tmpl_file, {'cols': fields },
@@ -180,6 +186,20 @@ def showSample(request, format = 'html'):
 def showInstantPoint(request, format = 'html'):
     stoqs_object = mod.InstantPoint
     query_set = stoqs_object.objects.all().order_by('timevalue')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
+
+def showMeasurement(request, format = 'html'):
+    stoqs_object = mod.Measurement
+    query_set = stoqs_object.objects.all()
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
+
+def showMeasuredParameter(request, format = 'html'):
+    stoqs_object = mod.MeasuredParameter
+    query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
