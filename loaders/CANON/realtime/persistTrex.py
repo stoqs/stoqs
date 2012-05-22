@@ -5,11 +5,20 @@ import sys
 import datetime
 import amqplib.client_0_8 as amqp
 from optparse import OptionParser
-from stoqs import models as m
 import signal
 import traceback
 import trex_sensor_pb2
 import pyproj
+import logging
+os.environ['DJANGO_SETTINGS_MODULE']='settings'
+project_dir = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))  # settings.py is three dirs up
+from django.conf import settings
+from stoqs import models as m
+
+logger = logging.getLogger('__main__')
+logger.setLevel(logging.DEBUG)
+
 
 class InterruptedBySignal:
     pass
@@ -39,7 +48,10 @@ class Consumer():
         '''Connect to RabbitMQ AMQP server based on settings we have at MBARI, return connection and channel objects.'''
 
         ##amqp_host = '134.89.12.92:5672' - stoqspg-dev
-        amqp_host = 'messaging.shore.mbari.org:5672'
+        ##amqp_host = 'messaging.shore.mbari.org:5672'
+        amqp_host = '%s:%s' % (settings.RABBITMQ_TRACKING_HOST, settings.RABBITMQ_TRACKING_PORT,)
+        logger.debug(amqp_host)
+        raw_input('paused')
         if vhost == 'canonvhost':
             connection = amqp.Connection( host = amqp_host, 
                 userid = "canon", 
@@ -48,9 +60,9 @@ class Consumer():
                 insist = False )
         elif vhost == 'trackingvhost':
             connection = amqp.Connection( host = amqp_host,
-                userid = "tracking", 
-                password = "MBARItracking", 
-                virtual_host = "trackingvhost", 
+                userid = settings.RABBITMQ_TRACKING_USER,
+                password = settings.RABBITMQ_TRACKING_PASSWORD,
+                virtual_host = settings.RABBITMQ_TRACKING_VHOST,
                 insist = False )
         else:
             print 'vhost must be either canonvhost or trackingvhost.'
