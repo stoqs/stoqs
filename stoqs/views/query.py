@@ -63,7 +63,7 @@ def kmlResponse(request, qm, response):
             dataHash[d[6]] = []
             dataHash[d[6]].append(d)
 
-    folderName = "%s_%.1f_%.1f" % (pName, qm.getDepth()[0], qm.getDepth()[1])
+    folderName = "%s_%.1f_%.1f" % (pName, float(qm.getDepth()[0]), float(qm.getDepth()[1]))
     descr = request.get_full_path().replace('&', '&amp;')
     logger.debug(descr)
     kml = KML.makeKML(request.META['dbAlias'], dataHash, pName, folderName, descr, qm.getTime()[0], qm.getTime()[1])

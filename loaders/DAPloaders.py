@@ -898,8 +898,10 @@ class Base_Loader(object):
 
         logger.debug('line = %s', line)
         logger.info('Number of points in original depth time series = %d', len(line))
+        ##critSimpleDepthTime = 10
+        critSimpleDepthTime = .0001
         try:
-            simple_line = simplify_points(line, 10)
+            simple_line = simplify_points(line, critSimpleDepthTime)
         except IndexError:
             simple_line = []        # Likely "list index out of range" from a stride that's too big
         logger.info('Number of points in simplified depth time series = %d', len(simple_line))
