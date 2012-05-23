@@ -39,7 +39,7 @@ except IndexError:
 cl = CANONLoader(dbAlias, 'CANON - May 2011')
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2012/netcdf/'
 cl.dorado_files = [ 'Dorado389_2012_143_07_143_07_decim.nc',
-                    'Dorado389_2012_143_07_143_08_decim.nc',
+                    'Dorado389_2012_143_08_143_08_decim.nc',
                   ]
 cl.tethys_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2012/'
 cl.tethys_files = [ 
