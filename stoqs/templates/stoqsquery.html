@@ -338,8 +338,31 @@
     
         function getUTCDateString(date) {
             // $.format.date(date,'yyyy-MM-dd hh:mm:ss') is broken in Safari, construct SQL friendly date string this way
-            var date_str = date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1) + '-' + date.getUTCDate();
-            date_str = date_str + ' ' + date.getUTCHours() + ':' + date.getUTCMinutes() + ':' + date.getUTCSeconds();
+            var mon = new String(date.getUTCMonth() + 1);
+            mon = mon.replace(/\d+/g, function(m) {
+               return "0".substr(m.length - 1) + m;
+            });
+            var day = new String(date.getUTCDate());
+            day = day.replace(/\d+/g, function(m) {
+               return "0".substr(m.length - 1) + m;
+            });
+            var hr = new String(date.getUTCHours());
+            hr = hr.replace(/\d+/g, function(m) {
+               return "0".substr(m.length - 1) + m;
+            });
+            var mn = new String(date.getUTCMinutes());
+            mn = mn.replace(/\d+/g, function(m) {
+               return "0".substr(m.length - 1) + m;
+            });
+            var se = new String(date.getUTCSeconds());
+            se = se.replace(/\d+/g, function(m) {
+               return "0".substr(m.length - 1) + m;
+            });
+
+            var date_str = date.getUTCFullYear() + '-' + mon + '-' + day;
+            date_str = date_str + ' ' + hr + ':' + mn + ':' + se;
+            console.log(date_str);
+
             return date_str
         }
 
@@ -564,7 +587,6 @@
                     ths = ths + '<th>' + value + '</th>';
                 });
                 ths = ths + '</tr>';
-                console.log(ths)
                 $('#sample-table > thead').html(ths);
 
                 $("#sample-table").dataTable( {
@@ -581,10 +603,12 @@
 
         $("#placeholder").bind("plotclick", function (event, pos, item) {
             if (item) {
-                // Crude test whether sample or activity click
+                // Crude test whether sample or activity click, activities 2nd element may be '(stride=..'
                 console.log(item.series.label)
                 if (item.series.label.split(' ').length == 2) {
-                    showSampleData(item.series.label)
+                    if (item.series.label.split(' ')[1].indexOf('(') == -1) {
+                        showSampleData(item.series.label)
+                    }
                 }
             }
         });
