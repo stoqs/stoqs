@@ -14,7 +14,7 @@ su -c "rabbitmqctl add_user stoqs stoqs"		# Note: You may want different credent
 su -c "rabbitmqctl add_vhost stoqs"				# for the Rabbitmq account - here we use 'stoqs'.
 su -c 'rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"'
 
-# For ability to generate ER diagrams
+# For ability to generate ER diagrams using ./manage.py graph_models stoqs stoqs -g -o stoqs_model.png
 su -c "yum -y install graphviz-devel"
 su -c "yum -y install graphviz-python"
 
@@ -80,6 +80,10 @@ easy_install gdal
 easy_install psycopg2==2.4.1
 easy_install pygraphviz
 easy_install django_extensions
+
+# For server-side Matlab-style plotting of data
+pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
+
 
 # When running django-admin.py or 'python manage.py' do it in your virtualenv, making
 # sure you prompt looks something like "(venv-stoqs)[student@localhost stoqsproj]$ "
