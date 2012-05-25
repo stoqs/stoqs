@@ -2,7 +2,8 @@ INSTALL
 =======
 
 Notes for installing and configuring STOQS.  Make sure that your system has all of the
-prerequisites noted in the PREREQUISITES file.
+prerequisites noted in the PREREQUISITES file and read the README before embarking on
+following these instructions.
 
 1. Set up your Django environment (bash shell):
 
@@ -44,13 +45,12 @@ prerequisites noted in the PREREQUISITES file.
    that the DATABASE_USER setting in privateSettings is 'stoqsadm'):
 
 	create database stoqs owner=stoqsadm template=template_postgis;
-	# use "template=postgis" if postgis was installed via yum
-	alter database stoqs set standard_conforming_strings to off;	# Not needed with Django patch #16778
 	\c stoqs
 	grant all on all tables in schema public to stoqsadm;
 	
 	[repeat for additional campaign specific databases]
 
+	# use "template=postgis" in the create command if postgis was installed via yum
 
 For the following commands where you run 'python manage.py ' with various options you will need your shell
 to be in the virtual environment that you created in PREREQUISITES - unless all of the packages have been
