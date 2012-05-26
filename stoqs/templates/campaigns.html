@@ -73,7 +73,7 @@
             <tbody>
                 {% for c in cList %}
                 <tr>
-                <td>{{ c.dbAlias }}</td><td><a href="/{{ c.dbName }}/activities">{{ c.name }}</a></td><td>{{ c.description }}</td>
+                <td>{{ c.dbAlias }}</td><td><a href="{{site_uri}}{% url stoqs-query-ui dbAlias=c.dbAlias %}">{{ c.name }}</a></td><td>{{ c.description }}</td>
                 <td>{{ c.startdate }}</td><td>{{ c.enddate }}</td>
                 </tr>
         {% endfor %}
