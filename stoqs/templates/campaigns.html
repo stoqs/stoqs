@@ -64,23 +64,42 @@
 
     <div class="container-fluid">
 
-        <h1>Campaign List</h1>
+        <div class="row-fluid">
 
-        <table border="1">
-            <thead>
-                <tr><th>Database Alias</th><th>Campaign</th><th>Description</th><th>Start</th><th>End</th></tr>
-            </thead>
-            <tbody>
-                {% for c in cList %}
-                <tr>
-                <td>{{ c.dbAlias }}</td><td><a href="{{site_uri}}{% url stoqs-query-ui dbAlias=c.dbAlias %}">{{ c.name }}</a></td><td>{{ c.description }}</td>
-                <td>{{ c.startdate }}</td><td>{{ c.enddate }}</td>
-                </tr>
-        {% endfor %}
-            </tbody>
-        </table>
+            <div class="span6">
+                <div class="accordion well" id="accordion1">
+                    <div class="accordian-group">
+                        <div class="accordian-heading">
+                            <h3><a id="campaigns-anchor" class="accordion-toggle" data-parent="#accordion1">
+                            Campaigns on this server
+                            </a></h3>
+                        </div>
+                        <div id="collapseCampaigns" class="accordion-body collapse in">
+                            <div class="accordion-inner">
+    
+                                <table class="table table-condensed table-bordered">
+                                    <thead>
+                                        <tr><th>Database Alias</th><th>Name</th><th>Description</th><th>Start</th><th>End</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for c in cList %}
+                                        <tr>
+                                        <td>{{ c.dbAlias }}</td>
+                                        <td><a href="{{site_uri}}{% url stoqs-query-ui dbAlias=c.dbAlias %}">{{ c.name }}</a></td><td>{{ c.description }}</td>
+                                        <td>{{ c.startdate }}</td><td>{{ c.enddate }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div><!-- accordian-group -->
+                </div><!-- accordian well -->
 
-    </div>
+            </div>
+        </div>
+
+    </div> <!-- container-fluid -->
 
   </body>
 </html>
