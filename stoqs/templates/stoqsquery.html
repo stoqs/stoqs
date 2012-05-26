@@ -106,7 +106,7 @@
 
         <div class="span6">
 
-            <div class="accordion well" id="accordion2">
+            <div class="accordion well" id="accordion1">
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
@@ -270,7 +270,7 @@
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
     <script type="text/javascript">
     
-    var stoqsQuery='{{site_uri}}{% url stoqs-query-summary dbAlias=request.META.dbAlias  %}';
+    var stoqsQuery='{{site_uri}}{% url stoqs-query-summary dbAlias=request.META.dbAlias %}';
     var params={}
     var initData;
     var zoomedData;
@@ -695,7 +695,8 @@
             zoomedData = initData;
             if (key == 'platforms') {
                 $.each(data[key], function (index, value) {
-                                        $('#platform-table > tbody:last').append('<tr id="' + value[1] +'">' +
+                                        $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td style="width: 10%;"><hr id="' + 
+                                                  value[1] +'_color" style="width:40px;height:2px;" /></td>' +
                                                   '<td class="platform"><button class="btn btn-mini stoqs-toggle platform">'+ value[0] +'</button></td>' +
                                                   '</tr>');
                 });
@@ -726,6 +727,9 @@
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
                 $.plot($("#placeholder"), getDataset(initData, start.getTime(), end.getTime()), simpledepthtime_options);
+                $.each(data[key]['colors'], function (index, value) {
+                    $('#' + index + '_color').css('background-color', '#' + value);
+                });
             }
         } // onInit()
 
