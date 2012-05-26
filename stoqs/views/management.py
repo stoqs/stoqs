@@ -115,7 +115,8 @@ def showDatabase(request):
 
 
 def showCampaigns(request):
-    '''Present list of Campaigns from scanning the DATABASES dictionary from settings.
+    '''
+    Present list of Campaigns from scanning the DATABASES dictionary from settings.
     '''
 
     dbAliases = settings.DATABASES.keys()
