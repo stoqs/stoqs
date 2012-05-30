@@ -54,6 +54,12 @@ cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_de
 
 cl.martin_parms = []
 
+cl.nps_g29_base = 'http://www.cencoos.org:8080/thredds/dodsC/glider/'
+cl.nps_g29_files = ['OS_Glider_NPS_Glider_29_20120524_TS.nc']
+cl.nps_g29_parms = ['TEMP', 'PSAL', 'OPBS']
+
+##cl.waveglider = ''
+
 cl.stride = stride
 cl.loadAll()
 
