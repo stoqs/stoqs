@@ -43,6 +43,7 @@ cl.dorado_files = [
                     'Dorado389_2012_142_02_142_02_decim.nc',
                     'Dorado389_2012_143_07_143_07_decim.nc',
                     'Dorado389_2012_143_08_143_08_decim.nc',
+                    'Dorado389_2012_150_00_150_00_decim.nc',
                   ]
 
 cl.tethys_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2012/'
