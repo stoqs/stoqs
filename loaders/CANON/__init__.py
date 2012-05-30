@@ -63,6 +63,14 @@ class CANONLoader(object):
             url = self.martin_base + file
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'martin', 'ff0000', 'ship', 'cruise', self.martin_parms, self.dbAlias, self.stride)
 
+    def loadNps_g29(self):
+        '''
+        Glider specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.nps_g29_files], self.nps_g29_files):
+            url = self.nps_g29_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'nps_g29', 'ff2200', 'glider', 'Glider Mission', self.nps_g29_parms, self.dbAlias, self.stride)
 
     def loadAll(self):
         '''
@@ -85,6 +93,12 @@ class CANONLoader(object):
         except AttributeError as e:
             print e
             raw_input("WARNING: No martin data for dbAlias = %s, campaignName = %s, martin_parms = %s" % (self.dbAlias, self.campaignName, self.martin_parms))
+            pass
+        try:
+            self.loadNps_g29()
+        except AttributeError as e:
+            print e
+            raw_input("WARNING: No Nps_g29 data for dbAlias = %s, campaignName = %s, nps_g29_parms = %s" % (self.dbAlias, self.campaignName, self.nps_g29_parms))
             pass
 
 if __name__ == '__main__':
