@@ -52,6 +52,7 @@ import urllib2
 import logging
 import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
+from loaders import STOQS_Loader
 
 
 # Set up logging
@@ -83,7 +84,7 @@ class NoValidData(Exception):
     pass
 
 
-class Base_Loader(object):
+class Base_Loader(STOQS_Loader):
     '''
     A base class for data load operations.  This shouldn't be instantiated directly,
     instead a loader for a particular platform should inherit from it.  Since 
@@ -869,7 +870,7 @@ class Base_Loader(object):
             for count in counts:
                 try:
                     ##logger.info('Creating ActivityParameterHistogram...')
-                    logger.info('count = %d, binlo = %f, binhi = %f', count, bins[i], bins[i+1])
+                    logger.debug('count = %d, binlo = %f, binhi = %f', count, bins[i], bins[i+1])
                     h, created = m.ActivityParameterHistogram.objects.using(self.dbAlias).get_or_create(
                                                     activityparameter=ap, bincount=count, binlo=bins[i], binhi=bins[i+1])
                     i = i + 1
@@ -1119,8 +1120,8 @@ class Mooring_Loader(Base_Loader):
         return super(Mooring_Loader,self).preProcessParams(row)
 
 
-class Glider_Loader(Base_Loader):
-    include_names=['TEMP', 'PSAL', 'FLU2']
+class Glider_Loader(Trajectory_Loader):
+    include_names=['TEMP', 'PSAL', 'OPBS', 'FLU2']
     def createActivity(self):
         '''
         Use provided activity information to add the activity to the database.
@@ -1131,10 +1132,24 @@ class Glider_Loader(Base_Loader):
                     platform=self.platform,
                     startdate=start,
                     enddate=end)
-        if self.activitytype is not None:
-            self.activity.activitytype=self.activitytype
+        if self.activitytypeName is not None:
+            self.activity.activitytypeName = self.activitytypeName
         self.activity.save(using=self.dbAlias)
         
+    def initDB(self):
+        'Needs to use the exact name for the time coordinate in the Glider data'
+        if self.startDatetime == None or self.endDatetime == None:
+            ds = open_url(self.url)
+            if self.startDatetime == None:
+                self.startDatetime = from_udunits(self.ds.TIME[0], self.ds.TIME.units)
+                self.dataStartDatetime = from_udunits(self.ds.TIME[0], self.ds.TIME.units)
+                logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
+            if self.endDatetime == None:
+                self.endDatetime = from_udunits(self.ds.TIME[-1], self.ds.TIME.units)
+                logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
+
+        return super(Glider_Loader, self).initDB()
+
     def preProcessParams(self, row):
         '''
         Convert from the days since 1950 to a usable timestamp.  Convert time, lat, long, and depth
@@ -1145,6 +1160,7 @@ class Glider_Loader(Base_Loader):
                 row[v.lower()]=row.pop(v)      
         if row.has_key('time'):
             row['time'] = time.mktime((datetime(1950,1,1) + timedelta(days = float(row['time']))).timetuple())
+
         return super(Glider_Loader,self).preProcessParams(row)
 
 
@@ -1169,7 +1185,6 @@ def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     loader.include_names = parmList
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
-
 
 
 def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbAlias, stride):
@@ -1207,6 +1222,30 @@ def runLrauvLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbA
             activitytypeName = aTypeName,
             platformName = pName,
             platformColor = 'ff4500',
+            platformTypeName = pTypeName,
+            stride = stride)
+
+    if parmList:
+        logger.debug("Setting include_names to %s", parmList)
+        loader.include_names = parmList
+    (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
+    logger.debug("Loaded Activity with name = %s", aName)
+
+
+def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride):
+    '''Run the DAPloader for Spray Glider trajectory data and update the Activity with 
+    attributes resulting from the load into dbAlias. Designed to be called from script
+    that loads the data.  Following the load important updates are made to the database.'''
+
+    logger.debug("Instantiating Glider_Loader for url = %s", url)
+    loader = Glider_Loader(
+            url = url,
+            campaignName = cName,
+            dbAlias = dbAlias,
+            activityName = aName,
+            activitytypeName = aTypeName,
+            platformName = pName,
+            platformColor = 'ff2200',
             platformTypeName = pTypeName,
             stride = stride)
 
