@@ -1,0 +1,7 @@
+This directory contains scripts to convert miscellaneous data to NetCDF so that
+it can be put on an OPeNDAP server for loading by DAPloaders.py.
+
+
+-- 
+Mike McCann
+29 May 2012
