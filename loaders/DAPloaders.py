@@ -864,8 +864,8 @@ class Base_Loader(STOQS_Loader):
                 
             # Compute and save histogram
             (counts, bins) = numpy.histogram(numpvar,100)
-            logger.info(counts)
-            logger.info(bins)
+            logger.debug(counts)
+            logger.debug(bins)
             i = 0
             for count in counts:
                 try:
@@ -882,10 +882,12 @@ class Base_Loader(STOQS_Loader):
 
         logger.info('Updated statistics for activity.name = %s', a.name)
 
-    def insertSimpleDepthTimeSeries(self):
+    def insertSimpleDepthTimeSeries(self, critSimpleDepthTime=10):
         '''
         Read the time series of depth values for this activity, simplify it and insert the values in the
         SimpleDepthTime table that is related to the Activity.
+
+        @param critSimpleDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
         '''
         vlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity,
                                                               ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk')
@@ -899,8 +901,6 @@ class Base_Loader(STOQS_Loader):
 
         logger.debug('line = %s', line)
         logger.info('Number of points in original depth time series = %d', len(line))
-        ##critSimpleDepthTime = 10
-        critSimpleDepthTime = .0001
         try:
             simple_line = simplify_points(line, critSimpleDepthTime)
         except IndexError:
@@ -1122,19 +1122,6 @@ class Mooring_Loader(Base_Loader):
 
 class Glider_Loader(Trajectory_Loader):
     include_names=['TEMP', 'PSAL', 'OPBS', 'FLU2']
-    def createActivity(self):
-        '''
-        Use provided activity information to add the activity to the database.
-        '''
-        start=datetime(1950,1,1) + timedelta(days = float(self.ds.TIME[0]))
-        end=datetime(1950,1,1) + timedelta(days = float(self.ds.TIME[-1]))
-        self.activity=m.Activity(name=self.activityName,
-                    platform=self.platform,
-                    startdate=start,
-                    enddate=end)
-        if self.activitytypeName is not None:
-            self.activity.activitytypeName = self.activitytypeName
-        self.activity.save(using=self.dbAlias)
         
     def initDB(self):
         'Needs to use the exact name for the time coordinate in the Glider data'
@@ -1187,7 +1174,7 @@ def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     logger.debug("Loaded Activity with name = %s", aName)
 
 
-def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbAlias, stride):
+def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAlias, stride):
     '''Run the DAPloader for Dorado AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.'''
@@ -1200,7 +1187,7 @@ def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbAlias, str
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
-            platformColor = 'ffff00',
+            platformColor = pColor,
             platformTypeName = pTypeName,
             stride = stride)
 
@@ -1208,7 +1195,7 @@ def runDoradoLoader(url, cName, aName, pName, pTypeName, aTypeName, dbAlias, str
     logger.debug("Loaded Activity with name = %s", aName)
 
 
-def runLrauvLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbAlias, stride):
+def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride):
     '''Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.'''
@@ -1221,7 +1208,7 @@ def runLrauvLoader(url, cName, aName, pName, pTypeName, aTypeName, parmList, dbA
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
-            platformColor = 'ff4500',
+            platformColor = pColor,
             platformTypeName = pTypeName,
             stride = stride)
 
@@ -1245,7 +1232,7 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
-            platformColor = 'ff2200',
+            platformColor = pColor,
             platformTypeName = pTypeName,
             stride = stride)
 
