@@ -42,12 +42,13 @@ class CANONLoader(object):
                 'martin':       '01665e',
              }
     colors = {  'dorado':       'ffeda0',
+                'other':        'ffeda0',
                 'tethys':       'fed976',
                 'daphne':       'feb24c',
                 'fulmar':       'fd8d3c',
                 'waveglider':   'fc4e2a',
                 'nps_g29':      'e31a1c',
-                'l_662':        '8d0026',
+                'l_662':        'bd0026',
                 'martin':       '800026',
              }
 
@@ -121,7 +122,7 @@ class CANONLoader(object):
             url = self.l_662_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'l_662', self.colors['l_662'], 'glider', 'Glider Mission', 
-                                        self.nps_g29_parms, self.dbAlias, self.stride)
+                                        self.l_662_parms, self.dbAlias, self.stride, self.l_662_startDatetime)
 
     def loadWaveglider(self):
         '''
@@ -137,8 +138,7 @@ class CANONLoader(object):
         '''
         Execute all the load functions
         '''
-        ##loaders = ['loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadNps_g29', 'loadWaveglider']
-        loaders = ['loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadWaveglider']
+        loaders = ['loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadNps_g29', 'loadL_662', 'loadWaveglider']
         for loader in loaders:
             if hasattr(self, loader):
                 # Call the loader if it exists
