@@ -153,7 +153,7 @@ class Base_Loader(STOQS_Loader):
 
     def initDB(self):
         '''Do the intial Database activities that are required before the data are processed: getPlatorm and createActivity.
-        Can be overridden by sub class.
+        Can be overridden by sub class.  An overriding method can do such things as setting startDatetime and endDatetime.
         '''
 
         if self.checkForValidData():
@@ -1122,6 +1122,20 @@ class Mooring_Loader(Base_Loader):
 
 class Glider_Loader(Trajectory_Loader):
     include_names=['TEMP', 'PSAL', 'OPBS', 'FLU2']
+
+    def createActivity(self):
+        '''
+        Use provided activity information to add the activity to the database.
+        '''
+        start=datetime(1950,1,1) + timedelta(days = float(self.ds.TIME[0]))
+        end=datetime(1950,1,1) + timedelta(days = float(self.ds.TIME[-1500]))
+        self.activity=m.Activity(name=self.activityName,
+                    platform=self.platform,
+                    startdate=start,
+                    enddate=end)
+        if self.activitytypeName is not None:
+            self.activity.activitytypeName = self.activitytypeName
+        self.activity.save(using=self.dbAlias)
         
     def initDB(self):
         'Needs to use the exact name for the time coordinate in the Glider data'
@@ -1132,7 +1146,7 @@ class Glider_Loader(Trajectory_Loader):
                 self.dataStartDatetime = from_udunits(self.ds.TIME[0], self.ds.TIME.units)
                 logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
             if self.endDatetime == None:
-                self.endDatetime = from_udunits(self.ds.TIME[-1], self.ds.TIME.units)
+                self.endDatetime = from_udunits(self.ds.TIME[-1500], self.ds.TIME.units)
                 logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
 
         return super(Glider_Loader, self).initDB()
@@ -1219,7 +1233,7 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
     logger.debug("Loaded Activity with name = %s", aName)
 
 
-def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride):
+def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None):
     '''Run the DAPloader for Spray Glider trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.'''
@@ -1234,7 +1248,8 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
             platformName = pName,
             platformColor = pColor,
             platformTypeName = pTypeName,
-            stride = stride)
+            stride = stride,
+            startDatetime = startDatetime)
 
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
