@@ -40,6 +40,7 @@ except IndexError:
 # Data loads for all the activities, LRAUV have real-time files before full-resolution
 # ------------------------------------------------------------------------------------
 cl = CANONLoader(dbAlias, 'CANON - May 2011')
+
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2012/netcdf/'
 cl.dorado_files = [ 
                     'Dorado389_2012_142_01_142_01_decim.nc',
@@ -48,6 +49,7 @@ cl.dorado_files = [
                     'Dorado389_2012_143_08_143_08_decim.nc',
                     'Dorado389_2012_150_00_150_00_decim.nc',
                     'Dorado389_2012_151_00_151_00_decim.nc',
+                    'Dorado389_2012_152_00_152_00_decim.nc',
                   ]
 
 cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/201205/'
@@ -63,31 +65,35 @@ cl.daphne_files = [
 cl.daphne_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
 
-# Tethys full resolution
-##cl.tethys_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2012/'
+##cl.tethys_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2012/'         # Tethys full resolution
+##cl.tethys_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/tethys/2012/201205/'             # Tethys realtime
 ##cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
 ##                    'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
 ##                    'mass_concentration_of_chlorophyll_in_sea_water']
 
-cl.tethys_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/tethys/2012/201205/'
 
-cl.martin_parms = []
+cl.fulmar_base = []
+cl.fulmar_files = []
+cl.fulmar_parms = []
 
 # Garbled TDS response: 1 June 2012
-cl.nps_g29_base = 'http://www.cencoos.org:8080/thredds/dodsC/glider/'
+cl.nps_g29_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
 cl.nps_g29_files = ['OS_Glider_NPS_G29_20120524_TS.nc']
 cl.nps_g29_parms = ['TEMP', 'PSAL', 'OPBS']
 
 # Zeros at end of time axis: 1 June 2012
-cl.l_662_base = 'http://www.cencoos.org:8080/thredds/dodsC/glider/'
+cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
 cl.l_662_files = ['OS_Glider_L_662_20120424_TS.nc']
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
-cl.l_662_startDatetime = datetime.datetime(2012,5, 15)
+cl.l_662_dataStartDatetime = datetime.datetime(2012,5, 15)
 
-##cl.waveglider = ''
+##cl.waveglider_base = ''
+##cl.waveglider_files = ''
+##cl.waveglider_parms = ''
 
 cl.stride = stride
 cl.loadAll()
+
 ##cl.loadDaphne()
 ##cl.loadNps_g29()
 ##cl.loadL_662()
