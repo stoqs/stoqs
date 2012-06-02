@@ -1120,7 +1120,7 @@ class Mooring_Loader(Base_Loader):
         return super(Mooring_Loader,self).preProcessParams(row)
 
 
-class Glider_Loader(Trajectory_Loader):
+class Glider_Loader(Base_Loader):
     include_names=['TEMP', 'PSAL', 'OPBS', 'FLU2']
 
     def createActivity(self):
@@ -1143,8 +1143,10 @@ class Glider_Loader(Trajectory_Loader):
             ds = open_url(self.url)
             if self.startDatetime == None:
                 self.startDatetime = from_udunits(self.ds.TIME[0], self.ds.TIME.units)
+            if self.dataStartDatetime == None:
                 self.dataStartDatetime = from_udunits(self.ds.TIME[0], self.ds.TIME.units)
-                logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
+            else:
+                logger.info("Using dataStartDatetime to read data from the source starting at %s", self.dataStartDatetime)
             if self.endDatetime == None:
                 self.endDatetime = from_udunits(self.ds.TIME[-1500], self.ds.TIME.units)
                 logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
@@ -1233,7 +1235,7 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
     logger.debug("Loaded Activity with name = %s", aName)
 
 
-def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None):
+def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, dataStartDatetime=None):
     '''Run the DAPloader for Spray Glider trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.'''
@@ -1249,7 +1251,7 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
             platformColor = pColor,
             platformTypeName = pTypeName,
             stride = stride,
-            startDatetime = startDatetime)
+            dataStartDatetime = dataStartDatetime)
 
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
