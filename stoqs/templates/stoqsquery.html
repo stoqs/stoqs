@@ -116,8 +116,10 @@
                     </div>
                     <div id="collapseMap" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <div class="row-fluid" id="map">
-                            </div>
+                            <div class="row-fluid" id="map"></div>
+                            <p>
+                                <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
+                            </p>
                             <p>
                                 <div id="query-stats" class="ajax-wait"></div>
                             </p>
@@ -193,12 +195,12 @@
                                     <p><button id="zoomed-button" class="btn btn-mini zoom-toggle disabled">Zoomed</button></p>
                                 </div>
                             </div>
-                            <input type="hidden" id="start-ems" "name="start-ems">
-                            <input type="hidden" id="start-time" "name="start-time">
-                            <input type="hidden" id="end-ems" name="end-ems"> 
+                            <input type="hidden" id="start-ems" "name="start-ems" />
+                            <input type="hidden" id="start-time" "name="start-time" />
+                            <input type="hidden" id="end-ems" name="end-ems" /> 
                             <input type="hidden" id="end-time" name="end-time"> 
-                            <input type="hidden" id="start-depth" "name="start-depth">
-                            <input type="hidden" id="end-depth" name="end-depth"> 
+                            <input type="hidden" id="start-depth" "name="start-depth" />
+                            <input type="hidden" id="end-depth" name="end-depth" /> 
                         </div>
                     </div>
                 </div><!-- accordian-group -->
@@ -276,6 +278,7 @@
     var initData;
     var zoomedData;
     var request=''
+    var map = null; 
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -362,7 +365,6 @@
 
             var date_str = date.getUTCFullYear() + '-' + mon + '-' + day;
             date_str = date_str + ' ' + hr + ':' + mn + ':' + se;
-            console.log(date_str);
 
             return date_str
         }
@@ -734,6 +736,11 @@
                     $('#' + index + '_color').css('border-bottom-color', '#' + value);
                 });
             }
+            else if (key == 'activitymaptrackextent') {
+                e = data[key];
+                //console.log('00=' + e[0][0] + ' 01=' + e[0][1] + ' 10=' + e[1][0] + ' 11=' + e[1][1]);
+                map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
+            }
         } // onInit()
 
         function onUpdate(data, key) {
@@ -779,6 +786,12 @@
                                     xaxis: { min: $('#start-ems').val(), max: $('#end-ems').val() },
                                     yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
                 }));
+            }
+            else if (key == 'activitymaptrackextent') {
+                e = data[key];
+                if ($('#zoomtoextentonupdate').is(':checked')) {
+                    map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
+                }
             }
         } // onUpdate()
 
@@ -835,7 +848,6 @@
          */
          OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
          OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
-         var map = null; 
          //ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
          var options = {
              projection: new OpenLayers.Projection("EPSG:900913"),
@@ -914,7 +926,6 @@
                       displayOutsideMaxExtent: true } );
           map.addLayer(sample_points); 
 
-          map.setCenter(new OpenLayers.LonLat(-13594478.3, 4411945.3), 9);
           map.addControl(new OpenLayers.Control.LayerSwitcher());
           map.addControl(new OpenLayers.Control.MousePosition());
           map.addControl(new OpenLayers.Control.PanZoom());
@@ -923,6 +934,7 @@
            *
            */
           updateSummaryData(true);
+
           
           $('body').on('change', '.slider-values', function (e) {
             var $slider=$('#slider-' + this.id.split('-').reverse()[0])

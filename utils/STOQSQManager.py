@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.db import connections
 from django.db.models import Q, Max, Min, Sum
+from django.contrib.gis.geos import fromstr
 from stoqs import models
 from coards import to_udunits
 import logging
@@ -67,7 +68,7 @@ class STOQSQManager(object):
                 q = getattr(self,'_%sQ' % (k,))(v)
                 logger.debug('k = %s, v = %s, q = %s', k, v, q)
                 qs = qs.filter(q)
-        self.qs = qs.distinct()
+        self.qs = qs
         self.kwargs = kwargs
         
     def generateOptions(self, stoqs_object = None):
@@ -97,6 +98,7 @@ class STOQSQManager(object):
                                'count': self.getCount,
                                'ap_count': self.getAPCount,
                                'sql': self.getMeasuredParametersPostgreSQL,
+                               'activitymaptrackextent': self.getActivityMaptrackExtent,
                                }
         
         results = {}
@@ -549,7 +551,6 @@ class STOQSQManager(object):
         
         return geo_query
 
-
     def getSampleGeoQuery(self, Q_object = None):
         '''
         This method generates a string that can be put into a Mapserver mapfile DATA statment.
@@ -566,4 +567,13 @@ class STOQSQManager(object):
             as subquery using unique gid using srid=4326''' % self.postgresifySQL(qs.query)
         
         return geo_query
+
+    def getActivityMaptrackExtent(self, srid=4326):
+        '''
+        Return GEOSGeometry extent of all the maptracks contained in the Activity geoqueryset
+        The result can be directly passed out for direct use in a OpenLayers
+        '''
+        extent = fromstr('LINESTRING (%s %s, %s %s)' % self.qs.extent(), srid=srid)
+        extent.transform(900913)
+        return extent
 
