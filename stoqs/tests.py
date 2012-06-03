@@ -51,10 +51,10 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         pass
 
     # Animation tests
-    def test_animate(self):
-        req = '/animatepoint/between/20101027T220000/20101028T005100/deltaminutes/30/format/url/?&width=400&height=400&rows=1&cols=1&tiles=%5B%7B%22url%22%3A%22http%3A%2F%2Flocalhost%2Fcgi-bin%2Fmapserv%3FMAP%3D%252Fdev%252Fshm%252Factivitypoint_hGjfPF.map%26LAYERS%3DDorado389_2010_300_00_300_00_decim.nc%26TIME%3D2010-10-27T22%253A00%253A00Z%252F2010-10-28T00%253A51%253A00Z%26TIMEFORMAT%3D%2525Y-%2525m-%2525dT%2525H%253A%2525M%253A%2525SZ%26TRANSPARENT%3DTRUE%26SERVICE%3DWMS%26VERSION%3D1.1.1%26REQUEST%3DGetMap%26STYLES%3D%26FORMAT%3Dimage%252Fpng%26SRS%3DEPSG%253A900913%26BBOX%3D-13686202.73393%2C4320220.8660706%2C-13502753.86607%2C4503669.7339294%26WIDTH%3D600%26HEIGHT%3D600%22%2C%22x%22%3A-100%2C%22y%22%3A-100%2C%22tileSizeW%22%3A600%2C%22tileSizeH%22%3A600%2C%22opacity%22%3A100%7D%5D'
-        response = self.client.get(req)
-        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+    ##def test_animate(self):
+    ##    req = '/animatepoint/between/20101027T220000/20101028T005100/deltaminutes/30/format/url/?&width=400&height=400&rows=1&cols=1&tiles=%5B%7B%22url%22%3A%22http%3A%2F%2Flocalhost%2Fcgi-bin%2Fmapserv%3FMAP%3D%252Fdev%252Fshm%252Factivitypoint_hGjfPF.map%26LAYERS%3DDorado389_2010_300_00_300_00_decim.nc%26TIME%3D2010-10-27T22%253A00%253A00Z%252F2010-10-28T00%253A51%253A00Z%26TIMEFORMAT%3D%2525Y-%2525m-%2525dT%2525H%253A%2525M%253A%2525SZ%26TRANSPARENT%3DTRUE%26SERVICE%3DWMS%26VERSION%3D1.1.1%26REQUEST%3DGetMap%26STYLES%3D%26FORMAT%3Dimage%252Fpng%26SRS%3DEPSG%253A900913%26BBOX%3D-13686202.73393%2C4320220.8660706%2C-13502753.86607%2C4503669.7339294%26WIDTH%3D600%26HEIGHT%3D600%22%2C%22x%22%3A-100%2C%22y%22%3A-100%2C%22tileSizeW%22%3A600%2C%22tileSizeH%22%3A600%2C%22opacity%22%3A100%7D%5D'
+    ##    response = self.client.get(req)
+    ##    self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     # Base class view tests
     def test_campaign(self):
@@ -168,55 +168,6 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
 
-    # Measurement view tests 
-    def test_measurementStandardNameBetween(self):
-        # For the load of:
-        #   http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
-        #   with stride = 1000    
-        # there are 47 measurements for each parameter
-        for parm in ('sea_water_salinity', 'sea_water_temperature', 'sea_water_sigma_t', 
-                     'mass_concentration_of_chlorophyll_in_sea_water',
-                    ):
-            req = '/test_stoqs/measurement/sn/%s/between/20101027T215155/20101028T155157/depth/0/300/count' % parm
-            response = self.client.get(req)
-            self.assertEqual(response.content, '47', 'Measurement between count for %s' % req)  # ?
-            
-        # Make sure all the formats return 200
-        for fmt in ('html', 'csv', 'kml'):
-            req = '/test_stoqs/measurement/sn/sea_water_salinity/between/20101028T075155/20101029T015157/depth/0/300/data.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-        
-        # Now with a stride
-        for fmt in ('html', 'csv', 'kml'):
-            req = '/test_stoqs/measurement/sn/sea_water_salinity/between/20101028T075155/20101029T015157/depth/0/300/stride/10/data.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-  
-    def test_measurementBetween(self):
-        
-        # For the load of:
-        #   http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
-        #   with stride = 1000    
-        # there are 47 measurements for each parameter
-        for parm in ('bbp420', 'bbp700', 'biolume', 'fl700_uncorr', 'mass_concentration_of_chlorophyll_in_sea_water',
-                    'nitrate', 'oxygen', 'salinity', 'sea_water_sigma_t', 'temperature'):
-            req = '/test_stoqs/measurement/%s/between/20101027T215155/20101028T155157/depth/0/300/count' % parm
-            response = self.client.get(req)
-            self.assertEqual(response.content, '47', 'Measurement between count for %s' % req)  # ?
-           
-        # Make sure all the formats return 200
-        for fmt in ('html', 'csv', 'kml'):
-            req = '/test_stoqs/measurement/temperature/between/20101028T075155/20101029T015157/depth/0/300/data.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-        
-        # Now with a stride
-        for fmt in ('html', 'csv', 'kml'):
-            req = '/test_stoqs/measurement/temperature/between/20101028T075155/20101029T015157/depth/0/300/stride/10/data.%s' % fmt
-            response = self.client.get(req)
-            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-   
     # Management tests 
     def test_manage(self):
         req = '/test_stoqs/mgmt'
