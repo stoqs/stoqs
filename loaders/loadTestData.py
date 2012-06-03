@@ -35,7 +35,7 @@ file = 'Dorado389_2010_300_00_300_00_decim.nc'                      # file name 
 stride = 1000                                                       # Make large for quicker runs, smaller for denser data
 dbAlias = 'default'
 
-DAPloaders.runDoradoLoader(baseUrl + file, 'Test Load', '%s (stride=%d)' % (file, stride,), 'dorado', 'auv', 'AUV Mission', dbAlias, stride)
+DAPloaders.runDoradoLoader(baseUrl + file, 'Test Load', '%s (stride=%d)' % (file, stride,), 'dorado', 'ffff00', 'auv', 'AUV Mission', dbAlias, stride)
 GulperLoader.load_gulps(file, file, dbAlias)
 
 
