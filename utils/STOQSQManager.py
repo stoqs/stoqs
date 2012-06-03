@@ -56,6 +56,7 @@ class STOQSQManager(object):
             else:
                 qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
     
+        self.kwargs = kwargs
         for k, v in kwargs.iteritems():
             '''
             Check to see if there is a "builder" for a Q object using the given parameters.
@@ -69,7 +70,6 @@ class STOQSQManager(object):
                 logger.debug('k = %s, v = %s, q = %s', k, v, q)
                 qs = qs.filter(q)
         self.qs = qs
-        self.kwargs = kwargs
         
     def generateOptions(self, stoqs_object = None):
         '''
@@ -117,6 +117,12 @@ class STOQSQManager(object):
         '''
         Get the count of measured parameters giving the exising query
         '''
+        get_actual_count = 0
+        if self.kwargs.has_key('get_actual_count'):
+            if self.kwargs['get_actual_count']:
+                get_actual_count = 1
+        logger.debug('get_actual_count = %d', get_actual_count)
+
         locale.setlocale(locale.LC_ALL, 'en_US')
         qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
         if qs_ap:
@@ -126,8 +132,8 @@ class STOQSQManager(object):
             logger.debug('approximate_count = %d', approximate_count)
             if approximate_count == 0:
                 logger.warn('actual_count == 0')
-            if ap_count < 2:
-                logger.info('>>>> ap_count is < 2.  Switching to getting actual count.')
+            if ap_count < 2 or get_actual_count:
+                logger.info('>>>> ap_count is < 2 or get_actual_count selected.  Switching to getting actual count.')
                 qs_mp = self.getMeasuredParametersQS()          # Actual count from MeasuredParameter - needs to do seq scan on large table
                 actual_count = qs_mp.count()
                 logger.debug('actual_count = %d', actual_count)

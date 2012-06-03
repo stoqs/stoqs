@@ -121,11 +121,12 @@ def queryData(request, format=None):
     as retreived from STOQSQManager.
     '''
     response = HttpResponse()
-    query_parms = {'parameters': 'parameters',          # This should be specified once in the query string for each parameter.
-                   'time': ('start_time','end_time'),   # Single values
-                   'depth': ('min_depth', 'max_depth'), # Single values
-                   'simpledepthtime': [],               # List of x,y values
-                   'platforms': 'platforms',            # Specified once in the query string for each platform.
+    query_parms = {'parameters': 'parameters',              # This should be specified once in the query string for each parameter.
+                   'time': ('start_time','end_time'),       # Single values
+                   'depth': ('min_depth', 'max_depth'),     # Single values
+                   'simpledepthtime': [],                   # List of x,y values
+                   'platforms': 'platforms',                # Specified once in the query string for each platform.
+                   'get_actual_count': 'get_actual_count',  # Flag value from checkbox
                    }
     params = {}
     for key, value in query_parms.iteritems():

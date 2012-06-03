@@ -122,6 +122,7 @@
                             </p>
                             <p>
                                 <div id="query-stats" class="ajax-wait"></div>
+                                <input type="checkbox" id="getactualcount" /> Compute actual count
                             </p>
                         </div>
                     </div>
@@ -490,6 +491,9 @@
             $('#time-depth-anchor').html('Time Depth')
         }
     });
+    $('#getactualcount').on('click', function (event) {
+        rebuildFilters();
+    });
 
     
     /*
@@ -499,6 +503,9 @@
     function updateSummaryData(init) {
         var init = typeof init !== 'undefined' ? init : false;
         var qstring=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
+        if ($('#getactualcount').is(':checked')) {
+            qstring = qstring + '&get_actual_count=1';
+        }
         if (! init) {
             if (request.readyState < 3) {
                 request.abort();
@@ -573,6 +580,7 @@
             "sSortDesc": "header headerSortUp",
             "sSortable": "header",
             "sWrapper": "dataTables_wrapper form-inline",
+            "sPaginationType": "full_numbers",
             "bJQueryUI": true,
             "aoColumnDefs": [ { "sWidth": "10%", "aTargets": [ -1 ] }
         ]
@@ -812,7 +820,7 @@
                 }
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
                 me.refreshMap();
-                if (data['ap_count'] > 1) {
+                if ( ! $('#getactualcount').is(':checked')) {
                     $('#query-stats').html("<h4>Approximately " + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters</h4>");
                 }
                 else {
