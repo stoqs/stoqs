@@ -76,24 +76,6 @@ urlpatterns = patterns('',
     url(pre + r'measurement.?'       + formatPat, 'stoqs.views.showMeasurement',       {}, name='show-measurement'),
     url(pre + r'measuredparameter.?' + formatPat, 'stoqs.views.showMeasuredParameter', {}, name='show-measuredparameter'),
 
-    # Measurements  
-    url(pre + 'measurement/' + btwnCl + formatCl, 
-        'stoqs.views.measurement.showBetweenMeasurements', {}, name='show-between-meas'),
-    url(pre + r'measurement/' + btwnCl + '/stride/(?P<stride>\d+)' + formatCl, 
-        'stoqs.views.measurement.showBetweenMeasurements', {}, name='show-between-meas-stride'),
-                       
-    url(pre + 'measurement/sn/' + btwnCl + formatCl, 
-        'stoqs.views.measurement.showBetweenMeasurements', {'snFlag': True}, name='show-between-sn-meas'),
-    url(pre + r'measurement/sn/' + btwnCl + '/stride/(?P<stride>\d+)' + formatCl, 
-        'stoqs.views.measurement.showBetweenMeasurements', {'snFlag': True}, name='show-between-sn-meas-stride'),
-                       
-    url(pre + r'measurement/' + btwnCl + '/count$', 
-        'stoqs.views.measurement.showBetweenMeasurements', {'countFlag': True}, name='show-between-meas-count'),
-    url(pre + r'measurement/sn/' + btwnCl + '/count$', 
-        'stoqs.views.measurement.showBetweenMeasurements', {'countFlag': True, 'snFlag': True}, name='show-between-sn-meas-count'),
-    ##(r'^measurementOfActivity/name/(?P<aName>\w+)/type/(?P<aType>\w+)/data.(?P<format>\w{0,4})$', views.showMeasurementsOfActivity),
-    ##(r'^measurementOfActivity/name/(\w+)/type/(\w+)/stride/(\d+)/data.(\w{0,4})$', views.showMeasurementsOfActivity),
-
     # URL For Chander's STOQQManager related views
     url(pre + r'query/summary/$', 'stoqs.views.query.queryData', {}, name='stoqs-query-summary'),
     url(pre + r'query/(?P<format>[^/]+)/?$', 'stoqs.views.query.queryData', {}, name='stoqs-query-results'),
