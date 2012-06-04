@@ -83,8 +83,9 @@ class CANONLoader(object):
         '''
         for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.daphne_files], self.daphne_files):
             url = self.daphne_base + file
+            # Set stride to 1 for telemetered data
             DAPloaders.runLrauvLoader(url, self.campaignName, aName, 'daphne', self.colors['daphne'], 'auv', 'AUV mission', 
-                                        self.daphne_parms, self.dbAlias, self.stride)
+                                        self.daphne_parms, self.dbAlias, 1)
 
     def loadMartin(self):
         '''
