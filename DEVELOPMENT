@@ -65,6 +65,13 @@ in making changes that you 'think might work'.
     copy it.  Update to make it a template with this psql command:
 
         UPDATE pg_database SET datistemplate = TRUE WHERE datname = 'template_postgis';
+
+    Other database roles need to have permission to see the relations (tables) in template_postgis,
+    so you need to do this too; for sure, run these commands as well with stoqsadm for <user_name>:
+
+        \c template_postgis
+        GRANT ALL ON TABLE geometry_columns TO <user_name>
+        GRANT ALL ON TABLE spatial_ref_sys TO <user_name>
     
     If they all pass you are good.  If you get a failure, fix it and then repeat the test.
     Iterate on these last two steps.  You may also test the links from the activities and
