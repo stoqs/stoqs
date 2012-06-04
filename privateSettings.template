@@ -59,7 +59,7 @@ PRODUCTION = False
 
 # Use 'mapage.py collectstatic' to put files in the production location so that DEBUG = False works on the development server.
 # See http://stackoverflow.com/questions/6405173/static-files-wont-load-when-out-of-debug-in-django
-TEMPLATE_DEBUG = DEBUG = False         
+TEMPLATE_DEBUG = DEBUG = True         
 
 # Modify default logging settings, e.g. to help in debugging stoqs or django, ignored is DEBUG is False
 # Note: Must restart the development server for changes made here to take effect
