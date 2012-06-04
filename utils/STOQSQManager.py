@@ -112,16 +112,23 @@ class STOQSQManager(object):
     #
     # Methods that generate summary data, based on the current query criteria.
     #
+
+    def getGet_Actual_Count(self):
+        '''
+        return state of Get Actual Count checkbox from query UI
+        '''
+        get_actual_count_state = False
+        if self.kwargs.has_key('get_actual_count'):
+            if self.kwargs['get_actual_count']:
+                get_actual_count_state = True
+        logger.debug('get_actual_count = %s', get_actual_count_state)
+
+        return get_actual_count_state
         
     def getCount(self):
         '''
         Get the count of measured parameters giving the exising query
         '''
-        get_actual_count = 0
-        if self.kwargs.has_key('get_actual_count'):
-            if self.kwargs['get_actual_count']:
-                get_actual_count = 1
-        logger.debug('get_actual_count = %d', get_actual_count)
 
         locale.setlocale(locale.LC_ALL, 'en_US')
         qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
@@ -132,14 +139,14 @@ class STOQSQManager(object):
             logger.debug('approximate_count = %d', approximate_count)
             if approximate_count == 0:
                 logger.warn('actual_count == 0')
-            if ap_count < 2 or get_actual_count:
-                logger.info('>>>> ap_count is < 2 or get_actual_count selected.  Switching to getting actual count.')
+            if self.getGet_Actual_Count():
+                logger.info('>>>> get_actual_count selected.  Switching to getting actual count.')
                 qs_mp = self.getMeasuredParametersQS()          # Actual count from MeasuredParameter - needs to do seq scan on large table
                 actual_count = qs_mp.count()
                 logger.debug('actual_count = %d', actual_count)
                 if actual_count == 0:
                     logger.warn('actual_count == 0')
-                return actual_count
+                return locale.format("%d", actual_count, grouping=True)
             else:
                 return locale.format("%d", approximate_count, grouping=True)
         else:
@@ -234,10 +241,10 @@ class STOQSQManager(object):
         '''
         Return SQL string that can be executed agaisnt the postgres database
         '''
-        sql = 'Constrain selection to just 1 ActivityParameter to see the SQL '
+        sql = 'Check "Get actual count" checkbox to see the SQL for your data selection'
         qs_ap = self.getActivityParametersQS()
         if qs_ap:
-            if qs_ap.count() < 2:
+            if self.getGet_Actual_Count():
                 # Return query only if a platform and a parameter have been selected
                 qs_mp = self.getMeasuredParametersQS()
                 if qs_mp:
