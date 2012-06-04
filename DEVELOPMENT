@@ -54,10 +54,17 @@ in making changes that you 'think might work'.
     		python manage.py test stoqs -v 2
 
     Note: The user that executes manage.py must have priveleges to create and drop database
-    for Django to run the tests.  You may need to do this at psql for your shell account:
+    for Django to run the tests.  You may need to do this at psql for your shell account
+    and the stoqsdm account:
 
         CREATE ROLE <user_name> LOGIN PASSWORD 'password_of_your_choice';
         ALTER ROLE <user_name> CREATEDB NOSUPERUSER NOCREATEROLE;
+
+    You must also be able to create a new database using the postgis template that was installed
+    with yum.  Postgres needs to be told that it is a template for other's than the owner to 
+    copy it.  Update to make it a template with this psql command:
+
+        UPDATE pg_database SET datistemplate = TRUE WHERE datname = 'template_postgis';
     
    	If they all pass you are good.  If you get a failure, fix it and then repeat the test.
    	Iterate on these last two steps.  You may also test the links from the activities and
@@ -87,5 +94,5 @@ in making changes that you 'think might work'.
 
 --
 Mike McCann
-MBARI 5 January 2012
+MBARI 4 June 2012
 
