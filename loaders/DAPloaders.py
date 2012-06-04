@@ -522,14 +522,13 @@ class Base_Loader(STOQS_Loader):
                     logger.debug("Loading %s into parts dictionary", k)
                     logger.debug("v = %s", v)
                     try:
-                        parts[k.lower()] = iter(v)  # Key coordinates on lower case version of the name so that
-                                                    # follow-on processing can be simpler, eg. 'time' vice 'TIME'
+                        parts[k] = iter(v)  
                     except TypeError:
                         continue                    # Likely "iteration over a 0-d array" resulting from a stride that's too big
 
                 elif self.ds[k][:].ndim == 0:
                     logger.debug("Loading %s into scalars dictionary", k.lower())
-                    scalars[k.lower()] = float(v[0])
+                    scalars[k] = float(v[0])
                 else:
                     logger.warn("v.ndim = %s (not 0 or 1) in trying to get part of %s", v.ndim, v)
                     continue
@@ -619,7 +618,7 @@ class Base_Loader(STOQS_Loader):
         for v in self.include_names:
             logger.debug("v = %s", v)
             try:
-                vVals = self.ds[v][:]
+                vVals = self.ds[v][:]           # Case sensitive 
                 logger.debug(len(vVals))
                 allNaNFlag[v] = numpy.isnan(vVals).all()
                 if not allNaNFlag[v]:
@@ -700,8 +699,10 @@ class Base_Loader(STOQS_Loader):
                         mindepth = depth
                     if depth > maxdepth:
                         maxdepth = depth
+
             for key, value in row.iteritems():
                 try:
+                    logger.debug('Checking for %s in self.include_names', key)
                     if len(self.include_names) and key not in self.include_names:
                         continue
                     elif key in self.ignored_names:
