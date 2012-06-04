@@ -8,17 +8,19 @@
 
 su -c "easy_install virtualenv"
 su -c "yum -y install postgis rabbitmq-server gdal scipy mod_wsgi"
+
+# Rabbitmq is used by the web app t manage long-running tasks
 su -c "/sbin/chkconfig rabbitmq-server on"
 su -c "/sbin/service rabbitmq-server start"
-su -c "rabbitmqctl add_user stoqs stoqs"		# Note: You may want different credentials
-su -c "rabbitmqctl add_vhost stoqs"				# for the Rabbitmq account - here we use 'stoqs'.
+su -c "rabbitmqctl add_user stoqs stoqs"        # Note: You may want different credentials
+su -c "rabbitmqctl add_vhost stoqs"             # for the Rabbitmq account - here we use 'stoqs'.
 su -c 'rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"'
 
 # For ability to generate ER diagrams using ./manage.py graph_models stoqs stoqs -g -o stoqs_model.png
 su -c "yum -y install graphviz-devel"
 su -c "yum -y install graphviz-python"
 
-# For ability to generate animated GIFS
+# A useful package for manipulating images
 su -c "yum -y install ImageMagick"
 
 # For ability for persistant storage of GIFS, assuming default location of your web server is /var/www/html
@@ -39,7 +41,8 @@ make install
 # mechanism.
 
 # To build MapServer, other prerequisites can be obtained via yum:
-su -c "yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel proj-nad proj-epsg curl-devel libxml2-devel"
+su -c "yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel"
+su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel"
 
 # Make sure the file at /usr/share/proj/epsg contains a line starting with <900913>; if not, append the following lines:
 
@@ -47,11 +50,16 @@ su -c "yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-
 <900913> +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs <>
 
 # With the above prerequisites, mapserver configure can be run as follows:
-./configure --with-proj=/usr --with-ogr=/usr/local/bin/gdal-config --with-gdal=/usr/local/bin/gdal-config --with-wfs --with-wfsclient --with-wmsclient --with-postgis=/usr/pgsql-9.1/bin/pg_config
+./configure --with-proj=/usr --with-ogr=/usr/bin/gdal-config --with-gdal=/usr/bin/gdal-config --with-wfs --with-wfsclient --with-wmsclient --with-postgis=/usr/pgsql-9.1/bin/pg_config
+make 
+cp mapserv /var/www/cgi-bin
 
-# Install OpenLayers following the instructions at http://openlayers.org/.  The templates are configured for
-# the JavaScript library to be installed in the root directory of the MAPSERVER_HOST.  Follow readme.txt 
-# instructions from the tar ball and you should be all set to go.
+# Make sure that the apache httpd service is running on your system
+chkconfig httpd on
+/sbin/service httpd start
+
+# The following prerequisites must be installed for each development directory on the system for which the 
+# above system-level prerequisites have been installed.
 
 # Go to the directory where you have checked out the stoqs project, e.g.:
 
@@ -76,8 +84,8 @@ easy_install django-celery
 easy_install coards
 easy_install seawater
 export PATH=/usr/pgsql-9.1/bin:$PATH
-easy_install gdal
-easy_install psycopg2==2.4.1
+easy_install gdal==1.9.0                # Make sure the version matches the gdal you compiled and installed
+easy_install psycopg2==2.4.1            # Do not use a higher version of psycopg2 - it has problems with postgresql-9.1
 easy_install pygraphviz
 easy_install django_extensions
 
@@ -91,6 +99,6 @@ pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
 
 --
 Mike McCann
-MBARI 1 February 2012
+MBARI 3 June 2012
 
 
