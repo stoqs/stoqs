@@ -91,43 +91,43 @@ class ParserWriter(object):
         self.outFile = outFile
 
         # Trajectory dataset, time is the only netCDF dimension
-        self.ncFile.createDimension('time', len(esec_list))
-        self.time = self.ncFile.createVariable('time', 'int32', ('time',))
+        self.ncFile.createDimension('TIME', len(esec_list))
+        self.time = self.ncFile.createVariable('TIME', 'float64', ('TIME',))
         self.time.units = 'seconds since 1970-01-01'
         self.time[:] = esec_list
 
         # Record Variables - coordinates for trajectory - save in the instance and use for metadata generation
-        self.latitude = self.ncFile.createVariable('latitude', 'float64', ('time',))
-        self.latitude.long_name = 'Latitude'
+        self.latitude = self.ncFile.createVariable('latitude', 'float64', ('TIME',))
+        self.latitude.long_name = 'LATITUDE'
         self.latitude.standard_name = 'latitude'
         self.latitude.units = 'degree_north'
         self.latitude[:] = lat_list
 
-        self.longitude = self.ncFile.createVariable('longitude', 'float64', ('time',))
-        self.longitude.long_name = 'Longitude'
+        self.longitude = self.ncFile.createVariable('longitude', 'float64', ('TIME',))
+        self.longitude.long_name = 'LONGITUDE'
         self.longitude.standard_name = 'longitude'
         self.longitude.units = 'degree_east'
         self.longitude[:] = lon_list
 
-        self.depth = self.ncFile.createVariable('depth', 'float64', ('time',))
-        self.depth.long_name = 'Depth'
+        self.depth = self.ncFile.createVariable('depth', 'float64', ('TIME',))
+        self.depth.long_name = 'DEPTH'
         self.depth.standard_name = 'depth'
         self.depth.units = 'm'
         self.depth[:] = dep_list
 
         # Record Variables - CTD Data
-        temp = self.ncFile.createVariable('temp', 'float64', ('time',))
+        temp = self.ncFile.createVariable('temp', 'float64', ('TIME',))
         temp.long_name = 'Temperature'
         temp.standard_name = 'sea_water_temperature'
         temp.units = 'Celsius'
         temp[:] = tem_list
 
-        sal = self.ncFile.createVariable('salinity', 'float64', ('time',))
+        sal = self.ncFile.createVariable('salinity', 'float64', ('TIME',))
         sal.long_name = 'Salinity'
         sal.standard_name = 'sea_water_salinity'
         sal[:] = sal_list
 
-        do = self.ncFile.createVariable('oxygen', 'float64', ('time',))
+        do = self.ncFile.createVariable('oxygen', 'float64', ('TIME',))
         do.long_name = 'Dissolved Oxygen'
         do.units = 'ml/l'
         do[:] = do_list
@@ -177,21 +177,21 @@ class ParserWriter(object):
         self.outFile = outFile
 
         # Trajectory dataset, time is the only netCDF dimension
-        self.ncFile.createDimension('time', len(esec_list))
+        self.ncFile.createDimension('TIME', len(esec_list))
 
-        self.time = self.ncFile.createVariable('time', 'int32', ('time',))
+        self.time = self.ncFile.createVariable('TIME', 'float64', ('TIME',))
         self.time.units = 'seconds since 1970-01-01'
         self.time[:] = esec_list
 
         # PCO2 variables 
         for v in pco2_vars:
             ncVar = v.replace(' ', '_', 42)
-            exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('time',))" % (ncVar.lower(), ncVar, )
+            exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar.upper(), )
             exec "self.%s.long_name = '%s'" % (ncVar.lower(), v, )
             exec "self.%s[:] = %s_list" % (ncVar.lower(), ncVar, )
 
         # Fudge up a depth variable with a value of zero
-        self.depth = self.ncFile.createVariable('depth', 'float64', ('time',))
+        self.depth = self.ncFile.createVariable('depth', 'float64', ('TIME',))
         self.depth.long_name = 'Depth'
         self.depth.standard_name = 'depth'
         self.depth.units = 'm'
