@@ -1067,6 +1067,7 @@ class Lrauv_Loader(Base_Loader):
     def initDB(self):
         'Needs to use the exact name for the time coordinate in the LRAUV data'
         if self.startDatetime == None or self.endDatetime == None:
+            logger.info('Reading data from %s', self.url)
             ds = open_url(self.url)
             if self.startDatetime == None:
                 self.startDatetime = datetime.utcfromtimestamp(ds.Time[0])
