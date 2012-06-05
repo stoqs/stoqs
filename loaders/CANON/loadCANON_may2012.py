@@ -52,15 +52,20 @@ cl.dorado_files = [
                     'Dorado389_2012_152_00_152_00_decim.nc',
                   ]
 
-cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/201205/'
+cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
 cl.daphne_files = [ 
-                    '20120530T160348/shore.nc',
-                    '20120530T215940/shore.nc',
-                    '20120531T010135/shore.nc',
-                    '20120531T011043/shore.nc',
-                    '20120531T050931/shore.nc',
-                    '20120531T062937/shore.nc',
-                    '20120531T174058/shore.nc'
+##                    '201205/20120530T160348/shore.nc',
+##                    '201205/20120530T215940/shore.nc',
+##                    '201205/20120531T010135/shore.nc',
+##                    '201205/20120531T011043/shore.nc',
+##                    '201205/20120531T050931/shore.nc',
+##                    '201205/20120531T062937/shore.nc',
+##                    '201205/20120531T174058/shore.nc'
+                    '201206/20120601T235829/shore.nc',
+                    '201206/20120603T002455/shore.nc',
+                    '201206/20120603T200613/shore.nc',
+                    '201206/20120603T213551/shore.nc',
+                    '201206/20120604T211315/shore.nc',
                   ]
 cl.daphne_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
@@ -92,9 +97,9 @@ cl.l_662_dataStartDatetime = datetime.datetime(2012,5, 15)
 ##cl.waveglider_parms = ''
 
 cl.stride = stride
-cl.loadAll()
+##cl.loadAll()
 
-##cl.loadDaphne()
+cl.loadDaphne()
 ##cl.loadNps_g29()
 ##cl.loadL_662()
 
