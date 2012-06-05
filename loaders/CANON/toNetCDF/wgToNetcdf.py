@@ -88,6 +88,7 @@ class ParserWriter(object):
 
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
+        self.outFile = outFile
 
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(esec_list))
@@ -173,6 +174,7 @@ class ParserWriter(object):
 
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
+        self.outFile = outFile
 
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(esec_list))
@@ -183,7 +185,6 @@ class ParserWriter(object):
 
         # PCO2 variables 
         for v in pco2_vars:
-            print v
             ncVar = v.replace(' ', '_', 42)
             exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('time',))" % (ncVar.lower(), ncVar, )
             exec "self.%s.long_name = '%s'" % (ncVar.lower(), v, )
@@ -234,8 +235,8 @@ class ParserWriter(object):
         self.ncFile.time_coverage_start = coards.from_udunits(self.time[0], self.time.units).isoformat()
         self.ncFile.time_coverage_end = coards.from_udunits(self.time[-1], self.time.units).isoformat()
 
-        self.ncFile.distribution_statement = 'Approved for public release. Distribution Unlimited.'
-        self.ncFile.license = 'Approved for public release. Distribution Unlimited.'
+        self.ncFile.distribution_statement = 'Any use requires prior approval from the MBARI CANON PI: Dr. Francisco Chavez'
+        self.ncFile.license = self.ncFile.distribution_statement
         self.ncFile.history = 'Created by "%s" on %s' % (' '.join(sys.argv), iso_now,)
 
 
@@ -243,7 +244,9 @@ if __name__ == '__main__':
 
     ctd = ParserWriter(parentDir='.')
     ctd.write_gpctd()
+    print "Wrote %s" % ctd.outFile
 
     pco2 = ParserWriter(parentDir='.')
     pco2.write_pco2()
+    print "Wrote %s" % ctd.outFile
 
