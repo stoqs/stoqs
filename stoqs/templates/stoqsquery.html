@@ -23,6 +23,11 @@
       .stoqs-parameter-toggle {
         width: 50%;
       }
+        .rotate-90 {
+            -moz-transform: rotate(-90deg);  /* FF3.5+ */
+            -o-transform: rotate(-90deg);  /* Opera 10.5 */
+            -webkit-transform: rotate(-90deg);  /* Saf3.1+, Chrome */
+        }
       th {
         align: center; /* Doesn't seem to work '*/
       }
@@ -191,7 +196,10 @@
                     <div id="collapseOne" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <div id="time-depth-plot" style="height:400px" class="disabled">
-                                <div id="placeholder" style="width:100%;height:90%;" class="disabled"></div>
+                                <!-- <div align="center" style="float:left;width:10%;height:90%;">
+                                    <div class="rotate-90">Depth (m)</div>
+                                </div>  -->
+                                <div id="placeholder" style="width:100%;height:90%;float:left;" class="disabled"></div>
                                 <p align="center">Time (GMT)</p>
                                 <div>
                                     <p><button id="zoomed-button" class="btn btn-mini zoom-toggle disabled">Zoomed</button></p>
