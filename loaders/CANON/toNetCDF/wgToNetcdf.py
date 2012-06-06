@@ -246,11 +246,17 @@ class ParserWriter(object):
 
 if __name__ == '__main__':
 
-    ctd = ParserWriter(parentDir='.')
+    # Accept arguement of data directory name, e.g. /mbari/Tracking/gliders
+    try:
+        dataDir = sys.argv[1]
+    except IndexError:
+        dataDir = '.'
+
+    ctd = ParserWriter(parentDir=dataDir)
     ctd.write_gpctd()
     print "Wrote %s" % ctd.outFile
 
-    pco2 = ParserWriter(parentDir='.')
+    pco2 = ParserWriter(parentDir=dataDir)
     pco2.write_pco2()
     print "Wrote %s" % ctd.outFile
 
