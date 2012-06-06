@@ -199,7 +199,7 @@ class Base_Loader(STOQS_Loader):
             logger.warn("Platform name %s not found in tracking database.  Creating new platform anyway.", platformName)
 
         # Create PlatformType
-        logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", (self.dbAlias, self.platformTypeName))
+        logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", self.dbAlias, self.platformTypeName)
         (platformType, created) = m.PlatformType.objects.db_manager(self.dbAlias).get_or_create(name = self.platformTypeName)
         if created:
             logger.debug("Created platformType.name %s in database %s", platformType.name, self.dbAlias)
@@ -674,6 +674,10 @@ class Base_Loader(STOQS_Loader):
             except SkipRecord:
                 logger.debug("Got SkipRecord Exception from self.preProcessParams().  Skipping")
                 continue
+            except Exception, e:
+                logger.error(e)
+                transaction.commit(using=self.dbAlias)
+                sys.exit(-1)
             else:
                 params = {} 
                 try:
@@ -693,6 +697,10 @@ class Base_Loader(STOQS_Loader):
                 except SkipRecord:
                     logger.debug("Got SkipRecord Exception from self.createMeasurement().  Skipping")
                     continue
+                except Exception, e:
+                    logger.error(e)
+                    transaction.commit(using=self.dbAlias)
+                    sys.exit(-1)
                 else:
                     logger.debug("longitude = %s, latitude = %s, time = %s, depth = %s", longitude, latitude, time, depth)
                     if depth < mindepth:
@@ -743,8 +751,11 @@ class Base_Loader(STOQS_Loader):
 
                 except ParameterNotFound:
                     print "Unable to locate parameter for %s, skipping" % (key,)
+                except Exception, e:
+                    logger.error(e)
+                    transaction.commit(using=self.dbAlias)
+                    sys.exit(-1)
 
-                transaction.commit(using=self.dbAlias)
 
             #   except Exception as e:
             #       print "Failed! %s" % (str(e),)
@@ -755,6 +766,7 @@ class Base_Loader(STOQS_Loader):
                     if (loaded % 500) == 0:
                         logger.info("%d records loaded.", loaded)
             # End for key, value
+            transaction.commit(using=self.dbAlias)
 
         transaction.commit(using=self.dbAlias)
 
@@ -1129,8 +1141,8 @@ class Glider_Loader(Base_Loader):
         '''
         Use provided activity information to add the activity to the database.
         '''
-        start=datetime(1950,1,1) + timedelta(days = float(self.ds.TIME[0]))
-        end=datetime(1950,1,1) + timedelta(days = float(self.ds.TIME[-1500]))
+        start = from_udunits(self.ds.TIME[0], self.ds.TIME.units)
+        end = from_udunits(self.ds.TIME[-1], self.ds.TIME.units)
         self.activity=m.Activity(name=self.activityName,
                     platform=self.platform,
                     startdate=start,
@@ -1150,7 +1162,7 @@ class Glider_Loader(Base_Loader):
             else:
                 logger.info("Using dataStartDatetime to read data from the source starting at %s", self.dataStartDatetime)
             if self.endDatetime == None:
-                self.endDatetime = from_udunits(self.ds.TIME[-1500], self.ds.TIME.units)
+                self.endDatetime = from_udunits(self.ds.TIME[-1], self.ds.TIME.units)
                 logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
 
         return super(Glider_Loader, self).initDB()
@@ -1161,10 +1173,12 @@ class Glider_Loader(Base_Loader):
         to lower case keys - since that is how we require them. 
         '''
         for v in ('TIME','LONGITUDE','LATITUDE', 'DEPTH'):
+            logger.debug(v)
             if row.has_key(v):
-                row[v.lower()]=row.pop(v)      
+                row[v.lower()]=row.pop(v) 
         if row.has_key('time'):
-            row['time'] = time.mktime((datetime(1950,1,1) + timedelta(days = float(row['time']))).timetuple())
+            row['time'] = to_udunits(from_udunits(float(row['time']), self.ds.TIME.units), 'seconds since 1970-01-01')
+            logger.debug(row['time'])
 
         return super(Glider_Loader,self).preProcessParams(row)
 
