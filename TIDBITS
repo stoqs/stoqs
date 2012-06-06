@@ -5,7 +5,7 @@ TIDBITS
 The tidbits here are anything that might be useful for developing, working with,
 or using stoqs.
 
-Here's an intercative python session that retrieves measurements and plots a histogram:
+Here's an interactive python session that retrieves measurements and plots a histogram:
 ---------------------------------------------------------------------------------------
 
 cd ~/dev/stoqshg
