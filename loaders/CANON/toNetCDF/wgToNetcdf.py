@@ -116,13 +116,13 @@ class ParserWriter(object):
         self.depth[:] = dep_list
 
         # Record Variables - CTD Data
-        temp = self.ncFile.createVariable('temp', 'float64', ('TIME',))
+        temp = self.ncFile.createVariable('TEMP', 'float64', ('TIME',))
         temp.long_name = 'Temperature'
         temp.standard_name = 'sea_water_temperature'
         temp.units = 'Celsius'
         temp[:] = tem_list
 
-        sal = self.ncFile.createVariable('salinity', 'float64', ('TIME',))
+        sal = self.ncFile.createVariable('PSAL', 'float64', ('TIME',))
         sal.long_name = 'Salinity'
         sal.standard_name = 'sea_water_salinity'
         sal[:] = sal_list
@@ -186,12 +186,16 @@ class ParserWriter(object):
         # PCO2 variables 
         for v in pco2_vars:
             ncVar = v.replace(' ', '_', 42)
-            exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar.upper(), )
+            # Only Latitude, Longitude, Depth, and Time variables are upper case to match other Glider data
+            if v == 'Latitude' or v == 'Longitude':
+                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar.upper(), )
+            else:
+                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar, )
             exec "self.%s.long_name = '%s'" % (ncVar.lower(), v, )
             exec "self.%s[:] = %s_list" % (ncVar.lower(), ncVar, )
 
         # Fudge up a depth variable with a value of zero
-        self.depth = self.ncFile.createVariable('depth', 'float64', ('TIME',))
+        self.depth = self.ncFile.createVariable('DEPTH', 'float64', ('TIME',))
         self.depth.long_name = 'Depth'
         self.depth.standard_name = 'depth'
         self.depth.units = 'm'
