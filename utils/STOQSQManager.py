@@ -247,6 +247,8 @@ class STOQSQManager(object):
             if self.getGet_Actual_Count():
                 # Return query only if a platform and a parameter have been selected
                 qs_mp = self.getMeasuredParametersQS()
+                qs_mp = qs_mp.values(   'measurement__instantpoint__activity__platform__name', 'measurement__instantpoint__timevalue', 
+                                        'measurement__geom', 'parameter__name', 'datavalue')
                 if qs_mp:
                     sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
                     sql +=  self.postgresifySQL(str(qs_mp.query)) + ';'
@@ -526,9 +528,9 @@ class STOQSQManager(object):
 
         # Add aliases for geom and gid - Activity
         q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
-        q = q.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)       # Fixes problem with above being applied to Sample query join
+        q = q.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)           # Fixes problem with above being applied to Sample query join
         q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
-   
+        q = q.replace('stoqs_measurement.geom', 'ST_AsText(stoqs_measurement.geom)')    # For sql ajax response to decode lat & lon
         # Add aliases for geom and gid - Sample
         q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
         q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
