@@ -152,6 +152,7 @@ def queryData(request, format=None):
         response.write(serializers.serialize('json', qm.qs))
     elif format == 'csv':
         logger.info('csv output')
+        return kmlResponse(request, qm, response)
     elif format == 'dap':
         logger.info('dap output')
     elif format == 'kml':
@@ -174,8 +175,10 @@ def queryUI(request):
     ##formats={'csv': 'Comma-Separated Values (CSV)',
     ##         'dods': 'OPeNDAP Format',
     ##         'kml': 'KML (Google Earth)'}
-    formats={'kml': 'KML (Google Earth)',
-             'sql': 'SQL for database %s' % settings.DATABASES[request.META['dbAlias']]['NAME']}
+    formats={'kml': 'KML - Google Earth visualization works best with a election of 5,000 points or less',
+             'sql': 'SQL for database %s' % settings.DATABASES[request.META['dbAlias']]['NAME'],
+             'csv': 'CSV',
+            }
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
                                                   'formats': formats,
                                                   'mapserver_host': settings.MAPSERVER_HOST,
