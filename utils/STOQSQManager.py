@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import connections
 from django.db.models import Q, Max, Min, Sum
 from django.contrib.gis.geos import fromstr
+from django.db.models import Avg
 from stoqs import models
 from coards import to_udunits
 import logging
@@ -90,6 +91,7 @@ class STOQSQManager(object):
                                    }
         else:
             options_functions={'parameters': self.getParameters,
+                               'parameterminmax': self.getParameterMinMax,
                                'platforms': self.getPlatforms,
                                'time': self.getTime,
                                'depth': self.getDepth,
@@ -307,14 +309,27 @@ class STOQSQManager(object):
         Lastly, we assume here that the name is unique and is also used for the id - this is enforced on 
         data load.
         '''
-        qs=self.qs.values('activityparameter__parameter__uuid','activityparameter__parameter__name').distinct()
+        qs = self.qs.values('activityparameter__parameter__uuid','activityparameter__parameter__name').distinct()
+
         results=[]
         for row in qs:
-            name=row['activityparameter__parameter__name']
-            id=row['activityparameter__parameter__name']
+            name = row['activityparameter__parameter__name']
+            id = row['activityparameter__parameter__name']
             if name is not None and id is not None:
                 results.append((name,id,))
         return results
+
+    def getParameterMinMax(self):
+        '''
+        If a single parameter has been selected return the average 2.5 and 97.5 percentiles of the
+        data and call them min and max for purposes of plotting
+        '''
+        results = []
+        if len(self.kwargs['parameters']) == 1:
+            qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
+            results = [self.kwargs['parameters'][0], qs['p025__avg'], qs['p975__avg']]
+        return results
+
     
     def getPlatforms(self):
         '''
