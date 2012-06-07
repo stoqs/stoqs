@@ -51,6 +51,7 @@ cl.dorado_files = [
 ##                    'Dorado389_2012_151_00_151_00_decim.nc',
 ##                    'Dorado389_2012_152_00_152_00_decim.nc',
                     'Dorado389_2012_157_07_157_07_decim.nc',
+                    'Dorado389_2012_158_00_158_00_decim.nc',
                   ]
 
 cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
@@ -69,6 +70,8 @@ cl.daphne_files = [
 ##                    '201206/20120604T211315/shore.nc',
                     '201206/20120606T050637/shore.nc',
                     '201206/20120606T094236/shore.nc',
+                    '201206/20120607T001433/shore.nc',
+##                    '201206/20120607T151546/shore.nc',
                   ]
 cl.daphne_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
@@ -80,7 +83,10 @@ cl.daphne_parms = [ 'platform_battery_charge', 'sea_water_temperature',
 
 cl.tethys_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/tethys/2012/'                    # Tethys realtime
 cl.tethys_files = [ 
-                    '201206/20120606T171537/shore.nc',
+                    '201206/20120604T192851/shore.nc',
+                    '201206/20120605T193027/shore.nc',
+                    '201206/20120605T193653/shore.nc',
+                    '201206/20120606T163010/shore.nc',
                   ]
 cl.tethys_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
@@ -101,11 +107,14 @@ cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_dataStartDatetime = datetime.datetime(2012,5, 15)
 
 cl.waveglider_base = 'http://odss.mbari.org/thredds/dodsC/CANON_may2012/waveglider/'
+##cl.waveglider_base = 'http://data.liquidr.com/erddap/tabledap/'
 cl.waveglider_files = [ 
                         'waveglider_gpctd_WG.nc',
                         'waveglider_pco2_WG.nc',
+##                        'weatherMBARIOAWaveGlider.dods?longitude,latitude,wVersion&time%3E=2012-06-01T00:00:00Z&time%3C=2012-06-08T00:00:00Z&.draw=markers&.marker=5|5&.color=0x000000&.colorBar=|||||'
                       ]
 cl.waveglider_parms = [ 
+##                          'temperature'
                         'temp', 'salinity', 'oxygen', 
                         'ZeroPumpOn_pco2', 'ZeroPumpOn_Temp', 'ZeroPumpOn_Pressure', 'ZeroPumpOff_pco2', 'ZeroPumpOff_Temp',
                         'ZeroPumpOff_Pressure', 'StandardFlowOn_Pressure', 'StandardFlowOff_pco2_Humidity', 'StandardFlowOff_pco2',
@@ -125,7 +134,7 @@ cl.stride = stride
 ##cl.loadWaveglider()
 
 cl.loadDorado()
-##cl.loadTethys()
-##cl.loadDaphne()
+cl.loadTethys()
+cl.loadDaphne()
 
 
