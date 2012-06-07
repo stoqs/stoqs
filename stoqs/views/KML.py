@@ -13,8 +13,11 @@ logger = logging.getLogger(__name__)
 # -----------------------------------------------------------------------------------------------------------
 # Support functions for rendering measurements into KML
 
-def makeKML(dbAlias, dataHash, pName, title, desc, startDate, endDate):
-    '''Generate the KML for the point in mpList'''
+def makeKML(dbAlias, dataHash, pName, title, desc, startDate, endDate, cmin=None, cmax=None):
+    '''
+    Generate the KML for the point in mpList
+    cmin and cmax are the color min and max 
+    '''
 
     #
     # Define the color lookup table and the color limits from 2.5 and 97.5 percentiles for each variable
@@ -30,9 +33,14 @@ def makeKML(dbAlias, dataHash, pName, title, desc, startDate, endDate):
 
     pointKMLHash = {}
     lineKMLHash = {}
+    if cmin and cmax:
+        clim = (cmin, cmax,)
+    else:
+        clim = climHash[pName]
+
     for k in dataHash.keys():
-        (pointStyleKML, pointKMLHash[k]) = buildKMLpoints(k, dataHash[k], clt, climHash[pName])
-        (lineStyleKML, lineKMLHash[k]) = buildKMLlines(k, dataHash[k], clt, climHash[pName])
+        (pointStyleKML, pointKMLHash[k]) = buildKMLpoints(k, dataHash[k], clt, clim)
+        (lineStyleKML, lineKMLHash[k]) = buildKMLlines(k, dataHash[k], clt, clim)
 
     #
     # KML header
