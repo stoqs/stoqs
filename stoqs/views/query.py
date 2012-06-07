@@ -122,6 +122,7 @@ def queryData(request, format=None):
     '''
     response = HttpResponse()
     query_parms = {'parameters': 'parameters',              # This should be specified once in the query string for each parameter.
+                   'parameterminmax': 'parameterminmax',    # Array of name, min, max
                    'time': ('start_time','end_time'),       # Single values
                    'depth': ('min_depth', 'max_depth'),     # Single values
                    'simpledepthtime': [],                   # List of x,y values
@@ -172,9 +173,6 @@ def queryUI(request):
         request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
         logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
-    ##formats={'csv': 'Comma-Separated Values (CSV)',
-    ##         'dods': 'OPeNDAP Format',
-    ##         'kml': 'KML (Google Earth)'}
     formats={'kml': 'KML - Google Earth visualization works best with a election of 5,000 points or less',
              'sql': 'SQL for database %s' % settings.DATABASES[request.META['dbAlias']]['NAME'],
              'csv': 'CSV',
