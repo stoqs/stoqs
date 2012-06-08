@@ -99,6 +99,9 @@ urlpatterns = patterns('',
 
     # For testing only 
     url(r'testAnimateCoastwatch$', 'stoqs.views.wms.showActivitiesWMSAnimateCoastwatch', {} , name='test-animate-wms-coastwatch'),\
+
+    # If nothing above matches show the campaigns
+    url('', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
 )
 
 # Not to be used in Production.  Must start development server with --insecure option to run with DEBUG = False:
