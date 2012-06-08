@@ -327,7 +327,7 @@ class STOQSQManager(object):
         results = []
         if len(self.kwargs['parameters']) == 1:
             qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
-            results = [self.kwargs['parameters'][0], qs['p025__avg'], qs['p975__avg']]
+            results = [self.kwargs['parameters'][0], round(qs['p025__avg'],8), round(qs['p975__avg'],8)]
         return results
 
     
