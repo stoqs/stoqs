@@ -1,11 +1,24 @@
+__author__    = 'Mike McCann'
+__copyright__ = '2012'
+__license__   = 'GPL v3'
+__contact__   = 'mccann at mbari.org'
+
+__doc__ = '''
+
+STOQS Query manager for building ajax responces to selections made for QueryUI
+
+@undocumented: __doc__ parser
+@status: production
+@license: GPL
 '''
-'''
+
 from django.conf import settings
 from django.db import connections
 from django.db.models import Q, Max, Min, Sum
 from django.contrib.gis.geos import fromstr
 from django.db.models import Avg
 from stoqs import models
+from utils import round_to_n
 from coards import to_udunits
 import logging
 import pprint
@@ -327,7 +340,7 @@ class STOQSQManager(object):
         results = []
         if len(self.kwargs['parameters']) == 1:
             qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
-            results = [self.kwargs['parameters'][0], round(qs['p025__avg'],8), round(qs['p975__avg'],8)]
+            results = [self.kwargs['parameters'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
         return results
 
     
