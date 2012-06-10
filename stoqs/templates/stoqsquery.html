@@ -77,6 +77,19 @@
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png">
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png">
     <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png">
+
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-29827353-2']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
   </head>
 
   <body>
@@ -93,7 +106,7 @@
           <a class="brand" href="#">{{request.META.dbAlias}}</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li><a href="{% url show-campaigns %}">Campaign list</a></li>
+              <li><a href="{% url show-campaigns %}"><i class="icon-list-alt icon-white"></i> Campaign list</a></li>
             </ul>
             <!--
             <form action="">
@@ -165,15 +178,25 @@
 
                             <div class="row-fluid">
                                 {% for format, description in formats.items %}
-                                <table>
-                                    <tr>
-                                        <th><a target="_blank" id="{{format}}-link" href=""><img src="{{STATIC_URL}}images/{{format}}-icon.png"/></a></th>
-                                        <th valign="top"><h4>&nbsp;{{description}}</h4></th>
-                                    </tr>
-                                </table>
-                                <div class="row-fluid">
-                                    <pre id="{{format}}-field"></pre>
-                                </div>          
+                                    <table>
+                                        <tr>
+                                            <th><a target="_blank" id="{{format}}-link" href=""><img src="{{STATIC_URL}}images/{{format}}-icon.png"/></a></th>
+                                            <th valign="top"><h4>&nbsp;{{description}}</h4></th>
+                                        </tr>
+                                    </table>
+                                    {% if format = 'kml' %}
+                                        <div align="center">
+                                        <span id="kml-parameter"></span>
+                                        <form align="center" class="form-inline">
+                                            <input id="cmin" type="text" class="input-small cmincmax" />
+                                            <img style="vertical-align:middle;"src="{{STATIC_URL}}images/jetplus_bar.png" />
+                                            <input id="cmax" type="text" class="input-small cmincmax" />
+                                        </form>
+                                        </div>
+                                        <pre id="{{format}}-field"></pre>
+                                    {% else %}
+                                        <pre id="{{format}}-field"></pre>
+                                    {% endif %}
                                 {% endfor %}            
                             </div><!-- row-fluid -->
                         </div>
@@ -289,6 +312,7 @@
     var zoomedData;
     var request=''
     var map = null; 
+    var kmlurl;
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -304,9 +328,16 @@
             $(element).removeClass('disabled');
         }
     }
+
+    function setKMLlinks() {
+        // To be colled up change of cmin & cmax input text boxes
+        var cmincmax = '&cmin=' + $('#cmin').val() + '&cmax=' + $('#cmax').val();
+        $('#kml-field').text(kmlurl + cmincmax);
+        $('#kml-link').attr('href',kmlurl + cmincmax);
+    }
     
     // Set the URL fields and buttons to use the current queried URL
-    function setDataAccess(sql) {
+    function setDataAccess(data) {
         var base_url='{{site_uri}}{% url stoqs-query-ui dbAlias=request.META.dbAlias %}';
         var param=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
         if (param != '') {
@@ -316,9 +347,23 @@
         var formats=[{% for format, description in formats.items %}'{{format}}'{% if not forloop.last %},{% endif %}{%endfor%}]
         // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
         $.each(formats, function (index, value) {
-            var url=base_url + value + param;
+            var url = base_url + value + param;
             if (value == 'sql') {
-                $('#'+value+'-field').text(sql);
+                $('#'+value+'-field').text(data['sql']);
+            }
+            else if (value == 'kml') {
+                if (typeof params['parameters'] != 'undefined') {
+                    if (params['parameters'].length == 1) {
+                        $('#kml-parameter').text(params['parameters'][0])
+                        $('#cmin').val(data['parameterminmax'][1]);
+                        $('#cmax').val(data['parameterminmax'][2]);
+                        kmlurl = url;
+                        setKMLlinks();
+                    }
+                }
+                else {
+                    $('#'+value+'-field').text('Select a Parameter to view your selection in Google Earth');
+                }
             }
             else {
                 $('#'+value+'-field').text(url);
@@ -504,6 +549,13 @@
         rebuildFilters();
     });
 
+    $('#cmin').bind('keypress', function (event, previousText) {
+        setTimeout(setKMLlinks());
+    });
+
+    $('#cmax').bind('keypress', function (event, previousText) {
+        setTimeout(setKMLlinks());
+    });
     
     /*
      * Perform the AJAX call to get a list of parameters, and enable/disable them
@@ -624,7 +676,7 @@
         $("#placeholder").bind("plotclick", function (event, pos, item) {
             if (item) {
                 // Crude test whether sample or activity click, activities 2nd element may be '(stride=..'
-                console.log(item.series.label)
+                //console.log(item.series.label)
                 if (item.series.label.split(' ').length == 2) {
                     if (item.series.label.split(' ')[1].indexOf('(') == -1) {
                         showSampleData(item.series.label)
@@ -819,7 +871,7 @@
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
-                setDataAccess(data['sql']);
+                setDataAccess(data)
                 for (var key in data) {
                     if (init == true) {
                         onInit(data, key)
