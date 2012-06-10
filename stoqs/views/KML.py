@@ -28,15 +28,16 @@ def makeKML(dbAlias, dataHash, pName, title, desc, startDate, endDate, cmin=None
         pn = p[0]
         qs = m.ActivityParameter.objects.using(dbAlias).filter(parameter__name=pn).aggregate(Avg('p025'), Avg('p975'))
         climHash[pn] = (qs['p025__avg'], qs['p975__avg'],)
-
     logger.debug('Color lookup min, max values:\n' + pprint.pformat(climHash))
+
 
     pointKMLHash = {}
     lineKMLHash = {}
     if cmin and cmax:
-        clim = (cmin, cmax,)
+        clim = (float(cmin), float(cmax),)
     else:
         clim = climHash[pName]
+    logger.debug('clim = %s', clim)
 
     for k in dataHash.keys():
         (pointStyleKML, pointKMLHash[k]) = buildKMLpoints(k, dataHash[k], clt, clim)
