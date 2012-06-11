@@ -154,7 +154,7 @@ def queryData(request, format=None):
         response.write(serializers.serialize('json', qm.qs))
     elif format == 'csv':
         logger.info('csv output')
-        return kmlResponse(request, qm, response)
+        return csvResponse(request, qm, response)
     elif format == 'dap':
         logger.info('dap output')
     elif format == 'kml':
