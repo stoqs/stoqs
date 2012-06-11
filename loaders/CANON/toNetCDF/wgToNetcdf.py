@@ -117,7 +117,7 @@ class ParserWriter(object):
 
         # Record Variables - CTD Data
         temp = self.ncFile.createVariable('TEMP', 'float64', ('TIME',))
-        temp.long_name = 'Temperature'
+        temp.long_name = 'Sea Water Temperature in-situ ITS-90 or IPTS-68 scale'
         temp.standard_name = 'sea_water_temperature'
         temp.units = 'Celsius'
         temp[:] = tem_list
@@ -258,5 +258,5 @@ if __name__ == '__main__':
 
     pco2 = ParserWriter(parentDir=dataDir)
     pco2.write_pco2()
-    print "Wrote %s" % ctd.outFile
+    print "Wrote %s" % pco2.outFile
 
