@@ -21,6 +21,9 @@ web requests.
 The first thing you'll need is the source code revision control software Mercurial
 which can be installed from http://mercurial.selenic.com/wiki/Download.
 
+STOQS is developed using the CentOS 6 Linux distrubution.  To install Mercurial on
+CentOS execute "yum -install mercurial" as root.
+
 This software can be checked out of Google Code thusly:
 
 	cd ~/dev
