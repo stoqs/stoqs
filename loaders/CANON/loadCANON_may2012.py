@@ -71,7 +71,8 @@ cl.daphne_files = [
                     '201206/20120606T050637/shore.nc',
                     '201206/20120606T094236/shore.nc',
                     '201206/20120607T001433/shore.nc',
-##                    '201206/20120607T151546/shore.nc',
+                    '201206/20120607T151546/shore.nc',
+                    '201206/20120607T162945/shore.nc'
                   ]
 cl.daphne_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
@@ -87,6 +88,12 @@ cl.tethys_files = [
                     '201206/20120605T193027/shore.nc',
                     '201206/20120605T193653/shore.nc',
                     '201206/20120606T163010/shore.nc',
+                    '201206/20120606T171537/shore.nc',
+                    '201206/20120607T194649/shore.nc',
+                    '201206/20120608T162946/shore.nc',
+##                    '201206/20120608T193449/shore.nc',
+                    '201206/20120608T194202/shore.nc',
+                    '201206/20120608T205115/shore.nc',
                   ]
 cl.tethys_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
@@ -107,33 +114,31 @@ cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_dataStartDatetime = datetime.datetime(2012,5, 15)
 
 cl.waveglider_base = 'http://odss.mbari.org/thredds/dodsC/CANON_may2012/waveglider/'
-##cl.waveglider_base = 'http://data.liquidr.com/erddap/tabledap/'
 cl.waveglider_files = [ 
                         'waveglider_gpctd_WG.nc',
-                        'waveglider_pco2_WG.nc',
-##                        'weatherMBARIOAWaveGlider.dods?longitude,latitude,wVersion&time%3E=2012-06-01T00:00:00Z&time%3C=2012-06-08T00:00:00Z&.draw=markers&.marker=5|5&.color=0x000000&.colorBar=|||||'
+##                        'waveglider_pco2_WG.nc',
                       ]
 cl.waveglider_parms = [ 
-##                          'temperature'
                         'temp', 'salinity', 'oxygen', 
-                        'ZeroPumpOn_pco2', 'ZeroPumpOn_Temp', 'ZeroPumpOn_Pressure', 'ZeroPumpOff_pco2', 'ZeroPumpOff_Temp',
-                        'ZeroPumpOff_Pressure', 'StandardFlowOn_Pressure', 'StandardFlowOff_pco2_Humidity', 'StandardFlowOff_pco2',
-                        'StandardFlowOff_Temp', 'StandardFlowOff_Pressure', 'Longitude', 'Latitude', 'EquilPumpOn_pco2', 'EquilPumpOn_Temp',
-                        'EquilPumpOn_Pressure', 'EquilPumpOff_pco2', 'EquilPumpOff_Temp', 'EquilPumpOff_Pressure', 'EquilPumpOff_Humidity',
-                        'Durafet_pH_6', 'Durafet_pH_5', 'Durafet_pH_4', 'Durafet_pH_3', 'Durafet_pH_2', 'Durafet_pH_1', 'Can_Humidity',
-                        'AirPumpOn_pco2', 'AirPumpOn_Temp', 'AirPumpOn_Pressure', 'AirPumpOff_pco2', 'AirPumpOff_Temp', 'AirPumpOff_Pressure',
-                        'AirPumpOff_Humidity',
+##                        'ZeroPumpOn_pco2', 'ZeroPumpOn_Temp', 'ZeroPumpOn_Pressure', 'ZeroPumpOff_pco2', 'ZeroPumpOff_Temp',
+##                        'ZeroPumpOff_Pressure', 'StandardFlowOn_Pressure', 'StandardFlowOff_pco2_Humidity', 'StandardFlowOff_pco2',
+##                        'StandardFlowOff_Temp', 'StandardFlowOff_Pressure', 'Longitude', 'Latitude', 'EquilPumpOn_pco2', 'EquilPumpOn_Temp',
+##                        'EquilPumpOn_Pressure', 'EquilPumpOff_pco2', 'EquilPumpOff_Temp', 'EquilPumpOff_Pressure', 'EquilPumpOff_Humidity',
+##                        'Durafet_pH_6', 'Durafet_pH_5', 'Durafet_pH_4', 'Durafet_pH_3', 'Durafet_pH_2', 'Durafet_pH_1', 'Can_Humidity',
+##                        'AirPumpOn_pco2', 'AirPumpOn_Temp', 'AirPumpOn_Pressure', 'AirPumpOff_pco2', 'AirPumpOff_Temp', 'AirPumpOff_Pressure',
+##                        'AirPumpOff_Humidity',
                       ]
 
 
 cl.stride = stride
 ##cl.loadAll()
 
-##cl.loadNps_g29()
-##cl.loadL_662()
-##cl.loadWaveglider()
+##cl.loadDorado()
 
-cl.loadDorado()
+cl.loadNps_g29()
+cl.loadL_662()
+cl.loadWaveglider()
+
 cl.loadTethys()
 cl.loadDaphne()
 

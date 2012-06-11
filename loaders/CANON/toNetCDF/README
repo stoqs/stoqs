@@ -1,6 +1,10 @@
 This directory contains scripts to convert miscellaneous data to NetCDF so that
 it can be put on an OPeNDAP server for loading by DAPloaders.py.
 
+    ./wgToNetcdf.py /net/tornado/vol/vol0/Tracking/gliders
+    <scp files created to TDS>
+
+Then run the appropriate loadCANON_... script one directory up to load the data into STOQS.
 
 -- 
 Mike McCann
