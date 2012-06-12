@@ -351,7 +351,6 @@
         // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
         $.each(formats, function (index, value) {
             var url = base_url + value + param;
-            console.log('url = ' + url)
             if (value == 'sql') {
                 $('#'+value+'-field').text(data['sql']);
             }
@@ -774,12 +773,13 @@
             zoomedData = initData;
             if (key == 'platforms') {
                 $.each(data[key], function (index, value) {
-                                        $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td class="platform" style="text-align:center;">' +
-                                                '<div align="center" style="float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
-                                                    '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;">' +
-                                                '</div></div>' +
-                                                '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;">'+ value[0] +'</button></td>' +
-                                            '</tr>');
+                    $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td class="platform" style="text-align:center;">' +
+                            '<div align="center" style="float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
+                                '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;border-bottom-color:#' + 
+                                    data['simpledepthtime']['colors'][value[1]] + ';">' +
+                            '</div></div>' +
+                            '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;">'+ value[0] +'</button></td>' +
+                        '</tr>');
                 });
             }
             else if (key == 'parameters') {
@@ -808,9 +808,6 @@
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
                 $.plot($("#placeholder"), getDataset(initData, start.getTime(), end.getTime()), simpledepthtime_options);
-                $.each(data[key]['colors'], function (index, value) {
-                    $('#' + index + '_color').css('border-bottom-color', '#' + value);
-                });
             }
             else if (key == 'activitymaptrackextent') {
                 e = data[key];
