@@ -123,7 +123,7 @@ class ParserWriter(object):
         temp[:] = tem_list
 
         sal = self.ncFile.createVariable('PSAL', 'float64', ('TIME',))
-        sal.long_name = 'Salinity'
+        sal.long_name = 'Sea Water Salinity in-situ PSS 1978 scale'
         sal.standard_name = 'sea_water_salinity'
         sal[:] = sal_list
 
