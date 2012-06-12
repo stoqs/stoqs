@@ -188,9 +188,9 @@
                                         <div align="center">
                                         <span id="kml-parameter"></span>
                                         <form align="center" class="form-inline">
-                                            <input id="cmin" type="text" class="input-small cmincmax" style="text-align:right;" />
+                                            <input id="cmin" type="text" class="input-small" style="text-align:right;" />
                                             <img style="vertical-align:middle;"src="{{STATIC_URL}}images/jetplus_bar.png" />
-                                            <input id="cmax" type="text" class="input-small cmincmax" />
+                                            <input id="cmax" type="text" class="input-small" />
                                         </form>
                                         </div>
                                         <pre id="{{format}}-field"></pre>
@@ -331,7 +331,10 @@
 
     function setKMLlinks() {
         // To be colled up change of cmin & cmax input text boxes
-        var cmincmax = '&cmin=' + $('#cmin').val() + '&cmax=' + $('#cmax').val();
+        var cmincmax = ''
+        if ($('#cmin').val() && $('#cmax').val()) {
+            cmincmax = '&cmin=' + $('#cmin').val() + '&cmax=' + $('#cmax').val();
+        }
         $('#kml-field').text(kmlurl + cmincmax);
         $('#kml-link').attr('href',kmlurl + cmincmax);
     }
@@ -348,22 +351,26 @@
         // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
         $.each(formats, function (index, value) {
             var url = base_url + value + param;
+            console.log('url = ' + url)
             if (value == 'sql') {
                 $('#'+value+'-field').text(data['sql']);
             }
             else if (value == 'kml') {
+                kmlurl = 'Select a Parameter to view your selection of O(10k) actual datavalues in Google Earth';
                 if (typeof params['parameters'] != 'undefined') {
                     if (params['parameters'].length == 1) {
-                        $('#kml-parameter').text(params['parameters'][0])
+                        $('#kml-parameter').text(params['parameters'][0]);
                         $('#cmin').val(data['parameterminmax'][1]);
                         $('#cmax').val(data['parameterminmax'][2]);
                         kmlurl = url;
-                        setKMLlinks();
+                    }
+                    else {
+                        $('#kml-parameter').text('');
+                        $('#cmin').val('');
+                        $('#cmax').val('');
                     }
                 }
-                else {
-                    $('#'+value+'-field').text('Select a Parameter to view your selection in Google Earth');
-                }
+                setKMLlinks();
             }
             else {
                 $('#'+value+'-field').text(url);
