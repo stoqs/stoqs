@@ -119,8 +119,7 @@ cl.waveglider_files = [
 ##                        'waveglider_pco2_WG.nc',
                       ]
 cl.waveglider_parms = [ 
-                        ##'TEMP', 'PSAL', 'oxygen', 
-                        'TEMP', 'PSAL',
+                        'TEMP', 'PSAL', 'oxygen', 
 ##                        'ZeroPumpOn_pco2', 'ZeroPumpOn_Temp', 'ZeroPumpOn_Pressure', 'ZeroPumpOff_pco2', 'ZeroPumpOff_Temp',
 ##                        'ZeroPumpOff_Pressure', 'StandardFlowOn_Pressure', 'StandardFlowOff_pco2_Humidity', 'StandardFlowOff_pco2',
 ##                        'StandardFlowOff_Temp', 'StandardFlowOff_Pressure', 'Longitude', 'Latitude', 'EquilPumpOn_pco2', 'EquilPumpOn_Temp',
