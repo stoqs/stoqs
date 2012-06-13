@@ -19,14 +19,18 @@ following these instructions.
     using postgresql-9.1.
 
     Most interaction with the postgres database is done via commands at the psql prompt.
-    To get the psql prompt become postgres (via root) and run the psql command:
+    To get the psql prompt become the postgres user with "su postgres" and enter the postgres
+    password.  This works if the postgres  account has been set up for login.  The default 
+    postgres installation creates the postgres account without login capability.  In this 
+    case you can become postgres via root (enter the root password when prompted) and then 
+    run the psql command:
 
-        su root -c "su postgres"        (or login as postgres if you can do that)
+        su root -c "su postgres"
         psql
-    
-    Using Postgres's 'psql' command with administrator priveledges make sure that
-    there is a spatial types database named "template_postgis".  You may need
-    to make a copy of the template installed from yum with a psql command like:
+
+    Using Postgres's 'psql' command with administrator priveledges (which you have as user
+    postgres) make sure that there is a spatial types database named "template_postgis".  You 
+    may need to make a copy of the template installed from yum with a psql command like:
 
         create database template_postgis with template postgis;
 
