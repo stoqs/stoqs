@@ -174,7 +174,7 @@ def queryUI(request):
         request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
         logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
-    formats={'kml': 'KML - Google Earth visualization works best with a election of 5,000 points or less',
+    formats={'kml': 'KML - To view data in Google Earth, click on the icon',
              'sql': 'SQL for database %s' % settings.DATABASES[request.META['dbAlias']]['NAME'],
              'csv': 'CSV',
             }
