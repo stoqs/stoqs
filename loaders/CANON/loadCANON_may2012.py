@@ -72,7 +72,7 @@ cl.daphne_files = [
                     '201206/20120606T094236/shore.nc',
                     '201206/20120607T001433/shore.nc',
                     '201206/20120607T151546/shore.nc',
-                    '201206/20120607T162945/shore.nc'
+                    '201206/20120607T162945/shore.nc',
                   ]
 cl.daphne_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
@@ -91,12 +91,16 @@ cl.tethys_files = [
                     '201206/20120606T171537/shore.nc',
                     '201206/20120607T194649/shore.nc',
                     '201206/20120608T162946/shore.nc',
-##                    '201206/20120608T193449/shore.nc',
+##                    '201206/20120608T193449/shore.nc',        # degenerate netCDF
                     '201206/20120608T194202/shore.nc',
                     '201206/20120608T205115/shore.nc',
+                    '201206/20120610T190213/shore.nc',
+                    '201206/20120613T050147/shore.nc',
+                    '201206/20120613T085821/shore.nc',
+                    '201206/20120613T162943/shore.nc',
                   ]
 cl.tethys_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
-                    'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
+                    'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water']
 
 cl.fulmar_base = []
 cl.fulmar_files = []
@@ -137,9 +141,9 @@ cl.stride = stride
 
 ##cl.loadNps_g29()
 ##cl.loadL_662()
-cl.loadWaveglider()
+##cl.loadWaveglider()
 
-##cl.loadTethys()
-##cl.loadDaphne()
+cl.loadTethys()
+cl.loadDaphne()
 
 
