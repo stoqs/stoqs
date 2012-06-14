@@ -73,9 +73,11 @@ cd ~/dev/stoqshg
  
 # Create a venv for a development environment
 virtualenv venv-stoqs
-source venv-stoqs/bin/activate, (source venv-stoqs/bin/activate.csh if using csh or tcsh)
+source venv-stoqs/bin/activate      # source venv-stoqs/bin/activate.csh if using csh or tcsh
 
-# Install additional Python packages required by STOQS:
+
+# Install additional Python packages required by STOQS. (Make sure you are in your venv
+# - your prompt should look something like "(venv-stoqs)[student@localhost stoqshg]$ "):
 easy_install numpy
 easy_install paste
 easy_install pydap
@@ -94,11 +96,11 @@ pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
 
 
 # When running django-admin.py or 'python manage.py' do it in your virtualenv, making
-# sure you prompt looks something like "(venv-stoqs)[student@localhost stoqsproj]$ "
+# sure your prompt looks something like "(venv-stoqs)[student@localhost stoqshg]$ "
 # Proceed to the instructions in the INSTALL file.
 
 --
 Mike McCann
-MBARI 3 June 2012
+MBARI 13 June 2012
 
 

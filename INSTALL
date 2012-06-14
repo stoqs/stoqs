@@ -36,7 +36,8 @@ following these instructions.
 
     The Django test runner requires the spatial types template to have the name template_postgis.
 
-    Create a 'stoqsadm' role, e.g.:
+    Create a 'stoqsadm' role (the credentials must match what you configured in privateSettings
+    for DATABASE_USER and DATABASE_PASSSWORD) e.g.:
     
         create role stoqsadm login password 'password_of_your_choice';
 
@@ -103,7 +104,7 @@ indication that you are in the virtual environment.
     and 
         http://localhost:8000/default/sample
     and 
-        http://localhost:8000/default/query        # For an ajax-driven query interface to STOQS
+        http://localhost:8000/default/query/       # For an ajax-driven query interface to STOQS
     
     The mgmt url provides a link deleting the Activity - confirm in the celeryd window that Activity 
     gets deleted - execute loaders/DAPloaders.py again to reload the data.
