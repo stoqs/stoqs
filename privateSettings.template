@@ -10,12 +10,20 @@
 ADMIN_NAME = ''
 ADMIN_EMAIL = ''
 
-# Database credentials - assume that all databases use the same login
+# Database credentials - assume that all databases use the same login on this server.
+# The DATABASE_USER and DATABASE_PASSWORD password you set here must be the
+# same as the postgres database role that you create at the end of step 2
+# in the INSTALL instructions.  Those instructions recommend using a
+# DATABASE_user role name of 'stoqsadm'.
 DATABASE_USER = ''
 DATABASE_PASSWORD = ''
+
+# If your postgres server is the same server that is running Django use '127.0.0.1'
 DATABASE_HOST = ''
 
-# Mapserver hostname, just the name or address.  Assumes that mapserv is installed in /cgi-bin
+# Mapserver hostname, just the name or address.  Assumes that mapserv is installed in /cgi-bin.
+# - If you set this to the IP address assigned to your VM you can access the web app from your host OS
+# - In a production environment set it to the host name of your mapserver
 MAPSERVER_HOST = ''
 
 # Make this unique, and don't share it with anybody
