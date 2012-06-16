@@ -140,7 +140,7 @@
                             </p>
                             <p>
                                 <div id="query-stats" class="ajax-wait"></div>
-                                <input type="checkbox" id="getactualcount" /> Get actual count
+                                <input type="checkbox" id="getactualcount" title="Increases query time" /> Get actual count
                             </p>
                         </div>
                     </div>
@@ -168,7 +168,7 @@
                 </div><!-- accordian-group -->
 
                 <div class="accordian-group">
-                    <div class="accordian-heading">
+                    <div class="accordian-heading" title="Click to toggle data access options">
                         <h3><a id="data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseDataAccess">
                         Measurement Data Access
                         </a></h3>
@@ -180,7 +180,7 @@
                                 {% for format, description in formats.items %}
                                     <table>
                                         <tr>
-                                            <th><a target="_blank" id="{{format}}-link" href=""><img src="{{STATIC_URL}}images/{{format}}-icon.png"/></a></th>
+                                            <th><a target="_blank" id="{{format}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format}}-icon.png"/></a></th>
                                             <th valign="top"><h4>&nbsp;{{description}}</h4></th>
                                         </tr>
                                     </table>
@@ -188,9 +188,9 @@
                                         <div align="center">
                                         <span id="kml-parameter"></span>
                                         <form align="center" class="form-inline">
-                                            <input id="cmin" type="text" class="input-small" style="text-align:right;" />
-                                            <img style="vertical-align:middle;"src="{{STATIC_URL}}images/jetplus_bar.png" />
-                                            <input id="cmax" type="text" class="input-small" />
+                                            <input id="cmin" type="text" class="input-small" style="text-align:right;" title="Initial value is 2.5 percentile value" />
+                                            <img style="vertical-align:middle;"src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" />
+                                            <input id="cmax" type="text" class="input-small" title="Initial value is 97.5 percentile value" />
                                         </form>
                                         </div>
                                         <pre id="{{format}}-field"></pre>
@@ -222,10 +222,10 @@
                                 <!-- <div align="center" style="float:left;width:10%;height:90%;">
                                     <div class="rotate-90">Depth (m)</div>
                                 </div>  -->
-                                <div id="placeholder" style="width:100%;height:90%;float:left;" class="disabled"></div>
+                                <div id="placeholder" style="width:100%;height:90%;float:left;" class="disabled" title="Click and drag to select"></div>
                                 <p align="center">Time (GMT)</p>
                                 <div>
-                                    <p><button id="zoomed-button" class="btn btn-mini zoom-toggle disabled">Zoomed</button></p>
+                                    <p><button id="zoomed-button" class="btn btn-mini zoom-toggle disabled" title="Click to unzoom">Zoomed</button></p>
                                 </div>
                             </div>
                             <input type="hidden" id="start-ems" "name="start-ems" />
@@ -240,14 +240,14 @@
 
 
                 <div class="accordian-group">
-                    <div class="accordian-heading">
+                    <div class="accordian-heading" title="Click to toggle Parameter list">
                         <h3><a id="parameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
                         Parameters
                         </a></h3>
                     </div>
                     <div id="collapseTwo" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <table id="parameter-table" class="table table-condensed table-bordered">
+                            <table id="parameter-table" class="table table-condensed">
                               <tbody>
                               </tbody>
                             </table>
@@ -257,14 +257,14 @@
 
 
                 <div class="accordian-group">
-                    <div class="accordian-heading">
+                    <div class="accordian-heading" title="Click to toggle Platform list">
                         <h3><a id="platforms-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
                         Platforms
                         </a></h3>
                     </div>
                     <div id="collapseThree" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <table id="platform-table" class="table table-condensed table-bordered">
+                            <table id="platform-table" class="table table-condensed">
                               <tbody>
                               </tbody>
                             </table>                                
@@ -555,11 +555,11 @@
         rebuildFilters();
     });
 
-    $('#cmin').bind('keypress', function (event, previousText) {
+    $('#cmin').on('keypress', function (event, previousText) {
         setTimeout(setKMLlinks());
     });
 
-    $('#cmax').bind('keypress', function (event, previousText) {
+    $('#cmax').on('keypress', function (event, previousText) {
         setTimeout(setKMLlinks());
     });
     
@@ -774,19 +774,21 @@
             if (key == 'platforms') {
                 $.each(data[key], function (index, value) {
                     $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td class="platform" style="text-align:center;">' +
-                            '<div align="center" style="float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
+                            '<div id="' + value[1] + '_icon" align="center" style="float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
                                 '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;border-bottom-color:#' + 
                                     data['simpledepthtime']['colors'][value[1]] + ';">' +
                             '</div></div>' +
-                            '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;">'+ value[0] +'</button></td>' +
+                            '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;" title="Click to select this platform">'+ value[0] +'</button></td>' +
                         '</tr>');
+                    $('#' + value[1] + '_icon').click( function () { $('#' + value[1] + ' > td > button').click() } );
                 });
             }
             else if (key == 'parameters') {
                 $.each(data[key], function (index, value) {
-                                        $('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
-                                                  '<td class="parameter"><button class="btn btn-mini stoqs-toggle parameter">'+ value[0] +'</button></td>' +
-                                                  '</tr>');
+                    $('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
+                            '<td class="parameter">' +
+                                '<button class="btn btn-mini stoqs-toggle parameter" title="Click to select this parameter">'+ value[0] +'</button></td>' +
+                            '</tr>');
                 });
             }
             else if (key == 'time') { 
@@ -891,8 +893,6 @@
                 else {
                     $('#query-stats').html("<h4>" + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters</h4>");
                 }
-                //$('#salinity > td > button').click();
-                //$('#dorado > td > button').click();
             },
             dataType: "json"
         });
