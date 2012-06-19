@@ -56,7 +56,6 @@ from loaders import STOQS_Loader
 
 
 # Set up logging
-##logger = logging.getLogger('loaders')
 logger = logging.getLogger('__main__')
 logger.setLevel(logging.INFO)
 
@@ -108,6 +107,7 @@ class Base_Loader(STOQS_Loader):
     global_ignored_names = ['longitude','latitude', 'time', 'Time',
                 'LONGITUDE','LATITUDE','TIME', 'NominalDepth', 'esecs', 'Longitude', 'Latitude',
                 'DEPTH','depth'] # A list of parameters that should not be imported as parameters
+    global_dbAlias = ''
     def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, 
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, stride=1 ):
@@ -137,6 +137,7 @@ class Base_Loader(STOQS_Loader):
         self.platformName = platformName
         self.platformColor = platformColor
         self.dbAlias = dbAlias
+        global_dbAlias = dbAlias
         self.platformTypeName = platformTypeName
         self.activityName = activityName
         self.startDatetime = startDatetime
@@ -239,7 +240,6 @@ class Base_Loader(STOQS_Loader):
       '''
       Wrapper so as to apply self.dbAlias in the decorator
       '''
-      @transaction.commit_manually(using=self.dbAlias)
       def innerAddParameters(self, parmDict):
         '''
         This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
@@ -275,13 +275,11 @@ class Base_Loader(STOQS_Loader):
                     'origin': self.activityName,
                     'name': key}
 
-                ##print "addParameters(): parms = %s" % parms
                 self.parameter_dict[key] = m.Parameter(**parms)
                 try:
                     sid = transaction.savepoint(using=self.dbAlias)
                     self.parameter_dict[key].save(using=self.dbAlias)
                     self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                    transaction.savepoint_commit(sid,using=self.dbAlias)
                 except IntegrityError as e:
                     logger.warn('%s', e)
                     transaction.savepoint_rollback(sid)
@@ -291,7 +289,6 @@ class Base_Loader(STOQS_Loader):
                             sid2 = transaction.savepoint(using=self.dbAlias)
                             self.parameter_dict[key].save(using=self.dbAlias)
                             self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                            transaction.savepoint_commit(sid2,using=self.dbAlias)
                         except Exception as e:
                             logger.error('%s', e)
                             transaction.savepoint_rollback(sid2,using=self.dbAlias)
@@ -310,7 +307,6 @@ class Base_Loader(STOQS_Loader):
                         '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
                 logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
 
-        transaction.commit(using=self.dbAlias)
 
       return innerAddParameters(self, parmDict)
  
@@ -585,7 +581,7 @@ class Base_Loader(STOQS_Loader):
             raise SkipRecord
 
         return measurement
-    
+
     def preProcessParams(self, row):
         '''
         This method is designed to perform any final pre-processing, such as adding new
@@ -641,7 +637,6 @@ class Base_Loader(STOQS_Loader):
       '''
       Wrapper so as to apply self.dbAlias in the decorator
       '''
-      @transaction.commit_manually(using=self.dbAlias)
       def innerProcess_data(self):
         '''
         Iterate over the data source and load the data in by creating new objects
@@ -676,7 +671,6 @@ class Base_Loader(STOQS_Loader):
                 continue
             except Exception, e:
                 logger.error(e)
-                transaction.commit(using=self.dbAlias)
                 sys.exit(-1)
             else:
                 params = {} 
@@ -699,7 +693,6 @@ class Base_Loader(STOQS_Loader):
                     continue
                 except Exception, e:
                     logger.error(e)
-                    transaction.commit(using=self.dbAlias)
                     sys.exit(-1)
                 else:
                     logger.debug("longitude = %s, latitude = %s, time = %s, depth = %s", longitude, latitude, time, depth)
@@ -753,7 +746,6 @@ class Base_Loader(STOQS_Loader):
                     print "Unable to locate parameter for %s, skipping" % (key,)
                 except Exception, e:
                     logger.error(e)
-                    transaction.commit(using=self.dbAlias)
                     sys.exit(-1)
 
 
@@ -766,9 +758,7 @@ class Base_Loader(STOQS_Loader):
                     if (loaded % 500) == 0:
                         logger.info("%d records loaded.", loaded)
             # End for key, value
-            transaction.commit(using=self.dbAlias)
 
-        transaction.commit(using=self.dbAlias)
 
         # End for row
         #
@@ -805,7 +795,6 @@ class Base_Loader(STOQS_Loader):
         self.insertSimpleDepthTimeSeries()
         logger.info("Data load complete, %d records loaded.", loaded)
 
-        transaction.commit(using=self.dbAlias)
 
         return loaded, path, parmCount, mindepth, maxdepth
 
