@@ -27,6 +27,7 @@ from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import Point
 from django.db.utils import IntegrityError
 from django.db import connection, transaction
+from django.db.models import Max, Min
 from stoqs import models as m
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
@@ -530,6 +531,16 @@ class STOQS_Loader(object):
                 logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
         logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
+
+    def updateCampaignStartEnd(self):
+        '''
+        Pull the min & max from InstantPoint and set the Campaign start and end from these
+        '''
+        if self.campaign:
+            ip_qs = m.InstantPoint.objects.using(self.dbAlias).aggregate(Max('timevalue'), Min('timevalue'))
+            m.Campaign.objects.using(self.dbAlias).update(
+                                        startdate = ip_qs['timevalue__min'],
+                                        enddate = ip_qs['timevalue__max'])
 
 
 
