@@ -793,6 +793,7 @@ class Base_Loader(STOQS_Loader):
         #
         self.updateActivityParameterStats(parameterCount)
         self.insertSimpleDepthTimeSeries()
+        self.updateCampaignStartEnd()
         logger.info("Data load complete, %d records loaded.", loaded)
 
 
@@ -847,22 +848,20 @@ class Base_Loader(STOQS_Loader):
                 if created:
                     logger.info('Created ActivityParameter for parameter.name = %s', p.name)
                 else:
-                    m.ActivityParameter.objects.using(self.dbAlias).update(
-                                        activity = a,
-                                        parameter = p,
-                                        number = len(listvar),
-                                        min = numpvar.min(),
-                                        max = numpvar.max(),
-                                        mean = numpvar.mean(),
-                                        median = median(listvar),
-                                        mode = mode(numpvar),
-                                        p025 = percentile(listvar, 0.025),
-                                        p975= percentile(listvar, 0.975)
-                                        )
-                    logger.info('Update ActivityParameter for parameter.name = %s', p.name)
+                    ap.number = len(listvar)
+                    ap.min = numpvar.min()
+                    ap.max = numpvar.max()
+                    ap.mean = numpvar.mean()
+                    ap.median = median(listvar)
+                    ap.mode = mode(numpvar)
+                    ap.p025 = percentile(listvar, 0.025)
+                    ap.p975 = percentile(listvar, 0.975)
+                    ap.save()
+                    logger.info('Updated ActivityParameter for parameter.name = %s', p.name)
 
             except IntegrityError:
                 logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
+                continue
                 
             # Compute and save histogram
             (counts, bins) = numpy.histogram(numpvar,100)
