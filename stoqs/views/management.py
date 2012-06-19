@@ -158,9 +158,9 @@ def showCampaigns(request):
             if c.description:
                 cam.description = c.description
             if c.startdate: 
-                cam.startdate = c.startdate + " GMT"
+                cam.startdate = c.startdate.strftime('%d %b %Y %H:%M:%S') + " GMT"
             if c.enddate:
-                cam.enddate = c.enddate + " GMT"
+                cam.enddate = c.enddate.strftime('%d %b %Y %H:%M:%S') + " GMT"
             logger.debug("Appending to cList cam with dbAlias = %s and name = %s", cam.dbAlias, cam.name)
             cList.append(cam)
 
