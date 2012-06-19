@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 __author__    = 'Mike McCann'
-__copyright__ = '2011'
+__copyright__ = '2012'
 __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
 
@@ -39,7 +39,7 @@ except IndexError:
 # ------------------------------------------------------------------------------------
 # Data loads for all the activities, LRAUV have real-time files before full-resolution
 # ------------------------------------------------------------------------------------
-cl = CANONLoader(dbAlias, 'CANON - May 2011')
+cl = CANONLoader(dbAlias, 'CANON - May 2012')
 
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2012/netcdf/'
 cl.dorado_files = [ 
