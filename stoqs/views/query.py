@@ -175,7 +175,7 @@ def queryUI(request):
         logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     formats={'kml': 'KML - To view data in Google Earth, click on the icon',
-             'sql': 'SQL for database %s' % settings.DATABASES[request.META['dbAlias']]['NAME'],
+             'sql': 'SQL', 
              'csv': 'CSV',
             }
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
