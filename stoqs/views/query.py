@@ -182,6 +182,7 @@ def queryUI(request):
                                                   'formats': formats,
                                                   'mapserver_host': settings.MAPSERVER_HOST,
                                                   'mappath': request.session['mappath'],
+                                                  'google_analytics_code': settings.GOOGLE_ANALYTICS_CODE,
                                                  }, 
                             context_instance=RequestContext(request))
 
