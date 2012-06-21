@@ -515,6 +515,7 @@
         $('tr',$('#platform-table')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 params['platforms'].push(element.id);
+                $('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
             }
         });
         updateSummaryData();
