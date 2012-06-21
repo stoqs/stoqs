@@ -140,7 +140,7 @@
                             </p>
                             <p>
                                 <div id="query-stats" class="ajax-wait"></div>
-                                <input type="checkbox" id="getactualcount" title="Increases query time" /> Get actual count
+                                <input type="checkbox" id="getactualcount" /> Get actual count
                             </p>
                         </div>
                     </div>
@@ -168,7 +168,7 @@
                 </div><!-- accordian-group -->
 
                 <div class="accordian-group">
-                    <div class="accordian-heading" title="Click to toggle data access options">
+                    <div class="accordian-heading">
                         <h3><a id="data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseDataAccess">
                         Measurement Data Access
                         </a></h3>
@@ -222,10 +222,10 @@
                                 <!-- <div align="center" style="float:left;width:10%;height:90%;">
                                     <div class="rotate-90">Depth (m)</div>
                                 </div>  -->
-                                <div id="placeholder" style="width:100%;height:90%;float:left;" class="disabled" title="Click and drag to select"></div>
+                                <div id="time-depth-flot" style="width:100%;height:90%;float:left;" class="disabled" title="Click and drag to select a time-depth range"></div>
                                 <p align="center">Time (GMT)</p>
                                 <div>
-                                    <p><button id="zoomed-button" class="btn btn-mini zoom-toggle disabled" title="Click to unzoom">Zoomed</button></p>
+                                    <p><button id="zoomed-button" class="btn btn-mini zoom-toggle disabled">Zoomed</button></p>
                                 </div>
                             </div>
                             <input type="hidden" id="start-ems" "name="start-ems" />
@@ -240,7 +240,7 @@
 
 
                 <div class="accordian-group">
-                    <div class="accordian-heading" title="Click to toggle Parameter list">
+                    <div class="accordian-heading">
                         <h3><a id="parameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
                         Parameters
                         </a></h3>
@@ -257,7 +257,7 @@
 
 
                 <div class="accordian-group">
-                    <div class="accordian-heading" title="Click to toggle Platform list">
+                    <div class="accordian-heading">
                         <h3><a id="platforms-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
                         Platforms
                         </a></h3>
@@ -317,8 +317,9 @@
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
         if (! $(element).is('.disabled')) {
-            $(element).removeClass('btn-primary'); // Unselect if it's selected.
-            $(element).addClass('disabled'); // Add the disabled class to it.
+            $(element).removeClass('btn-primary');      // Unselect if it's selected.
+            $(element).addClass('disabled');            // Add the disabled class to it.
+            $(element).attr('title', ' ').tooltip('fixTitle').tooltip('show');     // Remove tooltip
         }
     }
     
@@ -326,6 +327,7 @@
     function enableButton(element) {
         if ($(element).is('.disabled')) {
             $(element).removeClass('disabled');
+            $(element).attr('title', 'Click to Select').tooltip('fixTitle').tooltip('hide');     // Add generic tooltip
         }
     }
 
@@ -507,6 +509,7 @@
         $('tr',$('#parameter-table')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 params['parameters'].push(element.id);
+                $('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
             }
         });
         $('tr',$('#platform-table')).each(function (index, element) {
@@ -548,6 +551,7 @@
             rebuildFilters();
             $("#zoomed-button").removeClass('btn-primary');
             $("#zoomed-button").addClass('disabled');
+            $('#zoomed-button').attr('title', ' ').tooltip('fixTitle').tooltip('hide');
             $('#time-depth-anchor').html('Time Depth')
         }
     });
@@ -612,7 +616,7 @@
             }).appendTo("body").fadeIn(200);
         }
 
-        $("#placeholder").bind("plothover", function (event, pos, item) {
+        $("#time-depth-flot").bind("plothover", function (event, pos, item) {
             if (pos.x && pos.y) {
                 $("#x").text(pos.x.toFixed(2));
                 $("#y").text(pos.y.toFixed(2));
@@ -679,7 +683,7 @@
                 }
         }
 
-        $("#placeholder").bind("plotclick", function (event, pos, item) {
+        $("#time-depth-flot").bind("plotclick", function (event, pos, item) {
             if (item) {
                 // Crude test whether sample or activity click, activities 2nd element may be '(stride=..'
                 //console.log(item.series.label)
@@ -737,7 +741,7 @@
             return dataset;
         }
 
-        $("#placeholder").bind("plotselected", function (event, ranges) {
+        $("#time-depth-flot").bind("plotselected", function (event, ranges) {
                 // clamp the zooming to prevent eternal zoom
                 if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
                     ranges.xaxis.to = ranges.xaxis.from + 0.00001;
@@ -759,12 +763,13 @@
                 // Apply new depth & time ranges to the query and redraw the plot in rebuildFilters()
                 $('#zoomed-button').removeClass('disabled'); 
                 $('#zoomed-button').addClass('btn-primary');
+                $('#zoomed-button').attr('title', 'Click to unzoom').tooltip('fixTitle').tooltip('hide');
                 rebuildFilters();
                 var dtLabel = 'Time: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
                 dtLabel = dtLabel + ' Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
                 $('#time-depth-anchor').html(dtLabel);
                 
-        }); //$("#placeholder").bind("plotselected"
+        }); //$("#time-depth-flot").bind("plotselected"
 
 
         function onInit(data, key) {
@@ -773,23 +778,25 @@
             zoomedData = initData;
             if (key == 'platforms') {
                 $.each(data[key], function (index, value) {
-                    $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td class="platform" style="text-align:center;">' +
+                    $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td style="text-align:center;">' +
                             '<div id="' + value[1] + '_icon" align="center" style="float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
                                 '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;border-bottom-color:#' + 
                                     data['simpledepthtime']['colors'][value[1]] + ';">' +
                             '</div></div>' +
-                            '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;" title="Click to select this platform">'+ value[0] +'</button></td>' +
+                            '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;">'+ value[0] +'</button></td>' +
                         '</tr>');
                     $('#' + value[1] + '_icon').click( function () { $('#' + value[1] + ' > td > button').click() } );
                 });
+                $('.platform').tooltip({title: 'Click to select this Platform'});
             }
             else if (key == 'parameters') {
                 $.each(data[key], function (index, value) {
                     $('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
-                            '<td class="parameter">' +
-                                '<button class="btn btn-mini stoqs-toggle parameter" title="Click to select this parameter">'+ value[0] +'</button></td>' +
+                            '<td>' +
+                                '<button class="btn btn-mini stoqs-toggle parameter">'+ value[0] +'</button></td>' +
                             '</tr>');
                 });
+                $('.parameter').tooltip({title: 'Click to select this Parameter'});
             }
             else if (key == 'time') { 
                 var start = new Date(data[key][0]);
@@ -809,7 +816,7 @@
                 //flotPlot(data)
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
-                $.plot($("#placeholder"), getDataset(initData, start.getTime(), end.getTime()), simpledepthtime_options);
+                $.plot($("#time-depth-flot"), getDataset(initData, start.getTime(), end.getTime()), simpledepthtime_options);
             }
             else if (key == 'activitymaptrackextent') {
                 e = data[key];
@@ -856,7 +863,7 @@
                 if ( ! theData ) {
                     return;
                 }
-                $.plot($("#placeholder"), theData,
+                $.plot($("#time-depth-flot"), theData,
                                     $.extend(true, {}, simpledepthtime_options, {
                                     xaxis: { min: $('#start-ems').val(), max: $('#end-ems').val() },
                                     yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
@@ -1029,6 +1036,10 @@
           
         $('#time-depth-anchor').click();
         $('#map-anchor').click();
+        $('#parameters-anchor').tooltip({title: 'Click to toggle Paramters list'});
+        $('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
+        $('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
+        $('#getactualcount').tooltip({title: 'Will increase query time'});
 
     });
 
