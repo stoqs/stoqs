@@ -33,6 +33,9 @@ MAPSERVER_HOST = ''
 #     ''.join([choice(string.letters + string.digits + '-_+=*') for i in range(50)])
 MY_SECRET_KEY = ''
 
+# Google Analytics code - get for your web site, if you want to track usage
+GOOGLE_ANALYTICS_CODE = ''
+
 # These default settings correspond to the example RabbitMQ install and configuration documented 
 # in the PREREQUISITES file.  If you have a different setup, set the credentials here.
 RABBITMQ_HOST = 'localhost'
