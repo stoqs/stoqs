@@ -8,6 +8,7 @@ import datetime
 import numpy as np
 from pupynere import netcdf_file
 
+
 class ParserWriter(object):
     '''
     Handle all information needed to parse LR Waveglider CSV files and produce 
