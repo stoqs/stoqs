@@ -1,0 +1,40 @@
+
+TIDBITS
+=======
+
+The tidbits here are anything that might be useful for developing, working with,
+or using stoqs.
+
+Here's an interactive python session that retrieves measurements and plots a histogram:
+---------------------------------------------------------------------------------------
+
+cd ~/dev/stoqshg
+./manage.py shell
+
+from stoqs import models as m
+import matplotlib.pyplot as plt
+
+# Read from stride=100 database
+data = m.MeasuredParameter.objects.using('stoqs_april2011_s100').filter(parameter__name='salinity')
+sal = [float(mp.datavalue) for mp in data]
+plt.hist(sal,100)
+plt.title('Histogram of salinity from stoqs_april2011_s100')
+plt.xlabel('Salinity')
+plt.ylabel('Count')
+plt.savefig('sal_hist_s100.png')
+
+# Repeat for full-resolution database
+plt.clf()
+data = m.MeasuredParameter.objects.using('stoqs_april2011').filter(parameter__name='salinity')
+sal = [float(mp.datavalue) for mp in data]
+plt.hist(sal,100)
+plt.title('Histogram of salinity from stoqs_april2011')
+plt.xlabel('Salinity')
+plt.ylabel('Count')
+plt.savefig('sal_hist.png')
+
+
+--
+Mike McCann
+MBARI 25 May 2012
+
