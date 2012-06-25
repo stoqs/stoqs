@@ -41,49 +41,61 @@ except IndexError:
 # ------------------------------------------------------------------------------------
 cl = CANONLoader(dbAlias, 'CANON - May 2012')
 
+# 2-second decimated dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2012/netcdf/'
 cl.dorado_files = [ 
-##                    'Dorado389_2012_142_01_142_01_decim.nc',
-##                    'Dorado389_2012_142_02_142_02_decim.nc',
-##                    'Dorado389_2012_143_07_143_07_decim.nc',
-##                    'Dorado389_2012_143_08_143_08_decim.nc',
-##                    'Dorado389_2012_150_00_150_00_decim.nc',
-##                    'Dorado389_2012_151_00_151_00_decim.nc',
-##                    'Dorado389_2012_152_00_152_00_decim.nc',
+                    'Dorado389_2012_142_01_142_01_decim.nc',
+                    'Dorado389_2012_142_02_142_02_decim.nc',
+                    'Dorado389_2012_143_07_143_07_decim.nc',
+                    'Dorado389_2012_143_08_143_08_decim.nc',
+                    'Dorado389_2012_150_00_150_00_decim.nc',
+                    'Dorado389_2012_151_00_151_00_decim.nc',
+                    'Dorado389_2012_152_00_152_00_decim.nc',
                     'Dorado389_2012_157_07_157_07_decim.nc',
                     'Dorado389_2012_158_00_158_00_decim.nc',
                   ]
 
-cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
-cl.daphne_files = [ 
-##                    '201205/20120530T160348/shore.nc',
-##                    '201205/20120530T215940/shore.nc',
-##                    '201205/20120531T010135/shore.nc',
-##                    '201205/20120531T011043/shore.nc',
-##                    '201205/20120531T050931/shore.nc',
-##                    '201205/20120531T062937/shore.nc',
-##                    '201205/20120531T174058/shore.nc'
-##                    '201206/20120601T235829/shore.nc',
-##                    '201206/20120603T002455/shore.nc',
-##                    '201206/20120603T200613/shore.nc',
-##                    '201206/20120603T213551/shore.nc',
-##                    '201206/20120604T211315/shore.nc',
+# Realtime telemetered (_r_) daphne data
+cl.daphne_r_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
+cl.daphne_r_files = [ 
+                    '201205/20120530T160348/shore.nc',
+                    '201205/20120530T215940/shore.nc',
+                    '201205/20120531T010135/shore.nc',
+                    '201205/20120531T011043/shore.nc',
+                    '201205/20120531T050931/shore.nc',
+                    '201205/20120531T062937/shore.nc',
+                    '201205/20120531T174058/shore.nc'
+                    '201206/20120601T235829/shore.nc',
+                    '201206/20120603T002455/shore.nc',
+                    '201206/20120603T200613/shore.nc',
+                    '201206/20120603T213551/shore.nc',
+                    '201206/20120604T211315/shore.nc',
                     '201206/20120606T050637/shore.nc',
                     '201206/20120606T094236/shore.nc',
                     '201206/20120607T001433/shore.nc',
                     '201206/20120607T151546/shore.nc',
                     '201206/20120607T162945/shore.nc',
                   ]
-cl.daphne_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
+cl.daphne_r_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
 
-##cl.tethys_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2012/'         # Tethys full resolution
-##cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
-##                    'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
-##                    'mass_concentration_of_chlorophyll_in_sea_water']
+# Postrecovery full-resolution daphne data
+cl.daphne_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/daphne/'
+cl.daphne_files = [ 
+                    '2012/20120531_20120607/20120531T062937/slate.nc',
+                    '2012/20120531_20120607/20120603T002455/slate.nc',
+                    '2012/20120531_20120607/20120603T213551/slate.nc',
+                    '2012/20120531_20120607/20120604T211315/slate.nc',
+                    '2012/20120531_20120607/20120606T050637/slate.nc',
+                    '2012/20120531_20120607/20120606T094236/slate.nc',
+                  ]
+cl.daphne_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
+                    'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
+                    'mass_concentration_of_chlorophyll_in_sea_water']
 
-cl.tethys_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/tethys/2012/'                    # Tethys realtime
-cl.tethys_files = [ 
+# Realtime telemetered (_r_) tethys data
+cl.tethys_r_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/tethys/2012/'                    # Tethys realtime
+cl.tethys_r_files = [ 
                     '201206/20120604T192851/shore.nc',
                     '201206/20120605T193027/shore.nc',
                     '201206/20120605T193653/shore.nc',
@@ -99,24 +111,38 @@ cl.tethys_files = [
                     '201206/20120613T085821/shore.nc',
                     '201206/20120613T162943/shore.nc',
                   ]
-cl.tethys_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
+cl.tethys_r_parms = [ 'platform_battery_charge', 'sea_water_temperature', 
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water']
+
+# Postrecovery full-resolution tethys data
+cl.tethys_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/'
+cl.tethys_files = [ 
+                    '2012/20120606_20120613/20120606T171537/slate.nc',
+                    '2012/20120606_20120613/20120607T194649/slate.nc',
+                    '2012/20120606_20120613/20120608T205115/slate.nc',
+                    '2012/20120606_20120613/20120610T190213/slate.nc',
+                  ]
+
+cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
+                    'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
+                    'mass_concentration_of_chlorophyll_in_sea_water']
 
 cl.fulmar_base = []
 cl.fulmar_files = []
 cl.fulmar_parms = []
 
-# Garbled TDS response: 1 June 2012
+# NPS glider 
 cl.nps_g29_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
 cl.nps_g29_files = ['OS_Glider_NPS_G29_20120524_TS.nc']
 cl.nps_g29_parms = ['TEMP', 'PSAL', 'OPBS']
 
-# Zeros at end of time axis: 1 June 2012
+# Spray glider
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
 cl.l_662_files = ['OS_Glider_L_662_20120424_TS.nc']
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_dataStartDatetime = datetime.datetime(2012,5, 15)
 
+# Liquid Robotics Waveglider
 cl.waveglider_base = 'http://odss.mbari.org/thredds/dodsC/CANON_may2012/waveglider/'
 cl.waveglider_files = [ 
                         'waveglider_gpctd_WG.nc',
@@ -143,7 +169,7 @@ cl.stride = stride
 ##cl.loadL_662()
 ##cl.loadWaveglider()
 
-cl.loadTethys()
 cl.loadDaphne()
+cl.loadTethys()
 
 

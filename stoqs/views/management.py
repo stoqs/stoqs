@@ -27,6 +27,7 @@ from django.template import RequestContext
 from django.conf import settings
 from django.db import DatabaseError
 import stoqs.models as mod
+from datetime import datetime, timedelta
 from stoqs import tasks
 import socket
 import logging
@@ -128,7 +129,7 @@ def showCampaigns(request):
     # Data structure hash of lists.  Possible to have multiple campaigns in a database
     cHash = {}
     for dbAlias in settings.DATABASES.keys():
-        # Initialize Campaign hassh list
+        # Initialize Campaign hash list
         cHash[dbAlias] = []
 
     for dbAlias in settings.DATABASES.keys():
@@ -146,13 +147,28 @@ def showCampaigns(request):
             logger.warn("Database alias %s returns django.db.DatabaseError", dbAlias)
             continue
 
+    # Create a hash keyed by startdate of the dbAliases and campaigns so that we display a time sorted list of campaigns
+    timeSortHash = {}
+    dummyTime = datetime(1970,1,1)
+    for k in cHash.iterkeys():
+        for c in cHash[k]:
+            if c.startdate:
+                timeSortHash[c.startdate] = {k: c}
+            else:
+                # Put in a dummy time, and increment it
+                timeSortHash[dummyTime] = {k: c}
+                dummyTime += timedelta(seconds=1)
+
     # Preprocess hash for template (basically, flatten it)
     cList = []
     class Cam(object):
         pass
-    for k in cHash.keys():
-        for c in cHash[k]:
-	    cam = Cam()
+    for d in sorted(timeSortHash.iterkeys()):
+        logger.debug("d = %s, timeSortHash[d] = %s", d, timeSortHash[d])
+        for k,c in timeSortHash[d].iteritems():
+            logger.debug(k)
+            logger.debug(c)
+            cam = Cam()
             cam.dbAlias = k
             cam.name = c.name
             if c.description:

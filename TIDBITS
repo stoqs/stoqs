@@ -34,7 +34,24 @@ plt.ylabel('Count')
 plt.savefig('sal_hist.png')
 
 
+Here's a little script to update the start and end dates for all the Campaigns on a server:
+-----------------------------------------------------------------------------------------
+
+cd ~/dev/stoqshg
+./manage.py shell
+
+from stoqs import models as m
+from django.db.models import Max, Min
+
+dbAliases = [   'stoqs_may2012', 'stoqs_october2010_s100', 'stoqs_september2010_s100', 'stoqs_september2010_s100',
+                'default', 'stoqs_june2011_s100', 'stoqs_september2010', 'stoqs_april2011_s100', 
+                'stoqs_may2012_s100', 'stoqs_april2011', 'stoqs_june2011']
+for dbAlias in dbAliases:
+    ip_qs = m.InstantPoint.objects.using(dbAlias).aggregate(Max('timevalue'), Min('timevalue'))
+    m.Campaign.objects.using(dbAlias).update(startdate = ip_qs['timevalue__min'], enddate = ip_qs['timevalue__max'])
+
+
 --
 Mike McCann
-MBARI 25 May 2012
+MBARI 19 June 2012
 
