@@ -23,6 +23,7 @@ from utils.STOQSQManager import STOQSQManager
 from utils import encoders
 import json
 import pprint
+import csv
 
 
 import logging 
@@ -72,6 +73,41 @@ def kmlResponse(request, qm, response):
     response.write(kml)
     return response
 
+def csvResponse(request, qm, response):
+    '''
+    Return a response that is a KML represenation of the existing MeasuredParameter query that is in qm
+    '''
+    qs_mp = qm.getMeasuredParametersQS()
+    if qs_mp is None:
+        raise InvalidMeasuredParameterQueryException
+
+    try:
+        pName = qm.getParameters()[0][0]
+        logger.info("pName = %s", pName)
+    except IndexError:
+        raise NoParameterSelectedException
+
+    fields = ['platformName', 'time', 'longitude', 'latitude', 'depth', pName]
+
+    data = [
+            (   
+                mp.measurement.instantpoint.activity.platform.name, 
+                mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
+                mp.measurement.depth, mp.datavalue
+            )
+                 for mp in qs_mp]
+
+    response = HttpResponse()
+    response['Content-type'] = 'text/csv'
+    response['Content-Disposition'] = 'attachment; filename=%s.csv' % pName
+
+    writer = csv.writer(response)
+    writer.writerow(fields)
+    for d in data:
+        writer.writerow(d)
+    return response
+
+    
 def buildMapFile(request, qm, options):
     # 'mappath' should be in the session from the call to queryUI() set it here in case it's not set by queryUI() 
     if request.session.has_key('mappath'):
