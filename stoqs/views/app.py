@@ -58,6 +58,20 @@ class SampleDataTable(BaseOutputer):
         self.qs = {'aaData': table}
         logger.debug(self.qs)
 
+class MeasuredParameterByTimeAndParameter(BaseOutputer):
+    '''
+    Return data values for a parameter with time constraints
+    '''
+    fields = [ 'parameter__name', 'measurement__depth', 'measurement__geom', 'measurement__instantpoint__timevalue',
+               'measurement__instantpoint__activity__platform__name' ]
+
+def showMPbyTimeParm(request, format = 'json'):
+    stoqs_object = mod.MeasuredParameter
+    query_set = stoqs_object.objects.all().order_by('measurement__instantpoint__timevalue')
+
+    mp = MeasuredParameterByTimeAndParameter(request, format, query_set, stoqs_object)
+    return mp.process_request()
+
 
 def showSampleDT(request, format = 'json'):
     stoqs_object = mod.Sample
@@ -65,4 +79,5 @@ def showSampleDT(request, format = 'json'):
 
     s = SampleDataTable(request, format, query_set, stoqs_object)
     return s.process_request()
+
 
