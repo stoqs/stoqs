@@ -47,10 +47,18 @@ class BaseOutputer(object):
     '''Base methods for supported responses for all STOQS objects: csv, json, kml, html, etc.
     '''
     html_tmpl_file = 'html_template.html'
-    # Django's additional field lookups
+    # Django's additional field lookups - applicable to all fields
     fieldLookups = ('exact', 'iexact', 'contains', 'icontains', 'in', 'gt', 'gte', 'lt', 'lte', 'startswith', 'istartswith',
                     'endswith', 'iendswith', 'range', 'year', 'month', 'day', 'week_day', 'isnull', 'search', 'regex', 'iregex')
+    # GeoDjango's field lookups for geometry fields
+    distanceLookups = ('distance_lt', 'distance_lte', 'distance_gt', 'distance_gte', 'dwithin') 
+
+    spatialLookups = ('bbcontains', 'bboverlaps', 'contained', 'contains', 'contains_properly', 'coveredby', 'covers', 'crosses', 
+                      'disjoint', 'distance_gt', 'distance_gte', 'distance_lt', 'distance_lte', 'dwithin', 'equals', 'exact', 
+                      'intersects', 'overlaps', 'relate', 'same_as', 'touches', 'within', 'left', 'right', 'overlaps_left', 
+                      'overlaps_right', 'overlaps_above', 'overlaps_below', 'strictly_above', 'strictly_below')
     fields = []
+    geomFields = []
 
     def __init__(self, request, format, query_set, stoqs_object=None):
         self.request = request
@@ -89,13 +97,38 @@ class BaseOutputer(object):
             self.fields = fields
             return fields
 
+    def getGeomFields(self):
+        '''
+        Return list of any Geometry Field Types in the class - useful for knowing if we can append distanceLookups and spatialLookups.
+        '''
+        geomTypes = ('GeometryField', 'PointField', 'LineStringField', 'PolygonField', 'MultiPointField', 'MultiLineStringField', 
+                     'MultiPolygonField', 'GeometryCollectionField') 
+        if self.geomFields:
+            return self.geomFields
+        else:
+            geomFields = []
+            for f in self.stoqs_object._meta.fields:
+                if f.get_internal_type() in geomTypes:
+                    geomFields.append(f.name)
+                self.geomFields = geomFields
+            return geomFields
+
     def ammendFields(self, fields):
 
         # Append Django field lookups to the field names, see: https://docs.djangoproject.com/en/dev/ref/models/querysets/#field-lookups
+        # and https://docs.djangoproject.com/en/dev/ref/contrib/gis/db-api/ for the distance and spatial lookups
         ammendedFields = []
         ammendedFields.extend(fields)
         for addition in self.fieldLookups:
             for f in fields:
+                ammendedFields.append('%s__%s' % (f, addition, ))
+
+        for addition in self.distanceLookups:
+            for f in self.geomFields:
+                ammendedFields.append('%s__%s' % (f, addition, ))
+
+        for addition in self.spatialLookups:
+            for f in self.geomFields:
                 ammendedFields.append('%s__%s' % (f, addition, ))
 
         return ammendedFields
@@ -119,6 +152,7 @@ class BaseOutputer(object):
         Assign the processed query string 'qs' with query parameters and fields. May be overridden to restructure response as needed.
         '''
         fields = self.getFields()
+        geomFields = self.getGeomFields()
         logger.debug(fields)
         self.applyQueryParams(self.ammendFields(fields))
         self.qs = self.query_set
@@ -130,6 +164,7 @@ class BaseOutputer(object):
         Default request processing: Apply any query parameters and get fields for the values.  Respond with requested format.
         '''
         fields = self.getFields()
+        geomFields = self.getGeomFields()
         self.assign_qs()
 
         if self.format == 'csv' or self.format == 'tsv':
@@ -155,6 +190,9 @@ class BaseOutputer(object):
 
         elif self.format == 'help':
             helpText = 'Fields: %s\n\nField Lookups: %s' % (self.fields, self.fieldLookups)
+            if geomFields:
+                helpText += '\n\nSpatial and distance Lookups that may be appended to: %s\n\n%s\n\n%s' % (geomFields, 
+                            self.distanceLookups, self.spatialLookups)
             response = HttpResponse(helpText, mimetype="text/plain")
             return response
 
