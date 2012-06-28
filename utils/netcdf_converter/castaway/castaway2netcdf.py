@@ -91,35 +91,35 @@ class ParserWriter(object):
         self.outFile = outFile
 
         # Trajectory dataset, time is the only netCDF dimension
-        self.ncFile.createDimension('TIME', len(esec_list))
+        self.ncFile.createDimension('time', len(esec_list))
 
-        self.time = self.ncFile.createVariable('TIME', 'float64', ('TIME',))
+        self.time = self.ncFile.createVariable('time', 'float64', ('time',))
         self.time.units = 'seconds since 1970-01-01'
         self.time[:] = esec_list
 
         # Write  variables 
             # Only Latitude, Longitude, Depth, and Time variables are upper case to match other Glider data
 #            if v == 'Latitude' or v == 'Longitude':
-        self.longitude = self.ncFile.createVariable('LONGITUDE', 'float64', ('TIME',))
+        self.longitude = self.ncFile.createVariable('longitude', 'float64', ('time',))
 	self.longitude[:]=lon
-        self.latitude = self.ncFile.createVariable('LATITUDE', 'float64', ('TIME',))
+        self.latitude = self.ncFile.createVariable('latitude', 'float64', ('time',))
 	self.latitude[:]=lat
         for v in ex:
             ncVar = v.replace(' ', '_', 42)
 
 #                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar.upper(), )
 #            else:
-            exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (v, v, )
+            exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('time',))" % (v, v, )
             exec "self.%s.long_name = '%s'" % (v, v, )
             exec "self.%s[:] = %s_list" % (v, v, )
 
         # Fudge up a depth variable with a value of zero
-        self.depth = self.ncFile.createVariable('DEPTH', 'float64', ('TIME',))
+        self.depth = self.ncFile.createVariable('depth', 'float64', ('time',))
         self.depth.long_name = 'Depth'
         self.depth.standard_name = 'depth'
         self.depth.units = 'm'
-        self.depth[:] = np.zeros(len(self.time[:]))
-
+#        self.depth[:] = np.zeros(len(self.time[:]))
+	self.depth[:] = Pressure_list
         self.add_global_metadata()
 
         self.ncFile.close()
