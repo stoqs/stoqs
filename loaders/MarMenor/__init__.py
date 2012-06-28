@@ -32,7 +32,7 @@ class MarMenorLoader(object):
     '''
     stride = 1
     colors = {  'sparus':       'ffeda0',
-                'other':        'ffeda0',
+                'castaway':     'ffeda0',
                 'tethys':       'fed976',
                 'daphne':       'feb24c',
                 'fulmar':       'fd8d3c',
@@ -55,6 +55,14 @@ class MarMenorLoader(object):
             url = self.sparus_base + file
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'sparus', self.colors['sparus'], 'auv', 'AUV mission', 
                                         self.sparus_parms, self.dbAlias, self.stride)
+    def loadCastaway(self):
+        '''
+        Sparus specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.castaway_files], self.castaway_files):
+            url = self.castaway_base + file
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'castaway', self.colors['castaway'], 'mooring', 'CTD Profile', 
+                                        self.castaway_parms, self.dbAlias, self.stride)
 
 
     def loadAll(self):
@@ -62,6 +70,7 @@ class MarMenorLoader(object):
         Execute all the load functions
         '''
         loaders = ['loadSparus', ]
+        loaders = ['loadCastaway', ]
         for loader in loaders:
             if hasattr(self, loader):
                 # Call the loader if it exists
@@ -77,11 +86,10 @@ if __name__ == '__main__':
     '''
     Test operation of this class
     '''
-    mml = MarMenorLoader('default', 'Test Load')
-    mml.stride = 1000
-    mml.sparus_base = 'http://odss.mbari.org/thredds/dodsC/marmenor/insitu/UniversityOfGirona'
-    mml.sparus_files = ['exp4_5Nov2011_data.nc']
-    mml.sparus_parms = ['pressure', 'temperature', 'conductivity']
+    mml = MarMenorLoader('stoqs_marmenor_nov2011', 'AUV 2011')
+    mml.castaway_base = 'http://localhost:8080/thredds/dodsC/tst'
+    mml.castaway_files = ['foo.nc']
+    mml.castaway_parms = ['Pressure', 'Temperature', 'Conductivity']
     mml.loadAll()
 
 
