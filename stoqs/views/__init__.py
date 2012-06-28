@@ -86,6 +86,7 @@ class BaseOutputer(object):
             fields = []
             for f in self.stoqs_object._meta.fields:
                 fields.append(f.name)
+            self.fields = fields
             return fields
 
     def ammendFields(self, fields):
