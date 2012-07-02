@@ -1,4 +1,4 @@
-function inf = info_stoqs(u,table)
+function inf = info_stoqs(u,table,var)
 
 %Get info from a table in STOQS data base
 %       inf=info_stoqs('http://192.168.79.138:8000/default','platform')
@@ -17,9 +17,13 @@ function inf = info_stoqs(u,table)
 % Last review 30/June/2012
 
 %Load the information
-
-ur=[u '/' table '.json'];
-
+switch nargin
+    case 2
+    ur=[u '/' table '.json'];
+    case 3
+    ur=[u '/' table var];
+end
+ur
 try
     url = java.net.URL(ur);
 catch me
