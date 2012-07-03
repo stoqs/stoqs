@@ -274,6 +274,21 @@
                     </div>
                 </div><!-- accordian-group -->
 
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="parameter-values-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterValues">
+                        Parameter Values
+                        </a></h3>
+                    </div>
+                    <div id="collapseParameterValues" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <table id="parameter-value-table" class="table table-condensed">
+                              <tbody>
+                              </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
@@ -990,7 +1005,7 @@
             }
         );
          var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
-         map.addLayers([bathyEsri,gebco_noaa,osm]);
+         map.addLayers([gebco_noaa,bathyEsri,osm]);
          //ctrlGraticule.activate();
 
           /*
