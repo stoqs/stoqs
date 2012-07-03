@@ -1,0 +1,23 @@
+CHANGELOG
+=========
+
+Significant milestones in the STOQS software project
+
+Version 1.0: 5 January 2012
+
+- Major refactoring completed after excising all of the old SQL Alchemy and old
+  stoqs_<campaign> directories from the project.  ALLCAPS instruction files added
+  and Django unit tests are operational with a sample load provided in DAPloaders.py.
+
+- This is now a "compliant" Django application that is ready to be used for fusion,
+  query, and product generation of in situ oceanograhic measurements.  More 
+  importantly, the project now has a good foundation its enhancement using agile
+  software development methodology.
+
+Version 1.1: 11 April 2012
+
+- New utils/STOQSQManager.py module which powers the ajax driven query web page
+  where parameter, platform, depth and time  selection works to constrain activity 
+  maptracks which are displayed in an OpenLayers Mapserver powered map.  Measurement
+  data can be retrieved in KML format if the user has selected a parameter.
+
