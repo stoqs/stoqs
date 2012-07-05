@@ -76,6 +76,7 @@ class ActivityParameterHistogram(BaseOutputer):
     def process_request(self):
         fields = self.getFields()
         self.assign_qs()
+        self.responses.append('.png')
         if self.format == 'png':
             apn = self.request.GET.getlist('activityparameter__parameter__name')[0]
             if apn:
