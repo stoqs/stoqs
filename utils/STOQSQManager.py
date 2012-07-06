@@ -114,6 +114,8 @@ class STOQSQManager(object):
                                'ap_count': self.getAPCount,
                                'sql': self.getMeasuredParametersPostgreSQL,
                                'activitymaptrackextent': self.getActivityMaptrackExtent,
+                               'activityparameterhistograms': self.getActivityParameterHistograms,
+                               ##'activityparamhistrequestpngs': self.getActivityParamHistRequestPNGs,
                                }
         
         results = {}
@@ -219,6 +221,49 @@ class STOQSQManager(object):
         else:
             logger.debug("No queryset returned for ")
         return qs_ap
+
+    def getActivityParameterHistogramsQS(self):
+        '''
+        Return query set of ActivityParameterHistograms given the current constraints. 
+        '''
+        qparams = {}
+
+        logger.info(pprint.pformat(self.kwargs))
+        qs_aph = models.ActivityParameterHistogram.objects.using(self.dbname).all()
+        if self.kwargs.has_key('parameters'):
+            if self.kwargs['parameters']:
+                qs_aph = qs_aph.filter(Q(activityparameter__parameter__name__in=self.kwargs['parameters']))
+        if self.kwargs.has_key('platforms'):
+            if self.kwargs['platforms']:
+                qs_aph = qs_aph.filter(Q(activityparameter__activity__platform__name__in=self.kwargs['platforms']))
+        if self.kwargs.has_key('time'):
+            if self.kwargs['time'][0] is not None:
+                q1 = Q(activityparameter__activity__startdate__lte=self.kwargs['time'][0]) & Q(activityparameter__activity__enddate__gte=self.kwargs['time'][0])
+            if self.kwargs['time'][1] is not None:
+                q2 = Q(activityparameter__activity__startdate__lte=self.kwargs['time'][1]) & Q(activityparameter__activity__enddate__gte=self.kwargs['time'][1])
+            if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
+                q3 = Q(activityparameter__activity__startdate__gte=self.kwargs['time'][0]) & Q(activityparameter__activity__startdate__lte=self.kwargs['time'][1]
+                    ) & Q(activityparameter__activity__enddate__gte=self.kwargs['time'][0]) & Q(activityparameter__activity__enddate__lte=self.kwargs['time'][1])
+
+                qs_aph = qs_aph.filter(q1 | q2 | q3)
+
+                logger.debug('ORing Q objects %s, %s, %s', q1, q2, q3)
+
+        if self.kwargs.has_key('depth'):
+            if self.kwargs['depth'][0] is not None:
+                q1 = Q(activityparameter__activity__mindepth__lte=self.kwargs['depth'][0]) & Q(activityparameter__activity__maxdepth__gte=self.kwargs['depth'][0])
+            if self.kwargs['depth'][1] is not None:
+                q2 = Q(activityparameter__activity__mindepth__lte=self.kwargs['depth'][1]) & Q(activityparameter__activity__maxdepth__gte=self.kwargs['depth'][1])
+            if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
+                q3 = Q(activityparameter__activity__mindepth__gte=self.kwargs['depth'][0]) & Q(activityparameter__activity__mindepth__lte=self.kwargs['depth'][1]
+                    ) & Q(activityparameter__activity__maxdepth__gte=self.kwargs['depth'][0]) & Q(activityparameter__activity__maxdepth__lte=self.kwargs['depth'][1])
+                qs_aph = qs_aph.filter(q1 | q2 | q3)
+
+        if qs_aph:
+            logger.debug(pprint.pformat(str(qs_aph.query)))
+        else:
+            logger.debug("No queryset returned for ")
+        return qs_aph
 
     def getMeasuredParametersQS(self):
         '''
@@ -469,6 +514,39 @@ class STOQSQManager(object):
 
         return(samples)
 
+    def getActivityParameterHistograms(self):
+        '''
+        Based on the current selected query criteria for activities, return the associated histograms of the all the 
+        parameters as a list of hashes, one hash per parameter with keys of name, binlo, binhi, and bincount.
+        '''
+        aphList = []
+        for p in models.Parameter.objects.using(self.dbname).all():
+            binloList = []
+            binhiList = []
+            bincountList = []
+            for aph in self.getActivityParameterHistogramsQS().filter(activityparameter__parameter=p).values(
+                            'activityparameter__activity', 'binlo', 'binhi', 'bincount').order_by(
+                                'activityparameter__activity', 'binlo'):
+                binloList.append(aph['binlo'])
+                binhiList.append(aph['binhi'])
+                bincountList.append(aph['bincount'])
+
+            rec = {'pname': p.name, 'binlo': binloList, 'binhi': binhiList, 'binCount': bincountList}
+            aphList.append(rec)
+
+        return aphList
+
+    def getActivityParamHistRequestPNGs(self):
+        '''
+        Return list of URLs that return a PNG image for the histograms of paramters contained in
+        the Activity queryset.  The client can display these with an <img src=".." /> tag.
+        '''
+        urlList = []
+        for qs in self.getActivityParameterHistogramsQS():
+            pass
+
+        return urlList
+
     #
     # Methods that generate Q objects used to populate the query.
     #    
@@ -542,41 +620,6 @@ class STOQSQManager(object):
         
         return querystring
 
-    def postgresifySQL(self, query):
-        '''
-        Given a generic database agnostic Django query string modify it using regular expressions to work
-        on a PostgreSQL server.
-        '''
-        # Get text of query to quotify for Postgresql
-        q = str(query)
-
-        # Remove double quotes from around all table and colum names
-        q = q.replace('"', '')
-        ##logger.debug('Before: %s', q)
-
-        # Add aliases for geom and gid - Activity
-        q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
-        q = q.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)           # Fixes problem with above being applied to Sample query join
-        q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
-        q = q.replace('stoqs_measurement.geom', 'ST_AsText(stoqs_measurement.geom)')    # For sql ajax response to decode lat & lon
-        # Add aliases for geom and gid - Sample
-        q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
-        q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
-
-        # Quotify things that need quotes
-        QUOTE_NAMEEQUALS = re.compile('name\s+=\s+(?P<argument>\S+)')
-        QUOTE_DATES = re.compile('(?P<argument>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)')
-        QUOTE_INS = re.compile('IN\s+\((?P<argument>[^\)]+)\)')
-
-        q = QUOTE_NAMEEQUALS.sub(r"name = '\1'", q)
-        q = QUOTE_DATES.sub(r"'\1'", q)
-        q = QUOTE_INS.sub(r"IN ('\1')", q)
-
-        ##logger.debug('After: %s', q)
-
-        return q
-
-    ##def getMapfileDataStatement(self, Q_object = None):
     def getActivityGeoQuery(self, Q_object = None):
         '''
         This method generates a string that can be put into a Mapserver mapfile DATA statment.
@@ -620,3 +663,40 @@ class STOQSQManager(object):
         extent.transform(900913)
         return extent
 
+
+    #
+    # Utility methods used just by this class
+    #
+    def postgresifySQL(self, query):
+        '''
+        Given a generic database agnostic Django query string modify it using regular expressions to work
+        on a PostgreSQL server.
+        '''
+        # Get text of query to quotify for Postgresql
+        q = str(query)
+
+        # Remove double quotes from around all table and colum names
+        q = q.replace('"', '')
+        ##logger.debug('Before: %s', q)
+
+        # Add aliases for geom and gid - Activity
+        q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
+        q = q.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)           # Fixes problem with above being applied to Sample query join
+        q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
+        q = q.replace('stoqs_measurement.geom', 'ST_AsText(stoqs_measurement.geom)')    # For sql ajax response to decode lat & lon
+        # Add aliases for geom and gid - Sample
+        q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
+        q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
+
+        # Quotify things that need quotes
+        QUOTE_NAMEEQUALS = re.compile('name\s+=\s+(?P<argument>\S+)')
+        QUOTE_DATES = re.compile('(?P<argument>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)')
+        QUOTE_INS = re.compile('IN\s+\((?P<argument>[^\)]+)\)')
+
+        q = QUOTE_NAMEEQUALS.sub(r"name = '\1'", q)
+        q = QUOTE_DATES.sub(r"'\1'", q)
+        q = QUOTE_INS.sub(r"IN ('\1')", q)
+
+        ##logger.debug('After: %s', q)
+
+        return q
