@@ -87,8 +87,10 @@ if __name__ == '__main__':
     Test operation of this class
     '''
     mml = MarMenorLoader('stoqs_marmenor_nov2011', 'AUV 2011')
-    mml.castaway_base = 'http://localhost:8080/thredds/dodsC/tst'
-    mml.castaway_files = ['foo.nc']
+    mml.castaway_base = 'http://localhost:8080/thredds/dodsC/agg/Castaway/20111105'
+    mml.castaway_files = [ '.nc']
+#                          'foo1.nc'
+#                         ]
     mml.castaway_parms = ['Pressure', 'Temperature', 'Conductivity']
     mml.loadAll()
 
