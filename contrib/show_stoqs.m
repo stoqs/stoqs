@@ -1,6 +1,15 @@
-
 function show_stoqs(u)
-%u='http://192.168.79.141:8000/default';
+%Get info from a STOQS database and show on the workspace
+%      Usage:
+%            show_stoqs('http://192.168.79.138:8000/default')
+%      Input:
+%            u = Url of the STOQS database
+%
+% Must be install the jsonlab toolbox.
+%           http://www.mathworks.com/matlabcentral/fileexchange/33381
+
+%   Brian Schlining & Francisco Lopez
+%    8/Jul/2012 
 %---------------------CAMPAIGN----------------
 infc=info_stoqs(u,'campaign');
 infp=info_stoqs(u,'platform');
