@@ -517,24 +517,24 @@ class STOQSQManager(object):
     def getActivityParameterHistograms(self):
         '''
         Based on the current selected query criteria for activities, return the associated histograms of the all the 
-        parameters as a list of hashes, one hash per parameter with keys of name, binlo, binhi, and bincount.
+        parameters as a list of hashes, one hash per parameter with pairs of binlo and bincount for flot to make bar charts.
         '''
-        aphList = []
+        aphHash = {}
         for p in models.Parameter.objects.using(self.dbname).all():
-            binloList = []
-            binhiList = []
-            bincountList = []
+            histList = []
+            binwidth = None
             for aph in self.getActivityParameterHistogramsQS().filter(activityparameter__parameter=p).values(
                             'activityparameter__activity', 'binlo', 'binhi', 'bincount').order_by(
                                 'activityparameter__activity', 'binlo'):
-                binloList.append(aph['binlo'])
-                binhiList.append(aph['binhi'])
-                bincountList.append(aph['bincount'])
+                histList.append([aph['binlo'], aph['bincount']])
+                if not binwidth:
+                    binwidth = aph['binhi'] - aph['binlo']
+                    logger.debug('p.name = %s, binwidth = %f', p.name, binwidth)
 
-            rec = {'pname': p.name, 'binlo': binloList, 'binhi': binhiList, 'binCount': bincountList}
-            aphList.append(rec)
+            # Assign histogram data to the hash keyed by parameter name
+            aphHash[p.name] = {'pname': p.name, 'binwidth': binwidth, 'histlist': histList}
 
-        return aphList
+        return aphHash
 
     def getActivityParamHistRequestPNGs(self):
         '''
