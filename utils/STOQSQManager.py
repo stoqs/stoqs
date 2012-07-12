@@ -122,7 +122,7 @@ class STOQSQManager(object):
         for k,v in options_functions.iteritems():
             results[k] = v()
         
-        logger.info('qs.query = %s', pprint.pformat(str(self.qs.query)))
+        ##logger.info('qs.query = %s', pprint.pformat(str(self.qs.query)))
         ##logger.info('results = %s', pprint.pformat(results))
         return results
     
@@ -515,23 +515,38 @@ class STOQSQManager(object):
         '''
         Based on the current selected query criteria for activities, return the associated histograms of the all the 
         parameters as a list of hashes, one hash per parameter with pairs of binlo and bincount for flot to make bar charts.
+        Order in a somewhat complicated nested structure of hashes of hashes that permit the jQuery client to properly
+        color and plot the data.
         '''
+        aList = []
+        for a in self.getActivities():
+            aList.append(a)
+            
         aphHash = {}
-        for p in models.Parameter.objects.using(self.dbname).all():
-            histList = []
-            binwidth = None
-            for aph in self.getActivityParameterHistogramsQS().filter(activityparameter__parameter=p).values(
-                            'activityparameter__activity', 'binlo', 'binhi', 'bincount').order_by(
-                                'activityparameter__activity', 'binlo'):
-                histList.append([aph['binlo'], aph['bincount']])
-                if not binwidth:
-                    binwidth = aph['binhi'] - aph['binlo']
-                    logger.debug('p.name = %s, binwidth = %f', p.name, binwidth)
+        colors = {}
+        for pa in models.Parameter.objects.using(self.dbname).all():
+            plHash = {}
+            for pl in self.getPlatforms():
+                colors[pl[0]] = pl[2]
+                for a in aList:
+                    histList = []
+                    binwidth = None
+                    for aph in self.getActivityParameterHistogramsQS().select_related().filter(activityparameter__parameter=pa,
+                                activityparameter__activity__platform__name=pl[0], activityparameter__activity__name=a[0]
+                                ).values('activityparameter__activity__name', 
+                                'activityparameter__activity__platform__name', 'binlo', 'binhi', 'bincount').order_by(
+                                'activityparameter__activity__platform__name', 'activityparameter__activity__name', 'binlo'):
+                        histList.append([aph['binlo'], aph['bincount']])
+                        if not binwidth:
+                            binwidth = aph['binhi'] - aph['binlo']
+                            logger.debug('pa.name = %s, aname = %s, binwidth = %f', pa.name, aph['activityparameter__activity__name'], binwidth)
+                    plHash[pl[0]] = {'aname': a[0], 'hist': {'binwidth': binwidth, 'histlist': histList}}
+                    return None
 
             # Assign histogram data to the hash keyed by parameter name
-            aphHash[p.name] = {'pname': p.name, 'binwidth': binwidth, 'histlist': histList}
+            aphHash[pa.name] = {'pname': pa.name, 'histbyplatform': plHash}
 
-        return aphHash
+        return ({'colors': colors, 'aph': aphHash})
 
     def getActivityParamHistRequestPNGs(self):
         '''
