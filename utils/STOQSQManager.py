@@ -224,15 +224,12 @@ class STOQSQManager(object):
 
     def getActivityParameterHistogramsQS(self):
         '''
-        Return query set of ActivityParameterHistograms given the current constraints. 
+        Return query set of ActivityParameterHistograms given the current constraints. Do not include any parameters kwargs.
         '''
         qparams = {}
 
         logger.info(pprint.pformat(self.kwargs))
         qs_aph = models.ActivityParameterHistogram.objects.using(self.dbname).all()
-        if self.kwargs.has_key('parameters'):
-            if self.kwargs['parameters']:
-                qs_aph = qs_aph.filter(Q(activityparameter__parameter__name__in=self.kwargs['parameters']))
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
                 qs_aph = qs_aph.filter(Q(activityparameter__activity__platform__name__in=self.kwargs['platforms']))
