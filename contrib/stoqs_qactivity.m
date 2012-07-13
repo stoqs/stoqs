@@ -1,10 +1,10 @@
 function infa = stoqs_qactivity(u,camp,show)
 
 %Get info from the activities in a campaign in STOQS data base
-%       inf=stoqs_qcampaign('http://odss.mbari.org/canon/,'default',1);
+%      
 %Usage:
 %
-%   infa=stoqs_qactivity('http://odss.mbari.org/canon/default','CANON - June 2011',1);
+%   infa=stoqs_qactivity('http://odss.mbari.org/canon/,'default',1);
 %Input :
 
 %   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon
