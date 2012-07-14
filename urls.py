@@ -78,6 +78,8 @@ urlpatterns = patterns('',
     # Requests that override BaseOutputer
     url(pre + r'sampledatatable.?'   + formatPat, 'stoqs.views.app.showSampleDT',      {}, name='show-sample-datatable'),
     url(pre + r'mpbytimeparm.?'      + formatPat, 'stoqs.views.app.showMPbyTimeParm',  {}, name='show-mp-bytimeparm'),
+    url(pre + r'activityparameterhistogram.?'      
+                                     + formatPat, 'stoqs.views.app.showActivityParameterHistogram',  {}, name='show-aph'),
 
     # URL For Chander's STOQQManager related views
     url(pre + r'query/summary/$', 'stoqs.views.query.queryData', {}, name='stoqs-query-summary'),
