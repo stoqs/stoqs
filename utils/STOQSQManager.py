@@ -518,35 +518,57 @@ class STOQSQManager(object):
         Order in a somewhat complicated nested structure of hashes of hashes that permit the jQuery client to properly
         color and plot the data.
         '''
-        aList = []
-        for a in self.getActivities():
-            aList.append(a)
-            
         aphHash = {}
-        colors = {}
         for pa in models.Parameter.objects.using(self.dbname).all():
-            plHash = {}
-            for pl in self.getPlatforms():
-                colors[pl[0]] = pl[2]
-                for a in aList:
-                    histList = []
-                    binwidth = None
-                    for aph in self.getActivityParameterHistogramsQS().select_related().filter(activityparameter__parameter=pa,
-                                activityparameter__activity__platform__name=pl[0], activityparameter__activity__name=a[0]
-                                ).values('activityparameter__activity__name', 
+            histList = {}
+            binwidthList = {}
+            platformList = {}
+            activityList = {}
+            # Collect histograms organized by activity and platform names.  The SQL execution is sequential, a query
+            # is executed for each parameter and here we organize by platform and activity.
+            for aph in self.getActivityParameterHistogramsQS().select_related().filter(
+                                activityparameter__parameter=pa).values('activityparameter__activity__name', 
                                 'activityparameter__activity__platform__name', 'binlo', 'binhi', 'bincount').order_by(
                                 'activityparameter__activity__platform__name', 'activityparameter__activity__name', 'binlo'):
-                        histList.append([aph['binlo'], aph['bincount']])
-                        if not binwidth:
-                            binwidth = aph['binhi'] - aph['binlo']
-                            logger.debug('pa.name = %s, aname = %s, binwidth = %f', pa.name, aph['activityparameter__activity__name'], binwidth)
-                    plHash[pl[0]] = {'aname': a[0], 'hist': {'binwidth': binwidth, 'histlist': histList}}
-                    return None
+                # Save histogram data by activity name
+                try:
+                    histList[aph['activityparameter__activity__name']].append([aph['binlo'], aph['bincount']])
+                except KeyError:
+                    # First time seeing this activity name, create a list and add the first histogram point
+                    histList[aph['activityparameter__activity__name']] = []
+                    histList[aph['activityparameter__activity__name']].append([aph['binlo'], aph['bincount']])
+                    binwidthList[aph['activityparameter__activity__name']] = []
+                    binwidthList[aph['activityparameter__activity__name']] = aph['binhi'] - aph['binlo']
+                    platformList[aph['activityparameter__activity__name']] = []
+                    platformList[aph['activityparameter__activity__name']].append(aph['activityparameter__activity__platform__name'])
+
+                    logger.debug('pa.name = %s, aname = %s', pa.name, aph['activityparameter__activity__name'])
+
+            # Unwind the platformList to get activities by platform name
+            for an, pnList in platformList.iteritems():
+                logger.debug('an = %s, pnList = %s', an, pnList)
+                for pn in pnList:
+                    try:
+                        activityList[pn].append(an)
+                    except KeyError:
+                        activityList[pn] = []
+                        activityList[pn].append(an)
+
+            # Build the final data structure organized by platform -> activity
+            plHash = {}
+            for plat in activityList.keys():
+                logger.debug('plat = %s', plat)
+                for an in activityList[plat]:
+                    try:
+                        plHash[plat].append({'aname': an, 'binwidth': binwidthList[an], 'hist': histList[an]})
+                    except KeyError:
+                        plHash[plat] = []
+                        plHash[plat].append({'aname': an, 'binwidth': binwidthList[an], 'hist': histList[an]})
 
             # Assign histogram data to the hash keyed by parameter name
-            aphHash[pa.name] = {'pname': pa.name, 'histbyplatform': plHash}
+            aphHash[pa.name] = {'pname': pa.name, 'histbyplatformandactivity': plHash}
 
-        return ({'colors': colors, 'aph': aphHash})
+        return aphHash
 
     def getActivityParamHistRequestPNGs(self):
         '''
