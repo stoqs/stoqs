@@ -89,6 +89,7 @@ def csvResponse(request, qm, response):
 
     fields = ['platformName', 'time', 'longitude', 'latitude', 'depth', pName]
 
+     
     data = [
             (   
                 mp.measurement.instantpoint.activity.platform.name, 

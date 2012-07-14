@@ -1,4 +1,4 @@
-function outp=down_stoqs(url,stime,etime,mid,mad,par)
+function outp=stoqs_down(url,stime,etime,mid,mad,par)
 %Get data from a STOQS database, 
 %           d=down_stoqs('http://192.168.79.141:8000/default','2010-10-27+21:51:55','2010-11-18+10:22:42','0','700','salinity');
 %       Input

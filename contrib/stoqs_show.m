@@ -1,5 +1,5 @@
 
-function show_stoqs(u)
+function stoqs_show(u)
 %u='http://192.168.79.141:8000/default';
 %---------------------CAMPAIGN----------------
 infc=info_stoqs(u,'campaign');
