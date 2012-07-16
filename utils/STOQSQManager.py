@@ -513,7 +513,7 @@ class STOQSQManager(object):
 
     def getActivityParameterHistograms(self):
         '''
-        Based on the current selected query criteria for activities, return the associated histograms of the all the 
+        Based on the current selected query criteria for activities, return the associated histograms of the selected
         parameters as a list of hashes, one hash per parameter with pairs of binlo and bincount for flot to make bar charts.
         Order in a somewhat complicated nested structure of hashes of hashes that permit the jQuery client to properly
         color and plot the data.
@@ -560,15 +560,21 @@ class STOQSQManager(object):
                 logger.debug('plat = %s', plat)
                 for an in activityList[plat]:
                     try:
-                        plHash[plat].append({'aname': an, 'binwidth': binwidthList[an], 'hist': histList[an]})
+                        plHash[plat][an] = {'binwidth': binwidthList[an], 'hist': histList[an]}
                     except KeyError:
-                        plHash[plat] = []
-                        plHash[plat].append({'aname': an, 'binwidth': binwidthList[an], 'hist': histList[an]})
+                        plHash[plat] = {}
+                        plHash[plat][an] = {'binwidth': binwidthList[an], 'hist': histList[an]}
 
             # Assign histogram data to the hash keyed by parameter name
-            aphHash[pa.name] = {'pname': pa.name, 'histbyplatformandactivity': plHash}
+            aphHash[pa.name] = plHash
 
-        return aphHash
+        # Make RGBA colors from the hex colors - needed for opacity in flot bars
+        rgbas = {}
+        for p in self.getPlatforms():
+            r,g,b = (p[2][:2], p[2][2:4], p[2][4:])
+            rgbas[p[0]] = 'rgba(%d, %d, %d, 0.4)' % (int(r,16), int(g,16), int(b,16))
+
+        return {'histdata': aphHash, 'rgbacolors': rgbas}
 
     def getActivityParamHistRequestPNGs(self):
         '''
