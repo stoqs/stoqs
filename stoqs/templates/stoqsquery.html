@@ -347,6 +347,7 @@
     var request=''
     var map = null; 
     var kmlurl;
+    var parametervalues={};
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -552,6 +553,12 @@
                 $('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
             }
         });
+
+        for (var parameter in parametervalues) {
+            params[parameter + '_min'] = parametervalues[parameter]['min'];
+            params[parameter + '_max'] = parametervalues[parameter]['max'];
+        };
+
         updateSummaryData();
     }
     
@@ -783,7 +790,6 @@
             rec["color"] = color;
             rec["data"] = histbyactivity['hist'];
             rec["bars"] = { show: true, barWidth: histbyactivity['binwidth'], fill: true, fillColor: color };
-            console.log(rec["bars"]);
             histdata.push(rec);
             return histdata;
         }
@@ -798,6 +804,8 @@
                 hoverable: true,
             });
         }
+
+
 
         $("#time-depth-flot").bind("plotselected", function (event, ranges) {
                 // clamp the zooming to prevent eternal zoom
@@ -889,14 +897,16 @@
                             '<p align="center">' + parameter + '</p>' +
                         '</td>' +
                         '</tr>');
+                    $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
+                        parametervalues[parameter] = {'min': ranges.xaxis.from, 'max': ranges.xaxis.to };
+                        rebuildFilters();
+                    });
                     histdata = [];
                     $.each(histbyplatformandactivity, function (platform, histbyplatform) {
-                        console.log('platform = ' + platform)
                         $.each(histbyplatform, function(activity, histbyactivity) {
                             histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
                         });
                     });
-                    //console.log(histdata);
                     plotHistData(parameter, histdata);
                 });
             }
@@ -955,14 +965,11 @@
             else if (key == 'activityparameterhistograms') {
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     histdata = [];
-                    console.log(parameter);
                     $.each(histbyplatformandactivity, function (platform, histbyplatform) {
-                        console.log('platform = ' + platform)
                         $.each(histbyplatform, function(activity, histbyactivity) {
                             histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
                         });
                     });
-                    //console.log(histdata);
                     plotHistData(parameter, histdata);
                 });
             }
