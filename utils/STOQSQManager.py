@@ -85,7 +85,7 @@ class STOQSQManager(object):
                 qs = qs.filter(q)
         self.qs = qs
         
-    def generateOptions(self, stoqs_object = None):
+    def generateOptions(self):
         '''
         Generate a dictionary of all the selectable parameters by executing each of the functions
         to generate those parameters.  In this case, we'll simply do it by defining the dictionary and it's associated
@@ -96,27 +96,20 @@ class STOQSQManager(object):
         These objects are "simple" dictionaries using only Python's built-in types - so conversion to a
         corresponding JSON object should be trivial.
         '''
-        if stoqs_object:
-            stoqs_object_name = stoqs_object._meta.verbose_name.lower().replace(' ', '_')
-            if stoqs_object_name == 'activity':
-                options_functions={
-                                   'platform_name': self.getPlatforms,
-                                   }
-        else:
-            options_functions={'parameters': self.getParameters,
-                               'parameterminmax': self.getParameterMinMax,
-                               'platforms': self.getPlatforms,
-                               'time': self.getTime,
-                               'depth': self.getDepth,
-                               'simpledepthtime': self.getSimpleDepthTime,
-                               'sampledepthtime': self.getSampleDepthTime,
-                               'count': self.getCount,
-                               'ap_count': self.getAPCount,
-                               'sql': self.getMeasuredParametersPostgreSQL,
-                               'activitymaptrackextent': self.getActivityMaptrackExtent,
-                               'activityparameterhistograms': self.getActivityParameterHistograms,
-                               ##'activityparamhistrequestpngs': self.getActivityParamHistRequestPNGs,
-                               }
+        options_functions={'parameters': self.getParameters,
+                           'parameterminmax': self.getParameterMinMax,
+                           'platforms': self.getPlatforms,
+                           'time': self.getTime,
+                           'depth': self.getDepth,
+                           'simpledepthtime': self.getSimpleDepthTime,
+                           'sampledepthtime': self.getSampleDepthTime,
+                           'count': self.getCount,
+                           'ap_count': self.getAPCount,
+                           'sql': self.getMeasuredParametersPostgreSQL,
+                           'activitymaptrackextent': self.getActivityMaptrackExtent,
+                           'activityparameterhistograms': self.getActivityParameterHistograms,
+                           ##'activityparamhistrequestpngs': self.getActivityParamHistRequestPNGs,
+                           }
         
         results = {}
         for k,v in options_functions.iteritems():
