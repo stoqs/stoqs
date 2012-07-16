@@ -776,6 +776,29 @@
             return dataset;
         }
 
+        function collectHistData(histdata, platform, color, activity, histbyactivity) {
+            histdata.push(histbyactivity['hist']);
+            var rec = [];
+            rec["label"] = activity;
+            rec["color"] = color;
+            rec["data"] = histbyactivity['hist'];
+            rec["bars"] = { show: true, barWidth: histbyactivity['binwidth'], fill: true, fillColor: color };
+            console.log(rec["bars"]);
+            histdata.push(rec);
+            return histdata;
+        }
+
+        function plotHistData(parameter, histdata) {
+            $.plot($("#" + parameter + "-histogram-flot"), histdata, {
+                series: {
+                    lines: { show: false },
+                },
+                legend: { show: false },
+                selection: { mode: "x" },
+                hoverable: true,
+            });
+        }
+
         $("#time-depth-flot").bind("plotselected", function (event, ranges) {
                 // clamp the zooming to prevent eternal zoom
                 if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
@@ -870,27 +893,11 @@
                     $.each(histbyplatformandactivity, function (platform, histbyplatform) {
                         console.log('platform = ' + platform)
                         $.each(histbyplatform, function(activity, histbyactivity) {
-                            histdata.push(histbyactivity['hist']);
-                            rec = []
-                            rec["label"] = activity;
-                            rec["color"] = data[key]['rgbacolors'][platform];
-                            rec["data"] = histbyactivity['hist'];
-                            rec["barWidth"] = histbyactivity['binwidth'];
-                            rec["bars"] = { show: true, fill: true, fillColor: data[key]['rgbacolors'][platform] };
-                            //console.log(rec["color"]);
-                            console.log(rec["bars"]);
-                            histdata.push(rec);
+                            histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
                         });
                     });
                     //console.log(histdata);
-                    $.plot($("#" + parameter + "-histogram-flot"), histdata, {
-                        series: {
-                            lines: { show: false },
-                        },
-                        legend: { show: false },
-                        selection: { mode: "x" },
-                        hoverable: true,
-                    });
+                    plotHistData(parameter, histdata);
                 });
             }
         } // onInit()
@@ -946,12 +953,17 @@
                 }
             }
             else if (key == 'activityparameterhistograms') {
-                $.each(data[key], function (index, hist) {
-                    $.plot($("#" + hist['pname'] + "-histogram-flot"), [hist['histlist']], {
-                        series: {
-                            bars: { show: true, barWidth: hist['binwidth'] }
-                        }
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    histdata = [];
+                    console.log(parameter);
+                    $.each(histbyplatformandactivity, function (platform, histbyplatform) {
+                        console.log('platform = ' + platform)
+                        $.each(histbyplatform, function(activity, histbyactivity) {
+                            histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
+                        });
                     });
+                    //console.log(histdata);
+                    plotHistData(parameter, histdata);
                 });
             }
         } // onUpdate()
