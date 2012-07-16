@@ -566,7 +566,8 @@ class STOQSQManager(object):
                         plHash[plat][an] = {'binwidth': binwidthList[an], 'hist': histList[an]}
 
             # Assign histogram data to the hash keyed by parameter name
-            aphHash[pa.name] = plHash
+            if plHash:
+                aphHash[pa.name] = plHash
 
         # Make RGBA colors from the hex colors - needed for opacity in flot bars
         rgbas = {}
