@@ -135,6 +135,18 @@ class STOQSQManager(object):
 
         return get_actual_count_state
         
+    def getShow_All_Parameter_Values(self):
+        '''
+        return state of Show All Parameter Values checkbox from query UI
+        '''
+        show_all_parameter_values_state = False
+        if self.kwargs.has_key('show_all_parameter_values'):
+            if self.kwargs['show_all_parameter_values']:
+                show_all_parameter_values_state = True
+        logger.debug('show_all_parameter_values_state = %s', show_all_parameter_values_state)
+
+        return show_all_parameter_values_state
+
     def getCount(self):
         '''
         Get the count of measured parameters giving the exising query
@@ -178,7 +190,6 @@ class STOQSQManager(object):
         '''
         qparams = {}
 
-        logger.info(pprint.pformat(self.kwargs))
         qs_ap = models.ActivityParameter.objects.using(self.dbname).all()
         if self.kwargs.has_key('parameters'):
             if self.kwargs['parameters']:
@@ -310,7 +321,6 @@ class STOQSQManager(object):
         '''
         qparams = {}
 
-        logger.info(pprint.pformat(self.kwargs))
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
                 qparams['instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
@@ -513,6 +523,9 @@ class STOQSQManager(object):
         '''
         aphHash = {}
         for pa in models.Parameter.objects.using(self.dbname).all():
+            if not self.getShow_All_Parameter_Values():
+                if not pa.standard_name:
+                    continue
             histList = {}
             binwidthList = {}
             platformList = {}
