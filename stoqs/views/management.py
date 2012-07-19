@@ -26,6 +26,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.conf import settings
 from django.db import DatabaseError
+from django.http import HttpResponse
+from django.utils import simplejson
+from utils import encoders
 import stoqs.models as mod
 from datetime import datetime, timedelta
 from stoqs import tasks
@@ -115,7 +118,7 @@ def showDatabase(request):
     # End showDatabase()
 
 
-def showCampaigns(request):
+def showCampaigns(request,format=None):
     '''
     Present list of Campaigns from scanning the DATABASES dictionary from settings.
     '''
@@ -182,7 +185,15 @@ def showCampaigns(request):
 
     logger.debug("cList = %s", cList)
 
-    return render_to_response('campaigns.html', {'cList': cList }, context_instance=RequestContext(request)) 
+    if format == 'json':
+#	my={}
+#        for d in cam.name:
+#cHash[dbAlias].append(c)
+#	    my['name'].append(cam.name)
+#	my['Alias'] = cam.dbAlias
+        return HttpResponse(simplejson.dumps(list(cHash), cls=encoders.STOQSJSONEncoder), 'application/json')
+    else:
+        return render_to_response('campaigns.html', {'cList': cList }, context_instance=RequestContext(request)) 
 
 def showActivitiesMBARICustom(request):
     '''Present list of Activities in the database.  Unlike showDatabase(), show show the Activities and their
