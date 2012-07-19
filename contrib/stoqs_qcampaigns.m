@@ -1,5 +1,5 @@
 
-function stoqs_qcampaigns(u,show)
+function [infcs]=stoqs_qcampaigns(u,show)
 
 %Get the name of all the campaigns available in a STOQS server
 %      
