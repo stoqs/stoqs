@@ -274,6 +274,24 @@
                     </div>
                 </div><!-- accordian-group -->
 
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="parameter-values-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterValues">
+                        Parameter Values
+                        </a></h3>
+                    </div>
+                    <div id="collapseParameterValues" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <p>
+                                <input type="checkbox" id="showallparametervalues" /> Show all histograms
+                            </p>
+                            <table id="parameter-value-table" class="table table-condensed">
+                              <tbody>
+                              </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
@@ -332,6 +350,7 @@
     var request=''
     var map = null; 
     var kmlurl;
+    var parametervalues={};
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -537,6 +556,12 @@
                 $('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
             }
         });
+
+        for (var parameter in parametervalues) {
+            params[parameter + '_min'] = parametervalues[parameter]['min'];
+            params[parameter + '_max'] = parametervalues[parameter]['max'];
+        };
+
         updateSummaryData();
     }
     
@@ -579,6 +604,10 @@
         rebuildFilters();
     });
 
+    $('#showallparametervalues').on('click', function (event) {
+        rebuildFilters();
+    });
+
     $('#cmin').on('keypress', function (event, previousText) {
         setTimeout(setKMLlinks());
     });
@@ -596,6 +625,12 @@
         var qstring=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
         if ($('#getactualcount').is(':checked')) {
             qstring = qstring + '&get_actual_count=1';
+        }
+        if ($('#showallparametervalues').is(':checked')) {
+            qstring = qstring + '&show_all_parameter_values=1';
+        }
+        if ( ! $('#showallparametervalues').is(':checked')) {
+            //$('#parameter-value-table').html('<tbody></tbody>');
         }
         if (! init) {
             if (request.readyState < 3) {
@@ -621,7 +656,7 @@
                                         },
                                         legend: { show: false },
                                         selection: { mode: "xy" }
-                                      }
+                                      };
 
         function showTooltip(x, y, contents) {
             $('<div id="tooltip">' + contents + '</div>').css( {
@@ -761,6 +796,42 @@
             return dataset;
         }
 
+        function collectHistData(histdata, platform, color, activity, histbyactivity) {
+            histdata.push(histbyactivity['hist']);
+            var rec = [];
+            rec["label"] = activity;
+            rec["color"] = color;
+            rec["data"] = histbyactivity['hist'];
+            rec["bars"] = { show: true, barWidth: histbyactivity['binwidth'], fill: true, fillColor: color };
+            histdata.push(rec);
+            return histdata;
+        }
+
+        function addSelectedParameterValue(histdata, parameter) {
+            var rec = [];
+            rec["color"] = '#0f0f0f';
+            console.log(parametervalues[parameter]);
+            rec["data"] = [[parametervalues[parameter]['min'], 100000], [parametervalues[parameter]['max'], 100000]];
+            console.log(rec['data']);
+            binwidth = parametervalues[parameter]['max'] - parametervalues[parameter]['min'];
+            rec["bars"] = { show: true, barWidth: binwidth, fill: true, fillColor: '#0f0f0f' };
+            histdata.push(rec);
+            return histdata;
+        }
+
+        function plotHistData(parameter, histdata) {
+            $.plot($("#" + parameter + "-histogram-flot"), histdata, {
+                series: {
+                    lines: { show: false },
+                },
+                legend: { show: false },
+                selection: { mode: "x" },
+                hoverable: true,
+            });
+        }
+
+
+
         $("#time-depth-flot").bind("plotselected", function (event, ranges) {
                 // clamp the zooming to prevent eternal zoom
                 if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
@@ -843,6 +914,31 @@
                 //console.log('00=' + e[0][0] + ' 01=' + e[0][1] + ' 10=' + e[1][0] + ' 11=' + e[1][1]);
                 map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
             }
+            else if (key == 'activityparameterhistograms') {
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    $('#parameter-value-table > tbody:last').append('<tr>' +
+                        '<td>' +
+                            '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
+                            '<p align="center">' + parameter + '</p>' +
+                        '</td>' +
+                        '</tr>');
+                    histdata = [];
+                    $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
+                        parametervalues[parameter] = {'min': ranges.xaxis.from, 'max': ranges.xaxis.to };
+                        rebuildFilters();
+                        histdata = addSelectedParameterValue(histdata, parameter);
+                        console.log(parameter);
+                        console.log(histdata);
+                        plotHistData(parameter, histdata);
+                    });
+                    $.each(histbyplatformandactivity, function (platform, histbyplatform) {
+                        $.each(histbyplatform, function(activity, histbyactivity) {
+                            histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
+                        });
+                    });
+                    plotHistData(parameter, histdata);
+                });
+            }
         } // onInit()
 
         function onUpdate(data, key) {
@@ -894,6 +990,35 @@
                 if ($('#zoomtoextentonupdate').is(':checked')) {
                     map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
                 }
+            }
+            else if (key == 'activityparameterhistograms') {
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    histdata = [];
+                    if ( ! $('#' + parameter + '-histogram-flot').length ) {
+                        $('#parameter-value-table > tbody:last').append('<tr>' +
+                            '<td>' +
+                                '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
+                                '<p align="center">' + parameter + '</p>' +
+                            '</td>' +
+                            '</tr>');
+                        $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
+                            parametervalues[parameter] = {'min': ranges.xaxis.from, 'max': ranges.xaxis.to };
+                            rebuildFilters();
+                            histdata = addSelectedParameterValue(histdata, parameter);
+                            plotHistData(parameter, histdata);
+                            console.log(parameter);
+                            console.log(histdata);
+                        });
+                    }
+                    $.each(histbyplatformandactivity, function (platform, histbyplatform) {
+                        $.each(histbyplatform, function(activity, histbyactivity) {
+                            console.log(parameter);
+                            console.log(histdata);
+                            histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
+                        });
+                    });
+                    plotHistData(parameter, histdata);
+                });
             }
         } // onUpdate()
 
@@ -990,7 +1115,7 @@
             }
         );
          var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
-         map.addLayers([bathyEsri,gebco_noaa,osm]);
+         map.addLayers([gebco_noaa,bathyEsri,osm]);
          //ctrlGraticule.activate();
 
           /*
@@ -1056,10 +1181,12 @@
           
         $('#time-depth-anchor').click();
         $('#map-anchor').click();
-        $('#parameters-anchor').tooltip({title: 'Click to toggle Paramters list'});
+        $('#parameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
+        $('#parameter-values-anchor').tooltip({title: 'Click to see histograms of Parameters and to select by parameter value'});
         $('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
         $('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
         $('#getactualcount').tooltip({title: 'Will increase query time'});
+        $('#showallparametervalues').tooltip({title: 'For faster queries only parameters with standard_names are shown'});
 
     });
 
