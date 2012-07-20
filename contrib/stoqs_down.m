@@ -1,6 +1,6 @@
-function outp=stoqs_down(url,stime,etime,mid,mad,par)
+function outp=stoqs_down(varargin)
 %Get data from a STOQS database, 
-%           d=down_stoqs('http://192.168.79.141:8000/default','2010-10-27+21:51:55','2010-11-18+10:22:42','0','700','salinity');
+%           d=stoqs_down('http://192.168.79.141:8000/default','2010-10-27+21:51:55','2010-11-18+10:22:42',0,700,'salinity');
 %       Input
 %           url = URL of the STOQS server
 %           stime =Start time in the format 'yyyy-mm-dd+HH:MM:SS'
@@ -15,16 +15,11 @@ function outp=stoqs_down(url,stime,etime,mid,mad,par)
 %
 %   Brian Schlining & Francisco Lopez
 %   1/July/2012
+%
+%   Last modified
+%   20/July/2012
 
-
-%Load the information
-%stime='2010-10-27+21:51:55';
-%etime='2010-11-18+10:22:42';
-%mid='0';
-%mad='10';
-%par='temperature';
-
-query=[url '/query/csv?start_time=' stime '&end_time=' etime '&min_depth=' mid '&max_depth=' mad '&parameters=' par]
+query=[varargin{1} '/query/csv?start_time='  varargin{2} '&end_time=' varargin{3} '&min_depth=' num2str(varargin{4}) '&max_depth=' num2str(varargin{5}) '&parameters=' lower(char(varargin{6}))]
 
 
 %Get the information from the webpage
@@ -38,7 +33,7 @@ br = java.io.BufferedReader(isr);
 
 e=1;k=1;
 while e==1   
-    f(k,1:6)=regexp(char(readLine(br)),',','split');%Save the information as string, and separate it with the separator ','
+    f(k,1:6)=regexp(char(readLine(br)),',','split')%Save the information as string, and separate it with the separator ','
     if isempty(char(f(k,1)))%Check if I arrived to the end of the text
         e=0;
    end    
