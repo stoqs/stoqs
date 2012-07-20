@@ -286,8 +286,6 @@
                                 <input type="checkbox" id="showallparametervalues" /> Show all histograms
                             </p>
                             <table id="parameter-value-table" class="table table-condensed">
-                              <tbody>
-                              </tbody>
                             </table>
                         </div>
                     </div>
@@ -800,9 +798,11 @@
             histdata.push(histbyactivity['hist']);
             var rec = [];
             rec["label"] = activity;
-            rec["color"] = color;
+            //rec["color"] = color;
             rec["data"] = histbyactivity['hist'];
             rec["bars"] = { show: true, barWidth: histbyactivity['binwidth'], fill: true, fillColor: color };
+            //console.log('rec');
+            //console.log(rec);
             histdata.push(rec);
             return histdata;
         }
@@ -915,13 +915,19 @@
                 map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
             }
             else if (key == 'activityparameterhistograms') {
+                var histHtml = '<tbody>';
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
-                    $('#parameter-value-table > tbody:last').append('<tr>' +
+                    histHtml += '<tr>' +
                         '<td>' +
                             '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
                             '<p align="center">' + parameter + '</p>' +
                         '</td>' +
-                        '</tr>');
+                        '</tr>';
+                });
+                histHtml += '</tbody>';
+                $('#parameter-value-table').html(histHtml);
+
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     histdata = [];
                     $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
                         parametervalues[parameter] = {'min': ranges.xaxis.from, 'max': ranges.xaxis.to };
@@ -992,28 +998,30 @@
                 }
             }
             else if (key == 'activityparameterhistograms') {
+                var histHtml = '<tbody>';
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    histHtml += '<tr>' +
+                        '<td>' +
+                            '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
+                            '<p align="center">' + parameter + '</p>' +
+                        '</td>' +
+                        '</tr>';
+                });
+                histHtml += '</tbody>';
+                $('#parameter-value-table').html(histHtml);
+
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     histdata = [];
-                    if ( ! $('#' + parameter + '-histogram-flot').length ) {
-                        $('#parameter-value-table > tbody:last').append('<tr>' +
-                            '<td>' +
-                                '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
-                                '<p align="center">' + parameter + '</p>' +
-                            '</td>' +
-                            '</tr>');
-                        $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
-                            parametervalues[parameter] = {'min': ranges.xaxis.from, 'max': ranges.xaxis.to };
-                            rebuildFilters();
-                            histdata = addSelectedParameterValue(histdata, parameter);
-                            plotHistData(parameter, histdata);
-                            console.log(parameter);
-                            console.log(histdata);
-                        });
-                    }
+                    $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
+                        parametervalues[parameter] = {'min': ranges.xaxis.from, 'max': ranges.xaxis.to };
+                        rebuildFilters();
+                        histdata = addSelectedParameterValue(histdata, parameter);
+                        console.log(parameter);
+                        console.log(histdata);
+                        plotHistData(parameter, histdata);
+                    });
                     $.each(histbyplatformandactivity, function (platform, histbyplatform) {
                         $.each(histbyplatform, function(activity, histbyactivity) {
-                            console.log(parameter);
-                            console.log(histdata);
                             histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
                         });
                     });
