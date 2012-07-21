@@ -782,7 +782,6 @@
 
             // Add the sample locations, each with a label
             $.each(data['sampledepthtime'], function (index, sample) {
-                //rec["data"] = data['sampledepthtime'],
                 sample["color"] = "#000000";
                 sample["fillColor"] = "#ffffff";
                 sample["points"] = {show: true, fill: true, lineWidth: 1};
@@ -795,14 +794,12 @@
         }
 
         function collectHistData(histdata, platform, color, activity, histbyactivity) {
-            histdata.push(histbyactivity['hist']);
             var rec = [];
             rec["label"] = activity;
-            //rec["color"] = color;
+            rec["color"] = color;
+            rec["data"] = histbyactivity['hist'];
             rec["data"] = histbyactivity['hist'];
             rec["bars"] = { show: true, barWidth: histbyactivity['binwidth'], fill: true, fillColor: color };
-            //console.log('rec');
-            //console.log(rec);
             histdata.push(rec);
             return histdata;
         }
