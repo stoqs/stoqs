@@ -348,7 +348,7 @@
     var request=''
     var map = null; 
     var kmlurl;
-    var parametervalues={};
+    var parametervalues={};     // This should probably be a session variable
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -806,7 +806,7 @@
 
         function addSelectedParameterValue(histdata, parameter) {
             var rec = [];
-            rec["color"] = '#0f0f0f';
+            rec["color"] = '#0f0000';
             console.log(parametervalues[parameter]);
             rec["data"] = [[parametervalues[parameter]['min'], 100000], [parametervalues[parameter]['max'], 100000]];
             console.log(rec['data']);
@@ -912,6 +912,7 @@
                 map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
             }
             else if (key == 'activityparameterhistograms') {
+                // Create the html placeholders for the plots
                 var histHtml = '<tbody>';
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     histHtml += '<tr>' +
@@ -923,17 +924,17 @@
                 });
                 histHtml += '</tbody>';
                 $('#parameter-value-table').html(histHtml);
-
+                // Bind for parameter value range selection - will trigger rebuildFilters() upon selection event, where onUpdate() will handle
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     histdata = [];
                     $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
-                        parametervalues[parameter] = {'min': ranges.xaxis.from, 'max': ranges.xaxis.to };
+                        parametervalues[parameter] = {'xmin': ranges.xaxis.from, 'xmax': ranges.xaxis.to, 'ymin':0, 'ymax': ranges.yaxis.to };
                         rebuildFilters();
-                        histdata = addSelectedParameterValue(histdata, parameter);
-                        console.log(parameter);
-                        console.log(histdata);
-                        plotHistData(parameter, histdata);
                     });
+                });
+                // Plot the histograms and any selected ranges that have been saved in the session
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    histdata = [];
                     $.each(histbyplatformandactivity, function (platform, histbyplatform) {
                         $.each(histbyplatform, function(activity, histbyactivity) {
                             histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
@@ -1012,10 +1013,9 @@
                     $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
                         parametervalues[parameter] = {'min': ranges.xaxis.from, 'max': ranges.xaxis.to };
                         rebuildFilters();
-                        histdata = addSelectedParameterValue(histdata, parameter);
+                        histdata.push(addSelectedParameterValue(histdata, parameter));
                         console.log(parameter);
                         console.log(histdata);
-                        plotHistData(parameter, histdata);
                     });
                     $.each(histbyplatformandactivity, function (platform, histbyplatform) {
                         $.each(histbyplatform, function(activity, histbyactivity) {
@@ -1187,7 +1187,7 @@
         $('#time-depth-anchor').click();
         $('#map-anchor').click();
         $('#parameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
-        $('#parameter-values-anchor').tooltip({title: 'Click to see histograms of Parameters and to select by parameter value'});
+        $('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select by parameter value range'});
         $('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
         $('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
         $('#getactualcount').tooltip({title: 'Will increase query time'});
