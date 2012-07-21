@@ -228,7 +228,8 @@ class STOQSQManager(object):
 
     def getActivityParameterHistogramsQS(self):
         '''
-        Return query set of ActivityParameterHistograms given the current constraints. Do not include any parameters kwargs.
+        Return query set of ActivityParameterHistograms given the current constraints. 
+        If a parameter kwargs exists then constrain to platform(s) that have that parameter.
         '''
         qparams = {}
 
@@ -237,6 +238,16 @@ class STOQSQManager(object):
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
                 qs_aph = qs_aph.filter(Q(activityparameter__activity__platform__name__in=self.kwargs['platforms']))
+        if self.kwargs.has_key('parameters'):
+            if self.kwargs['parameters']:
+                # Need to do some kind of sub-query here: get all the platforms that have these parameters then restrict to the returned platforms
+                logger.debug('Finding out which platforms have parameter = %s', self.kwargs['parameters'])
+                qs_plat = models.Platform.objects.using(self.dbname).all()
+                qs_plat = qs_plat.filter(Q(activity__activityparameter__parameter__name__in=self.kwargs['parameters']))
+                platHash = {}       # Use a hash to get a unique list of platform names with .keys()
+                for plat in qs_plat:
+                    platHash[plat] = 1
+                qs_aph = qs_aph.filter(Q(activityparameter__activity__platform__name__in=platHash.keys()))
         if self.kwargs.has_key('time'):
             if self.kwargs['time'][0] is not None:
                 q1 = Q(activityparameter__activity__startdate__lte=self.kwargs['time'][0]) & Q(activityparameter__activity__enddate__gte=self.kwargs['time'][0])
@@ -263,7 +274,7 @@ class STOQSQManager(object):
         if qs_aph:
             logger.debug(pprint.pformat(str(qs_aph.query)))
         else:
-            logger.debug("No queryset returned for ")
+            logger.debug("No queryset returned for kwargs = %s", self.kwargs)
         return qs_aph
 
     def getMeasuredParametersQS(self):
