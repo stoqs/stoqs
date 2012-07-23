@@ -14,8 +14,10 @@ query view.
 @license: GPL
 '''
 
+from django.http import HttpResponse
 from stoqs.views import BaseOutputer
 import stoqs.models as mod
+import matplotlib.pyplot as plt
 import logging 
 
 logger = logging.getLogger(__name__)
@@ -64,6 +66,56 @@ class MeasuredParameterByTimeAndParameter(BaseOutputer):
     '''
     fields = [ 'parameter__name', 'measurement__depth', 'measurement__geom', 'measurement__instantpoint__timevalue',
                'measurement__instantpoint__activity__platform__name' ]
+
+class ActivityParameterHistogram(BaseOutputer):
+    '''
+    Return combined data for ActivityParameter statistics, including a png image of the histogram and other stats
+    '''
+    fields = [ 'binlo', 'binhi', 'bincount', 'activityparameter__parameter__name', 'activityparameter__activity__name']
+
+    def process_request(self):
+        fields = self.getFields()
+        self.assign_qs()
+        self.responses.append('.png')
+        if self.format == 'png':
+            apn = self.request.GET.getlist('activityparameter__parameter__name')[0]
+            if apn:
+                # Make a plot
+                response = HttpResponse()
+                response['Content-type'] = 'image/png'
+                l = []
+                h = []
+                w = []
+                for obj in self.qs:
+                    l.append(obj['binlo'])
+                    h.append(obj['bincount'])
+                    w.append(obj['binhi'] - obj['binlo'])
+
+                plt.bar(l,h,w)
+                plt.title('Histogram of %s' % apn)
+                plt.xlabel(apn)
+                plt.ylabel('Count')
+                plt.savefig(response)
+                plt.close()
+            else:
+                # Return a message
+                helpText = 'Please specify an activityparameter__parameter__name' 
+                response = HttpResponse(helpText, mimetype="text/plain")
+            return response
+
+        return super(ActivityParameterHistogram, self).process_request()
+
+
+
+def showActivityParameterHistogram(request, format='png'):
+    '''
+    By default return a png image of the histogram for the parameter
+    '''
+    stoqs_object = mod.ActivityParameterHistogram
+    query_set = stoqs_object.objects.all().order_by('binlo')
+
+    aph = ActivityParameterHistogram(request, format, query_set, stoqs_object)
+    return aph.process_request()
 
 def showMPbyTimeParm(request, format = 'json'):
     stoqs_object = mod.MeasuredParameter
