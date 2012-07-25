@@ -17,7 +17,7 @@ query view.
 from django.http import HttpResponse
 from stoqs.views import BaseOutputer
 import stoqs.models as mod
-import matplotlib.pyplot as plt
+##import matplotlib.pyplot as plt
 import logging 
 
 logger = logging.getLogger(__name__)
@@ -91,12 +91,12 @@ class ActivityParameterHistogram(BaseOutputer):
                     h.append(obj['bincount'])
                     w.append(obj['binhi'] - obj['binlo'])
 
-                plt.bar(l,h,w)
-                plt.title('Histogram of %s' % apn)
-                plt.xlabel(apn)
-                plt.ylabel('Count')
-                plt.savefig(response)
-                plt.close()
+                ##plt.bar(l,h,w)
+                ##plt.title('Histogram of %s' % apn)
+                ##plt.xlabel(apn)
+                ##plt.ylabel('Count')
+                ##plt.savefig(response)
+                ##plt.close()
             else:
                 # Return a message
                 helpText = 'Please specify an activityparameter__parameter__name' 
