@@ -1,5 +1,5 @@
 
-function [infcs]=stoqs_qcampaigns(u,show)
+function infcs=stoqs_qcampaigns(u,show)
 
 %Get the name of all the campaigns available in a STOQS server
 %      
@@ -22,10 +22,13 @@ function [infcs]=stoqs_qcampaigns(u,show)
 
 infcs=stoqs_info(u,'campaigns');
 
-if show==1
+if isempty(infcs)
+else
+    if show==1
     
-       fprintf('%s\n','CAMPAIGNS');
-    for i=1:length(infcs)  
-        fprintf('   %s\n',char(infcs(i)));
+         fprintf('%s\n','CAMPAIGNS');
+     for i=1:length(infcs)  
+         fprintf('   %s from %s to %s\n',char(infcs(i).name),char(infcs(i).startdate),char(infcs(i).enddate));
+     end
     end
 end

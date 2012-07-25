@@ -23,11 +23,15 @@ function [infpa,parname] = stoqs_qparameter(u,show)
 
 infpa=stoqs_info(u,'parameter');
 
-for i=1:length(infpa);parname{infpa(i).id}=infpa(i).name;end
+if isempty(infpa)
+    parname=''
+else
+    for i=1:length(infpa);parname{infpa(i).id}=infpa(i).name;end
 
-if show==1
-    fprintf('%s\n','PARAMETERS');
-    for i=1:length(parname)  
-        fprintf('    %s\n',char(parname(i)));
+    if show==1
+      fprintf('%s\n','PARAMETERS');
+      for i=1:length(parname)  
+         fprintf('    %s\n',char(parname(i)));
+      end
     end
 end

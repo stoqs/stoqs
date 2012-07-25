@@ -38,7 +38,15 @@ end
 urlStream = url.openStream(); %Open it
 isr = java.io.InputStreamReader(urlStream);
 br = java.io.BufferedReader(isr);
-inf=loadjson(char(readLine(br))); %Read de information, Convert java.string to string with char, so loadjson could convert it to a struct.
 
+a=char(readLine(br));
+if isempty(a)
+    error=['ERROR : Couldnt get the information for table ' table ' **************'];
+    disp(error)
+    inf='';
+else    
+    inf=loadjson(a); %Read de information, Convert java.string to string with char, so loadjson could convert it to a struct.
+    er=0;
+end
 
 
