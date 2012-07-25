@@ -19,12 +19,16 @@ function infc = stoqs_qcampaign(u,show)
 %   30/June/2012
 % Last review 30/July/2012
 
+
 infc=stoqs_info(u,'campaign');
 
-if show==1
-    for i=1:length(infc)  
-       fprintf('%s\n','CAMPAIGN');
-        fprintf('   %s\n',infc(i).name);
-        fprintf('   From  %s to %s\n',infc(i).startdate,infc(i).enddate);
+if isempty(infc)
+else
+    if show==1
+       for i=1:length(infc)  
+         fprintf('%s\n','CAMPAIGN');
+          fprintf('   %s\n',infc(i).name);
+          fprintf('   From  %s to %s\n',infc(i).startdate,infc(i).enddate);
+       end
     end
 end
