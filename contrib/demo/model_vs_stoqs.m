@@ -1,11 +1,12 @@
-function [model,d]=model_vs_stoqs(urlo,depth,range)
+function [model,d]=model_vs_stoqs(urlo,depth,range,drange)
 %Compare in-situ data with model output
 %
 %
 %   Input
 %       urlo= OPeNDAP ROMS output to use
-%       depth= Depth at we want to compare the data
+%       depth= Depth at we want to compare the data (m)
 %       range = Range of +/- depth where to look for in-situ measurement.
+%       drange = Date regane where to look for in-situ data (hours) 
 %       Example -> If we said mode_vs_stoqs(5,2), will look for all the
 %       data between 3m(5-2) and 7m(5+2)
 %
@@ -32,8 +33,8 @@ disp('Finish OPeNDAP server connection')
 %------------PREPARING QUERY -----------------
 %Prepare all the information needed to the STOQS Query.
 
-datestart=datestr(datenum(model.date)-1/24,'yyyy-mm-dd+HH:MM:SS'); %Get one hour after and before model date
-datend=datestr(datenum(model.date)+1/24,'yyyy-mm-dd+HH:MM:SS');
+datestart=datestr(datenum(model.date)-drange/24,'yyyy-mm-dd+HH:MM:SS'); %Get one hour after and before model date
+datend=datestr(datenum(model.date)+drange/24,'yyyy-mm-dd+HH:MM:SS');
 min_dep=depth-range; %min(abs(model.depth));
 max_dep=depth+range; %max(abs(model.depth))
 vari='sea_water_temperature'; %model.name(5)
@@ -43,11 +44,14 @@ vari='sea_water_temperature'; %model.name(5)
 disp('Getting STOQS in-situ measuremt')
 %Get the in-situ data
 d=stoqs_down('http://odss-staging.shore.mbari.org/canon/stoqs_june2011',datestart,datend,min_dep,max_dep,vari);
-disp('All the STOQS measurement download')
+
 
 %-----------  MAKE SOME PLOTS ----------------
 
-%---Trajectory over 
-pcolor(model.lon,model.lat, model.data_inlevel);shading flat;colorbar;hold on
-plot(d.long,d.lati)
-title(['Monterey Bay ROMS output ' datestr(model.date) ' at ' num2str(model.depth(model.level)) ' m']);
+%---Trajectory over
+if isempty(d)
+else
+    pcolor(model.lon,model.lat, model.data_inlevel);shading flat;colorbar;hold on
+    plot(d.long,d.lati)
+    title(['Monterey Bay ROMS output ' datestr(model.date) ' at ' num2str(model.depth(model.level)) ' m']);
+end
