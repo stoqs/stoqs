@@ -22,7 +22,7 @@ function outp=stoqs_down(varargin)
 
 query=[varargin{1} '/query/csv?start_time='  varargin{2} '&end_time=' varargin{3} '&min_depth=' num2str(varargin{4}) '&max_depth=' num2str(varargin{5}) '&parameters=' lower(char(varargin{6}))];
 
-
+disp('Connecting to STOQS')
 %Get the information from the webpage
 url = java.net.URL(query); %Read de URL
 
@@ -32,22 +32,39 @@ br = java.io.BufferedReader(isr);
 
 
 
-e=1;k=1;
+disp('Downloading the data')
+e=1;k=1;pc=1;
 while e==1   
     f(k,1:6)=regexp(char(readLine(br)),',','split');%Save the information as string, and separate it with the separator ','
-    if isempty(char(f(k,1)))%Check if I arrived to the end of the text
+   if isempty(char(f(k,1)))%Check if I arrived to the end of the text
         e=0;
    end    
-    k=k+1;
+    k=k+1;pc=pc+1;
+    if pc==100
+        pc=0;
+        str=['Download  ' num2str(k) '  measurement'];
+        disp(str)
+        
+    end
+
+       
 end
 
 %Separate the information in different variable with the correct type
-outp.platform=f(2:end-1,1);
-outp.time=datenum(f(2:end-1,2),'yyyy-mm-dd HH:MM:SS');
-outp.long=str2double(f(2:end-1,3));
-outp.lati=str2double(f(2:end-1,4));
-outp.dept=str2double(f(2:end-1,5));
-outp.vari=str2double(f(2:end-1,6));
+
+if k>2
+    disp('All the STOQS measurement download')
+    outp.platform=f(2:end-1,1);
+    outp.time=datenum(f(2:end-1,2),'yyyy-mm-dd HH:MM:SS');
+    outp.long=str2double(f(2:end-1,3));
+    outp.lati=str2double(f(2:end-1,4));
+    outp.dept=str2double(f(2:end-1,5));
+    outp.vari=str2double(f(2:end-1,6));
+else
+    disp('NO DATA available for the query');
+    outp='';
+end
+    
 
 
 clear url;clear urlStream;clear isr;clear br;clear f
