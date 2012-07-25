@@ -26,8 +26,8 @@ infp=stoqs_info(u,'platform');
 for i=1:length(infp);platname{infp(i).id}=infp(i).name;end
 
 if show==1
+    fprintf('%s\n','PLATFORMS');
     for i=1:length(platname)  
-       fprintf('%s\n','PLATFORMS');
-        fprintf('    %s\n',char(platname(i)));
+          fprintf('    %s\n',char(platname(i)));
     end
 end
