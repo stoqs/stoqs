@@ -1,7 +1,7 @@
 function inf = stoqs_info(u,table,var)
 
 %Get info from a table in STOQS data base
-%       inf=info_stoqs('http://192.168.79.138:8000/default','platform');
+%       inf=info_stoqs('http://odss.mbari.org/canon/default','platform');
 %       infc=info_stoqs(u,'activity.json?campaign=','2');
 %Usage:
 %
