@@ -1,0 +1,1218 @@
+<!DOCTYPE html> <!--  HTML5 Doctype -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{request.META.dbAlias}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- The styles -->
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet">
+    <style>
+      body {
+        padding-top: 60px;  /* 60px to make the container go all the way to the bottom of the topbar */
+        height: 100%;       /* make the percentage height on flot placeholder work */
+      }
+      .stoqs-toggle {
+        width: 100%;
+      }
+      .zoom-toggle {
+        width: 100%;
+      }
+      .stoqs-parameter-toggle {
+        width: 50%;
+      }
+        .rotate-90 {
+            -moz-transform: rotate(-90deg);  /* FF3.5+ */
+            -o-transform: rotate(-90deg);  /* Opera 10.5 */
+            -webkit-transform: rotate(-90deg);  /* Saf3.1+, Chrome */
+        }
+      th {
+        align: center; /* Doesn't seem to work '*/
+      }
+<!--
+        div.dataTables_length label {
+            width: 460px;
+            float: left;
+            text-align: left;
+        }
+ 
+        div.dataTables_length select {
+            width: 75px;
+        }
+ 
+        div.dataTables_filter label {
+            float: right;
+            width: 460px;
+        }
+ 
+        div.dataTables_info {
+            padding-top: 8px;
+        }
+ 
+        .dataTables_paginate {
+            float: right;
+            margin: 0;
+        }
+ 
+        table {
+            margin: 1em 0;
+            clear: both;
+        }
+-->
+    </style>
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+    <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet" />    
+    <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet" />    
+    
+
+    <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- The fav and touch icons -->
+    <link rel="shortcut icon" href="{{STATIC_URL}}media/favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png">
+
+    {% if google_analytics_code %}
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', '{{google_analytics_code}}']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    {% endif %}
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="http://www.mbari.org"><img src="{{STATIC_URL}}images/mbari_bw_logo.gif"></a>
+          <a class="brand" href="#">{{request.META.dbAlias}}</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li><a href="{% url show-campaigns %}"><i class="icon-list-alt icon-white"></i> Campaign list</a></li>
+            </ul>
+            <!--
+            <form action="">
+                <input type="text" placeholder="Search" />
+            </form>
+            -->
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+  <div class="container-fluid">
+
+    <div class="row-fluid">
+
+        <div class="span6">
+
+            <div class="accordion well" id="accordion1">
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="map-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseMap">
+                        Map
+                        </a></h3>
+                    </div>
+                    <div id="collapseMap" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <div class="row-fluid" id="map"></div>
+                            <p>
+                                <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
+                            </p>
+                            <p>
+                                <div id="query-stats" class="ajax-wait"></div>
+                                <input type="checkbox" id="getactualcount" /> Get actual count
+                            </p>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="sample-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSample">
+                        Sample Data Access
+                        </a></h3>
+                    </div>
+                    <div id="collapseSample" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <span id="sample-instructions">Click on Sample locations in time-depth plot to get information here</span>
+                            <table id="sample-table" class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                    </tr>
+                                </thead> 
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseDataAccess">
+                        Measurement Data Access
+                        </a></h3>
+                    </div>
+                    <div id="collapseDataAccess" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul class="nav nav-tabs">
+                                {% for format, description in formats.items %}
+                                    {% if format = 'kml' %}
+                                <li class="active"><a href="#{{format}}" data-toggle="tab">{{format}}</a></li>
+                                    {% else %}
+                                <li><a href="#{{format}}" data-toggle="tab">{{format}}</a></li>
+                                    {% endif %}
+                                    
+                                {% endfor %}            
+                            </ul>
+                            <div class="tab-content">
+                                {% for format, description in formats.items %}
+                                    {% if format = 'kml' %}
+                                <div class="tab-pane active" id="{{format}}">
+                                    {% else %}
+                                <div class="tab-pane" id="{{format}}">
+                                    {% endif %} 
+                                    <table>
+                                        <tr>
+                                            <th><a target="_blank" id="{{format}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format}}-icon.png"/></a></th>
+                                            <th valign="top"><h4>&nbsp;{{description}}</h4></th>
+                                        </tr>
+                                    </table>
+                                    {% if format = 'kml' %}
+                                        <div align="center">
+                                        <span id="kml-parameter"></span>
+                                        <form align="center" class="form-inline">
+                                            <input id="cmin" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
+                                            <img style="vertical-align:middle;"src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" />
+                                            <input id="cmax" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
+                                        </form>
+                                        </div>
+                                        <pre id="{{format}}-field"></pre>
+                                    {% else %}
+                                        <pre id="{{format}}-field"></pre>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}            
+                            </div>
+                            </ul>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+            </div><!-- accordian well -->
+
+        </div><!-- span6 -->
+        
+        <div class="span6">
+            <div class="accordion well" id="accordion2">
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="time-depth-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+                        Time Depth
+                        </a></h3>
+                    </div>
+                    <div id="collapseOne" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <div id="time-depth-plot" style="height:400px" class="disabled">
+                                <!-- <div align="center" style="float:left;width:10%;height:90%;">
+                                    <div class="rotate-90">Depth (m)</div>
+                                </div>  -->
+                                <div id="time-depth-flot" style="width:100%;height:90%;float:left;" class="disabled" title="Click and drag to select a time-depth range"></div>
+                                <p align="center">Time (GMT)</p>
+                                <div>
+                                    <p><button id="zoomed-button" class="btn btn-mini zoom-toggle disabled">Zoomed</button></p>
+                                </div>
+                            </div>
+                            <input type="hidden" id="start-ems" "name="start-ems" />
+                            <input type="hidden" id="start-time" "name="start-time" />
+                            <input type="hidden" id="end-ems" name="end-ems" /> 
+                            <input type="hidden" id="end-time" name="end-time"> 
+                            <input type="hidden" id="start-depth" "name="start-depth" />
+                            <input type="hidden" id="end-depth" name="end-depth" /> 
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="parameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
+                        Parameters
+                        </a></h3>
+                    </div>
+                    <div id="collapseTwo" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <table id="parameter-table" class="table table-condensed">
+                              <tbody>
+                              </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="parameter-values-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterValues">
+                        Parameter Values
+                        </a></h3>
+                    </div>
+                    <div id="collapseParameterValues" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <p>
+                                <input type="checkbox" id="showallparametervalues" /> Show all histograms
+                            </p>
+                            <table id="parameter-value-table" class="table table-condensed">
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="platforms-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
+                        Platforms
+                        </a></h3>
+                    </div>
+                    <div id="collapseThree" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <table id="platform-table" class="table table-condensed">
+                              <tbody>
+                              </tbody>
+                            </table>                                
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+            </div><!-- accordian well -->
+
+        </div><!-- span -->
+
+    </div><!-- row-fluid -->
+
+  </div> <!-- container -->
+
+    <!-- The javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery-ui-1.8.17.custom.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.dateFormat-1.0.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.selection.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.resize.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.dataTables.min.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-dropdown.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-scrollspy.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-tab.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-tooltip.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-popover.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-button.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-collapse.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-carousel.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-typeahead.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/OpenLayers.js"></script> 
+    <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
+    <script type="text/javascript">
+    
+    var stoqsQuery='{{site_uri}}{% url stoqs-query-summary dbAlias=request.META.dbAlias %}';
+    var params={}
+    var initData;
+    var zoomedData;
+    var request=''
+    var map = null; 
+    var kmlurl;
+    var parametervalues={};     // This should probably be a session variable
+    
+    // Called with an element that was selectable, should make that element non-selectable.
+    function disableButton(element) {
+        if (! $(element).is('.disabled')) {
+            $(element).removeClass('btn-primary');      // Unselect if it's selected.
+            $(element).addClass('disabled');            // Add the disabled class to it.
+            $(element).attr('title', ' ').tooltip('fixTitle').tooltip('show');     // Remove tooltip
+        }
+    }
+    
+    // Called with an element that was selectable, should make that element selectable.
+    function enableButton(element) {
+        if ($(element).is('.disabled')) {
+            $(element).removeClass('disabled');
+            $(element).attr('title', 'Click to Select').tooltip('fixTitle').tooltip('hide');     // Add generic tooltip
+        }
+    }
+
+    function setKMLlinks() {
+        // To be colled up change of cmin & cmax input text boxes
+        var cmincmax = ''
+        if ($('#cmin').val() && $('#cmax').val()) {
+            cmincmax = '&cmin=' + $('#cmin').val() + '&cmax=' + $('#cmax').val();
+        }
+        $('#kml-field').text(kmlurl + cmincmax);
+        $('#kml-link').attr('href',kmlurl + cmincmax);
+    }
+    
+    // Set the URL fields and buttons to use the current queried URL
+    function setDataAccess(data) {
+        var base_url='{{site_uri}}{% url stoqs-query-ui dbAlias=request.META.dbAlias %}';
+        var param=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
+        if (param != '') {
+            param = '?' + param;
+        } 
+        // Use the Django variable to populate the supported query formats.
+        var formats=[{% for format, description in formats.items %}'{{format}}'{% if not forloop.last %},{% endif %}{%endfor%}]
+        // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
+        $.each(formats, function (index, value) {
+            var url = base_url + value + param;
+            if (value == 'sql') {
+                $('#'+value+'-field').text(data['sql']);
+            }
+            else if (value == 'kml') {
+                kmlurl = 'Select a Parameter to view your selection of O(10k) actual datavalues in Google Earth';
+                if (typeof params['parameters'] != 'undefined') {
+                    if (params['parameters'].length == 1) {
+                        $('#kml-parameter').text(params['parameters'][0]);
+                        $('#cmin').val(data['parameterminmax'][1]);
+                        $('#cmax').val(data['parameterminmax'][2]);
+                        kmlurl = url;
+                    }
+                    else {
+                        $('#kml-parameter').text('');
+                        $('#cmin').val('');
+                        $('#cmax').val('');
+                    }
+                }
+                setKMLlinks();
+            }
+            else {
+                $('#'+value+'-field').text(url);
+                $('#'+value+'-link').attr('href',url);
+            }
+        });
+    }
+    
+    function toggleField(element) {
+        var $element=$(element);
+        if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
+            if ($element.is('.btn-primary')) {
+                $element.removeClass('btn-primary');
+                if ($(element).hasClass('parameter')) {
+                    $('#parameters-anchor').html('Parameters')
+                }
+                if ($(element).hasClass('platform')) {
+                    $('#platforms-anchor').html('Platforms')
+                }
+            } else {
+                $element.addClass('btn-primary');
+                if ($(element).hasClass('parameter')) {
+                    $('#parameters-anchor').html('Parameter: ' + $(element).html())
+                }
+                if ($(element).hasClass('platform')) {
+                    $('#platforms-anchor').html('Platform: ' + $(element).html())
+                }
+            }
+        }
+    }
+    
+        function getUTCDateString(date) {
+            // $.format.date(date,'yyyy-MM-dd hh:mm:ss') is broken in Safari, construct SQL friendly date string this way
+            var mon = new String(date.getUTCMonth() + 1);
+            mon = mon.replace(/\d+/g, function(m) {
+               return "0".substr(m.length - 1) + m;
+            });
+            var day = new String(date.getUTCDate());
+            day = day.replace(/\d+/g, function(m) {
+               return "0".substr(m.length - 1) + m;
+            });
+            var hr = new String(date.getUTCHours());
+            hr = hr.replace(/\d+/g, function(m) {
+               return "0".substr(m.length - 1) + m;
+            });
+            var mn = new String(date.getUTCMinutes());
+            mn = mn.replace(/\d+/g, function(m) {
+               return "0".substr(m.length - 1) + m;
+            });
+            var se = new String(date.getUTCSeconds());
+            se = se.replace(/\d+/g, function(m) {
+               return "0".substr(m.length - 1) + m;
+            });
+
+            var date_str = date.getUTCFullYear() + '-' + mon + '-' + day;
+            date_str = date_str + ' ' + hr + ':' + mn + ':' + se;
+
+            return date_str
+        }
+
+    function makeSlider(divid, type, data) {
+        if (type == 'time') {
+            var start=new Date(data[0]);
+            var end=new Date(data[1]);
+            var max=Math.abs((start.getTime() - end.getTime()));
+            var min=0
+        } else if (type == 'depth') {
+            // Float/Decimal type
+            var min=Math.floor(data[0]*10000);
+            var max=Math.ceil(data[1]*10000);
+        }
+        if (type == 'time') {
+            var formatter=function (value) { 
+                var start=new Date(data[0]);
+                var cur=new Date(start.getTime() + value);
+                return getUTCDateString(cur);
+            };
+            var reverseformatter=function (value) {
+                var start=new Date(data[0]);
+                try {
+                    var end=new Date(value);
+                } catch (err) {
+                    var end=new Data(data[1]).getTime();
+                }
+                var cur=Math.abs((start.getTime() - end.getTime()));
+                return cur;
+            };
+        } else if (type == 'depth') {
+            // Float/Decimal type
+            var formatter=function(value) { return value/10000; };
+            var reverseformatter=function(value) { return value *10000; };
+        }
+        var options={max: max,
+                     min: min,
+                     values: [min, max],
+                     range: true
+        };
+        
+        var div=$('#' + divid);
+        div.bind({
+            slide : function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, false); },
+            slidechange:function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, true); }
+        })
+        div.slider(options);
+        
+        div.data("reverseformatter", reverseformatter);
+        if (typeof postaddfunc != "undefined") {
+           //div.data("postaddfunction", postaddfunc);
+        }
+        return div;
+
+    } // makeSlider()
+    
+    function recordUpdatedValues(values, divid, type, formatter, updateTable) {
+        var min=formatter(values[0])
+        var max=formatter(values[1])
+        $('#start-' + type).val(min)
+        $('#end-' + type).val(max)
+        if (updateTable) {
+            rebuildFilters();
+        }
+    }
+    
+    function rebuildFilters() {
+        params={}
+        if ($('.btn-primary', $('#time-depth-plot')).length) {
+            params['start_time']=$('#start-time').val()
+            params['end_time']=$('#end-time').val()
+            params['min_depth']=$('#start-depth').val()
+            params['max_depth']=$('#end-depth').val()
+        }
+
+        params['parameters']=[]
+        params['platforms']=[]
+        $('tr',$('#parameter-table')).each(function (index, element) {
+            if ($('.btn-primary', $(element)).length) {
+                params['parameters'].push(element.id);
+                $('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
+            }
+        });
+        $('tr',$('#platform-table')).each(function (index, element) {
+            if ($('.btn-primary', $(element)).length) {
+                params['platforms'].push(element.id);
+                $('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
+            }
+        });
+
+        for (var parameter in parametervalues) {
+            params[parameter + '_min'] = parametervalues[parameter]['min'];
+            params[parameter + '_max'] = parametervalues[parameter]['max'];
+        };
+
+        updateSummaryData();
+    }
+    
+    function refreshMap() {
+        track_lines.redraw(true);
+        sample_points.redraw(true);
+    }
+
+    $(document).on('click', ".stoqs-toggle", function (event) {
+        toggleField(this);
+        rebuildFilters();
+    });
+
+    function resetZoomedValues(resetData) {
+            // Reset zoom to saved resetData values
+            $('#start-depth').val(resetData['depth'][0]);
+            $('#end-depth').val(resetData['depth'][1]);
+
+            var start=new Date(resetData['time'][0]);
+            $('#start-ems').val(start.getTime());
+            $('#start-time').val(getUTCDateString(start));
+            var end=new Date(resetData['time'][1]);
+            $('#end-ems').val(end.getTime());
+            $('#end-time').val(getUTCDateString(end));
+
+    }
+
+    // Special handling for unzooming the time-depth-plot
+    $("#zoomed-button").click(function() {
+        if ( $('.btn-primary', $('#time-depth-plot').length) ) {
+            resetZoomedValues(initData);
+            rebuildFilters();
+            $("#zoomed-button").removeClass('btn-primary');
+            $("#zoomed-button").addClass('disabled');
+            $('#zoomed-button').attr('title', ' ').tooltip('fixTitle').tooltip('hide');
+            $('#time-depth-anchor').html('Time Depth')
+        }
+    });
+    $('#getactualcount').on('click', function (event) {
+        rebuildFilters();
+    });
+
+    $('#showallparametervalues').on('click', function (event) {
+        rebuildFilters();
+    });
+
+    $('#cmin').on('keypress', function (event, previousText) {
+        setTimeout(setKMLlinks());
+    });
+
+    $('#cmax').on('keypress', function (event, previousText) {
+        setTimeout(setKMLlinks());
+    });
+    
+    /*
+     * Perform the AJAX call to get a list of parameters, and enable/disable them
+     * If "init" is true then this is the initial page load, and we need to populate the fields rather than toggle them.
+     */
+    function updateSummaryData(init) {
+        var init = typeof init !== 'undefined' ? init : false;
+        var qstring=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
+        if ($('#getactualcount').is(':checked')) {
+            qstring = qstring + '&get_actual_count=1';
+        }
+        if ($('#showallparametervalues').is(':checked')) {
+            qstring = qstring + '&show_all_parameter_values=1';
+        }
+        if ( ! $('#showallparametervalues').is(':checked')) {
+            //$('#parameter-value-table').html('<tbody></tbody>');
+        }
+        if (! init) {
+            if (request.readyState < 3) {
+                request.abort();
+            }
+        }
+        var me = this;
+
+        var simpledepthtime_options = { grid: { 
+                                            backgroundColor: "rgb(192, 211, 228)",      //c0d3e4
+                                            hoverable: true, 
+                                            clickable: true 
+                                        },
+                                        xaxis: { mode: "time" },
+                                        yaxis: {
+                                            transform: function (v) { return -v; },
+                                            inverseTransform: function (v) { return -v; }
+                                        },
+                                        series: {
+                                            lines: { show: true, fill: false, lineWidth: 1 },
+                                            points: { show: false, fill: false },
+                                            shadowSize: 0,
+                                        },
+                                        legend: { show: false },
+                                        selection: { mode: "xy" }
+                                      };
+
+        function showTooltip(x, y, contents) {
+            $('<div id="tooltip">' + contents + '</div>').css( {
+                position: 'absolute',
+                display: 'none',
+                top: y + 5,
+                left: x + 5,
+                border: '1px solid #fdd',
+                padding: '2px',
+                'background-color': '#fee',
+                opacity: 0.80
+            }).appendTo("body").fadeIn(200);
+        }
+
+        $("#time-depth-flot").bind("plothover", function (event, pos, item) {
+            if (pos.x && pos.y) {
+                $("#x").text(pos.x.toFixed(2));
+                $("#y").text(pos.y.toFixed(2));
+            }
+            else {
+                return;
+            }
+    
+            if (item) {
+                if (typeof previousPoint != 'undefined') {
+                    if (previousPoint != item.dataIndex) {
+                        previousPoint = item.dataIndex;
+                        
+                        $("#tooltip").remove();
+                        var x = item.datapoint[0].toFixed(2),
+                            y = item.datapoint[1].toFixed(2);
+                   
+                        showTooltip(item.pageX, item.pageY,
+                                    item.series.label);
+                    }
+                }
+            }
+            else {
+                $("#tooltip").remove();
+                previousPoint = null;            
+            }
+        });
+
+        /* Default class modification for DataTable*/
+        $.extend( $.fn.dataTableExt.oStdClasses, {
+            "sSortAsc": "header headerSortDown",
+            "sSortDesc": "header headerSortUp",
+            "sSortable": "header",
+            "sWrapper": "dataTables_wrapper form-inline",
+            "sPaginationType": "full_numbers",
+            "bJQueryUI": true,
+            "aoColumnDefs": [ { "sWidth": "10%", "aTargets": [ -1 ] }
+        ]
+        });
+
+        function showSampleData(label) {
+                //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
+                var sample_url = '{{site_uri}}{% url show-sample-datatable dbAlias=request.META.dbAlias format=".json" %}';
+                sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
+                
+                var cols = ['depth', 'filter diam', 'filter pore size', 'lon', 'lat', 'activity name', 'time', 'lab',
+                            'name', 'res.', 'purpose', 'type', 'volume'];
+                var ths = '<tr>';
+                $.each(cols, function (index, value) {
+                    ths = ths + '<th>' + value + '</th>';
+                });
+                ths = ths + '</tr>';
+                $('#sample-table > thead').html(ths);
+
+                $("#sample-table").dataTable( {
+                    "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
+                    "bProcessing": true,
+                    "bDestroy":    true,
+                    "sAjaxSource": sample_url
+                });
+                $('#sample-instructions').text('')
+                if (! $('#collapseSample').hasClass('in')) {
+                    $('#sample-anchor').click();
+                }
+        }
+
+        $("#time-depth-flot").bind("plotclick", function (event, pos, item) {
+            if (item) {
+                // Crude test whether sample or activity click, activities 2nd element may be '(stride=..'
+                //console.log(item.series.label)
+                if (item.series.label.split(' ').length == 2) {
+                    if (item.series.label.split(' ')[1].indexOf('(') == -1) {
+                        showSampleData(item.series.label)
+                    }
+                }
+            }
+        });
+
+        function getDataset(data, x1, x2) {
+            // Return a dataset for flot for only the data betweeh times x1 and x2
+            var dataset = [];
+            var platform_seen = [];
+            if ( ! data ) {
+                return;
+            }
+            $.each(data['platforms'], function (index, platform_value) {
+                // Now add each activity for this platform - separated so that they are not connected with a line
+                $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
+                    var rec = [];
+                    //console.log('Checking time for ' + platform_value + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                    subset_dts = []
+                    $.each(depth_time_series, function (index, td) {
+                        // From each activity push only the times between x1 & x2
+                        if (td[0] > x1 && td[0] < x2) {
+                            subset_dts.push(td);
+                        }
+                    });
+                    if (subset_dts.length > 0) {
+                        if (! platform_seen[platform_value[0]]) {
+                            rec["label"] = platform_value[0];
+                            platform_seen[platform_value[0]] = true;
+                        }
+                        rec["label"] = label;
+                        rec["data"] = depth_time_series;
+                        rec["color"] = "#" + data['simpledepthtime']['colors'][platform_value[0]];
+                        dataset.push(rec);
+                    }
+                });
+            });
+
+            // Add the sample locations, each with a label
+            $.each(data['sampledepthtime'], function (index, sample) {
+                sample["color"] = "#000000";
+                sample["fillColor"] = "#ffffff";
+                sample["points"] = {show: true, fill: true, lineWidth: 1};
+                sample["lines"] = {show: false};
+                sample["hoverable"] = true;
+                sample["clickable"] = true;
+                dataset.push(sample);
+            });
+            return dataset;
+        }
+
+        function collectHistData(histdata, platform, color, activity, histbyactivity) {
+            var rec = [];
+            rec["label"] = activity;
+            rec["color"] = color;
+            rec["data"] = histbyactivity['hist'];
+            rec["data"] = histbyactivity['hist'];
+            rec["bars"] = { show: true, barWidth: histbyactivity['binwidth'], fill: true, fillColor: color };
+            histdata.push(rec);
+            return histdata;
+        }
+
+        function addSelectedParameterValue(histdata, parameter) {
+            var rec = [];
+            rec["color"] = '#0f0000';
+            console.log(parametervalues[parameter]);
+            rec["data"] = [[parametervalues[parameter]['min'], 100000], [parametervalues[parameter]['max'], 100000]];
+            console.log(rec['data']);
+            binwidth = parametervalues[parameter]['max'] - parametervalues[parameter]['min'];
+            rec["bars"] = { show: true, barWidth: binwidth, fill: true, fillColor: '#0f0f0f' };
+            histdata.push(rec);
+            return histdata;
+        }
+
+        function plotHistData(parameter, histdata) {
+            $.plot($("#" + parameter + "-histogram-flot"), histdata, {
+                series: {
+                    lines: { show: false },
+                },
+                legend: { show: false },
+                selection: { mode: "x" },
+                hoverable: true,
+            });
+        }
+
+
+
+        $("#time-depth-flot").bind("plotselected", function (event, ranges) {
+                // clamp the zooming to prevent eternal zoom
+                if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
+                    ranges.xaxis.to = ranges.xaxis.from + 0.00001;
+                if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
+                    ranges.yaxis.to = ranges.yaxis.from + 0.00001;
+
+                // Save the zoomed values
+                $('#start-depth').val(Math.round(ranges.yaxis.from*100)/100);
+                $('#end-depth').val(Math.round(ranges.yaxis.to*100)/100);
+
+                $('#start-ems').val(ranges.xaxis.from);
+                var ds = new Date(ranges.xaxis.from);
+                $('#start-time').val(getUTCDateString(ds));
+
+                $('#end-ems').val(ranges.xaxis.to);
+                var de = new Date(ranges.xaxis.to);
+                $('#end-time').val(getUTCDateString(de))
+
+                // Apply new depth & time ranges to the query and redraw the plot in rebuildFilters()
+                $('#zoomed-button').removeClass('disabled'); 
+                $('#zoomed-button').addClass('btn-primary');
+                $('#zoomed-button').attr('title', 'Click to unzoom').tooltip('fixTitle').tooltip('hide');
+                rebuildFilters();
+                var dtLabel = 'Time: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
+                dtLabel = dtLabel + ' Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
+                $('#time-depth-anchor').html(dtLabel);
+                
+        }); //$("#time-depth-flot").bind("plotselected"
+
+
+        function onInit(data, key) {
+            // Called from ajax on initial request
+            initData = data;
+            zoomedData = initData;
+            if (key == 'platforms') {
+                $.each(data[key], function (index, value) {
+                    $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td style="text-align:center;">' +
+                            '<div id="' + value[1] + '_icon" align="center" style="float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
+                                '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;border-bottom-color:#' + 
+                                    data['simpledepthtime']['colors'][value[1]] + ';">' +
+                            '</div></div>' +
+                            '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;">'+ value[0] +'</button></td>' +
+                        '</tr>');
+                    $('#' + value[1] + '_icon').click( function () { $('#' + value[1] + ' > td > button').click() } );
+                });
+                $('.platform').tooltip({title: 'Click to select this Platform'});
+            }
+            else if (key == 'parameters') {
+                $.each(data[key], function (index, value) {
+                    $('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
+                            '<td>' +
+                                '<button class="btn btn-mini stoqs-toggle parameter">'+ value[0] +'</button></td>' +
+                            '</tr>');
+                });
+                $('.parameter').tooltip({title: 'Click to select this Parameter'});
+            }
+            else if (key == 'time') { 
+                var start = new Date(data[key][0]);
+                $('#start-ems').val(start.getTime());
+                $('#start-time').val(getUTCDateString(start));
+                var end = new Date(data[key][1]);
+                $('#end-ems').val(end.getTime());
+                $('#end-time').val(getUTCDateString(end));
+                makeSlider('slider-' + key, key, data[key])
+            }
+            else if (key == 'depth') {
+                $('#start-' + key).val(Math.round(data[key][0]*10)/10);
+                $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
+                makeSlider('slider-' + key, key, data[key])
+            }
+            else if (key == 'simpledepthtime') {
+                //flotPlot(data)
+                var start = new Date(data['time'][0]);
+                var end = new Date(data['time'][1]);
+                $.plot($("#time-depth-flot"), getDataset(initData, start.getTime(), end.getTime()), simpledepthtime_options);
+            }
+            else if (key == 'activitymaptrackextent') {
+                e = data[key];
+                //console.log('00=' + e[0][0] + ' 01=' + e[0][1] + ' 10=' + e[1][0] + ' 11=' + e[1][1]);
+                map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
+            }
+            else if (key == 'activityparameterhistograms') {
+                // Create the html placeholders for the plots
+                var histHtml = '<tbody>';
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    histHtml += '<tr>' +
+                        '<td>' +
+                            '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
+                            '<p align="center">' + parameter + '</p>' +
+                        '</td>' +
+                        '</tr>';
+                });
+                histHtml += '</tbody>';
+                $('#parameter-value-table').html(histHtml);
+                // Bind for parameter value range selection - will trigger rebuildFilters() upon selection event, where onUpdate() will handle
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    histdata = [];
+                    $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
+                        parametervalues[parameter] = {'xmin': ranges.xaxis.from, 'xmax': ranges.xaxis.to, 'ymin':0, 'ymax': ranges.yaxis.to };
+                        rebuildFilters();
+                    });
+                });
+                // Plot the histograms and any selected ranges that have been saved in the session
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    histdata = [];
+                    $.each(histbyplatformandactivity, function (platform, histbyplatform) {
+                        $.each(histbyplatform, function(activity, histbyactivity) {
+                            histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
+                        });
+                    });
+                    plotHistData(parameter, histdata);
+                });
+            }
+        } // onInit()
+
+        function onUpdate(data, key) {
+            // Called from ajax to update the selectors base on the new selection
+            if (key == 'platforms') {
+                zoomedData = data;
+                var ids=[];
+                $.each(data[key], function (index, value) {
+                    // Here we need to enable those that are still valid.
+                    var element=$('#' + value[1]);
+                    enableButton($('button', element)); // Enable the button in the table row
+                    ids.push(value[1]);
+                });
+                $('#platform-table > tbody > tr').each(function (index, elem) { 
+                    if ($.inArray((elem.id).toString(), ids) == -1) {
+                        disableButton($('button', $(elem))); // Disable the button in the table row
+                    }
+                });
+            }
+            else if (key == 'parameters') {
+                zoomedData = data;
+                var ids=[];
+                $.each(data[key], function (index, value) {
+                    // Here we need to enable those that are still valid.
+                    var element=$('#' + value[1]);
+                    enableButton($('button', element)); // Enable the button in the table row
+                    ids.push(value[1]);
+                });
+                $('#parameter-table > tbody > tr').each(function (index, elem) { 
+                    if ($.inArray((elem.id).toString(), ids) == -1) {
+                        disableButton($('button', $(elem))); // disable the button in the table row
+                    }
+                });
+            }
+            else if (key == 'simpledepthtime') {
+                // Redraw the plot given the saved values
+                theData = getDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val());
+                if ( ! theData ) {
+                    return;
+                }
+                $.plot($("#time-depth-flot"), theData,
+                                    $.extend(true, {}, simpledepthtime_options, {
+                                    xaxis: { min: $('#start-ems').val(), max: $('#end-ems').val() },
+                                    yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
+                }));
+            }
+            else if (key == 'activitymaptrackextent') {
+                e = data[key];
+                if ($('#zoomtoextentonupdate').is(':checked')) {
+                    map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
+                }
+            }
+            else if (key == 'activityparameterhistograms') {
+                var histHtml = '<tbody>';
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    histHtml += '<tr>' +
+                        '<td>' +
+                            '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
+                            '<p align="center">' + parameter + '</p>' +
+                        '</td>' +
+                        '</tr>';
+                });
+                histHtml += '</tbody>';
+                $('#parameter-value-table').html(histHtml);
+
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    histdata = [];
+                    $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
+                        parametervalues[parameter] = {'min': ranges.xaxis.from, 'max': ranges.xaxis.to };
+                        rebuildFilters();
+                        histdata.push(addSelectedParameterValue(histdata, parameter));
+                        console.log(parameter);
+                        console.log(histdata);
+                    });
+                    $.each(histbyplatformandactivity, function (platform, histbyplatform) {
+                        $.each(histbyplatform, function(activity, histbyactivity) {
+                            histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
+                        });
+                    });
+                    plotHistData(parameter, histdata);
+                });
+            }
+        } // onUpdate()
+
+        request = $.ajax({
+            type : 'GET',
+            beforeSend: function() {
+                $('#query-stats').html('<img src="{{STATIC_URL}}images/ajax-loader.gif">')
+            },
+            url : stoqsQuery + '?' + qstring,
+            success: function (data) {
+                setDataAccess(data)
+                for (var key in data) {
+                    if (init == true) {
+                        onInit(data, key)
+                    } else {
+                        onUpdate(data, key)
+                    }
+                }
+                // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
+                me.refreshMap();
+                if ( ! $('#getactualcount').is(':checked')) {
+                    $('#query-stats').html("<h4>Approximately " + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters</h4>");
+                }
+                else {
+                    $('#query-stats').html("<h4>" + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters</h4>");
+                }
+            },
+            dataType: "json"
+        });
+    } // updateSummaryData()
+    
+    
+    $(function () { 
+        // Initialize the accordian fields.
+        $(".collapse").collapse(); // Collapse the accordian fields.
+        
+        // Adjust the height of the map div to 500px
+        $('#map').height(500);
+        
+        // Add this behavior to all text fields, so when someone clicks on a field it highlights 
+        // all the data so it's easy to copy to the clipboard.
+        $(document).on('focus', 'input[type=text]', function(e) {
+            // Select field contents
+            var t=this
+            // This has to be done after 100ms so that standard bootstrap functionality happens first.
+            setTimeout(function() { t.select()}, 100);
+        });
+
+                
+        /* 
+         * Setup OpenLayers with some default background layers.
+         */
+        OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
+        OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
+        //ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
+        var options = {
+            projection: new OpenLayers.Projection("EPSG:900913"),
+            displayProjection: new OpenLayers.Projection("EPSG:4326"),
+            units: "m",
+            maxResolution: 156543.0339,
+            maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
+                                              20037508.34, 20037508.34),
+            //controls: [ctrlGraticule]
+        };
+        map = new OpenLayers.Map('map',options);
+
+        var bathyEsri = new OpenLayers.Layer.XYZ(
+            'ESRI Ocean'
+            ,'http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
+            ,{
+               sphericalMercator : true
+              ,isBaseLayer       : true
+              ,wrapDateLine      : true
+              ,opacity           : 1
+              ,visibility        : true
+             }
+        );
+
+        var gebco_noaa = new OpenLayers.Layer.XYZ(
+            "GEBCO & NOAA Tiles",
+            [
+                "http://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${x}/${y}.png"
+            ], 
+            {
+                attribution: "Sources: General Bathymetric Chart of the Oceans "
+                + "(<a href='http://www.gebco.net/'>GEBCO</a>)"
+                + " &amp; NOAA National Geophysical Data Center"
+                + " (<a href='http://www.ngdc.noaa.gov/mgg/dem/demportal.html'>NGDC</a>)",
+                sphericalMercator: true,
+                wrapDateLine: true,
+                transitionEffect: "resize",
+                buffer: 1,
+                numZoomLevels: 16
+            }
+        );
+        var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
+        map.addLayers([bathyEsri,gebco_noaa,osm]);
+        //ctrlGraticule.activate();
+
+        /*
+         * Maptrack layers selected by UI 
+         */
+        track_lines = new OpenLayers.Layer.WMS(
+            "track_lines",
+            "http://{{ mapserver_host }}/cgi-bin/mapserv",
+            { layers: 'track_lines',
+              map: '{{ mappath }}',
+              transparent: 'True' },
+            { units: 'degrees',
+              displayInLayerSwitcher: true,
+              projection: "EPSG:900913",
+              reproject: false,
+              visibility: true,
+              singleTile: true, ratio: 1,
+              displayOutsideMaxExtent: true } );
+        map.addLayer(track_lines); 
+
+        sample_points = new OpenLayers.Layer.WMS(
+            "sample_points",
+            "http://{{ mapserver_host }}/cgi-bin/mapserv",
+            { layers: 'sample_points',
+              map: '{{ mappath }}',
+              transparent: 'True' },
+            { units: 'degrees',
+              displayInLayerSwitcher: true,
+              projection: "EPSG:900913",
+              reproject: false,
+              visibility: true,
+              singleTile: true, ratio: 1,
+              displayOutsideMaxExtent: true } );
+        map.addLayer(sample_points); 
+
+        map.addControl(new OpenLayers.Control.LayerSwitcher());
+        map.addControl(new OpenLayers.Control.MousePosition());
+        map.addControl(new OpenLayers.Control.PanZoom());
+
+        // Capture BBOX from shift-mouse-click-drag
+        var control = new OpenLayers.Control();
+        OpenLayers.Util.extend(control, {
+            draw: function () {
+                // this Handler.Box will intercept the shift-mousedown
+                // before Control.MouseDefault gets to see it
+                this.box = new OpenLayers.Handler.Box( control,
+                {"done": this.notice},
+                {keyMask: OpenLayers.Handler.MOD_SHIFT});
+                this.box.activate();
+            },
+
+            notice: function (bounds) {
+                OpenLayers.Console.userError(bounds);
+            }
+        });
+        map.addControl(control);
+
+        /*
+         *
+         */
+        updateSummaryData(true);
+
+          
+        $('body').on('change', '.slider-values', function (e) {
+            var $slider=$('#slider-' + this.id.split('-').reverse()[0])
+            var setting=$slider.data().reverseformatter($(this).val());
+            var pos=0;
+            if (this.id.split('-')[0] == 'start') {
+                pos=0
+            } else {
+                pos=1
+            }
+            var oldvalue=$slider.slider('values',pos);
+            var result=$slider.slider('values',pos,[setting]);
+            if (Math.abs(setting-result) > 1) {
+                jAlert('The data entered was not within the specified range, or exceeds the valid precision for this field. ' +
+                        'the field has been reset to its original value.')
+                $slider.slider("values",pos,[oldvalue])
+            }
+        });
+          
+        $('#time-depth-anchor').click();
+        $('#map-anchor').click();
+        $('#parameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
+        $('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select by parameter value range'});
+        $('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
+        $('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
+        $('#getactualcount').tooltip({title: 'Will increase query time'});
+        $('#showallparametervalues').tooltip({title: 'For faster queries only parameters with standard_names are shown'});
+
+    });
+
+    </script>
+  </body>
+</html>
