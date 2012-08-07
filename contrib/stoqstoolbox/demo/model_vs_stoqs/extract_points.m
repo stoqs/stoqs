@@ -4,7 +4,8 @@ function [extra]=extract_points(model,insit)
 %  Usage
 %
 %   Get the value for the nearest node of the model to the insitu
-%   measurement. It's use in the function model_vs_stoqs
+%   measurement. It's use in the function model_vs_stoqs. You will get one
+%   model value for each in situ measurement.
 %
 % Input
 %   
@@ -18,7 +19,8 @@ function [extra]=extract_points(model,insit)
 %           .indx,indy = Index of the node nearest to the insitu data
 %           .modeltime = Model time.
 %           .time = Time of each of the in situ measurement
-%           
+%           .lon,lat = Longitude and Latitude of the node that have in situ
+%           measurement.
 %
 
 
