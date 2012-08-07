@@ -1,4 +1,4 @@
-function [inf]=stoqs_campaignbydate(urlst,yea,mon,day,hou,min,sec)
+function [inf]=stoqs_campaignbydate(urlst,date)
 %Search for the campaign available in STOQS for the date given.
 %      
 %      
@@ -7,15 +7,15 @@ function [inf]=stoqs_campaignbydate(urlst,yea,mon,day,hou,min,sec)
 %   
 %Input :
 %        urls=Url of the STOQS server
-%        date= year,mont,day,hour,minute,seconds
+%        date= Date in Matlab format. Use datenum to convert date to Matlab
+%        format
 %     
 %Output
 %        inf= All the structure information for the campaign selected.
 
-date=datenum(yea,mon,day,hou,min,sec); %Year,month,day,hour,minute,seconds
-
 %Get the info campaigns available in STOQS server
 infcs=stoqs_qcampaigns(urlst,0);
+inf='';
 
 for i=1:length(infcs)
     st=datenum(infcs(i).startdate);
