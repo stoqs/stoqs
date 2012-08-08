@@ -4,7 +4,7 @@ function stoqs_showall(u)
 %      
 %Usage:
 %
-%    stoqs_showcampaign('http://odss.mbari.org/canon');
+%    stoqs_showall('http://odss.mbari.org/canon');
 %Input :
 %
 %   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon
@@ -20,5 +20,6 @@ function stoqs_showall(u)
 
 infcs=stoqs_qcampaigns(u,0);
 for i=1:length(infcs)
-    stoqs_showcampaign(u,char(infcs(i)))
+    stoqs_showcampaign(u,char(infcs(i).dbAlias))
+    disp('---------------------------------------------');
 end
