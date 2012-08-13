@@ -162,38 +162,30 @@ def showCampaigns(request,format=None):
                 timeSortHash[dummyTime] = {k: c}
                 dummyTime += timedelta(seconds=1)
 
-    # Preprocess hash for template (basically, flatten it)
-    cList = []
-    class Cam(object):
-        pass
+    # Build list of hashes to pass to the campaigns.html template
+    camList = []
     for d in sorted(timeSortHash.iterkeys()):
         logger.debug("d = %s, timeSortHash[d] = %s", d, timeSortHash[d])
         for k,c in timeSortHash[d].iteritems():
             logger.debug(k)
             logger.debug(c)
-            cam = Cam()
-            cam.dbAlias = k
-            cam.name = c.name
+            description = ''
+            startdate = ''
+            enddate = ''
             if c.description:
-                cam.description = c.description
+                description = c.description
             if c.startdate: 
-                cam.startdate = c.startdate.strftime('%d %b %Y %H:%M:%S') + " GMT"
+                startdate = c.startdate.strftime('%d %b %Y %H:%M:%S') + " GMT"
             if c.enddate:
-                cam.enddate = c.enddate.strftime('%d %b %Y %H:%M:%S') + " GMT"
-            logger.debug("Appending to cList cam with dbAlias = %s and name = %s", cam.dbAlias, cam.name)
-            cList.append(cam)
+                enddate = c.enddate.strftime('%d %b %Y %H:%M:%S') + " GMT"
+            camList.append({'name': c.name, 'dbAlias': k, 'description': description,
+                            'startdate': startdate, 'enddate': enddate})
 
-    logger.debug("cList = %s", cList)
-
+    logger.debug("camList = %s", camList)
     if format == 'json':
-#	my={}
-#        for d in cam.name:
-#cHash[dbAlias].append(c)
-#	    my['name'].append(cam.name)
-#	my['Alias'] = cam.dbAlias
-        return HttpResponse(simplejson.dumps(list(cHash), cls=encoders.STOQSJSONEncoder), 'application/json')
+        return HttpResponse(simplejson.dumps(camList, cls=encoders.STOQSJSONEncoder), 'application/json')
     else:
-        return render_to_response('campaigns.html', {'cList': cList }, context_instance=RequestContext(request)) 
+        return render_to_response('campaigns.html', {'cList': camList }, context_instance=RequestContext(request)) 
 
 def showActivitiesMBARICustom(request):
     '''Present list of Activities in the database.  Unlike showDatabase(), show show the Activities and their
