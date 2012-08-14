@@ -5,7 +5,7 @@ function [query]=load_mb_1km(url,de)
 %      
 %Usage:
 %
-%   [date]=load_mb_1km('http://ourocean.jpl.nasa.gov:8080/thredds/dodsC/MBNowcast/mb_das_2012052515.nc')
+%   [date]=load_mb_1km('http://ourocean.jpl.nasa.gov:8080/thredds/dodsC/MBNowcast/mb_das_2012052515.nc',5)
 %    
 %
 %Input :
