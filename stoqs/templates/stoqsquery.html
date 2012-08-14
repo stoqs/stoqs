@@ -144,6 +144,7 @@
                                 <div id="query-stats" class="ajax-wait"></div>
                                 <input type="checkbox" id="getactualcount" /> Get actual count
                             </p>
+                            <div id="samplePoint"></div>
                         </div>
                     </div>
                 </div><!-- accordian-group -->
@@ -349,6 +350,7 @@
     var map = null; 
     var kmlurl;
     var parametervalues={};     // This should probably be a session variable
+    var polyLayer = new OpenLayers.Layer.Vector( "Polygon" );
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -561,6 +563,7 @@
         };
 
         updateSummaryData();
+        polyLayer.removeAllFeatures();
     }
     
     function refreshMap() {
@@ -1160,23 +1163,85 @@
         map.addControl(new OpenLayers.Control.MousePosition());
         map.addControl(new OpenLayers.Control.PanZoom());
 
-        // Capture BBOX from shift-mouse-click-drag
-        var control = new OpenLayers.Control();
-        OpenLayers.Util.extend(control, {
-            draw: function () {
-                // this Handler.Box will intercept the shift-mousedown
-                // before Control.MouseDefault gets to see it
-                this.box = new OpenLayers.Handler.Box( control,
-                {"done": this.notice},
-                {keyMask: OpenLayers.Handler.MOD_SHIFT});
-                this.box.activate();
-            },
 
-            notice: function (bounds) {
-                OpenLayers.Console.userError(bounds);
-            }
+        // Add polygon drawing tool and capture WKT of polygon as WGS84
+        map.addLayer(polyLayer);
+        var panelControls = [
+            new OpenLayers.Control.Navigation(),
+            new OpenLayers.Control.DrawFeature(polyLayer,
+                OpenLayers.Handler.Polygon,
+                {   'displayClass': 'olControlDrawFeaturePolygon',
+                    featureAdded: function() {
+                        var projWGS84 = new OpenLayers.Projection("EPSG:4326");
+                        var proj900913 = new OpenLayers.Projection("EPSG:900913");
+                        var polyWGS84 = polyLayer.features[0].geometry;
+                        polyWGS84.transform(proj900913, projWGS84);
+                        console.log(polyWGS84);
+                        OpenLayers.Console.userError(polyWGS84);
+                        rebuildFilters();
+                    }
+                }
+            )
+        ];
+        var toolbar = new OpenLayers.Control.Panel({
+            displayClass: 'olControlEditingToolbar',
+            defaultControl: panelControls[0]
         });
-        map.addControl(control);
+        // Commented out until it's fully implemented
+        //toolbar.addControls(panelControls);
+        //map.addControl(toolbar);
+
+
+        // Capture Feature info - both methods work with the data template specified as a file
+        // - Put feature info into a <div>
+        //map.events.register('click', map, function (e) {
+        //    OpenLayers.Util.getElement('samplePoint').innerHTML = "Loading... please wait...";
+        //    sample_point_url = sample_points.getFullRequestString({
+        //                            REQUEST: "GetFeatureInfo",
+        //                            EXCEPTIONS: "application/vnd.ogc.se_xml",
+        //                            BBOX: sample_points.map.getExtent().toBBOX(),
+        //                            X: e.xy.x,
+        //                            Y: e.xy.y,
+        //                            FEATURE_COUNT: 1,
+        //                            INFO_FORMAT: 'text/html',
+        //                            QUERY_LAYERS: sample_points.params.LAYERS,
+        //                            WIDTH: sample_points.map.size.w,
+        //                            HEIGHT: sample_points.map.size.h});
+        //    
+        //    OpenLayers.loadURL(sample_point_url, '', this, setHTML);
+        //    OpenLayers.Event.stop(e);
+        //});
+        //function setHTML(response) {
+        //    OpenLayers.Util.getElement('samplePoint').innerHTML = response.responseText;
+        //}
+        // - Create a popup window
+        //var sample_points_info = new OpenLayers.Control.WMSGetFeatureInfo({
+        //        url: "http://{{ mapserver_host }}/cgi-bin/mapserv",
+        //        maxFeatures: 3,
+        //        title: 'Identify features by clicking',
+        //        queryVisible: true,
+        //        layers: [sample_points],
+        //        vendorParams: {
+        //                 map: "{{ mappath }}",
+        //        },
+        //        eventListeners: {
+        //            getfeatureinfo: function(event) {
+        //                console.log(event);
+        //                map.addPopup(new OpenLayers.Popup.FramedCloud(
+        //                    "chicken",
+        //                    map.getLonLatFromPixel(event.xy),
+        //                    null,
+        //                    event.text,
+        //                    null,
+        //                    true
+        //                )); //map.addPopup
+        //            } // getfeatureinfo
+        //        } // eventListeners
+        //    });
+        //map.addControl(sample_points_info);
+        //sample_points_info.activate();
+        //End Capture Feature info tests
+
 
         /*
          *
