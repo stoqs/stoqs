@@ -1,70 +1,85 @@
 function outp=stoqs_down(varargin)
 %Get data from a STOQS database, 
-%           d=stoqs_down('http://192.168.79.141:8000/default','2010-10-27+21:51:55','2010-11-18+10:22:42',0,700,'salinity');
-%           d=stoqs_down('http://odss-staging.shore.mbari.org/canon/stoqs_june2011','2011-06-20+20:00:00','2011-06-20+22:00:00',1,4,'sea_water_temperature');
+%       Example
+%           Get all the oxygen data from platform dorado:
+%           d=stoqs_down('http://odss-staging.shore.mbari.org/canon/stoqs_may2012','2012-05-30 00:10:00','2012-05-30 01:10:00',0,0.5,'oxygen','');
 %       Input
-%           url = URL of the STOQS server
-%           stime =Start time in the format 'yyyy-mm-dd+HH:MM:SS'
-%           etime =End time in the format 'yyyy-mm-dd+HH:MM:SS'%
-%           mid = Minimum depth
-%           mad = Maximum depth
-%           par = Parameter to get the data
+%          The input in order are:
+% 			URL of the STOQS server
+% 			Start time in the format 'yyyy-mm-dd+HH:MM:SS'
+% 			End time in the format 'yyyy-mm-dd+HH:MM:SS'%
+%			Minimum depth
+% 			Maximum depth
+% 			Parameter to get the data. You must use the standard name of
+% 			      the variable using the CF-Metadata conventions
+% 			      (http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/19/cf-standard-name-table.html)
+%			Platform name. If want all the platform name don?t write 
+%				  any name
 %       Ouput
 %           outp = Structure with the information,
 %           platform,time,longitude,latitude, depth and variable values of
 %           the query point 
 %
-%   Brian Schlining & Francisco Lopez
+%   Mike McCann & Brian Schlining & Francisco Lopez
 %   1/July/2012
 %
 %   Last modified
-%   20/July/2012
+%   9/August/2012
 
-query=[varargin{1} '/query/csv?start_time='  varargin{2} '&end_time=' varargin{3} '&min_depth=' num2str(varargin{4}) '&max_depth=' num2str(varargin{5}) '&parameters=' lower(char(varargin{6}))];
 
-disp('Connecting to STOQS')
-%Get the information from the webpage
-url = java.net.URL(query); %Read de URL
+
+%query=[varargin{1} '/mpbytimeparm.json?measurement__instantpoint__activity__platform__name=' varargin{7} '&measurement__depth__gte=' varargin{4} '&measurement__depth__lte=' varargin{5} '&parameter__standard_name=' varargin{6} '&measurement__instantpoint__timevalue__gt=' varargin{2} '&measurement__instantpoint__timevalue__lt=' varargin{3}];
+
+if nargin<7
+    outp='';
+    disp('-----------------------');
+    disp('NOT ENOUGH ARGUMENT');
+    disp('-----------------------');
+    disp('HELP')
+    help stoqs_down_json;
+    return
+    
+end
+
+
+if isempty(char(varargin{7})) %Build a different query if the user want to get all the data from all the platforms, or from one plaftorm
+    query=[varargin{1} '/mpbytimeparm.json?measurement__depth__gte=' varargin{4} '&measurement__depth__lte=' varargin{5} '&parameter__standard_name=' varargin{6} '&measurement__instantpoint__timevalue__gt=' varargin{2} '&measurement__instantpoint__timevalue__lt=' varargin{3}];
+else
+
+    query=[varargin{1} '/mpbytimeparm.json?measurement__instantpoint__activity__platform__name=' varargin{7} '&measurement__depth__gte=' varargin{4} '&measurement__depth__lte=' varargin{5} '&parameter__standard_name=' varargin{6} '&measurement__instantpoint__timevalue__gt=' varargin{2} '&measurement__instantpoint__timevalue__lt=' varargin{3}];
+end
+
+
+try
+    url = java.net.URL(query);
+catch me
+    m = MException([mfilename ':BadURL'], '%s is not a valid URL. Cause: %s', u, me.message);
+    throw(m);
+end
 
 urlStream = url.openStream(); %Open it
 isr = java.io.InputStreamReader(urlStream);
 br = java.io.BufferedReader(isr);
 
-
-
-disp('Downloading the data')
-e=1;k=1;pc=1;
-while e==1   
-    f(k,1:6)=regexp(char(readLine(br)),',','split');%Save the information as string, and separate it with the separator ','
-   if isempty(char(f(k,1)))%Check if I arrived to the end of the text
-        e=0;
-   end    
-    k=k+1;pc=pc+1;
-    if pc==100
-        pc=0;
-        str=['Download  ' num2str(k) '  measurement'];
-        disp(str)
-        
-    end
-
-       
-end
-
-%Separate the information in different variable with the correct type
-
-if k>2
-    disp('All the STOQS measurement download')
-    outp.platform=f(2:end-1,1);
-    outp.time=datenum(f(2:end-1,2),'yyyy-mm-dd HH:MM:SS');
-    outp.long=str2double(f(2:end-1,3));
-    outp.lati=str2double(f(2:end-1,4));
-    outp.dept=str2double(f(2:end-1,5));
-    outp.vari=str2double(f(2:end-1,6));
-else
-    disp('NO DATA available for the query');
+a=char(readLine(br));
+if isempty(a)
+    error=['ERROR : Couldnt get the information for table ' table ' **************'];
+    disp(error)
     outp='';
+else    
+    info=loadjson(a); %Read de information, Convert java.string to string with char, so loadjson could convert it to a struct.
+    er=0;
 end
-    
 
+a=struct2cell(info); %Convert the structure array to cell array
 
-clear url;clear urlStream;clear isr;clear br;clear f
+%Save the data in a new structure with standard names.
+outp.platform=cell2mat(squeeze(a(6,:,:)));
+outp.time=squeeze(datenum(a(4,:,:),'yyyy-mm-ddTHH:MM:SS'));
+f=cell2mat(a(7,:,:));  %covnert a cell array into a single matrix
+outp.longitude=squeeze(f(1,1,:));
+outp.latitude=squeeze(f(1,2,:));
+outp.depth=cell2mat(squeeze(a(1,:,:)));
+outp.value=cell2mat(squeeze(a(3,:,:)));
+outp.parametername=cell2mat(squeeze(a(2,:,:)));
+outp.standardname=cell2mat(squeeze(a(5,:,:)));
