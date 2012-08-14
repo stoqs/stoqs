@@ -65,7 +65,7 @@ class MeasuredParameterByTimeAndParameter(BaseOutputer):
     Return data values for a parameter with time constraints
     '''
     fields = [ 'parameter__name', 'measurement__depth', 'measurement__geom', 'measurement__instantpoint__timevalue',
-               'measurement__instantpoint__activity__platform__name' ]
+               'measurement__instantpoint__activity__platform__name' , 'parameter__standard_name' , 'datavalue' ]
 
 class ActivityParameterHistogram(BaseOutputer):
     '''
