@@ -110,7 +110,8 @@ class ActivityView(object):
                             'layer_debug_level': self.layer_debug_level,
                             'copyright_string': 'MBARI %d' % datetime.today().year,
                             'dbconn': settings.DATABASES[self.request.META['dbAlias']],
-                            'mappath': self.mappath},
+                            'mappath': self.mappath,
+                            'STATIC_ROOT': settings.STATIC_ROOT},
                             context_instance = RequestContext(self.request))
 
         try:

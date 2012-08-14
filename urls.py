@@ -73,11 +73,12 @@ urlpatterns = patterns('',
     url(pre + r'analysismethod.?'    + formatPat, 'stoqs.views.showAnalysisMethod',    {}, name='show-analysismethod'),
     url(pre + r'instantpoint.?'      + formatPat, 'stoqs.views.showInstantPoint',      {}, name='show-instantpoint'),
     url(pre + r'measurement.?'       + formatPat, 'stoqs.views.showMeasurement',       {}, name='show-measurement'),
-    url(pre + r'measuredparameter.?' + formatPat, 'stoqs.views.showMeasuredParameter', {}, name='show-measuredparameter'),
 
     # Requests that override BaseOutputer
     url(pre + r'sampledatatable.?'   + formatPat, 'stoqs.views.app.showSampleDT',      {}, name='show-sample-datatable'),
-    url(pre + r'mpbytimeparm.?'      + formatPat, 'stoqs.views.app.showMPbyTimeParm',  {}, name='show-mp-bytimeparm'),
+    url(pre + r'measuredparameter.?' + formatPat, 'stoqs.views.app.showMeasuredParameter',  {}, name='show-mp-bytimeparm'),
+    url(pre + r'activityparameterhistogram.?'      
+                                     + formatPat, 'stoqs.views.app.showActivityParameterHistogram',  {}, name='show-aph'),
 
     # URL For Chander's STOQQManager related views
     url(pre + r'query/summary/$', 'stoqs.views.query.queryData', {}, name='stoqs-query-summary'),

@@ -32,14 +32,19 @@ except IndexError:
 try:
     dbAlias = sys.argv[2]
 except IndexError:
-    dbAlias = 'stoqs_marmenor_nov2011'
+    dbAlias = 'stoqs_marmenor_nov2011_s100'
 
 
 # ----------------------------------------------------------------------------------
-mml = MarMenorLoader(dbAlias, 'CANON - June 2011')
-mml.sparus_url='http://odss.mbari.org/thredds/dodsC/marmenor/insitu/UniversityOfGirona/'
-mml.sparus_files
-mml.sparus_parms
+mml = MarMenorLoader(dbAlias, 'MarMenor - October 2011')
+
+##mml.sparus_base='http://odss.mbari.org/thredds/dodsC/'
+##mml.sparus_files='marmenor/insitu/UniversityOfGirona/'
+##mml.sparus_parms=['
+
+mml.castaway_base='http://odss.mbari.org/thredds/dodsC/'
+mml.castaway_files=['agg/Castaway/20111110']
+mml.castaway_parms=['temperature', 'salinity']
 
 mml.stride = stride
 mml.loadAll()

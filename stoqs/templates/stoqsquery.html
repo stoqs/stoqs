@@ -144,6 +144,7 @@
                                 <div id="query-stats" class="ajax-wait"></div>
                                 <input type="checkbox" id="getactualcount" /> Get actual count
                             </p>
+                            <div id="samplePoint"></div>
                         </div>
                     </div>
                 </div><!-- accordian-group -->
@@ -349,6 +350,7 @@
     var map = null; 
     var kmlurl;
     var parametervalues={};     // This should probably be a session variable
+    var polyLayer = new OpenLayers.Layer.Vector( "Polygon" );
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -561,6 +563,7 @@
         };
 
         updateSummaryData();
+        polyLayer.removeAllFeatures();
     }
     
     function refreshMap() {
@@ -1076,21 +1079,21 @@
         /* 
          * Setup OpenLayers with some default background layers.
          */
-         OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
-         OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
-         //ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
-         var options = {
-             projection: new OpenLayers.Projection("EPSG:900913"),
-             displayProjection: new OpenLayers.Projection("EPSG:4326"),
-             units: "m",
-             maxResolution: 156543.0339,
-             maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
-                                               20037508.34, 20037508.34),
-             //controls: [ctrlGraticule]
-         };
-         map = new OpenLayers.Map('map',options);
+        OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
+        OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
+        //ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
+        var options = {
+            projection: new OpenLayers.Projection("EPSG:900913"),
+            displayProjection: new OpenLayers.Projection("EPSG:4326"),
+            units: "m",
+            maxResolution: 156543.0339,
+            maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
+                                              20037508.34, 20037508.34),
+            //controls: [ctrlGraticule]
+        };
+        map = new OpenLayers.Map('map',options);
 
-         var bathyEsri = new OpenLayers.Layer.XYZ(
+        var bathyEsri = new OpenLayers.Layer.XYZ(
             'ESRI Ocean'
             ,'http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
             ,{
@@ -1100,7 +1103,7 @@
               ,opacity           : 1
               ,visibility        : true
              }
-         );
+        );
 
         var gebco_noaa = new OpenLayers.Layer.XYZ(
             "GEBCO & NOAA Tiles",
@@ -1119,54 +1122,134 @@
                 numZoomLevels: 16
             }
         );
-         var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
-         map.addLayers([bathyEsri,gebco_noaa,osm]);
-         //ctrlGraticule.activate();
+        var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
+        map.addLayers([bathyEsri,gebco_noaa,osm]);
+        //ctrlGraticule.activate();
 
-          /*
-           * Maptrack layers selected by UI 
-           */
-          track_lines = new OpenLayers.Layer.WMS(
-                    "track_lines",
-                    "http://{{ mapserver_host }}/cgi-bin/mapserv",
-                    { layers: 'track_lines',
-                      map: '{{ mappath }}',
-                      transparent: 'True' },
-                    { units: 'degrees',
-                      displayInLayerSwitcher: true,
-                      projection: "EPSG:900913",
-                      reproject: false,
-                      visibility: true,
-                      singleTile: true, ratio: 1,
-                      displayOutsideMaxExtent: true } );
-          map.addLayer(track_lines); 
+        /*
+         * Maptrack layers selected by UI 
+         */
+        track_lines = new OpenLayers.Layer.WMS(
+            "track_lines",
+            "http://{{ mapserver_host }}/cgi-bin/mapserv",
+            { layers: 'track_lines',
+              map: '{{ mappath }}',
+              transparent: 'True' },
+            { units: 'degrees',
+              displayInLayerSwitcher: true,
+              projection: "EPSG:900913",
+              reproject: false,
+              visibility: true,
+              singleTile: true, ratio: 1,
+              displayOutsideMaxExtent: true } );
+        map.addLayer(track_lines); 
 
-          sample_points = new OpenLayers.Layer.WMS(
-                    "sample_points",
-                    "http://{{ mapserver_host }}/cgi-bin/mapserv",
-                    { layers: 'sample_points',
-                      map: '{{ mappath }}',
-                      transparent: 'True' },
-                    { units: 'degrees',
-                      displayInLayerSwitcher: true,
-                      projection: "EPSG:900913",
-                      reproject: false,
-                      visibility: true,
-                      singleTile: true, ratio: 1,
-                      displayOutsideMaxExtent: true } );
-          map.addLayer(sample_points); 
+        sample_points = new OpenLayers.Layer.WMS(
+            "sample_points",
+            "http://{{ mapserver_host }}/cgi-bin/mapserv",
+            { layers: 'sample_points',
+              map: '{{ mappath }}',
+              transparent: 'True' },
+            { units: 'degrees',
+              displayInLayerSwitcher: true,
+              projection: "EPSG:900913",
+              reproject: false,
+              visibility: true,
+              singleTile: true, ratio: 1,
+              displayOutsideMaxExtent: true } );
+        map.addLayer(sample_points); 
 
-          map.addControl(new OpenLayers.Control.LayerSwitcher());
-          map.addControl(new OpenLayers.Control.MousePosition());
-          map.addControl(new OpenLayers.Control.PanZoom());
+        map.addControl(new OpenLayers.Control.LayerSwitcher());
+        map.addControl(new OpenLayers.Control.MousePosition());
+        map.addControl(new OpenLayers.Control.PanZoom());
 
-          /*
-           *
-           */
-          updateSummaryData(true);
+
+        // Add polygon drawing tool and capture WKT of polygon as WGS84
+        map.addLayer(polyLayer);
+        var panelControls = [
+            new OpenLayers.Control.Navigation(),
+            new OpenLayers.Control.DrawFeature(polyLayer,
+                OpenLayers.Handler.Polygon,
+                {   'displayClass': 'olControlDrawFeaturePolygon',
+                    featureAdded: function() {
+                        var projWGS84 = new OpenLayers.Projection("EPSG:4326");
+                        var proj900913 = new OpenLayers.Projection("EPSG:900913");
+                        var polyWGS84 = polyLayer.features[0].geometry;
+                        polyWGS84.transform(proj900913, projWGS84);
+                        console.log(polyWGS84);
+                        OpenLayers.Console.userError(polyWGS84);
+                        rebuildFilters();
+                    }
+                }
+            )
+        ];
+        var toolbar = new OpenLayers.Control.Panel({
+            displayClass: 'olControlEditingToolbar',
+            defaultControl: panelControls[0]
+        });
+        // Commented out until it's fully implemented
+        //toolbar.addControls(panelControls);
+        //map.addControl(toolbar);
+
+
+        // Capture Feature info - both methods work with the data template specified as a file
+        // - Put feature info into a <div>
+        //map.events.register('click', map, function (e) {
+        //    OpenLayers.Util.getElement('samplePoint').innerHTML = "Loading... please wait...";
+        //    sample_point_url = sample_points.getFullRequestString({
+        //                            REQUEST: "GetFeatureInfo",
+        //                            EXCEPTIONS: "application/vnd.ogc.se_xml",
+        //                            BBOX: sample_points.map.getExtent().toBBOX(),
+        //                            X: e.xy.x,
+        //                            Y: e.xy.y,
+        //                            FEATURE_COUNT: 1,
+        //                            INFO_FORMAT: 'text/html',
+        //                            QUERY_LAYERS: sample_points.params.LAYERS,
+        //                            WIDTH: sample_points.map.size.w,
+        //                            HEIGHT: sample_points.map.size.h});
+        //    
+        //    OpenLayers.loadURL(sample_point_url, '', this, setHTML);
+        //    OpenLayers.Event.stop(e);
+        //});
+        //function setHTML(response) {
+        //    OpenLayers.Util.getElement('samplePoint').innerHTML = response.responseText;
+        //}
+        // - Create a popup window
+        //var sample_points_info = new OpenLayers.Control.WMSGetFeatureInfo({
+        //        url: "http://{{ mapserver_host }}/cgi-bin/mapserv",
+        //        maxFeatures: 3,
+        //        title: 'Identify features by clicking',
+        //        queryVisible: true,
+        //        layers: [sample_points],
+        //        vendorParams: {
+        //                 map: "{{ mappath }}",
+        //        },
+        //        eventListeners: {
+        //            getfeatureinfo: function(event) {
+        //                console.log(event);
+        //                map.addPopup(new OpenLayers.Popup.FramedCloud(
+        //                    "chicken",
+        //                    map.getLonLatFromPixel(event.xy),
+        //                    null,
+        //                    event.text,
+        //                    null,
+        //                    true
+        //                )); //map.addPopup
+        //            } // getfeatureinfo
+        //        } // eventListeners
+        //    });
+        //map.addControl(sample_points_info);
+        //sample_points_info.activate();
+        //End Capture Feature info tests
+
+
+        /*
+         *
+         */
+        updateSummaryData(true);
 
           
-          $('body').on('change', '.slider-values', function (e) {
+        $('body').on('change', '.slider-values', function (e) {
             var $slider=$('#slider-' + this.id.split('-').reverse()[0])
             var setting=$slider.data().reverseformatter($(this).val());
             var pos=0;
