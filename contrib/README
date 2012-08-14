@@ -1,12 +1,7 @@
 This directory holds any contributed software, for example, a
 Matlab toolbox that allows direct reading of data from a STOQS
-database via the base-level web services.
+database via the REST-API web services.
 
-show_stoqs.m   -------------------------------------------
-Get info of a STOQS database and show in your Matlab workspace. You need to install the toolbox JSONlab, from:
-http://www.mathworks.com/matlabcentral/fileexchange/33381
-and add it to your matlab path
------------------------------------------
 -- 
 Mike McCann
 28 June 2012
