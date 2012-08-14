@@ -7,7 +7,7 @@ __doc__ = '''
 
 Support functions fo the stoqsquery web app.  Most of these will override methods
 of classes in views/__init__.py to obtain specialized functionality for use by the 
-query view.
+query view and REST API to the data.
 
 @undocumented: __doc__ parser
 @status: production
@@ -60,12 +60,12 @@ class SampleDataTable(BaseOutputer):
         self.qs = {'aaData': table}
         logger.debug(self.qs)
 
-class MeasuredParameterByTimeAndParameter(BaseOutputer):
+class MeasuredParameter(BaseOutputer):
     '''
-    Return data values for a parameter with time constraints
+    Extend basic MeasuredParameter with additional fields that will return data values for many different constraints
     '''
-    fields = [ 'parameter__name', 'measurement__depth', 'measurement__geom', 'measurement__instantpoint__timevalue',
-               'measurement__instantpoint__activity__platform__name' ]
+    fields = [ 'parameter__name', 'parameter__standard_name', 'measurement__depth', 'measurement__geom', 'measurement__instantpoint__timevalue',
+               'measurement__instantpoint__activity__platform__name', 'datavalue' ]
 
 class ActivityParameterHistogram(BaseOutputer):
     '''
@@ -117,11 +117,11 @@ def showActivityParameterHistogram(request, format='png'):
     aph = ActivityParameterHistogram(request, format, query_set, stoqs_object)
     return aph.process_request()
 
-def showMPbyTimeParm(request, format = 'json'):
+def showMeasuredParameter(request, format = 'json'):
     stoqs_object = mod.MeasuredParameter
     query_set = stoqs_object.objects.all().order_by('measurement__instantpoint__timevalue')
 
-    mp = MeasuredParameterByTimeAndParameter(request, format, query_set, stoqs_object)
+    mp = MeasuredParameter(request, format, query_set, stoqs_object)
     return mp.process_request()
 
 
