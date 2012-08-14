@@ -1,0 +1,7 @@
+This directory holds any contributed software, for example, a
+Matlab toolbox that allows direct reading of data from a STOQS
+database via the REST-API web services.
+
+-- 
+Mike McCann
+28 June 2012
