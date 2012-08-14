@@ -10,6 +10,7 @@ MAP
   WEB
     IMAGEPATH "/dev/shm"
     METADATA
+          "ows_enable_request"   "*"
           "wfs_title"       "{{ wfs_title }}"
           "wfs_onlineresource"   "http://{{ mapserver_host }}/cgi-bin/mapserv?map={{ mappath }}&" 
           "wfs_srs"         "EPSG:4326 EPSG:900913 "  
@@ -84,7 +85,6 @@ MAP
     NAME "{{ item.name }}"
     TYPE {{ item.type }}
     DUMP true
-    TEMPLATE fooOnlyForWMSGetFeatureInfo
     CONNECTIONTYPE POSTGIS
     CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
     DATA "{{ item.geo_query|safe }}"
@@ -96,6 +96,9 @@ MAP
     PROJECTION
       "init=epsg:4326"
     END # PROJECTION
+    TEMPLATE "{{ STATIC_ROOT }}/wfs/sample_points_data.html"
+    HEADER "{{ STATIC_ROOT }}/wfs/sample_points_header.html"
+    FOOTER "{{ STATIC_ROOT }}/wfs/sample_points_footer.html"
     CLASS
       NAME "{{ item.name }}"
       STYLE
