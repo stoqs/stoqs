@@ -4,7 +4,7 @@ function [infp,platname] = stoqs_qplatform(u,show)
 %       inf=stoqs_qplatform('http://odss.mbari.org/canon/default',1);
 %Usage:
 %
-%   inf=stoqs_qplatform('http://odss.mbari.org/canon/default',1);
+%   inf=stoqs_qplatform('http://odss-staging.shore.mbari.org/canon/stoqs_may2012',1);
 %Input :
 
 %   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon/default
@@ -16,10 +16,21 @@ function [infp,platname] = stoqs_qplatform(u,show)
 %   platname = Name of the platform to acces it with the platform ID.
 %               Knowing the ID you can get the platname easily.
 % 
+%   Francisco Lopez & Mike McCann & Brian Schlining 
+%
+%   Last modified
+%   19/August/2012
 
-%   Brian Schlining & Francisco Lopez
-%   30/June/2012
-% Last review 30/July/2012
+if nargin<2
+    platname='';infp='';
+    disp('-----------------------');
+    disp('NOT ENOUGH ARGUMENT');
+    disp('-----------------------');
+    disp('HELP')
+    help stoqs_qplatform;
+    return
+    
+end
 
 infp=stoqs_info(u,'platform');
 
