@@ -1,25 +1,37 @@
 function inf = stoqs_info(u,table,var)
 %
 %Get info from a table in STOQS data base
-%       inf=info_stoqs('http://odss.mbari.org/canon/default','platform');
-%       infc=info_stoqs(u,'activity.json?campaign=','2');
+%       inf=stoqs_info('http://odss-staging.shore.mbari.org/canon/stoqs_may2012','platform');
+%       infc=info_stoqs(u,'activity.json?campaign=','1');
 %Usage:
 %
 %   t=info_stoqs(u)
 %Input :
 %   Could use 2 o 3 parameter in the input
-%   u = Url direction of the STOQS data server. Ex: http://192.168.79.138:8000/default
+%   u = Url direction of the STOQS data server. Ex: http://odss-staging.shore.mbari.org/canon/stoqs_may2012
 %   table = table to get the information
 %   var= value of the parameter of the query to do to the table
 %Output
 % Get the struct variable inf with all the information.
 % 
-
-%   Brian Schlining & Francisco Lopez
-%   30/June/2012
-% Last review 30/June/2012
+%   Francisco Lopez & Mike McCann & Brian Schlining 
+%
+%   Last modified
+%   19/August/2012
 
 %Load the information
+
+if nargin<2
+    inf='';
+    disp('-----------------------');
+    disp('NOT ENOUGH ARGUMENT');
+    disp('-----------------------');
+    disp('HELP')
+    help stoqs_info
+    return
+    
+end
+
 switch nargin
     case 2
     ur=[u '/' table '.json'];

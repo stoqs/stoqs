@@ -12,14 +12,13 @@ function [model,insit]=model_vs_stoqs(urlo,depth,range,drange,show)
 %       show = If is 1 make some plots.
 %
 %   Usage
-%       [query,d]=model_vs_stoqs('http://ourocean.jpl.nasa.gov:8080/thredds/dodsC/MBNowcast/mb_das_2011062021.nc',5,0.1,6,1);
-%       [query,d]=model_vs_stoqs('http://ourocean.jpl.nasa.gov:8080/thredds/dodsC/MBNowcast/mb_das_2012060221.nc',5,0.1,6,1);
+%       [query,d]=model_vs_stoqs('http://ourocean.jpl.nasa.gov:8080/thredds/dodsC/MBNowcast/mb_das_2011062021.nc',5,0.1,2,1);
 %
 %   Output
 %
 %
 %   Francisco Lopez-Castejon
-%   19/July/2012
+%   19/August/2012
 %
 stoqs_server='http://odss-staging.shore.mbari.org/canon';
 
@@ -52,7 +51,7 @@ if isempty(camp)
     
 else
     stoq_campaign=[stoqs_server '/' char(camp.dbAlias)]; %Build the url direction of the stoqs server for the campaign needed for the model date
-    insit=stoqs_down(stoq_campaign,datestart,datend,min_dep,max_dep,vari);
+    insit=stoqs_down(stoq_campaign,datestart,datend,min_dep,max_dep,vari,'');
 end
 
 
@@ -64,24 +63,22 @@ if show==1
  if isempty(model)
  else
     figure(1)
-        min_color=min([min(min(model.data_inlevel)) min(insit.vari)]);
-        max_color=max([max(max(model.data_inlevel)) max(insit.vari)]);
-        pcolor(model.lon,model.lat, model.data_inlevel);hold on;shading flat;t=colorbar;set(gca, 'CLim', [min_color, max_color]);hold on
+        min_color=min([min(min(model.data_inlevel)) min(insit.value)]);
+        max_color=max([max(max(model.data_inlevel)) max(insit.value)]);
+        pcolor(model.longitude,model.latitude, model.data_inlevel);hold on;shading flat;t=colorbar;set(gca, 'CLim', [min_color, max_color]);hold on
         set(get(t,'ylabel'),'String', 'Temperature','FontSize',18);set(gca,'FontSize',18);
-        scatter(insit.long,insit.lati,60,insit.vari,'filled');t=colorbar;set(gca, 'CLim', [min_color, max_color]);set(get(t,'ylabel'),'String', 'Temperature','FontSize',18);
-        plot(insit.long(1),insit.lati(1),'x');hold on;
-        plot(insit.long,insit.lati,'wo');
+        scatter(insit.longitude,insit.latitude,60,insit.value,'filled');t=colorbar;set(gca, 'CLim', [min_color, max_color]);set(get(t,'ylabel'),'String', 'Temperature','FontSize',18);
+        plot(insit.longitude(1),insit.latitude(1),'x');hold on;
+        plot(insit.longitude,insit.latitude,'wo');
         title(['Monterey Bay ROMS output ' datestr(model.date) ' at ' num2str(model.depth(model.level)) ' m'],'FontSize',18);
- %   figure(2)
 
         %-------------- GET THE NEAREST MODEL POINT TO THE INSITU MEASUREMENT
-
         ext=extract_points(model,insit);
-%        plot(ext.insitumean);hold on;plot(ext.node,'.r');legend('Mean of all insitu Measurement in the node','Model value to the nearest node')
+
         
     figure(3)
 
-      plot(insit.time,insit.vari,'x');datetick('x',15);hold on;plot(ext.modeltime,ext.pointdata,'.r');legend('Insitu measurement','Model output','FontSize',18);
+      plot(insit.time,insit.value,'x');datetick('x',15);hold on;plot(ext.modeltime,ext.pointdata,'.r');legend('Insitu measurement','Model output','FontSize',18);
       datetick('x',15);xlabel('HOURS','FontSize',18);ylabel('Temperature','FontSize',18)
       set(gca,'FontSize',18)
  end

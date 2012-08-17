@@ -4,7 +4,7 @@ function [infpa,parname] = stoqs_qparameter(u,show)
 %   
 %Usage:
 %
-%   inf=stoqs_qparameter('http://odss.mbari.org/canon/default',1);
+%   inf=stoqs_qparameter('http://odss-staging.shore.mbari.org/canon/stoqs_may2012',1);
 %Input :
 
 %   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon/default
@@ -16,10 +16,23 @@ function [infpa,parname] = stoqs_qparameter(u,show)
 %   platname = Name of the parameter to acces it with the parameter ID.
 %               Knowing the ID you can get the platname easily.
 % 
+%   Francisco Lopez & Mike McCann & Brian Schlining 
+%
+%   Last modified
+%   19/August/2012
 
-%   Brian Schlining & Francisco Lopez
-%   30/June/2012
-% Last review 30/July/2012
+
+
+if nargin<2
+    parname='';infpa='';
+    disp('-----------------------');
+    disp('NOT ENOUGH ARGUMENT');
+    disp('-----------------------');
+    disp('HELP')
+    help stoqs_qparameter;
+    return
+    
+end
 
 infpa=stoqs_info(u,'parameter');
 

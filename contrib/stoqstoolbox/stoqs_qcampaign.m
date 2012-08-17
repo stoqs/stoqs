@@ -4,7 +4,7 @@ function infc = stoqs_qcampaign(u,show)
 %      
 %Usage:
 %
-%   inf=stoqs_qcampaign('http://odss.mbari.org/canon/default',1);
+%   inf=stoqs_qcampaign('http://odss-staging.shore.mbari.org/canon/stoqs_may2012',1);
 %Input :
 %
 %   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon/default
@@ -15,10 +15,21 @@ function infc = stoqs_qcampaign(u,show)
 % Get the campaign available on the STOQS data server
 % 
 %
-%   Brian Schlining & Francisco Lopez
-%   30/June/2012
-% Last review 30/July/2012
+%   Francisco Lopez & Mike McCann & Brian Schlining 
+%
+%   Last modified
+%   19/August/2012
 
+if nargin<2
+    infc='';
+    disp('-----------------------');
+    disp('NOT ENOUGH ARGUMENT');
+    disp('-----------------------');
+    disp('HELP')
+    help stoqs_qcampaign;
+    return
+    
+end
 
 infc=stoqs_info(u,'campaign');
 

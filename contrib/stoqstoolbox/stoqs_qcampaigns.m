@@ -5,10 +5,10 @@ function infcs=stoqs_qcampaigns(u,show)
 %      
 %Usage:
 %
-%   inf=stoqs_qcampaigns('http://odss.mbari.org/canon/',1);
+%  inf=stoqs_qcampaigns('http://odss-staging.shore.mbari.org/canon/',1);
 %Input :
 %
-%   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon
+%   u = Url direction of the STOQS data server. Ex: http://odss-staging.shore.mbari.org/canon/
 %   show = Show the info on the screen or not. If show=1 , show the info,
 %               if show=0 doesn't show it.
 %
@@ -16,9 +16,21 @@ function infcs=stoqs_qcampaigns(u,show)
 % Get the campaigns available on the STOQS data server
 % 
 %
-%   Brian Schlining & Francisco Lopez
-%   18/July/2012
-% Last review 18/July/2012
+%   Francisco Lopez & Mike McCann & Brian Schlining 
+%
+%   Last modified
+%   19/August/2012
+
+if nargin<2
+    infcs='';
+    disp('-----------------------');
+    disp('NOT ENOUGH ARGUMENT');
+    disp('-----------------------');
+    disp('HELP')
+    help stoqs_qcampaigns
+    return
+    
+end
 
 infcs=stoqs_info(u,'campaigns');
 
