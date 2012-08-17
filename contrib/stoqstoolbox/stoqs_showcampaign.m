@@ -5,19 +5,29 @@ function stoqs_showcampaign(u,camp)
 %      
 %Usage:
 %
-%    stoqs_showcampaign('http://odss.mbari.org/canon/','default');
+%    stoqs_showcampaign('http://odss-staging.shore.mbari.org/canon/','stoqs_may2012');
 %Input :
 %
 %   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon
 %   camp = name of the campaign you want to do the query. ex='default'
 %
 % 
-
-%   Brian Schlining & Francisco Lopez
-%   12/July/2012
+%   Francisco Lopez & Mike McCann & Brian Schlining 
 %
-% Last review 16/July/2012
+%   Last modified
+%   19/August/2012
+% 
 %---------------------CAMPAIGN----------------
+
+if nargin<2
+    disp('-----------------------');
+    disp('NOT ENOUGH ARGUMENT');
+    disp('-----------------------');
+    disp('HELP')
+    help stoqs_showcampaign;
+    return
+    
+end
 
 urlc=[u '/' camp];
 

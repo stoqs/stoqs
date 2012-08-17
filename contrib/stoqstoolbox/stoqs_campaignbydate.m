@@ -3,7 +3,7 @@ function [inf]=stoqs_campaignbydate(urlst,date)
 %      
 %      
 %Usage:
-%       [camp]=stoqs_campaignbydate('http://odss-staging.shore.mbari.org/canon',2011,06,21,00,00,00);
+%       [camp]=stoqs_campaignbydate('http://odss-staging.shore.mbari.org/canon',datenum(2011,06,21));
 %   
 %Input :
 %        urls=Url of the STOQS server
@@ -12,8 +12,23 @@ function [inf]=stoqs_campaignbydate(urlst,date)
 %     
 %Output
 %        inf= All the structure information for the campaign selected.
+%
+%   Mike McCann & Brian Schlining & Francisco Lopez
+%
+%   Last modified
+%   19/August/2012
 
-%Get the info campaigns available in STOQS server
+if nargin<2
+    inf='';
+    disp('-----------------------');
+    disp('NOT ENOUGH ARGUMENT');
+    disp('-----------------------');
+    disp('HELP')
+    help stoqs_campaignbydate
+    return
+    
+end
+
 infcs=stoqs_qcampaigns(urlst,0);
 inf='';
 

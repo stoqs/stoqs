@@ -18,9 +18,10 @@ function [query]=load_mb_1km(url,de)
 %   query = Structure with all the information.
 % 
 %
+%
 %   Francisco Lopez-Castejon
-%   19/July/2012
-% Last review 24/July/2012   
+%   19/August/2012
+ 
 
 vari='temp';
 %Monterey Bay 1 Km
@@ -42,7 +43,7 @@ query.name=dvar_u.attributes;
 query.date=grid_u.time;
 query.depth=grid_u.z;
 query.value=dvar_u.data;
-query.lon=grid_u.lon;
-query.lat=grid_u.lat;
+query.longitude=grid_u.lon;
+query.latitude=grid_u.lat;
 query.data_inlevel= squeeze(dvar_u.data(1,level,1:end,1:end)); 
 query.level=level;

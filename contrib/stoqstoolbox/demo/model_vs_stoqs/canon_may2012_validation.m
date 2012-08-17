@@ -3,19 +3,20 @@
 % The Monterey Bay ROMS model, give an ouput every 6 hours (3,9,15,21)
 % We will try to compare the model ouput for all the time of the CANON 2012
 % May campaign (15 May 2012 01:23:30  to 13 Jun 2012 18:24:52 )
-
-
+%
+%   Francisco Lopez-Castejon
+%   19/August/2012
 
 
 sdate=datenum('01 Jun 2012 03:00:00');    %Start date to compare 
-edate=datenum('03 Jun 2012 21:00:00');    %End date to compare 
+edate=datenum('01 Jun 2012 21:00:00');    %End date to compare 
 intm=6; %Output model interval
 depth=5;
 depth_range=0.1;
 time_range=3;
 
 %Initizalization the variable
-insitu.value=NaN;insitu.time=NaN;insitu.long=NaN;insitu.lati=NaN;insitu.dept=NaN;insitu.platform=NaN;
+insitu.value=NaN;insitu.time=NaN;insitu.longitude=NaN;insitu.latitude=NaN;insitu.depth=NaN;insitu.platform=NaN;
 model.pointdata=NaN;extr.insitumean=NaN;extr.node=NaN;model.date=NaN;
 
 %Get the number of date to compare
@@ -27,7 +28,7 @@ for i=1:num
     urlope=['http://ourocean.jpl.nasa.gov:8080/thredds/dodsC/MBNowcast/mb_das_' datestr(sdate,'yyyy') datestr(sdate,'mm') datestr(sdate,'dd') datestr(sdate,'HH') '.nc'];
     [query,d]=model_vs_stoqs(urlope,depth,depth_range,time_range,0);
     disp('Download ')
-    disp(length(d.long))
+    disp(length(d.longitude))
      %Get the nearest model node to the insitu measurement
      
     ext=extract_points(query,d);
@@ -41,11 +42,11 @@ for i=1:num
         
     
     %Save all the insitu measurement
-    insitu.value=[insitu.value;d.vari];
+    insitu.value=[insitu.value;d.value];
     insitu.time=[insitu.time;d.time];
-    insitu.long=[insitu.long;d.long];    
-    insitu.lati=[insitu.lati;d.lati];      
-    insitu.dept=[insitu.dept;d.dept];  
+    insitu.longitude=[insitu.longitude;d.longitude];    
+    insitu.latitude=[insitu.latitude;d.latitude];      
+    insitu.depth=[insitu.depth;d.depth];  
     insitu.platform=[insitu.platform;d.platform];   
 
     %Prepare the next date
