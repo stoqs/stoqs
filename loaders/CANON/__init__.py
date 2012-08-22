@@ -123,7 +123,7 @@ class CANONLoader(object):
             url = self.l_662_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'l_662', self.colors['l_662'], 'glider', 'Glider Mission', 
-                                        self.l_662_parms, self.dbAlias, self.stride, self.l_662_dataStartDatetime)
+                                        self.l_662_parms, self.dbAlias, self.stride, self.l_662_startDatetime, self.l_662_endDatetime)
 
     def loadWaveglider(self):
         '''

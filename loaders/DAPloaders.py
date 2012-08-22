@@ -1239,7 +1239,7 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
     logger.debug("Loaded Activity with name = %s", aName)
 
 
-def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, dataStartDatetime=None):
+def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
     '''Run the DAPloader for Spray Glider trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.'''
@@ -1255,7 +1255,8 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
             platformColor = pColor,
             platformTypeName = pTypeName,
             stride = stride,
-            dataStartDatetime = dataStartDatetime)
+            startDatetime = startDatetime,
+            endDatetime = endDatetime)
 
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
