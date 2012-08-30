@@ -1,15 +1,76 @@
 function outp=stoqs_down(varargin)
-%       Usage
-%            Acces to a STOQS server and download a dataset based in a
-%            query.
+
+% NCDATASET  Provide access to datasets accessable by the NetCDF 4 API
 %
-%            Time Queries:
-%                The user could write a begging and end date. If, for example, he doesnt
+% Use as:
+%   ds = ncdataset(dataref)
+%
+% Arguments:
+%   dataref = A reference to a ncdataset that can be accessed by the NetCDF 4
+%       API. This includes local netcdf files, netcdf files on web servers
+%       and OpenDAP URLs
+%
+% Return:
+%   An instance of a ncdataset class
+%
+% Properties:
+%   netcdf = For power users. This is an instance of
+%       a ucar.nc2.ncdataset.NetcdfDataset (NetCDF-Java 4.2) and
+%       is used for the underlying data access. This object can
+%       be tweaked as needed. (For example, to enable/disable
+%       data caching.) See
+%       http://www.unidata.ucar.edu/software/netcdf-java/v4.2/javadoc/index.html
+%   variables = A cell array of all variables in the ncdataset. These names
+%        are used as arguments into other ncdataset methods
+%
+% Methods:
+%   ncdataset.axes - access coordinate variable names for a given variable
+%   ncdataset.attributes - access global or variable attributes
+%   ncdataset.data - retrieve data (or a subset of data) for a variable
+%   ncdataset.size - returns the size of a variable in the data store
+%   ncdataset.time - Attempt to convert a variable to matlabs native time format (see datenum)
+%
+% For more information on the methods use help. For example:
+%   >> help ncdataset.data
+%
+% Example:
+%   ds = ncdataset('http://dods.mbari.org/cgi-bin/nph-nc/data/ssdsdata/deployments/m1/200810/m1_metsys_20081008_original.nc')
+%   ga = ds.attributes;       % Global Attributes
+%   sv = 'SonicVelocity';     % A variable that we're interested in.
+%   d = ds.data(sv);          % Data for the SonicVelocity variable
+%   svAx = ds.axes(sv);       % Coordinate Variable names for the SonicVelocity variable
+%   svAt = ds.attributes(sv); % Attributes for SonicVelocity
+
+% Brian Schlining (brian@mbari.org)
+% 2009-05-12
+% Alexander Crosby 2010, 2011
+% NCTOOLBOX (http://code.google.com/p/nctoolbox)
+
+
+% STOQS_DOWN  Access a STOQS Data Server and download data based on a set of query parameters
+%
+% Usage:
+%   d = stoqs_down(url, start_time, end_time, min_depth, max_depth, standard_name, platform)
+%
+% Arguments:
+%   url = Address of a stoqs server database
+%   start_time = Start time in the format 'yyyy-mm-dd+HH:MM:SS'
+%   end_time = End time in the format 'yyyy-mm-dd+HH:MM:SS'%
+%			4. Minimum depth in meters
+% 			5. Maximum depth in meters
+% 			6. Parameter to get the data. You must use the standard name of the parameter. 
+%			7. Platform name. If want all the platform name don't write 
+%				  any name
+%       Ouput
+%           outp = Structure with fields that are arrays of:,
+%               platform, time, longitude, latitude, depth and measuredparameter datavalues
+%       
+%            Time:
+%                begining and end date. If, for example, he doesnt
 %                write  a end date, the program will query to all the data
 %                available from the begging date. In the same way, if the
 %                query only have a end date, the program will query to all
 %                the data available until that date. 
-%                        Ex. d=stoqs_down('http://odss-staging.shore.mbari.org/canon/stoqs_may2012','2012-05-30 00:10:00','2012-05-30 01:10:00','1','2','sea_water_temperature','dorado');
 %                            Will query to all the data available of
 %                            sea_water_temperature
 %                            measured by dorado between  2012-05-30 00:10:00 and 2012-05-30 01:10:00
@@ -35,23 +96,9 @@ function outp=stoqs_down(varargin)
 %                  Name of the platform to query, If is empty will query for all the platform.
 %                
 %
+%       Example:
+%            d=stoqs_down('http://odss.mbari.org/canon/stoqs_may2012','2012-05-30 00:10:00','2012-05-30 01:10:00','1','2','sea_water_temperature','dorado');
 %
-%       Input
-%          The input in order are:
-% 			URL of the STOQS server
-% 			Start time in the format 'yyyy-mm-dd+HH:MM:SS'
-% 			End time in the format 'yyyy-mm-dd+HH:MM:SS'%
-%			Minimum depth
-% 			Maximum depth
-% 			Parameter to get the data. You must use the standard name of
-% 			      the variable. 
-%			Platform name. If want all the platform name don?t write 
-%				  any name
-%       Ouput
-%           outp = Structure with the information,
-%           platform,time,longitude,latitude, depth and variable values of
-%           the query point 
-%       
 %                            
 %
 %
