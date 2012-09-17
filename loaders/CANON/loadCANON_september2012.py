@@ -109,8 +109,8 @@ cl.fulmar_parms = []
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
 cl.l_662_files = ['OS_Glider_L_662_20120816_TS.nc']
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
-cl.l_662_startDatetime = datetime.datetime(2012, 9, 1)
-cl.l_662_endDatetime = datetime.datetime(2012, 9, 30)
+cl.l_662_startDatetime = datetime.datetime(2012, 9, 10)
+cl.l_662_endDatetime = datetime.datetime(2012, 9, 20)
 
 # Liquid Robotics Waveglider
 ##cl.waveglider_base = 'http://odss.mbari.org/thredds/dodsC/CANON_september2012/waveglider/'
@@ -131,14 +131,24 @@ cl.waveglider_parms = [
                       ]
 
 
+# MBARI ESPdrift
+cl.espdrift_base = 'http://192.168.111.177:8080/thredds/dodsC/CANON_september2012/misc/ESPdrift/'
+cl.espdrift_files = [ 
+                        'ESP_ctd.nc',
+                        'ESP_isus.nc',
+                      ]
+cl.espdrift_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
+
+
 cl.stride = stride
 ##cl.loadAll()
 
 # For testing.  Comment out the loadAll() call, and uncomment one of these as needed
-##cl.loadDorado()
+cl.loadDorado()
 ##cl.loadNps_g29()
-##cl.loadL_662()
-##cl.loadWaveglider()
+cl.loadL_662()
+cl.loadWaveglider()
 cl.loadDaphne()
-##cl.loadTethys()
+cl.loadTethys()
+cl.loadESPdrift()
 
