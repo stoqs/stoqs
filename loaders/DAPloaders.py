@@ -1129,8 +1129,8 @@ class Glider_Loader(Base_Loader):
         '''
         Use provided activity information to add the activity to the database.
         '''
-        start = from_udunits(self.ds.TIME[0], self.ds.TIME.units)
-        end = from_udunits(self.ds.TIME[-1], self.ds.TIME.units)
+        start = from_udunits(float(self.ds.TIME[0]), self.ds.TIME.units)
+        end = from_udunits(float(self.ds.TIME[-1]), self.ds.TIME.units)
         self.activity=m.Activity(name=self.activityName,
                     platform=self.platform,
                     startdate=start,
@@ -1144,13 +1144,14 @@ class Glider_Loader(Base_Loader):
         if self.startDatetime == None or self.endDatetime == None:
             ds = open_url(self.url)
             if self.startDatetime == None:
-                self.startDatetime = from_udunits(self.ds.TIME[0], self.ds.TIME.units)
+                logger.debug("self.ds.TIME[0] = %f, self.ds.TIME.units = %s", self.ds.TIME[0], self.ds.TIME.units)
+                self.startDatetime = from_udunits(float(self.ds.TIME[0]), self.ds.TIME.units)
             if self.dataStartDatetime == None:
-                self.dataStartDatetime = from_udunits(self.ds.TIME[0], self.ds.TIME.units)
+                self.dataStartDatetime = from_udunits(float(self.ds.TIME[0]), self.ds.TIME.units)
             else:
                 logger.info("Using dataStartDatetime to read data from the source starting at %s", self.dataStartDatetime)
             if self.endDatetime == None:
-                self.endDatetime = from_udunits(self.ds.TIME[-1], self.ds.TIME.units)
+                self.endDatetime = from_udunits(float(self.ds.TIME[-1]), self.ds.TIME.units)
                 logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
 
         return super(Glider_Loader, self).initDB()
