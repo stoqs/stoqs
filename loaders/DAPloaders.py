@@ -1236,8 +1236,12 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
-    (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
-    logger.debug("Loaded Activity with name = %s", aName)
+    try:
+        (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
+    except DAPloaders.NoValidData, e:
+        logger.warn(e)
+    else:    
+        logger.debug("Loaded Activity with name = %s", aName)
 
 
 def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
