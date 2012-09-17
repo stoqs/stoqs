@@ -1238,7 +1238,7 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
         loader.include_names = parmList
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
-    except DAPloaders.NoValidData, e:
+    except NoValidData, e:
         logger.warn(e)
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
