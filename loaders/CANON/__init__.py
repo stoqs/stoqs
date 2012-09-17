@@ -152,7 +152,7 @@ class CANONLoader(object):
         '''
         Execute all the load functions
         '''
-        loaders = ['loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadNps_g29', 'loadWaveglider', 'loadL_662']
+        loaders = ['loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadNps_g29', 'loadWaveglider', 'loadL_662', 'loadESPdrift']
         for loader in loaders:
             if hasattr(self, loader):
                 # Call the loader if it exists
