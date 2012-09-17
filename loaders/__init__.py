@@ -536,11 +536,15 @@ class STOQS_Loader(object):
         '''
         Pull the min & max from InstantPoint and set the Campaign start and end from these
         '''
-        if self.campaign:
-            ip_qs = m.InstantPoint.objects.using(self.dbAlias).aggregate(Max('timevalue'), Min('timevalue'))
-            m.Campaign.objects.using(self.dbAlias).update(
-                                        startdate = ip_qs['timevalue__min'],
-                                        enddate = ip_qs['timevalue__max'])
+        try:
+            if self.campaign:
+                ip_qs = m.InstantPoint.objects.using(self.dbAlias).aggregate(Max('timevalue'), Min('timevalue'))
+                m.Campaign.objects.using(self.dbAlias).update(
+                                                       startdate = ip_qs['timevalue__min'],
+                                                        enddate = ip_qs['timevalue__max'])
+        except AttributeError, e:
+            logger.warn(e)
+            pass
 
 
 
