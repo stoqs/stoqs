@@ -154,13 +154,21 @@ def showCampaigns(request,format=None):
     timeSortHash = {}
     dummyTime = datetime(1970,1,1)
     for k in cHash.iterkeys():
+        logger.debug('k = %s', k)
         for c in cHash[k]:
+            logger.debug('c.name = %s', c.name)
+            # Use compination of dbAlias and startdate as different dbAlias's can have the same startdate
             if c.startdate:
-                timeSortHash[c.startdate] = {k: c}
+                key = str(c.startdate) + '_' + c.name
+                timeSortHash[key] = {k: c}
+                logger.debug("Set timeSortHash['%s'] = %s", key, {k: c})
             else:
                 # Put in a dummy time, and increment it
-                timeSortHash[dummyTime] = {k: c}
+                key = str(dummyTime) + '_' + c.name
+                timeSortHash[key] = {k: c}
+                logger.debug("Set timeSortHash['%s'] = %s", key, {k: c})
                 dummyTime += timedelta(seconds=1)
+                logger.debug('dunnyTime = %s', dummyTime)
 
     # Build list of hashes to pass to the campaigns.html template
     camList = []
