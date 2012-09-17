@@ -40,6 +40,8 @@ class CANONLoader(object):
                 'nps_g29':      '80cdc1',
                 'l_662':        '35978f',
                 'martin':       '01665e',
+                'flyer':     '11665e',
+                'espdrift':       '21665e',
              }
     colors = {  'dorado':       'ffeda0',
                 'other':        'ffeda0',
@@ -50,6 +52,8 @@ class CANONLoader(object):
                 'nps_g29':      'e31a1c',
                 'l_662':        'bd0026',
                 'martin':       '800026',
+                'flyer':     '801026',
+                'espdrift':       '802026',
              }
 
     def __init__(self, dbAlias, campaignName):
@@ -134,6 +138,15 @@ class CANONLoader(object):
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'waveglider', self.colors['waveglider'], 'glider', 'Glider Mission', 
                                         self.waveglider_parms, self.dbAlias, self.stride)
+    def loadESPdrift(self):
+        '''
+        ESPdrift specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.espdrift_files], self.espdrift_files):
+            url = self.espdrift_base + file
+            print "url = %s" % url
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espdrift', self.colors['espdrift'], 'espdrift', 'ESP drift Mission', 
+                                        self.espdrift_parms, self.dbAlias, self.stride)
 
     def loadAll(self):
         '''
