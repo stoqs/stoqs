@@ -91,6 +91,12 @@ cl.tethys_files = [
                     '20120912T003318/shore.nc',
                     '20120912T015450/shore.nc',
                     '20120912T142126/shore.nc',
+                    '20120915T030845/shore.nc',
+                    '20120917T025522/shore.nc',
+                    '20120917T111359/shore.nc',
+                    '20120917T123308/shore.nc',
+                    '20120917T150614/shore.nc',
+                    '20120917T151928/shore.nc',
                   ]
 cl.tethys_parms = [ 'platform_battery_charge', 'sea_water_temperature', 'downwelling_photosynthetic_photon_flux_in_sea_water',
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water']
