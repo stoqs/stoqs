@@ -142,6 +142,13 @@ cl.espdrift_files = [
                       ]
 cl.espdrift_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
 
+# Western Flyer Underway CTD
+cl.wfuctd_base = tdsBase + 'CANON_september2012/wf/'
+cl.wfuctd_files = [ 
+                        'wf_uctd.nc',
+                      ]
+cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
+
 
 cl.stride = stride
 ##cl.loadAll()
@@ -152,4 +159,5 @@ cl.loadWaveglider()
 cl.loadDaphne()
 cl.loadTethys()
 cl.loadESPdrift()
+cl.loadWFuctd()
 

@@ -148,6 +148,16 @@ class CANONLoader(object):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espdrift', self.colors['espdrift'], 'espdrift', 'ESP drift Mission', 
                                         self.espdrift_parms, self.dbAlias, self.stride)
 
+    def loadWFuctd(self):
+        '''
+        WF uctd specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.wfuctd_files], self.wfuctd_files):
+            url = self.wfuctd_base + file
+            print "url = %s" % url
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'wf_uctd', self.colors['flyer'], 'wf_uctd', 'Western Flyer Underway CTD Data', 
+                                        self.wfuctd_parms, self.dbAlias, self.stride)
+
     def loadAll(self):
         '''
         Execute all the load functions
