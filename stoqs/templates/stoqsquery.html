@@ -753,7 +753,7 @@
         });
 
         function getDataset(data, x1, x2) {
-            // Return a dataset for flot for only the data betweeh times x1 and x2
+            // Return a dataset for flot for only the data between times x1 and x2
             var dataset = [];
             var platform_seen = [];
             if ( ! data ) {
@@ -763,23 +763,28 @@
                 // Now add each activity for this platform - separated so that they are not connected with a line
                 $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
                     var rec = [];
-                    //console.log('Checking time for ' + platform_value + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                    console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
                     subset_dts = []
                     $.each(depth_time_series, function (index, td) {
-                        // From each activity push only the times between x1 & x2
-                        if (td[0] > x1 && td[0] < x2) {
+                        // From each activity push only the times between x1 & x2, inclusive
+                        if (td[0] >= x1 && td[0] <= x2) {
                             subset_dts.push(td);
                         }
                     });
+
                     if (subset_dts.length > 0) {
                         if (! platform_seen[platform_value[0]]) {
-                            rec["label"] = platform_value[0];
+                            //rec["label"] = platform_value[0];
                             platform_seen[platform_value[0]] = true;
                         }
-                        rec["label"] = label;
-                        rec["data"] = depth_time_series;
-                        rec["color"] = "#" + data['simpledepthtime']['colors'][platform_value[0]];
-                        dataset.push(rec);
+                        //rec["label"] = label;
+                        //rec["data"] = depth_time_series;
+                        //rec["color"] = "#" + data['simpledepthtime']['colors'][platform_value[0]];
+                        //console.log('rec["label"] = ' + rec["label"]);
+                        //console.log('rec["data"] = ' + rec["data"]);
+                        //console.log('rec["color"] = ' + rec["color"]);
+                        //dataset.push(rec);
+                        dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
                     }
                 });
             });
@@ -794,8 +799,10 @@
                 sample["clickable"] = true;
                 dataset.push(sample);
             });
+
             return dataset;
-        }
+
+        } // getDataset()
 
         function collectHistData(histdata, platform, color, activity, histbyactivity) {
             var rec = [];
