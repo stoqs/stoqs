@@ -26,6 +26,33 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 import DAPloaders
 import GulperLoader
 
+class Util(object):
+    '''
+    Utility methods used for creating netCDF files and loading data into STOQS
+    '''
+    @staticmethod
+    def convert_up_to_down(file):
+        '''
+        Convert an upcast SeaBird pctd file to a downcast file
+        '''
+        newName = '.'.join(file.split('.')[:-1]) + 'up.asc'
+        outFile = open(newName, 'w')
+        lines = []
+        i = 0
+        for line in open(file):
+            if i == 0:
+                outFile.write(line)
+            else:
+                lines.append(line)
+            i = i + 1
+
+        for line in reversed(lines):
+                outFile.write(line)
+
+        outFile.close()
+
+        return newName
+
 
 class CANONLoader(object):
     '''
