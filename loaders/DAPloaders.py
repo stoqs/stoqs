@@ -777,17 +777,17 @@ class Base_Loader(STOQS_Loader):
             logger.warn('%s', e)
             path = None        # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
 
-        logger.debug("path = %s", path)
-        if len(path) == 2:
-            logger.info("Length of path = 2: path = %s", path)
-            if path[0][0] == path[1][0] and path[0][1] == path[1][1]:
-                logger.info("And the 2 points are identical.  Adding a little bit of distance to the 2nd point so as to make a tiny line.")
-                newPoint = Point(path[0][0] + 0.001, path[0][1] + 0.001)
-                logger.debug(path[0])
-                logger.debug(newPoint)
-                path = LineString((path[0][0], path[0][1]), newPoint)
-        logger.debug("path = %s", path)
-        ##sys.stdout.write('\n')
+        else:
+            logger.debug("path = %s", path)
+            if len(path) == 2:
+                logger.info("Length of path = 2: path = %s", path)
+                if path[0][0] == path[1][0] and path[0][1] == path[1][1]:
+                    logger.info("And the 2 points are identical.  Adding a little bit of distance to the 2nd point so as to make a tiny line.")
+                    newPoint = Point(path[0][0] + 0.001, path[0][1] + 0.001)
+                    logger.debug(path[0])
+                    logger.debug(newPoint)
+                    path = LineString((path[0][0], path[0][1]), newPoint)
+            logger.debug("path = %s", path)
 
         # Update the Activity with information we now have following the load
         # Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
