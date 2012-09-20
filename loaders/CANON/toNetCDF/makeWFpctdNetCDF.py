@@ -8,3 +8,6 @@ rsync -rv stoqsadm@192.168.111.177:/ODSS/data/canon/2012_Sep/wf/pctd .
 
 scp pctd/*.nc stoqsadm@192.168.111.177:/ODSS/data/canon/2012_Sep/wf/pctd
 
+# Clean up
+rm -r pctd
+

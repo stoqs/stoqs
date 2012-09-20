@@ -9,3 +9,8 @@ scp stoqsadm@192.168.111.177:/ODSS/data/canon/2012_Sep/misc/ESPdrift/ESP_isus.cs
 
 scp ESP_ctd.nc stoqsadm@192.168.111.177:/ODSS/data/canon/2012_Sep/misc/ESPdrift
 scp ESP_isus.nc stoqsadm@192.168.111.177:/ODSS/data/canon/2012_Sep/misc/ESPdrift
+
+# Clean up
+rm ESP_ctd.*
+rm ESP_isus.*
+
