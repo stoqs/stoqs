@@ -7,3 +7,8 @@ scp stoqsadm@192.168.111.177:/ODSS/data/canon/2012_Sep/waveglider/tracking/waveg
 ./wgToNetcdf.py
 scp waveglider_gpctd_WG.nc stoqsadm@192.168.111.177:/ODSS/data/canon/2012_Sep/waveglider/netcdf
 scp waveglider_pco2_WG.nc stoqsadm@192.168.111.177:/ODSS/data/canon/2012_Sep/waveglider/netcdf
+
+# Clean up
+rm waveglider_gpctd_WG.*
+rm waveglider_pco2_WG.*
+
