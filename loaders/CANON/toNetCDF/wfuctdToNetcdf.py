@@ -26,8 +26,6 @@ MBARI 17 September 2012
 
 import os
 import sys
-# Add parent dir to pythonpath so that we can see the toNetCDF module
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../") )
 import csv
 import time
 from glob import glob
@@ -37,7 +35,10 @@ from datetime import datetime, timedelta
 import numpy as np
 from pupynere import netcdf_file
 
-from toNetCDF import BaseWriter
+# Add grandparent dir to pythonpath so that we can see the CANON and toNetCDF modules
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../") )
+
+from CANON.toNetCDF import BaseWriter
 
 class ParserWriter(BaseWriter):
     '''

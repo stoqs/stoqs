@@ -42,7 +42,12 @@ import datetime
 import numpy as np
 from pupynere import netcdf_file
 
-class ParserWriter(object):
+# Add grandparent dir to pythonpath so that we can see the CANON and toNetCDF modules
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../") )
+
+from CANON.toNetCDF import BaseWriter
+
+class ParserWriter(BaseWriter):
     '''
     Handle all information needed to parse LR Waveglider CSV files and produce 
     NetCDF for each of them
@@ -206,43 +211,6 @@ class ParserWriter(object):
         self.ncFile.close()
 
         # End write_pco2()
-
-    def add_global_metadata(self):
-        '''
-        This is the main advantage of using a class for these methods.  This method uses the
-        instance variables to write metadata specific for the data that are written.
-        '''
-
-        iso_now = datetime.datetime.now().isoformat()
-
-        self.ncFile.title = ''
-        self.ncFile.netcdf_version = '3.6'
-        self.ncFile.Convention = 'CF-1.4'
-        self.ncFile.date_created = iso_now
-        self.ncFile.date_update = iso_now
-        self.ncFile.date_modified = iso_now
-        self.ncFile.cdm_data_type = 'trajectory'
-        self.ncFile.CF_featureType = 'trajectory'
-        self.ncFile.data_mode = 'R'
-        self.ncFile.geospatial_lat_min = np.min(self.latitude[:])
-        self.ncFile.geospatial_lat_max = np.max(self.latitude[:])
-        self.ncFile.geospatial_lon_min = np.min(self.longitude[:])
-        self.ncFile.geospatial_lon_max = np.max(self.longitude[:])
-        self.ncFile.geospatial_lat_units = 'degree_north'
-        self.ncFile.geospatial_lon_units = 'degree_east'
-
-        self.ncFile.geospatial_vertical_min= np.min(self.depth[:])
-        self.ncFile.geospatial_vertical_max= np.max(self.depth[:])
-        self.ncFile.geospatial_vertical_units = 'm'
-        self.ncFile.geospatial_vertical_positive = 'down'
-
-        self.ncFile.time_coverage_start = coards.from_udunits(self.time[0], self.time.units).isoformat()
-        self.ncFile.time_coverage_end = coards.from_udunits(self.time[-1], self.time.units).isoformat()
-
-        self.ncFile.distribution_statement = 'Any use requires prior approval from the MBARI CANON PI: Dr. Francisco Chavez'
-        self.ncFile.license = self.ncFile.distribution_statement
-        self.ncFile.useconst = 'Not intended for legal use. Data may contain inaccuracies.'
-        self.ncFile.history = 'Created by "%s" on %s' % (' '.join(sys.argv), iso_now,)
 
 
 if __name__ == '__main__':

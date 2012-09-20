@@ -26,8 +26,8 @@ MBARI 17 September 2012
 
 import os
 import sys
-# Add parent dir to pythonpath so that we can see the toNetCDF module
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../") )
+# Add grandparent dir to pythonpath so that we can see the CANON and toNetCDF modules
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../") )
 import csv
 import time
 from glob import glob
@@ -38,35 +38,14 @@ import numpy as np
 from pupynere import netcdf_file
 from seawater import csiro
 
-from toNetCDF import BaseWriter
+from CANON.toNetCDF import BaseWriter
+from CANON import Util
 
 class ParserWriter(BaseWriter):
     '''
     Handle all information needed to parse Western Flyer Underway CTD data from the Seabird software
     generated .asc files and write the data as a CF-compliant NetCDF Trajectory file.
     '''
-
-    def convert_up_to_down(self, file):
-        '''
-        Convert an upcast file to a downcast file
-        '''
-        newName = '.'.join(file.split('.')[:-1]) + 'up.asc'
-        outFile = open(newName, 'w')
-        lines = []
-        i = 0
-        for line in open(file):
-            if i == 0:
-                outFile.write(line)
-            else:
-                lines.append(line)
-            i = i + 1
-
-        for line in reversed(lines):
-                outFile.write(line)
-
-        outFile.close()
-
-        return newName
 
     def get_year_lat_lon(self, file):
         '''
@@ -120,7 +99,7 @@ class ParserWriter(BaseWriter):
             print "file = %s" % file
             if file == './pctd/c0912c01.asc':
                 print "Converting %s up to down" % file
-                file = self.convert_up_to_down(file)
+                file = Util.convert_up_to_down(file)
 
             year, lat, lon = self.get_year_lat_lon(file)
 
