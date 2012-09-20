@@ -176,7 +176,8 @@ class Base_Loader(STOQS_Loader):
         what is in MBARItracking.'''
 
         ##paURL = 'http://odss-staging.shore.mbari.org/trackingdb/platformAssociations.csv'
-        paURL = 'http://odss.mbari.org/trackingdb/platformAssociations.csv'
+        ##paURL = 'http://odss.mbari.org/trackingdb/platformAssociations.csv'
+        paURL = 'http://192.168.111.177/trackingdb/platformAssociations.csv'
         # Returns lines like:
         # PlatformType,PlatformName
         # ship,Martin
@@ -185,6 +186,7 @@ class Base_Loader(STOQS_Loader):
         # ship,W_FLYER
         # ship,ZEPHYR
         # mooring,Bruce
+        logger.info("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
         tpHandle = csv.DictReader(urllib2.urlopen(paURL))
         platformName = ''
         for rec in tpHandle:
@@ -687,6 +689,7 @@ class Base_Loader(STOQS_Loader):
                                     depth = depth,
                                     lat = latitude,
                                     long = longitude)
+                    logger.debug("Appending to linestringPoints: measurement.geom = %s, %s" , measurement.geom.x, measurement.geom.y)
                     linestringPoints.append(measurement.geom)
                 except SkipRecord:
                     logger.debug("Got SkipRecord Exception from self.createMeasurement().  Skipping")
@@ -764,14 +767,26 @@ class Base_Loader(STOQS_Loader):
         #
         # now linestringPoints contains all the points
         #
+        logger.debug(linestringPoints)
         try:
             path = LineString(linestringPoints).simplify(tolerance=.001)
-        except TypeError:
+        except TypeError, e:
+            logger.warn("%s\nSetting path to None", e)
             path = None        # Likely "Cannot initialize on empty sequence." resulting from too big a stride
         except Exception as e:
             logger.warn('%s', e)
             path = None        # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
 
+        logger.debug("path = %s", path)
+        if len(path) == 2:
+            logger.info("Length of path = 2: path = %s", path)
+            if path[0][0] == path[1][0] and path[0][1] == path[1][1]:
+                logger.info("And the 2 points are identical.  Adding a little bit of distance to the 2nd point so as to make a tiny line.")
+                newPoint = Point(path[0][0] + 0.001, path[0][1] + 0.001)
+                logger.debug(path[0])
+                logger.debug(newPoint)
+                path = LineString((path[0][0], path[0][1]), newPoint)
+        logger.debug("path = %s", path)
         ##sys.stdout.write('\n')
 
         # Update the Activity with information we now have following the load
