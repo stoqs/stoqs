@@ -10,3 +10,4 @@ scp wf_uctd.nc stoqsadm@192.168.111.177:/ODSS/data/canon/2012_Sep/wf
 
 # Clean up 
 rm -r uctd
+rm wf_uctd.nc
