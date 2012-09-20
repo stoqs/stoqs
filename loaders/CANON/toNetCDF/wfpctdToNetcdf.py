@@ -46,14 +46,15 @@ class ParserWriter(BaseWriter):
     generated .asc files and write the data as a CF-compliant NetCDF Trajectory file.
     '''
 
-    def convert_up_to_down(self):
+    def convert_up_to_down(self, file):
         '''
         Convert an upcast file to a downcast file
         '''
-        outFile = open('pctd/c0912c01.asc', 'w')
+        newName = '.'.join(file.split('.')[:-1]) + 'up.asc'
+        outFile = open(newName, 'w')
         lines = []
         i = 0
-        for line in open('pctd/c0912c01up.asc'):
+        for line in open(file):
             if i == 0:
                 outFile.write(line)
             else:
@@ -64,6 +65,8 @@ class ParserWriter(BaseWriter):
                 outFile.write(line)
 
         outFile.close()
+
+        return newName
 
     def get_year_lat_lon(self, file):
         '''
@@ -109,23 +112,27 @@ class ParserWriter(BaseWriter):
  255.146622    199.000    197.437   3.624085   3.624098     8.9518     8.9525     0.5547    87.0507     4.3842 -9.990e-29     0.9866     0.3700     0.0348  0.0002000     0.0000 1.0000e-12     0.1294     100.00     5.0000    34.0048    34.0044     8.9306     8.9312    26.3499    26.3494 -9.990e-29 -9.990e-29 -9.990e-29         22 0.0000e+00
         '''
 
-        self.esec_list = []
-        self.lat_list = []
-        self.lon_list = []
-        self.pr_list = [] 
-        self.t1_list = []
-        self.sal_list = []
-        self.xmiss_list = []
-        self.ecofl_list = []
-
         # Fill up the object's member data item lists from all the files - read only the processed c*.asc files, 
         # the realtime.asc data will be processed by the end of the cruise
         fileList = glob(os.path.join(self.parentInDir, 'pctd/c*.asc'))
         fileList.sort()
         for file in fileList:
             print "file = %s" % file
+            if file == './pctd/c0912c01.asc':
+                print "Converting %s up to down" % file
+                file = self.convert_up_to_down(file)
 
             year, lat, lon = self.get_year_lat_lon(file)
+
+            # Initialize member lists for each file processed
+            self.esec_list = []
+            self.lat_list = []
+            self.lon_list = []
+            self.pr_list = [] 
+            self.t1_list = []
+            self.sal_list = []
+            self.xmiss_list = []
+            self.ecofl_list = []
 
             for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
 
