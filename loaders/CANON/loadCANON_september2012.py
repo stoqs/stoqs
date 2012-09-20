@@ -155,6 +155,21 @@ cl.wfuctd_files = [
                       ]
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
+# Western Flyer Profile CTD
+cl.wfpctd_base = tdsBase + 'CANON_september2012/wf/pctd/'
+cl.wfpctd_files = [ 
+'c0912c01up.nc', 'c0912c02.nc', 'c0912c03.nc', 'c0912c04.nc', 'c0912c05.nc', 'c0912c06.nc', 
+'c0912c07.nc', 'c0912c08.nc', 'c0912c09.nc', 'c0912c10.nc', 'c0912c11.nc', 'c0912c12.nc', 
+'c0912c13.nc', 'c0912c14.nc', 'c0912c15.nc', 'c0912c16.nc', 'c0912c17.nc', 'c0912c18.nc', 
+'c0912c19.nc', 'c0912c20.nc', 'c0912c21.nc', 'c0912c22.nc', 'c0912c23.nc', 'c0912c24.nc', 
+'c0912c25.nc', 'c0912c26.nc', 'c0912c27.nc', 'c0912c28.nc', 'c0912c29.nc', 'c0912c30.nc', 
+'c0912c31.nc', 'c0912c32.nc', 'c0912c33.nc', 'c0912c34.nc', 'c0912c35.nc', 'c0912c36.nc', 
+'c0912c37.nc', 'c0912c38.nc', 'c0912c39.nc', 'c0912c40.nc', 'c0912c41.nc', 'c0912c42.nc', 
+'c0912c43.nc', 'c0912c46.nc', 'c0912c47.nc', 'c0912c48.nc', 'c0912c49.nc', 'c0912c50.nc', 
+'c0912c51.nc', 
+                      ]
+cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
+
 
 cl.stride = stride
 ##cl.loadAll()
@@ -166,4 +181,5 @@ cl.loadDaphne()
 cl.loadTethys()
 cl.loadESPdrift()
 cl.loadWFuctd()
+cl.loadWFpctd()
 
