@@ -158,11 +158,21 @@ class CANONLoader(object):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'wf_uctd', self.colors['flyer'], 'wf_uctd', 'Western Flyer Underway CTD Data', 
                                         self.wfuctd_parms, self.dbAlias, self.stride)
 
+    def loadWFpctd(self):
+        '''
+        WF pctd specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.wfpctd_files], self.wfpctd_files):
+            url = self.wfpctd_base + file
+            print "url = %s" % url
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'wf_pctd', self.colors['flyer'], 'wf_pctd', 'Western Flyer Underway CTD Data', 
+                                        self.wfpctd_parms, self.dbAlias, self.stride)
     def loadAll(self):
         '''
         Execute all the load functions
         '''
-        loaders = ['loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadNps_g29', 'loadWaveglider', 'loadL_662', 'loadESPdrift']
+        loaders = [ 'loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadNps_g29', 'loadWaveglider', 'loadL_662', 'loadESPdrift',
+                    'loadWFuctd', 'loadWFpctd']
         for loader in loaders:
             if hasattr(self, loader):
                 # Call the loader if it exists
