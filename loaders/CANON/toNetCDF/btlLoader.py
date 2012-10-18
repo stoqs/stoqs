@@ -29,13 +29,17 @@ project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../") )
 # Add great-grandparent dir to pythonpath so that we can see the stoqs module
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../") )
+# Add great-great-grandparent dir to pythonpath so that we can see the stoqs module
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../") )
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
 from stoqs import models as m
 from CANON.toNetCDF import BaseWriter
 from CANON.toNetCDF.wfpctdToNetcdf import ParserWriter
+from loaders import STOQS_Loader, SkipRecord
 from datetime import datetime, timedelta
+from pydap.model import BaseType
 import time
 import numpy
 import csv
@@ -44,6 +48,7 @@ import logging
 from glob import glob
 from tempfile import NamedTemporaryFile
 import re
+import pprint
 
 # Set up logging
 logger = logging.getLogger('loaders')
@@ -62,7 +67,50 @@ class ClosestTimeNotFoundException(Exception):
     pass
 
 
-class SampleLoader(BaseWriter):
+class SampleLoader(BaseWriter, STOQS_Loader):
+
+    def load_data(self, lat, lon, depth, time, parmNameValues):
+        '''
+        Load the data values recorded at the bottle trips so that we have some InstantPoints to 
+        hang off for our Samples.  This is necessary as data are acquired on the down cast and
+        bottles are tripped on the upcast.  
+        @parmNameValues is a list of 2-tuples of (ParameterName, Value) measured at the time and location specified by
+        @lat decimal degrees
+        @lon decimal degrees
+        @time Python datetime.datetime object
+        @depth in meters
+        '''
+        try:
+            print time, depth, lat, lon
+            measurement = self.createMeasurement(time = time,
+                            depth = depth,
+                            lat = lat,
+                            long = lon)
+        except SkipRecord, e:
+            logger.info(e)
+        except Exception, e:
+            logger.error(e)
+            sys.exit(-1)
+        else:
+            logger.debug("longitude = %s, latitude = %s, time = %s, depth = %s", lon, lat, time, depth)
+
+        logger.debug("measurement._state.db = %s", measurement._state.db)
+        loaded = 0
+        for pn,value in parmNameValues:
+            logger.debug("pn = %s", pn)
+            logger.debug("parameter._state.db = %s", self.getParameterByName(pn)._state.db)
+            mp = m.MeasuredParameter(measurement = measurement,
+                        parameter = self.getParameterByName(pn),
+                        datavalue = value)
+            try:
+                mp.save(using=self.dbAlias)
+            except Exception, e:
+                logger.error('Exception %s. Skipping this record.', e)
+                logger.error("Bad value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
+                continue
+            else:
+                loaded += 1
+                logger.debug("Inserted value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
 
     def get_closest_instantpoint(self, aName, tv, dbAlias):
         '''
@@ -73,7 +121,7 @@ class SampleLoader(BaseWriter):
         num_timevalues = 0
         logger.debug('Looking for tv = %s', tv)
         while tol < 86400:                                      # Fail if not found within 24 hours
-            qs = m.InstantPoint.objects.using(dbAlias).filter(  activity__name__contains = aName,
+            qs = m.InstantPoint.objects.using(self.dbAlias).filter(  activity__name__contains = aName,
                                                                 timevalue__gte = (tv-timedelta(seconds=tol)),
                                                                 timevalue__lte = (tv+timedelta(seconds=tol))
                                                              ).order_by('timevalue')
@@ -83,6 +131,7 @@ class SampleLoader(BaseWriter):
             tol = tol * 2
 
         if not num_timevalues:
+            logger.info('Last query tried: %s', str(qs.query))
             raise ClosestTimeNotFoundException
 
         logger.debug('Found %d time values with tol = %d', num_timevalues, tol)
@@ -103,46 +152,49 @@ class SampleLoader(BaseWriter):
         logger.debug('i_min = %d', i_min)
         return qs[i_min], secdiff[i_min]
 
-    def load_btl(self, activityName, dbAlias, lon, lat, depth, timevalue, bottleName):
+    def load_btl(self, lon, lat, depth, timevalue, bottleName):
         '''
         Load a single Niskin Bottle sample
         '''
 
         # Get the Activity from the Database
         try:
-            activity = m.Activity.objects.using(dbAlias).get(name__contains=activityName)
+            activity = m.Activity.objects.using(self.dbAlias).get(name__contains=self.activityName)
             logger.debug('Got activity = %s', activity)
         except ObjectDoesNotExist:
-            logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', activityName)
+            logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', self.activityName)
             return
         except MultipleObjectsReturned:
-            logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
-            activity = m.Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
+            logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', self.activityName)
+            activity = m.Activity.objects.using(self.dbAlias).filter(name__contains=self.activityName)[0]
         
         # Get or create SampleType for Niskin
-        (sample_type, created) = m.SampleType.objects.using(dbAlias).get_or_create(name = 'Niskin')
+        (sample_type, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name = 'Niskin')
         logger.debug('sampletype %s, created = %s', sample_type, created)
-        for row in reader:
-            try:
-                ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
-                point = 'POINT(%s %s)' % (lon, lat)
-                stuple = m.Sample.objects.using(dbAlias).get_or_create( name = bottleName,
-                                                                    depth = depth,
+        # Get or create SamplePurpose for Niskin
+        (sample_purpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name = 'StandardDepth')
+        logger.debug('samplepurpose %s, created = %s', sample_purpose, created)
+        try:
+            ip, seconds_diff = self.get_closest_instantpoint(self.activityName, timevalue, self.dbAlias)
+            point = 'POINT(%s %s)' % (lon, lat)
+            stuple = m.Sample.objects.using(self.dbAlias).get_or_create( name = bottleName,
+                                                                    depth = str(depth),     # Must be str to convert to Decimal
                                                                     geom = point,
                                                                     instantpoint = ip,
                                                                     sampletype = sample_type,
-                                                                    volume = 1800
+                                                                    samplepurpose = sample_purpose,
+                                                                    volume = 20000.0
                                                                 )
-                rtuple = m.Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
-                                                                    value = seconds_diff
-                                                                    )
+            ##rtuple = m.Resource.objects.using(self.dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
+            ##                                                        value = seconds_diff
+            ##                                                        )
 
-                # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
-                logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
-            except ClosestTimeNotFoundException:
-                logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+            # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
+            ##logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
+        except ClosestTimeNotFoundException:
+            logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
 
-    def process_btl_files(self, dbAlias):
+    def process_btl_files(self):
         '''
         Loop through all .btl files and insert a Sample record to the database for each bottle trip
 
@@ -170,11 +222,13 @@ class SampleLoader(BaseWriter):
 
             fh = open(file)
             for line in fh:
-                # Parse Latitude & Longitude
-            
                 # Write to tempfile all lines that don't begin with '*' nor '#' then open that with csv.DictReader
                 # Concatenate broken lines that begin with 'Position...' and with HH:MM:SS, remove (avg|sdev)
                 if not line.startswith('#') and not line.startswith('*'):
+                    m = re.match('.+(Sbeox0PS)(Sbeox0Mm)', line.strip())
+                    if m:
+                        line = re.sub('(?<=)(Sbeox0PS)(Sbeox0Mm)(?=)', lambda m: "%s %s" % (m.group(1), m.group(2)), line)
+                        if _debug: print 'Fixed header: line = ', line
                     if line.strip() == 'Position        Time':
                         # Append 2nd line of header to first line & write to tmpFile
                         tmpFH.write(lastLine + line)
@@ -182,36 +236,71 @@ class SampleLoader(BaseWriter):
                     if m:
                         # Append Time string to last line & write to tmpFile
                         if _debug: print 'm.group(0) = ', m.group(0)
-                        tmpFH.write(lastLine + line)
+                        tmpFH.write(lastLine + ' ' + m.group(0) + '\n')
                     m = re.match('.+[A-Z][a-z][a-z] \d\d \d\d\d\d', line.strip())
                     if m:
                         # Replace spaces with dashes in the date field
                         line = re.sub('(?<= )([A-Z][a-z][a-z]) (\d\d) (\d\d\d\d)(?= )', lambda m: "%s-%s-%s" % (m.group(1), m.group(2), m.group(3)), line)
                         if _debug: print 'Spaces to dashes: line = ', line
-                    if line.rstrip().endswith('(avg)') or line.rstrip().endswith('(sdev)'):
                         # Remove (avg) or (sdev) field
-                        line = line[:line.find('(')]
-                        if _debug: print 'Remove (...: line = ', line
+                        ##line = line[:line.find('(')]
+                        ##if _debug: print 'Remove (...: line = ', line
 
                     lastLine = line.rstrip()      # Save line without terminating linefeed
 
             tmpFH.close()
 
+            # Create activity for this cast
+            self.startDatetime = None
+            self.endDatetime = None
             for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
-                # Date Time =  Sep-10-2012 20:38:17
-                es = time.mktime(time.strptime(r['Date'] + ' ' + r['Time'], '%b-%d-%Y %H:%M:%S'))
-                timevalue = datetime.fromtimestamp(es)
-                print r['Bottle'], es, timevalue, r['DepSM']
+                dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
+                if not self.startDatetime:
+                    self.startDatetime = dt
+            self.endDatetime = dt
+            self.campaignName = 'CANON - September 2012'
+            self.platformName = 'wfpctd'
+            self.platformColor = '11665e'
+            self.platformTypeName = 'ship'
+            self.platform = self.getPlatform(self.platformName, self.platformTypeName)
+            self.activitytypeName = 'CTD upcast'
+            self.activityName = file.split('/')[-1].split('.')[-2] 
+            self.include_names = ['Sal00', 'T090C']
+            self.createActivity()
+
+            # Add some parameters for the data that we need to load so that we have InstantPoints at the bottle locations
+            parmDict = {}
+            Sal00 = BaseType()
+            Sal00.attributes = {'units': 1 , 'long_name': 'salinity', 'standard_name': 'sea_water_salinity'} 
+            T090C = BaseType()
+            T090C.attributes = {'units': 'ITS-90, deg C', 'long_name': 'temperature', 'standard_name': 'sea_water_temperature'}
+            parmDict = { 'Sal00': Sal00, 'T090C': T090C }
+            self.addParameters(parmDict)
+
+            for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
+                # Date Time =  Sep-10-2012 20:38:17 - this is local time, but use TimeJ for GMT
+                ##es = time.mktime(time.strptime(r['Date'] + ' ' + r['Time'], '%b-%d-%Y %H:%M:%S'))
+                ##print 'Time from Date + Time =',  datetime.fromtimestamp(es)
+                dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
+                ##print 'Time from TimeJ = ', dt
+                esDiff = dt - datetime(1970, 1, 1, 0, 0, 0)
+                es = 86400 * esDiff.days + esDiff.seconds
+
                 # activity name will be the same as the .asc file that was converted to .nc
-                aName = file.split('/')[-1].split('.')[-2] + '.nc'
                 bName = file.split('/')[-1].split('.')[-2] + '_' + r['Bottle']
-                print aName, bName
-                self.load_btl(aName, dbAlias, lon, lat, r['DepSM'], timevalue, bName)
+
+                # Load data 
+                parmNameValues = []
+                for name in parmDict.keys():
+                    parmNameValues.append((name, float(r[name])))
+                logger.debug('Calling load_data with parmNameValues = %s', pprint.pprint(parmNameValues))
+                self.load_data(lon, lat, float(r['DepSM']), dt, parmNameValues)
+
+                # Load Bottle sample
+                self.load_btl(lon, lat, float(r['DepSM']), dt, bName)
 
             fh.close()
-            raw_input('Paused')
             os.remove(tmpFile)
-
 
 
 if __name__ == '__main__':
@@ -232,5 +321,6 @@ if __name__ == '__main__':
         outDir = '.'
     
     sl = SampleLoader(parentInDir=inDir, parentOutDir=outDir)
-    sl.process_btl_files(dbAlias)
+    sl.dbAlias = dbAlias
+    sl.process_btl_files()
 
