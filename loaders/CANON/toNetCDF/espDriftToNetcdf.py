@@ -57,9 +57,11 @@ class ParserWriter(BaseWriter):
 
     def __init__(self, parentDir):
         self.parentDir = parentDir
+        # For reading from malibu on the Western Flyer
+        ##self.read_gps(url='http://192.168.111.177/trackingdb/position/ESP/between/20120910T000000/20120920T000000/data.csv')
         self.read_gps()
        
-    def read_gps(self, url='http://192.168.111.177/trackingdb/position/ESP/between/20120910T000000/20120920T000000/data.csv'):
+    def read_gps(self, url='http://odss.mbari.org/trackingdb/position/ESP/between/20120910T000000/20120920T000000/data.csv'):
         '''
         Read the GPS positions from the .csv response and save in an array for easy lookup for the measurement data
         '''
@@ -93,7 +95,7 @@ class ParserWriter(BaseWriter):
             
     def write_ctd(self, inFile='ESP_ctd.csv', outFile='ESP_ctd.nc'):
         '''
-        Read in records from one of the ESP drifter and write out as NetCDF.  The records look like:
+        Read in records from one of the ESP drifter and write out as NetCDF.  The records look like (time is local):
 
         year,month,day,hour,minute,second,temp,sal,chl (calibrated),chl (ini)
         2012,   9,  11,  15,  32,  38,15.24,33.34,0.68,2.54
