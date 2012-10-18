@@ -13,5 +13,5 @@ rsync -rv stoqsadm@$RH:/ODSS/data/canon/2012_Sep/wf/pctd .
 scp pctd/*.nc stoqsadm@$RH:/ODSS/data/canon/2012_Sep/wf/pctd
 
 # Clean up
-##rm -r pctd
+rm -r pctd
 
