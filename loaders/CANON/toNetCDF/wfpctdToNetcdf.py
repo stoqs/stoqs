@@ -47,7 +47,8 @@ class ParserWriter(BaseWriter):
     generated .asc files and write the data as a CF-compliant NetCDF Trajectory file.
     '''
 
-    def get_year_lat_lon(self, file):
+    @staticmethod
+    def get_year_lat_lon(file):
         '''
         Open .hdr file to get the year, lat, and lon of this cast
         Returns (year, lat, lon) tuple
@@ -114,10 +115,11 @@ class ParserWriter(BaseWriter):
             self.ecofl_list = []
 
             for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
-
-                dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ']))
+                # A TimeJ value of 1.0 is 0000 hours 1 January, so subtract 1 day
+                dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
                 ##print dt
-                es = time.mktime(dt.timetuple())
+                esDiff = dt - datetime(1970, 1, 1, 0, 0, 0)
+                es = 86400 * esDiff.days + esDiff.seconds
                 ##print datetime.fromtimestamp(es)
                 
                 self.esec_list.append(es)
@@ -206,7 +208,7 @@ if __name__ == '__main__':
     except IndexError:
         inDir = '.'
     try:
-        outDir = sys.argv[1]
+        outDir = sys.argv[2]
     except IndexError:
         outDir = '.'
 
