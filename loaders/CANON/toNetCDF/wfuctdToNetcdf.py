@@ -91,11 +91,12 @@ class ParserWriter(BaseWriter):
                     break
 
             for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
-
-                dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ']))
-                ##print dt
-                es = time.mktime(dt.timetuple())
-                ##print datetime.fromtimestamp(es)
+                # A TimeJ value of 1.0 is 0000 hours 1 January, so subtract 1 day
+                dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
+                ##print 'dt = ', dt
+                esDiff = dt - datetime(1970, 1, 1, 0, 0, 0)
+                es = 86400 * esDiff.days + esDiff.seconds
+                ##print 'es = ', es, datetime.fromtimestamp(es)
                 
                 self.esec_list.append(es)
                 self.lat_list.append(r['Latitude'])
@@ -180,7 +181,7 @@ if __name__ == '__main__':
     except IndexError:
         inDir = '.'
     try:
-        outDir = sys.argv[1]
+        outDir = sys.argv[2]
     except IndexError:
         outDir = '.'
 
