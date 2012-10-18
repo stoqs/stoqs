@@ -176,8 +176,8 @@ class Base_Loader(STOQS_Loader):
         what is in MBARItracking.'''
 
         ##paURL = 'http://odss-staging.shore.mbari.org/trackingdb/platformAssociations.csv'
-        ##paURL = 'http://odss.mbari.org/trackingdb/platformAssociations.csv'
-        paURL = 'http://192.168.111.177/trackingdb/platformAssociations.csv'
+        paURL = 'http://odss.mbari.org/trackingdb/platformAssociations.csv'
+        ##paURL = 'http://192.168.111.177/trackingdb/platformAssociations.csv'  # Private URL for host malibu
         # Returns lines like:
         # PlatformType,PlatformName
         # ship,Martin
