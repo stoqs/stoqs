@@ -38,6 +38,7 @@ import csv
 import urllib2
 import logging
 from utils.utils import percentile, median, mode, simplify_points
+import pprint
 
 
 # Set up logging
@@ -54,6 +55,13 @@ from django.db.backends.util import CursorWrapper
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
+class SkipRecord(Exception):
+    pass
+
+
+class ParameterNotFound(Exception):
+    pass
+
 
 class STOQS_Loader(object):
     '''
@@ -64,6 +72,16 @@ class STOQS_Loader(object):
     Mike McCann
     MBARI 26 May 2012
     '''
+
+    parameter_dict={} # used to cache parameter objects 
+    standard_names = {} # should be defined for each child class
+    include_names=[] # names to include, if set it is used in conjunction with ignored_names
+    # Note: if a name is both in include_names and ignored_names it is ignored.
+    ignored_names=[]  # Should be defined for each child class
+    global_ignored_names = ['longitude','latitude', 'time', 'Time',
+                'LONGITUDE','LATITUDE','TIME', 'NominalDepth', 'esecs', 'Longitude', 'Latitude',
+                'DEPTH','depth'] # A list of parameters that should not be imported as parameters
+    global_dbAlias = ''
 
     def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, 
                 activitytypeName=None, platformColor=None, platformTypeName=None):
@@ -323,7 +341,7 @@ class STOQS_Loader(object):
         try:
             self.parameter_dict[name].save(using=self.dbAlias)
         except Exception, e:
-            print sys.exc_info(e)[2]
+            print e
             print name
             pprint.pprint( self.parameter_dict[name])
 
@@ -343,8 +361,8 @@ class STOQS_Loader(object):
         @return: An instance of stoqs.models.Measurement
         '''
 
-        if depth < -1000 or depth > 4000:
-            raise SkipRecord('Bad depth')
+        if depth < -1000 or depth > 6000:
+            raise SkipRecord('Bad depth = %f')
 
         ip = m.InstantPoint(activity = self.activity,
                     timevalue = time)
