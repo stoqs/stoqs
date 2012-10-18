@@ -46,8 +46,8 @@ except IndexError:
 cl = CANONLoader(dbAlias, 'CANON - September 2012')
 
 # Aboard the Flyer use malibu's VSAT IP address:
-tdsBase = 'http://192.168.111.177:8080/thredds/dodsC/'      # malibu on the flyer
-##tdsBase = 'http://odss.mbari.org:8080/thredds/dodsC/'       # For running shore-side
+##tdsBase = 'http://192.168.111.177:8080/thredds/dodsC/'      # malibu on the flyer
+tdsBase = 'http://odss.mbari.org:8080/thredds/dodsC/'       # For running shore-side
 
 # 2-second decimated dorado data
 # http://192.168.111.177:8080/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_258_00_258_00_decim.nc
