@@ -189,7 +189,7 @@ class CANONLoader(object):
         '''
         WF pctd specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.wfpctd_files], self.wfpctd_files):
+        for (aName, file) in zip([ a.split('.')[0] + ' (stride=%d)' % self.stride for a in self.wfpctd_files], self.wfpctd_files):
             url = self.wfpctd_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'wf_pctd', self.colors['flyer'], 'wf_pctd', 'Western Flyer Underway CTD Data', 
