@@ -48,12 +48,17 @@ class ParserWriter(BaseWriter):
     '''
 
     @staticmethod
-    def get_year_lat_lon(file):
+    def get_year_lat_lon(*args, **kwargs):
         '''
-        Open .hdr file to get the year, lat, and lon of this cast
+        Open .hdr file to get the year, lat, and lon of this cast.  Can be called with hdrUrl='' argument in which case
+        data will be read from the specified URL instead of from file.
         Returns (year, lat, lon) tuple
         '''
-        for line in open('.'.join(file.split('.')[:-1]) + '.hdr'):
+        if kwargs['hdrUrl']:
+            FH = urllib2.urlopen(kwargs['hdrUrl'])
+        else:
+            FH = open('.'.join(args[0].split('.')[:-1]) + '.hdr')
+        for line in FH:
             ##print line
             if line.find('NMEA Latitude') != -1:
                 latD = int(line.split(' ')[4])
