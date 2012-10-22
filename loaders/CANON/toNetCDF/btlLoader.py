@@ -49,6 +49,7 @@ from glob import glob
 from tempfile import NamedTemporaryFile
 import re
 import pprint
+from bs4 import BeautifulSoup
 
 # Set up logging
 logger = logging.getLogger('loaders')
@@ -194,9 +195,92 @@ class SampleLoader(BaseWriter, STOQS_Loader):
         except ClosestTimeNotFoundException:
             logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
 
+    def process_btl_file(self, fh, year, lat, lon):
+        '''
+        Iterate through lines of iterator to Seabird .btl file and pull out data for loading into STOQS
+        '''
+        _debug = False
+        tmpFile = NamedTemporaryFile(dir='/dev/shm', suffix='.btl').name
+        if _debug: print 'tmpFile = ', tmpFile
+        tmpFH = open(tmpFile, 'w')
+        for line in fh:
+            # Write to tempfile all lines that don't begin with '*' nor '#' then open that with csv.DictReader
+            # Concatenate broken lines that begin with 'Position...' and with HH:MM:SS, remove (avg|sdev)
+            if not line.startswith('#') and not line.startswith('*'):
+                m = re.match('.+(Sbeox0PS)(Sbeox0Mm)', line.strip())
+                if m:
+                    line = re.sub('(?<=)(Sbeox0PS)(Sbeox0Mm)(?=)', lambda m: "%s %s" % (m.group(1), m.group(2)), line)
+                    if _debug: print 'Fixed header: line = ', line
+                if line.strip() == 'Position        Time':
+                    # Append 2nd line of header to first line & write to tmpFile
+                    tmpFH.write(lastLine + line)
+                m = re.match('\d\d:\d\d:\d\d', line.strip())
+                if m:
+                    # Append Time string to last line & write to tmpFile
+                    if _debug: print 'm.group(0) = ', m.group(0)
+                    tmpFH.write(lastLine + ' ' + m.group(0) + '\n')
+                m = re.match('.+[A-Z][a-z][a-z] \d\d \d\d\d\d', line.strip())
+                if m:
+                    # Replace spaces with dashes in the date field
+                    line = re.sub('(?<= )([A-Z][a-z][a-z]) (\d\d) (\d\d\d\d)(?= )', lambda m: "%s-%s-%s" % (m.group(1), m.group(2), m.group(3)), line)
+                    if _debug: print 'Spaces to dashes: line = ', line
+
+                lastLine = line.rstrip()      # Save line without terminating linefeed
+
+        tmpFH.close()
+        try:
+            fh.close()
+        except AttributeError:
+            pass    # fh is likely a list read in from a URL, ignore AttributeError
+
+        # Create activity for this cast
+        self.startDatetime = None
+        self.endDatetime = None
+        print tmpFile
+        for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
+            dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
+            if not self.startDatetime:
+                self.startDatetime = dt
+        self.endDatetime = dt
+        self.platformName = 'wf_pctd'
+        self.platformColor = '11665e'
+        self.platformTypeName = 'ship'
+        self.platform = self.getPlatform(self.platformName, self.platformTypeName)
+        self.activitytypeName = 'CTD upcast'
+        self.include_names = ['Sal00', 'T090C']
+        self.createActivity()
+
+        # Add T & S parameters for the data that we need to load so that we have InstantPoints at the bottle locations
+        parmDict = {}
+        Sal00 = BaseType()
+        Sal00.attributes = {'units': 1 , 'long_name': 'salinity', 'standard_name': 'sea_water_salinity'} 
+        T090C = BaseType()
+        T090C.attributes = {'units': 'ITS-90, deg C', 'long_name': 'temperature', 'standard_name': 'sea_water_temperature'}
+        parmDict = { 'Sal00': Sal00, 'T090C': T090C }
+        self.addParameters(parmDict)
+
+        for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
+            dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
+            esDiff = dt - datetime(1970, 1, 1, 0, 0, 0)
+            es = 86400 * esDiff.days + esDiff.seconds
+            bName = self.activityName + '_' + r['Bottle']
+
+            # Load data 
+            parmNameValues = []
+            for name in parmDict.keys():
+                parmNameValues.append((name, float(r[name])))
+            logger.debug('Calling load_data with parmNameValues = %s', pprint.pprint(parmNameValues))
+            self.load_data(lon, lat, float(r['DepSM']), dt, parmNameValues)
+
+            # Load Bottle sample
+            self.load_btl(lon, lat, float(r['DepSM']), dt, bName)
+
+        os.remove(tmpFile)
+
     def process_btl_files(self):
         '''
-        Loop through all .btl files and insert a Sample record to the database for each bottle trip
+        Loop through all .btl files and insert a Sample record to the database for each bottle trip.  Assumes that c*.btl files 
+        are available in a local pctd directory, if not then they are read from a THREDDS server.
 
         Processed c*.btl files look like (after xml header):
 
@@ -207,100 +291,36 @@ class SampleLoader(BaseWriter, STOQS_Loader):
       3    Sep 10 2012    33.9433    33.9424    26.2372    26.2363    1.91904   29.75985     83.513     9.3330     9.3342 255.147702    150.644    149.478   3.652452   3.652470     9.3495     9.3507     0.4231    89.9630     4.5288     1.0855     1.0858     0.3890     0.0355  0.0002000     0.0000 1.0000e-12     0.1293     100.00     5.0000      14795 (avg)
               20:32:43
         '''
-
-        _debug = False
         fileList = glob(os.path.join(self.parentInDir, 'pctd/c*.btl'))
-        fileList.sort()
-        for file in fileList:
-            if _debug: print "file = %s" % file
-            tmpFile = NamedTemporaryFile(dir='/dev/shm', suffix='.btl').name
-            if _debug: print 'tmpFile = ', tmpFile
-            tmpFH = open(tmpFile, 'w')
+        if fileList:
+            # Read files from local pctd directory
+            fileList.sort()
+            for file in fileList:
+                self.activityName = file.split('/')[-1].split('.')[-2] 
+                year, lat, lon = ParserWriter.get_year_lat_lon(file)
+                fh = open(file)
+                self.process_btl_file(fh, year, lat, lon)
 
-            year, lat, lon = ParserWriter.get_year_lat_lon(file)
-            print year, lat, lon
-
-            fh = open(file)
-            for line in fh:
-                # Write to tempfile all lines that don't begin with '*' nor '#' then open that with csv.DictReader
-                # Concatenate broken lines that begin with 'Position...' and with HH:MM:SS, remove (avg|sdev)
-                if not line.startswith('#') and not line.startswith('*'):
-                    m = re.match('.+(Sbeox0PS)(Sbeox0Mm)', line.strip())
-                    if m:
-                        line = re.sub('(?<=)(Sbeox0PS)(Sbeox0Mm)(?=)', lambda m: "%s %s" % (m.group(1), m.group(2)), line)
-                        if _debug: print 'Fixed header: line = ', line
-                    if line.strip() == 'Position        Time':
-                        # Append 2nd line of header to first line & write to tmpFile
-                        tmpFH.write(lastLine + line)
-                    m = re.match('\d\d:\d\d:\d\d', line.strip())
-                    if m:
-                        # Append Time string to last line & write to tmpFile
-                        if _debug: print 'm.group(0) = ', m.group(0)
-                        tmpFH.write(lastLine + ' ' + m.group(0) + '\n')
-                    m = re.match('.+[A-Z][a-z][a-z] \d\d \d\d\d\d', line.strip())
-                    if m:
-                        # Replace spaces with dashes in the date field
-                        line = re.sub('(?<= )([A-Z][a-z][a-z]) (\d\d) (\d\d\d\d)(?= )', lambda m: "%s-%s-%s" % (m.group(1), m.group(2), m.group(3)), line)
-                        if _debug: print 'Spaces to dashes: line = ', line
-                        # Remove (avg) or (sdev) field
-                        ##line = line[:line.find('(')]
-                        ##if _debug: print 'Remove (...: line = ', line
-
-                    lastLine = line.rstrip()      # Save line without terminating linefeed
-
-            tmpFH.close()
-
-            # Create activity for this cast
-            self.startDatetime = None
-            self.endDatetime = None
-            for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
-                dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
-                if not self.startDatetime:
-                    self.startDatetime = dt
-            self.endDatetime = dt
-            self.campaignName = 'CANON - September 2012'
-            self.platformName = 'wfpctd'
-            self.platformColor = '11665e'
-            self.platformTypeName = 'ship'
-            self.platform = self.getPlatform(self.platformName, self.platformTypeName)
-            self.activitytypeName = 'CTD upcast'
-            self.activityName = file.split('/')[-1].split('.')[-2] 
-            self.include_names = ['Sal00', 'T090C']
-            self.createActivity()
-
-            # Add some parameters for the data that we need to load so that we have InstantPoints at the bottle locations
-            parmDict = {}
-            Sal00 = BaseType()
-            Sal00.attributes = {'units': 1 , 'long_name': 'salinity', 'standard_name': 'sea_water_salinity'} 
-            T090C = BaseType()
-            T090C.attributes = {'units': 'ITS-90, deg C', 'long_name': 'temperature', 'standard_name': 'sea_water_temperature'}
-            parmDict = { 'Sal00': Sal00, 'T090C': T090C }
-            self.addParameters(parmDict)
-
-            for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
-                # Date Time =  Sep-10-2012 20:38:17 - this is local time, but use TimeJ for GMT
-                ##es = time.mktime(time.strptime(r['Date'] + ' ' + r['Time'], '%b-%d-%Y %H:%M:%S'))
-                ##print 'Time from Date + Time =',  datetime.fromtimestamp(es)
-                dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
-                ##print 'Time from TimeJ = ', dt
-                esDiff = dt - datetime(1970, 1, 1, 0, 0, 0)
-                es = 86400 * esDiff.days + esDiff.seconds
-
-                # activity name will be the same as the .asc file that was converted to .nc
-                bName = file.split('/')[-1].split('.')[-2] + '_' + r['Bottle']
-
-                # Load data 
-                parmNameValues = []
-                for name in parmDict.keys():
-                    parmNameValues.append((name, float(r[name])))
-                logger.debug('Calling load_data with parmNameValues = %s', pprint.pprint(parmNameValues))
-                self.load_data(lon, lat, float(r['DepSM']), dt, parmNameValues)
-
-                # Load Bottle sample
-                self.load_btl(lon, lat, float(r['DepSM']), dt, bName)
-
-            fh.close()
-            os.remove(tmpFile)
+        else:
+            # Read files from the network
+            webBtlDir = 'http://odss.mbari.org/thredds/catalog/' + self.pctdDir + 'catalog.html'
+            logger.debug('Opening url to %s', webBtlDir)
+            soup = BeautifulSoup(urllib2.urlopen(webBtlDir).read())
+            linkList = soup.find_all('a')
+            linkList.sort(reverse=True)
+            for link in linkList:
+                file = link.get('href')
+                if file.endswith('.btl'):
+                    logger.debug("file = %s", file)
+                    # btlUrl looks something like: http://odss.mbari.org/thredds/fileServer/CANON_september2012/wf/pctd/c0912c53.btl
+                    btlUrl = 'http://odss.mbari.org/thredds/fileServer/' +  self.pctdDir + file.split('/')[-1]
+                    hdrUrl = 'http://odss.mbari.org/thredds/fileServer/' +  self.pctdDir + ''.join(file.split('/')[-1].split('.')[:-1]) + '.hdr'
+                    logger.debug('btlUrl = %s', btlUrl)
+    
+                    self.activityName = file.split('/')[-1].split('.')[-2] 
+                    year, lat, lon = ParserWriter.get_year_lat_lon(hdrUrl = hdrUrl)
+                    btlFH = urllib2.urlopen(btlUrl).read().splitlines()
+                    self.process_btl_file(btlFH, year, lat, lon)
 
 
 if __name__ == '__main__':
@@ -322,5 +342,7 @@ if __name__ == '__main__':
     
     sl = SampleLoader(parentInDir=inDir, parentOutDir=outDir)
     sl.dbAlias = dbAlias
+    sl.pctdDir = 'CANON_september2012/wf/pctd/'
+    sl.campaignName = 'CANON - September 2012'
     sl.process_btl_files()
 
