@@ -39,52 +39,13 @@ from pupynere import netcdf_file
 from seawater import csiro
 
 from CANON.toNetCDF import BaseWriter
-from CANON import Util
+from seabird import get_year_lat_lon, convert_up_to_down
 
 class ParserWriter(BaseWriter):
     '''
     Handle all information needed to parse Western Flyer Underway CTD data from the Seabird software
     generated .asc files and write the data as a CF-compliant NetCDF Trajectory file.
     '''
-
-    @staticmethod
-    def get_year_lat_lon(*args, **kwargs):
-        '''
-        Open .hdr file to get the year, lat, and lon of this cast.  Can be called with hdrUrl='' argument in which case
-        data will be read from the specified URL instead of from file.
-        Returns (year, lat, lon) tuple
-        '''
-        if kwargs['hdrUrl']:
-            FH = urllib2.urlopen(kwargs['hdrUrl'])
-        else:
-            FH = open('.'.join(args[0].split('.')[:-1]) + '.hdr')
-        for line in FH:
-            ##print line
-            if line.find('NMEA Latitude') != -1:
-                latD = int(line.split(' ')[4])
-                latM = float(line.split(' ')[5])
-                latNS = line.split(' ')[6].strip()
-            if line.find('NMEA Longitude') != -1:
-                lonD = int(line.split(' ')[4])
-                lonM = float(line.split(' ')[5])
-                lonEW = line.split(' ')[6].strip()
-            if line.find('NMEA UTC (Time)') != -1:
-                year = int(line.split(' ')[7])
-                # Breaking here assumes that the Time line appears after Latitude & Longitude
-                break
-
-        if latNS == 'N':
-            lat = float("%4.7f" % (latD + latM / 60))
-        else:
-            lat = float("-%4.7f" % (latD + latM / 60))
-
-        if lonEW == 'W':
-            lon = float("-%4.7f" % (lonD + lonM / 60))
-        else:
-            lon = float("%4.7f" % (lonD + lonM / 60))
-
-        return year, lat, lon
-
     def process_asc_files(self):
         '''
         Loop through all .asc files and write each one out as a netCDF file trajectory format
@@ -105,9 +66,9 @@ class ParserWriter(BaseWriter):
             print "file = %s" % file
             if file == './pctd/c0912c01.asc':
                 print "Converting %s up to down" % file
-                file = Util.convert_up_to_down(file)
+                file = convert_up_to_down(file)
 
-            year, lat, lon = self.get_year_lat_lon(file)
+            year, lat, lon = get_year_lat_lon(file)
 
             # Initialize member lists for each file processed
             self.esec_list = []
