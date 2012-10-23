@@ -161,11 +161,11 @@ class CANONLoader(object):
         WF pctd specific load functions
         '''
         platformName = 'wf_pctd'
-        for (aName, file) in zip([ a.split('.')[0] + ' (stride=%d)' % self.stride for a in self.wfpctd_files], self.wfpctd_files):
-            url = self.wfpctd_base + file
-            print "url = %s" % url
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], platformName, 'Western Flyer Underway CTD Data', 
-                                        self.wfpctd_parms, self.dbAlias, self.stride)
+        ##for (aName, file) in zip([ a.split('.')[0] + ' (stride=%d)' % self.stride for a in self.wfpctd_files], self.wfpctd_files):
+        ##    url = self.wfpctd_base + file
+        ##    print "url = %s" % url
+        ##    DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], platformName, 'Western Flyer Underway CTD Data', 
+        ##                                self.wfpctd_parms, self.dbAlias, self.stride)
         # Now load all the bottles           
         sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'])
         sl.tdsBase= 'http://odss.mbari.org/thredds/' 
