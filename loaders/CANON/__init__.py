@@ -22,37 +22,8 @@ os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
-
 import DAPloaders
-import GulperLoader
-
-class Util(object):
-    '''
-    Utility methods used for creating netCDF files and loading data into STOQS
-    '''
-    @staticmethod
-    def convert_up_to_down(file):
-        '''
-        Convert an upcast SeaBird pctd file to a downcast file
-        '''
-        newName = '.'.join(file.split('.')[:-1]) + 'up.asc'
-        outFile = open(newName, 'w')
-        lines = []
-        i = 0
-        for line in open(file):
-            if i == 0:
-                outFile.write(line)
-            else:
-                lines.append(line)
-            i = i + 1
-
-        for line in reversed(lines):
-                outFile.write(line)
-
-        outFile.close()
-
-        return newName
-
+from SampleLoaders import SeabirdLoader
 
 class CANONLoader(object):
     '''
@@ -67,8 +38,8 @@ class CANONLoader(object):
                 'nps_g29':      '80cdc1',
                 'l_662':        '35978f',
                 'martin':       '01665e',
-                'flyer':     '11665e',
-                'espdrift':       '21665e',
+                'flyer':        '11665e',
+                'espdrift':     '21665e',
              }
     colors = {  'dorado':       'ffeda0',
                 'other':        'ffeda0',
@@ -79,8 +50,8 @@ class CANONLoader(object):
                 'nps_g29':      'e31a1c',
                 'l_662':        'bd0026',
                 'martin':       '800026',
-                'flyer':     '801026',
-                'espdrift':       '802026',
+                'flyer':        '801026',
+                'espdrift':     '802026',
              }
 
     def __init__(self, dbAlias, campaignName):
@@ -96,7 +67,7 @@ class CANONLoader(object):
             url = self.dorado_base + file
             DAPloaders.runDoradoLoader(url, self.campaignName, aName, 'dorado', self.colors['dorado'], 'auv', 'AUV mission', 
                                         self.dbAlias, self.stride)
-            GulperLoader.load_gulps(aName, file, self.dbAlias)
+            load_gulps(aName, file, self.dbAlias)
 
 
     def loadTethys(self):
@@ -189,11 +160,19 @@ class CANONLoader(object):
         '''
         WF pctd specific load functions
         '''
+        platformName = 'wf_pctd'
         for (aName, file) in zip([ a.split('.')[0] + ' (stride=%d)' % self.stride for a in self.wfpctd_files], self.wfpctd_files):
             url = self.wfpctd_base + file
             print "url = %s" % url
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'wf_pctd', self.colors['flyer'], 'wf_pctd', 'Western Flyer Underway CTD Data', 
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], platformName, 'Western Flyer Underway CTD Data', 
                                         self.wfpctd_parms, self.dbAlias, self.stride)
+        # Now load all the bottles           
+        sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'])
+        sl.tdsBase= 'http://odss.mbari.org/thredds/' 
+        sl.pctdDir = 'CANON_september2012/wf/pctd/'
+        sl.process_btl_files()
+
+
     def loadAll(self):
         '''
         Execute all the load functions
