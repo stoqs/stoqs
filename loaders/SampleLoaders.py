@@ -8,6 +8,8 @@ __email__ = "mccann at mbari.org"
 __status__ = "Development"
 __doc__ = '''
 
+The SampleLoaders module contains classes and functions for loading Sample data into STOQS.
+
 The btlLoader module has a load_btl() method that reads data from a Seabird
 btl*.asc file and saves the bottle trip events as parent Samples in the STOQS database.
 
@@ -25,18 +27,13 @@ import os
 import sys
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
-# Add grandparent dir to pythonpath so that we can see the CANON and toNetCDF modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../") )
-# Add great-grandparent dir to pythonpath so that we can see the stoqs module
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../") )
-# Add great-great-grandparent dir to pythonpath so that we can see the stoqs module
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../") )
+# Add parent dir to pythonpath so that we can see the loaders and stoqs modules
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../") )
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
 from stoqs import models as m
-from CANON.toNetCDF import BaseWriter
-from CANON.toNetCDF.wfpctdToNetcdf import ParserWriter
+from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
 from datetime import datetime, timedelta
 from pydap.model import BaseType
@@ -68,7 +65,107 @@ class ClosestTimeNotFoundException(Exception):
     pass
 
 
-class SampleLoader(BaseWriter, STOQS_Loader):
+def get_closest_instantpoint(aName, tv, dbAlias):
+        '''
+        Start with a tolerance of 1 second and double it until we get a non-zero count,
+        get the values and find the closest one by finding the one with minimum absolute difference.
+        '''
+        tol = 1
+        num_timevalues = 0
+        logger.debug('Looking for tv = %s', tv)
+        while tol < 86400:                                      # Fail if not found within 24 hours
+            qs = m.InstantPoint.objects.using(dbAlias).filter(  activity__name__contains = aName,
+                                                                timevalue__gte = (tv-timedelta(seconds=tol)),
+                                                                timevalue__lte = (tv+timedelta(seconds=tol))
+                                                             ).order_by('timevalue')
+            if qs.count():
+                num_timevalues = qs.count()
+                break
+            tol = tol * 2
+
+        if not num_timevalues:
+            raise ClosestTimeNotFoundException
+
+        logger.debug('Found %d time values with tol = %d', num_timevalues, tol)
+        timevalues = [q.timevalue for q in qs]
+        logger.debug('timevalues = %s', timevalues)
+        i = 0
+        i_min = 0
+        secdiff = []
+        minsecdiff = tol
+        for t in timevalues:
+            secdiff.append(abs(t - tv).seconds)
+            if secdiff[i] < minsecdiff:
+                minsecdiff = secdiff[i]
+                i_min = i
+            logger.debug('i = %d, secdiff = %d', i, secdiff[i])
+            i = i + 1
+
+        logger.debug('i_min = %d', i_min)
+        return qs[i_min], secdiff[i_min]
+
+def load_gulps(activityName, file, dbAlias):
+    '''
+    file looks like 'Dorado389_2011_111_00_111_00_decim.nc'.  From hard-coded knowledge of MBARI's filesystem
+    read the associated _gulper.txt file for the survey and load the gulps as samples in the dbAlias database.
+    '''
+
+    # Get the Activity from the Database
+    try:
+        activity = m.Activity.objects.using(dbAlias).get(name__contains=activityName)
+        logger.debug('Got activity = %s', activity)
+    except ObjectDoesNotExist:
+        logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', activityName)
+        return
+    except MultipleObjectsReturned:
+        logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
+        activity = m.Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
+        
+
+    # Use the dods server to read over http - works from outside of MABRI's Intranet
+    baseUrl = 'http://dods.mbari.org/data/auvctd/surveys/'
+    yyyy = file.split('_')[1].split('_')[0]
+    survey = file.split(r'_decim')[0]
+    # E.g.: http://dods.mbari.org/data/auvctd/surveys/2010/odv/Dorado389_2010_300_00_300_00_Gulper.txt
+    gulperUrl = baseUrl + yyyy + '/odv/' + survey + '_Gulper.txt'
+
+    try:
+        reader = csv.DictReader(urllib2.urlopen(gulperUrl), dialect='excel-tab')
+        logger.debug('Reading gulps from %s', gulperUrl)
+    except urllib2.HTTPError:
+        logger.warn('Failed to find odv-formatted Gulper file: %s.  Skipping GulperLoad.', gulperUrl)
+        return
+
+    # Get or create SampleType for Gulper
+    (gulper_type, created) = m.SampleType.objects.using(dbAlias).get_or_create(name = 'Gulper')
+    logger.debug('sampletype %s, created = %s', gulper_type, created)
+    for row in reader:
+        # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
+        timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
+        try:
+            ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
+            point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
+            stuple = m.Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
+                                                                depth = row[r'DEPTH [m]'],
+                                                                geom = point,
+                                                                instantpoint = ip,
+                                                                sampletype = gulper_type,
+                                                                volume = 1800
+                                                              )
+            rtuple = m.Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
+                                                                  value = seconds_diff
+                                                                )
+
+            # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
+            logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
+        except ClosestTimeNotFoundException:
+            logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+
+
+class SeabirdLoader(STOQS_Loader):
+    '''
+    Inherit database loding functions from STOQS_Loader and use its constructor
+    '''
 
     def load_data(self, lat, lon, depth, time, parmNameValues):
         '''
@@ -113,46 +210,6 @@ class SampleLoader(BaseWriter, STOQS_Loader):
                 loaded += 1
                 logger.debug("Inserted value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
 
-    def get_closest_instantpoint(self, aName, tv, dbAlias):
-        '''
-        Start with a tolerance of 1 second and double it until we get a non-zero count,
-        get the values and find the closest one by finding the one with minimum absolute difference.
-        '''
-        tol = 1
-        num_timevalues = 0
-        logger.debug('Looking for tv = %s', tv)
-        while tol < 86400:                                      # Fail if not found within 24 hours
-            qs = m.InstantPoint.objects.using(self.dbAlias).filter(  activity__name__contains = aName,
-                                                                timevalue__gte = (tv-timedelta(seconds=tol)),
-                                                                timevalue__lte = (tv+timedelta(seconds=tol))
-                                                             ).order_by('timevalue')
-            if qs.count():
-                num_timevalues = qs.count()
-                break
-            tol = tol * 2
-
-        if not num_timevalues:
-            logger.info('Last query tried: %s', str(qs.query))
-            raise ClosestTimeNotFoundException
-
-        logger.debug('Found %d time values with tol = %d', num_timevalues, tol)
-        timevalues = [q.timevalue for q in qs]
-        logger.debug('timevalues = %s', timevalues)
-        i = 0
-        i_min = 0
-        secdiff = []
-        minsecdiff = tol
-        for t in timevalues:
-            secdiff.append(abs(t - tv).seconds)
-            if secdiff[i] < minsecdiff:
-                minsecdiff = secdiff[i]
-                i_min = i
-            logger.debug('i = %d, secdiff = %d', i, secdiff[i])
-            i = i + 1
-
-        logger.debug('i_min = %d', i_min)
-        return qs[i_min], secdiff[i_min]
-
     def load_btl(self, lon, lat, depth, timevalue, bottleName):
         '''
         Load a single Niskin Bottle sample
@@ -176,7 +233,7 @@ class SampleLoader(BaseWriter, STOQS_Loader):
         (sample_purpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name = 'StandardDepth')
         logger.debug('samplepurpose %s, created = %s', sample_purpose, created)
         try:
-            ip, seconds_diff = self.get_closest_instantpoint(self.activityName, timevalue, self.dbAlias)
+            ip, seconds_diff = get_closest_instantpoint(self.activityName, timevalue, self.dbAlias)
             point = 'POINT(%s %s)' % (lon, lat)
             stuple = m.Sample.objects.using(self.dbAlias).get_or_create( name = bottleName,
                                                                     depth = str(depth),     # Must be str to convert to Decimal
@@ -291,19 +348,22 @@ class SampleLoader(BaseWriter, STOQS_Loader):
       3    Sep 10 2012    33.9433    33.9424    26.2372    26.2363    1.91904   29.75985     83.513     9.3330     9.3342 255.147702    150.644    149.478   3.652452   3.652470     9.3495     9.3507     0.4231    89.9630     4.5288     1.0855     1.0858     0.3890     0.0355  0.0002000     0.0000 1.0000e-12     0.1293     100.00     5.0000      14795 (avg)
               20:32:43
         '''
-        fileList = glob(os.path.join(self.parentInDir, 'pctd/c*.btl'))
+        try:
+            fileList = glob(os.path.join(self.parentInDir, 'pctd/c*.btl'))
+        except AttributeError:
+            fileList = []
         if fileList:
             # Read files from local pctd directory
             fileList.sort()
             for file in fileList:
                 self.activityName = file.split('/')[-1].split('.')[-2] 
-                year, lat, lon = ParserWriter.get_year_lat_lon(file)
+                year, lat, lon = get_year_lat_lon(file)
                 fh = open(file)
                 self.process_btl_file(fh, year, lat, lon)
 
         else:
-            # Read files from the network
-            webBtlDir = 'http://odss.mbari.org/thredds/catalog/' + self.pctdDir + 'catalog.html'
+            # Read files from the network - use BeautifulSoup to parse TDS's html response
+            webBtlDir = self.tdsBase + 'catalog/' + self.pctdDir + 'catalog.html'
             logger.debug('Opening url to %s', webBtlDir)
             soup = BeautifulSoup(urllib2.urlopen(webBtlDir).read())
             linkList = soup.find_all('a')
@@ -313,12 +373,12 @@ class SampleLoader(BaseWriter, STOQS_Loader):
                 if file.endswith('.btl'):
                     logger.debug("file = %s", file)
                     # btlUrl looks something like: http://odss.mbari.org/thredds/fileServer/CANON_september2012/wf/pctd/c0912c53.btl
-                    btlUrl = 'http://odss.mbari.org/thredds/fileServer/' +  self.pctdDir + file.split('/')[-1]
-                    hdrUrl = 'http://odss.mbari.org/thredds/fileServer/' +  self.pctdDir + ''.join(file.split('/')[-1].split('.')[:-1]) + '.hdr'
+                    btlUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + file.split('/')[-1]
+                    hdrUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + ''.join(file.split('/')[-1].split('.')[:-1]) + '.hdr'
                     logger.debug('btlUrl = %s', btlUrl)
     
                     self.activityName = file.split('/')[-1].split('.')[-2] 
-                    year, lat, lon = ParserWriter.get_year_lat_lon(hdrUrl = hdrUrl)
+                    year, lat, lon = get_year_lat_lon(hdrUrl = hdrUrl)
                     btlFH = urllib2.urlopen(btlUrl).read().splitlines()
                     self.process_btl_file(btlFH, year, lat, lon)
 
@@ -331,18 +391,28 @@ if __name__ == '__main__':
         dbAlias = sys.argv[1]
     except IndexError:
         dbAlias = 'default'
-    try:
-        inDir = sys.argv[2]
-    except IndexError:
-        inDir = '.'
-    try:
-        outDir = sys.argv[3]
-    except IndexError:
-        outDir = '.'
+
     
-    sl = SampleLoader(parentInDir=inDir, parentOutDir=outDir)
-    sl.dbAlias = dbAlias
+    sl = SeabirdLoader('activity name', 'wf_pctd', dbAlias=dbAlias)
+    ##sl.parentInDir = '.'  # Set if reading data from a directory rather than a TDS URL
+    # Catalog to .btl files is formed with sl.tdsBase + 'catalog/' + sl.pctdDir + 'catalog.html'
+    sl.tdsBase= 'http://odss.mbari.org/thredds/' 
     sl.pctdDir = 'CANON_september2012/wf/pctd/'
     sl.campaignName = 'CANON - September 2012'
     sl.process_btl_files()
+
+
+
+    # A nice test data load for a northern Monterey Bay survey  
+    ##file = 'Dorado389_2010_300_00_300_00_decim.nc'
+    ##dbAlias = 'default'
+    file = 'Dorado389_2010_277_01_277_01_decim.nc'
+    dbAlias = 'stoqs_oct2010'
+
+    aName = file
+
+    load_gulps(aName, file, dbAlias)
+
+
+
 
