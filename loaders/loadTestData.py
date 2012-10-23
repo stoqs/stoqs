@@ -28,7 +28,7 @@ project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
 import DAPloaders
-import GulperLoader
+from SampleLoaders import load_gulps
 
 baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'             # NCML to make salinity.units = "1"
 file = 'Dorado389_2010_300_00_300_00_decim.nc'                      # file name is same as activity name
@@ -36,6 +36,6 @@ stride = 1000                                                       # Make large
 dbAlias = 'default'
 
 DAPloaders.runDoradoLoader(baseUrl + file, 'Test Load', '%s (stride=%d)' % (file, stride,), 'dorado', 'ffff00', 'auv', 'AUV Mission', dbAlias, stride)
-GulperLoader.load_gulps(file, file, dbAlias)
+load_gulps(file, file, dbAlias)
 
 
