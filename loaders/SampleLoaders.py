@@ -64,6 +64,8 @@ if settings.DEBUG:
 class ClosestTimeNotFoundException(Exception):
     pass
 
+class SingleActivityNotFound(Exception):
+    pass
 
 def get_closest_instantpoint(aName, tv, dbAlias):
         '''
@@ -179,7 +181,6 @@ class SeabirdLoader(STOQS_Loader):
         @depth in meters
         '''
         try:
-            print time, depth, lat, lon
             measurement = self.createMeasurement(time = time,
                             depth = depth,
                             lat = lat,
@@ -251,6 +252,8 @@ class SeabirdLoader(STOQS_Loader):
             ##logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
         except ClosestTimeNotFoundException:
             logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+        else:
+            logger.info('Loaded Bottle name = %s', bottleName)
 
     def process_btl_file(self, fh, year, lat, lon):
         '''
@@ -293,7 +296,6 @@ class SeabirdLoader(STOQS_Loader):
         # Create activity for this cast
         self.startDatetime = None
         self.endDatetime = None
-        print tmpFile
         for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
             dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
             if not self.startDatetime:
@@ -305,7 +307,19 @@ class SeabirdLoader(STOQS_Loader):
         self.platform = self.getPlatform(self.platformName, self.platformTypeName)
         self.activitytypeName = 'CTD upcast'
         self.include_names = ['Sal00', 'T090C']
-        self.createActivity()
+
+        # Bottle samples are to be loaded after downcast data are loaded so that we can use the same activity
+        from stoqs import models as m
+        try:
+            activity = m.Activity.objects.using(self.dbAlias).get(name__contains=self.activityName)
+            logger.debug('Got activity = %s', activity)
+            self.activity = activity
+        except ObjectDoesNotExist:
+            logger.error('Failed to find Activity with name like %s.  Must load downcast data before loading bottles.', self.activityName)
+            raise SingleActivityNotFound
+        except MultipleObjectsReturned:
+            logger.error('Multiple objects returned for name__contains = %s.  This should not happen.  Fix the database and the reason for this.', self.activityName)
+            raise SingleActivityNotFound
 
         # Add T & S parameters for the data that we need to load so that we have InstantPoints at the bottle locations
         parmDict = {}
@@ -326,7 +340,6 @@ class SeabirdLoader(STOQS_Loader):
             parmNameValues = []
             for name in parmDict.keys():
                 parmNameValues.append((name, float(r[name])))
-            logger.debug('Calling load_data with parmNameValues = %s', pprint.pprint(parmNameValues))
             self.load_data(lon, lat, float(r['DepSM']), dt, parmNameValues)
 
             # Load Bottle sample
@@ -359,7 +372,10 @@ class SeabirdLoader(STOQS_Loader):
                 self.activityName = file.split('/')[-1].split('.')[-2] 
                 year, lat, lon = get_year_lat_lon(file)
                 fh = open(file)
-                self.process_btl_file(fh, year, lat, lon)
+                try:
+                    self.process_btl_file(fh, year, lat, lon)
+                except SingleActivityNotFound:
+                    continue
 
         else:
             # Read files from the network - use BeautifulSoup to parse TDS's html response
