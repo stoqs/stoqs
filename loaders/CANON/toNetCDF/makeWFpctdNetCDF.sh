@@ -8,7 +8,6 @@ RH=beach.mbari.org
 rsync -rv stoqsadm@$RH:/ODSS/data/canon/2012_Sep/wf/pctd .
 
 ./wfpctdToNetcdf.py
-./btlLoader.py stoqs_september2012
 
 scp pctd/*.nc stoqsadm@$RH:/ODSS/data/canon/2012_Sep/wf/pctd
 
