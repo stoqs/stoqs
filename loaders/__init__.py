@@ -84,7 +84,7 @@ class STOQS_Loader(object):
     global_dbAlias = ''
 
     def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, 
-                activitytypeName=None, platformColor=None, platformTypeName=None):
+                activitytypeName=None, platformColor=None, platformTypeName=None, stride=1):
         '''
         Intialize with settings that are common for any load of data into STOQS.
         
@@ -437,12 +437,17 @@ class STOQS_Loader(object):
         are the standard names of those fields.  Classes that inherit from this
         class should set any default standard names at the class level.
         '''
-        for var in self.ds.keys():
-            if self.standard_names.has_key(var): continue # don't override pre-specified names
-            if self.ds[var].attributes.has_key('standard_name'):
-                self.standard_names[var]=self.ds[var].attributes['standard_name']
-            else:
-                self.standard_names[var]=None # Indicate those without a standard name
+        try:
+            # Assumes that we have a ds that came from an OpenDAP call
+            for var in self.ds.keys():
+                if self.standard_names.has_key(var): continue # don't override pre-specified names
+                if self.ds[var].attributes.has_key('standard_name'):
+                    self.standard_names[var]=self.ds[var].attributes['standard_name']
+                else:
+                    self.standard_names[var]=None # Indicate those without a standard name
+        except AttributeError, e:
+            logger.warn(e)
+            pass
 
     def updateActivityParameterStats(self, parameterCounts):
         '''
