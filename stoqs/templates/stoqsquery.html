@@ -371,7 +371,6 @@
     }
 
     function setKMLlinks() {
-        // To be colled up change of cmin & cmax input text boxes
         var cmincmax = ''
         if ($('#cmin').val() && $('#cmax').val()) {
             cmincmax = '&cmin=' + $('#cmin').val() + '&cmax=' + $('#cmax').val();
@@ -391,7 +390,6 @@
         var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
         // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
         $.each(formats, function (index, value) {
-            console.log(value);
             var url = base_url + value + param;
             if (value == 'sql') {
                 $('#'+value+'-field').text(data['sql']);
@@ -414,7 +412,16 @@
                 setKMLlinks();
             }
             else if (value == 'stoqstoolbox') {
-                $('#'+value+'-field').text("Matlab text here\nstoqs_down(stoq_campaign,datestart,datend,min_dep,max_dep,vari,'');");
+                var st_text = "campaign = '{{site_uri}}/{{request.META.dbAlias}}';\n";
+                $.each(params, function(k, v) {
+                    if (k.match(/depth$/)) {
+                        st_text = st_text + k + " = " + v + ";\n";
+                    }
+                    else {
+                        st_text = st_text + k + " = '" + v + "';\n";
+                    }
+                });
+                $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(campaign, start_time, end_time, min_depth, max_depth, parameters, platforms);\n");
             }
             else {
                 $('#'+value+'-field').text(url);
