@@ -148,7 +148,12 @@ class Base_Loader(STOQS_Loader):
         
         self.url = url
         self.varsLoaded = []
-        self.ds = open_url(url)
+        try:
+            self.ds = open_url(url)
+        except socket.error,e:
+            logger.error('Failed in attempt to open url = %s', url)
+            raise e
+
         self.ignored_names += self.global_ignored_names # add global ignored names to platform specific ignored names.
         self.build_standard_names()
 
