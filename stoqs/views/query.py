@@ -216,7 +216,7 @@ def queryUI(request):
     formats=[('kml', 'KML - To view data in Google Earth, click on the icon', ),
              ('sql', 'SQL', ),
              ('csv', 'CSV', ),
-             ('stoqstoolbox', 'stoqstoolbox', ),
+             ('stoqstoolbox', 'stoqstoolbox - Copy-n-paste into Matlab with stoqstoolbox installed from https://code.google.com/p/stoqs/downloads', ),
             ]
     logger.debug(formats)
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
