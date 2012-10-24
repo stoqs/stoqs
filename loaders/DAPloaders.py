@@ -57,7 +57,7 @@ from loaders import STOQS_Loader
 
 # Set up logging
 logger = logging.getLogger('__main__')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
