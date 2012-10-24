@@ -180,29 +180,29 @@
                         <div class="accordion-inner">
 
                             <ul class="nav nav-tabs">
-                                {% for format, description in formats.items %}
-                                    {% if format = 'kml' %}
-                                <li class="active"><a href="#{{format}}" data-toggle="tab">{{format}}</a></li>
+                                {% for format in formats %}
+                                    {% if format.0 = 'kml' %}
+                                <li class="active"><a href="#{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% else %}
-                                <li><a href="#{{format}}" data-toggle="tab">{{format}}</a></li>
+                                <li><a href="#{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% endif %}
                                     
                                 {% endfor %}            
                             </ul>
                             <div class="tab-content">
-                                {% for format, description in formats.items %}
-                                    {% if format = 'kml' %}
-                                <div class="tab-pane active" id="{{format}}">
+                                {% for format in formats %}
+                                    {% if format.0 = 'kml' %}
+                                <div class="tab-pane active" id="{{format.0}}">
                                     {% else %}
-                                <div class="tab-pane" id="{{format}}">
+                                <div class="tab-pane" id="{{format.0}}">
                                     {% endif %} 
                                     <table>
                                         <tr>
-                                            <th><a target="_blank" id="{{format}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format}}-icon.png"/></a></th>
-                                            <th valign="top"><h4>&nbsp;{{description}}</h4></th>
+                                            <th><a target="_blank" id="{{format.0}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png"/></a></th>
+                                            <th valign="top"><h4>&nbsp;{{format.1}}</h4></th>
                                         </tr>
                                     </table>
-                                    {% if format = 'kml' %}
+                                    {% if format.0 = 'kml' %}
                                         <div align="center">
                                         <span id="kml-parameter"></span>
                                         <form align="center" class="form-inline">
@@ -211,9 +211,9 @@
                                             <input id="cmax" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
                                         </form>
                                         </div>
-                                        <pre id="{{format}}-field"></pre>
+                                        <pre id="{{format.0}}-field"></pre>
                                     {% else %}
-                                        <pre id="{{format}}-field"></pre>
+                                        <pre id="{{format.0}}-field"></pre>
                                     {% endif %}
                                 </div>
                                 {% endfor %}            
@@ -388,9 +388,10 @@
             param = '?' + param;
         } 
         // Use the Django variable to populate the supported query formats.
-        var formats=[{% for format, description in formats.items %}'{{format}}'{% if not forloop.last %},{% endif %}{%endfor%}]
+        var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
         // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
         $.each(formats, function (index, value) {
+            console.log(value);
             var url = base_url + value + param;
             if (value == 'sql') {
                 $('#'+value+'-field').text(data['sql']);
@@ -411,6 +412,9 @@
                     }
                 }
                 setKMLlinks();
+            }
+            else if (value == 'stoqstoolbox') {
+                $('#'+value+'-field').text("Matlab text here\nstoqs_down(stoq_campaign,datestart,datend,min_dep,max_dep,vari,'');");
             }
             else {
                 $('#'+value+'-field').text(url);
