@@ -57,7 +57,7 @@ from loaders import STOQS_Loader
 
 # Set up logging
 logger = logging.getLogger('__main__')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -841,14 +841,13 @@ class Base_Loader(STOQS_Loader):
         '''
         a = self.activity
         for p in parameterCounts:
-            data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p)
+            data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p, measurement__instantpoint__activity=self.activity)
             numpvar = numpy.array([float(v.datavalue) for v in data])
             numpvar.sort()
             listvar = list(numpvar)
-            logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f',
+            logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f, shape = %s',
                             p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar), 
-                            percentile(listvar, 0.025), percentile(listvar, 0.975))
-
+                            percentile(listvar, 0.025), percentile(listvar, 0.975), numpvar.shape)
 
             # Save statistics
             try:
