@@ -212,10 +212,13 @@ def queryUI(request):
         request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
         logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
-    formats={'kml': 'KML - To view data in Google Earth, click on the icon',
-             'sql': 'SQL', 
-             'csv': 'CSV',
-            }
+    # Use list of tuples to preserve order
+    formats=[('kml', 'KML - To view data in Google Earth, click on the icon', ),
+             ('sql', 'SQL', ),
+             ('csv', 'CSV', ),
+             ('stoqstoolbox', 'stoqstoolbox', ),
+            ]
+    logger.debug(formats)
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
                                                   'formats': formats,
                                                   'mapserver_host': settings.MAPSERVER_HOST,
