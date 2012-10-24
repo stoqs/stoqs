@@ -90,6 +90,7 @@ easy_install gdal==1.9.0                # Make sure the version matches the gdal
 easy_install psycopg2==2.4.1            # Do not use a higher version of psycopg2 - it has problems with postgresql-9.1
 easy_install pygraphviz
 easy_install django_extensions
+easy_install beautifulsoup4
 
 # For server-side Matlab-style plotting of data
 pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
