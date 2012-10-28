@@ -32,13 +32,13 @@ create database stoqs_june2011 owner=stoqsadm template=template_postgis;
 \c stoqs_june2011
 grant all on all tables in schema public to stoqsadm;
 
-drop database stoqs_september2011;
-create database stoqs_september2011 owner=stoqsadm template=template_postgis;
-\c stoqs_september2011
+drop database stoqs_may2012;
+create database stoqs_may2012 owner=stoqsadm template=template_postgis;
+\c stoqs_may2012
 grant all on all tables in schema public to stoqsadm;
 
-drop database stoqs_october2011;
-create database stoqs_october2011 owner=stoqsadm template=template_postgis;
-\c stoqs_october2011
-grant all on all tables in schema public to stoqsadm;
+--drop database stoqs_september2012;
+--create database stoqs_september2012 owner=stoqsadm template=template_postgis;
+--\c stoqs_september2012
+--grant all on all tables in schema public to stoqsadm;
 
