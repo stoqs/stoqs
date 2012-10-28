@@ -412,7 +412,7 @@
                 setKMLlinks();
             }
             else if (value == 'stoqstoolbox') {
-                var st_text = "campaign = '{{site_uri}}/{{request.META.dbAlias}}';\n";
+                var st_text = "campaign = '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';\n";
                 $.each(params, function(k, v) {
                     if (k.match(/depth$/)) {
                         st_text = st_text + k + " = " + v + ";\n";
