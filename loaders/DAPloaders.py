@@ -50,6 +50,7 @@ from coards import to_udunits, from_udunits
 import csv
 import urllib2
 import logging
+import socket
 import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
 from loaders import STOQS_Loader
