@@ -435,7 +435,7 @@
                         st_text = st_text + k + " = '" + v + "';\n";
                     }
                 });
-                $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(campaign, start_time, end_time, min_depth, max_depth, parameters, platforms);\n");
+                $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(campaign, start_time, end_time, min_depth, max_depth, platforms, parametername, parameterstandardname);\n");
             }
             else {
                 $('#'+value+'-field').text(url);
