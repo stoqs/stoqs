@@ -49,7 +49,8 @@ class STOQSQManager(object):
         and self.qs will be built of a join of activities, parameters, and platforms with no constraints.
 
         Right now supported keyword arguments are the following:
-            parameters - a list of parameter names to include
+            parametername - a list of parameter names to include
+            parameterstandardname - a list of parameter styandard_names to include
             platforms - a list of platform names to include
             time - a two-tuple consisting of a start and end time, if either is None, the assumption is no start (or end) time
             depth - a two-tuple consisting of a range (start/end depth, if either is None, the assumption is no start (or end) depth
@@ -191,9 +192,12 @@ class STOQSQManager(object):
         qparams = {}
 
         qs_ap = models.ActivityParameter.objects.using(self.dbname).all()
-        if self.kwargs.has_key('parameters'):
-            if self.kwargs['parameters']:
-                qs_ap = qs_ap.filter(Q(parameter__name__in=self.kwargs['parameters']))
+        if self.kwargs.has_key('parametername'):
+            if self.kwargs['parametername']:
+                qs_ap = qs_ap.filter(Q(parameter__name__in=self.kwargs['parametername']))
+        if self.kwargs.has_key('parameterstandardname'):
+            if self.kwargs['parameterstandardname']:
+                qs_ap = qs_ap.filter(Q(parameter__standard_name__in=self.kwargs['parameterstandardname']))
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
                 qs_ap = qs_ap.filter(Q(activity__platform__name__in=self.kwargs['platforms']))
@@ -284,9 +288,12 @@ class STOQSQManager(object):
         qparams = {}
 
         logger.info(pprint.pformat(self.kwargs))
-        if self.kwargs.has_key('parameters'):
-            if self.kwargs['parameters']:
-                qparams['parameter__name__in'] = self.kwargs['parameters']
+        if self.kwargs.has_key('parametername'):
+            if self.kwargs['parametername']:
+                qparams['parameter__name__in'] = self.kwargs['parametername']
+        if self.kwargs.has_key('parameterstandardname'):
+            if self.kwargs['parameterstandardname']:
+                qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
                 qparams['measurement__instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
@@ -378,14 +385,16 @@ class STOQSQManager(object):
         Lastly, we assume here that the name is unique and is also used for the id - this is enforced on 
         data load.
         '''
-        qs = self.qs.values('activityparameter__parameter__uuid','activityparameter__parameter__name').distinct()
+        qs = self.qs.values('activityparameter__parameter__name','activityparameter__parameter__standard_name').distinct()
 
         results=[]
         for row in qs:
             name = row['activityparameter__parameter__name']
-            id = row['activityparameter__parameter__name']
-            if name is not None and id is not None:
-                results.append((name,id,))
+            standard_name = row['activityparameter__parameter__standard_name']
+            if not standard_name:
+                standard_name = ''
+            if name is not None:
+                results.append((name,standard_name,))
         return results
 
     def getParameterMinMax(self):
@@ -394,9 +403,12 @@ class STOQSQManager(object):
         data and call them min and max for purposes of plotting
         '''
         results = []
-        if len(self.kwargs['parameters']) == 1:
+        if len(self.kwargs['parametername']) == 1:
             qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
-            results = [self.kwargs['parameters'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+            results = [self.kwargs['parametername'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+        if len(self.kwargs['parameterstandardname']) == 1:
+            qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
+            results = [self.kwargs['parameterstandardname'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
         return results
 
     
@@ -533,8 +545,10 @@ class STOQSQManager(object):
         color and plot the data.
         '''
         aphHash = {}
+        showAllParametersFlag = self.getShow_All_Parameter_Values()
         for pa in models.Parameter.objects.using(self.dbname).all():
-            if not self.getShow_All_Parameter_Values():
+            if not showAllParametersFlag:
+                # If not showing all parameters, show only those that have a standard_name
                 if not pa.standard_name:
                     continue
             histList = {}
@@ -613,6 +627,8 @@ class STOQSQManager(object):
         '''
         Build a Q object to be added to the current queryset as a filter.  This should 
         ensure that our result doesn't contain any parameters that were not selected.
+        This the same function as _parameternameQ(), assume a query on parameters is a
+        query on parameter.name.
         '''
         q=Q()
         if parameters is None:
@@ -621,6 +637,34 @@ class STOQSQManager(object):
             q=Q(activityparameter__parameter__name__in=parameters)
         return q
     
+        
+    def _parameternameQ(self, parametername):
+        '''
+        Build a Q object to be added to the current queryset as a filter.  This should 
+        ensure that our result doesn't contain any parameter names that were not selected.
+        '''
+        q=Q()
+        if parametername is None:
+            return q
+        else:
+            q=Q(activityparameter__parameter__name__in=parametername)
+        return q
+
+    def _parameterstandardnameQ(self, parameterstandardname):
+        '''
+        Build a Q object to be added to the current queryset as a filter.  This should 
+        ensure that our result doesn't contain any parameter standard_names that were not selected.
+        '''
+        q=Q()
+        if parameterstandardname is None:
+            return q
+        else:
+            q=Q(activityparameter__parameter__standard_name__in=parameterstandardname)
+        return q
+
+
+
+
     def _platformsQ(self, platforms):
         '''
         Build a Q object to be added to the current queryset as a filter.  This will ensure that we

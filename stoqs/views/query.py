@@ -159,7 +159,9 @@ def queryData(request, format=None):
     as retreived from STOQSQManager.
     '''
     response = HttpResponse()
-    query_parms = {'parameters': 'parameters',              # This should be specified once in the query string for each parameter.
+    query_parms = {'parameters': 'parameters',              # For queryUI, contains list of (name, standard_name) tuples
+                   'parametername': 'parametername',        # For data queries
+                   'parameterstandardname': 'parameterstandardname',        # For data queries
                    'parameterminmax': 'parameterminmax',    # Array of name, min, max
                    'time': ('start_time','end_time'),       # Single values
                    'depth': ('min_depth', 'max_depth'),     # Single values
@@ -216,7 +218,7 @@ def queryUI(request):
     formats=[('kml', 'KML - To view data in Google Earth, click on the icon', ),
              ('sql', 'SQL', ),
              ('csv', 'CSV', ),
-             ('stoqstoolbox', 'stoqstoolbox - Copy-n-paste into Matlab with stoqstoolbox installed from https://code.google.com/p/stoqs/downloads', ),
+             ('stoqstoolbox', 'stoqstoolbox - work with the data in Matlab', ),
             ]
     logger.debug(formats)
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
