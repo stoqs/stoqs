@@ -40,28 +40,22 @@ function outp=stoqs_down(varargin)
 %          The input in order are:
 % 			URL of the STOQS server
 % 			Start time in the format 'yyyy-mm-dd+HH:MM:SS'
-% 			End time in the format 'yyyy-mm-dd+HH:MM:SS'%
-%			Minimum depth
-% 			Maximum depth
-% 			Parameter to get the data. You must use the standard name of
-% 			      the variable. 
-%			Platform name. If want all the platform name don?t write 
-%				  any name
+% 			End time in the format 'yyyy-mm-dd+HH:MM:SS'
+%			Minimum depth in meters
+% 			Maximum depth in meters
+%			Platform name. Set to '' to get data from all platforms.
+% 			Parameter name 
+% 			Parameter standard_name - the CF standard_name
 %       Ouput
-%           outp = Structure with the information,
-%           platform,time,longitude,latitude, depth and variable values of
-%           the query point 
-%       
-%                            
-%
-%
+%           outp = Structure with the data structured by 
+%                  platform, time, longitude, latitude, depth and parameter values
 %
 %
 %
 %   Francisco Lopez & Mike McCann & Brian Schlining 
 %
 %   Last modified
-%   19/August/2012
+%   30/October/2012
 
 
 
@@ -102,12 +96,16 @@ if ~isempty(varargin{5})
 end  
 
 if ~isempty(varargin{6})
-    query=[query 'parameter__standard_name=' varargin{6} '&'];
-end   
+    query=[query 'measurement__instantpoint__activity__platform__name=' varargin{6} '&'];
+end 
 
 if ~isempty(varargin{7})
-    query=[query 'measurement__instantpoint__activity__platform__name=' varargin{7} '&'];
-end 
+    query=[query 'parameter__name=' varargin{7} '&'];
+end   
+
+if ~isempty(varargin{8})
+    query=[query 'parameter__standard_name=' varargin{8} '&'];
+end   
 
 
 
