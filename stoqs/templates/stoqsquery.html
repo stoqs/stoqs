@@ -268,8 +268,14 @@
                     <div id="collapseTwo" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <table id="parameter-table" class="table table-condensed">
-                              <tbody>
-                              </tbody>
+                                <thead>
+                                    <tr>
+                                        <td style="text-align:center;font-weight:bold;">Name</td>
+                                        <td style="text-align:center;font-weight:bold;">Standard Name</td>
+                                    </tr>
+                                </thead>                             
+                                <tbody>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -396,9 +402,15 @@
             }
             else if (value == 'kml') {
                 kmlurl = 'Select a Parameter to view your selection of O(10k) actual datavalues in Google Earth';
-                if (typeof params['parameters'] != 'undefined') {
-                    if (params['parameters'].length == 1) {
-                        $('#kml-parameter').text(params['parameters'][0]);
+                if (typeof params['parametername'] != 'undefined') {
+                    if (params['parametername'].length == 1) {
+                        $('#kml-parameter').text(params['parametername'][0]);
+                        $('#cmin').val(data['parameterminmax'][1]);
+                        $('#cmax').val(data['parameterminmax'][2]);
+                        kmlurl = url;
+                    }
+                    else if (params['parameterstandardname'].length == 1) {
+                        $('#kml-parameter').text(params['parameterstandardname'][0]);
                         $('#cmin').val(data['parameterminmax'][1]);
                         $('#cmax').val(data['parameterminmax'][2]);
                         kmlurl = url;
@@ -412,7 +424,9 @@
                 setKMLlinks();
             }
             else if (value == 'stoqstoolbox') {
-                var st_text = "campaign = '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';\n";
+                var st_text = "% Copy and paste into a Matlab session where stoqstoolbox build 2012-10-31 or\n";
+                st_text = st_text + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
+                st_text = st_text + "campaign = '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';\n";
                 $.each(params, function(k, v) {
                     if (k.match(/depth$/)) {
                         st_text = st_text + k + " = " + v + ";\n";
@@ -435,7 +449,10 @@
         if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
             if ($element.is('.btn-primary')) {
                 $element.removeClass('btn-primary');
-                if ($(element).hasClass('parameter')) {
+                if ($(element).hasClass('parametername')) {
+                    $('#parameters-anchor').html('Parameters')
+                }
+                if ($(element).hasClass('parameterstandardname')) {
                     $('#parameters-anchor').html('Parameters')
                 }
                 if ($(element).hasClass('platform')) {
@@ -443,8 +460,11 @@
                 }
             } else {
                 $element.addClass('btn-primary');
-                if ($(element).hasClass('parameter')) {
-                    $('#parameters-anchor').html('Parameter: ' + $(element).html())
+                if ($(element).hasClass('parametername')) {
+                    $('#parameters-anchor').html('Parameter name: ' + $(element).html())
+                }
+                if ($(element).hasClass('parameterstandardname')) {
+                    $('#parameters-anchor').html('Parameter standard_name: ' + $(element).html())
                 }
                 if ($(element).hasClass('platform')) {
                     $('#platforms-anchor').html('Platform: ' + $(element).html())
@@ -554,12 +574,19 @@
             params['max_depth']=$('#end-depth').val()
         }
 
-        params['parameters']=[]
+        params['parametername']=[]
+        params['parameterstandardname']=[]
         params['platforms']=[]
-        $('tr',$('#parameter-table')).each(function (index, element) {
+        var regExp = new RegExp('--.+-sn');
+        $('td',$('#parameter-table')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
-                params['parameters'].push(element.id);
-                $('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
+                if ( $('.parametername', $(element)).length) {
+                    params['parametername'].push(element.id);
+                }
+                if ( $('.parameterstandardname', $(element)).length) {
+                    params['parameterstandardname'].push(element.id.replace(regExp,''));
+                }
+                $('#' + element.id + ' > button').attr('title', 'Click to unselect').tooltip('fixTitle');
             }
         });
         $('tr',$('#platform-table')).each(function (index, element) {
@@ -630,7 +657,7 @@
     });
     
     /*
-     * Perform the AJAX call to get a list of parameters, and enable/disable them
+     * Perform the AJAX call to get a list of parametername and parameterstandardname, and enable/disable them
      * If "init" is true then this is the initial page load, and we need to populate the fields rather than toggle them.
      */
     function updateSummaryData(init) {
@@ -774,7 +801,7 @@
                 // Now add each activity for this platform - separated so that they are not connected with a line
                 $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
                     var rec = [];
-                    console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                    //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
                     subset_dts = []
                     $.each(depth_time_series, function (index, td) {
                         // From each activity push only the times between x1 & x2, inclusive
@@ -900,13 +927,28 @@
                 $('.platform').tooltip({title: 'Click to select this Platform'});
             }
             else if (key == 'parameters') {
+                var parameterButtonText = '';
                 $.each(data[key], function (index, value) {
-                    $('#parameter-table > tbody:last').append('<tr id="' + value[1] +'">' +
-                            '<td>' +
-                                '<button class="btn btn-mini stoqs-toggle parameter">'+ value[0] +'</button></td>' +
-                            '</tr>');
+                    parameterButtonText = parameterButtonText + '<tr>' +
+                            '<td id="' + value[0] +'">' +
+                                '<button class="btn btn-mini stoqs-toggle parametername">'+ value[0] +'</button>' + 
+                            '</td>';
+                    if (value[1].length != 0) {
+                        // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
+                        // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
+                        parameterButtonText = parameterButtonText +
+                            '<td id="' + value[1] + '--' + value[0] + '-sn">' +
+                                '<button class="btn btn-mini stoqs-toggle parameterstandardname">'+ value[1] +'</button>' + 
+                            '</td>';
+                    }
+                    else {
+                        parameterButtonText = parameterButtonText + '<td>&nbsp;</td>';
+                    }
+                    parameterButtonText = parameterButtonText + '</tr>';
                 });
-                $('.parameter').tooltip({title: 'Click to select this Parameter'});
+                $('#parameter-table > tbody:last').append(parameterButtonText);
+                $('.parametername').tooltip({title: 'Click to select this Parameter name'});
+                $('.parameterstandardname').tooltip({title: 'Click to select this Parameter standard_name'});
             }
             else if (key == 'time') { 
                 var start = new Date(data[key][0]);
@@ -988,14 +1030,19 @@
                 zoomedData = data;
                 var ids=[];
                 $.each(data[key], function (index, value) {
-                    // Here we need to enable those that are still valid.
-                    var element=$('#' + value[1]);
-                    enableButton($('button', element)); // Enable the button in the table row
-                    ids.push(value[1]);
+                    // Here we need to enable those that are still valid
+                    enableButton($('button', '#' + value[0]));              // Enable the name button in the table row
+                    ids.push(value[0]);
+                    if (value[1].length != 0) {
+                        enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));  // Enable the standard_name button in the table row
+                        ids.push(value[1] + '--' + value[0] + '-sn');
+                    }
                 });
-                $('#parameter-table > tbody > tr').each(function (index, elem) { 
-                    if ($.inArray((elem.id).toString(), ids) == -1) {
-                        disableButton($('button', $(elem))); // disable the button in the table row
+                $('#parameter-table > tbody > tr > td').each(function (index, elem) { 
+                    if (elem.id.length != 0) {
+                        if ($.inArray((elem.id).toString(), ids) == -1) {
+                           disableButton($('button', $(elem))); // disable the button in the table row
+                        }
                     }
                 });
             }
