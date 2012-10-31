@@ -459,7 +459,7 @@ class Base_Loader(STOQS_Loader):
                 except AttributeError:
                     timeAxis = self.ds.esecs
     
-
+        logger.debug('self.dataStartDatetime, timeAxis.units = %s, %s', self.dataStartDatetime, timeAxis.units)
         s = to_udunits(self.dataStartDatetime, timeAxis.units)
 
         logger.info("For dataStartDatetime = %s, the udnits value is %f", self.dataStartDatetime, s)
@@ -1166,13 +1166,14 @@ class Glider_Loader(Base_Loader):
             if self.startDatetime == None:
                 logger.debug("self.ds.TIME[0] = %f, self.ds.TIME.units = %s", self.ds.TIME[0], self.ds.TIME.units)
                 self.startDatetime = from_udunits(float(self.ds.TIME[0]), self.ds.TIME.units)
-            if self.dataStartDatetime == None:
-                self.dataStartDatetime = from_udunits(float(self.ds.TIME[0]), self.ds.TIME.units)
-            else:
-                logger.info("Using dataStartDatetime to read data from the source starting at %s", self.dataStartDatetime)
             if self.endDatetime == None:
                 self.endDatetime = from_udunits(float(self.ds.TIME[-1]), self.ds.TIME.units)
                 logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
+
+        if self.dataStartDatetime == None:
+            self.dataStartDatetime = from_udunits(float(self.ds.TIME[0]), self.ds.TIME.units)
+        else:
+            logger.info("Using dataStartDatetime to read data from the source starting at %s", self.dataStartDatetime)
 
         return super(Glider_Loader, self).initDB()
 
