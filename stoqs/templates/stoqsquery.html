@@ -424,18 +424,26 @@
                 setKMLlinks();
             }
             else if (value == 'stoqstoolbox') {
+                // Required parameters for stoqs_down as of stoqstoolbox release noted in the Matlab comment below
+                var req_params = ['campaign', 'start_time', 'end_time', 'min_depth', 'max_depth', 'platforms', 'parametername', 'parameterstandardname'];
                 var st_text = "% Copy and paste into a Matlab session where stoqstoolbox build 2012-10-31 or\n";
                 st_text = st_text + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
                 st_text = st_text + "campaign = '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';\n";
-                $.each(params, function(k, v) {
-                    if (k.match(/depth$/)) {
-                        st_text = st_text + k + " = " + v + ";\n";
+                $.each(req_params, function(k, v) {
+                    if (typeof params[v] != "undefined") {
+                        if (v.match(/depth$/)) {
+                            // Numeric value, don't quote
+                            st_text = st_text + v + " = " + params[v] + ";\n";
+                        }
+                        else {
+                            st_text = st_text + v + " = '" + params[v] + "';\n";
+                        }
                     }
-                    else {
-                        st_text = st_text + k + " = '" + v + "';\n";
+                    else if (v != 'campaign') {
+                        st_text = st_text + v + " = '';\n";
                     }
                 });
-                $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(campaign, start_time, end_time, min_depth, max_depth, platforms, parametername, parameterstandardname);\n");
+                $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
             }
             else {
                 $('#'+value+'-field').text(url);
