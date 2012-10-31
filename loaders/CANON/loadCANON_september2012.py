@@ -122,23 +122,11 @@ cl.l_662_startDatetime = datetime.datetime(2012, 9, 10)
 cl.l_662_endDatetime = datetime.datetime(2012, 9, 20)
 
 # Liquid Robotics Waveglider
-##cl.waveglider_base = 'http://odss.mbari.org/thredds/dodsC/CANON_september2012/waveglider/'
 cl.waveglider_base = tdsBase + 'CANON_september2012/waveglider/'
-cl.waveglider_files = [ 
-                        'waveglider_gpctd_WG.nc',
-##                        'waveglider_pco2_WG.nc',
-                      ]
-cl.waveglider_parms = [ 
-                        'TEMP', 'PSAL', 'oxygen', 
-##                        'ZeroPumpOn_pco2', 'ZeroPumpOn_Temp', 'ZeroPumpOn_Pressure', 'ZeroPumpOff_pco2', 'ZeroPumpOff_Temp',
-##                        'ZeroPumpOff_Pressure', 'StandardFlowOn_Pressure', 'StandardFlowOff_pco2_Humidity', 'StandardFlowOff_pco2',
-##                        'StandardFlowOff_Temp', 'StandardFlowOff_Pressure', 'Longitude', 'Latitude', 'EquilPumpOn_pco2', 'EquilPumpOn_Temp',
-##                        'EquilPumpOn_Pressure', 'EquilPumpOff_pco2', 'EquilPumpOff_Temp', 'EquilPumpOff_Pressure', 'EquilPumpOff_Humidity',
-##                        'Durafet_pH_6', 'Durafet_pH_5', 'Durafet_pH_4', 'Durafet_pH_3', 'Durafet_pH_2', 'Durafet_pH_1', 'Can_Humidity',
-##                        'AirPumpOn_pco2', 'AirPumpOn_Temp', 'AirPumpOn_Pressure', 'AirPumpOff_pco2', 'AirPumpOff_Temp', 'AirPumpOff_Pressure',
-##                        'AirPumpOff_Humidity',
-                      ]
-
+cl.waveglider_files = [ 'waveglider_gpctd_WG.nc' ]
+cl.waveglider_parms = [ 'TEMP', 'PSAL', 'oxygen' ]
+cl.waveglider_startDatetime = datetime.datetime(2012, 8, 31, 18, 47, 0)
+cl.waveglider_endDatetime = datetime.datetime(2012, 9, 25, 16, 0, 0)
 
 # MBARI ESPdrift
 cl.espdrift_base = tdsBase + 'CANON_september2012/misc/ESPdrift/'

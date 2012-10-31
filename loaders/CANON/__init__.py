@@ -135,7 +135,7 @@ class CANONLoader(object):
             url = self.waveglider_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'waveglider', self.colors['waveglider'], 'glider', 'Glider Mission', 
-                                        self.waveglider_parms, self.dbAlias, self.stride)
+                                        self.waveglider_parms, self.dbAlias, self.stride, self.waveglider_startDatetime, self.waveglider_endDatetime)
     def loadESPdrift(self):
         '''
         ESPdrift specific load functions
