@@ -518,7 +518,7 @@ class STOQSQManager(object):
     def getSampleDepthTime(self):
         '''
         Based on the current selected query criteria for activities, return the associated SampleDepth time series
-        values as a 2-tuple list.  The similarity to getSimpleDepthTime name is a pure coincidence.
+        values as a 2-tuple list.  The name similarity to getSimpleDepthTime name is a pure coincidence.
         '''
         samples = []
         qs = self.getSampleQS().values_list(
@@ -529,8 +529,14 @@ class STOQSQManager(object):
                                 ).order_by('instantpoint__timevalue')
         for s in qs:
             ems = 1000 * to_udunits(s[0], 'seconds since 1970-01-01')
-            label = '%s %s' % (s[2], s[3],)                                     # Show entire Activity name
-            label = '%s %s' % (s[2].split('_decim')[0], s[3],)                  # Lop off '_decim.nc (stride=xxx)' part of name
+            # Kludgy handling of activity names - flot needs 2 items separated by a space to handle sample event clicking
+            if (s[2].find('_decim') != -1):
+                label = '%s %s' % (s[2].split('_decim')[0], s[3],)              # Lop off '_decim.nc (stride=xxx)' part of name
+            elif (s[2].find(' ') != -1):
+                label = '%s %s' % (s[2].split(' ')[0], s[3],)                   # Lop off everything after a space in the activity name
+            else:
+                label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
+
             rec = {'label': label, 'data': [[ems, '%.2f' % s[1]]]}
             ##logger.debug('Appending %s', rec)
             samples.append(rec)
