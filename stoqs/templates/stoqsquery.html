@@ -388,7 +388,8 @@
     
     // Set the URL fields and buttons to use the current queried URL
     function setDataAccess(data) {
-        var base_url='{{site_uri}}{% url stoqs-query-ui dbAlias=request.META.dbAlias %}';
+        var base_url = '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';
+        var query_url = '{{site_uri}}{% url stoqs-query-ui dbAlias=request.META.dbAlias %}';
         var param=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
         if (param != '') {
             param = '?' + param;
@@ -397,7 +398,7 @@
         var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
         // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
         $.each(formats, function (index, value) {
-            var url = base_url + value + param;
+            var url = query_url + value + param;
             if (value == 'sql') {
                 $('#'+value+'-field').text(data['sql']);
             }
@@ -445,6 +446,10 @@
                     }
                 });
                 $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
+            }
+            else if (value == 'json') {
+                var url = base_url + 'measuredparameter.json' + param;
+                $('#'+value+'-field').text(url);
             }
             else {
                 $('#'+value+'-field').text(url);

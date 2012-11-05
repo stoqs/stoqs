@@ -219,6 +219,7 @@ def queryUI(request):
              ('sql', 'SQL', ),
              ('csv', 'CSV', ),
              ('stoqstoolbox', 'stoqstoolbox - work with the data in Matlab', ),
+             ('json', 'JSON', ),
             ]
     logger.debug(formats)
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
