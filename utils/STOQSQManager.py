@@ -780,8 +780,13 @@ class STOQSQManager(object):
         The result can be directly passed out for direct use in a OpenLayers
         '''
         extent = fromstr('LINESTRING (%s %s, %s %s)' % self.qs.extent(), srid=srid)
-        extent.transform(900913)
-        return extent
+        try:
+            extent.transform(900913)
+        except Exception,e:
+            logger.error(e)
+            return None
+        else:
+            return extent
 
 
     #
