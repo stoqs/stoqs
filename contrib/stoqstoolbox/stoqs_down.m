@@ -145,6 +145,7 @@ outp.depth=cell2mat(squeeze(a(1,:,:)));
 outp.value=cell2mat(squeeze(a(3,:,:)));
 outp.parametername=squeeze(a(2,:,:));
 outp.standardname=squeeze(a(5,:,:));
+outp.units=squeeze(a(8,:,:));
 end
 
 disp('END THE JSON QUERY');
