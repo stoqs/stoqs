@@ -6,9 +6,9 @@ Create the stoqstoolbox downloadable distrubution with this zip(1) command:
 
     zip -r stoqstoolbox-YYYYMMDD.zip stoqstoolbox
 
-where YYYYMMDD is replaced with the date of the distribution.  Then upload
-the file to the Google Code downloads area: http://code.google.com/p/stoqs/downloads
+where YYYYMMDD is replaced with the date of the distribution.  Upload the .zip 
+file to the Google Code downloads area: http://code.google.com/p/stoqs/downloads.
 
 -- 
 Mike McCann
-1 Novenmber 2012
+5 November 2012
