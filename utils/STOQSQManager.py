@@ -109,6 +109,7 @@ class STOQSQManager(object):
                            'sql': self.getMeasuredParametersPostgreSQL,
                            'activitymaptrackextent': self.getActivityMaptrackExtent,
                            'activityparameterhistograms': self.getActivityParameterHistograms,
+                           ##'parameterplatformpng': self.getParameterPlatformPNG,
                            ##'activityparamhistrequestpngs': self.getActivityParamHistRequestPNGs,
                            }
         
@@ -624,6 +625,17 @@ class STOQSQManager(object):
             pass
 
         return urlList
+
+    def getParameterPlatformPNG(self):
+        '''
+        Called when user interface has selected just one Parameter and just one Platform, in which case
+        produce a depth-time section plot for overlay on the flot plot.  Return a png image for inclusion
+        in the AJAX response.
+        '''
+        sectionPng = None
+
+        return sectionPng
+
 
     #
     # Methods that generate Q objects used to populate the query.
