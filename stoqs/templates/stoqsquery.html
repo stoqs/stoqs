@@ -385,16 +385,47 @@
         $('#kml-field').text(kmlurl + cmincmax);
         $('#kml-link').attr('href',kmlurl + cmincmax);
     }
+
+    function getMPparms(params) {
+        // Construct querystring for measuredparameter REST request, mapping params to Django queries for the MP table
+        // Good for .json, .csv, .tsv, .html responses
+        var mp_param = '?';
+        if (typeof params['parametername'] != 'undefined') {
+            if (params['parametername'].length == 1) {
+                mp_param = mp_param + 'parameter__name=' + params['parametername'][0] + '&';
+            }
+        }
+        if (typeof params['platforms'] != 'undefined') {
+            if (params['platforms'].length == 1) {
+                mp_param = mp_param + 'measurement__instantpoint__activity__platform__name=' + params['platforms'][0] + '&';
+            }
+        }
+        if (typeof params['start_time'] != 'undefined') {
+            mp_param = mp_param + 'measurement__instantpoint__timevalue__gt=' + params['start_time'] + '&';
+        }
+        if (typeof params['end_time'] != 'undefined') {
+            mp_param = mp_param + 'measurement__instantpoint__timevalue__lt=' + params['end_time'] + '&';
+        }
+        if (typeof params['min_depth'] != 'undefined') {
+            mp_param = mp_param + 'measurement__depth__gte=' + params['min_depth'] + '&';
+        }
+        if (typeof params['max_depth'] != 'undefined') {
+            mp_param = mp_param + 'measurement__depth__lte=' + params['max_depth'] + '&';
+        }
+
+        return mp_param
+    }
     
     // Set the URL fields and buttons to use the current queried URL
     function setDataAccess(data) {
         var base_url = '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';
         var query_url = '{{site_uri}}{% url stoqs-query-ui dbAlias=request.META.dbAlias %}';
-        var param=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
+        var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
         if (param != '') {
             param = '?' + param;
         } 
-        // Use the Django variable to populate the supported query formats.
+        mp_param = getMPparms(params);
+
         var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
         // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
         $.each(formats, function (index, value) {
@@ -447,9 +478,26 @@
                 });
                 $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
             }
+            // Queries made using measuredparameter REST requests - use mp_parm for Django queries for the measuredparameter table
             else if (value == 'json') {
-                var url = base_url + 'measuredparameter.json' + param;
+                var url = base_url + 'measuredparameter.json' + mp_param;
                 $('#'+value+'-field').text(url);
+                $('#'+value+'-link').attr('href',url);
+            }
+            else if (value == 'csv') {
+                var url = base_url + 'measuredparameter.csv' + mp_param;
+                $('#'+value+'-field').text(url);
+                $('#'+value+'-link').attr('href',url);
+            }
+            else if (value == 'tsv') {
+                var url = base_url + 'measuredparameter.tsv' + mp_param;
+                $('#'+value+'-field').text(url);
+                $('#'+value+'-link').attr('href',url);
+            }
+            else if (value == 'html') {
+                var url = base_url + 'measuredparameter.html' + mp_param;
+                $('#'+value+'-field').text(url);
+                $('#'+value+'-link').attr('href',url);
             }
             else {
                 $('#'+value+'-field').text(url);

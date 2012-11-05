@@ -75,7 +75,7 @@ def kmlResponse(request, qm, response):
 
 def csvResponse(request, qm, response):
     '''
-    Return a response that is a KML represenation of the existing MeasuredParameter query that is in qm
+    Return a response that is a Comma Separated Value represenation of the existing MeasuredParameter query that is in qm
     '''
     qs_mp = qm.getMeasuredParametersQS()
     if qs_mp is None:
@@ -87,14 +87,14 @@ def csvResponse(request, qm, response):
     except IndexError:
         raise NoParameterSelectedException
 
-    fields = ['platformName', 'time', 'longitude', 'latitude', 'depth', pName]
+    fields = ['platformName', 'time', 'longitude', 'latitude', 'depth', pName, 'units']
 
      
     data = [
             (   
                 mp.measurement.instantpoint.activity.platform.name, 
                 mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
-                mp.measurement.depth, mp.datavalue
+                mp.measurement.depth, mp.datavalue, mp.parameter.units
             )
                  for mp in qs_mp]
 
@@ -192,7 +192,7 @@ def queryData(request, format=None):
     elif format == 'json':
         response['Content-Type'] = 'text/json'
         response.write(serializers.serialize('json', qm.qs))
-    elif format == 'csv':
+    elif format == 'csv-simple':
         logger.info('csv output')
         return csvResponse(request, qm, response)
     elif format == 'dap':
@@ -215,11 +215,14 @@ def queryUI(request):
         logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     # Use list of tuples to preserve order
-    formats=[('kml', 'KML - To view data in Google Earth, click on the icon', ),
-             ('sql', 'SQL', ),
-             ('csv', 'CSV', ),
+    formats=[('kml', 'Keyhole Markup Language - click on icon to view in Google Earth', ),
+             ('sql', 'Structured Query Language for PostGIS', ),
              ('stoqstoolbox', 'stoqstoolbox - work with the data in Matlab', ),
-             ('json', 'JSON', ),
+             ('json', 'JavaScript Object Notation', ),
+             ('csv', 'Comma Separated Values', ),
+             ('tsv', 'Tabbed Separated Values', ),
+             ('html', 'Hyper Text Markup Language table', ),
+             ('csv-simple', 'Comma Separated Values - simplified header', ),
             ]
     logger.debug(formats)
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
