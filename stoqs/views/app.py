@@ -65,7 +65,7 @@ class MeasuredParameter(BaseOutputer):
     Extend basic MeasuredParameter with additional fields that will return data values for many different constraints
     '''
     fields = [ 'parameter__name', 'parameter__standard_name', 'measurement__depth', 'measurement__geom', 'measurement__instantpoint__timevalue',
-               'measurement__instantpoint__activity__platform__name', 'datavalue' ]
+               'measurement__instantpoint__activity__platform__name', 'datavalue', 'parameter__units' ]
 
 class ActivityParameterHistogram(BaseOutputer):
     '''
