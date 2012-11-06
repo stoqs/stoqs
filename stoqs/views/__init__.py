@@ -71,7 +71,7 @@ class BaseOutputer(object):
         # /tmp should occasionally be scrubbed of old tempfiles by a cron(1) job.
         self.html_tmpl_path = tempfile.NamedTemporaryFile(dir='/tmp', prefix=self.stoqs_object_name+'_', suffix='.html').name
         # May be overridden by classes that provide other responses, such as '.png' in an overridden process_request() method
-        self.responses = ['.help', '.html', '.json', '.csv', '.tsv', '.xml']
+        self.responses = ['.help', '.html', '.json', '.csv', '.tsv', '.xml', '.count']
 
     def build_html_template(self):
         '''Build template for stoqs_object using generic html template with a column for each attribute
@@ -189,6 +189,11 @@ class BaseOutputer(object):
 
         elif self.format == 'json':
             return HttpResponse(simplejson.dumps(self.qs, cls=encoders.STOQSJSONEncoder), 'application/json')
+
+        elif self.format == 'count':
+            count = self.qs.count()
+            logger.debug('count = %d', count)
+            return HttpResponse('%d' % count, mimetype='text/plain')
 
         elif self.format == 'help':
             helpText = 'Fields: %s\n\nField Lookups: %s' % (self.fields, self.fieldLookups)
