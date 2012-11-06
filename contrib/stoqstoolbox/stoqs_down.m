@@ -51,6 +51,8 @@ function outp=stoqs_down(varargin)
 
 %CHECK INPUT ERRORS
 
+global mp_total_count 
+
 if nargin<7
     outp='';
     disp('-----------------------');
@@ -97,9 +99,25 @@ if ~isempty(varargin{8})
 end   
 
 
+% First, Get the count 
+query_count = strrep(query, '.json', '.count');         % Get count
 
-%DO THE JSON QUERY TO STOQS
-query = strrep(query, ' ', '%20');       % Replace spaces - in time parms - to be URL friendly
+try
+    url_count = java.net.URL(query_count);
+catch me
+    m = MException([mfilename ':BadURL'], '%s is not a valid URL. Cause: %s', query_count, me.message);
+    throw(m);
+end
+
+% Get the count so that we can show progress toward our goal
+urlStream = url_count.openStream(); 
+isr = java.io.InputStreamReader(urlStream);
+br = java.io.BufferedReader(isr);
+mp_total_count = char(readLine(br));
+
+
+% Second, Get the data
+query = strrep(query, ' ', '%20');                      % Replace spaces - in time parms - to be URL friendly
 disp(['START THE JSON QUERY: ']);
 try
     url = java.net.URL(query);
@@ -109,20 +127,22 @@ catch me
     throw(m);
 end
 
-urlStream = url.openStream(); %Open it
+
+% Open stream to the .json data
+urlStream = url.openStream(); 
 isr = java.io.InputStreamReader(urlStream);
 br = java.io.BufferedReader(isr);
 
 
 
-a=char(readLine(br));
+a = char(readLine(br));
 if isempty(a)
     error=['ERROR : Couldnt get the information for table ' table ' **************'];
     disp(error)
     outp='';
 else    
-    disp(['CONVERTING FROM JSON']);
-    info=loadjson(a); %Read the information, Convert java.string to string with char, so loadjson could convert it to a struct.
+    disp(['CONVERTING FROM JSON ' mp_total_count ' DATA VALUES']);
+    info = stoqs_loadjson(a); % Read the information, Convert java.string to string with char, so loadjson could convert it to a struct.
     er=0;
 end
 
