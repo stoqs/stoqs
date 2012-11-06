@@ -35,7 +35,7 @@ function data = loadjson(fname,varargin)
 % -- this function is part of jsonlab toolbox (http://iso2mesh.sf.net/cgi-bin/index.cgi?jsonlab)
 %
 
-global pos inStr len  esc index_esc len_esc isoct arraytoken
+global pos inStr len  esc index_esc len_esc isoct arraytoken mp_count mp_total_count
 
 if(regexp(fname,'[\{\}\]\[]','once'))
    string=fname;
@@ -60,6 +60,8 @@ index_esc = 1; len_esc = length(esc);
 
 opt=varargin2struct(varargin{:});
 jsoncount=1;
+mp_count = 0;
+textprogressbar(['Parsing JSON count: ' num2str(mp_total_count) ':  ']);
 while pos <= len
     switch(next_char)
         case '{'
@@ -84,7 +86,7 @@ if(~isempty(data))
           data=jcell2array(data);
       end
 end
-
+textprogressbar('  Done.');
 
 %%
 function newdata=parse_collection(id,data,obj)
@@ -180,7 +182,7 @@ function object = parse_object(varargin)
 %%-------------------------------------------------------------------------
 
 function object = parse_array(varargin) % JSON array is written in row-major order
-global pos inStr isoct
+global pos inStr isoct mp_count mp_total_count
     parse_char('[');
     object = cell(0, 1);
     dim2=[];
@@ -240,6 +242,8 @@ global pos inStr isoct
             if next_char == ']'
                 break;
             end
+            mp_count = mp_count + 1;
+            textprogressbar(round(100 * mp_count / str2num(mp_total_count)));
             parse_char(',');
          end
         end
