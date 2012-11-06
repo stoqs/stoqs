@@ -39,7 +39,7 @@ btwnCl = r'(?P<pName>[^/]+)/between/(?P<startDate>\w+)/(?P<endDate>\w+)/depth/(?
 
 # type is one of: 'data', 'perf'; format is one of: 'html', 'csv', 'kml'
 typePat = r'/(?P<type>[^/]{4,5})'
-formatPat = r'(?P<format>[^/]{0,4})$'
+formatPat = r'(?P<format>[^/]{0,5})$'
 formatCl = typePat + r'\.' + formatPat
 
 
@@ -106,7 +106,7 @@ urlpatterns = patterns('',
 
     # If nothing above matches show the quey interface is a dbalias is specified, otherwise show the campaigns
     url(pre, 'stoqs.views.query.queryUI', {}, name='base-campaign'),
-    url('', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
+    url(r'/', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
 )
 
 # Not to be used in Production.  Must start development server with --insecure option to run with DEBUG = False:
