@@ -17,8 +17,8 @@ function textprogressbar(c)
 persistent strCR;           %   Carriage return pesistent variable
 
 % Vizualization parameters
-strPercentageLength = 70;   %   Length of percentage string (must be >5)
-strDotsMaximum      = 70;   %   The total number of dots in a progress bar
+strPercentageLength = 10;   %   Length of percentage string (must be >5)
+strDotsMaximum      = 50;   %   The total number of dots in a progress bar
 
 %% Main 
 
