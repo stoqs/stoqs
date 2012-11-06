@@ -61,7 +61,7 @@ index_esc = 1; len_esc = length(esc);
 opt=varargin2struct(varargin{:});
 jsoncount=1;
 mp_count = 0;
-textprogressbar(['Parsing JSON count: ' num2str(mp_total_count) ':  ']);
+textprogressbar(['Parsing JSON count:  ' num2str(mp_total_count) ':  ']);
 while pos <= len
     switch(next_char)
         case '{'
