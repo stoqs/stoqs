@@ -66,7 +66,6 @@ end
 
 
 %CHECK WHAT KIND OF QUERY IS GOING TO DO AND BUILT IT
-disp('PREPARING THE QUERY');
 
 query=fullfile(varargin{1}, 'measuredparameter.json?');
 
@@ -118,10 +117,9 @@ mp_total_count = char(readLine(br));
 
 % Second, Get the data
 query = strrep(query, ' ', '%20');                      % Replace spaces - in time parms - to be URL friendly
-disp(['START THE JSON QUERY: ']);
 try
     url = java.net.URL(query);
-    disp(['CONNECTED TO THE SERVER AND READING DATA FROM: ' query])
+    disp(['Reading data from: ' query])
 catch me
     m = MException([mfilename ':BadURL'], '%s is not a valid URL. Cause: %s', query, me.message);
     throw(m);
@@ -141,7 +139,7 @@ if isempty(a)
     disp(error)
     outp='';
 else    
-    disp(['CONVERTING FROM JSON ' mp_total_count ' DATA VALUES']);
+    %%disp(['CONVERTING FROM JSON ' mp_total_count ' DATA VALUES']);
     info = stoqs_loadjson(a); % Read the information, Convert java.string to string with char, so loadjson could convert it to a struct.
     er=0;
 end
@@ -152,8 +150,6 @@ if isempty(info)
 else
 
 a=struct2cell(info); %Convert the structure array to cell array
-disp('MEASUREMENTS DOWNLOAD: ' )
-disp(length(a(6,:,:)))
 
 %Save the data in a new structure with standard names.
 outp.platform=squeeze(a(6,:,:));
@@ -167,7 +163,4 @@ outp.parametername=squeeze(a(2,:,:));
 outp.standardname=squeeze(a(5,:,:));
 outp.units=squeeze(a(8,:,:));
 end
-
-disp('END THE JSON QUERY');
-
 
