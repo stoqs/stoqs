@@ -20,12 +20,14 @@ from django.db.models import Avg
 from stoqs import models
 from utils import round_to_n
 from coards import to_udunits
+from datetime import datetime
 import logging
 import pprint
 import calendar
 import re
 import locale
 import time
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +111,7 @@ class STOQSQManager(object):
                            'sql': self.getMeasuredParametersPostgreSQL,
                            'activitymaptrackextent': self.getActivityMaptrackExtent,
                            'activityparameterhistograms': self.getActivityParameterHistograms,
-                           ##'parameterplatformpng': self.getParameterPlatformPNG,
+                           'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
                            ##'activityparamhistrequestpngs': self.getActivityParamHistRequestPNGs,
                            }
         
@@ -626,15 +628,87 @@ class STOQSQManager(object):
 
         return urlList
 
-    def getParameterPlatformPNG(self):
+    def getParameterPlatformDatavaluePNG(self):
         '''
         Called when user interface has selected just one Parameter and just one Platform, in which case
         produce a depth-time section plot for overlay on the flot plot.  Return a png image for inclusion
         in the AJAX response.
         '''
-        sectionPng = None
+        if len(self.kwargs['parametername']) != 1:
+            return
+        if len(self.kwargs['platforms']) != 1:
+            return
 
-        return sectionPng
+        from matplotlib.mlab import griddata
+        import numpy as np
+
+        # griddata parameters
+        tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
+        dgrid_max = 100             # Height of time-depth-flot plot area is 335 pixels
+        dinc = 0.5                  # Average vertical resolution of AUV Dorado
+        
+        # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
+        # query has salient points, typically in the vertices of the yo-yos.  
+        xi = None
+        if self.kwargs.has_key('time'):
+            if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
+                dstart = datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S')
+                dend = datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S')
+
+                sdt_count = self.qs.filter(platform__name = self.kwargs['platforms'][0]).values_list('simpledepthtime__depth').count()
+                logger.debug('sdt_count from query = %d', sdt_count)
+                if sdt_count > tgrid_max:
+                    sdt_count = tgrid_max
+
+                tmin = time.mktime(dstart.timetuple())
+                tmax = time.mktime(dend.timetuple())
+                xi = np.linspace(tmin, tmax, sdt_count)
+                logger.debug('xi = %s', xi)
+
+        # Make depth spacing dinc m, limit to time-depth-flot resolution (dgrid_max)
+        yi = None
+        if self.kwargs.has_key('depth'):
+            if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
+                dmin = float(self.kwargs['depth'][0])
+                dmax = float(self.kwargs['depth'][1])
+                y_count = int((dmax - dmin) / dinc )
+                if y_count > dgrid_max:
+                    y_count = dgrid_max
+                yi = np.linspace(dmin, dmax, y_count)
+                logger.debug('yi = %s', yi)
+
+        # Collect the scattered datavalues(time, depth) and grid them
+        if xi is not None and yi is not None:
+            logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
+            x = []
+            y = []
+            z = []
+            qs_mp = self.getMeasuredParametersQS().values('measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue')
+            for mp in qs_mp:
+                x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+                y.append(mp['measurement__depth'])
+                z.append(mp['datavalue'])
+            
+            zi = griddata(np.array(x), np.array(y), np.array(z), xi, yi, interp='nn')
+            logger.debug('zi = %s', zi)
+
+            # Make the plot
+            # contour the gridded data, plotting dots at the nonuniform data points.
+            CS = plt.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
+            CS = plt.contourf(xi, yi, zi, 15, cmap=plt.cm.jet)
+            ##plt.colorbar() # draw colorbar
+            # plot data points.
+            plt.scatter(x,y,marker='o',c='b',s=5,zorder=10)
+            ##plt.xlim(tmin, tmax)
+            plt.ylim(dmax, dmin)
+            plt.axis('off')
+            plt.title('%s (%d points)' % (self.kwargs['parametername'][0], len(z)))
+
+            plt.savefig('/tmp/section.png')
+
+            sectionPng = None
+
+            return sectionPng
 
 
     #
