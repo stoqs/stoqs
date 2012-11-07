@@ -291,7 +291,10 @@
                     <div id="collapseParameterValues" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <p>
-                                <input type="checkbox" id="showallparametervalues" /> Show all histograms
+                                Histogram display: 
+                                <input type="checkbox" id="showsigmatparametervalues" checked /> sea_water_sigma_t
+                                <input type="checkbox" id="showstandardnameparametervalues" /> Standard Names
+                                <input type="checkbox" id="showallparametervalues" /> All Parameters
                             </p>
                             <table id="parameter-value-table" class="table table-condensed">
                             </table>
@@ -707,6 +710,14 @@
         rebuildFilters();
     });
 
+    $('#showsigmatparametervalues').on('click', function (event) {
+        rebuildFilters();
+    });
+
+    $('#showstandardnameparametervalues').on('click', function (event) {
+        rebuildFilters();
+    });
+
     $('#showallparametervalues').on('click', function (event) {
         rebuildFilters();
     });
@@ -729,8 +740,14 @@
         if ($('#getactualcount').is(':checked')) {
             qstring = qstring + '&get_actual_count=1';
         }
+        if ($('#showsigmatparametervalues').is(':checked')) {
+            qstring = qstring + '&showsigmatparametervalues=1';
+        }
+        if ($('#showstandardnameparametervalues').is(':checked')) {
+            qstring = qstring + '&showstandardnameparametervalues=1';
+        }
         if ($('#showallparametervalues').is(':checked')) {
-            qstring = qstring + '&show_all_parameter_values=1';
+            qstring = qstring + '&showallparametervalues=1';
         }
         if ( ! $('#showallparametervalues').is(':checked')) {
             //$('#parameter-value-table').html('<tbody></tbody>');
@@ -1403,7 +1420,6 @@
         $('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
         $('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
         $('#getactualcount').tooltip({title: 'Will increase query time'});
-        $('#showallparametervalues').tooltip({title: 'For faster queries only parameters with standard_names are shown'});
 
     });
 

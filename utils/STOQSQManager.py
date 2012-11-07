@@ -139,13 +139,37 @@ class STOQSQManager(object):
 
         return get_actual_count_state
         
+    def getShow_Sigmat_Parameter_Values(self):
+        '''
+        return state of showsigmatparametervalues checkbox from query UI
+        '''
+        show_sigmat_parameter_values_state = False
+        if self.kwargs.has_key('showsigmatparametervalues'):
+            if self.kwargs['showsigmatparametervalues']:
+                show_sigmat_parameter_values_state = True
+        logger.debug('show_sigmat_parameter_values_state = %s', show_sigmat_parameter_values_state)
+
+        return show_sigmat_parameter_values_state
+
+    def getShow_StandardName_Parameter_Values(self):
+        '''
+        return state of showstandardnameparametervalues checkbox from query UI
+        '''
+        show_standardname_parameter_values_state = False
+        if self.kwargs.has_key('showstandardnameparametervalues'):
+            if self.kwargs['showstandardnameparametervalues']:
+                show_standardname_parameter_values_state = True
+        logger.debug('show_standardname_parameter_values_state = %s', show_standardname_parameter_values_state)
+
+        return show_standardname_parameter_values_state
+
     def getShow_All_Parameter_Values(self):
         '''
-        return state of Show All Parameter Values checkbox from query UI
+        return state of showallparametervalues checkbox from query UI
         '''
         show_all_parameter_values_state = False
-        if self.kwargs.has_key('show_all_parameter_values'):
-            if self.kwargs['show_all_parameter_values']:
+        if self.kwargs.has_key('showallparametervalues'):
+            if self.kwargs['showallparametervalues']:
                 show_all_parameter_values_state = True
         logger.debug('show_all_parameter_values_state = %s', show_all_parameter_values_state)
 
@@ -556,10 +580,17 @@ class STOQSQManager(object):
         aphHash = {}
         showAllParametersFlag = self.getShow_All_Parameter_Values()
         for pa in models.Parameter.objects.using(self.dbname).all():
-            if not showAllParametersFlag:
-                # If not showing all parameters, show only those that have a standard_name
-                if not pa.standard_name:
-                    continue
+
+            # Apply (negative) logic on whether to continue with creating histograms based on checkboxes checked in the queryUI
+            if not self.getShow_All_Parameter_Values():
+                if not self.getShow_StandardName_Parameter_Values():
+                    if not self.getShow_Sigmat_Parameter_Values():
+                        continue
+                    elif pa.standard_name != 'sea_water_sigma_t':
+                        continue
+                elif not pa.standard_name:
+                        continue
+
             histList = {}
             binwidthList = {}
             platformList = {}

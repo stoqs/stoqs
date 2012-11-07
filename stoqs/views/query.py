@@ -168,7 +168,9 @@ def queryData(request, format=None):
                    'simpledepthtime': [],                   # List of x,y values
                    'platforms': 'platforms',                # Specified once in the query string for each platform.
                    'get_actual_count': 'get_actual_count',  # Flag value from checkbox
-                   'show_all_parameter_values': 'show_all_parameter_values',  # Flag value from checkbox
+                   'showsigmatparametervalues': 'showsigmatparametervalues',                # Flag value from checkbox
+                   'showstandardnameparametervalues': 'showstandardnameparametervalues',    # Flag value from checkbox
+                   'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
                    }
     params = {}
     for key, value in query_parms.iteritems():
