@@ -725,17 +725,17 @@ class STOQSQManager(object):
 
             # Make the plot
             # contour the gridded data, plotting dots at the nonuniform data points.
-            CS = plt.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
-            CS = plt.contourf(xi, yi, zi, 15, cmap=plt.cm.jet)
+            #-CS = plt.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
+            #-CS = plt.contourf(xi, yi, zi, 15, cmap=plt.cm.jet)
             ##plt.colorbar() # draw colorbar
             # plot data points.
-            plt.scatter(x,y,marker='o',c='b',s=5,zorder=10)
+            #-plt.scatter(x,y,marker='o',c='b',s=5,zorder=10)
             ##plt.xlim(tmin, tmax)
-            plt.ylim(dmax, dmin)
-            plt.axis('off')
-            plt.title('%s (%d points)' % (self.kwargs['parametername'][0], len(z)))
+            #-plt.ylim(dmax, dmin)
+            #-plt.axis('off')
+            #-plt.title('%s (%d points)' % (self.kwargs['parametername'][0], len(z)))
 
-            plt.savefig('/tmp/section.png')
+            #-plt.savefig('/tmp/section.png')
 
             sectionPng = None
 
