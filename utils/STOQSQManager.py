@@ -720,8 +720,8 @@ class STOQSQManager(object):
                 y.append(mp['measurement__depth'])
                 z.append(mp['datavalue'])
             
-            zi = griddata(np.array(x), np.array(y), np.array(z), xi, yi, interp='nn')
-            logger.debug('zi = %s', zi)
+            #-zi = griddata(np.array(x), np.array(y), np.array(z), xi, yi, interp='nn')
+            #-logger.debug('zi = %s', zi)
 
             # Make the plot
             # contour the gridded data, plotting dots at the nonuniform data points.
