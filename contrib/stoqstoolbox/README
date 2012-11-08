@@ -9,13 +9,14 @@ following steps:
 1. Download the latest stoqstoolbox build .zip file from http://code.google.com/p/stoqs/downloads/list
    and unzip it.
 
-2. Install the toolbox JSONlab from http://www.mathworks.com/matlabcentral/fileexchange/33381.
-
-3. Copy the stoqstoolbox folder to a place where you put your Matlab toolboxes and add it to your
+2. Copy the stoqstoolbox folder to a place where you put your Matlab toolboxes and add it to your
    matlabpath.
 
-4. See the examples in the demo folder
+3. Copy and paste Matlab code from the stoqstoolbox tab under Measurement Data Acces to load data 
+   into Matlab from the stoqs query interface.
+
+4. See more examples in the demo folder.
 
 -- 
 Mike McCann
-14 August 2012
+7 November 2012
