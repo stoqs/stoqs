@@ -24,6 +24,8 @@ function data = loadjson(fname,varargin)
 %      opt: a struct to store parsing options, opt can be replaced by 
 %           a list of ('param',value) pairs. The param string is equivallent
 %           to a field in opt.
+%      mp_total_count: a global variable representing the expected number of
+%                      MeasuredParameters to parse, used for progressbar.
 %
 % output:
 %      dat: a cell array, where {...} blocks are converted into cell arrays,
