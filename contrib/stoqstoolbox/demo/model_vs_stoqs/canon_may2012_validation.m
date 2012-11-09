@@ -55,6 +55,6 @@ end
 
       figure(1)
         plot(insitu.time,insitu.value,'x');datetick('x','dd/mm HH:MM');hold on;plot(model.date,model.pointdata,'.r')
-        legend('Insitu measurement','Model output','FontSize',18);
+        legend('Insitu measurement','Model output');
       xlabel('Date ( day/mont hour:minute)','FontSize',18);ylabel('Temperature','FontSize',18)
       set(gca,'FontSize',18)

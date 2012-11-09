@@ -51,7 +51,7 @@ if isempty(camp)
     
 else
     stoq_campaign=[stoqs_server '/' char(camp.dbAlias)]; %Build the url direction of the stoqs server for the campaign needed for the model date
-    insit=stoqs_down(stoq_campaign,datestart,datend,min_dep,max_dep,vari,'');
+    insit=stoqs_down(stoq_campaign,datestart,datend,min_dep,max_dep,'',vari,'');
 end
 
 

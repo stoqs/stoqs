@@ -21,6 +21,8 @@ function inf = stoqs_info(u,table,var)
 
 %Load the information
 
+global mp_total_count
+
 if nargin<2
     inf='';
     disp('-----------------------');
@@ -32,6 +34,7 @@ if nargin<2
     
 end
 
+% Campaign information
 switch nargin
     case 2
     ur=[u '/' table '.json'];
@@ -40,14 +43,27 @@ switch nargin
 end
 
 try
+    disp(['Opening ' ur ])
     url = java.net.URL(ur);
 catch me
-    m = MException([mfilename ':BadURL'], '%s is not a valid URL. Cause: %s', u, me.message);
+    m = MException([mfilename ':BadURL'], '%s is not a valid URL. Cause: %s', ur, me.message);
     throw(m);
 end
  
+try
+    ur_count = strrep(ur, '.json', '.count');  % Get count for progressbar in stoqs_loadjson() 
+    url_count = java.net.URL(ur_count);
+catch me
+    m = MException([mfilename ':BadURL'], '%s is not a valid URL. Cause: %s', ur_count, me.message);
+    throw(m);
+end
 
-urlStream = url.openStream(); %Open it
+urlStream = url_count.openStream();
+isr = java.io.InputStreamReader(urlStream);
+br = java.io.BufferedReader(isr);
+mp_total_count = char(readLine(br)) 
+
+urlStream = url.openStream(); 
 isr = java.io.InputStreamReader(urlStream);
 br = java.io.BufferedReader(isr);
 
@@ -57,7 +73,7 @@ if isempty(a)
     disp(error)
     inf='';
 else    
-    inf=loadjson(a); %Read de information, Convert java.string to string with char, so loadjson could convert it to a struct.
+    inf = stoqs_loadjson(a); % Parse json response, Convert java.string to string with char, so loadjson could convert it to a struct.
     er=0;
 end
 
