@@ -86,7 +86,7 @@ urlpatterns = patterns('',
     url(pre + r'query/', 'stoqs.views.query.queryUI', {}, name='stoqs-query-ui'),
 
     # Management, base of campaign, etc.
-    url(r'campaigns.(?P<format>[^/]{0,4})$', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
+    url(r'campaigns.(?P<format>[^/]{3,5})$', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
     url(pre + r'mgmt$', 'stoqs.views.management.showDatabase', {}, name='show-database'),
     url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'stoqs.views.management.deleteActivity', {}, name='delete-activity'),
     url(pre + r'activitiesMBARICustom$', 'stoqs.views.management.showActivitiesMBARICustom', {}, name='show-activities'),
@@ -106,7 +106,7 @@ urlpatterns = patterns('',
 
     # If nothing above matches show the quey interface is a dbalias is specified, otherwise show the campaigns
     url(pre, 'stoqs.views.query.queryUI', {}, name='base-campaign'),
-    url(r'/', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
+    url(r'', 'stoqs.views.management.showCampaigns', {}, name='show-default'),
 )
 
 # Not to be used in Production.  Must start development server with --insecure option to run with DEBUG = False:
