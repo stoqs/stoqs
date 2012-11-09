@@ -192,6 +192,8 @@ def showCampaigns(request,format=None):
     logger.debug("camList = %s", camList)
     if format == 'json':
         return HttpResponse(simplejson.dumps(camList, cls=encoders.STOQSJSONEncoder), 'application/json')
+    elif format == 'count':
+        return HttpResponse(len(camList), mimetype='text/plain')
     else:
         return render_to_response('campaigns.html', {'cList': camList }, context_instance=RequestContext(request)) 
 
