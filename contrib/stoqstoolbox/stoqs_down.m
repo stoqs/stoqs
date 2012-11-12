@@ -97,26 +97,16 @@ if ~isempty(varargin{8})
     query=[query 'parameter__standard_name=' varargin{8} '&'];
 end   
 
+% Replace spaces - in time parms - to be URL friendly
+query = strrep(query, ' ', '%20'); 
+
 
 % First, Get the count 
-query_count = strrep(query, '.json', '.count');         % Get count
-
-try
-    url_count = java.net.URL(query_count);
-catch me
-    m = MException([mfilename ':BadURL'], '%s is not a valid URL. Cause: %s', query_count, me.message);
-    throw(m);
-end
-
-% Get the count so that we can show progress toward our goal
-urlStream = url_count.openStream(); 
-isr = java.io.InputStreamReader(urlStream);
-br = java.io.BufferedReader(isr);
-mp_total_count = char(readLine(br));
+query_count = strrep(query, '.json', '.count')  
+mp_total_count = str2num(urlread(query_count));
 
 
 % Second, Get the data
-query = strrep(query, ' ', '%20');                      % Replace spaces - in time parms - to be URL friendly
 try
     url = java.net.URL(query);
     disp(['Reading data from: ' query])
