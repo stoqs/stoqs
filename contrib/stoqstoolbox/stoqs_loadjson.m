@@ -249,7 +249,7 @@ global pos inStr isoct mp_count mp_total_count
             end
             mp_count = mp_count + 1;
             if (exist('mp_total_count') == 1)
-                textprogressbar(round(100 * mp_count / str2num(mp_total_count)));
+                textprogressbar(round(100 * mp_count / mp_total_count));
             end
             parse_char(',');
          end
