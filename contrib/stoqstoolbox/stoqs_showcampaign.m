@@ -5,7 +5,7 @@ function stoqs_showcampaign(u,camp)
 %      
 %Usage:
 %
-%    stoqs_showcampaign('http://odss-staging.shore.mbari.org/canon/','stoqs_may2012');
+%    stoqs_showcampaign('http://odss.mbari.org/canon/','stoqs_may2012');
 %Input :
 %
 %   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon

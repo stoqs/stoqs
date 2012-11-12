@@ -4,7 +4,7 @@ function [infpa,parname] = stoqs_qparameter(u,show)
 %   
 %Usage:
 %
-%   inf=stoqs_qparameter('http://odss-staging.shore.mbari.org/canon/stoqs_may2012',1);
+%   inf=stoqs_qparameter('http://odss.mbari.org/canon/stoqs_may2012',1);
 %Input :
 
 %   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon/default

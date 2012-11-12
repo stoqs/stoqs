@@ -4,7 +4,7 @@ function stoqs_showall(u)
 %      
 %Usage:
 %
-%    stoqs_showall('http://odss-staging.shore.mbari.org/canon');
+%    stoqs_showall('http://odss.mbari.org/canon');
 %Input :
 %
 %   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon

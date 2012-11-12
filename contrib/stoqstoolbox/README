@@ -12,11 +12,12 @@ following steps:
 2. Copy the stoqstoolbox folder to a place where you put your Matlab toolboxes and add it to your
    matlabpath.
 
-3. Copy and paste Matlab code from the stoqstoolbox tab under Measurement Data Acces to load data 
-   into Matlab from the stoqs query interface.
+3. Run 'stoqs_demo' to test the installation.
 
-4. See more examples in the demo folder.
+4. Using the stoqs web query interface (e.g. http://odss.mbari.org/canon/stoqs_may2012/query/) copy and 
+   paste provided Matlab code from the stoqstoolbox tab under Measurement Data Access into your Matlab
+   session.
 
 -- 
 Mike McCann
-7 November 2012
+12 November 2012

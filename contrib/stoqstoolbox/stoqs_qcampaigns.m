@@ -5,10 +5,10 @@ function infcs=stoqs_qcampaigns(u,show)
 %      
 %Usage:
 %
-%  inf=stoqs_qcampaigns('http://odss-staging.shore.mbari.org/canon/',1);
+%  inf=stoqs_qcampaigns('http://odss.mbari.org/canon/',1);
 %Input :
 %
-%   u = Url direction of the STOQS data server. Ex: http://odss-staging.shore.mbari.org/canon/
+%   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon/
 %   show = Show the info on the screen or not. If show=1 , show the info,
 %               if show=0 doesn't show it.
 %
