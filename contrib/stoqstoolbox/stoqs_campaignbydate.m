@@ -3,7 +3,7 @@ function [inf]=stoqs_campaignbydate(urlst,date)
 %      
 %      
 %Usage:
-%       [camp]=stoqs_campaignbydate('http://odss-staging.shore.mbari.org/canon',datenum(2011,06,21));
+%       [camp]=stoqs_campaignbydate('http://odss.mbari.org/canon',datenum(2011,06,21));
 %   
 %Input :
 %        urls=Url of the STOQS server

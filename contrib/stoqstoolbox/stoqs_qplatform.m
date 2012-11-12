@@ -4,7 +4,7 @@ function [infp,platname] = stoqs_qplatform(u,show)
 %       inf=stoqs_qplatform('http://odss.mbari.org/canon/default',1);
 %Usage:
 %
-%   inf=stoqs_qplatform('http://odss-staging.shore.mbari.org/canon/stoqs_may2012',1);
+%   inf=stoqs_qplatform('http://odss.mbari.org/canon/stoqs_may2012',1);
 %Input :
 
 %   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon/default
