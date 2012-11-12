@@ -1,14 +1,14 @@
 function inf = stoqs_info(u,table,var)
 %
 %Get info from a table in STOQS data base
-%       inf=stoqs_info('http://odss-staging.shore.mbari.org/canon/stoqs_may2012','platform');
+%       inf=stoqs_info('http://odss.mbari.org/canon/stoqs_may2012','platform');
 %       infc=info_stoqs(u,'activity.json?campaign=','1');
 %Usage:
 %
 %   t=info_stoqs(u)
 %Input :
 %   Could use 2 o 3 parameter in the input
-%   u = Url direction of the STOQS data server. Ex: http://odss-staging.shore.mbari.org/canon/stoqs_may2012
+%   u = Url direction of the STOQS data server. Ex: http://odss.mbari.org/canon/stoqs_may2012
 %   table = table to get the information
 %   var= value of the parameter of the query to do to the table
 %Output
@@ -20,8 +20,6 @@ function inf = stoqs_info(u,table,var)
 %   19/August/2012
 
 %Load the information
-
-global mp_total_count
 
 if nargin<2
     inf='';
@@ -50,19 +48,6 @@ catch me
     throw(m);
 end
  
-try
-    ur_count = strrep(ur, '.json', '.count');  % Get count for progressbar in stoqs_loadjson() 
-    url_count = java.net.URL(ur_count);
-catch me
-    m = MException([mfilename ':BadURL'], '%s is not a valid URL. Cause: %s', ur_count, me.message);
-    throw(m);
-end
-
-urlStream = url_count.openStream();
-isr = java.io.InputStreamReader(urlStream);
-br = java.io.BufferedReader(isr);
-mp_total_count = char(readLine(br)) 
-
 urlStream = url.openStream(); 
 isr = java.io.InputStreamReader(urlStream);
 br = java.io.BufferedReader(isr);
