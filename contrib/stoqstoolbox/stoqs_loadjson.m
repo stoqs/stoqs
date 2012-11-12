@@ -25,7 +25,8 @@ function data = loadjson(fname,varargin)
 %           a list of ('param',value) pairs. The param string is equivallent
 %           to a field in opt.
 %      mp_total_count: a global variable representing the expected number of
-%                      MeasuredParameters to parse, used for progressbar.
+%                      MeasuredParameters to parse.  If a number is assigned to
+%                      it then it's used to present a progressbar.
 %
 % output:
 %      dat: a cell array, where {...} blocks are converted into cell arrays,
@@ -63,7 +64,9 @@ index_esc = 1; len_esc = length(esc);
 opt=varargin2struct(varargin{:});
 jsoncount=1;
 mp_count = 0;
-textprogressbar(['Parsing json response for ' num2str(mp_total_count) ' datavalues:  ']);
+if (exist('mp_total_count') == 1)
+    textprogressbar(['Parsing json response for ' num2str(mp_total_count) ' datavalues:  ']);
+end
 while pos <= len
     switch(next_char)
         case '{'
@@ -245,7 +248,9 @@ global pos inStr isoct mp_count mp_total_count
                 break;
             end
             mp_count = mp_count + 1;
-            textprogressbar(round(100 * mp_count / str2num(mp_total_count)));
+            if (exist('mp_total_count') == 1)
+                textprogressbar(round(100 * mp_count / str2num(mp_total_count)));
+            end
             parse_char(',');
          end
         end
