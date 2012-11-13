@@ -27,6 +27,9 @@ import calendar
 import re
 import locale
 import time
+import os
+import tempfile
+os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
