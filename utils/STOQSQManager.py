@@ -30,7 +30,10 @@ import time
 import os
 import tempfile
 os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
+import matplotlib
+matplotlib.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import matplotlib.pyplot as plt
+
 
 logger = logging.getLogger(__name__)
 
