@@ -597,13 +597,15 @@ class STOQSQManager(object):
         color and plot the data.
         '''
         aphHash = {}
-        showAllParametersFlag = self.getShow_All_Parameter_Values()
+        showAllParameterValuesFlag = self.getShow_All_Parameter_Values()
+        showSigmatParameterValuesFlag = self.getShow_Sigmat_Parameter_Values()
+        showStandardnameParameterValuesFlag = self.getShow_StandardName_Parameter_Values()
         for pa in models.Parameter.objects.using(self.dbname).all():
 
             # Apply (negative) logic on whether to continue with creating histograms based on checkboxes checked in the queryUI
-            if not self.getShow_All_Parameter_Values():
-                if not self.getShow_StandardName_Parameter_Values():
-                    if not self.getShow_Sigmat_Parameter_Values():
+            if not showAllParameterValuesFlag:
+                if not showStandardnameParameterValuesFlag:
+                    if not showSigmatParameterValuesFlag:
                         continue
                     elif pa.standard_name != 'sea_water_sigma_t':
                         continue
@@ -686,7 +688,6 @@ class STOQSQManager(object):
         '''
         if not self.getDisplay_Parameter_Platform_Data():
             return
-
         if len(self.kwargs['parametername']) != 1:
             return
         if len(self.kwargs['platforms']) != 1:
@@ -699,6 +700,7 @@ class STOQSQManager(object):
         tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
         dgrid_max = 100             # Height of time-depth-flot plot area is 335 pixels
         dinc = 0.5                  # Average vertical resolution of AUV Dorado
+        sectionPngFile = '/tmp/section.png'         # To be replaced with session-named tempfile
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
         # query has salient points, typically in the vertices of the yo-yos.  
@@ -732,6 +734,11 @@ class STOQSQManager(object):
 
         # Collect the scattered datavalues(time, depth) and grid them
         if xi is not None and yi is not None:
+            try:
+                os.remove(sectionPngFile)
+            except Exception, e:
+                logger.warn(e)
+
             logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
             x = []
             y = []
@@ -743,9 +750,10 @@ class STOQSQManager(object):
                 z.append(mp['datavalue'])
             
             try:
-                zi = griddata(np.array(x), np.array(y), np.array(z), xi, yi, interp='nn')
-            except Exception,e:
-                logger.error(e)
+                zi = griddata(x, y, z, xi, yi, interp='nn')
+            except Exception, e:
+                logger.exception('Could not grid the data')
+                return
 
             #-logger.debug('zi = %s', zi)
 
@@ -762,14 +770,12 @@ class STOQSQManager(object):
                 plt.axis('off')
                 plt.title('%s (%d points)' % (self.kwargs['parametername'][0], len(z)))
 
-                plt.savefig('/tmp/section.png')
+                plt.savefig(sectionPngFile)
             except Exception,e:
-                logger.error(e)
+                logger.exception('Could not plot the data')
+                return
 
-
-            sectionPng = None
-
-            return sectionPng
+            return sectionPngFile
 
 
     #
