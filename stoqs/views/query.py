@@ -171,6 +171,7 @@ def queryData(request, format=None):
                    'showsigmatparametervalues': 'showsigmatparametervalues',                # Flag value from checkbox
                    'showstandardnameparametervalues': 'showstandardnameparametervalues',    # Flag value from checkbox
                    'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
+                   'displayparameterplatformdata': 'displayparameterplatformdata',          # Flag value from checkbox
                    }
     params = {}
     for key, value in query_parms.iteritems():

@@ -181,6 +181,19 @@ class STOQSQManager(object):
 
         return show_all_parameter_values_state
 
+    def getDisplay_Parameter_Platform_Data(self):
+        '''
+        return state of Display Parameter-Platform data checkbox from quiry UI
+        '''
+        display_parameter_platform_data_state = False
+        if self.kwargs.has_key('displayparameterplatformdata'):
+            if self.kwargs['displayparameterplatformdata']:
+                display_parameter_platform_data_state = True
+        logger.debug('display_parameter_platform_data_state = %s', display_parameter_platform_data_state)
+
+        return display_parameter_platform_data_state
+        
+
     def getCount(self):
         '''
         Get the count of measured parameters giving the exising query
@@ -671,6 +684,9 @@ class STOQSQManager(object):
         produce a depth-time section plot for overlay on the flot plot.  Return a png image for inclusion
         in the AJAX response.
         '''
+        if not self.getDisplay_Parameter_Platform_Data():
+            return
+
         if len(self.kwargs['parametername']) != 1:
             return
         if len(self.kwargs['platforms']) != 1:
@@ -726,22 +742,30 @@ class STOQSQManager(object):
                 y.append(mp['measurement__depth'])
                 z.append(mp['datavalue'])
             
-            zi = griddata(np.array(x), np.array(y), np.array(z), xi, yi, interp='nn')
+            try:
+                zi = griddata(np.array(x), np.array(y), np.array(z), xi, yi, interp='nn')
+            except Exception,e:
+                logger.error(e)
+
             #-logger.debug('zi = %s', zi)
 
             # Make the plot
             # contour the gridded data, plotting dots at the nonuniform data points.
-            CS = plt.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
-            CS = plt.contourf(xi, yi, zi, 15, cmap=plt.cm.jet)
-            ##plt.colorbar() # draw colorbar
-            # plot data points.
-            plt.scatter(x,y,marker='o',c='b',s=5,zorder=10)
-            ##plt.xlim(tmin, tmax)
-            plt.ylim(dmax, dmin)
-            plt.axis('off')
-            plt.title('%s (%d points)' % (self.kwargs['parametername'][0], len(z)))
+            try:
+                CS = plt.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
+                CS = plt.contourf(xi, yi, zi, 15, cmap=plt.cm.jet)
+                ##plt.colorbar() # draw colorbar
+                # plot data points.
+                plt.scatter(x,y,marker='o',c='b',s=5,zorder=10)
+                ##plt.xlim(tmin, tmax)
+                plt.ylim(dmax, dmin)
+                plt.axis('off')
+                plt.title('%s (%d points)' % (self.kwargs['parametername'][0], len(z)))
 
-            plt.savefig('/tmp/section.png')
+                plt.savefig('/tmp/section.png')
+            except Exception,e:
+                logger.error(e)
+
 
             sectionPng = None
 

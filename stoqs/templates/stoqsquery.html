@@ -256,6 +256,7 @@
                             <input type="hidden" id="start-depth" "name="start-depth" />
                             <input type="hidden" id="end-depth" name="end-depth" /> 
                         </div>
+                        <p class="hidden"><input type="checkbox" id="displayparameterplatformdata" /> Display Parameter-Platform data</p>
                     </div>
                 </div><!-- accordian-group -->
 
@@ -667,6 +668,17 @@
             params[parameter + '_max'] = parametervalues[parameter]['max'];
         };
 
+        if (params['parametername'].length == 1 && params['platforms'].length == 1 ) {
+            if (typeof params['max_depth'] != 'undefined' && typeof params['min_depth'] != 'undefined' ) {
+                if (params['max_depth'] > params['min_depth']) {
+                    $('#displayparameterplatformdata').parent().removeClass('hidden');
+                }
+            }
+        }
+        else {
+                $('#displayparameterplatformdata').parent().addClass('hidden');
+        }
+
         updateSummaryData();
         polyLayer.removeAllFeatures();
     }
@@ -722,6 +734,10 @@
         rebuildFilters();
     });
 
+    $('#displayparameterplatformdata').on('click', function (event) {
+        rebuildFilters();
+    });
+
     $('#cmin').on('keypress', function (event, previousText) {
         setTimeout(setKMLlinks());
     });
@@ -748,6 +764,9 @@
         }
         if ($('#showallparametervalues').is(':checked')) {
             qstring = qstring + '&showallparametervalues=1';
+        }
+        if ($('#displayparameterplatformdata').is(':checked')) {
+            qstring = qstring + '&displayparameterplatformdata=1';
         }
         if ( ! $('#showallparametervalues').is(':checked')) {
             //$('#parameter-value-table').html('<tbody></tbody>');
@@ -1420,6 +1439,7 @@
         $('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
         $('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
         $('#getactualcount').tooltip({title: 'Will increase query time'});
+        $('#displayparameterplatformdata').tooltip({title: 'Not yet implemented'});
 
     });
 
