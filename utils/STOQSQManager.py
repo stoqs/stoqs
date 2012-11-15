@@ -924,7 +924,8 @@ class STOQSQManager(object):
         try:
             extent.transform(900913)
         except Exception,e:
-            logger.error(e)
+            logger.error('Cannot get transorm for LINESTRING (%s %s, %s %s)', self.qs.extent())
+            logger.exception(e)
             return None
         else:
             return extent
