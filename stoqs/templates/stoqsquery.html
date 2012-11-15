@@ -1068,6 +1068,7 @@
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
                 $.plot($("#time-depth-flot"), getDataset(initData, start.getTime(), end.getTime()), simpledepthtime_options);
+
             }
             else if (key == 'activitymaptrackextent') {
                 e = data[key];
@@ -1156,6 +1157,20 @@
                                     xaxis: { min: $('#start-ems').val(), max: $('#end-ems').val() },
                                     yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
                 }));
+
+                if ($('#displayparameterplatformdata').is(':checked')) {
+                    var data = [ [ ["/stoqs/static/images/stoqstoolbox-icon.png", $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
+                    var options = $.extend(true, {}, simpledepthtime_options, {
+                            series: { images: { show: true } },
+                            xaxis: { min: $('#start-ems').val(), max: $('#end-ems').val() },
+                            yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
+                    });
+
+                    $.plot.image.loadDataImages(data, options, function () {
+                        $.plot($("#time-depth-flot"), data, options);
+                    });
+                }
+
             }
             else if (key == 'activitymaptrackextent') {
                 e = data[key];
