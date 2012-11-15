@@ -17,6 +17,7 @@ from django.db import connections
 from django.db.models import Q, Max, Min, Sum
 from django.contrib.gis.geos import fromstr
 from django.db.models import Avg
+from django.http import HttpResponse
 from stoqs import models
 from utils import round_to_n
 from coards import to_udunits
@@ -29,11 +30,6 @@ import locale
 import time
 import os
 import tempfile
-os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
-import matplotlib
-matplotlib.use('Agg')               # Force matplotlib to not use any Xwindows backend
-import matplotlib.pyplot as plt
-
 
 logger = logging.getLogger(__name__)
 
@@ -693,14 +689,26 @@ class STOQSQManager(object):
         if len(self.kwargs['platforms']) != 1:
             return
 
+        os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
+        import matplotlib
+        matplotlib.use('Agg')               # Force matplotlib to not use any Xwindows backend
+        import matplotlib.pyplot as plt
+
         from matplotlib.mlab import griddata
+        ##from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        ##from matplotlib.figure import Figure
         import numpy as np
+        import string
+        import random
 
         # griddata parameters
         tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
         dgrid_max = 100             # Height of time-depth-flot plot area is 335 pixels
         dinc = 0.5                  # Average vertical resolution of AUV Dorado
-        sectionPngFile = '/tmp/section.png'         # To be replaced with session-named tempfile
+        ##sectionPngFile = '/tmp/section.png'         # To be replaced with session-named tempfile
+        ##sectionPngFile = '/home/mccann/dev/stoqshg/stoqs/static/images/section.png'
+        sectionPngFile = self.kwargs['parametername'][0] + '_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(9)) + '.png'
+        sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
         # query has salient points, typically in the vertices of the yo-yos.  
@@ -735,7 +743,7 @@ class STOQSQManager(object):
         # Collect the scattered datavalues(time, depth) and grid them
         if xi is not None and yi is not None:
             try:
-                os.remove(sectionPngFile)
+                os.remove(sectionPngFileFullPath)
             except Exception, e:
                 logger.warn(e)
 
@@ -759,9 +767,11 @@ class STOQSQManager(object):
 
             # Make the plot
             # contour the gridded data, plotting dots at the nonuniform data points.
+            # See http://scipy.org/Cookbook/Matplotlib/Django
             try:
-                CS = plt.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
-                CS = plt.contourf(xi, yi, zi, 15, cmap=plt.cm.jet)
+                ##fig = Figure()
+                plt.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
+                plt.contourf(xi, yi, zi, 15, cmap=plt.cm.jet)
                 ##plt.colorbar() # draw colorbar
                 # plot data points.
                 plt.scatter(x,y,marker='o',c='b',s=5,zorder=10)
@@ -770,7 +780,11 @@ class STOQSQManager(object):
                 plt.axis('off')
                 plt.title('%s (%d points)' % (self.kwargs['parametername'][0], len(z)))
 
-                plt.savefig(sectionPngFile)
+                ##canvas = FigureCanvas(fig)
+                ##response = HttpResponse(content_type='image/png')
+                ##canvas.print_png(response)
+
+                plt.savefig(sectionPngFileFullPath)
             except Exception,e:
                 logger.exception('Could not plot the data')
                 return
