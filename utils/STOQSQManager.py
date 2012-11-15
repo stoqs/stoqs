@@ -920,10 +920,11 @@ class STOQSQManager(object):
         Return GEOSGeometry extent of all the maptracks contained in the Activity geoqueryset
         The result can be directly passed out for direct use in a OpenLayers
         '''
-        extent = fromstr('LINESTRING (%s %s, %s %s)' % self.qs.extent(), srid=srid)
         try:
+            extent = fromstr('LINESTRING (%s %s, %s %s)' % self.qs.extent(), srid=srid)
             extent.transform(900913)
         except Exception,e:
+            logger.error('Tried to get extent for self.qsquery =  %s', str(self.qs.query))
             logger.error('Cannot get transorm for LINESTRING (%s %s, %s %s)', self.qs.extent())
             logger.exception(e)
             return None
