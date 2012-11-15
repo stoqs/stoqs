@@ -104,10 +104,15 @@ urlpatterns = patterns('',
     # For testing only 
     url(r'testAnimateCoastwatch$', 'stoqs.views.wms.showActivitiesWMSAnimateCoastwatch', {} , name='test-animate-wms-coastwatch'),\
 
-    # If nothing above matches show the quey interface is a dbalias is specified, otherwise show the campaigns
-    url(pre, 'stoqs.views.query.queryUI', {}, name='base-campaign'),
-    url(r'', 'stoqs.views.management.showCampaigns', {}, name='show-default'),
 )
+
+# For use on development server, see https://docs.djangoproject.com/en/dev/howto/static-files/
+if settings.DEBUG:
+    urlpatterns += patterns('',
+        url(r'^stoqs/media/(?P<path>.*)$', 'django.views.static.serve', {
+            'document_root': settings.MEDIA_ROOT,
+        }),
+   )
 
 # Not to be used in Production.  Must start development server with --insecure option to run with DEBUG = False:
 #    python manage.py runserver 0.0.0.0:8000 --insecure
@@ -115,3 +120,9 @@ if settings.DEBUG is False and settings.PRODUCTION is False:   #if DEBUG is True
     urlpatterns += patterns('',
         url(r'^(?P<path>.*)$', 'django.contrib.staticfiles.views.serve', {'document_root': settings.STATIC_ROOT})
     )
+
+urlpatterns += patterns('',
+    # If nothing above matches show the quey interface is a dbalias is specified, otherwise show the campaigns
+    url(pre, 'stoqs.views.query.queryUI', {}, name='base-campaign'),
+    url(r'', 'stoqs.views.management.showCampaigns', {}, name='show-default'),
+)
