@@ -256,7 +256,7 @@
                             <input type="hidden" id="start-depth" "name="start-depth" />
                             <input type="hidden" id="end-depth" name="end-depth" /> 
                         </div>
-                        <p class="hidden"><input type="checkbox" id="displayparameterplatformdata" /> Display Parameter-Platform data</p>
+                        <p class="hidden"><input type="checkbox" id="displayparameterplatformdata" /> Contour plot the Parameter-Platform data values</p>
                     </div>
                 </div><!-- accordian-group -->
 
@@ -1158,8 +1158,11 @@
                                     yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
                 }));
 
+                // Make the contour plot if checkbox is checked and is not hidden
                 if ($('#displayparameterplatformdata').is(':checked') && ! $('#displayparameterplatformdata').parent().hasClass('hidden')) {
                     if (data['parameterplatformdatavaluepng']) {
+                        // The background image bleeds to Flot's axes and is not correct.  Too bad, because the graph shows on top of it
+                        //$('#time-depth-flot').css("background-image", "url({{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'] +")");
                         var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'], $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
                         var options = $.extend(true, {}, simpledepthtime_options, {
                             series: { images: { show: true } },
@@ -1172,7 +1175,7 @@
                         });
                     }
                     else {
-                        alert("Could not contour the data");
+                        alert("Could not contour the data.  See server log for error message.");
                     }
                 }
 
