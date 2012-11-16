@@ -79,6 +79,7 @@ urlpatterns = patterns('',
     url(pre + r'measuredparameter.?' + formatPat, 'stoqs.views.app.showMeasuredParameter',  {}, name='show-mp-bytimeparm'),
     url(pre + r'activityparameterhistogram.?'      
                                      + formatPat, 'stoqs.views.app.showActivityParameterHistogram',  {}, name='show-aph'),
+    url(pre + r'resourceactivity.?' + formatPat, 'stoqs.views.app.showResourceActivity',  {}, name='show-resourceactivity'),
 
     # URL For Chander's STOQQManager related views
     url(pre + r'query/summary/$', 'stoqs.views.query.queryData', {}, name='stoqs-query-summary'),

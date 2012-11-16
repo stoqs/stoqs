@@ -67,6 +67,14 @@ class MeasuredParameter(BaseOutputer):
     fields = [ 'parameter__name', 'parameter__standard_name', 'measurement__depth', 'measurement__geom', 'measurement__instantpoint__timevalue',
                'measurement__instantpoint__activity__platform__name', 'datavalue', 'parameter__units' ]
 
+
+class ResourceActivity(BaseOutputer):
+    '''
+    Extend basic Resource with additional fields that stitches it up to Activity fields 
+    '''
+    fields = [ 'name', 'value', 'uristring', 'resourcetype__name', 'activityresource__activity__platform__name', 'activityresource__activity__name' ]
+
+
 class ActivityParameterHistogram(BaseOutputer):
     '''
     Return combined data for ActivityParameter statistics, including a png image of the histogram and other stats
@@ -106,7 +114,6 @@ class ActivityParameterHistogram(BaseOutputer):
         return super(ActivityParameterHistogram, self).process_request()
 
 
-
 def showActivityParameterHistogram(request, format='png'):
     '''
     By default return a png image of the histogram for the parameter
@@ -124,6 +131,12 @@ def showMeasuredParameter(request, format = 'json'):
     mp = MeasuredParameter(request, format, query_set, stoqs_object)
     return mp.process_request()
 
+def showResourceActivity(request, format = 'json'):
+    stoqs_object = mod.Resource
+    query_set = stoqs_object.objects.all().order_by('activityresource__activity__startdate')
+
+    ra = ResourceActivity(request, format, query_set, stoqs_object)
+    return ra.process_request()
 
 def showSampleDT(request, format = 'json'):
     stoqs_object = mod.Sample
