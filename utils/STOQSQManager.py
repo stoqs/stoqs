@@ -763,13 +763,10 @@ class STOQSQManager(object):
                 logger.exception('Could not grid the data')
                 return
 
-            #-logger.debug('zi = %s', zi)
-
             # Make the plot
             # contour the gridded data, plotting dots at the nonuniform data points.
             # See http://scipy.org/Cookbook/Matplotlib/Django
             try:
-                ##fig = Figure()
                 plt.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
                 plt.contourf(xi, yi, zi, 15, cmap=plt.cm.jet)
                 ##plt.colorbar() # draw colorbar
@@ -780,11 +777,8 @@ class STOQSQManager(object):
                 plt.axis('off')
                 plt.title('%s (%d points)' % (self.kwargs['parametername'][0], len(z)))
 
-                ##canvas = FigureCanvas(fig)
-                ##response = HttpResponse(content_type='image/png')
-                ##canvas.print_png(response)
-
                 plt.savefig(sectionPngFileFullPath)
+                plt.close()
             except Exception,e:
                 logger.exception('Could not plot the data')
                 return

@@ -1158,17 +1158,22 @@
                                     yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
                 }));
 
-                if ($('#displayparameterplatformdata').is(':checked')) {
-                    var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'], $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
-                    var options = $.extend(true, {}, simpledepthtime_options, {
+                if ($('#displayparameterplatformdata').is(':checked') && ! $('#displayparameterplatformdata').parent().hasClass('hidden')) {
+                    if (data['parameterplatformdatavaluepng']) {
+                        var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'], $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
+                        var options = $.extend(true, {}, simpledepthtime_options, {
                             series: { images: { show: true } },
                             xaxis: { min: $('#start-ems').val(), max: $('#end-ems').val() },
                             yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
-                    });
+                        });
 
-                    $.plot.image.loadDataImages(flotdata, options, function () {
-                        $.plot($("#time-depth-flot"), flotdata, options);
-                    });
+                        $.plot.image.loadDataImages(flotdata, options, function () {
+                            $.plot($("#time-depth-flot"), flotdata, options);
+                        });
+                    }
+                    else {
+                        alert("Could not contour the data");
+                    }
                 }
 
             }
