@@ -877,6 +877,17 @@
                 }
         }
 
+        function showQuickLooks(label) {
+                // http://172.16.130.135:8000/stoqs_may2012/resourceactivity.json?resourcetype__name=quick_look&activityresource__activity__name__contains=Dorado389_2012_150_00_150_00_decim
+                //var quicklook_url = '{{site_uri}}{% url show-resourceactivity dbAlias=request.META.dbAlias format=".json" %}?resourcetype__name=quick_look&';
+                var quicklook_url = '{{site_uri}}{% url show-quicklookplots dbAlias=request.META.dbAlias %}?';
+                quicklook_url = quicklook_url + 'activityresource__activity__name__contains=' + label.split(' ')[0];
+                var nwin = window.open(quicklook_url, '', 'height=800,width=1000');
+                if (window.focus) {
+                    nwin.focus();
+                }
+        }
+                
         $("#time-depth-flot").bind("plotclick", function (event, pos, item) {
             if (item) {
                 // Crude test whether sample or activity click, activities 2nd element may be '(stride=..'
@@ -884,6 +895,10 @@
                 if (item.series.label.split(' ').length == 2) {
                     if (item.series.label.split(' ')[1].indexOf('(') == -1) {
                         showSampleData(item.series.label)
+                    }
+                    else if (item.series.label.split(' ')[1].indexOf('(') != -1) {
+                        // Crude test that we have an activity name
+                        showQuickLooks(item.series.label)
                     }
                 }
             }
