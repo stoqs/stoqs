@@ -19,6 +19,8 @@ from stoqs.views import BaseOutputer
 import stoqs.models as mod
 ##import matplotlib.pyplot as plt
 import logging 
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +139,21 @@ def showResourceActivity(request, format = 'json'):
 
     ra = ResourceActivity(request, format, query_set, stoqs_object)
     return ra.process_request()
+
+def showQuickLookPlots(request):
+    stoqs_object = mod.Resource
+    query_set = stoqs_object.objects.filter(resourcetype__name='quick_look').order_by('name')
+
+    ra = ResourceActivity(request, format, query_set, stoqs_object)
+    ra.assign_qs()
+
+    activityName = ''
+    try:
+        activityName = ra.request.GET.getlist('activityresource__activity__name__contains')[0]
+    except:
+        pass
+
+    return render_to_response('quicklookplots.html', {'activity': activityName, 'images': ra.qs}, context_instance=RequestContext(request))
 
 def showSampleDT(request, format = 'json'):
     stoqs_object = mod.Sample
