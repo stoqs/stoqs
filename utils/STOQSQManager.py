@@ -770,7 +770,7 @@ class STOQSQManager(object):
                 zi = griddata(x, y, z, xi, yi, interp='nn')
             except Exception, e:
                 logger.exception('Could not grid the data')
-                return
+                return None
 
             parm_info = self.getParameterMinMax()
             try:
@@ -779,12 +779,12 @@ class STOQSQManager(object):
                 # See http://scipy.org/Cookbook/Matplotlib/Django
                 fig = plt.figure(figsize=(6,3))
                 ax = fig.add_axes((0,0,1,1))
-                ##ax.set_axis_off()
+                ax.set_xlim(tmin, tmax)
+                ax.set_ylim(dmax, dmin)
                 clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
                 cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
                 ax.contourf(xi, yi, zi, clevs=np.linspace(parm_info[1], parm_info[2], 19), cmap=cm_jetplus)
                 ax.scatter(x, y, marker='.', c='k', s=2, zorder=10)
-                ax.set_ylim(dmax, dmin)
 
                 # Add sample locations and names
                 xsamp = []
@@ -802,7 +802,7 @@ class STOQSQManager(object):
                 plt.close()
             except Exception,e:
                 logger.exception('Could not plot the data')
-                return
+                return None
 
             try:
                 # Make colorbar as a separate figure
@@ -823,7 +823,7 @@ class STOQSQManager(object):
                 plt.close()
             except Exception,e:
                 logger.exception('Could not plot the colormap')
-                return
+                return None
 
             return sectionPngFile, colorbarPngFile
 

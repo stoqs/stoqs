@@ -1178,8 +1178,6 @@
 
                 // Make the contour plot if checkbox is checked and is not hidden
                 if ($('#displayparameterplatformdata').is(':checked') && ! $('#displayparameterplatformdata').parent().hasClass('hidden')) {
-                    console.log('parameterplatformdatavaluepng = ' + data['parameterplatformdatavaluepng'][0]);
-                    console.log('parameterplatformdatavaluepng cb = ' + data['parameterplatformdatavaluepng'][1]);
                     if (data['parameterplatformdatavaluepng']) {
                         // The background image bleeds to Flot's axes and is not correct.  Too bad, because the graph shows on top of it
                         //$('#time-depth-flot').css("background-image", "url({{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0] +")");
