@@ -22,7 +22,7 @@ def makeKML(dbAlias, dataHash, pName, title, desc, startDate, endDate, cmin=None
     #
     # Define the color lookup table and the color limits from 2.5 and 97.5 percentiles for each variable
     #
-    clt = readCLT(os.path.join(settings.MEDIA_ROOT, 'jetplus.txt'))
+    clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
     climHash = {}
     for p in m.Parameter.objects.using(dbAlias).all().values_list('name'):
         pn = p[0]
