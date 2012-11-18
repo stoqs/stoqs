@@ -679,7 +679,7 @@ class STOQSQManager(object):
     def getParameterPlatformDatavaluePNG(self):
         '''
         Called when user interface has selected just one Parameter and just one Platform, in which case
-        produce a depth-time section plot for overlay on the flot plot.  Return a png image for inclusion
+        produce a depth-time section plot for overlay on the flot plot.  Return a png image file name for inclusion
         in the AJAX response.
         '''
         if not self.getDisplay_Parameter_Platform_Data():
@@ -689,14 +689,14 @@ class STOQSQManager(object):
         if len(self.kwargs['platforms']) != 1:
             return
 
+        # Setup Matplotlib for running on the server
         os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
         import matplotlib
         matplotlib.use('Agg')               # Force matplotlib to not use any Xwindows backend
         import matplotlib.pyplot as plt
 
         from matplotlib.mlab import griddata
-        ##from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-        ##from matplotlib.figure import Figure
+        from matplotlib import mpl
         import numpy as np
         import string
         import random
@@ -705,10 +705,17 @@ class STOQSQManager(object):
         tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
         dgrid_max = 100             # Height of time-depth-flot plot area is 335 pixels
         dinc = 0.5                  # Average vertical resolution of AUV Dorado
-        ##sectionPngFile = '/tmp/section.png'         # To be replaced with session-named tempfile
-        ##sectionPngFile = '/home/mccann/dev/stoqshg/stoqs/static/images/section.png'
-        sectionPngFile = self.kwargs['parametername'][0] + '_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(9)) + '.png'
+
+        # Use session ID so that different users don't stomp on each other with their section plots
+        if self.request.session.has_key('sessionID'):
+            sessionID = self.request.session['sessionID']
+        else:
+            sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
+            self.request.session['sessionID'] = sessionID
+        sectionPngFile = self.kwargs['parametername'][0] + '_' + self.kwargs['platforms'][0] + '_' + sessionID + '.png'
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
+        colorbarPngFile = self.kwargs['parametername'][0] + '_' + self.kwargs['platforms'][0] + '_colorbar_' + sessionID + '.png'
+        colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', colorbarPngFile)
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
         # query has salient points, typically in the vertices of the yo-yos.  
@@ -719,7 +726,8 @@ class STOQSQManager(object):
                 dend = datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S')
 
                 sdt_count = self.qs.filter(platform__name = self.kwargs['platforms'][0]).values_list('simpledepthtime__depth').count()
-                logger.debug('sdt_count from query = %d', sdt_count)
+                sdt_count = int(sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
+                logger.debug('Half of sdt_count from query = %d', sdt_count)
                 if sdt_count > tgrid_max:
                     sdt_count = tgrid_max
 
@@ -763,27 +771,58 @@ class STOQSQManager(object):
                 logger.exception('Could not grid the data')
                 return
 
-            # Make the plot
-            # contour the gridded data, plotting dots at the nonuniform data points.
-            # See http://scipy.org/Cookbook/Matplotlib/Django
+            parm_info = self.getParameterMinMax()
             try:
-                fig = plt.figure()
-                ax=fig.add_axes((0,0,1,1))
-                ax.set_axis_off()
-                ax.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
-                ax.contourf(xi, yi, zi, 15, cmap=plt.cm.jet)
+                # Make the plot
+                # contour the gridded data, plotting dots at the nonuniform data points.
+                # See http://scipy.org/Cookbook/Matplotlib/Django
+                fig = plt.figure(figsize=(6,3))
+                ax = fig.add_axes((0,0,1,1))
+                ##ax.set_axis_off()
+                ##ax.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
+                ax.contourf(xi, yi, zi, clevs=np.linspace(parm_info[1], parm_info[2], 19), cmap=plt.cm.jet)
                 ##plt.colorbar() # draw colorbar
                 # plot data points.
-                ax.scatter(x, y, marker='.', c='b', s=2, zorder=10)
+                ax.scatter(x, y, marker='.', c='k', s=2, zorder=10)
                 ax.set_ylim(dmax, dmin)
 
-                fig.savefig(sectionPngFileFullPath, figsize=(6, 3), dpi=80)
+                # Add sample locations
+                xsamp = []
+                ysamp = []
+                sname = []
+                for s in self.getSampleQS().values('instantpoint__timevalue', 'depth', 'name'):
+                    xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()))
+                    ysamp.append(s['depth'])
+                    sname.append(s['name'])
+                ax.scatter(xsamp, ysamp, marker='o', c='w', s=15, zorder=10)
+                for x,y,sn in zip(xsamp, ysamp, sname):
+                    plt.annotate(sn, xy=(x,y))
+
+                fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
             except Exception,e:
                 logger.exception('Could not plot the data')
                 return
 
-            return sectionPngFile
+            try:
+                # Make colorbar as a separate figure
+                cbfig = plt.figure(figsize=(4,0.5))
+                ax = cbfig.add_axes([0.1, 0.8, 0.9, 0.15])
+                logger.debug('parm_info = %s', parm_info)
+                parm_units = models.Parameter.objects.filter(name=parm_info[0]).values_list('units')[0][0]
+                logger.debug('parm_units = %s', parm_units)
+                norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2])
+                cb = mpl.colorbar.ColorbarBase(ax, cmap=plt.cm.jet,
+                                                norm=norm,
+                                                orientation='horizontal')
+                cb.set_label('%s (%s)' % (parm_info[0], parm_units))
+                cbfig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
+                plt.close()
+            except Exception,e:
+                logger.exception('Could not plot the colormap')
+                return
+
+            return sectionPngFile, colorbarPngFile
 
 
     #
