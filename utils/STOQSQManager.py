@@ -700,6 +700,7 @@ class STOQSQManager(object):
         import numpy as np
         import string
         import random
+        from stoqs.views.KML import readCLT
 
         # griddata parameters
         tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
@@ -779,14 +780,13 @@ class STOQSQManager(object):
                 fig = plt.figure(figsize=(6,3))
                 ax = fig.add_axes((0,0,1,1))
                 ##ax.set_axis_off()
-                ##ax.contour(xi, yi, zi, 15, linewidths=0.5, colors='k')
-                ax.contourf(xi, yi, zi, clevs=np.linspace(parm_info[1], parm_info[2], 19), cmap=plt.cm.jet)
-                ##plt.colorbar() # draw colorbar
-                # plot data points.
+                clt = readCLT(os.path.join(settings.MEDIA_ROOT, 'jetplus.txt'))
+                cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
+                ax.contourf(xi, yi, zi, clevs=np.linspace(parm_info[1], parm_info[2], 19), cmap=cm_jetplus)
                 ax.scatter(x, y, marker='.', c='k', s=2, zorder=10)
                 ax.set_ylim(dmax, dmin)
 
-                # Add sample locations
+                # Add sample locations and names
                 xsamp = []
                 ysamp = []
                 sname = []
@@ -796,7 +796,7 @@ class STOQSQManager(object):
                     sname.append(s['name'])
                 ax.scatter(xsamp, ysamp, marker='o', c='w', s=15, zorder=10)
                 for x,y,sn in zip(xsamp, ysamp, sname):
-                    plt.annotate(sn, xy=(x,y))
+                    plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points')
 
                 fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
@@ -806,17 +806,20 @@ class STOQSQManager(object):
 
             try:
                 # Make colorbar as a separate figure
-                cbfig = plt.figure(figsize=(4,0.5))
-                ax = cbfig.add_axes([0.1, 0.8, 0.9, 0.15])
+                cb_fig = plt.figure(figsize=(4, 0.8))
+                cb_ax = cb_fig.add_axes([0.1, 0.8, 0.8, 0.2])
                 logger.debug('parm_info = %s', parm_info)
                 parm_units = models.Parameter.objects.filter(name=parm_info[0]).values_list('units')[0][0]
                 logger.debug('parm_units = %s', parm_units)
-                norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2])
-                cb = mpl.colorbar.ColorbarBase(ax, cmap=plt.cm.jet,
+                norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
+                cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=cm_jetplus,
                                                 norm=norm,
+                                                ticks=[parm_info[1], parm_info[2]],
                                                 orientation='horizontal')
+                cb.ax.set_xticklabels([str(parm_info[1]), str(parm_info[2])])
                 cb.set_label('%s (%s)' % (parm_info[0], parm_units))
-                cbfig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
+                logger.debug('ticklabels = %s', [str(parm_info[1]), str(parm_info[2])])
+                cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
             except Exception,e:
                 logger.exception('Could not plot the colormap')
