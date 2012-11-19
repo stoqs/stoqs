@@ -139,11 +139,15 @@
                         <div class="accordion-inner">
                             <div class="row-fluid" id="map"></div>
                             <p>
-                                <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
+                                <label class="checkbox">
+                                    <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
+                                </label>
                             </p>
                             <p>
                                 <div id="query-stats" class="ajax-wait"></div>
-                                <input type="checkbox" id="getactualcount" /> Get actual count
+                                <label class="checkbox">
+                                    <input type="checkbox" id="getactualcount" /> Get actual count
+                                </label>
                             </p>
                             <div id="samplePoint"></div>
                         </div>
@@ -246,8 +250,12 @@
                                 <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled" title="Click and drag to select a time-depth range"></div>
                                 <div class="row"><p align="center">Time (GMT)</p></div>
                                 <div class="row">
-                                    <div class="span3 hidden"><input type="checkbox" id="displayparameterplatformdata" /> Contour plot data values</div>
-                                    <div class="span4 offset3" id="sectioncolorbar"></div>
+                                    <div class="span2">
+                                        <label class="checkbox disabled">
+                                            <input type="checkbox" id="displayparameterplatformdata" disabled> Contour plot data values
+                                        </label>
+                                    </div>
+                                    <div class="span4" id="sectioncolorbar" style="float:right;"></div>
                                 </div>
                                 <div class="span12">
                                     <button id="zoomed-button" class="btn btn-mini zoom-toggle disabled">Zoomed</button>
@@ -672,14 +680,13 @@
         };
 
         if (params['parametername'].length == 1 && params['platforms'].length == 1 ) {
-            if (typeof params['max_depth'] != 'undefined' && typeof params['min_depth'] != 'undefined' ) {
-                if (params['max_depth'] > params['min_depth']) {
-                    $('#displayparameterplatformdata').parent().removeClass('hidden');
-                }
-            }
+            $('#displayparameterplatformdata').parent().removeClass('disabled');
+            $('#displayparameterplatformdata').removeAttr('disabled');
+            $('#displayparameterplatformdata').parent().tooltip('disable');
         }
         else {
-                $('#displayparameterplatformdata').parent().addClass('hidden');
+                $('#displayparameterplatformdata').parent().addClass('disabled');
+                $('#displayparameterplatformdata').attr('disabled');
         }
 
         updateSummaryData();
@@ -885,10 +892,10 @@
                 //var quicklook_url = '{{site_uri}}{% url show-resourceactivity dbAlias=request.META.dbAlias format=".json" %}?resourcetype__name=quick_look&';
                 var quicklook_url = '{{site_uri}}{% url show-quicklookplots dbAlias=request.META.dbAlias %}?';
                 quicklook_url = quicklook_url + 'activityresource__activity__name__contains=' + label.split(' ')[0];
-                var nwin = window.open(quicklook_url, '', 'height=800,width=1000');
-                if (window.focus) {
-                    nwin.focus();
-                }
+                //var nwin = window.open(quicklook_url, '', 'height=800,width=1000');
+                //if (window.focus) {
+                //    nwin.focus();
+                //}
         }
                 
         $("#time-depth-flot").bind("plotclick", function (event, pos, item) {
@@ -1176,11 +1183,9 @@
                                     yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
                 }));
 
-                // Make the contour plot if checkbox is checked and is not hidden
-                if ($('#displayparameterplatformdata').is(':checked') && ! $('#displayparameterplatformdata').parent().hasClass('hidden')) {
+                // Make the contour plot if checkbox is checked and is not disabled
+                if ($('#displayparameterplatformdata').is(':checked') && ! $('#displayparameterplatformdata').parent().hasClass('disabled')) {
                     if (data['parameterplatformdatavaluepng']) {
-                        // The background image bleeds to Flot's axes and is not correct.  Too bad, because the graph shows on top of it
-                        //$('#time-depth-flot').css("background-image", "url({{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0] +")");
                         var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
                         var options = $.extend(true, {}, simpledepthtime_options, {
                             series: { images: { show: true } },
@@ -1192,11 +1197,10 @@
                             $.plot($("#time-depth-flot"), flotdata, options);
                         });
                         // Show colorbar
-                        //var cb_url = 
                         $('#sectioncolorbar').html('<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />');
                     }
                     else {
-                        alert("Could not contour the data.  See server log for error message.");
+                        alert("Could not contour the data.  Try selecting a smaller depth-time region.");
                     }
                 }
 
@@ -1483,7 +1487,7 @@
         $('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
         $('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
         $('#getactualcount').tooltip({title: 'Will increase query time'});
-        $('#displayparameterplatformdata').tooltip({title: 'Not yet implemented'});
+        $('#displayparameterplatformdata').parent().tooltip({title: 'Select a Parameter name and a Platform to enable'});
 
     });
 
