@@ -723,8 +723,8 @@ class STOQSQManager(object):
         xi = None
         if self.kwargs.has_key('time'):
             if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
-                dstart = datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S')
-                dend = datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S')
+                dstart = datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S') 
+                dend = datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S') 
 
                 sdt_count = self.qs.filter(platform__name = self.kwargs['platforms'][0]).values_list('simpledepthtime__depth').count()
                 sdt_count = int(sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
@@ -732,8 +732,9 @@ class STOQSQManager(object):
                 if sdt_count > tgrid_max:
                     sdt_count = tgrid_max
 
-                tmin = time.mktime(dstart.timetuple())
-                tmax = time.mktime(dend.timetuple())
+                # convert seconds to minutes for more "equal" x-y spacing for griddata to do a better job for typical yo-yos
+                tmin = time.mktime(dstart.timetuple()) / 60.0
+                tmax = time.mktime(dend.timetuple()) / 60.0
                 xi = np.linspace(tmin, tmax, sdt_count)
                 logger.debug('xi = %s', xi)
 
@@ -762,7 +763,8 @@ class STOQSQManager(object):
             z = []
             qs_mp = self.getMeasuredParametersQS().values('measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue')
             for mp in qs_mp:
-                x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+                # convert seconds to minutes for more "equal" x-y spacing for griddata to do a better job for typical yo-yos
+                x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / 60.0)
                 y.append(mp['measurement__depth'])
                 z.append(mp['datavalue'])
             
@@ -970,16 +972,21 @@ class STOQSQManager(object):
         Return GEOSGeometry extent of all the maptracks contained in the Activity geoqueryset
         The result can be directly passed out for direct use in a OpenLayers
         '''
+        extent = None
         try:
-            extent = fromstr('LINESTRING (%s %s, %s %s)' % self.qs.extent(), srid=srid)
+            geomstr = 'LINESTRING (%s %s, %s %s)' % self.qs.extent()
+        except:
+            logger.exception('Tried to get extent for self.qs.query =  %s, but failed', str(self.qs.query))
+        try:
+            extent = fromstr(geomstr, srid=srid)
+        except:
+            logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
+        try:
             extent.transform(900913)
-        except Exception,e:
-            logger.error('Tried to get extent for self.qsquery =  %s', str(self.qs.query))
-            logger.error('Cannot get transorm for LINESTRING (%s %s, %s %s)', self.qs.extent())
-            logger.exception(e)
-            return None
-        else:
-            return extent
+        except:
+            logger.exception('Cannot get transorm to 900913 for geomstr = %s, srid = %d', geomstr, srid)
+        
+        return extent
 
 
     #
