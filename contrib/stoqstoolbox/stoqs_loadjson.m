@@ -64,7 +64,7 @@ index_esc = 1; len_esc = length(esc);
 opt=varargin2struct(varargin{:});
 jsoncount=1;
 mp_count = 0;
-if (exist('mp_total_count') == 1)
+if (~isempty(mp_total_count))
     textprogressbar(['Parsing json response for ' num2str(mp_total_count) ' datavalues:  ']);
 end
 while pos <= len
@@ -248,7 +248,7 @@ global pos inStr isoct mp_count mp_total_count
                 break;
             end
             mp_count = mp_count + 1;
-            if (exist('mp_total_count') == 1)
+            if (~isempty(mp_total_count))
                 textprogressbar(round(100 * mp_count / mp_total_count));
             end
             parse_char(',');
