@@ -732,9 +732,8 @@ class STOQSQManager(object):
                 if sdt_count > tgrid_max:
                     sdt_count = tgrid_max
 
-                # convert seconds to minutes for more "equal" x-y spacing for griddata to do a better job for typical yo-yos
-                tmin = time.mktime(dstart.timetuple()) / 60.0
-                tmax = time.mktime(dend.timetuple()) / 60.0
+                tmin = time.mktime(dstart.timetuple())
+                tmax = time.mktime(dend.timetuple())
                 xi = np.linspace(tmin, tmax, sdt_count)
                 logger.debug('xi = %s', xi)
 
@@ -752,6 +751,12 @@ class STOQSQManager(object):
 
         # Collect the scattered datavalues(time, depth) and grid them
         if xi is not None and yi is not None:
+            # Estimate a scale factor to apply to the x values on drid data so that x & y values are visually equal for the flot plot
+            # which is assumed to be 3x wider than tall.  Approximate horizontal coverage by Dorado is 1 m/s.
+            scale_factor = float(tmax -tmin) / (dmax - dmin) / 3.0
+            logger.debug('scale_factor = %f', scale_factor)
+            xi = xi / scale_factor
+
             try:
                 os.remove(sectionPngFileFullPath)
             except Exception, e:
@@ -763,13 +768,15 @@ class STOQSQManager(object):
             z = []
             qs_mp = self.getMeasuredParametersQS().values('measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue')
             for mp in qs_mp:
-                # convert seconds to minutes for more "equal" x-y spacing for griddata to do a better job for typical yo-yos
-                x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / 60.0)
+                x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
                 y.append(mp['measurement__depth'])
                 z.append(mp['datavalue'])
-            
+           
             try:
                 zi = griddata(x, y, z, xi, yi, interp='nn')
+            except KeyError, e:
+                logger.exception('Got KeyError: Could not grid the data')
+                return None
             except Exception, e:
                 logger.exception('Could not grid the data')
                 return None
@@ -781,12 +788,12 @@ class STOQSQManager(object):
                 # See http://scipy.org/Cookbook/Matplotlib/Django
                 fig = plt.figure(figsize=(6,3))
                 ax = fig.add_axes((0,0,1,1))
-                ax.set_xlim(tmin, tmax)
+                ax.set_xlim(tmin / scale_factor, tmax / scale_factor)
                 ax.set_ylim(dmax, dmin)
                 clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
                 cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
                 ax.contourf(xi, yi, zi, clevs=np.linspace(parm_info[1], parm_info[2], 19), cmap=cm_jetplus)
-                ax.scatter(x, y, marker='.', c='k', s=2, zorder=10)
+                ax.scatter(x, y, marker='.', c='k', s=1, zorder=10)
 
                 # Add sample locations and names
                 xsamp = []
@@ -808,7 +815,7 @@ class STOQSQManager(object):
 
             try:
                 # Make colorbar as a separate figure
-                cb_fig = plt.figure(figsize=(4, 0.8))
+                cb_fig = plt.figure(figsize=(5, 0.8))
                 cb_ax = cb_fig.add_axes([0.1, 0.8, 0.8, 0.2])
                 logger.debug('parm_info = %s', parm_info)
                 parm_units = models.Parameter.objects.filter(name=parm_info[0]).values_list('units')[0][0]
