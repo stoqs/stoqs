@@ -102,7 +102,7 @@ query = strrep(query, ' ', '%20');
 
 
 % First, Get the count 
-query_count = strrep(query, '.json', '.count')  
+query_count = strrep(query, '.json', '.count');
 mp_total_count = str2num(urlread(query_count));
 
 
