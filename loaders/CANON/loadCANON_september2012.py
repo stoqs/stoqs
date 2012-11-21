@@ -158,6 +158,13 @@ cl.wfpctd_files = [
                       ]
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 
+# Spray glider - for just the duration of the campaign
+cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
+cl.l_662_files = ['OS_Glider_L_662_20120816_TS.nc']
+cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
+cl.l_662_startDatetime = datetime.datetime(2012, 9, 1)
+cl.l_662_endDatetime = datetime.datetime(2012, 9, 21)
+
 
 cl.stride = stride
 ##cl.loadAll()
@@ -170,4 +177,5 @@ cl.loadTethys()
 cl.loadESPdrift()
 cl.loadWFuctd()
 cl.loadWFpctd()
+cl.loadL_662()
 
