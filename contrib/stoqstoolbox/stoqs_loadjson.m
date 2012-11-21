@@ -91,7 +91,9 @@ if(~isempty(data))
           data=jcell2array(data);
       end
 end
-textprogressbar('  Done.');
+if (~isempty(mp_total_count))
+    textprogressbar('  Done.');
+end
 
 %%
 function newdata=parse_collection(id,data,obj)
