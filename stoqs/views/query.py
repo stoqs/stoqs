@@ -172,6 +172,7 @@ def queryData(request, format=None):
                    'showstandardnameparametervalues': 'showstandardnameparametervalues',    # Flag value from checkbox
                    'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
                    'displayparameterplatformdata': 'displayparameterplatformdata',          # Flag value from checkbox
+                   'parametervalues': [],                   # Appended to below with any _MIN _MAX request items
                    }
     params = {}
     for key, value in query_parms.iteritems():
@@ -179,7 +180,19 @@ def queryData(request, format=None):
             params[key] = [request.GET.get(p, None) for p in value]
         else:
             params[key] = request.GET.getlist(key)
-   
+
+    # Look for any parameter _MIN & _MAX input from the UI.  After retrieving the above query_parms the
+    # only thing left in the request QueryDict should be the parameter _MIN _MAX selections.
+    for key, value in request.GET.iteritems():
+        if key.endswith('_MIN'):                    # Just test for _MIN; UI will always provide _MIN & _MAX
+            name = key.split('_MIN')[0]
+            try:
+                pminmax = {name: (request.GET.getlist(name + '_MIN')[0], request.GET.getlist(name + '_MAX')[0])}
+            except:
+                logger.exception('Could not get parameter values even though ' + key + ' ends with _MIN')
+            params['parametervalues'].append(pminmax)
+            logger.info('Adding to parametervalues: %s', pprint.pformat(pminmax))
+
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     qm.buildQuerySet(**params)
     options = simplejson.dumps(qm.generateOptions(),
