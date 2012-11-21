@@ -694,8 +694,10 @@
         });
 
         for (var parameter in parametervalues) {
-            params[parameter + '_min'] = parametervalues[parameter]['min'];
-            params[parameter + '_max'] = parametervalues[parameter]['max'];
+            // No CF stantard names end with '_MIN' or '_MAX' and none have upper case letters, so the convention
+            // of adding these identifiers and taking them off should work.
+            params[parameter + '_MIN'] = parametervalues[parameter]['min'];
+            params[parameter + '_MAX'] = parametervalues[parameter]['max'];
         };
 
         if (params['parametername'].length == 1 ) {
@@ -740,6 +742,10 @@
     $("#zoomed-button").click(function() {
         if ( $('.btn-primary', $('#time-depth-plot').length) ) {
             resetZoomedValues(initData);
+            options_stack = [];
+            zoom_xy_stack = [];
+            stack_depth = 0;
+            simpledepthtime_options_zoom = simpledepthtime_options;
             rebuildFilters();
             $("#zoomed-button").removeClass('btn-primary');
             $("#zoomed-button").addClass('disabled');
@@ -1187,7 +1193,7 @@
                         $('#sectioncolorbar').html('<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />');
                     }
                     else {
-                        alert(data['parameterplatformdatavaluepng'][2] + "  Try selecting a smaller depth-time region.");
+                        alert(data['parameterplatformdatavaluepng'][2] + "  Try a different selection.");
                     }
                 }
 
@@ -1468,8 +1474,6 @@
         });
         
 
-
-
         // show pan/zoom messages to illustrate events, see: http://people.iola.dk/olau/flot/examples/navigate.html
         $("#time-depth-flot").bind('plotpan', function (event, plot) {
             var axes = timedepthplot.getAxes();
@@ -1505,10 +1509,10 @@
             });
         }
     
-        addArrow('left', 55, 60, { left: -1 });
-        addArrow('right', 25, 60, { left: 1 });
-        addArrow('up', 40, 45, { top: 1 });
-        addArrow('down', 40, 75, { top: -1 });
+        addArrow('left', 55, 60, { left: -10 });
+        addArrow('right', 25, 60, { left: 10 });
+        addArrow('up', 40, 45, { top: 10 });
+        addArrow('down', 40, 75, { top: -10 });
 
 
         function ZoomIn(event, ranges) {
@@ -1581,7 +1585,7 @@
         $('#time-depth-anchor').click();
         $('#map-anchor').click();
         $('#parameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
-        $('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select by parameter value range'});
+        $('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select Measurement Data by parameter value range'});
         $('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
         $('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
         $('#getactualcount').tooltip({title: 'Will increase query time'});

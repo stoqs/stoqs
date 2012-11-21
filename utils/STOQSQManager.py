@@ -95,9 +95,10 @@ class STOQSQManager(object):
         Generate a dictionary of all the selectable parameters by executing each of the functions
         to generate those parameters.  In this case, we'll simply do it by defining the dictionary and it's associated
         function, then iterate over that dictionary calling the function(s) to get the value to be returned.
-        Note that in the case of parameters and platforms the result is a list of 2-tuples, with the UUID
-        and NAME of the associated element.  For time and depth, the result is a single 2-tuple with the
-        min and max value (respectively.)  
+        Note that in the case of parameters the return is a list of 2-tuples of (name, standard_name) and for
+        platforms the result is a list of 3-tuples of (name, id, color) the associated elements.  
+        For time and depth, the result is a single 2-tuple with the min and max value (respectively.)  
+        
         These objects are "simple" dictionaries using only Python's built-in types - so conversion to a
         corresponding JSON object should be trivial.
         '''
@@ -328,6 +329,7 @@ class STOQSQManager(object):
         Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
         '''
         qparams = {}
+        pv_qparams = {}
 
         logger.info(pprint.pformat(self.kwargs))
         if self.kwargs.has_key('parametername'):
@@ -350,8 +352,19 @@ class STOQSQManager(object):
             if self.kwargs['depth'][1] is not None:
                 qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
 
-        ##logger.debug(pprint.pformat(qparams))
+        logger.debug('qparams = %s', pprint.pformat(qparams))
+        
         qs_mp = models.MeasuredParameter.objects.using(self.dbname).filter(**qparams)
+
+        if self.kwargs.has_key('parametervalues'):
+            if self.kwargs['parametervalues']:
+                sql = self.postgresifySQL(str(qs_mp.query))
+                for pminmax in self.kwargs['parametervalues']:
+                    for k,v in pminmax.iteritems():
+                        sql = sql + k + ' > ' + v[0] + '\n'
+                        sql = sql + k + ' > ' + v[0] + '\n'
+                logger.debug('\n\nsql for parametervalue query = %s\n\n', sql)
+
         if qs_mp:
             logger.debug(pprint.pformat(str(qs_mp.query)))
         else:
@@ -948,6 +961,7 @@ class STOQSQManager(object):
             q=q & Q(mindepth__lte=depth[1])
         return q
     
+
     #
     # Methods to get the query used based on the current Q object.
     #
