@@ -683,11 +683,14 @@ class STOQSQManager(object):
         in the AJAX response.
         '''
         if not self.getDisplay_Parameter_Platform_Data():
-            return
+            return None, None, 'Contour data values checkbox not checked'
         if len(self.kwargs['parametername']) != 1:
-            return
-        if len(self.kwargs['platforms']) != 1:
-            return
+            return None, None, 'Parameter name not selected'
+        if len(self.getPlatforms()) != 1:
+            if len(self.kwargs['platforms']) != 1:
+                return None, None, 'Platform not selected'
+        platformName = self.getPlatforms()[0][0]
+        logger.debug('platformName = %s', platformName)
 
         # Setup Matplotlib for running on the server
         os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
@@ -713,41 +716,57 @@ class STOQSQManager(object):
         else:
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
             self.request.session['sessionID'] = sessionID
-        sectionPngFile = self.kwargs['parametername'][0] + '_' + self.kwargs['platforms'][0] + '_' + sessionID + '.png'
+        sectionPngFile = self.kwargs['parametername'][0] + '_' + platformName + '_' + sessionID + '.png'
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
-        colorbarPngFile = self.kwargs['parametername'][0] + '_' + self.kwargs['platforms'][0] + '_colorbar_' + sessionID + '.png'
+        colorbarPngFile = self.kwargs['parametername'][0] + '_' + platformName + '_colorbar_' + sessionID + '.png'
         colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', colorbarPngFile)
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
         # query has salient points, typically in the vertices of the yo-yos.  
+        tmin = None
+        tmax = None
         xi = None
         if self.kwargs.has_key('time'):
             if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
                 dstart = datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S') 
                 dend = datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S') 
-
-                sdt_count = self.qs.filter(platform__name = self.kwargs['platforms'][0]).values_list('simpledepthtime__depth').count()
-                sdt_count = int(sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
-                logger.debug('Half of sdt_count from query = %d', sdt_count)
-                if sdt_count > tgrid_max:
-                    sdt_count = tgrid_max
-
                 tmin = time.mktime(dstart.timetuple())
                 tmax = time.mktime(dend.timetuple())
-                xi = np.linspace(tmin, tmax, sdt_count)
-                logger.debug('xi = %s', xi)
+        ##if not tmin and not tmax:
+        ##    logger.debug('Time range not specified in query, getting it from the database')
+        ##    tmin, tmax = self.getTime()
+
+        if tmin and tmax:
+            sdt_count = self.qs.filter(platform__name = platformName).values_list('simpledepthtime__depth').count()
+            sdt_count = int(sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
+            logger.debug('Half of sdt_count from query = %d', sdt_count)
+            if sdt_count > tgrid_max:
+                sdt_count = tgrid_max
+
+            xi = np.linspace(tmin, tmax, sdt_count)
+            logger.debug('xi = %s', xi)
 
         # Make depth spacing dinc m, limit to time-depth-flot resolution (dgrid_max)
+        dmin = None
+        dmax = None
         yi = None
         if self.kwargs.has_key('depth'):
             if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
                 dmin = float(self.kwargs['depth'][0])
                 dmax = float(self.kwargs['depth'][1])
-                y_count = int((dmax - dmin) / dinc )
-                if y_count > dgrid_max:
-                    y_count = dgrid_max
-                yi = np.linspace(dmin, dmax, y_count)
-                logger.debug('yi = %s', yi)
+        ##if not dmin and not dmax:
+        ##    logger.debug('Depth range not specified in query, getting it from the database')
+        ##    depths = self.getDepth()
+        ##    dmin = float(depths[0])
+        ##    dmax = float(depths[1])
+
+        if dmin and dmax:
+            y_count = int((dmax - dmin) / dinc )
+            if y_count > dgrid_max:
+                y_count = dgrid_max
+            yi = np.linspace(dmin, dmax, y_count)
+            logger.debug('yi = %s', yi)
+
 
         # Collect the scattered datavalues(time, depth) and grid them
         if xi is not None and yi is not None:
@@ -771,15 +790,18 @@ class STOQSQManager(object):
                 x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
                 y.append(mp['measurement__depth'])
                 z.append(mp['datavalue'])
-           
+          
+            logger.debug('Number of x, y, z data values retrived from database = %d', len(z)) 
             try:
                 zi = griddata(x, y, z, xi, yi, interp='nn')
             except KeyError, e:
-                logger.exception('Got KeyError: Could not grid the data')
-                return None
+                logger.exception('Got KeyError. Could not grid the data')
+                return None, None, 'Got KeyError. Could not grid the data'
             except Exception, e:
                 logger.exception('Could not grid the data')
-                return None
+                return None, None, 'Could not grid the data'
+
+            logger.debug('zi = %s', zi)
 
             parm_info = self.getParameterMinMax()
             try:
@@ -793,7 +815,7 @@ class STOQSQManager(object):
                 clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
                 cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
                 ax.contourf(xi, yi, zi, clevs=np.linspace(parm_info[1], parm_info[2], 19), cmap=cm_jetplus)
-                ax.scatter(x, y, marker='.', s=1, facecolor='0.5', lw = 0)
+                ax.scatter(x, y, marker='.', s=2, c='k', lw = 0)
 
                 # Add sample locations and names
                 xsamp = []
@@ -811,7 +833,7 @@ class STOQSQManager(object):
                 plt.close()
             except Exception,e:
                 logger.exception('Could not plot the data')
-                return None
+                return None, None, 'Could not plot the data'
 
             try:
                 # Make colorbar as a separate figure
@@ -832,9 +854,11 @@ class STOQSQManager(object):
                 plt.close()
             except Exception,e:
                 logger.exception('Could not plot the colormap')
-                return None
+                return None, None, 'Could not plot the colormap'
 
-            return sectionPngFile, colorbarPngFile
+            return sectionPngFile, colorbarPngFile, ''
+        else:
+            return None, None, 'No depth-time region specified'
 
 
     #
