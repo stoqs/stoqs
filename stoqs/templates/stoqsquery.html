@@ -23,6 +23,17 @@
       .stoqs-parameter-toggle {
         width: 50%;
       }
+
+    #zoomnavigation .button {
+        position: absolute;
+        cursor: pointer;
+    }
+    #zoomnavigation div.button {
+        font-size: smaller;
+        color: #999;
+        background-color: #eee;
+        padding: 2px;
+    }
         .rotate-90 {
             -moz-transform: rotate(-90deg);  /* FF3.5+ */
             -o-transform: rotate(-90deg);  /* Opera 10.5 */
@@ -377,6 +388,12 @@
     var kmlurl;
     var parametervalues={};     // This should probably be a session variable
     var polyLayer = new OpenLayers.Layer.Vector( "Polygon" );
+    var timedepthplot;
+    var options_stack = [];
+    var zoom_xy_stack = [];
+    var stack_depth = 0;
+    var simpledepthtime_options;
+    var simpledepthtime_options_zoom;
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -681,7 +698,7 @@
             params[parameter + '_max'] = parametervalues[parameter]['max'];
         };
 
-        if (params['parametername'].length == 1 && params['platforms'].length == 1 ) {
+        if (params['parametername'].length == 1 ) {
             $('#displayparameterplatformdata').parent().removeClass('disabled');
             $('#displayparameterplatformdata').removeAttr('disabled');
             $('#displayparameterplatformdata').parent().tooltip('disable');
@@ -757,6 +774,27 @@
     $('#cmax').on('keypress', function (event, previousText) {
         setTimeout(setKMLlinks());
     });
+
+    var simpledepthtime_options = { grid: { 
+                                        backgroundColor: "rgb(192, 211, 228)",      //c0d3e4
+                                        hoverable: true, 
+                                        clickable: true 
+                                    },
+                                    xaxis: { mode: "time" },
+                                    yaxis: {
+                                        transform: function (v) { return -v; },
+                                        inverseTransform: function (v) { return -v; }
+                                    },
+                                    series: {
+                                        lines: { show: true, fill: false, lineWidth: 1 },
+                                        points: { show: false, fill: false },
+                                        shadowSize: 0
+                                    },
+                                    legend: { show: false },
+                                    selection: { mode: "xy" },
+                                    //zoom: { interactive: true },
+                                    //pan: { interactive: true }
+                                  };
     
     /*
      * Perform the AJAX call to get a list of parametername and parameterstandardname, and enable/disable them
@@ -790,24 +828,6 @@
         }
         var me = this;
 
-        var simpledepthtime_options = { grid: { 
-                                            backgroundColor: "rgb(192, 211, 228)",      //c0d3e4
-                                            hoverable: true, 
-                                            clickable: true 
-                                        },
-                                        xaxis: { mode: "time" },
-                                        yaxis: {
-                                            transform: function (v) { return -v; },
-                                            inverseTransform: function (v) { return -v; }
-                                        },
-                                        series: {
-                                            lines: { show: true, fill: false, lineWidth: 1 },
-                                            points: { show: false, fill: false },
-                                            shadowSize: 0
-                                        },
-                                        legend: { show: false },
-                                        selection: { mode: "xy" }
-                                      };
 
         function showTooltip(x, y, contents) {
             $('<div id="tooltip">' + contents + '</div>').css( {
@@ -1003,79 +1023,6 @@
         }
 
 
-
-        $("#time-depth-flot").bind("plotselected", function (event, ranges) {
-                // clamp the zooming to prevent eternal zoom
-                if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
-                    ranges.xaxis.to = ranges.xaxis.from + 0.00001;
-                if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
-                    ranges.yaxis.to = ranges.yaxis.from + 0.00001;
-
-                // Save the zoomed values
-                $('#start-depth').val(Math.round(ranges.yaxis.from*100)/100);
-                $('#end-depth').val(Math.round(ranges.yaxis.to*100)/100);
-
-                $('#start-ems').val(ranges.xaxis.from);
-                var ds = new Date(ranges.xaxis.from);
-                $('#start-time').val(getUTCDateString(ds));
-
-                $('#end-ems').val(ranges.xaxis.to);
-                var de = new Date(ranges.xaxis.to);
-                $('#end-time').val(getUTCDateString(de))
-
-                // Apply new depth & time ranges to the query and redraw the plot in rebuildFilters()
-                $('#zoomed-button').removeClass('disabled'); 
-                $('#zoomed-button').addClass('btn-primary');
-                $('#zoomed-button').attr('title', 'Click to unzoom').tooltip('fixTitle').tooltip('hide');
-                rebuildFilters();
-                var dtLabel = 'Time: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
-                dtLabel = dtLabel + ' Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
-                $('#time-depth-anchor').html(dtLabel);
-                
-        }); //$("#time-depth-flot").bind("plotselected"
-
-
-        // show pan/zoom messages to illustrate events, see: http://people.iola.dk/olau/flot/examples/navigate.html
-        $("#time-depth-flot").bind('plotpan', function (event, plot) {
-            var axes = plot.getAxes();
-            $(".message").html("Panning to x: "  + axes.xaxis.min.toFixed(2)
-                               + " &ndash; " + axes.xaxis.max.toFixed(2)
-                               + " and y: " + axes.yaxis.min.toFixed(2)
-                               + " &ndash; " + axes.yaxis.max.toFixed(2));
-        });
-
-        $("#time-depth-flot").bind('plotzoom', function (event, plot) {
-            var axes = plot.getAxes();
-            $(".message").html("Zooming to x: "  + axes.xaxis.min.toFixed(2)
-                               + " &ndash; " + axes.xaxis.max.toFixed(2)
-                               + " and y: " + axes.yaxis.min.toFixed(2)
-                               + " &ndash; " + axes.yaxis.max.toFixed(2));
-        });
-    
-        // add zoom out button 
-        $('<div class="button" style="right:20px;top:20px">zoom out</div>').appendTo($("#zoomnavigation")).click(function (e) {
-            e.preventDefault();
-            plot.zoomOut();
-        });
-    
-        // and add panning buttons
-        
-        // little helper for taking the repetitive work out of placing
-        // panning arrows
-        function addArrow(dir, right, top, offset) {
-            $('<img class="button" src="{{STATIC_URL}}images/arrow-' + dir + '.gif" style="right:' + right + 'px;top:' + top + 'px">').appendTo($("#zoomnavigation")).click(function (e) {
-                e.preventDefault();
-                plot.pan(offset);
-            });
-        }
-    
-        addArrow('left', 55, 60, { left: -100 });
-        addArrow('right', 25, 60, { left: 100 });
-        addArrow('up', 40, 45, { top: -100 });
-        addArrow('down', 40, 75, { top: 100 });
-
-
-
         function onInit(data, key) {
             // Called from ajax on initial request
             initData = data;
@@ -1135,7 +1082,9 @@
                 //flotPlot(data)
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
-                $.plot($("#time-depth-flot"), getDataset(initData, start.getTime(), end.getTime()), simpledepthtime_options);
+                simpledepthtime_options_zoom = simpledepthtime_options;
+                timedepthplot = $.plot($("#time-depth-flot"), getDataset(initData, start.getTime(), end.getTime()), 
+                                                              simpledepthtime_options_zoom);
 
             }
             else if (key == 'activitymaptrackextent') {
@@ -1220,20 +1169,15 @@
                 if ( ! theData ) {
                     return;
                 }
-                $.plot($("#time-depth-flot"), theData,
-                                    $.extend(true, {}, simpledepthtime_options, {
-                                    xaxis: { min: $('#start-ems').val(), max: $('#end-ems').val() },
-                                    yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
-                }));
+                timedepthplot = $.plot($("#time-depth-flot"), theData, simpledepthtime_options_zoom);
 
                 // Make the contour plot if checkbox is checked and is not disabled
                 if ($('#displayparameterplatformdata').is(':checked') && ! $('#displayparameterplatformdata').parent().hasClass('disabled')) {
-                    if (data['parameterplatformdatavaluepng']) {
-                        var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
-                        var options = $.extend(true, {}, simpledepthtime_options, {
+                    if (data['parameterplatformdatavaluepng'][0]) {
+                        var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                            $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
+                        var options = $.extend(true, {}, simpledepthtime_options_zoom, {
                             series: { images: { show: true } },
-                            xaxis: { min: $('#start-ems').val(), max: $('#end-ems').val() },
-                            yaxis: { min: $('#start-depth').val(), max: $('#end-depth').val() }
                         });
 
                         $.plot.image.loadDataImages(flotdata, options, function () {
@@ -1243,7 +1187,7 @@
                         $('#sectioncolorbar').html('<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />');
                     }
                     else {
-                        alert("Could not contour the data.  Try selecting a smaller depth-time region.");
+                        alert(data['parameterplatformdatavaluepng'][2] + "  Try selecting a smaller depth-time region.");
                     }
                 }
 
@@ -1522,7 +1466,118 @@
                 $slider.slider("values",pos,[oldvalue])
             }
         });
-          
+        
+
+
+
+        // show pan/zoom messages to illustrate events, see: http://people.iola.dk/olau/flot/examples/navigate.html
+        $("#time-depth-flot").bind('plotpan', function (event, plot) {
+            var axes = timedepthplot.getAxes();
+            console.log("Panning to x: "  + axes.xaxis.min.toFixed(2)
+                               + " &ndash; " + axes.xaxis.max.toFixed(2)
+                               + " and y: " + axes.yaxis.min.toFixed(2)
+                               + " &ndash; " + axes.yaxis.max.toFixed(2));
+        });
+
+        $("#time-depth-flot").bind('plotzoom', function (event, plot) {
+            var axes = timedepthplot.getAxes();
+            console.log("Zooming to x: "  + axes.xaxis.min.toFixed(2)
+                               + " &ndash; " + axes.xaxis.max.toFixed(2)
+                               + " and y: " + axes.yaxis.min.toFixed(2)
+                               + " &ndash; " + axes.yaxis.max.toFixed(2));
+        });
+
+    
+        // add zoom out button 
+        $('<div class="button" style="right:20px;top:20px">zoom out</div>').appendTo($("#zoomnavigation")).click(function (e) {
+            e.preventDefault();
+            timedepthplot.zoomOut();
+        });
+
+        // and add panning buttons
+        
+        // little helper for taking the repetitive work out of placing
+        // panning arrows
+        function addArrow(dir, right, top, offset) {
+            $('<img class="button" src="{{STATIC_URL}}images/arrow-' + dir + '.gif" style="right:' + right + 'px;top:' + top + 'px">').appendTo($("#zoomnavigation")).click(function (e) {
+                e.preventDefault();
+                timedepthplot.pan(offset);
+            });
+        }
+    
+        addArrow('left', 55, 60, { left: -1 });
+        addArrow('right', 25, 60, { left: 1 });
+        addArrow('up', 40, 45, { top: 1 });
+        addArrow('down', 40, 75, { top: -1 });
+
+
+        function ZoomIn(event, ranges) {
+                // clamp the zooming to prevent eternal zoom
+                if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
+                    ranges.xaxis.to = ranges.xaxis.from + 0.00001;
+                if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
+                    ranges.yaxis.to = ranges.yaxis.from + 0.00001;
+
+                // Save this zoom level
+                stack_depth++;
+                options_stack.push(simpledepthtime_options_zoom);
+                zoom_xy_stack.push([ $('#start-ems').val(), $('#end-ems').val(), $('#start-depth').val(), $('#end-depth').val() ]);
+                console.log('stack_depth = ' + stack_depth);
+                console.log('options_stack = ' + options_stack);
+                console.log('zoom_xy_stack = ' + zoom_xy_stack);
+
+                // Save the zoomed values
+                $('#start-depth').val(Math.round(ranges.yaxis.from*100)/100);
+                $('#end-depth').val(Math.round(ranges.yaxis.to*100)/100);
+
+                $('#start-ems').val(ranges.xaxis.from);
+                var ds = new Date(ranges.xaxis.from);
+                $('#start-time').val(getUTCDateString(ds));
+
+                $('#end-ems').val(ranges.xaxis.to);
+                var de = new Date(ranges.xaxis.to);
+                $('#end-time').val(getUTCDateString(de))
+
+                simpledepthtime_options_zoom = $.extend(true, {}, simpledepthtime_options, {
+                                                                      xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
+                                                                      yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to } 
+                                                                  });
+
+                // Apply new depth & time ranges to the query and redraw the plot in rebuildFilters()
+                $('#zoomed-button').removeClass('disabled'); 
+                $('#zoomed-button').addClass('btn-primary');
+                $('#zoomed-button').attr('title', 'Click to unzoom').tooltip('fixTitle').tooltip('hide');
+                rebuildFilters();
+                var dtLabel = 'Time: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
+                dtLabel = dtLabel + ' Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
+                $('#time-depth-anchor').html(dtLabel);
+        }
+
+        function ZoomOut() {
+            if (stack_depth > 0 ) {
+                // Pop options from options stack to restore previous zoom level 
+                stack_depth--;
+                simpledepthtime_options_zoom = options_stack.pop();
+                var zoom_xy = zoom_xy_stack.pop();
+                console.log('stack_depth = ' + stack_depth);
+                console.log('zoom_xy = ' + zoom_xy);
+                $('#start-ems').val(zoom_xy[0]);
+                $('#end-ems').val(zoom_xy[1]);
+                $('#start-depth').val(zoom_xy[2]);
+                $('#end-depth').val(zoom_xy[3]);
+            
+                rebuildFilters();
+            } 
+            // return false to suppress the right-mouse context menu from appearing 
+            return false
+        }
+
+        $("#time-depth-flot").bind("plotselected", ZoomIn);
+        $("#time-depth-flot").bind('contextmenu',  ZoomOut);
+
+
+
+    
         $('#time-depth-anchor').click();
         $('#map-anchor').click();
         $('#parameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
