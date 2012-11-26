@@ -263,7 +263,7 @@
                                 <div class="row">
                                     <div class="span2">
                                         <label class="checkbox disabled">
-                                            <input type="checkbox" id="displayparameterplatformdata" disabled> Contour data values
+                                            <input type="checkbox" id="displayparameterplatformdata" disabled><span id="contourtext">Contour data values</span>
                                         </label>
                                     </div>
                                     <div class="span3" id="zoomnavigation"></div>
@@ -651,6 +651,40 @@
         return div;
 
     } // makeSlider()
+
+    function enableContouring() {
+        $('#displayparameterplatformdata').parent().removeClass('disabled');
+        $('#displayparameterplatformdata').parent().tooltip('disable');
+        $('#displayparameterplatformdata').removeAttr('disabled');
+        if (typeof params['platforms'] != 'undefined') {
+            if (params['platforms'].length == 1) {
+                $('#contourtext').text('Contour ' + params['parametername'] + ' from ' + params['platforms'][0]);
+            }
+        }
+    }
+
+    function disableContouring() {
+        $('#displayparameterplatformdata').parent().addClass('disabled');
+        $('#displayparameterplatformdata').attr('disabled');
+        //$('#displayparameterplatformdata').removeAttr('checked');
+        $('#contourtext').text('Contour data values');
+        $('#sectioncolorbar').html('');
+    }
+
+    function updateContourInfo() {
+        if (typeof params['parametername'] != 'undefined') {
+            console.log('parametername = ' + params['parametername']);
+            if (params['parametername'].length == 1 ) {
+                enableContouring();
+            }
+            else {
+                disableContouring();
+            }
+        }
+        else {
+            disableContouring();
+        }
+    }
     
     function recordUpdatedValues(values, divid, type, formatter, updateTable) {
         var min=formatter(values[0])
@@ -700,16 +734,8 @@
             params[parameter + '_MAX'] = parametervalues[parameter]['max'];
         };
 
-        if (params['parametername'].length == 1 ) {
-            $('#displayparameterplatformdata').parent().removeClass('disabled');
-            $('#displayparameterplatformdata').removeAttr('disabled');
-            $('#displayparameterplatformdata').parent().tooltip('disable');
-        }
-        else {
-                $('#displayparameterplatformdata').parent().addClass('disabled');
-                $('#displayparameterplatformdata').attr('disabled');
-        }
 
+        updateContourInfo();
         updateSummaryData();
         polyLayer.removeAllFeatures();
     }
@@ -1261,6 +1287,9 @@
                     else {
                         alert(data['parameterplatformdatavaluepng'][2] + "  Try a different selection.");
                     }
+                }
+                else {
+                    $('#sectioncolorbar').html('');
                 }
 
             }
