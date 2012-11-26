@@ -825,6 +825,7 @@ class STOQSQManager(object):
                 ax = fig.add_axes((0,0,1,1))
                 ax.set_xlim(tmin / scale_factor, tmax / scale_factor)
                 ax.set_ylim(dmax, dmin)
+                ax.get_xaxis().set_ticks([])
                 clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
                 cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
                 ax.contourf(xi, yi, zi, clevs=np.linspace(parm_info[1], parm_info[2], 19), cmap=cm_jetplus)
