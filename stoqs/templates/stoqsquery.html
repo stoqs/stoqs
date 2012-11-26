@@ -753,6 +753,7 @@
             $('#time-depth-anchor').html('Time Depth')
         }
     });
+
     $('#getactualcount').on('click', function (event) {
         rebuildFilters();
     });
@@ -801,7 +802,204 @@
                                     //zoom: { interactive: true },
                                     //pan: { interactive: true }
                                   };
+
+
+    /* Default class modification for DataTable*/
+    $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sSortAsc": "header headerSortDown",
+        "sSortDesc": "header headerSortUp",
+        "sSortable": "header",
+        "sWrapper": "dataTables_wrapper form-inline",
+        "sPaginationType": "full_numbers",
+        "bJQueryUI": true,
+        "aoColumnDefs": [ { "sWidth": "10%", "aTargets": [ -1 ] }
+    ]
+    });
+
+
+    function showTooltip(x, y, contents) {
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#fee',
+            opacity: 0.80
+        }).appendTo("body").fadeIn(200);
+    }
+
+    $("#time-depth-flot").bind("plothover", function (event, pos, item) {
+        if (pos.x && pos.y) {
+            $("#x").text(pos.x.toFixed(2));
+            $("#y").text(pos.y.toFixed(2));
+        }
+        else {
+            return;
+        }
+
+        if (item) {
+            if (typeof previousPoint != 'undefined') {
+                if (previousPoint != item.dataIndex) {
+                    previousPoint = item.dataIndex;
+                    
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+               
+                    showTooltip(item.pageX, item.pageY,
+                                item.series.label);
+                }
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+    function showSampleData(label) {
+            //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
+            var sample_url = '{{site_uri}}{% url show-sample-datatable dbAlias=request.META.dbAlias format=".json" %}';
+            sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
+            
+            var cols = ['depth', 'filter diam', 'filter pore size', 'lon', 'lat', 'activity name', 'time', 'lab',
+                        'name', 'res.', 'purpose', 'type', 'volume'];
+            var ths = '<tr>';
+            $.each(cols, function (index, value) {
+                ths = ths + '<th>' + value + '</th>';
+            });
+            ths = ths + '</tr>';
+            $('#sample-table > thead').html(ths);
+
+            $("#sample-table").dataTable( {
+                "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
+                "bProcessing": true,
+                "bDestroy":    true,
+                "sAjaxSource": sample_url
+            });
+            $('#sample-instructions').text('')
+            if (! $('#collapseSample').hasClass('in')) {
+                $('#sample-anchor').click();
+            }
+    }
+
+    function showQuickLooks(label) {
+            // http://172.16.130.135:8000/stoqs_may2012/resourceactivity.json?resourcetype__name=quick_look&activityresource__activity__name__contains=Dorado389_2012_150_00_150_00_decim
+            //var quicklook_url = '{{site_uri}}{% url show-resourceactivity dbAlias=request.META.dbAlias format=".json" %}?resourcetype__name=quick_look&';
+            var quicklook_url = '{{site_uri}}{% url show-quicklookplots dbAlias=request.META.dbAlias %}?';
+            quicklook_url = quicklook_url + 'activityresource__activity__name__contains=' + label.split(' ')[0];
+            //var nwin = window.open(quicklook_url, '', 'height=800,width=1000');
+            //if (window.focus) {
+                //nwin.focus();
+            //}
+    }
+                
+    $("#time-depth-flot").bind("plotclick", function (event, pos, item) {
+        // This method of providing quick look plots is annoying as click-n-drag operations will sometimes trigger a plotclick
+        if (item) {
+            // Crude test whether sample or activity click, activities 2nd element may be '(stride=..'
+            //console.log(item.series.label)
+            if (item.series.label.split(' ').length == 2) {
+                if (item.series.label.split(' ')[1].indexOf('(') == -1) {
+                    showSampleData(item.series.label)
+                }
+                else if (item.series.label.split(' ')[1].indexOf('(') != -1) {
+                    // Crude test that we have an activity name
+                    showQuickLooks(item.series.label)
+                }
+            }
+        }
+    });
+
+    function getDataset(data, x1, x2) {
+        // Return a dataset for flot for only the data between times x1 and x2
+        var dataset = [];
+        var platform_seen = [];
+        if ( ! data ) {
+            return;
+        }
+        $.each(data['platforms'], function (index, platform_value) {
+            // Now add each activity for this platform - separated so that they are not connected with a line
+            $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
+                var rec = [];
+                //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                subset_dts = []
+                $.each(depth_time_series, function (index, td) {
+                    // From each activity push only the times between x1 & x2, inclusive
+                    if (td[0] >= x1 && td[0] <= x2) {
+                        subset_dts.push(td);
+                    }
+                });
+
+                if (subset_dts.length > 0) {
+                    if (! platform_seen[platform_value[0]]) {
+                        //rec["label"] = platform_value[0];
+                        platform_seen[platform_value[0]] = true;
+                    }
+                    //rec["label"] = label;
+                    //rec["data"] = depth_time_series;
+                    //rec["color"] = "#" + data['simpledepthtime']['colors'][platform_value[0]];
+                    //console.log('rec["label"] = ' + rec["label"]);
+                    //console.log('rec["data"] = ' + rec["data"]);
+                    //console.log('rec["color"] = ' + rec["color"]);
+                    //dataset.push(rec);
+                    dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
+                }
+            });
+        });
+
+        // Add the sample locations, each with a label
+        $.each(data['sampledepthtime'], function (index, sample) {
+            sample["color"] = "#000000";
+            sample["fillColor"] = "#ffffff";
+            sample["points"] = {show: true, fill: true, lineWidth: 1};
+            sample["lines"] = {show: false};
+            sample["hoverable"] = true;
+            sample["clickable"] = true;
+            dataset.push(sample);
+        });
+
+        return dataset;
+
+    } // getDataset()
+
+    function collectHistData(histdata, platform, color, activity, histbyactivity) {
+        var rec = [];
+        rec["label"] = activity;
+        rec["color"] = color;
+        rec["data"] = histbyactivity['hist'];
+        rec["data"] = histbyactivity['hist'];
+        rec["bars"] = { show: true, barWidth: histbyactivity['binwidth'], fill: true, fillColor: color };
+        histdata.push(rec);
+        return histdata;
+    }
+
+    function addSelectedParameterValue(histdata, parameter) {
+        var rec = [];
+        rec["color"] = '#0f0000';
+        console.log(parametervalues[parameter]);
+        rec["data"] = [[parametervalues[parameter]['min'], 100000], [parametervalues[parameter]['max'], 100000]];
+        console.log(rec['data']);
+        binwidth = parametervalues[parameter]['max'] - parametervalues[parameter]['min'];
+        rec["bars"] = { show: true, barWidth: binwidth, fill: true, fillColor: '#0f0f0f' };
+        histdata.push(rec);
+        return histdata;
+    }
     
+    function plotHistData(parameter, histdata) {
+        $.plot($("#" + parameter + "-histogram-flot"), histdata, {
+            series: {
+                lines: { show: false }
+            },
+            legend: { show: false },
+            selection: { mode: "x" },
+            hoverable: true
+        });
+    }
+
+
     /*
      * Perform the AJAX call to get a list of parametername and parameterstandardname, and enable/disable them
      * If "init" is true then this is the initial page load, and we need to populate the fields rather than toggle them.
@@ -833,201 +1031,6 @@
             }
         }
         var me = this;
-
-
-        function showTooltip(x, y, contents) {
-            $('<div id="tooltip">' + contents + '</div>').css( {
-                position: 'absolute',
-                display: 'none',
-                top: y + 5,
-                left: x + 5,
-                border: '1px solid #fdd',
-                padding: '2px',
-                'background-color': '#fee',
-                opacity: 0.80
-            }).appendTo("body").fadeIn(200);
-        }
-
-        $("#time-depth-flot").bind("plothover", function (event, pos, item) {
-            if (pos.x && pos.y) {
-                $("#x").text(pos.x.toFixed(2));
-                $("#y").text(pos.y.toFixed(2));
-            }
-            else {
-                return;
-            }
-    
-            if (item) {
-                if (typeof previousPoint != 'undefined') {
-                    if (previousPoint != item.dataIndex) {
-                        previousPoint = item.dataIndex;
-                        
-                        $("#tooltip").remove();
-                        var x = item.datapoint[0].toFixed(2),
-                            y = item.datapoint[1].toFixed(2);
-                   
-                        showTooltip(item.pageX, item.pageY,
-                                    item.series.label);
-                    }
-                }
-            }
-            else {
-                $("#tooltip").remove();
-                previousPoint = null;            
-            }
-        });
-
-        /* Default class modification for DataTable*/
-        $.extend( $.fn.dataTableExt.oStdClasses, {
-            "sSortAsc": "header headerSortDown",
-            "sSortDesc": "header headerSortUp",
-            "sSortable": "header",
-            "sWrapper": "dataTables_wrapper form-inline",
-            "sPaginationType": "full_numbers",
-            "bJQueryUI": true,
-            "aoColumnDefs": [ { "sWidth": "10%", "aTargets": [ -1 ] }
-        ]
-        });
-
-        function showSampleData(label) {
-                //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
-                var sample_url = '{{site_uri}}{% url show-sample-datatable dbAlias=request.META.dbAlias format=".json" %}';
-                sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
-                
-                var cols = ['depth', 'filter diam', 'filter pore size', 'lon', 'lat', 'activity name', 'time', 'lab',
-                            'name', 'res.', 'purpose', 'type', 'volume'];
-                var ths = '<tr>';
-                $.each(cols, function (index, value) {
-                    ths = ths + '<th>' + value + '</th>';
-                });
-                ths = ths + '</tr>';
-                $('#sample-table > thead').html(ths);
-
-                $("#sample-table").dataTable( {
-                    "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
-                    "bProcessing": true,
-                    "bDestroy":    true,
-                    "sAjaxSource": sample_url
-                });
-                $('#sample-instructions').text('')
-                if (! $('#collapseSample').hasClass('in')) {
-                    $('#sample-anchor').click();
-                }
-        }
-
-        function showQuickLooks(label) {
-                // http://172.16.130.135:8000/stoqs_may2012/resourceactivity.json?resourcetype__name=quick_look&activityresource__activity__name__contains=Dorado389_2012_150_00_150_00_decim
-                //var quicklook_url = '{{site_uri}}{% url show-resourceactivity dbAlias=request.META.dbAlias format=".json" %}?resourcetype__name=quick_look&';
-                var quicklook_url = '{{site_uri}}{% url show-quicklookplots dbAlias=request.META.dbAlias %}?';
-                quicklook_url = quicklook_url + 'activityresource__activity__name__contains=' + label.split(' ')[0];
-                //var nwin = window.open(quicklook_url, '', 'height=800,width=1000');
-                //if (window.focus) {
-                //    nwin.focus();
-                //}
-        }
-                
-        $("#time-depth-flot").bind("plotclick", function (event, pos, item) {
-            if (item) {
-                // Crude test whether sample or activity click, activities 2nd element may be '(stride=..'
-                //console.log(item.series.label)
-                if (item.series.label.split(' ').length == 2) {
-                    if (item.series.label.split(' ')[1].indexOf('(') == -1) {
-                        showSampleData(item.series.label)
-                    }
-                    else if (item.series.label.split(' ')[1].indexOf('(') != -1) {
-                        // Crude test that we have an activity name
-                        showQuickLooks(item.series.label)
-                    }
-                }
-            }
-        });
-
-        function getDataset(data, x1, x2) {
-            // Return a dataset for flot for only the data between times x1 and x2
-            var dataset = [];
-            var platform_seen = [];
-            if ( ! data ) {
-                return;
-            }
-            $.each(data['platforms'], function (index, platform_value) {
-                // Now add each activity for this platform - separated so that they are not connected with a line
-                $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
-                    var rec = [];
-                    //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
-                    subset_dts = []
-                    $.each(depth_time_series, function (index, td) {
-                        // From each activity push only the times between x1 & x2, inclusive
-                        if (td[0] >= x1 && td[0] <= x2) {
-                            subset_dts.push(td);
-                        }
-                    });
-
-                    if (subset_dts.length > 0) {
-                        if (! platform_seen[platform_value[0]]) {
-                            //rec["label"] = platform_value[0];
-                            platform_seen[platform_value[0]] = true;
-                        }
-                        //rec["label"] = label;
-                        //rec["data"] = depth_time_series;
-                        //rec["color"] = "#" + data['simpledepthtime']['colors'][platform_value[0]];
-                        //console.log('rec["label"] = ' + rec["label"]);
-                        //console.log('rec["data"] = ' + rec["data"]);
-                        //console.log('rec["color"] = ' + rec["color"]);
-                        //dataset.push(rec);
-                        dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
-                    }
-                });
-            });
-
-            // Add the sample locations, each with a label
-            $.each(data['sampledepthtime'], function (index, sample) {
-                sample["color"] = "#000000";
-                sample["fillColor"] = "#ffffff";
-                sample["points"] = {show: true, fill: true, lineWidth: 1};
-                sample["lines"] = {show: false};
-                sample["hoverable"] = true;
-                sample["clickable"] = true;
-                dataset.push(sample);
-            });
-
-            return dataset;
-
-        } // getDataset()
-
-        function collectHistData(histdata, platform, color, activity, histbyactivity) {
-            var rec = [];
-            rec["label"] = activity;
-            rec["color"] = color;
-            rec["data"] = histbyactivity['hist'];
-            rec["data"] = histbyactivity['hist'];
-            rec["bars"] = { show: true, barWidth: histbyactivity['binwidth'], fill: true, fillColor: color };
-            histdata.push(rec);
-            return histdata;
-        }
-
-        function addSelectedParameterValue(histdata, parameter) {
-            var rec = [];
-            rec["color"] = '#0f0000';
-            console.log(parametervalues[parameter]);
-            rec["data"] = [[parametervalues[parameter]['min'], 100000], [parametervalues[parameter]['max'], 100000]];
-            console.log(rec['data']);
-            binwidth = parametervalues[parameter]['max'] - parametervalues[parameter]['min'];
-            rec["bars"] = { show: true, barWidth: binwidth, fill: true, fillColor: '#0f0f0f' };
-            histdata.push(rec);
-            return histdata;
-        }
-
-        function plotHistData(parameter, histdata) {
-            $.plot($("#" + parameter + "-histogram-flot"), histdata, {
-                series: {
-                    lines: { show: false }
-                },
-                legend: { show: false },
-                selection: { mode: "x" },
-                hoverable: true
-            });
-        }
-
 
         function onInit(data, key) {
             // Called from ajax on initial request
