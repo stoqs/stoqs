@@ -314,12 +314,15 @@
                     </div>
                     <div id="collapseParameterValues" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <p>
+                            <div class="span6">
                                 Histogram display: 
                                 <input type="checkbox" id="showsigmatparametervalues" checked /> sea_water_sigma_t
                                 <input type="checkbox" id="showstandardnameparametervalues" /> Standard Names
                                 <input type="checkbox" id="showallparametervalues" /> All Parameters
-                            </p>
+                            </div>
+                            <div class="span4" class="float:right">
+                                <button id="resetparametervaluesselections" class="btn btn-mini disabled" style="float:right;50%"/> Reset Parameter Value Selections</button> 
+                            </div>
                             <table id="parameter-value-table" class="table table-condensed">
                             </table>
                         </div>
@@ -685,7 +688,7 @@
             disableContouring();
         }
     }
-    
+
     function recordUpdatedValues(values, divid, type, formatter, updateTable) {
         var min=formatter(values[0])
         var max=formatter(values[1])
@@ -727,18 +730,32 @@
             }
         });
 
-        for (var parameter in parametervalues) {
-            // No CF stantard names end with '_MIN' or '_MAX' and none have upper case letters, so the convention
-            // of adding these identifiers and taking them off should work.
-            params[parameter + '_MIN'] = parametervalues[parameter]['min'];
-            params[parameter + '_MAX'] = parametervalues[parameter]['max'];
-        };
-
+        if (parametervalues) {
+            valueText = ': ';
+            for (var parameter in parametervalues) {
+                // No CF stantard names end with '_MIN' or '_MAX' and none have upper case letters, so the convention
+                // of adding these identifiers and taking them off should work.
+                console.log(parameter);
+                var min = parametervalues[parameter]['min'];
+                var max = parametervalues[parameter]['max'];
+                console.log(min, max);
+                if (typeof min != 'undefined' && typeof max != 'undefined') {
+                    params[parameter + '_MIN'] = min;
+                    params[parameter + '_MAX'] = max;
+                    valueText = valueText + parameter + ': ' + min.toPrecision(4) + ' to ' + max.toPrecision(4) + ', ';
+                    $('#resetparametervaluesselections').removeClass('disabled');
+                    $('#resetparametervaluesselections').addClass('btn-primary');
+                }
+            };
+            valueText = valueText.substring(0, valueText.length - 2); 
+            $('#parameter-values-anchor').html('Parameter Values' + valueText);
+        }
 
         updateContourInfo();
         updateSummaryData();
         polyLayer.removeAllFeatures();
-    }
+
+    } // rebuildFilters()
     
     function refreshMap() {
         track_lines.redraw(true);
@@ -806,6 +823,15 @@
 
     $('#cmax').on('keypress', function (event, previousText) {
         setTimeout(setKMLlinks());
+    });
+
+    $("#resetparametervaluesselections").click(function() {
+        if ( $('#resetparametervaluesselections').hasClass('btn-primary')) {
+            $("#resetparametervaluesselections").removeClass('btn-primary');
+            $("#resetparametervaluesselections").addClass('disabled');
+            parametervalues = {};
+            rebuildFilters();
+        }
     });
 
     var simpledepthtime_options = { grid: { 
