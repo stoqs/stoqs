@@ -37,8 +37,16 @@ WSGIProcessGroup stoqs
 
     python manage.py collectstatic
 
-   
-5. Test as with a DEVELOPMENT installation:
+
+5. Make the STATIC_ROOT/media/sections directory (which is used for creating time-depth contour
+   plots) writable by the owner of the httpd process.  This can be done on a typical CentOS 
+   install with these commands:
+
+    mkdir -p /var/www/html/stoqs/media/sections/
+    chmod 733 /var/www/html/stoqs/media/sections/
+
+
+6. Test as with a DEVELOPMENT installation:
 
 	python manage.py test stoqs
 	
