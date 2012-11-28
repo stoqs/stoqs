@@ -497,7 +497,7 @@
             else if (value == 'stoqstoolbox') {
                 // Required parameters for stoqs_down as of stoqstoolbox release noted in the Matlab comment below
                 var req_params = ['campaign', 'start_time', 'end_time', 'min_depth', 'max_depth', 'platforms', 'parametername', 'parameterstandardname'];
-                var st_text = "% Copy and paste into a Matlab session where stoqstoolbox build 2012-10-31 or\n";
+                var st_text = "% Copy and paste into a Matlab session where stoqstoolbox build 2012-11-21 or\n";
                 st_text = st_text + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
                 st_text = st_text + "campaign = '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';\n";
                 $.each(req_params, function(k, v) {
@@ -507,7 +507,12 @@
                             st_text = st_text + v + " = " + params[v] + ";\n";
                         }
                         else {
-                            st_text = st_text + v + " = '" + params[v] + "';\n";
+                            if (v.match(/campaign/) && params[v].match(/https/)) {
+                                st_text = st_text + v + " = '" + params[v].replace(/https/, 'http') + "';\n";
+                            }
+                            else {
+                                st_text = st_text + v + " = '" + params[v] + "';\n";
+                            }
                         }
                     }
                     else if (v != 'campaign') {
@@ -798,7 +803,9 @@
     });
 
     $('#getactualcount').on('click', function (event) {
-        rebuildFilters();
+        if ( ! $('#getactualcount').is(':checked')) {
+            rebuildFilters();
+        }
     });
 
     $('#showsigmatparametervalues').on('click', function (event) {
