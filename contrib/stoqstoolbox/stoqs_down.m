@@ -70,11 +70,11 @@ end
 query=fullfile(varargin{1}, 'measuredparameter.json?');
 
 if ~isempty(varargin{2})
-    query=[query 'measurement__instantpoint__timevalue__gt=' varargin{2} '&'];
+    query=[query 'measurement__instantpoint__timevalue__gte=' varargin{2} '&'];
 end    
 
 if ~isempty(varargin{3})
-    query=[query 'measurement__instantpoint__timevalue__lt=' varargin{3} '&'];
+    query=[query 'measurement__instantpoint__timevalue__lte=' varargin{3} '&'];
 end   
 
 if ~isempty(varargin{4})
