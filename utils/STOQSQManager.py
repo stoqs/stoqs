@@ -798,11 +798,18 @@ class STOQSQManager(object):
             x = []
             y = []
             z = []
-            qs_mp = self.getMeasuredParametersQS().values('measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue')
-            for mp in qs_mp:
-                x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
-                y.append(mp['measurement__depth'])
-                z.append(mp['datavalue'])
+            try:
+                for mp in self.getMeasuredParametersQS().values('measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue'):
+                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
+                    y.append(mp['measurement__depth'])
+                    z.append(mp['datavalue'])
+            except AttributeError:
+                # Likely because it is a RawQuerySet from a ParameterValues query
+                for mp in self.getMeasuredParametersQS():
+                    logger.debug('mp = %s, %s, %s', mp.timevalue, mp.depth, mp.datavalue)
+                    x.append(time.mktime(mp.timevalue.timetuple()) / scale_factor)
+                    y.append(mp.depth)
+                    z.append(mp.datavalue)
           
             logger.debug('Number of x, y, z data values retrived from database = %d', len(z)) 
             try:
@@ -1130,7 +1137,7 @@ class STOQSQManager(object):
         #    (stoqs_parameter.name ='temperature')
 
         # Used by getParameterPlatformDatavaluePNG(): 'measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue
-        add_to_select = 'stoqs_instantpoint.timevalue, stoqs_measurement.depth, '
+        select_items = 'stoqs_measuredparameter.id, stoqs_instantpoint.timevalue, stoqs_measurement.depth, stoqs_measuredparameter.datavalue'
         add_to_from = ''
         from_sql = '' 
         where_sql = '' 
@@ -1138,20 +1145,19 @@ class STOQSQManager(object):
         for pminmax in pvDict:
             i = i + 1
             add_to_from = add_to_from + 'stoqs_parameter p' + str(i) + ', '
-            from_sql = from_sql + '\t' * (i - 1) + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + '\n'
-            from_sql = from_sql + '\t' * i + 'on mp' + str(i) + '.measurement_id = stoqs_measuredparameter.measurement_id\n'
+            from_sql = from_sql + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + ' '
+            from_sql = from_sql + 'on mp' + str(i) + '.measurement_id = stoqs_measuredparameter.measurement_id '
             for k,v in pminmax.iteritems():
-                where_sql = where_sql + "\t(p" + str(i) + ".name = '" + k + "') AND \n"
-                where_sql = where_sql + "\t(mp" + str(i) + ".datavalue > " + str(v[0]) + ") AND \n"
-                where_sql = where_sql + "\t(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND \n"
-                where_sql = where_sql + "\t(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND \n"
+                where_sql = where_sql + "(p" + str(i) + ".name = '" + k + "') AND "
+                where_sql = where_sql + "(mp" + str(i) + ".datavalue > " + str(v[0]) + ") AND "
+                where_sql = where_sql + "(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND "
+                where_sql = where_sql + "(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
 
-
-        logger.debug('\n\n\nfrom_sql = %s\n\n\n', from_sql)
-        logger.debug('\n\n\nwhere_sql = %s\n\n\n', where_sql)
-
-        q = query.replace('SELECT ', 'SELECT ' + add_to_select)
-        q = query.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
+        q = query
+        p = re.compile('SELECT .+ FROM')
+        q = p.sub('SELECT ' + select_items + ' FROM', q)
+        q = q.replace('SELECT FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
+        q = q.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
         q = q.replace('WHERE', from_sql + '\nWHERE' + where_sql)
 
         return q
