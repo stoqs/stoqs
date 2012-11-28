@@ -208,7 +208,11 @@ class STOQSQManager(object):
             if self.getGet_Actual_Count():
                 logger.info('>>>> get_actual_count selected.  Switching to getting actual count.')
                 qs_mp = self.getMeasuredParametersQS()          # Actual count from MeasuredParameter - needs to do seq scan on large table
-                actual_count = qs_mp.count()
+                try:
+                    actual_count = qs_mp.count()
+                except AttributeError:
+                    # Likely a RawQuerySet from a ParameterValues selection
+                    actual_count = sum(1 for mp in qs_mp)
                 logger.debug('actual_count = %d', actual_count)
                 if actual_count == 0:
                     logger.warn('actual_count == 0')
@@ -381,11 +385,18 @@ class STOQSQManager(object):
             if self.getGet_Actual_Count():
                 # Return query only if a platform and a parameter have been selected
                 qs_mp = self.getMeasuredParametersQS()
-                qs_mp = qs_mp.values(   'measurement__instantpoint__activity__platform__name', 'measurement__instantpoint__timevalue', 
-                                        'measurement__geom', 'parameter__name', 'datavalue')
-                if qs_mp:
-                    sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
-                    sql +=  self.postgresifySQL(str(qs_mp.query)) + ';'
+                try:
+                    qs_mp = qs_mp.values(   'measurement__instantpoint__activity__platform__name', 'measurement__instantpoint__timevalue', 
+                                            'measurement__geom', 'parameter__name', 'datavalue')
+                    if qs_mp:
+                        sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
+                        sql +=  self.postgresifySQL(str(qs_mp.query)) + ';'
+                except AttributeError:
+                    # Likely becase its a RawQueryString from a PameterValues selection
+                    sql = self.postgresifySQL(str(qs_mp.query)) + ';'
+                    sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'])
+                    sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME'] + sql
+
         return sql
 
     def getSampleQS(self):
