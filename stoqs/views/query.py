@@ -218,7 +218,7 @@ def queryData(request, format=None):
 
     return response
 
-def get_site_uri(request):
+def get_http_site_uri(request):
     '''
     Override 'https' that gets put there with STOQS imbedded in the ODSS web app
     '''
@@ -249,7 +249,8 @@ def queryUI(request):
              ('csv-simple', 'Comma Separated Values - simplified header', ),
             ]
     logger.debug(formats)
-    return render_to_response('stoqsquery.html', {'site_uri': get_site_uri(request),
+    return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
+                                                  'http_site_uri': get_http_site_uri(request),
                                                   'formats': formats,
                                                   'mapserver_host': settings.MAPSERVER_HOST,
                                                   'mappath': request.session['mappath'],
@@ -263,7 +264,7 @@ def queryActivityResource(request):
     '''
 
     formats={'kml': 'KML (Google Earth)'}
-    return render_to_response('stoqsquery.html', {'site_uri': get_site_uri(request),
+    return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
                                                   'formats': formats,
                                                   'mapserver_host': settings.MAPSERVER_HOST,
                                                   'mappath': request.session['mappath'],
