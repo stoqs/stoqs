@@ -217,6 +217,14 @@ def queryData(request, format=None):
         return kmlResponse(request, qm, response)
 
     return response
+
+def get_site_uri(request):
+    '''
+    Override 'https' that gets put there with STOQS imbedded in the ODSS web app
+    '''
+    site_uri = request.build_absolute_uri('/')[:-1]
+    site_uri = site_uri.replace('https', 'http')
+    return site_uri
     
 def queryUI(request):
     '''
@@ -241,7 +249,7 @@ def queryUI(request):
              ('csv-simple', 'Comma Separated Values - simplified header', ),
             ]
     logger.debug(formats)
-    return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
+    return render_to_response('stoqsquery.html', {'site_uri': get_site_uri(request),
                                                   'formats': formats,
                                                   'mapserver_host': settings.MAPSERVER_HOST,
                                                   'mappath': request.session['mappath'],
@@ -255,7 +263,7 @@ def queryActivityResource(request):
     '''
 
     formats={'kml': 'KML (Google Earth)'}
-    return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
+    return render_to_response('stoqsquery.html', {'site_uri': get_site_uri(request),
                                                   'formats': formats,
                                                   'mapserver_host': settings.MAPSERVER_HOST,
                                                   'mappath': request.session['mappath'],
