@@ -359,11 +359,11 @@ class STOQSQManager(object):
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
                 sql = self.postgresifySQL(str(qs_mp.query))
-                for pminmax in self.kwargs['parametervalues']:
-                    for k,v in pminmax.iteritems():
-                        sql = sql + k + ' > ' + v[0] + '\n'
-                        sql = sql + k + ' > ' + v[0] + '\n'
-                logger.debug('\n\nsql for parametervalue query = %s\n\n', sql)
+                logger.debug('\n\nsql before query = %s\n\n', sql)
+                # Modify sql to do a self-join on MeasuredParameter selecting on data values
+                sql_pv = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'])
+                logger.debug('\n\nsql_pv for parametervalue query = %s\n\n', sql_pv)
+                qs_mp = models.MeasuredParameter.objects.raw(sql_pv)
 
         if qs_mp:
             logger.debug(pprint.pformat(str(qs_mp.query)))
@@ -1069,5 +1069,89 @@ class STOQSQManager(object):
         q = QUOTE_INS.sub(r"IN ('\1')", q)
 
         ##logger.debug('After: %s', q)
+
+        return q
+
+    def addParameterValuesSelfJoins(self, query, pvDict):
+        '''
+        Given a Postgresified MeasuredParameter query string 'query', modify it to add the MP self joins needed 
+        to restrict the data selection to the ParameterValues specified in 'pvDict'.  Return a Postgresified 
+        query string that can be used by Django's Manage.raw().
+        '''
+
+        # Example original Postgresified SQL
+        #SELECT
+        #    stoqs_measuredparameter.id,
+        #    stoqs_measuredparameter.measurement_id,
+        #    stoqs_measuredparameter.parameter_id,
+        #    stoqs_measuredparameter.datavalue 
+        #FROM
+        #    stoqs_measuredparameter 
+        #        INNER JOIN stoqs_measurement 
+        #        ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id) 
+        #            INNER JOIN stoqs_instantpoint 
+        #            ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id) 
+        #                INNER JOIN stoqs_parameter 
+        #                ON (stoqs_measuredparameter.parameter_id = stoqs_parameter.id) 
+        #                    INNER JOIN stoqs_activity 
+        #                    ON (stoqs_instantpoint.activity_id = stoqs_activity.id) 
+        #                        INNER JOIN stoqs_platform 
+        #                        ON (stoqs_activity.platform_id = stoqs_platform.id) 
+        #WHERE
+        #    (stoqs_instantpoint.timevalue <= '2012-09-13 18:19:04' AND
+        #    stoqs_instantpoint.timevalue >= '2012-09-13 05:16:48' AND
+        #    stoqs_parameter.name IN ('temperature') AND
+        #    stoqs_measurement.depth >= -5.66 AND
+        #    stoqs_platform.name IN ('dorado') AND
+        #    stoqs_measurement.depth <= 153.85 )
+
+        # Example Self-join SQL to insert into the string
+        #select
+        #    stoqs_measuredparameter.datavalue,
+        #    stoqs_parameter_1.name              as name_1,
+        #    stoqs_measuredparameter_1.datavalue as datavalue_1,
+        #    stoqs_measuredparameter_1.datavalue as datavalue_1b,
+        #    stoqs_parameter.name 
+        #from
+        #    stoqs_measuredparameter stoqs_measuredparameter_1 
+        #        inner join stoqs_parameter stoqs_parameter_1 
+        #        on stoqs_measuredparameter_1.parameter_id = stoqs_parameter_1.id 
+        #            inner join stoqs_measuredparameter 
+        #            stoqs_measuredparameter 
+        #            on stoqs_measuredparameter_1.measurement_id = 
+        #            stoqs_measuredparameter.measurement_id 
+        #                inner join stoqs_parameter stoqs_parameter 
+        #                on stoqs_parameter.id = stoqs_measuredparameter.
+        #                parameter_id 
+        #where
+        #    (stoqs_parameter_1.name ='sea_water_sigma_t') and
+        #    (stoqs_measuredparameter_1.datavalue >24.5) and
+        #    (stoqs_measuredparameter_1.datavalue <25.0) and
+        #    (stoqs_parameter.name ='temperature')
+
+        # Used by getParameterPlatformDatavaluePNG(): 'measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue
+        add_to_select = 'stoqs_instantpoint.timevalue, stoqs_measurement.depth, '
+        add_to_from = ''
+        from_sql = '' 
+        where_sql = '' 
+        i = 0
+        for pminmax in pvDict:
+            i = i + 1
+            add_to_from = add_to_from + 'stoqs_parameter p' + str(i) + ', '
+            from_sql = from_sql + '\t' * (i - 1) + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + '\n'
+            from_sql = from_sql + '\t' * i + 'on mp' + str(i) + '.measurement_id = stoqs_measuredparameter.measurement_id\n'
+            for k,v in pminmax.iteritems():
+                where_sql = where_sql + "\t(p" + str(i) + ".name = '" + k + "') AND \n"
+                where_sql = where_sql + "\t(mp" + str(i) + ".datavalue > " + str(v[0]) + ") AND \n"
+                where_sql = where_sql + "\t(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND \n"
+                where_sql = where_sql + "\t(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND \n"
+
+
+        logger.debug('\n\n\nfrom_sql = %s\n\n\n', from_sql)
+        logger.debug('\n\n\nwhere_sql = %s\n\n\n', where_sql)
+
+        q = query.replace('SELECT ', 'SELECT ' + add_to_select)
+        q = query.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
+        q = q.replace('WHERE', from_sql + '\nWHERE' + where_sql)
 
         return q
