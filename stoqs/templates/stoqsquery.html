@@ -505,12 +505,7 @@
                             st_text = st_text + v + " = " + params[v] + ";\n";
                         }
                         else {
-                            if (v.match(/campaign/) && params[v].match(/https/)) {
-                                st_text = st_text + v + " = '" + params[v].replace(/https/, 'http') + "';\n";
-                            }
-                            else {
-                                st_text = st_text + v + " = '" + params[v] + "';\n";
-                            }
+                            st_text = st_text + v + " = '" + params[v] + "';\n";
                         }
                     }
                     else if (v != 'campaign') {
