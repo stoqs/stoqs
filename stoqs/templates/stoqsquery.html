@@ -497,7 +497,7 @@
                 var req_params = ['campaign', 'start_time', 'end_time', 'min_depth', 'max_depth', 'platforms', 'parametername', 'parameterstandardname'];
                 var st_text = "% Copy and paste into a Matlab session where stoqstoolbox build 2012-11-21 or\n";
                 st_text = st_text + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
-                st_text = st_text + "campaign = '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';\n";
+                st_text = st_text + "campaign = '{{http_site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';\n";
                 $.each(req_params, function(k, v) {
                     if (typeof params[v] != "undefined") {
                         if (v.match(/depth$/)) {
@@ -796,9 +796,7 @@
     });
 
     $('#getactualcount').on('click', function (event) {
-        if ( ! $('#getactualcount').is(':checked')) {
-            rebuildFilters();
-        }
+        rebuildFilters();
     });
 
     $('#showsigmatparametervalues').on('click', function (event) {
