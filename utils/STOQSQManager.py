@@ -16,6 +16,7 @@ from django.conf import settings
 from django.db import connections
 from django.db.models import Q, Max, Min, Sum
 from django.contrib.gis.geos import fromstr
+from django.contrib.gis.geos import MultiPoint
 from django.db.models import Avg
 from django.db.models.query import RawQuerySet
 from django.http import HttpResponse
@@ -196,9 +197,8 @@ class STOQSQManager(object):
         '''
         Get the count of measured parameters giving the exising query
         '''
-
-        locale.setlocale(locale.LC_ALL, 'en_US')
-        qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
+        
+	qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
         if qs_ap:
             ap_count = qs_ap.count()
             logger.debug('ap_count = %d', ap_count)
@@ -1052,29 +1052,61 @@ class STOQSQManager(object):
         
         return geo_query
 
+    def getSampleExtent(self, geoqueryset, srid=4326):
+        """
+        Accepts a GeoQuerySet and SRID. 
+        Returns the extent as a GEOS object in the Google Maps projection.
+        The result can be directly passed out for direct use in OpenLayers.
+        """
+        area = geoqueryset.area()
+        extent = fromstr('MULTIPOINT (%s %s, %s %s)' % geoqueryset.extent(), srid=srid)
+        ul = extent[0]
+        lr = extent[1]
+        dist = ul.distance(lr)
+        
+        # if the points are all in one location then expand the extent so openlayers
+        # will zoom to something that is visible
+        if not dist:
+            ul.x = ul.x-0.15
+            ul.y = ul.y+0.15
+            lr.x = lr.x+0.15
+            lr.y = lr.y-0.15
+            extent = MultiPoint(ul,lr)
+            extent.srid = srid
+
+        extent.transform(900913)
+        return extent
+
     def getActivityMaptrackExtent(self, srid=4326):
         '''
         Return GEOSGeometry extent of all the maptracks contained in the Activity geoqueryset
         The result can be directly passed out for direct use in a OpenLayers
-        '''
+        '''        
         extent = None
+        geomstr = ''
         try:
             geomstr = 'LINESTRING (%s %s, %s %s)' % self.qs.extent()
         except:
             logger.exception('Tried to get extent for self.qs.query =  %s, but failed', str(self.qs.query))
-
-        if geomstr:
+            try: 
+                logger.info('Trying to get extent from samples')
+                qs = self.getSampleQS()
+                extent = self.getSampleExtent(qs, 4326)
+            except:
+                logger.exception('Tried to get extent for qs.query =  %s, but failed', str(qs.query))
+                return extent
+        if extent is None:
             try:
                 extent = fromstr(geomstr, srid=srid)
             except:
                 logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
-            try:
-                extent.transform(900913)
-            except:
-                logger.exception('Cannot get transorm to 900913 for geomstr = %s, srid = %d', geomstr, srid)
+                return extent
+        try:
+            extent.transform(900913)
+        except:
+            logger.exception('Cannot get transorm to 900913 for geomstr = %s, srid = %d', geomstr, srid)
         
         return extent
-
 
     #
     # Utility methods used just by this class
