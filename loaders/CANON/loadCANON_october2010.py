@@ -54,6 +54,8 @@ cl.dorado_files = [ 'Dorado389_2010_277_01_277_01_decim.nc',
                     'Dorado389_2010_300_00_300_00_decim.nc',
                     'Dorado389_2010_301_00_301_00_decim.nc',
                   ]
+# These are full resolution (_d_) data files with Chl only from the first Tethys data used for CANON
+# Offical long-term archive location is: http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2010/
 cl.tethys_base = 'http://dods.mbari.org/opendap/data/auvctd/tethys/2010/netcdf/'
 cl.tethys_files = [ '20101018T143308_Chl_.nc',
                     '20101019T001815_Chl_.nc',
@@ -61,6 +63,16 @@ cl.tethys_files = [ '20101018T143308_Chl_.nc',
                     '20101020T113957_Chl_.nc',
                   ]
 cl.tethys_parms = ['mass_concentration_of_chlorophyll_in_sea_water']
+
+# Realtime shore.nc files - not a DODS server...
+cl.tethys_r_base = 'http://aosn.mbari.org/sbdlogs/tethys/2010/201010/'
+cl.tethys_r_files = [ '20101018T143308/shore.nc',
+                    '20101019T001815/shore.nc',
+                    '20101019T155117/shore.nv',
+                    '20101020T113957/shore.nc',
+                  ]
+cl.tethys_r_parms = ['mass_concentration_of_chlorophyll_in_sea_water']
+
 cl.martin_base = 'http://odss.mbari.org/thredds/dodsC/jhm_underway'
 cl.martin_files = [ '27710_jhmudas_v1.nc',
                     '27810_jhmudas_v1.nc',
