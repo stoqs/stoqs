@@ -733,7 +733,7 @@ class STOQSQManager(object):
         tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
         dgrid_max = 100             # Height of time-depth-flot plot area is 335 pixels
         dinc = 0.5                  # Average vertical resolution of AUV Dorado
-        nlevels = 50                # Number of color filled contour levels
+        nlevels = 255                # Number of color filled contour levels
 
         # Use session ID so that different users don't stomp on each other with their section plots
         if self.request.session.has_key('sessionID'):
@@ -847,7 +847,7 @@ class STOQSQManager(object):
                 ax.get_xaxis().set_ticks([])
                 clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
                 cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
-                ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=cm_jetplus)
+                ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=cm_jetplus, extend='both')
                 ax.scatter(x, y, marker='.', s=2, c='k', lw = 0)
 
                 # Add sample locations and names
