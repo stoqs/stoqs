@@ -736,14 +736,17 @@ class STOQSQManager(object):
         nlevels = 255                # Number of color filled contour levels
 
         # Use session ID so that different users don't stomp on each other with their section plots
+        # - This does not work for Firefox which just reads the previous image from its cache
         if self.request.session.has_key('sessionID'):
             sessionID = self.request.session['sessionID']
         else:
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
             self.request.session['sessionID'] = sessionID
-        sectionPngFile = self.kwargs['parametername'][0] + '_' + platformName + '_' + sessionID + '.png'
+        # - Use a new imageID for each new image
+        imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+        sectionPngFile = self.kwargs['parametername'][0] + '_' + platformName + '_' + imageID + '.png'
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
-        colorbarPngFile = self.kwargs['parametername'][0] + '_' + platformName + '_colorbar_' + sessionID + '.png'
+        colorbarPngFile = self.kwargs['parametername'][0] + '_' + platformName + '_colorbar_' + imageID + '.png'
         colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', colorbarPngFile)
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
