@@ -20,7 +20,7 @@ function [model,insit]=model_vs_stoqs(urlo,depth,range,drange,show)
 %   Francisco Lopez-Castejon
 %   19/August/2012
 %
-stoqs_server='http://odss-staging.shore.mbari.org/canon';
+stoqs_server='http://odss.mbari.org/canon';
 
 %-----------    MODEL WORK -------------------
 %Select the OpenDap Server to get the model output. Get all the model
