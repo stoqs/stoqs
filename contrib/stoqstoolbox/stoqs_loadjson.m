@@ -65,7 +65,9 @@ opt=varargin2struct(varargin{:});
 jsoncount=1;
 mp_count = 0;
 if (~isempty(mp_total_count))
-    textprogressbar(['Parsing json response for ' num2str(mp_total_count) ' datavalues:  ']);
+    if (mp_total_count ~= 0)
+        textprogressbar(['Parsing json response for ' num2str(mp_total_count) ' datavalues:  ']);
+    end
 end
 while pos <= len
     switch(next_char)
@@ -92,7 +94,9 @@ if(~isempty(data))
       end
 end
 if (~isempty(mp_total_count))
-    textprogressbar('  Done.');
+    if (mp_total_count ~= 0)
+        textprogressbar('  Done.');
+    end
 end
 
 %%
@@ -251,7 +255,9 @@ global pos inStr isoct mp_count mp_total_count
             end
             mp_count = mp_count + 1;
             if (~isempty(mp_total_count))
-                textprogressbar(round(100 * mp_count / mp_total_count));
+                if (mp_total_count ~= 0)
+                    textprogressbar(round(100 * mp_count / mp_total_count));
+                end
             end
             parse_char(',');
          end
