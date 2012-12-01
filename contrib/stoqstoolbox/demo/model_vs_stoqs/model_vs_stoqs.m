@@ -25,9 +25,8 @@ stoqs_server='http://odss.mbari.org/canon';
 %-----------    MODEL WORK -------------------
 %Select the OpenDap Server to get the model output. Get all the model
 %output information.
-disp('Connecting to the OPeNDAP server')
+disp(['Using NCTOOLBOX to read model data from ' urlo])
 [model]=load_mb_1km(urlo,depth);
-disp('Finish OPeNDAP server connection')
 
 
 
@@ -42,7 +41,7 @@ vari='sea_water_temperature'; %model.name(5)
 
 
 %------------- GETTING IN-SITU MEASUREMENT ------------
-disp('Getting STOQS in-situ measuremt')
+disp(['Using STOQSTOOLBOX to look for data at ' stoqs_server])
 %Get the in-situ data
 [camp]=stoqs_campaignbydate(stoqs_server,model.date);
 
@@ -78,7 +77,7 @@ if show==1
         
     figure(3)
 
-      plot(insit.time,insit.value,'x');datetick('x',15);hold on;plot(ext.modeltime,ext.pointdata,'.r');legend('Insitu measurement','Model output','FontSize',18);
+      plot(insit.time,insit.value,'x');datetick('x',15);hold on;plot(ext.modeltime,ext.pointdata,'.r');legend('In situ measurement','Model output','FontSize',18);
       datetick('x',15);xlabel('HOURS','FontSize',18);ylabel('Temperature','FontSize',18)
       set(gca,'FontSize',18)
  end
