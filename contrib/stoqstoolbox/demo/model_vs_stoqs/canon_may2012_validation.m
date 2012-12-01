@@ -23,12 +23,11 @@ model.pointdata=NaN;extr.insitumean=NaN;extr.node=NaN;model.date=NaN;
 num=(edate-sdate)/(intm/24);
 for i=1:num
     disp('---------------------------------------------------------');
-    disp(datestr(sdate))
+    disp(['Model time ' datestr(sdate)])
     %Build the url for OPeNDAP server
     urlope=['http://ourocean.jpl.nasa.gov:8080/thredds/dodsC/MBNowcast/mb_das_' datestr(sdate,'yyyy') datestr(sdate,'mm') datestr(sdate,'dd') datestr(sdate,'HH') '.nc'];
     [query,d]=model_vs_stoqs(urlope,depth,depth_range,time_range,0);
-    disp('Download ')
-    disp(length(d.longitude))
+    disp(['Downloaded ' num2str(length(d.longitude)) ' measurements'])
      %Get the nearest model node to the insitu measurement
      
     ext=extract_points(query,d);
@@ -55,6 +54,6 @@ end
 
       figure(1)
         plot(insitu.time,insitu.value,'x');datetick('x','dd/mm HH:MM');hold on;plot(model.date,model.pointdata,'.r')
-        legend('Insitu measurement','Model output');
-      xlabel('Date ( day/mont hour:minute)','FontSize',18);ylabel('Temperature','FontSize',18)
+        legend('in situ measurement','model output');
+      xlabel('Date ( day/month hour:minute)','FontSize',18);ylabel('Temperature','FontSize',18)
       set(gca,'FontSize',18)
