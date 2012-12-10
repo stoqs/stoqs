@@ -1045,14 +1045,16 @@ class STOQSQManager(object):
             geomstr = 'LINESTRING (%s %s, %s %s)' % self.qs.extent()
         except:
             logger.exception('Tried to get extent for self.qs.query =  %s, but failed', str(self.qs.query))
-        try:
-            extent = fromstr(geomstr, srid=srid)
-        except:
-            logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
-        try:
-            extent.transform(900913)
-        except:
-            logger.exception('Cannot get transorm to 900913 for geomstr = %s, srid = %d', geomstr, srid)
+
+        if geomstr:
+            try:
+                extent = fromstr(geomstr, srid=srid)
+            except:
+                logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
+            try:
+                extent.transform(900913)
+            except:
+                logger.exception('Cannot get transorm to 900913 for geomstr = %s, srid = %d', geomstr, srid)
         
         return extent
 
