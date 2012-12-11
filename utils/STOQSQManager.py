@@ -474,7 +474,10 @@ class STOQSQManager(object):
         results = []
         if len(self.kwargs['parametername']) == 1:
             qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
-            results = [self.kwargs['parametername'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+            try:
+                results = [self.kwargs['parametername'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+            except TypeError, e:
+                logger.exception(e)
         if len(self.kwargs['parameterstandardname']) == 1:
             qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
             results = [self.kwargs['parameterstandardname'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
@@ -716,7 +719,12 @@ class STOQSQManager(object):
         if len(self.getPlatforms()) != 1:
             if len(self.kwargs['platforms']) != 1:
                 return None, None, 'Platform not selected'
-        platformName = self.getPlatforms()[0][0]
+        try:
+            platformName = self.getPlatforms()[0][0]
+        except IndexError, e:
+            logger.warn(e)
+            return None, None, 'Could not get platform name'
+            
         logger.debug('platformName = %s', platformName)
 
         # Setup Matplotlib for running on the server
@@ -803,7 +811,12 @@ class STOQSQManager(object):
         if xi is not None and yi is not None:
             # Estimate a scale factor to apply to the x values on drid data so that x & y values are visually equal for the flot plot
             # which is assumed to be 3x wider than tall.  Approximate horizontal coverage by Dorado is 1 m/s.
-            scale_factor = float(tmax -tmin) / (dmax - dmin) / 3.0
+            try:
+                scale_factor = float(tmax -tmin) / (dmax - dmin) / 3.0
+            except ZeroDivisionError, e:
+                logger.warn(e)
+                return None, None, 'Bad depth range'
+                
             logger.debug('scale_factor = %f', scale_factor)
             xi = xi / scale_factor
 
