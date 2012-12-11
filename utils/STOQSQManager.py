@@ -17,6 +17,7 @@ from django.db import connections
 from django.db.models import Q, Max, Min, Sum
 from django.contrib.gis.geos import fromstr
 from django.db.models import Avg
+from django.db.models.query import RawQuerySet
 from django.http import HttpResponse
 from stoqs import models
 from utils import round_to_n
@@ -208,11 +209,11 @@ class STOQSQManager(object):
             if self.getGet_Actual_Count():
                 logger.info('>>>> get_actual_count selected.  Switching to getting actual count.')
                 qs_mp = self.getMeasuredParametersQS()          # Actual count from MeasuredParameter - needs to do seq scan on large table
-                try:
-                    actual_count = qs_mp.count()
-                except AttributeError:
-                    # Likely a RawQuerySet from a ParameterValues selection
+                if type(qs_mp) == RawQuerySet:
+                    # Most likely a RawQuerySet from a ParameterValues selection
                     actual_count = sum(1 for mp in qs_mp)
+                else:
+                    actual_count = qs_mp.count()
                 logger.debug('actual_count = %d', actual_count)
                 if actual_count == 0:
                     logger.warn('actual_count == 0')
@@ -370,6 +371,7 @@ class STOQSQManager(object):
                 qs_mp = models.MeasuredParameter.objects.raw(sql_pv)
 
         if qs_mp:
+            logger.debug('type(qs_mp) = %s', type(qs_mp))
             logger.debug(pprint.pformat(str(qs_mp.query)))
         else:
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
@@ -385,17 +387,18 @@ class STOQSQManager(object):
             if self.getGet_Actual_Count():
                 # Return query only if a platform and a parameter have been selected
                 qs_mp = self.getMeasuredParametersQS()
-                try:
+
+                if type(qs_mp) == RawQuerySet:
+                    # Most likely becase its a RawQuerySet from a ParameterValues selection
+                    sql = self.postgresifySQL(str(qs_mp.query)) + ';'
+                    sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'])
+                    sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME'] + sql
+                else:
                     qs_mp = qs_mp.values(   'measurement__instantpoint__activity__platform__name', 'measurement__instantpoint__timevalue', 
                                             'measurement__geom', 'parameter__name', 'datavalue')
                     if qs_mp:
                         sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
                         sql +=  self.postgresifySQL(str(qs_mp.query)) + ';'
-                except AttributeError:
-                    # Likely becase its a RawQueryString from a PameterValues selection
-                    sql = self.postgresifySQL(str(qs_mp.query)) + ';'
-                    sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'])
-                    sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME'] + sql
 
         return sql
 
@@ -813,18 +816,19 @@ class STOQSQManager(object):
             x = []
             y = []
             z = []
-            try:
-                for mp in self.getMeasuredParametersQS().values('measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue'):
-                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
-                    y.append(mp['measurement__depth'])
-                    z.append(mp['datavalue'])
-            except AttributeError:
-                # Likely because it is a RawQuerySet from a ParameterValues query
-                for mp in self.getMeasuredParametersQS():
-                    logger.debug('mp = %s, %s, %s', mp.timevalue, mp.depth, mp.datavalue)
+            qs_mp = self.getMeasuredParametersQS() 
+            if type(qs_mp) == RawQuerySet:
+                # Most likely because it is a RawQuerySet from a ParameterValues query
+                for mp in qs_mp:
+                    ##logger.debug('mp = %s, %s, %s', mp.timevalue, mp.depth, mp.datavalue)
                     x.append(time.mktime(mp.timevalue.timetuple()) / scale_factor)
                     y.append(mp.depth)
                     z.append(mp.datavalue)
+            else:
+                for mp in qs_mp.values('measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue'):
+                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
+                    y.append(mp['measurement__depth'])
+                    z.append(mp['datavalue'])
           
             logger.debug('Number of x, y, z data values retrived from database = %d', len(z)) 
             try:
@@ -1165,6 +1169,10 @@ class STOQSQManager(object):
             from_sql = from_sql + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + ' '
             from_sql = from_sql + 'on mp' + str(i) + '.measurement_id = stoqs_measuredparameter.measurement_id '
             for k,v in pminmax.iteritems():
+                # Prevent SQL injection attacks
+                p = re.compile("[';]")
+                if p.search(k) or p.search(v[0]) or p.search(v[1]):
+                    raise Exception('Invalid ParameterValue constraint expression: %s, %s' % (k, v))
                 where_sql = where_sql + "(p" + str(i) + ".name = '" + k + "') AND "
                 where_sql = where_sql + "(mp" + str(i) + ".datavalue > " + str(v[0]) + ") AND "
                 where_sql = where_sql + "(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND "
