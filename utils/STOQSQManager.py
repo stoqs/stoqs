@@ -20,7 +20,7 @@ from django.db.models import Avg
 from django.db.models.query import RawQuerySet
 from django.http import HttpResponse
 from stoqs import models
-from utils import round_to_n
+from utils import round_to_n, postgresifySQL
 from coards import to_udunits
 from datetime import datetime
 import logging
@@ -31,6 +31,7 @@ import locale
 import time
 import os
 import tempfile
+from MPQuery import MPQuery
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +48,11 @@ class STOQSQManager(object):
         self.request = request
         self.dbname = dbname
         self.response = response
+        self.mpq = MPQuery(request)
         
     def buildQuerySet(self, *args, **kwargs):
         '''
-        Build the query set based on any selections form the UI. For the first time through  kwargs will be empty 
+        Build the query set based on any selections from the UI. For the first time through  kwargs will be empty 
         and self.qs will be built of a join of activities, parameters, and platforms with no constraints.
 
         Right now supported keyword arguments are the following:
@@ -59,6 +61,7 @@ class STOQSQManager(object):
             platforms - a list of platform names to include
             time - a two-tuple consisting of a start and end time, if either is None, the assumption is no start (or end) time
             depth - a two-tuple consisting of a range (start/end depth, if either is None, the assumption is no start (or end) depth
+            parametervalues - a dictionary of parameter names and tuples of min & max values to use as constraints
 
         These are all called internally - so we'll assume that all the validation has been done in advance,
         and the calls to this method meet the requirements stated above.
@@ -90,6 +93,9 @@ class STOQSQManager(object):
                 logger.debug('k = %s, v = %s, q = %s', k, v, q)
                 qs = qs.filter(q)
         self.qs = qs
+
+        # Apply query constraints to the MeasuredParameter query object 
+        self.mpq.buildMPQuerySet(*args, **kwargs)
         
     def generateOptions(self):
         '''
@@ -110,9 +116,9 @@ class STOQSQManager(object):
                            'depth': self.getDepth,
                            'simpledepthtime': self.getSimpleDepthTime,
                            'sampledepthtime': self.getSampleDepthTime,
-                           'count': self.getCount,
+                           'count': self.getLocalizedCount,
                            'ap_count': self.getAPCount,
-                           'sql': self.getMeasuredParametersPostgreSQL,
+                           'sql': self.mpq.getMeasuredParametersPostgreSQL,
                            'activitymaptrackextent': self.getActivityMaptrackExtent,
                            'activityparameterhistograms': self.getActivityParameterHistograms,
                            'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
@@ -128,9 +134,8 @@ class STOQSQManager(object):
         return results
     
     #
-    # Methods that generate summary data, based on the current query criteria.
+    # Methods that return checkbox selections made on the UI
     #
-
     def getGet_Actual_Count(self):
         '''
         return state of Get Actual Count checkbox from query UI
@@ -190,39 +195,27 @@ class STOQSQManager(object):
         logger.debug('display_parameter_platform_data_state = %s', display_parameter_platform_data_state)
 
         return display_parameter_platform_data_state
-        
 
-    def getCount(self):
+    #
+    # Methods that generate summary data, based on the current query criteria.
+    #
+    def getLocalizedCount(self):
         '''
-        Get the count of measured parameters giving the exising query
+        Get the localized count (with commas) of measured parameters giving the exising query and return as string
         '''
 
         locale.setlocale(locale.LC_ALL, 'en_US')
         qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
         if qs_ap:
             ap_count = qs_ap.count()
-            logger.debug('ap_count = %d', ap_count)
             approximate_count = qs_ap.aggregate(Sum('number'))['number__sum']
-            logger.debug('approximate_count = %d', approximate_count)
-            if approximate_count == 0:
-                logger.warn('actual_count == 0')
             if self.getGet_Actual_Count():
-                logger.info('>>>> get_actual_count selected.  Switching to getting actual count.')
-                qs_mp = self.getMeasuredParametersQS()          # Actual count from MeasuredParameter - needs to do seq scan on large table
-                if type(qs_mp) == RawQuerySet:
-                    # Most likely a RawQuerySet from a ParameterValues selection
-                    actual_count = sum(1 for mp in qs_mp)
-                else:
-                    actual_count = qs_mp.count()
-                logger.debug('actual_count = %d', actual_count)
-                if actual_count == 0:
-                    logger.warn('actual_count == 0')
-                return locale.format("%d", actual_count, grouping=True)
+                return self.mpq.getLocalizedMPCount()
             else:
                 return locale.format("%d", approximate_count, grouping=True)
         else:
             return 0
-      
+
     def getAPCount(self):
         '''
         Return count of ActivityParameters given the current constraints
@@ -285,7 +278,6 @@ class STOQSQManager(object):
         '''
         qparams = {}
 
-        logger.info(pprint.pformat(self.kwargs))
         qs_aph = models.ActivityParameterHistogram.objects.using(self.dbname).all()
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
@@ -328,79 +320,6 @@ class STOQSQManager(object):
         else:
             logger.debug("No queryset returned for kwargs = %s", self.kwargs)
         return qs_aph
-
-    def getMeasuredParametersQS(self):
-        '''
-        Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
-        '''
-        qparams = {}
-        pv_qparams = {}
-
-        logger.info(pprint.pformat(self.kwargs))
-        if self.kwargs.has_key('parametername'):
-            if self.kwargs['parametername']:
-                qparams['parameter__name__in'] = self.kwargs['parametername']
-        if self.kwargs.has_key('parameterstandardname'):
-            if self.kwargs['parameterstandardname']:
-                qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
-        if self.kwargs.has_key('platforms'):
-            if self.kwargs['platforms']:
-                qparams['measurement__instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
-        if self.kwargs.has_key('time'):
-            if self.kwargs['time'][0] is not None:
-                qparams['measurement__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
-            if self.kwargs['time'][1] is not None:
-                qparams['measurement__instantpoint__timevalue__lte'] = self.kwargs['time'][1]
-        if self.kwargs.has_key('depth'):
-            if self.kwargs['depth'][0] is not None:
-                qparams['measurement__depth__gte'] = self.kwargs['depth'][0]
-            if self.kwargs['depth'][1] is not None:
-                qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
-
-        logger.debug('qparams = %s', pprint.pformat(qparams))
-        
-        qs_mp = models.MeasuredParameter.objects.using(self.dbname).filter(**qparams)
-
-        if self.kwargs.has_key('parametervalues'):
-            if self.kwargs['parametervalues']:
-                sql = self.postgresifySQL(str(qs_mp.query))
-                logger.debug('\n\nsql before query = %s\n\n', sql)
-                # Modify sql to do a self-join on MeasuredParameter selecting on data values
-                sql_pv = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'])
-                logger.debug('\n\nsql_pv for parametervalue query = %s\n\n', sql_pv)
-                qs_mp = models.MeasuredParameter.objects.raw(sql_pv)
-
-        if qs_mp:
-            logger.debug('type(qs_mp) = %s', type(qs_mp))
-            logger.debug(pprint.pformat(str(qs_mp.query)))
-        else:
-            logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
-        return qs_mp
-
-    def getMeasuredParametersPostgreSQL(self):
-        '''
-        Return SQL string that can be executed agaisnt the postgres database
-        '''
-        sql = 'Check "Get actual count" checkbox to see the SQL for your data selection'
-        qs_ap = self.getActivityParametersQS()
-        if qs_ap:
-            if self.getGet_Actual_Count():
-                # Return query only if a platform and a parameter have been selected
-                qs_mp = self.getMeasuredParametersQS()
-
-                if type(qs_mp) == RawQuerySet:
-                    # Most likely becase its a RawQuerySet from a ParameterValues selection
-                    sql = self.postgresifySQL(str(qs_mp.query)) + ';'
-                    sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'])
-                    sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME'] + sql
-                else:
-                    qs_mp = qs_mp.values(   'measurement__instantpoint__activity__platform__name', 'measurement__instantpoint__timevalue', 
-                                            'measurement__geom', 'parameter__name', 'datavalue')
-                    if qs_mp:
-                        sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
-                        sql +=  self.postgresifySQL(str(qs_mp.query)) + ';'
-
-        return sql
 
     def getSampleQS(self):
         '''
@@ -482,7 +401,6 @@ class STOQSQManager(object):
             qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
             results = [self.kwargs['parameterstandardname'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
         return results
-
     
     def getPlatforms(self):
         '''
@@ -829,7 +747,7 @@ class STOQSQManager(object):
             x = []
             y = []
             z = []
-            qs_mp = self.getMeasuredParametersQS() 
+            qs_mp = self.mpq.qs_mp
             if type(qs_mp) == RawQuerySet:
                 # Most likely because it is a RawQuerySet from a ParameterValues query
                 for mp in qs_mp:
@@ -957,9 +875,6 @@ class STOQSQManager(object):
             q=Q(activityparameter__parameter__standard_name__in=parameterstandardname)
         return q
 
-
-
-
     def _platformsQ(self, platforms):
         '''
         Build a Q object to be added to the current queryset as a filter.  This will ensure that we
@@ -1031,7 +946,7 @@ class STOQSQManager(object):
 
         # Query for mapserver
         geo_query = '''geom from (%s)
-            as subquery using unique gid using srid=4326''' % self.postgresifySQL(qs.query)
+            as subquery using unique gid using srid=4326''' % postgresifySQL(qs.query)
         
         return geo_query
 
@@ -1048,7 +963,7 @@ class STOQSQManager(object):
 
         # Query for mapserver
         geo_query = '''geom from (%s)
-            as subquery using unique gid using srid=4326''' % self.postgresifySQL(qs.query)
+            as subquery using unique gid using srid=4326''' % postgresifySQL(qs.query)
         
         return geo_query
 
@@ -1075,127 +990,3 @@ class STOQSQManager(object):
         
         return extent
 
-
-    #
-    # Utility methods used just by this class
-    #
-    def postgresifySQL(self, query):
-        '''
-        Given a generic database agnostic Django query string modify it using regular expressions to work
-        on a PostgreSQL server.
-        '''
-        # Get text of query to quotify for Postgresql
-        q = str(query)
-
-        # Remove double quotes from around all table and colum names
-        q = q.replace('"', '')
-        ##logger.debug('Before: %s', q)
-
-        # Add aliases for geom and gid - Activity
-        q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
-        q = q.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)           # Fixes problem with above being applied to Sample query join
-        q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
-        q = q.replace('stoqs_measurement.geom', 'ST_AsText(stoqs_measurement.geom)')    # For sql ajax response to decode lat & lon
-        # Add aliases for geom and gid - Sample
-        q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
-        q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
-
-        # Quotify things that need quotes
-        QUOTE_NAMEEQUALS = re.compile('name\s+=\s+(?P<argument>\S+)')
-        QUOTE_DATES = re.compile('(?P<argument>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)')
-        QUOTE_INS = re.compile('IN\s+\((?P<argument>[^\)]+)\)')
-
-        q = QUOTE_NAMEEQUALS.sub(r"name = '\1'", q)
-        q = QUOTE_DATES.sub(r"'\1'", q)
-        q = QUOTE_INS.sub(r"IN ('\1')", q)
-
-        ##logger.debug('After: %s', q)
-
-        return q
-
-    def addParameterValuesSelfJoins(self, query, pvDict):
-        '''
-        Given a Postgresified MeasuredParameter query string 'query', modify it to add the MP self joins needed 
-        to restrict the data selection to the ParameterValues specified in 'pvDict'.  Return a Postgresified 
-        query string that can be used by Django's Manage.raw().
-        '''
-
-        # Example original Postgresified SQL
-        #SELECT
-        #    stoqs_measuredparameter.id,
-        #    stoqs_measuredparameter.measurement_id,
-        #    stoqs_measuredparameter.parameter_id,
-        #    stoqs_measuredparameter.datavalue 
-        #FROM
-        #    stoqs_measuredparameter 
-        #        INNER JOIN stoqs_measurement 
-        #        ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id) 
-        #            INNER JOIN stoqs_instantpoint 
-        #            ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id) 
-        #                INNER JOIN stoqs_parameter 
-        #                ON (stoqs_measuredparameter.parameter_id = stoqs_parameter.id) 
-        #                    INNER JOIN stoqs_activity 
-        #                    ON (stoqs_instantpoint.activity_id = stoqs_activity.id) 
-        #                        INNER JOIN stoqs_platform 
-        #                        ON (stoqs_activity.platform_id = stoqs_platform.id) 
-        #WHERE
-        #    (stoqs_instantpoint.timevalue <= '2012-09-13 18:19:04' AND
-        #    stoqs_instantpoint.timevalue >= '2012-09-13 05:16:48' AND
-        #    stoqs_parameter.name IN ('temperature') AND
-        #    stoqs_measurement.depth >= -5.66 AND
-        #    stoqs_platform.name IN ('dorado') AND
-        #    stoqs_measurement.depth <= 153.85 )
-
-        # Example Self-join SQL to insert into the string
-        #select
-        #    stoqs_measuredparameter.datavalue,
-        #    stoqs_parameter_1.name              as name_1,
-        #    stoqs_measuredparameter_1.datavalue as datavalue_1,
-        #    stoqs_measuredparameter_1.datavalue as datavalue_1b,
-        #    stoqs_parameter.name 
-        #from
-        #    stoqs_measuredparameter stoqs_measuredparameter_1 
-        #        inner join stoqs_parameter stoqs_parameter_1 
-        #        on stoqs_measuredparameter_1.parameter_id = stoqs_parameter_1.id 
-        #            inner join stoqs_measuredparameter 
-        #            stoqs_measuredparameter 
-        #            on stoqs_measuredparameter_1.measurement_id = 
-        #            stoqs_measuredparameter.measurement_id 
-        #                inner join stoqs_parameter stoqs_parameter 
-        #                on stoqs_parameter.id = stoqs_measuredparameter.
-        #                parameter_id 
-        #where
-        #    (stoqs_parameter_1.name ='sea_water_sigma_t') and
-        #    (stoqs_measuredparameter_1.datavalue >24.5) and
-        #    (stoqs_measuredparameter_1.datavalue <25.0) and
-        #    (stoqs_parameter.name ='temperature')
-
-        # Used by getParameterPlatformDatavaluePNG(): 'measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue
-        select_items = 'stoqs_measuredparameter.id, stoqs_instantpoint.timevalue, stoqs_measurement.depth, stoqs_measuredparameter.datavalue'
-        add_to_from = ''
-        from_sql = '' 
-        where_sql = '' 
-        i = 0
-        for pminmax in pvDict:
-            i = i + 1
-            add_to_from = add_to_from + 'stoqs_parameter p' + str(i) + ', '
-            from_sql = from_sql + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + ' '
-            from_sql = from_sql + 'on mp' + str(i) + '.measurement_id = stoqs_measuredparameter.measurement_id '
-            for k,v in pminmax.iteritems():
-                # Prevent SQL injection attacks
-                p = re.compile("[';]")
-                if p.search(k) or p.search(v[0]) or p.search(v[1]):
-                    raise Exception('Invalid ParameterValue constraint expression: %s, %s' % (k, v))
-                where_sql = where_sql + "(p" + str(i) + ".name = '" + k + "') AND "
-                where_sql = where_sql + "(mp" + str(i) + ".datavalue > " + str(v[0]) + ") AND "
-                where_sql = where_sql + "(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND "
-                where_sql = where_sql + "(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
-
-        q = query
-        p = re.compile('SELECT .+ FROM')
-        q = p.sub('SELECT ' + select_items + ' FROM', q)
-        q = q.replace('SELECT FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
-        q = q.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
-        q = q.replace('WHERE', from_sql + '\nWHERE' + where_sql)
-
-        return q
