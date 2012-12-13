@@ -43,7 +43,7 @@ def kmlResponse(request, qm, response):
     '''
     Return a response that is a KML represenation of the existing MeasuredParameter query that is in qm
     '''
-    qs_mp = qm.getMeasuredParametersQS()
+    qs_mp = qm.mpq.qs_mp
     if qs_mp is None:
         raise InvalidMeasuredParameterQueryException
 

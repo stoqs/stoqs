@@ -41,7 +41,7 @@ from stoqs import models as m
 from loaders import STOQS_Loader, SkipRecord
 from datetime import datetime, timedelta
 from pydap.model import BaseType
-from django.contrib.gis.geos import fromstr
+from django.contrib.gis.geos import fromstr, Point, LineString
 
 import time
 import numpy
