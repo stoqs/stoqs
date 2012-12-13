@@ -821,6 +821,8 @@ class STOQSQManager(object):
         geomstr = ''
         try:
             geomstr = 'LINESTRING (%s %s, %s %s)' % self.qs.extent()
+        except TypeError:
+            logger.error('Query set %s most like has no maptrack fields set.  Check the database loader and make sure a geometry type is put into maptrack for each activity', str(self.qs))
         except:
             logger.exception('Tried to get extent for self.qs.query =  %s, but failed', str(self.qs.query))
             try: 
