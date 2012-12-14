@@ -60,8 +60,16 @@ class ActivityView(object):
         '''Initialize activity object to support building of mapserver mapfiles and openlayers html files.
 
         @param request: Web server request object
-        @param list: List of items that produces activities, e.g. Activities, Paramaters, Platforms, ...
-        @param mappath: Fully qualified path to the mapfile that will be created
+        @param itemList: List objects with attributes that are used to add layers to the mapserver map, attributes include
+                         for example:
+                            item.id = 'sample_points'
+                            item.name = 'sample_points'
+                            item.color = '255 255 255'
+                            item.type = 'point'
+                            item.geo_query = qm.getSampleGeoQuery()
+                            item.extra_style = 'SYMBOL "circle"\n        SIZE 7.0\n        OUTLINECOLOR 0 0 0 '
+
+        @param union_layer_string: A comma separated list of layer names that are grouped together by openlayers
         @param geo_query: The SQL to be placed in the DATA directive.  It must return a geometry object and a gid for the filter.
         '''
         self.url = url

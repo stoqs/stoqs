@@ -185,6 +185,7 @@ class Activity(models.Model):
     loaded_date = models.DateTimeField(null=True)
     maptrack = models.LineStringField(null=True)
     plannedtrack = models.LineStringField(null=True)
+    mappoint = models.PointField(srid=4326, spatial_index=True, dim=2, blank=True, null=True)
     mindepth = models.FloatField(null=True)
     maxdepth = models.FloatField(null=True)
     activitytype = models.ForeignKey(ActivityType, blank=True, null=True, default=None) 

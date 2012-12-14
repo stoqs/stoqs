@@ -159,10 +159,10 @@ def simplify_points (pts, tolerance):
     # Change from original code: add the index from the original line in the return
     return [(pts[i] + (i,)) for i in keep]
 
-def postgresifySQL(query):
+def postgresifySQL(query, pointFlag=False):
     '''
     Given a generic database agnostic Django query string modify it using regular expressions to work
-    on a PostgreSQL server.
+    on a PostgreSQL server.  If pointFlag is True then use the mappoint field for geom.
     '''
     import re
 
@@ -175,7 +175,12 @@ def postgresifySQL(query):
     # Add aliases for geom and gid - Activity
     q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
     q = q.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)           # Fixes problem with above being applied to Sample query join
-    q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
+
+    if pointFlag:
+        q = q.replace('stoqs_activity.mappoint', 'stoqs_activity.mappoint as geom')
+    else:
+        q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
+
     q = q.replace('stoqs_measurement.geom', 'ST_AsText(stoqs_measurement.geom)')    # For sql ajax response to decode lat & lon
     # Add aliases for geom and gid - Sample
     q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
