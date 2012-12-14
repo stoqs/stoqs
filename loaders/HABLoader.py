@@ -56,7 +56,7 @@ import pytz
 
 # Set up logging
 logger = logging.getLogger('loaders')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -403,6 +403,18 @@ class HABLoader(STOQS_Loader):
                         else:
                            parmNameValues.append((name, float(r[name])))
 
+                    # Check to make sure all data from this file are from the same location.
+                    # The program could be modified to read data in one file from multiple locations by reading data into a hash keyed by location name 
+                    # and then stepping through each key of the hash saving the data for each location into it's own activity.  For now just require
+                    # each data file to have data from just one location.
+                    try: 
+                        if lat != lastlat or lon != lastlon:
+                            logger.error("lat and lon are not the same for location = %s and lastlocation = %s.  The input data should have just one location." % (location, lastlocation))
+                            sys.exit(-1)
+                    except NameError, e:
+                        # Expected first time through when lastlon & lastlat don't yet exist
+                        pass
+
                     # Load data 
                     dt = datetime(year, month, day, hours, mins, secs)    
                     self.load_measurement(lon, lat, depth, dt, parmNameValues)
@@ -410,6 +422,10 @@ class HABLoader(STOQS_Loader):
                     # Load sample
                     bName = dt.isoformat()
                     self.load_sample(lon, lat, depth, dt, bName)
+
+                    lastlat = lat
+                    lastlon = lon
+                    lastlocation = location
 
 
         logger.info("Data load complete, %d records loaded.", self.loaded)        
@@ -419,10 +435,13 @@ class HABLoader(STOQS_Loader):
         # Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
         newComment = "%d MeasuredParameters loaded. Loaded on %sZ" % (self.loaded, datetime.utcnow())
         logger.info("runHABLoader(): Updating its comment with newComment = %s", newComment)
+        aName = location
     
         num_updated = m.Activity.objects.using(self.dbAlias).filter(id = self.activity.id).update(
+                        name = aName,
                         comment = newComment,
                         maptrack = None,
+                        mappoint = 'POINT(%s %s)' % (lon, lat),
                         mindepth = self.mindepth,
                         maxdepth = self.maxdepth,
                         num_measuredparameters = self.loaded,

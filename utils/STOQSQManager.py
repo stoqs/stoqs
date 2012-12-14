@@ -18,7 +18,6 @@ from django.db.models import Q, Max, Min, Sum
 from django.contrib.gis.geos import fromstr
 from django.contrib.gis.geos import MultiPoint
 from django.db.models import Avg
-from django.db.models.query import RawQuerySet
 from django.http import HttpResponse
 from stoqs import models
 from utils import round_to_n, postgresifySQL
