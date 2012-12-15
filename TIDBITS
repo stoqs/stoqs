@@ -51,6 +51,13 @@ for dbAlias in dbAliases:
     m.Campaign.objects.using(dbAlias).update(startdate = ip_qs['timevalue__min'], enddate = ip_qs['timevalue__max'])
 
 
+Manually managing schema evolution: adding a geometry column to the Activity table to an existing database:
+-----------------------------------------------------------------------------------------------------------
+\c <database>
+SELECT AddGeometryColumn('stoqs_activity', 'mappoint', 4326, 'POINT', 2);
+CREATE INDEX "stoqs_activity_mappoint_id" ON "stoqs_activity" USING GIST ( "mappoint" GIST_GEOMETRY_OPS );
+
+
 --
 Mike McCann
 MBARI 19 June 2012

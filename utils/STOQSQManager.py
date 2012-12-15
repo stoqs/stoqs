@@ -15,9 +15,9 @@ STOQS Query manager for building ajax responces to selections made for QueryUI
 from django.conf import settings
 from django.db import connections
 from django.db.models import Q, Max, Min, Sum
-from django.contrib.gis.geos import fromstr
-from django.contrib.gis.geos import MultiPoint
+from django.contrib.gis.geos import fromstr, MultiPoint, GEOSGeometry
 from django.db.models import Avg
+from django.db.utils import DatabaseError
 from django.http import HttpResponse
 from stoqs import models
 from utils import round_to_n, postgresifySQL
@@ -120,7 +120,7 @@ class STOQSQManager(object):
                            'count': self.getLocalizedCount,
                            'ap_count': self.getAPCount,
                            'sql': self.mpq.getMeasuredParametersPostgreSQL,
-                           'activitymaptrackextent': self.getActivityMaptrackExtent,
+                           'extent': self.getExtent,
                            'activityparameterhistograms': self.getActivityParameterHistograms,
                            'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
                            ##'activityparamhistrequestpngs': self.getActivityParamHistRequestPNGs,
@@ -811,32 +811,50 @@ class STOQSQManager(object):
         extent.transform(900913)
         return extent
 
-    def getActivityMaptrackExtent(self, srid=4326):
+    def getExtent(self, srid=4326):
         '''
-        Return GEOSGeometry extent of all the maptracks contained in the Activity geoqueryset
-        The result can be directly passed out for direct use in a OpenLayers
+        Return GEOSGeometry extent of all the geometry contained in the Activity and Sample geoquerysets.
+        The result can be directly passed out for direct use in a OpenLayers.
         '''        
         extent = None
-        geomstr = ''
-        try:
-            geomstr = 'LINESTRING (%s %s, %s %s)' % self.qs.extent()
-        except TypeError:
-            logger.error('Query set %s most like has no maptrack fields set.  Check the database loader and make sure a geometry type is put into maptrack for each activity', str(self.qs))
-        except:
-            logger.exception('Tried to get extent for self.qs.query =  %s, but failed', str(self.qs.query))
-            try: 
-                logger.info('Trying to get extent from samples')
-                qs = self.getSampleQS()
-                extent = self.getSampleExtent(qs, 4326)
-            except:
-                logger.exception('Tried to get extent for qs.query =  %s, but failed', str(qs.query))
-                return extent
-        if extent is None:
+
+        # Check all geometry types encountered in Activity GeoQuerySet in priority order
+        extentList = [] 
+        for geom_field in (('maptrack', 'mappoint', 'plannedtrack')):
             try:
-                extent = fromstr(geomstr, srid=srid)
-            except:
-                logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
-                return extent
+                extentList.append(self.qs.extent(field_name=geom_field))
+            except DatabaseError:
+                logger.warn('Database %s does not have field %s', self.dbname, geom_field)
+            except TypeError:
+                logger.debug('Field %s is Null in Activity GeoQuerySet: %s', geom_field, str(self.qs) )
+
+        # Append the Sample geometries 
+        try:
+            sqs = self.getSampleQS()
+            extentList.append(sqs.extent(field_name='geom'))
+        except:
+            logger.debug('Could not get an extent for Sample GeoQuerySet')
+
+        # Take the union of all geometry types found in Activities and Samples
+        logger.debug("Collected %d geometry extents from Activities and Samples", len(extentList))
+        geom_union = fromstr('LINESTRING (%s %s, %s %s)' % extentList[0], srid=srid)
+        for extent in extentList[1:]:
+            logger.debug('extent = %s', extent)
+            geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
+
+        # Aggressive try/excepts done here for better reporting on the production servers
+        logger.debug('geom_union = %s', geom_union)
+        try:
+            geomstr = 'LINESTRING (%s %s, %s %s)' % geom_union.extent
+        except TypeError:
+            logger.exception('Tried to get extent for self.qs.query =  %s, but failed. Check the database loader and make sure a geometry type (maptrack or mappoint) is assigned for each activity.', str(self.qs.query))
+
+        logger.debug('geomstr = %s', geomstr)
+        try:
+            extent = fromstr(geomstr, srid=srid)
+        except:
+            logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
+
         try:
             extent.transform(900913)
         except:
