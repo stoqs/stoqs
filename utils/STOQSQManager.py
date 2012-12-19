@@ -837,28 +837,29 @@ class STOQSQManager(object):
 
         # Take the union of all geometry types found in Activities and Samples
         logger.debug("Collected %d geometry extents from Activities and Samples", len(extentList))
-        geom_union = fromstr('LINESTRING (%s %s, %s %s)' % extentList[0], srid=srid)
-        for extent in extentList[1:]:
-            logger.debug('extent = %s', extent)
-            geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
+        if extentList:
+            geom_union = fromstr('LINESTRING (%s %s, %s %s)' % extentList[0], srid=srid)
+            for extent in extentList[1:]:
+                logger.debug('extent = %s', extent)
+                geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
 
-        # Aggressive try/excepts done here for better reporting on the production servers
-        logger.debug('geom_union = %s', geom_union)
-        try:
-            geomstr = 'LINESTRING (%s %s, %s %s)' % geom_union.extent
-        except TypeError:
-            logger.exception('Tried to get extent for self.qs.query =  %s, but failed. Check the database loader and make sure a geometry type (maptrack or mappoint) is assigned for each activity.', str(self.qs.query))
+            # Aggressive try/excepts done here for better reporting on the production servers
+            logger.debug('geom_union = %s', geom_union)
+            try:
+                geomstr = 'LINESTRING (%s %s, %s %s)' % geom_union.extent
+            except TypeError:
+                logger.exception('Tried to get extent for self.qs.query =  %s, but failed. Check the database loader and make sure a geometry type (maptrack or mappoint) is assigned for each activity.', str(self.qs.query))
 
-        logger.debug('geomstr = %s', geomstr)
-        try:
-            extent = fromstr(geomstr, srid=srid)
-        except:
-            logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
+            logger.debug('geomstr = %s', geomstr)
+            try:
+                extent = fromstr(geomstr, srid=srid)
+            except:
+                logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
 
-        try:
-            extent.transform(900913)
-        except:
-            logger.exception('Cannot get transorm to 900913 for geomstr = %s, srid = %d', geomstr, srid)
+            try:
+                extent.transform(900913)
+            except:
+                logger.exception('Cannot get transorm to 900913 for geomstr = %s, srid = %d', geomstr, srid)
         
         return extent
 

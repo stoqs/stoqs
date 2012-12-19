@@ -53,6 +53,7 @@ for dbAlias in dbAliases:
 
 Manually managing schema evolution: adding a geometry column to the Activity table to an existing database:
 -----------------------------------------------------------------------------------------------------------
+(Extracted from './manage.py sqlall stoqs')
 \c <database>
 SELECT AddGeometryColumn('stoqs_activity', 'mappoint', 4326, 'POINT', 2);
 CREATE INDEX "stoqs_activity_mappoint_id" ON "stoqs_activity" USING GIST ( "mappoint" GIST_GEOMETRY_OPS );
