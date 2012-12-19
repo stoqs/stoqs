@@ -61,6 +61,9 @@ class BaseOutputer(object):
     geomFields = []
 
     def __init__(self, request, format, query_set, stoqs_object=None):
+        '''
+        @query_set is the Query Set without any values assigned, qs is the Query set with values assigned.
+        '''
         self.request = request
         self.format = format
         self.query_set = query_set
@@ -135,6 +138,45 @@ class BaseOutputer(object):
 
         return ammendedFields
 
+    def parameterValueConstraints(self):
+        '''
+        Look for any parameter _MIN & _MAX input from the Query String.   Return a dictionary of (min, max) tuples
+        keyed by parameter name.  Allow unbounded constraints; either pmin or pmax may be None.
+        '''
+        pmin = {}
+        pmax = {}
+        for key, value in self.request.GET.iteritems():
+            if key.endswith('_MIN'):        
+                name = key.split('_MIN')[0]
+                try:
+                    pmin[name] = self.request.GET.getlist(name + '_MIN')[0]
+                except:
+                    logger.exception('Could not get min parameter value even though ' + key + ' ends with _MIN')
+            if key.endswith('_MAX'):        
+                name = key.split('_MAX')[0]
+                try:
+                    pmax[name] = self.request.GET.getlist(name + '_MAX')[0]
+                except:
+                    logger.exception('Could not get max parameter value even though ' + key + ' ends with _MAX')
+
+        # set() uniquifies the keys from each dictionary
+        pvDict = {}
+        for name in set(pmin.keys() + pmax.keys()):
+            # TODO: Validate than name is valid by asking the database...
+            try:
+                pn = pmin[name]
+            except KeyError:
+                pn = None
+            try:
+                px = pmax[name]
+            except KeyError:
+                px = None
+            pvDict[name] = (pn, px)
+
+        logger.debug('parametervalues =  %s', pvDict)
+
+        return pvDict
+
     def applyQueryParams(self, fields):
         '''
         Apply any constraints specified in the query string with ammened Django field lookups
@@ -152,6 +194,7 @@ class BaseOutputer(object):
     def assign_qs(self):
         '''
         Assign the processed query string 'qs' with query parameters and fields. May be overridden to restructure response as needed.
+        Creates self.qs which is self.query_string with values added.
         '''
         fields = self.getFields()
         geomFields = self.getGeomFields()
@@ -168,6 +211,11 @@ class BaseOutputer(object):
         fields = self.getFields()
         geomFields = self.getGeomFields()
         self.assign_qs()
+
+        # Check if the query contains parametervalue constraints, in which case we need to deal with a RawQuerySet
+        pvConstraints = self.parameterValueConstraints()
+        if pvConstraints:
+            logger.debug('pvConstraints =  %s', pvConstraints)
 
         if self.format == 'csv' or self.format == 'tsv':
             response = HttpResponse()
