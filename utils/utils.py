@@ -181,7 +181,7 @@ def postgresifySQL(query, pointFlag=False):
     else:
         q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
 
-    q = q.replace('stoqs_measurement.geom', 'ST_AsText(stoqs_measurement.geom)')    # For sql ajax response to decode lat & lon
+    q = q.replace('stoqs_measurement.geom', 'ST_X(stoqs_measurement.geom) as longitude, ST_Y(stoqs_measurement.geom) as latitude')
     # Add aliases for geom and gid - Sample
     q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
     q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
