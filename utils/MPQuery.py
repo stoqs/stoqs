@@ -43,10 +43,11 @@ class MPQuery(object):
         self.qs_mp = None
         self.sql = None
         self._count = None
+        self._MProws = []
         
     def buildMPQuerySet(self, *args, **kwargs):
         '''
-        Build the query set based on any selections frpm the UI. For the first time through  kwargs will be empty 
+        Build the query set based on selections from the UI. For the first time through kwargs will be empty 
         and self.qs_mp will have no constraints and will be all of the MeasuredParameters in the database.
         '''
 
@@ -55,33 +56,13 @@ class MPQuery(object):
             self.qs_mp = self.getMeasuredParametersQS()
             self.sql = self.getMeasuredParametersPostgreSQL()
 
-    def getMeasuredParametersQS(self):
+    def getQueryParms(self):
         '''
-        Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
-
-        What KML generation expects:
-            data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
-                     mp.measurement.depth, pName, mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
-                     for mp in qs_mp]
-
-        What Viz.py expects:
-            if type(qs_mp) == RawQuerySet:
-                # Most likely because it is a RawQuerySet from a ParameterValues query
-                for mp in qs_mp:
-                    ##logger.debug('mp = %s, %s, %s', mp.timevalue, mp.depth, mp.datavalue)
-                    x.append(time.mktime(mp.timevalue.timetuple()) / scale_factor)
-                    y.append(mp.depth)
-                    z.append(mp.datavalue)
-            else:
-                for mp in qs_mp.values('measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue'):
-                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
-                    y.append(mp['measurement__depth'])
-                    z.append(mp['datavalue'])
-
-
+        Extract constraints from the querystring kwargs to construct a dictionary of query parameters
+        that can be used as a filter for MeasuredParameters.  Handles all constraints except parameter
+        value constraints.
         '''
         qparams = {}
-        pv_qparams = {}
 
         logger.info('self.kwargs = %s', pprint.pformat(self.kwargs))
         if self.kwargs.has_key('parametername'):
@@ -105,9 +86,39 @@ class MPQuery(object):
                 qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
 
         logger.debug('qparams = %s', pprint.pformat(qparams))
+
+        return qparams
+
+    def getMeasuredParametersQS(self):
+        '''
+        Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
+
+        What KML generation expects:
+            data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
+                     mp.measurement.depth, pName, mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
+                     for mp in qs_mp]
+
+        What Viz.py expects:
+            if type(qs_mp) == RawQuerySet:
+                # Most likely because it is a RawQuerySet from a ParameterValues query
+                for mp in qs_mp:
+                    ##logger.debug('mp = %s, %s, %s', mp.timevalue, mp.depth, mp.datavalue)
+                    x.append(time.mktime(mp.timevalue.timetuple()) / scale_factor)
+                    y.append(mp.depth)
+                    z.append(mp.datavalue)
+            else:
+                for mp in qs_mp.values('measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue'):
+                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
+                    y.append(mp['measurement__depth'])
+                    z.append(mp['datavalue'])
+        '''
+
         logger.debug('dbalias = %s', self.request.META['dbAlias'])
 
+        qparams = self.getQueryParms()
+
         qs_mp = models.MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
+        qs_mp = qs_mp.values('measurement__instantpoint__timevalue', 'measurement__geom')
 
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
@@ -141,6 +152,42 @@ class MPQuery(object):
 
         logger.debug('self._count = %d', self._count)
         return int(self._count)
+
+    def getMProws(self):
+        '''
+        Return a list of dictionaries of Measured Parameter data loaded from the current Query Set.
+        Clients should request data from this method rather than iterating through the Query Set returned
+        by getMeasuredParametersQS() as getMProws() returns consistently formatted data whether we have
+        a GeoQuerySet or a RawQuerySet.
+
+        For Flot contour plot we need just depth and time.
+        For KML output we need in addition: latitude, longitude, parameter name, and platform name
+        '''
+        if not self._MProws:
+            if type(self.qs_mp) == RawQuerySet:
+                for mp in qs_mp:
+                    self._MProws.append(  { 'timevalue': mp.timevalue,
+                                            'depth': mp.depth,
+                                            'lon': mp.geom.x,
+                                            'lat': mp.geom.y,
+                                            'datavalue': mp.datavalue
+                                           })
+            else:
+                for mp in qs_mp.values( 'parameter__name', 'measurement__instantpoint__activity__platform.name',
+                                        'measurement__instantpoint__timevalue', 'measurement__depth', 
+                                        'mp.measurement.geom.x', 'mp.measurement.geom.y', 'datavalue'):
+                    self._MProws.append(  { 
+                                            'parametername': mp.parameter.name,
+                                            'platformname': mp.measurement.instantpoint.activity.platform.name,
+                                            'timevalue': mp.measurement.instantpoint.timevalue,
+                                            'depth': mp.measurement.depth,
+                                            'lon': mp.mp.measurement.geom.x,
+                                            'lat': mp.mp.measurement.geom.y,
+                                            'datavalue': mp.datavalue
+                                           })
+
+        return self._MProws
+            
 
     def getLocalizedMPCount(self):
         '''
@@ -254,7 +301,7 @@ class MPQuery(object):
         q = p.sub('SELECT ' + select_items + ' FROM', q)
         q = q.replace('SELECT FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
         q = q.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
-        q = q.replace('WHERE', from_sql + '\nWHERE' + where_sql)
+        q = q.replace('WHERE', from_sql + ' WHERE' + where_sql)
 
         return q
 
