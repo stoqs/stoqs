@@ -218,13 +218,13 @@ class MPQuery(object):
 
         return sql
 
-    def addParameterValuesSelfJoins(self, query, pvDict):
+    def addParameterValuesSelfJoins(self, query, pvDict, select_items='stoqs_instantpoint.timevalue, stoqs_measurement.depth, stoqs_measuredparameter.datavalue'):
         '''
-        Given a Postgresified MeasuredParameter query string 'query', modify it to add the MP self joins needed 
-        to restrict the data selection to the ParameterValues specified in 'pvDict'.  Return a Postgresified 
-        query string that can be used by Django's Manage.raw().
+        Given a Postgresified MeasuredParameter query string @query' modify it to add the MP self joins needed 
+        to restrict the data selection to the ParameterValues specified in @pvDict.  Add to the required
+        measuredparameter.id the select items in the comma separeated value string @select_items.
+        Return a Postgresified query string that can be used by Django's Manage.raw().
         '''
-
         # Example original Postgresified SQL
         #SELECT
         #    stoqs_measuredparameter.id,
@@ -276,7 +276,8 @@ class MPQuery(object):
         #    (stoqs_parameter.name ='temperature')
 
         # Used by getParameterPlatformDatavaluePNG(): 'measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue
-        select_items = 'stoqs_measuredparameter.id, stoqs_instantpoint.timevalue, stoqs_measurement.depth, stoqs_measuredparameter.datavalue'
+        # Used by REST requests in stoqs/views/__init__(): stoqs_parameter.name, stoqs_parameter.standard_name, stoqs_measurement.depth, stoqs_measurement.geom, stoqs_instantpoint.timevalue, stoqs_platform.name, stoqs_measuredparameter.datavalue, stoqs_parameter.units
+        select_items = 'stoqs_measuredparameter.id, ' + select_items
         add_to_from = ''
         from_sql = '' 
         where_sql = '' 

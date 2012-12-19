@@ -39,6 +39,8 @@ import os
 from random import randint
 import tempfile
 from utils.STOQSQManager import STOQSQManager
+from utils.utils import postgresifySQL
+from utils.MPQuery import MPQuery
 from utils import encoders
 
 logger = logging.getLogger(__name__)
@@ -160,7 +162,7 @@ class BaseOutputer(object):
                     logger.exception('Could not get max parameter value even though ' + key + ' ends with _MAX')
 
         # set() uniquifies the keys from each dictionary
-        pvDict = {}
+        pvDicts = []
         for name in set(pmin.keys() + pmax.keys()):
             # TODO: Validate than name is valid by asking the database...
             try:
@@ -171,11 +173,11 @@ class BaseOutputer(object):
                 px = pmax[name]
             except KeyError:
                 px = None
-            pvDict[name] = (pn, px)
+            pvDicts.append({name: (pn, px)})
 
-        logger.debug('parametervalues =  %s', pvDict)
+        logger.debug('parametervalues =  %s', pvDicts)
 
-        return pvDict
+        return pvDicts
 
     def applyQueryParams(self, fields):
         '''
@@ -216,6 +218,12 @@ class BaseOutputer(object):
         pvConstraints = self.parameterValueConstraints()
         if pvConstraints:
             logger.debug('pvConstraints =  %s', pvConstraints)
+            mpq = MPQuery(self.request)
+            sql = postgresifySQL(str(self.qs.query))
+            logger.debug('before sql = %s', sql)
+            sql = mpq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=', '.join(self.raw_fields))
+            logger.debug('after sql = %s', sql)
+            self.qs = mod.MeasuredParameter.objects.raw(sql)    # A RawQuerySet, which behaves differetly from a GeoQuerySet
 
         if self.format == 'csv' or self.format == 'tsv':
             response = HttpResponse()
