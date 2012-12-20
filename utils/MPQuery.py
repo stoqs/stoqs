@@ -14,9 +14,9 @@ views/__init__.py to support query by parameter value for the REST responses.
 @license: GPL
 '''
 from django.conf import settings
-from django.db.models.query import RawQuerySet
+from django.db.models.query import RawQuerySet, REPR_OUTPUT_SIZE
 from datetime import datetime
-from stoqs import models
+from stoqs.models import MeasuredParameter
 from utils import postgresifySQL
 import logging
 import pprint
@@ -25,13 +25,154 @@ import locale
 import time
 import os
 import tempfile
+import sqlparse
 
 logger = logging.getLogger(__name__)
+
+ITER_HARD_LIMIT = 10000
+
+class MPQuerySet(object):
+    '''
+    A duck-typed class to simulate a GeoQuerySet that's suitable for use everywhere a GeoQuerySet may be used.
+    This special class supports adapting MeasuredParameter RawQuerySets to make them look like regular
+    GeoQuerySets.  See: http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  (I looked at Google
+    again to see if self-joins are possible in Django, and confirmed that they are probably not.  
+    See: http://stackoverflow.com/questions/1578362/self-join-with-django-orm.)
+    '''
+    def __init__(self, rawsql):
+        self.rawsql = rawsql
+        self.mp_query = MeasuredParameter.objects.raw(rawsql)
+ 
+    def __iter__(self):
+        '''
+        Main way to access data that is used by interators in templates, etc.
+        Simulate behavior of regular GeoQuerySets.  Modify & format output as needed.
+        '''
+        for mp in self.mp_query[:ITER_HARD_LIMIT]:
+            row = { 'parameter__name': mp.parameter__name,
+                    'parameter__standard_name': mp.parameter__standard_name,
+                    'measurement__depth': mp.measurement__depth,
+                    'measurement__geom': 'POINT (%s %s)' % (mp.measurement.geom.x, mp.measurement.geom.y),
+                    'measurement__instantpoint__timevalue': mp.measurement__instantpoint__timevalue,
+                    'measurement__instantpoint__activity__platform__name': mp.measurement__instantpoint__activity__platform__name,
+                    'datavalue': mp.datavalue,
+                    'parameter__units': mp.parameter__units
+                  }
+            yield row
+ 
+    def __repr__(self):
+        data = list(self[:REPR_OUTPUT_SIZE + 1])
+        if len(data) > REPR_OUTPUT_SIZE:
+            data[-1] = "...(remaining elements truncated)..."
+        return repr(data)
+ 
+    def __getitem__(self, k):
+        if not isinstance(k, (slice, int, long)):
+            raise TypeError
+        assert ((not isinstance(k, slice) and (k >= 0))
+                or (isinstance(k, slice) and (k.start is None or k.start >= 0)
+                    and (k.stop is None or k.stop >= 0))), \
+                "Negative indexing is not supported."
+ 
+        if isinstance(k, slice):
+            ordering = tuple(field.lstrip('-') for field in self.ordering)
+            reverse = (ordering != self.ordering)
+            if reverse:
+                assert (sum(1 for field in self.ordering
+                            if field.startswith('-')) == len(ordering)), \
+                        "Mixed sort directions not supported."
+
+
+
+
+            mpq = self.mp_query
+ 
+            if k.stop is not None:
+                mpq = mpq[:k.stop]
+ 
+            rows = ([row + (MeasuredParameter,)
+                     for row in mpq.values_list(*(ordering + ('pk',)))])
+ 
+            rows.sort()
+            if reverse:
+                rows.reverse()
+            rows = rows[k]
+ 
+            pk_idx = len(ordering)
+            klass_idx = pk_idx + 1
+            mp_pks = [row[pk_idx] for row in rows
+                            if row[klass_idx] is MeasuredParameter]
+            mps = MeasuredParameter.objects.in_bulk(mp_pks)
+ 
+            results = []
+            for row in rows:
+                pk = row[-2]
+                klass = row[-1]
+                if klass is MeasuredParameter:
+                    mps[pk].type = 'measuredparameter'
+                    results.append(mps[pk])
+            return results
+        else:
+            return self[k:k+1][0]
+
+
+
+
+
+    def count(self):
+        return sum(1 for mp in self.mp_query)
+ 
+    def all(self):
+        return self._clone()
+ 
+    def filter(self, *args, **kwargs):
+        qs = self._clone()
+        qs.mp_query = qs.mp_query.filter(*args, **kwargs)
+        qs.sprocket_query = qs.sprocket_query.filter(*args, **kwargs)
+        return qs
+ 
+    def exclude(self, *args, **kwargs):
+        qs = self._clone()
+        qs.mp_query = qs.mp_query.exclude(*args, **kwargs)
+        qs.sprocket_query = qs.sprocket_query.exclude(*args, **kwargs)
+        return qs
+ 
+    def order_by(self, *ordering):
+        qs = self._clone()
+        qs.mp_query = qs.mp_query.order_by(*ordering)
+        qs.sprocket_query = qs.sprocket_query.order_by(*ordering)
+        qs.ordering = ordering
+        return qs
+ 
+    def _clone(self):
+        qs = GearQuerySet()
+        qs.mp_query = self.mp_query._clone()
+        qs.sprocket_query = self.sprocket_query._clone()
+        qs.ordering = self.ordering
+        return qs 
+
+
+ 
 
 class MPQuery(object):
     '''
     This class is designed to handle building and managing queries against the MeasuredParameter table of the STOQS database.
+    Special tooling is needed to perform parameter value queries which require building raw sql statements in order to
+    execute the self joins needed on the measuredparameter table.  The structure of RawQuerySet returned is harmonized
+    with the normal GeoQuerySet returned through regular .filter() operations.
     '''
+    rest_select_items = '''stoqs_parameter.name as parameter__name,
+                         stoqs_parameter.standard_name as parameter__standard_name,
+                         stoqs_measurement.depth as measurement__depth,
+                         stoqs_measurement.geom as measurement__geom,
+                         stoqs_instantpoint.timevalue as measurement__instantpoint__timevalue, 
+                         stoqs_platform.name as measurement__instantpoint__activity__platform__name,
+                         stoqs_measuredparameter.datavalue as datavalue,
+                         stoqs_parameter.units as parameter__units'''
+
+    kml_select_items = ''
+    contour_select_items = ''
+
     def __init__(self, request):
         '''
         This object saves instances of the QuerySet and count so that get_() methods work like a singleton to 
@@ -117,7 +258,7 @@ class MPQuery(object):
 
         qparams = self.getQueryParms()
 
-        qs_mp = models.MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
+        qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
         qs_mp = qs_mp.values('measurement__instantpoint__timevalue', 'measurement__geom')
 
         if self.kwargs.has_key('parametervalues'):
@@ -127,7 +268,7 @@ class MPQuery(object):
                 # Modify sql to do a self-join on MeasuredParameter selecting on data values
                 sql_pv = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'])
                 logger.debug('\n\nsql_pv for parametervalue query = %s\n\n', sql_pv)
-                qs_mp = models.MeasuredParameter.objects.raw(sql_pv)
+                qs_mp = MeasuredParameter.objects.raw(sql_pv)
 
         if qs_mp:
             logger.debug('type(qs_mp) = %s', type(qs_mp))
@@ -153,42 +294,6 @@ class MPQuery(object):
         logger.debug('self._count = %d', self._count)
         return int(self._count)
 
-    def getMProws(self):
-        '''
-        Return a list of dictionaries of Measured Parameter data loaded from the current Query Set.
-        Clients should request data from this method rather than iterating through the Query Set returned
-        by getMeasuredParametersQS() as getMProws() returns consistently formatted data whether we have
-        a GeoQuerySet or a RawQuerySet.
-
-        For Flot contour plot we need just depth and time.
-        For KML output we need in addition: latitude, longitude, parameter name, and platform name
-        '''
-        if not self._MProws:
-            if type(self.qs_mp) == RawQuerySet:
-                for mp in qs_mp:
-                    self._MProws.append(  { 'timevalue': mp.timevalue,
-                                            'depth': mp.depth,
-                                            'lon': mp.geom.x,
-                                            'lat': mp.geom.y,
-                                            'datavalue': mp.datavalue
-                                           })
-            else:
-                for mp in qs_mp.values( 'parameter__name', 'measurement__instantpoint__activity__platform.name',
-                                        'measurement__instantpoint__timevalue', 'measurement__depth', 
-                                        'mp.measurement.geom.x', 'mp.measurement.geom.y', 'datavalue'):
-                    self._MProws.append(  { 
-                                            'parametername': mp.parameter.name,
-                                            'platformname': mp.measurement.instantpoint.activity.platform.name,
-                                            'timevalue': mp.measurement.instantpoint.timevalue,
-                                            'depth': mp.measurement.depth,
-                                            'lon': mp.mp.measurement.geom.x,
-                                            'lat': mp.mp.measurement.geom.y,
-                                            'datavalue': mp.datavalue
-                                           })
-
-        return self._MProws
-            
-
     def getLocalizedMPCount(self):
         '''
         Apply commas to the count number and return as a string
@@ -205,9 +310,8 @@ class MPQuery(object):
             qs_mp = self.qs_mp
 
             if type(qs_mp) == RawQuerySet:
-                # Most likely becase its a RawQuerySet from a ParameterValues selection
-                sql = postgresifySQL(str(qs_mp.query)) + ';'
-                sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'])
+                sql = postgresifySQL(qs_mp.raw_query) + ';'
+                sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
                 sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME'] + sql
             else:
                 qs_mp = qs_mp.values(   'measurement__instantpoint__activity__platform__name', 'measurement__instantpoint__timevalue', 
@@ -216,14 +320,20 @@ class MPQuery(object):
                     sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
                     sql +=  postgresifySQL(str(qs_mp.query)) + ';'
 
-        return sql
+        return sqlparse.format(sql, reindent=True, keyword_case='upper')
 
-    def addParameterValuesSelfJoins(self, query, pvDict, select_items='stoqs_instantpoint.timevalue, stoqs_measurement.depth, stoqs_measuredparameter.datavalue'):
+    def addParameterValuesSelfJoins(self, query, pvDict, select_items= '''stoqs_instantpoint.timevalue as instantpoint__timevalue, 
+                                                                          stoqs_measurement.depth as measurement__depth,
+                                                                          stoqs_measuredparameter.datavalue as datavalue'''):
         '''
         Given a Postgresified MeasuredParameter query string @query' modify it to add the MP self joins needed 
         to restrict the data selection to the ParameterValues specified in @pvDict.  Add to the required
         measuredparameter.id the select items in the comma separeated value string @select_items.
         Return a Postgresified query string that can be used by Django's Manage.raw().
+        select_items can be altered as needed, examples:
+            For Flot contour plot we need just depth and time.
+            For KML output we need in addition: latitude, longitude, parameter name, and platform name
+            For REST we need about everything
         '''
         # Example original Postgresified SQL
         #SELECT

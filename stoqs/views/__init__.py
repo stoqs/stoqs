@@ -40,7 +40,7 @@ from random import randint
 import tempfile
 from utils.STOQSQManager import STOQSQManager
 from utils.utils import postgresifySQL
-from utils.MPQuery import MPQuery
+from utils.MPQuery import MPQuery, MPQuerySet
 from utils import encoders
 
 logger = logging.getLogger(__name__)
@@ -214,17 +214,17 @@ class BaseOutputer(object):
         geomFields = self.getGeomFields()
         self.assign_qs()
 
-        # Check if the query contains parametervalue constraints, in which case we need to deal with a RawQuerySet
+        # Check if the query contains parametervalue constraints, in which case we need to wrap RawQuerySet in an MPQuerySet
         pvConstraints = self.parameterValueConstraints()
         if pvConstraints:
-            logger.debug('pvConstraints =  %s', pvConstraints)
             mpq = MPQuery(self.request)
             sql = postgresifySQL(str(self.qs.query))
             logger.debug('before sql = %s', sql)
-            sql = mpq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=', '.join(self.raw_fields))
+            sql = mpq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=mpq.rest_select_items)
             logger.debug('after sql = %s', sql)
-            self.qs = mod.MeasuredParameter.objects.raw(sql)    # A RawQuerySet, which behaves differetly from a GeoQuerySet
+            self.qs = MPQuerySet(sql)
 
+        # Process request based on format requested
         if self.format == 'csv' or self.format == 'tsv':
             response = HttpResponse()
             if self.format == 'tsv':

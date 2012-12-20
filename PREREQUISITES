@@ -91,6 +91,7 @@ easy_install psycopg2==2.4.1            # Do not use a higher version of psycopg
 easy_install pygraphviz
 easy_install django_extensions
 easy_install beautifulsoup4
+easy_install sqlparse
 
 # For server-side Matlab-style plotting of data
 pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
