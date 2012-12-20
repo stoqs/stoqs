@@ -387,7 +387,7 @@
     var request=''
     var map = null; 
     var kmlurl;
-    var parametervalues={};     // This should probably be a session variable
+    var parametervalues={};     
     var polyLayer = new OpenLayers.Layer.Vector( "Polygon" );
     var timedepthplot;
     var options_stack = [];
@@ -447,6 +447,17 @@
         }
         if (typeof params['max_depth'] != 'undefined') {
             mp_param = mp_param + 'measurement__depth__lte=' + params['max_depth'] + '&';
+        }
+
+        if (parametervalues) {
+            for (var parameter in parametervalues) {
+                var min = parametervalues[parameter]['min'];
+                var max = parametervalues[parameter]['max'];
+                if (typeof min != 'undefined' && typeof max != 'undefined') {
+                    mp_param = mp_param + parameter + "_MIN=" + min.toPrecision(4) + "&";
+                    mp_param = mp_param + parameter + "_MAX=" + max.toPrecision(4) + "&";
+                }
+            };
         }
 
         return mp_param
@@ -512,6 +523,18 @@
                         st_text = st_text + v + " = '';\n";
                     }
                 });
+
+                if (parametervalues) {
+                    for (var parameter in parametervalues) {
+                        var min = parametervalues[parameter]['min'];
+                        var max = parametervalues[parameter]['max'];
+                        if (typeof min != 'undefined' && typeof max != 'undefined') {
+                            st_text = st_text + parameter + "_MIN = " + min.toPrecision(4) + ";\n";
+                            st_text = st_text + parameter + "_MAX = " + max.toPrecision(4) + ";\n";
+                        }
+                    };
+                }
+
                 $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
             }
             // Queries made using measuredparameter REST requests - use mp_parm for Django queries for the measuredparameter table
@@ -1039,6 +1062,9 @@
     
     function plotHistData(parameter, histdata) {
         $.plot($("#" + parameter + "-histogram-flot"), histdata, {
+            grid: {
+                backgroundColor: "rgb(192, 211, 228)",      //c0d3e4
+            },
             series: {
                 lines: { show: false }
             },

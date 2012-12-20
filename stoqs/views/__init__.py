@@ -143,7 +143,8 @@ class BaseOutputer(object):
     def parameterValueConstraints(self):
         '''
         Look for any parameter _MIN & _MAX input from the Query String.   Return a dictionary of (min, max) tuples
-        keyed by parameter name.  Allow unbounded constraints; either pmin or pmax may be None.
+        keyed by parameter name.  Unlike pvConstraints in the QueryUI, here we allow unbounded constraints; 
+        either pmin or pmax may be None.
         '''
         pmin = {}
         pmax = {}
@@ -161,19 +162,18 @@ class BaseOutputer(object):
                 except:
                     logger.exception('Could not get max parameter value even though ' + key + ' ends with _MAX')
 
-        # set() uniquifies the keys from each dictionary
         pvDicts = []
-        for name in set(pmin.keys() + pmax.keys()):
-            # TODO: Validate than name is valid by asking the database...
-            try:
-                pn = pmin[name]
-            except KeyError:
-                pn = None
-            try:
-                px = pmax[name]
-            except KeyError:
-                px = None
-            pvDicts.append({name: (pn, px)})
+        for name in set(pmin.keys() + pmax.keys()):         # set() uniquifies the keys from each dictionary
+            if name in mod.Parameter.objects.values_list('name', flat=True):
+                try:
+                    pn = pmin[name]
+                except KeyError:
+                    pn = None
+                try:
+                    px = pmax[name]
+                except KeyError:
+                    px = None
+                pvDicts.append({name: (pn, px)})
 
         logger.debug('parametervalues =  %s', pvDicts)
 
@@ -219,9 +219,7 @@ class BaseOutputer(object):
         if pvConstraints:
             mpq = MPQuery(self.request)
             sql = postgresifySQL(str(self.qs.query))
-            logger.debug('before sql = %s', sql)
             sql = mpq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=mpq.rest_select_items)
-            logger.debug('after sql = %s', sql)
             self.qs = MPQuerySet(sql)
 
         # Process request based on format requested

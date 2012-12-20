@@ -146,19 +146,11 @@ class ContourPlots(object):
             x = []
             y = []
             z = []
-            qs_mp = self.qs_mp
-            if type(qs_mp) == RawQuerySet:
-                # Most likely because it is a RawQuerySet from a ParameterValues query
-                for mp in qs_mp:
-                    ##logger.debug('mp = %s, %s, %s', mp.timevalue, mp.depth, mp.datavalue)
-                    x.append(time.mktime(mp.timevalue.timetuple()) / scale_factor)
-                    y.append(mp.depth)
-                    z.append(mp.datavalue)
-            else:
-                for mp in qs_mp.values('measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue'):
-                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
-                    y.append(mp['measurement__depth'])
-                    z.append(mp['datavalue'])
+            logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
+            for mp in self.qs_mp:
+                x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
+                y.append(mp['measurement__depth'])
+                z.append(mp['datavalue'])
           
             logger.debug('Number of x, y, z data values retrived from database = %d', len(z)) 
             try:
