@@ -68,9 +68,6 @@ class MeasuredParameter(BaseOutputer):
     '''
     fields = [ 'parameter__name', 'parameter__standard_name', 'measurement__depth', 'measurement__geom', 'measurement__instantpoint__timevalue',
                'measurement__instantpoint__activity__platform__name', 'datavalue', 'parameter__units' ]
-    # A parallel set of fields suitable for raw SQL generation
-    raw_fields = [ 'stoqs_parameter.name', 'stoqs_parameter.standard_name', 'stoqs_measurement.depth', 'stoqs_measurement.geom', 
-                   'stoqs_instantpoint.timevalue', 'stoqs_platform.name', 'stoqs_measuredparameter.datavalue', 'stoqs_parameter.units' ]
 
 
 class ResourceActivity(BaseOutputer):
