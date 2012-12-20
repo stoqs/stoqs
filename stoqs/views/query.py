@@ -240,7 +240,7 @@ def queryUI(request):
 
     # Use list of tuples to preserve order
     formats=[('kml', 'Keyhole Markup Language - click on icon to view in Google Earth', ),
-             ('sql', 'Structured Query Language for PostGIS', ),
+             ('sql', 'Structured Query Language for PostgreSQL', ),
              ('stoqstoolbox', 'stoqstoolbox - work with the data in Matlab', ),
              ('json', 'JavaScript Object Notation', ),
              ('csv', 'Comma Separated Values', ),
