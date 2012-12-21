@@ -431,6 +431,11 @@
                 mp_param = mp_param + 'parameter__name=' + params['parametername'][0] + '&';
             }
         }
+        if (typeof params['parameterstandardname'] != 'undefined') {
+            if (params['parameterstandardname'].length == 1) {
+                mp_param = mp_param + 'parameter__standard_name=' + params['parameterstandardname'][0] + '&';
+            }
+        }
         if (typeof params['platforms'] != 'undefined') {
             if (params['platforms'].length == 1) {
                 mp_param = mp_param + 'measurement__instantpoint__activity__platform__name=' + params['platforms'][0] + '&';
