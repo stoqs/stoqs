@@ -21,6 +21,7 @@ from django.db.utils import DatabaseError
 from django.http import HttpResponse
 from stoqs import models
 from utils import round_to_n, postgresifySQL
+from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getDisplay_Parameter_Platform_Data
 from MPQuery import MPQuery
 from Viz import ContourPlots
 from coards import to_udunits
@@ -135,69 +136,6 @@ class STOQSQManager(object):
         return results
     
     #
-    # Methods that return checkbox selections made on the UI
-    #
-    def getGet_Actual_Count(self):
-        '''
-        return state of Get Actual Count checkbox from query UI
-        '''
-        get_actual_count_state = False
-        if self.kwargs.has_key('get_actual_count'):
-            if self.kwargs['get_actual_count']:
-                get_actual_count_state = True
-        logger.debug('get_actual_count = %s', get_actual_count_state)
-
-        return get_actual_count_state
-        
-    def getShow_Sigmat_Parameter_Values(self):
-        '''
-        return state of showsigmatparametervalues checkbox from query UI
-        '''
-        show_sigmat_parameter_values_state = False
-        if self.kwargs.has_key('showsigmatparametervalues'):
-            if self.kwargs['showsigmatparametervalues']:
-                show_sigmat_parameter_values_state = True
-        logger.debug('show_sigmat_parameter_values_state = %s', show_sigmat_parameter_values_state)
-
-        return show_sigmat_parameter_values_state
-
-    def getShow_StandardName_Parameter_Values(self):
-        '''
-        return state of showstandardnameparametervalues checkbox from query UI
-        '''
-        show_standardname_parameter_values_state = False
-        if self.kwargs.has_key('showstandardnameparametervalues'):
-            if self.kwargs['showstandardnameparametervalues']:
-                show_standardname_parameter_values_state = True
-        logger.debug('show_standardname_parameter_values_state = %s', show_standardname_parameter_values_state)
-
-        return show_standardname_parameter_values_state
-
-    def getShow_All_Parameter_Values(self):
-        '''
-        return state of showallparametervalues checkbox from query UI
-        '''
-        show_all_parameter_values_state = False
-        if self.kwargs.has_key('showallparametervalues'):
-            if self.kwargs['showallparametervalues']:
-                show_all_parameter_values_state = True
-        logger.debug('show_all_parameter_values_state = %s', show_all_parameter_values_state)
-
-        return show_all_parameter_values_state
-
-    def getDisplay_Parameter_Platform_Data(self):
-        '''
-        return state of Display Parameter-Platform data checkbox from quiry UI
-        '''
-        display_parameter_platform_data_state = False
-        if self.kwargs.has_key('displayparameterplatformdata'):
-            if self.kwargs['displayparameterplatformdata']:
-                display_parameter_platform_data_state = True
-        logger.debug('display_parameter_platform_data_state = %s', display_parameter_platform_data_state)
-
-        return display_parameter_platform_data_state
-
-    #
     # Methods that generate summary data, based on the current query criteria.
     #
     def getLocalizedCount(self):
@@ -209,7 +147,7 @@ class STOQSQManager(object):
         if qs_ap:
             ap_count = qs_ap.count()
             approximate_count = qs_ap.aggregate(Sum('number'))['number__sum']
-            if self.getGet_Actual_Count():
+            if getGet_Actual_Count(self.kwargs):
                 return self.mpq.getLocalizedMPCount()
             else:
                 return locale.format("%d", approximate_count, grouping=True)
@@ -541,9 +479,9 @@ class STOQSQManager(object):
         color and plot the data.
         '''
         aphHash = {}
-        showAllParameterValuesFlag = self.getShow_All_Parameter_Values()
-        showSigmatParameterValuesFlag = self.getShow_Sigmat_Parameter_Values()
-        showStandardnameParameterValuesFlag = self.getShow_StandardName_Parameter_Values()
+        showAllParameterValuesFlag = getShow_All_Parameter_Values(self.kwargs)
+        showSigmatParameterValuesFlag = getShow_Sigmat_Parameter_Values(self.kwargs)
+        showStandardnameParameterValuesFlag = getShow_StandardName_Parameter_Values(self.kwargs)
         for pa in models.Parameter.objects.using(self.dbname).all():
 
             # Apply (negative) logic on whether to continue with creating histograms based on checkboxes checked in the queryUI
@@ -630,7 +568,7 @@ class STOQSQManager(object):
         produce a depth-time section plot for overlay on the flot plot.  Return a png image file name for inclusion
         in the AJAX response.
         '''
-        if not self.getDisplay_Parameter_Platform_Data():
+        if not getDisplay_Parameter_Platform_Data(self.kwargs):
             return None, None, 'Contour data values checkbox not checked'
         if len(self.kwargs['parametername']) != 1:
             return None, None, 'Parameter name not selected'

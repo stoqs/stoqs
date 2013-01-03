@@ -24,6 +24,64 @@ def addAttributeToListItems(list_to_modify, name, value):
 
     return new_list
 
+#
+# Methods that return checkbox selections made on the UI, called by STOQSQueryManager and MPQuery
+#
+def getGet_Actual_Count(kwargs):
+    '''
+    return state of Get Actual Count checkbox from query UI
+    '''
+    get_actual_count_state = False
+    if kwargs.has_key('get_actual_count'):
+        if kwargs['get_actual_count']:
+            get_actual_count_state = True
+
+    return get_actual_count_state
+
+def getShow_Sigmat_Parameter_Values(kwargs):
+    '''
+    return state of showsigmatparametervalues checkbox from query UI
+    '''
+    show_sigmat_parameter_values_state = False
+    if kwargs.has_key('showsigmatparametervalues'):
+        if kwargs['showsigmatparametervalues']:
+            show_sigmat_parameter_values_state = True
+
+    return show_sigmat_parameter_values_state
+
+def getShow_StandardName_Parameter_Values(kwargs):
+    '''
+    return state of showstandardnameparametervalues checkbox from query UI
+    '''
+    show_standardname_parameter_values_state = False
+    if kwargs.has_key('showstandardnameparametervalues'):
+        if kwargs['showstandardnameparametervalues']:
+            show_standardname_parameter_values_state = True
+
+    return show_standardname_parameter_values_state
+
+def getShow_All_Parameter_Values(kwargs):
+    '''
+    return state of showallparametervalues checkbox from query UI
+    '''
+    show_all_parameter_values_state = False
+    if kwargs.has_key('showallparametervalues'):
+        if kwargs['showallparametervalues']:
+            show_all_parameter_values_state = True
+
+    return show_all_parameter_values_state
+
+def getDisplay_Parameter_Platform_Data(kwargs):
+    '''
+    return state of Display Parameter-Platform data checkbox from quiry UI
+    '''
+    display_parameter_platform_data_state = False
+    if kwargs.has_key('displayparameterplatformdata'):
+        if kwargs['displayparameterplatformdata']:
+            display_parameter_platform_data_state = True
+
+    return display_parameter_platform_data_state
+
 
 ## {{{ http://code.activestate.com/recipes/511478/ (r1)
 import math
