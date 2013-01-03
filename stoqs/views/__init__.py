@@ -41,12 +41,13 @@ import tempfile
 from utils.STOQSQManager import STOQSQManager
 from utils.utils import postgresifySQL
 from utils.MPQuery import MPQuery, MPQuerySet
-from utils import encoders
+from utils import encoders, KML
 
 logger = logging.getLogger(__name__)
 
 class BaseOutputer(object):
-    '''Base methods for supported responses for all STOQS objects: csv, json, kml, html, etc.
+    '''
+    Base methods for supported responses for all STOQS objects: csv, json, kml, html, etc.
     '''
     html_tmpl_file = 'html_template.html'
     # Django's additional field lookups - applicable to all fields
@@ -79,7 +80,8 @@ class BaseOutputer(object):
         self.responses = ['.help', '.html', '.json', '.csv', '.tsv', '.xml', '.count']
 
     def build_html_template(self):
-        '''Build template for stoqs_object using generic html template with a column for each attribute
+        '''
+        Build template for stoqs_object using generic html template with a column for each attribute
         '''
         response = render_to_response(self.html_tmpl_file, {'cols': [field.name for field in self.stoqs_object._meta.fields] },
                                          context_instance = RequestContext(self.request))
@@ -190,6 +192,7 @@ class BaseOutputer(object):
             if self.request.GET.getlist(f):
                 qparams[f] = self.request.GET.getlist(f)[0]     # Get's just first element, will need to change for multiple params
 
+        self.qparams = qparams
         logger.debug(qparams)
         self.query_set = self.query_set.filter(**qparams)
 
@@ -201,7 +204,7 @@ class BaseOutputer(object):
         fields = self.getFields()
         geomFields = self.getGeomFields()
         logger.debug(fields)
-        self.applyQueryParams(self.ammendFields(fields))
+        self.applyQueryParams(fields)
         self.qs = self.query_set
         self.qs = self.qs.values(*fields)
 
@@ -219,8 +222,15 @@ class BaseOutputer(object):
         if pvConstraints:
             mpq = MPQuery(self.request)
             sql = postgresifySQL(str(self.qs.query))
-            sql = mpq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=mpq.rest_select_items)
-            self.qs = MPQuerySet(sql)
+            sql = mpq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=MPQuery.rest_select_items)
+            self.qs = MPQuerySet(sql, MPQuerySet.rest_columns)
+        else:
+            self.qs = MPQuerySet(None, MPQuerySet.rest_columns, qs_mp=self.qs)
+
+        logger.debug('type(self.qs) = %s', type(self.qs))
+        for mp in self.qs:
+            logger.debug('mp = %s', mp)
+            break
 
         # Process request based on format requested
         if self.format == 'csv' or self.format == 'tsv':
@@ -244,13 +254,16 @@ class BaseOutputer(object):
         elif self.format == 'json':
             return HttpResponse(simplejson.dumps(self.qs, cls=encoders.STOQSJSONEncoder), 'application/json')
 
+        elif self.format == 'kml':
+            return KML.kmlResponse(self.request, self.qs, self.qparams)
+
         elif self.format == 'count':
             count = self.qs.count()
             logger.debug('count = %d', count)
             return HttpResponse('%d' % count, mimetype='text/plain')
 
         elif self.format == 'help':
-            helpText = 'Fields: %s\n\nField Lookups: %s' % (self.fields, self.fieldLookups)
+            helpText = 'Fields: %s\n\nField Lookups: %s' % (fields, self.fieldLookups)
             if geomFields:
                 helpText += '\n\nSpatial and distance Lookups that may be appended to: %s\n\n%s\n\n%s' % (geomFields, 
                             self.distanceLookups, self.spatialLookups)

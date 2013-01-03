@@ -5,13 +5,60 @@ import numpy
 import settings
 import logging
 from stoqs import models as m
+from MPQuery import MPQuerySet
 from django.db.models import Avg
+from django.http import HttpResponse
 import pprint
 
 logger = logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------------------------------------
 # Support functions for rendering measurements into KML
+
+def kmlResponse(request, qs_mp, qparams):
+    '''
+    Return a response that is a KML represenation of the existing MeasuredParameter query that is in qs_mp.
+    pName is either the parameter__name or parameter__standard_name string.
+    '''
+    response = HttpResponse()
+    if qs_mp is None:
+        raise Exception('qs_mp is None.')
+
+    try:
+        pName = qparams['parameter__name'] or qparams['parameter__standard_name']
+        logger.info("pName = %s", pName)
+    except IndexError:
+        raise Exception('Neither parameter__name nor parameter__standard_name selected')
+
+    for mp in qs_mp:
+        logger.debug('keys = %s', mp.keys())
+        break
+
+    logger.debug('type(qs_mp) = %s', type(qs_mp))
+    data = [(mp['measurement__instantpoint__timevalue'], mp['measurement__geom__x'], mp['measurement__geom__y'],
+                 mp['measurement__depth'], mp['parameter__name'],  mp['datavalue'], mp['measurement__instantpoint__activity__platform__name'])
+                 for mp in qs_mp]
+
+    dataHash = {}
+    for d in data:
+        try:
+            dataHash[d[6]].append(d)
+        except KeyError:
+            dataHash[d[6]] = []
+            dataHash[d[6]].append(d)
+
+    try:
+        folderName = "%s_%.1f_%.1f" % (pName, float(qparams['measurement__depth__gte']), float(qparams['measurement__depth__lte']))
+    except KeyError:
+        folderName = "%s_" % (pName,)
+    descr = request.get_full_path().replace('&', '&amp;')
+    logger.debug(descr)
+    kml = makeKML(  request.META['dbAlias'], dataHash, pName, folderName, descr, qparams['measurement__instantpoint__timevalue__gt'], qparams['measurement__instantpoint__timevalue__lt'],
+                    request.GET.get('cmin', None), request.GET.get('cmax', None))
+    response['Content-Type'] = 'application/vnd.google-earth.kml+xml'
+    response.write(kml)
+    return response
+
 
 def makeKML(dbAlias, dataHash, pName, title, desc, startDate, endDate, cmin=None, cmax=None):
     '''
