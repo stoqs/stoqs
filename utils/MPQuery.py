@@ -17,7 +17,7 @@ from django.conf import settings
 from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet
 from datetime import datetime
 from stoqs.models import MeasuredParameter, Parameter
-from utils import postgresifySQL
+from utils import postgresifySQL, getGet_Actual_Count
 import logging
 import pprint
 import re
@@ -297,9 +297,10 @@ class MPQuery(object):
             if self.kwargs['depth'][1] is not None:
                 qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
 
-        # Make sure that we have at least time so that the instantpoint table is included
-        if not qparams.has_key('measurement__instantpoint__timevalue__gte'):
-            qparams['measurement__instantpoint__pk__isnull'] = False
+        if getGet_Actual_Count(self.kwargs):
+            # Make sure that we have at least time so that the instantpoint table is included
+            if not qparams.has_key('measurement__instantpoint__timevalue__gte'):
+                qparams['measurement__instantpoint__pk__isnull'] = False
 
         logger.debug('qparams = %s', pprint.pformat(qparams))
 
