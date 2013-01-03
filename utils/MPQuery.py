@@ -85,25 +85,25 @@ class MPQuerySet(object):
 
         logger.debug('self.query = %s', self.query)
         logger.debug('type(self.mp_query) = %s', type(self.mp_query))
-        for mp in self.mp_query[:ITER_HARD_LIMIT]:
+        if minimal_values_list:            
             if type(self.mp_query) == RawQuerySet:
-                logger.debug(mp.measurement__depth)
-
-        for mp in self.mp_query[:ITER_HARD_LIMIT]:
-            if minimal_values_list:            
-                if type(self.mp_query) == RawQuerySet:
+                for mp in self.mp_query[:ITER_HARD_LIMIT]:
                     row = { 'measurement__depth': mp.measurement__depth,
                             'measurement__instantpoint__timevalue': mp.measurement__instantpoint__timevalue,
                             'datavalue': mp.datavalue,
                           }
-                else:
+                    yield row
+            else:
+                for mp in self.mp_query[:ITER_HARD_LIMIT]:
                     row = { 'measurement__depth': mp['measurement__depth'],
                             'measurement__instantpoint__timevalue': mp['measurement__instantpoint__timevalue'],
                             'datavalue': mp['datavalue'],
                           }
+                    yield row
 
-            else:
-                if type(self.mp_query) == RawQuerySet:
+        else:
+            if type(self.mp_query) == RawQuerySet:
+                for mp in self.mp_query[:ITER_HARD_LIMIT]:
                     row = { 'parameter__name': mp.parameter__name,
                             'parameter__standard_name': mp.parameter.standard_name,
                             'measurement__depth': mp.measurement.depth,
@@ -114,7 +114,10 @@ class MPQuerySet(object):
                             'datavalue': mp.datavalue,
                             'parameter__units': mp.parameter.units
                           }
-                else:
+                    yield row
+            else:
+                for mp in self.mp_query[:ITER_HARD_LIMIT]:
+                    logger.debug(mp)
                     row = { 'parameter__name': mp['parameter__name'],
                             'parameter__standard_name': mp['parameter__standard_name'],
                             'measurement__depth': mp['measurement__depth'],
@@ -126,7 +129,7 @@ class MPQuerySet(object):
                             'datavalue': mp['datavalue'],
                             'parameter__units': mp['parameter__units']
                           }
-            yield row
+                    yield row
  
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE + 1])
@@ -294,6 +297,10 @@ class MPQuery(object):
             if self.kwargs['depth'][1] is not None:
                 qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
 
+        # Make sure that we have at least time so that the instantpoint table is included
+        if not qparams.has_key('measurement__instantpoint__timevalue__gte'):
+            qparams['measurement__instantpoint__pk__isnull'] = False
+
         logger.debug('qparams = %s', pprint.pformat(qparams))
 
         return qparams
@@ -316,7 +323,7 @@ class MPQuery(object):
                     z.append(mp['datavalue'])
         '''
         qparams = self.getQueryParms()
-        qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
+        qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=3).filter(**qparams)
 
         # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         if self.kwargs.has_key('parametervalues'):
