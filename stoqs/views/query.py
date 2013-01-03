@@ -20,16 +20,16 @@ from django.conf import settings
 from django.core import serializers
 from django.db.models import Q
 from utils.STOQSQManager import STOQSQManager
-from utils import encoders
+from utils import encoders, KML
 import json
 import pprint
 import csv
 
 
 import logging 
-import KML
 from wms import ActivityView
 from tempfile import NamedTemporaryFile
+from utils.MPQuery import MPQuerySet
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ def kmlResponse(request, qm, response):
     '''
     Return a response that is a KML represenation of the existing MeasuredParameter query that is in qm
     '''
-    qs_mp = qm.mpq.qs_mp
+    qs_mp = qm.mpq.getMeasuredParametersQS(MPQuerySet.kml_columns)
     if qs_mp is None:
         raise InvalidMeasuredParameterQueryException
 
@@ -53,8 +53,12 @@ def kmlResponse(request, qm, response):
     except IndexError:
         raise NoParameterSelectedException
 
-    data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
-                 mp.measurement.depth, pName, mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
+    for mp in qs_mp:
+        logger.debug('keys = %s', mp.keys())
+        break
+
+    data = [(mp['measurement__instantpoint__timevalue'], mp.measurement.geom.x, mp.measurement.geom.y,
+                 mp['measurement__depth'], pName,  mp['datavalue'], mp['measurement__instantpoint__activity__platform__name'])
                  for mp in qs_mp]
     dataHash = {}
     for d in data:
