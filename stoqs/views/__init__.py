@@ -217,15 +217,16 @@ class BaseOutputer(object):
         geomFields = self.getGeomFields()
         self.assign_qs()
 
-        # Check if the query contains parametervalue constraints, in which case we need to wrap RawQuerySet in an MPQuerySet
-        pvConstraints = self.parameterValueConstraints()
-        if pvConstraints:
-            mpq = MPQuery(self.request)
-            sql = postgresifySQL(str(self.qs.query))
-            sql = mpq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=MPQuery.rest_select_items)
-            self.qs = MPQuerySet(sql, MPQuerySet.rest_columns)
-        else:
-            self.qs = MPQuerySet(None, MPQuerySet.rest_columns, qs_mp=self.qs)
+        if type(self.stoqs_object) == mod.MeasuredParameter:
+            # Check if the query contains parametervalue constraints, in which case we need to wrap RawQuerySet in an MPQuerySet
+            pvConstraints = self.parameterValueConstraints()
+            if pvConstraints:
+                mpq = MPQuery(self.request)
+                sql = postgresifySQL(str(self.qs.query))
+                sql = mpq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=MPQuery.rest_select_items)
+                self.qs = MPQuerySet(sql, MPQuerySet.rest_columns)
+            else:
+                self.qs = MPQuerySet(None, MPQuerySet.rest_columns, qs_mp=self.qs)
 
         logger.debug('type(self.qs) = %s', type(self.qs))
         for mp in self.qs:
