@@ -64,7 +64,7 @@ class MPQuerySet(object):
         Use @values_list to request just the fields (columns) needed.  The class variables
         rest_colums and kml_columns are typical value_lists.
         '''
-        self.query = query
+        self.query = query or postgresifySQL(str(qs_mp.query))
         self.values_list = values_list
         self.ordering = ('timevalue,')
         self.mp_query = qs_mp or MeasuredParameter.objects.raw(query)
@@ -85,39 +85,30 @@ class MPQuerySet(object):
 
         logger.debug('self.query = %s', self.query)
         logger.debug('type(self.mp_query) = %s', type(self.mp_query))
-        if minimal_values_list:            
-            if type(self.mp_query) == RawQuerySet:
-                for mp in self.mp_query[:ITER_HARD_LIMIT]:
-                    row = { 'measurement__depth': mp.measurement__depth,
-                            'measurement__instantpoint__timevalue': mp.measurement__instantpoint__timevalue,
-                            'datavalue': mp.datavalue,
-                          }
-                    yield row
-            else:
+        if minimal_values_list:
+            # Likely for Flot contour plot
+            try:
+                # RawQuerySet
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
                     row = { 'measurement__depth': mp['measurement__depth'],
                             'measurement__instantpoint__timevalue': mp['measurement__instantpoint__timevalue'],
                             'datavalue': mp['datavalue'],
                           }
                     yield row
-
-        else:
-            if type(self.mp_query) == RawQuerySet:
+            except TypeError:
+                # GeoQuerySet
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
-                    row = { 'parameter__name': mp.parameter__name,
-                            'parameter__standard_name': mp.parameter.standard_name,
-                            'measurement__depth': mp.measurement.depth,
-                            'measurement__geom__x': mp.measurement.geom.x,
-                            'measurement__geom__y': mp.measurement.geom.y,
-                            'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
-                            'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
+                    row = { 'measurement__depth': mp.measurement__depth,
+                            'measurement__instantpoint__timevalue': mp.measurement__instantpoint__timevalue,
                             'datavalue': mp.datavalue,
-                            'parameter__units': mp.parameter.units
                           }
                     yield row
-            else:
+
+        else:
+            # Likely for building a REST or KML response
+            try:
+                # RawQuerySet
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
-                    logger.debug(mp)
                     row = { 'parameter__name': mp['parameter__name'],
                             'parameter__standard_name': mp['parameter__standard_name'],
                             'measurement__depth': mp['measurement__depth'],
@@ -128,6 +119,20 @@ class MPQuerySet(object):
                             'measurement__instantpoint__activity__platform__name': mp['measurement__instantpoint__activity__platform__name'],
                             'datavalue': mp['datavalue'],
                             'parameter__units': mp['parameter__units']
+                          }
+                    yield row
+            except TypeError:
+                # GeoQuerySet
+                for mp in self.mp_query[:ITER_HARD_LIMIT]:
+                    row = { 'parameter__name': mp.parameter__name,
+                            'parameter__standard_name': mp.parameter.standard_name,
+                            'measurement__depth': mp.measurement.depth,
+                            'measurement__geom__x': mp.measurement.geom.x,
+                            'measurement__geom__y': mp.measurement.geom.y,
+                            'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
+                            'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
+                            'datavalue': mp.datavalue,
+                            'parameter__units': mp.parameter.units
                           }
                     yield row
  
@@ -310,21 +315,10 @@ class MPQuery(object):
         '''
         Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
         @values_list can be assigned with additional columns that are supported by MPQuerySet().  The default values_list
-        is a minimal set suitable for used for time/depth contour plots in Viz.py.
-
-        What KML generation expects:
-            data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
-                     mp.measurement.depth, pName, mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
-                     for mp in qs_mp]
-
-        What Viz.py expects:
-                for mp in self.qs_mp:
-                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
-                    y.append(mp['measurement__depth'])
-                    z.append(mp['datavalue'])
+        is a minimal set suitable for used for time/depth contour plots for Flot in Viz.py.
         '''
         qparams = self.getQueryParms()
-        qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=3).filter(**qparams)
+        qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
 
         # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         if self.kwargs.has_key('parametervalues'):
@@ -333,16 +327,17 @@ class MPQuery(object):
                 logger.debug('\n\nsql before query = %s\n\n', sql)
                 sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'])
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
-                qs_mp = MPQuerySet(sql, values_list)
+                qs_mpq = MPQuerySet(sql, values_list)
+            else:
+                qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
         else:
-            qs_mp = MPQuerySet(None, values_list, qs_mp=qs_mp)
+            qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
 
-        if qs_mp:
-            logger.debug('type(qs_mp) = %s', type(qs_mp))
-            logger.debug(pprint.pformat(str(qs_mp.query)))
+        if qs_mpq:
+            logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
         else:
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
-        return qs_mp
+        return qs_mpq
 
     def getMPCount(self):
         '''
@@ -371,10 +366,8 @@ class MPQuery(object):
         if self._count:
             if self.qs_mp:
                 sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
-                if type(self.qs_mp) == MPQuerySet:
-                    sql +=  str(self.qs_mp.query) + ';'
-                else:
-                    sql +=  postgresifySQL(str(self.qs_mp.query)) + ';'
+                logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
+                sql +=  str(self.qs_mp.query) + ';'
                 sql = sqlparse.format(sql, reindent=True, keyword_case='upper')
                 # Fix up the formatting
                 sql = sql.replace('INNER JOIN', '     INNER JOIN')
