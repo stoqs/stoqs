@@ -217,7 +217,7 @@ class BaseOutputer(object):
         geomFields = self.getGeomFields()
         self.assign_qs()
 
-        if type(self.stoqs_object) == mod.MeasuredParameter:
+        if self.stoqs_object_name == 'measured_parameter':
             # Check if the query contains parametervalue constraints, in which case we need to wrap RawQuerySet in an MPQuerySet
             pvConstraints = self.parameterValueConstraints()
             if pvConstraints:
@@ -227,11 +227,6 @@ class BaseOutputer(object):
                 self.qs = MPQuerySet(sql, MPQuerySet.rest_columns)
             else:
                 self.qs = MPQuerySet(None, MPQuerySet.rest_columns, qs_mp=self.qs)
-
-        logger.debug('type(self.qs) = %s', type(self.qs))
-        for mp in self.qs:
-            logger.debug('mp = %s', mp)
-            break
 
         # Process request based on format requested
         if self.format == 'csv' or self.format == 'tsv':
