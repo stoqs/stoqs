@@ -487,6 +487,7 @@
             }
             else if (value == 'kml') {
                 kmlurl = 'Select a Parameter to view your selection of O(10k) actual datavalues in Google Earth';
+                var url = base_url + 'measuredparameter.kml' + mp_param;
                 if (typeof params['parametername'] != 'undefined') {
                     if (params['parametername'].length == 1) {
                         $('#kml-parameter').text(params['parametername'][0]);
