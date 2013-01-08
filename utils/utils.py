@@ -217,10 +217,11 @@ def simplify_points (pts, tolerance):
     # Change from original code: add the index from the original line in the return
     return [(pts[i] + (i,)) for i in keep]
 
-def postgresifySQL(query, pointFlag=False):
+def postgresifySQL(query, pointFlag=False, translateGeom=False):
     '''
     Given a generic database agnostic Django query string modify it using regular expressions to work
-    on a PostgreSQL server.  If pointFlag is True then use the mappoint field for geom.
+    on a PostgreSQL server.  If pointFlag is True then use the mappoint field for geom.  If translateGeom
+    is True then translate .geom to latitude and longitude columns.
     '''
     import re
 
@@ -239,7 +240,9 @@ def postgresifySQL(query, pointFlag=False):
     else:
         q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
 
-    q = q.replace('stoqs_measurement.geom', 'ST_X(stoqs_measurement.geom) as longitude, ST_Y(stoqs_measurement.geom) as latitude')
+    if translateGeom:
+        q = q.replace('stoqs_measurement.geom', 'ST_X(stoqs_measurement.geom) as longitude, ST_Y(stoqs_measurement.geom) as latitude')
+    
     # Add aliases for geom and gid - Sample
     q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
     q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')

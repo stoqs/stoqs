@@ -35,7 +35,7 @@ def kmlResponse(request, qs_mp, qparams):
         break
 
     logger.debug('type(qs_mp) = %s', type(qs_mp))
-    data = [(mp['measurement__instantpoint__timevalue'], mp['measurement__geom__x'], mp['measurement__geom__y'],
+    data = [(mp['measurement__instantpoint__timevalue'], mp['measurement__geom'].x, mp['measurement__geom'].y,
                  mp['measurement__depth'], mp['parameter__name'],  mp['datavalue'], mp['measurement__instantpoint__activity__platform__name'])
                  for mp in qs_mp]
 

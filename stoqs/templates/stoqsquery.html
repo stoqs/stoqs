@@ -773,8 +773,8 @@
                 var max = parametervalues[parameter]['max'];
                 console.log(min, max);
                 if (typeof min != 'undefined' && typeof max != 'undefined') {
-                    params[parameter + '_MIN'] = min;
-                    params[parameter + '_MAX'] = max;
+                    params[parameter + '_MIN'] = min.toPrecision(4);
+                    params[parameter + '_MAX'] = max.toPrecision(4);
                     valueText = valueText + parameter + ': ' + min.toPrecision(4) + ' to ' + max.toPrecision(4) + ', ';
                     $('#resetparametervaluesselections').removeClass('disabled');
                     $('#resetparametervaluesselections').addClass('btn-primary');
