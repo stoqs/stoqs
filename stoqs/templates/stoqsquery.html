@@ -511,8 +511,10 @@
             else if (value == 'stoqstoolbox') {
                 // Required parameters for stoqs_down as of stoqstoolbox release noted in the Matlab comment below
                 var req_params = ['campaign', 'start_time', 'end_time', 'min_depth', 'max_depth', 'platforms', 'parametername', 'parameterstandardname'];
-                var st_text = "% Copy and paste into a Matlab session where stoqstoolbox build 2012-11-21 or\n";
-                st_text = st_text + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
+                var hasParametervalues = false;
+                var st_text_comm = "% Copy and paste into a Matlab session where stoqstoolbox build 2013-01-08 or\n";
+                st_text_comm = st_text_comm + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
+                st_text = st_text_comm;
                 st_text = st_text + "campaign = '{{http_site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';\n";
                 $.each(req_params, function(k, v) {
                     if (typeof params[v] != "undefined") {
@@ -536,11 +538,16 @@
                         if (typeof min != 'undefined' && typeof max != 'undefined') {
                             st_text = st_text + parameter + "_MIN = " + min.toPrecision(4) + ";\n";
                             st_text = st_text + parameter + "_MAX = " + max.toPrecision(4) + ";\n";
+                            hasParametervalues = true;
                         }
                     };
                 }
-
-                $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
+                if (hasParametervalues) {
+                    $('#'+value+'-field').text(st_text_comm + "data = stoqs_down('" + base_url + "measuredparameter.json" + mp_param + "');\n");
+                }
+                else {
+                    $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
+                }
             }
             // Queries made using measuredparameter REST requests - use mp_parm for Django queries for the measuredparameter table
             else if (value == 'json') {
