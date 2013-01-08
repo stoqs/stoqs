@@ -2,9 +2,17 @@ function outp=stoqs_down(varargin)
 % STOQS_DOWN  Download data from a STOQS database directly into a Matlab strucure
 %
 % Use as:
-%   data = stoqs_down(campaign,start_time,end_time,min_depth,max_depth,platforms,parametername,parameterstandardname);
+%   a. data = stoqs_down(json_request_url)
+%      - or -
+%   b. data = stoqs_down(campaign,start_time,end_time,min_depth,max_depth,platforms,parametername,parameterstandardname);
 %
 % Arguments:
+%  a. 
+%   json_request_url = Fully qualified STOQS JSON request url.  Use this 
+%                      for requesting data that may include one or more 
+%                      Parameter Value constraints.  Copy the URL from the
+%                      STOQS web query interface.
+%  b.
 %   campaign = Base url for a campaign from a stoqs server
 %
 %   Arguments that constrain retreival of data (set to '' for no constraint):
@@ -46,14 +54,53 @@ function outp=stoqs_down(varargin)
 %   arguments for stoqs_down() for the selections made using the graphical web query interface.
 %
 %   Francisco Lopez, Mike McCann, & Brian Schlining 
-%   Last modified  31 October 2012
+%   Last modified  8 January 2013
 
-
-%CHECK INPUT ERRORS
 
 global mp_total_count 
 
-if nargin<7
+
+%CHECK WHAT KIND OF QUERY IS GOING TO DO AND BUILT IT
+
+if nargin == 8
+
+    query=fullfile(varargin{1}, 'measuredparameter.json?');
+
+    if ~isempty(varargin{2})
+        query=[query 'measurement__instantpoint__timevalue__gte=' varargin{2} '&'];
+    end    
+
+    if ~isempty(varargin{3})
+        query=[query 'measurement__instantpoint__timevalue__lte=' varargin{3} '&'];
+    end   
+
+    if ~isempty(varargin{4})
+        query=[query 'measurement__depth__gte=' num2str(varargin{4}) '&'];
+    end   
+
+    if ~isempty(varargin{5})
+        query=[query 'measurement__depth__lte=' num2str(varargin{5}) '&'];
+    end  
+
+    if ~isempty(varargin{6})
+        query=[query 'measurement__instantpoint__activity__platform__name=' varargin{6} '&'];
+    end 
+
+    if ~isempty(varargin{7})
+        query=[query 'parameter__name=' varargin{7} '&'];
+    end   
+
+    if ~isempty(varargin{8})
+        query=[query 'parameter__standard_name=' varargin{8} '&'];
+    end   
+
+    % Replace spaces - in time parms - to be URL friendly
+    query = strrep(query, ' ', '%20'); 
+
+elseif nargin == 1
+    query = varargin{1};
+    
+else
     outp='';
     disp('-----------------------');
     disp('NOT ENOUGH ARGUMENT');
@@ -63,42 +110,6 @@ if nargin<7
     return
     
 end
-
-
-%CHECK WHAT KIND OF QUERY IS GOING TO DO AND BUILT IT
-
-query=fullfile(varargin{1}, 'measuredparameter.json?');
-
-if ~isempty(varargin{2})
-    query=[query 'measurement__instantpoint__timevalue__gte=' varargin{2} '&'];
-end    
-
-if ~isempty(varargin{3})
-    query=[query 'measurement__instantpoint__timevalue__lte=' varargin{3} '&'];
-end   
-
-if ~isempty(varargin{4})
-    query=[query 'measurement__depth__gte=' num2str(varargin{4}) '&'];
-end   
-
-if ~isempty(varargin{5})
-    query=[query 'measurement__depth__lte=' num2str(varargin{5}) '&'];
-end  
-
-if ~isempty(varargin{6})
-    query=[query 'measurement__instantpoint__activity__platform__name=' varargin{6} '&'];
-end 
-
-if ~isempty(varargin{7})
-    query=[query 'parameter__name=' varargin{7} '&'];
-end   
-
-if ~isempty(varargin{8})
-    query=[query 'parameter__standard_name=' varargin{8} '&'];
-end   
-
-% Replace spaces - in time parms - to be URL friendly
-query = strrep(query, ' ', '%20'); 
 
 
 % First, Get the count 
@@ -130,6 +141,7 @@ if isempty(a)
     outp='';
 else    
     %%disp(['CONVERTING FROM JSON ' mp_total_count ' DATA VALUES']);
+    % Note: ParameterValues queries will not display the progressbar
     info = stoqs_loadjson(a); % Read the information, Convert java.string to string with char, so loadjson could convert it to a struct.
     er=0;
 end
