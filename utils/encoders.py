@@ -1,12 +1,16 @@
 from django.utils import simplejson
 from decimal import Decimal
 import datetime
+import logging
+
+logger = logging.getLogger(__name__)
  
 class STOQSJSONEncoder(simplejson.JSONEncoder):
     def default(self, object_to_encode):
         '''
         Convert Decimal object to something we can serialize
         '''
+        ##logger.debug('type(object_to_encode) = %s', type(object_to_encode))
         if isinstance(object_to_encode, Decimal):
             return object_to_encode.to_eng_string()
 

@@ -14,7 +14,8 @@ views/__init__.py to support query by parameter value for the REST responses.
 @license: GPL
 '''
 from django.conf import settings
-from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet
+from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, ValuesQuerySet
+from django.contrib.gis.db.models.query import GeoQuerySet
 from datetime import datetime
 from stoqs.models import MeasuredParameter, Parameter
 from utils import postgresifySQL, getGet_Actual_Count
@@ -33,7 +34,7 @@ ITER_HARD_LIMIT = 10000
 
 class MPQuerySet(object):
     '''
-    A duck-typed class to simulate a GeoQuerySet that's suitable for use everywhere a GeoQuerySet may be used.
+    A class to simulate a GeoQuerySet that's suitable for use everywhere a GeoQuerySet may be used.
     This special class supports adapting MeasuredParameter RawQuerySets to make them look like regular
     GeoQuerySets.  See: http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  (I looked at Google
     again to see if self-joins are possible in Django, and confirmed that they are probably not.  
@@ -43,8 +44,6 @@ class MPQuerySet(object):
                      'parameter__standard_name',
                      'measurement__depth',
                      'measurement__geom',
-                     'measurement__geom__x',
-                     'measurement__geom__y',
                      'measurement__instantpoint__timevalue', 
                      'measurement__instantpoint__activity__platform__name',
                      'datavalue',
@@ -62,12 +61,16 @@ class MPQuerySet(object):
         '''
         Initialize MPQuerySet with either raw SQL in @query or a QuerySet in @qs_mp.
         Use @values_list to request just the fields (columns) needed.  The class variables
-        rest_colums and kml_columns are typical value_lists.
+        rest_colums and kml_columns are typical value_lists.  Note: specifying a values_list
+        appears to break the correct serialization of geometry types in the json response.
         '''
         self.query = query or postgresifySQL(str(qs_mp.query))
         self.values_list = values_list
         self.ordering = ('timevalue,')
-        self.mp_query = qs_mp or MeasuredParameter.objects.raw(query)
+        if qs_mp:
+            self.mp_query = qs_mp
+        else:
+            self.mp_query = MeasuredParameter.objects.raw(query)
  
     def __iter__(self):
         '''
@@ -85,10 +88,19 @@ class MPQuerySet(object):
 
         logger.debug('self.query = %s', self.query)
         logger.debug('type(self.mp_query) = %s', type(self.mp_query))
+
+        if isinstance(self.mp_query, ValuesQuerySet):
+            logger.debug('self.mp_query is ValuesQuerySet')
+        if isinstance(self.mp_query, GeoQuerySet):
+            logger.debug('self.mp_query is GeoQuerySet')
+        if isinstance(self.mp_query, RawQuerySet):
+            logger.debug('self.mp_query is RawQuerySet')
+
+        # Must have model instance objects for JSON serialization of geometry fields to work right
         if minimal_values_list:
             # Likely for Flot contour plot
             try:
-                # RawQuerySet
+                # Dictionaries
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
                     row = { 'measurement__depth': mp['measurement__depth'],
                             'measurement__instantpoint__timevalue': mp['measurement__instantpoint__timevalue'],
@@ -96,45 +108,44 @@ class MPQuerySet(object):
                           }
                     yield row
             except TypeError:
-                # GeoQuerySet
+                # Model instances
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
-                    row = { 'measurement__depth': mp.measurement__depth,
-                            'measurement__instantpoint__timevalue': mp.measurement__instantpoint__timevalue,
+                    row = { 'measurement__depth': mp.measurement.depth,
+                            'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
                             'datavalue': mp.datavalue,
                           }
                     yield row
 
         else:
             # Likely for building a REST or KML response
+            logger.debug('type(self.mp_query) = %s', type(self.mp_query))
             try:
-                # RawQuerySet
+                # Dictionaries
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
-                    row = { 'parameter__name': mp['parameter__name'],
-                            'parameter__standard_name': mp['parameter__standard_name'],
+                    row = { 
                             'measurement__depth': mp['measurement__depth'],
-                            ##'measurement__geom': 'POINT (%s %s)' % (mp['measurement__geom'].x, mp['measurement__geom'].y),
-                            'measurement__geom': mp['measurement__geom'],
-                            'measurement__geom__x': mp['measurement__geom'].x,
-                            'measurement__geom__y': mp['measurement__geom'].y,
-                            'measurement__instantpoint__timevalue': mp['measurement__instantpoint__timevalue'],
-                            'measurement__instantpoint__activity__platform__name': mp['measurement__instantpoint__activity__platform__name'],
+                            'parameter__name': mp['parameter__name'],
                             'datavalue': mp['datavalue'],
-                            'parameter__units': mp['parameter__units']
+                            'measurement__instantpoint__timevalue': mp['measurement__instantpoint__timevalue'],
+                            'parameter__standard_name': mp['parameter__standard_name'],
+                            'measurement__instantpoint__activity__platform__name': mp['measurement__instantpoint__activity__platform__name'],
+                            # If .values(...) are requested in the query string then json serialization of the point geometry does not work right
+                            'measurement__geom': mp['measurement__geom'],
+                            'parameter__units': mp['parameter__units'],
                           }
                     yield row
             except TypeError:
-                # GeoQuerySet
+                # Model instances
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
-                    row = { 'parameter__name': mp.parameter__name,
-                            'parameter__standard_name': mp.parameter.standard_name,
+                    row = { 
                             'measurement__depth': mp.measurement.depth,
-                            'measurement__geom': mp.measurement__geom,
-                            'measurement__geom__x': mp.measurement.geom.x,
-                            'measurement__geom__y': mp.measurement.geom.y,
-                            'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
-                            'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
+                            'parameter__name': mp.parameter__name,
                             'datavalue': mp.datavalue,
-                            'parameter__units': mp.parameter.units
+                            'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
+                            'parameter__standard_name': mp.parameter.standard_name,
+                            'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
+                            'measurement__geom': mp.measurement.geom,
+                            'parameter__units': mp.parameter.units,
                           }
                     yield row
  
@@ -313,14 +324,17 @@ class MPQuery(object):
 
         return qparams
 
-    def getMeasuredParametersQS(self, values_list=['measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue']):
+    def getMeasuredParametersQS(self, values_list=[]):
         '''
         Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
-        @values_list can be assigned with additional columns that are supported by MPQuerySet().  The default values_list
-        is a minimal set suitable for used for time/depth contour plots for Flot in Viz.py.
+        @values_list can be assigned with additional columns that are supported by MPQuerySet(). Note that specificiation
+        of a values_list will break the JSON serialization of geometry types.
         '''
         qparams = self.getQueryParms()
-        qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
+        if values_list:
+            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
+        else:
+            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams)
 
         # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         if self.kwargs.has_key('parametervalues'):
@@ -366,6 +380,7 @@ class MPQuery(object):
         '''
         sql = 'Check "Get actual count" checkbox to see the SQL for your data selection'
         if self._count:
+            self.qs_mp = self.getMeasuredParametersQS(MPQuerySet.rest_columns)
             if self.qs_mp:
                 sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
                 logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
@@ -381,6 +396,7 @@ class MPQuery(object):
 
     def addParameterValuesSelfJoins(self, query, pvDict, select_items= '''stoqs_instantpoint.timevalue as measurement__instantpoint__timevalue, 
                                                                           stoqs_measurement.depth as measurement__depth,
+                                                                          stoqs_measurement.geom as measurement__geom,
                                                                           stoqs_measuredparameter.datavalue as datavalue'''):
         '''
         Given a Postgresified MeasuredParameter query string @query' modify it to add the MP self joins needed 
