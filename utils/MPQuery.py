@@ -107,6 +107,7 @@ class MPQuerySet(object):
                             'datavalue': mp['datavalue'],
                           }
                     yield row
+
             except TypeError:
                 # Model instances
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
@@ -134,6 +135,7 @@ class MPQuerySet(object):
                             'parameter__units': mp['parameter__units'],
                           }
                     yield row
+
             except TypeError:
                 # Model instances
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
@@ -252,8 +254,6 @@ class MPQuery(object):
                          stoqs_parameter.standard_name as parameter__standard_name,
                          stoqs_measurement.depth as measurement__depth,
                          stoqs_measurement.geom as measurement__geom,
-                         ST_X(stoqs_measurement.geom) as measurement__geom__x,
-                         ST_Y(stoqs_measurement.geom) as measurement__geom__y,
                          stoqs_instantpoint.timevalue as measurement__instantpoint__timevalue, 
                          stoqs_platform.name as measurement__instantpoint__activity__platform__name,
                          stoqs_measuredparameter.datavalue as datavalue,
@@ -334,14 +334,15 @@ class MPQuery(object):
         if values_list:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
         else:
-            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams)
+            # A depth of 4 is needed in order to see Platform
+            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
 
         # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
                 sql = postgresifySQL(str(qs_mp.query))
                 logger.debug('\n\nsql before query = %s\n\n', sql)
-                sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'])
+                sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
                 qs_mpq = MPQuerySet(sql, values_list)
             else:
