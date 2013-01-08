@@ -53,14 +53,13 @@ def kmlResponse(request, qs_mp, qparams):
         folderName = "%s_" % (pName,)
     descr = request.get_full_path().replace('&', '&amp;')
     logger.debug(descr)
-    kml = makeKML(  request.META['dbAlias'], dataHash, pName, folderName, descr, qparams['measurement__instantpoint__timevalue__gt'], qparams['measurement__instantpoint__timevalue__lt'],
-                    request.GET.get('cmin', None), request.GET.get('cmax', None))
+    kml = makeKML(request.META['dbAlias'], dataHash, pName, folderName, descr, request.GET.get('cmin', None), request.GET.get('cmax', None))
     response['Content-Type'] = 'application/vnd.google-earth.kml+xml'
     response.write(kml)
     return response
 
 
-def makeKML(dbAlias, dataHash, pName, title, desc, startDate, endDate, cmin=None, cmax=None):
+def makeKML(dbAlias, dataHash, pName, title, desc, cmin=None, cmax=None):
     '''
     Generate the KML for the point in mpList
     cmin and cmax are the color min and max 
