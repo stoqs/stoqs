@@ -107,7 +107,7 @@ urlpatterns = patterns('',
     url(r'testAnimateCoastwatch$', 'stoqs.views.wms.showActivitiesWMSAnimateCoastwatch', {} , name='test-animate-wms-coastwatch'),\
 
     # If nothing above matches show the quey interface is a dbalias is specified, otherwise show the campaigns
-    url(pre, 'stoqs.views.query.queryUI', {}, name='base-campaign'),
+    url(pre + '$', 'stoqs.views.query.queryUI', {}, name='base-campaign'),
     url('^$', 'stoqs.views.management.showCampaigns', {}, name='show-default'),
 
 )

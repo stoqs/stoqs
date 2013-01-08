@@ -81,7 +81,7 @@ def csvResponse(request, qm, response):
     '''
     Return a response that is a Comma Separated Value represenation of the existing MeasuredParameter query that is in qm
     '''
-    qs_mp = qm.getMeasuredParametersQS()
+    qs_mp = qm.mpq.getMeasuredParametersQS(MPQuerySet.rest_columns)
     if qs_mp is None:
         raise InvalidMeasuredParameterQueryException
 
@@ -93,12 +93,15 @@ def csvResponse(request, qm, response):
 
     fields = ['platformName', 'time', 'longitude', 'latitude', 'depth', pName, 'units']
 
+    for mp in qs_mp:
+        logger.debug('mp = %s', mp)
+        break
      
     data = [
             (   
-                mp.measurement.instantpoint.activity.platform.name, 
-                mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
-                mp.measurement.depth, mp.datavalue, mp.parameter.units
+                mp['measurement__instantpoint__activity__platform__name'], 
+                mp['measurement__instantpoint__timevalue'], mp['measurement__geom'].x, mp['measurement__geom'].y,
+                mp['measurement__depth'], mp['datavalue'], mp['parameter__units']
             )
                  for mp in qs_mp]
 

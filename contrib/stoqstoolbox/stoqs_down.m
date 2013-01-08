@@ -138,19 +138,65 @@ if isempty(info)
    outp='';
    disp('************NO DATA AVAILABLE FOR YOUR QUERY')
 else
+    % Map database fields to "standard" names in the output structure
+    % This method uses the JSON structure and does not rely on specific
+    % ordering
+    outp = struct(  'platform', [],...
+                    'time', [],... 
+                    'longitude', [],...
+                    'latitude', [],...
+                    'depth', [],...
+                    'value', [],...
+                    'parametername', [],...
+                    'standardname', [],... 
+                    'units', []);
+                
+    keys = {    'measurement__instantpoint__activity__platform__name',...
+                'measurement__instantpoint__timevalue',...
+                'measurement__geom_x',... % Dummy _x & _y for matching
+                'measurement__geom_y',... % fieldMap latitude & longitude
+                'measurement__depth',...
+                'datavalue',...
+                'parameter__name',...
+                'parameter__standard_name',...
+                'parameter__units'};
+            
+    values = {  'platform',...
+                'time',...
+                'longitude',...
+                'latitude',...
+                'depth', ...
+                'value',...
+                'parametername',...
+                'standardname',...
+                'units'};
+    fieldMap = containers.Map(keys, values);
+    
+    fields = fieldnames(info);
+    for i=1:numel(fields)
+        if strcmp(fields{i}, 'measurement__instantpoint__timevalue')
+            tvs = {info.(fields{i})};
+            dnums = [];
+            for j=1:numel(tvs)
+                dnums = [ dnums, datenum(tvs{j}, 'yyyy-mm-ddTHH:MM:SS') ];
+            end
+            outp.(fieldMap(fields{i})) = dnums';
+        elseif ~isempty(strfind(fields{i}, 'measurement__geom'))
+            g = [info.(fields{i})];
+            outp.longitude = g(1:2:end)';
+            outp.latitude = g(2:2:end)';
+        elseif strcmp(fields{i}, 'measurement__geom__y') 
+            continue
+        elseif strcmp(fields{i}, 'measurement__geom__x')
+            continue
+        elseif strcmp(fields{i}, 'datavalue') || strcmp(fields{i}, 'measurement__depth') 
+            % vectors
+            outp.(fieldMap(fields{i})) = [info.(fields{i})]';
+        else
+            % cell arrays: platform, parametername, standardname, units
+            outp.(fieldMap(fields{i})) = {info.(fields{i})}';
+        end
+    end
 
-a=struct2cell(info); %Convert the structure array to cell array
-
-%Save the data in a new structure with standard names.
-outp.platform=squeeze(a(6,:,:));
-outp.time=squeeze(datenum(a(4,:,:),'yyyy-mm-ddTHH:MM:SS'));
-f=cell2mat(a(7,:,:));  %covnert a cell array into a single matrix
-outp.longitude=squeeze(f(1,1,:));
-outp.latitude=squeeze(f(1,2,:));
-outp.depth=cell2mat(squeeze(a(1,:,:)));
-outp.value=cell2mat(squeeze(a(3,:,:)));
-outp.parametername=squeeze(a(2,:,:));
-outp.standardname=squeeze(a(5,:,:));
-outp.units=squeeze(a(8,:,:));
 end
 
