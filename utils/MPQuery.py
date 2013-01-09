@@ -78,8 +78,6 @@ class MPQuerySet(object):
         Simulate behavior of regular GeoQuerySets.  Modify & format output as needed.
         '''
         minimal_values_list = False
-        logger.debug('self.values_list = %s', self.values_list)
-        logger.debug('self.rest_columns = %s', self.rest_columns)
         for item in self.rest_columns:
             if item not in self.values_list:
                 minimal_values_list = True
@@ -352,6 +350,7 @@ class MPQuery(object):
 
         if qs_mpq:
             logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
+            
         else:
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
         return qs_mpq
