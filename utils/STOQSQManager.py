@@ -81,6 +81,7 @@ class STOQSQManager(object):
             else:
                 qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
     
+        self.args = args
         self.kwargs = kwargs
         for k, v in kwargs.iteritems():
             '''
@@ -97,7 +98,7 @@ class STOQSQManager(object):
         self.qs = qs
 
         # Apply query constraints to the MeasuredParameter query object 
-        self.mpq.buildMPQuerySet(*args, **kwargs)
+        ##self.mpq.buildMPQuerySet(*args, **kwargs)
         
     def generateOptions(self):
         '''
@@ -143,11 +144,12 @@ class STOQSQManager(object):
         Get the localized count (with commas) of measured parameters giving the exising query and return as string
         '''
         
-	qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
+        qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
         if qs_ap:
             ap_count = qs_ap.count()
             approximate_count = qs_ap.aggregate(Sum('number'))['number__sum']
             if getGet_Actual_Count(self.kwargs):
+                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
                 return self.mpq.getLocalizedMPCount()
             else:
                 return locale.format("%d", approximate_count, grouping=True)
@@ -583,6 +585,7 @@ class STOQSQManager(object):
             
         logger.debug('platformName = %s', platformName)
         logger.debug('Instantiating Viz.ContourPlots............................................')
+        self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
         cp = ContourPlots(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
                               self.getParameterMinMax(), self.getSampleQS(), platformName)
 

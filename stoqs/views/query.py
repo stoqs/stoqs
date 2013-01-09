@@ -39,43 +39,6 @@ class InvalidMeasuredParameterQueryException(Exception):
 class NoParameterSelectedException(Exception):
     pass
 
-def kmlResponse(request, qm, response):
-    '''
-    Return a response that is a KML represenation of the existing MeasuredParameter query that is in qm
-    '''
-    qs_mp = qm.mpq.getMeasuredParametersQS(MPQuerySet.kml_columns)
-    if qs_mp is None:
-        raise InvalidMeasuredParameterQueryException
-
-    try:
-        pName = qm.getParameters()[0][0]
-        logger.info("pName = %s", pName)
-    except IndexError:
-        raise NoParameterSelectedException
-
-    for mp in qs_mp:
-        logger.debug('keys = %s', mp.keys())
-        break
-
-    data = [(mp['measurement__instantpoint__timevalue'], mp.measurement.geom.x, mp.measurement.geom.y,
-                 mp['measurement__depth'], pName,  mp['datavalue'], mp['measurement__instantpoint__activity__platform__name'])
-                 for mp in qs_mp]
-    dataHash = {}
-    for d in data:
-        try:
-            dataHash[d[6]].append(d)
-        except KeyError:
-            dataHash[d[6]] = []
-            dataHash[d[6]].append(d)
-
-    folderName = "%s_%.1f_%.1f" % (pName, float(qm.getDepth()[0]), float(qm.getDepth()[1]))
-    descr = request.get_full_path().replace('&', '&amp;')
-    logger.debug(descr)
-    kml = KML.makeKML(  request.META['dbAlias'], dataHash, pName, folderName, descr, qm.getTime()[0], qm.getTime()[1], 
-                        request.GET.get('cmin', None), request.GET.get('cmax', None))
-    response['Content-Type'] = 'application/vnd.google-earth.kml+xml'
-    response.write(kml)
-    return response
 
 def csvResponse(request, qm, response):
     '''
@@ -220,8 +183,6 @@ def queryData(request, format=None):
         return csvResponse(request, qm, response)
     elif format == 'dap':
         logger.info('dap output')
-    elif format == 'kml':
-        return kmlResponse(request, qm, response)
 
     return response
 
