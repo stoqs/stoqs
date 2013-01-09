@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 class BaseAndMeasurementViewsTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
-    format_types = ['html', 'json', 'xml', 'csv']
+    format_types = ['.html', '.json', '.xml', '.csv']
     multi_db = False
     
     def setup(self):
@@ -147,8 +147,50 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                                                           'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+   
+    def test_measuredparameter(self):
+        for fmt in  ['.html', '.json', '.csv', '.tsv', '.kml', '.count']:
+            logger.debug('fmt = %s', fmt)
+            base = reverse('show-measuredparmeter', kwargs={ 'format': fmt,
+                                                            'dbAlias': 'default'})
+            params = {  'parameter__name': 'temperature',
+                        'cmin': 11.5,
+                        'cmax': 14.1 }
+            qstring = ''
+            for k,v in params.iteritems():
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.count':
+                logger.debug(response.content)
+                self.assertEqual(response.content, '50', 'Response should be "50" for %s' % req)
     
-    
+   
+    def test_measuredparameter_with_parametervalues(self):
+        for fmt in  ['.html', '.json', '.csv', '.tsv', '.kml', '.count']:
+            logger.debug('fmt = %s', fmt)
+            base = reverse('show-measuredparmeter', kwargs={ 'format': fmt,
+                                                            'dbAlias': 'default'})
+            params = {  'parameter__name': 'temperature',
+                        'cmin': 11.5,
+                        'cmax': 14.1,
+                        'sea_water_sigma_t_MIN': 25.0,
+                        'sea_water_sigma_t_MAX': 25.33 }
+            qstring = ''
+            for k,v in params.iteritems():
+                qstring = qstring + k + '=' + str(v) + '&'
+
+            req = base + '?' + qstring
+            logger.debug('req = %s', req)
+            response = self.client.get(req)
+            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+            if fmt == '.count':
+                logger.debug(response.content)
+                self.assertEqual(response.content, '30', 'Response should be "50" for %s' % req)
+
     def test_query_jsonencoded(self):
         req = reverse('stoqs-query-results', kwargs={'format': 'json',
                                                      'dbAlias': 'default'})
@@ -185,7 +227,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
         
         # Now test that the activity was deleted, after sleeping for a bit.  Need to see if Celery can provide notification
-        # This should work, but as of 10 Jan 2010 it does not.  COmmented out for now.
+        # This should work, but as of 10 Jan 2010 it does not.  Commented out for now.
 #        logger.info('Sleeping after delete')
 #        time.sleep(20)
 #        req = '/test_stoqs/activities'
