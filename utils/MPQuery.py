@@ -207,7 +207,12 @@ class MPQuerySet(object):
             return self[k:k+1][0]
 
     def count(self):
-        return sum(1 for mp in self.mp_query)
+        logger.debug('Counting records in self.mp_query which is of type = %s', type(self.mp_query))
+        try:
+            c = self.mp_query.count()
+        except AttributeError:
+            c = sum(1 for mp in self.mp_query)
+        return c
  
     def all(self):
         return self._clone()
@@ -362,6 +367,7 @@ class MPQuery(object):
         return the count.
         '''
         if not self._count:
+            logger.debug('Calling self.qs_mp.count()...')
             self._count = self.qs_mp.count()
 
         logger.debug('self._count = %d', self._count)

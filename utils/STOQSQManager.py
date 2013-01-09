@@ -149,7 +149,8 @@ class STOQSQManager(object):
             ap_count = qs_ap.count()
             approximate_count = qs_ap.aggregate(Sum('number'))['number__sum']
             if getGet_Actual_Count(self.kwargs):
-                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                if not self.mpq.qs_mp:
+                    self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
                 return self.mpq.getLocalizedMPCount()
             else:
                 return locale.format("%d", approximate_count, grouping=True)
