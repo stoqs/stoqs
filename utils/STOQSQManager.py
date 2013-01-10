@@ -586,7 +586,8 @@ class STOQSQManager(object):
             
         logger.debug('platformName = %s', platformName)
         logger.debug('Instantiating Viz.ContourPlots............................................')
-        self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+        if not self.mpq.qs_mp:
+            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
         cp = ContourPlots(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
                               self.getParameterMinMax(), self.getSampleQS(), platformName)
 
