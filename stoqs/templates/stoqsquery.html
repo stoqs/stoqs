@@ -456,8 +456,8 @@
 
         if (parametervalues) {
             for (var parameter in parametervalues) {
-                var min = parametervalues[parameter]['min'];
-                var max = parametervalues[parameter]['max'];
+                var min = parametervalues[parameter]['xmin'];
+                var max = parametervalues[parameter]['xmax'];
                 if (typeof min != 'undefined' && typeof max != 'undefined') {
                     mp_param = mp_param + parameter + "_MIN=" + min.toPrecision(4) + "&";
                     mp_param = mp_param + parameter + "_MAX=" + max.toPrecision(4) + "&";
@@ -534,8 +534,8 @@
 
                 if (parametervalues) {
                     for (var parameter in parametervalues) {
-                        var min = parametervalues[parameter]['min'];
-                        var max = parametervalues[parameter]['max'];
+                        var min = parametervalues[parameter]['xmin'];
+                        var max = parametervalues[parameter]['xmax'];
                         if (typeof min != 'undefined' && typeof max != 'undefined') {
                             st_text = st_text + parameter + "_MIN = " + min.toPrecision(4) + ";\n";
                             st_text = st_text + parameter + "_MAX = " + max.toPrecision(4) + ";\n";
@@ -710,7 +710,7 @@
 
     function updateContourInfo() {
         if (typeof params['parametername'] != 'undefined') {
-            console.log('parametername = ' + params['parametername']);
+            //console.log('parametername = ' + params['parametername']);
             if (params['parametername'].length == 1 ) {
                 enableContouring();
             }
@@ -769,10 +769,8 @@
             for (var parameter in parametervalues) {
                 // No CF stantard names end with '_MIN' or '_MAX' and none have upper case letters, so the convention
                 // of adding these identifiers and taking them off should work.
-                console.log(parameter);
-                var min = parametervalues[parameter]['min'];
-                var max = parametervalues[parameter]['max'];
-                console.log(min, max);
+                var min = parametervalues[parameter]['xmin'];
+                var max = parametervalues[parameter]['xmax'];
                 if (typeof min != 'undefined' && typeof max != 'undefined') {
                     params[parameter + '_MIN'] = min.toPrecision(4);
                     params[parameter + '_MAX'] = max.toPrecision(4);
@@ -1055,7 +1053,6 @@
         rec["label"] = activity;
         rec["color"] = color;
         rec["data"] = histbyactivity['hist'];
-        rec["data"] = histbyactivity['hist'];
         rec["bars"] = { show: true, barWidth: histbyactivity['binwidth'], fill: true, fillColor: color };
         histdata.push(rec);
         return histdata;
@@ -1063,18 +1060,23 @@
 
     function addSelectedParameterValue(histdata, parameter) {
         var rec = [];
-        rec["color"] = '#0f0000';
-        console.log(parametervalues[parameter]);
-        rec["data"] = [[parametervalues[parameter]['min'], 100000], [parametervalues[parameter]['max'], 100000]];
-        console.log(rec['data']);
-        binwidth = parametervalues[parameter]['max'] - parametervalues[parameter]['min'];
-        rec["bars"] = { show: true, barWidth: binwidth, fill: true, fillColor: '#0f0f0f' };
+        color = 'rgba(244, 164, 96, 0.2)';
+        rec["label"] = 'selection';
+        rec["color"] = color;
+        //console.log(parametervalues[parameter]);
+        rec["data"] = [[parametervalues[parameter]['xmin'], parametervalues[parameter]['ymax']]];
+        //console.log(rec['data']);
+        binwidth = parametervalues[parameter]['xmax'] - parametervalues[parameter]['xmin'];
+        rec["bars"] = { show: true, barWidth: binwidth, fill: true, fillColor: color };
         histdata.push(rec);
         return histdata;
     }
     
     function plotHistData(parameter, histdata) {
         $.plot($("#" + parameter + "-histogram-flot"), histdata, {
+            yaxis: {
+                autoscaleMargin: null
+            },
             grid: {
                 backgroundColor: "rgb(192, 211, 228)",      //c0d3e4
             },
@@ -1378,18 +1380,27 @@
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     histdata = [];
                     $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
-                        parametervalues[parameter] = {'min': ranges.xaxis.from, 'max': ranges.xaxis.to };
+                        parametervalues[parameter] = {'xmin': ranges.xaxis.from, 'xmax': ranges.xaxis.to, 'ymin':0, 'ymax': ranges.yaxis.to };
                         rebuildFilters();
-                        histdata.push(addSelectedParameterValue(histdata, parameter));
-                        console.log(parameter);
-                        console.log(histdata);
                     });
                     $.each(histbyplatformandactivity, function (platform, histbyplatform) {
                         $.each(histbyplatform, function(activity, histbyactivity) {
                             histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
                         });
                     });
+
+                    if (parametervalues) {
+                        if (parametervalues[parameter]) {
+                            var min = parametervalues[parameter]['xmin'];
+                            var max = parametervalues[parameter]['xmax'];
+                            if (typeof min != 'undefined' && typeof max != 'undefined') {
+                                histdata = addSelectedParameterValue(histdata, parameter);
+                            }
+                        }
+                    }
+
                     plotHistData(parameter, histdata);
+
                 });
             }
         } // onUpdate()
