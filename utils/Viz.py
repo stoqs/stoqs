@@ -101,7 +101,7 @@ class ContourPlots(object):
                 sdt_count = tgrid_max
 
             xi = np.linspace(tmin, tmax, sdt_count)
-            logger.debug('xi = %s', xi)
+            ##logger.debug('xi = %s', xi)
 
         # Make depth spacing dinc m, limit to time-depth-flot resolution (dgrid_max)
         dmin = None
@@ -111,18 +111,13 @@ class ContourPlots(object):
             if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
                 dmin = float(self.kwargs['depth'][0])
                 dmax = float(self.kwargs['depth'][1])
-        ##if not dmin and not dmax:
-        ##    logger.debug('Depth range not specified in query, getting it from the database')
-        ##    depths = self.getDepth()
-        ##    dmin = float(depths[0])
-        ##    dmax = float(depths[1])
 
-        if dmin and dmax:
+        if dmin is not None and dmax is not None:
             y_count = int((dmax - dmin) / dinc )
             if y_count > dgrid_max:
                 y_count = dgrid_max
             yi = np.linspace(dmin, dmax, y_count)
-            logger.debug('yi = %s', yi)
+            ##logger.debug('yi = %s', yi)
 
 
         # Collect the scattered datavalues(time, depth) and grid them
@@ -149,10 +144,14 @@ class ContourPlots(object):
             z = []
             logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
             logger.debug('isinstance(self.qs_mp, MPQuerySet) = %s', isinstance(self.qs_mp, MPQuerySet) )
+            i = 0
             for mp in self.qs_mp:
                 x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
                 y.append(mp['measurement__depth'])
                 z.append(mp['datavalue'])
+                i = i + 1
+                if (i % 1000) == 0:
+                    logger.debug('Appended %i measurements to x, y, and z', i)
 
             if self.kwargs.has_key('parametervalues'):
                 if self.kwargs['parametervalues']:
@@ -230,5 +229,6 @@ class ContourPlots(object):
 
             return sectionPngFile, colorbarPngFile, ''
         else:
+            logger.debug('xi and yi are None.  tmin, tmax, sdt_count, dmin, dmax, y_count = %f, %f, %f, %f, %f, %f ', tmin, tmax, sdt_count, dmin, dmax, y_count)
             return None, None, 'No depth-time region specified'
 
