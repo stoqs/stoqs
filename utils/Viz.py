@@ -52,7 +52,7 @@ class ContourPlots(object):
         self.sampleQS = sampleQS
         self.platformName = platformName
 
-    def contourDatavaluesForFlot(self, tgrid_max = 1000, dgrid_max = 100, dinc = 0.5, nlevels = 255):
+    def contourDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, nlevels=255, contourFlag=True):
         '''
         Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
         3 tuple of (sectionPngFile, colorbarPngFile, errorMessage)
@@ -153,18 +153,23 @@ class ContourPlots(object):
                 x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
                 y.append(mp['measurement__depth'])
                 z.append(mp['datavalue'])
+
+            if self.kwargs.has_key('parametervalues'):
+                if self.kwargs['parametervalues']:
+                    contourFlag = False
           
             logger.debug('Number of x, y, z data values retrived from database = %d', len(z)) 
-            try:
-                zi = griddata(x, y, z, xi, yi, interp='nn')
-            except KeyError, e:
-                logger.exception('Got KeyError. Could not grid the data')
-                return None, None, 'Got KeyError. Could not grid the data'
-            except Exception, e:
-                logger.exception('Could not grid the data')
-                return None, None, 'Could not grid the data'
+            if contourFlag:
+                try:
+                    zi = griddata(x, y, z, xi, yi, interp='nn')
+                except KeyError, e:
+                    logger.exception('Got KeyError. Could not grid the data')
+                    return None, None, 'Got KeyError. Could not grid the data'
+                except Exception, e:
+                    logger.exception('Could not grid the data')
+                    return None, None, 'Could not grid the data'
 
-            logger.debug('zi = %s', zi)
+                logger.debug('zi = %s', zi)
 
             parm_info = self.parameterMinMax
             try:
@@ -178,8 +183,11 @@ class ContourPlots(object):
                 ax.get_xaxis().set_ticks([])
                 clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
                 cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
-                ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=cm_jetplus, extend='both')
-                ax.scatter(x, y, marker='.', s=2, c='k', lw = 0)
+                if contourFlag:
+                    ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=cm_jetplus, extend='both')
+                    ax.scatter(x, y, marker='.', s=2, c='k', lw = 0)
+                else:
+                    ax.scatter(x, y, c=z, s=20, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
 
                 # Add sample locations and names
                 xsamp = []
