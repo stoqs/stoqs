@@ -168,8 +168,8 @@ class CANONLoader(object):
                                         self.wfpctd_parms, self.dbAlias, self.stride)
         # Now load all the bottles           
         sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'])
-        sl.tdsBase= 'http://odss.mbari.org/thredds/' 
-        sl.pctdDir = 'CANON_september2012/wf/pctd/'
+        sl.tdsBase= self.tdsBase
+        sl.pctdDir = self.pctdDir
         sl.process_btl_files()
 
 
