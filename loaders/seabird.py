@@ -35,9 +35,9 @@ def get_year_lat_lon(*args, **kwargs):
     data will be read from the specified URL instead of from file.
     Returns (year, lat, lon) tuple
     '''
-    if kwargs['hdrUrl']:
+    try:
         FH = urllib2.urlopen(kwargs['hdrUrl'])
-    else:
+    except KeyError:
         FH = open('.'.join(args[0].split('.')[:-1]) + '.hdr')
     for line in FH:
         ##print line
