@@ -46,6 +46,15 @@ class ParserWriter(BaseWriter):
     Handle all information needed to parse Western Flyer Underway CTD data from the Seabird software
     generated .asc files and write the data as a CF-compliant NetCDF Trajectory file.
     '''
+
+    def __init__(self, inDir, outDir, beginFileString):
+        '''
+        Override BaseWriter's constructor as we need some additional parameters
+        '''
+        self.inDir = inDir
+        self.outDir = outDir
+        self.beginFileString = beginFileString
+
     def process_asc_files(self):
         '''
         Loop through all .asc files and write each one out as a netCDF file trajectory format
@@ -60,7 +69,7 @@ class ParserWriter(BaseWriter):
 
         # Fill up the object's member data item lists from all the files - read only the processed c*.asc files, 
         # the realtime.asc data will be processed by the end of the cruise
-        fileList = glob(os.path.join(self.parentInDir, 'pctd/c*.asc'))
+        fileList = glob(os.path.join(self.inDir, self.beginFileString + '*.asc'))
         fileList.sort()
         for file in fileList:
             print "file = %s" % file
@@ -81,8 +90,11 @@ class ParserWriter(BaseWriter):
             self.ecofl_list = []
 
             for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
+                if not r['TimeJ']:
+                    continue
                 # A TimeJ value of 1.0 is 0000 hours 1 January, so subtract 1 day
                 dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
+
                 ##print dt
                 esDiff = dt - datetime(1970, 1, 1, 0, 0, 0)
                 es = 86400 * esDiff.days + esDiff.seconds
@@ -177,8 +189,12 @@ if __name__ == '__main__':
         outDir = sys.argv[2]
     except IndexError:
         outDir = '.'
+    try:
+        beginFileString = sys.argv[3]
+    except IndexError:
+        beginFileString = 'c'               # Default of 'c' for CANON cruise data files
 
-    pw = ParserWriter(parentInDir=inDir, parentOutDir=outDir)
+    pw = ParserWriter(inDir, outDir, beginFileString)
     pw.process_asc_files()
 
 
