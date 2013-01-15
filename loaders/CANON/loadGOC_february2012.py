@@ -10,7 +10,7 @@ Master loader for all February 2012 WF GOC activities.
 
 The default is to load data with a stride of 100 into a database named stoqs_february2012_s100.
 
-Execute with "./loadGOC_february2012 1 stoqs_february2012" to load full resolution data.
+Execute with "./loadGOC_february2012.py 1 stoqs_february2012" to load full resolution data.
 
 Mike McCann
 MBARI 14 January 2012
