@@ -75,5 +75,5 @@ cl.stride = stride
 
 # For testing.  Comment out the loadAll() call, and uncomment one of these as needed
 cl.loadWFuctd()
-##cl.loadWFpctd()
+cl.loadWFpctd()
 
