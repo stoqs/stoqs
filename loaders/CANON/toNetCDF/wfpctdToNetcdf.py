@@ -184,11 +184,11 @@ if __name__ == '__main__':
     try:
         inDir = sys.argv[1]
     except IndexError:
-        inDir = '.'
+        inDir = 'pctd'
     try:
         outDir = sys.argv[2]
     except IndexError:
-        outDir = '.'
+        outDir = 'pctd'
     try:
         beginFileString = sys.argv[3]
     except IndexError:

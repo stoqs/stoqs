@@ -46,6 +46,14 @@ class ParserWriter(BaseWriter):
     generated .asc files and write the data as a CF-compliant NetCDF Trajectory file.
     '''
 
+    def __init__(self, inDir, outDir, beginFileString):
+        '''
+        Override BaseWriter's constructor as we need some additional parameters
+        '''
+        self.inDir = inDir
+        self.outDir = outDir
+        self.beginFileString = beginFileString
+
     def read_asc_files(self):
         '''
         Loop through all .asc files and load data into lists.
@@ -77,7 +85,7 @@ class ParserWriter(BaseWriter):
 
         # Fill up the object's member data item lists from all the files - read only the processed c*.asc files, 
         # the realtime.asc data will be processed by the end of the cruise
-        fileList = glob(os.path.join(self.parentInDir, 'uctd/c*.asc'))
+        fileList = glob(os.path.join(self.inDir, self.beginFileString + '*.asc'))
         fileList.sort()
         for file in fileList:
             print "file = %s" % file
@@ -179,13 +187,17 @@ if __name__ == '__main__':
     try:
         inDir = sys.argv[1]
     except IndexError:
-        inDir = '.'
+        inDir = 'uctd'
     try:
         outDir = sys.argv[2]
     except IndexError:
         outDir = '.'
+    try:
+        beginFileString = sys.argv[3]
+    except IndexError:
+        beginFileString = 'c'
 
-    pw = ParserWriter(parentInDir=inDir, parentOutDir=outDir)
+    pw = ParserWriter(inDir, outDir, beginFileString)
     pw.read_asc_files()
     pw.write_ctd()
     print "Wrote %s" % pw.outFile
