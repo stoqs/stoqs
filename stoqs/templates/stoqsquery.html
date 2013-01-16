@@ -171,6 +171,8 @@
                         Sample Data Access
                         </a></h3>
                     </div>
+
+
                     <div id="collapseSample" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <span id="sample-instructions">Click on Sample locations in time-depth plot to get information here</span>
@@ -184,6 +186,8 @@
                             </table>
                         </div>
                     </div>
+
+
                 </div><!-- accordian-group -->
 
                 <div class="accordian-group">
@@ -701,7 +705,7 @@
         $('#displayparameterplatformdata').parent().addClass('disabled');
         $('#displayparameterplatformdata').attr('disabled');
         //$('#displayparameterplatformdata').removeAttr('checked');
-        $('#contourtext').text('Contour data values');
+        $('#contourtext').text('Show data values');
         $('#sectioncolorbar').html('');
     }
 
@@ -890,6 +894,19 @@
                                     //zoom: { interactive: true },
                                     //pan: { interactive: true }
                                   };
+    var histogram_options = {   yaxis: {
+                                    autoscaleMargin: null
+                                },
+                                grid: {
+                                    backgroundColor: "rgb(192, 211, 228)",      //c0d3e4
+                                },
+                                series: {
+                                    lines: { show: false }
+                                },
+                                legend: { show: false },
+                                selection: { mode: "x" },
+                                hoverable: true
+                            };
 
 
     /* Default class modification for DataTable*/
@@ -1077,20 +1094,17 @@
     }
     
     function plotHistData(parameter, histdata) {
-        $.plot($("#" + parameter + "-histogram-flot"), histdata, {
-            yaxis: {
-                autoscaleMargin: null
-            },
-            grid: {
-                backgroundColor: "rgb(192, 211, 228)",      //c0d3e4
-            },
-            series: {
-                lines: { show: false }
-            },
-            legend: { show: false },
-            selection: { mode: "x" },
-            hoverable: true
-        });
+        histogtram_options_labels = $.extend(true, {}, histogram_options, {
+                                                            xaxes: [{
+                                                                        axisLabel: parameter,
+                                                                    }],
+                                                            yaxes: [{
+                                                                        position: 'left',
+                                                                        axisLabel: 'Count',
+                                                                    }]
+                                                                          });
+
+        $.plot($("#" + parameter + "-histogram-flot"), histdata, histogtram_options_labels);
     }
 
     function ZoomIn(event, ranges) {
@@ -1266,7 +1280,6 @@
                     histHtml += '<tr>' +
                         '<td>' +
                             '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
-                            '<p align="center">' + parameter + '</p>' +
                         '</td>' +
                         '</tr>';
                 });
@@ -1374,7 +1387,6 @@
                     histHtml += '<tr>' +
                         '<td>' +
                             '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
-                            '<p align="center">' + parameter + '</p>' +
                         '</td>' +
                         '</tr>';
                 });
