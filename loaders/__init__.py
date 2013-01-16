@@ -438,7 +438,7 @@ class STOQS_Loader(object):
         class should set any default standard names at the class level.
         '''
         try:
-            # Assumes that we have a ds that came from an OpenDAP call
+            # Assumes that we have a ds that came from an OPeNDAP call
             for var in self.ds.keys():
                 if self.standard_names.has_key(var): continue # don't override pre-specified names
                 if self.ds[var].attributes.has_key('standard_name'):

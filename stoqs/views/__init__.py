@@ -342,6 +342,13 @@ def showSampleType(request, format = 'html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
+def showSamplePurpose(request, format = 'html'):
+    stoqs_object = mod.SamplePurpose
+    query_set = stoqs_object.objects.all().order_by('name')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
+
 def showAnalysisMethod(request, format = 'html'):
     stoqs_object = mod.AnalysisMethod
     query_set = stoqs_object.objects.all().order_by('name')
