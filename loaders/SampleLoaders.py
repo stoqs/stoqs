@@ -50,7 +50,7 @@ from bs4 import BeautifulSoup
 
 # Set up logging
 logger = logging.getLogger('loaders')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -66,6 +66,9 @@ class ClosestTimeNotFoundException(Exception):
 
 class SingleActivityNotFound(Exception):
     pass
+
+def removeNonAscii(s): 
+    return "".join(i for i in s if ord(i)<128)
 
 def get_closest_instantpoint(aName, tv, dbAlias):
         '''
@@ -410,19 +413,27 @@ class SubSamplesLoader(STOQS_Loader):
 
     def load_subsample(self, parentSample, row):
         '''
-        Load the data values recorded at the bottle trips so that we have some InstantPoints to 
-        hang off for our Samples.  This is necessary as data are acquired on the down cast and
-        bottles are tripped on the upcast.  
+        Populate the Sample, SampledParameter, SampleRelationship, and associated lookup tables 
+        (SampleType, SamplePurpose, AnalysisMethod) with data in the row from the spreadsheet.
         '''
+        if row['Parameter Value'] == '':        # Must have a value to proceed
+            return
+
         (sampleType, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name='subsample')
         (samplePurpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name=row['Sample Type'])
 
+        fd = None
+        if row['Filter Diameter [mm]']:
+            fd = float(row['Filter Diameter [mm]'])
+        fps = None
+        if row['Filter Pore Size [uM]']:
+            fps = float(row['Filter Pore Size [uM]'])
         sample = m.Sample(  instantpoint=parentSample.instantpoint,
                             depth=parentSample.depth,
                             geom=parentSample.geom,
-                            volume=row['Sample Volume [mL]'],
-                            filterdiameter=row['Filter Diameter [mm]'],
-                            filterporesize=row['Filter Pore Size [uM]'],
+                            volume=float(row['Sample Volume [mL]']),
+                            filterdiameter=fd,
+                            filterporesize=fps,
                             laboratory=row['Laboratory'],
                             researcher=row['Researcher'],
                             sampletype=sampleType,
@@ -433,14 +444,14 @@ class SubSamplesLoader(STOQS_Loader):
         samplerelationship.save(using=self.dbAlias)
                    
         (parameter, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name=row['Parameter Name'], units=row['Parameter Units'])
-
-        (analysisMethod, created) = m.AnalysisMethod.objects.using(self.dbAlias).get_or_create(name=row['Analysis Method'])
+    
+        analysisMethod = None
+        if row['Analysis Method']:
+            (analysisMethod, created) = m.AnalysisMethod.objects.using(self.dbAlias).get_or_create(name=removeNonAscii(row['Analysis Method']))
 
         sp = m.SampledParameter(sample=sample, parameter=parameter, datavalue=row['Parameter Value'], analysismethod=analysisMethod)
         sp.save(using=self.dbAlias)
                                 
-        pass
-
     def process_subsample_file(self, fileName):
         '''
         Open .csv file and load the data, matching to existing Sample.
@@ -450,15 +461,31 @@ class SubSamplesLoader(STOQS_Loader):
             2011_074_02_074_02,0,random,1500,25,30,B1006 barnacles,0.218,OD A450 nm,,Vrijenhoek,Harvey,Sandwich Hybridization Assay,,
             2011_074_02_074_02,0,random,1500,25,30,M2B mussels,0.118,OD A450 nm,,Vrijenhoek,Harvey,Sandwich Hybridization Assay,,
         '''
+        subCount = 0
+        lastParentSampleID = 0
         for r in csv.DictReader(open(fileName)):
-            ##logger.debug(r)
-            parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
-                                                  ).filter( instantpoint__activity__name__contains=r['Cruise'], 
-                                                            name='%.1f' % float(r['Bottle Number']))[0]
-            logger.debug('parentSample.id = %d', parentSample.id)
-            self.load_subsample(parentSample, r)
-    
+            logger.debug(r)
+            if r['Cruise'] == '2011_257_00_257_01':
+                r['Cruise'] = '2011_257_00_257_00'      # Correct a typo in spreadsheet
+            try:
+                parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
+                                                      ).filter( instantpoint__activity__name__contains=r['Cruise'], 
+                                                                name='%.1f' % float(r['Bottle Number']))[0]
+            except IndexError:
+                logger.warn('Parent Sample not found for Cruise = %s, Bottle Number = %s', r['Cruise'], r['Bottle Number'])
+                continue
 
+            if parentSample.id != lastParentSampleID:
+                if lastParentSampleID:
+                    logger.info('%d sub samples loaded', subCount)
+                logger.info('Loading subsamples of parentSample (activity, bottle) = (%s, %s)', r['Cruise'], r['Bottle Number'])
+                subCount = 0
+
+            subCount = subCount + 1
+            self.load_subsample(parentSample, r)
+            lastParentSampleID = parentSample.id
+    
+        logger.info('%d sub samples loaded', subCount)
 
 
 if __name__ == '__main__':
