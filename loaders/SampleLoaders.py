@@ -50,7 +50,7 @@ from bs4 import BeautifulSoup
 
 # Set up logging
 logger = logging.getLogger('loaders')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -166,7 +166,7 @@ def load_gulps(activityName, file, dbAlias):
 
 class SeabirdLoader(STOQS_Loader):
     '''
-    Inherit database loding functions from STOQS_Loader and use its constructor
+    Inherit database loading functions from STOQS_Loader and use its constructor
     '''
 
     def load_data(self, lat, lon, depth, time, parmNameValues):
@@ -399,6 +399,68 @@ class SeabirdLoader(STOQS_Loader):
                     self.process_btl_file(btlFH, year, lat, lon)
 
 
+class SubSamplesLoader(STOQS_Loader):
+    '''
+    Inherit database loading functions from STOQS_Loader and use its constructor.
+    This class is designed to load subsample information for Samples that have already
+    been loaded into a STOQS database.  The input data will have a key field that will
+    match to an existing Sample and SampledParameter data that will need to be loaded
+    in.
+    '''
+
+    def load_subsample(self, parentSample, row):
+        '''
+        Load the data values recorded at the bottle trips so that we have some InstantPoints to 
+        hang off for our Samples.  This is necessary as data are acquired on the down cast and
+        bottles are tripped on the upcast.  
+        '''
+        (sampleType, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name='subsample')
+        (samplePurpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name=row['Sample Type'])
+
+        sample = m.Sample(  instantpoint=parentSample.instantpoint,
+                            depth=parentSample.depth,
+                            geom=parentSample.geom,
+                            volume=row['Sample Volume [mL]'],
+                            filterdiameter=row['Filter Diameter [mm]'],
+                            filterporesize=row['Filter Pore Size [uM]'],
+                            laboratory=row['Laboratory'],
+                            researcher=row['Researcher'],
+                            sampletype=sampleType,
+                            samplepurpose=samplePurpose)
+        sample.save(using=self.dbAlias)
+
+        samplerelationship = m.SampleRelationship(child=sample, parent=parentSample)
+        samplerelationship.save(using=self.dbAlias)
+                   
+        (parameter, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name=row['Parameter Name'], units=row['Parameter Units'])
+
+        (analysisMethod, created) = m.AnalysisMethod.objects.using(self.dbAlias).get_or_create(name=row['Analysis Method'])
+
+        sp = m.SampledParameter(sample=sample, parameter=parameter, datavalue=row['Parameter Value'], analysismethod=analysisMethod)
+        sp.save(using=self.dbAlias)
+                                
+        pass
+
+    def process_subsample_file(self, fileName):
+        '''
+        Open .csv file and load the data, matching to existing Sample.
+        The format of the file is as defined by Julio's work.  The first few records look like:
+
+            Cruise,Bottle Number,Sample Type,Sample Volume [mL],Filter Diameter [mm],Filter Pore Size [uM],Parameter Name,Parameter Value,Parameter Units,MBARI BOG Taxon Code,Laboratory,Researcher,Analysis Method,Comment Name,Comment Value
+            2011_074_02_074_02,0,random,1500,25,30,B1006 barnacles,0.218,OD A450 nm,,Vrijenhoek,Harvey,Sandwich Hybridization Assay,,
+            2011_074_02_074_02,0,random,1500,25,30,M2B mussels,0.118,OD A450 nm,,Vrijenhoek,Harvey,Sandwich Hybridization Assay,,
+        '''
+        for r in csv.DictReader(open(fileName)):
+            ##logger.debug(r)
+            parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
+                                                  ).filter( instantpoint__activity__name__contains=r['Cruise'], 
+                                                            name='%.1f' % float(r['Bottle Number']))[0]
+            logger.debug('parentSample.id = %d', parentSample.id)
+            self.load_subsample(parentSample, r)
+    
+
+
+
 if __name__ == '__main__':
 
     # Accept optional arguments of dbAlias, input data directory name, and output directory name
@@ -406,9 +468,15 @@ if __name__ == '__main__':
     try:
         dbAlias = sys.argv[1]
     except IndexError:
-        dbAlias = 'default'
+        dbAlias = 'stoqs_dorado2011_s100'
 
-    
+    # Test SubSamplesLoader
+    ssl = SubSamplesLoader('', '', dbAlias=dbAlias)
+    ssl.process_subsample_file('2011_AUVdorado_Samples_Database.csv')
+
+    sys.exit(0)
+
+    # Test SeabirdLoader
     sl = SeabirdLoader('activity name', 'wf_pctd', dbAlias=dbAlias)
     ##sl.parentInDir = '.'  # Set if reading data from a directory rather than a TDS URL
     # Catalog to .btl files is formed with sl.tdsBase + 'catalog/' + sl.pctdDir + 'catalog.html'
@@ -418,8 +486,7 @@ if __name__ == '__main__':
     sl.process_btl_files()
 
 
-
-    # A nice test data load for a northern Monterey Bay survey  
+    # Test load_gulps: A nice test data load for a northern Monterey Bay survey  
     ##file = 'Dorado389_2010_300_00_300_00_decim.nc'
     ##dbAlias = 'default'
     file = 'Dorado389_2010_277_01_277_01_decim.nc'
