@@ -471,7 +471,7 @@ class SampledParameter(models.Model):
     sample = models.ForeignKey(Sample) 
     parameter = models.ForeignKey(Parameter) 
     datavalue = models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
-    analysismethod = models.ForeignKey(AnalysisMethod)
+    analysismethod = models.ForeignKey(AnalysisMethod, null=True)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Sampled Parameter'
