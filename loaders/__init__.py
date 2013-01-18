@@ -55,6 +55,8 @@ from django.db.backends.util import CursorWrapper
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
+missing_value = 1e-34
+
 class SkipRecord(Exception):
     pass
 
@@ -119,6 +121,7 @@ class STOQS_Loader(object):
 
         ##paURL = 'http://odss-staging.shore.mbari.org/trackingdb/platformAssociations.csv'
         paURL = 'http://odss.mbari.org/trackingdb/platformAssociations.csv'
+        ##paURL = 'http://192.168.111.177/trackingdb/platformAssociations.csv'  # Private URL for host malibu
         # Returns lines like:
         # PlatformType,PlatformName
         # ship,Martin
@@ -127,6 +130,7 @@ class STOQS_Loader(object):
         # ship,W_FLYER
         # ship,ZEPHYR
         # mooring,Bruce
+        logger.info("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
         tpHandle = csv.DictReader(urllib2.urlopen(paURL))
         platformName = ''
         for rec in tpHandle:
@@ -142,7 +146,7 @@ class STOQS_Loader(object):
             logger.warn("Platform name %s not found in tracking database.  Creating new platform anyway.", platformName)
 
         # Create PlatformType
-        logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", (self.dbAlias, self.platformTypeName))
+        logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", self.dbAlias, self.platformTypeName)
         (platformType, created) = m.PlatformType.objects.db_manager(self.dbAlias).get_or_create(name = self.platformTypeName)
         if created:
             logger.debug("Created platformType.name %s in database %s", platformType.name, self.dbAlias)
@@ -165,7 +169,6 @@ class STOQS_Loader(object):
       '''
       Wrapper so as to apply self.dbAlias in the decorator
       '''
-      @transaction.commit_manually(using=self.dbAlias)
       def innerAddParameters(self, parmDict):
         '''
         This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
@@ -201,13 +204,11 @@ class STOQS_Loader(object):
                     'origin': self.activityName,
                     'name': key}
 
-                ##print "addParameters(): parms = %s" % parms
                 self.parameter_dict[key] = m.Parameter(**parms)
                 try:
                     sid = transaction.savepoint(using=self.dbAlias)
                     self.parameter_dict[key].save(using=self.dbAlias)
                     self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                    transaction.savepoint_commit(sid,using=self.dbAlias)
                 except IntegrityError as e:
                     logger.warn('%s', e)
                     transaction.savepoint_rollback(sid)
@@ -217,7 +218,6 @@ class STOQS_Loader(object):
                             sid2 = transaction.savepoint(using=self.dbAlias)
                             self.parameter_dict[key].save(using=self.dbAlias)
                             self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                            transaction.savepoint_commit(sid2,using=self.dbAlias)
                         except Exception as e:
                             logger.error('%s', e)
                             transaction.savepoint_rollback(sid2,using=self.dbAlias)
@@ -236,7 +236,6 @@ class STOQS_Loader(object):
                         '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
                 logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
 
-        transaction.commit(using=self.dbAlias)
 
       return innerAddParameters(self, parmDict)
  
@@ -361,8 +360,8 @@ class STOQS_Loader(object):
         @return: An instance of stoqs.models.Measurement
         '''
 
-        if depth < -1000 or depth > 6000:
-            raise SkipRecord('Bad depth = %f')
+        if depth < -1000 or depth > 4000:
+            raise SkipRecord('Bad depth')
 
         ip = m.InstantPoint(activity = self.activity,
                     timevalue = time)
@@ -412,7 +411,7 @@ class STOQS_Loader(object):
         for v in self.include_names:
             logger.debug("v = %s", v)
             try:
-                vVals = self.ds[v][:]
+                vVals = self.ds[v][:]           # Case sensitive
                 logger.debug(len(vVals))
                 allNaNFlag[v] = numpy.isnan(vVals).all()
                 if not allNaNFlag[v]:
@@ -450,23 +449,22 @@ class STOQS_Loader(object):
             pass
 
     def updateActivityParameterStats(self, parameterCounts):
-        '''
+        ''' 
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
         for this activity.  Store the historgram in the associated table.
-        '''
+        '''                 
         a = self.activity
         for p in parameterCounts:
-            data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p)
+            data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p, measurement__instantpoint__activity=self.activity)
             numpvar = numpy.array([float(v.datavalue) for v in data])
-            numpvar.sort()
-            listvar = list(numpvar)
-            logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f',
-                            p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar), 
-                            percentile(listvar, 0.025), percentile(listvar, 0.975))
-
-
-            # Save statistics
-            try:
+            numpvar.sort()              
+            listvar = list(numpvar)     
+            logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f, shape = %s',
+                            p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar),
+                            percentile(listvar, 0.025), percentile(listvar, 0.975), numpvar.shape)
+                                        
+            # Save statistics           
+            try:                        
                 ap, created = m.ActivityParameter.objects.using(self.dbAlias).get_or_create(
                                         activity = a,
                                         parameter = p,
@@ -479,36 +477,34 @@ class STOQS_Loader(object):
                                         p025 = percentile(listvar, 0.025),
                                         p975= percentile(listvar, 0.975)
                                         )
-                   
-                if created:
+                    
+                if created: 
                     logger.info('Created ActivityParameter for parameter.name = %s', p.name)
                 else:
-                    m.ActivityParameter.objects.using(self.dbAlias).update(
-                                        activity = a,
-                                        parameter = p,
-                                        number = len(listvar),
-                                        min = numpvar.min(),
-                                        max = numpvar.max(),
-                                        mean = numpvar.mean(),
-                                        median = median(listvar),
-                                        mode = mode(numpvar),
-                                        p025 = percentile(listvar, 0.025),
-                                        p975= percentile(listvar, 0.975)
-                                        )
-                    logger.info('Update ActivityParameter for parameter.name = %s', p.name)
+                    ap.number = len(listvar)
+                    ap.min = numpvar.min()
+                    ap.max = numpvar.max()
+                    ap.mean = numpvar.mean()
+                    ap.median = median(listvar)
+                    ap.mode = mode(numpvar)
+                    ap.p025 = percentile(listvar, 0.025)
+                    ap.p975 = percentile(listvar, 0.975)
+                    ap.save()
+                    logger.info('Updated ActivityParameter for parameter.name = %s', p.name)
 
             except IntegrityError:
                 logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
-                
+                continue
+
             # Compute and save histogram
             (counts, bins) = numpy.histogram(numpvar,100)
-            logger.info(counts)
-            logger.info(bins)
+            logger.debug(counts)
+            logger.debug(bins)
             i = 0
             for count in counts:
                 try:
                     ##logger.info('Creating ActivityParameterHistogram...')
-                    logger.info('count = %d, binlo = %f, binhi = %f', count, bins[i], bins[i+1])
+                    logger.debug('count = %d, binlo = %f, binhi = %f', count, bins[i], bins[i+1])
                     h, created = m.ActivityParameterHistogram.objects.using(self.dbAlias).get_or_create(
                                                     activityparameter=ap, bincount=count, binlo=bins[i], binhi=bins[i+1])
                     i = i + 1
@@ -520,10 +516,12 @@ class STOQS_Loader(object):
 
         logger.info('Updated statistics for activity.name = %s', a.name)
 
-    def insertSimpleDepthTimeSeries(self):
+    def insertSimpleDepthTimeSeries(self, critSimpleDepthTime=10):
         '''
         Read the time series of depth values for this activity, simplify it and insert the values in the
         SimpleDepthTime table that is related to the Activity.
+
+        @param critSimpleDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
         '''
         vlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity,
                                                               ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk')
@@ -537,8 +535,6 @@ class STOQS_Loader(object):
 
         logger.debug('line = %s', line)
         logger.info('Number of points in original depth time series = %d', len(line))
-        ##critSimpleDepthTime = 10
-        critSimpleDepthTime = .0001
         try:
             simple_line = simplify_points(line, critSimpleDepthTime)
         except IndexError:
