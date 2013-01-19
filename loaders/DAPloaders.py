@@ -511,40 +511,29 @@ class Trajectory_Loader(Base_Loader):
         return super(Trajectory_Loader, self).preProcessParams(row)
 
 
-class Dorado_Loader(Base_Loader):
-    include_names = ['temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
-            'fl700_uncorr', 'salinity', 'biolume']
-
+class Dorado_Loader(Trajectory_Loader):
     chl = pydap.model.BaseType()
     chl.attributes = {  'standard_name':    'mass_concentration_of_chlorophyll_in_sea_water',
-                'long_name':        'Chlorophyll',
-                'units':        'ug/l',
-                'name':         'mass_concentration_of_chlorophyll_in_sea_water'
-            }
+                        'long_name':        'Chlorophyll',
+                        'units':            'ug/l',
+                        'name':             'mass_concentration_of_chlorophyll_in_sea_water'
+                     }
     dens = pydap.model.BaseType()
     dens.attributes = { 'standard_name':    'sea_water_sigma_t',
-                'long_name':        'Sigma-T',
-                'units':        'kg m-3',
-                'name':         'sea_water_sigma_t'
-            }
-
+                        'long_name':        'Sigma-T',
+                        'units':            'kg m-3',
+                        'name':             'sea_water_sigma_t'
+                      }
     parmDict = {    'mass_concentration_of_chlorophyll_in_sea_water': chl,
-            'sea_water_sigma_t': dens
-            }
-    include_names.extend(parmDict.keys())
+                    'sea_water_sigma_t': dens
+               }
+    include_names = [   'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
+                        'fl700_uncorr', 'salinity', 'biolume',
+                        'mass_concentration_of_chlorophyll_in_sea_water',
+                        'sea_water_sigma_t' ]
+
 
     def initDB(self):
-        'Needs to use the exact name for the time coordinate in the AUVCTD data'
-        if self.startDatetime == None or self.endDatetime == None:
-            ds = open_url(self.url)
-            if self.startDatetime == None:
-                self.startDatetime = datetime.utcfromtimestamp(ds.time[0])
-                self.dataStartDatetime = datetime.utcfromtimestamp(ds.time[0])
-                logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
-            if self.endDatetime == None:
-                self.endDatetime = datetime.utcfromtimestamp(ds.time[-1])
-                logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
-
         self.addParameters(self.parmDict)
         for k in self.parmDict.keys():
             self.varsLoaded.append(k)       # Make sure to add the derived parameters to the list that gets put in the comment
@@ -557,9 +546,9 @@ class Dorado_Loader(Base_Loader):
         # Magic formula for October 2010 CANON "experiment"
         if row.has_key('fl700_uncorr'):
             row['mass_concentration_of_chlorophyll_in_sea_water'] = 3.4431e+03 * row['fl700_uncorr']
+
         if row.has_key('salinity') and row.has_key('temperature') and row.has_key('depth') and row.has_key('latitude'):
             row['sea_water_sigma_t'] = sw.dens(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
-
 
         return super(Dorado_Loader, self).preProcessParams(row)
 
@@ -617,13 +606,21 @@ class Dorado_Loader(Base_Loader):
         return super(Dorado_Loader, self).addResources()
 
 
-class Lrauv_Loader(Base_Loader):
-    include_names = ['mass_concentration_of_oxygen_in_sea_water',
-            'mole_concentration_of_nitrate_in_sea_water',
-            'mass_concentration_of_chlorophyll_in_sea_water',
-            'sea_water_salinity',
-            'sea_water_temperature',
-            ]
+class Lrauv_Loader(Trajectory_Loader):
+    dens = pydap.model.BaseType()
+    dens.attributes = { 'standard_name':    'sea_water_sigma_t',
+                        'long_name':        'Sigma-T',
+                        'units':            'kg m-3',
+                        'name':             'sea_water_sigma_t'
+                      }
+    parmDict = {'sea_water_sigma_t': dens}
+    include_names = [   'mass_concentration_of_oxygen_in_sea_water',
+                        'mole_concentration_of_nitrate_in_sea_water',
+                        'mass_concentration_of_chlorophyll_in_sea_water',
+                        'sea_water_salinity',
+                        'sea_water_temperature',
+                        'sea_water_sigma_t',
+                    ]
 
     def initDB(self):
         'Needs to use the exact name for the time coordinate in the LRAUV data'
@@ -638,52 +635,25 @@ class Lrauv_Loader(Base_Loader):
                 self.endDatetime = datetime.utcfromtimestamp(ds.Time[-1])
                 logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
 
+        self.addParameters(self.parmDict)
+        for k in self.parmDict.keys():
+            self.varsLoaded.append(k)       # Make sure to add the derived parameters to the list that gets put in the comment
+
         return super(Lrauv_Loader, self).initDB()
 
     def preProcessParams(self, row):
-        '''I confess to not really understanding what this does.  - mpm
-        '''
         ##print "preProcessParams(): row = %s" % row
         for v in ('Time', 'TIME', 'latitude', 'longitude', 'depth'):
             if row.has_key(v):
                 row[v.lower()] = row.pop(v) 
+        if row.has_key('sea_water_salinity') and row.has_key('sea_water_temperature') and row.has_key('depth') and row.has_key('latitude'):
+            row['sea_water_sigma_t'] = sw.dens(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
 
         return super(Lrauv_Loader, self).preProcessParams(row)
 
 
-class Mooring_Loader(Base_Loader):
-    ##include_names=['sea_water_temperature', 'sea_water_salinity', 'Fluorescence',
-        ##'Fluor_RefSignal', 'NTU_RefSignal', 'NTU', 'ThermistorTemp']
-    include_names=['Temperature', 'Salinity', 'TEMP', 'PSAL', 'ATMP', 'AIRT', 'WDIR', 'WSDP']
 
-    def preProcessParams(self, row):
-
-        for v in ('Time','TIME','LATITUDE','LONGITUDE','DEPTH','Longitude','Latitude','NominalDepth'):
-            logger.debug("v = %s", v)
-            if row.has_key(v):
-                value = row.pop(v)
-                row[v.lower()] = value
-        if not row.has_key('longitude'):
-            for key in ('GPS_LONGITUDE_HR',):
-                if row.has_key(key):
-                    row['longitude'] = row.pop(key)
-        if not row.has_key('latitude'):
-            for key in ('GPS_LATITUDE_HR',):
-                if row.has_key(key):
-                    row['latitude'] = row.pop(key)
-        if row.has_key('nominaldepth') and (not row.has_key('depth')):
-            row['depth'] = row.pop('nominaldepth')
-        if row.has_key('hr_time_adcp') and (not row.has_key('time')):
-            row['time'] = row.pop('hr_time_adcp')
-        if row.has_key('esecs') and (not row.has_key('time')):
-            row['time'] = row.pop('esecs')
-        if row.has_key('HR_DEPTH_adcp') and (not row.has_key('depth')):
-            row['depth'] = row.pop('HR_DEPTH_adcp')
-            # print row
-        return super(Mooring_Loader,self).preProcessParams(row)
-
-
-class Glider_Loader(Base_Loader):
+class Glider_Loader(Trajectory_Loader):
     include_names=['TEMP', 'PSAL', 'OPBS', 'FLU2']
 
     def createActivity(self):
@@ -732,6 +702,38 @@ class Glider_Loader(Base_Loader):
             logger.debug(row['time'])
 
         return super(Glider_Loader,self).preProcessParams(row)
+
+
+class Mooring_Loader(Base_Loader):
+    ##include_names=['sea_water_temperature', 'sea_water_salinity', 'Fluorescence',
+        ##'Fluor_RefSignal', 'NTU_RefSignal', 'NTU', 'ThermistorTemp']
+    include_names=['Temperature', 'Salinity', 'TEMP', 'PSAL', 'ATMP', 'AIRT', 'WDIR', 'WSDP']
+
+    def preProcessParams(self, row):
+
+        for v in ('Time','TIME','LATITUDE','LONGITUDE','DEPTH','Longitude','Latitude','NominalDepth'):
+            logger.debug("v = %s", v)
+            if row.has_key(v):
+                value = row.pop(v)
+                row[v.lower()] = value
+        if not row.has_key('longitude'):
+            for key in ('GPS_LONGITUDE_HR',):
+                if row.has_key(key):
+                    row['longitude'] = row.pop(key)
+        if not row.has_key('latitude'):
+            for key in ('GPS_LATITUDE_HR',):
+                if row.has_key(key):
+                    row['latitude'] = row.pop(key)
+        if row.has_key('nominaldepth') and (not row.has_key('depth')):
+            row['depth'] = row.pop('nominaldepth')
+        if row.has_key('hr_time_adcp') and (not row.has_key('time')):
+            row['time'] = row.pop('hr_time_adcp')
+        if row.has_key('esecs') and (not row.has_key('time')):
+            row['time'] = row.pop('esecs')
+        if row.has_key('HR_DEPTH_adcp') and (not row.has_key('depth')):
+            row['depth'] = row.pop('HR_DEPTH_adcp')
+            # print row
+        return super(Mooring_Loader,self).preProcessParams(row)
 
 
 def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride):
