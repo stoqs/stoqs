@@ -147,7 +147,8 @@ cl.wfuctd_files = [
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
 # Western Flyer Profile CTD
-cl.wfpctd_base = cl.tdsBase + 'CANON_september2012/wf/pctd/'
+cl.pctdDir = 'CANON_september2012/wf/pctd/'
+cl.wfpctd_base = cl.tdsBase + cl.pctdDir
 cl.wfpctd_files = [ 
 'c0912c01up.nc', 'c0912c02.nc', 'c0912c03.nc', 'c0912c04.nc', 'c0912c05.nc', 'c0912c06.nc', 
 'c0912c07.nc', 'c0912c08.nc', 'c0912c09.nc', 'c0912c10.nc', 'c0912c11.nc', 'c0912c12.nc', 
