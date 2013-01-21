@@ -67,7 +67,7 @@ indication that you are in the virtual environment.
     Answer 'no' when asked to create a superuser unless you wish to use the admin interface.
     If you have additional databases sync them with the --database option:
     
-        python manage.py syncdb --database=stoqs_<campaign> # For campaign specific databases 
+        python manage.py syncdb --database=stoqs_<campaign>     # For campaign specific databases 
     
 
 5.  Start the development web server:
@@ -92,23 +92,10 @@ indication that you are in the virtual environment.
 
     If you get the message "Data load complete, 498 records loaded" followed by some sample load messages
     then you will have successfully loaded some data from MBARI's AUVCTD Dorado OPeNDAP data archive.  
-    You should be able to see the Activity that was loaded at:
+    You should be able to see an ajax-driven user interface  web page at:
 
-        http://localhost:8000/default/activitiesMBARICustom # Test the get data links in the Comment column
-    and
-        http://localhost:8000/default/mgmt
-    and 
-        http://localhost:8000/default/admin/       # Login with the account you created in step 4
-    and 
-        http://localhost:8000/default/activity
-    and 
-        http://localhost:8000/default/sample
-    and 
-        http://localhost:8000/default/query/       # For an ajax-driven query interface to STOQS
+        http://localhost:8000/default/query/ 
     
-    The mgmt url provides a link deleting the Activity - confirm in the celeryd window that Activity 
-    gets deleted - execute loaders/DAPloaders.py again to reload the data.
-
     Refer to urls.py and stoqs/tests.py for a complete list of url patterns supported.
     
 
@@ -118,5 +105,5 @@ To continue on to the next steps please read the instructions in the DEVELOPMENT
 
 --
 Mike McCann
-MBARI 4 June 2012
+MBARI i21 January 2013
 
