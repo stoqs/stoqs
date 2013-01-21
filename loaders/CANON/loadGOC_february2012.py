@@ -45,8 +45,8 @@ except IndexError:
 # ------------------------------------------------------------------------------------
 cl = CANONLoader(dbAlias, 'GOC - February 2012')
 
-cl.dodsBase = 'http://odss.mbari.org:8080/thredds/dodsC/' 
 cl.tdsBase = 'http://odss.mbari.org:8080/thredds/'      
+cl.dodsBase = cl.tdsBase + 'dodsC/' 
 
 # Western Flyer Underway CTD
 cl.wfuctd_base = cl.dodsBase + 'GOC_february2012/wf/uctd/'
