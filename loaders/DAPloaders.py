@@ -347,6 +347,15 @@ class Base_Loader(STOQS_Loader):
                 except ValueError:
                     logger.info('Bad time value')
                     continue
+
+                # If a time subset of data are requested
+                if self.startDatetime:
+                    if time < self.startDatetime:
+                        continue
+                if self.endDatetime:
+                    if time > self.endDatetime:
+                        continue
+
                 try:
                     measurement = self.createMeasurement(time = time,
                                     depth = depth,
