@@ -50,11 +50,11 @@ cl = CANONLoader(dbAlias, campaignName)
 
 # Aboard the Flyer use malibu's VSAT IP address:
 ##tdsBase = 'http://192.168.111.177:8080/thredds/dodsC/'      # malibu on the flyer
-tdsBase = 'http://odss.mbari.org/thredds/dodsC/'       # For running shore-side
+cl.tdsBase = 'http://odss.mbari.org/thredds/dodsC/'       # For running shore-side
 
 # 2-second decimated dorado data
 # http://192.168.111.177:8080/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_258_00_258_00_decim.nc
-cl.dorado_base = tdsBase + 'CANON_september2012/dorado/'
+cl.dorado_base = cl.tdsBase + 'CANON_september2012/dorado/'
 cl.dorado_files = [ 
                     'Dorado389_2012_256_00_256_00_decim.nc',
                     'Dorado389_2012_257_01_257_01_decim.nc',
@@ -63,7 +63,7 @@ cl.dorado_files = [
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
 ##cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
-cl.daphne_base = tdsBase + 'CANON_september2012/lrauv/daphne/realtime/sbdlogs/2012/201209/'
+cl.daphne_base = cl.tdsBase + 'CANON_september2012/lrauv/daphne/realtime/sbdlogs/2012/201209/'
 cl.daphne_files = [ 
 # NoValidData                    '20120910T142840/shore.nc',
 # NoValidData                    '20120910T143107/shore.nc',
@@ -86,7 +86,7 @@ cl.daphne_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_
 
 # Realtime telemetered (_r_) tethys data - insert '_r_' to not load the files
 ##cl.tethys_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/tethys/2012/'                    # Tethys realtime
-cl.tethys_base = tdsBase + 'CANON_september2012/lrauv/tethys/realtime/sbdlogs/2012/201209/'
+cl.tethys_base = cl.tdsBase + 'CANON_september2012/lrauv/tethys/realtime/sbdlogs/2012/201209/'
 cl.tethys_files = [ 
                     '20120909T152301/shore.nc',
                     '20120910T190223/shore.nc',
@@ -125,14 +125,14 @@ cl.l_662_startDatetime = datetime.datetime(2012, 9, 10)
 cl.l_662_endDatetime = datetime.datetime(2012, 9, 20)
 
 # Liquid Robotics Waveglider
-cl.waveglider_base = tdsBase + 'CANON_september2012/waveglider/'
+cl.waveglider_base = cl.tdsBase + 'CANON_september2012/waveglider/'
 cl.waveglider_files = [ 'waveglider_gpctd_WG.nc' ]
 cl.waveglider_parms = [ 'TEMP', 'PSAL', 'oxygen' ]
 cl.waveglider_startDatetime = datetime.datetime(2012, 8, 31, 18, 47, 0)
 cl.waveglider_endDatetime = datetime.datetime(2012, 9, 25, 16, 0, 0)
 
 # MBARI ESPdrift
-cl.espdrift_base = tdsBase + 'CANON_september2012/misc/ESPdrift/'
+cl.espdrift_base = cl.tdsBase + 'CANON_september2012/misc/ESPdrift/'
 cl.espdrift_files = [ 
                         'ESP_ctd.nc',
                         'ESP_isus.nc',
@@ -140,14 +140,14 @@ cl.espdrift_files = [
 cl.espdrift_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
 
 # Western Flyer Underway CTD
-cl.wfuctd_base = tdsBase + 'CANON_september2012/wf/'
+cl.wfuctd_base = cl.tdsBase + 'CANON_september2012/wf/'
 cl.wfuctd_files = [ 
                         'wf_uctd.nc',
                       ]
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
 # Western Flyer Profile CTD
-cl.wfpctd_base = tdsBase + 'CANON_september2012/wf/pctd/'
+cl.wfpctd_base = cl.tdsBase + 'CANON_september2012/wf/pctd/'
 cl.wfpctd_files = [ 
 'c0912c01up.nc', 'c0912c02.nc', 'c0912c03.nc', 'c0912c04.nc', 'c0912c05.nc', 'c0912c06.nc', 
 'c0912c07.nc', 'c0912c08.nc', 'c0912c09.nc', 'c0912c10.nc', 'c0912c11.nc', 'c0912c12.nc', 
