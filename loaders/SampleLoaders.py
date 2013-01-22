@@ -463,6 +463,7 @@ class SubSamplesLoader(STOQS_Loader):
         '''
         subCount = 0
         lastParentSampleID = 0
+        parameterCount = {}
         for r in csv.DictReader(open(fileName)):
             logger.debug(r)
             if r['Cruise'] == '2011_257_00_257_01':
@@ -481,11 +482,22 @@ class SubSamplesLoader(STOQS_Loader):
                 logger.info('Loading subsamples of parentSample (activity, bottle) = (%s, %s)', r['Cruise'], r['Bottle Number'])
                 subCount = 0
 
+            try:
+                p = m.Parameter.objects.using(self.dbAlias).get(name=r['Parameter Name'])
+            except e:
+                logger.warn(e)
+            else:
+                try:
+                    parameterCount[p] += 1
+                except KeyError:
+                    parameterCount[p] = 0
+
             subCount = subCount + 1
             self.load_subsample(parentSample, r)
             lastParentSampleID = parentSample.id
     
         logger.info('%d sub samples loaded', subCount)
+        self.assignParameterGroup(parameterCount, groupName='Sampled')
 
 
 if __name__ == '__main__':
