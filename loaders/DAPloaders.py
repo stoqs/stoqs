@@ -481,6 +481,7 @@ class Base_Loader(STOQS_Loader):
         self.updateActivityParameterStats(parameterCount)
         self.insertSimpleDepthTimeSeries()
         self.updateCampaignStartEnd()
+        self.assignParameterGroup(parameterCount, groupName='Measured in situ')
         logger.info("Data load complete, %d records loaded.", loaded)
 
 
