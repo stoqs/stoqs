@@ -489,7 +489,7 @@ class STOQS_Loader(object):
                     ap.mode = mode(numpvar)
                     ap.p025 = percentile(listvar, 0.025)
                     ap.p975 = percentile(listvar, 0.975)
-                    ap.save()
+                    ap.save(using=self.dbAlias)
                     logger.info('Updated ActivityParameter for parameter.name = %s', p.name)
 
             except IntegrityError:
@@ -565,6 +565,14 @@ class STOQS_Loader(object):
             logger.warn(e)
             pass
 
+    def assignParameterGroup(self, parameterCounts, groupName='Measured in situ'):
+        ''' 
+        For all the parameters in @parameterCounts create a many-to-many association with the Group named @groupName
+        '''                 
+        g, created = m.ParameterGroup.objects.using(self.dbAlias).get_or_create(name=groupName)
+        for p in parameterCounts:
+            pgp = m.ParameterGroupParameter(parameter=p, parametergroup=g)
+            pgp.save(using=self.dbAlias)
 
 
 if __name__ == '__main__':
