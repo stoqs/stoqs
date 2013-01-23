@@ -63,6 +63,7 @@ class MPQuerySet(object):
         Use @values_list to request just the fields (columns) needed.  The class variables
         rest_colums and kml_columns are typical value_lists.  Note: specifying a values_list
         appears to break the correct serialization of geometry types in the json response.
+        Called by stoqs/views/__init__.py when MeasuredParameter REST requests are made.
         '''
         self.query = query or postgresifySQL(str(qs_mp.query))
         self.values_list = values_list
@@ -282,6 +283,7 @@ class MPQuery(object):
         '''
         Build the query set based on selections from the UI. For the first time through kwargs will be empty 
         and self.qs_mp will have no constraints and will be all of the MeasuredParameters in the database.
+        This is called by utils/STOQSQueryManagery.py.
         '''
 
         if self.qs_mp is None:
@@ -337,12 +339,13 @@ class MPQuery(object):
         if values_list:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
         else:
-            # A depth of 4 is needed in order to see Platform
-            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
+            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
 
         # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
+                # A depth of 4 is needed in order to see Platform
+                qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
                 sql = postgresifySQL(str(qs_mp.query))
                 logger.debug('\n\nsql before query = %s\n\n', sql)
                 sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
