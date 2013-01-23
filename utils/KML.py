@@ -188,6 +188,12 @@ def buildKMLlines(plat, data, clt, clim):
     for row in data:
         (dt, lon, lat, depth, parm, datavalue, platform) = row
 
+        if lat < -90 or lat > 90:
+            # HACK warning: Fix any accidentally swapped lat & lons
+            foo = lon
+            lon = lat
+            lat = foo
+
         coordStr = "%.6f,%.6f,-%.1f" % (lon, lat, depth)
 
         if lastCoordStr:
@@ -255,6 +261,12 @@ def buildKMLpoints(plat, data, clt, clim):
     pointKml = ''
     for row in data:
         (dt, lon, lat, depth, parm, datavalue, platform) = row
+
+        if lat < -90 or lat > 90:
+            # HACK Warning: Fix any accidentally swapped lat & lons
+            foo = lon
+            lon = lat
+            lat = foo
 
         coordStr = "%.6f, %.6f,-%.1f" % (lon, lat, depth)
 
