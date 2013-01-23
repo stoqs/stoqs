@@ -571,8 +571,14 @@ class STOQS_Loader(object):
         '''                 
         g, created = m.ParameterGroup.objects.using(self.dbAlias).get_or_create(name=groupName)
         for p in parameterCounts:
-            pgp = m.ParameterGroupParameter(parameter=p, parametergroup=g)
-            pgp.save(using=self.dbAlias)
+            pgps = m.ParameterGroupParameter.objects.using(self.dbAlias).filter(parameter=p, parametergroup=g)
+            if not pgps:
+                # Attempt saving relation only if it does not exist
+                pgp = m.ParameterGroupParameter(parameter=p, parametergroup=g)
+                try:
+                    pgp.save(using=self.dbAlias)
+                except Exception, e:
+                    logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
 
 if __name__ == '__main__':
