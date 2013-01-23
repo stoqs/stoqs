@@ -183,6 +183,12 @@ class SeabirdLoader(STOQS_Loader):
         @time Python datetime.datetime object
         @depth in meters
         '''
+
+        # Sanity check to prevent accidental switching of lat & lon
+        if lat < -90 or lat > 90:
+            logger.exception("lat = %f.  Can't load this!", lat)
+            sys.exit(-1)
+
         try:
             measurement = self.createMeasurement(time = time,
                             depth = depth,
@@ -214,7 +220,7 @@ class SeabirdLoader(STOQS_Loader):
                 loaded += 1
                 logger.debug("Inserted value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
 
-    def load_btl(self, lon, lat, depth, timevalue, bottleName):
+    def load_btl(self, lat, lon, depth, timevalue, bottleName):
         '''
         Load a single Niskin Bottle sample
         '''
@@ -343,10 +349,10 @@ class SeabirdLoader(STOQS_Loader):
             parmNameValues = []
             for name in parmDict.keys():
                 parmNameValues.append((name, float(r[name])))
-            self.load_data(lon, lat, float(r['DepSM']), dt, parmNameValues)
+            self.load_data(lat, lon, float(r['DepSM']), dt, parmNameValues)
 
             # Load Bottle sample
-            self.load_btl(lon, lat, float(r['DepSM']), dt, bName)
+            self.load_btl(lat, lon, float(r['DepSM']), dt, bName)
 
         os.remove(tmpFile)
 
