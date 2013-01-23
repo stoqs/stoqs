@@ -17,9 +17,6 @@
       .stoqs-toggle {
         width: 100%;
       }
-      .zoom-toggle {
-        width: 100%;
-      }
       .stoqs-parameter-toggle {
         width: 50%;
       }
@@ -285,8 +282,9 @@
                 <div class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="time-depth-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
-                        Time Depth
-                        </a></h3>
+                        Time Depth</a>
+                        <button id="zoomed-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
                     </div>
                     <div id="collapseOne" class="accordion-body collapse in">
                         <div class="accordion-inner">
@@ -300,9 +298,6 @@
                                     </div>
                                     <div class="span3" id="zoomnavigation"></div>
                                     <div class="span4" id="sectioncolorbar" style="float:right;"></div>
-                                </div>
-                                <div class="span12">
-                                    <button id="zoomed-button" class="btn btn-mini zoom-toggle disabled">Zoomed</button>
                                 </div>
                             </div>
                             <input type="hidden" id="start-ems" "name="start-ems" />
@@ -767,12 +762,12 @@
     }
     
     function rebuildFilters() {
-        params={}
-        if ($('.btn-primary', $('#time-depth-plot')).length) {
-            params['start_time']=$('#start-time').val()
-            params['end_time']=$('#end-time').val()
-            params['min_depth']=$('#start-depth').val()
-            params['max_depth']=$('#end-depth').val()
+        params={};
+        if ($('.btn-primary', $('#time-depth-anchor').parent()).length) {
+            params['start_time']=$('#start-time').val();
+            params['end_time']=$('#end-time').val();
+            params['min_depth']=$('#start-depth').val();
+            params['max_depth']=$('#end-depth').val();
         }
 
         params['parametername']=[]
