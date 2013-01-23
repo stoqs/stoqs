@@ -24,10 +24,15 @@ def kmlResponse(request, qs_mp, qparams):
     if qs_mp is None:
         raise Exception('qs_mp is None.')
 
-    try:
-        pName = qparams['parameter__name'] or qparams['parameter__standard_name']
+    # If both selected parameter__name takes priority over parameter__standard_name
+    if qparams.has_key('parameter__standard_name'):
+        pName = qparams['parameter__standard_name']
+    if qparams.has_key('parameter__name'):
+        pName = qparams['parameter__ame']
+
+    if pName:
         logger.info("pName = %s", pName)
-    except IndexError:
+    else:
         raise Exception('Neither parameter__name nor parameter__standard_name selected')
 
     for mp in qs_mp:
