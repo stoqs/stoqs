@@ -229,6 +229,6 @@ class ContourPlots(object):
 
             return sectionPngFile, colorbarPngFile, ''
         else:
-            logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax, y_count = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax, y_count)
+            logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax)
             return None, None, 'No depth-time region specified'
 
