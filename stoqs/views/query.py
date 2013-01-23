@@ -36,49 +36,11 @@ logger = logging.getLogger(__name__)
 class InvalidMeasuredParameterQueryException(Exception):
     pass
 
+
 class NoParameterSelectedException(Exception):
     pass
 
 
-def csvResponse(request, qm, response):
-    '''
-    Return a response that is a Comma Separated Value represenation of the existing MeasuredParameter query that is in qm
-    '''
-    qs_mp = qm.mpq.getMeasuredParametersQS(MPQuerySet.rest_columns)
-    if qs_mp is None:
-        raise InvalidMeasuredParameterQueryException
-
-    try:
-        pName = qm.getParameters()[0][0]
-        logger.info("pName = %s", pName)
-    except IndexError:
-        raise NoParameterSelectedException
-
-    fields = ['platformName', 'time', 'longitude', 'latitude', 'depth', pName, 'units']
-
-    for mp in qs_mp:
-        logger.debug('mp = %s', mp)
-        break
-     
-    data = [
-            (   
-                mp['measurement__instantpoint__activity__platform__name'], 
-                mp['measurement__instantpoint__timevalue'], mp['measurement__geom'].x, mp['measurement__geom'].y,
-                mp['measurement__depth'], mp['datavalue'], mp['parameter__units']
-            )
-                 for mp in qs_mp]
-
-    response = HttpResponse()
-    response['Content-type'] = 'text/csv'
-    response['Content-Disposition'] = 'attachment; filename=%s.csv' % pName
-
-    writer = csv.writer(response)
-    writer.writerow(fields)
-    for d in data:
-        writer.writerow(d)
-    return response
-
-    
 def buildMapFile(request, qm, options):
     # 'mappath' should be in the session from the call to queryUI() set it here in case it's not set by queryUI() 
     if request.session.has_key('mappath'):
@@ -178,9 +140,6 @@ def queryData(request, format=None):
     elif format == 'json':
         response['Content-Type'] = 'text/json'
         response.write(serializers.serialize('json', qm.qs))
-    elif format == 'csv-simple':
-        logger.info('csv output')
-        return csvResponse(request, qm, response)
     elif format == 'dap':
         logger.info('dap output')
 
@@ -214,7 +173,6 @@ def queryUI(request):
              ('csv', 'Comma Separated Values', ),
              ('tsv', 'Tabbed Separated Values', ),
              ('html', 'Hyper Text Markup Language table', ),
-             ('csv-simple', 'Comma Separated Values - simplified header', ),
             ]
     logger.debug(formats)
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
