@@ -265,6 +265,7 @@ class ParameterGroup(models.Model):
     '''
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, unique=True)
+    description= models.CharField(max_length=128, blank=True, null=True)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'ParameterGroup'
