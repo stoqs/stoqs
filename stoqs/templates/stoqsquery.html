@@ -314,16 +314,17 @@
                 <div class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="parameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
-                        Parameters
-                        </a></h3>
+                        Parameters</a>
+                        <button id="clear-parameter-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
                     </div>
                     <div id="collapseTwo" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <table id="parameter-table" class="table table-condensed">
                                 <thead>
                                     <tr>
-                                        <td style="text-align:center;font-weight:bold;">Name</td>
-                                        <td style="text-align:center;font-weight:bold;">Standard Name</td>
+                                        <th style="text-align:center;">Name</th>
+                                        <th style="text-align:center;">Standard Name</th>
                                     </tr>
                                 </thead>                             
                                 <tbody>
@@ -357,8 +358,9 @@
                 <div class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="platforms-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
-                        Platforms
-                        </a></h3>
+                        Platforms</a>
+                        <button id="clear-platforms-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
                     </div>
                     <div id="collapseThree" class="accordion-body collapse in">
                         <div class="accordion-inner">
@@ -613,23 +615,33 @@
                 $element.removeClass('btn-primary');
                 if ($(element).hasClass('parametername')) {
                     $('#parameters-anchor').html('Parameters')
+                    $('#clear-parameter-button').addClass('disabled');
+                    $('#clear-parameter-button').removeClass('btn-primary');
                 }
                 if ($(element).hasClass('parameterstandardname')) {
                     $('#parameters-anchor').html('Parameters')
+                    $('#clear-parameter-button').addClass('disabled');
+                    $('#clear-parameter-button').removeClass('btn-primary');
                 }
                 if ($(element).hasClass('platform')) {
-                    $('#platforms-anchor').html('Platforms')
+                    $('#platforms-anchor').html('Platforms');
                 }
             } else {
                 $element.addClass('btn-primary');
                 if ($(element).hasClass('parametername')) {
                     $('#parameters-anchor').html('Parameter name: ' + $(element).html())
+                    $('#clear-parameter-button').removeClass('disabled');
+                    $('#clear-parameter-button').addClass('btn-primary');
                 }
                 if ($(element).hasClass('parameterstandardname')) {
                     $('#parameters-anchor').html('Parameter standard_name: ' + $(element).html())
+                    $('#clear-parameter-button').removeClass('disabled');
+                    $('#clear-parameter-button').addClass('btn-primary');
                 }
                 if ($(element).hasClass('platform')) {
                     $('#platforms-anchor').html('Platform: ' + $(element).html())
+                    $('#clear-platforms-button').removeClass('disabled');
+                    $('#clear-platforms-button').addClass('btn-primary');
                 }
             }
         }
@@ -885,12 +897,41 @@
         setTimeout(setKMLlinks());
     });
 
+    $("#clear-parameter-button").click(function() {
+        if ( $('#clear-parameter-button').hasClass('btn-primary')) {
+            $("#clear-parameter-button").removeClass('btn-primary');
+            $("#clear-parameter-button").addClass('disabled');
+            $('td',$('#parameter-table')).each(function (index, element) {
+                if ($('.btn-primary', $(element)).length) {
+                    $('#' + element.id + ' > button').removeClass('btn-primary');
+                }
+            });
+            rebuildFilters();
+            $('#parameters-anchor').html('Parameters')
+        }
+    });
+
     $("#resetparametervaluesselections").click(function() {
         if ( $('#resetparametervaluesselections').hasClass('btn-primary')) {
             $("#resetparametervaluesselections").removeClass('btn-primary');
             $("#resetparametervaluesselections").addClass('disabled');
             parametervalues = {};
             rebuildFilters();
+        }
+    });
+
+    $("#clear-platforms-button").click(function() {
+        if ( $('#clear-platforms-button').hasClass('btn-primary')) {
+            $("#clear-platforms-button").removeClass('btn-primary');
+            $("#clear-platforms-button").addClass('disabled');
+            $('tr',$('#platform-table')).each(function (index, element) {
+                if ($('.btn-primary', $(element)).length) {
+                    console.log(element);
+                    $('#' + element.id + ' > td > button').removeClass('btn-primary');
+                }
+            });
+            rebuildFilters();
+            $('#platforms-anchor').html('Platforms')
         }
     });
 
