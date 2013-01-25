@@ -456,15 +456,24 @@ class STOQS_Loader(object):
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
         for this activity.  Store the historgram in the associated table.
         '''                 
-        a = self.activity
+        if self.activity:
+            a = self.activity
+        else:
+            raise Exception('Must have an activity defined in self.activity')
+
         for p in parameterCounts:
             if sampledFlag:
-                data = m.SampledParameter.objects.using(self.dbAlias).filter(parameter=p, sample__instantpoint__activity=self.activity)
+                data = m.SampledParameter.objects.using(self.dbAlias).filter(parameter=p, sample__instantpoint__activity=a)
             else:
-                data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p, measurement__instantpoint__activity=self.activity)
+                data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p, measurement__instantpoint__activity=a)
             numpvar = numpy.array([float(v.datavalue) for v in data])
             numpvar.sort()              
-            listvar = list(numpvar)     
+            listvar = list(numpvar)
+            ##logger.debug('%s: listvar = %s', p.name, listvar)
+            if not listvar:
+                logger.warn('No datavalues for p.name = %s in activity %s', p.name, a.name)
+                continue
+
             logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f, shape = %s',
                             p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar),
                             percentile(listvar, 0.025), percentile(listvar, 0.975), numpvar.shape)

@@ -474,7 +474,7 @@ class SubSamplesLoader(STOQS_Loader):
         lastParentSampleID = 0
         parameterCount = {}
         for r in csv.DictReader(open(fileName)):
-            logger.debug(r)
+            ##logger.debug(r)
             if r['Cruise'] == '2011_257_00_257_01':
                 r['Cruise'] = '2011_257_00_257_00'      # Correct a typo in spreadsheet
             try:
@@ -515,10 +515,11 @@ class SubSamplesLoader(STOQS_Loader):
         table.  The updateActivityParameterStats() method in STOQS_Loader expects a hash of parameters
         that are unique to an activity that is an attribute of self.
         '''
-        for p in parameterCount:
-            for a in m.SampledParameter.objects.using(self.dbAlias).filter(parameter__name=p.name).values('sample__instantpoint__activity').distinct():
-                self.activity = a
-                self.updateActivityParameterStats(parameterCount, sampledFlag=True)
+        for row in m.SampledParameter.objects.using(self.dbAlias).values('sample__instantpoint__activity__pk').distinct():
+            a_id = row['sample__instantpoint__activity__pk']
+            logger.debug('a_id = %d', a_id)
+            self.activity = m.Activity.objects.using(self.dbAlias).get(pk=a_id)
+            self.updateActivityParameterStats(parameterCount, sampledFlag=True)
 
 
 if __name__ == '__main__':
