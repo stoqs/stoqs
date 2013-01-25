@@ -28,7 +28,7 @@ def kmlResponse(request, qs_mp, qparams):
     if qparams.has_key('parameter__standard_name'):
         pName = qparams['parameter__standard_name']
     if qparams.has_key('parameter__name'):
-        pName = qparams['parameter__ame']
+        pName = qparams['parameter__name']
 
     if pName:
         logger.info("pName = %s", pName)
