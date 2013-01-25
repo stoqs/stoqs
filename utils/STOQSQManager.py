@@ -20,6 +20,8 @@ from django.db.models import Avg
 from django.db.utils import DatabaseError
 from django.http import HttpResponse
 from stoqs import models
+from loaders import MEASUREDINSITU
+from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getDisplay_Parameter_Platform_Data
 from MPQuery import MPQuery
@@ -112,7 +114,10 @@ class STOQSQManager(object):
         These objects are "simple" dictionaries using only Python's built-in types - so conversion to a
         corresponding JSON object should be trivial.
         '''
-        options_functions={'parameters': self.getParameters,
+        options_functions={
+                           'sampledparametersgroup': self.getParameters,
+                           'measuredparametersgroup': self.getParameters,
+                           'parameters': self.getParameters,
                            'parameterminmax': self.getParameterMinMax,
                            'platforms': self.getPlatforms,
                            'time': self.getTime,
@@ -130,7 +135,12 @@ class STOQSQManager(object):
         
         results = {}
         for k,v in options_functions.iteritems():
-            results[k] = v()
+            if k == 'measuredparametersgroup':
+                results[k] = v(MEASUREDINSITU)
+            elif k == 'sampledparametersgroup':
+                results[k] = v(SAMPLED)
+            else:
+                results[k] = v()
         
         ##logger.info('qs.query = %s', pprint.pformat(str(self.qs.query)))
         ##logger.info('results = %s', pprint.pformat(results))
@@ -308,15 +318,20 @@ class STOQSQManager(object):
                 results.append((name,uuid,))
         return results
 
-    def getParameters(self):
+    def getParameters(self, groupName=''):
         '''
         Get a list of the unique parameters that are left based on the current query criteria.  Also
         return the UUID's of those, since we need to return those to perform the query later.
         Lastly, we assume here that the name is unique and is also used for the id - this is enforced on 
         data load.
         '''
-        qs = self.qs.values('activityparameter__parameter__name','activityparameter__parameter__standard_name').distinct()
+        if groupName:
+            qs = self.qs.filter(activityparameter__parameter__parametergroupparameter__parametergroup__name=groupName).values(
+                    'activityparameter__parameter__name','activityparameter__parameter__standard_name').distinct()
+        else:
+            qs = self.qs.values('activityparameter__parameter__name','activityparameter__parameter__standard_name').distinct()
 
+        logger.debug('   >>>>>>>> qs.query = %s', str(qs.query))
         results=[]
         for row in qs:
             name = row['activityparameter__parameter__name']
