@@ -321,12 +321,6 @@
                     <div id="collapseSampledParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <table id="sampledparameter-table" class="table table-condensed">
-                                <thead>
-                                    <tr>
-                                        <th style="text-align:center;">Name</th>
-                                        <th style="text-align:center;">Standard Name</th>
-                                    </tr>
-                                </thead>                             
                                 <tbody>
                                 </tbody>
                             </table>
@@ -339,7 +333,7 @@
                     <div class="accordian-heading">
                         <h3><a id="measuredparameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMeasuredParameter">
                         Measured Parameters</a>
-                        <button id="clear-parameter-button" class="btn btn-mini disabled">Clear Selection</button>
+                        <button id="clear-measuredparameter-button" class="btn btn-mini disabled">Clear Selection</button>
                         </h3>
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
@@ -639,30 +633,40 @@
         if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
             if ($element.is('.btn-primary')) {
                 $element.removeClass('btn-primary');
+                if ($(element).hasClass('sampledparametername')) {
+                    $('#sampledparameters-anchor').html('Sampled Parameters')
+                    $('#clear-sampledparameter-button').addClass('disabled');
+                    $('#clear-sampledparameter-button').removeClass('btn-primary');
+                }
                 if ($(element).hasClass('parametername')) {
                     $('#measuredparameters-anchor').html('Measured Parameters')
-                    $('#clear-parameter-button').addClass('disabled');
-                    $('#clear-parameter-button').removeClass('btn-primary');
+                    $('#clear-measuredparameter-button').addClass('disabled');
+                    $('#clear-measuredparameter-button').removeClass('btn-primary');
                 }
                 if ($(element).hasClass('parameterstandardname')) {
                     $('#measuredparameters-anchor').html('Measured Parameters')
-                    $('#clear-parameter-button').addClass('disabled');
-                    $('#clear-parameter-button').removeClass('btn-primary');
+                    $('#clear-measuredparameter-button').addClass('disabled');
+                    $('#clear-measuredparameter-button').removeClass('btn-primary');
                 }
                 if ($(element).hasClass('platform')) {
                     $('#platforms-anchor').html('Platforms');
                 }
             } else {
                 $element.addClass('btn-primary');
+                if ($(element).hasClass('sampledparametername')) {
+                    $('#sampledparameters-anchor').html('Sampled Parameter name: ' + $(element).html())
+                    $('#clear-sampledparameter-button').removeClass('disabled');
+                    $('#clear-sampledparameter-button').addClass('btn-primary');
+                }
                 if ($(element).hasClass('parametername')) {
                     $('#measuredparameters-anchor').html('Measured Parameter name: ' + $(element).html())
-                    $('#clear-parameter-button').removeClass('disabled');
-                    $('#clear-parameter-button').addClass('btn-primary');
+                    $('#clear-measuredparameter-button').removeClass('disabled');
+                    $('#clear-measuredparameter-button').addClass('btn-primary');
                 }
                 if ($(element).hasClass('parameterstandardname')) {
                     $('#measuredparameters-anchor').html('Measured Parameter standard_name: ' + $(element).html())
-                    $('#clear-parameter-button').removeClass('disabled');
-                    $('#clear-parameter-button').addClass('btn-primary');
+                    $('#clear-measuredparameter-button').removeClass('disabled');
+                    $('#clear-measuredparameter-button').addClass('btn-primary');
                 }
                 if ($(element).hasClass('platform')) {
                     $('#platforms-anchor').html('Platform: ' + $(element).html())
@@ -923,10 +927,24 @@
         setTimeout(setKMLlinks());
     });
 
-    $("#clear-parameter-button").click(function() {
-        if ( $('#clear-parameter-button').hasClass('btn-primary')) {
-            $("#clear-parameter-button").removeClass('btn-primary');
-            $("#clear-parameter-button").addClass('disabled');
+    $("#clear-sampledparameter-button").click(function() {
+        if ( $('#clear-sampledparameter-button').hasClass('btn-primary')) {
+            $("#clear-sampledparameter-button").removeClass('btn-primary');
+            $("#clear-sampledparameter-button").addClass('disabled');
+            $('td',$('#sampledparameter-table')).each(function (index, element) {
+                if ($('.btn-primary', $(element)).length) {
+                    $('#' + element.id + ' > button').removeClass('btn-primary');
+                }
+            });
+            rebuildFilters();
+            $('#measuredparameters-anchor').html('Measured Parameters')
+        }
+    });
+
+    $("#clear-measuredparameter-button").click(function() {
+        if ( $('#clear-measuredparameter-button').hasClass('btn-primary')) {
+            $("#clear-measuredparameter-button").removeClass('btn-primary');
+            $("#clear-measuredparameter-button").addClass('disabled');
             $('td',$('#parameter-table')).each(function (index, element) {
                 if ($('.btn-primary', $(element)).length) {
                     $('#' + element.id + ' > button').removeClass('btn-primary');
@@ -1315,7 +1333,20 @@
                 });
                 $('.platform').tooltip({title: 'Click to select this Platform'});
             }
-            else if (key == 'parameters') {
+            else if (key == 'sampledparametersgroup') {
+                var parameterButtonText = '';
+                $.each(data[key], function (index, value) {
+                    parameterButtonText = parameterButtonText + '<tr>' +
+                            '<td id="' + value[0] +'">' +
+                                '<button class="btn btn-mini stoqs-toggle sampledparametername">'+ value[0] +'</button>' + 
+                            '</td>';
+                    parameterButtonText = parameterButtonText + '</tr>';
+                });
+                $('#sampledparameter-table > tbody:last').append(parameterButtonText);
+                $('.sampledparametername').tooltip({title: 'Click to select this Parameter name'});
+                $('.sampledparameterstandardname').tooltip({title: 'Click to select this Parameter standard_name'});
+            }
+            else if (key == 'measuredparametersgroup') {
                 var parameterButtonText = '';
                 $.each(data[key], function (index, value) {
                     parameterButtonText = parameterButtonText + '<tr>' +
@@ -1417,7 +1448,23 @@
                     }
                 });
             }
-            else if (key == 'parameters') {
+            else if (key == 'sampledparametersgroup') {
+                zoomedData = data;
+                var ids=[];
+                $.each(data[key], function (index, value) {
+                    // Here we need to enable those that are still valid
+                    enableButton($('button', '#' + value[0]));              // Enable the name button in the table row
+                    ids.push(value[0]);
+                });
+                $('#sampledparameter-table > tbody > tr > td').each(function (index, elem) { 
+                    if (elem.id.length != 0) {
+                        if ($.inArray((elem.id).toString(), ids) == -1) {
+                           disableButton($('button', $(elem))); // disable the button in the table row
+                        }
+                    }
+                });
+            }
+            else if (key == 'measuredparametersgroup') {
                 zoomedData = data;
                 var ids=[];
                 $.each(data[key], function (index, value) {
@@ -1429,7 +1476,7 @@
                         ids.push(value[1] + '--' + value[0] + '-sn');
                     }
                 });
-                $('#parameter-table > tbody > tr > td').each(function (index, elem) { 
+                $('#measuredparameter-table > tbody > tr > td').each(function (index, elem) { 
                     if (elem.id.length != 0) {
                         if ($.inArray((elem.id).toString(), ids) == -1) {
                            disableButton($('button', $(elem))); // disable the button in the table row

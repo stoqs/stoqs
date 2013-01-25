@@ -117,7 +117,7 @@ class STOQSQManager(object):
         options_functions={
                            'sampledparametersgroup': self.getParameters,
                            'measuredparametersgroup': self.getParameters,
-                           'parameters': self.getParameters,
+                           ##'parameters': self.getParameters,
                            'parameterminmax': self.getParameterMinMax,
                            'platforms': self.getPlatforms,
                            'time': self.getTime,
@@ -327,11 +327,13 @@ class STOQSQManager(object):
         '''
         if groupName:
             qs = self.qs.filter(activityparameter__parameter__parametergroupparameter__parametergroup__name=groupName).values(
-                    'activityparameter__parameter__name','activityparameter__parameter__standard_name').distinct()
+                    'activityparameter__parameter__name','activityparameter__parameter__standard_name').distinct().order_by(
+                    'activityparameter__parameter__name')
         else:
-            qs = self.qs.values('activityparameter__parameter__name','activityparameter__parameter__standard_name').distinct()
+            qs = self.qs.values('activityparameter__parameter__name','activityparameter__parameter__standard_name').distinct().order_by(
+                                'activityparameter__parameter__name')
 
-        logger.debug('   >>>>>>>> qs.query = %s', str(qs.query))
+        ##logger.debug('   >>>>>>>> qs.query = %s', str(qs.query))
         results=[]
         for row in qs:
             name = row['activityparameter__parameter__name']

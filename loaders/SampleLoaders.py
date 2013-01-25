@@ -493,7 +493,7 @@ class SubSamplesLoader(STOQS_Loader):
 
             try:
                 p = m.Parameter.objects.using(self.dbAlias).get(name=r['Parameter Name'])
-            except e:
+            except Exception, e:
                 logger.warn(e)
             else:
                 try:
