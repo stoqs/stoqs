@@ -52,6 +52,9 @@ logger.setLevel(logging.INFO)
 from django.db.backends import BaseDatabaseWrapper
 from django.db.backends.util import CursorWrapper
 
+# Constant for ParameterGroup name - for utils/STOQSQmanager.py to use
+MEASUREDINSITU = 'Measured in situ'
+
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
@@ -448,14 +451,17 @@ class STOQS_Loader(object):
             logger.warn(e)
             pass
 
-    def updateActivityParameterStats(self, parameterCounts):
+    def updateActivityParameterStats(self, parameterCounts, sampledFlag=False):
         ''' 
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
         for this activity.  Store the historgram in the associated table.
         '''                 
         a = self.activity
         for p in parameterCounts:
-            data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p, measurement__instantpoint__activity=self.activity)
+            if sampledFlag:
+                data = m.SampledParameter.objects.using(self.dbAlias).filter(parameter=p, sample__instantpoint__activity=self.activity)
+            else:
+                data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p, measurement__instantpoint__activity=self.activity)
             numpvar = numpy.array([float(v.datavalue) for v in data])
             numpvar.sort()              
             listvar = list(numpvar)     

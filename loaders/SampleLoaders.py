@@ -58,6 +58,9 @@ logger.setLevel(logging.INFO)
 from django.db.backends import BaseDatabaseWrapper
 from django.db.backends.util import CursorWrapper
 
+# Constant for ParameterGroup name - for utils/STOQSQmanager.py to use
+SAMPLED = 'Sampled'
+
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
@@ -503,7 +506,19 @@ class SubSamplesLoader(STOQS_Loader):
             lastParentSampleID = parentSample.id
     
         logger.info('%d sub samples loaded', subCount)
-        self.assignParameterGroup(parameterCount, groupName='Sampled')
+        self.assignParameterGroup(parameterCount, groupName=SAMPLED)
+        self.postProcess(parameterCount)
+
+    def postProcess(self, parameterCount):
+        '''
+        Perform step(s) following subsample loads, namely inserting/updating records in the ActivityParameter
+        table.  The updateActivityParameterStats() method in STOQS_Loader expects a hash of parameters
+        that are unique to an activity that is an attribute of self.
+        '''
+        for p in parameterCount:
+            for a in m.SampledParameter.objects.using(self.dbAlias).filter(parameter__name=p.name).values('sample__instantpoint__activity').distinct():
+                self.activity = a
+                self.updateActivityParameterStats(parameterCount, sampledFlag=True)
 
 
 if __name__ == '__main__':
