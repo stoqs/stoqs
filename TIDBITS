@@ -62,6 +62,11 @@ Drop NOT NULL constraint on foreign key where we don't always have an Analysis M
 --------------------------------------------------------------------------------------
 ALTER TABLE stoqs_sampledparameter ALTER COLUMN analysismethod_id DROP NOT NULL;
 
+Add a column:
+-------------
+ALTER TABLE stoqs_parametergroup ADD COLUMN "description" varchar(128);
+
+
 --
 Mike McCann
 MBARI 19 June 2012
