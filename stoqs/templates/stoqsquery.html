@@ -313,12 +313,36 @@
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
-                        <h3><a id="parameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
-                        Parameters</a>
+                        <h3><a id="sampledparameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSampledParameter">
+                        Sampled Parameters</a>
+                        <button id="clear-sampledparameter-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
+                    </div>
+                    <div id="collapseSampledParameter" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <table id="sampledparameter-table" class="table table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:center;">Name</th>
+                                        <th style="text-align:center;">Standard Name</th>
+                                    </tr>
+                                </thead>                             
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="measuredparameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMeasuredParameter">
+                        Measured Parameters</a>
                         <button id="clear-parameter-button" class="btn btn-mini disabled">Clear Selection</button>
                         </h3>
                     </div>
-                    <div id="collapseTwo" class="accordion-body collapse in">
+                    <div id="collapseMeasuredParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <table id="parameter-table" class="table table-condensed">
                                 <thead>
@@ -333,6 +357,8 @@
                         </div>
                     </div>
                 </div><!-- accordian-group -->
+
+
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
@@ -614,12 +640,12 @@
             if ($element.is('.btn-primary')) {
                 $element.removeClass('btn-primary');
                 if ($(element).hasClass('parametername')) {
-                    $('#parameters-anchor').html('Parameters')
+                    $('#measuredparameters-anchor').html('Measured Parameters')
                     $('#clear-parameter-button').addClass('disabled');
                     $('#clear-parameter-button').removeClass('btn-primary');
                 }
                 if ($(element).hasClass('parameterstandardname')) {
-                    $('#parameters-anchor').html('Parameters')
+                    $('#measuredparameters-anchor').html('Measured Parameters')
                     $('#clear-parameter-button').addClass('disabled');
                     $('#clear-parameter-button').removeClass('btn-primary');
                 }
@@ -629,12 +655,12 @@
             } else {
                 $element.addClass('btn-primary');
                 if ($(element).hasClass('parametername')) {
-                    $('#parameters-anchor').html('Parameter name: ' + $(element).html())
+                    $('#measuredparameters-anchor').html('Measured Parameter name: ' + $(element).html())
                     $('#clear-parameter-button').removeClass('disabled');
                     $('#clear-parameter-button').addClass('btn-primary');
                 }
                 if ($(element).hasClass('parameterstandardname')) {
-                    $('#parameters-anchor').html('Parameter standard_name: ' + $(element).html())
+                    $('#measuredparameters-anchor').html('Measured Parameter standard_name: ' + $(element).html())
                     $('#clear-parameter-button').removeClass('disabled');
                     $('#clear-parameter-button').addClass('btn-primary');
                 }
@@ -645,7 +671,7 @@
                 }
             }
         }
-    }
+    } // toggleField()
     
     function getUTCDateString(date) {
         // $.format.date(date,'yyyy-MM-dd hh:mm:ss') is broken in Safari, construct SQL friendly date string this way
@@ -907,7 +933,7 @@
                 }
             });
             rebuildFilters();
-            $('#parameters-anchor').html('Parameters')
+            $('#measuredparameters-anchor').html('Measured Parameters')
         }
     });
 
@@ -1730,7 +1756,7 @@
         // Tooltips    
         $('#time-depth-anchor').click();
         $('#map-anchor').click();
-        $('#parameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
+        $('#measuredparameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
         $('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select Measurement Data by parameter value range'});
         $('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
         $('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
