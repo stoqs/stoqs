@@ -50,7 +50,7 @@ from bs4 import BeautifulSoup
 
 # Set up logging
 logger = logging.getLogger('loaders')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -461,7 +461,46 @@ class SubSamplesLoader(STOQS_Loader):
         sp = m.SampledParameter(sample=sample, parameter=parameter, datavalue=row['Parameter Value'], analysismethod=analysisMethod)
         sp.save(using=self.dbAlias)
                                 
-    def process_subsample_file(self, fileName):
+    def delete_subsample(self, parentSample, row):
+        '''
+        Delete the subsample represented by the data in @row from the database
+        '''
+        if row['Parameter Value'] == '':        # Must have a value to proceed
+            return
+
+        fd = None
+        if row['Filter Diameter [mm]']:
+            fd = float(row['Filter Diameter [mm]'])
+        fps = None
+        if row['Filter Pore Size [uM]']:
+            fps = float(row['Filter Pore Size [uM]'])
+
+        samples = m.Sample.objects.using(self.dbAlias).filter(
+                            instantpoint=parentSample.instantpoint,
+                            depth=parentSample.depth,
+                            geom=parentSample.geom,
+                            volume=float(row['Sample Volume [mL]']),
+                            filterdiameter=fd,
+                            filterporesize=fps,
+                            laboratory=row['Laboratory'],
+                            researcher=row['Researcher'],
+                            )
+        if not samples:
+            logger.debug('No samples returned from query of parentSample = %s and row = %s', parentSample, row)
+            return
+
+        if len(samples) == 1:
+            logger.debug('Deleting subsample %s from database %s', samples[0], self.dbAlais)
+            samples[0].delete(using=self.dbAlias)
+        else:
+            logger.warn('More than one subsample returned for query of parentSample = %s and row = %s', parentSample, row)
+            logger.debug('samples.query = %s', str(samples.query))
+            logger.warn('Removing them all...')
+            for s in samples:
+                logger.debug('s.id = %s', s.id)
+                s.delete(using=self.dbAlias)
+
+    def process_subsample_file(self, fileName, unloadFlag=False):
         '''
         Open .csv file and load the data, matching to existing Sample.
         The format of the file is as defined by Julio's work.  The first few records look like:
@@ -469,6 +508,8 @@ class SubSamplesLoader(STOQS_Loader):
             Cruise,Bottle Number,Sample Type,Sample Volume [mL],Filter Diameter [mm],Filter Pore Size [uM],Parameter Name,Parameter Value,Parameter Units,MBARI BOG Taxon Code,Laboratory,Researcher,Analysis Method,Comment Name,Comment Value
             2011_074_02_074_02,0,random,1500,25,30,B1006 barnacles,0.218,OD A450 nm,,Vrijenhoek,Harvey,Sandwich Hybridization Assay,,
             2011_074_02_074_02,0,random,1500,25,30,M2B mussels,0.118,OD A450 nm,,Vrijenhoek,Harvey,Sandwich Hybridization Assay,,
+
+        If @unloadFlag is True then delete the subsamples from @fileName from the database.  This is useful for testing.
         '''
         subCount = 0
         lastParentSampleID = 0
@@ -485,29 +526,36 @@ class SubSamplesLoader(STOQS_Loader):
                 logger.warn('Parent Sample not found for Cruise = %s, Bottle Number = %s', r['Cruise'], r['Bottle Number'])
                 continue
 
-            if parentSample.id != lastParentSampleID:
-                if lastParentSampleID:
-                    logger.info('%d sub samples loaded', subCount)
-                logger.info('Loading subsamples of parentSample (activity, bottle) = (%s, %s)', r['Cruise'], r['Bottle Number'])
-                subCount = 0
+            if not unloadFlag:
+                # Some useful logger output
+                if parentSample.id != lastParentSampleID:
+                    if lastParentSampleID:
+                        logger.info('%d sub samples loaded', subCount)
+                    logger.info('Loading subsamples of parentSample (activity, bottle) = (%s, %s)', r['Cruise'], r['Bottle Number'])
+                    subCount = 0
 
-            try:
-                p = m.Parameter.objects.using(self.dbAlias).get(name=r['Parameter Name'])
-            except Exception, e:
-                logger.warn(e)
-            else:
                 try:
-                    parameterCount[p] += 1
-                except KeyError:
-                    parameterCount[p] = 0
+                    p = m.Parameter.objects.using(self.dbAlias).get(name=r['Parameter Name'])
+                except Exception, e:
+                    logger.warn(e)
+                else:
+                    try:
+                        parameterCount[p] += 1
+                    except KeyError:
+                        parameterCount[p] = 0
 
-            subCount = subCount + 1
-            self.load_subsample(parentSample, r)
-            lastParentSampleID = parentSample.id
-    
-        logger.info('%d sub samples loaded', subCount)
-        self.assignParameterGroup(parameterCount, groupName=SAMPLED)
-        self.postProcess(parameterCount)
+                # Load subsample
+                subCount = subCount + 1
+                self.load_subsample(parentSample, r)
+                lastParentSampleID = parentSample.id
+            else:
+                # Unload subsample
+                self.delete_subsample(parentSample, r)
+   
+        if not unloadFlag: 
+            logger.info('%d sub samples loaded', subCount)
+            self.assignParameterGroup(parameterCount, groupName=SAMPLED)
+            self.postProcess(parameterCount)
 
     def postProcess(self, parameterCount):
         '''
@@ -530,6 +578,16 @@ if __name__ == '__main__':
         dbAlias = sys.argv[1]
     except IndexError:
         dbAlias = 'stoqs_dorado2011_s100'
+
+    try:
+        unload = sys.argv[2]
+    except IndexError:
+        pass
+    else:
+        ssl = SubSamplesLoader('', '', dbAlias=dbAlias)
+        ssl.process_subsample_file('2011_AUVdorado_Samples_Database.csv', True)
+        sys.exit(0)
+        
 
     # Test SubSamplesLoader
     ssl = SubSamplesLoader('', '', dbAlias=dbAlias)
