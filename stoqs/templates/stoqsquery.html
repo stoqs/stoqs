@@ -1215,8 +1215,8 @@
                                                                         axisLabel: 'Count',
                                                                     }]
                                                                           });
-
-        $.plot($("#" + parameter + "-histogram-flot"), histdata, histogtram_options_labels);
+        parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');
+        $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogtram_options_labels);
     }
 
     function ZoomIn(event, ranges) {
@@ -1525,9 +1525,10 @@
             else if (key == 'activityparameterhistograms') {
                 var histHtml = '<tbody>';
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');       // HTML ids don't allow spaces
                     histHtml += '<tr>' +
                         '<td>' +
-                            '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
+                            '<div id="' + parameter_idsafe + '-histogram-flot" style="width:100%;height:100px;"></div>' +
                         '</td>' +
                         '</tr>';
                 });
@@ -1535,8 +1536,9 @@
                 $('#parameter-value-table').html(histHtml);
 
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');       // HTML ids don't allow spaces
                     histdata = [];
-                    $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
+                    $("#" + parameter_idsafe + "-histogram-flot").bind("plotselected", function (event, ranges) {
                         parametervalues[parameter] = {'xmin': ranges.xaxis.from, 'xmax': ranges.xaxis.to, 'ymin':0, 'ymax': ranges.yaxis.to };
                         rebuildFilters();
                     });
