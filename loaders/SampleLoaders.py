@@ -50,7 +50,7 @@ from bs4 import BeautifulSoup
 
 # Set up logging
 logger = logging.getLogger('loaders')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -537,7 +537,7 @@ class SubSamplesLoader(STOQS_Loader):
                 try:
                     p = m.Parameter.objects.using(self.dbAlias).get(name=r['Parameter Name'])
                 except Exception, e:
-                    logger.warn(e)
+                    logger.warn('Could not get Parameter name = %s: %s', r['Parameter Name'], e)
                 else:
                     try:
                         parameterCount[p] += 1
