@@ -506,8 +506,8 @@ class STOQS_Loader(object):
 
             ##raw_input('paused')
 
-            # Compute and save histogram, adjust # of bins down for smaller number of counts
-            if number < 50:
+            # Compute and save histogram, use smaller number of bins for Sampled Parameters
+            if sampledFlag:
                 (counts, bins) = numpy.histogram(numpvar,10)
             else:
                 (counts, bins) = numpy.histogram(numpvar,100)

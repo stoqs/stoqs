@@ -338,7 +338,7 @@
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <table id="parameter-table" class="table table-condensed">
+                            <table id="measuredparameter-table" class="table table-condensed">
                                 <thead>
                                     <tr>
                                         <th style="text-align:center;">Name</th>
@@ -816,7 +816,7 @@
         params['parameterstandardname']=[]
         params['platforms']=[]
         var regExp = new RegExp('--.+-sn');
-        $('td',$('#parameter-table')).each(function (index, element) {
+        $('td',$('#measuredparameter-table')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 if ( $('.parametername', $(element)).length) {
                     params['parametername'].push(element.id);
@@ -945,7 +945,7 @@
         if ( $('#clear-measuredparameter-button').hasClass('btn-primary')) {
             $("#clear-measuredparameter-button").removeClass('btn-primary');
             $("#clear-measuredparameter-button").addClass('disabled');
-            $('td',$('#parameter-table')).each(function (index, element) {
+            $('td',$('#measuredparameter-table')).each(function (index, element) {
                 if ($('.btn-primary', $(element)).length) {
                     $('#' + element.id + ' > button').removeClass('btn-primary');
                 }
@@ -1366,7 +1366,7 @@
                     }
                     parameterButtonText = parameterButtonText + '</tr>';
                 });
-                $('#parameter-table > tbody:last').append(parameterButtonText);
+                $('#measuredparameter-table > tbody:last').append(parameterButtonText);
                 $('.parametername').tooltip({title: 'Click to select this Parameter name'});
                 $('.parameterstandardname').tooltip({title: 'Click to select this Parameter standard_name'});
             }
