@@ -477,57 +477,54 @@ class STOQS_Loader(object):
             logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f, shape = %s',
                             p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar),
                             percentile(listvar, 0.025), percentile(listvar, 0.975), numpvar.shape)
+            number = len(listvar)
                                         
             # Save statistics           
             try:                        
-                ap, created = m.ActivityParameter.objects.using(self.dbAlias).get_or_create(
-                                        activity = a,
-                                        parameter = p,
-                                        number = len(listvar),
-                                        min = numpvar.min(),
-                                        max = numpvar.max(),
-                                        mean = numpvar.mean(),
-                                        median = median(listvar),
-                                        mode = mode(numpvar),
-                                        p025 = percentile(listvar, 0.025),
-                                        p975= percentile(listvar, 0.975)
-                                        )
+                ap, created = m.ActivityParameter.objects.using(self.dbAlias).get_or_create(activity = a, parameter = p)
                     
                 if created: 
                     logger.info('Created ActivityParameter for parameter.name = %s', p.name)
+
+                # Set attributes of this ap - if not created, an update will happen
+                ap.number = number
+                ap.min = numpvar.min()
+                ap.max = numpvar.max()
+                ap.mean = numpvar.mean()
+                ap.median = median(listvar)
+                ap.mode = mode(numpvar)
+                ap.p025 = percentile(listvar, 0.025)
+                ap.p975 = percentile(listvar, 0.975)
+                ap.save(using=self.dbAlias)
+                if created: 
+                    logger.info('Saved ActivityParameter for parameter.name = %s', p.name)
                 else:
-                    ap.number = len(listvar)
-                    ap.min = numpvar.min()
-                    ap.max = numpvar.max()
-                    ap.mean = numpvar.mean()
-                    ap.median = median(listvar)
-                    ap.mode = mode(numpvar)
-                    ap.p025 = percentile(listvar, 0.025)
-                    ap.p975 = percentile(listvar, 0.975)
-                    ap.save(using=self.dbAlias)
                     logger.info('Updated ActivityParameter for parameter.name = %s', p.name)
 
-            except IntegrityError:
-                logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
-                continue
+            except IntegrityError, e:
+                logger.warn('IntegrityError(%s): Cannot create ActivityParameter for parameter.name = %s.', e, p.name)
 
-            # Compute and save histogram
-            (counts, bins) = numpy.histogram(numpvar,100)
+            ##raw_input('paused')
+
+            # Compute and save histogram, adjust # of bins down for smaller number of counts
+            if number < 50:
+                (counts, bins) = numpy.histogram(numpvar,10)
+            else:
+                (counts, bins) = numpy.histogram(numpvar,100)
             logger.debug(counts)
             logger.debug(bins)
             i = 0
             for count in counts:
                 try:
-                    ##logger.info('Creating ActivityParameterHistogram...')
+                    logger.debug('Creating ActivityParameterHistogram...')
                     logger.debug('count = %d, binlo = %f, binhi = %f', count, bins[i], bins[i+1])
                     h, created = m.ActivityParameterHistogram.objects.using(self.dbAlias).get_or_create(
                                                     activityparameter=ap, bincount=count, binlo=bins[i], binhi=bins[i+1])
                     i = i + 1
-                    ##if created:
-                    ##    logger.info('Created ActivityParameterHistogram for parameter.name = %s, h = %s', (p.name, h,))
+                    if created:
+                        logger.debug('Created ActivityParameterHistogram for parameter.name = %s, h = %s', p.name, h)
                 except IntegrityError:
                     logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
-
 
         logger.info('Updated statistics for activity.name = %s', a.name)
 
