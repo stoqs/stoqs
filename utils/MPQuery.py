@@ -300,9 +300,9 @@ class MPQuery(object):
         qparams = {}
 
         logger.info('self.kwargs = %s', pprint.pformat(self.kwargs))
-        if self.kwargs.has_key('parametername'):
-            if self.kwargs['parametername']:
-                qparams['parameter__name__in'] = self.kwargs['parametername']
+        if self.kwargs.has_key('measuredparametersgroup'):
+            if self.kwargs['measuredparametersgroup']:
+                qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
         if self.kwargs.has_key('parameterstandardname'):
             if self.kwargs['parameterstandardname']:
                 qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']

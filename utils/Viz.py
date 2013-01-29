@@ -73,9 +73,9 @@ class ContourPlots(object):
             self.request.session['sessionID'] = sessionID
         # - Use a new imageID for each new image
         imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-        sectionPngFile = self.kwargs['parametername'][0] + '_' + self.platformName + '_' + imageID + '.png'
+        sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + imageID + '.png'
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
-        colorbarPngFile = self.kwargs['parametername'][0] + '_' + self.platformName + '_colorbar_' + imageID + '.png'
+        colorbarPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_colorbar_' + imageID + '.png'
         colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', colorbarPngFile)
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time

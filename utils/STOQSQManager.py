@@ -60,7 +60,8 @@ class STOQSQManager(object):
         and self.qs will be built of a join of activities, parameters, and platforms with no constraints.
 
         Right now supported keyword arguments are the following:
-            parametername - a list of parameter names to include
+            sampledparametersgroup - a list of sampled parameter names to include
+            measuredparametersgroup - a list of measured parameter names to include
             parameterstandardname - a list of parameter styandard_names to include
             platforms - a list of platform names to include
             time - a two-tuple consisting of a start and end time, if either is None, the assumption is no start (or end) time
@@ -185,9 +186,9 @@ class STOQSQManager(object):
         qparams = {}
 
         qs_ap = models.ActivityParameter.objects.using(self.dbname).all()
-        if self.kwargs.has_key('parametername'):
-            if self.kwargs['parametername']:
-                qs_ap = qs_ap.filter(Q(parameter__name__in=self.kwargs['parametername']))
+        if self.kwargs.has_key('measuredparametersgroup'):
+            if self.kwargs['measuredparametersgroup']:
+                qs_ap = qs_ap.filter(Q(parameter__name__in=self.kwargs['measuredparametersgroup']))
         if self.kwargs.has_key('parameterstandardname'):
             if self.kwargs['parameterstandardname']:
                 qs_ap = qs_ap.filter(Q(parameter__standard_name__in=self.kwargs['parameterstandardname']))
@@ -350,15 +351,17 @@ class STOQSQManager(object):
         data and call them min and max for purposes of plotting
         '''
         results = []
-        if len(self.kwargs['parametername']) == 1:
-            qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
-            try:
-                results = [self.kwargs['parametername'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
-            except TypeError, e:
-                logger.exception(e)
-        if len(self.kwargs['parameterstandardname']) == 1:
-            qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
-            results = [self.kwargs['parameterstandardname'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+        if self.kwargs.has_key('measuredparametersgroup'):
+            if len(self.kwargs['measuredparametersgroup']) == 1:
+                qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
+                try:
+                    results = [self.kwargs['measuredparametersgroup'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                except TypeError, e:
+                    logger.exception(e)
+        if self.kwargs.has_key('parameterstandardname'):
+            if len(self.kwargs['parameterstandardname']) == 1:
+                qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
+                results = [self.kwargs['parameterstandardname'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
         return results
     
     def getPlatforms(self):
@@ -591,7 +594,7 @@ class STOQSQManager(object):
         '''
         if not getDisplay_Parameter_Platform_Data(self.kwargs):
             return None, None, 'Contour data values checkbox not checked'
-        if len(self.kwargs['parametername']) != 1:
+        if len(self.kwargs['measuredparametersgroup']) != 1:
             return None, None, 'Parameter name not selected'
         if len(self.getPlatforms()) != 1:
             if len(self.kwargs['platforms']) != 1:
@@ -632,6 +635,30 @@ class STOQSQManager(object):
     
         
     def _parameternameQ(self, parametername):
+        '''
+        Build a Q object to be added to the current queryset as a filter.  This should 
+        ensure that our result doesn't contain any parameter names that were not selected.
+        '''
+        q=Q()
+        if parametername is None:
+            return q
+        else:
+            q=Q(activityparameter__parameter__name__in=parametername)
+        return q
+
+    def _sampledparametersgroupQ(self, parametername):
+        '''
+        Build a Q object to be added to the current queryset as a filter.  This should 
+        ensure that our result doesn't contain any parameter names that were not selected.
+        '''
+        q=Q()
+        if parametername is None:
+            return q
+        else:
+            q=Q(activityparameter__parameter__name__in=parametername)
+        return q
+
+    def _measuredparametersgroupQ(self, parametername):
         '''
         Build a Q object to be added to the current queryset as a filter.  This should 
         ensure that our result doesn't contain any parameter names that were not selected.
