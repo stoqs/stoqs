@@ -91,7 +91,8 @@ def queryData(request, format=None):
     as retreived from STOQSQManager.
     '''
     response = HttpResponse()
-    query_parms = {'parameters': 'parameters',              # For queryUI, contains list of (name, standard_name) tuples
+    query_parms = {#'parameters': 'parameters',              # For queryUI, contains list of (name, standard_name) tuples
+                   'measuredparametersgroup': 'measuredparametersgroup',
                    'parametername': 'parametername',        # For data queries
                    'parameterstandardname': 'parameterstandardname',        # For data queries
                    'parameterminmax': 'parameterminmax',    # Array of name, min, max

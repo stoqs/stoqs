@@ -321,6 +321,13 @@
                     <div id="collapseSampledParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <table id="sampledparameter-table" class="table table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left;">Access</th>
+                                        <th style="text-align:left;">Plot</th>
+                                        <th style="text-align:left;">Name</th>
+                                    </tr>
+                                </thead>                             
                                 <tbody>
                                 </tbody>
                             </table>
@@ -476,9 +483,9 @@
         // Construct querystring for measuredparameter REST request, mapping params to Django queries for the MP table
         // Good for .json, .csv, .tsv, .html responses
         var mp_param = '?';
-        if (typeof params['parametername'] != 'undefined') {
-            if (params['parametername'].length == 1) {
-                mp_param = mp_param + 'parameter__name=' + params['parametername'][0] + '&';
+        if (typeof params['measuredparametersgroup'] != 'undefined') {
+            if (params['measuredparametersgroup'].length == 1) {
+                mp_param = mp_param + 'parameter__name=' + params['measuredparametersgroup'][0] + '&';
             }
         }
         if (typeof params['parameterstandardname'] != 'undefined') {
@@ -538,9 +545,9 @@
             else if (value == 'kml') {
                 kmlurl = 'Select a Parameter to view your selection of O(10k) actual datavalues in Google Earth';
                 var url = base_url + 'measuredparameter.kml' + mp_param;
-                if (typeof params['parametername'] != 'undefined') {
-                    if (params['parametername'].length == 1) {
-                        $('#kml-parameter').text(params['parametername'][0]);
+                if (typeof params['measuredparametersgroup'] != 'undefined') {
+                    if (params['measuredparametersgroup'].length == 1) {
+                        $('#kml-parameter').text(params['measuredparametersgroup'][0]);
                         $('#cmin').val(data['parameterminmax'][1]);
                         $('#cmax').val(data['parameterminmax'][2]);
                         kmlurl = url;
@@ -561,7 +568,7 @@
             }
             else if (value == 'stoqstoolbox') {
                 // Required parameters for stoqs_down as of stoqstoolbox release noted in the Matlab comment below
-                var req_params = ['campaign', 'start_time', 'end_time', 'min_depth', 'max_depth', 'platforms', 'parametername', 'parameterstandardname'];
+                var req_params = ['campaign', 'start_time', 'end_time', 'min_depth', 'max_depth', 'platforms', 'measuredparametersgroup', 'parameterstandardname'];
                 var hasParametervalues = false;
                 var st_text_comm = "% Copy and paste into a Matlab session where stoqstoolbox build 2013-01-08 or\n";
                 st_text_comm = st_text_comm + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
@@ -633,12 +640,12 @@
         if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
             if ($element.is('.btn-primary')) {
                 $element.removeClass('btn-primary');
-                if ($(element).hasClass('sampledparametername')) {
+                if ($(element).hasClass('sampledparametersgroup')) {
                     $('#sampledparameters-anchor').html('Sampled Parameters')
                     $('#clear-sampledparameter-button').addClass('disabled');
                     $('#clear-sampledparameter-button').removeClass('btn-primary');
                 }
-                if ($(element).hasClass('parametername')) {
+                if ($(element).hasClass('measuredparametersgroup')) {
                     $('#measuredparameters-anchor').html('Measured Parameters')
                     $('#clear-measuredparameter-button').addClass('disabled');
                     $('#clear-measuredparameter-button').removeClass('btn-primary');
@@ -653,12 +660,12 @@
                 }
             } else {
                 $element.addClass('btn-primary');
-                if ($(element).hasClass('sampledparametername')) {
+                if ($(element).hasClass('sampledparametersgroup')) {
                     $('#sampledparameters-anchor').html('Sampled Parameter name: ' + $(element).html())
                     $('#clear-sampledparameter-button').removeClass('disabled');
                     $('#clear-sampledparameter-button').addClass('btn-primary');
                 }
-                if ($(element).hasClass('parametername')) {
+                if ($(element).hasClass('measuredparametersgroup')) {
                     $('#measuredparameters-anchor').html('Measured Parameter name: ' + $(element).html())
                     $('#clear-measuredparameter-button').removeClass('disabled');
                     $('#clear-measuredparameter-button').addClass('btn-primary');
@@ -765,7 +772,7 @@
         $('#displayparameterplatformdata').removeAttr('disabled');
         if (typeof params['platforms'] != 'undefined') {
             if (params['platforms'].length == 1) {
-                $('#contourtext').text('Show ' + params['parametername'] + ' from ' + params['platforms'][0]);
+                $('#contourtext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
             }
         }
     }
@@ -779,9 +786,9 @@
     }
 
     function updateContourInfo() {
-        if (typeof params['parametername'] != 'undefined') {
-            //console.log('parametername = ' + params['parametername']);
-            if (params['parametername'].length == 1 ) {
+        if (typeof params['measuredparametersgroup'] != 'undefined') {
+            //console.log('measuredparametersgroup = ' + params['measuredparametersgroup']);
+            if (params['measuredparametersgroup'].length == 1 ) {
                 enableContouring();
             }
             else {
@@ -812,14 +819,14 @@
             params['max_depth']=$('#end-depth').val();
         }
 
-        params['parametername']=[]
+        params['measuredparametersgroup']=[]
         params['parameterstandardname']=[]
         params['platforms']=[]
         var regExp = new RegExp('--.+-sn');
         $('td',$('#measuredparameter-table')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
-                if ( $('.parametername', $(element)).length) {
-                    params['parametername'].push(element.id);
+                if ( $('.measuredparametersgroup', $(element)).length) {
+                    params['measuredparametersgroup'].push(element.id);
                 }
                 if ( $('.parameterstandardname', $(element)).length) {
                     params['parameterstandardname'].push(element.id.replace(regExp,''));
@@ -1337,13 +1344,20 @@
                 var parameterButtonText = '';
                 $.each(data[key], function (index, value) {
                     parameterButtonText = parameterButtonText + '<tr>' +
+                            '<td id="' + value[0] +'_access">' +
+                                '<input type="checkbox" checked />' +
+                            '</td>' +
+                            '<td>' +
+                                '<input type="radio" name="sampledparametersgoup_plot" />' +
+                            '</td>' +
                             '<td id="' + value[0] +'">' +
-                                '<button class="btn btn-mini stoqs-toggle sampledparametername">'+ value[0] +'</button>' + 
+                                '<button class="btn btn-mini sampledparametersgroup">'+ value[0] +'</button>' + 
                             '</td>';
                     parameterButtonText = parameterButtonText + '</tr>';
                 });
+                parameterButtonText = parameterButtonText + '';
                 $('#sampledparameter-table > tbody:last').append(parameterButtonText);
-                $('.sampledparametername').tooltip({title: 'Click to select this Parameter name'});
+                $('.sampledparametersgroup').tooltip({title: 'Click to select this Parameter name'});
                 $('.sampledparameterstandardname').tooltip({title: 'Click to select this Parameter standard_name'});
             }
             else if (key == 'measuredparametersgroup') {
@@ -1351,7 +1365,7 @@
                 $.each(data[key], function (index, value) {
                     parameterButtonText = parameterButtonText + '<tr>' +
                             '<td id="' + value[0] +'">' +
-                                '<button class="btn btn-mini stoqs-toggle parametername">'+ value[0] +'</button>' + 
+                                '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' + 
                             '</td>';
                     if (value[1].length != 0) {
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
@@ -1367,7 +1381,7 @@
                     parameterButtonText = parameterButtonText + '</tr>';
                 });
                 $('#measuredparameter-table > tbody:last').append(parameterButtonText);
-                $('.parametername').tooltip({title: 'Click to select this Parameter name'});
+                $('.measuredparametersgroup').tooltip({title: 'Click to select this Parameter name'});
                 $('.parameterstandardname').tooltip({title: 'Click to select this Parameter standard_name'});
             }
             else if (key == 'time') { 
@@ -1479,7 +1493,7 @@
                 $('#measuredparameter-table > tbody > tr > td').each(function (index, elem) { 
                     if (elem.id.length != 0) {
                         if ($.inArray((elem.id).toString(), ids) == -1) {
-                           disableButton($('button', $(elem))); // disable the button in the table row
+                            disableButton($('button', $(elem))); // disable the button in the table row
                         }
                     }
                 });
