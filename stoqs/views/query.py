@@ -91,11 +91,10 @@ def queryData(request, format=None):
     as retreived from STOQSQManager.
     '''
     response = HttpResponse()
-    query_parms = {#'parameters': 'parameters',              # For queryUI, contains list of (name, standard_name) tuples
-                   'measuredparametersgroup': 'measuredparametersgroup',
+    query_parms = {
                    'sampledparametersgroup': 'sampledparametersgroup',
-                   'parametername': 'parametername',        # For data queries
-                   'parameterstandardname': 'parameterstandardname',        # For data queries
+                   'measuredparametersgroup': 'measuredparametersgroup',
+                   'parameterstandardname': 'parameterstandardname',        
                    'parameterminmax': 'parameterminmax',    # Array of name, min, max
                    'time': ('start_time','end_time'),       # Single values
                    'depth': ('min_depth', 'max_depth'),     # Single values
@@ -128,7 +127,7 @@ def queryData(request, format=None):
             logger.info('Adding to parametervalues: %s', pprint.pformat(pminmax))
 
     qm = STOQSQManager(request, response, request.META['dbAlias'])
-    qm.buildQuerySet(**params)
+    qm.buildQuerySets(**params)
     options = simplejson.dumps(qm.generateOptions(),
                                cls=encoders.STOQSJSONEncoder)
                                # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
