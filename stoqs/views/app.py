@@ -53,7 +53,7 @@ class SampleDataTable(BaseOutputer):
                 mpDict = {}
                 for mp in mod.MeasuredParameter.objects.filter(measurement__instantpoint__id=rec['instantpoint__id']):
                     logger.debug('parameter name = %s, value = %f', mp.parameter.name, mp.datavalue)
-                    pName = mp.parameter.name
+                    pName = mp.parameter.name.replace('_', '_ ')
                     pNameList.append(pName)
                     mpDict[pName] = mp.datavalue
           
@@ -65,7 +65,7 @@ class SampleDataTable(BaseOutputer):
             row.append(rec['filterporesize'])
             row.append('%.5f' % rec['geom'].x)
             row.append('%.5f' % rec['geom'].y)
-            row.append('_ '.join(rec['instantpoint__activity__name'].split('_')[1:5]))
+            row.append(rec['instantpoint__activity__name'].replace('_', '_ '))
             row.append(rec['instantpoint__timevalue'])
             row.append(rec['laboratory'])
             row.append(rec['name'])
@@ -85,7 +85,6 @@ class SampleDataTable(BaseOutputer):
                          {'sTitle': 'type'}, {'sTitle': 'volume'} ] )
 
         # Format complete JSON for jQuery DataTables, see: http://stackoverflow.com/questions/8665309/jquery-datatables-get-columns-from-json
-        ##self.qs = {'aaData': table, 'aoColumns': colList, 'asSorting': [ [ 1, 'desc' ] ]}
         logger.debug('len(colList) = %d', len(colList))
         logger.debug('len(row) = %d', len(row))
         self.qs = {'aaData': table, 'aoColumns': colList}

@@ -871,7 +871,6 @@
         $('td',$('#sampledparameter-table')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 if ( $('.sampledparametersgroup', $(element)).length) {
-                    console.log('sampledparametersgroup added id = ' + element.id);
                     params['sampledparametersgroup'].push(element.id);
                 }
             }
@@ -937,7 +936,6 @@
 
     $(document).on('click', ".stoqs-multiselect", function (event) {
         selectField(this);
-        console.log('Calling rebuildFilters');
         rebuildFilters();
     });
 
@@ -1042,7 +1040,6 @@
             $("#clear-platforms-button").addClass('disabled');
             $('tr',$('#platform-table')).each(function (index, element) {
                 if ($('.btn-primary', $(element)).length) {
-                    console.log(element);
                     $('#' + element.id + ' > td > button').removeClass('btn-primary');
                 }
             });
@@ -1094,6 +1091,7 @@
 
 
     /* Default class modification for DataTable*/
+    /*
     $.extend( $.fn.dataTableExt.oStdClasses, {
         "sSortAsc": "header headerSortDown",
         "sSortDesc": "header headerSortUp",
@@ -1104,6 +1102,7 @@
         "aoColumnDefs": [ { "sWidth": "10%", "aTargets": [ -1 ] }
     ]
     });
+    */
 
     function showTooltip(x, y, contents) {
         $('<div id="tooltip">' + contents + '</div>').css( {
@@ -1150,29 +1149,23 @@
     function showSampleData(label) {
             //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
             var sample_url = '{{site_uri}}{% url show-sample-datatable dbAlias=request.META.dbAlias format=".json" %}';
-            var json = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
-            console.log(json);
+            sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
+            console.log('sample_url = ' + sample_url);
 
-            //var cols = ['depth', 'filter diam', 'filter pore size', 'lon', 'lat', 'activity name', 'time', 'lab',
-            //            'name', 'res.', 'purpose', 'type', 'volume'];
-            //var ths = '<tr>';
-            //$.each(cols, function (index, value) {
-            //    ths = ths + '<th>' + value + '</th>';
-            //});
-            //ths = ths + '</tr>';
-            //$('#sample-table > thead').html(ths);
-
-            console.log('Calling dataTable....');
-            console.log(json.aoColumns);
-            console.log(json.aaData);
-            $("#sample-table").dataTable( {
-                "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
-                "bProcessing": true,
-                "bDestroy":    true,
-                "aaData": json.aaData,
-                "aoColumns": json.aoColumns
+            request = $.ajax({
+                type : 'GET',
+                url : sample_url,
+                success: function (json) {
+                    $("#sample-table").dataTable( {
+                        "bProcessing":  true,
+                        "bDestroy":     true,
+                        "aaData":       json.aaData,
+                        "aoColumns":    json.aoColumns
+                    });
+                },
+                dataType: "json"
             });
-            console.log('Done with dataTable.');
+
             $('#sample-instructions').text('')
             if (! $('#collapseSample').hasClass('in')) {
                 $('#sample-anchor').click();
@@ -1194,10 +1187,9 @@
         // This method of providing quick look plots is annoying as click-n-drag operations will sometimes trigger a plotclick
         if (item) {
             // Crude test whether sample or activity click, activities 2nd element may be '(stride=..'
-            //console.log(item.series.label)
+            console.log(item.series.label)
             if (item.series.label.split(' ').length == 2) {
                 if (item.series.label.split(' ')[1].indexOf('(') == -1) {
-                    console.log('Calling showSampleData()');
                     showSampleData(item.series.label)
                 }
                 else if (item.series.label.split(' ')[1].indexOf('(') != -1) {
@@ -1563,10 +1555,15 @@
                         ids.push(value[1] + '--' + value[0] + '-sn');
                     }
                 });
+                console.log(ids);
                 $('#measuredparameter-table > tbody > tr > td').each(function (index, elem) { 
                     if (elem.id.length != 0) {
+                        console.log(elem.id);
                         if ($.inArray((elem.id).toString(), ids) == -1) {
                             disableButton($('button', $(elem))); // disable the button in the table row
+                        }
+                        else {
+                            console.log('not disabled');
                         }
                     }
                 });
