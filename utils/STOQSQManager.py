@@ -99,6 +99,7 @@ class STOQSQManager(object):
                 logger.debug('k = %s, v = %s, q = %s', k, v, q)
                 qs = qs.filter(q)
         self.qs = qs
+        logger.debug('Activity query = %s', str(self.qs.query))
 
         # Apply query constraints to the MeasuredParameter query object 
         ##self.mpq.buildMPQuerySet(*args, **kwargs)
@@ -326,23 +327,25 @@ class STOQSQManager(object):
         Lastly, we assume here that the name is unique and is also used for the id - this is enforced on 
         data load.
         '''
+        # Django makes it easy to do sub-queries: Get Parameters from list of Activities matching current selection
+        p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
         if groupName:
-            qs = self.qs.filter(activityparameter__parameter__parametergroupparameter__parametergroup__name=groupName).values(
-                    'activityparameter__parameter__name','activityparameter__parameter__standard_name').distinct().order_by(
-                    'activityparameter__parameter__name')
-        else:
-            qs = self.qs.values('activityparameter__parameter__name','activityparameter__parameter__standard_name').distinct().order_by(
-                                'activityparameter__parameter__name')
+            p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
 
-        ##logger.debug('   >>>>>>>> qs.query = %s', str(qs.query))
+        p_qs = p_qs.values('name','standard_name','id').distinct().order_by('name')
+        # Odd: Trying to print the query gives "Can't do subqueries with queries on different DBs."
+        ##logger.debug('----------- p_qs.query (%s) = %s', groupName, str(p_qs.query))
+
         results=[]
-        for row in qs:
-            name = row['activityparameter__parameter__name']
-            standard_name = row['activityparameter__parameter__standard_name']
+        for row in p_qs:
+            name = row['name']
+            standard_name = row['standard_name']
+            id = row['id']
             if not standard_name:
                 standard_name = ''
             if name is not None:
-                results.append((name,standard_name,))
+                results.append((name,standard_name,id,))
+
         return results
 
     def getParameterMinMax(self):
@@ -646,16 +649,17 @@ class STOQSQManager(object):
             q=Q(activityparameter__parameter__name__in=parametername)
         return q
 
-    def _sampledparametersgroupQ(self, parametername):
+    def _sampledparametersgroupQ(self, parameterid):
         '''
         Build a Q object to be added to the current queryset as a filter.  This should 
         ensure that our result doesn't contain any parameter names that were not selected.
+        We use id for sampledparametersgroup as the name may contain special characters.
         '''
         q=Q()
-        if parametername is None:
+        if parameterid is None:
             return q
         else:
-            q=Q(activityparameter__parameter__name__in=parametername)
+            q=Q(activityparameter__parameter__id__in=parameterid)
         return q
 
     def _measuredparametersgroupQ(self, parametername):

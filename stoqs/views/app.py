@@ -31,7 +31,8 @@ class SampleDataTable(BaseOutputer):
     '''
     fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
                 'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
-                'instantpoint__timevalue', 'instantpoint__activity__name']
+                'instantpoint__timevalue', 'instantpoint__activity__name',
+                'instantpoint__id']
 
     def assign_qs(self):
         '''
@@ -41,9 +42,24 @@ class SampleDataTable(BaseOutputer):
         logger.debug(fields)
         self.applyQueryParams(self.ammendFields(fields))
         self.qs = self.query_set
+      
+        pNameList = [] 
+
         table = []
         for rec in self.qs.values(*fields):
             row = []
+            # Get Measured parameters for this sample, they will be the same for all the recs, so get them just once
+            if not table:
+                mpDict = {}
+                for mp in mod.MeasuredParameter.objects.filter(measurement__instantpoint__id=rec['instantpoint__id']):
+                    logger.debug('parameter name = %s, value = %f', mp.parameter.name, mp.datavalue)
+                    pName = mp.parameter.name
+                    pNameList.append(pName)
+                    mpDict[pName] = mp.datavalue
+          
+            for k in pNameList: 
+                row.append('%f' % mpDict[k]) 
+
             row.append('%.2f' % rec['depth'])
             row.append(rec['filterdiameter'])
             row.append(rec['filterporesize'])
@@ -58,8 +74,21 @@ class SampleDataTable(BaseOutputer):
             row.append(rec['sampletype__name'])
             row.append(rec['volume'])
             table.append(row)
+        
+        colList = []
+        for k in pNameList: 
+            colList.append({'sTitle': k})
 
-        self.qs = {'aaData': table}
+        colList.extend( [{'sTitle': 'depth'}, {'sTitle': 'filter diam'}, {'sTitle': 'filter pore size'}, 
+                         {'sTitle': 'lon'}, {'sTitle': 'lat'}, {'sTitle': 'activity name'}, {'sTitle': 'time'}, 
+                         {'sTitle': 'lab'}, {'sTitle': 'name'}, {'sTitle': 'res.'}, {'sTitle': 'purpose'}, 
+                         {'sTitle': 'type'}, {'sTitle': 'volume'} ] )
+
+        # Format complete JSON for jQuery DataTables, see: http://stackoverflow.com/questions/8665309/jquery-datatables-get-columns-from-json
+        ##self.qs = {'aaData': table, 'aoColumns': colList, 'asSorting': [ [ 1, 'desc' ] ]}
+        logger.debug('len(colList) = %d', len(colList))
+        logger.debug('len(row) = %d', len(row))
+        self.qs = {'aaData': table, 'aoColumns': colList}
         logger.debug(self.qs)
 
 class MeasuredParameter(BaseOutputer):
