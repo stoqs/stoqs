@@ -54,7 +54,16 @@ class STOQSQManager(object):
         self.response = response
         self.mpq = MPQuery(request)
         
-    def buildQuerySet(self, *args, **kwargs):
+    def buildQuerySets(self, *args, **kwargs):
+        '''
+        Build the query sets based on any selections from the UI.  We need one for Activities and one for Samples
+        '''
+        self._buildQuerySet(**kwargs)
+        kwargs['fromTable'] = 'Sample'
+        self._buildQuerySet(**kwargs)
+
+
+    def _buildQuerySet(self, *args, **kwargs):
         '''
         Build the query set based on any selections from the UI. For the first time through  kwargs will be empty 
         and self.qs will be built of a join of activities, parameters, and platforms with no constraints.
@@ -71,18 +80,33 @@ class STOQSQManager(object):
         These are all called internally - so we'll assume that all the validation has been done in advance,
         and the calls to this method meet the requirements stated above.
         '''
+        fromTable = 'Activity'
+        if kwargs.has_key('fromTable'):
+            fromTable = kwargs['fromTable']
+
         if 'qs' in args:
             logger.debug('Using query string passed in to make a non-activity based query')
             qs = args['qs']
         else:
-            logger.debug('Making default activity based query')
-            if (not kwargs):
-                qs = models.Activity.objects.using(self.dbname).select_related(depth=3).filter( activityparameter__parameter__pk__isnull=False,
-                                                                                                activityparameter__activity__pk__isnull=False,
-                                                                                                simpledepthtime__pk__isnull=False,
-                                                                                                platform__pk__isnull=False)
+            if fromTable == 'Activity':
+                logger.debug('Making default activity based query')
+                if (not kwargs):
+                    qs = models.Activity.objects.using(self.dbname).select_related(depth=3).filter( activityparameter__parameter__pk__isnull=False,
+                                                                                                    activityparameter__activity__pk__isnull=False,
+                                                                                                    simpledepthtime__pk__isnull=False,
+                                                                                                    platform__pk__isnull=False)
+                else:
+                    qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
+            elif fromTable == 'Sample':
+                logger.debug('Making %s based query', fromTable)
+                if (not kwargs):
+                    qs = models.Sample.objects.using(self.dbname).select_related(depth=3).filter( sampledparameter__parameter__pk__isnull=False,
+                                                                                                  instantpoint__activity__pk__isnull=False,
+                                                                                                  instantpoint__activity__platform__pk__isnull=False)
+                else:
+                    qs = models.Sample.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
             else:
-                qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
+                logger.exception('No handler for fromTable = %s', fromTable)
     
         self.args = args
         self.kwargs = kwargs
@@ -92,14 +116,21 @@ class STOQSQManager(object):
             '''
             if not v:
                 continue
+            if k == 'fromTable':
+                continue
             if hasattr(self, '_%sQ' % (k,)):
                 # Call the method if it exists, and add the resulting Q object to the filtered
                 # queryset.
-                q = getattr(self,'_%sQ' % (k,))(v)
-                logger.debug('k = %s, v = %s, q = %s', k, v, q)
+                q = getattr(self,'_%sQ' % (k,))(v, fromTable)
+                logger.debug('fromTable = %s, k = %s, v = %s, q = %s', fromTable, k, v, q)
                 qs = qs.filter(q)
-        self.qs = qs
-        logger.debug('Activity query = %s', str(self.qs.query))
+
+        if fromTable == 'Activity':
+            self.qs = qs
+            ##logger.debug('Activity query = %s', str(self.qs.query))
+        elif fromTable == 'Sample':
+            self.sample_qs = qs
+            logger.debug('Sample query = %s', str(self.sample_qs.query))
 
         # Apply query constraints to the MeasuredParameter query object 
         ##self.mpq.buildMPQuerySet(*args, **kwargs)
@@ -279,30 +310,13 @@ class STOQSQManager(object):
         '''
         Return query set of Samples given the current constraints. 
         '''
-        qparams = {}
 
-        if self.kwargs.has_key('platforms'):
-            if self.kwargs['platforms']:
-                qparams['instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
-        if self.kwargs.has_key('time'):
-            if self.kwargs['time'][0] is not None:
-                qparams['instantpoint__timevalue__gte'] = self.kwargs['time'][0]
-            if self.kwargs['time'][1] is not None:
-                qparams['instantpoint__timevalue__lte'] = self.kwargs['time'][1]
-        if self.kwargs.has_key('depth'):
-            if self.kwargs['depth'][0] is not None:
-                qparams['depth__gte'] = self.kwargs['depth'][0]
-            if self.kwargs['depth'][1] is not None:
-                qparams['depth__lte'] = self.kwargs['depth'][1]
-
-        logger.debug(pprint.pformat(qparams))
-        qs_sample = models.Sample.objects.using(self.dbname).filter(**qparams)
-        if qs_sample:
-            logger.debug(pprint.pformat(str(qs_sample.query)))
-            self.qs_sample = qs_sample
+        if not self.sample_qs:
+            logger.warn("self.sample_qs is None")
+            return
         else:
-            logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
-        return qs_sample
+            self.qs_sample = self.sample_qs         # We had it this way before, keep this for a bit...
+            return self.sample_qs
 
     def getActivities(self):
         '''
@@ -476,25 +490,26 @@ class STOQSQManager(object):
         values as a 2-tuple list.  The name similarity to getSimpleDepthTime name is a pure coincidence.
         '''
         samples = []
-        qs = self.getSampleQS().values_list(
+        if self.getSampleQS():
+            qs = self.getSampleQS().values_list(
                                     'instantpoint__timevalue', 
                                     'depth',
                                     'instantpoint__activity__name',
                                     'name'
                                 ).order_by('instantpoint__timevalue')
-        for s in qs:
-            ems = 1000 * to_udunits(s[0], 'seconds since 1970-01-01')
-            # Kludgy handling of activity names - flot needs 2 items separated by a space to handle sample event clicking
-            if (s[2].find('_decim') != -1):
-                label = '%s %s' % (s[2].split('_decim')[0], s[3],)              # Lop off '_decim.nc (stride=xxx)' part of name
-            elif (s[2].find(' ') != -1):
-                label = '%s %s' % (s[2].split(' ')[0], s[3],)                   # Lop off everything after a space in the activity name
-            else:
-                label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
+            for s in qs:
+                ems = 1000 * to_udunits(s[0], 'seconds since 1970-01-01')
+                # Kludgy handling of activity names - flot needs 2 items separated by a space to handle sample event clicking
+                if (s[2].find('_decim') != -1):
+                    label = '%s %s' % (s[2].split('_decim')[0], s[3],)              # Lop off '_decim.nc (stride=xxx)' part of name
+                elif (s[2].find(' ') != -1):
+                    label = '%s %s' % (s[2].split(' ')[0], s[3],)                   # Lop off everything after a space in the activity name
+                else:
+                    label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
 
-            rec = {'label': label, 'data': [[ems, '%.2f' % s[1]]]}
-            ##logger.debug('Appending %s', rec)
-            samples.append(rec)
+                rec = {'label': label, 'data': [[ems, '%.2f' % s[1]]]}
+                ##logger.debug('Appending %s', rec)
+                samples.append(rec)
 
         return(samples)
 
@@ -622,34 +637,7 @@ class STOQSQManager(object):
     # Methods that generate Q objects used to populate the query.
     #    
         
-    def _parametersQ(self, parameters):
-        '''
-        Build a Q object to be added to the current queryset as a filter.  This should 
-        ensure that our result doesn't contain any parameters that were not selected.
-        This the same function as _parameternameQ(), assume a query on parameters is a
-        query on parameter.name.
-        '''
-        q=Q()
-        if parameters is None:
-            return q
-        else:
-            q=Q(activityparameter__parameter__name__in=parameters)
-        return q
-    
-        
-    def _parameternameQ(self, parametername):
-        '''
-        Build a Q object to be added to the current queryset as a filter.  This should 
-        ensure that our result doesn't contain any parameter names that were not selected.
-        '''
-        q=Q()
-        if parametername is None:
-            return q
-        else:
-            q=Q(activityparameter__parameter__name__in=parametername)
-        return q
-
-    def _sampledparametersgroupQ(self, parameterid):
+    def _sampledparametersgroupQ(self, parameterid, fromTable='Activity'):
         '''
         Build a Q object to be added to the current queryset as a filter.  This should 
         ensure that our result doesn't contain any parameter names that were not selected.
@@ -659,10 +647,13 @@ class STOQSQManager(object):
         if parameterid is None:
             return q
         else:
-            q=Q(activityparameter__parameter__id__in=parameterid)
+            if fromTable == 'Activity':
+                q=Q(activityparameter__parameter__id__in=parameterid)
+            elif fromTable == 'Sample':
+                q=Q(sampledparameter__parameter__id__in=parameterid)
         return q
 
-    def _measuredparametersgroupQ(self, parametername):
+    def _measuredparametersgroupQ(self, parametername, fromTable='Activity'):
         '''
         Build a Q object to be added to the current queryset as a filter.  This should 
         ensure that our result doesn't contain any parameter names that were not selected.
@@ -671,10 +662,13 @@ class STOQSQManager(object):
         if parametername is None:
             return q
         else:
-            q=Q(activityparameter__parameter__name__in=parametername)
+            if fromTable == 'Activity':
+                q=Q(activityparameter__parameter__name__in=parametername)
+            elif fromTable == 'Sample':
+                q=Q(sampledparameter__parameter__name__in=parametername)
         return q
 
-    def _parameterstandardnameQ(self, parameterstandardname):
+    def _parameterstandardnameQ(self, parameterstandardname, fromTable='Activity'):
         '''
         Build a Q object to be added to the current queryset as a filter.  This should 
         ensure that our result doesn't contain any parameter standard_names that were not selected.
@@ -683,10 +677,13 @@ class STOQSQManager(object):
         if parameterstandardname is None:
             return q
         else:
-            q=Q(activityparameter__parameter__standard_name__in=parameterstandardname)
+            if fromTable == 'Activity':
+                q=Q(activityparameter__parameter__standard_name__in=parameterstandardname)
+            elif fromTable == 'Sample':
+                q=Q(sampledparameter__parameter__standard_name__in=parameterstandardname)
         return q
 
-    def _platformsQ(self, platforms):
+    def _platformsQ(self, platforms, fromTable='Activity'):
         '''
         Build a Q object to be added to the current queryset as a filter.  This will ensure that we
         only generate the other values/sets for platforms that were selected.
@@ -695,10 +692,13 @@ class STOQSQManager(object):
         if platforms is None:
             return q
         else:
-            q=Q(platform__name__in=platforms)
+            if fromTable == 'Activity':
+                q=Q(platform__name__in=platforms)
+            elif fromTable == 'Sample':
+                q=Q(instantpoint__activity__platform__name__in=platforms)
         return q    
     
-    def _timeQ(self, times):
+    def _timeQ(self, times, fromTable='Activity'):
         '''
         Build a Q object to be added to the current queryset as a filter.  This ensures that we limit
         things down based on the time range selected by the user.
@@ -707,12 +707,18 @@ class STOQSQManager(object):
         if not times:
             return q
         if times[0] is not None:
-            q=Q(enddate__gte=times[0])
+            if fromTable == 'Activity':
+                q=Q(enddate__gte=times[0])
+            elif fromTable == 'Sample':
+                q=Q(instantpoint__timevalue__gte=times[0])
         if times[1] is not None:
-            q=q & Q(startdate__lte=times[1])
+            if fromTable == 'Activity':
+                q=q & Q(startdate__lte=times[1])
+            elif fromTable == 'Sample':
+                q=q & Q(instantpoint__timevalue__lte=times[1])
         return q
     
-    def _depthQ(self, depth):
+    def _depthQ(self, depth, fromTable='Activity'):
         '''
         Build a Q object to be added to the current queryset as a filter.  Once again, we want
         to make sure that we only generate the "leftover" components based on the selected depth
@@ -722,9 +728,15 @@ class STOQSQManager(object):
         if not depth:
             return q
         if depth[0] is not None:
-            q=Q(maxdepth__gte=depth[0])
+            if fromTable == 'Activity':
+                q=Q(maxdepth__gte=depth[0])
+            elif fromTable == 'Sample':
+                q=Q(depth__gte=depth[0])
         if depth[1] is not None:
-            q=q & Q(mindepth__lte=depth[1])
+            if fromTable == 'Activity':
+                q=q & Q(mindepth__lte=depth[1])
+            elif fromTable == 'Sample':
+                q=q & Q(depth__lte=depth[1])
         return q
     
 
@@ -774,7 +786,9 @@ class STOQSQManager(object):
 
         # Query for mapserver
         geo_query = '''geom from (%s)
-            as subquery using unique gid using srid=4326''' % postgresifySQL(qs.query)
+            as subquery using unique gid using srid=4326''' % postgresifySQL(qs.query, sampleFlag=True)
+
+        logger.debug('geo_query = %s', geo_query)
         
         return geo_query
 

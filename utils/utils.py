@@ -217,7 +217,7 @@ def simplify_points (pts, tolerance):
     # Change from original code: add the index from the original line in the return
     return [(pts[i] + (i,)) for i in keep]
 
-def postgresifySQL(query, pointFlag=False, translateGeom=False):
+def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False):
     '''
     Given a generic database agnostic Django query string modify it using regular expressions to work
     on a PostgreSQL server.  If pointFlag is True then use the mappoint field for geom.  If translateGeom
@@ -231,22 +231,22 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False):
     # Remove double quotes from around all table and colum names
     q = q.replace('"', '')
 
-    # Add aliases for geom and gid - Activity
-    q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
-    q = q.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)           # Fixes problem with above being applied to Sample query join
-
-    if pointFlag:
-        q = q.replace('stoqs_activity.mappoint', 'stoqs_activity.mappoint as geom')
+    if not sampleFlag:
+        # Add aliases for geom and gid - Activity
+        q = q.replace('stoqs_activity.id', 'stoqs_activity.id as gid', 1)
+        q = q.replace('= stoqs_activity.id as gid', '= stoqs_activity.id', 1)           # Fixes problem with above being applied to Sample query join
+        if pointFlag:
+            q = q.replace('stoqs_activity.mappoint', 'stoqs_activity.mappoint as geom')
+        else:
+            q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
     else:
-        q = q.replace('stoqs_activity.maptrack', 'stoqs_activity.maptrack as geom')
+        # Add aliases for geom and gid - Sample
+        q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
+        q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
 
     if translateGeom:
         q = q.replace('stoqs_measurement.geom', 'ST_X(stoqs_measurement.geom) as longitude, ST_Y(stoqs_measurement.geom) as latitude')
     
-    # Add aliases for geom and gid - Sample
-    q = q.replace('stoqs_sample.id', 'stoqs_sample.id as gid', 1)
-    q = q.replace('stoqs_sample.geom', 'stoqs_sample.geom as geom')
-
     # Quotify things that need quotes
     QUOTE_NAMEEQUALS = re.compile('name\s+=\s+(?P<argument>\S+)')
     QUOTE_DATES = re.compile('(?P<argument>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)')
