@@ -2,9 +2,10 @@
 # =============
 
 # These commands need to be executed once on your system, they have been tested on CentOS 6.
-# It is assumed that Postgres 9.1 is already installed.  A production environment will most
-# likely have all of these packages installed.  Check with your system administrator to be 
-# sure.
+# It is assumed that Postgres 9.1 is already installed.  Some level of familiarity with 
+# Unix is required to install STOQS.  If you run into any difficulties please feel free
+# to post questions on the stoqs-discuss mail list, which you may join at: 
+# https://groups.google.com/forum/#!forum/stoqs-discuss
 
 su -c "easy_install virtualenv"
 su -c "yum -y install postgis rabbitmq-server gdal scipy mod_wsgi"
@@ -23,27 +24,6 @@ su -c "yum -y install graphviz-python"
 # A useful package for manipulating images
 su -c "yum -y install ImageMagick"
 
-# For ability for persistant storage of GIFS, assuming default location of your web server is /var/www/html
-mkdir /tmp/media
-su -c 'ln -s /tmp/media /var/www/html/media'
-
-# Build GDAL from source.  Download latest (v1.9 or higher) tar ball from http://download.osgeo.org/gdal/
-# Unpack, and in the top level directory (e.g. gdal-1.9.0/) run:
-./configure --with-python
-make
-make install
-
-# Install MapServer following the instructions for your system at http://mapserver.org/.  It is typical to
-# build it from source and then copy the 'mapserv' executable to the cgi-bin directory for your web server.
-# The .map templates assume that this is where the mapserv executable is located.  You will set the MapServer
-# host name (MAPSERVER_HOST) for your privateSettings file.  It _can_ be a separate server from your Django 
-# server, but it must be able to see the .map files produced by Django through a network mount or some other 
-# mechanism.
-
-# To build MapServer, other prerequisites can be obtained via yum:
-su -c "yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel"
-su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel"
-
 # Become root and su to user postgres in order to have permissions create the postgis template database
 su
 su postgres
@@ -54,6 +34,29 @@ createlang plpgsql postgis
 psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/postgis.sql
 psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/spatial_ref_sys.sql
 
+# For ability for persistant storage of GIFS, assuming default location of your web server is /var/www/html
+mkdir /tmp/media
+su -c 'ln -s /tmp/media /var/www/html/media'
+
+# Build GDAL from source.  Download latest (v1.9 or higher) tar ball from http://download.osgeo.org/gdal/
+# Unpack, and in the top level directory (e.g. gdal-1.9.0/) run ('make install' must be done as root):
+./configure --with-python
+make
+make install
+
+# Mapserver:
+# ---------
+# To build MapServer some prerequisites will need to be installed:
+su -c "yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel"
+su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel"
+
+# Install MapServer following the instructions for your system at http://mapserver.org/.  It is typical to
+# build it from source and then copy the 'mapserv' executable to the cgi-bin directory for your web server.
+# The .map templates assume that this is where the mapserv executable is located.  You will set the MapServer
+# host name (MAPSERVER_HOST) for your privateSettings file.  It _can_ be a separate server from your Django 
+# server, but it must be able to see the .map files produced by Django through a network mount or some other 
+# mechanism.
+
 # Make sure the file at /usr/share/proj/epsg contains a line starting with <900913>; if not, append the following lines:
 
 # Spherical Mercator
@@ -63,6 +66,7 @@ psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/spatial_ref_sys.sql
 ./configure --with-proj=/usr --with-ogr=/usr/local/bin/gdal-config --with-gdal=/usr/local/bin/gdal-config --with-wfs --with-wfsclient --with-wmsclient --with-postgis=/usr/pgsql-9.1/bin/pg_config
 make 
 cp mapserv /var/www/cgi-bin
+
 
 # Make sure that the apache httpd service is running on your system
 chkconfig httpd on
@@ -113,6 +117,6 @@ pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
 
 --
 Mike McCann
-MBARI 13 June 2012
+MBARI 31 January 2013
 
 
