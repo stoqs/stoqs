@@ -25,7 +25,7 @@ from matplotlib import mpl
 from django.conf import settings
 from django.db.models.query import RawQuerySet
 from datetime import datetime
-from stoqs.views.KML import readCLT
+from KML import readCLT
 from stoqs import models
 from MPQuery import MPQuerySet
 import numpy as np
