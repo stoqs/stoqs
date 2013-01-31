@@ -170,6 +170,9 @@ class STOQSQManager(object):
         for k,v in options_functions.iteritems():
             if k == 'measuredparametersgroup':
                 results[k] = v(MEASUREDINSITU)
+                # To support legacy databases that do not have ParamaterGroup.name populated
+                if not results[k]:
+                    results[k] = v()
             elif k == 'sampledparametersgroup':
                 results[k] = v(SAMPLED)
             else:
