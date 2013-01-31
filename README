@@ -29,8 +29,11 @@ This software can be checked out of Google Code thusly:
 	cd ~/dev
 	hg clone https://<your_google_account>@code.google.com/p/stoqs/ stoqshg
 
-(I like to give the top level directory a different name so as not to create confusion
-with the 'stoqs' subdirectory which is the Django application within the project.)
+Note: The source checkout instructions on the Google Code site do not include the
+last argument, in which case the software will be checked out into a 'stoqs' directory.
+This can be confusing as there is another 'stoqs' directory in the tree.  For this
+reason we check it out to a 'stoqshg' directory to indicate that it is a Mercurial
+clone.
 	
 Further information is in these files:
 
@@ -39,12 +42,13 @@ Further information is in these files:
 	DEVELOPMENT   - Instructions on running a development environment
 	PRODUCTION    - Instructions on setting up a production environment
 	LOADING       - Loading your data
+    TIDBITS       - Miscellaneous tips, fixes, and examples for using STOQS
 	LICENSE       - GNU General Public License text, how this software is licensed
 	
 
 --
 Mike McCann
-MBARI 4 January 2012
+MBARI 30 January 2013
 
 
 
