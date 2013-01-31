@@ -778,11 +778,13 @@ class STOQSQManager(object):
         This method generates a string that can be put into a Mapserver mapfile DATA statment.
         It is for returning Samples.
         '''
-        qs = self.getSampleQS()
+        qs = self.sample_qs
+        if not qs:
+            return
 
         # Add any more filters (Q objects) if specified
         if Q_object:
-            qs = qs.filter(Q_object)
+            qs = self.sample_qs.filter(Q_object)
 
         # Query for mapserver
         geo_query = '''geom from (%s)
