@@ -98,7 +98,7 @@ in making changes that you 'think might work'.
     - Model changes (adding new relations, etc.) may require starting over with creating and syncing
       a database then loading some data, creating a new fixture, and testing.
     
-      
+    - Additional information is in the file DEBUG_OPTIMIZE      
 
 --
 Mike McCann
