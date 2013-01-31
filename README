@@ -26,25 +26,25 @@ CentOS execute "yum -install mercurial" as root.
 
 This software can be checked out of Google Code thusly:
 
-	cd ~/dev
-	hg clone https://<your_google_account>@code.google.com/p/stoqs/ stoqshg
+    cd ~/dev
+    hg clone https://<your_google_account>@code.google.com/p/stoqs/ stoqshg
 
 Note: The source checkout instructions on the Google Code site do not include the
 last argument, in which case the software will be checked out into a 'stoqs' directory.
 This can be confusing as there is another 'stoqs' directory in the tree.  For this
 reason we check it out to a 'stoqshg' directory to indicate that it is a Mercurial
 clone.
-	
+    
 Further information is in these files:
 
-	PREREQUISITES - System level requirements, e.g. Postgis, Django, Python modules
-	INSTALL       - Steps to install the Django stoqs application
-	DEVELOPMENT   - Instructions on running a development environment
-	PRODUCTION    - Instructions on setting up a production environment
-	LOADING       - Loading your data
+    PREREQUISITES - System level requirements, e.g. Postgis, Django, Python modules
+    INSTALL       - Steps to install the Django stoqs application
+    DEVELOPMENT   - Instructions on running a development environment
+    PRODUCTION    - Instructions on setting up a production environment
+    LOADING       - Loading your data
     TIDBITS       - Miscellaneous tips, fixes, and examples for using STOQS
-	LICENSE       - GNU General Public License text, how this software is licensed
-	
+    LICENSE       - GNU General Public License text, how this software is licensed
+    
 
 --
 Mike McCann
