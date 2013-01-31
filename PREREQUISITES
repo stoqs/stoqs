@@ -44,6 +44,16 @@ make install
 su -c "yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel"
 su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel"
 
+# Become root and su to user postgres in order to have permissions create the postgis template database
+su
+su postgres
+
+# Create the postgis template  database (Note: depending on versions, your paths may vary)
+createdb postgis
+createlang plpgsql postgis
+psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/postgis.sql
+psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/spatial_ref_sys.sql
+
 # Make sure the file at /usr/share/proj/epsg contains a line starting with <900913>; if not, append the following lines:
 
 # Spherical Mercator

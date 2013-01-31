@@ -75,7 +75,7 @@ indication that you are in the virtual environment.
         python manage.py runserver 0.0.0.0:8000 
     
     
-6.  Start the celerey daemon (which services long-running tasks) in another window:
+6.  Optional: Start the celerey daemon (which services long-running tasks) in another window:
 
         python manage.py celeryd -l INFO
 
@@ -88,7 +88,7 @@ indication that you are in the virtual environment.
 
     If you get this error: django.db.utils.DatabaseError: invalid byte sequence for encoding "UTF8": 0x00
     make sure you have installed Django patch #16778 to the django/contrib/gis/db/backends/postgis/adapter.py
-    file in your venv-stoqs/lib/python2.6/site-packages/Django-1.3-py2.6.egg folder.
+    file in your venv-stoqs/lib/python2.6/site-packages/Django-1.3-py2.6.egg (or similar) folder.
 
     If you get the message "Data load complete, 498 records loaded" followed by some sample load messages
     then you will have successfully loaded some data from MBARI's AUVCTD Dorado OPeNDAP data archive.  
@@ -105,5 +105,5 @@ To continue on to the next steps please read the instructions in the DEVELOPMENT
 
 --
 Mike McCann
-MBARI i21 January 2013
+MBARI 21 January 2013
 
