@@ -188,17 +188,18 @@ class ContourPlots(object):
                 else:
                     ax.scatter(x, y, c=z, s=20, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
 
-                # Add sample locations and names
-                xsamp = []
-                ysamp = []
-                sname = []
-                for s in self.sampleQS.values('instantpoint__timevalue', 'depth', 'name'):
-                    xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()) / scale_factor)
-                    ysamp.append(s['depth'])
-                    sname.append(s['name'])
-                ax.scatter(xsamp, ysamp, marker='o', c='w', s=15, zorder=10)
-                for x,y,sn in zip(xsamp, ysamp, sname):
-                    plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
+                if self.sampleQS:
+                    # Add sample locations and names
+                    xsamp = []
+                    ysamp = []
+                    sname = []
+                    for s in self.sampleQS.values('instantpoint__timevalue', 'depth', 'name'):
+                        xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()) / scale_factor)
+                        ysamp.append(s['depth'])
+                        sname.append(s['name'])
+                    ax.scatter(xsamp, ysamp, marker='o', c='w', s=15, zorder=10)
+                    for x,y,sn in zip(xsamp, ysamp, sname):
+                        plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
                 fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
