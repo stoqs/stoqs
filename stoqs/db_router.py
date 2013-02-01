@@ -47,12 +47,19 @@ class RouterMiddleware(object):
             # Add as a META tag for those views that wish to use the dbAlias
             
             request.META['dbAlias'] = _thread_local_vars.dbAlias
+
+        # See http://dustinfarris.com/2012/2/sharing-django-users-and-sessions-across-projects/
+        if request.path.startswith('/admin'):
+            _thread_local_vars.admin = True
+
         return view_func(request, *pargs, **kwargs)
     
     def process_response(self, request, response):
         # Get rid of the thread local variable, since it isn't needed anymore.
         if hasattr(_thread_local_vars, 'dbAlias'):
             del _thread_local_vars.dbAlias
+        if hasattr(_thread_local_vars, 'admin'):
+            del(_thread_local_vars.admin)
         return response
 
 
@@ -60,6 +67,8 @@ class RouterMiddleware(object):
 class DatabaseRouter(object):
     def _default_db( self ):
         from django.conf import settings
+        logger.debug('_thread_local_vars = %s', _thread_local_vars)
+        logger.debug('settings.DATABASES = %s', settings.DATABASES)
         if hasattr( _thread_local_vars, 'dbAlias' ) and _thread_local_vars.dbAlias in settings.DATABASES:
             logger.debug("DatabaseRouter: Returning dbAlias = %s", _thread_local_vars.dbAlias)
             return _thread_local_vars.dbAlias
