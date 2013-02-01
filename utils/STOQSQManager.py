@@ -64,8 +64,8 @@ class STOQSQManager(object):
         self._buildQuerySet(**kwargs)
         kwargs['fromTable'] = 'Sample'
         self._buildQuerySet(**kwargs)
-        ##kwargs['fromTable'] = 'ActivityParameterHistogram'
-        ##self._buildQuerySet(**kwargs)
+        kwargs['fromTable'] = 'ActivityParameterHistogram'
+        self._buildQuerySet(**kwargs)
 
     def _buildQuerySet(self, *args, **kwargs):
         '''
@@ -92,6 +92,7 @@ class STOQSQManager(object):
             logger.debug('Using query string passed in to make a non-activity based query')
             qs = args['qs']
         else:
+            # Provide "base" querysets with depth and filters so that more efficient inner joins are generated
             if fromTable == 'Activity':
                 logger.debug('Making default activity based query')
                 if (not kwargs):
@@ -109,6 +110,14 @@ class STOQSQManager(object):
                                                                                                   instantpoint__activity__platform__pk__isnull=False)
                 else:
                     qs = models.Sample.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
+            elif fromTable == 'ActivityParameterHistogram':
+                logger.debug('Making %s based query', fromTable)
+                if (not kwargs):
+                    qs = models.ActivityParameterHistogram.objects.using(self.dbname).select_related(depth=3).filter( activityparameter__parameter__pk__isnull=False,
+                                                                                                  activityparameter__activity__pk__isnull=False,
+                                                                                                  activityparameter__activity__platform__pk__isnull=False)
+                else:
+                    qs = models.ActivityParameterHistogram.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
             else:
                 logger.exception('No handler for fromTable = %s', fromTable)
     
@@ -129,16 +138,17 @@ class STOQSQManager(object):
                 logger.debug('fromTable = %s, k = %s, v = %s, q = %s', fromTable, k, v, q)
                 qs = qs.filter(q)
 
+        # Assign query sets for the current UI selections
         if fromTable == 'Activity':
             self.qs = qs.using(self.dbname)
             ##logger.debug('Activity query = %s', str(self.qs.query))
         elif fromTable == 'Sample':
             self.sample_qs = qs.using(self.dbname)
             logger.debug('Sample query = %s', str(self.sample_qs.query))
+        elif fromTable == 'ActivityParameterHistogram':
+            self.activityparameterhistogram_qs = qs.using(self.dbname)
+            logger.debug('activityparameterhistogram_qs = %s', str(self.activityparameterhistogram_qs.query))
 
-        # Apply query constraints to the MeasuredParameter query object 
-        ##self.mpq.buildMPQuerySet(*args, **kwargs)
-        
     def generateOptions(self):
         '''
         Generate a dictionary of all the selectable parameters by executing each of the functions
@@ -266,63 +276,21 @@ class STOQSQManager(object):
     def getActivityParameterHistogramsQS(self):
         '''
         Return query set of ActivityParameterHistograms given the current constraints. 
-        If a parameter kwargs exists then constrain to platform(s) that have that parameter.
         '''
-        qparams = {}
-
-        qs_aph = models.ActivityParameterHistogram.objects.using(self.dbname).all()
-        if self.kwargs.has_key('platforms'):
-            if self.kwargs['platforms']:
-                qs_aph = qs_aph.filter(Q(activityparameter__activity__platform__name__in=self.kwargs['platforms']))
-        if self.kwargs.has_key('parameters'):
-            if self.kwargs['parameters']:
-                # Need to do some kind of sub-query here: get all the platforms that have these parameters then restrict to the returned platforms
-                logger.debug('Finding out which platforms have parameter = %s', self.kwargs['parameters'])
-                qs_plat = models.Platform.objects.using(self.dbname).all()
-                qs_plat = qs_plat.filter(Q(activity__activityparameter__parameter__name__in=self.kwargs['parameters']))
-                platHash = {}       # Use a hash to get a unique list of platform names with .keys()
-                for plat in qs_plat:
-                    platHash[plat] = 1
-                qs_aph = qs_aph.filter(Q(activityparameter__activity__platform__name__in=platHash.keys()))
-        if self.kwargs.has_key('time'):
-            if self.kwargs['time'][0] is not None:
-                q1 = Q(activityparameter__activity__startdate__lte=self.kwargs['time'][0]) & Q(activityparameter__activity__enddate__gte=self.kwargs['time'][0])
-            if self.kwargs['time'][1] is not None:
-                q2 = Q(activityparameter__activity__startdate__lte=self.kwargs['time'][1]) & Q(activityparameter__activity__enddate__gte=self.kwargs['time'][1])
-            if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
-                q3 = Q(activityparameter__activity__startdate__gte=self.kwargs['time'][0]) & Q(activityparameter__activity__startdate__lte=self.kwargs['time'][1]
-                    ) & Q(activityparameter__activity__enddate__gte=self.kwargs['time'][0]) & Q(activityparameter__activity__enddate__lte=self.kwargs['time'][1])
-
-                qs_aph = qs_aph.filter(q1 | q2 | q3)
-
-                logger.debug('ORing Q objects %s, %s, %s', q1, q2, q3)
-
-        if self.kwargs.has_key('depth'):
-            if self.kwargs['depth'][0] is not None:
-                q1 = Q(activityparameter__activity__mindepth__lte=self.kwargs['depth'][0]) & Q(activityparameter__activity__maxdepth__gte=self.kwargs['depth'][0])
-            if self.kwargs['depth'][1] is not None:
-                q2 = Q(activityparameter__activity__mindepth__lte=self.kwargs['depth'][1]) & Q(activityparameter__activity__maxdepth__gte=self.kwargs['depth'][1])
-            if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
-                q3 = Q(activityparameter__activity__mindepth__gte=self.kwargs['depth'][0]) & Q(activityparameter__activity__mindepth__lte=self.kwargs['depth'][1]
-                    ) & Q(activityparameter__activity__maxdepth__gte=self.kwargs['depth'][0]) & Q(activityparameter__activity__maxdepth__lte=self.kwargs['depth'][1])
-                qs_aph = qs_aph.filter(q1 | q2 | q3)
-
-        if qs_aph:
-            logger.debug(pprint.pformat(str(qs_aph.query)))
-        else:
-            logger.debug("No queryset returned for kwargs = %s", self.kwargs)
-        return qs_aph
+        if not self.activityparameterhistogram_qs:
+            logger.warn("self.activityparameterhistogram_qs is None")
+            return
+        if self.activityparameterhistogram_qs:
+            return self.activityparameterhistogram_qs
 
     def getSampleQS(self):
         '''
         Return query set of Samples given the current constraints. 
         '''
-
         if not self.sample_qs:
             logger.warn("self.sample_qs is None")
             return
         else:
-            self.qs_sample = self.sample_qs         # We had it this way before, keep this for a bit...
             return self.sample_qs
 
     def getActivities(self):
@@ -353,7 +321,7 @@ class STOQSQManager(object):
         if groupName:
             p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
 
-        p_qs = p_qs.values('name','standard_name','id').distinct().order_by('name')
+        p_qs = p_qs.values('name','standard_name','id','units').distinct().order_by('name')
         # Odd: Trying to print the query gives "Can't do subqueries with queries on different DBs."
         ##logger.debug('----------- p_qs.query (%s) = %s', groupName, str(p_qs.query))
 
@@ -362,10 +330,11 @@ class STOQSQManager(object):
             name = row['name']
             standard_name = row['standard_name']
             id = row['id']
+            units = row['units']
             if not standard_name:
                 standard_name = ''
             if name is not None:
-                results.append((name,standard_name,id,))
+                results.append((name,standard_name,id,units))
 
         return results
 
@@ -528,6 +497,7 @@ class STOQSQManager(object):
         color and plot the data.
         '''
         aphHash = {}
+        pUnits = {}
         showAllParameterValuesFlag = getShow_All_Parameter_Values(self.kwargs)
         showSigmatParameterValuesFlag = getShow_Sigmat_Parameter_Values(self.kwargs)
         showStandardnameParameterValuesFlag = getShow_StandardName_Parameter_Values(self.kwargs)
@@ -591,6 +561,7 @@ class STOQSQManager(object):
             # Assign histogram data to the hash keyed by parameter name
             if plHash:
                 aphHash[pa.name] = plHash
+                pUnits[pa.name] = pa.units
 
         # Make RGBA colors from the hex colors - needed for opacity in flot bars
         rgbas = {}
@@ -598,7 +569,7 @@ class STOQSQManager(object):
             r,g,b = (p[2][:2], p[2][2:4], p[2][4:])
             rgbas[p[0]] = 'rgba(%d, %d, %d, 0.4)' % (int(r,16), int(g,16), int(b,16))
 
-        return {'histdata': aphHash, 'rgbacolors': rgbas}
+        return {'histdata': aphHash, 'rgbacolors': rgbas, 'parameterunits': pUnits}
 
     def getActivityParamHistRequestPNGs(self):
         '''
@@ -658,6 +629,8 @@ class STOQSQManager(object):
                 q=Q(activityparameter__parameter__id__in=parameterid)
             elif fromTable == 'Sample':
                 q=Q(sampledparameter__parameter__id__in=parameterid)
+            elif fromTable == 'ActivityParameterHistogram':
+                q=Q(activityparameter__parameter__id__in=parameterid)
         return q
 
     def _measuredparametersgroupQ(self, parametername, fromTable='Activity'):
@@ -673,9 +646,14 @@ class STOQSQManager(object):
                 q=Q(activityparameter__parameter__name__in=parametername)
             elif fromTable == 'Sample':
                 # Use sub-query to find all Samples from Activities that are in the existing Activity queryset
-                # Probable bug in django/db/models/sql/query.py in "sql, params = self.get_compiler(DEFAULT_DB_ALIAS).as_sql()"
-                # which requires the monkey patch that's done in __init__().
-                q=Q(instantpoint__activity__in=self.qs.using(self.dbname))
+                # Note: must do the monkey patch in __init__() so that Django's django/db/models/sql/query.py 
+                # statement "sql, params = self.get_compiler(DEFAULT_DB_ALIAS).as_sql()" uses the right connection.
+                # This is not a Django bug according to source code comment at:
+                #    https://github.com/django/django/blob/master/django/db/models/sql/query.py
+                q=Q(instantpoint__activity__in=self.qs)
+            elif fromTable == 'ActivityParameterHistogram':
+                # Use sub-query to find all ActivityParameterHistogram from Activities that are in the existing Activity queryset
+                q=Q(activityparameter__activity__in=self.qs)
         return q
 
     def _parameterstandardnameQ(self, parameterstandardname, fromTable='Activity'):
@@ -690,7 +668,11 @@ class STOQSQManager(object):
             if fromTable == 'Activity':
                 q=Q(activityparameter__parameter__standard_name__in=parameterstandardname)
             elif fromTable == 'Sample':
-                q=Q(sampledparameter__parameter__standard_name__in=parameterstandardname)
+                # Use sub-query to find all Samples from Activities that are in the existing Activity queryset
+                q=Q(instantpoint__activity__in=self.qs)
+            elif fromTable == 'ActivityParameterHistogram':
+                # Use sub-query to find all ActivityParameterHistogram from Activities that are in the existing Activity queryset
+                q=Q(activityparameter__activity__in=self.qs)
         return q
 
     def _platformsQ(self, platforms, fromTable='Activity'):
@@ -705,7 +687,11 @@ class STOQSQManager(object):
             if fromTable == 'Activity':
                 q=Q(platform__name__in=platforms)
             elif fromTable == 'Sample':
-                q=Q(instantpoint__activity__platform__name__in=platforms)
+                # Use sub-query to find all Samples from Activities that are in the existing Activity queryset
+                q=Q(instantpoint__activity__in=self.qs)
+            elif fromTable == 'ActivityParameterHistogram':
+                # Use sub-query to find all ActivityParameterHistogram from Activities that are in the existing Activity queryset
+                q=Q(activityparameter__activity__in=self.qs)
         return q    
     
     def _timeQ(self, times, fromTable='Activity'):
@@ -721,11 +707,15 @@ class STOQSQManager(object):
                 q=Q(enddate__gte=times[0])
             elif fromTable == 'Sample':
                 q=Q(instantpoint__timevalue__gte=times[0])
+            elif fromTable == 'ActivityParameterHistogram':
+                q=Q(activityparameter__activity__enddate__gte=times[0])
         if times[1] is not None:
             if fromTable == 'Activity':
                 q=q & Q(startdate__lte=times[1])
             elif fromTable == 'Sample':
                 q=q & Q(instantpoint__timevalue__lte=times[1])
+            elif fromTable == 'ActivityParameterHistogram':
+                q=q & Q(activityparameter__activity__startdate__lte=times[1])
         return q
     
     def _depthQ(self, depth, fromTable='Activity'):
@@ -742,11 +732,15 @@ class STOQSQManager(object):
                 q=Q(maxdepth__gte=depth[0])
             elif fromTable == 'Sample':
                 q=Q(depth__gte=depth[0])
+            elif fromTable == 'ActivityParameterHistogram':
+                q=Q(activityparameter__activity__maxdepth__gte=depth[0])
         if depth[1] is not None:
             if fromTable == 'Activity':
                 q=q & Q(mindepth__lte=depth[1])
             elif fromTable == 'Sample':
                 q=q & Q(depth__lte=depth[1])
+            elif fromTable == 'ActivityParameterHistogram':
+                q=q & Q(activityparameter__activity__mindepth__lte=depth[1])
         return q
     
 
