@@ -484,13 +484,13 @@
         // Good for .json, .csv, .tsv, .html responses
         var mp_param = '?';
         if (typeof params['measuredparametersgroup'] != 'undefined') {
-            if (params['measuredparametersgroup'].length == 1) {
-                mp_param = mp_param + 'parameter__name=' + params['measuredparametersgroup'][0] + '&';
+            for (var i=0; i<params['measuredparametersgroup'].length; i++) {
+                mp_param = mp_param + 'parameter__name=' + params['measuredparametersgroup'][i] + '&';
             }
         }
         if (typeof params['parameterstandardname'] != 'undefined') {
-            if (params['parameterstandardname'].length == 1) {
-                mp_param = mp_param + 'parameter__standard_name=' + params['parameterstandardname'][0] + '&';
+            for (var i=0; i<params['parameterstandardname'].length; i++) {
+                mp_param = mp_param + 'parameter__standard_name=' + params['parameterstandardname'][i] + '&';
             }
         }
         if (typeof params['platforms'] != 'undefined') {
@@ -543,7 +543,7 @@
                 $('#'+value+'-field').text(data['sql']);
             }
             else if (value == 'kml') {
-                kmlurl = 'Select a Parameter to view your selection of O(10k) actual datavalues in Google Earth';
+                kmlurl = 'Select a single Parameter to view your selection in Google Earth';
                 var url = base_url + 'measuredparameter.kml' + mp_param;
                 if (typeof params['measuredparametersgroup'] != 'undefined') {
                     if (params['measuredparametersgroup'].length == 1) {
@@ -1445,8 +1445,8 @@
                     parameterButtonText = parameterButtonText + '</tr>';
                 });
                 $('#measuredparameter-table > tbody:last').append(parameterButtonText);
-                $('.measuredparametersgroup').tooltip({title: 'Click to select this Parameter name'});
-                $('.parameterstandardname').tooltip({title: 'Click to select this Parameter standard_name'});
+                //$('.measuredparametersgroup').tooltip({title: 'Click to select this Parameter name'});
+                //$('.parameterstandardname').tooltip({title: 'Click to select this Parameter standard_name'});
             }
             else if (key == 'time') { 
                 var start = new Date(data[key][0]);
@@ -1534,7 +1534,6 @@
                     enableButton($('button', '#' + value[2]));              // Enable the button in the table row
                     ids.push(value[2].toString());
                 });
-                console.log(ids);
                 $('#sampledparameter-table > tbody > tr > td').each(function (index, elem) { 
                     if (elem.id.length != 0) {
                         if ($.inArray((elem.id).toString(), ids) == -1) {
@@ -1555,15 +1554,10 @@
                         ids.push(value[1] + '--' + value[0] + '-sn');
                     }
                 });
-                console.log(ids);
                 $('#measuredparameter-table > tbody > tr > td').each(function (index, elem) { 
                     if (elem.id.length != 0) {
-                        console.log(elem.id);
                         if ($.inArray((elem.id).toString(), ids) == -1) {
                             disableButton($('button', $(elem))); // disable the button in the table row
-                        }
-                        else {
-                            console.log('not disabled');
                         }
                     }
                 });

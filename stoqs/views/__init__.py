@@ -190,7 +190,11 @@ class BaseOutputer(object):
         for f in self.ammendFields(fields):
             ##logger.debug(f)
             if self.request.GET.getlist(f):
-                qparams[f] = self.request.GET.getlist(f)[0]     # Get's just first element, will need to change for multiple params
+                ##logger.debug('len(self.request.GET.getlist(f)) = %d', len(self.request.GET.getlist(f)))
+                if len(self.request.GET.getlist(f)) == 1:
+                    qparams[f] = self.request.GET.getlist(f)[0]
+                else:
+                    qparams[f + '__in'] = self.request.GET.getlist(f)
 
         self.qparams = qparams
         logger.debug(qparams)
