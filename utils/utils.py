@@ -1,4 +1,7 @@
 # A collection of various utility functions
+import logging
+
+logger = logging.getLogger(__name__)
 
 def round_to_n(x, n):
     '''
@@ -247,14 +250,40 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
     if translateGeom:
         q = q.replace('stoqs_measurement.geom', 'ST_X(stoqs_measurement.geom) as longitude, ST_Y(stoqs_measurement.geom) as latitude')
     
-    # Quotify things that need quotes
+    # Quotify simple things that need quotes
     QUOTE_NAMEEQUALS = re.compile('name\s+=\s+(?P<argument>\S+)')
     QUOTE_DATES = re.compile('(?P<argument>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)')
-    QUOTE_INS = re.compile('IN\s+\((?P<argument>[^\)]+)\)')
 
     q = QUOTE_NAMEEQUALS.sub(r"name = '\1'", q)
     q = QUOTE_DATES.sub(r"'\1'", q)
-    q = QUOTE_INS.sub(r"IN ('\1')", q)
+
+    # The IN ( ... ) clauses require special treatment: an IN SELECT subquery needs no quoting, only string values need quotes, and numbers need no quotes
+    FIND_INS = re.compile('\sIN\s[^\)]+\)')
+    items = ''
+    for m in FIND_INS.findall(q):
+        if m.find('SELECT') == -1:
+            logger.debug('line = %s', m)
+            FIND_ITEMS = re.compile('\((?P<argument>[^\)]+)\)')
+            new_items = ''
+            try:
+                items = FIND_ITEMS.search(m).groups()[0]
+            except Exception, e:
+                logger.warn(e)
+                continue
+            else:
+                for item in items.split(','):
+                    if not item.isdigit():
+                        new_items = new_items + "'" + item.strip() + "', "
+                    else:
+                        new_items = new_items + item.strip() + ", "
+
+                logger.debug('items = %s', items)
+            new_items = new_items[:-2]
+            logger.debug('new_items = %s', new_items)
+
+    if items:
+        logger.debug('Replacing items = %s with new_items = %s', items, new_items)
+        q = q.replace(items, new_items) 
 
     return q
 
