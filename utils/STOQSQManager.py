@@ -13,8 +13,8 @@ STOQS Query manager for building ajax responces to selections made for QueryUI
 '''
 
 from django.conf import settings
-from django.db import connections
 from django.db.models import Q, Max, Min, Sum
+from django.db.models.sql import query
 from django.contrib.gis.geos import fromstr, MultiPoint, GEOSGeometry
 from django.db.models import Avg
 from django.db.utils import DatabaseError
@@ -53,15 +53,19 @@ class STOQSQManager(object):
         self.dbname = dbname
         self.response = response
         self.mpq = MPQuery(request)
+        # monkey patch sql/query.py to make it use our database for sql generation
+        query.DEFAULT_DB_ALIAS = dbname
         
     def buildQuerySets(self, *args, **kwargs):
         '''
         Build the query sets based on any selections from the UI.  We need one for Activities and one for Samples
         '''
+        kwargs['fromTable'] = 'Activity'
         self._buildQuerySet(**kwargs)
         kwargs['fromTable'] = 'Sample'
         self._buildQuerySet(**kwargs)
-
+        ##kwargs['fromTable'] = 'ActivityParameterHistogram'
+        ##self._buildQuerySet(**kwargs)
 
     def _buildQuerySet(self, *args, **kwargs):
         '''
@@ -80,7 +84,7 @@ class STOQSQManager(object):
         These are all called internally - so we'll assume that all the validation has been done in advance,
         and the calls to this method meet the requirements stated above.
         '''
-        fromTable = 'Activity'
+        fromTable = 'Activity'              # Default is Activity
         if kwargs.has_key('fromTable'):
             fromTable = kwargs['fromTable']
 
@@ -126,10 +130,10 @@ class STOQSQManager(object):
                 qs = qs.filter(q)
 
         if fromTable == 'Activity':
-            self.qs = qs
+            self.qs = qs.using(self.dbname)
             ##logger.debug('Activity query = %s', str(self.qs.query))
         elif fromTable == 'Sample':
-            self.sample_qs = qs
+            self.sample_qs = qs.using(self.dbname)
             logger.debug('Sample query = %s', str(self.sample_qs.query))
 
         # Apply query constraints to the MeasuredParameter query object 
@@ -668,7 +672,10 @@ class STOQSQManager(object):
             if fromTable == 'Activity':
                 q=Q(activityparameter__parameter__name__in=parametername)
             elif fromTable == 'Sample':
-                q=Q(sampledparameter__parameter__name__in=parametername)
+                # Use sub-query to find all Samples from Activities that are in the existing Activity queryset
+                # Probable bug in django/db/models/sql/query.py in "sql, params = self.get_compiler(DEFAULT_DB_ALIAS).as_sql()"
+                # which requires the monkey patch that's done in __init__().
+                q=Q(instantpoint__activity__in=self.qs.using(self.dbname))
         return q
 
     def _parameterstandardnameQ(self, parameterstandardname, fromTable='Activity'):
@@ -772,7 +779,7 @@ class STOQSQManager(object):
 
         # Query for mapserver
         geo_query = '''geom from (%s)
-            as subquery using unique gid using srid=4326''' % postgresifySQL(qs.query)
+            as subquery using unique gid using srid=4326''' % postgresifySQL(qs.query).rstrip()
         
         return geo_query
 
@@ -787,11 +794,10 @@ class STOQSQManager(object):
 
         # Add any more filters (Q objects) if specified
         if Q_object:
-            qs = self.sample_qs.filter(Q_object)
+            qs = self.sample_qs.using(self.dbname).filter(Q_object)
 
         # Query for mapserver
-        geo_query = '''geom from (%s)
-            as subquery using unique gid using srid=4326''' % postgresifySQL(qs.query, sampleFlag=True)
+        geo_query = 'geom from (%s) as subquery using unique gid using srid=4326' % postgresifySQL(qs.query, sampleFlag=True)
 
         logger.debug('geo_query = %s', geo_query)
         
