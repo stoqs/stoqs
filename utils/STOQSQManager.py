@@ -621,16 +621,16 @@ class STOQSQManager(object):
         ensure that our result doesn't contain any parameter names that were not selected.
         We use id for sampledparametersgroup as the name may contain special characters.
         '''
-        q=Q()
+        q = Q()
         if parameterid is None:
             return q
         else:
             if fromTable == 'Activity':
-                q=Q(activityparameter__parameter__id__in=parameterid)
+                q = Q(activityparameter__parameter__id__in=parameterid)
             elif fromTable == 'Sample':
-                q=Q(sampledparameter__parameter__id__in=parameterid)
+                q = Q(sampledparameter__parameter__id__in=parameterid)
             elif fromTable == 'ActivityParameterHistogram':
-                q=Q(activityparameter__parameter__id__in=parameterid)
+                q = Q(activityparameter__parameter__id__in=parameterid)
         return q
 
     def _measuredparametersgroupQ(self, parametername, fromTable='Activity'):
@@ -638,22 +638,22 @@ class STOQSQManager(object):
         Build a Q object to be added to the current queryset as a filter.  This should 
         ensure that our result doesn't contain any parameter names that were not selected.
         '''
-        q=Q()
+        q = Q()
         if parametername is None:
             return q
         else:
             if fromTable == 'Activity':
-                q=Q(activityparameter__parameter__name__in=parametername)
+                q = Q(activityparameter__parameter__name__in=parametername)
             elif fromTable == 'Sample':
                 # Use sub-query to find all Samples from Activities that are in the existing Activity queryset
                 # Note: must do the monkey patch in __init__() so that Django's django/db/models/sql/query.py 
                 # statement "sql, params = self.get_compiler(DEFAULT_DB_ALIAS).as_sql()" uses the right connection.
                 # This is not a Django bug according to source code comment at:
                 #    https://github.com/django/django/blob/master/django/db/models/sql/query.py
-                q=Q(instantpoint__activity__in=self.qs)
+                q = Q(instantpoint__activity__in=self.qs)
             elif fromTable == 'ActivityParameterHistogram':
                 # Use sub-query to find all ActivityParameterHistogram from Activities that are in the existing Activity queryset
-                q=Q(activityparameter__activity__in=self.qs)
+                q = Q(activityparameter__activity__in=self.qs)
         return q
 
     def _parameterstandardnameQ(self, parameterstandardname, fromTable='Activity'):
@@ -661,18 +661,18 @@ class STOQSQManager(object):
         Build a Q object to be added to the current queryset as a filter.  This should 
         ensure that our result doesn't contain any parameter standard_names that were not selected.
         '''
-        q=Q()
+        q = Q()
         if parameterstandardname is None:
             return q
         else:
             if fromTable == 'Activity':
-                q=Q(activityparameter__parameter__standard_name__in=parameterstandardname)
+                q = Q(activityparameter__parameter__standard_name__in=parameterstandardname)
             elif fromTable == 'Sample':
                 # Use sub-query to find all Samples from Activities that are in the existing Activity queryset
-                q=Q(instantpoint__activity__in=self.qs)
+                q = Q(instantpoint__activity__in=self.qs)
             elif fromTable == 'ActivityParameterHistogram':
                 # Use sub-query to find all ActivityParameterHistogram from Activities that are in the existing Activity queryset
-                q=Q(activityparameter__activity__in=self.qs)
+                q = Q(activityparameter__activity__in=self.qs)
         return q
 
     def _platformsQ(self, platforms, fromTable='Activity'):
@@ -680,18 +680,18 @@ class STOQSQManager(object):
         Build a Q object to be added to the current queryset as a filter.  This will ensure that we
         only generate the other values/sets for platforms that were selected.
         '''
-        q=Q()
+        q = Q()
         if platforms is None:
             return q
         else:
             if fromTable == 'Activity':
-                q=Q(platform__name__in=platforms)
+                q = Q(platform__name__in=platforms)
             elif fromTable == 'Sample':
                 # Use sub-query to find all Samples from Activities that are in the existing Activity queryset
-                q=Q(instantpoint__activity__in=self.qs)
+                q = Q(instantpoint__activity__in=self.qs)
             elif fromTable == 'ActivityParameterHistogram':
                 # Use sub-query to find all ActivityParameterHistogram from Activities that are in the existing Activity queryset
-                q=Q(activityparameter__activity__in=self.qs)
+                q = Q(activityparameter__activity__in=self.qs)
         return q    
     
     def _timeQ(self, times, fromTable='Activity'):
@@ -699,23 +699,23 @@ class STOQSQManager(object):
         Build a Q object to be added to the current queryset as a filter.  This ensures that we limit
         things down based on the time range selected by the user.
         '''
-        q=Q()
+        q = Q()
         if not times:
             return q
         if times[0] is not None:
             if fromTable == 'Activity':
-                q=Q(enddate__gte=times[0])
+                q = Q(enddate__gte=times[0])
             elif fromTable == 'Sample':
-                q=Q(instantpoint__timevalue__gte=times[0])
+                q = Q(instantpoint__timevalue__gte=times[0])
             elif fromTable == 'ActivityParameterHistogram':
-                q=Q(activityparameter__activity__enddate__gte=times[0])
+                q = Q(activityparameter__activity__enddate__gte=times[0])
         if times[1] is not None:
             if fromTable == 'Activity':
-                q=q & Q(startdate__lte=times[1])
+                q = q & Q(startdate__lte=times[1])
             elif fromTable == 'Sample':
-                q=q & Q(instantpoint__timevalue__lte=times[1])
+                q = q & Q(instantpoint__timevalue__lte=times[1])
             elif fromTable == 'ActivityParameterHistogram':
-                q=q & Q(activityparameter__activity__startdate__lte=times[1])
+                q = q & Q(activityparameter__activity__startdate__lte=times[1])
         return q
     
     def _depthQ(self, depth, fromTable='Activity'):
@@ -724,23 +724,23 @@ class STOQSQManager(object):
         to make sure that we only generate the "leftover" components based on the selected depth
         range.
         '''
-        q=Q()
+        q = Q()
         if not depth:
             return q
         if depth[0] is not None:
             if fromTable == 'Activity':
-                q=Q(maxdepth__gte=depth[0])
+                q = Q(maxdepth__gte=depth[0])
             elif fromTable == 'Sample':
-                q=Q(depth__gte=depth[0])
+                q = Q(depth__gte=depth[0])
             elif fromTable == 'ActivityParameterHistogram':
-                q=Q(activityparameter__activity__maxdepth__gte=depth[0])
+                q = Q(activityparameter__activity__maxdepth__gte=depth[0])
         if depth[1] is not None:
             if fromTable == 'Activity':
-                q=q & Q(mindepth__lte=depth[1])
+                q = q & Q(mindepth__lte=depth[1])
             elif fromTable == 'Sample':
-                q=q & Q(depth__lte=depth[1])
+                q = q & Q(depth__lte=depth[1])
             elif fromTable == 'ActivityParameterHistogram':
-                q=q & Q(activityparameter__activity__mindepth__lte=depth[1])
+                q = q & Q(activityparameter__activity__mindepth__lte=depth[1])
         return q
     
 
