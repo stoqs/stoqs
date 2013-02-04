@@ -288,8 +288,9 @@
                     </div>
                     <div id="collapseOne" class="accordion-body collapse in">
                         <div class="accordion-inner">
+                            <em>Click and drag to select a time-depth range</em>
                             <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
-                                <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled" title="Click and drag to select a time-depth range"></div>
+                                <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
                                 <div class="row">
                                     <div class="span2">
                                         <label class="checkbox disabled">
@@ -320,11 +321,13 @@
                     </div>
                     <div id="collapseSampledParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
+                            <em>Select parameter and/or axis for property-property plot</em>
                             <table id="sampledparameter-table" class="table table-condensed">
                                 <thead>
                                     <tr>
-                                        <th style="text-align:left;">Access</th>
-                                        <th style="text-align:left;">Plot</th>
+                                        <th style="text-align:left;">X</th>
+                                        <th style="text-align:left;">Y</th>
+                                        <th style="text-align:left;">Z</th>
                                         <th style="text-align:left;">Name</th>
                                     </tr>
                                 </thead>                             
@@ -345,9 +348,13 @@
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
+                            <em>Select parameter and/or axis for property-property plot</em>
                             <table id="measuredparameter-table" class="table table-condensed">
                                 <thead>
                                     <tr>
+                                        <th style="text-align:left;">X</th>
+                                        <th style="text-align:left;">Y</th>
+                                        <th style="text-align:left;">Z</th>
                                         <th style="text-align:center;">Name</th>
                                         <th style="text-align:center;">Standard Name</th>
                                     </tr>
@@ -370,6 +377,7 @@
                     </div>
                     <div id="collapseParameterValues" class="accordion-body collapse in">
                         <div class="accordion-inner">
+                            <em>Click and drag to select parameter ranges</em>
                             <div class="span6">
                                 Histogram display: 
                                 <input type="checkbox" id="showsigmatparametervalues" checked /> sea_water_sigma_t
@@ -636,48 +644,25 @@
     }
     
     function toggleField(element) {
-        // Allow only one selection - works like radio buttons
         var $element=$(element);
         if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
             if ($element.is('.btn-primary')) {
                 $element.removeClass('btn-primary');
-                if ($(element).hasClass('sampledparametersgroup')) {
-                    $('#sampledparameters-anchor').html('Sampled Parameters')
-                    $('#clear-sampledparameter-button').addClass('disabled');
-                    $('#clear-sampledparameter-button').removeClass('btn-primary');
-                }
-                if ($(element).hasClass('measuredparametersgroup')) {
-                    $('#measuredparameters-anchor').html('Measured Parameters')
-                    $('#clear-measuredparameter-button').addClass('disabled');
-                    $('#clear-measuredparameter-button').removeClass('btn-primary');
-                }
-                if ($(element).hasClass('parameterstandardname')) {
-                    $('#measuredparameters-anchor').html('Measured Parameters')
-                    $('#clear-measuredparameter-button').addClass('disabled');
-                    $('#clear-measuredparameter-button').removeClass('btn-primary');
-                }
-                if ($(element).hasClass('platform')) {
-                    $('#platforms-anchor').html('Platforms');
-                }
             } else {
                 $element.addClass('btn-primary');
                 if ($(element).hasClass('sampledparametersgroup')) {
-                    $('#sampledparameters-anchor').html('Sampled Parameter name: ' + $(element).html())
                     $('#clear-sampledparameter-button').removeClass('disabled');
                     $('#clear-sampledparameter-button').addClass('btn-primary');
                 }
                 if ($(element).hasClass('measuredparametersgroup')) {
-                    $('#measuredparameters-anchor').html('Measured Parameter name: ' + $(element).html())
                     $('#clear-measuredparameter-button').removeClass('disabled');
                     $('#clear-measuredparameter-button').addClass('btn-primary');
                 }
                 if ($(element).hasClass('parameterstandardname')) {
-                    $('#measuredparameters-anchor').html('Measured Parameter standard_name: ' + $(element).html())
                     $('#clear-measuredparameter-button').removeClass('disabled');
                     $('#clear-measuredparameter-button').addClass('btn-primary');
                 }
                 if ($(element).hasClass('platform')) {
-                    $('#platforms-anchor').html('Platform: ' + $(element).html())
                     $('#clear-platforms-button').removeClass('disabled');
                     $('#clear-platforms-button').addClass('btn-primary');
                 }
@@ -685,53 +670,6 @@
         }
     } // toggleField()
     
-    function selectField(element) {
-        // Allow multiple selections - works like checkboxes
-        var $element=$(element);
-        if ($element.is('.btn-primary')) {
-            $element.removeClass('btn-primary');
-            if ($(element).hasClass('sampledparametersgroup')) {
-                $('#sampledparameters-anchor').html('Sampled Parameters')
-                $('#clear-sampledparameter-button').addClass('disabled');
-                $('#clear-sampledparameter-button').removeClass('btn-primary');
-            }
-            if ($(element).hasClass('measuredparametersgroup')) {
-                $('#measuredparameters-anchor').html('Measured Parameters')
-                $('#clear-measuredparameter-button').addClass('disabled');
-                $('#clear-measuredparameter-button').removeClass('btn-primary');
-            }
-            if ($(element).hasClass('parameterstandardname')) {
-                $('#measuredparameters-anchor').html('Measured Parameters')
-                $('#clear-measuredparameter-button').addClass('disabled');
-                $('#clear-measuredparameter-button').removeClass('btn-primary');
-            }
-            if ($(element).hasClass('platform')) {
-                $('#platforms-anchor').html('Platforms');
-            }
-        } else {
-            $element.addClass('btn-primary');
-            if ($(element).hasClass('sampledparametersgroup')) {
-                $('#sampledparameters-anchor').html('Sampled Parameter name: ' + $(element).html())
-                $('#clear-sampledparameter-button').removeClass('disabled');
-                $('#clear-sampledparameter-button').addClass('btn-primary');
-            }
-            if ($(element).hasClass('measuredparametersgroup')) {
-                $('#measuredparameters-anchor').html('Measured Parameter name: ' + $(element).html())
-                $('#clear-measuredparameter-button').addClass('btn-primary');
-            }
-            if ($(element).hasClass('parameterstandardname')) {
-                $('#measuredparameters-anchor').html('Measured Parameter standard_name: ' + $(element).html())
-                $('#clear-measuredparameter-button').removeClass('disabled');
-                $('#clear-measuredparameter-button').addClass('btn-primary');
-            }
-            if ($(element).hasClass('platform')) {
-                $('#platforms-anchor').html('Platform: ' + $(element).html())
-                $('#clear-platforms-button').removeClass('disabled');
-                $('#clear-platforms-button').addClass('btn-primary');
-            }
-        }
-    } // selectField()
-
     function getUTCDateString(date) {
         // $.format.date(date,'yyyy-MM-dd hh:mm:ss') is broken in Safari, construct SQL friendly date string this way
         var mon = new String(date.getUTCMonth() + 1);
@@ -828,9 +766,14 @@
     function disableContouring() {
         $('#displayparameterplatformdata').parent().addClass('disabled');
         $('#displayparameterplatformdata').attr('disabled');
-        //$('#displayparameterplatformdata').removeAttr('checked');
         $('#contourtext').text('Show data values');
         $('#sectioncolorbar').html('');
+        if ($('#displayparameterplatformdata').is(':checked')) {
+            // Seems like there is better utility with leaving checked for when selecting different parameters.
+            // This use is better than having it checked for when it doesn't make sense; comment out for now.
+            //$('#displayparameterplatformdata').removeAttr('checked');
+        }
+        $('#displayparameterplatformdata').parent().tooltip({title: 'Select a Measured Parameter and a Platform to enable'});
     }
 
     function updateContourInfo() {
@@ -875,6 +818,14 @@
                 }
             }
         });
+        if (params['sampledparametersgroup'].length) {
+            $('#sampledparameters-anchor').html('Sampled Parameter id(s): ' + params['sampledparametersgroup'].join())
+        }
+        else {
+            $('#sampledparameters-anchor').html('Sampled Parameters')
+            $('#clear-sampledparameter-button').removeClass('btn-primary');
+            $('#clear-sampledparameter-button').addClass('disabled');
+        }
 
         params['measuredparametersgroup']=[]
         params['parameterstandardname']=[]
@@ -887,17 +838,37 @@
                 if ( $('.parameterstandardname', $(element)).length) {
                     params['parameterstandardname'].push(element.id.replace(regExp,''));
                 }
-                $('#' + element.id + ' > button').attr('title', 'Click to unselect').tooltip('fixTitle');
+                //$('#' + element.id + ' > button').attr('title', 'Click to unselect').tooltip('fixTitle');
             }
         });
+        $('#measuredparameters-anchor').html('Measured Parameter: ')
+        if (params['measuredparametersgroup'].length) {
+            $('#measuredparameters-anchor').append('name(s): ' + params['measuredparametersgroup'].join() + ' ')
+        }
+        if (params['parameterstandardname'].length) {
+            $('#measuredparameters-anchor').append('standard name(s): ' + params['parameterstandardname'].join())
+        }
+        if ( ! params['measuredparametersgroup'].length && ! params['parameterstandardname'].length) {
+            $('#measuredparameters-anchor').html('Measured Parameters')
+            $('#clear-measuredparameter-button').removeClass('btn-primary');
+            $('#clear-measuredparameter-button').addClass('disabled');
+        }
 
         params['platforms']=[]
         $('tr',$('#platform-table')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 params['platforms'].push(element.id);
-                $('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
+                //$('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
             }
         });
+        if (params['platforms'].length) {
+            $('#platforms-anchor').html('Platform name: ' + params['platforms'].join())
+        }
+        else {
+            $('#platforms-anchor').html('Platforms')
+            $('#clear-platforms-button').removeClass('btn-primary');
+            $('#clear-platforms-button').addClass('disabled');
+        }
 
         if (parametervalues) {
             valueText = ': ';
@@ -931,11 +902,6 @@
 
     $(document).on('click', ".stoqs-toggle", function (event) {
         toggleField(this);
-        rebuildFilters();
-    });
-
-    $(document).on('click', ".stoqs-multiselect", function (event) {
-        selectField(this);
         rebuildFilters();
     });
 
@@ -1247,6 +1213,12 @@
             sample["clickable"] = true;
             dataset.push(sample);
         });
+        if (data['sampledepthtime'].length == 0) {
+            sample_points.setVisibility(false);         // Turn off sample view openlayers
+        }
+        else {
+            sample_points.setVisibility(true);         // Turn on sample view openlayers
+        }
 
         return dataset;
 
@@ -1411,13 +1383,16 @@
                     parameterButtonText = parameterButtonText + '<tr>' +
                             //'<td id="' + value[2] +'_access">' +
                             '<td>' +
-                                '<input type="checkbox" checked />' +
+                                '<input type="radio" name="parameters_x" value="value[2]"/>' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="sampledparametersgoup_plot" />' +
+                                '<input type="radio" name="parameters_y" value="value[2]"/>' +
+                            '</td>' +
+                            '<td>' +
+                                '<input type="radio" name="parameters_z" value="value[2]"/>' +
                             '</td>' +
                             '<td id="' + value[2] +'">' +
-                                '<button class="btn btn-mini stoqs-multiselect sampledparametersgroup">'+ value[0] +'</button>' + 
+                                '<button class="btn btn-mini stoqs-toggle sampledparametersgroup">'+ value[0] +'</button>' + 
                             '</td>';
                     parameterButtonText = parameterButtonText + '</tr>';
                 });
@@ -1428,6 +1403,15 @@
                 var parameterButtonText = '';
                 $.each(data[key], function (index, value) {
                     parameterButtonText = parameterButtonText + '<tr>' +
+                            '<td>' +
+                                '<input type="radio" name="parameters_x" value="value[2]"/>' +
+                            '</td>' +
+                            '<td>' +
+                                '<input type="radio" name="parameters_y" value="value[2]"/>' +
+                            '</td>' +
+                            '<td>' +
+                                '<input type="radio" name="parameters_z" value="value[2]"/>' +
+                            '</td>' +
                             '<td id="' + value[0] +'">' +
                                 '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' + 
                             '</td>';
@@ -1883,12 +1867,12 @@
         // Tooltips    
         $('#time-depth-anchor').click();
         $('#map-anchor').click();
-        $('#measuredparameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
-        $('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select Measurement Data by parameter value range'});
-        $('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
-        $('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
+        //$('#measuredparameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
+        //$('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select Measurement Data by parameter value range'});
+        //$('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
+        //$('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
         $('#getactualcount').tooltip({title: 'Will increase query time'});
-        $('#displayparameterplatformdata').parent().tooltip({title: 'Select a Parameter name and a Platform to enable'});
+        $('#displayparameterplatformdata').parent().tooltip({title: 'Select a Measured Parameter and a Platform to enable'});
 
     });
 
