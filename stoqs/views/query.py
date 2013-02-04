@@ -69,14 +69,16 @@ def buildMapFile(request, qm, options):
         item_list.append(item)
 
     # Add an item for the samples for the existing query - do not add it to the union, it's a different type
-    item = Item()
-    item.id = 'sample_points'
-    item.name = 'sample_points'
-    item.color = '255 255 255'
-    item.type = 'point'
-    item.geo_query = qm.getSampleGeoQuery()
-    item.extra_style = 'SYMBOL "circle"\n        SIZE 7.0\n        OUTLINECOLOR 0 0 0 '
-    item_list.append(item)
+    sample_geo_query = qm.getSampleGeoQuery()
+    if sample_geo_query:
+        item = Item()
+        item.id = 'sample_points'
+        item.name = 'sample_points'
+        item.color = '255 255 255'
+        item.type = 'point'
+        item.geo_query = sample_geo_query
+        item.extra_style = 'SYMBOL "circle"\n        SIZE 7.0\n        OUTLINECOLOR 0 0 0 '
+        item_list.append(item)
     
     union_layer_string = union_layer_string[:-1]
 
