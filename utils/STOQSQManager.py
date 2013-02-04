@@ -110,6 +110,8 @@ class STOQSQManager(object):
                                                                                                   instantpoint__activity__platform__pk__isnull=False)
                 else:
                     qs = models.Sample.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
+                # Exclude sub (child) samples where name is not set.  Flot UI needs a name for its selector
+                qs = qs.exclude(name__isnull=True)
             elif fromTable == 'ActivityParameterHistogram':
                 logger.debug('Making %s based query', fromTable)
                 if (not kwargs):
@@ -279,9 +281,7 @@ class STOQSQManager(object):
         '''
         if not self.activityparameterhistogram_qs:
             logger.warn("self.activityparameterhistogram_qs is None")
-            return
-        if self.activityparameterhistogram_qs:
-            return self.activityparameterhistogram_qs
+        return self.activityparameterhistogram_qs
 
     def getSampleQS(self):
         '''
@@ -289,9 +289,7 @@ class STOQSQManager(object):
         '''
         if not self.sample_qs:
             logger.warn("self.sample_qs is None")
-            return
-        else:
-            return self.sample_qs
+        return self.sample_qs
 
     def getActivities(self):
         '''
@@ -784,7 +782,7 @@ class STOQSQManager(object):
         '''
         qs = self.sample_qs
         if not qs:
-            return
+            return ''
 
         # Add any more filters (Q objects) if specified
         if Q_object:
