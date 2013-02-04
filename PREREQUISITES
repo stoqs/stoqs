@@ -40,6 +40,7 @@ su -c 'ln -s /tmp/media /var/www/html/media'
 
 # Build GDAL from source.  Download latest (v1.9 or higher) tar ball from http://download.osgeo.org/gdal/
 # Unpack, and in the top level directory (e.g. gdal-1.9.0/) run ('make install' must be done as root):
+su -c "yum -y install expat-devel"              # Required for KML parsing support
 ./configure --with-python
 make
 make install
