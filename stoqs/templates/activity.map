@@ -81,6 +81,7 @@ MAP
     END # PROJECTION
   END # LAYER
   {% for item in list %}
+  {% if item.geo_query %}
   LAYER
     NAME "{{ item.name }}"
     TYPE {{ item.type }}
@@ -96,9 +97,9 @@ MAP
     PROJECTION
       "init=epsg:4326"
     END # PROJECTION
-    TEMPLATE "{{ STATIC_ROOT }}/wfs/sample_points_data.html"
-    HEADER "{{ STATIC_ROOT }}/wfs/sample_points_header.html"
-    FOOTER "{{ STATIC_ROOT }}/wfs/sample_points_footer.html"
+    ##TEMPLATE "{{ STATIC_ROOT }}/wfs/sample_points_data.html"
+    ##HEADER "{{ STATIC_ROOT }}/wfs/sample_points_header.html"
+    ##FOOTER "{{ STATIC_ROOT }}/wfs/sample_points_footer.html"
     CLASS
       NAME "{{ item.name }}"
       STYLE
@@ -107,6 +108,7 @@ MAP
       END # STYLE
     END # CLASS
   END # LAYER
+  {% endif %}
   {% endfor %}
 
 END # MAP
