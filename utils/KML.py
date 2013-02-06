@@ -254,16 +254,17 @@ def buildKMLpoints(plat, data, clt, clim, withTimeStampFlag):
             logger.debug("c = %s", c)
             logger.debug("ge_color = %s", ge_color)
 
+##<href>http://maps.google.com/mapfiles/kml/shapes/dot.png</href>
         style = '''<Style id="%s">
 <IconStyle>
 <color>%s</color>
 <scale>0.6</scale>
 <Icon>
-<href>http://maps.google.com/mapfiles/kml/shapes/dot.png</href>
+<href>%s.png</href>
 </Icon>
 </IconStyle>
 </Style>
-''' % (ge_color, ge_color)
+''' % (ge_color, ge_color, os.path.join(settings.STATIC_URL, 'colormaps', 'jetplus_dots', ge_color))
 
         styleKml += style
 
