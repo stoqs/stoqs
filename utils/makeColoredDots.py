@@ -28,21 +28,19 @@ def savePPM(r, g, b, dir):
     Write ASCII netPPM file with 0-1 values for @r, @g, @b.  Files will
     be named with the hex values of abgr, the KML ordering of components.
     '''
-    print 'r, g, b = %f, %f, %f' % (r, g, b)
+    ##print 'r, g, b = %f, %f, %f' % (r, g, b)
     if r < 0 or r > 1 or g < 0 or g > 1 or b < 0 or b > 1:
         raise Exception('Illegal color components.  Values must be > 0.0 and < 1.0.')
 
     ge_color = "ff%02x%02x%02x" % ((round(b * 255), round(g * 255), round(r * 255)))
-    ppm_color = "%d %d %d" % ((round(r * 255), round(g * 255), round(b * 255)))
-    fileName = ge_color + '.ppm'
-    print 'fileName = %s' % fileName
+    im_color = "%02x%02x%02x" % ((round(r * 255), round(g * 255), round(b * 255)))
+    fileName = os.path.join(dir, ge_color + '.png')
+    ##print 'Creating fileName = %s' % fileName
 
-    fh = open(os.path.join(dir, fileName), 'w')
-    fh.write('P3\n')
-    fh.write('1 1\n')
-    fh.write('255\n')
-    fh.write(ppm_color + '\n')
-    fh.close()
+    # ImageMagick to create dot similar to http://maps.google.com/mapfiles/kml/shapes/dot.png, but with color
+    cmd = '''convert -size 64x64 xc:none -fill '#%s' -draw 'circle 31.5,31.5 31.5,21' %s''' % (im_color, fileName)
+    print cmd
+    os.system(cmd)
 
 def processColorMap(colormapFileName='jetplus.txt'):
     '''
@@ -56,4 +54,5 @@ def processColorMap(colormapFileName='jetplus.txt'):
 if __name__ == '__main__':
 
     processColorMap()
+    print "Now commit and pus the changes in mercurial and run:\nmanage.py collectstatic"
     

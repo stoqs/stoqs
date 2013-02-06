@@ -85,7 +85,6 @@ def getDisplay_Parameter_Platform_Data(kwargs):
 
     return display_parameter_platform_data_state
 
-
 ## {{{ http://code.activestate.com/recipes/511478/ (r1)
 import math
 import numpy

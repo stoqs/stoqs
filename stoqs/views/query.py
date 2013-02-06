@@ -102,12 +102,14 @@ def queryData(request, format=None):
                    'depth': ('min_depth', 'max_depth'),     # Single values
                    'simpledepthtime': [],                   # List of x,y values
                    'platforms': 'platforms',                # Specified once in the query string for each platform.
+                   'parametervalues': [],                   # Appended to below with any _MIN _MAX request items
+
+                    # TODO: Could simplify all these flags by putting them into a dictionary...
                    'get_actual_count': 'get_actual_count',  # Flag value from checkbox
                    'showsigmatparametervalues': 'showsigmatparametervalues',                # Flag value from checkbox
                    'showstandardnameparametervalues': 'showstandardnameparametervalues',    # Flag value from checkbox
                    'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
                    'displayparameterplatformdata': 'displayparameterplatformdata',          # Flag value from checkbox
-                   'parametervalues': [],                   # Appended to below with any _MIN _MAX request items
                    }
     params = {}
     for key, value in query_parms.iteritems():
