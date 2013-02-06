@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # -----------------------------------------------------------------------------------------------------------
 # Support functions for rendering measurements into KML
 
-def kmlResponse(request, qs_mp, qparams):
+def kmlResponse(request, qs_mp, qparams, withTimeStampFlag=True):
     '''
     Return a response that is a KML represenation of the existing MeasuredParameter query that is in qs_mp.
     pName is either the parameter__name or parameter__standard_name string.
@@ -58,13 +58,13 @@ def kmlResponse(request, qs_mp, qparams):
         folderName = "%s_" % (pName,)
     descr = request.get_full_path().replace('&', '&amp;')
     logger.debug(descr)
-    kml = makeKML(request.META['dbAlias'], dataHash, pName, folderName, descr, request.GET.get('cmin', None), request.GET.get('cmax', None))
+    kml = makeKML(request.META['dbAlias'], dataHash, pName, folderName, descr, request.GET.get('cmin', None), request.GET.get('cmax', None), withTimeStampFlag)
     response['Content-Type'] = 'application/vnd.google-earth.kml+xml'
     response.write(kml)
     return response
 
 
-def makeKML(dbAlias, dataHash, pName, title, desc, cmin=None, cmax=None):
+def makeKML(dbAlias, dataHash, pName, title, desc, cmin=None, cmax=None, withTimeStampFlag=True):
     '''
     Generate the KML for the point in mpList
     cmin and cmax are the color min and max 
@@ -91,8 +91,8 @@ def makeKML(dbAlias, dataHash, pName, title, desc, cmin=None, cmax=None):
     logger.debug('clim = %s', clim)
 
     for k in dataHash.keys():
-        (pointStyleKML, pointKMLHash[k]) = buildKMLpoints(k, dataHash[k], clt, clim)
-        (lineStyleKML, lineKMLHash[k]) = buildKMLlines(k, dataHash[k], clt, clim)
+        (pointStyleKML, pointKMLHash[k]) = buildKMLpoints(k, dataHash[k], clt, clim, withTimeStampFlag)
+        (lineStyleKML, lineKMLHash[k]) = buildKMLlines(k, dataHash[k], clt, clim, withTimeStampFlag)
 
     #
     # KML header
@@ -147,7 +147,7 @@ def readCLT(fileName):
     return cltList
 
 
-def buildKMLlines(plat, data, clt, clim):
+def buildKMLlines(plat, data, clt, clim, withTimeStampFlag):
     '''Build KML placemark LineStrings of all the point data in `list`
     Use distinctive line colors for each platform.
     the same way as is done in the auvctd dorado science data processing.
@@ -197,7 +197,8 @@ def buildKMLlines(plat, data, clt, clim):
         coordStr = "%.6f,%.6f,-%.1f" % (lon, lat, depth)
 
         if lastCoordStr:
-            placemark = """
+            if withTimeStampFlag:
+                placemark = """
 <Placemark>
 <styleUrl>#%s</styleUrl>
 <TimeStamp>
@@ -210,6 +211,17 @@ def buildKMLlines(plat, data, clt, clim):
 </coordinates>
 </LineString>
 </Placemark> """         % (plat, time.strftime("%Y-%m-%dT%H:%M:%SZ", dt.timetuple()), lastCoordStr + ' ' + coordStr)
+            else:
+                placemark = """
+<Placemark>
+<styleUrl>#%s</styleUrl>
+<LineString>
+<altitudeMode>absolute</altitudeMode>
+<coordinates>
+%s
+</coordinates>
+</LineString>
+</Placemark> """         % (plat, lastCoordStr + ' ' + coordStr)
 
             lineKml += placemark
 
@@ -218,7 +230,7 @@ def buildKMLlines(plat, data, clt, clim):
     return (styleKml, lineKml)
 
 
-def buildKMLpoints(plat, data, clt, clim):
+def buildKMLpoints(plat, data, clt, clim, withTimeStampFlag):
     '''Build KML Placemarks of all the point data in `list` and use colored styles 
     the same way as is done in the auvctd dorado science data processing.
     `data` are the results of a query, say from xySlice()
@@ -283,7 +295,8 @@ def buildKMLpoints(plat, data, clt, clim):
             logger.debug("clt_index = %d", clt_index)
         ge_color_val = "ff%02x%02x%02x" % ((round(clt[clt_index][2] * 255), round(clt[clt_index][1] * 255), round(clt[clt_index][0] * 255)));
 
-        placemark = """
+        if withTimeStampFlag:
+            placemark = """
 <Placemark>
 <styleUrl>#%s</styleUrl>
 <TimeStamp>
@@ -296,6 +309,17 @@ def buildKMLpoints(plat, data, clt, clim):
 </coordinates>
 </Point>
 </Placemark> """         % (ge_color_val, time.strftime("%Y-%m-%dT%H:%M:%SZ", dt.timetuple()), coordStr)
+        else:
+            placemark = """
+<Placemark>
+<styleUrl>#%s</styleUrl>
+<Point>
+<altitudeMode>absolute</altitudeMode>
+<coordinates>
+%s
+</coordinates>
+</Point>
+</Placemark> """         % (ge_color_val, coordStr)
 
         pointKml += placemark
 
