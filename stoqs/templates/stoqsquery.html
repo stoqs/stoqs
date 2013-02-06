@@ -146,17 +146,16 @@
                     <div id="collapseMap" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <div class="row-fluid" id="map"></div>
-                            <p>
-                                <label class="checkbox">
-                                    <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
-                                </label>
-                            </p>
-                            <p>
+                            <div>
+                                <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
+                                <input type="checkbox" id="showsensortracks" /> Show sensor tracks (must select one measured parameter)
+                            </div>
+                            <div>
                                 <div id="query-stats" class="ajax-wait"></div>
                                 <label class="checkbox">
                                     <input type="checkbox" id="getactualcount" /> Get actual count
                                 </label>
-                            </p>
+                            </div>
                             <div id="samplePoint"></div>
                         </div>
                     </div>
@@ -486,18 +485,25 @@
         $('#kml-field').text(kmlurl + cmincmax);
         $('#kml-link').attr('href',kmlurl + cmincmax);
 
-        // Dynamically set url for sensor tracks display in openlayers
-        sensortrackskml.protocol = new OpenLayers.Protocol.HTTP({
-                url: kmlurl.replace('.kml', '.kmln') + cmincmax,
-                format: new OpenLayers.Format.KML({
-                    extractStyles: true,
-                    extractAttributes: true,
-                    maxDepth: 2
-                })
-        });
-        console.log(sensortrackskml);
-        sensortrackskml.loaded = false;
-        sensortrackskml.refresh({force: true});
+        if ($('#showsensortracks').is(':checked')) {
+            if (kmlurl.lastIndexOf('http', 0) === 0) {
+                // Dynamically set url for sensor tracks display in openlayers
+                sensortrackskml.protocol = new OpenLayers.Protocol.HTTP({
+                        url: kmlurl.replace('.kml', '.kmln') + cmincmax,
+                        format: new OpenLayers.Format.KML({
+                            extractStyles: true,
+                            extractAttributes: true,
+                            maxDepth: 2
+                        })
+                });
+                console.log(sensortrackskml);
+            }
+            else {
+                sensortrackskml.removeAllFeatures();
+            }
+            sensortrackskml.loaded = false;
+            sensortrackskml.refresh({force: true});
+        }
     }
 
     function getMPparms(params) {
@@ -968,6 +974,10 @@
         rebuildFilters();
     });
 
+    $('#showsensortracks').on('click', function (event) {
+        rebuildFilters();
+    });
+
     $('#cmin').on('keypress', function (event, previousText) {
         setTimeout(setKMLlinks());
     });
@@ -1261,10 +1271,11 @@
         return histdata;
     }
     
-    function plotHistData(parameter, histdata) {
+    function plotHistData(parameter, histdata, parameterunits) {
+        var units = parameterunits[parameter];
         histogtram_options_labels = $.extend(true, {}, histogram_options, {
                                                             xaxes: [{
-                                                                        axisLabel: parameter,
+                                                                        axisLabel: parameter + ' (' + units + ')',
                                                                     }],
                                                             yaxes: [{
                                                                         position: 'left',
@@ -1310,7 +1321,7 @@
         // Apply new depth & time ranges to the query and redraw the plot in rebuildFilters()
         $('#zoomed-button').removeClass('disabled'); 
         $('#zoomed-button').addClass('btn-primary');
-        $('#zoomed-button').attr('title', 'Click to unzoom to original extent. Right-click on plot to unzoom to last zoom level.').tooltip('fixTitle').tooltip('hide');
+        //$('#zoomed-button').attr('title', 'Click to unzoom to original extent. Right-click on plot to unzoom to last zoom level.').tooltip('fixTitle').tooltip('hide');
         rebuildFilters();
         var dtLabel = 'Time: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
         dtLabel = dtLabel + ' Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
@@ -1387,7 +1398,7 @@
                         '</tr>');
                     $('#' + value[1] + '_icon').click( function () { $('#' + value[1] + ' > td > button').click() } );
                 });
-                $('.platform').tooltip({title: 'Click to select this Platform'});
+                //$('.platform').tooltip({title: 'Click to select this Platform'});
             }
             else if (key == 'sampledparametersgroup') {
                 var parameterButtonText = '';
@@ -1475,6 +1486,7 @@
             }
             else if (key == 'activityparameterhistograms') {
                 // Create the html placeholders for the plots
+                var parameterunits = data[key]['parameterunits'];
                 var histHtml = '<tbody>';
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     histHtml += '<tr>' +
@@ -1501,7 +1513,7 @@
                             histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
                         });
                     });
-                    plotHistData(parameter, histdata);
+                    plotHistData(parameter, histdata, parameterunits);
                 });
             }
         } // onInit()
@@ -1599,6 +1611,7 @@
             }
             else if (key == 'activityparameterhistograms') {
                 var histHtml = '<tbody>';
+                var parameterunits = data[key]['parameterunits'];
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');       // HTML ids don't allow spaces
                     histHtml += '<tr>' +
@@ -1633,7 +1646,7 @@
                         }
                     }
 
-                    plotHistData(parameter, histdata);
+                    plotHistData(parameter, histdata, parameterunits);
 
                 });
             }
@@ -1751,7 +1764,6 @@
               visibility: true,
               singleTile: true, ratio: 1,
               displayOutsideMaxExtent: true } );
-        map.addLayer(track_lines); 
 
         sample_points = new OpenLayers.Layer.WMS(
             "Sample points",
@@ -1766,7 +1778,6 @@
               visibility: true,
               singleTile: true, ratio: 1,
               displayOutsideMaxExtent: true } );
-        map.addLayer(sample_points); 
 
         sensortrackskml = new OpenLayers.Layer.Vector("Sensor tracks", {
             projection: map.displayProjection,
@@ -1782,6 +1793,8 @@
             })
         });
         map.addLayer(sensortrackskml);
+        map.addLayer(track_lines); 
+        map.addLayer(sample_points); 
 
         map.addControl(new OpenLayers.Control.LayerSwitcher());
         map.addControl(new OpenLayers.Control.MousePosition());
