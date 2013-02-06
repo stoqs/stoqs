@@ -82,9 +82,11 @@ def buildMapFile(request, qm, options):
     
     union_layer_string = union_layer_string[:-1]
 
+    mp_kml = 'http://172.16.130.135:8000/stoqs_dorado2011_s100/measuredparameter.kml?parameter__name=fl700_uncorr&measurement__instantpoint__timevalue__gt=2011-03-15 19:51:45&measurement__instantpoint__timevalue__lt=2011-03-16 14:45:37&measurement__depth__gte=-1.4&measurement__depth__lte=5.26&&cmin=0.0000757&cmax=0.0023'
+
     ##logger.debug('item_list = %s', pprint.pformat(item_list))        
     logger.debug('union_layer_string = %s', union_layer_string)
-    av = ActivityView(request, item_list, union_layer_string)
+    av = ActivityView(request, item_list, union_layer_string, mp_kml=mp_kml)
     av.generateActivityMapFile()
 
 def queryData(request, format=None):
