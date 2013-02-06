@@ -111,5 +111,47 @@ MAP
   {% endif %}
   {% endfor %}
 
+LAYER
+   NAME 'sensortracks'
+   TYPE POINT
+   STATUS off
+
+   CONNECTIONTYPE OGR
+   ##CONNECTION '/home/mccann/dev/stoqshg/northsouth.kml'
+   ##CONNECTION "http://172.16.130.135:8000/stoqs_dorado2011_s100/measuredparameter.kmln?parameter__name=fl700_uncorr&measurement__instantpoint__timevalue__gt=2011-03-15%2021:41:49&measurement__instantpoint__timevalue__lt=2011-03-16%2013:46:05&measurement__depth__gte=-0.12&measurement__depth__lte=18.12&&cmin=0.0000757&cmax=0.0023"
+
+   CONNECTION "/mnt/hgfs/mccann/Downloads/dorado Points.kml"
+
+   ##CONNECTION "{{ mp_kml|safe }}"
+
+   ##TRANSPARENCY 50
+   DEBUG 5
+
+   PROJECTION
+      "init=epsg:4326"
+   ##'proj=longlat'
+   ##'datum=WGS84'
+   ##'no_defs'
+   END
+
+   METADATA
+     'wms_title'           'doradopoints'
+     'wms_name'            'doradopoints'
+     'wms_onlineresource'  'http://ubuntu/cgi-bin/mapserv?map=/home/stoqsadm/deployed/mapfiles/proxy.map'
+     'wms_server_version'  '1.1.0'
+     'wms_srs'             'EPSG:4326'
+     'wms_format'          'image/png'
+   ##  'wms_transparent'     'true'
+   END
+    CLASS
+      NAME "sensortracks_color"
+      STYLE
+        COLOR 244 244 16
+        OUTLINECOLOR 199 199 199
+      END # STYLE
+    END # CLASS
+
+END # LAYER
+
 END # MAP
 

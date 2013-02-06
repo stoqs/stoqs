@@ -56,7 +56,7 @@ class ActivityView(object):
     # For using the same colors
     itemColor_dict = {}
 
-    def __init__(self, request, itemList, union_layer_string, url = olWebPageTemplate):
+    def __init__(self, request, itemList, union_layer_string, url=olWebPageTemplate, mp_kml=''):
         '''Initialize activity object to support building of mapserver mapfiles and openlayers html files.
 
         @param request: Web server request object
@@ -76,6 +76,7 @@ class ActivityView(object):
         self.request = request
         self.itemList = itemList 
         self.union_layer_string = union_layer_string
+        self.mp_kml = mp_kml
         self.mappath = self.request.session['mappath']
     
         if settings.LOGGING['loggers']['stoqs']['level'] == 'DEBUG':
@@ -110,9 +111,11 @@ class ActivityView(object):
         # </location>
 
         ##logger.debug(pprint.pformat(settings.DATABASES[self.request.META['dbAlias']]))
+        logger.debug('self.mp_kml = %s', self.mp_kml)
         response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,
                             'union_layer_string': self.union_layer_string,
+                            'mp_kml': self.mp_kml,
                             'wfs_title': 'WFS title for an Activity',
                             'map_debug_level': self.map_debug_level,
                             'layer_debug_level': self.layer_debug_level,
