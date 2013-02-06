@@ -327,7 +327,7 @@
                                     <tr>
                                         <th style="text-align:left;">X</th>
                                         <th style="text-align:left;">Y</th>
-                                        <th style="text-align:left;">Z</th>
+                                        <th style="text-align:left;">Color</th>
                                         <th style="text-align:left;">Name</th>
                                     </tr>
                                 </thead>                             
@@ -354,7 +354,7 @@
                                     <tr>
                                         <th style="text-align:left;">X</th>
                                         <th style="text-align:left;">Y</th>
-                                        <th style="text-align:left;">Z</th>
+                                        <th style="text-align:left;">Color</th>
                                         <th style="text-align:center;">Name</th>
                                         <th style="text-align:center;">Standard Name</th>
                                     </tr>
@@ -451,15 +451,16 @@
     var zoomedData;
     var request=''
     var map = null; 
-    var kmlurl;
+    var kmlurl = '';
     var parametervalues={};     
-    var polyLayer = new OpenLayers.Layer.Vector( "Polygon" );
+    var polyLayer = new OpenLayers.Layer.Vector( "Selection polygon", {visibility: false} );
     var timedepthplot;
     var options_stack = [];
     var zoom_xy_stack = [];
     var stack_depth = 0;
     var simpledepthtime_options;
     var simpledepthtime_options_zoom;
+    var cmincmax = ''
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -479,12 +480,24 @@
     }
 
     function setKMLlinks() {
-        var cmincmax = ''
         if ($('#cmin').val() && $('#cmax').val()) {
-            cmincmax = '&cmin=' + $('#cmin').val() + '&cmax=' + $('#cmax').val();
+            cmincmax = 'cmin=' + $('#cmin').val() + '&cmax=' + $('#cmax').val();
         }
         $('#kml-field').text(kmlurl + cmincmax);
         $('#kml-link').attr('href',kmlurl + cmincmax);
+
+        // Dynamically set url for sensor tracks display in openlayers
+        sensortrackskml.protocol = new OpenLayers.Protocol.HTTP({
+                url: kmlurl.replace('.kml', '.kmln') + cmincmax,
+                format: new OpenLayers.Format.KML({
+                    extractStyles: true,
+                    extractAttributes: true,
+                    maxDepth: 2
+                })
+        });
+        console.log(sensortrackskml);
+        sensortrackskml.loaded = false;
+        sensortrackskml.refresh({force: true});
     }
 
     function getMPparms(params) {
@@ -1726,7 +1739,7 @@
          * Maptrack layers selected by UI 
          */
         track_lines = new OpenLayers.Layer.WMS(
-            "track_lines",
+            "Activity track lines",
             "http://{{ mapserver_host }}/cgi-bin/mapserv",
             { layers: 'track_lines',
               map: '{{ mappath }}',
@@ -1741,7 +1754,7 @@
         map.addLayer(track_lines); 
 
         sample_points = new OpenLayers.Layer.WMS(
-            "sample_points",
+            "Sample points",
             "http://{{ mapserver_host }}/cgi-bin/mapserv",
             { layers: 'sample_points',
               map: '{{ mappath }}',
@@ -1754,6 +1767,21 @@
               singleTile: true, ratio: 1,
               displayOutsideMaxExtent: true } );
         map.addLayer(sample_points); 
+
+        sensortrackskml = new OpenLayers.Layer.Vector("Sensor tracks", {
+            projection: map.displayProjection,
+            strategies: [new OpenLayers.Strategy.Fixed()],
+            // protocol is Dynamically set in setKMLLinks()
+            protocol: new OpenLayers.Protocol.HTTP({
+                url: '',
+                format: new OpenLayers.Format.KML({
+                    extractStyles: true,
+                    extractAttributes: true,
+                    maxDepth: 2
+                })
+            })
+        });
+        map.addLayer(sensortrackskml);
 
         map.addControl(new OpenLayers.Control.LayerSwitcher());
         map.addControl(new OpenLayers.Control.MousePosition());
