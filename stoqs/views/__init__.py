@@ -257,6 +257,9 @@ class BaseOutputer(object):
         elif self.format == 'kml':
             return KML.kmlResponse(self.request, self.qs, self.qparams)
 
+        elif self.format == 'kmln':
+            return KML.kmlResponse(self.request, self.qs, self.qparams, withTimeStampFlag=False)
+
         elif self.format == 'count':
             count = self.qs.count()
             logger.debug('count = %d', count)
