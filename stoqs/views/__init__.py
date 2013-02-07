@@ -41,7 +41,8 @@ import tempfile
 from utils.STOQSQManager import STOQSQManager
 from utils.utils import postgresifySQL
 from utils.MPQuery import MPQuery, MPQuerySet
-from utils import encoders, KML
+from utils import encoders
+from utils.KML import KML
 
 logger = logging.getLogger(__name__)
 
@@ -255,10 +256,12 @@ class BaseOutputer(object):
             return HttpResponse(simplejson.dumps(self.qs, cls=encoders.STOQSJSONEncoder), 'application/json')
 
         elif self.format == 'kml':
-            return KML.kmlResponse(self.request, self.qs, self.qparams)
+            kml = KML(self.request, self.qs, self.qparams)
+            return kml.kmlResponse()
 
         elif self.format == 'kmln':
-            return KML.kmlResponse(self.request, self.qs, self.qparams, withTimeStampFlag=False)
+            kml = KML(self.request, self.qs, self.qparams, withTimeStamps=False, withLineStrings=False)
+            return kml.kmlResponse()
 
         elif self.format == 'count':
             count = self.qs.count()

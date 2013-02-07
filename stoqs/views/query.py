@@ -20,7 +20,7 @@ from django.conf import settings
 from django.core import serializers
 from django.db.models import Q
 from utils.STOQSQManager import STOQSQManager
-from utils import encoders, KML
+from utils import encoders
 import json
 import pprint
 import csv
