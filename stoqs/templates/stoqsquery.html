@@ -10,65 +10,16 @@
     <!-- The styles -->
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet">
     <style>
-      body {
-        padding-top: 60px;  /* 60px to make the container go all the way to the bottom of the topbar */
-        height: 100%;       /* make the percentage height on flot placeholder work */
-      }
-      .stoqs-toggle {
-        width: 100%;
-      }
-      .stoqs-parameter-toggle {
-        width: 50%;
-      }
-
-    #zoomnavigation .button {
-        position: absolute;
-        cursor: pointer;
-    }
-    #zoomnavigation div.button {
-        font-size: smaller;
-        color: #999;
-        background-color: #eee;
-        padding: 2px;
-    }
-        .rotate-90 {
-            -moz-transform: rotate(-90deg);  /* FF3.5+ */
-            -o-transform: rotate(-90deg);  /* Opera 10.5 */
-            -webkit-transform: rotate(-90deg);  /* Saf3.1+, Chrome */
+        body {
+            padding-top: 60px;  /* 60px to make the container go all the way to the bottom of the topbar */
+            height: 100%;       /* make the percentage height on flot placeholder work */
         }
-      th {
-        align: center; /* Doesn't seem to work '*/
-      }
-<!--
-        div.dataTables_length label {
-            width: 460px;
-            float: left;
-            text-align: left;
+        .stoqs-toggle {
+            width: 100%;
         }
- 
-        div.dataTables_length select {
-            width: 75px;
+        .stoqs-background-ajax-loader {
+            background-image: url({{STATIC_URL}}images/ajax-loader-pulse.gif);
         }
- 
-        div.dataTables_filter label {
-            float: right;
-            width: 460px;
-        }
- 
-        div.dataTables_info {
-            padding-top: 8px;
-        }
- 
-        .dataTables_paginate {
-            float: right;
-            margin: 0;
-        }
- 
-        table {
-            margin: 1em 0;
-            clear: both;
-        }
--->
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet" />    
@@ -296,7 +247,6 @@
                                             <input type="checkbox" id="displayparameterplatformdata" disabled><span id="contourtext">Show data values</span>
                                         </label>
                                     </div>
-                                    <div class="span3" id="zoomnavigation"></div>
                                     <div class="span4" id="sectioncolorbar" style="float:right;"></div>
                                 </div>
                             </div>
@@ -327,7 +277,7 @@
                                         <th style="text-align:left;">X</th>
                                         <th style="text-align:left;">Y</th>
                                         <th style="text-align:left;">Color</th>
-                                        <th style="text-align:left;">Name</th>
+                                        <th style="text-align:center;">Name</th>
                                     </tr>
                                 </thead>                             
                                 <tbody>
@@ -1038,7 +988,7 @@
     });
 
     var simpledepthtime_options = { grid: { 
-                                        backgroundColor: "rgb(192, 211, 228)",      //c0d3e4
+                                        backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
                                         hoverable: true, 
                                         clickable: true 
                                     },
@@ -1656,6 +1606,7 @@
             type : 'GET',
             beforeSend: function() {
                 $('#query-stats').html('<img src="{{STATIC_URL}}images/ajax-loader.gif">')
+                $('#time-depth-flot').addClass('stoqs-background-ajax-loader ');
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
@@ -1667,8 +1618,11 @@
                         onUpdate(data, key)
                     }
                 }
+                $('#time-depth-flot').removeClass('stoqs-background-ajax-loader ');
+
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
                 me.refreshMap();
+
                 if ( ! $('#getactualcount').is(':checked')) {
                     $('#query-stats').html("<h4>Approximately " + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters</h4>");
                 }
