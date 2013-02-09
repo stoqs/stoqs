@@ -112,6 +112,40 @@
                     </div>
                 </div><!-- accordian-group -->
 
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="parameter-parameter-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterParameter">
+                        Parameter-Parameter</a>
+                        <button id="clear-pp-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
+                    </div>
+
+                    <div id="collapseParameterParameter" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul class="nav nav-tabs">
+                                <li><a href="#pp2d" data-toggle="tab">2D</a></li>
+                                <li><a href="#pp3d" data-toggle="tab">3D</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane" id="pp2d">
+                                    <div id="parameter-parameter-2dplot">
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="pp3d">
+                                    <div id="parameter-parameter-2dplot">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- accordian-group -->
+
+
+
+
                 <div class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="sample-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSample">
@@ -231,12 +265,12 @@
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
-                        <h3><a id="time-depth-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+                        <h3><a id="time-depth-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTimeDepth">
                         Time Depth</a>
                         <button id="zoomed-button" class="btn btn-mini disabled">Clear Selection</button>
                         </h3>
                     </div>
-                    <div id="collapseOne" class="accordion-body collapse in">
+                    <div id="collapseTimeDepth" class="accordion-body collapse in">
                         <div class="accordion-inner">
                             <em>Click and drag to select a time-depth range</em>
                             <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
@@ -276,6 +310,7 @@
                                     <tr>
                                         <th style="text-align:left;">X</th>
                                         <th style="text-align:left;">Y</th>
+                                        <th style="text-align:left;">Z</th>
                                         <th style="text-align:left;">Color</th>
                                         <th style="text-align:center;">Name</th>
                                     </tr>
@@ -303,6 +338,7 @@
                                     <tr>
                                         <th style="text-align:left;">X</th>
                                         <th style="text-align:left;">Y</th>
+                                        <th style="text-align:left;">Z</th>
                                         <th style="text-align:left;">Color</th>
                                         <th style="text-align:center;">Name</th>
                                         <th style="text-align:center;">Standard Name</th>
@@ -314,8 +350,6 @@
                         </div>
                     </div>
                 </div><!-- accordian-group -->
-
-
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
@@ -869,11 +903,6 @@
         sample_points.redraw(true);
     }
 
-    $(document).on('click', ".stoqs-toggle", function (event) {
-        toggleField(this);
-        rebuildFilters();
-    });
-
     function resetZoomedValues(resetData) {
             // Reset zoom to saved resetData values
             $('#start-depth').val(resetData['depth'][0]);
@@ -902,6 +931,11 @@
             $('#zoomed-button').attr('title', ' ').tooltip('fixTitle').tooltip('hide');
             $('#time-depth-anchor').html('Time Depth')
         }
+    });
+
+    $(document).on('click', ".stoqs-toggle", function (event) {
+        toggleField(this);
+        rebuildFilters();
     });
 
     $('#getactualcount').on('click', function (event) {
@@ -936,19 +970,44 @@
         setTimeout(setKMLlinks());
     });
 
-    $("#clear-sampledparameter-button").click(function() {
-        if ( $('#clear-sampledparameter-button').hasClass('btn-primary')) {
-            $("#clear-sampledparameter-button").removeClass('btn-primary');
-            $("#clear-sampledparameter-button").addClass('disabled');
-            $('td',$('#sampledparameter-table')).each(function (index, element) {
-                if ($('.btn-primary', $(element)).length) {
-                    $('#' + element.id + ' > button').removeClass('btn-primary');
-                }
-            });
-            rebuildFilters();
-            $('#measuredparameters-anchor').html('Measured Parameters')
+    $('body').on('change', '.parameter-radio', function (e) {
+        if ($('input:radio[name=parameters_x]').is(':checked')) {
+            var px = $('input:radio[name=parameters_x]:checked').val();
+        }
+        if ($('input:radio[name=parameters_y]').is(':checked')) {
+            var py = $('input:radio[name=parameters_y]:checked').val();
+        }
+        if ($('input:radio[name=parameters_z]').is(':checked')) {
+            var pz = $('input:radio[name=parameters_z]:checked').val();
+        }
+        if ($('input:radio[name=parameters_c]').is(':checked')) {
+            var pc = $('input:radio[name=parameters_c]:checked').val();
+        }
+
+        console.log(px, py, pz, pc);
+        if (typeof px != 'undefined' || typeof py != 'undefined' || typeof pz != 'undefined' || typeof pc != 'undefined') {
+            $("#clear-pp-button").addClass('btn-primary');
+            $("#clear-pp-button").removeClass('disabled');
+        }
+        if (typeof px != 'undefined' && typeof py != 'undefined' && typeof pz == 'undefined') {
+            console.log('2D');
+        }
+        if (typeof px != 'undefined' && typeof py != 'undefined' && typeof pz != 'undefined') {
+            console.log('3D');
         }
     });
+
+    $("#clear-pp-button").click(function() {
+        if ( $('#clear-pp-button').hasClass('btn-primary')) {
+            $("#clear-pp-button").removeClass('btn-primary');
+            $("#clear-pp-button").addClass('disabled');
+            $('input:radio[name=parameters_x]').prop('checked', false);
+            $('input:radio[name=parameters_y]').prop('checked', false);
+            $('input:radio[name=parameters_z]').prop('checked', false);
+            $('input:radio[name=parameters_c]').prop('checked', false);
+        }
+    });
+
 
     $("#clear-measuredparameter-button").click(function() {
         if ( $('#clear-measuredparameter-button').hasClass('btn-primary')) {
@@ -1357,13 +1416,16 @@
                     parameterButtonText = parameterButtonText + '<tr>' +
                             //'<td id="' + value[2] +'_access">' +
                             '<td>' +
-                                '<input type="radio" name="parameters_x" value="value[2]"/>' +
+                                '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio"/>' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_y" value="value[2]"/>' +
+                                '<input type="radio" name="parameters_y" value="' + value[2] + '" class="parameter-radio"/>' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_z" value="value[2]"/>' +
+                                '<input type="radio" name="parameters_z" value="' + value[2] + '" class="parameter-radio"/>' +
+                            '</td>' +
+                            '<td>' +
+                                '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio"/>' +
                             '</td>' +
                             '<td id="' + value[2] +'">' +
                                 '<button class="btn btn-mini stoqs-toggle sampledparametersgroup">'+ value[0] +'</button>' + 
@@ -1378,13 +1440,16 @@
                 $.each(data[key], function (index, value) {
                     parameterButtonText = parameterButtonText + '<tr>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_x" value="value[2]"/>' +
+                                '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio"/>' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_y" value="value[2]"/>' +
+                                '<input type="radio" name="parameters_y" value="' + value[2] + '" class="parameter-radio"/>' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_z" value="value[2]"/>' +
+                                '<input type="radio" name="parameters_z" value="' + value[2] + '" class="parameter-radio"/>' +
+                            '</td>' +
+                            '<td>' +
+                                '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio"/>' +
                             '</td>' +
                             '<td id="' + value[0] +'">' +
                                 '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' + 
