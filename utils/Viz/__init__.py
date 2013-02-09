@@ -231,3 +231,23 @@ class ContourPlots(object):
             logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax)
             return None, None, 'No depth-time region specified'
 
+
+class ParameterParameterPlots(object):
+    '''
+    Use matploptib to create nice looking property-property plots
+    '''
+    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName):
+        '''
+        Save parameters that can be used by the different plotting methods here
+        '''
+        self.kwargs = kwargs
+        self.request = request
+        self.qs = qs
+        self.qs_mp = qs_mp
+        self.platformName = platformName
+
+    def makePlot(self):
+        '''
+        Produce a .png image 
+        '''
+        pass
