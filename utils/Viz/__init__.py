@@ -27,7 +27,6 @@ from django.db.models.query import RawQuerySet
 from datetime import datetime
 from KML import readCLT
 from stoqs import models
-from MPQuery import MPQuerySet
 import numpy as np
 import logging
 import string
@@ -143,7 +142,6 @@ class ContourPlots(object):
             y = []
             z = []
             logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
-            logger.debug('isinstance(self.qs_mp, MPQuerySet) = %s', isinstance(self.qs_mp, MPQuerySet) )
             i = 0
             for mp in self.qs_mp:
                 x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)

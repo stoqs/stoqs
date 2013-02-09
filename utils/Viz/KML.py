@@ -5,7 +5,6 @@ import numpy
 import settings
 import logging
 from stoqs import models as m
-from MPQuery import MPQuerySet
 from django.db.models import Avg
 from django.http import HttpResponse
 import pprint

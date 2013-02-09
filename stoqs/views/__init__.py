@@ -42,7 +42,7 @@ from utils.STOQSQManager import STOQSQManager
 from utils.utils import postgresifySQL
 from utils.MPQuery import MPQuery, MPQuerySet
 from utils import encoders
-from utils.KML import KML
+from utils.Viz.KML import KML
 
 logger = logging.getLogger(__name__)
 
