@@ -27,7 +27,8 @@ MBARI Jan 3, 2012
 from django.conf.urls.defaults import *
 from django.contrib.gis import admin
 from django.conf import settings
-##import views
+from ga_ows.views.wfs import WFS
+from stoqs import models as m
 
 admin.autodiscover()
 
@@ -93,6 +94,18 @@ urlpatterns = patterns('',
     url(pre + r'mgmt$', 'stoqs.views.management.showDatabase', {}, name='show-database'),
     url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'stoqs.views.management.deleteActivity', {}, name='delete-activity'),
     url(pre + r'activitiesMBARICustom$', 'stoqs.views.management.showActivitiesMBARICustom', {}, name='show-activities'),
+
+    # WFS - Tesing for exposing Sample data to the OpenLayers map
+    # Prerequisites:
+    #   su -y 'yum install libxml2-devel libxml2 libxslt-devel libxslt'
+    #   pip install lxml
+    #   git clone https://github.com/JeffHeard/ga_ows.git ga_ows && cd ga_ows && python setup.py install
+    #   export LD_LIBRARY_PATH='/usr/local/lib:$LD_LIBRARY_PATH' && python manage.py runserver 0.0.0.0:8000
+    url(pre + r'wfs/?', WFS.as_view(
+        models=[m.Sample],          # everything but this is optional.
+        title='STOQS Sample WFS',
+        provider_name='MBARI',
+    )),
 
     # Animation  
     url(pre + r'activitiesWMSAnimate$', 'stoqs.views.wms.showActivitiesWMSAnimate', {}, name='show-activities-wms-animate'),

@@ -412,6 +412,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.navigate.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.axislabels.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.cookie.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
     <script src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
@@ -1811,6 +1812,28 @@
                 })
             })
         });
+
+
+        // Test of WFS using ga_wfs 
+        // As of 11 Feb 2013 this request returns a MissingParameterValue Exception, but does not crash
+        // Note the prerequisite software listed as a comment in urls.py before the url match for 'wfs'
+        var csrf_token = $.cookie('csrftoken');
+        samplewfs = new OpenLayers.Layer.Vector("Sample WFS", {
+            projection: map.displayProjection,
+            strategies: [new OpenLayers.Strategy.BBOX()],
+            protocol: new OpenLayers.Protocol.WFS({
+                url: '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}wfs',
+                headers: {'X-CSRFToken': csrf_token},
+                featureType: 'Sample',
+            }),
+            styleMap: new OpenLayers.StyleMap({
+                    strokeWidth: 3,
+                    strokeColor: "#333333"
+            }),
+        });
+        map.addLayer(samplewfs);
+
+
         map.addLayer(sensortrackskml);
         map.addLayer(track_lines); 
         map.addLayer(sample_points); 
