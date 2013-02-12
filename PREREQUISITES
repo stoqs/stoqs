@@ -107,10 +107,13 @@ pip install pygraphviz
 pip install django_extensions
 pip install beautifulsoup4
 pip install sqlparse
+pip install lxml
 
 # For server-side Matlab-style plotting of data
 pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
 
+# For WFS to OpenLayers directly from the Django data model
+pip install -e git+https://github.com/JeffHeard/ga_ows.git#egg=ga_ows
 
 # When running django-admin.py or 'python manage.py' do it in your virtualenv, making
 # sure your prompt looks something like "(venv-stoqs)[student@localhost stoqshg]$ "
