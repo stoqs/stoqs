@@ -454,6 +454,9 @@
             $(element).attr('title', ' ').tooltip('fixTitle').tooltip('show');     // Remove tooltip
         }
     }
+    function disableXYZColor(element) {
+        $(element).attr('disabled',true);    // disable the X, Y, Z, Color radio buttons in the row
+    }
     
     // Called with an element that was selectable, should make that element selectable.
     function enableButton(element) {
@@ -461,6 +464,9 @@
             $(element).removeClass('disabled');
             $(element).attr('title', 'Click to Select').tooltip('fixTitle').tooltip('hide');     // Add generic tooltip
         }
+    }
+    function enableXYZColor(element) {
+        $(element).removeAttr('disabled');    // enable the X, Y, Z, Color radio buttons in the row
     }
 
     function setKMLlinks() {
@@ -1009,6 +1015,19 @@
         }
     });
 
+    $("#clear-sampledparameter-button").click(function() {
+        if ( $('#clear-sampledparameter-button').hasClass('btn-primary')) {
+            $("#clear-sampledparameter-button").removeClass('btn-primary');
+            $("#clear-sampledparameter-button").addClass('disabled');
+            $('td',$('#sampledparameter-table')).each(function (index, element) {
+                if ($('.btn-primary', $(element)).length) {
+                    $('#' + element.id + ' > button').removeClass('btn-primary');
+                }
+            });
+            rebuildFilters();
+            $('#sampledparameters-anchor').html('Sampled Parameters')
+        }
+    });
 
     $("#clear-measuredparameter-button").click(function() {
         if ( $('#clear-measuredparameter-button').hasClass('btn-primary')) {
@@ -1542,12 +1561,12 @@
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid.
                     var element=$('#' + value[1]);
-                    enableButton($('button', element)); // Enable the button in the table row
+                    enableButton($('button', element));             // enable the button in the table row
                     ids.push(value[1]);
                 });
                 $('#platform-table > tbody > tr').each(function (index, elem) { 
                     if ($.inArray((elem.id).toString(), ids) == -1) {
-                        disableButton($('button', $(elem))); // Disable the button in the table row
+                        disableButton($('button', $(elem)));        // disable the button in the table row
                     }
                 });
             }
@@ -1556,13 +1575,15 @@
                 var ids=[];
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid, convert int id to string
-                    enableButton($('button', '#' + value[2]));              // Enable the button in the table row
+                    enableButton($('button', '#' + value[2]));                                          // enable the button in the table row
+                    enableXYZColor($('input:radio', $('button', '#' + value[2]).parent().parent()));   // enable the X, Y, Z, Color radio buttons in the row
                     ids.push(value[2].toString());
                 });
-                $('#sampledparameter-table > tbody > tr > td').each(function (index, elem) { 
-                    if (elem.id.length != 0) {
-                        if ($.inArray((elem.id).toString(), ids) == -1) {
-                            disableButton($('button', $(elem))); // disable the button in the table row
+                $('#sampledparameter-table > tbody > tr > td > button').each(function (index, elem) { 
+                    if (elem.parentNode.id.length != 0) {
+                        if ($.inArray(elem.parentNode.id.toString(), ids) == -1) {
+                            disableButton($(elem));                                             // disable the button in the table row
+                            disableXYZColor($('input:radio', $(elem).parent().parent()));       // disable the X, Y, Z, Color radio buttons in the row
                         }
                     }
                 });
@@ -1572,17 +1593,19 @@
                 var ids=[];
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid
-                    enableButton($('button', '#' + value[0]));              // Enable the name button in the table row
+                    enableButton($('button', '#' + value[0]));      // enable the name button in the table row
+                    enableXYZColor($('input:radio', $('button', '#' + value[0]).parent().parent()));   // enable the X, Y, Z, Color radio buttons in the row
                     ids.push(value[0]);
                     if (value[1].length != 0) {
-                        enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));  // Enable the standard_name button in the table row
+                        enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));    // Enable the standard_name button in the table row
                         ids.push(value[1] + '--' + value[0] + '-sn');
                     }
                 });
-                $('#measuredparameter-table > tbody > tr > td').each(function (index, elem) { 
-                    if (elem.id.length != 0) {
-                        if ($.inArray((elem.id).toString(), ids) == -1) {
-                            disableButton($('button', $(elem))); // disable the button in the table row
+                $('#measuredparameter-table > tbody > tr > td > button').each(function (index, elem) { 
+                    if (elem.parentNode.id.length != 0) {
+                        if ($.inArray(elem.parentNode.id.toString(), ids) == -1) {
+                            disableButton($(elem));                                             // disable the button in the table row
+                            disableXYZColor($('input:radio', $(elem).parent().parent()));       // disable the X, Y, Z, Color radio buttons in the row
                         }
                     }
                 });
