@@ -96,11 +96,16 @@
                     </div>
                     <div id="collapseMap" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <div class="row-fluid" id="map"></div>
-                            <div>
-                                <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
-                                <input type="checkbox" id="showsensortracks" /> Show sensor tracks (must select one measured parameter)
+                            <div class="row-fluid" id="map">
                             </div>
+                            <form class="form-inline">
+                                <label class="checkbox" style="width:200px;">
+                                    <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
+                                </label>
+                                <label class="checkbox" style="width:200px;">
+                                    <input type="checkbox" id="showsensortracks" disabled="disabled"/> Show sensor tracks
+                                </label>
+                            </form>
                             <div>
                                 <div id="query-stats" class="ajax-wait"></div>
                                 <label class="checkbox">
@@ -278,7 +283,7 @@
                                 <div class="row">
                                     <div class="span2">
                                         <label class="checkbox disabled">
-                                            <input type="checkbox" id="displayparameterplatformdata" disabled><span id="contourtext">Show data values</span>
+                                            <input type="checkbox" id="showparameterplatformdata" disabled="disabled"><span id="contourtext">Show data values</span>
                                         </label>
                                     </div>
                                     <div class="span4" id="sectioncolorbar" style="float:right;"></div>
@@ -469,13 +474,16 @@
         $(element).removeAttr('disabled');    // enable the X, Y, Z, Color radio buttons in the row
     }
 
-    function setKMLlinks() {
+    function updateKMLcmincmax() {
         if ($('#cmin').val() && $('#cmax').val()) {
             cmincmax = 'cmin=' + $('#cmin').val() + '&cmax=' + $('#cmax').val();
         }
         $('#kml-field').text(kmlurl + cmincmax);
         $('#kml-link').attr('href',kmlurl + cmincmax);
 
+    }
+
+    function update_sensortrackskml() {
         if ($('#showsensortracks').is(':checked')) {
             if (kmlurl.lastIndexOf('http', 0) === 0) {
                 // Dynamically set url for sensor tracks display in openlayers
@@ -494,6 +502,9 @@
             }
             sensortrackskml.loaded = false;
             sensortrackskml.refresh({force: true});
+        }
+        else {
+            sensortrackskml.removeAllFeatures();
         }
     }
 
@@ -582,7 +593,8 @@
                         $('#cmax').val('');
                     }
                 }
-                setKMLlinks();
+                updateKMLcmincmax();
+                update_sensortrackskml();
             }
             else if (value == 'stoqstoolbox') {
                 // Required parameters for stoqs_down as of stoqstoolbox release noted in the Matlab comment below
@@ -763,9 +775,8 @@
     } // makeSlider()
 
     function enableContouring() {
-        $('#displayparameterplatformdata').parent().removeClass('disabled');
-        $('#displayparameterplatformdata').parent().tooltip('disable');
-        $('#displayparameterplatformdata').removeAttr('disabled');
+        $('#showparameterplatformdata').parent().tooltip('disable');
+        $('#showparameterplatformdata').removeAttr('disabled');
         if (typeof params['platforms'] != 'undefined') {
             if (params['platforms'].length == 1) {
                 $('#contourtext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
@@ -774,16 +785,15 @@
     }
 
     function disableContouring() {
-        $('#displayparameterplatformdata').parent().addClass('disabled');
-        $('#displayparameterplatformdata').attr('disabled');
+        $('#showparameterplatformdata').attr('disabled',true);
         $('#contourtext').text('Show data values');
         $('#sectioncolorbar').html('');
-        if ($('#displayparameterplatformdata').is(':checked')) {
+        if ($('#showparameterplatformdata').is(':checked')) {
             // Seems like there is better utility with leaving checked for when selecting different parameters.
             // This use is better than having it checked for when it doesn't make sense; comment out for now.
-            //$('#displayparameterplatformdata').removeAttr('checked');
+            //$('#showparameterplatformdata').removeAttr('checked');
         }
-        $('#displayparameterplatformdata').parent().tooltip({title: 'Select a Measured Parameter and a Platform to enable'});
+        $('#showparameterplatformdata').parent().tooltip({title: 'Select a Measured Parameter and a Platform to enable'});
     }
 
     function updateContourInfo() {
@@ -864,6 +874,19 @@
             $('#clear-measuredparameter-button').addClass('disabled');
         }
 
+        // Enable/disable showsensortracks checkbox
+        $('#showsensortracks').attr('disabled', true);
+        if (params['measuredparametersgroup'].length == 1) {
+            $('#showsensortracks').removeAttr('disabled');
+            $('#showsensortracks').parent().tooltip('disable');
+        }
+        else {
+            if (params['parameterstandardname'].length == 1) {
+                $('#showsensortracks').removeAttr('disabled');
+                $('#showsensortracks').parent().tooltip('disable');
+            }
+        }
+
         params['platforms']=[]
         $('tr',$('#platform-table')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
@@ -904,6 +927,10 @@
         polyLayer.removeAllFeatures();
 
     } // rebuildFilters()
+
+    function rebuildPPSelectors() {
+        pp_params = {};
+    } // rebuildPPSelectors()
     
     function refreshMap() {
         track_lines.redraw(true);
@@ -946,38 +973,45 @@
     });
 
     $('#getactualcount').on('click', function (event) {
+        // Don't need to get everything from queryData, only the count
         rebuildFilters();
     });
 
     $('#showsigmatparametervalues').on('click', function (event) {
+        // Don't need to get everything from queryData, only the new histogramdata
         rebuildFilters();
     });
 
     $('#showstandardnameparametervalues').on('click', function (event) {
+        // Don't need to get everything from queryData, only the new histogramdata
         rebuildFilters();
     });
 
     $('#showallparametervalues').on('click', function (event) {
+        // Don't need to get everything from queryData, only the new histogramdata
         rebuildFilters();
     });
 
-    $('#displayparameterplatformdata').on('click', function (event) {
+    $('#showparameterplatformdata').on('click', function (event) {
+        // Don't need to get everything from queryData, only the response with the PNG image
         rebuildFilters();
     });
 
     $('#showsensortracks').on('click', function (event) {
-        rebuildFilters();
+        updateKMLcmincmax();
+        update_sensortrackskml();
     });
 
     $('#cmin').on('keypress', function (event, previousText) {
-        setTimeout(setKMLlinks());
+        setTimeout(updateKMLcmincmax());
     });
 
     $('#cmax').on('keypress', function (event, previousText) {
-        setTimeout(setKMLlinks());
+        setTimeout(updateKMLcmincmax());
     });
 
     $('body').on('change', '.parameter-radio', function (e) {
+        rebuildPPSelectors();
         if ($('input:radio[name=parameters_x]').is(':checked')) {
             var px = $('input:radio[name=parameters_x]:checked').val();
         }
@@ -1399,8 +1433,8 @@
         if ($('#showallparametervalues').is(':checked')) {
             qstring = qstring + '&showallparametervalues=1';
         }
-        if ($('#displayparameterplatformdata').is(':checked')) {
-            qstring = qstring + '&displayparameterplatformdata=1';
+        if ($('#showparameterplatformdata').is(':checked')) {
+            qstring = qstring + '&showparameterplatformdata=1';
         }
         if ( ! $('#showallparametervalues').is(':checked')) {
             //$('#parameter-value-table').html('<tbody></tbody>');
@@ -1619,7 +1653,7 @@
                 timedepthplot = $.plot($("#time-depth-flot"), theData, simpledepthtime_options_zoom);
 
                 // Make the contour plot if checkbox is checked and is not disabled
-                if ($('#displayparameterplatformdata').is(':checked') && ! $('#displayparameterplatformdata').parent().hasClass('disabled')) {
+                if ($('#showparameterplatformdata').is(':checked')) {
                     if (data['parameterplatformdatavaluepng'][0]) {
                         var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
                                             $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
@@ -1825,7 +1859,7 @@
         sensortrackskml = new OpenLayers.Layer.Vector("Sensor tracks", {
             projection: map.displayProjection,
             strategies: [new OpenLayers.Strategy.Fixed()],
-            // protocol is Dynamically set in setKMLLinks()
+            // protocol is Dynamically set in update_sensortrackskml()
             protocol: new OpenLayers.Protocol.HTTP({
                 url: '',
                 format: new OpenLayers.Format.KML({
@@ -1978,7 +2012,8 @@
         //$('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
         //$('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
         $('#getactualcount').tooltip({title: 'Will increase query time'});
-        $('#displayparameterplatformdata').parent().tooltip({title: 'Select a Measured Parameter and a Platform to enable'});
+        $('#showparameterplatformdata').parent().tooltip({title: 'Select a Measured Parameter Name and a Platform to enable'});
+        $('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter enable'});
 
     });
 

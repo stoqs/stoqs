@@ -105,11 +105,11 @@ def queryData(request, format=None):
                    'parametervalues': [],                   # Appended to below with any _MIN _MAX request items
 
                     # TODO: Could simplify all these flags by putting them into a dictionary...
-                   'get_actual_count': 'get_actual_count',  # Flag value from checkbox
+                   'get_actual_count': 'get_actual_count',                                  # Flag value from checkbox
                    'showsigmatparametervalues': 'showsigmatparametervalues',                # Flag value from checkbox
                    'showstandardnameparametervalues': 'showstandardnameparametervalues',    # Flag value from checkbox
                    'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
-                   'displayparameterplatformdata': 'displayparameterplatformdata',          # Flag value from checkbox
+                   'showparameterplatformdata': 'showparameterplatformdata',                # Flag value from checkbox
                    }
     params = {}
     for key, value in query_parms.iteritems():
@@ -189,10 +189,22 @@ def queryUI(request):
                                                  }, 
                             context_instance=RequestContext(request))
 
-def queryActivityResource(request):
+def queryPP(request):
     '''
-    Build and return main Activity Resource web page
+    Process data requests from the main query web page.  Returns data or image from request for Parameter-Parameter.
     '''
+    response = HttpResponse()
+    query_parms = {
+                   'px': 'px',              # Parameter id for x-axis
+                   'py': 'py',              # Parameter id for y-axis
+                   'pz': 'pz',              # Parameter id for z-axis
+                   'pcolor': 'pcolor',      # Parameter id for color
+                   'xlog': false,           # Log scale for x-axis
+                   'ylog': false,           # Log scale for y-axis
+                   'zlog': false,           # Log scale for z-axis
+                   'clog': false            # Log scale for color
+
+    }
 
     formats={'kml': 'KML (Google Earth)'}
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],

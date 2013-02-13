@@ -250,4 +250,20 @@ class ParameterParameterPlots(object):
         '''
         Produce a .png image 
         '''
-        pass
+        try:
+            logger.debug('kwargs = %s', kwargs)
+            fig = plt.figure(figsize=(6,6))
+            ax = fig.add_axes((0,0,1,1))
+            ax.set_xlim(tmin / scale_factor, tmax / scale_factor)
+            ax.set_ylim(dmax, dmin)
+            ax.get_xaxis().set_ticks([])
+            clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+            cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
+            if contourFlag:
+                ax.scatter(x, y, marker='.', s=2, c='k', lw = 0)
+            else:
+                ax.scatter(x, y, c=z, s=20, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+
+        except:
+            raise Exception('Cannot plot parameter-parameter data')
+
