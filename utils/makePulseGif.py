@@ -4,12 +4,13 @@
 # #time-depth-flot
 
 import os
-from numpy import arange, sin, pi
+from numpy import arange, hstack
 
-smax = 20
+# Do a linear transition of transparency for a stronger indication of activity
 i = 0
-for s in (smax * sin(arange(0, 2*pi, 0.2))) + smax:
-    cmd = "convert -size 1x1 xc:none -fill 'hsl(208,%s,89)' -draw 'point 0,0' pulse_%03d.gif" % (s, i)
+for a in hstack((arange(0, 1.0, 0.1), arange(1.0, 0, -0.1))):
+    # Use background color of bootstrap's .well class
+    cmd = "convert -size 1x1 xc:#f5f5f5 -fill 'rgba(192,211,228,%.2f)' -draw 'point 0,0' pulse_%03d.gif" % (a, i)
     print cmd
     os.system(cmd)
     i = i + 1
