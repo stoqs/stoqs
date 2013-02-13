@@ -821,8 +821,14 @@
         }
     }
     
-    function rebuildFilters() {
+    function rebuildFilters(only) {
         params={};
+        // To tell the backend to process for only and update only this part of the data
+        // Useful for radio button and checkbox events that do not change the selection
+        if (typeof only != 'undefined') {
+            params['only'] = only
+        }
+
         if ($('.btn-primary', $('#time-depth-anchor').parent()).length) {
             params['start_time']=$('#start-time').val();
             params['end_time']=$('#end-time').val();
@@ -922,6 +928,19 @@
             $('#parameter-values-anchor').html('Parameter Values' + valueText);
         }
 
+        if ($('input:radio[name=parameters_x]').is(':checked')) {
+            params['px'] = $('input:radio[name=parameters_x]:checked').val();
+        }
+        if ($('input:radio[name=parameters_y]').is(':checked')) {
+            params['py'] = $('input:radio[name=parameters_y]:checked').val();
+        }
+        if ($('input:radio[name=parameters_z]').is(':checked')) {
+            params['pz'] = $('input:radio[name=parameters_z]:checked').val();
+        }
+        if ($('input:radio[name=parameters_c]').is(':checked')) {
+            params['pc'] = $('input:radio[name=parameters_c]:checked').val();
+        }
+
         updateContourInfo();
         updateSummaryData();
         polyLayer.removeAllFeatures();
@@ -1006,40 +1025,10 @@
         setTimeout(updateKMLcmincmax());
     });
 
-    function showParameterParameter() {
-        var ppQuery='{{site_uri}}{% url stoqs-query-pp dbAlias=request.META.dbAlias %}';
-        ppQuery = ppQuery + '?';
-        if ($('input:radio[name=parameters_x]').is(':checked')) {
-            ppQuery = ppQuery + 'px=' + $('input:radio[name=parameters_x]:checked').val() + '&';
-        }
-        if ($('input:radio[name=parameters_y]').is(':checked')) {
-            ppQuery = ppQuery + 'py=' + $('input:radio[name=parameters_y]:checked').val() + '&';
-        }
-        if ($('input:radio[name=parameters_z]').is(':checked')) {
-            ppQuery = ppQuery + 'pz=' + $('input:radio[name=parameters_z]:checked').val() + '&';
-        }
-        if ($('input:radio[name=parameters_c]').is(':checked')) {
-            ppQuery = ppQuery + 'pc=' + $('input:radio[name=parameters_c]:checked').val() + '&';
-        }
-
+    $('body').on('change', '.parameter-radio', function (e) {
         $("#clear-pp-button").addClass('btn-primary');
         $("#clear-pp-button").removeClass('disabled');
-
-        request = $.ajax({
-            type : 'GET',
-            url : ppQuery,
-            success: function (json) {
-                $("#pp-plot2d").html('<img src="' + json.png + '">')
-                if (! $('#collapseParameterParameter').hasClass('in')) {
-                    $('#parameterparameter-anchor').click();
-                }
-            },
-            dataType: "json"
-        });
-    }
-
-    $('body').on('change', '.parameter-radio', function (e) {
-        showParameterParameter();
+        rebuildFilters('pp');
     });
 
     $("#clear-pp-button").click(function() {
