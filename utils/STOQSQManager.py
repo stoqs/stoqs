@@ -25,7 +25,7 @@ from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data
 from MPQuery import MPQuery
-from Viz import ContourPlots
+from Viz import ContourPlots, ParameterParameterPlots
 from coards import to_udunits
 from datetime import datetime
 import logging
@@ -79,7 +79,9 @@ class STOQSQManager(object):
             platforms - a list of platform names to include
             time - a two-tuple consisting of a start and end time, if either is None, the assumption is no start (or end) time
             depth - a two-tuple consisting of a range (start/end depth, if either is None, the assumption is no start (or end) depth
-            parametervalues - a dictionary of parameter names and tuples of min & max values to use as constraints
+            parametervalues - a dictionary of parameter names and tuples of min & max values to use as constraints 
+                              these are passed onto MPQuery and processed from the kwargs dictionary
+            parameterparameter - a tuple of Parameter ids for x, y, z axes and color for correlation plotting
 
         These are all called internally - so we'll assume that all the validation has been done in advance,
         and the calls to this method meet the requirements stated above.
@@ -179,6 +181,7 @@ class STOQSQManager(object):
                            'extent': self.getExtent,
                            'activityparameterhistograms': self.getActivityParameterHistograms,
                            'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
+                           'parameterparameterpng': self.getParameterParameterPNG,
                            ##'activityparamhistrequestpngs': self.getActivityParamHistRequestPNGs,
                            }
         
@@ -533,11 +536,11 @@ class STOQSQManager(object):
                     platformList[aph['activityparameter__activity__name']] = []
                     platformList[aph['activityparameter__activity__name']].append(aph['activityparameter__activity__platform__name'])
 
-                    logger.debug('pa.name = %s, aname = %s', pa.name, aph['activityparameter__activity__name'])
+                    ##logger.debug('pa.name = %s, aname = %s', pa.name, aph['activityparameter__activity__name'])
 
             # Unwind the platformList to get activities by platform name
             for an, pnList in platformList.iteritems():
-                logger.debug('an = %s, pnList = %s', an, pnList)
+                ##logger.debug('an = %s, pnList = %s', an, pnList)
                 for pn in pnList:
                     try:
                         activityList[pn].append(an)
@@ -548,7 +551,7 @@ class STOQSQManager(object):
             # Build the final data structure organized by platform -> activity
             plHash = {}
             for plat in activityList.keys():
-                logger.debug('plat = %s', plat)
+                ##logger.debug('plat = %s', plat)
                 for an in activityList[plat]:
                     try:
                         plHash[plat][an] = {'binwidth': binwidthList[an], 'hist': histList[an]}
@@ -608,6 +611,38 @@ class STOQSQManager(object):
 
         return cp.contourDatavaluesForFlot()
 
+
+    def getParameterParameterPNG(self):
+        '''
+        If at least the X and Y radio buttons are checked produce a scatter plot for delivery back to the client
+        '''
+        pngFileName = None
+        logger.debug('------------------------- %s --------------------', self.kwargs)
+        if (self.kwargs.has_key('parameterparameter')):
+            px = self.kwargs['parameterparameter'][0]
+            py = self.kwargs['parameterparameter'][1]
+            pc = self.kwargs['parameterparameter'][3]
+            logger.debug('px = %s, py = %s, pc = %s', px, py, pc)
+
+            if (px and py):
+                if not self.mpq.qs_mp:
+                    self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
+                # We have enough information to generate a 2D scatter plot
+                logger.debug('Instantiating Viz.PropertyPropertyPlots............................................')
+                ppp = ParameterParameterPlots(self.request, px, py, pc, self.mpq.qs_mp_no_parameters)
+                pngFileName = ppp.make2DPlot()
+            
+        return pngFileName
+
+    def getParameterParameterX3D(self):
+        '''
+        If at least the X, Y, and Z radio buttons are checked produce an X3D response for delivery back to the client
+        '''
+        if (self.kwargs.has_key('px') and self.kwargs.has_key('py') and self.kwargs.has_key('pz')):
+            if (self.kwargs['px'] != '' and self.kwargs['py'] != '' and self.kwargs['pz'] != ''):
+                # Create X3D 
+                pass
 
     #
     # Methods that generate Q objects used to populate the query.

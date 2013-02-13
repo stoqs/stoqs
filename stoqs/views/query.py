@@ -112,6 +112,8 @@ def queryData(request, format=None):
                    'simpledepthtime': [],                   # List of x,y values
                    'platforms': 'platforms',                # Specified once in the query string for each platform.
                    'parametervalues': [],                   # Appended to below with any _MIN _MAX request items
+                   'parameterparameter': ('px', 'py', 'pz', 'pc',               # Parameters to plot
+                                          'xlog', 'ylog', 'zlog', 'clog'),      # Flags for log-scale
 
                     # TODO: Could simplify all these flags by putting them into a dictionary...
                    'get_actual_count': 'get_actual_count',                                  # Flag value from checkbox
@@ -159,53 +161,6 @@ def queryData(request, format=None):
 
     return response
 
-def queryPP(request, format=None):
-    '''
-    Process data requests from the main query web page.  Returns data or image from request for Parameter-Parameter.
-    '''
-    response = HttpResponse()
-    query_parms = {
-                   'px': 'px',              # Parameter id for x-axis
-                   'py': 'py',              # Parameter id for y-axis
-                   'pz': 'pz',              # Parameter id for z-axis
-                   'pcolor': 'pcolor',      # Parameter id for color
-                   'xlog': 'xlog',           # Log scale for x-axis
-                   'ylog': 'ylog',           # Log scale for y-axis
-                   'zlog': 'zlog',           # Log scale for z-axis
-                   'clog': 'clog'            # Log scale for color
-
-    }
-    params = {}
-    for key, value in query_parms.iteritems():
-        if type(value) in (list, tuple):
-            params[key] = [request.GET.get(p, None) for p in value]
-        else:
-            params[key] = request.GET.getlist(key)
-
-    logger.debug('params = %s', params)
-
-    qs = None
-    qs_mp = None
-
-    if (params.has_key('px') and params.has_key('py')):
-        if (params['px'] != '' and params['py'] != ''):
-            pp_plot = ParameterParameterPlots(params, request, qs, qs_mp)
-            pngFileName = pp_plot.makePlot()
-            
-    if (params.has_key('px') and params.has_key('py') and params.has_key('pz')):
-        if (params['px'] != '' and params['py'] != '' and params['pz'] != ''):
-            # Create X3D 
-            pass
-
-    if not format: # here we export in a given format, or just provide summary data if no format is given.
-        response['Content-Type'] = 'text/html'
-        response.write({'png': pngFileName})
-    elif format == 'json':
-        response['Content-Type'] = 'text/json'
-        response.write(serializers.serialize('json', {'png': pngFileName}))
-
-    return response
-    
 def queryUI(request):
     '''
     Build and return main query web page

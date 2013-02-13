@@ -221,27 +221,22 @@ class MPQuerySet(object):
     def filter(self, *args, **kwargs):
         qs = self._clone()
         qs.mp_query = qs.mp_query.filter(*args, **kwargs)
-        qs.sprocket_query = qs.sprocket_query.filter(*args, **kwargs)
         return qs
  
     def exclude(self, *args, **kwargs):
         qs = self._clone()
         qs.mp_query = qs.mp_query.exclude(*args, **kwargs)
-        qs.sprocket_query = qs.sprocket_query.exclude(*args, **kwargs)
         return qs
  
     def order_by(self, *ordering):
         qs = self._clone()
         qs.mp_query = qs.mp_query.order_by(*ordering)
-        qs.sprocket_query = qs.sprocket_query.order_by(*ordering)
         qs.ordering = ordering
         return qs
  
     def _clone(self):
-        qs = GearQuerySet()
+        qs = MPQuerySet(self.query, self.values_list)
         qs.mp_query = self.mp_query._clone()
-        qs.sprocket_query = self.sprocket_query._clone()
-        qs.ordering = self.ordering
         return qs 
 
 

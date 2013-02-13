@@ -86,7 +86,6 @@ urlpatterns = patterns('',
 
     # URL For Chander's STOQQManager related views
     url(pre + r'query/summary/$', 'stoqs.views.query.queryData', {}, name='stoqs-query-summary'),
-    url(pre + r'query/pp/$', 'stoqs.views.query.queryPP', {}, name='stoqs-query-pp'),
     url(pre + r'query/(?P<format>[^/]+)/?$', 'stoqs.views.query.queryData', {}, name='stoqs-query-results'),
     url(pre + r'query/', 'stoqs.views.query.queryUI', {}, name='stoqs-query-ui'),
 

@@ -234,23 +234,44 @@ class ContourPlots(object):
 
 class ParameterParameterPlots(object):
     '''
-    Use matploptib to create nice looking property-property plots
+    Use matploplib to create nice looking property-property plots
     '''
-    def __init__(self, params, request, qs, qs_mp):
+    def __init__(self, request, px, py, pc, qs):
         '''
         Save parameters that can be used by the different plotting methods here
         '''
-        self.params = params
         self.request = request
+        self.px = px
+        self.py = py
+        self.pc = pc
         self.qs = qs
-        self.qs_mp = qs_mp
 
-    def makePlot(self):
+    def make2DPlot(self):
         '''
         Produce a .png image 
         '''
-        try:
-            logger.debug('kwargs = %s', kwargs)
+        while 1:
+
+            # Add selected X, Y and C parameters to the query set to get the data for the scatter plot
+            logger.debug('self.px = %s', self.px)
+            ##xqs = self.qs.filter(parameter__id=self.px)
+            logger.debug('type(self.qs) = %s', type(self.qs))
+            xqs = self.qs.filter(parameter__id=6)
+            logger.debug('xqs.query = %s', str(xqs.query))
+
+            # Use session ID so that different users don't stomp on each other with their parameterparameter plots
+            # - This does not work for Firefox which just reads the previous image from its cache
+            if self.request.session.has_key('sessionID'):
+                sessionID = self.request.session['sessionID']
+            else:
+                sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
+                self.request.session['sessionID'] = sessionID
+            # - Use a new imageID for each new image
+            imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+            ppPngFile = '%s_%s_%s_%s.png' % (self.px, self.py, self.pc, imageID)
+            ppPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', ppPngFile)
+
+
             fig = plt.figure(figsize=(6,6))
             ax = fig.add_axes((0,0,1,1))
             ax.set_xlim(tmin / scale_factor, tmax / scale_factor)
@@ -263,6 +284,6 @@ class ParameterParameterPlots(object):
             else:
                 ax.scatter(x, y, c=z, s=20, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
 
-        except:
-            raise Exception('Cannot plot parameter-parameter data')
+        ##except:
+        ##    raise Exception('Cannot make 2D parameterparameter plot')
 
