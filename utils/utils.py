@@ -74,16 +74,16 @@ def getShow_All_Parameter_Values(kwargs):
 
     return show_all_parameter_values_state
 
-def getDisplay_Parameter_Platform_Data(kwargs):
+def getShow_Parameter_Platform_Data(kwargs):
     '''
     return state of Display Parameter-Platform data checkbox from quiry UI
     '''
-    display_parameter_platform_data_state = False
-    if kwargs.has_key('displayparameterplatformdata'):
-        if kwargs['displayparameterplatformdata']:
-            display_parameter_platform_data_state = True
+    show_parameter_platform_data_state = False
+    if kwargs.has_key('showparameterplatformdata'):
+        if kwargs['showparameterplatformdata']:
+            show_parameter_platform_data_state = True
 
-    return display_parameter_platform_data_state
+    return show_parameter_platform_data_state
 
 ## {{{ http://code.activestate.com/recipes/511478/ (r1)
 import math

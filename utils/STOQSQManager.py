@@ -23,7 +23,7 @@ from stoqs import models
 from loaders import MEASUREDINSITU
 from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL
-from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getDisplay_Parameter_Platform_Data
+from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data
 from MPQuery import MPQuery
 from Viz import ContourPlots
 from coards import to_udunits
@@ -586,8 +586,8 @@ class STOQSQManager(object):
         produce a depth-time section plot for overlay on the flot plot.  Return a png image file name for inclusion
         in the AJAX response.
         '''
-        if not getDisplay_Parameter_Platform_Data(self.kwargs):
-            return None, None, 'Contour data values checkbox not checked'
+        if not getShow_Parameter_Platform_Data(self.kwargs):
+            return None, None, 'Show data values checkbox not checked'
         if len(self.kwargs['measuredparametersgroup']) != 1:
             return None, None, 'Parameter name not selected'
         if len(self.getPlatforms()) != 1:

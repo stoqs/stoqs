@@ -86,6 +86,7 @@ urlpatterns = patterns('',
 
     # URL For Chander's STOQQManager related views
     url(pre + r'query/summary/$', 'stoqs.views.query.queryData', {}, name='stoqs-query-summary'),
+    url(pre + r'query/pp/$', 'stoqs.views.query.queryPP', {}, name='stoqs-query-pp'),
     url(pre + r'query/(?P<format>[^/]+)/?$', 'stoqs.views.query.queryData', {}, name='stoqs-query-results'),
     url(pre + r'query/', 'stoqs.views.query.queryUI', {}, name='stoqs-query-ui'),
 
@@ -99,7 +100,7 @@ urlpatterns = patterns('',
     # Prerequisites:
     #   su -y 'yum install libxml2-devel libxml2 libxslt-devel libxslt'
     #   pip install lxml
-    #   git clone https://github.com/JeffHeard/ga_ows.git ga_ows && cd ga_ows && python setup.py install
+    #   pip install -e git+https://github.com/JeffHeard/ga_ows.git#egg=ga_ows
     #   export LD_LIBRARY_PATH='/usr/local/lib:$LD_LIBRARY_PATH' && python manage.py runserver 0.0.0.0:8000
     url(pre + r'wfs/?', WFS.as_view(
         models=[m.Sample],          # everything but this is optional.
