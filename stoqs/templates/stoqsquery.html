@@ -928,10 +928,6 @@
 
     } // rebuildFilters()
 
-    function rebuildPPSelectors() {
-        pp_params = {};
-    } // rebuildPPSelectors()
-    
     function refreshMap() {
         track_lines.redraw(true);
         sample_points.redraw(true);
@@ -1010,32 +1006,40 @@
         setTimeout(updateKMLcmincmax());
     });
 
-    $('body').on('change', '.parameter-radio', function (e) {
-        rebuildPPSelectors();
+    function showParameterParameter() {
+        var ppQuery='{{site_uri}}{% url stoqs-query-pp dbAlias=request.META.dbAlias %}';
+        ppQuery = ppQuery + '?';
         if ($('input:radio[name=parameters_x]').is(':checked')) {
-            var px = $('input:radio[name=parameters_x]:checked').val();
+            ppQuery = ppQuery + 'px=' + $('input:radio[name=parameters_x]:checked').val() + '&';
         }
         if ($('input:radio[name=parameters_y]').is(':checked')) {
-            var py = $('input:radio[name=parameters_y]:checked').val();
+            ppQuery = ppQuery + 'py=' + $('input:radio[name=parameters_y]:checked').val() + '&';
         }
         if ($('input:radio[name=parameters_z]').is(':checked')) {
-            var pz = $('input:radio[name=parameters_z]:checked').val();
+            ppQuery = ppQuery + 'pz=' + $('input:radio[name=parameters_z]:checked').val() + '&';
         }
         if ($('input:radio[name=parameters_c]').is(':checked')) {
-            var pc = $('input:radio[name=parameters_c]:checked').val();
+            ppQuery = ppQuery + 'pc=' + $('input:radio[name=parameters_c]:checked').val() + '&';
         }
 
-        console.log(px, py, pz, pc);
-        if (typeof px != 'undefined' || typeof py != 'undefined' || typeof pz != 'undefined' || typeof pc != 'undefined') {
-            $("#clear-pp-button").addClass('btn-primary');
-            $("#clear-pp-button").removeClass('disabled');
-        }
-        if (typeof px != 'undefined' && typeof py != 'undefined' && typeof pz == 'undefined') {
-            console.log('2D');
-        }
-        if (typeof px != 'undefined' && typeof py != 'undefined' && typeof pz != 'undefined') {
-            console.log('3D');
-        }
+        $("#clear-pp-button").addClass('btn-primary');
+        $("#clear-pp-button").removeClass('disabled');
+
+        request = $.ajax({
+            type : 'GET',
+            url : ppQuery,
+            success: function (json) {
+                $("#pp-plot2d").html('<img src="' + json.png + '">')
+                if (! $('#collapseParameterParameter').hasClass('in')) {
+                    $('#parameterparameter-anchor').click();
+                }
+            },
+            dataType: "json"
+        });
+    }
+
+    $('body').on('change', '.parameter-radio', function (e) {
+        showParameterParameter();
     });
 
     $("#clear-pp-button").click(function() {

@@ -236,15 +236,14 @@ class ParameterParameterPlots(object):
     '''
     Use matploptib to create nice looking property-property plots
     '''
-    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName):
+    def __init__(self, params, request, qs, qs_mp):
         '''
         Save parameters that can be used by the different plotting methods here
         '''
-        self.kwargs = kwargs
+        self.params = params
         self.request = request
         self.qs = qs
         self.qs_mp = qs_mp
-        self.platformName = platformName
 
     def makePlot(self):
         '''
