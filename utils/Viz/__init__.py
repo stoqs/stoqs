@@ -24,6 +24,7 @@ from matplotlib.mlab import griddata
 from matplotlib import mpl
 from django.conf import settings
 from django.db.models.query import RawQuerySet
+from django.db import connections
 from datetime import datetime
 from KML import readCLT
 from stoqs import models
@@ -264,10 +265,12 @@ class ParameterParameter(object):
             y = []
             c = []
             logger.debug('sql = %s', sql)
-            for x, y, c in models.MeasuredParameter.objects.raw(sql):
+            cursor = connections[self.request.META['dbAlias']].cursor()
+            cursor.execute(sql)
+            for id, x, y in cursor:
                 xlist.append(x)
                 ylist.append(y)
-                clist.append(c)
+                ##clist.append(c)
 
             
 
