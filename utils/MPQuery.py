@@ -501,7 +501,7 @@ class MPQuery(object):
         q = p.sub('SELECT ' + select_items + ' FROM', q)
         q = q.replace('SELECT FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
         q = q.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
-        q = q.replace('WHERE', from_sql + ' WHERE' + where_sql)
+        q = q.replace('WHERE', from_sql + ' WHERE ' + where_sql)
 
         return q
 
@@ -520,33 +520,28 @@ class MPQuery(object):
         select_items = 'stoqs_measuredparameter.id, '
 
         add_to_from = ''
-        from_sql = '' 
         where_sql = '' 
-        i = 0
-        i = i + 1
-
-        # Join on measuerement - don't do if already in query
-        add_to_from = add_to_from + 'stoqs_parameter p' + str(i) + ', '
-        from_sql = from_sql + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + ' '
-        from_sql = from_sql + 'on mp' + str(i) + '.measurement_id = stoqs_measuredparameter.measurement_id '
 
         for axis, pid in pDict.iteritems():
             if pid:
                 logger.debug('axis, pid = %s, %s', axis, pid)
-                select_items = select_items + 'stoqs_measuredparameter_' + axis + '.datavalue as ' + axis + ', '
-                add_to_from = add_to_from + ''
-                where_sql = where_sql + "(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
+                select_items = select_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+
+                add_to_from = add_to_from + 'INNER JOIN stoqs_measuredparameter mp_' + axis + ' '
+                add_to_from = add_to_from + 'on mp_' + axis + '.measurement_id = stoqs_measurement.id '
+                add_to_from = add_to_from + 'INNER JOIN stoqs_parameter p_' + axis + ' '
+                add_to_from = add_to_from + 'on mp_' + axis + '.parameter_id = p_' + axis + '.id '
+
+                where_sql = where_sql + '(p_' + axis + '.id = ' + str(pid) + ') AND '
 
         q = query
         select_items = select_items[:-2] + ' '
         logger.debug('select_items = %s', select_items)
         q = 'SELECT ' + select_items + q[q.find('FROM'):]
-        logger.debug('q = %s', q)
+        logger.debug('add_to_from = %s', add_to_from)
 
 
-        q = q.replace('SELECT FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
-        q = q.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
-        q = q.replace('WHERE', from_sql + ' WHERE' + where_sql)
+        q = q.replace(' WHERE ', add_to_from + ' WHERE ' + where_sql)
 
         logger.debug('q = %s', q)
         return q
