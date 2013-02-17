@@ -182,6 +182,7 @@ class STOQSQManager(object):
                            'extent': self.getExtent,
                            'activityparameterhistograms': self.getActivityParameterHistograms,
                            'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
+                           'parameterparameterx3d': self.getParameterParameterX3D,
                            'parameterparameterpng': self.getParameterParameterPNG,
                            ##'activityparamhistrequestpngs': self.getActivityParamHistRequestPNGs,
                            }

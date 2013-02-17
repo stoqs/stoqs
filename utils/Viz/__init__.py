@@ -245,34 +245,31 @@ class ParameterParameter(object):
         self.request = request
         self.pDict = pDict
         self.mpq = mpq
+        self.x = []
+        self.y = []
+        self.z = []
+        self.c = []
 
     def make2DPlot(self):
         '''
         Produce a .png image 
         '''
         try:
-            # Add selected X, Y and C parameters to the query set to get the data for the scatter plot
-            logger.debug('self.pDict = %s', self.pDict)
-            logger.debug('type(self.mpq) = %s', type(self.mpq))
+            if not self.x and not self.y:
+                # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
+                sql = str(self.mpq.qs_mp.query)
+                sql = self.mpq.addParameterParameterSelfJoins(sql, self.pDict)
 
-            # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
-            sql = str(self.mpq.qs_mp.query)
-            logger.debug('\n\nsql before calling addParameterParameterSelfJoins() = %s\n\n', sql)
-            sql = self.mpq.addParameterParameterSelfJoins(sql, self.pDict)
-
-            x = []
-            y = []
-            c = []
-            logger.debug('sql = %s', sql)
-            cursor = connections[self.request.META['dbAlias']].cursor()
-            cursor.execute(sql)
-            for row in cursor:
-                x.append(row[1])
-                y.append(row[2])
-                try:
-                    c.append(row[3])
-                except IndexError:
-                    pass
+                # Use cursor so that we can specify the database alias to use
+                cursor = connections[self.request.META['dbAlias']].cursor()
+                cursor.execute(sql)
+                for row in cursor:
+                    self.x.append(row[1])
+                    self.y.append(row[2])
+                    try:
+                        self.c.append(row[3])
+                    except IndexError:
+                        pass
 
             # Use session ID so that different users don't stomp on each other with their parameterparameter plots
             # - This does not work for Firefox which just reads the previous image from its cache
@@ -289,17 +286,61 @@ class ParameterParameter(object):
 
 
             fig = plt.figure(figsize=(6,6))
-            ax = fig.add_axes((0,0,1,1))
+            ax = fig.add_subplot(111)
             clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
             cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
-            if c:
-                ax.scatter(x, y, c=c, s=10, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
-            else:
-                ax.scatter(x, y, marker='.', s=10, c='k', lw = 0)
+            if self.c:
+                # Get min & max settings from ActivityParameter...
 
+                ax.scatter(self.x, self.y, c=c, s=10, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+            else:
+                ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0)
+
+            ax.set_xlabel('xlabel')
+            ax.set_ylabel('ylabel')
             fig.savefig(ppPngFileFullPath, dpi=120)
             plt.close()
 
+            # Assemble additional information about the correlation...
+            infoText = ''
+
         except:
+            logger.exception('Cannot make 2D parameterparameter plot')
             raise Exception('Cannot make 2D parameterparameter plot')
+
+        else:
+            return ppPngFile, infoText
+
+    def makeX3D(self):
+        '''
+        Produce X3D XML text and return it
+        '''
+        try:
+            if not self.x and not self.y and not self.z:
+                # Construct special SQL for P-P plot that returns up to 4 data values for the up to 4 Parameters requested for an X3D view
+                sql = str(self.mpq.qs_mp.query)
+                sql = self.mpq.addParameterParameterSelfJoins(sql, self.pDict)
+
+                # Use cursor so that we can specify the database alias to use
+                cursor = connections[self.request.META['dbAlias']].cursor()
+                cursor.execute(sql)
+                for row in cursor:
+                    self.x.append(row[1])
+                    self.y.append(row[2])
+                    self.z.append(row[3])
+                    try:
+                        self.c.append(row[4])
+                    except IndexError:
+                        pass
+
+                # Construct x3D...
+
+
+
+        except:
+            logger.exception('Cannot make parameterparameter X3D')
+            raise Exception('Cannot make parameterparameter X3D')
+
+        else:
+            return ppX3DText, infoText
 
