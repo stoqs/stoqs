@@ -250,8 +250,7 @@ class ParameterParameter(object):
         '''
         Produce a .png image 
         '''
-        while 1:
-
+        try:
             # Add selected X, Y and C parameters to the query set to get the data for the scatter plot
             logger.debug('self.pDict = %s', self.pDict)
             logger.debug('type(self.mpq) = %s', type(self.mpq))
@@ -267,12 +266,13 @@ class ParameterParameter(object):
             logger.debug('sql = %s', sql)
             cursor = connections[self.request.META['dbAlias']].cursor()
             cursor.execute(sql)
-            for id, x, y in cursor:
-                xlist.append(x)
-                ylist.append(y)
-                ##clist.append(c)
-
-            
+            for row in cursor:
+                x.append(row[1])
+                y.append(row[2])
+                try:
+                    c.append(row[3])
+                except IndexError:
+                    pass
 
             # Use session ID so that different users don't stomp on each other with their parameterparameter plots
             # - This does not work for Firefox which just reads the previous image from its cache
@@ -283,22 +283,23 @@ class ParameterParameter(object):
                 self.request.session['sessionID'] = sessionID
             # - Use a new imageID for each new image
             imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-            ppPngFile = '%s_%s_%s_%s.png' % (self.px, self.py, self.pc, imageID)
+            ppPngFile = '%s_%s_%s_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['c'], imageID)
             ppPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', ppPngFile)
+            logger.debug('ppPngFileFullPath = %s', ppPngFileFullPath)
 
 
             fig = plt.figure(figsize=(6,6))
             ax = fig.add_axes((0,0,1,1))
-            ax.set_xlim(tmin / scale_factor, tmax / scale_factor)
-            ax.set_ylim(dmax, dmin)
-            ax.get_xaxis().set_ticks([])
             clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
             cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
-            if contourFlag:
-                ax.scatter(x, y, marker='.', s=2, c='k', lw = 0)
+            if c:
+                ax.scatter(x, y, c=c, s=10, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
             else:
-                ax.scatter(x, y, c=z, s=20, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+                ax.scatter(x, y, marker='.', s=10, c='k', lw = 0)
 
-        ##except:
-        ##    raise Exception('Cannot make 2D parameterparameter plot')
+            fig.savefig(ppPngFileFullPath, dpi=120)
+            plt.close()
+
+        except:
+            raise Exception('Cannot make 2D parameterparameter plot')
 
