@@ -27,6 +27,7 @@ from django.db.models.query import RawQuerySet
 from datetime import datetime
 from KML import readCLT
 from stoqs import models
+from utils.utils import postgresifySQL
 import numpy as np
 import logging
 import string
@@ -232,19 +233,17 @@ class ContourPlots(object):
             return None, None, 'No depth-time region specified'
 
 
-class ParameterParameterPlots(object):
+class ParameterParameter(object):
     '''
     Use matploplib to create nice looking property-property plots
     '''
-    def __init__(self, request, px, py, pc, qs):
+    def __init__(self, request, pDict, mpq):
         '''
         Save parameters that can be used by the different plotting methods here
         '''
         self.request = request
-        self.px = px
-        self.py = py
-        self.pc = pc
-        self.qs = qs
+        self.pDict = pDict
+        self.mpq = mpq
 
     def make2DPlot(self):
         '''
@@ -253,11 +252,24 @@ class ParameterParameterPlots(object):
         while 1:
 
             # Add selected X, Y and C parameters to the query set to get the data for the scatter plot
-            logger.debug('self.px = %s', self.px)
-            ##xqs = self.qs.filter(parameter__id=self.px)
-            logger.debug('type(self.qs) = %s', type(self.qs))
-            xqs = self.qs.filter(parameter__id=6)
-            logger.debug('xqs.query = %s', str(xqs.query))
+            logger.debug('self.pDict = %s', self.pDict)
+            logger.debug('type(self.mpq) = %s', type(self.mpq))
+
+            # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
+            sql = str(self.mpq.qs_mp.query)
+            logger.debug('\n\nsql before calling addParameterParameterSelfJoins() = %s\n\n', sql)
+            sql = self.mpq.addParameterParameterSelfJoins(sql, self.pDict)
+
+            x = []
+            y = []
+            c = []
+            logger.debug('sql = %s', sql)
+            for x, y, c in models.MeasuredParameter.objects.raw(sql):
+                xlist.append(x)
+                ylist.append(y)
+                clist.append(c)
+
+            
 
             # Use session ID so that different users don't stomp on each other with their parameterparameter plots
             # - This does not work for Firefox which just reads the previous image from its cache

@@ -15,7 +15,7 @@ STOQS Query manager for building ajax responces to selections made for QueryUI
 from django.conf import settings
 from django.db.models import Q, Max, Min, Sum
 from django.db.models.sql import query
-from django.contrib.gis.geos import fromstr, MultiPoint, GEOSGeometry
+from django.contrib.gis.geos import fromstr, MultiPoint
 from django.db.models import Avg
 from django.db.utils import DatabaseError
 from django.http import HttpResponse
@@ -25,7 +25,7 @@ from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data
 from MPQuery import MPQuery
-from Viz import ContourPlots, ParameterParameterPlots
+from Viz import ContourPlots, ParameterParameter
 from coards import to_udunits
 from datetime import datetime
 import logging
@@ -53,6 +53,7 @@ class STOQSQManager(object):
         self.dbname = dbname
         self.response = response
         self.mpq = MPQuery(request)
+        self.pp = None
         # monkey patch sql/query.py to make it use our database for sql generation
         query.DEFAULT_DB_ALIAS = dbname
         
@@ -617,7 +618,6 @@ class STOQSQManager(object):
         If at least the X and Y radio buttons are checked produce a scatter plot for delivery back to the client
         '''
         pngFileName = None
-        logger.debug('------------------------- %s --------------------', self.kwargs)
         if (self.kwargs.has_key('parameterparameter')):
             px = self.kwargs['parameterparameter'][0]
             py = self.kwargs['parameterparameter'][1]
@@ -629,9 +629,10 @@ class STOQSQManager(object):
                     self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
                 # We have enough information to generate a 2D scatter plot
-                logger.debug('Instantiating Viz.PropertyPropertyPlots............................................')
-                ppp = ParameterParameterPlots(self.request, px, py, pc, self.mpq.qs_mp_no_parameters)
-                pngFileName = ppp.make2DPlot()
+                if not self.pp:
+                    logger.debug('Instantiating Viz.PropertyPropertyPlots............................................')
+                    self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq)
+                pngFileName = self.pp.make2DPlot()
             
         return pngFileName
 

@@ -220,6 +220,7 @@ class MPQuerySet(object):
  
     def filter(self, *args, **kwargs):
         qs = self._clone()
+        logger.debug('type(qs) = %s', type(qs))
         qs.mp_query = qs.mp_query.filter(*args, **kwargs)
         return qs
  
@@ -504,4 +505,49 @@ class MPQuery(object):
 
         return q
 
+
+    def addParameterParameterSelfJoins(self, query, pDict):
+        '''
+        Given a Postgresified MeasuredParameter query string @query modify it to add the MP self joins needed 
+        to return up to 4 parameter data values from the same measurements. The Parameter ids are specified
+        by the integer values in @pList.  The original @query string may be one that is modified by 
+        self.addParameterValuesSelfJoins() or not.  
+        Return a Postgresified query string that can be used by Django's Manage.raw().
+        Written for use by utils.Viz.ParamaterParameter()
+        '''
+        logger.debug('query = %s', query)
+    
+        select_items = 'stoqs_measuredparameter.id, '
+
+        add_to_from = ''
+        from_sql = '' 
+        where_sql = '' 
+        i = 0
+        i = i + 1
+
+        # Join on measuerement - don't do if already in query
+        add_to_from = add_to_from + 'stoqs_parameter p' + str(i) + ', '
+        from_sql = from_sql + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + ' '
+        from_sql = from_sql + 'on mp' + str(i) + '.measurement_id = stoqs_measuredparameter.measurement_id '
+
+        for axis, pid in pDict.iteritems():
+            if pid:
+                logger.debug('axis, pid = %s, %s', axis, pid)
+                select_items = select_items + 'stoqs_measuredparameter_' + axis + '.datavalue as ' + axis + ', '
+                add_to_from = add_to_from + ''
+                where_sql = where_sql + "(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
+
+        q = query
+        select_items = select_items[:-2] + ' '
+        logger.debug('select_items = %s', select_items)
+        q = 'SELECT ' + select_items + q[q.find('FROM'):]
+        logger.debug('q = %s', q)
+
+
+        q = q.replace('SELECT FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
+        q = q.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
+        q = q.replace('WHERE', from_sql + ' WHERE' + where_sql)
+
+        logger.debug('q = %s', q)
+        return q
 
