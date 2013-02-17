@@ -21,7 +21,6 @@ from django.core import serializers
 from django.db.models import Q
 from utils.STOQSQManager import STOQSQManager
 from utils import encoders
-from utils.Viz import ParameterParameterPlots
 import json
 import pprint
 import csv
