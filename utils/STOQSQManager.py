@@ -341,12 +341,21 @@ class STOQSQManager(object):
 
         return results
 
-    def getParameterMinMax(self):
+    def getParameterMinMax(self, pid=None):
         '''
         If a single parameter has been selected return the average 2.5 and 97.5 percentiles of the
         data and call them min and max for purposes of plotting
         '''
         results = []
+        if pid:
+            qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
+            try:
+                results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+            except TypeError, e:
+                logger.exception(e)
+            else:
+                return results
+
         if self.kwargs.has_key('measuredparametersgroup'):
             if len(self.kwargs['measuredparametersgroup']) == 1:
                 qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
@@ -632,7 +641,7 @@ class STOQSQManager(object):
                 # We have enough information to generate a 2D scatter plot
                 if not self.pp:
                     logger.debug('Instantiating Viz.PropertyPropertyPlots............................................')
-                    self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq)
+                    self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.getParameterMinMax(pc))
                 pngFileName = self.pp.make2DPlot()
             
         return pngFileName
@@ -645,6 +654,26 @@ class STOQSQManager(object):
             if (self.kwargs['px'] != '' and self.kwargs['py'] != '' and self.kwargs['pz'] != ''):
                 # Create X3D 
                 pass
+        x3dText = None
+        if (self.kwargs.has_key('parameterparameter')):
+            px = self.kwargs['parameterparameter'][0]
+            py = self.kwargs['parameterparameter'][1]
+            pz = self.kwargs['parameterparameter'][2]
+            pc = self.kwargs['parameterparameter'][3]
+            logger.debug('px = %s, py = %s, pz = %s, pc = %s', px, py, pz, pc)
+
+            if (px and py and pz):
+                if not self.mpq.qs_mp:
+                    self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
+                # We have enough information to generate X3D XML
+                if not self.pp:
+                    logger.debug('Instantiating Viz.PropertyPropertyPlots............................................')
+                    self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq)
+                pngFileName = self.pp.makeX3D()
+            
+        return x3dText
+
 
     #
     # Methods that generate Q objects used to populate the query.

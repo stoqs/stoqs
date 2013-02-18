@@ -129,9 +129,10 @@
                     <div id="collapseParameterParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
 
-                            <ul class="nav nav-tabs">
+                            <ul id="parameterParameterTabs" class="nav nav-tabs">
                                 <li><a href="#pp2d" data-toggle="tab">2D</a></li>
                                 <li><a href="#pp3d" data-toggle="tab">3D</a></li>
+                                <li><a href="#ppdata" data-toggle="tab">Data</a></li>
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane" id="pp2d">
@@ -140,6 +141,10 @@
                                 </div>
                                 <div class="tab-pane" id="pp3d">
                                     <div id="parameter-parameter-2dplot">
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="ppdata">
+                                    <div id="parameter-parameter-data">
                                     </div>
                                 </div>
                             </div>
@@ -1009,7 +1014,7 @@
 
     $('#showparameterplatformdata').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the PNG image
-        rebuildFilters();
+        rebuildFilters('pp');
     });
 
     $('#showsensortracks').on('click', function (event) {
@@ -1039,6 +1044,9 @@
             $('input:radio[name=parameters_y]').prop('checked', false);
             $('input:radio[name=parameters_z]').prop('checked', false);
             $('input:radio[name=parameters_c]').prop('checked', false);
+            //$('#pp2d').html('');
+            //$('#pp3d').html('');
+            //$('#ppdata').html('');
         }
     });
 
@@ -1715,6 +1723,36 @@
                     plotHistData(parameter, histdata, parameterunits);
 
                 });
+            }
+            else if (key == 'parameterparameterpng') {
+                if (data[key]) {
+                    if (data[key][0]) {
+                        $('#parameter-parameter-2dplot').html('<img src={{MEDIA_URL}}parameterparameter/' + data[key][0] + '>')
+                        if ( ! $('#collapseParameterParameter').hasClass('in') ) {
+                            $('#parameter-parameter-anchor').click();
+                        }
+                        if ( $('#collapseParameterParameter').hasClass('in') ) {
+                            if ( ! $('#pp2d').hasClass('active') ) {
+                                $('a[href=#pp2d]').tab('show');
+                            }
+                        }
+                    }
+                }
+            }
+            else if (key == 'parameterparameterx3d') {
+                if (data[key]) {
+                    if (data[key][0]) {
+                        $('#parameter-parameter-2dplot').html('<p>Not yet implemented</p>');
+                        if ( ! $('#collapseParameterParameter').hasClass('in') ) {
+                            $('#parameter-parameter-anchor').click();
+                        }
+                        if ( $('#collapseParameterParameter').hasClass('in') ) {
+                            if ( ! $('#pp3d').hasClass('active') ) {
+                                $('a[href=#pp3d]').tab('show');
+                            }
+                        }
+                    }
+                }
             }
         } // onUpdate()
 

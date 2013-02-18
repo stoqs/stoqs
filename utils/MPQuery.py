@@ -518,14 +518,19 @@ class MPQuery(object):
         logger.debug('query = %s', query)
     
         select_items = 'stoqs_measuredparameter.id, '
+        select_order = ('x', 'y', 'z', 'c')
 
         add_to_from = ''
         where_sql = '' 
 
+        for axis in select_order:
+            if pDict.has_key(axis):
+                if pDict[axis]:
+                    select_items = select_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+
         for axis, pid in pDict.iteritems():
             if pid:
                 logger.debug('axis, pid = %s, %s', axis, pid)
-                select_items = select_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
 
                 add_to_from = add_to_from + 'INNER JOIN stoqs_measuredparameter mp_' + axis + ' '
                 add_to_from = add_to_from + 'on mp_' + axis + '.measurement_id = stoqs_measurement.id '
@@ -540,8 +545,10 @@ class MPQuery(object):
         q = 'SELECT ' + select_items + q[q.find('FROM'):]
         logger.debug('add_to_from = %s', add_to_from)
 
-
-        q = q.replace(' WHERE ', add_to_from + ' WHERE ' + where_sql)
+        if q.find('WHERE') == -1:
+            q = q +  add_to_from + ' WHERE ' + where_sql
+        else:
+            q = q.replace(' WHERE ', add_to_from + ' WHERE ' + where_sql)
 
         logger.debug('q = %s', q)
         return q
