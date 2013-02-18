@@ -238,13 +238,14 @@ class ParameterParameter(object):
     '''
     Use matploplib to create nice looking property-property plots
     '''
-    def __init__(self, request, pDict, mpq):
+    def __init__(self, request, pDict, mpq, colorMinMax):
         '''
         Save parameters that can be used by the different plotting methods here
         '''
         self.request = request
         self.pDict = pDict
         self.mpq = mpq
+        self.colorMinMax = colorMinMax
         self.x = []
         self.y = []
         self.z = []
@@ -290,15 +291,17 @@ class ParameterParameter(object):
             clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
             cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
             if self.c:
-                # Get min & max settings from ActivityParameter...
-
-                ax.scatter(self.x, self.y, c=c, s=10, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.colorMinMax[1], vmax=self.colorMinMax[2])
             else:
                 ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0)
 
-            ax.set_xlabel('xlabel')
-            ax.set_ylabel('ylabel')
-            fig.savefig(ppPngFileFullPath, dpi=120)
+            xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
+            ax.set_xlabel('%s (%s)' % (xp.name, xp.units))
+
+            yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
+            ax.set_ylabel('%s (%s)' % (yp.name, yp.units))
+
+            fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
             plt.close()
 
             # Assemble additional information about the correlation...
@@ -315,6 +318,8 @@ class ParameterParameter(object):
         '''
         Produce X3D XML text and return it
         '''
+        ppX3DText = '<x3d></x3d>'
+        infoText = 'Nothing'
         try:
             if not self.x and not self.y and not self.z:
                 # Construct special SQL for P-P plot that returns up to 4 data values for the up to 4 Parameters requested for an X3D view
