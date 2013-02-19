@@ -29,6 +29,8 @@ from datetime import datetime
 from KML import readCLT
 from stoqs import models
 from utils.utils import postgresifySQL
+from loaders.SampleLoaders import SAMPLED
+from loaders import MEASUREDINSITU
 import numpy as np
 import logging
 import string
@@ -258,6 +260,17 @@ class ParameterParameter(object):
         try:
             if not self.x and not self.y:
                 # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
+
+                # Sampled and Measured Parameters being in separate tables (sampledparameter, measuredparameter) complicates things a bit.
+                # If self.x and self.y are from the same table then we can get them with just one query, if not then it might be
+                # easiest to perform 2 separate queries.
+                if self.x in models.ParameterGroupParameter.objects.using(self.request.META['dbAlias']).filter(parametergroup__name=SAMPLED
+                        ).values_list('parameter__id', flat=True):
+                    # This is a Sampled Parameter, do something like (The connection between sampledparameter and measuredparameter is instantpoint):
+                    sql = str(self.spq.qs_mp.query)
+                    sql = self.spq.addParameterParameterSelfJoins(sql, self.pDict)
+
+
                 sql = str(self.mpq.qs_mp.query)
                 sql = self.mpq.addParameterParameterSelfJoins(sql, self.pDict)
 
