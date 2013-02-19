@@ -136,7 +136,7 @@
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane" id="pp2d">
-                                    <div id="parameter-parameter-2dplot">
+                                    <div id="parameter-parameter-2dplot" style="overflow: auto">
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="pp3d">
@@ -1033,7 +1033,9 @@
     $('body').on('change', '.parameter-radio', function (e) {
         $("#clear-pp-button").addClass('btn-primary');
         $("#clear-pp-button").removeClass('disabled');
-        rebuildFilters('pp');
+        if ( $('input:radio[name=parameters_x]').is(':checked') && $('input:radio[name=parameters_y]').is(':checked') ) {
+            rebuildFilters('pp');
+        }
     });
 
     $("#clear-pp-button").click(function() {
