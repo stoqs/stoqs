@@ -1729,7 +1729,7 @@
             else if (key == 'parameterparameterpng') {
                 if (data[key]) {
                     if (data[key][0]) {
-                        $('#parameter-parameter-2dplot').html('<img src={{MEDIA_URL}}parameterparameter/' + data[key][0] + '>')
+                        $('#parameter-parameter-2dplot').html('<img src="{{MEDIA_URL}}parameterparameter/' + data[key][0] + '" style="margin:0px auto;display:block">')
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
                             $('#parameter-parameter-anchor').click();
                         }
