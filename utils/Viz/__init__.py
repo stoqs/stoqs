@@ -240,13 +240,14 @@ class ParameterParameter(object):
     '''
     Use matploplib to create nice looking property-property plots
     '''
-    def __init__(self, request, pDict, mpq, colorMinMax):
+    def __init__(self, request, pDict, mpq, pq, colorMinMax):
         '''
         Save parameters that can be used by the different plotting methods here
         '''
         self.request = request
         self.pDict = pDict
         self.mpq = mpq
+        self.pq = pq
         self.colorMinMax = colorMinMax
         self.x = []
         self.y = []
@@ -260,28 +261,17 @@ class ParameterParameter(object):
         try:
             if not self.x and not self.y:
                 # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
+                sql = str(self.pq.qs_mp.query)
+                sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
 
-                # Sampled and Measured Parameters being in separate tables (sampledparameter, measuredparameter) complicates things a bit.
-                # If self.x and self.y are from the same table then we can get them with just one query, if not then it might be
-                # easiest to perform 2 separate queries.
-                if self.x in models.ParameterGroupParameter.objects.using(self.request.META['dbAlias']).filter(parametergroup__name=SAMPLED
-                        ).values_list('parameter__id', flat=True):
-                    # This is a Sampled Parameter, do something like (The connection between sampledparameter and measuredparameter is instantpoint):
-                    sql = str(self.spq.qs_mp.query)
-                    sql = self.spq.addParameterParameterSelfJoins(sql, self.pDict)
-
-
-                sql = str(self.mpq.qs_mp.query)
-                sql = self.mpq.addParameterParameterSelfJoins(sql, self.pDict)
-
-                # Use cursor so that we can specify the database alias to use
+                # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
                 cursor = connections[self.request.META['dbAlias']].cursor()
                 cursor.execute(sql)
                 for row in cursor:
-                    self.x.append(row[1])
-                    self.y.append(row[2])
+                    self.x.append(row[0])
+                    self.y.append(row[1])
                     try:
-                        self.c.append(row[3])
+                        self.c.append(row[2])
                     except IndexError:
                         pass
 
