@@ -5,9 +5,9 @@ __contact__   = 'mccann at mbari.org'
 
 __doc__ = '''
 
-MeasuredParameter Query class for managing aspects of building requests for MeasuredParameter datavalues.
-Intended to be used by utils/STOQSQManager.py for preventing multiple traversals of qs_mp and by
-views/__init__.py to support query by parameter value for the REST responses.
+Parameter Query class for managing aspects of building requests for Measured and Sampled Parameter datavalues.
+Intended to be used by utils/STOQSQManager.py for building ParameterValue and ParameterParameter queries.
+The class hides the complexities of getting datavalues from both MeasuredParameter and SampledParameter.
 
 @undocumented: __doc__ parser
 @status: production
@@ -17,8 +17,10 @@ from django.conf import settings
 from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, ValuesQuerySet
 from django.contrib.gis.db.models.query import GeoQuerySet
 from datetime import datetime
-from stoqs.models import MeasuredParameter, Parameter
+from stoqs.models import MeasuredParameter, Parameter, ParameterGroupParameter
 from utils import postgresifySQL, getGet_Actual_Count
+from loaders.SampleLoaders import SAMPLED
+from loaders import MEASUREDINSITU
 import logging
 import pprint
 import re
@@ -32,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 ITER_HARD_LIMIT = 100000
 
-class MPQuerySet(object):
+class PQuerySet(object):
     '''
     A class to simulate a GeoQuerySet that's suitable for use everywhere a GeoQuerySet may be used.
     This special class supports adapting MeasuredParameter RawQuerySets to make them look like regular
@@ -59,7 +61,7 @@ class MPQuerySet(object):
                    ]
     def __init__(self, query, values_list, qs_mp=None):
         '''
-        Initialize MPQuerySet with either raw SQL in @query or a QuerySet in @qs_mp.
+        Initialize PQuerySet with either raw SQL in @query or a QuerySet in @qs_mp.
         Use @values_list to request just the fields (columns) needed.  The class variables
         rest_colums and kml_columns are typical value_lists.  Note: specifying a values_list
         appears to break the correct serialization of geometry types in the json response.
@@ -236,19 +238,20 @@ class MPQuerySet(object):
         return qs
  
     def _clone(self):
-        qs = MPQuerySet(self.query, self.values_list)
+        qs = PQuerySet(self.query, self.values_list)
         qs.mp_query = self.mp_query._clone()
         return qs 
 
 
  
 
-class MPQuery(object):
+class PQuery(object):
     '''
-    This class is designed to handle building and managing queries against the MeasuredParameter table of the STOQS database.
-    Special tooling is needed to perform parameter value queries which require building raw sql statements in order to
-    execute the self joins needed on the measuredparameter table.  The structure of RawQuerySet returned is harmonized
-    with the normal GeoQuerySet returned through regular .filter() operations by using the MPQuerySet "adapter".
+    This class is designed to handle building and managing queries against the MeasuredParameter
+    or the SampledParameter tables of the STOQS database.  Special tooling is needed to perform 
+    parameter value and parameter-parameter queries which require building raw sql statements in order to
+    execute the self joins needed on the tables.  The structure of RawQuerySet returned is harmonized
+    with the normal GeoQuerySet returned through regular .filter() operations by using the PQuerySet "adapter".
     '''
     rest_select_items = '''stoqs_parameter.name as parameter__name,
                          stoqs_parameter.standard_name as parameter__standard_name,
@@ -265,34 +268,47 @@ class MPQuery(object):
     def __init__(self, request):
         '''
         This object saves instances of the QuerySet and count so that get_() methods work like a singleton to 
-        return the value for the object.  MPQuery objects are meant to be instantiated by the STOQSQManager 
-        buildQuerySet() method and are unique for each AJAX request.  After buildMPQuerySet() is executed
+        return the value for the object.  PQuery objects are meant to be instantiated by the STOQSQManager 
+        buildQuerySet() method and are unique for each AJAX request.  After buildPQuerySet() is executed
         the member values below can be accessed.
         '''
         self.request = request
         self.qs_mp = None
-        self.qs_mp_no_parameters = None
         self.sql = None
-        self.sql_no_parameters = None
         self._count = None
-        self._MProws = []
+        self._Prows = []
+
+    def isParameterSampled(self, id):
+        '''
+        Return True Parameter @id is a Sampled Parameter
+        '''
+        value = id in ParameterGroupParameter.objects.using(self.request.META['dbAlias']
+                        ).filter(parametergroup__name=SAMPLED).values_list('parameter__id', flat=True)
+        logger.debug('id = %d, dbAlias = %s, SAMPLED = %s, value = %s', id, self.request.META['dbAlias'], SAMPLED, value)
+        return value
         
-    def buildMPQuerySet(self, *args, **kwargs):
+    def isParameterMeasured(self, id):
+        '''
+        Return True Parameter @id is a Measured Parameter
+        '''
+        value = id in ParameterGroupParameter.objects.using(self.request.META['dbAlias']
+                        ).filter(parametergroup__name=MEASUREDINSITU).values_list('parameter__id', flat=True)
+        logger.debug(value)
+        return value
+
+    def buildPQuerySet(self, *args, **kwargs):
         '''
         Build the query set based on selections from the UI. For the first time through kwargs will be empty 
         and self.qs_mp will have no constraints and will be all of the MeasuredParameters in the database.
         This is called by utils/STOQSQueryManagery.py.
-        Parallel '_no_parameters' qs and sql are provided for Parameter-Parameter request generation.
         '''
 
         if self.qs_mp is None:
             self.kwargs = kwargs
             self.qs_mp = self.getMeasuredParametersQS()
-            self.qs_mp_no_parameters = self.getMeasuredParametersQS(noParametersFlag=True)
             self.sql = self.getMeasuredParametersPostgreSQL()
-            self.sql_no_parameters = self.getMeasuredParametersPostgreSQL(noParametersFlag=True)
 
-    def _getQueryParms(self, noParametersFlag=False):
+    def _getQueryParms(self):
         '''
         Extract constraints from the querystring kwargs to construct a dictionary of query parameters
         that can be used as a filter for MeasuredParameters.  Handles all constraints except parameter
@@ -301,13 +317,12 @@ class MPQuery(object):
         qparams = {}
 
         logger.info('self.kwargs = %s', pprint.pformat(self.kwargs))
-        if not noParametersFlag:
-            if self.kwargs.has_key('measuredparametersgroup'):
-                if self.kwargs['measuredparametersgroup']:
-                    qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
-            if self.kwargs.has_key('parameterstandardname'):
-                if self.kwargs['parameterstandardname']:
-                    qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
+        if self.kwargs.has_key('measuredparametersgroup'):
+            if self.kwargs['measuredparametersgroup']:
+                qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
+        if self.kwargs.has_key('parameterstandardname'):
+            if self.kwargs['parameterstandardname']:
+                qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
         
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
@@ -332,19 +347,19 @@ class MPQuery(object):
 
         return qparams
 
-    def getMeasuredParametersQS(self, values_list=[], noParametersFlag=False):
+    def getMeasuredParametersQS(self, values_list=[]):
         '''
         Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
-        @values_list can be assigned with additional columns that are supported by MPQuerySet(). Note that specificiation
+        @values_list can be assigned with additional columns that are supported by PQuerySet(). Note that specificiation
         of a values_list will break the JSON serialization of geometry types.
         '''
-        qparams = self._getQueryParms(noParametersFlag)
+        qparams = self._getQueryParms()
         if values_list:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
         else:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
 
-        # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
+        # Wrap PQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
                 # A depth of 4 is needed in order to see Platform
@@ -353,11 +368,11 @@ class MPQuery(object):
                 logger.debug('\n\nsql before query = %s\n\n', sql)
                 sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
-                qs_mpq = MPQuerySet(sql, values_list)
+                qs_mpq = PQuerySet(sql, values_list)
             else:
-                qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
+                qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
         else:
-            qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
+            qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
 
         if qs_mpq:
             logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
@@ -366,7 +381,7 @@ class MPQuery(object):
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
         return qs_mpq
 
-    def getMPCount(self):
+    def getPCount(self):
         '''
         Get the actual count of measured parameters giving the exising query.  If private _count
         member variable exist return that, otherwise expand the query set as necessary to get and
@@ -379,20 +394,20 @@ class MPQuery(object):
         logger.debug('self._count = %d', self._count)
         return int(self._count)
 
-    def getLocalizedMPCount(self):
+    def getLocalizedPCount(self):
         '''
         Apply commas to the count number and return as a string
         '''
         locale.setlocale(locale.LC_ALL, 'en_US')
-        return locale.format("%d", self.getMPCount(), grouping=True)
+        return locale.format("%d", self.getPCount(), grouping=True)
 
-    def getMeasuredParametersPostgreSQL(self, noParametersFlag=False):
+    def getMeasuredParametersPostgreSQL(self):
         '''
         Return SQL string that can be executed against the postgres database
         '''
         sql = 'Check "Get actual count" checkbox to see the SQL for your data selection'
         if self._count:
-            self.qs_mp = self.getMeasuredParametersQS(MPQuerySet.rest_columns, noParametersFlag)
+            self.qs_mp = self.getMeasuredParametersQS(PQuerySet.rest_columns)
             if self.qs_mp:
                 sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
                 logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
@@ -406,12 +421,41 @@ class MPQuery(object):
 
         return sql
 
+    def _pvSQLfragments(self, pvDict):
+        '''
+        Given a dictionary @pvDict of {parameter: (pmin, pmax)} return SQL fragments for the FROM and WHERE portions
+        of a query
+        '''
+        add_to_from = ''
+        from_sql = '' 
+        where_sql = '' 
+        i = 0
+        for pminmax in pvDict:
+            i = i + 1
+            add_to_from = add_to_from + 'stoqs_parameter p' + str(i) + ', '
+            from_sql = from_sql + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + ' '
+            from_sql = from_sql + 'on mp' + str(i) + '.measurement_id = stoqs_measuredparameter.measurement_id '
+            for k,v in pminmax.iteritems():
+                # Prevent SQL injection attacks
+                if k in Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
+                    p = re.compile("[';]")
+                    if p.search(v[0]) or p.search(v[1]):
+                        raise Exception('Invalid ParameterValue constraint expression: %s, %s' % (k, v))
+                    where_sql = where_sql + "(p" + str(i) + ".name = '" + k + "') AND "
+                    if v[0]:
+                        where_sql = where_sql + "(mp" + str(i) + ".datavalue > " + str(v[0]) + ") AND "
+                    if v[1]:
+                        where_sql = where_sql + "(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND "
+                    where_sql = where_sql + "(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
+
+        return add_to_from, from_sql, where_sql
+
     def addParameterValuesSelfJoins(self, query, pvDict, select_items= '''stoqs_instantpoint.timevalue as measurement__instantpoint__timevalue, 
                                                                           stoqs_measurement.depth as measurement__depth,
                                                                           stoqs_measurement.geom as measurement__geom,
                                                                           stoqs_measuredparameter.datavalue as datavalue'''):
         '''
-        Given a Postgresified MeasuredParameter query string @query' modify it to add the MP self joins needed 
+        Given a Postgresified MeasuredParameter query string @query' modify it to add the P self joins needed 
         to restrict the data selection to the ParameterValues specified in @pvDict.  Add to the required
         measuredparameter.id the select items in the comma separeated value string @select_items.
         Return a Postgresified query string that can be used by Django's Manage.raw().
@@ -474,27 +518,8 @@ class MPQuery(object):
         # Used by REST requests in stoqs/views/__init__(): stoqs_parameter.name, stoqs_parameter.standard_name, stoqs_measurement.depth, stoqs_measurement.geom, stoqs_instantpoint.timevalue, stoqs_platform.name, stoqs_measuredparameter.datavalue, stoqs_parameter.units
 
         select_items = 'stoqs_measuredparameter.id, ' + select_items
-        add_to_from = ''
-        from_sql = '' 
-        where_sql = '' 
-        i = 0
-        for pminmax in pvDict:
-            i = i + 1
-            add_to_from = add_to_from + 'stoqs_parameter p' + str(i) + ', '
-            from_sql = from_sql + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + ' '
-            from_sql = from_sql + 'on mp' + str(i) + '.measurement_id = stoqs_measuredparameter.measurement_id '
-            for k,v in pminmax.iteritems():
-                # Prevent SQL injection attacks
-                if k in Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
-                    p = re.compile("[';]")
-                    if p.search(v[0]) or p.search(v[1]):
-                        raise Exception('Invalid ParameterValue constraint expression: %s, %s' % (k, v))
-                    where_sql = where_sql + "(p" + str(i) + ".name = '" + k + "') AND "
-                    if v[0]:
-                        where_sql = where_sql + "(mp" + str(i) + ".datavalue > " + str(v[0]) + ") AND "
-                    if v[1]:
-                        where_sql = where_sql + "(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND "
-                    where_sql = where_sql + "(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
+
+        add_to_from, from_sql, where_sql = self._pvSQLfragments(pvDict)
 
         q = query
         p = re.compile('SELECT .+ FROM')
@@ -508,47 +533,124 @@ class MPQuery(object):
 
     def addParameterParameterSelfJoins(self, query, pDict):
         '''
-        Given a Postgresified MeasuredParameter query string @query modify it to add the MP self joins needed 
+        Given a Postgresified MeasuredParameter query string @query modify it to add the P self joins needed 
         to return up to 4 parameter data values from the same measurements. The Parameter ids are specified
         by the integer values in @pList.  The original @query string may be one that is modified by 
         self.addParameterValuesSelfJoins() or not.  
         Return a Postgresified query string that can be used by Django's Manage.raw().
         Written for use by utils.Viz.ParamaterParameter()
+
+    Example query to emulate (designed in Aqua Data Studio Query Builder and Query Analyzer):
+
+SELECT
+    mp_x.datavalue AS x,
+    sp_y.datavalue AS y, 
+    mp_c.datavalue AS c
+FROM
+    stoqs_sample 
+        INNER JOIN stoqs_instantpoint 
+        ON stoqs_sample.instantpoint_id = stoqs_instantpoint.id 
+            INNER JOIN stoqs_measurement 
+            ON stoqs_instantpoint.id = stoqs_measurement.instantpoint_id 
+                INNER JOIN stoqs_activity 
+                ON stoqs_instantpoint.activity_id = stoqs_activity.id 
+                    INNER JOIN stoqs_platform 
+                    ON stoqs_activity.platform_id = stoqs_platform.id 
+
+                        INNER JOIN stoqs_sampledparameter sp_y
+                        ON sp_y.sample_id = stoqs_sample.id 
+                            INNER JOIN stoqs_parameter p_y 
+                            ON sp_y.parameter_id = p_y.id 
+
+                                INNER JOIN stoqs_measuredparameter mp_x
+                                ON mp_x.measurement_id = stoqs_measurement.id 
+                                    INNER JOIN stoqs_parameter p_x
+                                    ON mp_x.parameter_id = p_x.id 
+
+                                        INNER JOIN stoqs_measuredparameter mp_c 
+                                        ON mp_c.measurement_id = stoqs_measurement.id 
+                                            INNER JOIN stoqs_parameter p_c
+                                            ON mp_c.parameter_id = p_c.id 
+WHERE
+    ("stoqs_platform"."name" ='dorado') AND
+    (p_x.id =6) AND
+    (p_c.id =7) AND
+    (p_y.id =57)
         '''
-        logger.debug('query = %s', query)
+
+        logger.debug('initial query = %s', query)
     
-        select_items = 'stoqs_measuredparameter.id, '
+        # Construct SELECT strings, must be in proper order
+        select_items = ''
         select_order = ('x', 'y', 'z', 'c')
-
-        add_to_from = ''
-        where_sql = '' 
-
         for axis in select_order:
             if pDict.has_key(axis):
                 if pDict[axis]:
-                    select_items = select_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+                    if self.isParameterMeasured(int(pDict[axis])):
+                        select_items = select_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+                    elif self.isParameterSampled(int(pDict[axis])):
+                        select_items = select_items + 'sp_' + axis + '.datavalue as ' + axis + ', '
 
+        # Include all joins that are possible from the selectors in the UI: time, depth, parameter, platform
+        replace_from = '''stoqs_sample 
+        INNER JOIN stoqs_instantpoint 
+        ON stoqs_sample.instantpoint_id = stoqs_instantpoint.id 
+            INNER JOIN stoqs_measurement 
+            ON stoqs_instantpoint.id = stoqs_measurement.instantpoint_id 
+                INNER JOIN stoqs_activity 
+                ON stoqs_instantpoint.activity_id = stoqs_activity.id 
+                    INNER JOIN stoqs_platform 
+                    ON stoqs_activity.platform_id = stoqs_platform.id 
+                        INNER JOIN stoqs_measuredparameter 
+                        ON stoqs_measuredparameter.measurement_id = stoqs_measurement.id 
+                            INNER JOIN stoqs_parameter 
+                            ON stoqs_measuredparameter.parameter_id = stoqs_parameter.id 
+        '''
+
+        # Construct INNER JOINS and WHERE sql for Sampled and Measured Parameter selections
+        where_sql = '' 
         for axis, pid in pDict.iteritems():
             if pid:
                 logger.debug('axis, pid = %s, %s', axis, pid)
 
-                add_to_from = add_to_from + 'INNER JOIN stoqs_measuredparameter mp_' + axis + ' '
-                add_to_from = add_to_from + 'on mp_' + axis + '.measurement_id = stoqs_measurement.id '
-                add_to_from = add_to_from + 'INNER JOIN stoqs_parameter p_' + axis + ' '
-                add_to_from = add_to_from + 'on mp_' + axis + '.parameter_id = p_' + axis + '.id '
+                if self.isParameterMeasured(int(pid)):
+                    logger.debug('Measured')
+                    replace_from = replace_from + 'INNER JOIN stoqs_measuredparameter mp_' + axis + ' '
+                    replace_from = replace_from + 'on mp_' + axis + '.measurement_id = stoqs_measurement.id '
+                    replace_from = replace_from + 'INNER JOIN stoqs_parameter p_' + axis + ' '
+                    replace_from = replace_from + 'on mp_' + axis + '.parameter_id = p_' + axis + '.id '
+                if self.isParameterSampled(int(pid)):
+                    logger.debug('Sampled')
+                    replace_from = replace_from + 'INNER JOIN stoqs_sampledparameter sp_' + axis + ' '
+                    replace_from = replace_from + 'on sp_' + axis + '.sample_id = stoqs_sample.id '
+                    replace_from = replace_from + 'INNER JOIN stoqs_parameter p_' + axis + ' '
+                    replace_from = replace_from + 'on sp_' + axis + '.parameter_id = p_' + axis + '.id '
 
                 where_sql = where_sql + '(p_' + axis + '.id = ' + str(pid) + ') AND '
 
+
+        # Modify original SQL with new joins and where sql - almost a total rewrite
         q = query
-        select_items = select_items[:-2] + ' '
-        logger.debug('select_items = %s', select_items)
-        q = 'SELECT ' + select_items + q[q.find('FROM'):]
-        logger.debug('add_to_from = %s', add_to_from)
+        select_items = select_items[:-2] + ' '                      # Remove ', '
+        q = 'SELECT ' + select_items + q[q.find('FROM'):]           # Override original select items
 
         if q.find('WHERE') == -1:
-            q = q +  add_to_from + ' WHERE ' + where_sql
+            # Case where no filters applied from UI - no selections and no WHERE clause, add ours
+            q = q + ' WHERE ' + where_sql[:-4]                      # Remove last 'AND '
         else:
-            q = q.replace(' WHERE ', add_to_from + ' WHERE ' + where_sql)
+            # Insert our WHERE clause into the filters that are in the original query
+            q = q.replace(' WHERE ', ' WHERE ' + where_sql)
+
+        # Completely replace the whole FROM clause
+        p = re.compile('FROM.+WHERE')
+        q = p.sub('FROM ' + replace_from + ' WHERE', q)
+
+        # Check for ParameterValues and add to the SQL
+        if self.kwargs['parametervalues']:
+            # Add SQL fragments for any Parameter Value selections
+            pv_add_to_from, pv_from_sql, pv_where_sql = self._pvSQLfragments(self.kwargs['parametervalues'])
+            q = q.replace('FROM stoqs_sample', 'FROM ' + pv_add_to_from + 'stoqs_sample')
+            q = q.replace('WHERE', pv_from_sql + ' WHERE ' + pv_where_sql)
 
         logger.debug('q = %s', q)
         return q
