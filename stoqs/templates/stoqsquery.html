@@ -933,17 +933,29 @@
             $('#parameter-values-anchor').html('Parameter Values' + valueText);
         }
 
+        pp_html = '';
         if ($('input:radio[name=parameters_x]').is(':checked')) {
             params['px'] = $('input:radio[name=parameters_x]:checked').val();
+            pp_html = pp_html + 'x:' + params['px'] + ' ';
         }
         if ($('input:radio[name=parameters_y]').is(':checked')) {
             params['py'] = $('input:radio[name=parameters_y]:checked').val();
+            pp_html = pp_html + 'y:' + params['py'] + ' ';
         }
         if ($('input:radio[name=parameters_z]').is(':checked')) {
             params['pz'] = $('input:radio[name=parameters_z]:checked').val();
+            pp_html = pp_html + 'z:' + params['pz'] + ' ';
         }
         if ($('input:radio[name=parameters_c]').is(':checked')) {
             params['pc'] = $('input:radio[name=parameters_c]:checked').val();
+            pp_html = pp_html + 'c:' + params['pc'] + ' ';
+        }
+        if ( $('input:radio[name=parameters_x]').is(':checked') || $('input:radio[name=parameters_y]').is(':checked') ||
+             $('input:radio[name=parameters_z]').is(':checked') || $('input:radio[name=parameters_c]').is(':checked') ) {
+            $('#parameter-parameter-anchor').html('Parameter-Parameter: ' + pp_html)
+        }
+        else {
+            $('#parameter-parameter-anchor').html('Parameter-Parameter')
         }
 
         updateContourInfo();
@@ -1763,6 +1775,7 @@
             beforeSend: function() {
                 $('#query-stats').html('<img src="{{STATIC_URL}}images/ajax-loader.gif">')
                 $('#time-depth-flot').addClass('stoqs-background-ajax-loader ');
+                $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader ');
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
@@ -1775,6 +1788,7 @@
                     }
                 }
                 $('#time-depth-flot').removeClass('stoqs-background-ajax-loader ');
+                $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader ');
 
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
                 me.refreshMap();
