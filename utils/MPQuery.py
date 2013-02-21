@@ -271,9 +271,7 @@ class MPQuery(object):
         '''
         self.request = request
         self.qs_mp = None
-        self.qs_mp_no_parameters = None
         self.sql = None
-        self.sql_no_parameters = None
         self._count = None
         self._MProws = []
         
@@ -282,17 +280,14 @@ class MPQuery(object):
         Build the query set based on selections from the UI. For the first time through kwargs will be empty 
         and self.qs_mp will have no constraints and will be all of the MeasuredParameters in the database.
         This is called by utils/STOQSQueryManagery.py.
-        Parallel '_no_parameters' qs and sql are provided for Parameter-Parameter request generation.
         '''
 
         if self.qs_mp is None:
             self.kwargs = kwargs
             self.qs_mp = self.getMeasuredParametersQS()
-            self.qs_mp_no_parameters = self.getMeasuredParametersQS(noParametersFlag=True)
             self.sql = self.getMeasuredParametersPostgreSQL()
-            self.sql_no_parameters = self.getMeasuredParametersPostgreSQL(noParametersFlag=True)
 
-    def _getQueryParms(self, noParametersFlag=False):
+    def _getQueryParms(self):
         '''
         Extract constraints from the querystring kwargs to construct a dictionary of query parameters
         that can be used as a filter for MeasuredParameters.  Handles all constraints except parameter
@@ -301,13 +296,12 @@ class MPQuery(object):
         qparams = {}
 
         logger.info('self.kwargs = %s', pprint.pformat(self.kwargs))
-        if not noParametersFlag:
-            if self.kwargs.has_key('measuredparametersgroup'):
-                if self.kwargs['measuredparametersgroup']:
-                    qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
-            if self.kwargs.has_key('parameterstandardname'):
-                if self.kwargs['parameterstandardname']:
-                    qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
+        if self.kwargs.has_key('measuredparametersgroup'):
+            if self.kwargs['measuredparametersgroup']:
+                qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
+        if self.kwargs.has_key('parameterstandardname'):
+            if self.kwargs['parameterstandardname']:
+                qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
         
         if self.kwargs.has_key('platforms'):
             if self.kwargs['platforms']:
@@ -332,13 +326,13 @@ class MPQuery(object):
 
         return qparams
 
-    def getMeasuredParametersQS(self, values_list=[], noParametersFlag=False):
+    def getMeasuredParametersQS(self, values_list=[]):
         '''
         Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
         @values_list can be assigned with additional columns that are supported by MPQuerySet(). Note that specificiation
         of a values_list will break the JSON serialization of geometry types.
         '''
-        qparams = self._getQueryParms(noParametersFlag)
+        qparams = self._getQueryParms()
         if values_list:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
         else:
@@ -386,13 +380,16 @@ class MPQuery(object):
         locale.setlocale(locale.LC_ALL, 'en_US')
         return locale.format("%d", self.getMPCount(), grouping=True)
 
-    def getMeasuredParametersPostgreSQL(self, noParametersFlag=False):
+    def getMeasuredParametersPostgreSQL(self):
         '''
         Return SQL string that can be executed against the postgres database
         '''
         sql = 'Check "Get actual count" checkbox to see the SQL for your data selection'
+        if not self._count:
+            logger.debug('Calling self.qs_mp.count()...')
+            self._count = self.qs_mp.count()
         if self._count:
-            self.qs_mp = self.getMeasuredParametersQS(MPQuerySet.rest_columns, noParametersFlag)
+            self.qs_mp = self.getMeasuredParametersQS(MPQuerySet.rest_columns)
             if self.qs_mp:
                 sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
                 logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
