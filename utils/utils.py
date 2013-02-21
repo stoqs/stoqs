@@ -261,7 +261,7 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
     items = ''
     for m in FIND_INS.findall(q):
         if m.find('SELECT') == -1:
-            logger.debug('line = %s', m)
+            ##logger.debug('line = %s', m)
             FIND_ITEMS = re.compile('\((?P<argument>[^\'\)]+)\)')
             new_items = ''
             try:
@@ -276,12 +276,12 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
                     else:
                         new_items = new_items + item.strip() + ", "
 
-                logger.debug('items = %s', items)
+                ##logger.debug('items = %s', items)
             new_items = new_items[:-2]
-            logger.debug('new_items = %s', new_items)
+            ##logger.debug('new_items = %s', new_items)
 
             if new_items:
-                logger.debug('Replacing items = %s with new_items = %s', items, new_items)
+                ##logger.debug('Replacing items = %s with new_items = %s', items, new_items)
                 q = q.replace(r' IN (' + items, r' IN (' + new_items) 
 
     return q
