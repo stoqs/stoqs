@@ -180,7 +180,7 @@ class STOQSQManager(object):
                            'sampledepthtime': self.getSampleDepthTime,
                            'count': self.getLocalizedCount,
                            'ap_count': self.getAPCount,
-                           'sql': self.mpq.getMeasuredParametersPostgreSQL,
+                           'sql': self.getMeasuredParametersPostgreSQL,
                            'extent': self.getExtent,
                            'activityparameterhistograms': self.getActivityParameterHistograms,
                            'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
@@ -226,6 +226,15 @@ class STOQSQManager(object):
                 return locale.format("%d", approximate_count, grouping=True)
         else:
             return 0
+
+    def getMeasuredParametersPostgreSQL(self):
+        '''
+        Wrapper around self.mpq.getMeasuredParametersPostgreSQL(), ensure that we have qs_mp built before calling 
+        '''
+        if not self.mpq.qs_mp:
+            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
+        return self.mpq.getMeasuredParametersPostgreSQL()
 
     def getAPCount(self):
         '''
