@@ -25,6 +25,7 @@ from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data
 from MPQuery import MPQuery
+from PQuery import PQuery
 from Viz import ContourPlots, ParameterParameter
 from coards import to_udunits
 from datetime import datetime
@@ -53,6 +54,7 @@ class STOQSQManager(object):
         self.dbname = dbname
         self.response = response
         self.mpq = MPQuery(request)
+        self.pq = PQuery(request)
         self.pp = None
         # monkey patch sql/query.py to make it use our database for sql generation
         query.DEFAULT_DB_ALIAS = dbname
@@ -635,13 +637,13 @@ class STOQSQManager(object):
             logger.debug('px = %s, py = %s, pc = %s', px, py, pc)
 
             if (px and py):
-                if not self.mpq.qs_mp:
-                    self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                if not self.pq.qs_mp:
+                    self.pq.buildPQuerySet(*self.args, **self.kwargs)
 
                 # We have enough information to generate a 2D scatter plot
                 if not self.pp:
                     logger.debug('Instantiating Viz.PropertyPropertyPlots............................................')
-                    self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.getParameterMinMax(pc))
+                    self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, self.getParameterMinMax(pc))
                 pngFileName = self.pp.make2DPlot()
             
         return pngFileName
@@ -669,7 +671,7 @@ class STOQSQManager(object):
                 # We have enough information to generate X3D XML
                 if not self.pp:
                     logger.debug('Instantiating Viz.PropertyPropertyPlots............................................')
-                    self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq)
+                    self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq)
                 pngFileName = self.pp.makeX3D()
             
         return x3dText
