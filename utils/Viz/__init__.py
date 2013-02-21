@@ -22,6 +22,7 @@ matplotlib.use('Agg')               # Force matplotlib to not use any Xwindows b
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
 from matplotlib import mpl
+from pylab import polyfit, polyval
 from django.conf import settings
 from django.db.models.query import RawQuerySet
 from django.db import connections
@@ -288,31 +289,47 @@ class ParameterParameter(object):
             ppPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', ppPngFile)
             logger.debug('ppPngFileFullPath = %s', ppPngFileFullPath)
 
-
-            fig = plt.figure(figsize=(6,6))
+            # Make the figure
+            fig = plt.figure()
+            plt.grid(True)
             ax = fig.add_subplot(111)
             clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
             cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
             if self.c:
                 ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.colorMinMax[1], vmax=self.colorMinMax[2])
+                # Add colorbar
+                cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
+                norm = mpl.colors.Normalize(vmin=self.colorMinMax[1], vmax=self.colorMinMax[2], clip=False)
+                cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=cm_jetplus,
+                                                norm=norm,
+                                                ticks=[self.colorMinMax[1], self.colorMinMax[2]],
+                                                orientation='horizontal')
+                cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
+                cb.set_label('%s (%s)' % (cp.name, cp.units))
             else:
                 ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0)
 
+            # Labels the axes
             xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
             ax.set_xlabel('%s (%s)' % (xp.name, xp.units))
-
             yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
             ax.set_ylabel('%s (%s)' % (yp.name, yp.units))
+    
+            # Assemble additional information about the correlation...
+            m, b = polyfit(self.x, self.y, 1)
+            yfit = polyval([m, b], self.x)
+            ax.plot(self.x, yfit, color='k', linewidth=0.5)
+            c = np.corrcoef(self.x, self.y)[0,1]
+            infoText = 'Linear regression: %s = %f * %s + %f (r<sup>2</sup> = %f)' % (yp.name, m, xp.name, b, c**2)
 
+            # Save the figure
             fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
             plt.close()
 
-            # Assemble additional information about the correlation...
-            infoText = ''
-
-        except:
-            logger.exception('Cannot make 2D parameterparameter plot')
-            raise Exception('Cannot make 2D parameterparameter plot')
+        except Exception, e:
+            infoText = str(e)
+            logger.exception('Cannot make 2D parameterparameter plot: %s', e)
+            return None, infoText
 
         else:
             return ppPngFile, infoText
