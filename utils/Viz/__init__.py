@@ -269,10 +269,11 @@ class ParameterParameter(object):
                 cursor = connections[self.request.META['dbAlias']].cursor()
                 cursor.execute(sql)
                 for row in cursor:
-                    self.x.append(row[0])
-                    self.y.append(row[1])
+                    # SampledParameter datavalues are Decimal, convert everything to a float for numpy
+                    self.x.append(float(row[0]))
+                    self.y.append(float(row[1]))
                     try:
-                        self.c.append(row[2])
+                        self.c.append(float(row[2]))
                     except IndexError:
                         pass
 
@@ -320,14 +321,14 @@ class ParameterParameter(object):
             yfit = polyval([m, b], self.x)
             ax.plot(self.x, yfit, color='k', linewidth=0.5)
             c = np.corrcoef(self.x, self.y)[0,1]
-            infoText = 'Linear regression: %s = %f * %s + %f (r<sup>2</sup> = %f)' % (yp.name, m, xp.name, b, c**2)
+            infoText = 'Linear regression: %s = %f * %s + %f (r<sup>2</sup> = %f, n = %d)' % (yp.name, m, xp.name, b, c**2, len(self.x))
 
             # Save the figure
             fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
             plt.close()
 
         except Exception, e:
-            infoText = str(e)
+            infoText = 'Parameter-Parameter: ' + str(e)
             logger.exception('Cannot make 2D parameterparameter plot: %s', e)
             return None, infoText
 
