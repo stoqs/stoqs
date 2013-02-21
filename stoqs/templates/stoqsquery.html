@@ -136,9 +136,7 @@
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane" id="pp2d">
-                                    <div id="parameter-parameter-2dplot" style="overflow: auto">
-                                    </div>
-                                    <div id="parameter-parameter-info">
+                                    <div id="parameter-parameter-2dplot" style="overflow: auto; margin:0px auto;" >
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="pp3d">
@@ -1060,6 +1058,7 @@
             $('input:radio[name=parameters_y]').prop('checked', false);
             $('input:radio[name=parameters_z]').prop('checked', false);
             $('input:radio[name=parameters_c]').prop('checked', false);
+            $('#parameter-parameter-anchor').html('Parameter-Parameter')
             //$('#pp2d').html('');
             //$('#pp3d').html('');
             //$('#ppdata').html('');
@@ -1743,7 +1742,7 @@
             else if (key == 'parameterparameterpng') {
                 if (data[key]) {
                     if (data[key][0]) {
-                        $('#parameter-parameter-2dplot').html('<img src="{{MEDIA_URL}}parameterparameter/' + data[key][0] + '" style="margin:0px auto;display:block">')
+                        $('#parameter-parameter-2dplot').html('<img src="{{MEDIA_URL}}parameterparameter/' + data[key][0] + '">')
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
                             $('#parameter-parameter-anchor').click();
                         }
@@ -1753,7 +1752,7 @@
                             }
                         }
                         if (data[key][1]) {
-                            $('#parameter-parameter-info').html(data[key][1])
+                            $('#parameter-parameter-2dplot').append('<pre class="prettyprint">' + data[key][1] + '</pre>');
                         }
                     }
                     else {
