@@ -580,8 +580,8 @@ WHERE
 
         logger.debug('initial query = %s', query)
     
-        # Construct SELECT strings, must be in proper order
-        select_items = 'DISTINCT '
+        # Construct SELECT strings, must be in proper order, include depth for possible sigma-t calculation
+        select_items = 'DISTINCT stoqs_measurement.depth, '
         select_order = ('x', 'y', 'z', 'c')
         containsSampleFlag = False
         for axis in select_order:
@@ -674,6 +674,7 @@ WHERE
         if self.kwargs['parametervalues']:
             # Add SQL fragments for any Parameter Value selections
             pv_add_to_from, pv_from_sql, pv_where_sql = self._pvSQLfragments(self.kwargs['parametervalues'])
+            logger.debug('pv_add_to_from = %s', pv_add_to_from)
             q = q.replace('FROM stoqs_sample', 'FROM ' + pv_add_to_from + 'stoqs_sample')
             q = q.replace('WHERE', pv_from_sql + ' WHERE ' + pv_where_sql)
 
