@@ -219,6 +219,24 @@ def simplify_points (pts, tolerance):
     # Change from original code: add the index from the original line in the return
     return [(pts[i] + (i,)) for i in keep]
 
+def pearsonr(x, y):
+    '''
+    See http://stackoverflow.com/questions/3949226/calculating-pearson-correlation-and-significance-in-python and
+    http://shop.oreilly.com/product/9780596529321.do
+    '''
+    # Assume len(x) == len(y)
+    from itertools import imap
+    n = len(x)
+    sum_x = float(sum(x))
+    sum_y = float(sum(y))
+    sum_x_sq = sum(map(lambda x: pow(x, 2), x))
+    sum_y_sq = sum(map(lambda x: pow(x, 2), y))
+    psum = sum(imap(lambda x, y: x * y, x, y))
+    num = psum - (sum_x * sum_y/n)
+    den = pow((sum_x_sq - pow(sum_x, 2) / n) * (sum_y_sq - pow(sum_y, 2) / n), 0.5)
+    if den == 0: return 0
+    return num / den
+
 def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False):
     '''
     Given a generic database agnostic Django query string modify it using regular expressions to work

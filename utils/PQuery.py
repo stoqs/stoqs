@@ -676,6 +676,7 @@ WHERE
             pv_add_to_from, pv_from_sql, pv_where_sql = self._pvSQLfragments(self.kwargs['parametervalues'])
             logger.debug('pv_add_to_from = %s', pv_add_to_from)
             q = q.replace('FROM stoqs_sample', 'FROM ' + pv_add_to_from + 'stoqs_sample')
+            q = q.replace('FROM stoqs_instantpoint', 'FROM ' + pv_add_to_from + 'stoqs_instantpoint')
             q = q.replace('WHERE', pv_from_sql + ' WHERE ' + pv_where_sql)
 
         logger.debug('q = %s', q)
