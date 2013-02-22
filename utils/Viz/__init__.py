@@ -32,6 +32,7 @@ from stoqs import models
 from utils.utils import postgresifySQL
 from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
+import seawater.csiro as sw
 import numpy as np
 import logging
 import string
@@ -250,10 +251,47 @@ class ParameterParameter(object):
         self.mpq = mpq
         self.pq = pq
         self.colorMinMax = colorMinMax
+        self.depth = []
         self.x = []
         self.y = []
         self.z = []
         self.c = []
+
+    def computeSigmat(self, limits, xaxis_name='sea_water_salinity', pressure=0):
+        '''
+        Given a tuple of limits = (xmin, xmax, ymin, ymax) and an xaxis_name compute 
+        density for a range of values between the mins and maxes.  Return the X and Y values
+        for Salinity/temperature and density converted to sigma-t.  A pressure argument may
+        be provided for computing sigmat for that pressure.
+        '''
+        ns = 50
+        nt = 50
+        sigmat = []
+        if xaxis_name == 'sea_water_salinity':
+            s = np.linspace(limits[0], limits[1], ns, endpoint=False)
+            t = np.linspace(limits[2], limits[3], nt, endpoint=False)
+            for ti in t:
+                row = []
+                for si in s:
+                    row.append(sw.dens(si, ti, pressure) - 1000.0)
+                sigmat.append(row)
+
+        elif xaxis_name == 'sea_water_temperature':
+            t = np.linspace(limits[0], limits[1], nt, endpoint=False)
+            s = np.linspace(limits[2], limits[3], ns, endpoint=False)
+            for si in s:
+                row = []
+                for ti in t:
+                    row.append(sw.dens(si, ti, pressure) - 1000.0)
+                sigmat.append(row)
+
+        else:
+            raise Exception('Cannot compute sigma-t with xaxis_name = "%s"', xaxis_name)
+
+        if xaxis_name == 'sea_water_salinity':
+            return s, t, sigmat
+        elif xaxis_name == 'sea_water_temperature':
+            return t, s, sigmat
 
     def make2DPlot(self):
         '''
@@ -269,11 +307,12 @@ class ParameterParameter(object):
                 cursor = connections[self.request.META['dbAlias']].cursor()
                 cursor.execute(sql)
                 for row in cursor:
-                    # SampledParameter datavalues are Decimal, convert everything to a float for numpy
-                    self.x.append(float(row[0]))
-                    self.y.append(float(row[1]))
+                    # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
+                    self.depth.append(float(row[0]))
+                    self.x.append(float(row[1]))
+                    self.y.append(float(row[2]))
                     try:
-                        self.c.append(float(row[2]))
+                        self.c.append(float(row[3]))
                     except IndexError:
                         pass
 
@@ -315,8 +354,22 @@ class ParameterParameter(object):
             ax.set_xlabel('%s (%s)' % (xp.name, xp.units))
             yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
             ax.set_ylabel('%s (%s)' % (yp.name, yp.units))
+
+            # Add Sigma-t contours if x/y is salinity/temperature, approximate depth to pressure - must fix for deep water...
+            Z = None
+            logger.debug('ax.axis() = %s', ax.axis())
+            limits = ax.axis()
+            if xp.standard_name == 'sea_water_salinity' and yp.standard_name == 'sea_water_temperature':
+                logger.debug('Calling computeSigmat...')
+                X, Y, Z = self.computeSigmat((limits), xaxis_name='sea_water_temperature', pressure=np.mean(self.depth))
+            if xp.standard_name == 'sea_water_temperature' and yp.standard_name == 'sea_water_salinity':
+                logger.debug('Calling computeSigmat...')
+                X, Y, Z = self.computeSigmat(limits, xaxis_name='sea_water_temperature', pressure=np.mean(self.depth))
+            if Z is not None:
+                CS = plt.contour(X, Y, Z)
+                plt.clabel(CS, inline=1, fontsize=10)
     
-            # Assemble additional information about the correlation...
+            # Assemble additional information about the correlation
             m, b = polyfit(self.x, self.y, 1)
             yfit = polyval([m, b], self.x)
             ax.plot(self.x, yfit, color='k', linewidth=0.5)
@@ -327,7 +380,8 @@ class ParameterParameter(object):
             fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
             plt.close()
 
-        except Exception, e:
+        except TypeError, e:
+            ##infoText = 'Parameter-Parameter: ' + str(type(e))
             infoText = 'Parameter-Parameter: ' + str(e)
             logger.exception('Cannot make 2D parameterparameter plot: %s', e)
             return None, infoText
