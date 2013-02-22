@@ -29,7 +29,7 @@ from django.db import connections
 from datetime import datetime
 from KML import readCLT
 from stoqs import models
-from utils.utils import postgresifySQL
+from utils.utils import postgresifySQL, pearsonr, round_to_n
 from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
 import seawater.csiro as sw
@@ -357,24 +357,27 @@ class ParameterParameter(object):
 
             # Add Sigma-t contours if x/y is salinity/temperature, approximate depth to pressure - must fix for deep water...
             Z = None
-            logger.debug('ax.axis() = %s', ax.axis())
-            limits = ax.axis()
+            infoText = ''
+            meanDepth = round(np.mean(self.depth))
             if xp.standard_name == 'sea_water_salinity' and yp.standard_name == 'sea_water_temperature':
-                logger.debug('Calling computeSigmat...')
-                X, Y, Z = self.computeSigmat((limits), xaxis_name='sea_water_temperature', pressure=np.mean(self.depth))
+                X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_salinity', pressure=np.mean(self.depth))
             if xp.standard_name == 'sea_water_temperature' and yp.standard_name == 'sea_water_salinity':
-                logger.debug('Calling computeSigmat...')
-                X, Y, Z = self.computeSigmat(limits, xaxis_name='sea_water_temperature', pressure=np.mean(self.depth))
+                X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_temperature', pressure=meanDepth)
             if Z is not None:
-                CS = plt.contour(X, Y, Z)
+                CS = ax.contour(X, Y, Z, colors='k')
                 plt.clabel(CS, inline=1, fontsize=10)
+                infoText = 'Sigma-t levels computed for pressure = %.1f dbar<br>' % meanDepth
     
             # Assemble additional information about the correlation
             m, b = polyfit(self.x, self.y, 1)
             yfit = polyval([m, b], self.x)
             ax.plot(self.x, yfit, color='k', linewidth=0.5)
             c = np.corrcoef(self.x, self.y)[0,1]
-            infoText = 'Linear regression: %s = %f * %s + %f (r<sup>2</sup> = %f, n = %d)' % (yp.name, m, xp.name, b, c**2, len(self.x))
+            pr = pearsonr(self.x, self.y)
+            ##test_pr = pearsonr([1,2,3], [1,5,7])
+            ##logger.debug('test_pr = %f (should be 0.981980506062)', test_pr)
+            infoText = infoText + 'Linear regression: %s = %s * %s + %s (r<sup>2</sup> = %s, p = %s, n = %d)' % (yp.name, 
+                            round_to_n(m,4), xp.name, round_to_n(b,4), round_to_n(c**2,4), round_to_n(pr,4), len(self.x))
 
             # Save the figure
             fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
