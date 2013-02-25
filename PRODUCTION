@@ -49,14 +49,19 @@ WSGIProcessGroup stoqs
     chmod 733 /var/www/html/stoqs/media/parameterparameter/
 
 
-6. Test as with a DEVELOPMENT installation:
+6. Restart the apache web server:
 
-	python manage.py test stoqs
-	
-	Interact with the activities and measurement requests to get data
+    sudo /sbin/service httpd restart
 
 
-TODO: Instructions for setting up celery to run as a daemon
+7. Test the STOQS user interface at URL:
+
+    http://<your_server_name>/canon/
+
+
+TODO: Instructions for setting up celery to run as a daemon. (Note: celery is used for managing 
+      long running processes, as of 25 February 2013 stoqs has no such processes.  This is a
+      placeholder should stoqs develop long running processes in the future.)
 
 
 --
