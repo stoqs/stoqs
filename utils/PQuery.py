@@ -284,7 +284,6 @@ class PQuery(object):
         '''
         value = id in ParameterGroupParameter.objects.using(self.request.META['dbAlias']
                         ).filter(parametergroup__name=SAMPLED).values_list('parameter__id', flat=True)
-        logger.debug('id = %d, dbAlias = %s, SAMPLED = %s, value = %s', id, self.request.META['dbAlias'], SAMPLED, value)
         return value
         
     def isParameterMeasured(self, id):
@@ -293,7 +292,6 @@ class PQuery(object):
         '''
         value = id in ParameterGroupParameter.objects.using(self.request.META['dbAlias']
                         ).filter(parametergroup__name=MEASUREDINSITU).values_list('parameter__id', flat=True)
-        logger.debug(value)
         return value
 
     def buildPQuerySet(self, *args, **kwargs):
@@ -633,13 +631,11 @@ WHERE
                 logger.debug('axis, pid = %s, %s', axis, pid)
 
                 if self.isParameterMeasured(int(pid)):
-                    logger.debug('Measured')
                     replace_from = replace_from + 'INNER JOIN stoqs_measuredparameter mp_' + axis + ' '
                     replace_from = replace_from + 'on mp_' + axis + '.measurement_id = stoqs_measurement.id '
                     replace_from = replace_from + 'INNER JOIN stoqs_parameter p_' + axis + ' '
                     replace_from = replace_from + 'on mp_' + axis + '.parameter_id = p_' + axis + '.id '
                 elif self.isParameterSampled(int(pid)):
-                    logger.debug('Sampled')
                     replace_from = replace_from + 'INNER JOIN stoqs_sampledparameter sp_' + axis + ' '
                     replace_from = replace_from + 'on sp_' + axis + '.sample_id = stoqs_sample.id '
                     replace_from = replace_from + 'INNER JOIN stoqs_parameter p_' + axis + ' '
