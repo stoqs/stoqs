@@ -38,12 +38,15 @@ WSGIProcessGroup stoqs
     python manage.py collectstatic
 
 
-5. Make the STATIC_ROOT/media/sections directory (which is used for creating time-depth contour
-   plots) writable by the owner of the httpd process.  This can be done on a typical CentOS 
+5. Create the STATIC_ROOT/media/sections and STATIC_ROOT/media/parameterparameter directories. 
+   (These are used by matplotlib for data visualization for the UI.)  They need to be
+   writable by the owner of the httpd process.  This can be done on a typical CentOS 
    install with these commands:
 
     mkdir -p /var/www/html/stoqs/media/sections/
+    mkdir -p /var/www/html/stoqs/media/parameterparameter/
     chmod 733 /var/www/html/stoqs/media/sections/
+    chmod 733 /var/www/html/stoqs/media/parameterparameter/
 
 
 6. Test as with a DEVELOPMENT installation:
@@ -58,4 +61,4 @@ TODO: Instructions for setting up celery to run as a daemon
 
 --
 Mike McCann
-MBARI 5 January 2012
+MBARI 25 February 2013
