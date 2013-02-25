@@ -419,16 +419,18 @@ class ParameterParameter(object):
 
             # Construct x3D...
             infoText = ''
-            ppX3DText = '''<x3d width="500px" height="400px">
-  <scene>
-    <shape>
-      <appearance>
-        <material diffuseColor='red'></material>
-      </appearance>
-      <box></box>
-    </shape>
-  </scene>
-</x3d>
+            ppX3DText = '''
+<X3D xmlns="http://www.web3d.org/specifications/x3d-namespace"  showStat="true" showLog="true">
+          <Scene>
+            <Viewpoint position='0 0 10' />
+             <Shape>
+                <Appearance>
+                    <Material diffuseColor='0.603 0.894 0.909' />   
+                </Appearance>
+                <Box DEF='box'/>
+             </Shape>
+          </Scene>
+        </X3D>
 '''
 
         except:

@@ -2,13 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta encoding="utf-8">
     <title>{{request.META.dbAlias}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
 
     <!-- The styles -->
-    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet" />
     <style>
         body {
             padding-top: 60px;  /* 60px to make the container go all the way to the bottom of the topbar */
@@ -21,9 +22,10 @@
             background-image: url({{STATIC_URL}}images/ajax-loader-pulse.gif);
         }
     </style>
-    <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet" />    
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet" />    
+    <link type="text/css" href="{{ STATIC_URL }}x3dom/css/x3dom.css" rel="stylesheet" />    
     
 
     <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -33,10 +35,10 @@
     <![endif]-->
 
     <!-- The fav and touch icons -->
-    <link rel="shortcut icon" href="{{STATIC_URL}}media/favicon.ico">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png">
+    <link rel="shortcut icon" href="{{STATIC_URL}}media/favicon.ico" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png" />
+    <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png" />
 
     {% if google_analytics_code %}
     <!-- Google Analytics -->
@@ -64,7 +66,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="http://www.mbari.org"><img src="{{STATIC_URL}}images/mbari_bw_logo.gif"></a>
+          <a class="brand" href="http://www.mbari.org"><img src="{{STATIC_URL}}images/mbari_bw_logo.gif" alt="MBARI"></a>
           <a class="brand" href="#">{{request.META.dbAlias}}</a>
           <div class="nav-collapse">
             <ul class="nav">
@@ -140,7 +142,7 @@
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="pp3d">
-                                    <div id="parameter-parameter-3dplot">
+                                    <div id="parameter-parameter-3dplot" style="width:500px; height:400px;">
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="ppdata">
@@ -177,8 +179,6 @@
                                     <span id="sample-instructions">Click on Sample locations in time-depth plot to get information here</span>
                                     <table id="sample-table" class="table table-striped table-bordered">
                                         <thead>
-                                            <tr>
-                                            </tr>
                                         </thead> 
                                         <tbody>
                                         </tbody>
@@ -188,7 +188,7 @@
                                 <div class="tab-pane" id="{{format.0}}-sample">
                                     <table>
                                         <tr>
-                                            <th><a target="_blank" id="{{format.0}}-link-sample" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png"/></a></th>
+                                            <th><a target="_blank" id="{{format.0}}-link-sample" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png" alt="{{format.0}}"/></a></th>
                                             <th valign="top"><h4>&nbsp;{{format.1}}</h4></th>
                                         </tr>
                                     </table>
@@ -197,7 +197,7 @@
                                         <span id="kml-parameter-sample"></span>
                                         <form align="center" class="form-inline">
                                             <input id="cmin-sample" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
-                                            <img style="vertical-align:middle;"src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" />
+                                            <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" />
                                             <input id="cmax-sample" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
                                         </form>
                                         </div>
@@ -417,31 +417,32 @@
     <!-- The javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery-1.7.1.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery-ui-1.8.17.custom.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.ui.touch-punch.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.dateFormat-1.0.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.selection.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.resize.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.image.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.navigate.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.flot.axislabels.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery/js/jquery.cookie.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-dropdown.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-scrollspy.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-tab.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-tooltip.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-popover.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-button.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-collapse.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-carousel.js"></script>
-    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-typeahead.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery-ui-1.8.17.custom.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.ui.touch-punch.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.dateFormat-1.0.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.selection.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.resize.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.image.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.navigate.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.axislabels.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-scrollspy.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-tab.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-tooltip.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-popover.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-button.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-collapse.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-carousel.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-typeahead.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/OpenLayers.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.js"></script>
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
     <script type="text/javascript">
     
