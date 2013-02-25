@@ -650,9 +650,10 @@ class STOQSQManager(object):
                     self.pq.buildPQuerySet(*self.args, **self.kwargs)
 
                 # We have enough information to generate a 2D scatter plot
-                if not self.pp:
-                    logger.debug('Instantiating Viz.PropertyPropertyPlots............................................')
-                    self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, self.getParameterMinMax(pc))
+                ##if not self.pp:     # ...png always gets called before ...x3d 
+                pMinMax = {'x': self.getParameterMinMax(px), 'y': self.getParameterMinMax(py), 'c': self.getParameterMinMax(pc)}
+                logger.debug('Instantiating Viz.PropertyPropertyPlots for PNG............................................')
+                self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
                 pngFileName = self.pp.make2DPlot()
             
         return pngFileName
@@ -661,27 +662,23 @@ class STOQSQManager(object):
         '''
         If at least the X, Y, and Z radio buttons are checked produce an X3D response for delivery back to the client
         '''
-        if (self.kwargs.has_key('px') and self.kwargs.has_key('py') and self.kwargs.has_key('pz')):
-            if (self.kwargs['px'] != '' and self.kwargs['py'] != '' and self.kwargs['pz'] != ''):
-                # Create X3D 
-                pass
         x3dText = None
         if (self.kwargs.has_key('parameterparameter')):
             px = self.kwargs['parameterparameter'][0]
             py = self.kwargs['parameterparameter'][1]
             pz = self.kwargs['parameterparameter'][2]
             pc = self.kwargs['parameterparameter'][3]
-            logger.debug('px = %s, py = %s, pz = %s, pc = %s', px, py, pz, pc)
+            logger.debug(' >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  px = %s, py = %s, pz = %s, pc = %s', px, py, pz, pc)
 
             if (px and py and pz):
                 if not self.mpq.qs_mp:
-                    self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                    self.mpq.buildPQuerySet(*self.args, **self.kwargs)
 
                 # We have enough information to generate X3D XML
-                if not self.pp:
-                    logger.debug('Instantiating Viz.PropertyPropertyPlots............................................')
-                    self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq)
-                pngFileName = self.pp.makeX3D()
+                pMinMax = {'x': self.getParameterMinMax(px), 'y': self.getParameterMinMax(py), 'y': self.getParameterMinMax(pz), 'c': self.getParameterMinMax(pc)}
+                logger.debug('Instantiating Viz.PropertyPropertyPlots for X3D............................................')
+                self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
+                x3dText = self.pp.makeX3D()
             
         return x3dText
 

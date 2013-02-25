@@ -242,7 +242,7 @@ class ParameterParameter(object):
     '''
     Use matploplib to create nice looking property-property plots
     '''
-    def __init__(self, request, pDict, mpq, pq, colorMinMax):
+    def __init__(self, request, pDict, mpq, pq, pMinMax):
         '''
         Save parameters that can be used by the different plotting methods here
         '''
@@ -250,7 +250,7 @@ class ParameterParameter(object):
         self.pDict = pDict
         self.mpq = mpq
         self.pq = pq
-        self.colorMinMax = colorMinMax
+        self.pMinMax = pMinMax
         self.depth = []
         self.x = []
         self.y = []
@@ -298,6 +298,7 @@ class ParameterParameter(object):
         Produce a .png image 
         '''
         try:
+            # self.x and self.y may already be set for this instance by makeX3D()
             if not self.x and not self.y:
                 # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
                 sql = str(self.pq.qs_mp.query)
@@ -336,13 +337,13 @@ class ParameterParameter(object):
             clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
             cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
             if self.c:
-                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.colorMinMax[1], vmax=self.colorMinMax[2])
+                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2])
                 # Add colorbar
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
-                norm = mpl.colors.Normalize(vmin=self.colorMinMax[1], vmax=self.colorMinMax[2], clip=False)
+                norm = mpl.colors.Normalize(vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip=False)
                 cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=cm_jetplus,
                                                 norm=norm,
-                                                ticks=[self.colorMinMax[1], self.colorMinMax[2]],
+                                                ticks=[self.pMinMax['c'][1], self.pMinMax['c'][2]],
                                                 orientation='horizontal')
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
                 cb.set_label('%s (%s)' % (cp.name, cp.units))
@@ -396,34 +397,45 @@ class ParameterParameter(object):
         '''
         Produce X3D XML text and return it
         '''
-        ppX3DText = '<x3d></x3d>'
-        infoText = 'Nothing'
         try:
-            if not self.x and not self.y and not self.z:
-                # Construct special SQL for P-P plot that returns up to 4 data values for the up to 4 Parameters requested for an X3D view
-                sql = str(self.mpq.qs_mp.query)
-                sql = self.mpq.addParameterParameterSelfJoins(sql, self.pDict)
+            # Construct special SQL for P-P plot that returns up to 4 data values for the up to 4 Parameters requested for a 3D plot
+            sql = str(self.pq.qs_mp.query)
+            logger.debug('self.pDict = %s', self.pDict)
+            sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
 
-                # Use cursor so that we can specify the database alias to use
-                cursor = connections[self.request.META['dbAlias']].cursor()
-                cursor.execute(sql)
-                for row in cursor:
-                    self.x.append(row[1])
-                    self.y.append(row[2])
-                    self.z.append(row[3])
-                    try:
-                        self.c.append(row[4])
-                    except IndexError:
-                        pass
+            # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
+            cursor = connections[self.request.META['dbAlias']].cursor()
+            cursor.execute(sql)
+            for row in cursor:
+                # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
+                self.depth.append(float(row[0]))
+                self.x.append(float(row[1]))
+                self.y.append(float(row[2]))
+                self.z.append(float(row[3]))
+                try:
+                    self.c.append(float(row[4]))
+                except IndexError:
+                    pass
 
-                # Construct x3D...
-
-
+            # Construct x3D...
+            infoText = ''
+            ppX3DText = '''<x3d width="500px" height="400px">
+  <scene>
+    <shape>
+      <appearance>
+        <material diffuseColor='red'></material>
+      </appearance>
+      <box></box>
+    </shape>
+  </scene>
+</x3d>
+'''
 
         except:
             logger.exception('Cannot make parameterparameter X3D')
             raise Exception('Cannot make parameterparameter X3D')
 
         else:
+            logger.debug('ppX3DText = %s', ppX3DText)
             return ppX3DText, infoText
 

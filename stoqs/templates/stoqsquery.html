@@ -1769,7 +1769,7 @@
             else if (key == 'parameterparameterx3d') {
                 if (data[key]) {
                     if (data[key][0]) {
-                        $('#parameter-parameter-3dplot').html('<p>Not yet implemented</p>');
+                        $('#parameter-parameter-3dplot').html(data[key][0]);
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
                             $('#parameter-parameter-anchor').click();
                         }
