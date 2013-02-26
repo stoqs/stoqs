@@ -16,6 +16,7 @@ views/__init__.py to support query by parameter value for the REST responses.
 from django.conf import settings
 from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, ValuesQuerySet
 from django.contrib.gis.db.models.query import GeoQuerySet
+from django.db import DatabaseError
 from datetime import datetime
 from stoqs.models import MeasuredParameter, Parameter
 from utils import postgresifySQL, getGet_Actual_Count
@@ -212,7 +213,10 @@ class MPQuerySet(object):
         try:
             c = self.mp_query.count()
         except AttributeError:
-            c = sum(1 for mp in self.mp_query)
+            try:
+                c = sum(1 for mp in self.mp_query)
+            except DatabaseError:
+                return 0
         return c
  
     def all(self):
