@@ -141,7 +141,7 @@
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="pp3d">
-                                    <div id="parameter-parameter-3dplot" style="width:500px; height:400px;">
+                                    <div id="parameter-parameter-3dplot" style="overflow: auto; margin:0px auto;" >
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="ppdata">
@@ -153,8 +153,6 @@
                     </div>
 
                 </div><!-- accordian-group -->
-
-
 
 
                 <div class="accordian-group">
@@ -1778,6 +1776,7 @@
                                 $('a[href=#pp3d]').tab('show');
                             }
                         }
+                        x3dom.reload();
                     }
                 }
             }
