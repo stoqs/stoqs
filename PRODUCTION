@@ -14,17 +14,27 @@ Here are the steps:
    httpd.conf.
    
    
-2. Add these lines to the stoqs.conf file in /etc/httpd/conf.d/:
+2. Add the following lines to the stoqs.conf file in /etc/httpd/conf.d/ and make sure
+   that the directory where stoqs.wsgi is located is readable by the wed server.
+
+# stoqs.conf - connector between apache/wsgi and the stoqs project
+
+# Replace STOQS_PROJ_DIR below with the location where the STOQS project has been 
+# checked out, something like "/home/student/dev/stoqsproj"
 
 WSGISocketPrefix /var/run/wsgi
 
 WSGIDaemonProcess stoqs user=apache group=root threads=25
 WSGIProcessGroup stoqs
 
+<Directory STOQS_PROJ_DIR>
+Order deny,allow
+Allow from all
+</Directory>
+
 # Map web server path to location of the stoqs.wsgi file:
 # WSGIScriptAlias /<parent_web_site> <path_to_stoqs.wsgi_file>, e.g.:
-# WSGIScriptAlias /canon /home/student/dev/stoqsproj/stoqs.wsgi
-# (Uncomment above line, edited with web parent and stoqs.wsgi location)
+WSGIScriptAlias /canon STOQS_PROJ_DIR/stoqs.wsgi
 
 
 3. Edit privateSettings if the DATABASE_* settings are different.  (Your Postgres
