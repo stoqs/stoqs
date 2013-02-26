@@ -417,6 +417,16 @@ class ParameterParameter(object):
                 except IndexError:
                     pass
 
+            points = ''
+            colors = ''
+            for x,y,z in zip(self.x, self.y, self.z):
+                # Scale to 10,000 on each axis, bounded by min/max values
+                xs = 10000 * (x - float(self.pMinMax['x'][0])) / (float(self.pMinMax['x'][1]) - float(self.pMinMax['x'][0])) 
+                ys = 10000 * (y - float(self.pMinMax['y'][0])) / (float(self.pMinMax['y'][1]) - float(self.pMinMax['y'][0])) 
+                zs = 10000 * (z - float(self.pMinMax['z'][0])) / (float(self.pMinMax['z'][1]) - float(self.pMinMax['z'][0])) 
+                points = points + '%d %d %d ' % (int(xs), int(ys), int(zs))
+                colors = colors + '0 0 0 '
+
             # Construct x3D...
             infoText = ''
             ppX3DText = '''<X3D width="600px" height="500px">
@@ -437,9 +447,15 @@ class ParameterParameter(object):
         <sphere></sphere>
       </shape>
     </transform>
+    <shape>
+      <pointset>
+        <color color='%s'></color>
+        <coordinate point='%s'></coordinate>
+      </pointset>
+    </shape>
   </scene>
     </X3D>
-'''
+''' % (colors, points)
 
         except:
             logger.exception('Cannot make parameterparameter X3D')

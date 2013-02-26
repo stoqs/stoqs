@@ -675,7 +675,7 @@ class STOQSQManager(object):
                     self.mpq.buildPQuerySet(*self.args, **self.kwargs)
 
                 # We have enough information to generate X3D XML
-                pMinMax = {'x': self.getParameterMinMax(px), 'y': self.getParameterMinMax(py), 'y': self.getParameterMinMax(pz), 'c': self.getParameterMinMax(pc)}
+                pMinMax = {'x': self.getParameterMinMax(px), 'y': self.getParameterMinMax(py), 'z': self.getParameterMinMax(pz), 'c': self.getParameterMinMax(pc)}
                 logger.debug('Instantiating Viz.PropertyPropertyPlots for X3D............................................')
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
                 x3dText = self.pp.makeX3D()
