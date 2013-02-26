@@ -2,14 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta encoding="utf-8">
     <title>{{request.META.dbAlias}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
 
     <!-- The styles -->
-    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet" />
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet">
     <style>
         body {
             padding-top: 60px;  /* 60px to make the container go all the way to the bottom of the topbar */
@@ -22,10 +21,10 @@
             background-image: url({{STATIC_URL}}images/ajax-loader-pulse.gif);
         }
     </style>
-    <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-    <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet" />    
-    <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet" />    
-    <link type="text/css" href="{{ STATIC_URL }}x3dom/css/x3dom.css" rel="stylesheet" />    
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+    <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet">
+    <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet">
+    <link type="text/css" href="{{ STATIC_URL }}x3dom/css/x3dom.css" rel="stylesheet">
     
 
     <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -35,10 +34,10 @@
     <![endif]-->
 
     <!-- The fav and touch icons -->
-    <link rel="shortcut icon" href="{{STATIC_URL}}media/favicon.ico" />
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png" />
-    <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png" />
+    <link rel="shortcut icon" href="{{STATIC_URL}}media/favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png">
 
     {% if google_analytics_code %}
     <!-- Google Analytics -->
@@ -189,13 +188,13 @@
                                     <table>
                                         <tr>
                                             <th><a target="_blank" id="{{format.0}}-link-sample" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png" alt="{{format.0}}"/></a></th>
-                                            <th valign="top"><h4>&nbsp;{{format.1}}</h4></th>
+                                            <th style="vertical-align:text-top;"><h4>&nbsp;{{format.1}}</h4></th>
                                         </tr>
                                     </table>
                                     {% if format.0 = 'kml' %}
-                                        <div align="center">
+                                        <div style="text-align: center;">
                                         <span id="kml-parameter-sample"></span>
-                                        <form align="center" class="form-inline">
+                                        <form style="text-align: center;" class="form-inline">
                                             <input id="cmin-sample" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                                             <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" />
                                             <input id="cmax-sample" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
@@ -242,13 +241,13 @@
                                     <table>
                                         <tr>
                                             <th><a target="_blank" id="{{format.0}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png"/></a></th>
-                                            <th valign="top"><h4>&nbsp;{{format.1}}</h4></th>
+                                            <th style="vertical-align:text-top;"><h4>&nbsp;{{format.1}}</h4></th>
                                         </tr>
                                     </table>
                                     {% if format.0 = 'kml' %}
-                                        <div align="center">
+                                        <div style="text-align: center;">
                                         <span id="kml-parameter"></span>
-                                        <form align="center" class="form-inline">
+                                        <form style="text-align: center;" class="form-inline">
                                             <input id="cmin" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                                             <img style="vertical-align:middle;"src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" />
                                             <input id="cmax" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
@@ -1476,7 +1475,7 @@
             if (key == 'platforms') {
                 $.each(data[key], function (index, value) {
                     $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td style="text-align:center;">' +
-                            '<div id="' + value[1] + '_icon" align="center" style="float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
+                            '<div id="' + value[1] + '_icon" style="text-align: center;float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
                                 '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;border-bottom-color:#' + 
                                     data['simpledepthtime']['colors'][value[1]] + ';">' +
                             '</div></div>' +
