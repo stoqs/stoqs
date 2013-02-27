@@ -650,13 +650,14 @@ class STOQSQManager(object):
                     self.pq.buildPQuerySet(*self.args, **self.kwargs)
 
                 # We have enough information to generate a 2D scatter plot
-                ##if not self.pp:     # ...png always gets called before ...x3d 
+                ##if not self.pp:     # ...png always gets called before ...x3d - unless we change the key names...
                 pMinMax = {'x': self.getParameterMinMax(px), 'y': self.getParameterMinMax(py), 'c': self.getParameterMinMax(pc)}
-                logger.debug('Instantiating Viz.PropertyPropertyPlots for PNG............................................')
+                if not pMinMax['x'] or not pMinMax['y']:
+                    return '', 'Selected x and y axis parameters are not in filtered selection.'
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
-                pngFileName = self.pp.make2DPlot()
+                plotResults = self.pp.make2DPlot()
             
-        return pngFileName
+        return plotResults
 
     def getParameterParameterX3D(self):
         '''
@@ -676,6 +677,9 @@ class STOQSQManager(object):
 
                 # We have enough information to generate X3D XML
                 pMinMax = {'x': self.getParameterMinMax(px), 'y': self.getParameterMinMax(py), 'z': self.getParameterMinMax(pz), 'c': self.getParameterMinMax(pc)}
+                logger.debug('pMinMax = %s', pMinMax)
+                if not pMinMax['x'] or not pMinMax['y'] or not pMinMax['z']:
+                    return '', 'Selected x, y, and z axis parameters are not in filtered selection.'
                 logger.debug('Instantiating Viz.PropertyPropertyPlots for X3D............................................')
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
                 x3dText = self.pp.makeX3D()
