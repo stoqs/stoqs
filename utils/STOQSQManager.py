@@ -663,7 +663,7 @@ class STOQSQManager(object):
         '''
         If at least the X, Y, and Z radio buttons are checked produce an X3D response for delivery back to the client
         '''
-        x3dText = None
+        x3dDict = None
         if (self.kwargs.has_key('parameterparameter')):
             px = self.kwargs['parameterparameter'][0]
             py = self.kwargs['parameterparameter'][1]
@@ -682,9 +682,9 @@ class STOQSQManager(object):
                     return '', 'Selected x, y, and z axis parameters are not in filtered selection.'
                 logger.debug('Instantiating Viz.PropertyPropertyPlots for X3D............................................')
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
-                x3dText = self.pp.makeX3D()
+                x3dDict = self.pp.makeX3D()
             
-        return x3dText
+        return x3dDict
 
 
     #
