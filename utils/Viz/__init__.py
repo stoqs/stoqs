@@ -337,6 +337,7 @@ class ParameterParameter(object):
             clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
             cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
             if self.c:
+                logger.debug('self.pMinMax = %s', self.pMinMax)
                 ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2])
                 # Add colorbar
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
@@ -421,9 +422,9 @@ class ParameterParameter(object):
             colors = ''
             for x,y,z in zip(self.x, self.y, self.z):
                 # Scale to 10,000 on each axis, bounded by min/max values
-                xs = 10000 * (x - float(self.pMinMax['x'][0])) / (float(self.pMinMax['x'][1]) - float(self.pMinMax['x'][0])) 
-                ys = 10000 * (y - float(self.pMinMax['y'][0])) / (float(self.pMinMax['y'][1]) - float(self.pMinMax['y'][0])) 
-                zs = 10000 * (z - float(self.pMinMax['z'][0])) / (float(self.pMinMax['z'][1]) - float(self.pMinMax['z'][0])) 
+                xs = 100 * (x - float(self.pMinMax['x'][1])) / (float(self.pMinMax['x'][2]) - float(self.pMinMax['x'][1])) 
+                ys = 100 * (y - float(self.pMinMax['y'][1])) / (float(self.pMinMax['y'][2]) - float(self.pMinMax['y'][1])) 
+                zs = 100 * (z - float(self.pMinMax['z'][1])) / (float(self.pMinMax['z'][2]) - float(self.pMinMax['z'][1])) 
                 points = points + '%d %d %d ' % (int(xs), int(ys), int(zs))
                 colors = colors + '0 0 0 '
 
@@ -431,6 +432,97 @@ class ParameterParameter(object):
             infoText = ''
             ppX3DText = '''<X3D width="600px" height="500px">
   <scene>
+<!--
+    <Collision DEF='DoNotCollideWithVisualizationWidget' bboxCenter='0 0 0' bboxSize='-1 -1 -1' enabled='false'>
+      <Group bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+        <Group DEF='ArrowGreen' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+-->
+          <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+            <Cylinder DEF='ArrowCylinder' bottom='true' height='2' radius='.025' side='true' solid='true' top='false'/>
+            <Appearance DEF='Grey'>
+              <Material ambientIntensity='0.2' diffuseColor='.1 .1 .1' emissiveColor='.2 .2 .2' shininess='0.2' specularColor='0 0 0' transparency='0'/>
+            </Appearance>
+          </Shape>
+          <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 0' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 1 0'>
+            <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+              <Cone DEF='ArrowCone' bottom='true' bottomRadius='.05' height='.1' side='true' solid='true'/>
+              <Appearance USE='Grey'/>
+            </Shape>
+          </Transform>
+<!--
+        </Group>
+        <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 0' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 1.08 0'>
+          <Billboard axisOfRotation='0 1 0' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+            <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+              <Appearance DEF='LABEL_APPEARANCE'>
+                <Material ambientIntensity='0.2' diffuseColor='1 1 .3' emissiveColor='.33 .33 .1' shininess='0.2' specularColor='0 0 0' transparency='0'/>
+              </Appearance>
+              <Text maxExtent='0.0' solid='false' string='"Y"'>
+                <FontStyle DEF='LABEL_FONT' containerField='fontStyle' family='"SANS"' horizontal='true' justify='"MIDDLE" "MIDDLE"' leftToRight='true' size='.2' spacing='1.0' style='PLAIN' topToBottom='true'/>
+              </Text>
+            </Shape>
+          </Billboard>
+        </Transform>
+      </Group>
+      <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 -1.57079' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 0 0'>
+        <Group bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+          <Group DEF='ArrowRed' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+            <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+              <Cylinder USE='ArrowCylinder'/>
+              <Appearance DEF='Red'>
+                <Material ambientIntensity='0.2' diffuseColor='.7 .1 .1' emissiveColor='.33 0 0' shininess='0.2' specularColor='0 0 0' transparency='0'/>
+              </Appearance>
+            </Shape>
+            <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 0' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 1 0'>
+              <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+                <Cone USE='ArrowCone'/>
+                <Appearance USE='Red'/>
+              </Shape>
+            </Transform>
+          </Group>
+          <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 1.57079' scale='1 1 1' scaleOrientation='0 0 1 0' translation='.072 1.1 0'>
+            <Billboard axisOfRotation='0 1 0' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+              <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+                <Appearance USE='LABEL_APPEARANCE'/>
+                <Text maxExtent='0.0' solid='false' string='"X"'>
+                  <FontStyle USE='LABEL_FONT'/>
+                </Text>
+              </Shape>
+            </Billboard>
+          </Transform>
+        </Group>
+      </Transform>
+      <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='1 0 0 1.57079' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 0 0'>
+        <Group bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+          <Group DEF='ArrowBlue' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+            <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+              <Cylinder USE='ArrowCylinder'/>
+              <Appearance DEF='Blue'>
+                <Material ambientIntensity='0.2' diffuseColor='.3 .3 1' emissiveColor='.1 .1 .33' shininess='0.2' specularColor='0 0 0' transparency='0'/>
+              </Appearance>
+            </Shape>
+            <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 0' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 1 0'>
+              <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+                <Cone USE='ArrowCone'/>
+                <Appearance USE='Blue'/>
+              </Shape>
+            </Transform>
+          </Group>
+          <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='1 0 0 -1.57079' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 1.1 .072'>
+            <Billboard axisOfRotation='0 1 0' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+              <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
+                <Appearance USE='LABEL_APPEARANCE'/>
+                <Text maxExtent='0.0' solid='false' string='"Z"'>
+                  <FontStyle USE='LABEL_FONT'/>
+                </Text>
+              </Shape>
+            </Billboard>
+          </Transform>
+        </Group>
+      </Transform>
+    </Collision>
+-->
+
     <transform translation="-2 0 0">
       <shape>
         <appearance>
