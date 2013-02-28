@@ -137,11 +137,53 @@
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane" id="pp2d">
-                                    <div id="parameter-parameter-2dplot" style="overflow: auto; margin:0px auto;" >
+                                    <div id="parameter-parameter-2dplot" style="overflow: auto; margin:0px auto;">
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="pp3d">
-                                    <div id="parameter-parameter-3dplot" style="overflow: auto; margin:0px auto;" >
+                                    <div id="parameter-parameter-3dplot" style="overflow: auto; margin:0px auto;">
+                                        <p style="text-align: center;">
+                                            <em> Rotate: Left mouse &mdash; Translate: Ctrl + left mouse &mdash; Zoom: Alt + left mouse </em>
+                                        </p>
+                                        <center>
+                                        <X3D width="600px" height="500px">
+                                            <scene>
+                                                <Viewpoint position='0 0 40' orientation='0 0 1 0'></viewpoint>
+                                                <Group DEF='Axis'>
+                                                    <Transform translation='0 5 0'>
+                                                        <Shape>
+                                                            <Appearance DEF='Grey'>
+                                                                <Material diffuseColor='.1 .1 .1' emissiveColor='.2 .2 .2'/>
+                                                            </Appearance>
+                                                            <Cylinder height='10' radius='.2'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                    <transform translation='0 11 0'>
+                                                        <Shape>
+                                                            <Text solid='false' string='X'>
+                                                                <FontStyle justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                </Group>
+                                                <Transform rotation='0 0 1 -1.57079632679'/>
+                                                    <Group USE='Axis'/>
+                                                </Transform>
+                                                <Transform rotation='1 0 0 1.57079632679'/>
+                                                    <Group USE='Axis'/>
+                                                </Transform>
+<!--
+                                                <shape>
+                                                    <pointset>
+                                                        <color id="pointsetcolors"></color>
+                                                        <coordinate id="poinsetcooordinates"></coordinate>
+                                                    </pointset>
+                                                </shape>
+-->
+                                            </scene>
+                                        </X3D>
+                                        </center>
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="ppdata">
@@ -1131,11 +1173,11 @@
                                         inverseTransform: function (v) { return -v; }
                                     },
                                     xaxes: [{
-                                                axisLabel: 'Time (gmt)',
+                                                axisLabel: 'Time (gmt)'
                                             }],
                                     yaxes: [{
                                                 position: 'left',
-                                                axisLabel: 'Depth (m)',
+                                                axisLabel: 'Depth (m)'
                                             }],
                                     series: {
                                         lines: { show: true, fill: false, lineWidth: 1 },
@@ -1358,11 +1400,11 @@
         var units = parameterunits[parameter];
         histogtram_options_labels = $.extend(true, {}, histogram_options, {
                                                             xaxes: [{
-                                                                        axisLabel: parameter + ' (' + units + ')',
+                                                                        axisLabel: parameter + ' (' + units + ')'
                                                                     }],
                                                             yaxes: [{
                                                                         position: 'left',
-                                                                        axisLabel: 'Count',
+                                                                        axisLabel: 'Count'
                                                                     }]
                                                                           });
         parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');
