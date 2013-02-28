@@ -1714,7 +1714,7 @@
                         var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
                                             $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
                         var options = $.extend(true, {}, simpledepthtime_options_zoom, {
-                            series: { images: { show: true } },
+                            series: { images: { show: true } }
                         });
 
                         $.plot.image.loadDataImages(flotdata, options, function () {
