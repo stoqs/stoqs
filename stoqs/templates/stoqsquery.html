@@ -1977,7 +1977,7 @@
             protocol: new OpenLayers.Protocol.WFS({
                 url: '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}wfs',
                 headers: {'X-CSRFToken': csrf_token},
-                featureType: 'Sample',
+                featureType: 'Sample'
             }),
             styleMap: new OpenLayers.StyleMap({
                     strokeWidth: 3,
