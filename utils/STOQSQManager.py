@@ -638,7 +638,7 @@ class STOQSQManager(object):
         '''
         If at least the X and Y radio buttons are checked produce a scatter plot for delivery back to the client
         '''
-        pngFileName = None
+        plotResults = None
         if (self.kwargs.has_key('parameterparameter')):
             px = self.kwargs['parameterparameter'][0]
             py = self.kwargs['parameterparameter'][1]
