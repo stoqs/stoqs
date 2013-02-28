@@ -398,6 +398,7 @@ class ParameterParameter(object):
         '''
         Produce X3D XML text and return it
         '''
+        x3dResults = {}
         try:
             # Construct special SQL for P-P plot that returns up to 4 data values for the up to 4 Parameters requested for a 3D plot
             sql = str(self.pq.qs_mp.query)
@@ -422,138 +423,17 @@ class ParameterParameter(object):
             colors = ''
             for x,y,z in zip(self.x, self.y, self.z):
                 # Scale to 10,000 on each axis, bounded by min/max values
-                xs = 100 * (x - float(self.pMinMax['x'][1])) / (float(self.pMinMax['x'][2]) - float(self.pMinMax['x'][1])) 
-                ys = 100 * (y - float(self.pMinMax['y'][1])) / (float(self.pMinMax['y'][2]) - float(self.pMinMax['y'][1])) 
-                zs = 100 * (z - float(self.pMinMax['z'][1])) / (float(self.pMinMax['z'][2]) - float(self.pMinMax['z'][1])) 
+                xs = 10000 * (x - float(self.pMinMax['x'][1])) / (float(self.pMinMax['x'][2]) - float(self.pMinMax['x'][1])) 
+                ys = 10000 * (y - float(self.pMinMax['y'][1])) / (float(self.pMinMax['y'][2]) - float(self.pMinMax['y'][1])) 
+                zs = 10000 * (z - float(self.pMinMax['z'][1])) / (float(self.pMinMax['z'][2]) - float(self.pMinMax['z'][1])) 
                 points = points + '%d %d %d ' % (int(xs), int(ys), int(zs))
                 colors = colors + '0 0 0 '
 
             # Construct x3D...
-            infoText = ''
-            ppX3DText = '''<X3D width="600px" height="500px">
-  <scene>
-<!--
-    <Collision DEF='DoNotCollideWithVisualizationWidget' bboxCenter='0 0 0' bboxSize='-1 -1 -1' enabled='false'>
-      <Group bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-        <Group DEF='ArrowGreen' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
--->
-          <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-            <Cylinder DEF='ArrowCylinder' bottom='true' height='2' radius='.025' side='true' solid='true' top='false'/>
-            <Appearance DEF='Grey'>
-              <Material ambientIntensity='0.2' diffuseColor='.1 .1 .1' emissiveColor='.2 .2 .2' shininess='0.2' specularColor='0 0 0' transparency='0'/>
-            </Appearance>
-          </Shape>
-          <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 0' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 1 0'>
-            <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-              <Cone DEF='ArrowCone' bottom='true' bottomRadius='.05' height='.1' side='true' solid='true'/>
-              <Appearance USE='Grey'/>
-            </Shape>
-          </Transform>
-<!--
-        </Group>
-        <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 0' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 1.08 0'>
-          <Billboard axisOfRotation='0 1 0' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-            <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-              <Appearance DEF='LABEL_APPEARANCE'>
-                <Material ambientIntensity='0.2' diffuseColor='1 1 .3' emissiveColor='.33 .33 .1' shininess='0.2' specularColor='0 0 0' transparency='0'/>
-              </Appearance>
-              <Text maxExtent='0.0' solid='false' string='"Y"'>
-                <FontStyle DEF='LABEL_FONT' containerField='fontStyle' family='"SANS"' horizontal='true' justify='"MIDDLE" "MIDDLE"' leftToRight='true' size='.2' spacing='1.0' style='PLAIN' topToBottom='true'/>
-              </Text>
-            </Shape>
-          </Billboard>
-        </Transform>
-      </Group>
-      <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 -1.57079' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 0 0'>
-        <Group bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-          <Group DEF='ArrowRed' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-            <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-              <Cylinder USE='ArrowCylinder'/>
-              <Appearance DEF='Red'>
-                <Material ambientIntensity='0.2' diffuseColor='.7 .1 .1' emissiveColor='.33 0 0' shininess='0.2' specularColor='0 0 0' transparency='0'/>
-              </Appearance>
-            </Shape>
-            <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 0' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 1 0'>
-              <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-                <Cone USE='ArrowCone'/>
-                <Appearance USE='Red'/>
-              </Shape>
-            </Transform>
-          </Group>
-          <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 1.57079' scale='1 1 1' scaleOrientation='0 0 1 0' translation='.072 1.1 0'>
-            <Billboard axisOfRotation='0 1 0' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-              <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-                <Appearance USE='LABEL_APPEARANCE'/>
-                <Text maxExtent='0.0' solid='false' string='"X"'>
-                  <FontStyle USE='LABEL_FONT'/>
-                </Text>
-              </Shape>
-            </Billboard>
-          </Transform>
-        </Group>
-      </Transform>
-      <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='1 0 0 1.57079' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 0 0'>
-        <Group bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-          <Group DEF='ArrowBlue' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-            <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-              <Cylinder USE='ArrowCylinder'/>
-              <Appearance DEF='Blue'>
-                <Material ambientIntensity='0.2' diffuseColor='.3 .3 1' emissiveColor='.1 .1 .33' shininess='0.2' specularColor='0 0 0' transparency='0'/>
-              </Appearance>
-            </Shape>
-            <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='0 0 1 0' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 1 0'>
-              <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-                <Cone USE='ArrowCone'/>
-                <Appearance USE='Blue'/>
-              </Shape>
-            </Transform>
-          </Group>
-          <Transform bboxCenter='0 0 0' bboxSize='-1 -1 -1' center='0 0 0' rotation='1 0 0 -1.57079' scale='1 1 1' scaleOrientation='0 0 1 0' translation='0 1.1 .072'>
-            <Billboard axisOfRotation='0 1 0' bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-              <Shape bboxCenter='0 0 0' bboxSize='-1 -1 -1'>
-                <Appearance USE='LABEL_APPEARANCE'/>
-                <Text maxExtent='0.0' solid='false' string='"Z"'>
-                  <FontStyle USE='LABEL_FONT'/>
-                </Text>
-              </Shape>
-            </Billboard>
-          </Transform>
-        </Group>
-      </Transform>
-    </Collision>
--->
-
-    <transform translation="-2 0 0">
-      <shape>
-        <appearance>
-          <material diffuseColor='red'></material>
-        </appearance>
-        <box></box>
-      </shape>
-    </transform>
-    <transform translation="2 0 0">
-      <shape>
-        <appearance>
-          <material diffuseColor='blue'></material>
-        </appearance>
-        <sphere></sphere>
-      </shape>
-    </transform>
-    <shape>
-      <pointset>
-        <color color='%s'></color>
-        <coordinate point='%s'></coordinate>
-      </pointset>
-    </shape>
-  </scene>
-    </X3D>
-''' % (colors, points)
+            x3dResults = {'colors': colors, 'points': points, 'info': ''}
 
         except:
             logger.exception('Cannot make parameterparameter X3D')
             raise Exception('Cannot make parameterparameter X3D')
 
-        else:
-            logger.debug('ppX3DText = %s', ppX3DText)
-            return ppX3DText, infoText
-
+        return x3dResults

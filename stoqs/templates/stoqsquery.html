@@ -172,14 +172,12 @@
                                                 <Transform rotation='1 0 0 1.57079632679'/>
                                                     <Group USE='Axis'/>
                                                 </Transform>
-<!--
                                                 <shape>
                                                     <pointset>
                                                         <color id="pointsetcolors"></color>
-                                                        <coordinate id="poinsetcooordinates"></coordinate>
+                                                        <coordinate id="pointsetcoordinates"></coordinate>
                                                     </pointset>
                                                 </shape>
--->
                                             </scene>
                                         </X3D>
                                     </div>
@@ -1806,8 +1804,9 @@
             }
             else if (key == 'parameterparameterx3d') {
                 if (data[key]) {
-                    if (data[key][0]) {
-                        $('#parameter-parameter-3dplot').html(data[key][0]);
+                    if (data[key]['points']) {
+                        $('#pointsetcoordinates').attr('point', data[key]['points']);
+                        $('#pointsetcolors').attr('color', data[key]['colors']);
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
                             $('#parameter-parameter-anchor').click();
                         }
@@ -1816,7 +1815,7 @@
                                 $('a[href=#pp3d]').tab('show');
                             }
                         }
-                        x3dom.reload();
+                        //x3dom.reload();
                     }
                 }
             }
