@@ -351,7 +351,7 @@ class ParameterParameter(object):
             else:
                 ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0)
 
-            # Labels the axes
+            # Label the axes
             xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
             ax.set_xlabel('%s (%s)' % (xp.name, xp.units))
             yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
@@ -419,21 +419,46 @@ class ParameterParameter(object):
                 except IndexError:
                     pass
 
+            if self.c:
+                self.c.reverse()    # Modifies self.c in place - needed for popping values off in loop below
+                clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+
             points = ''
             colors = ''
             for x,y,z in zip(self.x, self.y, self.z):
-                # Scale to 10,000 on each axis, bounded by min/max values
+                # Scale to 10000 on each axis, bounded by min/max values - must be 10000 as X3D in stoqs/templates/stoqsquery.html is hard-coded with 10000
+                # This gives us enough resolution for modern displays and eliminates decimal point characters
                 xs = 10000 * (x - float(self.pMinMax['x'][1])) / (float(self.pMinMax['x'][2]) - float(self.pMinMax['x'][1])) 
                 ys = 10000 * (y - float(self.pMinMax['y'][1])) / (float(self.pMinMax['y'][2]) - float(self.pMinMax['y'][1])) 
                 zs = 10000 * (z - float(self.pMinMax['z'][1])) / (float(self.pMinMax['z'][2]) - float(self.pMinMax['z'][1])) 
                 points = points + '%d %d %d ' % (int(xs), int(ys), int(zs))
-                colors = colors + '0 0 0 '
+                if self.c:
+                    cindx = int(round((self.c.pop() - float(self.pMinMax['c'][1])) * (len(clt) - 1) / 
+                                    (float(self.pMinMax['c'][2]) - float(self.pMinMax['c'][1]))))
+                    if cindx < 0:
+                        cindx = 0
+                    if cindx > len(clt) - 1:
+                        cindx = len(clt) - 1
+                    colors = colors + '%.3f %.3f %.3f ' % (clt[cindx][0], clt[cindx][1], clt[cindx][2])
+                else:
+                    colors = colors + '0 0 0 '
 
-            # Construct x3D...
-            x3dResults = {'colors': colors, 'points': points, 'info': ''}
+            # Label the axes
+            xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
+            self.pMinMax['x'].append(('%s (%s)' % (xp.name, xp.units)))
+            yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
+            self.pMinMax['y'].append(('%s (%s)' % (yp.name, yp.units)))
+            zp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z']))
+            self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
+
+            # Get median x,y,z of the data for setting center of rotation
+            median_coords = ''
+
+            x3dResults = {'colors': colors, 'points': points, 'info': '', 'x': self.pMinMax['x'], 'y': self.pMinMax['y'], 'z': self.pMinMax['z'], 'median': median_coords}
 
         except:
             logger.exception('Cannot make parameterparameter X3D')
-            raise Exception('Cannot make parameterparameter X3D')
+            x3dResults = {'colors': [], 'points': [], 'info': 'Cannot make 3D plot.', 'x': [], 'y': [], 'z': [], 'median': ''}
 
         return x3dResults
+

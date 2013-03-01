@@ -148,7 +148,7 @@
                                         <X3D showLog='true' height="500px" style="width:100%; margin: 0px auto; display:block; border: none;">
                                             <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
                                             <scene>
-                                                <Viewpoint position='2000 3000 19000'></viewpoint>
+                                                <Viewpoint id='x3d-viewpoint' position='2000 3000 19000'></viewpoint>
 
                                                 <!-- Y axis -->
                                                 <Group DEF='Axis'>
@@ -219,7 +219,7 @@
                                                     </Transform>
                                                     <Transform translation='5000 -800 0' scale='400 400 400'>
                                                         <Shape>
-                                                            <Text id="3xd-xname" solid='false' string='X-axis label (units)'>
+                                                            <Text id="x3d-xname" solid='false' string='X-axis label (units)'>
                                                                 <FontStyle size='2' justify='MIDDLE'/>
                                                             </Text>
                                                             <Appearance USE='Grey'/>
@@ -1907,6 +1907,17 @@
                     if (data[key]['points']) {
                         $('#pointsetcoordinates').attr('point', data[key]['points']);
                         $('#pointsetcolors').attr('color', data[key]['colors']);
+                        $('#x3d-xmin').attr('string', data[key]['x'][1]);
+                        $('#x3d-xmax').attr('string', data[key]['x'][2]);
+                        $('#x3d-xname').attr('string', data[key]['x'][3]);
+                        $('#x3d-ymin').attr('string', data[key]['y'][1]);
+                        $('#x3d-ymax').attr('string', data[key]['y'][2]);
+                        $('#x3d-yname').attr('string', data[key]['y'][3]);
+                        $('#x3d-zmin').attr('string', data[key]['z'][1]);
+                        $('#x3d-zmax').attr('string', data[key]['z'][2]);
+                        $('#x3d-zname').attr('string', data[key]['z'][3]);
+                        //$('#x3d-viewpoint').attr('centerofrotation', data[key]['x'][4] + ',' + data[key]['y'][4] + ',' + data[key]['z'][4])
+                        $('#x3d-viewpoint').attr('centerofrotation', '5000' + ',' + '5000' + ',' + '5000')
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
                             $('#parameter-parameter-anchor').click();
                         }
