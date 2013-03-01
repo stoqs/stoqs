@@ -149,6 +149,7 @@
                                             <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
                                             <scene>
                                                 <Viewpoint position='2000 3000 19000'></viewpoint>
+
                                                 <!-- Y axis -->
                                                 <Group DEF='Axis'>
                                                     <Transform translation='0 5000 0'>
@@ -169,9 +170,25 @@
                                                     </Shape>
                                                 </Transform>
                                                 <Transform rotation='0 1 0 -0.78539816339'>
+                                                    <Transform translation='-400 0 0' scale='300 300 300' rotation='0 0 -1 1.57079632679'>
+                                                        <Shape>
+                                                            <Text id="x3d-ymin" solid='false' string='-0.123'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
                                                     <Transform translation='-800 5000 0' scale='400 400 400' rotation='0 0 -1 1.57079632679'>
                                                         <Shape>
-                                                            <Text solid='false' string='Y-axis label (units)'>
+                                                            <Text id="x3d-yname" solid='false' string='Y-axis label (units)'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                    <Transform translation='-400 10000 0' scale='300 300 300' rotation='0 0 -1 1.57079632679'>
+                                                        <Shape>
+                                                            <Text id="x3d-ymax" solid='false' string='1234.0'>
                                                                 <FontStyle size='2' justify='MIDDLE'/>
                                                             </Text>
                                                             <Appearance USE='Grey'/>
@@ -192,9 +209,25 @@
                                                     </Shape>
                                                 </Transform>
                                                 <Transform rotation='1 0 0 0.78539816339'>
+                                                    <Transform translation='0 -400 0' scale='300 300 300'>
+                                                        <Shape>
+                                                            <Text id='x3d-xmin' solid='false' string='0.2356'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
                                                     <Transform translation='5000 -800 0' scale='400 400 400'>
                                                         <Shape>
-                                                            <Text solid='false' string='X-axis label (units)'>
+                                                            <Text id="3xd-xname" solid='false' string='X-axis label (units)'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                    <Transform translation='10000 -400 0' scale='300 300 300'>
+                                                        <Shape>
+                                                            <Text id='x3d-xmax' solid='false' string='2356'>
                                                                 <FontStyle size='2' justify='MIDDLE'/>
                                                             </Text>
                                                             <Appearance USE='Grey'/>
@@ -215,9 +248,25 @@
                                                     </Shape>
                                                 </Transform>
                                                 <Transform rotation='0 0 1 -0.78539816339'>
+                                                    <Transform translation='0 -400 0' scale='300 300 300' rotation='0 1 0 -1.57079632679'>
+                                                        <Shape>
+                                                            <Text id='x3d-zmin' solid='false' string='0.001'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
                                                     <Transform translation='0 -800 5000' scale='400 400 400' rotation='0 1 0 -1.57079632679'>
                                                         <Shape>
-                                                            <Text solid='false' string='Z-axis label (units)'>
+                                                            <Text id='x3d-zname' solid='false' string='Z-axis label (units)'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                    <Transform translation='0 -400 10000' scale='300 300 300' rotation='0 1 0 -1.57079632679'>
+                                                        <Shape>
+                                                            <Text id='x3d-zmax' solid='false' string='9832'>
                                                                 <FontStyle size='2' justify='MIDDLE'/>
                                                             </Text>
                                                             <Appearance USE='Grey'/>
