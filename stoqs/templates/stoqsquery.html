@@ -145,9 +145,11 @@
                                         <p style="text-align: center;">
                                             <em> Rotate: Left mouse &mdash; Translate: Ctrl + left mouse &mdash; Zoom: Alt + left mouse </em>
                                         </p>
-                                        <X3D height="500px" style="width:100%; margin: 0px auto; display:block; border: none;">
+                                        <X3D showLog='true' height="500px" style="width:100%; margin: 0px auto; display:block; border: none;">
+                                            <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
                                             <scene>
-                                                <Viewpoint position='2000 3000 19000' orientation='0 0 1 0'></viewpoint>
+                                                <Viewpoint position='2000 3000 19000'></viewpoint>
+                                                <!-- Y axis -->
                                                 <Group DEF='Axis'>
                                                     <Transform translation='0 5000 0'>
                                                         <Shape>
@@ -157,21 +159,72 @@
                                                             <Cylinder height='10000' radius='20'/>
                                                         </Shape>
                                                     </Transform>
-                                                    <transform translation='0 11000 0'>
+                                                </Group>
+                                                <Transform translation='0 10600 0' scale='300 300 300'>
+                                                    <Shape>
+                                                        <Text solid='false' string='Y'>
+                                                            <FontStyle size='2' justify='MIDDLE'/>
+                                                        </Text>
+                                                        <Appearance USE='Grey'/>
+                                                    </Shape>
+                                                </Transform>
+                                                <Transform rotation='0 1 0 -0.78539816339'>
+                                                    <Transform translation='-800 5000 0' scale='400 400 400' rotation='0 0 -1 1.57079632679'>
                                                         <Shape>
-                                                            <Text solid='false' string='X'>
-                                                                <FontStyle justify='MIDDLE'/>
+                                                            <Text solid='false' string='Y-axis label (units)'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
                                                             </Text>
                                                             <Appearance USE='Grey'/>
                                                         </Shape>
                                                     </Transform>
-                                                </Group>
+                                                </Transform>
+
+                                                <!-- X axis -->
                                                 <Transform rotation='0 0 1 -1.57079632679'/>
                                                     <Group USE='Axis'/>
                                                 </Transform>
+                                                <Transform translation='10600 0 0' scale='300 300 300'>
+                                                    <Shape>
+                                                        <Text solid='false' string='X'>
+                                                            <FontStyle size='2' justify='MIDDLE'/>
+                                                        </Text>
+                                                        <Appearance USE='Grey'/>
+                                                    </Shape>
+                                                </Transform>
+                                                <Transform rotation='1 0 0 0.78539816339'>
+                                                    <Transform translation='5000 -800 0' scale='400 400 400'>
+                                                        <Shape>
+                                                            <Text solid='false' string='X-axis label (units)'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                </Transform>
+
+                                                <!-- Z axis -->
                                                 <Transform rotation='1 0 0 1.57079632679'/>
                                                     <Group USE='Axis'/>
                                                 </Transform>
+                                                <Transform translation='0 0 10600' scale='300 300 300'>
+                                                    <Shape>
+                                                        <Text solid='false' string='Z'>
+                                                            <FontStyle size='2' justify='MIDDLE'/>
+                                                        </Text>
+                                                        <Appearance USE='Grey'/>
+                                                    </Shape>
+                                                </Transform>
+                                                <Transform rotation='0 0 1 -0.78539816339'>
+                                                    <Transform translation='0 -800 5000' scale='400 400 400' rotation='0 1 0 -1.57079632679'>
+                                                        <Shape>
+                                                            <Text solid='false' string='Z-axis label (units)'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                </Transform>
+
                                                 <shape>
                                                     <pointset>
                                                         <color id="pointsetcolors"></color>
