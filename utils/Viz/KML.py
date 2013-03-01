@@ -321,7 +321,7 @@ class KML(object):
                 clt_index = int(len(clt) - 1);
             if _debug:
                 logger.debug("clt_index = %d", clt_index)
-            ge_color_val = "ff%02x%02x%02x" % ((round(clt[clt_index][2] * 255), round(clt[clt_index][1] * 255), round(clt[clt_index][0] * 255)));
+            ge_color_val = "ff%02x%02x%02x" % ((round(clt[clt_index][2] * 255), round(clt[clt_index][1] * 255), round(clt[clt_index][0] * 255)))
 
             if self.withTimeStampFlag:
                 placemark = """

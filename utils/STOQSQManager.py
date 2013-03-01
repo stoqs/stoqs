@@ -360,6 +360,7 @@ class STOQSQManager(object):
         results = []
         if pid:
             qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
+            logger.debug('qs = %s', qs)
             try:
                 results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
             except TypeError, e:
