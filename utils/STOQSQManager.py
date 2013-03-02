@@ -352,17 +352,23 @@ class STOQSQManager(object):
 
         return results
 
-    def getParameterMinMax(self, pid=None):
+    def getParameterMinMax(self, pid=None, percentileAggregateType='avg'):
         '''
         If a single parameter has been selected return the average 2.5 and 97.5 percentiles of the
-        data and call them min and max for purposes of plotting
+        data and call them min and max for purposes of plotting.  If @percentileAggregateType is
+        'avg' then the average of all the percentiles will be used.  This would be appropriate for
+        contour plotting.  If @percentileAggregateType is 'extrema' then the aggregate Min is used 
+        for 'p025' and Max for 'p975'.
         '''
         results = []
         if pid:
-            qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
-            logger.debug('qs = %s', qs)
             try:
-                results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                if percentileAggregateType == 'extrema':
+                    qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'), Avg('median'))
+                    results = [pid, round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
+                else:
+                    qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
+                    results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
             except TypeError, e:
                 logger.exception(e)
             else:
@@ -370,15 +376,27 @@ class STOQSQManager(object):
 
         if self.kwargs.has_key('measuredparametersgroup'):
             if len(self.kwargs['measuredparametersgroup']) == 1:
-                qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
                 try:
-                    results = [self.kwargs['measuredparametersgroup'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                    if percentileAggregateType == 'extrema':
+                        qs = self.getActivityParametersQS().aggregate(Min('p025'), Max('p975'))
+                        results = [self.kwargs['measuredparametersgroup'][0], round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
+                    else:
+                        qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
+                        results = [self.kwargs['measuredparametersgroup'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
                 except TypeError, e:
                     logger.exception(e)
+
         if self.kwargs.has_key('parameterstandardname'):
             if len(self.kwargs['parameterstandardname']) == 1:
-                qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
-                results = [self.kwargs['parameterstandardname'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                try:
+                    if percentileAggregateType == 'extrema':
+                        qs = self.getActivityParametersQS().aggregate(Min('p025'), Max('p975'))
+                        results = [self.kwargs['parameterstandardname'][0], round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
+                    else:
+                        qs = self.getActivityParametersQS().aggregate(Avg('p025'), Avg('p975'))
+                        results = [self.kwargs['parameterstandardname'][0], round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                except TypeError, e:
+                    logger.exception(e)
         return results
     
     def getPlatforms(self):
@@ -677,10 +695,14 @@ class STOQSQManager(object):
                     self.mpq.buildPQuerySet(*self.args, **self.kwargs)
 
                 # We have enough information to generate X3D XML
-                pMinMax = {'x': self.getParameterMinMax(px), 'y': self.getParameterMinMax(py), 'z': self.getParameterMinMax(pz), 'c': self.getParameterMinMax(pc)}
-                logger.debug('pMinMax = %s', pMinMax)
+                pMinMax = { 'x': self.getParameterMinMax(px, percentileAggregateType='extrema'), 
+                            'y': self.getParameterMinMax(py, percentileAggregateType='extrema'), 
+                            'z': self.getParameterMinMax(pz, percentileAggregateType='extrema'), 
+                            'c': self.getParameterMinMax(pc, percentileAggregateType='extrema') }
+                
                 if not pMinMax['x'] or not pMinMax['y'] or not pMinMax['z']:
                     return '', 'Selected x, y, and z axis parameters are not in filtered selection.'
+
                 logger.debug('Instantiating Viz.PropertyPropertyPlots for X3D............................................')
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
                 x3dDict = self.pp.makeX3D()
