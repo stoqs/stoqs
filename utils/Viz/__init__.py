@@ -451,10 +451,33 @@ class ParameterParameter(object):
             zp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z']))
             self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
 
-            # Get median x,y,z of the data for setting center of rotation
-            median_coords = ''
+            colorbarPngFile = ''
+            if colors:
+                cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
+                try:
+                    # Make colorbar as a separate figure
+                    imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+                    colorbarPngFile = '%s_%s_%s_%s_3dcolorbar_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['z'], self.pDict['c'], imageID )
+                    colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
+                    logger.debug('colorbarPngFile = %s', colorbarPngFile)
+                    cb_fig = plt.figure(figsize=(0.8, 5))
+                    cb_ax = cb_fig.add_axes([0.1, 0.1, 0.2, 0.8])
+                    norm = mpl.colors.Normalize(vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip=False)
+                    clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+                    cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
+                    cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=cm_jetplus,
+                                                    norm=norm,
+                                                    ticks=[self.pMinMax['c'][1], self.pMinMax['c'][2]],
+                                                    orientation='vertical')
+                    cb.ax.set_xticklabels([str(self.pMinMax['c'][1]), str(self.pMinMax['c'][2])])
+                    cb.set_label('%s (%s)' % (cp.name, cp.units))
+                    cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
+                    plt.close()
+                except Exception,e:
+                    logger.exception('Could not plot the colormap')
+                    return None, None, 'Could not plot the colormap'
 
-            x3dResults = {'colors': colors, 'points': points, 'info': '', 'x': self.pMinMax['x'], 'y': self.pMinMax['y'], 'z': self.pMinMax['z'], 'median': median_coords}
+            x3dResults = {'colors': colors, 'points': points, 'info': '', 'x': self.pMinMax['x'], 'y': self.pMinMax['y'], 'z': self.pMinMax['z'], 'colorbar': colorbarPngFile}
 
         except:
             logger.exception('Cannot make parameterparameter X3D')

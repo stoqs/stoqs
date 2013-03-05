@@ -108,7 +108,8 @@
                                 </label>
                             </form>
                             <div>
-                                <div id="query-stats" class="ajax-wait"></div>
+                                <div id="query-stats"></div>
+                                <div id="loader-div" class="ajax-wait"></div>
                                 <label class="checkbox">
                                     <input type="checkbox" id="getactualcount" /> Get actual count
                                 </label>
@@ -145,7 +146,9 @@
                                         <p style="text-align: center;">
                                             <em> Rotate: Left mouse &mdash; Translate: Ctrl + left mouse &mdash; Zoom: Alt + left mouse </em>
                                         </p>
-                                        <X3D height="500px" style="width:100%; margin: 0px auto; display:block; border: none;">
+                                        <div id='ppx3dcolorbar'>
+                                        </div>
+                                        <X3D id='pp_x3d' showProgess='bar' showStat='true' height="500px" style="width:100%; margin: 0px auto; display:block; border: none;">
                                             <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
                                             <scene>
                                                 <Viewpoint id='x3d-viewpoint' position='2000 3000 19000' centerofrotation='5000 5000 5000'></viewpoint>
@@ -282,6 +285,9 @@
                                                 </shape>
                                             </scene>
                                         </X3D>
+                                        <p>
+                                            <a href='#' onClick="$('#pp_x3d')[0].runtime.resetView();return false;">Reset view</a>
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="ppdata">
@@ -1918,6 +1924,10 @@
                         $('#x3d-zname').attr('string', data[key]['z'][3]);
                         //$('#x3d-viewpoint').attr('centerofrotation', data[key]['x'][4] + ',' + data[key]['y'][4] + ',' + data[key]['z'][4])
                         //$('#x3d-viewpoint').attr('centerofrotation', '5000' + ' ' + '5000' + ' ' + '5000')
+                        //$('#ppx3dcolorbar').html('<img src="{{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + '" />');
+                        $('#pp_x3d').css( {
+                                'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
+                                'background-repeat': 'no-repeat' } );
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
                             $('#parameter-parameter-anchor').click();
                         }
@@ -1935,7 +1945,7 @@
         request = $.ajax({
             type : 'GET',
             beforeSend: function() {
-                $('#query-stats').html('<img src="{{STATIC_URL}}images/ajax-loader.gif">')
+                $('#loader-div').html('<img src="{{STATIC_URL}}images/ajax-loader.gif">')
                 $('#time-depth-flot').addClass('stoqs-background-ajax-loader ');
                 $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader ');
             },
@@ -1951,6 +1961,7 @@
                 }
                 $('#time-depth-flot').removeClass('stoqs-background-ajax-loader ');
                 $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader ');
+                $('#loader-div').html('');
 
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
                 me.refreshMap();
