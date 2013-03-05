@@ -43,7 +43,11 @@ except IndexError:
 # ------------------------------------------------------------------------------------
 # Data loads for all the activities, LRAUV have real-time files before full-resolution
 # ------------------------------------------------------------------------------------
-cl = CANONLoader(dbAlias, 'CANON - May 2012')
+campaignName = 'CANON - May 2012'
+if stride != 1:
+    campaignName = campaignName + ' with stride=%d' % stride
+
+cl = CANONLoader(dbAlias, campaignName)
 
 # 2-second decimated dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2012/netcdf/'

@@ -35,7 +35,11 @@ except IndexError:
     dbAlias = 'stoqs_september2010'
 
 # ----------------------------------------------------------------------------------
-cl = CANONLoader(dbAlias, 'ESP Drifter Tracking - September 2010')
+campaignName = 'CANON - September 2010'
+if stride != 1:
+    campaignName = campaignName + ' with stride=%d' % stride
+
+cl = CANONLoader(dbAlias, campaignName)
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
 cl.dorado_files = [ 'Dorado389_2010_257_01_258_04_decim.nc',
                     'Dorado389_2010_258_05_258_08_decim.nc',
