@@ -650,7 +650,9 @@ class STOQSQManager(object):
 
                 # We have enough information to generate a 2D scatter plot
                 ##if not self.pp:     # ...png always gets called before ...x3d - unless we change the key names...
-                pMinMax = {'x': self.getParameterMinMax(px), 'y': self.getParameterMinMax(py), 'c': self.getParameterMinMax(pc)}
+                pMinMax = { 'x': self.getParameterMinMax(px, percentileAggregateType='extrema'), 
+                            'y': self.getParameterMinMax(py, percentileAggregateType='extrema'), 
+                            'c': self.getParameterMinMax(pc)}
                 if not pMinMax['x'] or not pMinMax['y']:
                     return '', 'Selected x and y axis parameters are not in filtered selection.'
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
