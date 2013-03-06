@@ -146,9 +146,7 @@
                                         <p style="text-align: center;">
                                             <em> Rotate: Left mouse &mdash; Translate: Ctrl + left mouse &mdash; Zoom: Alt + left mouse </em>
                                         </p>
-                                        <div id='ppx3dcolorbar'>
-                                        </div>
-                                        <X3D id='pp_x3d' showProgess='bar' showStat='true' height="500px" style="width:100%; margin: 0px auto; display:block; border: none;">
+                                        <X3D id='pp_x3d' height="500px" style="width:100%; margin: 0px auto; display:block; border: none;">
                                             <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
                                             <scene>
                                                 <Viewpoint id='x3d-viewpoint' position='2000 3000 19000' centerofrotation='5000 5000 5000'></viewpoint>
@@ -1922,9 +1920,6 @@
                         $('#x3d-zmin').attr('string', data[key]['z'][1]);
                         $('#x3d-zmax').attr('string', data[key]['z'][2]);
                         $('#x3d-zname').attr('string', data[key]['z'][3]);
-                        //$('#x3d-viewpoint').attr('centerofrotation', data[key]['x'][4] + ',' + data[key]['y'][4] + ',' + data[key]['z'][4])
-                        //$('#x3d-viewpoint').attr('centerofrotation', '5000' + ' ' + '5000' + ' ' + '5000')
-                        //$('#ppx3dcolorbar').html('<img src="{{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + '" />');
                         $('#pp_x3d').css( {
                                 'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
                                 'background-repeat': 'no-repeat' } );
