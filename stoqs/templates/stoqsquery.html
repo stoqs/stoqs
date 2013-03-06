@@ -91,31 +91,47 @@
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
-                        <h3><a id="map-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseMap">
-                        Map
+                        <h3><a id="spatial-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseSpatial">
+                        Spatial
                         </a></h3>
                     </div>
-                    <div id="collapseMap" class="accordion-body collapse in">
+                    <div id="collapseSpatial" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <div class="row-fluid" id="map">
-                            </div>
-                            <form class="form-inline">
-                                <label class="checkbox" style="width:200px;">
-                                    <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
-                                </label>
-                                <label class="checkbox" style="width:200px;">
-                                    <input type="checkbox" id="showsensortracks" disabled="disabled"/> Show sensor tracks
-                                </label>
-                            </form>
-                            <div>
-                                <div id="query-stats"></div>
-                                <div id="loader-div" class="ajax-wait"></div>
-                                <label class="checkbox">
-                                    <input type="checkbox" id="getactualcount" /> Get actual count
-                                </label>
-                            </div>
-                            <div id="samplePoint"></div>
-                        </div>
+
+                            <ul id="spatialTabs" class="nav nav-tabs">
+                                <li class="active"><a href="#map2d" data-toggle="tab">Map</a></li>
+                                <li><a href="#geo3d" data-toggle="tab">3D</a></li>
+                            </ul>
+
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="map2d">
+                                    <div class="row-fluid" id="map" style="height:500px;">
+                                    </div>
+                                    <form class="form-inline">
+                                        <label class="checkbox" style="width:200px;">
+                                            <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
+                                        </label>
+                                        <label class="checkbox" style="width:200px;">
+                                            <input type="checkbox" id="showsensortracks" disabled="disabled"/> Show sensor tracks
+                                        </label>
+                                    </form>
+                                    <div>
+                                        <div id="query-stats"></div>
+                                        <div id="loader-div" class="ajax-wait"></div>
+                                        <label class="checkbox">
+                                            <input type="checkbox" id="getactualcount" /> Get actual count
+                                        </label>
+                                    </div>
+                                    <div id="samplePoint"></div>
+                                </div>
+                                <div class="tab-pane" id="geo3d">
+                                    <div class="row-fluid" id="geox3d" style="height:500px;">
+                                        <em>Under construction</em>
+                                    </div>
+                                </div>
+                            </div><!-- tab-content -->
+
+                        </div><!-- accorion-inner -->
                     </div>
                 </div><!-- accordian-group -->
 
@@ -1975,10 +1991,7 @@
     
     $(function () { 
         // Initialize the accordian fields.
-        $(".collapse").collapse(); // Collapse the accordian fields.
-        
-        // Adjust the height of the map div to 500px
-        $('#map').height(500);
+        $(".collapse").collapse(); // Collapse all the accordian fields, click the Spatial and Temporal ones below
         
         // Add this behavior to all text fields, so when someone clicks on a field it highlights 
         // all the data so it's easy to copy to the clipboard.
@@ -2220,8 +2233,8 @@
         
 
         // Tooltips    
+        $('#spatial-anchor').click();
         $('#time-depth-anchor').click();
-        $('#map-anchor').click();
         //$('#measuredparameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
         //$('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select Measurement Data by parameter value range'});
         //$('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
