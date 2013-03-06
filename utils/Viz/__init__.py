@@ -460,8 +460,8 @@ class ParameterParameter(object):
                     colorbarPngFile = '%s_%s_%s_%s_3dcolorbar_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['z'], self.pDict['c'], imageID )
                     colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
                     logger.debug('colorbarPngFile = %s', colorbarPngFile)
-                    cb_fig = plt.figure(figsize=(0.8, 5))
-                    cb_ax = cb_fig.add_axes([0.1, 0.1, 0.2, 0.8])
+                    cb_fig = plt.figure(figsize=(0.6, 4))
+                    cb_ax = cb_fig.add_axes([0.1, 0.1, 0.15, 0.8])
                     norm = mpl.colors.Normalize(vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip=False)
                     clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
                     cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
@@ -469,8 +469,11 @@ class ParameterParameter(object):
                                                     norm=norm,
                                                     ticks=[self.pMinMax['c'][1], self.pMinMax['c'][2]],
                                                     orientation='vertical')
-                    cb.ax.set_xticklabels([str(self.pMinMax['c'][1]), str(self.pMinMax['c'][2])])
-                    cb.set_label('%s (%s)' % (cp.name, cp.units))
+                    cb.ax.set_yticklabels([str(self.pMinMax['c'][1]), str(self.pMinMax['c'][2])])
+                    cb.set_label('%s (%s)' % (cp.name, cp.units), fontsize=10)
+                    for label in cb.ax.get_yticklabels():
+                        label.set_fontsize(10)
+                        label.set_rotation('vertical')
                     cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
                     plt.close()
                 except Exception,e:
