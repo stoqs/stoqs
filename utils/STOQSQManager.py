@@ -364,7 +364,9 @@ class STOQSQManager(object):
         if pid:
             try:
                 if percentileAggregateType == 'extrema':
+                    logger.debug('self.getActivityParametersQS().filter(parameter__id=pid) = %s', str(self.getActivityParametersQS().filter(parameter__id=pid).query))
                     qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'), Avg('median'))
+                    logger.debug('qs = %s', qs)
                     results = [pid, round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
                 else:
                     qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
@@ -698,7 +700,7 @@ class STOQSQManager(object):
                 pMinMax = { 'x': self.getParameterMinMax(px, percentileAggregateType='extrema'), 
                             'y': self.getParameterMinMax(py, percentileAggregateType='extrema'), 
                             'z': self.getParameterMinMax(pz, percentileAggregateType='extrema'), 
-                            'c': self.getParameterMinMax(pc, percentileAggregateType='extrema') }
+                            'c': self.getParameterMinMax(pc) }
                 
                 if not pMinMax['x'] or not pMinMax['y'] or not pMinMax['z']:
                     return '', 'Selected x, y, and z axis parameters are not in filtered selection.'
