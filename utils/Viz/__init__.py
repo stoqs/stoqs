@@ -295,7 +295,7 @@ class ParameterParameter(object):
 
     def make2DPlot(self):
         '''
-        Produce a .png image 
+        Produce a Parameter-Parameter .png image with axis limits set to the 2.5 and 97.5 percentials and draw outside the lines
         '''
         try:
             # self.x and self.y may already be set for this instance by makeX3D()
@@ -334,11 +334,14 @@ class ParameterParameter(object):
             fig = plt.figure()
             plt.grid(True)
             ax = fig.add_subplot(111)
+            ax.set_xlim(self.pMinMax['x'][1], self.pMinMax['x'][2])
+            ax.set_ylim(self.pMinMax['y'][1], self.pMinMax['y'][2])
+
             clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
             cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
             if self.c:
                 logger.debug('self.pMinMax = %s', self.pMinMax)
-                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2])
+                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
                 # Add colorbar
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
                 norm = mpl.colors.Normalize(vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip=False)
