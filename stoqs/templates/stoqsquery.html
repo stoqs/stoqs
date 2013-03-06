@@ -154,7 +154,7 @@
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane" id="pp2d">
-                                    <div id="parameter-parameter-2dplot" style="overflow: auto; margin:0px auto;">
+                                    <div id="parameter-parameter-2dplot" style="height:500px; overflow: auto; margin:0px auto;">
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="pp3d">
@@ -306,6 +306,7 @@
                                 </div>
                                 <div class="tab-pane" id="ppdata">
                                     <div id="parameter-parameter-data">
+                                        <em>Under construction</em>
                                     </div>
                                 </div>
                             </div>
@@ -327,9 +328,6 @@
 
                             <ul class="nav nav-tabs">
                                 <li class="active"><a href="#table" data-toggle="tab">Table</a></li>
-                                {% for format in formats %}
-                                <li><a href="#{{format.0}}-sample" data-toggle="tab">{{format.0}}</a></li>
-                                {% endfor %}            
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane active" id="table" style="overflow: auto">
@@ -341,29 +339,6 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                {% for format in formats %}
-                                <div class="tab-pane" id="{{format.0}}-sample">
-                                    <table>
-                                        <tr>
-                                            <th><a target="_blank" id="{{format.0}}-link-sample" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png" alt="{{format.0}}"/></a></th>
-                                            <th style="vertical-align:text-top;"><span>&nbsp;{{format.1}}</span></th>
-                                        </tr>
-                                    </table>
-                                    {% if format.0 = 'kml' %}
-                                        <div style="text-align: center;">
-                                        <span id="kml-parameter-sample"></span>
-                                        <form style="text-align: center;" class="form-inline">
-                                            <input id="cmin-sample" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
-                                            <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" alt="jetplus"/>
-                                            <input id="cmax-sample" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
-                                        </form>
-                                        </div>
-                                        <pre id="{{format.0}}-field-sample"></pre>
-                                    {% else %}
-                                        <pre id="{{format.0}}-field-sample"></pre>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}            
                             </div>
                         </div>
                     </div>
@@ -432,32 +407,49 @@
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
-                        <h3><a id="time-depth-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTimeDepth">
-                        Time Depth</a>
+                        <h3><a id="temporal-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTemporal">
+                        Temporal</a>
                         <button id="zoomed-button" class="btn btn-mini disabled">Clear Selection</button>
                         </h3>
                     </div>
-                    <div id="collapseTimeDepth" class="accordion-body collapse in">
+                    <div id="collapseTemporal" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <em>Click and drag to select a time-depth range</em>
-                            <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
-                                <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
-                                <div class="row">
-                                    <div class="span2">
-                                        <label class="checkbox disabled">
-                                            <input type="checkbox" id="showparameterplatformdata" disabled="disabled"><span id="contourtext">Show data values</span>
-                                        </label>
+
+                            <ul id="temporalTabs" class="nav nav-tabs">
+                                <li class="active"><a href="#temporal-depth" data-toggle="tab" id="temporal-depth-label">Depth</a></li>
+                                <li><a href="#temporal-parameter" data-toggle="tab">Parameter</a></li>
+                            </ul>
+
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="temporal-depth">
+                                    <em>Click and drag to select a time-depth range</em>
+                                    <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
+                                        <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
+                                        <div class="row">
+                                            <div class="span2">
+                                                <label class="checkbox disabled">
+                                                    <input type="checkbox" id="showparameterplatformdata" disabled="disabled"><span id="contourtext">Show data values</span>
+                                                </label>
+                                            </div>
+                                            <div class="span4" id="sectioncolorbar" style="float:right;"></div>
+                                        </div>
                                     </div>
-                                    <div class="span4" id="sectioncolorbar" style="float:right;"></div>
+                                    <input type="hidden" id="start-ems" name="start-ems" />
+                                    <input type="hidden" id="start-time" name="start-time" />
+                                    <input type="hidden" id="end-ems" name="end-ems" /> 
+                                    <input type="hidden" id="end-time" name="end-time"> 
+                                    <input type="hidden" id="start-depth" name="start-depth" />
+                                    <input type="hidden" id="end-depth" name="end-depth" /> 
                                 </div>
-                            </div>
-                            <input type="hidden" id="start-ems" name="start-ems" />
-                            <input type="hidden" id="start-time" name="start-time" />
-                            <input type="hidden" id="end-ems" name="end-ems" /> 
-                            <input type="hidden" id="end-time" name="end-time"> 
-                            <input type="hidden" id="start-depth" name="start-depth" />
-                            <input type="hidden" id="end-depth" name="end-depth" /> 
-                        </div>
+                                <div class="tab-pane" id="temporal-parameter">
+                                    <em>Under construction</em>
+                                    <div class="row-fluid" id="time-parameter-plot" style="height:400px" class="disabled row-fluid">
+                                    </div>
+                                </div>
+                            </div><!-- tab-content -->
+
+
+                        </div><!-- accordion-inner -->
                     </div>
                 </div><!-- accordian-group -->
 
@@ -998,7 +990,7 @@
             params['only'] = only
         }
 
-        if ($('.btn-primary', $('#time-depth-anchor').parent()).length) {
+        if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
             params['start_time']=$('#start-time').val();
             params['end_time']=$('#end-time').val();
             params['min_depth']=$('#start-depth').val();
@@ -1159,7 +1151,7 @@
             $("#zoomed-button").removeClass('btn-primary');
             $("#zoomed-button").addClass('disabled');
             $('#zoomed-button').attr('title', ' ').tooltip('fixTitle').tooltip('hide');
-            $('#time-depth-anchor').html('Time Depth')
+            $('#temporal-anchor').html('Temporal')
         }
     });
 
@@ -1564,9 +1556,10 @@
         $('#zoomed-button').addClass('btn-primary');
         //$('#zoomed-button').attr('title', 'Click to unzoom to original extent. Right-click on plot to unzoom to last zoom level.').tooltip('fixTitle').tooltip('hide');
         rebuildFilters();
-        var dtLabel = 'Time: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
-        dtLabel = dtLabel + ' Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
-        $('#time-depth-anchor').html(dtLabel);
+        var tLabel = 'Time: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
+        var dLabel = 'Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
+        $('#temporal-anchor').html(tLabel);
+        $('#temporal-depth-label').html(dLabel);
     }
 
     function ZoomOut() {
@@ -2234,7 +2227,7 @@
 
         // Tooltips    
         $('#spatial-anchor').click();
-        $('#time-depth-anchor').click();
+        $('#temporal-anchor').click();
         //$('#measuredparameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
         //$('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select Measurement Data by parameter value range'});
         //$('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
