@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 __author__    = 'Mike McCann'
 __copyright__ = '2011'
 __license__   = 'GPL v3'
@@ -49,9 +50,15 @@ class CANONLoader(object):
                 'waveglider':   'fc4e2a',
                 'nps_g29':      'e31a1c',
                 'l_662':        'bd0026',
+                'hehape':       'bd2026',
+                'rusalka':      'bd4026',
+                'carmen':       'bd8026',
                 'martin':       '800026',
                 'flyer':        '801026',
+                'carson':       '881026',
                 'espdrift':     '802026',
+                'espmack':      '804026',
+                'espbruce':     '808026',
              }
 
     def __init__(self, dbAlias, campaignName):
@@ -127,6 +134,36 @@ class CANONLoader(object):
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'l_662', self.colors['l_662'], 'glider', 'Glider Mission', 
                                         self.l_662_parms, self.dbAlias, self.stride, self.l_662_startDatetime, self.l_662_endDatetime)
 
+    def loadHeHaPe(self):
+        '''
+        Glider specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.hehape_files], self.hehape_files):
+            url = self.hehape_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'hehape', self.colors['hehape'], 'glider', 'Glider Mission', 
+                                        self.hehape_parms, self.dbAlias, self.stride)
+
+    def loadRusalka(self):
+        '''
+        Glider specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.rusalka_files], self.rusalka_files):
+            url = self.rusalka_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'rusalka', self.colors['rusalka'], 'glider', 'Glider Mission', 
+                                        self.rusalka_parms, self.dbAlias, self.stride)
+
+    def loadCarmen(self):
+        '''
+        Glider specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.carmen_files], self.carmen_files):
+            url = self.carmen_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'carmen', self.colors['carmen'], 'glider', 'Glider Mission', 
+                                        self.carmen_parms, self.dbAlias, self.stride)
+
     def loadWaveglider(self):
         '''
         Glider specific load functions
@@ -145,6 +182,26 @@ class CANONLoader(object):
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espdrift', self.colors['espdrift'], 'espdrift', 'ESP drift Mission', 
                                         self.espdrift_parms, self.dbAlias, self.stride)
+
+    def loadESPmack(self):
+        '''
+        ESPmack specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.espmack_files], self.espmack_files):
+            url = self.espmack_base + file
+            print "url = %s" % url
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espmack', self.colors['espmack'], 'espmack', 'ESP mack Mission', 
+                                        self.espmack_parms, self.dbAlias, self.stride)
+
+    def loadESPbruce(self):
+        '''
+        ESPbruce specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.espbruce_files], self.espbruce_files):
+            url = self.espbruce_base + file
+            print "url = %s" % url
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espbruce', self.colors['espbruce'], 'espbruce', 'ESP bruce Mission', 
+                                        self.espbruce_parms, self.dbAlias, self.stride)
 
     def loadWFuctd(self):
         '''
@@ -168,6 +225,32 @@ class CANONLoader(object):
                                         self.wfpctd_parms, self.dbAlias, self.stride)
         # Now load all the bottles           
         sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'])
+        sl.tdsBase= self.tdsBase
+        sl.pctdDir = self.pctdDir
+        sl.process_btl_files()
+
+    def loadRCuctd(self):
+        '''
+        RC uctd specific load functions
+        '''
+        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.rcuctd_files], self.rcuctd_files):
+            url = self.rcuctd_base + file
+            print "url = %s" % url
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'rc_uctd', self.colors['carson'], 'rc_uctd', 'Rachel Carson Underway CTD Data', 
+                                        self.rcuctd_parms, self.dbAlias, self.stride)
+
+    def loadRCpctd(self):
+        '''
+        RC pctd specific load functions
+        '''
+        platformName = 'rc_pctd'
+        for (aName, file) in zip([ a.split('.')[0] + ' (stride=%d)' % self.stride for a in self.rcpctd_files], self.rcpctd_files):
+            url = self.rcpctd_base + file
+            print "url = %s" % url
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['carson'], platformName, 'Rachel Carson Profile CTD Data', 
+                                        self.rcpctd_parms, self.dbAlias, self.stride)
+        # Now load all the bottles           
+        sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['carson'])
         sl.tdsBase= self.tdsBase
         sl.pctdDir = self.pctdDir
         sl.process_btl_files()
