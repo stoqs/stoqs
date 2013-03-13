@@ -72,6 +72,7 @@ indication that you are in the virtual environment.
 
 5.  Start the development web server:
 
+        export LD_LIBRARY_PATH=/usr/local/lib/                  # Needed if packages, such as gdal, were installed here
         python manage.py runserver 0.0.0.0:8000 
     
     
