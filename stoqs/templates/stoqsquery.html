@@ -85,11 +85,11 @@
 
     <div class="row-fluid">
 
-        <div class="span6">
+        <div class="span6 stoqs-zoom-width">
 
-            <div class="accordion well" id="accordion1">
+            <div id="accordion1" class="accordion well">
 
-                <div class="accordian-group">
+                <div id="spatial-group" class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="spatial-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseSpatial">
                         Spatial
@@ -159,13 +159,22 @@
                                 </div>
                                 <div class="tab-pane" id="pp3d">
                                     <div id="parameter-parameter-3dplot" style="height:500px;">
-                                        <p style="text-align: center;">
-                                            <em> Rotate: Left mouse &mdash; Translate: Ctrl + left mouse &mdash; Zoom: Alt + left mouse </em>
-                                        </p>
+                                        <table>
+                                            <tr>
+                                                <td style="vertical-align: top; padding-right: 10px;">
+                                                    <em> Rotate: Left mouse<br>Translate: Ctrl + left mouse<br>Zoom: Alt + left mouse </em>
+                                                </td>
+                                                <td style="vertical-align: top;">
+                                                    <button id="zoom-width-button" class="btn btn-mini">Zoom display</button>
+                                                    <br><br>
+                                                    <button id="pp_x3d-reset-view" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.resetView();return false;">Reset view</button>
+                                                </td>
+                                            </tr>
+                                        </table>
                                         <X3D id='pp_x3d' style="width:100%; margin: 0px auto; display:block; border: none;">
                                             <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
                                             <scene>
-                                                <Viewpoint id='x3d-viewpoint' position='2000 3000 19000' centerofrotation='5000 5000 5000'></viewpoint>
+                                                <Viewpoint id='x3d-viewpoint' position='2000 3000 22000' centerofrotation='5000 5000 5000'></viewpoint>
 
                                                 <!-- Y axis -->
                                                 <Group DEF='Axis'>
@@ -299,9 +308,6 @@
                                                 </shape>
                                             </scene>
                                         </X3D>
-                                        <p>
-                                            <a href='#' onClick="$('#pp_x3d')[0].runtime.resetView();return false;">Reset view</a>
-                                        </p>
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="ppdata">
@@ -402,7 +408,7 @@
 
         </div><!-- span6 -->
         
-        <div class="span6">
+        <div id="right-column" class="span6 stoqs-zoom-width">
             <div class="accordion well" id="accordion2">
 
                 <div class="accordian-group">
@@ -599,6 +605,7 @@
     var params={}
     var initData;
     var zoomedData;
+    var widthZoomed = false;
     var request=''
     var map = null; 
     var kmlurl = '';
@@ -825,7 +832,7 @@
             }
         });
     }
-    
+
     function toggleField(element) {
         var $element=$(element);
         if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
@@ -1271,6 +1278,54 @@
             $('#platforms-anchor').html('Platforms')
         }
     });
+
+    $("#zoom-width-button").click(function() {
+        if (widthZoomed) {
+            if ($('.stoqs-zoom-width').hasClass('span12')) {
+                $('.stoqs-zoom-width').removeClass('span12');
+            }
+            if (! $('.stoqs-zoom-width').hasClass('span6')) {
+                $('.stoqs-zoom-width').addClass('span6');
+            }
+            $('.navbar').show();
+            $('body').css({'padding-top': '60px'});
+            $('#spatial-group').children().show();
+            $('#accordion1').addClass('well');
+            $('#parameter-parameter-anchor').parent().show();
+            $('#parameterParameterTabs').show();
+            $('#sample-anchor').parent().show();
+            $('#data-access-anchor').parent().show();
+            $('#right-column').show();
+            $('#parameter-parameter-3dplot').css( { 'height': '500px',
+                                                    'width': '',
+                                                    'position': ''
+                                                  } );
+            $('#zoom-width-button').html('Zoom display');
+        } else {
+            if ($('.stoqs-zoom-width').hasClass('span6')) {
+                $('.stoqs-zoom-width').removeClass('span6');
+            }
+            if (! $('.stoqs-zoom-width').hasClass('span12')) {
+                $('.stoqs-zoom-width').addClass('span12');
+            }
+            $('.navbar').hide();
+            $('body').css({'padding-top': '0px'});
+            $('#spatial-group').children().hide();
+            $('#accordion1').removeClass('well');
+            $('#parameter-parameter-anchor').parent().hide();
+            $('#parameterParameterTabs').hide();
+            $('#sample-anchor').parent().hide();
+            $('#data-access-anchor').parent().hide();
+            $('#right-column').hide();
+            $('#parameter-parameter-3dplot').css( { 'height': '100%',
+                                                    'width': '100%',
+                                                    'position': 'fixed',
+                                                  });
+            $('#zoom-width-button').html('Unzoom display');
+        }
+        widthZoomed = ! widthZoomed;
+    });
+
 
     var simpledepthtime_options = { grid: { 
                                         backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
@@ -1953,6 +2008,7 @@
                 $('#loader-div').html('<img src="{{STATIC_URL}}images/ajax-loader.gif">')
                 $('#time-depth-flot').addClass('stoqs-background-ajax-loader ');
                 $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader ');
+                $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader ');
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
@@ -1966,6 +2022,7 @@
                 }
                 $('#time-depth-flot').removeClass('stoqs-background-ajax-loader ');
                 $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader ');
+                $('#parameter-parameter-3dplot').removeClass('stoqs-background-ajax-loader ');
                 $('#loader-div').html('');
 
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
