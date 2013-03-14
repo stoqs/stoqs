@@ -61,9 +61,9 @@ cl.dorado_files = [
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
 ##cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
-cl.daphne_base = cl.dodsBase + 'CANON_march2013/lrauv/daphne/realtime/sbdlogs/2012/201209/'
+cl.daphne_base = cl.dodsBase + 'CANON_march2013/lrauv/daphne/realtime/sbdlogs/2013/201303/'
 cl.daphne_files = [ 
-                    '20120910T221418/shore.nc',
+                    '20130313T195025/shore.nc',         # No science data yet
                   ]
 cl.daphne_parms = [ 'platform_battery_charge', 'sea_water_temperature', 'downwelling_photosynthetic_photon_flux_in_sea_water',
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
