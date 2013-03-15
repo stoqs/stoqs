@@ -48,9 +48,9 @@ if stride != 1:
     campaignName = campaignName + ' with stride=%d' % stride
 cl = CANONLoader(dbAlias, campaignName)
 
-# Aboard the Carson use zuma's local IP address:
-##cl.tdsBase = 'http://134.89.22.17/thredds/'       
-cl.tdsBase = 'http://odss.mbari.org/thredds/'       
+# Aboard the Carson use zuma
+cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
+##cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # 2-second decimated dorado data
@@ -63,13 +63,15 @@ cl.dorado_files = [
 ##cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
 cl.daphne_base = cl.dodsBase + 'CANON_march2013/lrauv/daphne/realtime/sbdlogs/2013/201303/'
 cl.daphne_files = [ 
-                    '20130313T195025/shore.nc',         # No science data yet
+                    'shore_201303132226_201303140449.nc',
+                    'shore_201303140708_201303140729.nc',
+                    'shore_201303140729_201303141609.nc',
+                    'shore_201303141631_201303151448.nc',
                   ]
-cl.daphne_parms = [ 'platform_battery_charge', 'sea_water_temperature', 'downwelling_photosynthetic_photon_flux_in_sea_water',
-                    'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water']
+cl.daphne_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water']
 
 # Postrecovery full-resolution (_d_) daphne data - insert '_d_' for delayed-mode to not load the data
-cl.daphne_d_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/daphne/2012/'
+cl.daphne_d_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/daphne/2013/'
 cl.daphne_d_files = [ 
                   ]
 cl.daphne_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
@@ -78,12 +80,19 @@ cl.daphne_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_
 
 # Realtime telemetered (_r_) tethys data - insert '_r_' to not load the files
 ##cl.tethys_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/tethys/2012/'                    # Tethys realtime
-cl.tethys_base = cl.dodsBase + 'CANON_september2012/lrauv/tethys/realtime/sbdlogs/2012/201209/'
+cl.tethys_base = cl.dodsBase + 'CANON_march2013/lrauv/tethys/realtime/sbdlogs/2013/201303/'
 cl.tethys_files = [ 
-                    '20120909T152301/shore.nc',
+                    'shore_201303140812_201303141247.nc',
+                    'shore_201303141252_201303141329.nc',
+                    'shore_201303141331_201303150644.nc',
+                    'shore_201303150645_201303151308.nc',
+                    'shore_201303151312_201303151339.nc',
+                    'shore_201303151333_201303151334.nc',
+                    'shore_201303151337_201303151503.nc',
+                    'shore_201303151504_201303151706.nc',
+                    'shore_201303151714_201303151725.nc',
                   ]
-cl.tethys_parms = [ 'platform_battery_charge', 'sea_water_temperature', 'downwelling_photosynthetic_photon_flux_in_sea_water',
-                    'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water']
+cl.tethys_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water']
 
 # Postrecovery full-resolution tethys data - insert '_d_' for delayed-mode to not load the data
 cl.tethys_d_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2012/'
@@ -104,7 +113,8 @@ cl.rusalka_base = cl.dodsBase + 'CANON_march2013/usc_glider/Rusalka/processed/'
 cl.carmen_base = cl.dodsBase + 'CANON_march2013/usc_glider/Carmen/processed/'
 
 cl.hehape_files = [
-                        'OS_Glider_20130305_TS.nc',
+                        'OS_Glider_HeHaPe_20130305_TS.nc',
+                        'OS_Glider_HeHaPe_20130310_TS.nc',
                    ]
 cl.hehape_parms = [ 'TEMP', 'PSAL', 'BB532', 'CDOM', 'CHLA', 'DENS' ]
 
@@ -151,8 +161,8 @@ cl.stride = stride
 
 # For testing.  Comment out the loadAll() call, and uncomment one of these as needed
 ##cl.loadDorado()
-##cl.loadDaphne()
-##cl.loadTethys()
+cl.loadDaphne()
+cl.loadTethys()
 ##cl.loadESPmack()
 ##cl.loadESPbruce()
 ##cl.loadRCuctd()
