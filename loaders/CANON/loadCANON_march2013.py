@@ -56,7 +56,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # 2-second decimated dorado data
 cl.dorado_base = cl.dodsBase + 'CANON_march2013/dorado/'
 cl.dorado_files = [ 
-                    'Dorado389_2012_256_00_256_00_decim.nc',
+                    'Dorado389_2013_074_02_074_02_decim.nc',
                   ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
@@ -109,7 +109,6 @@ cl.fulmar_parms = []
 
 # Webb gliders
 cl.hehape_base = cl.dodsBase + 'CANON_march2013/usc_glider/HeHaPe/processed/'
-cl.rusalka_base = cl.dodsBase + 'CANON_march2013/usc_glider/Rusalka/processed/'
 cl.carmen_base = cl.dodsBase + 'CANON_march2013/usc_glider/Carmen/processed/'
 
 cl.hehape_files = [
@@ -117,6 +116,12 @@ cl.hehape_files = [
                         'OS_Glider_HeHaPe_20130310_TS.nc',
                    ]
 cl.hehape_parms = [ 'TEMP', 'PSAL', 'BB532', 'CDOM', 'CHLA', 'DENS' ]
+
+cl.rusalka_base = cl.dodsBase + 'CANON_march2013/usc_glider/Rusalka/processed/'
+cl.rusalka_files = [
+                        'OS_Glider_Rusalka_20130301_TS.nc',
+                   ]
+cl.rusalka_parms = [ 'TEMP', 'PSAL', 'BB532', 'CDOM', 'CHLA', 'DENS' ]
 
 # Spray glider - for just the duration of the campaign
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
@@ -160,13 +165,14 @@ cl.stride = stride
 ##cl.loadAll()
 
 # For testing.  Comment out the loadAll() call, and uncomment one of these as needed
-##cl.loadDorado()
+cl.loadDorado()
 cl.loadDaphne()
 cl.loadTethys()
 ##cl.loadESPmack()
 ##cl.loadESPbruce()
 ##cl.loadRCuctd()
 ##cl.loadRCpctd()
-cl.loadHeHaPe()
+##cl.loadHeHaPe()
+##cl.loadRusalka()
 ##cl.loadL_662()
 
