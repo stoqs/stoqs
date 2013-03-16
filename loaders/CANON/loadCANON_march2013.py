@@ -67,6 +67,7 @@ cl.daphne_files = [
                     'shore_201303140708_201303140729.nc',
                     'shore_201303140729_201303141609.nc',
                     'shore_201303141631_201303151448.nc',
+                    'shore_201303141631_201303161621.nc',
                   ]
 cl.daphne_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water']
 
@@ -90,9 +91,16 @@ cl.tethys_files = [
                     'shore_201303151333_201303151334.nc',
                     'shore_201303151337_201303151503.nc',
                     'shore_201303151504_201303151706.nc',
-                    'shore_201303151714_201303151725.nc',
+                    'shore_201303151714_201303151730.nc',
+                    'shore_201303151728_201303151747.nc',
+                    'shore_201303151748_201303151947.nc',
+                    'shore_201303151950_201303152001.nc',
+                    'shore_201303152003_201303152011.nc',
+                    'shore_201303152013_201303152026.nc',
+                    'shore_201303152027_201303160953.nc',
                   ]
-cl.tethys_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water']
+cl.tethys_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
+                    'platform_x_velocity_current', 'platform_y_velocity_current', 'platform_z_velocity_current']
 
 # Postrecovery full-resolution tethys data - insert '_d_' for delayed-mode to not load the data
 cl.tethys_d_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2012/'
@@ -103,14 +111,8 @@ cl.tethys_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
 
-cl.fulmar_base = []
-cl.fulmar_files = []
-cl.fulmar_parms = []
-
 # Webb gliders
 cl.hehape_base = cl.dodsBase + 'CANON_march2013/usc_glider/HeHaPe/processed/'
-cl.carmen_base = cl.dodsBase + 'CANON_march2013/usc_glider/Carmen/processed/'
-
 cl.hehape_files = [
                         'OS_Glider_HeHaPe_20130305_TS.nc',
                         'OS_Glider_HeHaPe_20130310_TS.nc',
