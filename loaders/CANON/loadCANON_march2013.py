@@ -57,6 +57,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 cl.dorado_base = cl.dodsBase + 'CANON_march2013/dorado/'
 cl.dorado_files = [ 
                     'Dorado389_2013_074_02_074_02_decim.nc',
+                    'Dorado389_2013_075_05_075_06_decim.nc',
                   ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
@@ -141,7 +142,7 @@ cl.espmack_files = [
 cl.espmack_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
 
 # Rachel Carson Underway CTD
-cl.rcuctd_base = cl.dodsBase + 'CANON_march2013/carson/data/'
+cl.rcuctd_base = cl.dodsBase + 'CANON_march2013/carson/'
 cl.rcuctd_files = [ 
                         'rc_uctd.nc',
                       ]
@@ -177,14 +178,14 @@ cl.stride = stride
 ##cl.loadAll()
 
 # For testing.  Comment out the loadAll() call, and uncomment one of these as needed
-##cl.loadDorado()
-##cl.loadDaphne()
-##cl.loadTethys()
+cl.loadDorado()
+cl.loadDaphne()
+cl.loadTethys()
 ##cl.loadESPmack()
 ##cl.loadESPbruce()
-##cl.loadRCuctd()
+cl.loadRCuctd()
 cl.loadRCpctd()
 ##cl.loadHeHaPe()
 ##cl.loadRusalka()
-##cl.loadL_662()
+##cl.loadYellowfin()
 
