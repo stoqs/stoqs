@@ -117,7 +117,7 @@ class ParserWriter(BaseWriter):
                 self.wetstar_list.append(r['WetStar'])
 
     
-    def write_ctd(self, outFile='wf_uctd.nc'):
+    def write_ctd(self, outFile='uctd.nc'):
         '''
         Write lists out as NetCDF.
         '''
@@ -196,10 +196,14 @@ if __name__ == '__main__':
         beginFileString = sys.argv[3]
     except IndexError:
         beginFileString = 'c'
+    try:
+        ncFilename = sys.argv[4]
+    except IndexError:
+        ncFilename = 'uctd.nc'
 
     pw = ParserWriter(inDir, outDir, beginFileString)
     pw.read_asc_files()
-    pw.write_ctd()
+    pw.write_ctd(ncFilename)
     print "Wrote %s" % pw.outFile
 
 
