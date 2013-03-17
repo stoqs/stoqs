@@ -148,12 +148,22 @@ cl.rcuctd_files = [
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
 # Rachel Carson Profile CTD
-cl.pctdDir = 'CANON_march2013/rc/pctd/'
+cl.pctdDir = 'CANON_march2013/carson/pctd/'
 cl.rcpctd_base = cl.dodsBase + cl.pctdDir
 cl.rcpctd_files = [ 
-'c0912c01up.nc', 
+                    '07413c01.nc',
+                    '07413c02.nc',
+                    '07413c03.nc',
+                    '07413c04.nc',
+                    '07413c05.nc',
+                    '07413c06.nc',
+                    '07413c07.nc',
+                    '07413c08.nc',
+                    '07413c09.nc',
+                    '07413c10.nc',
+                    '07413c11.nc',
                       ]
-cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
+cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 
 # Spray glider - for just the duration of the campaign
 ##cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
@@ -167,13 +177,13 @@ cl.stride = stride
 ##cl.loadAll()
 
 # For testing.  Comment out the loadAll() call, and uncomment one of these as needed
-cl.loadDorado()
-cl.loadDaphne()
-cl.loadTethys()
+##cl.loadDorado()
+##cl.loadDaphne()
+##cl.loadTethys()
 ##cl.loadESPmack()
 ##cl.loadESPbruce()
 ##cl.loadRCuctd()
-##cl.loadRCpctd()
+cl.loadRCpctd()
 ##cl.loadHeHaPe()
 ##cl.loadRusalka()
 ##cl.loadL_662()
