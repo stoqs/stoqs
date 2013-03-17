@@ -74,6 +74,7 @@ class ParserWriter(BaseWriter):
         for file in fileList:
             print "file = %s" % file
             if file == './pctd/c0912c01.asc':
+                # Special fix for first cast on September 2012 CANON cruise
                 print "Converting %s up to down" % file
                 file = convert_up_to_down(file)
 
