@@ -313,9 +313,6 @@ class SeabirdLoader(STOQS_Loader):
             if not self.startDatetime:
                 self.startDatetime = dt
         self.endDatetime = dt
-        self.platformName = 'wf_pctd'
-        self.platformColor = '11665e'
-        self.platformTypeName = 'ship'
         self.platform = self.getPlatform(self.platformName, self.platformTypeName)
         self.activitytypeName = 'CTD upcast'
         self.include_names = ['Sal00', 'T090C']
