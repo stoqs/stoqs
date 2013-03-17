@@ -34,6 +34,10 @@ try:
     stride = int(sys.argv[1])
 except IndexError:
     stride = 100
+except ValueError:
+    # Not an integer
+    stride = 'optimal'
+
 try:
     dbAlias = sys.argv[2]
 except IndexError:
@@ -45,7 +49,12 @@ except IndexError:
 # ------------------------------------------------------------------------------------
 campaignName = 'CANON-ECOHAB - March 2013'
 if stride != 1:
-    campaignName = campaignName + ' with stride=%d' % stride
+    try:
+        campaignName = campaignName + ' with stride=%d' % stride
+    except TypeError:
+        # Not an integer
+        campaignName = campaignName + ' with appropriate strides'
+
 cl = CANONLoader(dbAlias, campaignName)
 
 # Aboard the Carson use zuma
@@ -174,18 +183,27 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 ##cl.l_662_endDatetime = datetime.datetime(2012, 9, 21)
 
 
-cl.stride = stride
-##cl.loadAll()
-
-# For testing.  Comment out the loadAll() call, and uncomment one of these as needed
-cl.loadDorado()
-cl.loadDaphne()
-cl.loadTethys()
-##cl.loadESPmack()
-##cl.loadESPbruce()
-cl.loadRCuctd()
-cl.loadRCpctd()
-##cl.loadHeHaPe()
-##cl.loadRusalka()
-##cl.loadYellowfin()
+# Load the data with the appropriate stride
+if stride == 'optimal':
+    cl.loadDorado(stride=10)
+    cl.loadDaphne(stride=10)
+    cl.loadTethys(stride=10)
+    ##cl.loadESPmack()
+    ##cl.loadESPbruce()
+    cl.loadRCuctd(stride=1)
+    cl.loadRCpctd(stride=1)
+    ##cl.loadHeHaPe()
+    ##cl.loadRusalka()
+    ##cl.loadYellowfin()
+else:
+    cl.loadDorado()
+    cl.loadDaphne()
+    cl.loadTethys()
+    ##cl.loadESPmack()
+    ##cl.loadESPbruce()
+    cl.loadRCuctd()
+    cl.loadRCpctd()
+    ##cl.loadHeHaPe()
+    ##cl.loadRusalka()
+    ##cl.loadYellowfin()
 

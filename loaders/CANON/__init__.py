@@ -30,7 +30,6 @@ class CANONLoader(object):
     '''
     Common routines for loading all CANON data
     '''
-    stride = 1
     brownish = {'dorado':       '8c510a',
                 'tethys':       'bf812d',
                 'daphne':       'dfc27d',
@@ -61,194 +60,212 @@ class CANONLoader(object):
                 'espbruce':     '808026',
              }
 
-    def __init__(self, dbAlias, campaignName):
+    def __init__(self, dbAlias, campaignName, stride=1):
         self.dbAlias = dbAlias
         self.campaignName = campaignName
+        self.stride = stride
 
-
-    def loadDorado(self):
+    def loadDorado(self, stride=None):
         '''
         Dorado specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.dorado_files], self.dorado_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.dorado_files], self.dorado_files):
             url = self.dorado_base + file
             DAPloaders.runDoradoLoader(url, self.campaignName, aName, 'dorado', self.colors['dorado'], 'auv', 'AUV mission', 
-                                        self.dbAlias, self.stride)
+                                        self.dbAlias, stride)
             load_gulps(aName, file, self.dbAlias)
 
 
-    def loadTethys(self):
+    def loadTethys(self, stride=None):
         '''
         Tethys specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.tethys_files], self.tethys_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + file
             DAPloaders.runLrauvLoader(url, self.campaignName, aName, 'tethys', self.colors['tethys'], 'auv', 'AUV mission', 
-                                        self.tethys_parms, self.dbAlias, self.stride)
+                                        self.tethys_parms, self.dbAlias, stride)
 
-    def loadDaphne(self):
+    def loadDaphne(self, stride=None):
         '''
         Daphne specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.daphne_files], self.daphne_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.daphne_files], self.daphne_files):
             url = self.daphne_base + file
             # Set stride to 1 for telemetered data
             DAPloaders.runLrauvLoader(url, self.campaignName, aName, 'daphne', self.colors['daphne'], 'auv', 'AUV mission', 
-                                        self.daphne_parms, self.dbAlias, 1)
+                                        self.daphne_parms, self.dbAlias, stride)
 
-    def loadMartin(self):
+    def loadMartin(self, stride=None):
         '''
         Martin specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.martin_files], self.martin_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.martin_files], self.martin_files):
             url = self.martin_base + file
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'martin', self.colors['martin'], 'ship', 'cruise', 
-                                        self.martin_parms, self.dbAlias, self.stride)
+                                        self.martin_parms, self.dbAlias, stride)
 
-    def loadFulmar(self):
+    def loadFulmar(self, stride=None):
         '''
         Fulmar specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.fulmar_files], self.fulmar_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.fulmar_files], self.fulmar_files):
             url = self.fulmar_base + file
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'fulmar', self.colors['fulmar'], 'ship', 'cruise', 
-                                        self.fulmar_parms, self.dbAlias, self.stride)
+                                        self.fulmar_parms, self.dbAlias, stride)
 
-    def loadNps_g29(self):
+    def loadNps_g29(self, stride=None):
         '''
         Glider specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.nps_g29_files], self.nps_g29_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.nps_g29_files], self.nps_g29_files):
             url = self.nps_g29_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'nps_g29', self.colors['nps_g29'], 'glider', 'Glider Mission', 
-                                        self.nps_g29_parms, self.dbAlias, self.stride)
+                                        self.nps_g29_parms, self.dbAlias, stride)
 
-    def loadL_662(self):
+    def loadL_662(self, stride=None):
         '''
         Glider specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.l_662_files], self.l_662_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.l_662_files], self.l_662_files):
             url = self.l_662_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'l_662', self.colors['l_662'], 'glider', 'Glider Mission', 
-                                        self.l_662_parms, self.dbAlias, self.stride, self.l_662_startDatetime, self.l_662_endDatetime)
+                                        self.l_662_parms, self.dbAlias, stride, self.l_662_startDatetime, self.l_662_endDatetime)
 
-    def loadHeHaPe(self):
+    def loadHeHaPe(self, stride=None):
         '''
         Glider specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.hehape_files], self.hehape_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.hehape_files], self.hehape_files):
             url = self.hehape_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'hehape', self.colors['hehape'], 'glider', 'Glider Mission', 
-                                        self.hehape_parms, self.dbAlias, self.stride)
+                                        self.hehape_parms, self.dbAlias, stride)
 
-    def loadRusalka(self):
+    def loadRusalka(self, stride=None):
         '''
         Glider specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.rusalka_files], self.rusalka_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.rusalka_files], self.rusalka_files):
             url = self.rusalka_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'rusalka', self.colors['rusalka'], 'glider', 'Glider Mission', 
-                                        self.rusalka_parms, self.dbAlias, self.stride)
+                                        self.rusalka_parms, self.dbAlias, stride)
 
-    def loadCarmen(self):
+    def loadCarmen(self, stride=None):
         '''
         Glider specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.carmen_files], self.carmen_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.carmen_files], self.carmen_files):
             url = self.carmen_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'carmen', self.colors['carmen'], 'glider', 'Glider Mission', 
-                                        self.carmen_parms, self.dbAlias, self.stride)
+                                        self.carmen_parms, self.dbAlias, stride)
 
-    def loadWaveglider(self):
+    def loadWaveglider(self, stride=None):
         '''
         Glider specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.waveglider_files], self.waveglider_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.waveglider_files], self.waveglider_files):
             url = self.waveglider_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'waveglider', self.colors['waveglider'], 'glider', 'Glider Mission', 
-                                        self.waveglider_parms, self.dbAlias, self.stride, self.waveglider_startDatetime, self.waveglider_endDatetime)
-    def loadESPdrift(self):
+                                        self.waveglider_parms, self.dbAlias, stride, self.waveglider_startDatetime, self.waveglider_endDatetime)
+    def loadESPdrift(self, stride=None):
         '''
         ESPdrift specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.espdrift_files], self.espdrift_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.espdrift_files], self.espdrift_files):
             url = self.espdrift_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espdrift', self.colors['espdrift'], 'espdrift', 'ESP drift Mission', 
-                                        self.espdrift_parms, self.dbAlias, self.stride)
+                                        self.espdrift_parms, self.dbAlias, stride)
 
-    def loadESPmack(self):
+    def loadESPmack(self, stride=None):
         '''
         ESPmack specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.espmack_files], self.espmack_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.espmack_files], self.espmack_files):
             url = self.espmack_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espmack', self.colors['espmack'], 'espmack', 'ESP mack Mission', 
-                                        self.espmack_parms, self.dbAlias, self.stride)
+                                        self.espmack_parms, self.dbAlias, stride)
 
-    def loadESPbruce(self):
+    def loadESPbruce(self, stride=None):
         '''
         ESPbruce specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.espbruce_files], self.espbruce_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.espbruce_files], self.espbruce_files):
             url = self.espbruce_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espbruce', self.colors['espbruce'], 'espbruce', 'ESP bruce Mission', 
-                                        self.espbruce_parms, self.dbAlias, self.stride)
+                                        self.espbruce_parms, self.dbAlias, stride)
 
-    def loadWFuctd(self):
+    def loadWFuctd(self, stride=None):
         '''
         WF uctd specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.wfuctd_files], self.wfuctd_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wfuctd_files], self.wfuctd_files):
             url = self.wfuctd_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'wf_uctd', self.colors['flyer'], 'wf_uctd', 'Western Flyer Underway CTD Data', 
-                                        self.wfuctd_parms, self.dbAlias, self.stride)
+                                        self.wfuctd_parms, self.dbAlias, stride)
 
-    def loadWFpctd(self):
+    def loadWFpctd(self, stride=None):
         '''
         WF pctd specific load functions
         '''
+        stride = stride or self.stride
         platformName = 'wf_pctd'
-        for (aName, file) in zip([ a.split('.')[0] + ' (stride=%d)' % self.stride for a in self.wfpctd_files], self.wfpctd_files):
+        for (aName, file) in zip([ a.split('.')[0] + ' (stride=%d)' % stride for a in self.wfpctd_files], self.wfpctd_files):
             url = self.wfpctd_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], platformName, 'Western Flyer Profile CTD Data', 
-                                        self.wfpctd_parms, self.dbAlias, self.stride)
+                                        self.wfpctd_parms, self.dbAlias, stride)
         # Now load all the bottles           
         sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'])
         sl.tdsBase= self.tdsBase
         sl.pctdDir = self.pctdDir
         sl.process_btl_files()
 
-    def loadRCuctd(self):
+    def loadRCuctd(self, stride=None):
         '''
         RC uctd specific load functions
         '''
-        for (aName, file) in zip([ a + ' (stride=%d)' % self.stride for a in self.rcuctd_files], self.rcuctd_files):
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.rcuctd_files], self.rcuctd_files):
             url = self.rcuctd_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'rc_uctd', self.colors['carson'], 'rc_uctd', 'Rachel Carson Underway CTD Data', 
-                                        self.rcuctd_parms, self.dbAlias, self.stride)
+                                        self.rcuctd_parms, self.dbAlias, stride)
 
-    def loadRCpctd(self):
+    def loadRCpctd(self, stride=None):
         '''
         RC pctd specific load functions
         '''
+        stride = stride or self.stride
         platformName = 'rc_pctd'
-        for (aName, file) in zip([ a.split('.')[0] + ' (stride=%d)' % self.stride for a in self.rcpctd_files], self.rcpctd_files):
+        for (aName, file) in zip([ a.split('.')[0] + ' (stride=%d)' % stride for a in self.rcpctd_files], self.rcpctd_files):
             url = self.rcpctd_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['carson'], platformName, 'Rachel Carson Profile CTD Data', 
-                                        self.rcpctd_parms, self.dbAlias, self.stride)
+                                        self.rcpctd_parms, self.dbAlias, stride)
         # Now load all the bottles           
         sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['carson'])
         sl.tdsBase= self.tdsBase
@@ -256,10 +273,11 @@ class CANONLoader(object):
         sl.process_btl_files()
 
 
-    def loadAll(self):
+    def loadAll(self, stride=None):
         '''
         Execute all the load functions
         '''
+        stride = stride or self.stride
         loaders = [ 'loadDorado', 'loadTethys', 'loadDaphne', 'loadMartin', 'loadFulmar', 'loadNps_g29', 'loadWaveglider', 'loadL_662', 'loadESPdrift',
                     'loadWFuctd', 'loadWFpctd']
         for loader in loaders:
