@@ -54,9 +54,9 @@ class ParserWriter(BaseWriter):
         self.outDir = outDir
         self.beginFileString = beginFileString
 
-    def read_asc_files(self):
+    def read_asc_files(self, depth):
         '''
-        Loop through all .asc files and load data into lists.
+        Loop through all .asc files and load data into lists.  Pass in a float for @depth for intake depth in meters.  Flyer is about 2m, Carson is about 1.5m.
 
         Processed c*.asc files look like:
 
@@ -105,18 +105,18 @@ class ParserWriter(BaseWriter):
                 esDiff = dt - datetime(1970, 1, 1, 0, 0, 0)
                 es = 86400 * esDiff.days + esDiff.seconds
                 ##print 'es = ', es, datetime.fromtimestamp(es)
+                ##print 'r = ', r
                 
                 self.esec_list.append(es)
                 self.lat_list.append(r['Latitude'])
                 self.lon_list.append(r['Longitude'])
-                self.dep_list.append(2.0)               # The Western Flyer's intake is about 2 m below the surface
+                self.dep_list.append(depth) 
         
                 self.t1_list.append(r['T190C'])
                 self.sal_list.append(r['Sal00'])
                 self.xmiss_list.append(r['Xmiss'])
                 self.wetstar_list.append(r['WetStar'])
 
-    
     def write_ctd(self, outFile='uctd.nc'):
         '''
         Write lists out as NetCDF.
@@ -200,9 +200,13 @@ if __name__ == '__main__':
         ncFilename = sys.argv[4]
     except IndexError:
         ncFilename = 'uctd.nc'
+    try:
+        depth = sys.argv[5]
+    except IndexError:
+        depth = 1.5
 
     pw = ParserWriter(inDir, outDir, beginFileString)
-    pw.read_asc_files()
+    pw.read_asc_files(depth)
     pw.write_ctd(ncFilename)
     print "Wrote %s" % pw.outFile
 
