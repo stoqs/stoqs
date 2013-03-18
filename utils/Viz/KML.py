@@ -270,7 +270,6 @@ class KML(object):
 
         _debug = False
 
-
         #
         # Build the styles for the colors in clt using clim
         #
@@ -281,7 +280,8 @@ class KML(object):
                 logger.debug("c = %s", c)
                 logger.debug("ge_color = %s", ge_color)
 
-##<href>http://maps.google.com/mapfiles/kml/shapes/dot.png</href>
+            baseURL = self.request.build_absolute_uri('/')[:-1] + '/' + settings.STATIC_URL
+
             style = '''<Style id="%s">
 <IconStyle>
 <color>%s</color>
@@ -291,7 +291,7 @@ class KML(object):
 </Icon>
 </IconStyle>
 </Style>
-''' % (ge_color, ge_color, os.path.join(settings.STATIC_URL, 'colormaps', 'jetplus_dots', ge_color))
+''' % (ge_color, ge_color, os.path.join(baseURL, 'colormaps', 'jetplus_dots', ge_color))
 
             styleKml += style
 
