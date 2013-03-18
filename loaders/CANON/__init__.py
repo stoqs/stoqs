@@ -266,8 +266,8 @@ class CANONLoader(object):
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['carson'], platformName, 'Rachel Carson Profile CTD Data', 
                                         self.rcpctd_parms, self.dbAlias, stride)
-        # Now load all the bottles           
-        sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['carson'])
+        # load all the bottles           
+        sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['carson'], platformTypeName='ship')
         sl.tdsBase= self.tdsBase
         sl.pctdDir = self.pctdDir
         sl.process_btl_files()
