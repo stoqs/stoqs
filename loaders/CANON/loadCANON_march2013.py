@@ -67,6 +67,7 @@ cl.dorado_base = cl.dodsBase + 'CANON_march2013/dorado/'
 cl.dorado_files = [ 
                     'Dorado389_2013_074_02_074_02_decim.nc',
                     'Dorado389_2013_075_05_075_06_decim.nc',
+                    'Dorado389_2013_076_01_076_02_decim.nc',
                   ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
@@ -77,7 +78,7 @@ cl.daphne_files = [
                     'shore_201303140708_201303140729.nc',
                     'shore_201303140729_201303141609.nc',
                     'shore_201303141631_201303151448.nc',
-                    'shore_201303141631_201303161621.nc',
+                    'shore_201303141631_201303181540.nc',
                   ]
 cl.daphne_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water']
 
@@ -108,6 +109,22 @@ cl.tethys_files = [
                     'shore_201303152003_201303152011.nc',
                     'shore_201303152013_201303152026.nc',
                     'shore_201303152027_201303160953.nc',
+                    'shore_201303160958_201303161025.nc',
+                    'shore_201303161027_201303161039.nc',
+                    'shore_201303161041_201303170254.nc',
+                    'shore_201303170334_201303170607.nc',
+                    'shore_201303170616_201303170638.nc',
+                    'shore_201303170641_201303170646.nc',
+                    'shore_201303170647_201303171828.nc',
+                    'shore_201303171835_201303171849.nc',
+                    'shore_201303171851_201303171856.nc',
+                    'shore_201303171857_201303172034.nc',
+                    'shore_201303172042_201303172051.nc',
+                    'shore_201303172055_201303172058.nc',
+                    'shore_201303172059_201303180702.nc',
+                    'shore_201303180717_201303180736.nc',
+                    'shore_201303180733_201303180742.nc',
+                    'shore_201303180743_201303181632.nc',
                   ]
 cl.tethys_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'platform_x_velocity_current', 'platform_y_velocity_current', 'platform_z_velocity_current']
@@ -172,6 +189,21 @@ cl.rcpctd_files = [
                     '07413c09.nc',
                     '07413c10.nc',
                     '07413c11.nc',
+                    '07513c12.nc',
+                    '07513c13.nc',
+                    '07513c14.nc',
+                    '07513c15.nc',
+                    '07513c16.nc',
+                    '07513c17.nc',
+                    '07513c18.nc',
+                    '07513c19.nc',
+                    '07613c20.nc',
+                    '07613c21.nc',
+                    '07613c22.nc',
+                    '07613c23.nc',
+                    '07613c24.nc',
+                    '07613c25.nc',
+                    '07613c26.nc',
                       ]
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 
@@ -187,7 +219,7 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 if stride == 'optimal':
     cl.loadDorado(stride=10)
     cl.loadDaphne(stride=10)
-    cl.loadTethys(stride=10)
+    cl.loadTethys(stride=1)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd(stride=1)
