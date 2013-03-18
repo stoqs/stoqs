@@ -58,14 +58,28 @@ Manually managing schema evolution: adding a geometry column to the Activity tab
 SELECT AddGeometryColumn('stoqs_activity', 'mappoint', 4326, 'POINT', 2);
 CREATE INDEX "stoqs_activity_mappoint_id" ON "stoqs_activity" USING GIST ( "mappoint" GIST_GEOMETRY_OPS );
 
+
 Drop NOT NULL constraint on foreign key where we don't always have an Analysis Method:
 --------------------------------------------------------------------------------------
 ALTER TABLE stoqs_sampledparameter ALTER COLUMN analysismethod_id DROP NOT NULL;
+
 
 Add a column:
 -------------
 ALTER TABLE stoqs_parametergroup ADD COLUMN "description" varchar(128);
 
+
+Change database password:
+------------------------
+ALTER ROLE stoqsadm login password 'newpassword';
+
+
+Add an 'everyone' Postgres user with read access to all databases - useful for read-only web apps
+-------------------------------------------------------------------------------------------------
+CREATE ROLE readonly nologin;
+GRANT select on all tables in schema public to readonly;
+CREATE ROLE everyone login password 'guest';
+GRANT readonly to everyone;
 
 --
 Mike McCann
