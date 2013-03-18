@@ -149,7 +149,11 @@ def load_gulps(activityName, file, dbAlias):
     logger.debug('sampletype %s, created = %s', gulper_type, created)
     for row in reader:
         # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
-        timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
+        try:
+            timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
+        except TypeError, e:
+            logger.error('%s.  Skipping this Sample - you may want to fix the input file', e)
+            continue
         try:
             ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
             point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
@@ -174,6 +178,12 @@ class SeabirdLoader(STOQS_Loader):
     '''
     Inherit database loading functions from STOQS_Loader and use its constructor
     '''
+
+    def __init__(self, activityName, platformName, dbAlias='default', campaignName=None,
+                activitytypeName=None, platformColor=None, platformTypeName=None, stride=1):
+        'Just use the STOQS_Loader constructor'
+        super(SeabirdLoader, self).__init__(activityName, platformName, dbAlias, campaignName,
+                activitytypeName, platformColor, platformTypeName, stride)
 
     def load_data(self, lat, lon, depth, time, parmNameValues):
         '''
@@ -371,7 +381,7 @@ class SeabirdLoader(STOQS_Loader):
               20:32:43
         '''
         try:
-            fileList = glob(os.path.join(self.parentInDir, 'pctd/c*.btl'))
+            fileList = glob(os.path.join(self.parentInDir, 'pctd/*c*.btl'))
         except AttributeError:
             fileList = []
         if fileList:
