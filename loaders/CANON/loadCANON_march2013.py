@@ -168,9 +168,11 @@ cl.espmack_files = [
 cl.espmack_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
 
 # Rachel Carson Underway CTD
-cl.rcuctd_base = cl.dodsBase + 'CANON_march2013/carson/'
+cl.rcuctd_base = cl.dodsBase + 'CANON_march2013/carson/uctd/'
 cl.rcuctd_files = [ 
-                        'rc_uctd.nc',
+                        '07413plm01.nc',
+                        '07513plm02.nc',
+                        '07613plm03.nc',
                       ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
@@ -224,8 +226,8 @@ if stride == 'optimal':
     ##cl.loadESPbruce()
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
-    ##cl.loadHeHaPe()
-    ##cl.loadRusalka()
+    ##cl.loadHeHaPe(stride=10)        # As of 3/18/2013 - Bad Lat & Lon
+    ##cl.loadRusalka(stride=10)     # As of 3/18/2013 - no good data in file http://zuma.rc.mbari.org/thredds/dodsC/CANON_march2013/usc_glider/Rusalka/processed/OS_Glider_Rusalka_20130301_TS.nc.html
     ##cl.loadYellowfin()
 else:
     cl.loadDorado()
