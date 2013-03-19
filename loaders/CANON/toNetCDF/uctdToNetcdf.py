@@ -54,7 +54,7 @@ class ParserWriter(BaseWriter):
         self.outDir = outDir
         self.beginFileString = beginFileString
 
-    def read_asc_files(self, depth):
+    def process_files(self, depth):
         '''
         Loop through all .asc files and load data into lists.  Pass in a float for @depth for intake depth in meters.  Flyer is about 2m, Carson is about 1.5m.
 
@@ -74,21 +74,21 @@ class ParserWriter(BaseWriter):
 
         '''
 
-        self.esec_list = []
-        self.lat_list = []
-        self.lon_list = []
-        self.dep_list = []          # Nominal depth = 2m
-        self.t1_list = []
-        self.sal_list = []
-        self.xmiss_list = []
-        self.wetstar_list = []
-
         # Fill up the object's member data item lists from all the files - read only the processed c*.asc files, 
         # the realtime.asc data will be processed by the end of the cruise
         fileList = glob(os.path.join(self.inDir, self.beginFileString + '*.asc'))
         fileList.sort()
         for file in fileList:
             print "file = %s" % file
+
+            self.esec_list = []
+            self.lat_list = []
+            self.lon_list = []
+            self.dep_list = []          # Nominal depth, e.g. 2.0 for Western Flyer, 1.5 for Rachel Carson
+            self.t1_list = []
+            self.sal_list = []
+            self.xmiss_list = []
+            self.wetstar_list = []
 
             # Open .hdr file to get the year, parse year from a line like this:
             # * System UTC = Sep 15 2012 06:49:50
@@ -116,6 +116,8 @@ class ParserWriter(BaseWriter):
                 self.sal_list.append(r['Sal00'])
                 self.xmiss_list.append(r['Xmiss'])
                 self.wetstar_list.append(r['WetStar'])
+
+            self.write_ctd(file[:-4]+'.nc')
 
     def write_ctd(self, outFile='uctd.nc'):
         '''
@@ -176,14 +178,16 @@ class ParserWriter(BaseWriter):
         self.add_global_metadata()
 
         self.ncFile.close()
+        print "Wrote %s" % pw.outFile
 
-        # End write_gpctd()
+        # End write_ctd()
 
 
 if __name__ == '__main__':
 
     # Accept optional arguments of input data directory name and output directory name
-    # If not specified then the current directory is used
+    # If not specified then the uctd is used. The third argument is the character(s) at
+    # the begining of the .asc file names.  The fourrh is the intake water depth in m.
     try:
         inDir = sys.argv[1]
     except IndexError:
@@ -191,23 +195,19 @@ if __name__ == '__main__':
     try:
         outDir = sys.argv[2]
     except IndexError:
-        outDir = '.'
+        outDir = 'uctd'
     try:
         beginFileString = sys.argv[3]
     except IndexError:
         beginFileString = 'c'
-    try:
-        ncFilename = sys.argv[4]
-    except IndexError:
-        ncFilename = 'uctd.nc'
     try:
         depth = sys.argv[5]
     except IndexError:
         depth = 1.5
 
     pw = ParserWriter(inDir, outDir, beginFileString)
-    pw.read_asc_files(depth)
-    pw.write_ctd(ncFilename)
-    print "Wrote %s" % pw.outFile
+    pw.process_files(depth)
+    ##pw.read_asc_files(depth)
+    ##pw.write_ctd(ncFilename)
 
 

@@ -7,10 +7,9 @@ RH=zuma.rc.mbari.org
 
 rsync -rv odssadm@$RH:/data/canon/2013_Mar/carson/uctd .
 
-./uctdToNetcdf.py uctd . 0 rc_uctd.nc 1.5
+./uctdToNetcdf.py uctd uctd 0 1.5
 
-scp rc_uctd.nc odssadm@$RH:/data/canon/2013_Mar/carson
+scp uctd/*.nc odssadm@$RH:/data/canon/2013_Mar/carson/uctd
 
 # Clean up 
 rm -r uctd
-rm rc_uctd.nc
