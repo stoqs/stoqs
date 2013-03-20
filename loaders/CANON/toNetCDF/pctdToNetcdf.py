@@ -89,6 +89,7 @@ class ParserWriter(BaseWriter):
             self.sal_list = []
             self.xmiss_list = []
             self.ecofl_list = []
+            self.oxygen_list = []
 
             for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
                 if not r['TimeJ']:
@@ -110,6 +111,7 @@ class ParserWriter(BaseWriter):
                 self.sal_list.append(r['Sal00'])
                 self.xmiss_list.append(r['Xmiss'])
                 self.ecofl_list.append(r['FlECO-AFL'])
+                self.oxygen_list.append(r['Sbeox0ML/L'])
 
             self.write_pctd(file)
     
@@ -170,6 +172,11 @@ class ParserWriter(BaseWriter):
         ecofl.long_name = 'Fluorescence, WET Labs ECO-AFL/FL'
         ecofl.units = 'mg/m^3'
         ecofl[:] = self.ecofl_list
+
+        oxygen = self.ncFile.createVariable('oxygen', 'float64', ('time',))
+        oxygen.long_name = 'Oxygen, SBE 43'
+        oxygen.units = 'ml/l'
+        oxygen[:] = self.oxygen_list
 
         self.add_global_metadata()
 
