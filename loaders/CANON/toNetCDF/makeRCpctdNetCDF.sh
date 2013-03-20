@@ -7,7 +7,7 @@ RH=zuma.rc.mbari.org
 
 rsync -rv odssadm@$RH:/data/canon/2013_Mar/carson/pctd .
 
-./pctdToNetcdf.py pctd pctd 07
+./pctdToNetcdf.py pctd pctd 0
 
 scp pctd/*.nc odssadm@$RH:/data/canon/2013_Mar/carson/pctd
 
