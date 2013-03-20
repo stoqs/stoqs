@@ -51,6 +51,10 @@ class KML(object):
         else:
             self.withLineStringsFlag = True
             
+        if kwargs.has_key('withFullIconURL'):
+            self.withFullIconURLFlag = kwargs['withFullIconURL']
+        else:
+            self.withFullIconURLFlag = True
 
     def kmlResponse(self):
         '''
@@ -273,6 +277,11 @@ class KML(object):
         #
         # Build the styles for the colors in clt using clim
         #
+        if self.withFullIconURLFlag:
+            baseURL = self.request.build_absolute_uri('/')[:-1] + '/' + settings.STATIC_URL
+        else:
+            baseURL = settings.STATIC_URL
+
         styleKml = ''
         for c in clt:
             ge_color = "ff%02x%02x%02x" % ((round(c[2] * 255), round(c[1] * 255), round(c[0] * 255)))
@@ -280,7 +289,6 @@ class KML(object):
                 logger.debug("c = %s", c)
                 logger.debug("ge_color = %s", ge_color)
 
-            baseURL = self.request.build_absolute_uri('/')[:-1] + '/' + settings.STATIC_URL
 
             style = '''<Style id="%s">
 <IconStyle>

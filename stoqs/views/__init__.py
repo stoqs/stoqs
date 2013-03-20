@@ -260,7 +260,7 @@ class BaseOutputer(object):
             return kml.kmlResponse()
 
         elif self.format == 'kmln':
-            kml = KML(self.request, self.qs, self.qparams, withTimeStamps=False, withLineStrings=False)
+            kml = KML(self.request, self.qs, self.qparams, withTimeStamps=False, withLineStrings=False, withFullIconURL=False)
             return kml.kmlResponse()
 
         elif self.format == 'count':
