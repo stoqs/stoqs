@@ -65,9 +65,10 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # 2-second decimated dorado data
 cl.dorado_base = cl.dodsBase + 'CANON_march2013/dorado/'
 cl.dorado_files = [ 
-                    'Dorado389_2013_074_02_074_02_decim.nc',
-                    'Dorado389_2013_075_05_075_06_decim.nc',
-                    'Dorado389_2013_076_01_076_02_decim.nc',
+                    ##'Dorado389_2013_074_02_074_02_decim.nc',
+                    ##'Dorado389_2013_075_05_075_06_decim.nc',
+                    ##'Dorado389_2013_076_01_076_02_decim.nc',
+                    'Dorado389_2013_079_04_079_04_decim.nc',
                   ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
@@ -170,9 +171,10 @@ cl.espmack_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'CANON_march2013/carson/uctd/'
 cl.rcuctd_files = [ 
-                        '07413plm01.nc',
-                        '07513plm02.nc',
-                        '07613plm03.nc',
+                        ##'07413plm01.nc',
+                        ##'07513plm02.nc',
+                        ##'07613plm03.nc',
+                        '07913plm04.nc',
                       ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
@@ -180,34 +182,39 @@ cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.pctdDir = 'CANON_march2013/carson/pctd/'
 cl.rcpctd_base = cl.dodsBase + cl.pctdDir
 cl.rcpctd_files = [ 
-                    '07413c01.nc',
-                    '07413c02.nc',
-                    '07413c03.nc',
-                    '07413c04.nc',
-                    '07413c05.nc',
-                    '07413c06.nc',
-                    '07413c07.nc',
-                    '07413c08.nc',
-                    '07413c09.nc',
-                    '07413c10.nc',
-                    '07413c11.nc',
-                    '07513c12.nc',
-                    '07513c13.nc',
-                    '07513c14.nc',
-                    '07513c15.nc',
-                    '07513c16.nc',
-                    '07513c17.nc',
-                    '07513c18.nc',
-                    '07513c19.nc',
-                    '07613c20.nc',
-                    '07613c21.nc',
-                    '07613c22.nc',
-                    '07613c23.nc',
-                    '07613c24.nc',
-                    '07613c25.nc',
-                    '07613c26.nc',
+#                    '07413c01.nc',
+#                    '07413c02.nc',
+#                    '07413c03.nc',
+#                    '07413c04.nc',
+#                    '07413c05.nc',
+#                    '07413c06.nc',
+#                    '07413c07.nc',
+#                    '07413c08.nc',
+#                    '07413c09.nc',
+#                    '07413c10.nc',
+#                    '07413c11.nc',
+#                    '07513c12.nc',
+#                    '07513c13.nc',
+#                    '07513c14.nc',
+#                    '07513c15.nc',
+#                    '07513c16.nc',
+#                    '07513c17.nc',
+#                    '07513c18.nc',
+#                    '07513c19.nc',
+#                    '07613c20.nc',
+#                    '07613c21.nc',
+#                    '07613c22.nc',
+#                    '07613c23.nc',
+#                    '07613c24.nc',
+#                    '07613c25.nc',
+#                    '07613c26.nc',
+                    '07913c27.nc',
+                    '07913c28.nc',
+                    '07913c29.nc',
+                    '07913c30.nc',
+                    '07913c31.nc',
                       ]
-cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
+cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
 # Spray glider - for just the duration of the campaign
 ##cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
@@ -220,8 +227,8 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 # Load the data with the appropriate stride
 if stride == 'optimal':
     cl.loadDorado(stride=10)
-    cl.loadDaphne(stride=10)
-    cl.loadTethys(stride=1)
+    ##cl.loadDaphne(stride=1)
+    ##cl.loadTethys(stride=1)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd(stride=1)
