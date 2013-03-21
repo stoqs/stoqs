@@ -2,10 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
     <title>{{request.META.dbAlias}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <meta name="description" content="Spatial Temporal Oceanographic Query System - User Interface">
+    <meta name="author" content="Mike McCann, MBARI">
 
     <!-- The styles -->
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet">
@@ -19,6 +20,15 @@
         }
         .stoqs-background-ajax-loader {
             background-image: url({{STATIC_URL}}images/ajax-loader-pulse.gif);
+        }
+        .olControlLoadingPanel {
+            background-image:url({{STATIC_URL}}images/ajax-loader.gif);
+            margin-left: 30%;
+            margin-top: 50%;
+            position: relative;
+            background-position:center;
+            background-repeat:no-repeat;
+            display: none;
         }
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
@@ -126,36 +136,30 @@
                                 </div>
                                 <div class="tab-pane" id="geo3d">
                                     <div id="geo-3dplot" style="height:500px;">
-                                        <em>Under construction</em>
                                         <table>
                                             <tr>
                                                 <td style="vertical-align: top; padding-right: 10px;">
+                                                    <em>Under construction</em><br>
                                                     <em> Rotate: Left mouse<br>Translate: Ctrl + left mouse<br>Zoom: Alt + left mouse </em>
                                                 </td>
                                                 <td style="vertical-align: top;">
+                                                    <!--
                                                     <button id="geo_zoom-width-button" class="btn btn-mini">Zoom display</button>
                                                     <br><br>
+                                                    -->
                                                     <button id="geo_x3d-show-all" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.showAll();return false;">Show all</button>
                                                     <br><br>
                                                     <button id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;">Reset view</button>
                                                 </td>
                                             </tr>
                                         </table>
-                                        <!-- <X3D id='geo_x3d' showLog="true" style="width:100%; margin: 0px auto; display:block; border: none;"> -->
-
-<!--
-                                        <X3D id='geo_x3d' style="width:100%; margin: 0px auto; display:block; border: none;">
+                                        <X3D id='geo_x3d' showLog="true" style="width:100%; margin: 0px auto; display:block; border: none;">
                                             <scene>
-                <GeoViewpoint centerOfRotation='0 0 0' position='0 0 20000000' orientation='0 0 1 1.57075' zNear='1000000' zFar='100000000' fieldOfView='0.785375'></Viewpoint>
-
-                                                <GeoViewpoint centerOfRotation='33 -118 0' description='Initial GeoViewpoint' geoSystem='"GD" "WE"' jump='true' orientation='1 0 0 -1.57' position='33.0 -118.0 3000' fieldOfView='0.7854' navType='"EXAMINE" "ANY"' headlight='true' containerField='children' zNear='1000' zFar='100000'>
-                                                    <geoOrigin DEF='ORIGIN' geoSystem='"GD" "WE"' geoCoords='33.5 -118 0' rotateYUp='true'></geoOrigin>
-                                                </GeoViewpoint>
-                                                <Inline nameSpaceName='bathy' url="{{STATIC_URL}}x3d/SanPedroBasin50.x3d"></inline>
+                                              <transform>
+                                                <Inline url="{{STATIC_URL}}x3d/SanPedroBasin50.x3d"></Inline>
+                                              </transform>
                                             </scene>
                                         </X3D>
--->
-
                                     </div>
                                 </div>
                             </div><!-- tab-content -->
@@ -628,6 +632,7 @@
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-carousel.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-typeahead.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/OpenLayers.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/LoadingPanel.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
@@ -2206,6 +2211,7 @@
         map.addLayer(track_lines); 
         map.addLayer(sample_points); 
 
+        map.addControl(new OpenLayers.Control.LoadingPanel());
         map.addControl(new OpenLayers.Control.LayerSwitcher());
         map.addControl(new OpenLayers.Control.MousePosition());
         map.addControl(new OpenLayers.Control.PanZoom());
