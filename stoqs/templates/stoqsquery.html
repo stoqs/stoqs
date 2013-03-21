@@ -1000,6 +1000,7 @@
         if (typeof params['platforms'] != 'undefined') {
             if (params['platforms'].length == 1) {
                 $('#contourtext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
+                $('#contourtext').css( { 'color': 'black' } );
             }
         }
     }
@@ -1944,9 +1945,12 @@
                         });
                         // Show colorbar
                         $('#sectioncolorbar').html('<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />');
+                        $('#contourtext').text(params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
+                        $('#contourtext').css( { 'color': 'black' } );
                     }
                     else {
-                        alert(data['parameterplatformdatavaluepng'][2] + "  Try a different selection.");
+                        $('#contourtext').text(data['parameterplatformdatavaluepng'][2] + "  Try a different selection.");
+                        $('#contourtext').css( { 'color': 'red' } );
                     }
                 }
                 else {
