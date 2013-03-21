@@ -81,7 +81,15 @@ GRANT select on all tables in schema public to readonly;
 CREATE ROLE everyone login password 'guest';
 GRANT readonly to everyone;
 
+
+Delete an Activity:
+-------------------
+./manage.py shell
+acts = models.Activity.objects.using('stoqs_march2013_s').filter(name__contains='plm04')
+acts[0].delete(using='stoqs_march2013_s')
+
+
 --
 Mike McCann
-MBARI 19 June 2012
+MBARI 20 March 2013
 
