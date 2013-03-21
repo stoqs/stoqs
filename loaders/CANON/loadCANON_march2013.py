@@ -226,13 +226,13 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
 # Load the data with the appropriate stride
 if stride == 'optimal':
-    cl.loadDorado(stride=10)
+    ##cl.loadDorado(stride=10)
     ##cl.loadDaphne(stride=1)
     ##cl.loadTethys(stride=1)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd(stride=1)
-    cl.loadRCpctd(stride=1)
+    ##cl.loadRCpctd(stride=1)
     ##cl.loadHeHaPe(stride=10)        # As of 3/18/2013 - Bad Lat & Lon
     ##cl.loadRusalka(stride=10)     # As of 3/18/2013 - no good data in file http://zuma.rc.mbari.org/thredds/dodsC/CANON_march2013/usc_glider/Rusalka/processed/OS_Glider_Rusalka_20130301_TS.nc.html
     ##cl.loadYellowfin()
