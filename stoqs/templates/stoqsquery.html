@@ -18,11 +18,24 @@
         .stoqs-toggle {
             width: 100%;
         }
-        .stoqs-background-ajax-loader {
+        .stoqs-background-ajax-loader-pulse {
             background-image: url({{STATIC_URL}}images/ajax-loader-pulse.gif);
         }
+        .stoqs-background-ajax-loader-pp {
+            background-image: url({{STATIC_URL}}images/ajax-loader-rotating.gif);
+            margin-left: 50%;
+            margin-top: 30%;
+            position: relative;
+            background-position:center;
+            background-repeat:no-repeat;
+        }
+        .stoqs-background-ajax-loader-3d {
+            background-image: url({{STATIC_URL}}images/ajax-loader-rotating.gif);
+            background-position:center;
+            background-repeat:no-repeat;
+        }
         .olControlLoadingPanel {
-            background-image:url({{STATIC_URL}}images/ajax-loader-rotating1.gif);
+            background-image:url({{STATIC_URL}}images/ajax-loader-rotating.gif);
             margin-left: 50%;
             margin-top: 30%;
             width: 100px;
@@ -129,7 +142,6 @@
                                     </form>
                                     <div>
                                         <div id="query-stats"></div>
-                                        <div id="loader-div" class="ajax-wait"></div>
                                         <label class="checkbox">
                                             <input type="checkbox" id="getactualcount" /> Get actual count
                                         </label>
@@ -155,7 +167,8 @@
                                                 </td>
                                             </tr>
                                         </table>
-                                        <X3D id='geo_x3d' showLog="true" style="width:100%; margin: 0px auto; display:block; border: none;">
+                                        <!-- <X3D id='geo_x3d' showLog="true" style="width:100%; margin: 0px auto; display:block; border: none;">-->
+                                        <X3D id='geo_x3d' style="width:100%; margin: 0px auto; display:block; border: none;">
                                             <scene>
                                               <transform>
                                                 <Inline url="{{STATIC_URL}}x3d/SanPedroBasin50.x3d"></Inline>
@@ -2044,10 +2057,9 @@
         request = $.ajax({
             type : 'GET',
             beforeSend: function() {
-                $('#loader-div').html('<img src="{{STATIC_URL}}images/ajax-loader.gif">')
-                $('#time-depth-flot').addClass('stoqs-background-ajax-loader ');
-                $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader ');
-                $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader ');
+                $('#time-depth-flot').addClass('stoqs-background-ajax-loader-pulse ');
+                $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader-pp ');
+                $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader-3d ');
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
@@ -2059,10 +2071,9 @@
                         onUpdate(data, key)
                     }
                 }
-                $('#time-depth-flot').removeClass('stoqs-background-ajax-loader ');
-                $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader ');
-                $('#parameter-parameter-3dplot').removeClass('stoqs-background-ajax-loader ');
-                $('#loader-div').html('');
+                $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
+                $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
+                $('#parameter-parameter-3dplot').removeClass('stoqs-background-ajax-loader-3d');
 
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
                 me.refreshMap();
