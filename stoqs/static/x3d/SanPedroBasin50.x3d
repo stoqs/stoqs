@@ -1,13 +1,9 @@
-<GeoViewpoint centerOfRotation='33 -118 0' description='Initial GeoViewpoint' geoSystem='"GD" "WE"' jump='true' orientation='1 0 0 -1.57' position='33.0 -118.0 10000' fieldOfView='0.7854' navType='"EXAMINE" "ANY"' headlight='true' containerField='children'>
-    <geoOrigin DEF='ORIGIN' geoSystem='"GD" "WE"' geoCoords='33.5 -118 0' rotateYUp='true'></geoOrigin>
-</GeoViewpoint>
-
+<scene>
 <shape>
     <Appearance>
         <Material diffuseColor='0.7 0.7 0.7'/>
     </Appearance> 
-
-    <GeoElevationGrid colorPerVertex='true' creaseAngle='0' geoGridOrigin='33.5 -118 0' geoSystem='"GD" "WE"' solid='true' xDimension='237' xSpacing='0.00216229' yScale='10' zDimension='144' zSpacing='0.00217051' normalPerVertex='true' ccw='true' containerField='geometry' height='-507.573 
+    <GeoElevationGrid colorPerVertex='true' creaseAngle='3.14' geoGridOrigin='33.5 -118 0' geoSystem='"GD" "WE"' solid='false' xDimension='237' xSpacing='0.00216229' yScale='10' zDimension='144' zSpacing='0.00217051' normalPerVertex='true' ccw='true' containerField='geometry' height='-507.573 
 		-519.753 -538.546 -564.705 -564.353 -571.604 
 		-574.144 -569.527 -618.773 -634.961 -628.629 
 		-638.224 -670.914 -675.949 -688.896 -693.994 
@@ -6833,7 +6829,7 @@
 		238.875 242.271 245.659 249.035 252.411 
 		255.768 259.122 262.465 265.797 269.125 
 		272.432 275.738 279.023 282.302 285.569 
-		288.819 292.068'>
-        <geoOrigin use='ORIGIN'></geoOrigin>
+		288.819 292.068'> 
     </GeoElevationGrid>
 </shape>
+</scene>
