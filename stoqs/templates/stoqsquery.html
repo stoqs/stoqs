@@ -22,7 +22,7 @@
             background-image: url({{STATIC_URL}}images/ajax-loader-pulse.gif);
         }
         .stoqs-background-ajax-loader-pp {
-            background-image: url({{STATIC_URL}}images/ajax-loader-rotating.gif);
+            background-image: url({{STATIC_URL}}images/ajax-loader-rotating1.gif);
             margin-left: 50%;
             margin-top: 30%;
             position: relative;
@@ -30,12 +30,12 @@
             background-repeat:no-repeat;
         }
         .stoqs-background-ajax-loader-3d {
-            background-image: url({{STATIC_URL}}images/ajax-loader-rotating.gif);
+            background-image: url({{STATIC_URL}}images/ajax-loader-rotating1.gif);
             background-position:center;
             background-repeat:no-repeat;
         }
         .olControlLoadingPanel {
-            background-image:url({{STATIC_URL}}images/ajax-loader-rotating.gif);
+            background-image:url({{STATIC_URL}}images/ajax-loader-rotating1.gif);
             margin-left: 50%;
             margin-top: 30%;
             width: 100px;
@@ -484,8 +484,10 @@
                                         <div class="row">
                                             <div class="span2">
                                                 <label class="checkbox disabled">
-                                                    <input type="checkbox" id="showparameterplatformdata" disabled="disabled"><span id="contourtext">Show data values</span>
+                                                    <input type="checkbox" id="showparameterplatformdata" disabled="disabled"><span id="contourtext">Show data</span>
                                                 </label>
+                                                <input type="radio" name="showdataas" value="contour" style="margin-left:1px;"/> contour
+                                                <input type="radio" name="showdataas" value="scatter"/> scatter
                                             </div>
                                             <div class="span4" id="sectioncolorbar" style="float:right;"></div>
                                         </div>
@@ -1714,6 +1716,9 @@
         }
         if ($('#showparameterplatformdata').is(':checked')) {
             qstring = qstring + '&showparameterplatformdata=1';
+        }
+        if ($('input:radio[name=showdataas]:checked').val()) {
+            qstring = qstring + '&showdataas=' + $('input:radio[name=showdataas]:checked').val();
         }
         if ( ! $('#showallparametervalues').is(':checked')) {
             //$('#parameter-value-table').html('<tbody></tbody>');
