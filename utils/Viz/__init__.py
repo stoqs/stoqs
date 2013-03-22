@@ -127,18 +127,18 @@ class ContourPlots(object):
 
         # Collect the scattered datavalues(time, depth) and grid them
         if xi is not None and yi is not None:
-            # Estimate a scale factor to apply to the x values on drid data so that x & y values are visually equal for the flot plot
+            # Estimate a scale factor to apply to the x values on grid data so that x & y values are visually equal for the flot plot
             # which is assumed to be 3x wider than tall.  Approximate horizontal coverage by Dorado is 1 m/s.
             try:
                 scale_factor = float(tmax -tmin) / (dmax - dmin) / 3.0
             except ZeroDivisionError, e:
                 logger.warn(e)
                 logger.debug('Setting scale_factor to 1.  Will scatter plot the data anyway.')
-                scale_factor = 1
+                scale_factor = None
                 contourFlag = False
-                
-            logger.debug('scale_factor = %f', scale_factor)
-            xi = xi / scale_factor
+            else:                
+                logger.debug('scale_factor = %f', scale_factor)
+                xi = xi / scale_factor
 
             try:
                 os.remove(sectionPngFileFullPath)
@@ -151,7 +151,10 @@ class ContourPlots(object):
             logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
             i = 0
             for mp in self.qs_mp:
-                x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
+                if scale_factor:
+                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
+                else:
+                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
                 y.append(mp['measurement__depth'])
                 z.append(mp['datavalue'])
                 i = i + 1
@@ -206,7 +209,10 @@ class ContourPlots(object):
                     ysamp = []
                     sname = []
                     for s in self.sampleQS.values('instantpoint__timevalue', 'depth', 'name'):
-                        xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()) / scale_factor)
+                        if scale_factor:
+                            xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()) / scale_factor)
+                        else:
+                            xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()))
                         ysamp.append(s['depth'])
                         sname.append(s['name'])
                     ax.scatter(xsamp, ysamp, marker='o', c='w', s=15, zorder=10)
