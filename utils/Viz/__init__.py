@@ -133,7 +133,9 @@ class ContourPlots(object):
                 scale_factor = float(tmax -tmin) / (dmax - dmin) / 3.0
             except ZeroDivisionError, e:
                 logger.warn(e)
-                return None, None, 'Bad depth range'
+                logger.debug('Setting scale_factor to 1.  Will scatter plot the data anyway.')
+                scale_factor = 1
+                contourFlag = False
                 
             logger.debug('scale_factor = %f', scale_factor)
             xi = xi / scale_factor
@@ -143,7 +145,6 @@ class ContourPlots(object):
             except Exception, e:
                 logger.warn(e)
 
-            logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
             x = []
             y = []
             z = []
@@ -157,13 +158,20 @@ class ContourPlots(object):
                 if (i % 1000) == 0:
                     logger.debug('Appended %i measurements to x, y, and z', i)
 
+            logger.debug('self.kwargs = %s', self.kwargs)
             if self.kwargs.has_key('parametervalues'):
                 if self.kwargs['parametervalues']:
                     contourFlag = False
           
+            if self.kwargs.has_key('showdataas'):
+                if self.kwargs['showdataas']:
+                    if self.kwargs['showdataas'][0] == 'scatter':
+                        contourFlag = False
+          
             logger.debug('Number of x, y, z data values retrived from database = %d', len(z)) 
             if contourFlag:
                 try:
+                    logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
                     zi = griddata(x, y, z, xi, yi, interp='nn')
                 except KeyError, e:
                     logger.exception('Got KeyError. Could not grid the data')
@@ -235,7 +243,7 @@ class ContourPlots(object):
             return sectionPngFile, colorbarPngFile, ''
         else:
             logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax)
-            return None, None, 'No depth-time region specified'
+            return None, None, 'No depth-time region specified.'
 
 
 class ParameterParameter(object):
