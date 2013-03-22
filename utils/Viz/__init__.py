@@ -57,9 +57,14 @@ class MeasuredParameter(object):
         self.sampleQS = sampleQS
         self.platformName = platformName
         self.scale_factor = None
+        self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
         self.x = []
         self.y = []
         self.z = []
+        self.lat = []
+        self.lon = []
+        self.depth = []
+        self.value = []
 
     def loadData(self):
         '''
@@ -74,10 +79,15 @@ class MeasuredParameter(object):
                 self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
             self.y.append(mp['measurement__depth'])
             self.z.append(mp['datavalue'])
+
+            self.lon.append(mp['measurement__geom'].x)
+            self.lat.append(mp['measurement__geom'].y)
             i = i + 1
             if (i % 100) == 0:
                 logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
 
+        self.depth = self.y
+        self.value = self.z
 
     def contourDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, nlevels=255, contourFlag=True):
         '''
@@ -203,8 +213,8 @@ class MeasuredParameter(object):
                 ax.set_xlim(tmin / self.scale_factor, tmax / self.scale_factor)
                 ax.set_ylim(dmax, dmin)
                 ax.get_xaxis().set_ticks([])
-                clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
-                cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
+                self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+                cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
                 if contourFlag:
                     ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=cm_jetplus, extend='both')
                     ax.scatter(self.x, self.y, marker='.', s=2, c='k', lw = 0)
@@ -263,7 +273,32 @@ class MeasuredParameter(object):
         '''
         Return scatter-like data values as X3D geocoordinates and colors
         '''
-        pass
+        x3dResults = {}
+        colorbarPngFile = ''
+        if not self.lon and not self.lat and not self.depth and not self.value:
+            self.loadData()
+        try:
+            points = ''
+            colors = ''
+            for lon,lat,depth,value in zip(self.lon, self.lat, self.depth, self.value):
+                points = points + '%.5f %.5f %.1f ' % (lon, lat, -depth)
+
+                cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
+                                    (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))
+                if cindx < 0:
+                    cindx = 0
+                if cindx > len(self.clt) - 1:
+                    cindx = len(self.clt) - 1
+
+                colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
+ 
+            x3dResults = {'colors': colors, 'points': points, 'info': '', 'colorbar': colorbarPngFile}
+
+        except Exception,e:
+            logger.exception('Could not create measuredparameterx3d')
+            return None, None, 'Could not create measuredparameterx3d'
+
+        return x3dResults
 
 
 class ParameterParameter(object):
@@ -279,6 +314,7 @@ class ParameterParameter(object):
         self.mpq = mpq
         self.pq = pq
         self.pMinMax = pMinMax
+        self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
         self.depth = []
         self.x = []
         self.y = []
@@ -365,8 +401,8 @@ class ParameterParameter(object):
             ax.set_xlim(self.pMinMax['x'][1], self.pMinMax['x'][2])
             ax.set_ylim(self.pMinMax['y'][1], self.pMinMax['y'][2])
 
-            clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
-            cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
+            self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+            cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
             if self.c:
                 logger.debug('self.pMinMax = %s', self.pMinMax)
                 ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
@@ -452,7 +488,6 @@ class ParameterParameter(object):
 
             if self.c:
                 self.c.reverse()    # Modifies self.c in place - needed for popping values off in loop below
-                clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
 
             points = ''
             colors = ''
@@ -464,13 +499,13 @@ class ParameterParameter(object):
                 zs = 10000 * (z - float(self.pMinMax['z'][1])) / (float(self.pMinMax['z'][2]) - float(self.pMinMax['z'][1])) 
                 points = points + '%d %d %d ' % (int(xs), int(ys), int(zs))
                 if self.c:
-                    cindx = int(round((self.c.pop() - float(self.pMinMax['c'][1])) * (len(clt) - 1) / 
+                    cindx = int(round((self.c.pop() - float(self.pMinMax['c'][1])) * (len(self.clt) - 1) / 
                                     (float(self.pMinMax['c'][2]) - float(self.pMinMax['c'][1]))))
                     if cindx < 0:
                         cindx = 0
-                    if cindx > len(clt) - 1:
-                        cindx = len(clt) - 1
-                    colors = colors + '%.3f %.3f %.3f ' % (clt[cindx][0], clt[cindx][1], clt[cindx][2])
+                    if cindx > len(self.clt) - 1:
+                        cindx = len(self.clt) - 1
+                    colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
                 else:
                     colors = colors + '0 0 0 '
 
@@ -494,8 +529,7 @@ class ParameterParameter(object):
                     cb_fig = plt.figure(figsize=(0.6, 4))
                     cb_ax = cb_fig.add_axes([0.1, 0.1, 0.15, 0.8])
                     norm = mpl.colors.Normalize(vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip=False)
-                    clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
-                    cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
+                    cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
                     cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=cm_jetplus,
                                                     norm=norm,
                                                     ticks=[self.pMinMax['c'][1], self.pMinMax['c'][2]],
