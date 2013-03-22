@@ -68,7 +68,8 @@ cl.dorado_files = [
                     ##'Dorado389_2013_074_02_074_02_decim.nc',
                     ##'Dorado389_2013_075_05_075_06_decim.nc',
                     ##'Dorado389_2013_076_01_076_02_decim.nc',
-                    'Dorado389_2013_079_04_079_04_decim.nc',
+                    ##'Dorado389_2013_079_04_079_04_decim.nc',
+                    'Dorado389_2013_080_02_080_02_decim.nc',
                   ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
@@ -174,7 +175,8 @@ cl.rcuctd_files = [
                         ##'07413plm01.nc',
                         ##'07513plm02.nc',
                         ##'07613plm03.nc',
-                        '07913plm04.nc',
+                        ##'07913plm04.nc',
+                        '08013plm05.nc',
                       ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
@@ -208,11 +210,16 @@ cl.rcpctd_files = [
 #                    '07613c24.nc',
 #                    '07613c25.nc',
 #                    '07613c26.nc',
-                    '07913c27.nc',
-                    '07913c28.nc',
-                    '07913c29.nc',
-                    '07913c30.nc',
-                    '07913c31.nc',
+#                    '07913c27.nc',
+#                    '07913c28.nc',
+#                    '07913c29.nc',
+#                    '07913c30.nc',
+#                    '07913c31.nc',
+                    '08013c32.nc',
+                    '08013c33.nc',
+                    '08013c34.nc',
+                    '08013c35.nc',
+                    '08013c36.nc',
                       ]
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
@@ -226,13 +233,13 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
 # Load the data with the appropriate stride
 if stride == 'optimal':
-    ##cl.loadDorado(stride=10)
+    cl.loadDorado(stride=2)
     ##cl.loadDaphne(stride=1)
     ##cl.loadTethys(stride=1)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd(stride=1)
-    ##cl.loadRCpctd(stride=1)
+    cl.loadRCpctd(stride=1)
     ##cl.loadHeHaPe(stride=10)        # As of 3/18/2013 - Bad Lat & Lon
     ##cl.loadRusalka(stride=10)     # As of 3/18/2013 - no good data in file http://zuma.rc.mbari.org/thredds/dodsC/CANON_march2013/usc_glider/Rusalka/processed/OS_Glider_Rusalka_20130301_TS.nc.html
     ##cl.loadYellowfin()
