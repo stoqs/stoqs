@@ -26,7 +26,7 @@ from utils import round_to_n, postgresifySQL
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data
 from MPQuery import MPQuery
 from PQuery import PQuery
-from Viz import ContourPlots, ParameterParameter
+from Viz import MeasuredParameter, ParameterParameter
 from coards import to_udunits
 from datetime import datetime
 import logging
@@ -625,10 +625,10 @@ class STOQSQManager(object):
             return None, None, 'Could not get platform name.'
             
         logger.debug('platformName = %s', platformName)
-        logger.debug('Instantiating Viz.ContourPlots............................................')
+        logger.debug('Instantiating Viz.MeasuredParameter............................................')
         if not self.mpq.qs_mp:
             self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-        cp = ContourPlots(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
+        cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
                               self.getParameterMinMax(), self.getSampleQS(), platformName)
 
         return cp.contourDatavaluesForFlot()
@@ -675,7 +675,7 @@ class STOQSQManager(object):
 
             if (px and py and pz):
                 if not self.mpq.qs_mp:
-                    self.mpq.buildPQuerySet(*self.args, **self.kwargs)
+                    self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
                 # We have enough information to generate X3D XML
                 pMinMax = { 'x': self.getParameterMinMax(px, percentileAggregateType='extrema'), 
@@ -699,14 +699,18 @@ class STOQSQManager(object):
         x3dDict = None
         if self.kwargs.has_key('measuredparametersgroup'):
             if len(self.kwargs['measuredparametersgroup']) == 1:
-                mpname = self.kwargs['measuredparametersgroup'][0]
+                if self.kwargs['measuredparametersgroup'][0]:
+                    if not self.mpq.qs_mp:
+                        self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                    try:
+                        platformName = self.getPlatforms()[0][0]
+                    except IndexError, e:
+                        logger.warn(e)
+                        platformName = None
 
-                if not self.mpq.qs_mp:
-                    self.mpq.buildPQuerySet(*self.args, **self.kwargs)
-
-                mpdv  = ContourPlots(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
-                              self.getParameterMinMax(), self.getSampleQS(), platformName)
-                x3dDict = mpdv.dataValuesX3D()
+                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
+                                  self.getParameterMinMax(), self.getSampleQS(), platformName)
+                    x3dDict = mpdv.dataValuesX3D()
             
         return x3dDict
 
