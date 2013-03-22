@@ -41,13 +41,13 @@ import time
 
 logger = logging.getLogger(__name__)
 
-class ContourPlots(object):
+class MeasuredParameter(object):
     '''
     Use matploptib to create nice looking contour plots
     '''
     def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName):
         '''
-        Save parameters that can be used by the different plotting methods here
+        Save parameters that can be used by the different product generation methods here
         '''
         self.kwargs = kwargs
         self.request = request
@@ -56,6 +56,28 @@ class ContourPlots(object):
         self.parameterMinMax = parameterMinMax
         self.sampleQS = sampleQS
         self.platformName = platformName
+        self.scale_factor = None
+        self.x = []
+        self.y = []
+        self.z = []
+
+    def loadData(self):
+        '''
+        Read the data from the database into member variables for use by the methods that output various products
+        '''
+        logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
+        i = 0
+        for mp in self.qs_mp:
+            if self.scale_factor:
+                self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+            else:
+                self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+            self.y.append(mp['measurement__depth'])
+            self.z.append(mp['datavalue'])
+            i = i + 1
+            if (i % 100) == 0:
+                logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
+
 
     def contourDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, nlevels=255, contourFlag=True):
         '''
@@ -130,36 +152,22 @@ class ContourPlots(object):
             # Estimate a scale factor to apply to the x values on grid data so that x & y values are visually equal for the flot plot
             # which is assumed to be 3x wider than tall.  Approximate horizontal coverage by Dorado is 1 m/s.
             try:
-                scale_factor = float(tmax -tmin) / (dmax - dmin) / 3.0
+                self.scale_factor = float(tmax -tmin) / (dmax - dmin) / 3.0
             except ZeroDivisionError, e:
                 logger.warn(e)
-                logger.debug('Setting scale_factor to 1.  Will scatter plot the data anyway.')
-                scale_factor = None
+                logger.debug('Not setting self.scale_factor.  Scatter plots will still work.')
                 contourFlag = False
             else:                
-                logger.debug('scale_factor = %f', scale_factor)
-                xi = xi / scale_factor
+                logger.debug('self.scale_factor = %f', self.scale_factor)
+                xi = xi / self.scale_factor
 
             try:
                 os.remove(sectionPngFileFullPath)
             except Exception, e:
                 logger.warn(e)
 
-            x = []
-            y = []
-            z = []
-            logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
-            i = 0
-            for mp in self.qs_mp:
-                if scale_factor:
-                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / scale_factor)
-                else:
-                    x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
-                y.append(mp['measurement__depth'])
-                z.append(mp['datavalue'])
-                i = i + 1
-                if (i % 1000) == 0:
-                    logger.debug('Appended %i measurements to x, y, and z', i)
+            if not self.x and not self.y and not self.z:
+                self.loadData()
 
             logger.debug('self.kwargs = %s', self.kwargs)
             if self.kwargs.has_key('parametervalues'):
@@ -171,11 +179,11 @@ class ContourPlots(object):
                     if self.kwargs['showdataas'][0] == 'scatter':
                         contourFlag = False
           
-            logger.debug('Number of x, y, z data values retrived from database = %d', len(z)) 
+            logger.debug('Number of x, y, z data values retrived from database = %d', len(self.z)) 
             if contourFlag:
                 try:
                     logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
-                    zi = griddata(x, y, z, xi, yi, interp='nn')
+                    zi = griddata(self.x, self.y, self.z, xi, yi, interp='nn')
                 except KeyError, e:
                     logger.exception('Got KeyError. Could not grid the data')
                     return None, None, 'Got KeyError. Could not grid the data'
@@ -192,16 +200,16 @@ class ContourPlots(object):
                 # See http://scipy.org/Cookbook/Matplotlib/Django
                 fig = plt.figure(figsize=(6,3))
                 ax = fig.add_axes((0,0,1,1))
-                ax.set_xlim(tmin / scale_factor, tmax / scale_factor)
+                ax.set_xlim(tmin / self.scale_factor, tmax / self.scale_factor)
                 ax.set_ylim(dmax, dmin)
                 ax.get_xaxis().set_ticks([])
                 clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
                 cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
                 if contourFlag:
                     ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=cm_jetplus, extend='both')
-                    ax.scatter(x, y, marker='.', s=2, c='k', lw = 0)
+                    ax.scatter(self.x, self.y, marker='.', s=2, c='k', lw = 0)
                 else:
-                    ax.scatter(x, y, c=z, s=20, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+                    ax.scatter(self.x, self.y, c=self.z, s=20, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
 
                 if self.sampleQS:
                     # Add sample locations and names
@@ -209,8 +217,8 @@ class ContourPlots(object):
                     ysamp = []
                     sname = []
                     for s in self.sampleQS.values('instantpoint__timevalue', 'depth', 'name'):
-                        if scale_factor:
-                            xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()) / scale_factor)
+                        if self.scale_factor:
+                            xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()) / self.scale_factor)
                         else:
                             xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()))
                         ysamp.append(s['depth'])
@@ -251,7 +259,7 @@ class ContourPlots(object):
             logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax)
             return None, None, 'No depth-time region specified.'
 
-    def dataValuesX3D():
+    def dataValuesX3D(self):
         '''
         Return scatter-like data values as X3D geocoordinates and colors
         '''
