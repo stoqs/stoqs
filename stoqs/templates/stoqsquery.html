@@ -161,8 +161,6 @@
                                                     <button id="geo_zoom-width-button" class="btn btn-mini">Zoom display</button>
                                                     <br><br>
                                                     -->
-                                                    <button id="geo_x3d-show-all" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.showAll();return false;">Show all</button>
-                                                    <br><br>
                                                     <button id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;">Reset view</button>
                                                 </td>
                                             </tr>
@@ -170,9 +168,15 @@
                                         <!-- <X3D id='geo_x3d' showLog="true" style="width:100%; margin: 0px auto; display:block; border: none;">-->
                                         <X3D id='geo_x3d' style="width:100%; margin: 0px auto; display:block; border: none;">
                                             <scene>
-                                              <transform>
+                                                <NavigationInfo speed="0.1"></NavigationInfo>
+                                                    <Viewpoint position="-2554555.15162 -4708534.72350 3493239.79495" orientation="0.77438 -0.22856 -0.59000 2.63898"  zNear="810.792226" zFar="810792225.504400" centerOfRotation="-2480522.2360344105 -4700586.017103683 3511951.5301989224 " description="defaultX3DViewpointNode"></Viewpoint>
+                                                <shape>
+                                                    <pointset>
+                                                        <color id="geopointsetcolors"></color>
+                                                        <coordinate id="geopointsetcoordinates"></coordinate>
+                                                    </pointset>
+                                                </shape>
                                                 <Inline url="{{STATIC_URL}}x3d/SanPedroBasin50.x3d"></Inline>
-                                              </transform>
                                             </scene>
                                         </X3D>
                                     </div>
@@ -2057,7 +2061,18 @@
                                 $('a[href=#pp3d]').tab('show');
                             }
                         }
-                        //x3dom.reload();
+                    }
+                }
+            }
+            else if (key == 'measuredparameterx3d') {
+                if (data[key]) {
+                    if (data[key]['points']) {
+                        $('#geopointsetcoordinates').attr('point', data[key]['points']);
+                        $('#geopointsetcolors').attr('color', data[key]['colors']);
+                        $('#geo_x3d').css( {
+                                'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
+                                'background-repeat': 'no-repeat',
+                                'position': 'relative' } );
                     }
                 }
             }
