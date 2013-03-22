@@ -69,26 +69,37 @@ cl.dorado_files = [
                     ##'Dorado389_2013_075_05_075_06_decim.nc',
                     ##'Dorado389_2013_076_01_076_02_decim.nc',
                     ##'Dorado389_2013_079_04_079_04_decim.nc',
-                    'Dorado389_2013_080_02_080_02_decim.nc',
+                    ##'Dorado389_2013_080_02_080_02_decim.nc',
+                    'Dorado389_2013_081_05_081_05_decim.nc',
+                    'Dorado389_2013_081_06_081_06_decim.nc',
                   ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
 ##cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
-cl.daphne_base = cl.dodsBase + 'CANON_march2013/lrauv/daphne/realtime/sbdlogs/2013/201303/'
-cl.daphne_files = [ 
+cl.daphne_r_base = cl.dodsBase + 'CANON_march2013/lrauv/daphne/realtime/sbdlogs/2013/201303/'
+cl.daphne_r_files = [ 
                     'shore_201303132226_201303140449.nc',
                     'shore_201303140708_201303140729.nc',
                     'shore_201303140729_201303141609.nc',
                     'shore_201303141631_201303151448.nc',
                     'shore_201303141631_201303181540.nc',
                   ]
-cl.daphne_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water']
+cl.daphne_r_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water']
 
 # Postrecovery full-resolution (_d_) daphne data - insert '_d_' for delayed-mode to not load the data
-cl.daphne_d_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/daphne/2013/'
-cl.daphne_d_files = [ 
+cl.daphne_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/daphne/missionlogs/2013/'
+cl.daphne_files = [ 
+                    '20130313_20130318/20130313T195025/201303131950_201303132226.nc',
+                    '20130313_20130318/20130313T222616/201303132226_201303140705.nc',
+                    '20130313_20130318/20130314T070622/201303140706_201303140729.nc',
+                    '20130313_20130318/20130314T072813/201303140728_201303141601.nc',
+                    '20130313_20130318/20130314T162843/201303141901_201303150303.nc',
+                    '20130313_20130318/20130314T162843/201303150303_201303151019.nc',
+                    '20130313_20130318/20130314T162843/201303151019_201303151821.nc',
+                    '20130313_20130318/20130314T162843/201303151821_201303151901.nc',
+                    '20130313_20130318/20130314T162843/201303151901_201303160253.nc',
                   ]
-cl.daphne_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
+cl.daphne_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
 
@@ -176,7 +187,8 @@ cl.rcuctd_files = [
                         ##'07513plm02.nc',
                         ##'07613plm03.nc',
                         ##'07913plm04.nc',
-                        '08013plm05.nc',
+                        ##'08013plm05.nc',
+                        '08113plm06.nc',
                       ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
@@ -215,11 +227,18 @@ cl.rcpctd_files = [
 #                    '07913c29.nc',
 #                    '07913c30.nc',
 #                    '07913c31.nc',
-                    '08013c32.nc',
-                    '08013c33.nc',
-                    '08013c34.nc',
-                    '08013c35.nc',
-                    '08013c36.nc',
+#                    '08013c32.nc',
+#                    '08013c33.nc',
+#                    '08013c34.nc',
+#                    '08013c35.nc',
+#                    '08013c36.nc',
+                    '08113c37.nc',
+                    '08113c38.nc',
+                    '08113c39.nc',
+                    '08113c40.nc',
+                    '08113c41.nc',
+                    '08113c42.nc',
+                    '08113c43.nc',
                       ]
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
@@ -234,7 +253,7 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 # Load the data with the appropriate stride
 if stride == 'optimal':
     cl.loadDorado(stride=2)
-    ##cl.loadDaphne(stride=1)
+    ##cl.loadDaphne(stride=1000)
     ##cl.loadTethys(stride=1)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
@@ -245,8 +264,8 @@ if stride == 'optimal':
     ##cl.loadYellowfin()
 else:
     cl.loadDorado()
-    cl.loadDaphne()
-    cl.loadTethys()
+    ##cl.loadDaphne()
+    ##cl.loadTethys()
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd()
