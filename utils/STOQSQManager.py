@@ -198,6 +198,7 @@ class STOQSQManager(object):
                            'activityparameterhistograms': self.getActivityParameterHistograms,
                            'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
                            'parameterparameterx3d': self.getParameterParameterX3D,
+                           'measuredparameterx3d': self.getMeasuredParameterX3D,
                            'parameterparameterpng': self.getParameterParameterPNG,
                            ##'activityparamhistrequestpngs': self.getActivityParamHistRequestPNGs,
                            }
@@ -691,6 +692,23 @@ class STOQSQManager(object):
             
         return x3dDict
 
+    def getMeasuredParameterX3D(self):
+        '''
+        If a single MeasuredParameter is selected then return the X3D coordinates and colors for those points
+        '''
+        x3dDict = None
+        if self.kwargs.has_key('measuredparametersgroup'):
+            if len(self.kwargs['measuredparametersgroup']) == 1:
+                mpname = self.kwargs['measuredparametersgroup'][0]
+
+                if not self.mpq.qs_mp:
+                    self.mpq.buildPQuerySet(*self.args, **self.kwargs)
+
+                mpdv  = ContourPlots(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
+                              self.getParameterMinMax(), self.getSampleQS(), platformName)
+                x3dDict = mpdv.dataValuesX3D()
+            
+        return x3dDict
 
     #
     # Methods that generate Q objects used to populate the query.
