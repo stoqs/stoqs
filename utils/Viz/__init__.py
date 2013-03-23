@@ -210,7 +210,10 @@ class MeasuredParameter(object):
                 # See http://scipy.org/Cookbook/Matplotlib/Django
                 fig = plt.figure(figsize=(6,3))
                 ax = fig.add_axes((0,0,1,1))
-                ax.set_xlim(tmin / self.scale_factor, tmax / self.scale_factor)
+                if self.scale_factor:
+                    ax.set_xlim(tmin / self.scale_factor, tmax / self.scale_factor)
+                else:
+                    ax.set_xlim(tmin, tmax)
                 ax.set_ylim(dmax, dmin)
                 ax.get_xaxis().set_ticks([])
                 self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
