@@ -708,9 +708,9 @@ class STOQSQManager(object):
                         logger.warn(e)
                         platformName = None
 
-                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
-                                  self.getParameterMinMax(), self.getSampleQS(), platformName)
-                    x3dDict = mpdv.dataValuesX3D()
+                    ##mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
+                    ##              self.getParameterMinMax(), self.getSampleQS(), platformName)
+                    ##x3dDict = mpdv.dataValuesX3D()
             
         return x3dDict
 
