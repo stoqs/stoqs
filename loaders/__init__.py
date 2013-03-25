@@ -123,7 +123,7 @@ class STOQS_Loader(object):
         what is in MBARItracking.'''
 
         ##paURL = 'http://odss-staging.shore.mbari.org/trackingdb/platformAssociations.csv'
-        #-#paURL = 'http://odss.mbari.org/trackingdb/platformAssociations.csv'
+        paURL = 'http://odss.mbari.org/trackingdb/platformAssociations.csv'
         ##paURL = 'http://192.168.111.177/trackingdb/platformAssociations.csv'  # Private URL for host malibu
         # Returns lines like:
         # PlatformType,PlatformName
@@ -133,8 +133,8 @@ class STOQS_Loader(object):
         # ship,W_FLYER
         # ship,ZEPHYR
         # mooring,Bruce
-        #-#logger.info("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
-        #-#tpHandle = csv.DictReader(urllib2.urlopen(paURL))
+        logger.info("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
+        tpHandle = csv.DictReader(urllib2.urlopen(paURL))
         tpHandle = []
         platformName = ''
         for rec in tpHandle:
