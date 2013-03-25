@@ -192,10 +192,10 @@ class Base_Loader(STOQS_Loader):
             timeAxis = self.ds.TIME
         except AttributeError:
             try:
-                timeAxis = self.ds.time
+                timeAxis = self.ds.Time
             except AttributeError:
                 try:
-                    timeAxis = self.ds.Time
+                    timeAxis = self.ds.time
                 except AttributeError:
                     timeAxis = self.ds.esecs
     
@@ -224,7 +224,7 @@ class Base_Loader(STOQS_Loader):
             v = self.ds[k]
             logger.debug("k in keys = %s, shape = %s, type = %s", k, self.ds[k].shape, type(v))
             if k.find('%2E') != -1:
-                logger.debug("Skipping variable %s that has '.' in it as TDS can't retrieve it anyway.", k)
+                logger.debug("Skipping variable %s that has '.' in it as TDS can't retrieve it anyway. Even Hyrax can't properly deliver dot-named variables to pydap.", k)
                 continue
 
             # Only build iterators for included names and the required non-parameter coordinate variables in ignored_names
@@ -241,7 +241,8 @@ class Base_Loader(STOQS_Loader):
                     then the cache files must be removed and the tomcat hosting TDS restarted.''')
                     sys.exit(1)
                 except pydap.exceptions.ServerError as e:
-                    logger.warn('%s', e)
+                    logger.exception('%s', e)
+                    sys.exit(-1)
                     continue
 
                 logger.debug("Loading %s into parts dictionary", k)
@@ -277,6 +278,7 @@ class Base_Loader(STOQS_Loader):
                     logger.warn("v.ndim = %s (not 0 or 1) in trying to get part of %s", v.ndim, v)
                     continue
 
+                ##raw_input('paused')
 
         # Now, deliver the rows
         while True:
@@ -335,7 +337,7 @@ class Base_Loader(STOQS_Loader):
                 logger.debug("Got SkipRecord Exception from self.preProcessParams().  Skipping")
                 continue
             except Exception, e:
-                logger.error(e)
+                logger.exception(e)
                 sys.exit(-1)
             else:
                 params = {} 
@@ -656,8 +658,17 @@ class Lrauv_Loader(Trajectory_Loader):
         for v in ('Time', 'TIME', 'latitude', 'longitude', 'depth'):
             if row.has_key(v):
                 row[v.lower()] = row.pop(v) 
-        if row.has_key('sea_water_salinity') and row.has_key('sea_water_temperature') and row.has_key('depth') and row.has_key('latitude'):
-            row['sea_water_sigma_t'] = sw.dens(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
+
+        if self.url.find('shore') == -1:
+            # Full-resolution data (whose name does not contain 'shore') are in radians
+            if row.has_key('latitude'):
+                row['latitude'] = row['latitude'] * 180.0 / numpy.pi
+            if row.has_key('longitude'):
+                row['longitude'] = row['longitude'] * 180.0 / numpy.pi
+            # Can't read CTD_NeilBrown.sea_water_temperature because of the '.'.  Use 'sea_water_temperature', but convert to C and assign units
+            if row.has_key('sea_water_temperature'):
+                row['sea_water_temperature'] = row['sea_water_temperature'] - 272.15
+                self.ds['sea_water_temperature'].units = 'degC'
 
         return super(Lrauv_Loader, self).preProcessParams(row)
 
