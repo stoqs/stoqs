@@ -58,18 +58,18 @@ if stride != 1:
 cl = CANONLoader(dbAlias, campaignName)
 
 # Aboard the Carson use zuma
-cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
-##cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
+##cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
+cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # 2-second decimated dorado data
 cl.dorado_base = cl.dodsBase + 'CANON_march2013/dorado/'
 cl.dorado_files = [ 
-                    ##'Dorado389_2013_074_02_074_02_decim.nc',
-                    ##'Dorado389_2013_075_05_075_06_decim.nc',
-                    ##'Dorado389_2013_076_01_076_02_decim.nc',
-                    ##'Dorado389_2013_079_04_079_04_decim.nc',
-                    ##'Dorado389_2013_080_02_080_02_decim.nc',
+                    'Dorado389_2013_074_02_074_02_decim.nc',
+                    'Dorado389_2013_075_05_075_06_decim.nc',
+                    'Dorado389_2013_076_01_076_02_decim.nc',
+                    'Dorado389_2013_079_04_079_04_decim.nc',
+                    'Dorado389_2013_080_02_080_02_decim.nc',
                     'Dorado389_2013_081_05_081_05_decim.nc',
                     'Dorado389_2013_081_06_081_06_decim.nc',
                   ]
@@ -183,11 +183,11 @@ cl.espmack_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'CANON_march2013/carson/uctd/'
 cl.rcuctd_files = [ 
-                        ##'07413plm01.nc',
-                        ##'07513plm02.nc',
-                        ##'07613plm03.nc',
-                        ##'07913plm04.nc',
-                        ##'08013plm05.nc',
+                        '07413plm01.nc',
+                        '07513plm02.nc',
+                        '07613plm03.nc',
+                        '07913plm04.nc',
+                        '08013plm05.nc',
                         '08113plm06.nc',
                       ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
@@ -196,48 +196,12 @@ cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.pctdDir = 'CANON_march2013/carson/pctd/'
 cl.rcpctd_base = cl.dodsBase + cl.pctdDir
 cl.rcpctd_files = [ 
-#                    '07413c01.nc',
-#                    '07413c02.nc',
-#                    '07413c03.nc',
-#                    '07413c04.nc',
-#                    '07413c05.nc',
-#                    '07413c06.nc',
-#                    '07413c07.nc',
-#                    '07413c08.nc',
-#                    '07413c09.nc',
-#                    '07413c10.nc',
-#                    '07413c11.nc',
-#                    '07513c12.nc',
-#                    '07513c13.nc',
-#                    '07513c14.nc',
-#                    '07513c15.nc',
-#                    '07513c16.nc',
-#                    '07513c17.nc',
-#                    '07513c18.nc',
-#                    '07513c19.nc',
-#                    '07613c20.nc',
-#                    '07613c21.nc',
-#                    '07613c22.nc',
-#                    '07613c23.nc',
-#                    '07613c24.nc',
-#                    '07613c25.nc',
-#                    '07613c26.nc',
-#                    '07913c27.nc',
-#                    '07913c28.nc',
-#                    '07913c29.nc',
-#                    '07913c30.nc',
-#                    '07913c31.nc',
-#                    '08013c32.nc',
-#                    '08013c33.nc',
-#                    '08013c34.nc',
-#                    '08013c35.nc',
-#                    '08013c36.nc',
-                    '08113c37.nc',
-                    '08113c38.nc',
-                    '08113c39.nc',
-                    '08113c40.nc',
-                    '08113c41.nc',
-                    '08113c42.nc',
+                    '07413c01.nc', '07413c02.nc', '07413c03.nc', '07413c04.nc', '07413c05.nc', '07413c06.nc', '07413c07.nc',
+                    '07413c08.nc', '07413c09.nc', '07413c10.nc', '07413c11.nc', '07513c12.nc', '07513c13.nc', '07513c14.nc',
+                    '07513c15.nc', '07513c16.nc', '07513c17.nc', '07513c18.nc', '07513c19.nc', '07613c20.nc', '07613c21.nc',
+                    '07613c22.nc', '07613c23.nc', '07613c24.nc', '07613c25.nc', '07613c26.nc', '07913c27.nc', '07913c28.nc',
+                    '07913c29.nc', '07913c30.nc', '07913c31.nc', '08013c32.nc', '08013c33.nc', '08013c34.nc', '08013c35.nc',
+                    '08013c36.nc', '08113c37.nc', '08113c38.nc', '08113c39.nc', '08113c40.nc', '08113c41.nc', '08113c42.nc',
                     '08113c43.nc',
                       ]
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
