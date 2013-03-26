@@ -65,13 +65,13 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # 2-second decimated dorado data
 cl.dorado_base = cl.dodsBase + 'CANON_march2013/dorado/'
 cl.dorado_files = [ 
-                    ##'Dorado389_2013_074_02_074_02_decim.nc',
-                    ##'Dorado389_2013_075_05_075_06_decim.nc',
+                    'Dorado389_2013_074_02_074_02_decim.nc',
+                    'Dorado389_2013_075_05_075_06_decim.nc',
                     'Dorado389_2013_076_01_076_02_decim.nc',
-                    ##'Dorado389_2013_079_04_079_04_decim.nc',
-                    ##'Dorado389_2013_080_02_080_02_decim.nc',
-                    ##'Dorado389_2013_081_05_081_05_decim.nc',
-                    ##'Dorado389_2013_081_06_081_06_decim.nc',
+                    'Dorado389_2013_079_04_079_04_decim.nc',
+                    'Dorado389_2013_080_02_080_02_decim.nc',
+                    'Dorado389_2013_081_05_081_05_decim.nc',
+                    'Dorado389_2013_081_06_081_06_decim.nc',
                   ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
@@ -276,12 +276,8 @@ cl.espmack_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'CANON_march2013/carson/uctd/'
 cl.rcuctd_files = [ 
-                        '07413plm01.nc',
-                        '07513plm02.nc',
-                        '07613plm03.nc',
-                        '07913plm04.nc',
-                        '08013plm05.nc',
-                        '08113plm06.nc',
+                        '07413plm01.nc', '07513plm02.nc', '07613plm03.nc', '07913plm04.nc',
+                        '08013plm05.nc', '08113plm06.nc',
                       ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
@@ -309,13 +305,13 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
 # Load the data with the appropriate stride
 if stride == 'optimal':
-    ##cl.loadDorado(stride=100)
-    cl.loadDaphne(stride=1000)
-    cl.loadTethys(stride=1000)
+    cl.loadDorado(stride=2)
+    cl.loadDaphne(stride=10)
+    cl.loadTethys(stride=10)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
-    ##cl.loadRCuctd(stride=1)
-    ##cl.loadRCpctd(stride=1)
+    cl.loadRCuctd(stride=1)
+    cl.loadRCpctd(stride=1)
     ##cl.loadHeHaPe(stride=10)        # As of 3/18/2013 - Bad Lat & Lon
     ##cl.loadRusalka(stride=10)     # As of 3/18/2013 - no good data in file http://zuma.rc.mbari.org/thredds/dodsC/CANON_march2013/usc_glider/Rusalka/processed/OS_Glider_Rusalka_20130301_TS.nc.html
     ##cl.loadYellowfin()
