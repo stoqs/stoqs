@@ -154,8 +154,10 @@
                                             <tr>
                                                 <td style="vertical-align: top; padding-right: 10px;">
                                                     <em style="color:orange">Under construction</em><br>
-                                                    <em>Recenter rotation: double click</em>
-                                                    <em>Rotate: Left mouse<br>Translate: Ctrl + left mouse<br>Zoom: Alt + left mouse </em>
+                                                    <em>Recenter rotation: double click</em><br>
+                                                    <em>Rotate: Left mouse</em><br>
+                                                    <em>Translate: Ctrl + left mouse</em><br>
+                                                    <em>Zoom: Alt + left mouse</em>
                                                 </td>
                                                 <td style="vertical-align: top;">
                                                     <!--
@@ -167,20 +169,37 @@
                                             </tr>
                                         </table>
                                         <!-- <X3D id='geo_x3d' showLog="true" style="width:100%; margin: 0px auto; display:block; border: none;"> -->
-                                        <X3D id='geo_x3d' style="width:100%; margin: 0px auto; display:block; border: none;">
-                                            <scene>
+                                        <X3D id='geo_x3d' style="width:100%; margin: 0px auto; display:block; border: none;"> 
+                                            <Scene frustumCulling='false'>
                                                 <NavigationInfo speed="0.1"></NavigationInfo>
-                                                    <Viewpoint position="-2554555.15162 -4708534.72350 3493239.79495" orientation="0.77438 -0.22856 -0.59000 2.63898"  zNear="810.792226" zFar="810792225.504400" centerOfRotation="-2480522.2360344105 -4700586.017103683 3511951.5301989224 " description="defaultX3DViewpointNode"></Viewpoint>
+                                                <!--    <Viewpoint position="-2554555.15162 -4708534.72350 3493239.79495" orientation="0.77438 -0.22856 -0.59000 2.63898"  zNear="810.792226" zFar="810792225.504400" centerOfRotation="-2480522.2360344105 -4700586.017103683 3511951.5301989224 " description="defaultX3DViewpointNode"></Viewpoint> -->
+                                                 <Viewpoint position="-2506201.75319 -4749736.09075 3500394.81991" orientation="0.93462 -0.27600 -0.22427 1.90148" zNear="810.792226" zFar="810792225.504400" centerOfRotation="-2480522.2360344105 -4700586.017103683 3511951.5301989224" description="defaultX3DViewpointNode"></Viewpoint>
+                                                    
+                                                    <Shape>
 <!--
-                                                <shape>
+                <PointSet>
+                    <GeoCoordinate point='33.6 -118.5 10'/>
+                    <Coordinate point='-2554555.15162 -4708534.72350 3493239.79495 2 2 2 3 3 3'/> 
+                    <Color color='1 0 0'/>
+                </PointSet>
+-->
+                            <Appearance> 
+                                <Material emissiveColor='1 0 0'></Material> 
+                            </Appearance>
+                            <IndexedLineSet coordIndex='0 1'>
+                                <GeoCoordinate geoSystem='"GD" "WE"' point='33.56 -117.9 0 33.63 -118.1 0'></GeoCoordinate>
+                            </IndexedLineSet>
+
+
+            </Shape>
+<!--
                                                     <PointSet>
-                                                        <color id="geopointsetcolors"></color>
-                                                        <GeoCoordinate id="geopointsetcoordinates" geoGridOrigin='33.5 -118 0' geoSystem='"GD" "WE"'></GeoCoordinate>
+                                                        <color id="geopointsetcolors">0 0 0</color>
+                                                        <GeoCoordinate id="geopointsetcoordinates" geoSystem='"GD" "WE"'></GeoCoordinate>
                                                     </PointSet>
-                                                </shape>
 -->
                                                 <Inline url="{{STATIC_URL}}x3d/SanPedroBasin50.x3d"></Inline>
-                                            </scene>
+                                            </Scene>
                                         </X3D>
                                     </div>
                                 </div>
@@ -657,7 +676,11 @@
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-typeahead.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/OpenLayers.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/LoadingPanel.js"></script> 
+<!--
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.js"></script>
+-->
+    <script type="text/javascript" src="http://x3dom.org/download/dev/x3dom-full.js"></script>
+
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
     <script type="text/javascript">
