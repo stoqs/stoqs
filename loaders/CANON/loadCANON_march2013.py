@@ -316,6 +316,7 @@ if stride == 'optimal':
     ##cl.loadRusalka(stride=10)     # As of 3/18/2013 - no good data in file http://zuma.rc.mbari.org/thredds/dodsC/CANON_march2013/usc_glider/Rusalka/processed/OS_Glider_Rusalka_20130301_TS.nc.html
     ##cl.loadYellowfin()
 else:
+    cl.stride = stride
     cl.loadDorado()
     cl.loadDaphne()
     cl.loadTethys()
