@@ -83,7 +83,7 @@ class MeasuredParameter(object):
             self.lon.append(mp['measurement__geom'].x)
             self.lat.append(mp['measurement__geom'].y)
             i = i + 1
-            if (i % 100) == 0:
+            if (i % 1000) == 0:
                 logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
 
         self.depth = self.y
@@ -253,14 +253,16 @@ class MeasuredParameter(object):
                 logger.debug('parm_info = %s', parm_info)
                 parm_units = models.Parameter.objects.filter(name=parm_info[0]).values_list('units')[0][0]
                 logger.debug('parm_units = %s', parm_units)
+                logger.debug('ticklabels = %s', [str(parm_info[1]), str(parm_info[2])])
                 norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
+                logger.debug('Done with norm')
                 cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=cm_jetplus,
                                                 norm=norm,
                                                 ticks=[parm_info[1], parm_info[2]],
                                                 orientation='horizontal')
                 cb.ax.set_xticklabels([str(parm_info[1]), str(parm_info[2])])
                 cb.set_label('%s (%s)' % (parm_info[0], parm_units))
-                logger.debug('ticklabels = %s', [str(parm_info[1]), str(parm_info[2])])
+                logger.debug('Saving colorbar to file = %s', colorbarPngFileFullPath)
                 cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
             except Exception,e:
