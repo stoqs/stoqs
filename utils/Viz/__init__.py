@@ -283,8 +283,11 @@ class MeasuredParameter(object):
         try:
             points = ''
             colors = ''
+            indices = ''
+            index = 0
             for lon,lat,depth,value in zip(self.lon, self.lat, self.depth, self.value):
-                points = points + '%.5f %.5f %.1f ' % (lon, lat, -depth)
+                # 10x vertical exaggeration - must match the GeoElevationGrid
+                points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * 10)
 
                 cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
                                     (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))
@@ -294,8 +297,10 @@ class MeasuredParameter(object):
                     cindx = len(self.clt) - 1
 
                 colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
- 
-            x3dResults = {'colors': colors, 'points': points, 'info': '', 'colorbar': colorbarPngFile}
+                indices = indices + '%i ' % index
+                index = index + 1
+
+            x3dResults = {'colors': colors[:-1], 'points': points[:-1], 'info': '', 'index': indices[:-1], 'colorbar': colorbarPngFile}
 
         except Exception,e:
             logger.exception('Could not create measuredparameterx3d')
