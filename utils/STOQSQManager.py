@@ -631,7 +631,7 @@ class STOQSQManager(object):
         cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
                               self.getParameterMinMax(), self.getSampleQS(), platformName)
 
-        return cp.contourDatavaluesForFlot()
+        return cp.renderDatavaluesForFlot()
 
 
     def getParameterParameterPNG(self):
