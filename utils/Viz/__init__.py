@@ -89,7 +89,7 @@ class MeasuredParameter(object):
         self.depth = self.y
         self.value = self.z
 
-    def contourDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, nlevels=255, contourFlag=True):
+    def renderDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, nlevels=255, contourFlag=True):
         '''
         Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
         3 tuple of (sectionPngFile, colorbarPngFile, errorMessage)
@@ -278,7 +278,16 @@ class MeasuredParameter(object):
         '''
         Return scatter-like data values as X3D geocoordinates and colors
         '''
+        showGeoX3DDataFlag = False
+        if self.kwargs.has_key('showgeox3ddata'):
+            if self.kwargs['showgeox3ddata']:
+                if self.kwargs['showgeox3ddata']:
+                    showGeoX3DDataFlag = True
+          
         x3dResults = {}
+        if not showGeoX3DDataFlag:
+            return x3dResults
+
         colorbarPngFile = ''
         if not self.lon and not self.lat and not self.depth and not self.value:
             self.loadData()
