@@ -133,11 +133,11 @@
                                     <div class="row-fluid" id="map" style="height:500px;">
                                     </div>
                                     <form class="form-inline">
-                                        <label class="checkbox" style="width:200px;">
+                                        <label class="checkbox" style="width:150px;">
                                             <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
                                         </label>
-                                        <label class="checkbox" style="width:200px;">
-                                            <input type="checkbox" id="showsensortracks" disabled="disabled"/> Show sensor tracks
+                                        <label class="checkbox" style="width:400px;">
+                                            <input type="checkbox" id="showsensortracks" disabled="disabled"/><span id="showsensortrackstext"> Show sensor tracks</span>
                                         </label>
                                     </form>
                                     <div>
@@ -165,6 +165,9 @@
                                                     <button id="geo_zoom-width-button" class="btn btn-mini">Zoom display</button>
                                                     <br><br>
                                                     -->
+                                                    <label class="checkbox disabled">
+                                                        <input type="checkbox" id="showgeox3ddata" disabled="disabled"><span id="showgeox3ddatatext">Show data</span>
+                                                    </label>
                                                     <button id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;">Reset view</button>
                                                 </td>
                                             </tr>
@@ -549,8 +552,8 @@
                             <table id="sampledparameter-table" class="table table-condensed">
                                 <thead>
                                     <tr>
-                                        <th colspan="4" style="text-align:center; text-decoration: underline;">Parameter-Parameter</th>
-                                        <th colspan="1" style="text-align:center; text-decoration: underline;">Filter</th>
+                                        <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic">Parameter-Parameter</th>
+                                        <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic">Filter</th>
                                     </tr>
                                     <tr>
                                         <th style="text-align:left;">X</th>
@@ -580,8 +583,8 @@
                             <table id="measuredparameter-table" class="table table-condensed">
                                 <thead>
                                     <tr>
-                                        <th colspan="4" style="text-align:center; text-decoration: underline;">Parameter-Parameter</th>
-                                        <th colspan="2" style="text-align:center; text-decoration: underline;">Filter &mdash; Select for section and sensor tracks plotting</th>
+                                        <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic">Parameter-Parameter</th>
+                                        <th colspan="2" style="text-align:center; text-decoration: underline; font-style:italic">Filter &amp; Select for spatial and temporal plotting</th>
                                     </tr>
                                     <tr>
                                         <th style="text-align:left;">X</th>
@@ -1022,20 +1025,24 @@
 
     } // makeSlider()
 
-    function enableContouring() {
+    function enableTemporalPlotting() {
         $('#showparameterplatformdata').parent().tooltip('disable');
         $('#showparameterplatformdata').removeAttr('disabled');
         if (typeof params['platforms'] != 'undefined') {
             if (params['platforms'].length == 1) {
                 $('#contourtext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
+                $('#showgeox3ddatatext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
+                $('#showsensortrackstext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
                 $('#contourtext').css( { 'color': 'black' } );
             }
         }
     }
 
-    function disableContouring() {
+    function disableTemporalPlotting() {
         $('#showparameterplatformdata').attr('disabled',true);
-        $('#contourtext').text('Show data values');
+        $('#contourtext').text('Show data');
+        $('#showgeox3ddatatext').text('Show data');
+        $('#showsensortrackstext').text('Show sensor tracks');
         $('#sectioncolorbar').html('');
         if ($('#showparameterplatformdata').is(':checked')) {
             // Seems like there is better utility with leaving checked for when selecting different parameters.
@@ -1045,18 +1052,36 @@
         $('#showparameterplatformdata').parent().tooltip({title: 'Select a Measured Parameter and a Platform to enable'});
     }
 
-    function updateContourInfo() {
+    function enableSpatialPlotting() {
+        $('#showsensortracks').parent().tooltip('disable');
+        $('#showsensortracks').removeAttr('disabled');
+        $('#showgeox3ddata').parent().tooltip('disable');
+        $('#showgeox3ddata').removeAttr('disabled');
+        $('#showsensortrackstext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
+        $('#showgeox3ddatatext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
+    }
+
+    function disableSpatialPlotting() {
+        $('#showsensortracks').attr('disabled',true);
+        $('#showgeox3ddata').attr('disabled',true);
+        $('#showsensortrackstext').text('Show sensor tracks');
+        $('#showgeox3ddatatext').text('Show data');
+    }
+
+    function updateShowDataInfo() {
         if (typeof params['measuredparametersgroup'] != 'undefined') {
             //console.log('measuredparametersgroup = ' + params['measuredparametersgroup']);
             if (params['measuredparametersgroup'].length == 1 ) {
-                enableContouring();
+                enableTemporalPlotting();
+                enableSpatialPlotting();
             }
             else {
-                disableContouring();
+                disableTemporalPlotting();
+                disableSpatialPlotting();
             }
         }
         else {
-            disableContouring();
+            disableTemporalPlotting();
         }
     }
 
@@ -1202,7 +1227,7 @@
             $('#parameter-parameter-anchor').html('Parameter-Parameter')
         }
 
-        updateContourInfo();
+        updateShowDataInfo();
         updateSummaryData();
         polyLayer.removeAllFeatures();
 
