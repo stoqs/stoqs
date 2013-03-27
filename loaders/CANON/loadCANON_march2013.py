@@ -317,8 +317,8 @@ if stride == 'optimal':
     ##cl.loadYellowfin()
 else:
     cl.loadDorado()
-    ##cl.loadDaphne()
-    ##cl.loadTethys()
+    cl.loadDaphne()
+    cl.loadTethys()
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd()
