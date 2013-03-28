@@ -245,10 +245,13 @@ class STOQSQManager(object):
         '''
         Wrapper around self.mpq.getMeasuredParametersPostgreSQL(), ensure that we have qs_mp built before calling 
         '''
-        if not self.mpq.qs_mp:
-            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+        sql = None
+        if getGet_Actual_Count(self.kwargs):
+            if not self.mpq.qs_mp:
+                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                sql = self.mpq.getMeasuredParametersPostgreSQL()
 
-        return self.mpq.getMeasuredParametersPostgreSQL()
+        return sql
 
     def getAPCount(self):
         '''
