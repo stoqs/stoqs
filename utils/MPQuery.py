@@ -359,9 +359,9 @@ class MPQuery(object):
 
         if qs_mpq:
             logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
-            
         else:
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
+
         return qs_mpq
 
     def getMPCount(self):
