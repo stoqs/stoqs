@@ -76,7 +76,7 @@ def getShow_All_Parameter_Values(kwargs):
 
 def getShow_Parameter_Platform_Data(kwargs):
     '''
-    return state of Display Parameter-Platform data checkbox from quiry UI
+    return state of Show data checkbox from query UI
     '''
     show_parameter_platform_data_state = False
     if kwargs.has_key('showparameterplatformdata'):
@@ -84,6 +84,18 @@ def getShow_Parameter_Platform_Data(kwargs):
             show_parameter_platform_data_state = True
 
     return show_parameter_platform_data_state
+
+def getShow_Geo_X3D_Data(kwargs):
+    '''
+    return state of Show data checkbox from query UI
+    '''
+    show_geo_x3d_data_state = False
+    logger.debug('kwargs = %s', kwargs)
+    if kwargs.has_key('showgeox3ddata'):
+        if kwargs['showgeox3ddata']:
+            show_geo_x3d_data_state = True
+
+    return show_geo_x3d_data_state
 
 ## {{{ http://code.activestate.com/recipes/511478/ (r1)
 import math

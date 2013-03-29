@@ -23,7 +23,7 @@ from stoqs import models
 from loaders import MEASUREDINSITU
 from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL
-from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data
+from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
 from MPQuery import MPQuery
 from PQuery import PQuery
 from Viz import MeasuredParameter, ParameterParameter
@@ -231,7 +231,7 @@ class STOQSQManager(object):
         if qs_ap:
             ap_count = qs_ap.count()
             approximate_count = qs_ap.aggregate(Sum('number'))['number__sum']
-            locale.setlocale(locale.LC_ALL, 'en_US')
+            locale.setlocale(locale.LC_ALL, '')                 # Use systems default locale settings
             if getGet_Actual_Count(self.kwargs):
                 if not self.mpq.qs_mp:
                     self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
@@ -700,20 +700,21 @@ class STOQSQManager(object):
         If a single MeasuredParameter is selected then return the X3D coordinates and colors for those points
         '''
         x3dDict = None
-        if self.kwargs.has_key('measuredparametersgroup'):
-            if len(self.kwargs['measuredparametersgroup']) == 1:
-                if self.kwargs['measuredparametersgroup'][0]:
-                    if not self.mpq.qs_mp:
-                        self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-                    try:
-                        platformName = self.getPlatforms()[0][0]
-                    except IndexError, e:
-                        logger.warn(e)
-                        platformName = None
+        if getShow_Geo_X3D_Data(self.kwargs):
+            if self.kwargs.has_key('measuredparametersgroup'):
+                if len(self.kwargs['measuredparametersgroup']) == 1:
+                    if self.kwargs['measuredparametersgroup'][0]:
+                        if not self.mpq.qs_mp:
+                            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                        try:
+                            platformName = self.getPlatforms()[0][0]
+                        except IndexError, e:
+                            logger.warn(e)
+                            platformName = None
 
-                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
-                                  self.getParameterMinMax(), self.getSampleQS(), platformName)
-                    x3dDict = mpdv.dataValuesX3D()
+                        mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
+                                      self.getParameterMinMax(), self.getSampleQS(), platformName)
+                        x3dDict = mpdv.dataValuesX3D()
             
         return x3dDict
 

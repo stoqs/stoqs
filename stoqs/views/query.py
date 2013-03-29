@@ -120,6 +120,7 @@ def queryData(request, format=None):
                    'showstandardnameparametervalues': 'showstandardnameparametervalues',    # Flag value from checkbox
                    'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
                    'showparameterplatformdata': 'showparameterplatformdata',                # Flag value from checkbox
+                   'showgeox3ddata': 'showgeox3ddata',                                      # Flag value from checkbox
                    'showdataas': 'showdataas',               # Value from radio button, either 'contour' or 'scatter'
                    }
     params = {}
