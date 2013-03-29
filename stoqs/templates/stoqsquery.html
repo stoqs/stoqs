@@ -45,6 +45,7 @@
             background-repeat:no-repeat;
             display: none;
         }
+
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet">
@@ -149,6 +150,9 @@
                                     <div id="samplePoint"></div>
                                 </div>
                                 <div class="tab-pane" id="geo3d">
+                                        <label class="checkbox disabled">
+                                            <input type="checkbox" id="showgeox3ddata" disabled="disabled"><span id="showgeox3ddatatext">Show data</span>
+                                        </label>
                                     <div id="geo-3dplot" style="height:500px;">
                                         <table>
                                             <tr>
@@ -165,9 +169,6 @@
                                                     <button id="geo_zoom-width-button" class="btn btn-mini">Zoom display</button>
                                                     <br><br>
                                                     -->
-                                                    <label class="checkbox disabled">
-                                                        <input type="checkbox" id="showgeox3ddata" disabled="disabled"><span id="showgeox3ddatatext">Show data</span>
-                                                    </label>
                                                     <button id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;">Reset view</button>
                                                 </td>
                                             </tr>
@@ -1275,27 +1276,32 @@
 
     $('#getactualcount').on('click', function (event) {
         // Don't need to get everything from queryData, only the count
-        rebuildFilters();
+        rebuildFilters('getactualcount');
     });
 
     $('#showsigmatparametervalues').on('click', function (event) {
         // Don't need to get everything from queryData, only the new histogramdata
-        rebuildFilters();
+        rebuildFilters('sigmatparametervalues');
     });
 
     $('#showstandardnameparametervalues').on('click', function (event) {
         // Don't need to get everything from queryData, only the new histogramdata
-        rebuildFilters();
+        rebuildFilters('standardnameparametervalues');
     });
 
     $('#showallparametervalues').on('click', function (event) {
         // Don't need to get everything from queryData, only the new histogramdata
-        rebuildFilters();
+        rebuildFilters('allparametervalues');
     });
 
     $('#showparameterplatformdata').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the PNG image
-        rebuildFilters('pp');
+        rebuildFilters('parameterplatformdata');
+    });
+
+    $('#showgeox3ddata').on('click', function (event) {
+        // Don't need to get everything from queryData, only the response with the PNG image
+        rebuildFilters('geox3ddata');
     });
 
     $('#showsensortracks').on('click', function (event) {
@@ -1767,6 +1773,9 @@
         }
         if ($('#showparameterplatformdata').is(':checked')) {
             qstring = qstring + '&showparameterplatformdata=1';
+        }
+        if ($('#showgeox3ddata').is(':checked')) {
+            qstring = qstring + '&showgeox3ddata=1';
         }
         if ($('input:radio[name=showdataas]:checked').val()) {
             qstring = qstring + '&showdataas=' + $('input:radio[name=showdataas]:checked').val();
