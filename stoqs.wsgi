@@ -13,7 +13,7 @@ referenced where it is installed on the web server in the /etc/httpd/conf.d/stoq
 file.  Example content of stoqs.conf file:
 
 WSGISocketPrefix /var/run/wsgi
-WSGIDaemonProcess stoqs user=apache group=root process=1 threads=10
+WSGIDaemonProcess stoqs user=apache group=root process=1 threads=10 maximum-requests=10 inactivity-timeout=30
 WSGIProcessGroup stoqs
 WSGIScriptAlias /canon /home/student/dev/stoqsproj/stoqs.wsgi
 
