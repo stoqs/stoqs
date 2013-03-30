@@ -138,7 +138,7 @@
                                             <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
                                         </label>
                                         <label class="checkbox" style="width:400px;">
-                                            <input type="checkbox" id="showsensortracks" disabled="disabled"/><span id="showsensortrackstext"> Show sensor tracks</span>
+                                            <input type="checkbox" id="showsensortracks" /><span id="showsensortrackstext"> Show sensor tracks</span>
                                         </label>
                                     </form>
                                     <div>
@@ -151,7 +151,7 @@
                                 </div>
                                 <div class="tab-pane" id="geo3d">
                                         <label class="checkbox disabled">
-                                            <input type="checkbox" id="showgeox3ddata" disabled="disabled"><span id="showgeox3ddatatext">Show data</span>
+                                            <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>
                                         </label>
                                     <div id="geo-3dplot" style="height:500px;">
                                         <table>
@@ -433,7 +433,7 @@
                 <div class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseDataAccess">
-                        Measurement Data Access
+                        Measured Parameter Data Access
                         </a></h3>
                     </div>
                     <div id="collapseDataAccess" class="accordion-body collapse in">
@@ -513,10 +513,10 @@
                                         <div class="row">
                                             <div class="span2">
                                                 <label class="checkbox disabled">
-                                                    <input type="checkbox" id="showparameterplatformdata" disabled="disabled"><span id="contourtext">Show data</span>
+                                                    <input type="checkbox" id="showparameterplatformdata" /><span id="contourtext">Show data</span>
                                                 </label>
-                                                <input type="radio" name="showdataas" value="contour" style="margin-left:1px;"/> contour
-                                                <input type="radio" name="showdataas" value="scatter" checked/> scatter
+                                                <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
+                                                <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
                                             <div class="span4" id="sectioncolorbar" style="float:right;"></div>
                                         </div>
@@ -585,7 +585,7 @@
                                 <thead>
                                     <tr>
                                         <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic">Parameter-Parameter</th>
-                                        <th colspan="2" style="text-align:center; text-decoration: underline; font-style:italic">Filter &amp; Select for spatial and temporal plotting</th>
+                                        <th colspan="2" style="text-align:center; text-decoration: underline; font-style:italic">Filter &amp; Select for spatial temporal visualization and data access</th>
                                     </tr>
                                     <tr>
                                         <th style="text-align:left;">X</th>
@@ -1027,7 +1027,7 @@
     } // makeSlider()
 
     function enableTemporalPlotting() {
-        $('#showparameterplatformdata').parent().tooltip('disable');
+        $('#showparameterplatformdata').tooltip('disable');
         $('#showparameterplatformdata').removeAttr('disabled');
         if (typeof params['platforms'] != 'undefined') {
             if (params['platforms'].length == 1) {
@@ -1050,13 +1050,12 @@
             // This use is better than having it checked for when it doesn't make sense; comment out for now.
             //$('#showparameterplatformdata').removeAttr('checked');
         }
-        $('#showparameterplatformdata').parent().tooltip({title: 'Select a Measured Parameter and a Platform to enable'});
     }
 
     function enableSpatialPlotting() {
-        $('#showsensortracks').parent().tooltip('disable');
+        $('#showsensortracks').tooltip('disable');
         $('#showsensortracks').removeAttr('disabled');
-        $('#showgeox3ddata').parent().tooltip('disable');
+        $('#showgeox3ddata').tooltip('disable');
         $('#showgeox3ddata').removeAttr('disabled');
         $('#showsensortrackstext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
         $('#showgeox3ddatatext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
@@ -1299,6 +1298,11 @@
         rebuildFilters('parameterplatformdata');
     });
 
+    $('input[name="showdataas"]').on('click', function (event) {
+        // Don't need to get everything from queryData, only the response with the PNG image
+        rebuildFilters('parameterplatformdata');
+    });
+
     $('#showgeox3ddata').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the PNG image
         rebuildFilters('geox3ddata');
@@ -1423,6 +1427,8 @@
             $('.navbar').hide();
             $('body').css({'padding-top': '0px'});
             $('#spatial-group').children().hide();
+            $('#collapseSample').parent().children().hide();
+            $('#collapseDataAccess').parent().children().hide();
             $('#accordion1').removeClass('well');
             $('#parameter-parameter-anchor').parent().hide();
             $('#parameterParameterTabs').hide();
@@ -1814,16 +1820,16 @@
                     parameterButtonText = parameterButtonText + '<tr>' +
                             //'<td id="' + value[2] +'_access">' +
                             '<td>' +
-                                '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio"/>' +
+                                '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_y" value="' + value[2] + '" class="parameter-radio"/>' +
+                                '<input type="radio" name="parameters_y" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_z" value="' + value[2] + '" class="parameter-radio"/>' +
+                                '<input type="radio" name="parameters_z" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio"/>' +
+                                '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
                             '<td id="' + value[2] +'">' +
                                 '<button class="btn btn-mini stoqs-toggle sampledparametersgroup">'+ value[0] +'</button>' + 
@@ -1838,16 +1844,16 @@
                 $.each(data[key], function (index, value) {
                     parameterButtonText = parameterButtonText + '<tr>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio"/>' +
+                                '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_y" value="' + value[2] + '" class="parameter-radio"/>' +
+                                '<input type="radio" name="parameters_y" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_z" value="' + value[2] + '" class="parameter-radio"/>' +
+                                '<input type="radio" name="parameters_z" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
                             '<td>' +
-                                '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio"/>' +
+                                '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
                             '<td id="' + value[0] +'">' +
                                 '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' + 
@@ -2424,8 +2430,11 @@
         //$('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
         //$('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
         $('#getactualcount').tooltip({title: 'Will increase query time'});
-        $('#showparameterplatformdata').parent().tooltip({title: 'Select a Measured Parameter Name and a Platform to enable'});
-        $('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter enable'});
+
+        // Tootips that are disabled after first use - don't want to annoy users too much
+        $('#showparameterplatformdata').tooltip({title: 'Select a Measured Parameter Name and a Platform to enable'});
+        $('#showsensortracks').tooltip({title: 'Select a Measured Parameter to enable'});
+        $('#showgeox3ddata').tooltip({title: 'Select a Measured Parameter to enable'});
 
     });
 
