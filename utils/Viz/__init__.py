@@ -236,7 +236,7 @@ class MeasuredParameter(object):
                             xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()))
                         ysamp.append(s['depth'])
                         sname.append(s['name'])
-                    ax.scatter(xsamp, ysamp, marker='o', c='w', s=15, zorder=10)
+                    ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10)
                     for x,y,sn in zip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
