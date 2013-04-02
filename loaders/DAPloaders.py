@@ -233,6 +233,9 @@ class Base_Loader(STOQS_Loader):
                 continue
             
             if type(v) is pydap.model.GridType:
+                if self.stride > tIndx[-1]:
+                    logger.warn('Stride to big to read data. Skipping this file.')
+                    continue
                 try:
                     v = self.ds[k][tIndx[0]:tIndx[-1]:self.stride]      # Subselect along the time axis
                 except ValueError, err:
