@@ -250,12 +250,11 @@
                                                 </td>
                                             </tr>
                                         </table>
+                                        <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
                                         <X3D id='pp_x3d' style="width:100%; margin: 0px auto; display:block; border: none;">
-                                            <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
                                             <scene>
                                                 <Viewpoint id='x3d-viewpoint' position='2000 3000 22000' centerofrotation='5000 5000 5000'></viewpoint>
 
-                                                <!-- Y axis -->
                                                 <Group DEF='Axis'>
                                                     <Transform translation='0 5000 0'>
                                                         <Shape>
@@ -301,7 +300,6 @@
                                                     </Transform>
                                                 </Transform>
 
-                                                <!-- X axis -->
                                                 <Transform rotation='0 0 1 -1.57079632679'/>
                                                     <Group USE='Axis'/>
                                                 </Transform>
@@ -340,7 +338,6 @@
                                                     </Transform>
                                                 </Transform>
 
-                                                <!-- Z axis -->
                                                 <Transform rotation='1 0 0 1.57079632679'/>
                                                     <Group USE='Axis'/>
                                                 </Transform>
