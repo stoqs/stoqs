@@ -187,11 +187,7 @@
                                                         </indexedlineset>
                                                     </shape>
  
-                                                    <shape>
-                                                        <indexedlineset id="geoindexedlineset">
-                                                            <color id="geopointsetcolors"></color>
-                                                            <geocoordinate id="geopointsetcoordinates" geosystem='GD'></geocoordinate>
-                                                        </indexedlineset>
+                                                    <shape id="mp-x3d-track">
                                                     </shape>
                                                  
                                                     <!--
@@ -2125,9 +2121,10 @@
             else if (key == 'measuredparameterx3d') {
                 if (data[key]) {
                     if (data[key]['points']) {
-                        $('#geopointsetcoordinates').attr('point', data[key]['points']);
-                        $('#geopointsetcolors').attr('color', data[key]['colors']);
-                        $('#geoindexedlineset').attr('coordIndex', data[key]['index']);
+                        $('#mp-x3d-track').append('<indexedlineset coordIndex="' + 
+                                            data[key]['index'] + '"> <color color="' + 
+                                            data[key]['colors'] + '"></color> <geocoordinate point="' + 
+                                            data[key]['points'] + '"></geocoordinate> </indexedlineset>');
                         $('#geo_x3d').css( {
                                 'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
                                 'background-repeat': 'no-repeat',
