@@ -3,7 +3,7 @@
     <Appearance>
         <Material diffuseColor='0.7 0.7 0.7'/>
     </Appearance> 
-    <GeoElevationGrid colorPerVertex='true' creaseAngle='3.14' geoGridOrigin='33.470001 -118.434998 0.0' geoSystem='GD' solid='false' xDimension='237' xSpacing='0.00216229' yScale='10' zDimension='144' zSpacing='0.00217051' normalPerVertex='true' ccw='true' containerField='geometry' height='-507.573 
+    <GeoElevationGrid colorPerVertex='true' creaseAngle='3.14' geoGridOrigin='33.470001 -118.434998 0.0' geoSystem='GD' solid='true' xDimension='237' xSpacing='0.00216229' yScale='10' zDimension='144' zSpacing='0.00217051' normalPerVertex='true' ccw='true' containerField='geometry' height='-507.573 
 		-519.753 -538.546 -564.705 -564.353 -571.604 
 		-574.144 -569.527 -618.773 -634.961 -628.629 
 		-638.224 -670.914 -675.949 -688.896 -693.994 
