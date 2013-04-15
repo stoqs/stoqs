@@ -46,6 +46,7 @@ class MPQuerySet(object):
                      'measurement__depth',
                      'measurement__geom',
                      'measurement__instantpoint__timevalue', 
+                     'measurement__instantpoint__activity__name',
                      'measurement__instantpoint__activity__platform__name',
                      'datavalue',
                      'parameter__units'
@@ -129,6 +130,7 @@ class MPQuerySet(object):
                             'datavalue': mp['datavalue'],
                             'measurement__instantpoint__timevalue': mp['measurement__instantpoint__timevalue'],
                             'parameter__standard_name': mp['parameter__standard_name'],
+                            'measurement__instantpoint__activity__name': mp['measurement__instantpoint__activity__name'],
                             'measurement__instantpoint__activity__platform__name': mp['measurement__instantpoint__activity__platform__name'],
                             # If .values(...) are requested in the query string then json serialization of the point geometry does not work right
                             'measurement__geom': mp['measurement__geom'],
@@ -145,6 +147,7 @@ class MPQuerySet(object):
                             'datavalue': mp.datavalue,
                             'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
                             'parameter__standard_name': mp.parameter.standard_name,
+                            'measurement__instantpoint__activity__name': mp.measurement.instantpoint.activity.name,
                             'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
                             'measurement__geom': mp.measurement.geom,
                             'parameter__units': mp.parameter.units,
