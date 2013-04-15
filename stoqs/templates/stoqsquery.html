@@ -587,12 +587,12 @@
                     </div>
                     <div id="collapseParameterValues" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <em>Click and drag to select parameter ranges</em>
+                            <div id="histogram-instruction">Show distribution of parameter values</div>
                             <div class="span6">
                                 Histogram display: 
-                                <input type="checkbox" id="showsigmatparametervalues" checked /> sea_water_sigma_t
-                                <input type="checkbox" id="showstandardnameparametervalues" /> Standard Names
-                                <input type="checkbox" id="showallparametervalues" /> All Parameters
+                                <input type="checkbox" class="pv-histogram-checkbox" id="showsigmatparametervalues" /> sea_water_sigma_t
+                                <input type="checkbox" class="pv-histogram-checkbox" id="showstandardnameparametervalues" /> Standard Names
+                                <input type="checkbox" class="pv-histogram-checkbox" id="showallparametervalues" /> All Parameters
                             </div>
                             <table id="parameter-value-table" class="table table-condensed">
                             </table>
@@ -1252,19 +1252,10 @@
         rebuildFilters('getactualcount');
     });
 
-    $('#showsigmatparametervalues').on('click', function (event) {
+    $('.pv-histogram-checkbox').on('click', function (event) {
         // Don't need to get everything from queryData, only the new histogramdata
-        rebuildFilters('sigmatparametervalues');
-    });
-
-    $('#showstandardnameparametervalues').on('click', function (event) {
-        // Don't need to get everything from queryData, only the new histogramdata
-        rebuildFilters('standardnameparametervalues');
-    });
-
-    $('#showallparametervalues').on('click', function (event) {
-        // Don't need to get everything from queryData, only the new histogramdata
-        rebuildFilters('allparametervalues');
+        $('#histogram-instruction').html('<em>Click and drag to select parameter ranges</em>');
+        rebuildFilters('parametervalueshistograms');
     });
 
     $('#showparameterplatformdata').on('click', function (event) {
