@@ -41,6 +41,51 @@ import time
 
 logger = logging.getLogger(__name__)
 
+def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientation='horizontal'):
+    '''
+    Utility function used by classes in this module to create a colorbar image accessible at @colorbarPngFileFullPath.
+    The @requst object is needed to use the database alias.
+    @parm_info is a 3 element list/tuple: (parameterId, minValue, maxValue).
+    @colormap is a color the color lookup table.
+    If @orientation is 'vertical' create a vertically oriented image, otherwise horizontal.
+    '''
+
+    if orientation == 'horizontal':
+        cb_fig = plt.figure(figsize=(5, 0.8))
+        cb_ax = cb_fig.add_axes([0.1, 0.8, 0.8, 0.2])
+        parm_units = models.Parameter.objects.using(request.META['dbAlias']).filter(name=parm_info[0]).values_list('units')[0][0]
+        norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
+        cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
+                                        norm=norm,
+                                        ticks=[parm_info[1], parm_info[2]],
+                                        orientation='horizontal')
+        cb.ax.set_xticklabels([str(parm_info[1]), str(parm_info[2])])
+        cb.set_label('%s (%s)' % (parm_info[0], parm_units))
+        cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
+        plt.close()
+
+    elif orientation == 'vertical':
+        cb_fig = plt.figure(figsize=(0.6, 4))
+        cb_ax = cb_fig.add_axes([0.1, 0.1, 0.15, 0.8])
+        norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
+        cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
+                                        norm=norm,
+                                        ticks=[parm_info[1], parm_info[2]],
+                                        orientation='vertical')
+        cb.ax.set_yticklabels([str(parm_info[1]), str(parm_info[2])])
+        logger.debug('Getting units for parm_info[0] = %s', parm_info[0])
+        cp = models.Parameter.objects.using(request.META['dbAlias']).get(id=int(parm_info[0]))
+        cb.set_label('%s (%s)' % (cp.name, cp.units), fontsize=10)
+        for label in cb.ax.get_yticklabels():
+            label.set_fontsize(10)
+            label.set_rotation('vertical')
+        cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
+        plt.close()
+
+    else:
+        raise Exception('orientation must be either horizontal or vertical')
+
+
 class MeasuredParameter(object):
     '''
     Use matploptib to create nice looking contour plots
@@ -48,6 +93,7 @@ class MeasuredParameter(object):
     def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName):
         '''
         Save parameters that can be used by the different product generation methods here
+        parameterMinMax is like: (pName, pMin, pMax)
         '''
         self.kwargs = kwargs
         self.request = request
@@ -247,24 +293,7 @@ class MeasuredParameter(object):
                 return None, None, 'Could not plot the data'
 
             try:
-                # Make colorbar as a separate figure
-                cb_fig = plt.figure(figsize=(5, 0.8))
-                cb_ax = cb_fig.add_axes([0.1, 0.8, 0.8, 0.2])
-                logger.debug('parm_info = %s', parm_info)
-                parm_units = models.Parameter.objects.filter(name=parm_info[0]).values_list('units')[0][0]
-                logger.debug('parm_units = %s', parm_units)
-                logger.debug('ticklabels = %s', [str(parm_info[1]), str(parm_info[2])])
-                norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
-                logger.debug('Done with norm')
-                cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=cm_jetplus,
-                                                norm=norm,
-                                                ticks=[parm_info[1], parm_info[2]],
-                                                orientation='horizontal')
-                cb.ax.set_xticklabels([str(parm_info[1]), str(parm_info[2])])
-                cb.set_label('%s (%s)' % (parm_info[0], parm_units))
-                logger.debug('Saving colorbar to file = %s', colorbarPngFileFullPath)
-                cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
-                plt.close()
+                makeColorBar(self.request, colorbarPngFileFullPath, parm_info, cm_jetplus)
             except Exception,e:
                 logger.exception('Could not plot the colormap')
                 return None, None, 'Could not plot the colormap'
@@ -327,6 +356,7 @@ class ParameterParameter(object):
     def __init__(self, request, pDict, mpq, pq, pMinMax):
         '''
         Save parameters that can be used by the different plotting methods here
+        @pMinMax is like: (pID, pMin, pMax)
         '''
         self.request = request
         self.pDict = pDict
@@ -540,26 +570,12 @@ class ParameterParameter(object):
             if colors:
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
                 try:
-                    # Make colorbar as a separate figure
+                    cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
                     imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
                     colorbarPngFile = '%s_%s_%s_%s_3dcolorbar_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['z'], self.pDict['c'], imageID )
                     colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
-                    logger.debug('colorbarPngFile = %s', colorbarPngFile)
-                    cb_fig = plt.figure(figsize=(0.6, 4))
-                    cb_ax = cb_fig.add_axes([0.1, 0.1, 0.15, 0.8])
-                    norm = mpl.colors.Normalize(vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip=False)
-                    cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
-                    cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=cm_jetplus,
-                                                    norm=norm,
-                                                    ticks=[self.pMinMax['c'][1], self.pMinMax['c'][2]],
-                                                    orientation='vertical')
-                    cb.ax.set_yticklabels([str(self.pMinMax['c'][1]), str(self.pMinMax['c'][2])])
-                    cb.set_label('%s (%s)' % (cp.name, cp.units), fontsize=10)
-                    for label in cb.ax.get_yticklabels():
-                        label.set_fontsize(10)
-                        label.set_rotation('vertical')
-                    cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
-                    plt.close()
+                    makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus, orientation='vertical')
+
                 except Exception,e:
                     logger.exception('Could not plot the colormap')
                     return None, None, 'Could not plot the colormap'
