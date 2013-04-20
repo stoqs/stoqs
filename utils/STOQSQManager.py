@@ -360,12 +360,14 @@ class STOQSQManager(object):
             if len(self.kwargs['measuredparametersgroup']) == 1:
                 mpname = self.kwargs['measuredparametersgroup'][0]
                 try:
+                    pid = models.Parameter.objects.using(self.dbname).get(name=mpname).id
+                    logger.debug('pid = %s', pid)
                     if percentileAggregateType == 'extrema':
-                        qs = self.getActivityParametersQS().filter(parameter__name=mpname).aggregate(Min('p025'), Max('p975'))
-                        results = [mpname, round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
+                        qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'))
+                        results = [pid, round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
                     else:
-                        qs = self.getActivityParametersQS().filter(parameter__name=mpname).aggregate(Avg('p025'), Avg('p975'))
-                        results = [mpname, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                        qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
+                        results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
                 except TypeError, e:
                     logger.exception(e)
 

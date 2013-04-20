@@ -53,14 +53,16 @@ def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientat
     if orientation == 'horizontal':
         cb_fig = plt.figure(figsize=(5, 0.8))
         cb_ax = cb_fig.add_axes([0.1, 0.8, 0.8, 0.2])
-        parm_units = models.Parameter.objects.using(request.META['dbAlias']).filter(name=parm_info[0]).values_list('units')[0][0]
         norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
+        ticks=round_to_n(list(np.linspace(parm_info[1], parm_info[2], num=4)), 3)
+        logger.debug('================================= ticks = %s', ticks)
         cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
                                         norm=norm,
-                                        ticks=[parm_info[1], parm_info[2]],
+                                        ticks=ticks,
                                         orientation='horizontal')
-        cb.ax.set_xticklabels([str(parm_info[1]), str(parm_info[2])])
-        cb.set_label('%s (%s)' % (parm_info[0], parm_units))
+        cb.ax.set_xticklabels(ticks)
+        cp = models.Parameter.objects.using(request.META['dbAlias']).get(id=int(parm_info[0]))
+        cb.set_label('%s (%s)' % (cp.name, cp.units))
         cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
         plt.close()
 
@@ -70,7 +72,7 @@ def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientat
         norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
         cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
                                         norm=norm,
-                                        ticks=[parm_info[1], parm_info[2]],
+                                        ticks=list(np.linspace(parm_info[1], parm_info[2], num=4)),
                                         orientation='vertical')
         cb.ax.set_yticklabels([str(parm_info[1]), str(parm_info[2])])
         logger.debug('Getting units for parm_info[0] = %s', parm_info[0])
@@ -455,12 +457,12 @@ class ParameterParameter(object):
             if self.c:
                 logger.debug('self.pMinMax = %s', self.pMinMax)
                 ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
-                # Add colorbar
+                # Add colorbar to the image
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
                 norm = mpl.colors.Normalize(vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip=False)
                 cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=cm_jetplus,
                                                 norm=norm,
-                                                ticks=[self.pMinMax['c'][1], self.pMinMax['c'][2]],
+                                                ticks=list(np.linspace(self.pMinMax['c'][1], self.pMinMax['c'][2], num=4)),
                                                 orientation='horizontal')
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
                 cb.set_label('%s (%s)' % (cp.name, cp.units))
@@ -574,7 +576,8 @@ class ParameterParameter(object):
                     imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
                     colorbarPngFile = '%s_%s_%s_%s_3dcolorbar_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['z'], self.pDict['c'], imageID )
                     colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
-                    makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus, orientation='vertical')
+                    ##makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus, orientation='vertical')
+                    makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus)
 
                 except Exception,e:
                     logger.exception('Could not plot the colormap')
