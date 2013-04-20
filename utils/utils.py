@@ -5,14 +5,27 @@ logger = logging.getLogger(__name__)
 
 def round_to_n(x, n):
     '''
-    reound to n significant digits
+    Round to n significant digits
     '''
     if n < 1:
         raise ValueError("number of significant digits must be >= 1")
-    # Use %e format to get the n most significant digits, as a string.
-    format = "%." + str(n-1) + "e"
-    as_string = format % x
-    return float(as_string)
+
+    if type(x) in (list, tuple):
+        rounded_list = []
+        for xi in x:
+            # Use %e format to get the n most significant digits, as a string.
+            format = "%." + str(n-1) + "e"
+            as_string = format % xi
+            rounded_list.append(float(as_string))
+        
+        return rounded_list
+
+    else:
+        # Use %e format to get the n most significant digits, as a string.
+        format = "%." + str(n-1) + "e"
+        as_string = format % x
+
+        return float(as_string)
 
 def addAttributeToListItems(list_to_modify, name, value):
     '''
