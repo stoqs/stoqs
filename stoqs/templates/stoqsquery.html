@@ -151,49 +151,45 @@
                                 </div>
                                 <div class="tab-pane" id="geo3d" style="height:100%;">
                                     <div id="geo-3dplot" style="height:500px;">
-                                        <table>
-                                            <tr>
-                                                <td style="vertical-align: top; padding-right: 10px;">
-                                                    <em style="color:orange">Under construction</em><br>
-                                                    <em>Recenter rotation: double click</em><br>
-                                                    <em>Rotate: Left mouse</em><br>
-                                                    <em>Translate: Ctrl + left mouse</em><br>
-                                                    <em>Zoom: Alt + left mouse</em><br>
-                                                    Vertical Exageration: 10x
-                                                </td>
-                                                <td style="vertical-align: top;">
-                                                    <!--
-                                                    <button id="geo_zoom-width-button" class="btn btn-mini">Zoom display</button>
-                                                    <br><br>
-                                                    -->
-                                                    <button id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;">Reset view</button>
-                                                </td>
-                                            </tr>
-                                        </table>
+                                        <div class="row-fluid">
+                                            <div class="span3">
+                                                <em>Rotate: Left mouse</em><br>
+                                                <em>Translate: Ctrl + left mouse</em><br>
+                                                <em>Zoom: Alt + left mouse</em><br>
+                                                <em>Recenter rotation: double click</em><br>
+                                            </div>
+                                            <div class="span2">
+                                                <p><button id="geo-zoom-width-button" class="btn btn-mini zoom-width-button">Zoom display</button></p>
+                                                <p><button id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;">Reset view</button></p>
+                                                <form class="form-inline">
+                                                    <label class="checkbox disabled">
+                                                        <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>
+                                                    </label>
+                                                </form>
+                                            </div>
+                                            <div id="geo3d-colorbar" class="span7"></div>
+                                        </div>
+                                        <div> 
                                         <X3D id='geo_x3d' style="width:100%; margin: 0px auto; display:block; border: none;"> 
                                             <!-- <Scene frustumCulling='false'> -->
                                             <Scene>
                                                 <NavigationInfo speed="0.05"></NavigationInfo>
                                                 <shape id="mp-x3d-track"></shape>
-                                                <Viewpoint position="-2523652.5 -4726093.2 3499413.2" orientation="0.96902 -0.20915 -0.13134 1.74597" zNear="810.79" zFar="810792225.5" centerOfRotation="-2505293.6 -4686937.5 3513055.2" description="defaultX3DViewpointNode"></Viewpoint>
+                                                <Viewpoint position="-2523652.5 -4726093.2 3499413.2" orientation="0.96902 -0.20915 -0.13134 1.74597" centerOfRotation="-2505293.6 -4686937.5 3513055.2" description="defaultX3DViewpointNode"></Viewpoint>
                                                 <Inline url="{{STATIC_URL}}x3d/SanPedroBasin50.x3d" render="true"></Inline>
                                             </Scene>
                                         </X3D>
+                                        </div>
                                     </div>
-                                    <form class="form-inline">
-                                        <label class="checkbox disabled">
-                                            <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>
-                                        </label>
-                                    </form>
                                 </div>
                             </div><!-- tab-content -->
 
-                        </div><!-- accorion-inner -->
+                        </div><!-- accordion-inner -->
                     </div>
                 </div><!-- accordian-group -->
 
 
-                <div class="accordian-group">
+                <div id="parameter-parameter-group" class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="parameter-parameter-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterParameter">
                         Parameter-Parameter</a>
@@ -216,27 +212,21 @@
                                 </div>
                                 <div class="tab-pane" id="pp3d">
                                     <div id="parameter-parameter-3dplot" style="height:500px;">
-                                        <table>
-                                            <tr>
-                                                <td style="vertical-align: top; padding-right: 10px;">
-                                                    <em> Rotate: Left mouse<br>Translate: Ctrl + left mouse<br>Zoom: Alt + left mouse </em>
-                                                </td>
-                                                <td style="vertical-align: top;">
-                                                    <button id="zoom-width-button" class="btn btn-mini">Zoom display</button>
-                                                    <br><br>
-                                                    <!-- <button id="pp_x3d-show-all" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.showAll();return false;">Show all</button>
-                                                    <br><br> -->
-                                                    <button id="pp_x3d-reset-view" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.resetView();return false;">Reset view</button>
-                                                </td>
-                                                <td>
-                                                    <div id=pp3d-colorbar></div>
-                                                </td>
-                                            </tr>
-                                        </table>
+                                        <div class="row-fluid">
+                                            <div class="span3">
+                                                <em> Rotate: Left mouse<br>Translate: Ctrl + left mouse<br>Zoom: Alt + left mouse </em>
+                                            </div>
+                                            <div class="span2">
+                                                <p><button id="pp-zoom-width-button" class="btn btn-mini zoom-width-button">Zoom display</button></p>
+                                                <p><button id="pp_x3d-reset-view" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.resetView();return false;">Reset view</button></p>
+                                            </div>
+                                            <div id="pp3d-colorbar" class="span7"></div>
+                                        </div>
+                                        <div>
                                         <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
                                         <X3D id='pp_x3d' style="width:100%; margin: 0px auto; display:block; border: none;">
                                             <scene>
-                                                <Viewpoint id='x3d-viewpoint' position='2000 3000 22000' centerofrotation='5000 5000 5000'></viewpoint>
+                                                <Viewpoint id='x3d-viewpoint' position='1927 2658 22000' centerofrotation='5000 5000 5000'></viewpoint>
 
                                                 <Group DEF='Axis'>
                                                     <Transform translation='0 5000 0'>
@@ -367,6 +357,7 @@
                                                 </shape>
                                             </scene>
                                         </X3D>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="ppdata">
@@ -1365,7 +1356,7 @@
         }
     });
 
-    $("#zoom-width-button").click(function() {
+    $(".zoom-width-button").click(function(element) {
         if (widthZoomed) {
             if ($('.stoqs-zoom-width').hasClass('span12')) {
                 $('.stoqs-zoom-width').removeClass('span12');
@@ -1375,18 +1366,29 @@
             }
             $('.navbar').show();
             $('body').css({'padding-top': '60px'});
-            $('#spatial-group').children().show();
             $('#accordion1').addClass('well');
-            $('#parameter-parameter-anchor').parent().show();
-            $('#parameterParameterTabs').show();
-            $('#sample-anchor').parent().show();
-            $('#data-access-anchor').parent().show();
+            $('#sample-anchor').parentsUntil('.accordian-group').show();
+            $('#data-access-anchor').parentsUntil('.accordian-group').show();
             $('#right-column').show();
-            $('#parameter-parameter-3dplot').css( { 'height': '500px',
-                                                    'width': '',
-                                                    'position': ''
-                                                  } );
-            $('#zoom-width-button').html('Zoom display');
+            if (this.id == 'pp-zoom-width-button') {
+                $('#spatial-group').children().show();
+                $('#parameter-parameter-anchor').parent().show();
+                $('#parameterParameterTabs').show();
+                $('#parameter-parameter-3dplot').css( { 'height': '500px',
+                                                        'width': '',
+                                                        'position': ''
+                                                      } );
+            }
+            if (this.id == 'geo-zoom-width-button') {
+                $('#parameter-parameter-group').children().show();
+                $('#spatial-anchor').parent().show();
+                $('#spatialTabs').show();
+                $('#geo-3dplot').css( { 'height': '500px',
+                                        'width': '',
+                                        'position': ''
+                                      } );
+            }
+            $(this).html('Zoom display');
         } else {
             if ($('.stoqs-zoom-width').hasClass('span6')) {
                 $('.stoqs-zoom-width').removeClass('span6');
@@ -1396,20 +1398,31 @@
             }
             $('.navbar').hide();
             $('body').css({'padding-top': '0px'});
-            $('#spatial-group').children().hide();
             $('#collapseSample').parent().children().hide();
             $('#collapseDataAccess').parent().children().hide();
             $('#accordion1').removeClass('well');
-            $('#parameter-parameter-anchor').parent().hide();
-            $('#parameterParameterTabs').hide();
-            $('#sample-anchor').parent().hide();
-            $('#data-access-anchor').parent().hide();
+            $('#sample-anchor').parentsUntil('.accordian-group').hide();
+            $('#data-access-anchor').parentsUntil('.accordian-group').hide();
             $('#right-column').hide();
-            $('#parameter-parameter-3dplot').css( { 'height': '100%',
-                                                    'width': '100%',
-                                                    'position': 'fixed'
-                                                  });
-            $('#zoom-width-button').html('Unzoom display');
+            if (this.id == 'pp-zoom-width-button') {
+                $('#spatial-group').children().hide();
+                $('#parameter-parameter-anchor').parent().hide();
+                $('#parameterParameterTabs').hide();
+                $('#parameter-parameter-3dplot').css( { 'height': '100%',
+                                                        'width': '100%',
+                                                        'position': 'fixed'
+                                                      });
+            }
+            if (this.id == 'geo-zoom-width-button') {
+                $('#parameter-parameter-group').children().hide();
+                $('#spatial-anchor').parent().hide();
+                $('#spatialTabs').hide();
+                $('#geo-3dplot').css( { 'height': '100%',
+                                        'width': '100%',
+                                        'position': 'fixed'
+                                      });
+            }
+            $(this).html('Unzoom display');
         }
         widthZoomed = ! widthZoomed;
     });
@@ -2081,10 +2094,11 @@
                         $('#x3d-zmin').attr('string', data[key]['z'][1]);
                         $('#x3d-zmax').attr('string', data[key]['z'][2]);
                         $('#x3d-zname').attr('string', data[key]['z'][3]);
-                        $('#pp_x3d').css( {
-                                'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
-                                'background-repeat': 'no-repeat',
-                                'position': 'relative' } );
+                        $('#pp3d-colorbar').html('<img src="{{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + '" />');
+                        //$('#pp_x3d').css( {
+                        //        'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
+                        //        'background-repeat': 'no-repeat',
+                        //        'position': 'relative' } );
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
                             $('#parameter-parameter-anchor').click();
                         }
@@ -2103,11 +2117,7 @@
                                             data[key]['index'] + '"> <color color="' + 
                                             data[key]['colors'] + '"></color> <geocoordinate point="' + 
                                             data[key]['points'] + '"></geocoordinate> </indexedlineset>');
-                        $('#geo_x3d').css( {
-                                'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
-                                'background-repeat': 'no-repeat',
-                                'position': 'relative' } );
-                        //x3dom.reload();
+                        $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data[key]['colorbar'] + '" />');
                     }
                 }
             }
@@ -2405,7 +2415,7 @@
         // Tootips that are disabled after first use - don't want to annoy users too much
         $('#showparameterplatformdata').tooltip({title: 'Select a Measured Parameter Name and a Platform to enable'});
         $('#showsensortracks').tooltip({title: 'Select a Measured Parameter to enable'});
-        $('#showgeox3ddata').tooltip({title: 'Select a Measured Parameter to enable'});
+        $('#showgeox3ddata').parent().tooltip({title: 'Select a Measured Parameter to enable'});
 
     });
 
