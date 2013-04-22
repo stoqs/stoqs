@@ -55,7 +55,6 @@ def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientat
         cb_ax = cb_fig.add_axes([0.1, 0.8, 0.8, 0.2])
         norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
         ticks=round_to_n(list(np.linspace(parm_info[1], parm_info[2], num=4)), 3)
-        logger.debug('================================= ticks = %s', ticks)
         cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
                                         norm=norm,
                                         ticks=ticks,
@@ -124,6 +123,13 @@ class MeasuredParameter(object):
         Read the data from the database into member variables for use by the methods that output various products
         '''
         logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
+
+        # Save to '_by_act' dictionaries so that X3D and end each IndexedLinestring with a '-1'
+        self.depth_by_act = {}
+        self.value_by_act = {}
+        self.lon_by_act = {}
+        self.lat_by_act = {}
+
         i = 0
         for mp in self.qs_mp:
             if self.scale_factor:
@@ -131,10 +137,14 @@ class MeasuredParameter(object):
             else:
                 self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
             self.y.append(mp['measurement__depth'])
+            self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
             self.z.append(mp['datavalue'])
+            self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
 
             self.lon.append(mp['measurement__geom'].x)
+            self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
             self.lat.append(mp['measurement__geom'].y)
+            self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
             i = i + 1
             if (i % 1000) == 0:
                 logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
@@ -314,7 +324,9 @@ class MeasuredParameter(object):
             if self.kwargs['showgeox3ddata']:
                 if self.kwargs['showgeox3ddata']:
                     showGeoX3DDataFlag = True
-          
+
+        VERT_EXAG = 10
+
         x3dResults = {}
         if not showGeoX3DDataFlag:
             return x3dResults
@@ -326,28 +338,32 @@ class MeasuredParameter(object):
             colors = ''
             indices = ''
             index = 0
-            for lon,lat,depth,value in zip(self.lon, self.lat, self.depth, self.value):
-                # 10x vertical exaggeration - must match the GeoElevationGrid
-                points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * 10)
+            for act in self.value_by_act.keys():
+                for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
+                    # 10x vertical exaggeration - must match the GeoElevationGrid
+                    points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * VERT_EXAG)
 
-                cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
-                                    (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))
-                if cindx < 0:
-                    cindx = 0
-                if cindx > len(self.clt) - 1:
-                    cindx = len(self.clt) - 1
+                    cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
+                                        (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))
+                    if cindx < 0:
+                        cindx = 0
+                    if cindx > len(self.clt) - 1:
+                        cindx = len(self.clt) - 1
 
-                colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
-                indices = indices + '%i ' % index
-                index = index + 1
+                    colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
+                    indices = indices + '%i ' % index
+                    index = index + 1
+
+                # End the IndexedLinestring with -1 so that end point does not connect to the beg point
+                indices = indices + '-1 ' 
 
             try:
                 makeColorBar(self.request, self.colorbarPngFileFullPath, self.parameterMinMax, self.cm_jetplus)
             except Exception,e:
                 logger.exception('Could not plot the colormap')
                 x3dResults = 'Could not plot the colormap'
-
-            x3dResults = {'colors': colors[:-1], 'points': points[:-1], 'info': '', 'index': indices[:-1], 'colorbar': self.colorbarPngFile}
+            else:
+                x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
 
         except Exception,e:
             logger.exception('Could not create measuredparameterx3d')
