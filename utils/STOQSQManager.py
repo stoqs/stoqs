@@ -231,7 +231,7 @@ class STOQSQManager(object):
         if qs_ap:
             ap_count = qs_ap.count()
             approximate_count = qs_ap.aggregate(Sum('number'))['number__sum']
-            locale.setlocale(locale.LC_ALL, '')                 # Use systems default locale settings
+            locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
             if getGet_Actual_Count(self.kwargs):
                 if not self.mpq.qs_mp:
                     self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
