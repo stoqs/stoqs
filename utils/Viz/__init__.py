@@ -106,6 +106,11 @@ class MeasuredParameter(object):
         self.platformName = platformName
         self.scale_factor = None
         self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+        self.cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
+        # - Use a new imageID for each new image
+        self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+        self.colorbarPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
+        self.colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', self.colorbarPngFile)
         self.x = []
         self.y = []
         self.z = []
@@ -156,12 +161,9 @@ class MeasuredParameter(object):
         else:
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
             self.request.session['sessionID'] = sessionID
-        # - Use a new imageID for each new image
-        imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-        sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + imageID + '.png'
+
+        sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
-        colorbarPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_colorbar_' + imageID + '.png'
-        colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', colorbarPngFile)
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
         # query has salient points, typically in the vertices of the yo-yos.  
@@ -264,13 +266,11 @@ class MeasuredParameter(object):
                     ax.set_xlim(tmin, tmax)
                 ax.set_ylim(dmax, dmin)
                 ax.get_xaxis().set_ticks([])
-                self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
-                cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
                 if contourFlag:
-                    ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=cm_jetplus, extend='both')
+                    ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=self.cm_jetplus, extend='both')
                     ax.scatter(self.x, self.y, marker='.', s=2, c='k', lw = 0)
                 else:
-                    ax.scatter(self.x, self.y, c=self.z, s=20, cmap=cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+                    ax.scatter(self.x, self.y, c=self.z, s=20, cmap=self.cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
 
                 if self.sampleQS:
                     # Add sample locations and names
@@ -295,12 +295,12 @@ class MeasuredParameter(object):
                 return None, None, 'Could not plot the data'
 
             try:
-                makeColorBar(self.request, colorbarPngFileFullPath, parm_info, cm_jetplus)
+                makeColorBar(self.request, self.colorbarPngFileFullPath, parm_info, self.cm_jetplus)
             except Exception,e:
                 logger.exception('Could not plot the colormap')
                 return None, None, 'Could not plot the colormap'
 
-            return sectionPngFile, colorbarPngFile, ''
+            return sectionPngFile, self.colorbarPngFile, ''
         else:
             logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax)
             return None, None, 'No depth-time region specified.'
@@ -319,7 +319,6 @@ class MeasuredParameter(object):
         if not showGeoX3DDataFlag:
             return x3dResults
 
-        colorbarPngFile = ''
         if not self.lon and not self.lat and not self.depth and not self.value:
             self.loadData()
         try:
@@ -342,11 +341,17 @@ class MeasuredParameter(object):
                 indices = indices + '%i ' % index
                 index = index + 1
 
-            x3dResults = {'colors': colors[:-1], 'points': points[:-1], 'info': '', 'index': indices[:-1], 'colorbar': colorbarPngFile}
+            try:
+                makeColorBar(self.request, self.colorbarPngFileFullPath, self.parameterMinMax, self.cm_jetplus)
+            except Exception,e:
+                logger.exception('Could not plot the colormap')
+                x3dResults = 'Could not plot the colormap'
+
+            x3dResults = {'colors': colors[:-1], 'points': points[:-1], 'info': '', 'index': indices[:-1], 'colorbar': self.colorbarPngFile}
 
         except Exception,e:
             logger.exception('Could not create measuredparameterx3d')
-            return None, None, 'Could not create measuredparameterx3d'
+            x3dResults = 'Could not create measuredparameterx3d'
 
         return x3dResults
 
@@ -576,7 +581,6 @@ class ParameterParameter(object):
                     imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
                     colorbarPngFile = '%s_%s_%s_%s_3dcolorbar_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['z'], self.pDict['c'], imageID )
                     colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
-                    ##makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus, orientation='vertical')
                     makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus)
 
                 except Exception,e:
