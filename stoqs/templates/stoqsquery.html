@@ -34,6 +34,11 @@
             background-position:center;
             background-repeat:no-repeat;
         }
+        .stoqs-background-ajax-loader-3d-topright {
+            background-image: url({{STATIC_URL}}images/ajax-loader.gif);
+            background-position:80% 10%;
+            background-repeat:no-repeat;
+        }
         .olControlLoadingPanel {
             background-image:url({{STATIC_URL}}images/ajax-loader-rotating1.gif);
             margin-left: 50%;
@@ -147,12 +152,6 @@
                                         <div id="sensortracks-colorbar" class="span6">
                                         </div>
                                     </div>
-                                    <div>
-                                        <div id="query-stats"></div>
-                                        <label class="checkbox">
-                                            <input type="checkbox" id="getactualcount" /> Get actual count
-                                        </label>
-                                    </div>
                                     <div id="samplePoint"></div>
                                 </div>
                                 <div class="tab-pane" id="geo3d" style="height:100%;">
@@ -186,6 +185,53 @@
                                             </Scene>
                                         </X3D>
                                         </div>
+                                    </div>
+                                </div>
+                            </div><!-- tab-content -->
+
+                        </div><!-- accordion-inner -->
+                    </div>
+                </div><!-- accordian-group -->
+
+
+                <div id="metadata-group" class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="metadata-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMetadata">
+                        Metadata</a>
+                        </h3>
+                    </div>
+
+                    <div id="collapseMetadata" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <label class="checkbox">
+                                <input type="checkbox" id="getactualcount" /> Get actual count
+                            </label>
+
+                            <h3>Activities</h3>
+                                <table id="activities-table" class="table table-striped table-bordered">
+                                    <thead>
+                                        <tr><td>Under construction</td></tr>
+                                    </thead> 
+                                    <tbody>
+                                        <tr><td></td></tr>
+                                    </tbody>
+                                </table>
+
+                            <h3>Resources</h3>
+                            <ul id="resourceTabs" class="nav nav-tabs">
+                                <li><a href="#quicklookplots" data-toggle="tab">Quick look plots</a></li>
+                                <li><a href="#netcdfmetadata" data-toggle="tab">NetCDF metadata</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane" id="quicklookplots">
+                                    <div id="metadata-quicklookplots">
+                                        Under construction
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="netcdfmetadata">
+                                    <div id="metadata-netcdfmetadata">
+                                        Under construction
                                     </div>
                                 </div>
                             </div><!-- tab-content -->
@@ -378,7 +424,7 @@
                 </div><!-- accordian-group -->
 
 
-                <div class="accordian-group">
+                <div id="sample-group" class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="sample-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSample">
                         Sample Data Access
@@ -407,7 +453,8 @@
 
                 </div><!-- accordian-group -->
 
-                <div class="accordian-group">
+
+                <div id="data-access-group" class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseDataAccess">
                         Measured Parameter Data Access
@@ -1373,8 +1420,9 @@
             $('.navbar').show();
             $('body').css({'padding-top': '60px'});
             $('#accordion1').addClass('well');
-            $('#sample-anchor').parentsUntil('.accordian-group').show();
-            $('#data-access-anchor').parentsUntil('.accordian-group').show();
+            $('#metadata-group').show();
+            $('#sample-group').show();
+            $('#data-access-group').show();
             $('#right-column').show();
             if (this.id == 'pp-zoom-width-button') {
                 $('#spatial-group').children().show();
@@ -1404,11 +1452,10 @@
             }
             $('.navbar').hide();
             $('body').css({'padding-top': '0px'});
-            $('#collapseSample').parent().children().hide();
-            $('#collapseDataAccess').parent().children().hide();
             $('#accordion1').removeClass('well');
-            $('#sample-anchor').parentsUntil('.accordian-group').hide();
-            $('#data-access-anchor').parentsUntil('.accordian-group').hide();
+            $('#metadata-group').hide();
+            $('#sample-group').hide();
+            $('#data-access-group').hide();
             $('#right-column').hide();
             if (this.id == 'pp-zoom-width-button') {
                 $('#spatial-group').children().hide();
@@ -2135,6 +2182,7 @@
                 $('#time-depth-flot').addClass('stoqs-background-ajax-loader-pulse ');
                 $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader-pp ');
                 $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader-3d ');
+                $('#geo-3dplot').addClass('stoqs-background-ajax-loader-3d-topright ');
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
@@ -2149,15 +2197,16 @@
                 $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
                 $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
                 $('#parameter-parameter-3dplot').removeClass('stoqs-background-ajax-loader-3d');
+                $('#geo-3dplot').removeClass('stoqs-background-ajax-loader-3d-topright');
 
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
                 me.refreshMap();
 
                 if ( ! $('#getactualcount').is(':checked')) {
-                    $('#query-stats').html("<h4>Approximately " + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters</h4>");
+                    $('#metadata-anchor').html("Metadata: approximately " + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters");
                 }
                 else {
-                    $('#query-stats').html("<h4>" + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters</h4>");
+                    $('#metadata-anchor').html("Metdata: " + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters");
                 }
             },
             dataType: "json"
@@ -2416,7 +2465,7 @@
         //$('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select Measurement Data by parameter value range'});
         //$('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
         //$('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
-        $('#getactualcount').tooltip({title: 'Will increase query time'});
+        $('#getactualcount').parent().tooltip({title: 'Will increase query time'});
 
         // Tootips that are disabled after first use - don't want to annoy users too much
         $('#showparameterplatformdata').tooltip({title: 'Select a Measured Parameter Name and a Platform to enable'});
