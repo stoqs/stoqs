@@ -2203,10 +2203,10 @@
                 me.refreshMap();
 
                 if ( ! $('#getactualcount').is(':checked')) {
-                    $('#metadata-anchor').html("Metadata: approximately " + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters");
+                    $('#metadata-anchor').html("Metadata: approximately " + data['count'] + " values from " + data['ap_count'] + " ActivityParameters");
                 }
                 else {
-                    $('#metadata-anchor').html("Metdata: " + data['count'] + " measured parameter data values from " + data['ap_count'] + " ActivityParameters");
+                    $('#metadata-anchor').html("Metdata: " + data['count'] + " values from " + data['ap_count'] + " ActivityParameters");
                 }
             },
             dataType: "json"
