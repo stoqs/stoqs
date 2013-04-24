@@ -73,7 +73,7 @@ cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 cl.stride = stride
 ##cl.loadAll()
 
-# For testing.  Comment out the loadAll() call, and uncomment one of these as needed
-cl.loadWFuctd()
-cl.loadWFpctd()
+# Use same platformName so that section data visualization works in STOQS UI
+cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data')
+cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data')
 
