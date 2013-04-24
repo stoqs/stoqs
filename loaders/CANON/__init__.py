@@ -216,27 +216,30 @@ class CANONLoader(object):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espbruce', self.colors['espbruce'], 'espbruce', 'ESP bruce Mission', 
                                         self.espbruce_parms, self.dbAlias, stride)
 
-    def loadWFuctd(self, stride=None):
+    def loadWFuctd(self, stride=None, platformName='wf_uctd', activitytypeName='Western Flyer Underway CTD Data'):
         '''
-        WF uctd specific load functions
+        WF uctd specific load functions.  Override defaults for @platformName and activitytypeName if it's desired
+        to consider uctd and pctd coming from the same platform.  You may want to do this to use the data 
+        visualization capabilities in STOQS.
         '''
         stride = stride or self.stride
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wfuctd_files], self.wfuctd_files):
             url = self.wfuctd_base + file
             print "url = %s" % url
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'wf_uctd', self.colors['flyer'], 'wf_uctd', 'Western Flyer Underway CTD Data', 
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], platformName, activitytypeName,
                                         self.wfuctd_parms, self.dbAlias, stride)
 
-    def loadWFpctd(self, stride=None):
+    def loadWFpctd(self, stride=None, platformName='wf_pctd', activitytypeName='Western Flyer Profile CTD Data'):
         '''
-        WF pctd specific load functions
+        WF pctd specific load functions. Override defaults for @platformName and activitytypeName if it's desired
+        to consider uctd and pctd coming from the same platform.  You may want to do this to use the data 
+        visualization capabilities in STOQS.
         '''
         stride = stride or self.stride
-        platformName = 'wf_pctd'
         for (aName, file) in zip([ a.split('.')[0] + ' (stride=%d)' % stride for a in self.wfpctd_files], self.wfpctd_files):
             url = self.wfpctd_base + file
             print "url = %s" % url
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], platformName, 'Western Flyer Profile CTD Data', 
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], platformName, activitytypeName, 
                                         self.wfpctd_parms, self.dbAlias, stride)
         # Now load all the bottles           
         sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'])
