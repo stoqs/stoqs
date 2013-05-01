@@ -197,7 +197,7 @@
                 <div id="metadata-group" class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="metadata-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMetadata">
-                        Metadata</a>
+                        Metadata:</a> <span id="metadata-count" style="color:black;"></span><span id="metadata-ajaxtime" style="color:black;">
                         </h3>
                     </div>
 
@@ -458,7 +458,7 @@
                     <div class="accordian-heading">
                         <h3><a id="data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseDataAccess">
                         Measured Parameter Data Access
-                        </a></h3>
+                        </a> </h3>
                     </div>
                     <div id="collapseDataAccess" class="accordion-body collapse in">
                         <div class="accordion-inner">
@@ -1166,7 +1166,7 @@
         });
         $('#measuredparameters-anchor').html('Measured Parameter: ')
         if (params['measuredparametersgroup'].length) {
-            $('#measuredparameters-anchor').append('name(s): ' + params['measuredparametersgroup'].join() + ' ')
+            $('#measuredparameters-anchor').append('name(s): ' + params['measuredparametersgroup'].join())
         }
         if (params['parameterstandardname'].length) {
             $('#measuredparameters-anchor').append('standard name(s): ' + params['parameterstandardname'].join())
@@ -1244,7 +1244,7 @@
         }
         if ( $('input:radio[name=parameters_x]').is(':checked') || $('input:radio[name=parameters_y]').is(':checked') ||
              $('input:radio[name=parameters_z]').is(':checked') || $('input:radio[name=parameters_c]').is(':checked') ) {
-            $('#parameter-parameter-anchor').html('Parameter-Parameter: ' + pp_html)
+            $('#parameter-parameter-anchor').html('Parameter-Parameter: ' + pp_html.substring(0, pp_html.length - 1))
         }
         else {
             $('#parameter-parameter-anchor').html('Parameter-Parameter')
@@ -2176,6 +2176,7 @@
             }
         } // onUpdate()
 
+        var startAjax = new Date().getTime();
         request = $.ajax({
             type : 'GET',
             beforeSend: function() {
@@ -2183,6 +2184,7 @@
                 $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader-pp ');
                 $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader-3d ');
                 $('#geo-3dplot').addClass('stoqs-background-ajax-loader-3d-topright ');
+                $('#metadata-ajaxtime').html(" (loading...)");
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
@@ -2202,11 +2204,15 @@
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
                 me.refreshMap();
 
+                var endAjax = new Date().getTime();
+                var nsecs = (endAjax - startAjax) / 1000.0;
                 if ( ! $('#getactualcount').is(':checked')) {
-                    $('#metadata-anchor').html("Metadata: approximately " + data['count'] + " values from " + data['ap_count'] + " ActivityParameters");
+                    $('#metadata-count').html("about " + data['count'] + " data values");
+                    $('#metadata-ajaxtime').html(" (" + nsecs + " seconds)");
                 }
                 else {
-                    $('#metadata-anchor').html("Metdata: " + data['count'] + " values from " + data['ap_count'] + " ActivityParameters");
+                    $('#metadata-count').html(data['count'] + " data values");
+                    $('#metadata-ajaxtime').html(" (" + nsecs + " seconds)");
                 }
             },
             dataType: "json"
