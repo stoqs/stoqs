@@ -2,10 +2,12 @@
 # =============
 
 # These commands need to be executed once on your system, they have been tested on CentOS 6.
-# It is assumed that Postgres 9.1 is already installed.  Some level of familiarity with 
-# Unix is required to install STOQS.  If you run into any difficulties please feel free
-# to post questions on the stoqs-discuss mail list, which you may join at: 
-# https://groups.google.com/forum/#!forum/stoqs-discuss
+# It is assumed that Postgres 9.1 is already installed.  If you do not have PostgreSQL 9.1
+# installed, then follow the diresctions here: http://wiki.postgresql.org/wiki/YUM_Installation
+#
+# Some level of familiarity with Unix is required to install STOQS.  
+# If you run into any difficulties please feel free to post questions on the stoqs-discuss 
+# mail list, which you may join at: # https://groups.google.com/forum/#!forum/stoqs-discuss
 
 su -c "easy_install virtualenv"
 su -c "yum -y install postgis rabbitmq-server gdal scipy mod_wsgi"
