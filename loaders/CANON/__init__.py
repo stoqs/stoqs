@@ -37,6 +37,7 @@ class CANONLoader(object):
                 'waveglider':   'c7eae5',
                 'nps_g29':      '80cdc1',
                 'l_662':        '35978f',
+                'm1':           '35f78f',
                 'martin':       '01665e',
                 'flyer':        '11665e',
                 'espdrift':     '21665e',
@@ -49,6 +50,7 @@ class CANONLoader(object):
                 'waveglider':   'fc4e2a',
                 'nps_g29':      'e31a1c',
                 'l_662':        'bd0026',
+                'm1':           'bd2026',
                 'hehape':       'bd2026',
                 'rusalka':      'bd4026',
                 'carmen':       'bd8026',
@@ -140,6 +142,16 @@ class CANONLoader(object):
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'l_662', self.colors['l_662'], 'glider', 'Glider Mission', 
                                         self.l_662_parms, self.dbAlias, stride, self.l_662_startDatetime, self.l_662_endDatetime)
 
+    def loadM1(self, stride=None):
+        '''
+        Mooring M1 specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.m1_files], self.m1_files):
+            url = self.m1_base + file
+            print "url = %s" % url
+            DAPloaders.runMooringLoader(url, self.campaignName, aName, 'm1', self.colors['m1'], 'mooring', 'Mooring Deployment', 
+                                        self.m1_parms, self.dbAlias, stride, self.m1_startDatetime, self.m1_endDatetime)
     def loadHeHaPe(self, stride=None):
         '''
         Glider specific load functions
