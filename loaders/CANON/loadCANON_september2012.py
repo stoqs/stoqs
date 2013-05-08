@@ -118,7 +118,7 @@ cl.fulmar_files = []
 cl.fulmar_parms = []
 
 # Spray glider - for just the duration of the campaign
-cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
+cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20120816_TS.nc']
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = datetime.datetime(2012, 9, 10)
@@ -169,6 +169,17 @@ cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = datetime.datetime(2012, 9, 1)
 cl.l_662_endDatetime = datetime.datetime(2012, 9, 21)
 
+# Mooring M1 - for just the duration of the campaign
+cl.m1_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'
+cl.m1_files = ['OS_MBARI-M1_R_TS']
+##cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR', 
+##                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR', 
+##                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+##              ]
+cl.m1_parms = [ 'PSAL', 'TEMP' ]
+cl.m1_startDatetime = datetime.datetime(2012, 9, 1)
+cl.m1_endDatetime = datetime.datetime(2012, 9, 21)
+
 
 cl.stride = stride
 ##cl.loadAll()
@@ -182,4 +193,5 @@ cl.loadESPdrift()
 cl.loadWFuctd()
 cl.loadWFpctd()
 cl.loadL_662()
+##cl.loadM1()
 
