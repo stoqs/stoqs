@@ -467,11 +467,14 @@ class STOQSQManager(object):
         colors = {}
 
         # Restrict selection to Activities that are Trajectories.  Can have pre CF-1.6 UCDD and CF-1.6 and later metadata.
-        udcc_q = Q(activityresource__resource__name__iexact='thredds_data_type') & Q(activityresource__resource__value__iexact='Trajectory')
+        udcc_q1 = Q(activityresource__resource__name__iexact='thredds_data_type') & Q(activityresource__resource__value__iexact='Trajectory')
+        udcc_q2 = Q(activityresource__resource__name__iexact='cdm_data_type') & Q(activityresource__resource__value__iexact='trajectory')
+        udcc_q3 = Q(activityresource__resource__name__iexact='CF%3afeatureType') & Q(activityresource__resource__value__iexact='trajectory')
+        udcc_q4 = Q(activityresource__resource__name__iexact='CF_featureType') & Q(activityresource__resource__value__iexact='trajectory')
         cf16_q = Q(activityresource__resource__name__iexact='featureType') & Q(activityresource__resource__value__iexact='trajectory')
         for p in self.getPlatforms():
             plq = Q(platform__name = p[0])
-            qs = self.qs.filter(plq & (udcc_q | cf16_q)).values_list(
+            qs = self.qs.filter(plq & (udcc_q1 | udcc_q2 | udcc_q3 | udcc_q4 | cf16_q)).values_list(
                                     'simpledepthtime__epochmilliseconds', 
                                     'simpledepthtime__depth',
                                     'name'
