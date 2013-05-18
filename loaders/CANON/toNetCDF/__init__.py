@@ -49,12 +49,11 @@ class BaseWriter(object):
 
         self.ncFile.title = ''
         self.ncFile.netcdf_version = '3.6'
-        self.ncFile.Convention = 'CF-1.4'
+        self.ncFile.Conventions = 'CF-1.6'
         self.ncFile.date_created = iso_now
         self.ncFile.date_update = iso_now
         self.ncFile.date_modified = iso_now
-        self.ncFile.cdm_data_type = 'trajectory'
-        self.ncFile.CF_featureType = 'trajectory'
+        self.ncFile.featureType = 'trajectory'
         self.ncFile.data_mode = 'R'
         self.ncFile.geospatial_lat_min = np.min(self.latitude[:])
         self.ncFile.geospatial_lat_max = np.max(self.latitude[:])
