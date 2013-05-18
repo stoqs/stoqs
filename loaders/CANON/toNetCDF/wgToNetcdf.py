@@ -77,19 +77,25 @@ class ParserWriter(BaseWriter):
 
         # Read data in from the input file
         reader = csv.DictReader(open(os.path.join(self.parentDir, inFile)))
+        last_esec = 0
         for r in reader:
             gmtDTString = r['GPCTD Timestamp']
             tt = time.strptime(gmtDTString, '%Y-%m-%d %H:%M:%S')
             diff = datetime.datetime(*tt[:6]) - datetime.datetime(1970,1,1,0,0,0)
-        
-            esec_list.append(diff.days * 86400 + diff.seconds)
-            lat_list.append(r[' Latitude'])
-            lon_list.append(r[' Longitude'])
-            dep_list.append(r[' Pressure(decibars)'])        # decibars is darn close to meters at the surface
-        
-            tem_list.append(r[' Temperature(degrees C)'])
-            sal_list.append(r[' Salinity(PSU)'])
-            do_list.append(r[' Dissolved Oxygen(mL/L)'])
+       
+            esec = diff.days * 86400 + diff.seconds 
+            if esec > last_esec:
+                esec_list.append(esec)
+                lat_list.append(r[' Latitude'])
+                lon_list.append(r[' Longitude'])
+                dep_list.append(r[' Pressure(decibars)'])        # decibars is darn close to meters at the surface
+            
+                tem_list.append(r[' Temperature(degrees C)'])
+                sal_list.append(r[' Salinity(PSU)'])
+                do_list.append(r[' Dissolved Oxygen(mL/L)'])
+                last_esec = esec
+            else:
+                print 'Skipping esec = %d' % esec
 
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
@@ -99,6 +105,7 @@ class ParserWriter(BaseWriter):
         self.ncFile.createDimension('TIME', len(esec_list))
         self.time = self.ncFile.createVariable('TIME', 'float64', ('TIME',))
         self.time.units = 'seconds since 1970-01-01'
+        self.time.standard_name = 'time'
         self.time[:] = esec_list
 
         # Record Variables - coordinates for trajectory - save in the instance and use for metadata generation
@@ -125,16 +132,19 @@ class ParserWriter(BaseWriter):
         temp.long_name = 'Sea Water Temperature in-situ ITS-90 or IPTS-68 scale'
         temp.standard_name = 'sea_water_temperature'
         temp.units = 'Celsius'
+        temp.coordinates = 'time latitude longitude depth'
         temp[:] = tem_list
 
         sal = self.ncFile.createVariable('PSAL', 'float64', ('TIME',))
         sal.long_name = 'Sea Water Salinity in-situ PSS 1978 scale'
         sal.standard_name = 'sea_water_salinity'
+        sal.coordinates = 'time latitude longitude depth'
         sal[:] = sal_list
 
         do = self.ncFile.createVariable('oxygen', 'float64', ('TIME',))
         do.long_name = 'Dissolved Oxygen'
         do.units = 'ml/l'
+        do.coordinates = 'time latitude longitude depth'
         do[:] = do_list
 
         self.add_global_metadata()
@@ -162,20 +172,26 @@ class ParserWriter(BaseWriter):
                     ]
 
         reader = csv.DictReader(open(os.path.join(self.parentDir, inFile)))
+        last_esec = 0
         for r in reader:
             gmtDTString = r['PCO2 Timestamp']
             tt = time.strptime(gmtDTString, '%Y-%m-%d %H:%M:%S')
             diff = datetime.datetime(*tt[:6]) - datetime.datetime(1970,1,1,0,0,0)
+            esec = diff.days * 86400 + diff.seconds
+            if esec > last_esec:
+                esec_list.append(esec)
         
-            esec_list.append(diff.days * 86400 + diff.seconds)
-        
-            for v in pco2_vars:
-                ncVar = v.replace(' ', '_', 42)
-                try:
-                    exec "%s_list.append(r[' %s'])" % (ncVar, v, )
-                except NameError:
-                    exec '%s_list = []' % ncVar
-                    exec "%s_list.append(r[' %s'])" % (ncVar, v, )
+                for v in pco2_vars:
+                    ncVar = v.replace(' ', '_', 42)
+                    try:
+                        exec "%s_list.append(r[' %s'])" % (ncVar, v, )
+                    except NameError:
+                        exec '%s_list = []' % ncVar
+                        exec "%s_list.append(r[' %s'])" % (ncVar, v, )
+
+                last_esec = esec
+            else:
+                print 'Skipping esec = %d' % esec
 
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
@@ -186,22 +202,34 @@ class ParserWriter(BaseWriter):
 
         self.time = self.ncFile.createVariable('TIME', 'float64', ('TIME',))
         self.time.units = 'seconds since 1970-01-01'
+        self.time.long_name = 'Time GMT'
+        self.time.standard_name = 'time'
         self.time[:] = esec_list
 
         # PCO2 variables 
         for v in pco2_vars:
             ncVar = v.replace(' ', '_', 42)
             # Only Latitude, Longitude, Depth, and Time variables are upper case to match other Glider data
-            if v == 'Latitude' or v == 'Longitude':
-                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar.upper(), )
+            if v in ('Latitude', 'Longitude'):
+                # Name the coordinate variable all upper case
+                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (v.lower(), v.upper(), )
+                exec "self.%s.long_name = '%s'" % (v.lower(), v.lower(), )
+                exec "self.%s.standard_name = '%s'" % (v.lower(), v.lower(), )
+                if v == 'Latitude':
+                    exec "self.%s.units = 'degrees_north'" % v.lower()
+                if v == 'Longitude':
+                    exec "self.%s.units = 'degrees_east'" % v.lower()
+                    
             else:
                 exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar, )
-            exec "self.%s.long_name = '%s'" % (ncVar.lower(), v, )
+                exec "self.%s.coordinates = 'TIME LATITUDE LONGITUDE DEPTH'" % ncVar.lower()
+                exec "self.%s.long_name = '%s'" % (ncVar.lower(), v, )
+
             exec "self.%s[:] = %s_list" % (ncVar.lower(), ncVar, )
 
         # Fudge up a depth variable with a value of zero
         self.depth = self.ncFile.createVariable('DEPTH', 'float64', ('TIME',))
-        self.depth.long_name = 'Depth'
+        self.depth.long_name = 'depth below sea level'
         self.depth.standard_name = 'depth'
         self.depth.units = 'm'
         self.depth[:] = np.zeros(len(self.time[:]))
