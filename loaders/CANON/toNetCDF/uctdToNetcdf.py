@@ -131,6 +131,7 @@ class ParserWriter(BaseWriter):
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(self.esec_list))
         self.time = self.ncFile.createVariable('time', 'float64', ('time',))
+        self.time.standard_name = 'time'
         self.time.units = 'seconds since 1970-01-01'
         self.time[:] = self.esec_list
 
@@ -157,21 +158,25 @@ class ParserWriter(BaseWriter):
         temp = self.ncFile.createVariable('TEMP', 'float64', ('time',))
         temp.long_name = 'Temperature, 2 [ITS-90, deg C]'
         temp.standard_name = 'sea_water_temperature'
+        temp.coordinates = 'time depth latitude longitude'
         temp.units = 'Celsius'
         temp[:] = self.t1_list
 
         sal = self.ncFile.createVariable('PSAL', 'float64', ('time',))
         sal.long_name = 'Salinity, Practical [PSU]'
         sal.standard_name = 'sea_water_salinity'
+        sal.coordinates = 'time depth latitude longitude'
         sal[:] = self.sal_list
 
         xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',))
         xmiss.long_name = 'Beam Transmission, Chelsea/Seatech'
+        xmiss.coordinates = 'time depth latitude longitude'
         xmiss.units = '%'
         xmiss[:] = self.xmiss_list
 
         wetstar = self.ncFile.createVariable('wetstar', 'float64', ('time',))
         wetstar.long_name = 'Fluorescence, WET Labs WETstar'
+        wetstar.coordinates = 'time depth latitude longitude'
         wetstar.units = 'mg/m^3'
         wetstar[:] = self.wetstar_list
 

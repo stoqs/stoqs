@@ -137,6 +137,7 @@ class ParserWriter(BaseWriter):
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(esec_list))
         self.time = self.ncFile.createVariable('time', 'float64', ('time',))
+        self.time.standard_name = 'time'
         self.time.units = 'seconds since 1970-01-01'
         self.time[:] = esec_list
 
@@ -163,21 +164,25 @@ class ParserWriter(BaseWriter):
         temp = self.ncFile.createVariable('TEMP', 'float64', ('time',))
         temp.long_name = 'Sea Water Temperature in-situ ITS-90 or IPTS-68 scale'
         temp.standard_name = 'sea_water_temperature'
+        temp.coordinates = 'time depth latitude longitude'
         temp.units = 'Celsius'
         temp[:] = tem_list
 
         sal = self.ncFile.createVariable('PSAL', 'float64', ('time',))
         sal.long_name = 'Sea Water Salinity in-situ PSS 1978 scale'
         sal.standard_name = 'sea_water_salinity'
+        sal.coordinates = 'time depth latitude longitude'
         sal[:] = sal_list
 
         chlcal = self.ncFile.createVariable('chl', 'float64', ('time',))
         chlcal.long_name = 'Chlorophyll'
+        chlcal.coordinates = 'time depth latitude longitude'
         chlcal.units = '?'
         chlcal[:] = chl_cal_list
 
         chlini = self.ncFile.createVariable('chl_ini', 'float64', ('time',))
         chlini.long_name = 'Raw Chlorophyll'
+        chlini.coordinates = 'time depth latitude longitude'
         chlini.units = '?'
         chlini[:] = chl_ini_list
 
@@ -231,6 +236,7 @@ class ParserWriter(BaseWriter):
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(esec_list))
         self.time = self.ncFile.createVariable('time', 'float64', ('time',))
+        self.time.standard_name = 'time'
         self.time.units = 'seconds since 1970-01-01'
         self.time[:] = esec_list
 
@@ -261,6 +267,7 @@ class ParserWriter(BaseWriter):
                 exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('time',))" % (ncVar.lower(), ncVar.upper(), )
             else:
                 exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('time',))" % (ncVar.lower(), ncVar, )
+            exec "self.%s.coordinates = 'time depth latitude longitude'" % ncVar.lower()
             exec "self.%s.long_name = '%s'" % (ncVar.lower(), v, )
             exec "self.%s[:] = %s_list" % (ncVar.lower(), ncVar, )
 

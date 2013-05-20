@@ -7,10 +7,10 @@ RH=beach.mbari.org
 
 rsync -rv stoqsadm@$RH:/ODSS/data/canon/2012_Sep/wf/uctd .
 
-./wfuctdToNetcdf.py uctd . c wf_uctd.nc
+./uctdToNetcdf.py uctd uctd c 2.0
 
-scp wf_uctd.nc stoqsadm@$RH:/ODSS/data/canon/2012_Sep/wf
+scp uctd/*.nc stoqsadm@$RH:/data/canon/2012_Sep/wf/uctd
 
 # Clean up 
 rm -r uctd
-rm wf_uctd.nc
+

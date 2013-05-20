@@ -111,7 +111,10 @@ class ParserWriter(BaseWriter):
                 self.sal_list.append(r['Sal00'])
                 self.xmiss_list.append(r['Xmiss'])
                 self.ecofl_list.append(r['FlECO-AFL'])
-                self.oxygen_list.append(r['Sbeox0ML/L'])
+                try:
+                    self.oxygen_list.append(r['Sbeox0ML/L'])
+                except KeyError:
+                    pass
 
             self.write_pctd(file)
     
@@ -129,6 +132,7 @@ class ParserWriter(BaseWriter):
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(self.esec_list))
         self.time = self.ncFile.createVariable('time', 'float64', ('time',))
+        self.time.standard_name = 'time'
         self.time.units = 'seconds since 1970-01-01'
         self.time[:] = self.esec_list
 
@@ -155,28 +159,34 @@ class ParserWriter(BaseWriter):
         temp = self.ncFile.createVariable('TEMP', 'float64', ('time',))
         temp.long_name = 'Temperature, 2 [ITS-90, deg C]'
         temp.standard_name = 'sea_water_temperature'
+        temp.coordinates = 'time depth latitude longitude'
         temp.units = 'Celsius'
         temp[:] = self.t1_list
 
         sal = self.ncFile.createVariable('PSAL', 'float64', ('time',))
         sal.long_name = 'Salinity, Practical [PSU]'
         sal.standard_name = 'sea_water_salinity'
+        sal.coordinates = 'time depth latitude longitude'
         sal[:] = self.sal_list
 
         xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',))
         xmiss.long_name = 'Beam Transmission, Chelsea/Seatech'
+        xmiss.coordinates = 'time depth latitude longitude'
         xmiss.units = '%'
         xmiss[:] = self.xmiss_list
 
         ecofl = self.ncFile.createVariable('ecofl', 'float64', ('time',))
         ecofl.long_name = 'Fluorescence, WET Labs ECO-AFL/FL'
+        ecofl.coordinates = 'time depth latitude longitude'
         ecofl.units = 'mg/m^3'
         ecofl[:] = self.ecofl_list
 
-        oxygen = self.ncFile.createVariable('oxygen', 'float64', ('time',))
-        oxygen.long_name = 'Oxygen, SBE 43'
-        oxygen.units = 'ml/l'
-        oxygen[:] = self.oxygen_list
+        if self.oxygen_list:
+            oxygen = self.ncFile.createVariable('oxygen', 'float64', ('time',))
+            oxygen.long_name = 'Oxygen, SBE 43'
+            oxygen.coordinates = 'time depth latitude longitude'
+            oxygen.units = 'ml/l'
+            oxygen[:] = self.oxygen_list
 
         self.add_global_metadata()
 
