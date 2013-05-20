@@ -140,9 +140,12 @@ cl.espdrift_files = [
 cl.espdrift_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
 
 # Western Flyer Underway CTD
-cl.wfuctd_base = cl.dodsBase + 'CANON_september2012/wf/'
+cl.wfuctd_base = cl.dodsBase + 'CANON_september2012/wf/uctd/'
 cl.wfuctd_files = [ 
-                        'wf_uctd.nc',
+        'c0912m01.nc', 'c0912m02.nc', 'c0912m03.nc', 'c0912m04.nc', 'c0912m05.nc', 'c0912m06.nc', 
+        'c0912m07.nc', 'c0912m08.nc', 'c0912m09.nc', 'c0912m10.nc', 'c0912m11.nc', 'c0912m12.nc', 
+        'c0912m13.nc', 'c0912m14.nc', 'c0912m15.nc', 'c0912m16.nc', 'c0912m17.nc', 'c0912m18.nc', 
+        'c0912m19.nc', 
                       ]
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
@@ -169,17 +172,23 @@ cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = datetime.datetime(2012, 9, 1)
 cl.l_662_endDatetime = datetime.datetime(2012, 9, 21)
 
-# Mooring M1 - for just the duration of the campaign
-cl.m1_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'
-cl.m1_files = ['OS_MBARI-M1_R_TS']
+# Mooring M1ts - for just the duration of the campaign
+cl.m1ts_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'
+cl.m1ts_files = ['OS_MBARI-M1_R_TS']
 ##cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR', 
 ##                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR', 
 ##                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
 ##              ]
-cl.m1_parms = [ 'PSAL', 'TEMP' ]
-cl.m1_startDatetime = datetime.datetime(2012, 9, 1)
-cl.m1_endDatetime = datetime.datetime(2012, 9, 21)
+cl.m1ts_parms = [ 'PSAL', 'TEMP' ]
+cl.m1ts_startDatetime = datetime.datetime(2012, 9, 1)
+cl.m1ts_endDatetime = datetime.datetime(2012, 9, 21)
 
+# Mooring M1met - for just the duration of the campaign
+cl.m1met_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'
+cl.m1met_files = ['OS_MBARI-M1_R_M']
+cl.m1met_parms = [ 'WSPD', 'WDIR', 'ATMP', 'SW', 'RELH' ]
+cl.m1met_startDatetime = datetime.datetime(2012, 9, 1)
+cl.m1met_endDatetime = datetime.datetime(2012, 9, 21)
 
 cl.stride = stride
 ##cl.loadAll()
@@ -193,5 +202,6 @@ cl.loadESPdrift()
 cl.loadWFuctd()
 cl.loadWFpctd()
 cl.loadL_662()
-##cl.loadM1()
+cl.loadM1ts()
+cl.loadM1met()
 
