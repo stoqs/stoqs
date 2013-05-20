@@ -132,19 +132,19 @@ class ParserWriter(BaseWriter):
         temp.long_name = 'Sea Water Temperature in-situ ITS-90 or IPTS-68 scale'
         temp.standard_name = 'sea_water_temperature'
         temp.units = 'Celsius'
-        temp.coordinates = 'time latitude longitude depth'
+        temp.coordinates = 'TIME latitude longitude depth'
         temp[:] = tem_list
 
         sal = self.ncFile.createVariable('PSAL', 'float64', ('TIME',))
         sal.long_name = 'Sea Water Salinity in-situ PSS 1978 scale'
         sal.standard_name = 'sea_water_salinity'
-        sal.coordinates = 'time latitude longitude depth'
+        sal.coordinates = 'TIME latitude longitude depth'
         sal[:] = sal_list
 
         do = self.ncFile.createVariable('oxygen', 'float64', ('TIME',))
         do.long_name = 'Dissolved Oxygen'
         do.units = 'ml/l'
-        do.coordinates = 'time latitude longitude depth'
+        do.coordinates = 'TIME latitude longitude depth'
         do[:] = do_list
 
         self.add_global_metadata()
