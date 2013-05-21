@@ -69,7 +69,7 @@ class MPQuerySet(object):
         '''
         self.query = query or postgresifySQL(str(qs_mp.query))
         self.values_list = values_list
-        self.ordering = ('timevalue,')
+        self.ordering = ('id',)
         if qs_mp:
             self.mp_query = qs_mp
         else:
@@ -162,8 +162,8 @@ class MPQuerySet(object):
  
     def __getitem__(self, k):
         '''
-        Boiler plate copied from http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  Does not seem to be used
-        by Django templates and other uses of this class, which seem to mainly use __iter__().
+        Boiler plate copied from http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  
+        Is used for slicing data, e.g. for subsampling data for sensortracks
         '''
         if not isinstance(k, (slice, int, long)):
             raise TypeError
@@ -173,43 +173,7 @@ class MPQuerySet(object):
                 "Negative indexing is not supported."
  
         if isinstance(k, slice):
-            ordering = tuple(field.lstrip('-') for field in self.ordering)
-            reverse = (ordering != self.ordering)
-            ##if reverse:
-                ##assert (sum(1 for field in self.ordering
-                ##            if field.startswith('-')) == len(ordering)), \
-                ##        "Mixed sort directions not supported."
-
-
-            mpq = self.mp_query
- 
-            if k.stop is not None:
-                mpq = mpq[:k.stop]
- 
-            rows = ([row + (MeasuredParameter,)
-                     for row in mpq.values_list(*(ordering + ('pk',)))])
- 
-            rows.sort()
-            if reverse:
-                rows.reverse()
-            rows = rows[k]
- 
-            pk_idx = len(ordering)
-            klass_idx = pk_idx + 1
-            mp_pks = [row[pk_idx] for row in rows
-                            if row[klass_idx] is MeasuredParameter]
-            mps = MeasuredParameter.objects.in_bulk(mp_pks)
- 
-            results = []
-            for row in rows:
-                pk = row[-2]
-                klass = row[-1]
-                if klass is MeasuredParameter:
-                    mps[pk].type = 'measuredparameter'
-                    results.append(mps[pk])
-            return results
-        else:
-            return self[k:k+1][0]
+            return self.mp_query[k]
 
     def count(self):
         logger.debug('Counting records in self.mp_query which is of type = %s', type(self.mp_query))
