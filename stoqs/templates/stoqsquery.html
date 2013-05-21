@@ -50,7 +50,10 @@
             background-repeat:no-repeat;
             display: none;
         }
-
+        .olControlAttribution {
+            left:10em;
+            top:10em;
+        }
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet"></link>
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet"></link>
@@ -164,8 +167,8 @@
                                                 <em>Recenter rotation: double click</em><br>
                                             </div>
                                             <div class="span2">
-                                                <p><button id="geo-zoom-width-button" class="btn btn-mini zoom-width-button">Zoom display</button></p>
-                                                <p><button id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;">Reset view</button></p>
+                                                <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
+                                                <p><a id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                                 <form class="form-inline">
                                                     <label class="checkbox disabled">
                                                         <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>
@@ -269,8 +272,8 @@
                                                 <em> Rotate: Left mouse<br>Translate: Ctrl + left mouse<br>Zoom: Alt + left mouse </em>
                                             </div>
                                             <div class="span2">
-                                                <p><button id="pp-zoom-width-button" class="btn btn-mini zoom-width-button">Zoom display</button></p>
-                                                <p><button id="pp_x3d-reset-view" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.resetView();return false;">Reset view</button></p>
+                                                <p><a id="pp-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
+                                                <p><a id="pp_x3d-reset-view" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                             </div>
                                             <div id="pp3d-colorbar" class="span7"></div>
                                         </div>
@@ -762,9 +765,14 @@
     function update_sensortrackskml() {
         if ($('#showsensortracks').is(':checked')) {
             if (kmlurl.lastIndexOf('http', 0) === 0) {
+                // strideVal can be adjusted based on the current count of measured_parameters so as to prevent long waits for the KML transfer
+                strideVal = '1';
+                // Set colorbar as an attribution - must get the url to the .png from the sensor tracks being turned on
+                // See: http://stackoverflow.com/questions/5539633/adding-a-absolutely-positioned-div-to-the-bottom-of-an-openlayers-map/5568762#5568762
+                //sensortrackskml.attribution = '<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />';
                 // Dynamically set url for sensor tracks display in openlayers
                 sensortrackskml.protocol = new OpenLayers.Protocol.HTTP({
-                        url: kmlurl.replace('.kml', '.kmln') + cmincmax,
+                        url: kmlurl.replace('.kml', '.kmln') + cmincmax + '&stride=' + strideVal,
                         format: new OpenLayers.Format.KML({
                             extractStyles: true,
                             extractAttributes: true,
@@ -1442,7 +1450,7 @@
                                         'position': ''
                                       } );
             }
-            $(this).html('Zoom display');
+            $(this).html('<i class="icon-resize-full"></i> Zoom display');
         } else {
             if ($('.stoqs-zoom-width').hasClass('span6')) {
                 $('.stoqs-zoom-width').removeClass('span6');
@@ -1475,7 +1483,7 @@
                                         'position': 'fixed'
                                       });
             }
-            $(this).html('Unzoom display');
+            $(this).html('<i class="icon-remove-sign"></i> Unzoom display');
         }
         widthZoomed = ! widthZoomed;
     });
