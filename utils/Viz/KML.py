@@ -41,25 +41,32 @@ class KML(object):
         self.qparams = qparams
 
         logger.debug('kwargs = %s', kwargs)
-        if kwargs.has_key('withTimeStamp'):
+        if 'withTimeStamp' in kwargs:
             self.withTimeStampFlag = kwargs['withTimeStamp']
         else:
             self.withTimeStampFlag = True
 
-        if kwargs.has_key('withLineStrings'):
+        if 'withLineStrings' in kwargs:
             self.withLineStringsFlag = kwargs['withLineStrings']
         else:
             self.withLineStringsFlag = True
             
-        if kwargs.has_key('withFullIconURL'):
+        if 'withFullIconURL' in kwargs:
             self.withFullIconURLFlag = kwargs['withFullIconURL']
         else:
             self.withFullIconURLFlag = True
 
+        if 'stride' in kwargs:
+            # If passed in as an argument
+            self.stride = kwargs['stride']
+        else:
+            # Check if in request, otherwise set it to 1
+            self.stride = int(self.request.GET.get('stride', 1))
+
     def kmlResponse(self):
         '''
         Return a response that is a KML represenation of the existing MeasuredParameter query that is in self.qs_mp.
-        pName is either the parameter__name or parameter__standard_name string.
+        pName is either the parameter__name or parameter__standard_name string.  Use @stride to return a subset of data.
         '''
         response = HttpResponse()
         if self.qs_mp is None:
@@ -81,9 +88,10 @@ class KML(object):
             break
     
         logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
+        logger.debug('self.stride = %d', self.stride)
         data = [(mp['measurement__instantpoint__timevalue'], mp['measurement__geom'].x, mp['measurement__geom'].y,
                      mp['measurement__depth'], mp['parameter__name'],  mp['datavalue'], mp['measurement__instantpoint__activity__platform__name'])
-                     for mp in self.qs_mp]
+                     for mp in self.qs_mp[::self.stride]]
 
         dataHash = {}
         for d in data:
