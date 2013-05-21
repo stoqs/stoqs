@@ -157,7 +157,7 @@ class Base_Loader(STOQS_Loader):
         try:
             self.ds = open_url(url)
         except socket.error,e:
-            logger.error('Failed in attempt to open url = %s', url)
+            logger.error('Failed in attempt to open_url(%s)', url)
             raise e
 
         self.ignored_names += self.global_ignored_names # add global ignored names to platform specific ignored names.
@@ -415,7 +415,7 @@ class Base_Loader(STOQS_Loader):
                 longitudes[pname] = self.ds[ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
             else:
-                logger.warn('Variable %s is not of type pydap.model.BaseType with a shape length of %d.  It has a shape length of %d.', pname, len(self.ds[pname].shape))
+                logger.warn('Variable %s is not of type pydap.model.BaseType with a shape length of 1.  It has a shape length of %d.', pname, len(self.ds[pname].shape))
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
         for pname in data.keys():
