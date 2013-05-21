@@ -86,7 +86,7 @@ class KML(object):
         for mp in self.qs_mp:
             logger.debug('keys = %s', mp.keys())
             break
-    
+
         logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
         logger.debug('self.stride = %d', self.stride)
         data = [(mp['measurement__instantpoint__timevalue'], mp['measurement__geom'].x, mp['measurement__geom'].y,
