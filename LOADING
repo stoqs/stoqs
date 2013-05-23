@@ -59,25 +59,33 @@ OPeNDAP accessible data sources.
      source venv-stoqs/bin/activate
      ./manage.py syncbd --database=stoqs_september2012_s100
 
-   
 8. Execute your load script.  If following the example of the scripts in loaders/CANON they
    take two arguments (<stride> <db_name>).  For example to populate the example database:
 
      loaders/CANON/loadCANONseptember2012.py 100 stoqs_september2012_s100
 
+   To populated a full-resolution database repeat steps 4-7 with another database name,
+   say "stoqs_september2012" and execute:
+
+     loaders/CANON/loadCANONseptember2012.py 1 stoqs_september2012
+
 9. Notes:
 
-    - Repeat steps 4-7 with appropriate alterations to create a database with a different 
-      stride value.
     - As a campaign produces data files those files may be added to the script.  To add
       data to an existing database simply comment out previously loaded files and re-execute
-      the script with the new files.
-    - Programs to create NetCDF files from various original data files (e.g. Seabird CTD 
-      underway and profile) are in the loaders/CANON/toNetCDF directory.  See the README
+      the script (step 8) with the new files.
+    - Programs to create NetCDF files from various original data files (e.g. Seabird underway 
+      and profile CTD) are in the loaders/CANON/toNetCDF directory.  See the README
       there for instrctions on running those scripts to put the data on an OPeNDAP server
       so that your STOQS loader can load them.
+    - Editing and running the load script during a campaign is an interactive process requiring
+      interaction with people and testing the data sources for valid parameter names as well
+      as monitoring the script's output for warning and error messages.
+    - The stoqs-discuss mail list (https://groups.google.com/forum/?fromgroups=#!forum/stoqs-discuss)
+      is a good place to ask questions if any problems are encountered.
     
     
 --
 Mike McCann
-MBARI 22 May 2013     
+MBARI 22 May 2013
+ 
