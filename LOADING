@@ -67,17 +67,17 @@ OPeNDAP accessible data sources.
 
 9. Notes:
 
-	- Repeat steps 4-7 with appropriate alterations to create a database with a different 
+    - Repeat steps 4-7 with appropriate alterations to create a database with a different 
       stride value.
-	- As a campaign produces data files those files may be added to the script.  To add
+    - As a campaign produces data files those files may be added to the script.  To add
       data to an existing database simply comment out previously loaded files and re-execute
       the script with the new files.
     - Programs to create NetCDF files from various original data files (e.g. Seabird CTD 
       underway and profile) are in the loaders/CANON/toNetCDF directory.  See the README
       there for instrctions on running those scripts to put the data on an OPeNDAP server
       so that your STOQS loader can load them.
-	  
-	  
+    
+    
 --
 Mike McCann
 MBARI 22 May 2013     
