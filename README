@@ -33,7 +33,7 @@ last argument, in which case the software will be checked out into a 'stoqs' dir
 This can be confusing as there is another 'stoqs' directory in the tree.  For this
 reason we check it out to a 'stoqshg' directory to indicate that it is a Mercurial
 clone.  To continue with the installation follow the instructions starting in the
-PREREQUISITES which will be in your stoqshg directory.
+PREREQUISITES file which will be in your stoqshg directory.
 
 Operation
 ---------
@@ -58,7 +58,5 @@ or any sort of comments about STOQS.
 
 --
 Mike McCann
-MBARI 22 May 2013
-
-
+MBARI 23 May 2013
 
