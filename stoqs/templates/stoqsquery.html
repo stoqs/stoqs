@@ -2219,11 +2219,11 @@
                 var endAjax = new Date().getTime();
                 var nsecs = (endAjax - startAjax) / 1000.0;
                 if ( ! $('#getactualcount').is(':checked')) {
-                    $('#metadata-count').html("about " + data['count'] + " data values");
+                    $('#metadata-count').html("about " + data['counts']['approximate_count_localized'] + " data values");
                     $('#metadata-ajaxtime').html(" (" + nsecs + " seconds)");
                 }
                 else {
-                    $('#metadata-count').html(data['count'] + " data values");
+                    $('#metadata-count').html(data['counts']['actual_count_localized'] + " data values");
                     $('#metadata-ajaxtime').html(" (" + nsecs + " seconds)");
                 }
             },
