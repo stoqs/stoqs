@@ -67,13 +67,19 @@ class MPQuerySet(object):
         appears to break the correct serialization of geometry types in the json response.
         Called by stoqs/views/__init__.py when MeasuredParameter REST requests are made.
         '''
-        self.query = query or postgresifySQL(str(qs_mp.query))
+        if query is None and qs_mp is not None:
+            logger.debug('query is None and qs_mp is not None')
+            self.query = postgresifySQL(str(qs_mp.query))
+            self.mp_query = qs_mp
+        elif query is not None and qs_mp is None:
+            logger.debug('query is not None and qs_mp is None')
+            self.query = query
+            self.mp_query = MeasuredParameter.objects.raw(query)
+        else:
+            raise Exception('Either query or qs_mp must be not None and the other be None.')
+
         self.values_list = values_list
         self.ordering = ('id',)
-        if qs_mp:
-            self.mp_query = qs_mp
-        else:
-            self.mp_query = MeasuredParameter.objects.raw(query)
  
     def __iter__(self):
         '''
@@ -177,11 +183,14 @@ class MPQuerySet(object):
 
     def count(self):
         logger.debug('Counting records in self.mp_query which is of type = %s', type(self.mp_query))
+        # self.mp_query should contain no 'ORDER BY' as ensured by the routine that calls .count()
         try:
             c = self.mp_query.count()
+            logger.debug('c = %d as retreived from self.mp_query.count()', c)
         except AttributeError:
             try:
                 c = sum(1 for mp in self.mp_query)
+                logger.debug('c = %d as retreived from sum(1 for mp in self.mp_query)', c)
             except DatabaseError:
                 return 0
         return c
@@ -210,8 +219,6 @@ class MPQuerySet(object):
         qs = MPQuerySet(self.query, self.values_list)
         qs.mp_query = self.mp_query._clone()
         return qs 
-
-
  
 
 class MPQuery(object):
@@ -256,6 +263,7 @@ class MPQuery(object):
         if self.qs_mp is None:
             self.kwargs = kwargs
             self.qs_mp = self.getMeasuredParametersQS()
+            self.qs_mp_no_order = self.getMeasuredParametersQS(orderedFlag=False)
             self.sql = self.getMeasuredParametersPostgreSQL()
 
     def _getQueryParms(self):
@@ -266,7 +274,7 @@ class MPQuery(object):
         '''
         qparams = {}
 
-        logger.info('self.kwargs = %s', pprint.pformat(self.kwargs))
+        ##logger.info('self.kwargs = %s', pprint.pformat(self.kwargs))
         if self.kwargs.has_key('measuredparametersgroup'):
             if self.kwargs['measuredparametersgroup']:
                 qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
@@ -297,37 +305,43 @@ class MPQuery(object):
 
         return qparams
 
-    def getMeasuredParametersQS(self, values_list=[]):
+    def getMeasuredParametersQS(self, values_list=[], orderedFlag=True):
         '''
         Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
         @values_list can be assigned with additional columns that are supported by MPQuerySet(). Note that specificiation
-        of a values_list will break the JSON serialization of geometry types.
+        of a values_list will break the JSON serialization of geometry types. @orderedFlag may be set to False to reduce
+        memory and time taken for queries that don't need ordered values.
         '''
         qparams = self._getQueryParms()
+        logger.debug('Building qs_mp...')
         if values_list:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
         else:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
 
-        qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
+        if orderedFlag:
+            qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
 
         # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
                 # A depth of 4 is needed in order to see Platform
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
-                qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
+                if orderedFlag:
+                    qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
                 sql = postgresifySQL(str(qs_mp.query))
                 logger.debug('\n\nsql before query = %s\n\n', sql)
                 sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
                 qs_mpq = MPQuerySet(sql, values_list)
             else:
+                logger.debug('Building MPQuerySet...')
                 qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
         else:
+            logger.debug('Building MPQuerySet...')
             qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
 
-        if qs_mpq:
+        if qs_mpq is None:
             logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
         else:
             logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
@@ -341,8 +355,8 @@ class MPQuery(object):
         return the count.
         '''
         if not self._count:
-            logger.debug('Calling self.qs_mp.count()...')
-            self._count = self.qs_mp.count()
+            logger.debug('Calling self.qs_mp_no_order.count()...')
+            self._count = self.qs_mp_no_order.count()
 
         logger.debug('self._count = %d', self._count)
         return int(self._count)
@@ -360,8 +374,8 @@ class MPQuery(object):
         '''
         sql = 'Check "Get actual count" checkbox to see the SQL for your data selection'
         if not self._count:
-            logger.debug('Calling self.qs_mp.count()...')
-            self._count = self.qs_mp.count()
+            logger.debug('Calling self.getMPCount()...')
+            self._count = self.getMPCount()
         if self._count:
             self.qs_mp = self.getMeasuredParametersQS(MPQuerySet.rest_columns)
             if self.qs_mp:
@@ -374,6 +388,7 @@ class MPQuery(object):
                 sql = sql.replace(' WHERE', '\nWHERE ')
                 p = re.compile('\s+AND')
                 sql = p.sub('\n      AND', sql)
+                logger.debug('sql = %s', sql)
 
         return sql
 
