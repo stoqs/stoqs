@@ -23,7 +23,7 @@ OPeNDAP accessible data sources.
 
 3. The CANON directory in loaders/ contains load scripts for all of the MBARI CANON
    campaigns.  Much of the commonly used loader code has been factored out into a 
-   CANONLoader class loaders/CANON/__init__.py so that the load scripts (e.g. 
+   CANONLoader class in loaders/CANON/__init__.py so that the load scripts (e.g. 
    loadCANON_september2012.py) simply need to be constructed with the OPeNDAP URLs
    and parameter names for each type of platform.
 
@@ -57,7 +57,7 @@ OPeNDAP accessible data sources.
    environment (see PREREQUISITES and INSTALL):
 
      source venv-stoqs/bin/activate
-     ./manage.py syncbd --database=stoqs_september2012_s100
+     ./manage.py syncdb --database=stoqs_september2012_s100
 
 8. Execute your load script.  If following the example of the scripts in loaders/CANON they
    take two arguments (<stride> <db_name>).  For example to populate the example database:
@@ -74,9 +74,9 @@ OPeNDAP accessible data sources.
     - As a campaign produces data files those files may be added to the script.  To add
       data to an existing database simply comment out previously loaded files and re-execute
       the script (step 8) with the new files.
-    - Programs to create NetCDF files from various original data files (e.g. Seabird underway 
+    - some programs to create NetCDF files from various original data files (e.g. Seabird underway 
       and profile CTD) are in the loaders/CANON/toNetCDF directory.  See the README
-      there for instrctions on running those scripts to put the data on an OPeNDAP server
+      there for instructions on running those scripts to put the data on an OPeNDAP server
       so that your STOQS loader can load them.
     - Editing and running the load script during a campaign is an interactive process requiring
       interaction with people and testing the data sources for valid parameter names as well
@@ -87,5 +87,5 @@ OPeNDAP accessible data sources.
     
 --
 Mike McCann
-MBARI 22 May 2013
+MBARI 23 May 2013
  
