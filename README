@@ -15,16 +15,15 @@ NetCDF and Geographic Information Systems technologies.
 
 After installation, data is loaded into STOQS from a variety of data sources,
 including OPeNDAP data sets, other relational databases, and flat files.  
-Products are delivered in a variety of formats, including KML, via REST-style 
-web requests.
+Products are delivered within the STOQS User Interface and in a variety of 
+formats, including KML, via REST-style web requests.
 
-The first thing you'll need is the source code revision control software Mercurial
-which can be installed from http://mercurial.selenic.com/wiki/Download.
-
-STOQS is developed using the CentOS 6 Linux distrubution.  To install Mercurial on
-CentOS execute "yum -install mercurial" as root.
-
-This software can be checked out of Google Code thusly:
+Installing
+----------
+If you wish to install the system from scratch you will need the source code 
+revision control software Mercurial which can be installed in CentOS with 
+"yum -install mercurial" as root.  Then checkout the software from Google
+Code with:
 
     cd ~/dev
     hg clone https://<your_google_account>@code.google.com/p/stoqs/ stoqshg
@@ -33,8 +32,16 @@ Note: The source checkout instructions on the Google Code site do not include th
 last argument, in which case the software will be checked out into a 'stoqs' directory.
 This can be confusing as there is another 'stoqs' directory in the tree.  For this
 reason we check it out to a 'stoqshg' directory to indicate that it is a Mercurial
-clone.
-    
+clone.  To continue with the installation follow the instructions starting in the
+PREREQUISITES which will be in your stoqshg directory.
+
+Operation
+---------
+If you wish to load data into an already installed STOQS server you can start with
+reading  the LOADING file for the instructions for creating a database, setting data
+sources, and writing a loader script.
+
+
 Further information is in these files:
 
     PREREQUISITES - System level requirements, e.g. Postgis, Django, Python modules
@@ -44,11 +51,14 @@ Further information is in these files:
     LOADING       - Loading your data
     TIDBITS       - Miscellaneous tips, fixes, and examples for using STOQS
     LICENSE       - GNU General Public License text, how this software is licensed
-    
+
+The stoqs project web site has a wiki with links to presentations and periodic feature
+updates.  The stoqs-discuss list in Google Groups is also a good place to post questions
+or any sort of comments about STOQS.    
 
 --
 Mike McCann
-MBARI 30 January 2013
+MBARI 22 May 2013
 
 
 

@@ -3,13 +3,13 @@ LOADING
 
 Instructions for loading your data in STOQS
 
-These instructions will cover loading in situ point observation data from
+These instructions will cover loading in situ discrete geometry feature type data from
 OPeNDAP accessible data sources.
 
 1. Add a new file to the loaders directory named to describe the campaign that is 
    the source of the data.  The campaign name may be a project name or a month_year
    combination.  It can really be anything you want.  At MBARI for the CANON project
-   we typically have fields programs where intensive measurements are collected in
+   we typically have field programs where intensive measurements are collected in
    an area of the ocean over a several week period, so we name our campaigns like
    'sept2010' and our stoqs databases like 'stoqs_sept2010' and 'stoqs_june2011'.
    The point of using separate databases for campaigns is to constrain the size
@@ -20,18 +20,64 @@ OPeNDAP accessible data sources.
 2. In your new loadXXXX.py file instantiate a DAPloaders object with accurate attributes
    for each activity to be loaded.  There are several examples of other load files in
    the loaders/ directory.  Feel free to use them as a basis for the data you wish to load.
+
+3. The CANON directory in loaders/ contains load scripts for all of the MBARI CANON
+   campaigns.  Much of the commonly used loader code has been factored out into a 
+   CANONLoader class loaders/CANON/__init__.py so that the load scripts (e.g. 
+   loadCANON_september2012.py) simply need to be constructed with the OPeNDAP URLs
+   and parameter names for each type of platform.
+
+4. Create a PostgreSQL database for your campaign (full instructions are in the 
+   INSTALL file).  At the psql prompt:
+
+     create database stoqs_september2012_s100 owner=stoqsadm template=template_postgis;
+     \c stoqs_september2012_s100
+     grant all on all tables in schema public to stoqsadm;
+
+   The convention is to append the append the stride value ('_s100') to the campaign
+   portion of the database name.
+
+5. Add the new database to your privateSettings file (see INSTALL):
+
+     'stoqs_september2012_s100': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': 'stoqs_september2012_s100',
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': DATABASE_PORT
+     },
+
+6. Restart your server to force a re-read of the settings file.  On a development server
+   simply restart "python manage.py runserver 0.0.0.0:8000" which you normally have running
+   in its own shell window (see DEVELOPMENT).  On a production server restart apache with
+   "sudo /sbin/service httpd restart" (see PRODUCTION). 
+
+7. Synchronize the new database with the stoqs data model.  At a shell prompt in your virtual
+   environment (see PREREQUISITES and INSTALL):
+
+     source venv-stoqs/bin/activate
+     ./manage.py syncbd --database=stoqs_september2012_s100
+
    
-3. Execute your load script.
+8. Execute your load script.  If following the example of the scripts in loaders/CANON they
+   take two arguments (<stride> <db_name>).  For example to populate the example database:
 
-4. Notes:
+     loaders/CANON/loadCANONseptember2012.py 100 stoqs_september2012_s100
 
-	- Use the stride attribute to subsample data to be loaded if the density is too great
-	  for the purpose of your database
-	- Update the comment on the Activity after the load to provide useful information about
-	  the Activity.  The showActivities view code uses the comment to render a useful web
-	  response.
+9. Notes:
+
+	- Repeat steps 4-7 with appropriate alterations to create a database with a different 
+      stride value.
+	- As a campaign produces data files those files may be added to the script.  To add
+      data to an existing database simply comment out previously loaded files and re-execute
+      the script with the new files.
+    - Programs to create NetCDF files from various original data files (e.g. Seabird CTD 
+      underway and profile) are in the loaders/CANON/toNetCDF directory.  See the README
+      there for instrctions on running those scripts to put the data on an OPeNDAP server
+      so that your STOQS loader can load them.
 	  
 	  
 --
 Mike McCann
-MBARI 5 January 2012     
+MBARI 22 May 2013     
