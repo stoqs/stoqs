@@ -56,6 +56,7 @@ class STOQSQManager(object):
         self.mpq = MPQuery(request)
         self.pq = PQuery(request)
         self.pp = None
+        self._actual_count = None
         # monkey patch sql/query.py to make it use our database for sql generation
         query.DEFAULT_DB_ALIAS = dbname
         
@@ -191,8 +192,7 @@ class STOQSQManager(object):
                            'depth': self.getDepth,
                            'simpledepthtime': self.getSimpleDepthTime,
                            'sampledepthtime': self.getSampleDepthTime,
-                           'count': self.getLocalizedCount,
-                           'ap_count': self.getAPCount,
+                           'counts': self.getCounts,
                            'sql': self.getMeasuredParametersPostgreSQL,
                            'extent': self.getExtent,
                            'activityparameterhistograms': self.getActivityParameterHistograms,
@@ -220,36 +220,49 @@ class STOQSQManager(object):
         return results
     
     #
-    # Methods that generate summary data, based on the current query criteria.
+    # Methods that generate summary data, based on the current query criteria
     #
-    def getLocalizedCount(self):
+    def getCounts(self):
         '''
-        Get the localized count (with commas) of measured parameters giving the exising query and return as string
+        Collect all of the various counts into a dictionary
         '''
-        
-        qs_ap = self.getActivityParametersQS()                  # Approximate count from ActivityParameter
-        if qs_ap:
-            ap_count = qs_ap.count()
-            approximate_count = qs_ap.aggregate(Sum('number'))['number__sum']
-            locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-            if getGet_Actual_Count(self.kwargs):
-                if not self.mpq.qs_mp:
-                    self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-                return self.mpq.getLocalizedMPCount()
+        # Always get approximate count
+        approximate_count = self.getActivityParametersQS().aggregate(Sum('number'))['number__sum']
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+
+        # Actual counts are None unless the 'Get actual count' box is checked
+        actual_count = None
+        actual_count_localized = None
+        if getGet_Actual_Count(self.kwargs):
+            if not self.mpq.qs_mp:
+                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+            if self._actual_count:
+                actual_count = self._actual_count
             else:
-                return locale.format("%d", approximate_count, grouping=True)
-        else:
-            return 0
+                logger.debug('Calling self.mpq.getMPCount()')
+                actual_count = self.mpq.getMPCount()
+                logger.debug('actual_count = %s', actual_count)
+
+        if actual_count:
+            actual_count_localized = locale.format("%d", approximate_count, grouping=True)
+
+        return {    'ap_count': self.getAPCount(), 
+                    'approximate_count': approximate_count,
+                    'approximate_count_localized': locale.format("%d", approximate_count, grouping=True),
+                    'actual_count': actual_count,
+                    'actual_count_localized': actual_count_localized
+                }
 
     def getMeasuredParametersPostgreSQL(self):
         '''
         Wrapper around self.mpq.getMeasuredParametersPostgreSQL(), ensure that we have qs_mp built before calling 
         '''
-        sql = None
+        sql = 'Check "Get actual count" in Metadata to construct SQL query'
         if getGet_Actual_Count(self.kwargs):
             if not self.mpq.qs_mp:
                 self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
                 sql = self.mpq.getMeasuredParametersPostgreSQL()
+                self._actual_count = self.mpq.getMPCount()
 
         return sql
 
@@ -772,6 +785,7 @@ class STOQSQManager(object):
                 q = Q(instantpoint__activity__in=self.qs)
             elif fromTable == 'ActivityParameter':
                 q = Q(activity__in=self.qs)
+                q = q & Q(parameter__name__in=parametername)
             elif fromTable == 'ActivityParameterHistogram':
                 # Use sub-query to find all ActivityParameterHistogram from Activities that are in the existing Activity queryset
                 q = Q(activityparameter__activity__in=self.qs)
