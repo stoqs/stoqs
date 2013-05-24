@@ -34,6 +34,13 @@ try:
     stride = int(sys.argv[1])
 except IndexError:
     stride = 100
+except ValueError:
+    # Not an integer
+    if sys.argv[1] == 's':
+        stride = 'optimal'
+    elif sys.argv[1] == 't':
+        stride = 'testing'
+
 try:
     dbAlias = sys.argv[2]
 except IndexError:
@@ -45,7 +52,16 @@ except IndexError:
 # ------------------------------------------------------------------------------------
 campaignName = 'CANON - September 2012'
 if stride != 1:
-    campaignName = campaignName + ' with stride=%d' % stride
+    try:
+        campaignName = campaignName + ' with stride=%d' % stride
+    except TypeError:
+        # Not an integer
+        if stride == 'optimal':
+            campaignName = campaignName + ' with appropriate strides'
+        elif stride == 'testing':
+            campaignName = campaignName + ' for testing'
+
+
 cl = CANONLoader(dbAlias, campaignName)
 
 # Aboard the Flyer use malibu's VSAT IP address:
@@ -190,18 +206,30 @@ cl.m1met_parms = [ 'WSPD', 'WDIR', 'ATMP', 'SW', 'RELH' ]
 cl.m1met_startDatetime = datetime.datetime(2012, 9, 1)
 cl.m1met_endDatetime = datetime.datetime(2012, 9, 21)
 
-cl.stride = stride
 ##cl.loadAll()
 
 # For testing.  Comment out the loadAll() call, and uncomment one of these as needed
-cl.loadDorado()
-cl.loadWaveglider()
-cl.loadDaphne()
-cl.loadTethys()
-cl.loadESPdrift()
-cl.loadWFuctd()
-cl.loadWFpctd()
-cl.loadL_662()
-cl.loadM1ts()
-cl.loadM1met()
+if stride == 'testing':
+    cl.loadDorado(stride=100)
+    cl.loadWaveglider(stride=10)
+    ##cl.loadDaphne(stride=10)
+    ##cl.loadTethys(stride=10)
+    ##cl.loadESPdriftstride=10()
+    ##cl.loadWFuctd(stride=10)
+    ##cl.loadWFpctd(stride=10)
+    cl.loadL_662(stride=10)
+    cl.loadM1ts(stride=1)
+    cl.loadM1met(stride=1)
+else:
+    cl.stride = stride
+    cl.loadDorado()
+    cl.loadWaveglider()
+    cl.loadDaphne()
+    cl.loadTethys()
+    cl.loadESPdrift()
+    cl.loadWFuctd()
+    cl.loadWFpctd()
+    cl.loadL_662()
+    cl.loadM1ts()
+    cl.loadM1met()
 
