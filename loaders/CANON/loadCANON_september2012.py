@@ -211,7 +211,7 @@ cl.m1met_endDatetime = datetime.datetime(2012, 9, 21)
 # For testing.  Comment out the loadAll() call, and uncomment one of these as needed
 if stride == 'testing':
     cl.loadDorado(stride=100)
-    cl.loadWaveglider(stride=10)
+    cl.loadWaveglider(stride=100)
     ##cl.loadDaphne(stride=10)
     ##cl.loadTethys(stride=10)
     ##cl.loadESPdriftstride=10()
