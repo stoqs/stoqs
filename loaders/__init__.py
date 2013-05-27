@@ -351,7 +351,7 @@ class STOQS_Loader(object):
 
         return self.parameter_dict[name]
 
-    def createMeasurement(self, time, depth, lat, long):
+    def createMeasurement(self, time, depth, lat, long, nomDepth=None, nomLat=None, nomLong=None):
         '''
         Create and return a measurement object in the database.  The measurement object
         is created by first creating an instance of stoqs.models.Instantpoint using the activity, 
@@ -361,19 +361,28 @@ class STOQS_Loader(object):
         @param depth: The depth for the measurement
         @param lat: The latitude (degrees, assumed WGS84) for the measurement
         @param long: The longitude (degrees, assumed WGS84) for the measurement
+        @param nomDepth: The nominal depth (e.g. for a timeSeriesProfile featureType) measurement
+        @param nomLat: The nominal latitude (e.g. for a timeSeriesProfile featureType) measurement
+        @param nomLong: The nominal longitude (e.g. for a timeSeriesProfile featureType) measurement
         @return: An instance of stoqs.models.Measurement
         '''
 
         if depth < -1000 or depth > 4000:
             raise SkipRecord('Bad depth')
 
-        ip = m.InstantPoint(activity = self.activity,
-                    timevalue = time)
-        ip.save(using=self.dbAlias)
+        ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
+
+        nl = None
+        if not (nomDepth is None and nomLat is None and nomLong is None):
+            point = 'POINT(%s %s)' % (repr(nomLong), repr(nomLat))
+            nl, created = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), geom=point)
+
         point = 'POINT(%s %s)' % (repr(long), repr(lat))
-        measurement = m.Measurement(instantpoint = ip,
-                        depth = repr(depth),
-                        geom = point)
+        measurement = m.Measurement(
+                        instantpoint=ip,
+                        nominallocation=nl,
+                        depth=repr(depth),
+                        geom=point)
         try:
             measurement.save(using=self.dbAlias)
         except Exception, e:
