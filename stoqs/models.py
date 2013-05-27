@@ -300,12 +300,31 @@ class ActivityResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['activity', 'resource']
 
+class NominalLocation(models.Model):
+    '''
+    A NominalLocation has @depth and @geom fields for storing an Nominal horizontal position and depth of a
+    measurement.  This is useful for representing CF discrete geometry data of featureType timeSeriesProfile;
+    for example, a mooring time series with nominal latitude, longitude and nominal depths of subsurface
+    instruments.
+    '''
+    depth= models.FloatField(db_index=True)
+    geom = models.PointField(srid=4326, spatial_index=True, dim=2)
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name = 'NominalLocation'
+        verbose_name_plural = 'NominalLocations'
+        app_label = 'stoqs'
+    def __str__(self):
+        return "Nominal Locarion at %s" % (self.geom, self.depth)
+
 class Measurement(models.Model):
     '''
-    A Measurement may have a depth value (this is an Oceanographic Query System) and a location (represented by the geom field), 
-    be associated with an InstantPoint and and a MeasuredParameter (where the measured datavalue is stored).
+    A Measurement may have a @depth value (this is an Oceanographic Query System) and a horizontal location 
+    (represented by the @geom field), it may also have a nominal location with is represented in a related table.
+    It is  associated with an InstantPoint and and a MeasuredParameter (where the measured datavalue is stored).
     '''
     instantpoint = models.ForeignKey(InstantPoint)
+    nominallocation = models.ForeignKey(NominalLocation, null=True)
     depth= models.FloatField(db_index=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     objects = models.GeoManager()
