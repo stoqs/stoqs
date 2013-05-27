@@ -214,10 +214,10 @@ if stride == 'testing':
     cl.loadWaveglider(stride=100)
     ##cl.loadDaphne(stride=10)
     ##cl.loadTethys(stride=10)
-    ##cl.loadESPdriftstride=10()
+    ##cl.loadESPdrift(stride=10)
     ##cl.loadWFuctd(stride=10)
     ##cl.loadWFpctd(stride=10)
-    cl.loadL_662(stride=10)
+    cl.loadL_662(stride=100)
     cl.loadM1ts(stride=1)
     cl.loadM1met(stride=1)
 else:
