@@ -219,9 +219,9 @@ class Base_Loader(STOQS_Loader):
         Return a dictionary of a variable's auxilary coordinates mapped to the standard_names of 'time', 'latitude',
         'longitude', and 'depth'.  Accomodate previous ways of associating these variables and convert to the new 
         CF-1.6 conventions as outlined in Chapter 5 of the document.  If an auxCoord dictionary is passed to the
-        Loader then that dictionary will be returned.  This is handy for datasets that are not compliant.  Requirements
-        for compliance: variables have a coordinates attribute listing the 4 geospatial/temporal coordinates, the
-        coordinate variables have standard_names of 'time', 'latitude', 'longitude', 'depth'.
+        Loader then that dictionary will be returned.  This is handy for datasets that are not yet compliant.  
+        Requirements for compliance: variables have a coordinates attribute listing the 4 geospatial/temporal 
+        coordinates, the coordinate variables have standard_names of 'time', 'latitude', 'longitude', 'depth'.
         Example return value: {'time': 'esecs', 'depth': 'DEPTH', 'latitude': 'lat', 'longitude': 'lon'}
         '''
         if self.auxCoords:
@@ -265,6 +265,42 @@ class Base_Loader(STOQS_Loader):
 
         return coordDict
 
+    def getNominalLocation(self):
+        '''
+        For timeSeries and timeSeriesProfile data return nominal location as a tuple of (depth, latitude, longitude) as
+        expressed in the coordinate variables of the mooring or station. For timeSeries features depth will be a scalar, 
+        for timeSeriesProfile depth will be an array of depths.
+        '''
+        depths = {}
+        lats = {}
+        lons = {}
+        for v in self.include_names:
+            ac = self.getAuxCoordinates(v)
+     
+            # depth may be single-valued or an array 
+            if self.getFeatureType() == 'timeseries': 
+                depths[v] = self.ds[v][ac['depth']][:][0]
+            elif self.getFeatureType() == 'timeseriesprofile':
+                depths[v] = self.ds[v][ac['depth']][:]
+
+            # latitude and longitude are single-valued
+            lats[v] = self.ds[v][ac['latitude']][:][0]
+            lons[v] = self.ds[v][ac['longitude']][:][0]
+
+        # All variables must have the same nominal location 
+        if len(set(lats.values())) != 1 or len(set(lons.values())) != 1:
+            raise Exception('Invalid file coordinates structure.  All variables must have identical nominal lat & lon, lats = %s, lons = %s', lats, lons)
+        else:
+            lat = lats.values()[0]
+            lon = lons.values()[0]
+
+        if len(set(lats.values())) != 1:
+            raise Exception('Invalid file coordinates structure.  All variables must have identical nominal depth, depths, depths = %s', depths)
+        else:
+            depth = depths.values()[0]
+
+        return depth, lat, lon
+
     def getTimeBegEndIndices(self, timeAxis):
         '''
         If startDatetime and/or endDatetime specified return begining and ending indices for the corresponding time axis indices
@@ -301,6 +337,9 @@ class Base_Loader(STOQS_Loader):
         latitudes = {}
         longitudes = {}
         timeUnits = {}
+        nomDepths = {}
+        nomLats = {}
+        nomLons = {}
 
         # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
         # The reads here take advantage of OPeNDAP access mechanisms to effeciently transfer data across the network
@@ -331,10 +370,12 @@ class Base_Loader(STOQS_Loader):
 
                 # CF (nee COARDS) has tzyx coordinate ordering
                 times[pname] = self.ds[self.ds[pname].keys()[1]][tIndx[0]:tIndx[-1]:self.stride]
-                depths[pname] = self.ds[self.ds[pname].keys()[2]][:]
-                latitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])
-                longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])
+                depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
+                latitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])      # TODO lookup more precise gps lat
+                longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon
                 timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
+
+                nomDepths[pname], nomLats[pname], nomLons[pname] = self.getNominalLocation()
             else:
                 logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.  It has a shape length of %d.', pname, len(self.ds[pname].shape))
 
@@ -353,6 +394,9 @@ class Base_Loader(STOQS_Loader):
                     values['latitude'] = latitudes[pname]
                     values['longitude'] = longitudes[pname]
                     values['timeUnits'] = timeUnits[pname]
+                    values['nomDepth'] = nomDepths[pname][k]
+                    values['nomLat'] = nomLats[pname]
+                    values['nomLon'] = nomLons[pname]
                     yield values
                     k = k + 1
 
@@ -462,13 +506,13 @@ class Base_Loader(STOQS_Loader):
         logger.info('self.getFeatureType() = %s', self.getFeatureType())
         if self.getFeatureType() == 'timeseriesprofile':
             data_generator = self._genTimeSeriesGridType()
-
+            featureType = 'timeseriesprofile'
         elif self.getFeatureType() == 'timeseries':
             data_generator = self._genTimeSeriesGridType()
-
+            featureType = 'timeseries'
         elif self.getFeatureType() == 'trajectory':
             data_generator = self._genTrajectory()
-        
+            featureType = 'trajectory'
 
         for row in data_generator:
             logger.debug(row)
@@ -485,26 +529,25 @@ class Base_Loader(STOQS_Loader):
             else:
                 params = {} 
                 try:
-                    longitude, latitude, time, depth = (row.pop('longitude'), 
-                                    row.pop('latitude'),
-                                    from_udunits(row.pop('time'), row.pop('timeUnits')),
-                                    row.pop('depth'))
+                    if featureType == 'timeseriesprofile' or featureType == 'timeseries':
+                        longitude, latitude, time, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
+                                                            from_udunits(row.pop('time'), row.pop('timeUnits')),
+                                                            row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
+                        measurement = self.createMeasurement(time=time, depth=depth, lat=latitude, long=longitude,
+                                                            nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
+                    else:
+                        longitude, latitude, time, depth = (row.pop('longitude'), row.pop('latitude'),
+                                                            from_udunits(row.pop('time'), row.pop('timeUnits')),
+                                                            row.pop('depth'))
+                        measurement = self.createMeasurement(time=time, depth=depth, lat=latitude, long=longitude)
                 except ValueError:
                     logger.info('Bad time value')
                     continue
-
-                try:
-                    measurement = self.createMeasurement(time = time,
-                                    depth = depth,
-                                    lat = latitude,
-                                    long = longitude)
-                    logger.debug("Appending to linestringPoints: measurement.geom = %s, %s" , measurement.geom.x, measurement.geom.y)
-                    linestringPoints.append(measurement.geom)
                 except SkipRecord:
                     logger.debug("Got SkipRecord Exception from self.createMeasurement().  Skipping")
                     continue
                 except Exception, e:
-                    logger.error(e)
+                    logger.exception(e)
                     sys.exit(-1)
                 else:
                     logger.debug("longitude = %s, latitude = %s, time = %s, depth = %s", longitude, latitude, time, depth)
@@ -512,6 +555,8 @@ class Base_Loader(STOQS_Loader):
                         mindepth = depth
                     if depth > maxdepth:
                         maxdepth = depth
+                    logger.debug("Appending to linestringPoints: measurement.geom = %s, %s" , measurement.geom.x, measurement.geom.y)
+                    linestringPoints.append(measurement.geom)
 
             for key, value in row.iteritems():
                 try:
@@ -533,6 +578,7 @@ class Base_Loader(STOQS_Loader):
                     # End try
                     ##p2 = self.getParameterByName(key)
                     ##print "p2.name = %s" % p2.name
+
                     logger.debug("measurement._state.db = %s", measurement._state.db)
                     logger.debug("key = %s", key)
                     logger.debug("parameter._state.db = %s", self.getParameterByName(key)._state.db)
@@ -1016,6 +1062,8 @@ def runMooringLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, par
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
+
+    loader.auxCoords = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
