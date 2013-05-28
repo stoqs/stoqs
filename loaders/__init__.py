@@ -294,8 +294,7 @@ class STOQS_Loader(object):
         logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
         if self.ds.attributes.has_key('NC_GLOBAL'):
             (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name = 'nc_global')
-            for rn in self.ds.attributes['NC_GLOBAL'].keys():
-                value = self.ds.attributes['NC_GLOBAL'][rn]
+            for rn, value in self.ds.attributes['NC_GLOBAL'].iteritems():
                 logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
                 (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                             name=rn, value=value, resourcetype=resourceType)
