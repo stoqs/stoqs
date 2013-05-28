@@ -721,7 +721,7 @@
     var map = null; 
     var kmlurl = '';
     var parametervalues={};     
-    var polyLayer = new OpenLayers.Layer.Vector( "Selection polygon", {visibility: false} );
+    var polyLayer = new OpenLayers.Layer.Vector( " Selection polygon", {visibility: false} );
     var timedepthplot;
     var options_stack = [];
     var zoom_xy_stack = [];
@@ -2268,7 +2268,7 @@
         map = new OpenLayers.Map('map',options);
 
         var bathyEsri = new OpenLayers.Layer.XYZ(
-            'ESRI Ocean'
+            ' ESRI Ocean'
             ,'http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
             ,{
                sphericalMercator : true
@@ -2280,7 +2280,7 @@
         );
 
         var gebco_noaa = new OpenLayers.Layer.XYZ(
-            "GEBCO & NOAA Tiles",
+            " GEBCO & NOAA Tiles",
             [
                 "http://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${x}/${y}.png"
             ], 
@@ -2296,7 +2296,7 @@
                 numZoomLevels: 16
             }
         );
-        var osm=new OpenLayers.Layer.OSM("OpenStreetMap");
+        var osm=new OpenLayers.Layer.OSM(" OpenStreetMap");
         map.addLayers([bathyEsri,gebco_noaa,osm]);
         //ctrlGraticule.activate();
 
@@ -2304,7 +2304,7 @@
          * Maptrack layers selected by UI 
          */
         track_lines = new OpenLayers.Layer.WMS(
-            "Activity track lines",
+            " trajectories",
             "http://{{ mapserver_host }}/cgi-bin/mapserv",
             { layers: 'trajectories',
               map: '{{ mappath }}',
@@ -2318,7 +2318,7 @@
               displayOutsideMaxExtent: true } );
 
         stations = new OpenLayers.Layer.WMS(
-            "Activity track lines",
+            " stations",
             "http://{{ mapserver_host }}/cgi-bin/mapserv",
             { layers: 'timeSeries',
               map: '{{ mappath }}',
@@ -2332,7 +2332,7 @@
               displayOutsideMaxExtent: true } );
 
         sample_points = new OpenLayers.Layer.WMS(
-            "Sample points",
+            " Sample points",
             "http://{{ mapserver_host }}/cgi-bin/mapserv",
             { layers: 'sample_points',
               map: '{{ mappath }}',
@@ -2345,7 +2345,7 @@
               singleTile: true, ratio: 1,
               displayOutsideMaxExtent: true } );
 
-        sensortrackskml = new OpenLayers.Layer.Vector("Sensor tracks", {
+        sensortrackskml = new OpenLayers.Layer.Vector(" Sensor tracks", {
             projection: map.displayProjection,
             strategies: [new OpenLayers.Strategy.Fixed()],
             // protocol is Dynamically set in update_sensortrackskml()
