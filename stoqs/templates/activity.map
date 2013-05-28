@@ -64,8 +64,8 @@ MAP
     END
     UNITS PIXELS                    #sets the units for the feature object
   END
-
   # Union layer needs to have an empty CLASS section for it to draw the connected layer
+  {% if trajectory_union_layer_string %}
   LAYER
     NAME "trajectories"
     TYPE line
@@ -80,7 +80,9 @@ MAP
       "init=epsg:4326"
     END # PROJECTION
   END # LAYER
+  {% endif %}
   # Union layer needs to have an empty CLASS section for it to draw the connected layer
+  {% if station_union_layer_string %}
   LAYER
     NAME "timeSeries"
     TYPE point
@@ -95,6 +97,7 @@ MAP
       "init=epsg:4326"
     END # PROJECTION
   END # LAYER
+  {% endif %}
   {% for item in list %}
   {% if item.geo_query %}
   LAYER
