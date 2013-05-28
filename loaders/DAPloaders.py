@@ -29,13 +29,12 @@ MBARI Dec 29, 2011
 # Force lookup of models to THE specific stoqs module.
 import os
 import sys
-from django.contrib.gis.geos import GEOSGeometry, LineString
+from django.contrib.gis.geos import GEOSGeometry, LineString, Point
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 from django.conf import settings
 
-from django.contrib.gis.geos import Point
 from django.db.utils import IntegrityError
 from django.db import connection, transaction
 from stoqs import models as m
@@ -611,40 +610,35 @@ class Base_Loader(STOQS_Loader):
                         logger.info("%d records loaded.", loaded)
             # End for key, value
 
-
         # End for row
+
         #
-        # now linestringPoints contains all the points
+        # Examine linestringPoints and set to a path for trajectory and stationPoint for timeSeriesProfile and timeSeries
         #
+        path = None
+        stationPoint = None
         try:
             path = LineString(linestringPoints).simplify(tolerance=.001)
         except TypeError, e:
             logger.warn("%s\nSetting path to None", e)
-            path = None        # Likely "Cannot initialize on empty sequence." resulting from too big a stride
         except Exception as e:
-            logger.warn('%s', e)
-            path = None        # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
-
+            logger.warn('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
         else:
-            logger.debug("path = %s", path)
             if len(path) == 2:
                 logger.info("Length of path = 2: path = %s", path)
                 if path[0][0] == path[1][0] and path[0][1] == path[1][1]:
-                    logger.info("And the 2 points are identical.  Adding a little bit of distance to the 2nd point so as to make a tiny line.")
-                    newPoint = Point(path[0][0] + 0.001, path[0][1] + 0.001)
-                    logger.debug(path[0])
-                    logger.debug(newPoint)
-                    path = LineString((path[0][0], path[0][1]), newPoint)
-            logger.debug("path = %s", path)
+                    logger.info("And the 2 points are identical. Saving the first point of this path as a point as the featureType is also %s.", featureType)
+                    stationPoint = Point(path[0][0], path[0][1])
+                    path = None
 
         # Update the Activity with information we now have following the load
-        # Careful with the structure of this comment.  It is parsed in views.py to give some useful links in showActivities()
         newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (loaded, ' '.join(self.varsLoaded), datetime.utcnow())
         logger.debug("Updating its comment with newComment = %s", newComment)
     
         num_updated = m.Activity.objects.using(self.dbAlias).filter(id = self.activity.id).update(
                         comment = newComment,
                         maptrack = path,
+                        mappoint = stationPoint,
                         mindepth = mindepth,
                         maxdepth = maxdepth,
                         num_measuredparameters = loaded,
