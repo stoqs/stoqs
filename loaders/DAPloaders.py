@@ -209,7 +209,12 @@ class Base_Loader(STOQS_Loader):
         if featureType.lower() == 'station':
             # Used in elvis' TDS mooring data aggregation, it's really 'timeSeriesProfile'
             featureType = 'timeSeriesProfile'
-            self.ds.attributes['NC_GLOBAL']['featureType'] = featureType
+
+        if featureType.lower() == 'Trajectory':
+            featureType = 'trajectory'
+
+        # Put the CF-1.6 proper featureType into NC_GLOBAL so that addResources will put it into the database
+        self.ds.attributes['NC_GLOBAL']['featureType'] = featureType
 
         return featureType.lower()
 
