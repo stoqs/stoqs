@@ -64,16 +64,33 @@ def buildMapFile(request, qm, options):
 
     # Add an item (a mapfile layer) for each platform - unioned up
     item_list = []      # Replicates queryset from an Activity query (needs name & id) with added geo_query & color attrbutes
-    union_layer_string = ''
+
+    trajectory_union_layer_string = ''
     for p in json.loads(options)['platforms']:
+        if p[3] != 'trajectory':
+            continue
         item = Item()
         item.id = p[1]
         item.name = p[0]
-        union_layer_string += str(item.name) + ','
+        trajectory_union_layer_string += str(item.name) + ','
         item.color = '"#%s"' % p[2]
         item.type = 'line'
-        item.geo_query = qm.getActivityGeoQuery(Q(platform__name='%s' % p[0]))
         item.extra_style = ''
+        item.geo_query = qm.getActivityGeoQuery(Q(platform__name='%s' % p[0]))
+        item_list.append(item)
+
+    station_union_layer_string = ''
+    for p in json.loads(options)['platforms']:
+        if p[3] != 'timeSeries' and p[3] != 'timeSeriesProfile':
+            continue
+        item = Item()
+        item.id = p[1]
+        item.name = p[0]
+        station_union_layer_string += str(item.name) + ','
+        item.color = '"#%s"' % p[2]
+        item.type = 'point'
+        item.extra_style = 'SYMBOL "circle"\n        SIZE 7.0\n        OUTLINECOLOR 1 1 1'
+        item.geo_query = qm.getActivityGeoQuery(Q(platform__name='%s' % p[0]), pointFlag=True)
         item_list.append(item)
 
     # Add an item for the samples for the existing query - do not add it to the union, it's a different type
@@ -88,11 +105,12 @@ def buildMapFile(request, qm, options):
         item.extra_style = 'SYMBOL "circle"\n        SIZE 7.0\n        OUTLINECOLOR 0 0 0 '
         item_list.append(item)
     
-    union_layer_string = union_layer_string[:-1]
+    trajectory_union_layer_string = trajectory_union_layer_string[:-1]
+    station_union_layer_string = station_union_layer_string[:-1]
 
     ##logger.debug('item_list = %s', pprint.pformat(item_list))        
-    logger.debug('union_layer_string = %s', union_layer_string)
-    av = ActivityView(request, item_list, union_layer_string)
+    logger.debug('trajectory_union_layer_string = %s', trajectory_union_layer_string)
+    av = ActivityView(request, item_list, trajectory_union_layer_string, station_union_layer_string)
     av.generateActivityMapFile()
 
 def queryData(request, format=None):
