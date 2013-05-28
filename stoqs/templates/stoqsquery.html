@@ -2306,7 +2306,21 @@
         track_lines = new OpenLayers.Layer.WMS(
             "Activity track lines",
             "http://{{ mapserver_host }}/cgi-bin/mapserv",
-            { layers: 'track_lines',
+            { layers: 'trajectories',
+              map: '{{ mappath }}',
+              transparent: 'True' },
+            { units: 'degrees',
+              displayInLayerSwitcher: true,
+              projection: "EPSG:900913",
+              reproject: false,
+              visibility: true,
+              singleTile: true, ratio: 1,
+              displayOutsideMaxExtent: true } );
+
+        stations = new OpenLayers.Layer.WMS(
+            "Activity track lines",
+            "http://{{ mapserver_host }}/cgi-bin/mapserv",
+            { layers: 'timeSeries',
               map: '{{ mappath }}',
               transparent: 'True' },
             { units: 'degrees',
@@ -2368,6 +2382,7 @@
 
         map.addLayer(sensortrackskml);
         map.addLayer(track_lines); 
+        map.addLayer(stations); 
         map.addLayer(sample_points); 
 
         map.addControl(new OpenLayers.Control.LoadingPanel());

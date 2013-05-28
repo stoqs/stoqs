@@ -56,7 +56,7 @@ class ActivityView(object):
     # For using the same colors
     itemColor_dict = {}
 
-    def __init__(self, request, itemList, union_layer_string, url=olWebPageTemplate):
+    def __init__(self, request, itemList, trajectory_union_layer_string, station_union_layer_string, url=olWebPageTemplate):
         '''Initialize activity object to support building of mapserver mapfiles and openlayers html files.
 
         @param request: Web server request object
@@ -69,13 +69,15 @@ class ActivityView(object):
                             item.geo_query = qm.getSampleGeoQuery()
                             item.extra_style = 'SYMBOL "circle"\n        SIZE 7.0\n        OUTLINECOLOR 0 0 0 '
 
-        @param union_layer_string: A comma separated list of layer names that are grouped together by openlayers
+        @param trajectory_union_layer_string: A comma separated list of trajectory layer names that are grouped together by openlayers
+        @param station_union_layer_string: A comma separated list of station layer names that are grouped together by openlayers
         @param geo_query: The SQL to be placed in the DATA directive.  It must return a geometry object and a gid for the filter.
         '''
         self.url = url
         self.request = request
         self.itemList = itemList 
-        self.union_layer_string = union_layer_string
+        self.trajectory_union_layer_string = trajectory_union_layer_string
+        self.station_union_layer_string = station_union_layer_string
         self.mappath = self.request.session['mappath']
     
         if settings.LOGGING['loggers']['stoqs']['level'] == 'DEBUG':
@@ -112,7 +114,8 @@ class ActivityView(object):
         ##logger.debug(pprint.pformat(settings.DATABASES[self.request.META['dbAlias']]))
         response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,
-                            'union_layer_string': self.union_layer_string,
+                            'trajectory_union_layer_string': self.trajectory_union_layer_string,
+                            'station_union_layer_string': self.station_union_layer_string,
                             'wfs_title': 'WFS title for an Activity',
                             'map_debug_level': self.map_debug_level,
                             'layer_debug_level': self.layer_debug_level,

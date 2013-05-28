@@ -400,19 +400,34 @@ class STOQSQManager(object):
     
     def getPlatforms(self):
         '''
-        Get a list of the unique platforms that are left based on the current query criteria.  Also
-        return the UUID's of those, since we need to return those to perform the query later.
-        Lastly, we assume here that the name is unique and is also used for the id - this is enforced on 
-        data load.
+        Get a list of the unique platforms that are left based on the current query criteria.
+        We assume here that the name is unique and is also used for the id - this is enforced on 
+        data load.  Organize the platforms into a dictionary keyed by activity featureType.
         '''
-        qs=self.qs.values('platform__uuid', 'platform__name', 'platform__color').distinct()
-        results=[]
+        qs = self.qs.values('platform__uuid', 'platform__name', 'platform__color').distinct()
+        results = []
         for row in qs:
             name=row['platform__name']
             id=row['platform__name']
             color=row['platform__color']
             if name is not None and id is not None:
-                results.append((name,id,color,))
+                # Get the featureType from the Resource
+                fts = models.ActivityResource.objects.using(self.dbname).filter(resource__name='featureType', 
+                                                                                activity__platform__name=name).values('resource__value').distinct()
+                if len(fts) == 0:
+                    logger.warn('No featureType returned for platform name = %s.  Setting it to "trajectory".', name)
+                    featureType = 'trajectory'
+                elif len(fts) > 1:
+                    logger.warn('More than one featureType returned for platform %s: %s.  Using the first one.', name, fts)
+                    featureType = fts[0]['resource__value']
+                else:
+                    featureType = fts[0]['resource__value']
+
+                logger.info('platform name = %s, featureType = %s', name, featureType)
+
+                ##results.append((name,id,color,))
+                results.append((name, id, color, featureType, ))
+
         return results
     
     def getTime(self):
@@ -907,10 +922,11 @@ class STOQSQManager(object):
         
         return querystring
 
-    def getActivityGeoQuery(self, Q_object = None):
+    def getActivityGeoQuery(self, Q_object = None, pointFlag=False):
         '''
         This method generates a string that can be put into a Mapserver mapfile DATA statment.
-        It is for returning Activities.
+        It is for returning Activities.  If @param pointFlag is True then postgresifySQL() will
+        deliver the mappoint field as geom, otherwise it will deliver maptrack (trajectory) as geom.
         '''
         qs = self.qs
 
@@ -919,8 +935,7 @@ class STOQSQManager(object):
             qs = qs.filter(Q_object)
 
         # Query for mapserver
-        geo_query = '''geom from (%s)
-            as subquery using unique gid using srid=4326''' % postgresifySQL(qs.query).rstrip()
+        geo_query = 'geom from (%s) as subquery using unique gid using srid=4326' % postgresifySQL(qs.query, pointFlag).rstrip()
         
         return geo_query
 

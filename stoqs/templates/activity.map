@@ -67,12 +67,27 @@ MAP
 
   # Union layer needs to have an empty CLASS section for it to draw the connected layer
   LAYER
-    NAME "track_lines"
+    NAME "trajectories"
     TYPE line
     STATUS off
     TEMPLATE fooOnlyForWMSGetFeatureInfo
     CONNECTIONTYPE UNION
-    CONNECTION "{{ union_layer_string|safe }}"
+    CONNECTION "{{ trajectory_union_layer_string|safe }}"
+    STYLEITEM "AUTO"
+    CLASS
+    END
+    PROJECTION
+      "init=epsg:4326"
+    END # PROJECTION
+  END # LAYER
+  # Union layer needs to have an empty CLASS section for it to draw the connected layer
+  LAYER
+    NAME "timeSeries"
+    TYPE point
+    STATUS off
+    TEMPLATE fooOnlyForWMSGetFeatureInfo
+    CONNECTIONTYPE UNION
+    CONNECTION "{{ station_union_layer_string|safe }}"
     STYLEITEM "AUTO"
     CLASS
     END
