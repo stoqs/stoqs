@@ -67,7 +67,7 @@ def buildMapFile(request, qm, options):
 
     trajectory_union_layer_string = ''
     for p in json.loads(options)['platforms']:
-        if p[3] != 'trajectory':
+        if p[3].lower() != 'trajectory':
             continue
         item = Item()
         item.id = p[1]
@@ -81,7 +81,7 @@ def buildMapFile(request, qm, options):
 
     station_union_layer_string = ''
     for p in json.loads(options)['platforms']:
-        if p[3] != 'timeSeries' and p[3] != 'timeSeriesProfile':
+        if p[3].lower() != 'timeseries' and p[3].lower() != 'timeseriesprofile':
             continue
         item = Item()
         item.id = p[1]
@@ -109,7 +109,6 @@ def buildMapFile(request, qm, options):
     station_union_layer_string = station_union_layer_string[:-1]
 
     ##logger.debug('item_list = %s', pprint.pformat(item_list))        
-    logger.debug('trajectory_union_layer_string = %s', trajectory_union_layer_string)
     av = ActivityView(request, item_list, trajectory_union_layer_string, station_union_layer_string)
     av.generateActivityMapFile()
 
@@ -201,7 +200,7 @@ def queryUI(request):
              ('tsv', 'Tabbed Separated Values', ),
              ('html', 'Hyper Text Markup Language table', ),
             ]
-    logger.debug(formats)
+
     return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
                                                   'http_site_uri': get_http_site_uri(request),
                                                   'formats': formats,
