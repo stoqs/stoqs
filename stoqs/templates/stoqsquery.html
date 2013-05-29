@@ -729,6 +729,9 @@
     var simpledepthtime_options;
     var simpledepthtime_options_zoom;
     var cmincmax = ''
+    var hasTrajectory;
+    var hasTimeSeries;
+    var hasTimeSeriesProfile;
     
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
@@ -1264,9 +1267,26 @@
 
     } // rebuildFilters()
 
-    function refreshMap() {
-        track_lines.redraw(true);
+    function refreshMap(e) {
+        if (hasTrajectory) {
+            track_lines.setVisibility(true);
+            track_lines.redraw(true);
+        }
+        else {
+            track_lines.setVisibility(false);
+        }
+        if (hasTimeSeries || hasTimeSeriesProfile) {
+            stations.setVisibility(true);
+            stations.redraw(true);
+        }
+        else {
+            stations.setVisibility(false);
+        }
         sample_points.redraw(true);
+
+        if ($('#zoomtoextentonupdate').is(':checked')) {
+            map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
+        }
     }
 
     function resetZoomedValues(resetData) {
@@ -1664,13 +1684,6 @@
                         //rec["label"] = platform_value[0];
                         platform_seen[platform_value[0]] = true;
                     }
-                    //rec["label"] = label;
-                    //rec["data"] = depth_time_series;
-                    //rec["color"] = "#" + data['simpledepthtime']['colors'][platform_value[0]];
-                    //console.log('rec["label"] = ' + rec["label"]);
-                    //console.log('rec["data"] = ' + rec["data"]);
-                    //console.log('rec["color"] = ' + rec["color"]);
-                    //dataset.push(rec);
                     dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
                 }
             });
@@ -1845,6 +1858,9 @@
             initData = data;
             zoomedData = initData;
             if (key == 'platforms') {
+                hasTrajectory = false;
+                hasTimeSeries = false;
+                hasTimeSeriesProfile = false;
                 $.each(data[key], function (index, value) {
                     $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td style="text-align:center;">' +
                             '<div id="' + value[1] + '_icon" style="text-align: center;float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
@@ -1854,6 +1870,15 @@
                             '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;">'+ value[0] +'</button></td>' +
                         '</tr>');
                     $('#' + value[1] + '_icon').click( function () { $('#' + value[1] + ' > td > button').click() } );
+                    if (value[3].toLowerCase() == 'trajectory') {
+                        hasTrajectory = true;
+                    }
+                    if (value[3].toLowerCase() == 'timeseries') {
+                        hasTimeSeries = true;
+                    }
+                    if (value[3].toLowerCase() == 'timeseriesprofile') {
+                        hasTimeSeriesProfile = true;
+                    }
                 });
                 //$('.platform').tooltip({title: 'Click to select this Platform'});
             }
@@ -1942,13 +1967,6 @@
                                                               simpledepthtime_options_zoom);
 
             }
-            else if (key == 'extent') {
-                if (data[key]) {
-                    e = data[key];
-                    //console.log('00=' + e[0][0] + ' 01=' + e[0][1] + ' 10=' + e[1][0] + ' 11=' + e[1][1]);
-                    map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
-                }
-            }
             else if (key == 'activityparameterhistograms') {
                 // Create the html placeholders for the plots
                 var parameterunits = data[key]['parameterunits'];
@@ -1987,12 +2005,24 @@
             // Called from ajax to update the selectors base on the new selection
             if (key == 'platforms') {
                 zoomedData = data;
+                hasTrajectory = false;
+                hasTimeSeries = false;
+                hasTimeSeriesProfile = false;
                 var ids=[];
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid.
                     var element=$('#' + value[1]);
                     enableButton($('button', element));             // enable the button in the table row
                     ids.push(value[1]);
+                    if (value[3].toLowerCase() == 'trajectory') {
+                        hasTrajectory = true;
+                    }
+                    if (value[3].toLowerCase() == 'timeseries') {
+                        hasTimeSeries = true;
+                    }
+                    if (value[3].toLowerCase() == 'timeseriesprofile') {
+                        hasTimeSeriesProfile = true;
+                    }
                 });
                 $('#platform-table > tbody > tr').each(function (index, elem) { 
                     if ($.inArray((elem.id).toString(), ids) == -1) {
@@ -2074,14 +2104,6 @@
                     $('#sectioncolorbar').html('');
                 }
 
-            }
-            else if (key == 'extent') {
-                if (data[key]) {
-                    e = data[key];
-                    if ($('#zoomtoextentonupdate').is(':checked')) {
-                        map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
-                    }
-                }
             }
             else if (key == 'activityparameterhistograms') {
                 var histHtml = '<tbody>';
@@ -2214,7 +2236,7 @@
                 $('#geo-3dplot').removeClass('stoqs-background-ajax-loader-3d-topright');
 
                 // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
-                me.refreshMap();
+                me.refreshMap(data['extent']);
 
                 var endAjax = new Date().getTime();
                 var nsecs = (endAjax - startAjax) / 1000.0;
