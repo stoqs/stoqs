@@ -64,13 +64,14 @@ Drop NOT NULL constraint on foreign key where we don't always have an Analysis M
 ALTER TABLE stoqs_sampledparameter ALTER COLUMN analysismethod_id DROP NOT NULL;
 
 
-Add a column:
--------------
+Examples of adding columns to accomodate a new schema:
+------------------------------------------------------
 ALTER TABLE stoqs_parametergroup ADD COLUMN "description" varchar(128);
+ALTER TABLE stoqs_measurement ADD COLUMN "nominallocation_id" integer REFERENCES "stoqs_nominallocation" ("id") DEFERRABLE INITIALLY DEFERRED;
 
 
 Change database password:
-------------------------
+-------------------------
 ALTER ROLE stoqsadm login password 'newpassword';
 
 
