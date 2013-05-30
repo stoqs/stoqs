@@ -26,7 +26,7 @@ from django.conf import settings
 from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import Point
 from django.db.utils import IntegrityError
-from django.db import connection, transaction
+from django.db import connection, transaction, DatabaseError
 from django.db.models import Max, Min
 from stoqs import models as m
 from datetime import datetime
@@ -261,7 +261,7 @@ class STOQS_Loader(object):
                                         enddate = self.endDatetime)
 
         if created:
-            logger.info("Created activity %s in database %s", self.activityName, self.dbAlias)
+            logger.info("Created activity %s in database %s with startDate = %s and endDate = %s", self.activityName, self.dbAlias, self.startDatetime, self.endDatetime)
         else:
             logger.info("Retrived activity %s from database %s", self.activityName, self.dbAlias)
 
@@ -365,25 +365,34 @@ class STOQS_Loader(object):
         @param nomLong: The nominal longitude (e.g. for a timeSeriesProfile featureType) measurement
         @return: An instance of stoqs.models.Measurement
         '''
-
+        # Brute force QC check
         if depth < -1000 or depth > 4000:
             raise SkipRecord('Bad depth')
 
         ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
 
         nl = None
-        if not (nomDepth is None and nomLat is None and nomLong is None):
-            point = 'POINT(%s %s)' % (repr(nomLong), repr(nomLat))
-            nl, created = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), geom=point)
-
         point = 'POINT(%s %s)' % (repr(long), repr(lat))
-        measurement = m.Measurement(
-                        instantpoint=ip,
-                        nominallocation=nl,
-                        depth=repr(depth),
-                        geom=point)
+        if not (nomDepth == None and nomLat == None and nomLong == None):
+            logger.info('nomDepth = %s nomLat = %s nomLong = %s', nomDepth, nomLat, nomLong)
+            nom_point = 'POINT(%s %s)' % (repr(nomLong), repr(nomLat))
+            nl, created = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), geom=nom_point)
+
+        measurement = m.Measurement(instantpoint=ip, nominallocation=nl, depth=repr(depth), geom=point)
+
         try:
             measurement.save(using=self.dbAlias)
+        except DatabaseError, e:
+            logger.exception('''%s
+                It is likely that creating a nominallocation was attempted on a database that does not have that relation.
+                Run "./manage.py syncdb --database=%s"
+                and at the psql prompt:
+                \c %s
+                ALTER TABLE stoqs_measurement ADD COLUMN "nominallocation_id" integer REFERENCES "stoqs_nominallocation" ("id") DEFERRABLE INITIALLY DEFERRED;
+                - or -
+                Drop the database, recreate it, resync, and reload.  Your choice.
+                ''', e, self.dbAlias, self.dbAlias)
+            sys.exit(-1)
         except Exception, e:
             logger.error('Exception %s', e)
             logger.error("Cannot save measurement time = %s, long = %s, lat = %s, depth = %s", time, repr(long), repr(lat), repr(depth))
