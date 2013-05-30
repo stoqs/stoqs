@@ -36,6 +36,8 @@ createlang plpgsql postgis
 psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/postgis.sql
 psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/spatial_ref_sys.sql
 
+# Make sure "timezone = 'GMT'" is specified in file /var/lib/pgsql/9.1/data/postgresql.conf and reload
+
 # For ability for persistant storage of GIFS, assuming default location of your web server is /var/www/html
 mkdir /tmp/media
 su -c 'ln -s /tmp/media /var/www/html/media'

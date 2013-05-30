@@ -111,8 +111,10 @@ DATABASE_ROUTERS = ['stoqs.db_router.DatabaseRouter']
 # although not all choices may be available on all operating systems.
 # On Unix systems, a value of None will cause Django to use the same
 # timezone as the operating system.
-# If running in a Windows environment this must be set to the same as your
-# system time zone.
+# Note that this setting affects only Django's interaction with the
+# database. In order for mapserver's and other queries to understand 
+# the GMT timezone, postgres must be configured to use 'GMT'. You must
+# set "timezone = 'GMT'" as described in the STOQS INSTALL file.
 USE_TZ = True
 TIME_ZONE = 'GMT'
 
