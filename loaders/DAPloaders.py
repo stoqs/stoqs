@@ -659,9 +659,10 @@ class Base_Loader(STOQS_Loader):
         # Update the stats and store simple line values
         #
         self.updateActivityParameterStats(parameterCount)
-        self.insertSimpleDepthTimeSeries()
         self.updateCampaignStartEnd()
         self.assignParameterGroup(parameterCount, groupName='Measured in situ')
+        if self.getFeatureType() == 'trajectory':
+            self.insertSimpleDepthTimeSeries()
         logger.info("Data load complete, %d records loaded.", loaded)
 
 
