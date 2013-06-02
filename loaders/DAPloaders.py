@@ -52,7 +52,7 @@ import logging
 import socket
 import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord, missing_value
+from loaders import STOQS_Loader, SkipRecord
 
 
 # Set up logging
@@ -173,6 +173,28 @@ class Base_Loader(STOQS_Loader):
             self.createActivity()
         else:
             raise NoValidData
+
+    def getmissing_value(self, var):
+        '''
+        Return the missing_value attribute for netCDF variable var
+        '''
+        try:
+            mv = self.ds[var].attributes['missing_value']
+        except KeyError:
+            logger.warn('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
+        else:
+            return mv
+
+    def get_FillValue(self, var):
+        '''
+        Return the _FillValue attribute for netCDF variable var
+        '''
+        try:
+            fv = self.ds[var].attributes['_FillValue']
+        except KeyError:
+            logger.warn('Cannot get attribute _FillValue for variable %s from url %s', var, self.url)
+        else:
+            return fv
 
     def getFeatureType(self):
         '''
@@ -572,7 +594,7 @@ class Base_Loader(STOQS_Loader):
 
                     # If the data have a Z dependence (e.g. mooring tstring/adcp) then value will be an array.
                     logger.debug("value = %s ", value)
-                    if value == missing_value or value == 'null': # absence of a value
+                    if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null': # absence of a value
                         continue
                     try:
                         if math.isnan(value): # not a number for a math type
