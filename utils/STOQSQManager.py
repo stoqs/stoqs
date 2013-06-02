@@ -24,6 +24,7 @@ from loaders import MEASUREDINSITU
 from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
+from utils import simplify_points
 from MPQuery import MPQuery
 from PQuery import PQuery
 from Viz import MeasuredParameter, ParameterParameter
@@ -425,7 +426,6 @@ class STOQSQManager(object):
 
                 logger.info('platform name = %s, featureType = %s', name, featureType)
 
-                ##results.append((name,id,color,))
                 results.append((name, id, color, featureType, ))
 
         return results
@@ -494,33 +494,34 @@ class STOQSQManager(object):
         sdt = {}
         colors = {}
 
-        # Restrict selection to Activities that are Trajectories.  Can have pre CF-1.6 UCDD and CF-1.6 and later metadata.
-        udcc_q1 = Q(activityresource__resource__name__iexact='thredds_data_type') & Q(activityresource__resource__value__iexact='Trajectory')
-        udcc_q2 = Q(activityresource__resource__name__iexact='cdm_data_type') & Q(activityresource__resource__value__iexact='trajectory')
-        udcc_q3 = Q(activityresource__resource__name__iexact='CF%3afeatureType') & Q(activityresource__resource__value__iexact='trajectory')
-        udcc_q4 = Q(activityresource__resource__name__iexact='CF_featureType') & Q(activityresource__resource__value__iexact='trajectory')
-        cf16_q = Q(activityresource__resource__name__iexact='featureType') & Q(activityresource__resource__value__iexact='trajectory')
+        trajectoryQ = self._trajectoryQ()
+
         for p in self.getPlatforms():
             plq = Q(platform__name = p[0])
-            qs = self.qs.filter(plq & (udcc_q1 | udcc_q2 | udcc_q3 | udcc_q4 | cf16_q)).values_list(
-                                    'simpledepthtime__epochmilliseconds', 
-                                    'simpledepthtime__depth',
-                                    'name'
-                                ).order_by('simpledepthtime__epochmilliseconds')
             sdt[p[0]] = {}
             colors[p[0]] = p[2]
-            # Create hash with date-time series organized by activity__name key within a platform__name key
-            # This will let flot plot the series with gaps between the surveys -- not connected
-            for s in qs:
-                try:
-                    ##logger.debug('s[2] = %s', s[2])
-                    sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
-                except KeyError:
-                    sdt[p[0]][s[2]] = []                                    # First time seeing activity__name, make it a list
-                    if s[1]:
-                        sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value
-                except TypeError:
-                    continue                                                # Likely "float argument required, not NoneType"
+
+            if p[3].lower() == 'trajectory':
+                qs_traj = self.qs.filter(plq & trajectoryQ).values_list( 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth',
+                                    'name').order_by('simpledepthtime__epochmilliseconds')
+                # Add to sdt hash date-time series organized by activity__name key within a platform__name key
+                # This will let flot plot the series with gaps between the surveys -- not connected
+                for s in qs_traj:
+                    try:
+                        ##logger.debug('s[2] = %s', s[2])
+                        sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
+                    except KeyError:
+                        sdt[p[0]][s[2]] = []                                    # First time seeing activity__name, make it a list
+                        if s[1]:
+                            sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value
+                    except TypeError:
+                        continue                                                # Likely "float argument required, not NoneType"
+
+            elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
+                for aName, line in self.buildTimeSeriesProfileSDT(p[0]).iteritems():
+                    logger.info('aName, line = %s, %s', aName, line)
+                    sdt[p[0]][aName] = line
+                
 
         return({'sdt': sdt, 'colors': colors})
 
@@ -904,7 +905,21 @@ class STOQSQManager(object):
             elif fromTable == 'ActivityParameterHistogram':
                 q = q & Q(activityparameter__activity__mindepth__lte=depth[1])
         return q
+
+    def _trajectoryQ(self):
+        '''
+        Return Q object that is True if the activity is of featureType trajectory
+        '''
+        # Restrict selection to Activities that are trajectories.  Can have pre CF-1.6 UCDD and CF-1.6 and later metadata.
+        udcc_q1 = Q(activityresource__resource__name__iexact='thredds_data_type') & Q(activityresource__resource__value__iexact='Trajectory')
+        udcc_q2 = Q(activityresource__resource__name__iexact='cdm_data_type') & Q(activityresource__resource__value__iexact='trajectory')
+        udcc_q3 = Q(activityresource__resource__name__iexact='CF%3afeatureType') & Q(activityresource__resource__value__iexact='trajectory')
+        udcc_q4 = Q(activityresource__resource__name__iexact='CF_featureType') & Q(activityresource__resource__value__iexact='trajectory')
+        cf16_q = Q(activityresource__resource__name__iexact='featureType') & Q(activityresource__resource__value__iexact='trajectory')
+
+        q = (udcc_q1 | udcc_q2 | udcc_q3 | udcc_q4 | cf16_q)
     
+        return q
 
     #
     # Methods to get the query used based on the current Q object.
@@ -1036,3 +1051,44 @@ class STOQSQManager(object):
         
         return extent
 
+
+    def buildTimeSeriesProfileSDT(self, platformName, critSimpleDepthTime=10):
+        '''
+        Utility method for building a multi-line simpleDepthTimeSeries for timeSeriesProfile data.  Given a @param
+        platformName get all measurement times and depths, organize hash according to nominal depth and return for
+        inclusing in sdt.
+        '''
+        sdtHash = {}
+        tsByActND = {}
+
+        # Create 2 key hash for activity and nomDepth
+        acts = models.Activity.objects.using(self.dbname).filter(platform__name=platformName).values_list('name')
+        for act in acts:
+            tsByActND[act[0]] = {}
+
+        atd = models.Activity.objects.using(self.dbname).select_related(depth=3).filter(platform__name=platformName
+                                    ).values_list('name', 'instantpoint__timevalue', 'instantpoint__measurement__depth', 
+                                    'instantpoint__measurement__nominallocation__depth')
+
+        # Collect depth time series into a timeseries by activity and nominal depth hash
+        for act, timevalue, depth, nd in atd:
+            snd = str(nd)
+            ems = time.mktime(timevalue.timetuple()) * 1000
+            try: 
+                tsByActND[act][snd].append((ems, depth))
+            except KeyError:
+                tsByActND[act][snd] = []
+                tsByActND[act][snd].append((ems, depth))
+                
+        ##logger.info('tsByActND = %s', tsByActND)
+
+        # Make simple lines for each nominal depth
+        for act in tsByActND.keys():
+            ##logger.info('%s: tsByActND[act].keys() = %s', act, tsByActND[act].keys())
+            for snd in tsByActND[act].keys():
+                ##sdtHash[act + '_%s' % snd] = tsByActND[act][snd]      # Bigger response adds seconds to the web page response time
+                simple_line = simplify_points(tsByActND[act][snd], critSimpleDepthTime)
+                sdtHash[act + '_%s' % snd] = simple_line
+
+        return sdtHash
+       
