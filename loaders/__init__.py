@@ -286,9 +286,10 @@ class STOQS_Loader(object):
             self.activity.save(using=self.dbAlias)   # Resave with the campaign
 
     def addResources(self):
-        '''Add Resources for this activity, namely the NC_GLOBAL attribute names and values.
         '''
-
+        Add Resources for this activity, namely the NC_GLOBAL attribute names and values,
+        and all the attributes for each variable in include_names.
+        '''
         # The NC_GLOBAL attributes from the OPeNDAP URL.  Save them all.
         logger.debug("Getting or Creating ResourceType nc_global...")
         logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
@@ -302,6 +303,20 @@ class STOQS_Loader(object):
                             activity=self.activity, resource=resource)
         else:
             logger.warn("No NC_GLOBAL attribute in %s", self.url)
+
+        # Attributes of all the variables in include_names
+        for v in self.include_names:
+            logger.info('v = %s', v)
+            try:
+                for rn, value in self.ds[v].attributes.iteritems():
+                    logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
+                    (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                                          name=rn, value=value, resourcetype=resourceType)
+                    (ar, created) = m.ParameterResource.objects.db_manager(self.dbAlias).get_or_create(
+                                    parameter=self.getParameterByName(v), resource=resource)
+            except KeyError:
+                # Just skip deriveed parameters that may have been added for a sub-classed Loader
+                logger.warn('include_name %s is not in %s; assuming it is derived and skipping', v, self.url)
 
         
     def getParameterByName(self, name):
@@ -374,7 +389,7 @@ class STOQS_Loader(object):
         nl = None
         point = 'POINT(%s %s)' % (repr(long), repr(lat))
         if not (nomDepth == None and nomLat == None and nomLong == None):
-            logger.info('nomDepth = %s nomLat = %s nomLong = %s', nomDepth, nomLat, nomLong)
+            logger.debug('nomDepth = %s nomLat = %s nomLong = %s', nomDepth, nomLat, nomLong)
             nom_point = 'POINT(%s %s)' % (repr(nomLong), repr(nomLat))
             nl, created = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), geom=nom_point)
 
@@ -549,7 +564,9 @@ class STOQS_Loader(object):
     def insertSimpleDepthTimeSeries(self, critSimpleDepthTime=10):
         '''
         Read the time series of depth values for this activity, simplify it and insert the values in the
-        SimpleDepthTime table that is related to the Activity.
+        SimpleDepthTime table that is related to the Activity.  This procedure is suitable for only
+        trajectory data; timeSeriesProfile type data uses another method to produce a collection of
+        simple depth time series for display in flot.
 
         @param critSimpleDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
         '''
