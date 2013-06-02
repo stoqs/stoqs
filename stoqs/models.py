@@ -300,6 +300,19 @@ class ActivityResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['activity', 'resource']
 
+class ParameterResource(models.Model):
+    '''
+    Association class pairing Parameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    '''
+    uuid = UUIDField(editable=False)
+    parameter = models.ForeignKey(Parameter)
+    resource = models.ForeignKey(Resource)
+    class Meta:
+        verbose_name = 'Parameter Resource'
+        verbose_name_plural = 'Parameter Resource'
+        app_label = 'stoqs'
+        unique_together = ['parameter', 'resource']
+
 class NominalLocation(models.Model):
     '''
     A NominalLocation has @depth and @geom fields for storing an Nominal horizontal position and depth of a
