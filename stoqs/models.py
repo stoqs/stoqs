@@ -315,11 +315,12 @@ class ParameterResource(models.Model):
 
 class NominalLocation(models.Model):
     '''
-    A NominalLocation has @depth and @geom fields for storing an Nominal horizontal position and depth of a
+    A NominalLocation has depth and geom fields for storing a Nominal horizontal position and depth of a
     measurement.  This is useful for representing CF discrete geometry data of featureType timeSeriesProfile;
     for example, a mooring time series with nominal latitude, longitude and nominal depths of subsurface
-    instruments.
+    instruments.  It has a many to one relationship with Activity.
     '''
+    activity = models.ForeignKey(Activity) 
     depth= models.FloatField(db_index=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     objects = models.GeoManager()
