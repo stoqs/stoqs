@@ -52,7 +52,7 @@ import logging
 import socket
 import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord
+from loaders import STOQS_Loader, SkipRecord, missing_value
 
 
 # Set up logging
@@ -181,7 +181,7 @@ class Base_Loader(STOQS_Loader):
         try:
             mv = self.ds[var].attributes['missing_value']
         except KeyError:
-            logger.warn('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
+            logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
         else:
             return mv
 
@@ -192,7 +192,7 @@ class Base_Loader(STOQS_Loader):
         try:
             fv = self.ds[var].attributes['_FillValue']
         except KeyError:
-            logger.warn('Cannot get attribute _FillValue for variable %s from url %s', var, self.url)
+            logger.debug('Cannot get attribute _FillValue for variable %s from url %s', var, self.url)
         else:
             return fv
 
@@ -683,8 +683,10 @@ class Base_Loader(STOQS_Loader):
         self.updateActivityParameterStats(parameterCount)
         self.updateCampaignStartEnd()
         self.assignParameterGroup(parameterCount, groupName='Measured in situ')
-        if self.getFeatureType() == 'trajectory':
+        if self.getFeatureType().lower() == 'trajectory':
             self.insertSimpleDepthTimeSeries()
+        elif self.getFeatureType().lower() == 'timeseries' or self.getFeatureType().lower() == 'timeseriesprofile':
+            self.insertSimpleDepthTimeSeriesByNominalDepth()
         logger.info("Data load complete, %d records loaded.", loaded)
 
 
@@ -739,13 +741,13 @@ class Dorado_Loader(Trajectory_Loader):
     chl.attributes = {  'standard_name':    'mass_concentration_of_chlorophyll_in_sea_water',
                         'long_name':        'Chlorophyll',
                         'units':            'ug/l',
-                        'name':             'mass_concentration_of_chlorophyll_in_sea_water'
+                        'name':             'mass_concentration_of_chlorophyll_in_sea_water',
                      }
     dens = pydap.model.BaseType()
     dens.attributes = { 'standard_name':    'sea_water_sigma_t',
                         'long_name':        'Sigma-T',
                         'units':            'kg m-3',
-                        'name':             'sea_water_sigma_t'
+                        'name':             'sea_water_sigma_t',
                       }
     parmDict = {    'mass_concentration_of_chlorophyll_in_sea_water': chl,
                     'sea_water_sigma_t': dens
