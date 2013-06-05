@@ -68,6 +68,7 @@ Examples of adding columns to accomodate a new schema:
 ------------------------------------------------------
 ALTER TABLE stoqs_parametergroup ADD COLUMN "description" varchar(128);
 ALTER TABLE stoqs_measurement ADD COLUMN "nominallocation_id" integer REFERENCES "stoqs_nominallocation" ("id") DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE stoqs_nominallocation ADD COLUMN "activity_id" integer REFERENCES "stoqs_activity" ("id") DEFERRABLE INITIALLY DEFERRED;
 
 
 Change database password:
