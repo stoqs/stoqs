@@ -380,9 +380,11 @@ class STOQS_Loader(object):
         @param nomLong: The nominal longitude (e.g. for a timeSeriesProfile featureType) measurement
         @return: An instance of stoqs.models.Measurement
         '''
-        # Brute force QC check
-        if depth < -1000 or depth > 4000:
-            raise SkipRecord('Bad depth')
+        # Brute force QC check on depth to remove egregous outliers
+        minDepth = -1000
+        maxDepth = 4000
+        if depth < minDepth or depth > maxDepth:
+            raise SkipRecord('Bad depth: depth must be > and < %s' % minDepth, maxDepth)
 
         ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
 
@@ -391,7 +393,8 @@ class STOQS_Loader(object):
         if not (nomDepth == None and nomLat == None and nomLong == None):
             logger.debug('nomDepth = %s nomLat = %s nomLong = %s', nomDepth, nomLat, nomLong)
             nom_point = 'POINT(%s %s)' % (repr(nomLong), repr(nomLat))
-            nl, created = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), geom=nom_point)
+            nl, created = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), 
+                                    geom=nom_point, activity=self.activity)
 
         measurement = m.Measurement(instantpoint=ip, nominallocation=nl, depth=repr(depth), geom=point)
 
@@ -567,7 +570,6 @@ class STOQS_Loader(object):
         SimpleDepthTime table that is related to the Activity.  This procedure is suitable for only
         trajectory data; timeSeriesProfile type data uses another method to produce a collection of
         simple depth time series for display in flot.
-
         @param critSimpleDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
         '''
         vlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity,
@@ -583,6 +585,7 @@ class STOQS_Loader(object):
         logger.debug('line = %s', line)
         logger.info('Number of points in original depth time series = %d', len(line))
         try:
+            # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
             simple_line = simplify_points(line, critSimpleDepthTime)
         except IndexError:
             simple_line = []        # Likely "list index out of range" from a stride that's too big
@@ -597,6 +600,49 @@ class STOQS_Loader(object):
                 logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
         logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
+
+    def insertSimpleDepthTimeSeriesByNominalDepth(self, critSimpleDepthTime=10):
+        '''
+        Read the time series of depth values for each nominal depth of this activity, simplify them 
+        and insert the values in the SimpleDepthTime table that is related via the NominalLocations
+        to the Activity.  This procedure is suitable for timeSeries and timeSeriesProfile data
+        @param critSimpleDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
+        '''
+        for nl in m.NominalLocation.objects.using(self.dbAlias).filter(activity=self.activity):
+            nomDepth = nl.depth
+            logger.info('nomDepth = %s', nomDepth)
+            # Collect depth time series into a timeseries by activity and nominal depth hash
+            ndlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity, nominallocation__depth=nomDepth
+                                                              ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk')
+            line = []
+            pklookup = []
+            for dt,dd,pk in ndlqs:
+                ems = 1000 * to_udunits(dt, 'seconds since 1970-01-01')
+                d = float(dd)
+                line.append((ems,d,))
+                pklookup.append(pk)
+
+            logger.debug('line = %s', line)
+            logger.info('Number of points in original depth time series = %d', len(line))
+            try:
+                # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
+                simple_line = simplify_points(line, critSimpleDepthTime)
+            except IndexError:
+                simple_line = []        # Likely "list index out of range" from a stride that's too big
+            logger.info('Number of points in simplified depth time series = %d', len(simple_line))
+            logger.debug('simple_line = %s', simple_line)
+
+            for t,d,k in simple_line:
+                logger.info('t,d,k = %s, %s, %s', t,d,k)
+                try:
+                    ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
+                    logger.info('ip = %s', ip)
+                    m.SimpleDepthTime.objects.using(self.dbAlias).create(activity=self.activity, nominallocation=nl,
+                                                                     instantpoint=ip, depth=d, epochmilliseconds=t)
+                except ObjectDoesNotExist:
+                    logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
+
+            logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
     def updateCampaignStartEnd(self):
         '''
