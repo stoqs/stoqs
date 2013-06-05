@@ -209,11 +209,30 @@ class InstantPoint(models.Model):
     def __str__(self):
         return "%s" % (self.timevalue,)
 
+class NominalLocation(models.Model):
+    '''
+    A NominalLocation has depth and geom fields for storing a Nominal horizontal position and depth of a
+    measurement.  This is useful for representing CF discrete geometry data of featureType timeSeriesProfile;
+    for example, a mooring time series with nominal latitude, longitude and nominal depths of subsurface
+    instruments.  It has a many to one relationship with Activity.
+    '''
+    activity = models.ForeignKey(Activity) 
+    depth= models.FloatField(db_index=True)
+    geom = models.PointField(srid=4326, spatial_index=True, dim=2)
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name = 'NominalLocation'
+        verbose_name_plural = 'NominalLocations'
+        app_label = 'stoqs'
+    def __str__(self):
+        return "Nominal Locarion at %s" % (self.geom, self.depth)
+
 class SimpleDepthTime(models.Model):
     '''
     A simplified time series of depth values for an Activity useful for plotting in the UI
     '''
     activity = models.ForeignKey(Activity) 
+    nominallocation = models.ForeignKey(NominalLocation, null=True) 
     instantpoint = models.ForeignKey(InstantPoint)
     epochmilliseconds = models.FloatField()
     depth= models.FloatField()
@@ -312,24 +331,6 @@ class ParameterResource(models.Model):
         verbose_name_plural = 'Parameter Resource'
         app_label = 'stoqs'
         unique_together = ['parameter', 'resource']
-
-class NominalLocation(models.Model):
-    '''
-    A NominalLocation has depth and geom fields for storing a Nominal horizontal position and depth of a
-    measurement.  This is useful for representing CF discrete geometry data of featureType timeSeriesProfile;
-    for example, a mooring time series with nominal latitude, longitude and nominal depths of subsurface
-    instruments.  It has a many to one relationship with Activity.
-    '''
-    activity = models.ForeignKey(Activity) 
-    depth= models.FloatField(db_index=True)
-    geom = models.PointField(srid=4326, spatial_index=True, dim=2)
-    objects = models.GeoManager()
-    class Meta:
-        verbose_name = 'NominalLocation'
-        verbose_name_plural = 'NominalLocations'
-        app_label = 'stoqs'
-    def __str__(self):
-        return "Nominal Locarion at %s" % (self.geom, self.depth)
 
 class Measurement(models.Model):
     '''
