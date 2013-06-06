@@ -192,6 +192,7 @@ class STOQSQManager(object):
                            'time': self.getTime,
                            'depth': self.getDepth,
                            'simpledepthtime': self.getSimpleDepthTime,
+                           'parametertime': self.getParameterTime,
                            'sampledepthtime': self.getSampleDepthTime,
                            'counts': self.getCounts,
                            'sql': self.getMeasuredParametersPostgreSQL,
@@ -414,17 +415,14 @@ class STOQSQManager(object):
             if name is not None and id is not None:
                 # Get the featureType from the Resource
                 fts = models.ActivityResource.objects.using(self.dbname).filter(resource__name='featureType', 
-                                                                                activity__platform__name=name).values('resource__value').distinct()
+                               activity__platform__name=name).values_list('resource__value', flat=True).distinct()
                 if len(fts) == 0:
                     logger.warn('No featureType returned for platform name = %s.  Setting it to "trajectory".', name)
                     featureType = 'trajectory'
                 elif len(fts) > 1:
                     logger.warn('More than one featureType returned for platform %s: %s.  Using the first one.', name, fts)
-                    featureType = fts[0]['resource__value']
-                else:
-                    featureType = fts[0]['resource__value']
 
-                logger.info('platform name = %s, featureType = %s', name, featureType)
+                featureType = fts[0]
 
                 results.append((name, id, color, featureType, ))
 
@@ -495,6 +493,8 @@ class STOQSQManager(object):
         colors = {}
 
         trajectoryQ = self._trajectoryQ()
+        timeSeriesQ = self._timeSeriesQ()
+        timeSeriesProfileQ = self._timeSeriesProfileQ()
 
         for p in self.getPlatforms():
             plq = Q(platform__name = p[0])
@@ -518,12 +518,80 @@ class STOQSQManager(object):
                         continue                                                # Likely "float argument required, not NoneType"
 
             elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
-                for aName, line in self.buildTimeSeriesProfileSDT(p[0]).iteritems():
-                    logger.info('aName, line = %s, %s', aName, line)
-                    sdt[p[0]][aName] = line
-                
+                qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ)).select_related().values_list( 
+                                            'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
+                                            'simpledepthtime__nominallocation__depth').order_by('simpledepthtime__epochmilliseconds')
+                logger.info('qs_tsp = %s', str(qs_tsp.query))
+                # Add to sdt hash date-time series organized by activity__name_nominallocation__depth  key within a platform__name key
+                for sd in qs_tsp:
+                    logger.info('sd = %s', sd)
+                    an_nd = '%s_%s' % (sd[2], sd[3])
+                    try:
+                        sdt[p[0]][an_nd].append( [sd[0], '%.2f' % sd[1]] )
+                    except KeyError:
+                        sdt[p[0]][an_nd] = []                                    # First time seeing activity__name, make it a list
+                        if sd[1]:
+                            sdt[p[0]][an_nd].append( [sd[0], '%.2f' % sd[1]] )     # Append first value
+                    except TypeError:
+                        continue                                                # Likely "float argument required, not NoneType"
 
         return({'sdt': sdt, 'colors': colors})
+
+    def getParameterTime(self):
+        '''
+        Based on the current selected query criteria for activities, return the associated MeasuredParameter datavalue time series
+        values as a 2-tuple list inside a 4 level hash of featureType, platform, parameter, and an "activity__name + nominal depth" key
+        for each line to be drawn by flot.
+        '''
+        pt = {}
+        colors = {}
+
+        for p in self.getPlatforms():
+            plat = p[0]
+            plq = Q(platform__name = plat)
+            colors[plat] = p[2]
+
+            if p[3].lower() == 'timeseriesprofile':
+                try:
+                    pt['timeseriesprofile'][plat] = {}
+                except KeyError:
+                    pt['timeseriesprofile'] = {}
+                    pt['timeseriesprofile'][plat] = {}
+
+                # Pre-populate hash with parameter names
+                for pa in self.getParameters():
+                    parmQ = Q(activityparameter__parameter__name=pa[0])
+                    try:
+                        pt['timeseriesprofile'][plat][pa[0]] = {}
+                    except KeyError:
+                        pt['timeseriesprofile'][plat] = {}
+                        pt['timeseriesprofile'][plat][pa[0]] = {}
+
+                # Query database for time series data from MeasuredParameter and stuff into hash
+                if not self.mpq.qs_mp:
+                    self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
+                logger.info('self.mpq.qs_mp = %s', str(self.mpq.qs_mp.query))
+                for mp in self.mpq.qs_mp:
+                    an = mp['measurement__instantpoint__activity__name']
+                    tv = mp['measurement__instantpoint__timevalue']
+                    ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
+                    dv = mp['datavalue']
+                    nd = mp['measurement__depth']       # Should be mp['measurement__mominallocation__depth']
+                    parm = mp['parameter__name']
+                    
+                    if not dv:
+                        continue
+                    an_nd = "%s_%s" % (an, nd,)
+                    ##if parm == 'ATMP':
+                    ##    logger.debug('plat, parm, an_nd, tv, dv: %s, %s, %s, %s, %s', plat, parm, an_nd, tv, dv)
+                    try:
+                        pt['timeseriesprofile'][plat][parm][an_nd].append((ems, dv))
+                    except KeyError:
+                        pt['timeseriesprofile'][plat][parm][an_nd] = []
+                        pt['timeseriesprofile'][plat][parm][an_nd].append((ems, dv))
+
+        return({'pt': pt, 'colors': colors})
 
     def getSampleDepthTime(self):
         '''
@@ -668,9 +736,9 @@ class STOQSQManager(object):
             
         logger.debug('platformName = %s', platformName)
         logger.debug('Instantiating Viz.MeasuredParameter............................................')
-        if not self.mpq.qs_mp:
+        if not self.mpq.qs_mp_no_order:
             self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-        cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
+        cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order,
                               self.getParameterMinMax(), self.getSampleQS(), platformName)
 
         return cp.renderDatavaluesForFlot()
@@ -688,6 +756,7 @@ class STOQSQManager(object):
             logger.debug('px = %s, py = %s, pc = %s', px, py, pc)
 
             if (px and py):
+                # TODO: Pquery is used here, not MPquery - must DRY
                 if not self.pq.qs_mp:
                     self.pq.buildPQuerySet(*self.args, **self.kwargs)
 
@@ -918,6 +987,32 @@ class STOQSQManager(object):
         cf16_q = Q(activityresource__resource__name__iexact='featureType') & Q(activityresource__resource__value__iexact='trajectory')
 
         q = (udcc_q1 | udcc_q2 | udcc_q3 | udcc_q4 | cf16_q)
+    
+        return q
+
+    def _timeSeriesQ(self):
+        '''
+        Return Q object that is True if the activity is of featureType timeSeries
+        '''
+        # Restrict selection to Activities that are trajectories.  Can have pre CF-1.6 UCDD and CF-1.6 and later metadata.
+        udcc_q1 = Q(activityresource__resource__name__iexact='thredds_data_type') & Q(activityresource__resource__value__iexact='station')
+        udcc_q2 = Q(activityresource__resource__name__iexact='cdm_data_type') & Q(activityresource__resource__value__iexact='station')
+        cf16_q = Q(activityresource__resource__name__iexact='featureType') & Q(activityresource__resource__value__iexact='timeSeries')
+
+        q = (udcc_q1 | udcc_q2 | cf16_q)
+    
+        return q
+
+    def _timeSeriesProfileQ(self):
+        '''
+        Return Q object that is True if the activity is of featureType timeSeries
+        '''
+        # Restrict selection to Activities that are trajectories.  Can have pre CF-1.6 UCDD and CF-1.6 and later metadata.
+        udcc_q1 = Q(activityresource__resource__name__iexact='thredds_data_type') & Q(activityresource__resource__value__iexact='station')
+        udcc_q2 = Q(activityresource__resource__name__iexact='cdm_data_type') & Q(activityresource__resource__value__iexact='station')
+        cf16_q = Q(activityresource__resource__name__iexact='featureType') & Q(activityresource__resource__value__iexact='timeSeriesProfile')
+
+        q = (udcc_q1 | udcc_q2 | cf16_q)
     
         return q
 
