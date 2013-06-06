@@ -225,7 +225,7 @@ class NominalLocation(models.Model):
         verbose_name_plural = 'NominalLocations'
         app_label = 'stoqs'
     def __str__(self):
-        return "Nominal Locarion at %s" % (self.geom, self.depth)
+        return "Nominal Location at %s %s %s" % (self.geom.x, self.geom.y, self.depth)
 
 class SimpleDepthTime(models.Model):
     '''
