@@ -59,6 +59,12 @@ class MPQuerySet(object):
                      'measurement__instantpoint__activity__platform__name',
                      'datavalue',
                    ]
+    ui_timedepth_columns = [  
+                     'measurement__depth',
+                     'measurement__instantpoint__timevalue', 
+                     'measurement__instantpoint__activity__name',
+                     'datavalue',
+                   ]
     def __init__(self, query, values_list, qs_mp=None):
         '''
         Initialize MPQuerySet with either raw SQL in @query or a QuerySet in @qs_mp.
@@ -111,6 +117,7 @@ class MPQuerySet(object):
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
                     row = { 'measurement__depth': mp['measurement__depth'],
                             'measurement__instantpoint__timevalue': mp['measurement__instantpoint__timevalue'],
+                            'measurement__instantpoint__activity__name': mp['measurement__instantpoint__activity__name'],
                             'datavalue': mp['datavalue'],
                           }
                     yield row
@@ -249,6 +256,7 @@ class MPQuery(object):
         '''
         self.request = request
         self.qs_mp = None
+        self.qs_mp_no_order = None
         self.sql = None
         self._count = None
         self._MProws = []
@@ -263,7 +271,11 @@ class MPQuery(object):
         if self.qs_mp is None:
             self.kwargs = kwargs
             self.qs_mp = self.getMeasuredParametersQS()
-            self.qs_mp_no_order = self.getMeasuredParametersQS(orderedFlag=False)
+            if self.kwargs['showparameterplatformdata']:
+                logger.debug('Building qs_mp_no_order with values_list = %s', MPQuerySet.ui_timedepth_columns)
+                self.qs_mp_no_order = self.getMeasuredParametersQS(MPQuerySet.ui_timedepth_columns, orderedFlag=False)
+            else:
+                self.qs_mp_no_order = self.getMeasuredParametersQS(orderedFlag=False)
             self.sql = self.getMeasuredParametersPostgreSQL()
 
     def _getQueryParms(self):
@@ -314,10 +326,10 @@ class MPQuery(object):
         '''
         qparams = self._getQueryParms()
         logger.debug('Building qs_mp...')
-        if values_list:
-            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
-        else:
+        if values_list == []:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
+        else:
+            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
 
         if orderedFlag:
             qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
