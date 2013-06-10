@@ -172,7 +172,7 @@ class Base_Loader(STOQS_Loader):
             self.addParameters(self.ds)
             self.createActivity()
         else:
-            raise NoValidData
+            raise NoValidData('No valid data in url %s', self.url)
 
     def getmissing_value(self, var):
         '''
@@ -430,8 +430,8 @@ class Base_Loader(STOQS_Loader):
 
     def _genTrajectory(self):
         '''
-        Generator of trajectory data. The data values are a function of time and coordinates attribute identifies the
-        depth, latitude, and longitude from where the measurement was made.
+        Generator of trajectory data. The data values are a function of time and the coordinates attribute 
+        identifies the depth, latitude, and longitude from where the measurement was made.
         Using terminology from CF-1.6 assume data is from a discrete geometry type of trajectory.
         Provides a uniform dictionary that contains attributes and their associated values without the need
         to individualize code for each data source.
@@ -454,7 +454,7 @@ class Base_Loader(STOQS_Loader):
             # Only single trajectories are allowed
             logger.info('Reading data from %s: %s', self.url, pname)
             if len(self.ds[pname].shape) == 1 and type(self.ds[pname]) is pydap.model.BaseType:
-                # Example data:
+                # Legacy Dorado data need to be processed as BaseType; Example data:
                 #   dsdorado = open_url('http://odss.mbari.org/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_256_00_256_00_decim.nc')
                 #   dsdorado['temperature'].shape = (12288,)
                 ac[pname] = self.getAuxCoordinates(pname)
@@ -474,7 +474,7 @@ class Base_Loader(STOQS_Loader):
                     continue
     
                 # The STOQS datavalue 
-                data[pname] = iter(v)      # Iterator on time axis delivering all z values in an array with .next()
+                data[pname] = iter(v)      # Iterator on time axis delivering all values in an array with .next()
 
                 # Peek at coordinate attribute to get depth, latitude, longitude values from the other BaseTypes
                 logger.info('ac = %s', ac)
@@ -484,8 +484,39 @@ class Base_Loader(STOQS_Loader):
                 latitudes[pname] = self.ds[ac[pname]['latitude']][tIndx[0]:tIndx[-1]:self.stride]
                 longitudes[pname] = self.ds[ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
+
+            elif len(self.ds[pname].shape) == 1 and type(self.ds[pname]) is pydap.model.GridType:
+                # LRAUV data need to be processed as GridType
+                ac[pname] = self.getAuxCoordinates(pname)
+                tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
+                try:
+                    # Subselect along the time axis
+                    logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
+                    v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
+                except ValueError, err:
+                    logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
+                    If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
+                    then the cache files must be removed and the tomcat hosting TDS restarted.''')
+                    sys.exit(1)
+                except pydap.exceptions.ServerError as e:
+                    logger.error('%s', e)
+                    continue
+    
+                # The STOQS datavalue 
+                data[pname] = iter(v)      # Iterator on time axis delivering all values in an array with .next()
+
+                # Peek at coordinate attribute to get depth, latitude, longitude values from the other BaseTypes
+                logger.info('ac = %s', ac)
+
+                times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
+                depths[pname] = self.ds[ac[pname]['depth']][ac[pname]['depth']][tIndx[0]:tIndx[-1]:self.stride]
+                latitudes[pname] = self.ds[ac[pname]['latitude']][ac[pname]['latitude']][tIndx[0]:tIndx[-1]:self.stride]
+                longitudes[pname] = self.ds[ac[pname]['longitude']][ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
+                timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
+
             else:
-                logger.warn('Variable %s is not of type pydap.model.BaseType with a shape length of 1.  It has a shape length of %d.', pname, len(self.ds[pname].shape))
+                logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 1.  It is type %s with shape length = %d.', 
+                            pname, type(self.ds[pname]), len(self.ds[pname].shape))
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
         for pname in data.keys():
@@ -493,6 +524,8 @@ class Base_Loader(STOQS_Loader):
             l = 0
             values = {}
             for dv in data[pname]:
+                if numpy.isnan(dv):
+                    continue
                 values[pname] = float(dv)
                 values['time'] = times[pname][l]
                 values['depth'] = depths[pname][l]
