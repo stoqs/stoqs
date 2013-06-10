@@ -206,6 +206,7 @@ class ParserWriter(BaseWriter):
         isus_vars = [   'no3' 
                     ]
 
+        lastEs = 0
         reader = csv.DictReader(open(os.path.join(self.parentDir, inFile)))
         for r in reader:
             localDT = datetime.datetime(int(r['year']), int(r['month']), int(r['day']), 
@@ -213,6 +214,9 @@ class ParserWriter(BaseWriter):
             ##print str(localDT)
             es = time.mktime(localDT.timetuple())
         
+            if es <= lastEs:
+                continue                        # Must have monotonically increasing time
+
             esec_list.append(es)
             lat_list.append(self.gps_lat[es])
             lon_list.append(self.gps_lon[es])
@@ -227,7 +231,7 @@ class ParserWriter(BaseWriter):
                     exec '%s_list = []' % ncVar
                     exec "%s_list.append(r['%s'])" % (ncVar, v, )
 
-
+            lastEs = es
 
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
