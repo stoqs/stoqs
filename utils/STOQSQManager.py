@@ -163,13 +163,13 @@ class STOQSQManager(object):
             ##logger.debug('Activity query = %s', str(self.qs.query))
         elif fromTable == 'Sample':
             self.sample_qs = qs.using(self.dbname)
-            logger.debug('Sample query = %s', str(self.sample_qs.query))
+            ##logger.debug('Sample query = %s', str(self.sample_qs.query))
         elif fromTable == 'ActivityParameter':
             self.activityparameter_qs = qs.using(self.dbname)
-            logger.debug('activityparameter_qs = %s', str(self.activityparameter_qs.query))
+            ##logger.debug('activityparameter_qs = %s', str(self.activityparameter_qs.query))
         elif fromTable == 'ActivityParameterHistogram':
             self.activityparameterhistogram_qs = qs.using(self.dbname)
-            logger.debug('activityparameterhistogram_qs = %s', str(self.activityparameterhistogram_qs.query))
+            ##logger.debug('activityparameterhistogram_qs = %s', str(self.activityparameterhistogram_qs.query))
 
     def generateOptions(self):
         '''
@@ -351,18 +351,18 @@ class STOQSQManager(object):
         '''
         If a single parameter has been selected return the average 2.5 and 97.5 percentiles of the
         data and call them min and max for purposes of plotting.  If @percentileAggregateType is
-        'avg' then the average of all the percentiles will be used.  This would be appropriate for
-        contour plotting.  If @percentileAggregateType is 'extrema' then the aggregate Min is used 
-        for 'p025' and Max for 'p975'.
+        'avg' then the average of all the 2.5 and 97.5 percentiles will be used.  This would be appropriate for
+        contour or scatter plotting.  If @percentileAggregateType is 'extrema' then the aggregate Min is used 
+        for 'p010' and Max for 'p990'.  This is appropriate for parameter-parameter plotting.
         '''
         results = []
         if pid:
             try:
                 if percentileAggregateType == 'extrema':
                     logger.debug('self.getActivityParametersQS().filter(parameter__id=pid) = %s', str(self.getActivityParametersQS().filter(parameter__id=pid).query))
-                    qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'), Avg('median'))
+                    qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'), Avg('median'))
                     logger.debug('qs = %s', qs)
-                    results = [pid, round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
+                    results = [pid, round_to_n(qs['p010__min'],3), round_to_n(qs['p990__max'],3)]
                 else:
                     qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
                     results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
@@ -378,8 +378,8 @@ class STOQSQManager(object):
                     pid = models.Parameter.objects.using(self.dbname).get(name=mpname).id
                     logger.debug('pid = %s', pid)
                     if percentileAggregateType == 'extrema':
-                        qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'))
-                        results = [pid, round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
+                        qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'))
+                        results = [pid, round_to_n(qs['p010__min'],3), round_to_n(qs['p990__max'],3)]
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
                         results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
@@ -524,7 +524,7 @@ class STOQSQManager(object):
                 logger.info('qs_tsp = %s', str(qs_tsp.query))
                 # Add to sdt hash date-time series organized by activity__name_nominallocation__depth  key within a platform__name key
                 for sd in qs_tsp:
-                    logger.info('sd = %s', sd)
+                    ##logger.info('sd = %s', sd)
                     an_nd = '%s_%s' % (sd[2], sd[3])
                     try:
                         sdt[p[0]][an_nd].append( [sd[0], '%.2f' % sd[1]] )
@@ -572,19 +572,19 @@ class STOQSQManager(object):
                     self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
                 logger.info('self.mpq.qs_mp = %s', str(self.mpq.qs_mp.query))
-                for mp in self.mpq.qs_mp:
+                # Modify query set to have only timeseriesprofile data
+                qs_mp = self.mpq.qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact='timeseriesprofile')
+                logger.info('qs_mp = %s', str(qs_mp.query))
+                for mp in qs_mp:
                     an = mp['measurement__instantpoint__activity__name']
                     tv = mp['measurement__instantpoint__timevalue']
                     ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
                     dv = mp['datavalue']
                     nd = mp['measurement__depth']       # Should be mp['measurement__mominallocation__depth']
                     parm = mp['parameter__name']
-                    
                     if not dv:
                         continue
                     an_nd = "%s_%s" % (an, nd,)
-                    ##if parm == 'ATMP':
-                    ##    logger.debug('plat, parm, an_nd, tv, dv: %s, %s, %s, %s, %s', plat, parm, an_nd, tv, dv)
                     try:
                         pt['timeseriesprofile'][plat][parm][an_nd].append((ems, dv))
                     except KeyError:
@@ -736,8 +736,9 @@ class STOQSQManager(object):
             
         logger.debug('platformName = %s', platformName)
         logger.debug('Instantiating Viz.MeasuredParameter............................................')
-        if not self.mpq.qs_mp_no_order:
-            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+        
+        self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
         cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order,
                               self.getParameterMinMax(), self.getSampleQS(), platformName)
 
@@ -753,10 +754,9 @@ class STOQSQManager(object):
             px = self.kwargs['parameterparameter'][0]
             py = self.kwargs['parameterparameter'][1]
             pc = self.kwargs['parameterparameter'][3]
-            logger.debug('px = %s, py = %s, pc = %s', px, py, pc)
 
             if (px and py):
-                # TODO: Pquery is used here, not MPquery - must DRY
+                # Pquery is used here so as to combine Measured and Sampled Parameters
                 if not self.pq.qs_mp:
                     self.pq.buildPQuerySet(*self.args, **self.kwargs)
 
@@ -785,8 +785,8 @@ class STOQSQManager(object):
             logger.debug(' >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  px = %s, py = %s, pz = %s, pc = %s', px, py, pz, pc)
 
             if (px and py and pz):
-                if not self.mpq.qs_mp:
-                    self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                if not self.pq.qs_mp:
+                    self.pq.buildPQuerySet(*self.args, **self.kwargs)
 
                 # We have enough information to generate X3D XML
                 pMinMax = { 'x': self.getParameterMinMax(px, percentileAggregateType='extrema'), 
@@ -870,7 +870,6 @@ class STOQSQManager(object):
                 q = Q(instantpoint__activity__in=self.qs)
             elif fromTable == 'ActivityParameter':
                 q = Q(activity__in=self.qs)
-                q = q & Q(parameter__name__in=parametername)
             elif fromTable == 'ActivityParameterHistogram':
                 # Use sub-query to find all ActivityParameterHistogram from Activities that are in the existing Activity queryset
                 q = Q(activityparameter__activity__in=self.qs)
@@ -1147,43 +1146,3 @@ class STOQSQManager(object):
         return extent
 
 
-    def buildTimeSeriesProfileSDT(self, platformName, critSimpleDepthTime=10):
-        '''
-        Utility method for building a multi-line simpleDepthTimeSeries for timeSeriesProfile data.  Given a @param
-        platformName get all measurement times and depths, organize hash according to nominal depth and return for
-        inclusing in sdt.
-        '''
-        sdtHash = {}
-        tsByActND = {}
-
-        # Create 2 key hash for activity and nomDepth
-        acts = models.Activity.objects.using(self.dbname).filter(platform__name=platformName).values_list('name')
-        for act in acts:
-            tsByActND[act[0]] = {}
-
-        atd = models.Activity.objects.using(self.dbname).select_related(depth=3).filter(platform__name=platformName
-                                    ).values_list('name', 'instantpoint__timevalue', 'instantpoint__measurement__depth', 
-                                    'instantpoint__measurement__nominallocation__depth')
-
-        # Collect depth time series into a timeseries by activity and nominal depth hash
-        for act, timevalue, depth, nd in atd:
-            snd = str(nd)
-            ems = time.mktime(timevalue.timetuple()) * 1000
-            try: 
-                tsByActND[act][snd].append((ems, depth))
-            except KeyError:
-                tsByActND[act][snd] = []
-                tsByActND[act][snd].append((ems, depth))
-                
-        ##logger.info('tsByActND = %s', tsByActND)
-
-        # Make simple lines for each nominal depth
-        for act in tsByActND.keys():
-            ##logger.info('%s: tsByActND[act].keys() = %s', act, tsByActND[act].keys())
-            for snd in tsByActND[act].keys():
-                ##sdtHash[act + '_%s' % snd] = tsByActND[act][snd]      # Bigger response adds seconds to the web page response time
-                simple_line = simplify_points(tsByActND[act][snd], critSimpleDepthTime)
-                sdtHash[act + '_%s' % snd] = simple_line
-
-        return sdtHash
-       
