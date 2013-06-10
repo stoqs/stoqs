@@ -141,10 +141,12 @@ class MeasuredParameter(object):
             self.z.append(mp['datavalue'])
             self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
 
-            self.lon.append(mp['measurement__geom'].x)
-            self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
-            self.lat.append(mp['measurement__geom'].y)
-            self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
+            if 'measurement__geom' in mp.keys():
+                self.lon.append(mp['measurement__geom'].x)
+                self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
+                self.lat.append(mp['measurement__geom'].y)
+                self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
+
             i = i + 1
             if (i % 1000) == 0:
                 logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
@@ -397,7 +399,7 @@ class ParameterParameter(object):
         '''
         Given a tuple of limits = (xmin, xmax, ymin, ymax) and an xaxis_name compute 
         density for a range of values between the mins and maxes.  Return the X and Y values
-        for Salinity/temperature and density converted to sigma-t.  A pressure argument may
+        for salinity/temperature and density converted to sigma-t.  A pressure argument may
         be provided for computing sigmat for that pressure.
         '''
         ns = 50
@@ -431,7 +433,7 @@ class ParameterParameter(object):
 
     def make2DPlot(self):
         '''
-        Produce a Parameter-Parameter .png image with axis limits set to the 2.5 and 97.5 percentials and draw outside the lines
+        Produce a Parameter-Parameter .png image with axis limits set to the 1 and 99 percentiles and draw outside the lines
         '''
         try:
             # self.x and self.y may already be set for this instance by makeX3D()
@@ -452,7 +454,10 @@ class ParameterParameter(object):
                         self.c.append(float(row[3]))
                     except IndexError:
                         pass
-
+            # If still no self.x and self.y then selection is not valid for the chosen x and y
+            if self.x == [] or self.y == []:
+                return None, 'No Parameter-Parameter data values returned.'
+            
             # Use session ID so that different users don't stomp on each other with their parameterparameter plots
             # - This does not work for Firefox which just reads the previous image from its cache
             if self.request.session.has_key('sessionID'):
@@ -488,7 +493,7 @@ class ParameterParameter(object):
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
                 cb.set_label('%s (%s)' % (cp.name, cp.units))
             else:
-                ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0)
+                ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0, clip_on=False)
 
             # Label the axes
             xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
