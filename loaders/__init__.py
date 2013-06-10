@@ -386,7 +386,10 @@ class STOQS_Loader(object):
         if depth < minDepth or depth > maxDepth:
             raise SkipRecord('Bad depth: depth must be > and < %s' % minDepth, maxDepth)
 
-        ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
+        try:
+            ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
+        except DatabaseError, e:
+            logger.error('''%s.  Could not load InstantPoint.  Skipping.''', e)
 
         nl = None
         point = 'POINT(%s %s)' % (repr(long), repr(lat))
@@ -402,12 +405,8 @@ class STOQS_Loader(object):
         except DatabaseError, e:
             logger.exception('''%s
                 It is likely that creating a nominallocation was attempted on a database that does not have that relation.
-                Run "./manage.py syncdb --database=%s"
-                and at the psql prompt:
-                \c %s
-                ALTER TABLE stoqs_measurement ADD COLUMN "nominallocation_id" integer REFERENCES "stoqs_nominallocation" ("id") DEFERRABLE INITIALLY DEFERRED;
-                - or -
-                Drop the database, recreate it, resync, and reload.  Your choice.
+                Several schema changes were checked into the STOQS repository in June 2013.  It's suggested that you
+                drop the database, recreate it, resync, and reload. 
                 ''', e, self.dbAlias, self.dbAlias)
             sys.exit(-1)
         except Exception, e:
