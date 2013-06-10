@@ -396,10 +396,9 @@ class STOQS_Loader(object):
             nl, created = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), 
                                     geom=nom_point, activity=self.activity)
 
-        measurement = m.Measurement(instantpoint=ip, nominallocation=nl, depth=repr(depth), geom=point)
-
         try:
-            measurement.save(using=self.dbAlias)
+            measurement, created = m.Measurement.objects.using(self.dbAlias).get_or_create(instantpoint=ip, 
+                                    nominallocation=nl, depth=repr(depth), geom=point)
         except DatabaseError, e:
             logger.exception('''%s
                 It is likely that creating a nominallocation was attempted on a database that does not have that relation.
@@ -531,6 +530,8 @@ class STOQS_Loader(object):
                 ap.mode = mode(numpvar)
                 ap.p025 = percentile(listvar, 0.025)
                 ap.p975 = percentile(listvar, 0.975)
+                ap.p010 = percentile(listvar, 0.010)
+                ap.p990 = percentile(listvar, 0.990)
                 ap.save(using=self.dbAlias)
                 if created: 
                     logger.info('Saved ActivityParameter for parameter.name = %s', p.name)
@@ -610,7 +611,7 @@ class STOQS_Loader(object):
         '''
         for nl in m.NominalLocation.objects.using(self.dbAlias).filter(activity=self.activity):
             nomDepth = nl.depth
-            logger.info('nomDepth = %s', nomDepth)
+            logger.debug('nomDepth = %s', nomDepth)
             # Collect depth time series into a timeseries by activity and nominal depth hash
             ndlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity, nominallocation__depth=nomDepth
                                                               ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk')
@@ -623,20 +624,20 @@ class STOQS_Loader(object):
                 pklookup.append(pk)
 
             logger.debug('line = %s', line)
-            logger.info('Number of points in original depth time series = %d', len(line))
+            logger.debug('Number of points in original depth time series = %d', len(line))
             try:
                 # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
                 simple_line = simplify_points(line, critSimpleDepthTime)
             except IndexError:
                 simple_line = []        # Likely "list index out of range" from a stride that's too big
-            logger.info('Number of points in simplified depth time series = %d', len(simple_line))
+            logger.debug('Number of points in simplified depth time series = %d', len(simple_line))
             logger.debug('simple_line = %s', simple_line)
 
             for t,d,k in simple_line:
-                logger.info('t,d,k = %s, %s, %s', t,d,k)
+                logger.debug('t,d,k = %s, %s, %s', t,d,k)
                 try:
                     ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
-                    logger.info('ip = %s', ip)
+                    logger.debug('ip = %s', ip)
                     m.SimpleDepthTime.objects.using(self.dbAlias).create(activity=self.activity, nominallocation=nl,
                                                                      instantpoint=ip, depth=d, epochmilliseconds=t)
                 except ObjectDoesNotExist:
