@@ -465,9 +465,12 @@ class ActivityParameter(models.Model):
     mean = models.FloatField(null=True)
     median = models.FloatField(null=True)
     mode = models.FloatField(null=True)
-    # Useful for ignoring min & max outliers - 2.5% & 97.5% qualtiles of the parameter
+    # Useful for visualiztion, ignoring min & max outliers - 2.5% & 97.5% percentiles of the parameter
     p025 = models.FloatField(null=True)
     p975 = models.FloatField(null=True)
+    # Useful for visualiztion, ignoring fewer min & max outliers - 1% & 99% percentiles of the parameter
+    p010 = models.FloatField(null=True)
+    p990 = models.FloatField(null=True)
     class Meta:
         verbose_name = 'Activity Parameter'
         verbose_name_plural = 'Activity Parameter'
