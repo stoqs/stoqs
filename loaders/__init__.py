@@ -386,10 +386,7 @@ class STOQS_Loader(object):
         if depth < minDepth or depth > maxDepth:
             raise SkipRecord('Bad depth: depth must be > and < %s' % minDepth, maxDepth)
 
-        try:
-            ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
-        except DatabaseError, e:
-            logger.error('''%s.  Could not load InstantPoint.  Skipping.''', e)
+        ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
 
         nl = None
         point = 'POINT(%s %s)' % (repr(long), repr(lat))
