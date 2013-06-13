@@ -21,7 +21,7 @@ import matplotlib
 matplotlib.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
-from matplotlib import mpl
+import matplotlib as mpl
 from pylab import polyfit, polyval
 from django.conf import settings
 from django.db.models.query import RawQuerySet
