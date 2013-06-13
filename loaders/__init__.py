@@ -365,12 +365,13 @@ class STOQS_Loader(object):
 
         return self.parameter_dict[name]
 
-    def createMeasurement(self, time, depth, lat, long, nomDepth=None, nomLat=None, nomLong=None):
+    def createMeasurement(self, featureType, time, depth, lat, long, nomDepth=None, nomLat=None, nomLong=None):
         '''
         Create and return a measurement object in the database.  The measurement object
         is created by first creating an instance of stoqs.models.Instantpoint using the activity, 
         then by creating an instance of Measurement using the Instantpoint.  A reference to 
         an instance of a stoqs.models.Measurement object is then returned.
+        @param featureType: A CF-1.6 Discrete Sampling Geometry type: 'trajectory'. 'timeseriesprofile', 'timeseries'
         @param time: A valid datetime instance of a datetime object used to create the Instantpoint
         @param depth: The depth for the measurement
         @param lat: The latitude (degrees, assumed WGS84) for the measurement
@@ -386,7 +387,12 @@ class STOQS_Loader(object):
         if depth < minDepth or depth > maxDepth:
             raise SkipRecord('Bad depth: depth must be > and < %s' % minDepth, maxDepth)
 
-        ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
+        if featureType == 'timeseriesprofile':
+            # For timeSeriesProfile data we reuse InstantPoints so perform the more expensive get_or_create()
+            ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
+        else:
+            ip = m.InstantPoint(activity=self.activity, timevalue=time)
+            ip.save(using=self.dbAlias)
 
         nl = None
         point = 'POINT(%s %s)' % (repr(long), repr(lat))
