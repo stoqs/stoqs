@@ -387,12 +387,7 @@ class STOQS_Loader(object):
         if depth < minDepth or depth > maxDepth:
             raise SkipRecord('Bad depth: depth must be > and < %s' % minDepth, maxDepth)
 
-        if featureType == 'timeseriesprofile':
-            # For timeSeriesProfile data we reuse InstantPoints so perform the more expensive get_or_create()
-            ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
-        else:
-            ip = m.InstantPoint(activity=self.activity, timevalue=time)
-            ip.save(using=self.dbAlias)
+        ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
 
         nl = None
         point = 'POINT(%s %s)' % (repr(long), repr(lat))
@@ -405,6 +400,11 @@ class STOQS_Loader(object):
         try:
             measurement, created = m.Measurement.objects.using(self.dbAlias).get_or_create(instantpoint=ip, 
                                     nominallocation=nl, depth=repr(depth), geom=point)
+            ##if created:
+            ##    logger.info('Created measurement.id = %d', measurement.id)
+            ##else:
+            ##    logger.info('Re-using measurement.id = %d', measurement.id)
+
         except DatabaseError, e:
             logger.exception('''%s
                 It is likely that creating a nominallocation was attempted on a database that does not have that relation.
