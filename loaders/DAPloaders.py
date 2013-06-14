@@ -634,16 +634,13 @@ class Base_Loader(STOQS_Loader):
                             continue
                     except: 
                         pass
-                    # End try
-                    ##p2 = self.getParameterByName(key)
-                    ##print "p2.name = %s" % p2.name
 
                     logger.debug("measurement._state.db = %s", measurement._state.db)
                     logger.debug("key = %s", key)
                     logger.debug("parameter._state.db = %s", self.getParameterByName(key)._state.db)
-                    mp = m.MeasuredParameter(measurement = measurement,
-                                parameter = self.getParameterByName(key),
-                                datavalue = value)
+                    parameter = self.getParameterByName(key)
+                    mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, datavalue=value)
+                    logger.debug('Saving parameter_id %s at measurement_id = %s', parameter.id, measurement.id)
                     try:
                         mp.save(using=self.dbAlias)
                     except Exception, e:
