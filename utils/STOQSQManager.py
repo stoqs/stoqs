@@ -591,6 +591,11 @@ class STOQSQManager(object):
                         pt['timeseriesprofile'][plat][parm][an_nd] = []
                         pt['timeseriesprofile'][plat][parm][an_nd].append((ems, dv))
 
+                # Remove any empty parameters
+                for p in pt['timeseriesprofile'][plat].keys():
+                    if not pt['timeseriesprofile'][plat][p]:
+                        del pt['timeseriesprofile'][plat][p]
+
         return({'pt': pt, 'colors': colors})
 
     def getSampleDepthTime(self):
