@@ -193,6 +193,7 @@ class Base_Loader(STOQS_Loader):
             fv = self.ds[var].attributes['_FillValue']
         except KeyError:
             logger.debug('Cannot get attribute _FillValue for variable %s from url %s', var, self.url)
+            return None
         else:
             return fv
 
@@ -535,6 +536,65 @@ class Base_Loader(STOQS_Loader):
                 yield values
                 l = l + 1
 
+    def _insertRow(self, parmCount, parameterCount, measurement, row):
+        '''
+        Insert a row of MeasuredParameters as returned from our data generators.
+        Perform inside an inner method to commit only on success as some saves may result in 
+        database integrity errors and we need to recover from them gracefully.
+        '''
+        @transaction.commit_on_success(using=self.dbAlias)
+        def _innerInsertRow(self, parmCount, parameterCount, measurement, row):
+
+            for key, value in row.iteritems():
+                try:
+                    logger.debug('Checking for %s in self.include_names', key)
+                    if len(self.include_names) and key not in self.include_names:
+                        continue
+                    elif key in self.ignored_names:
+                        continue
+
+                    # If the data have a Z dependence (e.g. mooring tstring/adcp) then value will be an array.
+                    logger.debug("value = %s ", value)
+                    if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null': # absence of a value
+                        continue
+                    try:
+                        if math.isnan(value): # not a number for a math type
+                            continue
+                    except Exception, e: 
+                        logger.debug('%s', e)
+                        pass
+
+                    logger.debug("measurement._state.db = %s", measurement._state.db)
+                    logger.debug("key = %s", key)
+                    logger.debug("parameter._state.db = %s", self.getParameterByName(key)._state.db)
+                    parameter = self.getParameterByName(key)
+                    mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, datavalue=value)
+                    logger.debug('Saving parameter_id %s at measurement_id = %s', parameter.id, measurement.id)
+                    try:
+                        mp.save(using=self.dbAlias)
+                    except IntegrityError, e:
+                        logger.warn('%sSkipping this record.', e)
+                    else:
+                        self.loaded += 1
+                        logger.debug("Inserted value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
+                        parmCount[key] += 1
+                        if parameterCount.has_key(self.getParameterByName(key)):
+                            parameterCount[self.getParameterByName(key)] += 1
+                        else:
+                            parameterCount[self.getParameterByName(key)] = 0
+
+                except ParameterNotFound:
+                    print "Unable to locate parameter for %s, skipping" % (key,)
+
+                if self.loaded:
+                    if (self.loaded % 500) == 0:
+                        logger.info("%d records loaded.", self.loaded)
+
+            # End for key, value
+
+        return _innerInsertRow(self, parmCount, parameterCount, measurement, row)
+
+
     def process_data(self): 
       '''
       Wrapper so as to apply self.dbAlias in the decorator
@@ -553,7 +613,7 @@ class Base_Loader(STOQS_Loader):
 
         self.initDB()
 
-        loaded = 0
+        self.loaded = 0
         linestringPoints=[]
         parmCount = {}
         parameterCount = {}
@@ -617,55 +677,8 @@ class Base_Loader(STOQS_Loader):
                     logger.debug("Appending to linestringPoints: measurement.geom = %s, %s" , measurement.geom.x, measurement.geom.y)
                     linestringPoints.append(measurement.geom)
 
-            for key, value in row.iteritems():
-                try:
-                    logger.debug('Checking for %s in self.include_names', key)
-                    if len(self.include_names) and key not in self.include_names:
-                        continue
-                    elif key in self.ignored_names:
-                        continue
+            self._insertRow(parmCount, parameterCount, measurement, row)
 
-                    # If the data have a Z dependence (e.g. mooring tstring/adcp) then value will be an array.
-                    logger.debug("value = %s ", value)
-                    if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null': # absence of a value
-                        continue
-                    try:
-                        if math.isnan(value): # not a number for a math type
-                            continue
-                    except: 
-                        pass
-
-                    logger.debug("measurement._state.db = %s", measurement._state.db)
-                    logger.debug("key = %s", key)
-                    logger.debug("parameter._state.db = %s", self.getParameterByName(key)._state.db)
-                    parameter = self.getParameterByName(key)
-                    mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, datavalue=value)
-                    logger.debug('Saving parameter_id %s at measurement_id = %s', parameter.id, measurement.id)
-                    try:
-                        mp.save(using=self.dbAlias)
-                    except Exception, e:
-                        logger.error('Exception %s. Skipping this record.', e)
-                        logger.error("Bad value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
-                        continue
-                    else:
-                        loaded += 1
-                        logger.debug("Inserted value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
-                        parmCount[key] += 1
-                        if parameterCount.has_key(self.getParameterByName(key)):
-                            parameterCount[self.getParameterByName(key)] += 1
-                        else:
-                            parameterCount[self.getParameterByName(key)] = 0
-
-                except ParameterNotFound:
-                    print "Unable to locate parameter for %s, skipping" % (key,)
-                except Exception, e:
-                    logger.error(e)
-                    sys.exit(-1)
-
-                if loaded:
-                    if (loaded % 500) == 0:
-                        logger.info("%d records loaded.", loaded)
-            # End for key, value
 
         # End for row
 
@@ -689,7 +702,7 @@ class Base_Loader(STOQS_Loader):
                     path = None
 
         # Update the Activity with information we now have following the load
-        newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (loaded, ' '.join(self.varsLoaded), datetime.utcnow())
+        newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, ' '.join(self.varsLoaded), datetime.utcnow())
         logger.debug("Updating its comment with newComment = %s", newComment)
     
         num_updated = m.Activity.objects.using(self.dbAlias).filter(id = self.activity.id).update(
@@ -698,7 +711,7 @@ class Base_Loader(STOQS_Loader):
                         mappoint = stationPoint,
                         mindepth = mindepth,
                         maxdepth = maxdepth,
-                        num_measuredparameters = loaded,
+                        num_measuredparameters = self.loaded,
                         loaded_date = datetime.utcnow())
         logger.debug("%d activitie(s) updated with new attributes." % num_updated)
 
@@ -717,10 +730,10 @@ class Base_Loader(STOQS_Loader):
             self.insertSimpleDepthTimeSeries()
         elif self.getFeatureType().lower() == 'timeseries' or self.getFeatureType().lower() == 'timeseriesprofile':
             self.insertSimpleDepthTimeSeriesByNominalDepth()
-        logger.info("Data load complete, %d records loaded.", loaded)
+        logger.info("Data load complete, %d records loaded.", self.loaded)
 
 
-        return loaded, path, parmCount, mindepth, maxdepth
+        return self.loaded, path, parmCount, mindepth, maxdepth
 
       return innerProcess_data(self)
 
