@@ -127,6 +127,7 @@ class MPQuerySet(object):
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
                     row = { 'measurement__depth': mp.measurement.depth,
                             'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
+                            'measurement__instantpoint__activity__name': mp.measurement.instantpoint.activity.name,
                             'datavalue': mp.datavalue,
                           }
                     yield row
