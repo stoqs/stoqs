@@ -203,10 +203,8 @@ class SeabirdLoader(STOQS_Loader):
             sys.exit(-1)
 
         try:
-            measurement = self.createMeasurement(time = time,
-                            depth = depth,
-                            lat = lat,
-                            long = lon)
+            measurement = self.createMeasurement(featureType='trajectory', time=time,
+                                                    depth=depth, lat=lat, long=lon)
         except SkipRecord, e:
             logger.info(e)
         except Exception, e:
