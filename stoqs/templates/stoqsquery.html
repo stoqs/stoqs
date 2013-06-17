@@ -557,7 +557,9 @@
                                 </div>
                                 <div class="tab-pane" id="temporal-parameter">
                                     <em>Under construction</em>
+                                    <em>Click and drag to select a time range</em>
                                     <div class="row-fluid" id="time-parameter-plot" style="height:400px" class="disabled row-fluid">
+                                        <div id="time-parameter-flot" style="width:100%;height:90%;" class="disabled"></div>
                                     </div>
                                 </div>
                             </div><!-- tab-content -->
@@ -723,11 +725,14 @@
     var parametervalues={};     
     var polyLayer = new OpenLayers.Layer.Vector( " Selection polygon", {visibility: false} );
     var timedepthplot;
+    var timeparameterplot;
     var options_stack = [];
     var zoom_xy_stack = [];
     var stack_depth = 0;
     var simpledepthtime_options;
     var simpledepthtime_options_zoom;
+    var parametertime_options;
+    var parametertime_options_zoom;
     var cmincmax = ''
     var hasTrajectory;
     var hasTimeSeries;
@@ -1311,6 +1316,7 @@
             zoom_xy_stack = [];
             stack_depth = 0;
             simpledepthtime_options_zoom = simpledepthtime_options;
+            parametertime_options_zoom = parametertime_options;
             rebuildFilters();
             $("#zoomed-button").removeClass('btn-primary');
             $("#zoomed-button").addClass('disabled');
@@ -1534,6 +1540,25 @@
                                     legend: { show: false },
                                     selection: { mode: "xy" }
                                   };
+    var parametertime_options = { grid: { 
+                                        backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
+                                    },
+                                    xaxis: { mode: "time" },
+                                    xaxes: [{
+                                                axisLabel: 'Time (gmt)'
+                                            }],
+                                    yaxes: [{
+                                                position: 'left',
+                                                axisLabel: 'Parameters'
+                                            }],
+                                    series: {
+                                        lines: { show: true, fill: false, lineWidth: 1 },
+                                        points: { show: false, fill: false },
+                                        shadowSize: 0
+                                    },
+                                    legend: { show: true },
+                                    selection: { mode: "x" }
+                                  };
     var histogram_options = {   yaxis: {
                                     autoscaleMargin: null
                                 },
@@ -1660,7 +1685,7 @@
     });
 
     function getDataset(data, x1, x2) {
-        // Return a dataset for flot for only the data between times x1 and x2
+        // Return a dataset of simpledepthtime for flot for only the data between times x1 and x2
         var dataset = [];
         var platform_seen = [];
         if ( ! data ) {
@@ -1709,6 +1734,44 @@
         return dataset;
 
     } // getDataset()
+
+    function getParameterDataset(data, x1, x2) {
+        // Return a dataset of parameter time series for flot for only the data between times x1 and x2
+        var dataset = [];
+        var platform_seen = [];
+        if ( ! data ) {
+            return;
+        }
+        $.each(data['platforms'], function (index, platform_value) {
+            if (data['parametertime']['pt']['timeseriesprofile'][platform_value[0]]) {
+                // Now add each parameter for this platform - each with the same units on a y axis
+                $.each(data['parametertime']['pt']['timeseriesprofile'][platform_value[0]], function (parm, parameter_time_series) {
+                $.each(parameter_time_series, function (label, parameter_time_series) {
+                    var rec = [];
+                    //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                    subset_pts = []
+                    $.each(parameter_time_series, function (index, td) {
+                        // From each activity push only the times between x1 & x2, inclusive
+                        if (td[0] >= x1 && td[0] <= x2) {
+                            subset_pts.push(td);
+                        }
+                    });
+
+                    if (subset_pts.length > 0) {
+                        if (! platform_seen[platform_value[0]]) {
+                            //rec["label"] = platform_value[0];
+                            platform_seen[platform_value[0]] = true;
+                        }
+                        dataset.push({'label': label, 'data': parameter_time_series, 'color': "#" + data['parametertime']['colors'][platform_value[0]]});
+                    }
+                });
+                });
+            }
+        });
+
+        return dataset;
+
+    } // getParameterDataset()
 
     function collectHistData(histdata, platform, color, activity, histbyactivity) {
         var rec = [];
@@ -1965,8 +2028,15 @@
                 simpledepthtime_options_zoom = simpledepthtime_options;
                 timedepthplot = $.plot($("#time-depth-flot"), getDataset(initData, start.getTime(), end.getTime()), 
                                                               simpledepthtime_options_zoom);
-
             }
+            //else if (key == 'parametertime') {
+            //    //flotPlot(data)
+            //    var start = new Date(data['time'][0]);
+            //    var end = new Date(data['time'][1]);
+            //    simpledepthtime_options_zoom = parametertime_options;
+            //    timeparameterplot = $.plot($("#time-parameter-flot"), getParameterDataset(initData, start.getTime(), end.getTime()), 
+            //                                                  parametertime_options_zoom);
+            //}
             else if (key == 'activityparameterhistograms') {
                 // Create the html placeholders for the plots
                 var parameterunits = data[key]['parameterunits'];
