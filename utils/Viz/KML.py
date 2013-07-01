@@ -83,14 +83,19 @@ class KML(object):
         else:
             raise Exception('Neither parameter__name nor parameter__standard_name selected')
     
-        for mp in self.qs_mp:
-            logger.debug('keys = %s', mp.keys())
-            break
 
         logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
         logger.debug('self.stride = %d', self.stride)
-        data = [(mp['measurement__instantpoint__timevalue'], mp['measurement__geom'].x, mp['measurement__geom'].y,
+
+        try:
+            # Expect the query set self.qs_mp to be a collection of value lists
+            data = [(mp['measurement__instantpoint__timevalue'], mp['measurement__geom'].x, mp['measurement__geom'].y,
                      mp['measurement__depth'], mp['parameter__name'],  mp['datavalue'], mp['measurement__instantpoint__activity__platform__name'])
+                     for mp in self.qs_mp[::self.stride]]
+        except TypeError:
+            # Otherwise expect self.qs_mp to be a collection of model instances
+            data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
+                     mp.measurement.depth, mp.parameter.name,  mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
                      for mp in self.qs_mp[::self.stride]]
 
         dataHash = {}
