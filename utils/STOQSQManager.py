@@ -67,12 +67,19 @@ class STOQSQManager(object):
         '''
         kwargs['fromTable'] = 'Activity'
         self._buildQuerySet(**kwargs)
+
         kwargs['fromTable'] = 'Sample'
         self._buildQuerySet(**kwargs)
+
         kwargs['fromTable'] = 'ActivityParameter'
         self._buildQuerySet(**kwargs)
+        # Add special query constraint for APs which are in the selection of Activities that are built by _buildQuerySet() fromTable Activity
+        self.activityparameter_qs = self.activityparameter_qs.filter(Q(activity__in=self.qs))
+
         kwargs['fromTable'] = 'ActivityParameterHistogram'
         self._buildQuerySet(**kwargs)
+        # Add special query constraint for APHs which are in the selection of Activities that are built by _buildQuerySet() fromTable Activity
+        self.activityparameterhistogram_qs = self.activityparameterhistogram_qs.filter(Q(activityparameter__activity__in=self.qs))
 
     def _buildQuerySet(self, *args, **kwargs):
         '''
@@ -229,6 +236,7 @@ class STOQSQManager(object):
         Collect all of the various counts into a dictionary
         '''
         # Always get approximate count
+        logger.debug('str(self.getActivityParametersQS().query) = %s', str(self.getActivityParametersQS().query))
         approximate_count = self.getActivityParametersQS().aggregate(Sum('number'))['number__sum']
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
@@ -238,6 +246,7 @@ class STOQSQManager(object):
         if getGet_Actual_Count(self.kwargs):
             if not self.mpq.qs_mp:
                 self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
             if self._actual_count:
                 actual_count = self._actual_count
             else:
@@ -246,7 +255,7 @@ class STOQSQManager(object):
                 logger.debug('actual_count = %s', actual_count)
 
         if actual_count:
-            actual_count_localized = locale.format("%d", approximate_count, grouping=True)
+            actual_count_localized = locale.format("%d", actual_count, grouping=True)
 
         return {    'ap_count': self.getAPCount(), 
                     'approximate_count': approximate_count,
@@ -357,19 +366,15 @@ class STOQSQManager(object):
         '''
         results = []
         if pid:
-            try:
-                if percentileAggregateType == 'extrema':
-                    logger.debug('self.getActivityParametersQS().filter(parameter__id=pid) = %s', str(self.getActivityParametersQS().filter(parameter__id=pid).query))
-                    qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'), Avg('median'))
-                    logger.debug('qs = %s', qs)
-                    results = [pid, round_to_n(qs['p010__min'],3), round_to_n(qs['p990__max'],3)]
-                else:
-                    qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
-                    results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
-            except TypeError, e:
-                logger.exception(e)
+            if percentileAggregateType == 'extrema':
+                logger.debug('self.getActivityParametersQS().filter(parameter__id=pid) = %s', str(self.getActivityParametersQS().filter(parameter__id=pid).query))
+                qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'), Avg('median'))
+                logger.debug('qs = %s', qs)
+                results = [pid, round_to_n(qs['p010__min'],3), round_to_n(qs['p990__max'],3)]
             else:
-                return results
+                qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
+                results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+            return results
 
         if self.kwargs.has_key('measuredparametersgroup'):
             if len(self.kwargs['measuredparametersgroup']) == 1:
@@ -874,10 +879,13 @@ class STOQSQManager(object):
                 #    https://github.com/django/django/blob/master/django/db/models/sql/query.py
                 q = Q(instantpoint__activity__in=self.qs)
             elif fromTable == 'ActivityParameter':
-                q = Q(activity__in=self.qs)
+                # Use sub-query to restrict ActivityParameters to those that are in the list of Activities in the selection
+                ##q = Q(activity__in=self.qs)
+                q = q & Q(parameter__name__in=parametername)
             elif fromTable == 'ActivityParameterHistogram':
                 # Use sub-query to find all ActivityParameterHistogram from Activities that are in the existing Activity queryset
-                q = Q(activityparameter__activity__in=self.qs)
+                ##q = Q(activityparameter__activity__in=self.qs)
+                pass
         return q
 
     def _parameterstandardnameQ(self, parameterstandardname, fromTable='Activity'):
