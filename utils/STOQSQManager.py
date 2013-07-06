@@ -73,13 +73,9 @@ class STOQSQManager(object):
 
         kwargs['fromTable'] = 'ActivityParameter'
         self._buildQuerySet(**kwargs)
-        # Add special query constraint for APs which are in the selection of Activities that are built by _buildQuerySet() fromTable Activity
-        self.activityparameter_qs = self.activityparameter_qs.filter(Q(activity__in=self.qs))
 
         kwargs['fromTable'] = 'ActivityParameterHistogram'
         self._buildQuerySet(**kwargs)
-        # Add special query constraint for APHs which are in the selection of Activities that are built by _buildQuerySet() fromTable Activity
-        self.activityparameterhistogram_qs = self.activityparameterhistogram_qs.filter(Q(activityparameter__activity__in=self.qs))
 
     def _buildQuerySet(self, *args, **kwargs):
         '''
@@ -236,8 +232,8 @@ class STOQSQManager(object):
         Collect all of the various counts into a dictionary
         '''
         # Always get approximate count
-        logger.debug('str(self.getActivityParametersQS().query) = %s', str(self.getActivityParametersQS().query))
-        approximate_count = self.getActivityParametersQS().aggregate(Sum('number'))['number__sum']
+        logger.debug('str(self.getActivityParametersQS(forCount=True).query) = %s', str(self.getActivityParametersQS(forCount=True).query))
+        approximate_count = self.getActivityParametersQS(forCount=True).aggregate(Sum('number'))['number__sum']
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
         # Actual counts are None unless the 'Get actual count' box is checked
@@ -287,13 +283,23 @@ class STOQSQManager(object):
         else:
             return 0
         
-    def getActivityParametersQS(self):
+    def getActivityParametersQS(self, forCount=False):
         '''
         Return query set of ActivityParameters given the current constraints. 
+        If forCount is True then add list of measured parameters to the query; this is done here for the query
+        needed for getting the count.  The ParameterParameter min & max query also uses self.activityparameter_qs
+        and we don't want the addition of the measured parameters query for that.
         '''
         if not self.activityparameter_qs:
             logger.warn("self.activityparameter_qs is None")
-        return self.activityparameter_qs
+        if forCount:
+            if self.kwargs['measuredparametersgroup']:
+                logger.debug('Adding Q object for parameter__name__in = %s', self.kwargs['measuredparametersgroup'])
+                return self.activityparameter_qs.filter(Q(parameter__name__in=self.kwargs['measuredparametersgroup']))
+            else:
+                return self.activityparameter_qs
+        else:
+            return self.activityparameter_qs
 
     def getActivityParameterHistogramsQS(self):
         '''
@@ -880,12 +886,10 @@ class STOQSQManager(object):
                 q = Q(instantpoint__activity__in=self.qs)
             elif fromTable == 'ActivityParameter':
                 # Use sub-query to restrict ActivityParameters to those that are in the list of Activities in the selection
-                ##q = Q(activity__in=self.qs)
-                q = q & Q(parameter__name__in=parametername)
+                q = Q(activity__in=self.qs)
             elif fromTable == 'ActivityParameterHistogram':
                 # Use sub-query to find all ActivityParameterHistogram from Activities that are in the existing Activity queryset
-                ##q = Q(activityparameter__activity__in=self.qs)
-                pass
+                q = Q(activityparameter__activity__in=self.qs)
         return q
 
     def _parameterstandardnameQ(self, parameterstandardname, fromTable='Activity'):
