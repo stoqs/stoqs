@@ -1742,15 +1742,17 @@
         if ( ! data ) {
             return;
         }
-        $.each(data['platforms'], function (index, platform_value) {
-            if (data['parametertime']['pt']['timeseriesprofile'][platform_value[0]]) {
+        $.each(data.parametertime.pt.timeseriesprofile, function (platform, platform_parm) {
+            console.log('platform = ' + platform);
+            console.log('platform_parm = ' + platform_parm);
+            // May want these organized by units on the server (?)
+            $.each(platform_parm, function (parm, activity_time_series) {
+                console.log('parm = ' + parm);
                 // Now add each parameter for this platform - each with the same units on a y axis
-                $.each(data['parametertime']['pt']['timeseriesprofile'][platform_value[0]], function (parm, parameter_time_series) {
-                $.each(parameter_time_series, function (label, parameter_time_series) {
-                    var rec = [];
-                    //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                //console.log('Checking time for ' + platform + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                $.each(activity_time_series, function (activity, time_series) {
                     subset_pts = []
-                    $.each(parameter_time_series, function (index, td) {
+                    $.each(time_series, function (index, td) {
                         // From each activity push only the times between x1 & x2, inclusive
                         if (td[0] >= x1 && td[0] <= x2) {
                             subset_pts.push(td);
@@ -1758,15 +1760,14 @@
                     });
 
                     if (subset_pts.length > 0) {
-                        if (! platform_seen[platform_value[0]]) {
-                            //rec["label"] = platform_value[0];
-                            platform_seen[platform_value[0]] = true;
+                        if (! platform_seen[platform]) {
+                            platform_seen[platform] = true;
                         }
-                        dataset.push({'label': label, 'data': parameter_time_series, 'color': "#" + data['parametertime']['colors'][platform_value[0]]});
+                        label = parm + ' ' + activity;
+                        dataset.push({'label': label, 'data': time_series, 'color': "#" + data.parametertime.colors[platform]});
                     }
                 });
-                });
-            }
+            });
         });
 
         return dataset;
@@ -2029,14 +2030,14 @@
                 timedepthplot = $.plot($("#time-depth-flot"), getDataset(initData, start.getTime(), end.getTime()), 
                                                               simpledepthtime_options_zoom);
             }
-            //else if (key == 'parametertime') {
-            //    //flotPlot(data)
-            //    var start = new Date(data['time'][0]);
-            //    var end = new Date(data['time'][1]);
-            //    simpledepthtime_options_zoom = parametertime_options;
-            //    timeparameterplot = $.plot($("#time-parameter-flot"), getParameterDataset(initData, start.getTime(), end.getTime()), 
-            //                                                  parametertime_options_zoom);
-            //}
+            else if (key == 'parametertime') {
+                //flotPlot(data)
+                var start = new Date(data['time'][0]);
+                var end = new Date(data['time'][1]);
+                parametertime_options_zoom = parametertime_options;
+                timeparameterplot = $.plot($("#time-parameter-flot"), getParameterDataset(initData, start.getTime(), end.getTime()), 
+                                                              parametertime_options_zoom);
+            }
             else if (key == 'activityparameterhistograms') {
                 // Create the html placeholders for the plots
                 var parameterunits = data[key]['parameterunits'];
@@ -2174,6 +2175,11 @@
                     $('#sectioncolorbar').html('');
                 }
 
+            }
+            else if (key == 'parametertime') {
+                parametertime_options_zoom = parametertime_options;
+                timeparameterplot = $.plot($("#time-parameter-flot"), getParameterDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val()),
+                                                              parametertime_options_zoom);
             }
             else if (key == 'activityparameterhistograms') {
                 var histHtml = '<tbody>';
