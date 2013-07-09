@@ -551,38 +551,47 @@ class STOQSQManager(object):
     def getParameterTime(self):
         '''
         Based on the current selected query criteria for activities, return the associated MeasuredParameter datavalue time series
-        values as a 2-tuple list inside a 4 level hash of featureType, platform, parameter, and an "activity__name + nominal depth" key
+        values as a 2-tuple list inside a 3 level hash of featureType, units, and an "activity__name + nominal depth" key
         for each line to be drawn by flot.
         '''
         pt = {}
         colors = {}
+        pa_units = {}
+        units = {}
 
         for p in self.getPlatforms():
             plat = p[0]
-            plq = Q(platform__name = plat)
             colors[plat] = p[2]
 
             if p[3].lower() == 'timeseriesprofile':
-                try:
-                    pt['timeseriesprofile'][plat] = {}
-                except KeyError:
-                    pt['timeseriesprofile'] = {}
-                    pt['timeseriesprofile'][plat] = {}
-
-                # Pre-populate hash with parameter names
+                # Collect units in a parameter name hash, use standard_name if set and repair bad names
                 for pa in self.getParameters():
-                    parmQ = Q(activityparameter__parameter__name=pa[0])
+                    unit = pa[3]
+                    if pa[1] == 'sea_water_salinity':
+                        unit = 'PSU'
+                    if pa[1] and pa[1].strip() != '':
+                        pa_units[pa[1]] = unit
+                    else:
+                        pa_units[pa[0]] = unit
                     try:
-                        pt['timeseriesprofile'][plat][pa[0]] = {}
+                        pt['timeseriesprofile'][unit] = {}
                     except KeyError:
-                        pt['timeseriesprofile'][plat] = {}
-                        pt['timeseriesprofile'][plat][pa[0]] = {}
+                        pt['timeseriesprofile'] = {}
+                        pt['timeseriesprofile'][unit] = {}
 
-                # Query database for time series data from MeasuredParameter and stuff into hash
+                # Build units hash of parameter names for labeling axes in flot
+                for p,u in pa_units.iteritems():
+                    try:
+                        units[u] = units[u] + ' ' + p
+                    except KeyError:
+                        units[u] = p
+
+                # Query database for time series data from MeasuredParameter and stuff into hash of time series for plotting
                 if not self.mpq.qs_mp:
                     self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
                 logger.info('self.mpq.qs_mp = %s', str(self.mpq.qs_mp.query))
+
                 # Modify query set to have only timeseriesprofile data
                 qs_mp = self.mpq.qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact='timeseriesprofile')
                 logger.info('qs_mp = %s', str(qs_mp.query))
@@ -591,23 +600,21 @@ class STOQSQManager(object):
                     tv = mp['measurement__instantpoint__timevalue']
                     ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
                     dv = mp['datavalue']
-                    nd = mp['measurement__depth']       # Should be mp['measurement__mominallocation__depth']
-                    parm = mp['parameter__name']
+                    nd = mp['measurement__depth']       # Can also be mp['measurement__mominallocation__depth']
+                    if mp['parameter__standard_name'] and mp['parameter__standard_name'].strip() != '':
+                        parm = mp['parameter__standard_name']
+                    else:
+                        parm = mp['parameter__name']
                     if not dv:
                         continue
-                    an_nd = "%s_%s" % (an, nd,)
+                    an_nd = "%s @ %s" % (an, nd,)
                     try:
-                        pt['timeseriesprofile'][plat][parm][an_nd].append((ems, dv))
+                        pt['timeseriesprofile'][pa_units[parm]][an_nd].append((ems, dv))
                     except KeyError:
-                        pt['timeseriesprofile'][plat][parm][an_nd] = []
-                        pt['timeseriesprofile'][plat][parm][an_nd].append((ems, dv))
+                        pt['timeseriesprofile'][pa_units[parm]][an_nd] = []
+                        pt['timeseriesprofile'][pa_units[parm]][an_nd].append((ems, dv))
 
-                # Remove any empty parameters
-                for p in pt['timeseriesprofile'][plat].keys():
-                    if not pt['timeseriesprofile'][plat][p]:
-                        del pt['timeseriesprofile'][plat][p]
-
-        return({'pt': pt, 'colors': colors})
+        return({'pt': pt, 'colors': colors, 'units': units})
 
     def getSampleDepthTime(self):
         '''

@@ -1738,35 +1738,26 @@
     function getParameterDataset(data, x1, x2) {
         // Return a dataset of parameter time series for flot for only the data between times x1 and x2
         var dataset = [];
-        var platform_seen = [];
         if ( ! data ) {
             return;
         }
-        $.each(data.parametertime.pt.timeseriesprofile, function (platform, platform_parm) {
-            console.log('platform = ' + platform);
-            console.log('platform_parm = ' + platform_parm);
-            // May want these organized by units on the server (?)
-            $.each(platform_parm, function (parm, activity_time_series) {
-                console.log('parm = ' + parm);
-                // Now add each parameter for this platform - each with the same units on a y axis
-                //console.log('Checking time for ' + platform + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
-                $.each(activity_time_series, function (activity, time_series) {
-                    subset_pts = []
-                    $.each(time_series, function (index, td) {
-                        // From each activity push only the times between x1 & x2, inclusive
-                        if (td[0] >= x1 && td[0] <= x2) {
-                            subset_pts.push(td);
-                        }
-                    });
-
-                    if (subset_pts.length > 0) {
-                        if (! platform_seen[platform]) {
-                            platform_seen[platform] = true;
-                        }
-                        label = parm + ' ' + activity;
-                        dataset.push({'label': label, 'data': time_series, 'color': "#" + data.parametertime.colors[platform]});
+        $.each(data.parametertime.pt.timeseriesprofile, function (unit, activity_time_series) {
+            console.log('unit = ' + unit);
+            console.log('activity_time_series = ' + activity_time_series);
+            $.each(activity_time_series, function (activity, time_series) {
+                subset_pts = []
+                $.each(time_series, function (index, td) {
+                    // From each activity push only the times between x1 & x2, inclusive
+                    if (td[0] >= x1 && td[0] <= x2) {
+                        subset_pts.push(td);
                     }
                 });
+
+                if (subset_pts.length > 0) {
+                    label = data.parametertime.units[unit] + ' ' + activity;
+                    //dataset.push({'label': label, 'data': time_series, 'color': "#" + data.parametertime.colors[platform]});
+                    dataset.push({'label': label, 'data': time_series});
+                }
             });
         });
 
