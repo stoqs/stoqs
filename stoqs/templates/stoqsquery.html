@@ -731,8 +731,6 @@
     var stack_depth = 0;
     var simpledepthtime_options;
     var simpledepthtime_options_zoom;
-    var parametertime_options;
-    var parametertime_options_zoom;
     var cmincmax = ''
     var hasTrajectory;
     var hasTimeSeries;
@@ -1316,7 +1314,6 @@
             zoom_xy_stack = [];
             stack_depth = 0;
             simpledepthtime_options_zoom = simpledepthtime_options;
-            parametertime_options_zoom = parametertime_options;
             rebuildFilters();
             $("#zoomed-button").removeClass('btn-primary');
             $("#zoomed-button").addClass('disabled');
@@ -1540,25 +1537,6 @@
                                     legend: { show: false },
                                     selection: { mode: "xy" }
                                   };
-    var parametertime_options = { grid: { 
-                                        backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
-                                    },
-                                    xaxis: { mode: "time" },
-                                    xaxes: [{
-                                                axisLabel: 'Time (gmt)'
-                                            }],
-                                    yaxes: [{
-                                                position: 'left',
-                                                axisLabel: 'Parameters'
-                                            }],
-                                    series: {
-                                        lines: { show: true, fill: false, lineWidth: 1 },
-                                        points: { show: false, fill: false },
-                                        shadowSize: 0
-                                    },
-                                    legend: { show: true },
-                                    selection: { mode: "x" }
-                                  };
     var histogram_options = {   yaxis: {
                                     autoscaleMargin: null
                                 },
@@ -1741,27 +1719,46 @@
         if ( ! data ) {
             return;
         }
+
+        var yaxisNumber = {};
+        var yaxisCount = 0;
+        var yaxesOptions = [];
         $.each(data.parametertime.pt.timeseriesprofile, function (unit, activity_time_series) {
             console.log('unit = ' + unit);
             console.log('activity_time_series = ' + activity_time_series);
             $.each(activity_time_series, function (activity, time_series) {
-                subset_pts = []
+                hasData = false;
                 $.each(time_series, function (index, td) {
-                    // From each activity push only the times between x1 & x2, inclusive
+                    // Test activity for data between times x1 and x2
                     if (td[0] >= x1 && td[0] <= x2) {
-                        subset_pts.push(td);
+                        hasData = true;
+                        return false;
                     }
                 });
 
-                if (subset_pts.length > 0) {
-                    label = data.parametertime.units[unit] + ' ' + activity;
-                    //dataset.push({'label': label, 'data': time_series, 'color': "#" + data.parametertime.colors[platform]});
-                    dataset.push({'label': label, 'data': time_series});
+                if (hasData) {
+                    if (! (unit in yaxisNumber)) {
+                        yaxisCount = yaxisCount + 1;
+                        yaxisNumber[unit] = yaxisCount;
+                        if (yaxisNumber[unit] % 2 == 0) {
+                            pos = 'right';
+                        }
+                        else {
+                            pos = 'left';
+                        }
+                        label_with_activity_name = data.parametertime.units[unit] + ' (' + unit + ') ' + activity;
+                        label = data.parametertime.units[unit] + ' (' + unit + ')';
+                        yaxesOptions.push({position: pos, axisLabel: label});
+                    }
+                    dataset.push({'label': label, 'data': time_series, 'yaxis': yaxisNumber[unit]});
                 }
             });
         });
 
-        return dataset;
+        return { 
+            'dataset': dataset,
+            'yaxesOptions': yaxesOptions
+        };
 
     } // getParameterDataset()
 
@@ -2025,9 +2022,21 @@
                 //flotPlot(data)
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
-                parametertime_options_zoom = parametertime_options;
-                timeparameterplot = $.plot($("#time-parameter-flot"), getParameterDataset(initData, start.getTime(), end.getTime()), 
-                                                              parametertime_options_zoom);
+                parmData = getParameterDataset(initData, start.getTime(), end.getTime());
+                timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, {
+                                                                        xaxis: { mode: "time" },
+                                                                        xaxes: [{
+                                                                                    axisLabel: 'Time (gmt)'
+                                                                                }],
+                                                                        yaxes: parmData.yaxesOptions,
+                                                                        series: {
+                                                                            lines: { show: true, fill: false, lineWidth: 1 },
+                                                                            points: { show: false, fill: false },
+                                                                            shadowSize: 0
+                                                                        },
+                                                                        legend: { show: false },
+                                                                        selection: { mode: "x" }
+                                                                    });
             }
             else if (key == 'activityparameterhistograms') {
                 // Create the html placeholders for the plots
@@ -2168,9 +2177,21 @@
 
             }
             else if (key == 'parametertime') {
-                parametertime_options_zoom = parametertime_options;
-                timeparameterplot = $.plot($("#time-parameter-flot"), getParameterDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val()),
-                                                              parametertime_options_zoom);
+                parmData = getParameterDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val());
+                timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, {
+                                                                        xaxis: { mode: "time" },
+                                                                        xaxes: [{
+                                                                                    axisLabel: 'Time (gmt)'
+                                                                                }],
+                                                                        yaxes: parmData.yaxesOptions,
+                                                                        series: {
+                                                                            lines: { show: true, fill: false, lineWidth: 1 },
+                                                                            points: { show: false, fill: false },
+                                                                            shadowSize: 0
+                                                                        },
+                                                                        legend: { show: false },
+                                                                        selection: { mode: "x" }
+                                                                    });
             }
             else if (key == 'activityparameterhistograms') {
                 var histHtml = '<tbody>';
