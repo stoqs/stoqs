@@ -556,7 +556,6 @@
                                     <input type="hidden" id="end-depth" name="end-depth" /> 
                                 </div>
                                 <div class="tab-pane" id="temporal-parameter">
-                                    <em>Under construction</em>
                                     <em>Click and drag to select a time range</em>
                                     <div class="row-fluid" id="time-parameter-plot" style="height:400px" class="disabled row-fluid">
                                         <div id="time-parameter-flot" style="width:100%;height:90%;" class="disabled"></div>
@@ -1669,6 +1668,7 @@
         if ( ! data ) {
             return;
         }
+        var maxLength = 0;
         $.each(data['platforms'], function (index, platform_value) {
             // Now add each activity for this platform - separated so that they are not connected with a line
             $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
@@ -1683,6 +1683,9 @@
                 });
 
                 if (subset_dts.length > 0) {
+                    if (subset_dts.length > maxLength) {
+                        maxLength = subset_dts.length;
+                    }
                     if (! platform_seen[platform_value[0]]) {
                         //rec["label"] = platform_value[0];
                         platform_seen[platform_value[0]] = true;
@@ -1709,6 +1712,15 @@
             sample_points.setVisibility(true);         // Turn on sample view openlayers
         }
 
+        // Show the Parameter tab if no interesting depth plot as determined by low maximum length of data
+        if (maxLength <= 2 && data.parametertime.pt.timeseriesprofile) {
+            if ( $('#collapseTemporal').hasClass('in') ) {
+                if ( ! $('#temporal-parameter').hasClass('active') ) {
+                    $('a[href=#temporal-parameter]').tab('show');
+                }
+            }
+        }
+
         return dataset;
 
     } // getDataset()
@@ -1717,6 +1729,9 @@
         // Return a dataset of parameter time series for flot for only the data between times x1 and x2
         var dataset = [];
         if ( ! data ) {
+            return;
+        }
+        if ( jQuery.isEmptyObject(data.parametertime.pt) ) {
             return;
         }
 
@@ -1799,6 +1814,26 @@
                                                                           });
         parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');
         $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogtram_options_labels);
+    }
+
+    function plotTimeParameterData(parmData) {
+        if ( jQuery.isEmptyObject(parmData) ) {
+            return;
+        }
+        $.plot($("#time-parameter-flot"), parmData.dataset, {
+                                                            xaxis: { mode: "time" },
+                                                            xaxes: [{
+                                                                        axisLabel: 'Time (gmt)'
+                                                                    }],
+                                                            yaxes: parmData.yaxesOptions,
+                                                            series: {
+                                                                lines: { show: true, fill: false, lineWidth: 1 },
+                                                                points: { show: false, fill: false },
+                                                                shadowSize: 0
+                                                            },
+                                                            legend: { show: false },
+                                                            selection: { mode: "x" }
+                                                        });
     }
 
     function ZoomIn(event, ranges) {
@@ -2023,20 +2058,7 @@
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
                 parmData = getParameterDataset(initData, start.getTime(), end.getTime());
-                timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, {
-                                                                        xaxis: { mode: "time" },
-                                                                        xaxes: [{
-                                                                                    axisLabel: 'Time (gmt)'
-                                                                                }],
-                                                                        yaxes: parmData.yaxesOptions,
-                                                                        series: {
-                                                                            lines: { show: true, fill: false, lineWidth: 1 },
-                                                                            points: { show: false, fill: false },
-                                                                            shadowSize: 0
-                                                                        },
-                                                                        legend: { show: false },
-                                                                        selection: { mode: "x" }
-                                                                    });
+                plotTimeParameterData(parmData);
             }
             else if (key == 'activityparameterhistograms') {
                 // Create the html placeholders for the plots
@@ -2178,20 +2200,7 @@
             }
             else if (key == 'parametertime') {
                 parmData = getParameterDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val());
-                timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, {
-                                                                        xaxis: { mode: "time" },
-                                                                        xaxes: [{
-                                                                                    axisLabel: 'Time (gmt)'
-                                                                                }],
-                                                                        yaxes: parmData.yaxesOptions,
-                                                                        series: {
-                                                                            lines: { show: true, fill: false, lineWidth: 1 },
-                                                                            points: { show: false, fill: false },
-                                                                            shadowSize: 0
-                                                                        },
-                                                                        legend: { show: false },
-                                                                        selection: { mode: "x" }
-                                                                    });
+                plotTimeParameterData(parmData);
             }
             else if (key == 'activityparameterhistograms') {
                 var histHtml = '<tbody>';
