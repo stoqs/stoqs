@@ -1150,6 +1150,14 @@
             params['min_depth']=$('#start-depth').val();
             params['max_depth']=$('#end-depth').val();
         }
+        else {
+            var start = new Date(timedepthplot.getAxes().xaxis.min);
+            params['start_time'] = getUTCDateString(start)
+            var end = new Date(timedepthplot.getAxes().xaxis.max);
+            params['end_time'] = getUTCDateString(end)
+            params['min_depth'] = timedepthplot.getAxes().yaxis.min
+            params['max_depth'] = timedepthplot.getAxes().yaxis.max
+        }
 
         params['sampledparametersgroup']=[]
         $('td',$('#sampledparameter-table')).each(function (index, element) {
