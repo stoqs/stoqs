@@ -844,6 +844,9 @@
     
     // Set the URL fields and buttons to use the current queried URL
     function setDataAccess(data) {
+        if ( $.isEmptyObject(data['parameterminmax']) ) {
+            return;
+        }
         var base_url = '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';
         var query_url = '{{site_uri}}{% url stoqs-query-ui dbAlias=request.META.dbAlias %}';
         var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
@@ -1133,9 +1136,11 @@
     
     function rebuildFilters(only) {
         params={};
-        // To tell the backend to process for only and update only this part of the data
+        // To tell the backend to process for the list of options in the only list
         // Useful for radio button and checkbox events that do not change the selection
-        if (typeof only != 'undefined') {
+        // and for not updating data for panels not visible in the UI.  Items in the 
+        // only list are the keys of options_functions in utils/STOQSQManager.py.
+        if ( ! $.isEmptyObject(only) ) {
             params['only'] = only
         }
 
@@ -1270,6 +1275,9 @@
     } // rebuildFilters()
 
     function refreshMap(e) {
+        if ( $.isEmptyObject(e) ) {
+            return;
+        }
         if (hasTrajectory) {
             track_lines.setVisibility(true);
             track_lines.redraw(true);
@@ -1328,28 +1336,33 @@
 
     $('#getactualcount').on('click', function (event) {
         // Don't need to get everything from queryData, only the count
-        rebuildFilters('getactualcount');
+        rebuildFilters(['counts']);
     });
 
     $('.pv-histogram-checkbox').on('click', function (event) {
         // Don't need to get everything from queryData, only the new histogramdata
         $('#histogram-instruction').html('<em>Click and drag to select parameter ranges</em>');
-        rebuildFilters('parametervalueshistograms');
+        rebuildFilters(['activityparameterhistograms']);
     });
 
     $('#showparameterplatformdata').on('click', function (event) {
-        // Don't need to get everything from queryData, only the response with the PNG image
-        rebuildFilters('parameterplatformdata');
+        // Don't need to get everything from queryData, only the response with the PNG image if checked
+        if ($('#showparameterplatformdata').is(':checked')) {
+            rebuildFilters(['parameterplatformdatavaluepng']);
+        }
+        else {
+            rebuildFilters();
+        }
     });
 
     $('input[name="showdataas"]').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the PNG image
-        rebuildFilters('parameterplatformdata');
+        rebuildFilters(['parameterplatformdatavaluepng']);
     });
 
     $('#showgeox3ddata').on('click', function (event) {
-        // Don't need to get everything from queryData, only the response with the PNG image
-        rebuildFilters('geox3ddata');
+        // Don't need to get everything from queryData, only the response with the X3D data
+        rebuildFilters(['measuredparameterx3d']);
     });
 
     $('#showsensortracks').on('click', function (event) {
@@ -1369,7 +1382,7 @@
         $("#clear-pp-button").addClass('btn-primary');
         $("#clear-pp-button").removeClass('disabled');
         if ( $('input:radio[name=parameters_x]').is(':checked') && $('input:radio[name=parameters_y]').is(':checked') ) {
-            rebuildFilters('pp');
+            rebuildFilters(['parameterparameterpng', 'parameterparameterx3d']);
         }
     });
 
@@ -1661,7 +1674,7 @@
         }
     });
 
-    function getDataset(data, x1, x2) {
+    function getDepthDataset(data, x1, x2) {
         // Return a dataset of simpledepthtime for flot for only the data between times x1 and x2
         var dataset = [];
         var platform_seen = [];
@@ -1723,7 +1736,7 @@
 
         return dataset;
 
-    } // getDataset()
+    } // getDepthDataset()
 
     function getParameterDataset(data, x1, x2) {
         // Return a dataset of parameter time series for flot for only the data between times x1 and x2
@@ -1731,7 +1744,7 @@
         if ( ! data ) {
             return;
         }
-        if ( jQuery.isEmptyObject(data.parametertime.pt) ) {
+        if ( $.isEmptyObject(data.parametertime.pt) ) {
             return;
         }
 
@@ -1817,7 +1830,7 @@
     }
 
     function plotTimeParameterData(parmData) {
-        if ( jQuery.isEmptyObject(parmData) ) {
+        if ( $.isEmptyObject(parmData) ) {
             return;
         }
         $.plot($("#time-parameter-flot"), parmData.dataset, {
@@ -2050,7 +2063,7 @@
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
                 simpledepthtime_options_zoom = simpledepthtime_options;
-                timedepthplot = $.plot($("#time-depth-flot"), getDataset(initData, start.getTime(), end.getTime()), 
+                timedepthplot = $.plot($("#time-depth-flot"), getDepthDataset(initData, start.getTime(), end.getTime()), 
                                                               simpledepthtime_options_zoom);
             }
             else if (key == 'parametertime') {
@@ -2165,12 +2178,13 @@
             }
             else if (key == 'simpledepthtime') {
                 // Redraw the plot given the saved values
-                theData = getDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val());
+                theData = getDepthDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val());
                 if ( ! theData ) {
                     return;
                 }
                 timedepthplot = $.plot($("#time-depth-flot"), theData, simpledepthtime_options_zoom);
-
+            }
+            else if (key == 'parameterplatformdatavaluepng') {
                 // Make the contour plot if checkbox is checked and is not disabled
                 if ($('#showparameterplatformdata').is(':checked')) {
                     if (data['parameterplatformdatavaluepng'][0]) {
@@ -2196,7 +2210,6 @@
                 else {
                     $('#sectioncolorbar').html('');
                 }
-
             }
             else if (key == 'parametertime') {
                 parmData = getParameterDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val());
@@ -2319,7 +2332,7 @@
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
-                setDataAccess(data)
+                setDataAccess(data);
                 for (var key in data) {
                     if (init == true) {
                         onInit(data, key)
@@ -2337,14 +2350,15 @@
 
                 var endAjax = new Date().getTime();
                 var nsecs = (endAjax - startAjax) / 1000.0;
-                if ( ! $('#getactualcount').is(':checked')) {
-                    $('#metadata-count').html("about " + data['counts']['approximate_count_localized'] + " data values");
-                    $('#metadata-ajaxtime').html(" (" + nsecs + " seconds)");
+                if ( ! $.isEmptyObject(data['counts']) ) {
+                    if ( ! $('#getactualcount').is(':checked') ) {
+                        $('#metadata-count').html("about " + data['counts']['approximate_count_localized'] + " data values");
+                    }
+                    else {
+                        $('#metadata-count').html(data['counts']['actual_count_localized'] + " data values");
+                    }
                 }
-                else {
-                    $('#metadata-count').html(data['counts']['actual_count_localized'] + " data values");
-                    $('#metadata-ajaxtime').html(" (" + nsecs + " seconds)");
-                }
+                $('#metadata-ajaxtime').html(" (" + nsecs + " seconds)");
             },
             dataType: "json"
         });

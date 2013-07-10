@@ -210,6 +210,10 @@ class STOQSQManager(object):
         
         results = {}
         for k,v in options_functions.iteritems():
+            if self.kwargs['only'] != []:
+                if k not in self.kwargs['only']:
+                    continue
+
             if k == 'measuredparametersgroup':
                 results[k] = v(MEASUREDINSITU)
                 # To support legacy databases that do not have ParamaterGroup.name populated
