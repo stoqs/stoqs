@@ -531,7 +531,7 @@ class STOQSQManager(object):
             elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
                 qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ)).select_related().values_list( 
                                             'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
-                                            'simpledepthtime__nominallocation__depth').order_by('simpledepthtime__epochmilliseconds')
+                                            'simpledepthtime__nominallocation__depth').order_by('simpledepthtime__epochmilliseconds').distinct()
                 logger.info('qs_tsp = %s', str(qs_tsp.query))
                 # Add to sdt hash date-time series organized by activity__name_nominallocation__depth  key within a platform__name key
                 for sd in qs_tsp:
