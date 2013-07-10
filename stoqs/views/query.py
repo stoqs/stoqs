@@ -50,6 +50,9 @@ def get_http_site_uri(request):
     return site_uri
 
 def buildMapFile(request, qm, options):
+    if 'platforms' not in json.loads(options):
+        return
+
     # 'mappath' should be in the session from the call to queryUI() set it here in case it's not set by queryUI() 
     if request.session.has_key('mappath'):
         logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
@@ -138,7 +141,9 @@ def queryData(request, format=None):
                    'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
                    'showparameterplatformdata': 'showparameterplatformdata',                # Flag value from checkbox
                    'showgeox3ddata': 'showgeox3ddata',                                      # Flag value from checkbox
-                   'showdataas': 'showdataas',               # Value from radio button, either 'contour' or 'scatter'
+                   'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
+
+                    'only': 'only',                         # List of options to update - when only a partial response is needed
                    }
     params = {}
     for key, value in query_parms.iteritems():
