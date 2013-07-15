@@ -1144,21 +1144,6 @@
             params['only'] = only
         }
 
-        if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
-            params['start_time']=$('#start-time').val();
-            params['end_time']=$('#end-time').val();
-            params['min_depth']=$('#start-depth').val();
-            params['max_depth']=$('#end-depth').val();
-        }
-        else {
-            var start = new Date(timedepthplot.getAxes().xaxis.min);
-            params['start_time'] = getUTCDateString(start)
-            var end = new Date(timedepthplot.getAxes().xaxis.max);
-            params['end_time'] = getUTCDateString(end)
-            params['min_depth'] = timedepthplot.getAxes().yaxis.min
-            params['max_depth'] = timedepthplot.getAxes().yaxis.max
-        }
-
         params['sampledparametersgroup']=[]
         $('td',$('#sampledparameter-table')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
@@ -1201,6 +1186,22 @@
             $('#measuredparameters-anchor').html('Measured Parameters')
             $('#clear-measuredparameter-button').removeClass('btn-primary');
             $('#clear-measuredparameter-button').addClass('disabled');
+        }
+
+        if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
+            params['start_time']=$('#start-time').val();
+            params['end_time']=$('#end-time').val();
+            params['min_depth']=$('#start-depth').val();
+            params['max_depth']=$('#end-depth').val();
+        }
+        else if (params['measuredparametersgroup'].length) {
+            // Force a set of min/max time/depth if a Measured Parameter is selected
+            var start = new Date(timedepthplot.getAxes().xaxis.min);
+            params['start_time'] = getUTCDateString(start)
+            var end = new Date(timedepthplot.getAxes().xaxis.max);
+            params['end_time'] = getUTCDateString(end)
+            params['min_depth'] = timedepthplot.getAxes().yaxis.min
+            params['max_depth'] = timedepthplot.getAxes().yaxis.max
         }
 
         // Enable/disable showsensortracks checkbox
@@ -1628,6 +1629,28 @@
         }
     });
 
+    $("#time-parameter-flot").bind("plothover", function (event, pos, item) {
+
+        if (item) {
+            if (typeof previousPoint != 'undefined') {
+                if (previousPoint != item.dataIndex) {
+                    previousPoint = item.dataIndex;
+                    
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+               
+                    showTooltip(item.pageX, item.pageY,
+                                item.series.label);
+                }
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
     function showSampleData(label) {
             //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
             var sample_url = '{{site_uri}}{% url show-sample-datatable dbAlias=request.META.dbAlias format=".json" %}';
@@ -1734,11 +1757,14 @@
         }
 
         // Show the Parameter tab if no interesting depth plot as determined by low maximum length of data
-        if (maxLength <= 2 && data.parametertime.pt.timeseriesprofile) {
+        if (maxLength <= 2 && ! $.isEmptyObject(data.parametertime.pt.timeseriesprofile)) {
             if ( $('#collapseTemporal').hasClass('in') ) {
-                if ( ! $('#temporal-parameter').hasClass('active') ) {
-                    $('a[href=#temporal-parameter]').tab('show');
-                }
+                $('a[href=#temporal-parameter]').tab('show');
+            }
+        }
+        else {
+            if ( $('#collapseTemporal').hasClass('in') ) {
+                $('a[href=#temporal-depth]').tab('show');
             }
         }
 
@@ -1782,11 +1808,10 @@
                         else {
                             pos = 'left';
                         }
-                        label_with_activity_name = data.parametertime.units[unit] + ' (' + unit + ') ' + activity;
-                        label = data.parametertime.units[unit] + ' (' + unit + ')';
-                        yaxesOptions.push({position: pos, axisLabel: label});
+                        yAxisLabel = data.parametertime.units[unit] + ' (' + unit + ')';
+                        yaxesOptions.push({position: pos, axisLabel: yAxisLabel});
                     }
-                    dataset.push({'label': label, 'data': time_series, 'yaxis': yaxisNumber[unit]});
+                    dataset.push({'label': activity, 'data': time_series, 'yaxis': yaxisNumber[unit]});
                 }
             });
         });
@@ -1842,6 +1867,9 @@
             return;
         }
         $.plot($("#time-parameter-flot"), parmData.dataset, {
+                                                            grid: {
+                                                                hoverable: true
+                                                            },
                                                             xaxis: { mode: "time" },
                                                             xaxes: [{
                                                                         axisLabel: 'Time (gmt)'
