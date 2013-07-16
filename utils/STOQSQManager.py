@@ -553,16 +553,56 @@ class STOQSQManager(object):
 
         return({'sdt': sdt, 'colors': colors})
 
+    def _collectParameters(self, platform):
+        '''
+        Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names.
+        Return a tuple of pa_units, is_standard_name, ndCounts dictionaries.
+        '''
+        pa_units = {}
+        is_standard_name = {}
+        ndCounts = {}
+        pt = {}
+
+        # Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names
+        p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
+        p_qs = p_qs.filter(activityparameter__activity__platform__name=platform[0])
+        for parameter in p_qs:
+            unit = parameter.units
+
+            # Get the number of nominal depths for this parameter
+            nds =  models.NominalLocation.objects.using(self.dbname
+                                    ).filter( Q(activity__in=self.qs),
+                                              activity__platform__name=platform[0],
+                                              measurement__measuredparameter__parameter=parameter
+                                    ).values('depth').distinct().count()
+
+            ##raise Exception('DEBUG')
+
+            if parameter.standard_name == 'sea_water_salinity':
+                unit = 'PSU'
+            if parameter.standard_name and parameter.standard_name.strip() != '':
+                pa_units[parameter.standard_name] = unit
+                is_standard_name[parameter.standard_name] = True
+                ndCounts[parameter.standard_name] = nds
+            else:
+                pa_units[parameter.name] = unit
+                is_standard_name[parameter.name] = False
+                ndCounts[parameter.name] = nds
+            try:
+                pt['timeseriesprofile'][unit] = {}
+            except KeyError:
+                pt['timeseriesprofile'] = {}
+                pt['timeseriesprofile'][unit] = {}
+
+        return (pa_units, is_standard_name, ndCounts, pt)
+
     def getParameterTime(self):
         '''
         Based on the current selected query criteria for activities, return the associated MeasuredParameter datavalue time series
         values as a 2-tuple list inside a 3 level hash of featureType, units, and an "activity__name + nominal depth" key
         for each line to be drawn by flot.
         '''
-        pt = {}
         units = {}
-        pa_units = {}
-        is_standard_name = {}
 
         # The base MeasuredParameter query set for existing UI selections
         if not self.mpq.qs_mp:
@@ -579,24 +619,7 @@ class STOQSQManager(object):
                     logger.debug('Adding filter to look for timeseriesprofile featureTypes')
                     self.mpq.qs_mp = self.mpq.qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact='timeseriesprofile')
 
-                # Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names
-                p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
-                p_qs = p_qs.filter(activityparameter__activity__platform__name=platform[0])
-                for parameter in p_qs:
-                    unit = parameter.units
-                    if parameter.standard_name == 'sea_water_salinity':
-                        unit = 'PSU'
-                    if parameter.standard_name and parameter.standard_name.strip() != '':
-                        pa_units[parameter.standard_name] = unit
-                        is_standard_name[parameter.standard_name] = True
-                    else:
-                        pa_units[parameter.name] = unit
-                        is_standard_name[parameter.name] = False
-                    try:
-                        pt['timeseriesprofile'][unit] = {}
-                    except KeyError:
-                        pt['timeseriesprofile'] = {}
-                        pt['timeseriesprofile'][unit] = {}
+                pa_units, is_standard_name, ndCounts, pt = self._collectParameters(platform)
 
                 # Build units hash of parameter names for labeling axes in flot
                 for p,u in pa_units.iteritems():
@@ -613,9 +636,12 @@ class STOQSQManager(object):
                     logger.debug('')
                     logger.debug('-------------------------------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
                     logger.debug('qs_mp = %s', str(qs_mp.query))
-                    logger.debug('qs_mp.count() = %s', str(qs_mp.count()))
 
-                    for mp in qs_mp:
+                    logger.debug('qs_mp.count() = %s, ndCounts[p] = %s', str(qs_mp.count()), ndCounts[p])
+                    
+                    stride = int(qs_mp.count() / 20)
+
+                    for mp in qs_mp[::stride]:
                         if not mp['datavalue']:
                             continue
                         an = mp['measurement__instantpoint__activity__name']
