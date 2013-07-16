@@ -613,11 +613,14 @@ class STOQSQManager(object):
         for platform in self.getPlatforms():
 
             if platform[3].lower() == 'timeseriesprofile':
-                # Restrict MeasuredParameters to featureType of 'timeseriesprofile' as parameter names may span featureTypes
+                # Order by nominal depth first so that strided access collects data correctly from each depth
+                pt_qs_mp = self.mpq.qs_mp_no_order.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')
+
                 # Only add this filter if a platform constraint is not in self.mpq.qs_mp, otherwise it results in many nested nested loops in a time consuming query
                 if str(self.mpq.qs_mp.query).find('stoqs_platform.name IN (') == -1:
+                    # Restrict MeasuredParameters to featureType of 'timeseriesprofile' as parameter names may span featureTypes
                     logger.debug('Adding filter to look for timeseriesprofile featureTypes')
-                    self.mpq.qs_mp = self.mpq.qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact='timeseriesprofile')
+                    pt_qs_mp = pt_qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact='timeseriesprofile')
 
                 pa_units, is_standard_name, ndCounts, pt = self._collectParameters(platform)
 
@@ -629,17 +632,19 @@ class STOQSQManager(object):
                         units[u] = p
 
                     if is_standard_name[p]:
-                        qs_mp = self.mpq.qs_mp.filter(parameter__standard_name=p)
+                        qs_mp = pt_qs_mp.filter(parameter__standard_name=p)
                     else:
-                        qs_mp = self.mpq.qs_mp.filter(parameter__name=p)
+                        qs_mp = pt_qs_mp.filter(parameter__name=p)
 
-                    logger.debug('')
+                    # If client is requesting only parametertime then deliver full resolution, otherwise heavily stride it
+                    pointsPerTimeSeries = 5
+                    if self.kwargs['only'] == 'parametertime': 
+                        stride = 1                   
+                    else:
+                        stride = int(qs_mp.count() / pointsPerTimeSeries / ndCounts[p])
+
                     logger.debug('-------------------------------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
-                    logger.debug('qs_mp = %s', str(qs_mp.query))
-
-                    logger.debug('qs_mp.count() = %s, ndCounts[p] = %s', str(qs_mp.count()), ndCounts[p])
-                    
-                    stride = int(qs_mp.count() / 20)
+                    logger.debug('qs_mp.count() = %s, ndCounts[p] = %s, stride = %s', str(qs_mp.count()), ndCounts[p], stride)
 
                     for mp in qs_mp[::stride]:
                         if not mp['datavalue']:
@@ -649,6 +654,11 @@ class STOQSQManager(object):
                         ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
                         nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
                                                             # mooring microcat actual depths are put into mp['measurement__depth']
+
+                        ##if p == 'sea_water_salinity':
+                        ##    logger.debug('nd = %s, tv = %s', nd, tv)
+                        ##    raise Exception('DEBUG')        # Useful for examining queries in the postgres log
+
                         an_nd = "%s @ %s" % (an, nd,)
                         try:
                             pt['timeseriesprofile'][pa_units[p]][an_nd].append((ems, mp['datavalue']))
