@@ -210,18 +210,18 @@ class MPQuerySet(object):
         qs = self._clone()
         logger.debug('type(qs) = %s', type(qs))
         qs.mp_query = qs.mp_query.filter(*args, **kwargs)
-        return qs
+        return qs.mp_query
  
     def exclude(self, *args, **kwargs):
         qs = self._clone()
         qs.mp_query = qs.mp_query.exclude(*args, **kwargs)
-        return qs
+        return qs.mp_query
  
     def order_by(self, *ordering):
         qs = self._clone()
         qs.mp_query = qs.mp_query.order_by(*ordering)
         qs.ordering = ordering
-        return qs
+        return qs.mp_query
  
     def _clone(self):
         qs = MPQuerySet(self.query, self.values_list)
