@@ -217,10 +217,9 @@ class MPQuerySet(object):
         qs.mp_query = qs.mp_query.exclude(*args, **kwargs)
         return qs.mp_query
  
-    def order_by(self, *ordering):
+    def order_by(self, *args, **kwargs):
         qs = self._clone()
-        qs.mp_query = qs.mp_query.order_by(*ordering)
-        qs.ordering = ordering
+        qs.mp_query = qs.mp_query.order_by(*args, **kwargs)
         return qs.mp_query
  
     def _clone(self):
@@ -328,7 +327,8 @@ class MPQuery(object):
         qparams = self._getQueryParms()
         logger.debug('Building qs_mp...')
         if values_list == []:
-            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
+            # If no .values(...) added to QS then items returned by iteration on qs_mp are model objects, not out wanted dictionaries
+            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*MPQuerySet.rest_columns)
         else:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
 
