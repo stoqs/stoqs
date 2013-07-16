@@ -58,8 +58,30 @@ class STOQSQManager(object):
         self.pq = PQuery(request)
         self.pp = None
         self._actual_count = None
+
         # monkey patch sql/query.py to make it use our database for sql generation
         query.DEFAULT_DB_ALIAS = dbname
+
+        # Dictionary of items that get returned via AJAX as the JSON response.  Make available as member variable.
+        self.options_functions = {
+            'sampledparametersgroup': self.getParameters,
+            'measuredparametersgroup': self.getParameters,
+            'parameterminmax': self.getParameterMinMax,
+            'platforms': self.getPlatforms,
+            'time': self.getTime,
+            'depth': self.getDepth,
+            'simpledepthtime': self.getSimpleDepthTime,
+            'parametertime': self.getParameterTime,
+            'sampledepthtime': self.getSampleDepthTime,
+            'counts': self.getCounts,
+            'sql': self.getMeasuredParametersPostgreSQL,
+            'extent': self.getExtent,
+            'activityparameterhistograms': self.getActivityParameterHistograms,
+            'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
+            'parameterparameterx3d': self.getParameterParameterX3D,
+            'measuredparameterx3d': self.getMeasuredParameterX3D,
+            'parameterparameterpng': self.getParameterParameterPNG,
+        }
         
     def buildQuerySets(self, *args, **kwargs):
         '''
@@ -186,30 +208,9 @@ class STOQSQManager(object):
         These objects are "simple" dictionaries using only Python's built-in types - so conversion to a
         corresponding JSON object should be trivial.
         '''
-        options_functions={
-                           'sampledparametersgroup': self.getParameters,
-                           'measuredparametersgroup': self.getParameters,
-                           ##'parameters': self.getParameters,
-                           'parameterminmax': self.getParameterMinMax,
-                           'platforms': self.getPlatforms,
-                           'time': self.getTime,
-                           'depth': self.getDepth,
-                           'simpledepthtime': self.getSimpleDepthTime,
-                           'parametertime': self.getParameterTime,
-                           'sampledepthtime': self.getSampleDepthTime,
-                           'counts': self.getCounts,
-                           'sql': self.getMeasuredParametersPostgreSQL,
-                           'extent': self.getExtent,
-                           'activityparameterhistograms': self.getActivityParameterHistograms,
-                           'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
-                           'parameterparameterx3d': self.getParameterParameterX3D,
-                           'measuredparameterx3d': self.getMeasuredParameterX3D,
-                           'parameterparameterpng': self.getParameterParameterPNG,
-                           ##'activityparamhistrequestpngs': self.getActivityParamHistRequestPNGs,
-                           }
         
         results = {}
-        for k,v in options_functions.iteritems():
+        for k,v in self.options_functions.iteritems():
             if self.kwargs['only'] != []:
                 if k not in self.kwargs['only']:
                     continue
@@ -559,24 +560,38 @@ class STOQSQManager(object):
         for each line to be drawn by flot.
         '''
         pt = {}
-        colors = {}
-        pa_units = {}
         units = {}
+        pa_units = {}
+        is_standard_name = {}
 
-        for p in self.getPlatforms():
-            plat = p[0]
-            colors[plat] = p[2]
+        # The base MeasuredParameter query set for existing UI selections
+        if not self.mpq.qs_mp:
+            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+        logger.info('self.mpq.qs_mp = %s', str(self.mpq.qs_mp.query))
 
-            if p[3].lower() == 'timeseriesprofile':
-                # Collect units in a parameter name hash, use standard_name if set and repair bad names
-                for pa in self.getParameters():
-                    unit = pa[3]
-                    if pa[1] == 'sea_water_salinity':
+        # Look for platforms that have featureTypes ammenable for Parameter time series visualization
+        for platform in self.getPlatforms():
+
+            if platform[3].lower() == 'timeseriesprofile':
+                # Restrict MeasuredParameters to featureType of 'timeseriesprofile' as parameter names may span featureTypes
+                # Only add this filter if a platform constraint is not in self.mpq.qs_mp, otherwise it results in many nested nested loops in a time consuming query
+                if str(self.mpq.qs_mp.query).find('stoqs_platform.name IN (') == -1:
+                    logger.debug('Adding filter to look for timeseriesprofile featureTypes')
+                    self.mpq.qs_mp = self.mpq.qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact='timeseriesprofile')
+
+                # Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names
+                p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
+                p_qs = p_qs.filter(activityparameter__activity__platform__name=platform[0])
+                for parameter in p_qs:
+                    unit = parameter.units
+                    if parameter.standard_name == 'sea_water_salinity':
                         unit = 'PSU'
-                    if pa[1] and pa[1].strip() != '':
-                        pa_units[pa[1]] = unit
+                    if parameter.standard_name and parameter.standard_name.strip() != '':
+                        pa_units[parameter.standard_name] = unit
+                        is_standard_name[parameter.standard_name] = True
                     else:
-                        pa_units[pa[0]] = unit
+                        pa_units[parameter.name] = unit
+                        is_standard_name[parameter.name] = False
                     try:
                         pt['timeseriesprofile'][unit] = {}
                     except KeyError:
@@ -590,35 +605,32 @@ class STOQSQManager(object):
                     except KeyError:
                         units[u] = p
 
-                # Query database for time series data from MeasuredParameter and stuff into hash of time series for plotting
-                if not self.mpq.qs_mp:
-                    self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-
-                logger.info('self.mpq.qs_mp = %s', str(self.mpq.qs_mp.query))
-
-                # Modify query set to have only timeseriesprofile data
-                qs_mp = self.mpq.qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact='timeseriesprofile')
-                logger.info('qs_mp = %s', str(qs_mp.query))
-                for mp in qs_mp:
-                    an = mp['measurement__instantpoint__activity__name']
-                    tv = mp['measurement__instantpoint__timevalue']
-                    ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
-                    dv = mp['datavalue']
-                    nd = mp['measurement__depth']       # Can also be mp['measurement__mominallocation__depth']
-                    if mp['parameter__standard_name'] and mp['parameter__standard_name'].strip() != '':
-                        parm = mp['parameter__standard_name']
+                    if is_standard_name[p]:
+                        qs_mp = self.mpq.qs_mp.filter(parameter__standard_name=p)
                     else:
-                        parm = mp['parameter__name']
-                    if not dv:
-                        continue
-                    an_nd = "%s @ %s" % (an, nd,)
-                    try:
-                        pt['timeseriesprofile'][pa_units[parm]][an_nd].append((ems, dv))
-                    except KeyError:
-                        pt['timeseriesprofile'][pa_units[parm]][an_nd] = []
-                        pt['timeseriesprofile'][pa_units[parm]][an_nd].append((ems, dv))
+                        qs_mp = self.mpq.qs_mp.filter(parameter__name=p)
 
-        return({'pt': pt, 'colors': colors, 'units': units})
+                    logger.debug('')
+                    logger.debug('-------------------------------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
+                    logger.debug('qs_mp = %s', str(qs_mp.query))
+                    logger.debug('qs_mp.count() = %s', str(qs_mp.count()))
+
+                    for mp in qs_mp:
+                        if not mp['datavalue']:
+                            continue
+                        an = mp['measurement__instantpoint__activity__name']
+                        tv = mp['measurement__instantpoint__timevalue']
+                        ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
+                        nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
+                                                            # mooring microcat actual depths are put into mp['measurement__depth']
+                        an_nd = "%s @ %s" % (an, nd,)
+                        try:
+                            pt['timeseriesprofile'][pa_units[p]][an_nd].append((ems, mp['datavalue']))
+                        except KeyError:
+                            pt['timeseriesprofile'][pa_units[p]][an_nd] = []
+                            pt['timeseriesprofile'][pa_units[p]][an_nd].append((ems, mp['datavalue']))
+
+        return({'pt': pt, 'units': units})
 
     def getSampleDepthTime(self):
         '''
@@ -731,17 +743,6 @@ class STOQSQManager(object):
 
         return {'histdata': aphHash, 'rgbacolors': rgbas, 'parameterunits': pUnits}
 
-    def getActivityParamHistRequestPNGs(self):
-        '''
-        Return list of URLs that return a PNG image for the histograms of paramters contained in
-        the Activity queryset.  The client can display these with an <img src=".." /> tag.
-        '''
-        urlList = []
-        for qs in self.getActivityParameterHistogramsQS():
-            pass
-
-        return urlList
-
     def getParameterPlatformDatavaluePNG(self):
         '''
         Called when user interface has selected just one Parameter and just one Platform, in which case
@@ -809,7 +810,7 @@ class STOQSQManager(object):
             py = self.kwargs['parameterparameter'][1]
             pz = self.kwargs['parameterparameter'][2]
             pc = self.kwargs['parameterparameter'][3]
-            logger.debug(' >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  px = %s, py = %s, pz = %s, pc = %s', px, py, pz, pc)
+            logger.debug('px = %s, py = %s, pz = %s, pc = %s', px, py, pz, pc)
 
             if (px and py and pz):
                 if not self.pq.qs_mp:
