@@ -10,7 +10,7 @@
 # mail list, which you may join at: # https://groups.google.com/forum/#!forum/stoqs-discuss
 
 su -c "easy_install virtualenv"
-su -c "yum -y install postgis rabbitmq-server gdal scipy mod_wsgi"
+su -c "yum -y install rabbitmq-server gdal scipy mod_wsgi"
 
 # Rabbitmq is used by the web app t manage long-running tasks
 su -c "/sbin/chkconfig rabbitmq-server on"
@@ -31,6 +31,7 @@ su
 su postgres
 
 # Create the postgis template  database (Note: depending on versions, your paths may vary)
+su -c "yum -y install postgis postgis91"		# The actual package names may vary
 createdb postgis
 createlang plpgsql postgis
 psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/postgis.sql
@@ -49,11 +50,11 @@ su -c "yum -y install expat-devel"              # Required for KML parsing suppo
 make
 make install
 
-# Mapserver:
-# ---------
+# Mapserver - these instructions have been tested for version 6.2.1:
+# ------------------------------------------------------------------
 # To build MapServer some prerequisites will need to be installed:
 su -c "yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel"
-su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel"
+su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel postgresql91-devel libxslt-devel pam-devel openssl-devel readline-devel"
 
 # Install MapServer following the instructions for your system at http://mapserver.org/.  It is typical to
 # build it from source and then copy the 'mapserv' executable to the cgi-bin directory for your web server.
@@ -69,8 +70,10 @@ su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel"
 
 # With the above prerequisites, mapserver configure can be run as follows:
 ./configure --with-proj=/usr --with-ogr=/usr/local/bin/gdal-config --with-gdal=/usr/local/bin/gdal-config --with-wfs --with-wfsclient --with-wmsclient --with-postgis=/usr/pgsql-9.1/bin/pg_config
+# Make sure that there is a libpg.so file or symlink in /usr/pgsql-9.1/lib.  You may need to do this:
+su -c "ln -s /usr/pgsql-9.1/lib/libpq.so.5.4 /usr/pgsql-9.1/lib/libpq.so
 make 
-cp mapserv /var/www/cgi-bin
+make install
 
 
 # Make sure that the apache httpd service is running on your system
@@ -125,6 +128,6 @@ pip install -e git+https://github.com/JeffHeard/ga_ows.git#egg=ga_ows
 
 --
 Mike McCann
-MBARI 31 January 2013
+MBARI 17 July 2013
 
 
