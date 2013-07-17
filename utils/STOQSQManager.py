@@ -639,12 +639,15 @@ class STOQSQManager(object):
 
                     # If client is requesting only parametertime then deliver full resolution, otherwise heavily stride it
                     pointsPerTimeSeries = 5
-                    if 'parametertime' in self.kwargs['only']: 
+                    stride = int(qs_mp.count() / pointsPerTimeSeries / ndCounts[p])
+                    if 'parametertime' in self.kwargs['only']:
                         stride = 1                   
-                    else:
-                        stride = int(qs_mp.count() / pointsPerTimeSeries / ndCounts[p])
+                    if 'stationtab' in self.kwargs:
+                        if '1' in self.kwargs['stationtab']: 
+                            stride = 1                   
 
                     logger.debug('-------------------------------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
+                    logger.debug('self.kwargs = %s', self.kwargs)
                     logger.debug("qs_mp.count() = %s, ndCounts[p] = %s, self.kwargs['only'] = %s, stride = %s", str(qs_mp.count()), ndCounts[p], self.kwargs['only'], stride)
 
                     for mp in qs_mp[::stride]:

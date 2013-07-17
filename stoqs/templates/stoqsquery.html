@@ -540,7 +540,7 @@
                         <div class="accordion-inner">
 
                             <ul id="temporalTabs" class="nav nav-tabs temporal-tab">
-                                <li class="active"><a href="#temporal-depth" data-toggle="tab" id="temporal-depth-label">Trajectory</a></li>
+                                <li class="active" id="temporal-depth-li"><a href="#temporal-depth" data-toggle="tab" id="temporal-depth-label">Trajectory</a></li>
                                 <li class="disabled" id="temporal-parameter-li"><a href="#temporal-parameter" data-toggle="tab">Station</a></li>
                             </ul>
 
@@ -1287,9 +1287,13 @@
         else {
             $('#parameter-parameter-anchor').html('Parameter-Parameter')
         }
+        if ($('#temporal-parameter-li').hasClass('active')) {
+            params['stationtab'] = 1;
+        }
 
         updateShowDataInfo();
         updateSummaryData();
+
         polyLayer.removeAllFeatures();
 
     } // rebuildFilters()
@@ -1549,7 +1553,13 @@
         }
         // Show the tab then plot the data so that axes are properly drawn
         $('a', event.delegateTarget).tab('show');
-        rebuildFilters(['parametertime']);
+       
+        if ( event.delegateTarget.id == 'temporal-parameter-li' ) { 
+            rebuildFilters(['parametertime']);
+        }
+        else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
+            rebuildFilters(['simpledepthtime']);
+        }
     });
 
 
@@ -2118,7 +2128,7 @@
                 parmData = getParameterDataset(initData, start.getTime(), end.getTime());
                 if ( ! $.isEmptyObject(parmData) ) {
                     if (parmData.yaxesOptions.length != 0) {
-                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + parmData.yaxesOptions.length + ' station Parameters</a>');
+                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + parmData.yaxesOptions.length + ' Station Parameters</a>');
                         $("#temporal-parameter-li").removeClass('disabled');
                     }
                     plotTimeParameterData(parmData);
@@ -2264,7 +2274,17 @@
             }
             else if (key == 'parametertime') {
                 parmData = getParameterDataset(data, $('#start-ems').val(), $('#end-ems').val());
-                plotTimeParameterData(parmData);
+                if ( ! $.isEmptyObject(parmData) ) {
+                    if (parmData.yaxesOptions.length != 0) {
+                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + parmData.yaxesOptions.length + ' Station Parameters</a>');
+                        $("#temporal-parameter-li").removeClass('disabled');
+                        plotTimeParameterData(parmData);
+                    }
+                    else {
+                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">Station</a>');
+                        $("#temporal-parameter-li").addClass('disabled');
+                    }
+                }
             }
             else if (key == 'activityparameterhistograms') {
                 var histHtml = '<tbody>';
@@ -2369,6 +2389,18 @@
                     }
                 }
             }
+
+            // If no parametertime data and Station tab is active then disable it and switch back to Trajectory
+            if ( ! $.isEmptyObject(data.parametertime) ) {
+                if ( $.isEmptyObject(data.parametertime.pt) ) {
+                    if ( $('#temporal-parameter-li').hasClass('active') ) {
+                        $('a', '#temporal-depth-li').tab('show');
+                        $('#temporal-parameter-li').addClass('disabled');
+                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">Station</a>');
+                    } 
+                }
+            }
+
         } // onUpdate()
 
         var startAjax = new Date().getTime();
