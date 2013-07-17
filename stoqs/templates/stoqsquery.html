@@ -54,6 +54,18 @@
             left:10em;
             top:10em;
         }
+        .nav-tabs li.active a { 
+            color: black;
+        }
+        .nav-tabs li.disabled a { 
+            color: grey;
+            cursor: no-drop;
+        }
+        .nav-tabs li.disabled a:hover { 
+            border-color: transparent; 
+            background-color: transparent; 
+        }
+
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet"></link>
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet"></link>
@@ -527,9 +539,9 @@
                     <div id="collapseTemporal" class="accordion-body collapse in">
                         <div class="accordion-inner">
 
-                            <ul id="temporalTabs" class="nav nav-tabs">
-                                <li class="active"><a href="#temporal-depth" data-toggle="tab" id="temporal-depth-label">Depth</a></li>
-                                <li><a href="#temporal-parameter" data-toggle="tab">Parameter</a></li>
+                            <ul id="temporalTabs" class="nav nav-tabs temporal-tab">
+                                <li class="active"><a href="#temporal-depth" data-toggle="tab" id="temporal-depth-label">Trajectory</a></li>
+                                <li class="disabled" id="temporal-parameter-li"><a href="#temporal-parameter" data-toggle="tab">Station</a></li>
                             </ul>
 
                             <div class="tab-content">
@@ -724,7 +736,6 @@
     var parametervalues={};     
     var polyLayer = new OpenLayers.Layer.Vector( " Selection polygon", {visibility: false} );
     var timedepthplot;
-    var timeparameterplot;
     var options_stack = [];
     var zoom_xy_stack = [];
     var stack_depth = 0;
@@ -1532,6 +1543,16 @@
         widthZoomed = ! widthZoomed;
     });
 
+    $('.temporal-tab > li').on('click', function (event) {
+        if ($(event.delegateTarget).hasClass('disabled')) {
+            return false;
+        }
+        // Show the tab then plot the data so that axes are properly drawn
+        $('a', event.delegateTarget).tab('show');
+        rebuildFilters(['parametertime']);
+    });
+
+
 
     var simpledepthtime_options = { grid: { 
                                         backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
@@ -1756,18 +1777,6 @@
             sample_points.setVisibility(true);         // Turn on sample view openlayers
         }
 
-        // Show the Parameter tab if no interesting depth plot as determined by low maximum length of data
-        if (maxLength <= 2 && ! $.isEmptyObject(data.parametertime.pt.timeseriesprofile)) {
-            if ( $('#collapseTemporal').hasClass('in') ) {
-                $('a[href=#temporal-parameter]').tab('show');
-            }
-        }
-        else {
-            if ( $('#collapseTemporal').hasClass('in') ) {
-                $('a[href=#temporal-depth]').tab('show');
-            }
-        }
-
         return dataset;
 
     } // getDepthDataset()
@@ -1972,12 +1981,12 @@
         }
         if ($('#showparameterplatformdata').is(':checked')) {
             qstring = qstring + '&showparameterplatformdata=1';
+            if ($('input:radio[name=showdataas]:checked').val()) {
+                qstring = qstring + '&showdataas=' + $('input:radio[name=showdataas]:checked').val();
+            }
         }
         if ($('#showgeox3ddata').is(':checked')) {
             qstring = qstring + '&showgeox3ddata=1';
-        }
-        if ($('input:radio[name=showdataas]:checked').val()) {
-            qstring = qstring + '&showdataas=' + $('input:radio[name=showdataas]:checked').val();
         }
         if ( ! $('#showallparametervalues').is(':checked')) {
             //$('#parameter-value-table').html('<tbody></tbody>');
@@ -2103,11 +2112,17 @@
                                                               simpledepthtime_options_zoom);
             }
             else if (key == 'parametertime') {
-                //flotPlot(data)
+                // Enable tab
                 var start = new Date(data['time'][0]);
                 var end = new Date(data['time'][1]);
                 parmData = getParameterDataset(initData, start.getTime(), end.getTime());
-                plotTimeParameterData(parmData);
+                if ( ! $.isEmptyObject(parmData) ) {
+                    if (parmData.yaxesOptions.length != 0) {
+                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + parmData.yaxesOptions.length + ' station Parameters</a>');
+                        $("#temporal-parameter-li").removeClass('disabled');
+                    }
+                    plotTimeParameterData(parmData);
+                }
             }
             else if (key == 'activityparameterhistograms') {
                 // Create the html placeholders for the plots
@@ -2248,7 +2263,7 @@
                 }
             }
             else if (key == 'parametertime') {
-                parmData = getParameterDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val());
+                parmData = getParameterDataset(data, $('#start-ems').val(), $('#end-ems').val());
                 plotTimeParameterData(parmData);
             }
             else if (key == 'activityparameterhistograms') {
@@ -2361,6 +2376,7 @@
             type : 'GET',
             beforeSend: function() {
                 $('#time-depth-flot').addClass('stoqs-background-ajax-loader-pulse ');
+                $('#time-parameter-flot').addClass('stoqs-background-ajax-loader-pulse ');
                 $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader-pp ');
                 $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader-3d ');
                 $('#geo-3dplot').addClass('stoqs-background-ajax-loader-3d-topright ');
@@ -2377,6 +2393,7 @@
                     }
                 }
                 $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
+                $('#time-parameter-flot').removeClass('stoqs-background-ajax-loader-pulse ');
                 $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
                 $('#parameter-parameter-3dplot').removeClass('stoqs-background-ajax-loader-3d');
                 $('#geo-3dplot').removeClass('stoqs-background-ajax-loader-3d-topright');
