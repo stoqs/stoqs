@@ -449,7 +449,7 @@ class Base_Loader(STOQS_Loader):
         # The reads here take advantage of OPeNDAP access mechanisms to effeciently transfer data across the network
         for pname in self.include_names:
             if pname not in self.ds.keys():
-                logger.warn('include_name %s not in dataset self.url', pname)
+                logger.warn('include_name %s not in dataset %s', pname, self.url)
                 continue
             # Peek at the shape and pull apart the data from its grid coordinates 
             # Only single trajectories are allowed
@@ -467,7 +467,7 @@ class Base_Loader(STOQS_Loader):
                 except ValueError, err:
                     logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
                     If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
-                    then the cache files must be removed and the tomcat hosting TDS restarted.''')
+                    then the cache files must be removed and the tomcat hosting TDS restarted.''', err, self.url)
                     sys.exit(1)
                 except pydap.exceptions.ServerError as e:
                     logger.exception('%s', e)
@@ -713,7 +713,7 @@ class Base_Loader(STOQS_Loader):
                         maxdepth = maxdepth,
                         num_measuredparameters = self.loaded,
                         loaded_date = datetime.utcnow())
-        logger.debug("%d activitie(s) updated with new attributes." % num_updated)
+        logger.debug("%d activitie(s) updated with new attributes.", num_updated)
 
         #
         # Add resources after loading data to capture additional metadata that may be added

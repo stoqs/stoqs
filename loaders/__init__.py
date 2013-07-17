@@ -406,11 +406,14 @@ class STOQS_Loader(object):
             ##    logger.info('Re-using measurement.id = %d', measurement.id)
 
         except DatabaseError, e:
-            logger.exception('''%s
-                It is likely that creating a nominallocation was attempted on a database that does not have that relation.
+            logger.exception('''DatabaseError:
+                It is likely that you need https://code.djangoproject.com/attachment/ticket/16778/postgis-adapter.patch.
+                Check the STOQS INSTALL file for instructions on Django patch #16778.
+
+                It's also likely that creating a nominallocation was attempted on a database that does not have that relation.
                 Several schema changes were checked into the STOQS repository in June 2013.  It's suggested that you
                 drop the database, recreate it, resync, and reload. 
-                ''', e, self.dbAlias, self.dbAlias)
+                ''')
             sys.exit(-1)
         except Exception, e:
             logger.error('Exception %s', e)
