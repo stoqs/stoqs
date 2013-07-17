@@ -602,6 +602,7 @@ class STOQSQManager(object):
         values as a 2-tuple list inside a 3 level hash of featureType, units, and an "activity__name + nominal depth" key
         for each line to be drawn by flot.
         '''
+        pt = {}
         units = {}
 
         # The base MeasuredParameter query set for existing UI selections
@@ -638,13 +639,13 @@ class STOQSQManager(object):
 
                     # If client is requesting only parametertime then deliver full resolution, otherwise heavily stride it
                     pointsPerTimeSeries = 5
-                    if self.kwargs['only'] == 'parametertime': 
+                    if 'parametertime' in self.kwargs['only']: 
                         stride = 1                   
                     else:
                         stride = int(qs_mp.count() / pointsPerTimeSeries / ndCounts[p])
 
                     logger.debug('-------------------------------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
-                    logger.debug('qs_mp.count() = %s, ndCounts[p] = %s, stride = %s', str(qs_mp.count()), ndCounts[p], stride)
+                    logger.debug("qs_mp.count() = %s, ndCounts[p] = %s, self.kwargs['only'] = %s, stride = %s", str(qs_mp.count()), ndCounts[p], self.kwargs['only'], stride)
 
                     for mp in qs_mp[::stride]:
                         if not mp['datavalue']:
