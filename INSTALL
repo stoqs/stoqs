@@ -88,7 +88,7 @@ indication that you are in the virtual environment.
 7.  Start the development web server:
 
         export LD_LIBRARY_PATH=/usr/local/lib/                  # Needed if packages, such as gdal, were installed here
-        export GDAL_DATA=/usr/share/gdal                        # Needed if epsg support files can't be found - your dir may vary
+        export GDAL_DATA=/usr/share/gdal/                       # Needed if epsg support files can't be found - your dir may vary
         python manage.py runserver 0.0.0.0:8000 
     
     
