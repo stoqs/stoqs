@@ -3,14 +3,14 @@
 
 # These commands need to be executed once on your system, they have been tested on CentOS 6.
 # It is assumed that Postgres 9.1 is already installed.  If you do not have PostgreSQL 9.1
-# installed, then follow the diresctions here: http://wiki.postgresql.org/wiki/YUM_Installation
+# installed, then follow the directions here: http://wiki.postgresql.org/wiki/YUM_Installation
 #
 # Some level of familiarity with Unix is required to install STOQS.  
 # If you run into any difficulties please feel free to post questions on the stoqs-discuss 
 # mail list, which you may join at: # https://groups.google.com/forum/#!forum/stoqs-discuss
 
 su -c "easy_install virtualenv"
-su -c "yum -y install rabbitmq-server gdal scipy mod_wsgi"
+su -c "yum -y install rabbitmq-server scipy mod_wsgi"
 
 # Rabbitmq is used by the web app t manage long-running tasks
 su -c "/sbin/chkconfig rabbitmq-server on"
@@ -31,7 +31,7 @@ su
 su postgres
 
 # Create the postgis template  database (Note: depending on versions, your paths may vary)
-su -c "yum -y install postgis postgis91"		# The actual package names may vary
+su -c "yum -y install postgis91"		        # The actual package name may vary
 createdb postgis
 createlang plpgsql postgis
 psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/postgis.sql
@@ -45,7 +45,7 @@ su -c 'ln -s /tmp/media /var/www/html/media'
 
 # Build GDAL from source.  Download latest (v1.9 or higher) tar ball from http://download.osgeo.org/gdal/
 # Unpack, and in the top level directory (e.g. gdal-1.9.0/) run ('make install' must be done as root):
-su -c "yum -y install expat-devel"              # Required for KML parsing support
+su -c "yum -y install gdal expat-devel"              # Required for csv files and KML parsing support
 ./configure --with-python
 make
 make install
