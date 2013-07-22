@@ -69,6 +69,16 @@ WSGIScriptAlias /canon STOQS_PROJ_DIR/stoqs.wsgi
     http://<your_server_name>/canon/
 
 
+8. You may need to add the follwing lines to the startup script for apache httpd, typically file 
+   /etc/init.d/http:
+
+    export LD_LIBRARY_PATH='/usr/local/lib/'
+    export GDAL_DATA='/usr/share/gdal/'
+  
+   You'll know if you'll need to add this if you get a message saying the gdal library can't be found.
+   Check for error messages in /var/log/httpd/error_log and of course on the web pages from the stoqs ui.
+
+
 TODO: Instructions for setting up celery to run as a daemon. (Note: celery is used for managing 
       long running processes, as of 25 February 2013 stoqs has no such processes.  This is a
       placeholder should stoqs develop long running processes in the future.)
