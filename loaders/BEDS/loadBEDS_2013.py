@@ -56,7 +56,8 @@ cl.bed_base = cl.dodsBase + 'BEDS_2013/beds01/'
 cl.bed_files = [ 
                     'BED00039.nc',
                   ]
-cl.bed_parms = ['XA', 'XR', 'PRESS', 'BED_DEPTH']
+##cl.bed_parms = ['XA', 'XR', 'PRESS', 'BED_DEPTH']
+cl.bed_parms = ['XA', 'YA', 'ZA', 'XR', 'YR', 'ZR', 'PRESS', 'BED_DEPTH']
 
 cl.stride = stride
 
