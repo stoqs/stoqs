@@ -253,6 +253,7 @@ class Base_Loader(STOQS_Loader):
         '''
         if self.auxCoords:
             # Simply return self.auxCoords if specified in the constructor
+            logger.debug('Returning auxCoords that were specified in the constructor')
             return self.auxCoords
 
         # Scan variable standard_name attributes for ('time', 'latitude', 'longitude', 'depth') standard_name's
@@ -283,7 +284,7 @@ class Base_Loader(STOQS_Loader):
 
         # Check for all 4 coordinates needed for spatial-temporal location - if any are missing raise exception with suggestion
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
-        logger.info('coordDict = %s', coordDict)
+        logger.debug('coordDict = %s', coordDict)
         if set(coordDict.keys()) != reqCoords:
             logger.warn('Required coordinate(s) %s missing.  Consider overriding by setting an auxCoods dictionary in your Loader.', list(reqCoords - set(coordDict.keys())))
             raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
@@ -302,10 +303,12 @@ class Base_Loader(STOQS_Loader):
         lats = {}
         lons = {}
         for v in self.include_names:
+            logger.debug('Calling self.getAuxCoordinates() for v = %s', v)
             ac = self.getAuxCoordinates(v)
      
             # depth may be single-valued or an array 
             if self.getFeatureType() == 'timeseries': 
+                logger.debug('ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']][:][0]
             elif self.getFeatureType() == 'timeseriesprofile':
                 depths[v] = self.ds[v][ac['depth']][:]
@@ -326,7 +329,12 @@ class Base_Loader(STOQS_Loader):
         else:
             depth = depths.values()[0]
 
-        return depth, lat, lon
+        logger.info('type(depth) = %s', type(depth))
+        if type(depth) not in ('list', 'tuple', 'numpy.ndarray'):
+            # Make scalars arrays 
+            depth_array = numpy.array([depth])
+
+        return depth_array, lat, lon
 
     def getTimeBegEndIndices(self, timeAxis):
         '''
@@ -354,7 +362,7 @@ class Base_Loader(STOQS_Loader):
     def _genTimeSeriesGridType(self):
         '''
         Generator of TimeSeriesProfile (tzyx where z is multi-valued) and TimeSeries (tzyx where z is single-valued) data.
-        Using terminology from CF-1.6 assume data is from a discrete geometry type of timeSeriesProfile or timeSeries.
+        Using terminology from CF-1.6 assume data is from a discrete sampling geometry type of timeSeriesProfile or timeSeries.
         Provides a uniform dictionary that contains attributes and their associated values without the need
         to individualize code for each data source.
         '''
@@ -977,9 +985,37 @@ class Glider_Loader(Trajectory_Loader):
         return super(Glider_Loader,self).preProcessParams(row)
 
 
-class Mooring_Loader(Base_Loader):
+class TimeSeries_Loader(Base_Loader):
     '''
-    OceanSITES formatted Mooring data loader.  Expects CF-1.6 timeSeriesProfile discrete geometry type.
+    Generic loader for station (non-trajectory) data.  Expects CF-1.6 timeSeries discrete sampling geometry featureType.
+    '''
+    # Subclasses or calling function must specify include_names
+    include_names=[]
+
+    def initDB(self):
+        'Needs to use the exact name for the time coordinate in the Trajectory data'
+        if self.startDatetime == None or self.endDatetime == None:
+            ds = open_url(self.url)
+            if self.startDatetime == None:
+                self.startDatetime = datetime.utcfromtimestamp(ds.time[0])
+                self.dataStartDatetime = datetime.utcfromtimestamp(ds.time[0])
+                logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
+            if self.endDatetime == None:
+                self.endDatetime = datetime.utcfromtimestamp(ds.time[-1])
+                logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
+
+        return super(TimeSeries_Loader, self).initDB()
+
+    def preProcessParams(self, row):
+        '''
+        Placeholder for any special preprocessing
+        '''
+        return super(TimeSeries_Loader,self).preProcessParams(row)
+
+
+class Mooring_Loader(TimeSeries_Loader):
+    '''
+    OceanSITES formatted Mooring data loader.  Expects CF-1.6 timeSeriesProfile discrete sampling geometry type.
     '''
     include_names=['Temperature', 'Salinity', 'TEMP', 'PSAL', 'ATMP', 'AIRT', 'WDIR', 'WSDP']
 
@@ -988,6 +1024,19 @@ class Mooring_Loader(Base_Loader):
         Placeholder for any special preprocessing for Mooring data
         '''
         return super(Mooring_Loader,self).preProcessParams(row)
+
+
+class BEDS_TS_Loader(TimeSeries_Loader):
+    '''
+    Benthic Event Detector timeSeries data.  Expects CF-1.6 timeSeries discrete sampling geometry type.
+    '''
+    include_names = ['XA', 'YA', 'ZA', 'XR', 'YR', 'ZR', 'PRESS', 'BED_DEPTH']
+
+    def preProcessParams(self, row):
+        '''
+        Placeholder for any special preprocessing for Mooring data
+        '''
+        return super(BEDS_TS_Loader,self).preProcessParams(row)
 
 #
 # Helper methods that expose a common interface for executing the loaders for specific platforms
@@ -1106,9 +1155,35 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
         
     logger.debug("Loaded Activity with name = %s", aName)
 
+def runTimeSeriesLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+    '''
+    Run the DAPloader for Generic CF Metadata timeSeries featureType data. 
+    Following the load important updates are made to the database.
+    '''
+    logger.debug("Instantiating TimeSeries_Loader for url = %s", url)
+    loader = TimeSeries_Loader(
+            url = url,
+            campaignName = cName,
+            dbAlias = dbAlias,
+            activityName = aName,
+            activitytypeName = aTypeName,
+            platformName = pName,
+            platformColor = pColor,
+            platformTypeName = pTypeName,
+            stride = stride,
+            startDatetime = startDatetime,
+            endDatetime = endDatetime)
+
+    if parmList:
+        logger.debug("Setting include_names to %s", parmList)
+        loader.include_names = parmList
+
+    (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
+    logger.debug("Loaded Activity with name = %s", aName)
+
 def runMooringLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
     '''
-    Run the DAPloader for OceanSites formatetd Mooring Station data and update the Activity with 
+    Run the DAPloader for OceanSites formatted Mooring Station data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
