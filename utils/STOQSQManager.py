@@ -613,7 +613,7 @@ class STOQSQManager(object):
         # Look for platforms that have featureTypes ammenable for Parameter time series visualization
         for platform in self.getPlatforms():
 
-            if platform[3].lower() == 'timeseriesprofile':
+            if platform[3].lower() == 'timeseriesprofile' or platform[3].lower() == 'timeseries':
                 # Order by nominal depth first so that strided access collects data correctly from each depth
                 pt_qs_mp = self.mpq.qs_mp_no_order.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')
 
@@ -621,7 +621,7 @@ class STOQSQManager(object):
                 if str(self.mpq.qs_mp.query).find('stoqs_platform.name IN (') == -1:
                     # Restrict MeasuredParameters to featureType of 'timeseriesprofile' as parameter names may span featureTypes
                     logger.debug('Adding filter to look for timeseriesprofile featureTypes')
-                    pt_qs_mp = pt_qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact='timeseriesprofile')
+                    pt_qs_mp = pt_qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact=platform[3].lower())
 
                 pa_units, is_standard_name, ndCounts, pt = self._collectParameters(platform)
 
