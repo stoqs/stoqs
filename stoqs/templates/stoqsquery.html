@@ -2123,16 +2123,10 @@
                                                               simpledepthtime_options_zoom);
             }
             else if (key == 'parametertime') {
-                // Enable tab
-                var start = new Date(data['time'][0]);
-                var end = new Date(data['time'][1]);
-                parmData = getParameterDataset(initData, start.getTime(), end.getTime());
-                if ( ! $.isEmptyObject(parmData) ) {
-                    if (parmData.yaxesOptions.length != 0) {
-                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + parmData.yaxesOptions.length + ' Parameters</a>');
-                        $("#temporal-parameter-li").removeClass('disabled');
-                    }
-                    plotTimeParameterData(parmData);
+                // Just check the count and enable tab if not 0
+                if (data.parametertime.counts != 0) {
+                    $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + data.parametertime.counts + ' Parameters</a>');
+                    $("#temporal-parameter-li").removeClass('disabled');
                 }
             }
             else if (key == 'activityparameterhistograms') {

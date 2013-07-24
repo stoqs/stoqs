@@ -659,6 +659,8 @@ class STOQSQManager(object):
         UI has request only 'parametertime'.  If part of the larger SummaryData request then return the structure with
         the count set - a much cheaper query.
         '''
+        pt = {}
+        units = {}
         counts = 0
 
         # The base MeasuredParameter query set for existing UI selections
@@ -671,29 +673,26 @@ class STOQSQManager(object):
 
             if platform[3].lower() == 'timeseriesprofile' or platform[3].lower() == 'timeseries':
                 # Do cheap query to count the number of timeseriesprofile or timeseris parameters
-                count = models.Parameter.objects.using(self.dbname).filter(
-                                    activityparameter__activity__activityresource__resource__name='featureType',
-                                    activityparameter__activity__activityresource__resource__value='timeseries'
+                counts = counts + models.Parameter.objects.using(self.dbname).filter(
+                                    activityparameter__activity__activityresource__resource__name__iexact='featureType',
+                                    activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower()
                                     ).distinct().count()
 
-                if 'parametertime' not in self.kwargs['only']:
-                    # Not specific request for parametertime data, add up the counts
-                    counts = counts + count
+                if 'parametertime' in self.kwargs['only']:
+                    # Order by nominal depth first so that strided access collects data correctly from each depth
+                    pt_qs_mp = self.mpq.qs_mp_no_order.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')
+    
+                    # Only add this filter if a platform constraint is not in self.mpq.qs_mp, otherwise it results in many nested nested loops in a time consuming query
+                    if str(self.mpq.qs_mp.query).find('stoqs_platform.name IN (') == -1:
+                        # Restrict MeasuredParameters to featureType of 'timeseriesprofile' as parameter names may span featureTypes
+                        logger.debug('Adding filter to look for %s featureTypes', platform[3].lower())
+                        pt_qs_mp = pt_qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact=platform[3].lower())
 
-                # Order by nominal depth first so that strided access collects data correctly from each depth
-                pt_qs_mp = self.mpq.qs_mp_no_order.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')
+                    logger.debug('Calling self._collectParameters(platform) for platform = %s', platform)
+                    pa_units, is_standard_name, ndCounts, pt = self._collectParameters(platform)
 
-                # Only add this filter if a platform constraint is not in self.mpq.qs_mp, otherwise it results in many nested nested loops in a time consuming query
-                if str(self.mpq.qs_mp.query).find('stoqs_platform.name IN (') == -1:
-                    # Restrict MeasuredParameters to featureType of 'timeseriesprofile' as parameter names may span featureTypes
-                    logger.debug('Adding filter to look for %s featureTypes', platform[3].lower())
-                    pt_qs_mp = pt_qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact=platform[3].lower())
-
-                logger.debug('Calling self._collectParameters(platform) for platform = %s', platform)
-                pa_units, is_standard_name, ndCounts, pt = self._collectParameters(platform)
-
-                logger.debug('Calling self._buildParameterTime')
-                pt, units = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, pt_qs_mp)
+                    logger.debug('Calling self._buildParameterTime')
+                    pt, units = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, pt_qs_mp)
 
         return({'pt': pt, 'units': units, 'counts': counts})
 
