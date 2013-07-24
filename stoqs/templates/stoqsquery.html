@@ -540,8 +540,8 @@
                         <div class="accordion-inner">
 
                             <ul id="temporalTabs" class="nav nav-tabs temporal-tab">
-                                <li class="active" id="temporal-depth-li"><a href="#temporal-depth" data-toggle="tab" id="temporal-depth-label">Trajectory</a></li>
-                                <li class="disabled" id="temporal-parameter-li"><a href="#temporal-parameter" data-toggle="tab">Station</a></li>
+                                <li class="active" id="temporal-depth-li"><a href="#temporal-depth" data-toggle="tab" id="temporal-depth-label">Depth</a></li>
+                                <li class="disabled" id="temporal-parameter-li"><a href="#temporal-parameter" data-toggle="tab">Parameter</a></li>
                             </ul>
 
                             <div class="tab-content">
@@ -1349,7 +1349,8 @@
             $("#zoomed-button").removeClass('btn-primary');
             $("#zoomed-button").addClass('disabled');
             $('#zoomed-button').attr('title', ' ').tooltip('fixTitle').tooltip('hide');
-            $('#temporal-anchor').html('Temporal')
+            $('#temporal-anchor').html('Temporal');
+            $('#temporal-depth-label').html('Depth');
         }
     });
 
@@ -2128,7 +2129,7 @@
                 parmData = getParameterDataset(initData, start.getTime(), end.getTime());
                 if ( ! $.isEmptyObject(parmData) ) {
                     if (parmData.yaxesOptions.length != 0) {
-                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + parmData.yaxesOptions.length + ' Station Parameters</a>');
+                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + parmData.yaxesOptions.length + ' Parameters</a>');
                         $("#temporal-parameter-li").removeClass('disabled');
                     }
                     plotTimeParameterData(parmData);
@@ -2396,7 +2397,7 @@
                     if ( $('#temporal-parameter-li').hasClass('active') ) {
                         $('a', '#temporal-depth-li').tab('show');
                         $('#temporal-parameter-li').addClass('disabled');
-                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">Station</a>');
+                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">Parameter</a>');
                     } 
                 }
             }
