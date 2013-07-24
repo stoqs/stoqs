@@ -338,7 +338,7 @@ class Base_Loader(STOQS_Loader):
 
     def getTimeBegEndIndices(self, timeAxis):
         '''
-        If startDatetime and/or endDatetime specified return begining and ending indices for the corresponding time axis indices
+        Return begining and ending indices for the corresponding time axis indices
         '''
         if self.startDatetime: 
             logger.debug('self.startDatetime, timeAxis.units = %s, %s', self.startDatetime, timeAxis.units)
@@ -355,9 +355,12 @@ class Base_Loader(STOQS_Loader):
 
         tf = (s <= timeAxis) & (timeAxis <= e)
         tIndx = numpy.nonzero(tf == True)[0]
-        logger.info('Start and end indices are: %s', (tIndx[0], tIndx[-1]))
 
-        return tIndx
+        # For python slicing add 1 to the end index
+        indices = (tIndx[0], tIndx[-1] + 1)
+        logger.info('Start and end indices are: %s', indices)
+
+        return indices
 
     def _genTimeSeriesGridType(self):
         '''
