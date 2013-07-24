@@ -565,8 +565,9 @@ class STOQSQManager(object):
 
         # Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names
         p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
-        p_qs = p_qs.filter(activityparameter__activity__platform__name=platform[0])
+        p_qs = p_qs.filter(activityparameter__activity__platform__name=platform[0]).distinct()
         for parameter in p_qs:
+            logger.debug('parameter = %s', parameter)
             unit = parameter.units
 
             # Get the number of nominal depths for this parameter
@@ -596,14 +597,69 @@ class STOQSQManager(object):
 
         return (pa_units, is_standard_name, ndCounts, pt)
 
+    def _buildParameterTime(self, pa_units, is_standard_name, ndCounts, pt, pt_qs_mp):
+        '''
+        Build structure of timeseries/timeseriesprofile parameters organized by units
+        '''
+        units = {}
+
+        # Build units hash of parameter names for labeling axes in flot
+        for p,u in pa_units.iteritems():
+            logger.debug('p, u = %s, %s', p, u)
+            try:
+                units[u] = units[u] + ' ' + p
+            except KeyError:
+                units[u] = p
+
+            if is_standard_name[p]:
+                qs_mp = pt_qs_mp.filter(parameter__standard_name=p)
+            else:
+                qs_mp = pt_qs_mp.filter(parameter__name=p)
+
+            # If client is requesting only parametertime then deliver full resolution, otherwise heavily stride it
+            pointsPerTimeSeries = 5
+            stride = int(qs_mp.count() / pointsPerTimeSeries / ndCounts[p])
+            if 'parametertime' in self.kwargs['only']:
+                stride = 1                   
+            if 'stationtab' in self.kwargs:
+                if '1' in self.kwargs['stationtab']: 
+                    stride = 1                   
+
+            logger.debug('-------------------------------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
+            logger.debug('self.kwargs = %s', self.kwargs)
+            logger.debug("qs_mp.count() = %s, ndCounts[p] = %s, self.kwargs['only'] = %s, stride = %s", str(qs_mp.count()), ndCounts[p], self.kwargs['only'], stride)
+
+            for mp in qs_mp[::stride]:
+                if not mp['datavalue']:
+                    continue
+                an = mp['measurement__instantpoint__activity__name']
+                tv = mp['measurement__instantpoint__timevalue']
+                ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
+                nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
+                                                    # mooring microcat actual depths are put into mp['measurement__depth']
+
+                ##if p == 'sea_water_salinity':
+                ##    logger.debug('nd = %s, tv = %s', nd, tv)
+                ##    raise Exception('DEBUG')        # Useful for examining queries in the postgres log
+
+                an_nd = "%s @ %s" % (an, nd,)
+                try:
+                    pt['timeseriesprofile'][pa_units[p]][an_nd].append((ems, mp['datavalue']))
+                except KeyError:
+                    pt['timeseriesprofile'][pa_units[p]][an_nd] = []
+                    pt['timeseriesprofile'][pa_units[p]][an_nd].append((ems, mp['datavalue']))
+
+        return (pt, units)
+
     def getParameterTime(self):
         '''
         Based on the current selected query criteria for activities, return the associated MeasuredParameter datavalue time series
         values as a 2-tuple list inside a 3 level hash of featureType, units, and an "activity__name + nominal depth" key
-        for each line to be drawn by flot.
+        for each line to be drawn by flot.  The MeasuredParameter queries here can be costly.  Only perform them if the
+        UI has request only 'parametertime'.  If part of the larger SummaryData request then return the structure with
+        the count set - a much cheaper query.
         '''
-        pt = {}
-        units = {}
+        counts = 0
 
         # The base MeasuredParameter query set for existing UI selections
         if not self.mpq.qs_mp:
@@ -614,63 +670,32 @@ class STOQSQManager(object):
         for platform in self.getPlatforms():
 
             if platform[3].lower() == 'timeseriesprofile' or platform[3].lower() == 'timeseries':
+                # Do cheap query to count the number of timeseriesprofile or timeseris parameters
+                count = models.Parameter.objects.using(self.dbname).filter(
+                                    activityparameter__activity__activityresource__resource__name='featureType',
+                                    activityparameter__activity__activityresource__resource__value='timeseries'
+                                    ).distinct().count()
+
+                if 'parametertime' not in self.kwargs['only']:
+                    # Not specific request for parametertime data, add up the counts
+                    counts = counts + count
+
                 # Order by nominal depth first so that strided access collects data correctly from each depth
                 pt_qs_mp = self.mpq.qs_mp_no_order.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')
 
                 # Only add this filter if a platform constraint is not in self.mpq.qs_mp, otherwise it results in many nested nested loops in a time consuming query
                 if str(self.mpq.qs_mp.query).find('stoqs_platform.name IN (') == -1:
                     # Restrict MeasuredParameters to featureType of 'timeseriesprofile' as parameter names may span featureTypes
-                    logger.debug('Adding filter to look for timeseriesprofile featureTypes')
+                    logger.debug('Adding filter to look for %s featureTypes', platform[3].lower())
                     pt_qs_mp = pt_qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact=platform[3].lower())
 
+                logger.debug('Calling self._collectParameters(platform) for platform = %s', platform)
                 pa_units, is_standard_name, ndCounts, pt = self._collectParameters(platform)
 
-                # Build units hash of parameter names for labeling axes in flot
-                for p,u in pa_units.iteritems():
-                    try:
-                        units[u] = units[u] + ' ' + p
-                    except KeyError:
-                        units[u] = p
+                logger.debug('Calling self._buildParameterTime')
+                pt, units = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, pt_qs_mp)
 
-                    if is_standard_name[p]:
-                        qs_mp = pt_qs_mp.filter(parameter__standard_name=p)
-                    else:
-                        qs_mp = pt_qs_mp.filter(parameter__name=p)
-
-                    # If client is requesting only parametertime then deliver full resolution, otherwise heavily stride it
-                    pointsPerTimeSeries = 5
-                    stride = int(qs_mp.count() / pointsPerTimeSeries / ndCounts[p])
-                    if 'parametertime' in self.kwargs['only']:
-                        stride = 1                   
-                    if 'stationtab' in self.kwargs:
-                        if '1' in self.kwargs['stationtab']: 
-                            stride = 1                   
-
-                    logger.debug('-------------------------------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
-                    logger.debug('self.kwargs = %s', self.kwargs)
-                    logger.debug("qs_mp.count() = %s, ndCounts[p] = %s, self.kwargs['only'] = %s, stride = %s", str(qs_mp.count()), ndCounts[p], self.kwargs['only'], stride)
-
-                    for mp in qs_mp[::stride]:
-                        if not mp['datavalue']:
-                            continue
-                        an = mp['measurement__instantpoint__activity__name']
-                        tv = mp['measurement__instantpoint__timevalue']
-                        ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
-                        nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
-                                                            # mooring microcat actual depths are put into mp['measurement__depth']
-
-                        ##if p == 'sea_water_salinity':
-                        ##    logger.debug('nd = %s, tv = %s', nd, tv)
-                        ##    raise Exception('DEBUG')        # Useful for examining queries in the postgres log
-
-                        an_nd = "%s @ %s" % (an, nd,)
-                        try:
-                            pt['timeseriesprofile'][pa_units[p]][an_nd].append((ems, mp['datavalue']))
-                        except KeyError:
-                            pt['timeseriesprofile'][pa_units[p]][an_nd] = []
-                            pt['timeseriesprofile'][pa_units[p]][an_nd].append((ems, mp['datavalue']))
-
-        return({'pt': pt, 'units': units})
+        return({'pt': pt, 'units': units, 'counts': counts})
 
     def getSampleDepthTime(self):
         '''
