@@ -577,8 +577,6 @@ class STOQSQManager(object):
                                               measurement__measuredparameter__parameter=parameter
                                     ).values('depth').distinct().count()
 
-            ##raise Exception('DEBUG')
-
             if parameter.standard_name == 'sea_water_salinity':
                 unit = 'PSU'
             if parameter.standard_name and parameter.standard_name.strip() != '':
@@ -589,11 +587,14 @@ class STOQSQManager(object):
                 pa_units[parameter.name] = unit
                 is_standard_name[parameter.name] = False
                 ndCounts[parameter.name] = nds
-            try:
-                pt['timeseriesprofile'][unit] = {}
-            except KeyError:
-                pt['timeseriesprofile'] = {}
-                pt['timeseriesprofile'][unit] = {}
+
+            pt[unit] = {}
+
+            ##try:
+            ##    pt['timeseriesprofile'][unit] = {}
+            ##except KeyError:
+            ##    pt['timeseriesprofile'] = {}
+            ##    pt['timeseriesprofile'][unit] = {}
 
         return (pa_units, is_standard_name, ndCounts, pt)
 
@@ -644,10 +645,10 @@ class STOQSQManager(object):
 
                 an_nd = "%s @ %s" % (an, nd,)
                 try:
-                    pt['timeseriesprofile'][pa_units[p]][an_nd].append((ems, mp['datavalue']))
+                    pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
                 except KeyError:
-                    pt['timeseriesprofile'][pa_units[p]][an_nd] = []
-                    pt['timeseriesprofile'][pa_units[p]][an_nd].append((ems, mp['datavalue']))
+                    pt[pa_units[p]][an_nd] = []
+                    pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
 
         return (pt, units)
 
@@ -656,8 +657,8 @@ class STOQSQManager(object):
         Based on the current selected query criteria for activities, return the associated MeasuredParameter datavalue time series
         values as a 2-tuple list inside a 3 level hash of featureType, units, and an "activity__name + nominal depth" key
         for each line to be drawn by flot.  The MeasuredParameter queries here can be costly.  Only perform them if the
-        UI has request only 'parametertime'.  If part of the larger SummaryData request then return the structure with
-        the count set - a much cheaper query.
+        UI has request only 'parametertime' or if the Parameter tab is active in the UI as indicated by 'stationtab' in self.kwargs.
+        If part of the larger SummaryData request then return the structure with just counts set - a much cheaper query.
         '''
         pt = {}
         units = {}
@@ -678,7 +679,7 @@ class STOQSQManager(object):
                                     activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower()
                                     ).distinct().count()
 
-                if 'parametertime' in self.kwargs['only']:
+                if 'parametertime' in self.kwargs['only'] or 'stationtab' in self.kwargs:
                     # Order by nominal depth first so that strided access collects data correctly from each depth
                     pt_qs_mp = self.mpq.qs_mp_no_order.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')
     

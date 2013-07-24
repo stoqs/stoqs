@@ -1805,7 +1805,7 @@
         var yaxisNumber = {};
         var yaxisCount = 0;
         var yaxesOptions = [];
-        $.each(data.parametertime.pt.timeseriesprofile, function (unit, activity_time_series) {
+        $.each(data.parametertime.pt, function (unit, activity_time_series) {
             console.log('unit = ' + unit);
             console.log('activity_time_series = ' + activity_time_series);
             $.each(activity_time_series, function (activity, time_series) {
@@ -2268,17 +2268,15 @@
                 }
             }
             else if (key == 'parametertime') {
-                parmData = getParameterDataset(data, $('#start-ems').val(), $('#end-ems').val());
-                if ( ! $.isEmptyObject(parmData) ) {
-                    if (parmData.yaxesOptions.length != 0) {
-                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + parmData.yaxesOptions.length + ' Station Parameters</a>');
-                        $("#temporal-parameter-li").removeClass('disabled');
-                        plotTimeParameterData(parmData);
-                    }
-                    else {
-                        $("#temporal-parameter-li").html('<a href="#temporal-parameter">Station</a>');
-                        $("#temporal-parameter-li").addClass('disabled');
-                    }
+                if ( data.parametertime.counts != 0 ) {
+                    $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + data.parametertime.counts + ' Parameters</a>');
+                    $("#temporal-parameter-li").removeClass('disabled');
+                    parmData = getParameterDataset(data, $('#start-ems').val(), $('#end-ems').val());
+                    plotTimeParameterData(parmData);
+                }
+                else {
+                    $("#temporal-parameter-li").html('<a href="#temporal-parameter">Parameter</a>');
+                    $("#temporal-parameter-li").addClass('disabled');
                 }
             }
             else if (key == 'activityparameterhistograms') {
@@ -2389,7 +2387,7 @@
             if ( ! $.isEmptyObject(data.parametertime) ) {
                 if ( $.isEmptyObject(data.parametertime.pt) ) {
                     if ( $('#temporal-parameter-li').hasClass('active') ) {
-                        $('a', '#temporal-depth-li').tab('show');
+                        //$('a', '#temporal-depth-li').tab('show');
                         $('#temporal-parameter-li').addClass('disabled');
                         $("#temporal-parameter-li").html('<a href="#temporal-parameter">Parameter</a>');
                     } 
