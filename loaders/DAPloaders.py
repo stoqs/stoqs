@@ -396,9 +396,12 @@ class Base_Loader(STOQS_Loader):
                     then the cache files must be removed and the tomcat hosting TDS restarted.''')
                     sys.exit(1)
                 except pydap.exceptions.ServerError as e:
-                    logger.exception('%s', e)
-                    sys.exit(-1)
-                    continue
+                    if self.stride > 1:
+                        logger.warn('%s and stride > 1.  Skipping dataset %s', e, self.url)
+                        continue
+                    else:
+                        logger.exception('%s', e)
+                        sys.exit(-1)
     
                 # The STOQS datavalue 
                 data[pname] = iter(v)      # Iterator on time axis delivering all z values in an array with .next()
