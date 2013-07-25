@@ -432,13 +432,13 @@ class STOQSQManager(object):
                 # Get the featureType from the Resource
                 fts = models.ActivityResource.objects.using(self.dbname).filter(resource__name='featureType', 
                                activity__platform__name=name).values_list('resource__value', flat=True).distinct()
-                if len(fts) == 0:
+                try:
+                    featureType = fts[0]
+                except IndexError:
                     logger.warn('No featureType returned for platform name = %s.  Setting it to "trajectory".', name)
                     featureType = 'trajectory'
-                elif len(fts) > 1:
+                if len(fts) > 1:
                     logger.warn('More than one featureType returned for platform %s: %s.  Using the first one.', name, fts)
-
-                featureType = fts[0]
 
                 results.append((name, id, color, featureType, ))
 
