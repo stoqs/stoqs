@@ -144,7 +144,8 @@ def queryData(request, format=None):
                    'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
 
                     'only': 'only',                         # List of options to update - when only a partial response is needed
-                    'stationtab': 'stationtab',             # = 1 if Parameter/Station tab is active and full resolution timeSeries data is needed
+                    'parametertab': 'parametertab',         # = 1 if Parameter/Station tab is active and full resolution timeSeries data is needed
+                    'secondsperpixel': 'secondsperpixel',   # Resolution of time-depth-flot window
                    }
     params = {}
     for key, value in query_parms.iteritems():
