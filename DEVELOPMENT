@@ -98,6 +98,12 @@ in making changes that you 'think might work'.
 
     - Model changes (adding new relations, etc.) may require starting over with creating and syncing
       a database then loading some data, creating a new fixture, and testing.
+
+    - If new python modules are added with pip update the requirements.txt file with:
+
+        pip freeze > requirements.txt
+
+      and commit the requiremetns.txt file to the repository.
     
     - Additional information is in the file DEBUG_OPTIMIZE      
 
