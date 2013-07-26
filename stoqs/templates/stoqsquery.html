@@ -741,6 +741,8 @@
     var stack_depth = 0;
     var simpledepthtime_options;
     var simpledepthtime_options_zoom;
+    var parametertime_options;
+    var parametertime_options_zoom;
     var cmincmax = ''
     var hasTrajectory;
     var hasTimeSeries;
@@ -1339,7 +1341,7 @@
 
     }
 
-    // Special handling for unzooming the time-depth-plot
+    // Special handling for unzooming the time-depth-plot and time-parameter-plot
     $("#zoomed-button").click(function() {
         if ( $('.btn-primary', $('#time-depth-plot').length) ) {
             resetZoomedValues(initData);
@@ -1347,6 +1349,7 @@
             zoom_xy_stack = [];
             stack_depth = 0;
             simpledepthtime_options_zoom = simpledepthtime_options;
+            parametertime_options_zoom = parametertime_options;
             rebuildFilters();
             $("#zoomed-button").removeClass('btn-primary');
             $("#zoomed-button").addClass('disabled');
@@ -1567,7 +1570,7 @@
 
 
 
-    var simpledepthtime_options = { grid: { 
+    simpledepthtime_options = { grid: { 
                                         backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
                                         hoverable: true, 
                                         clickable: true 
@@ -1592,7 +1595,7 @@
                                     legend: { show: false },
                                     selection: { mode: "xy" }
                                   };
-    var histogram_options = {   yaxis: {
+    histogram_options = {   yaxis: {
                                     autoscaleMargin: null
                                 },
                                 grid: {
@@ -1605,6 +1608,21 @@
                                 selection: { mode: "x" },
                                 hoverable: true
                             };
+    parametertime_options = {   grid: {
+                                        hoverable: true
+                                    },
+                                    xaxis: { mode: "time" },
+                                    xaxes: [{
+                                                axisLabel: 'Time (gmt)'
+                                            }],
+                                    series: {
+                                        lines: { show: true, fill: false, lineWidth: 1 },
+                                        points: { show: false, fill: false },
+                                        shadowSize: 0
+                                    },
+                                    legend: { show: false },
+                                    selection: { mode: "x" }
+                                };
 
 
     /* Default class modification for DataTable*/
@@ -1884,28 +1902,6 @@
         $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogtram_options_labels);
     }
 
-    function plotTimeParameterData(parmData) {
-        if ( $.isEmptyObject(parmData) ) {
-            return;
-        }
-        $.plot($("#time-parameter-flot"), parmData.dataset, {
-                                                            grid: {
-                                                                hoverable: true
-                                                            },
-                                                            xaxis: { mode: "time" },
-                                                            xaxes: [{
-                                                                        axisLabel: 'Time (gmt)'
-                                                                    }],
-                                                            yaxes: parmData.yaxesOptions,
-                                                            series: {
-                                                                lines: { show: true, fill: false, lineWidth: 1 },
-                                                                points: { show: false, fill: false },
-                                                                shadowSize: 0
-                                                            },
-                                                            legend: { show: false },
-                                                            selection: { mode: "x" }
-                                                        });
-    }
 
     function ZoomIn(event, ranges) {
         // clamp the zooming to prevent eternal zoom
@@ -2129,6 +2125,26 @@
                 if (data.parametertime.counts != 0) {
                     $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + data.parametertime.counts + ' Parameters</a>');
                     $("#temporal-parameter-li").removeClass('disabled');
+
+                    $("#time-parameter-flot").bind("plotselected", function (event, ranges) {
+                        $('#start-ems').val(ranges.xaxis.from);
+                        var ds = new Date(ranges.xaxis.from);
+                        $('#start-time').val(getUTCDateString(ds));
+
+                        $('#end-ems').val(ranges.xaxis.to);
+                        var de = new Date(ranges.xaxis.to);
+                        $('#end-time').val(getUTCDateString(de))
+
+                        rebuildFilters('parametertime');
+                        $('#zoomed-button').removeClass('disabled'); 
+                        $('#zoomed-button').addClass('btn-primary');
+
+                        parametertime_options_zoom = $.extend(true, {}, parametertime_options, {
+                                                              xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
+                                                          });
+                        var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
+                        $('#temporal-anchor').html(tLabel);
+                    });
                 }
             }
             else if (key == 'activityparameterhistograms') {
@@ -2274,7 +2290,14 @@
                     $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + data.parametertime.counts + ' Parameters</a>');
                     $("#temporal-parameter-li").removeClass('disabled');
                     parmData = getParameterDataset(data, $('#start-ems').val(), $('#end-ems').val());
-                    plotTimeParameterData(parmData);
+                
+                    if ( $.isEmptyObject(parmData) ) {
+                        return;
+                    }
+                    parametertime_options_zoom = $.extend(true, {}, parametertime_options, {
+                                                              yaxes: parmData.yaxesOptions,
+                                                          });
+                    $.plot($("#time-parameter-flot"), parmData.dataset, parametertime_options_zoom);
                 }
                 else {
                     $("#temporal-parameter-li").html('<a href="#temporal-parameter">Parameter</a>');
