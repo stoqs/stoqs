@@ -553,10 +553,13 @@ class STOQSQManager(object):
 
         return({'sdt': sdt, 'colors': colors})
 
+    #
+    # The following set of private (_...) methods are for building the parametertime response
+    #
     def _collectParameters(self, platform):
         '''
         Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names.
-        Return a tuple of pa_units, is_standard_name, ndCounts dictionaries.
+        Return a tuple of pa_units, is_standard_name, ndCounts, and pt dictionaries.
         '''
         pa_units = {}
         is_standard_name = {}
@@ -590,18 +593,57 @@ class STOQSQManager(object):
 
             pt[unit] = {}
 
-            ##try:
-            ##    pt['timeseriesprofile'][unit] = {}
-            ##except KeyError:
-            ##    pt['timeseriesprofile'] = {}
-            ##    pt['timeseriesprofile'][unit] = {}
-
         return (pa_units, is_standard_name, ndCounts, pt)
 
-    def _buildParameterTime(self, pa_units, is_standard_name, ndCounts, pt, pt_qs_mp):
+    def _getParameterTimeFromMP(self, qs_mp, pt, pa_units, a, p, stride):
+        '''
+        Return hash of time series measuredparameter data with specified stride
+        '''
+        # Order by nominal depth first so that strided access collects data correctly from each depth
+        pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')
+        for mp in qs_mp[::stride]:
+            if not mp['datavalue']:
+                continue
+
+            tv = mp['measurement__instantpoint__timevalue']
+            ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
+            nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
+                                                # mooring microcat actual depths are put into mp['measurement__depth']
+    
+            ##if p == 'sea_water_salinity':
+            ##    logger.debug('nd = %s, tv = %s', nd, tv)
+            ##    raise Exception('DEBUG')        # Useful for examining queries in the postgresql log
+
+            an_nd = "%s @ %s" % (a.name, nd,)
+            try:
+                pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
+            except KeyError:
+                pt[pa_units[p]][an_nd] = []
+                pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
+
+        return pt
+        
+    def _getParameterTimeFromAP(self, pt, pa_units, a, p):
+        '''
+        Return hash of time series min and max values for specified activity and parameter.  To be used when duration
+        of an activity is less than the pixel width of the flot plot area.  This can occur for short event data sets
+        such as from Benthic Event Detector deployments.
+        '''
+
+        aps = models.ActivityParameter.objects.using(self.dbname).filter(activity=a, parameter__name=p).values('min', 'max')
+
+        start_ems = 1000 * to_udunits(a.startdate, 'seconds since 1970-01-01')
+        end_ems = 1000 * to_udunits(a.startdate, 'seconds since 1970-01-01')
+
+        pt[pa_units[p]][a.name] = [[start_ems, aps[0]['min']], [end_ems, aps[0]['max']]]
+
+        return pt
+
+    def _buildParameterTime(self, pa_units, is_standard_name, ndCounts, pt_base, pt_qs_mp):
         '''
         Build structure of timeseries/timeseriesprofile parameters organized by units
         '''
+        PIXELS_WIDE = 800                   # Approximate pixel width of parameter-time-flot window
         units = {}
 
         # Build units hash of parameter names for labeling axes in flot
@@ -612,43 +654,38 @@ class STOQSQManager(object):
             except KeyError:
                 units[u] = p
 
+            # Apply either parameter name or standard_name to MeasuredParameter and Activity query sets
             if is_standard_name[p]:
                 qs_mp = pt_qs_mp.filter(parameter__standard_name=p)
+                qs_awp = self.qs.filter(activityparameter__parameter__standard_name=p)
             else:
                 qs_mp = pt_qs_mp.filter(parameter__name=p)
+                qs_awp = self.qs.filter(activityparameter__parameter__name=p)
 
-            # If client is requesting only parametertime then deliver full resolution, otherwise heavily stride it
-            pointsPerTimeSeries = 5
-            stride = int(qs_mp.count() / pointsPerTimeSeries / ndCounts[p])
-            if 'parametertime' in self.kwargs['only']:
-                stride = 1                   
-            if 'stationtab' in self.kwargs:
-                if '1' in self.kwargs['stationtab']: 
-                    stride = 1                   
+            qs_awp = qs_awp.filter(activityresource__resource__value__icontains='timeseries')
+
+            try:
+                secondsperpixel = self.kwargs['secondsperpixel'][0]
+            except KeyError:
+                secondsperpixel = 1500                              # Default is a 2-week view  (86400 * 14 / 800)
 
             logger.debug('-------------------------------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
-            logger.debug('self.kwargs = %s', self.kwargs)
-            logger.debug("qs_mp.count() = %s, ndCounts[p] = %s, self.kwargs['only'] = %s, stride = %s", str(qs_mp.count()), ndCounts[p], self.kwargs['only'], stride)
-
-            for mp in qs_mp[::stride]:
-                if not mp['datavalue']:
-                    continue
-                an = mp['measurement__instantpoint__activity__name']
-                tv = mp['measurement__instantpoint__timevalue']
-                ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
-                nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
-                                                    # mooring microcat actual depths are put into mp['measurement__depth']
-
-                ##if p == 'sea_water_salinity':
-                ##    logger.debug('nd = %s, tv = %s', nd, tv)
-                ##    raise Exception('DEBUG')        # Useful for examining queries in the postgres log
-
-                an_nd = "%s @ %s" % (an, nd,)
-                try:
-                    pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
-                except KeyError:
-                    pt[pa_units[p]][an_nd] = []
-                    pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
+            
+            # Select each time series by Activity and test against secondsperpixel for deciding on min & max or stride selection
+            for a in qs_awp:
+                qs_mp_a = qs_mp.filter(measurement__instantpoint__activity__name=a.name)
+                ad = (a.enddate-a.startdate)
+                aseconds = ad.days * 86400 + ad.seconds
+                logger.debug('a.name = %s, a.startdate = %s, a.enddate %s, aseconds = %s, secondsperpixel = %s', a.name, a.startdate, a.enddate, aseconds, secondsperpixel)
+                if float(aseconds) > float(secondsperpixel):
+                    # Multiple points of this activity can be displayed in the flot, get an appropriate stride
+                    stride = qs_mp_a.count() / PIXELS_WIDE / ndCounts[p]        # Integer factors -> integer result
+                    if stride < 1:
+                        stride = 1
+                    pt = self._getParameterTimeFromMP(qs_mp_a, pt_base, pa_units, a, p, stride)
+                else:
+                    # Construct just two points for this activity-parameter using the min & max from the AP table
+                    pt = self._getParameterTimeFromAP(pt_base, pa_units, a, p)
 
         return (pt, units)
 
@@ -673,29 +710,23 @@ class STOQSQManager(object):
         for platform in self.getPlatforms():
 
             if platform[3].lower() == 'timeseriesprofile' or platform[3].lower() == 'timeseries':
-                # Do cheap query to count the number of timeseriesprofile or timeseris parameters
+                # Do cheap query to count the number of timeseriesprofile or timeseries parameters
                 counts = counts + models.Parameter.objects.using(self.dbname).filter(
                                     activityparameter__activity__activityresource__resource__name__iexact='featureType',
                                     activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower()
                                     ).distinct().count()
 
                 if 'parametertime' in self.kwargs['only'] or 'stationtab' in self.kwargs:
-                    # Order by nominal depth first so that strided access collects data correctly from each depth
-                    pt_qs_mp = self.mpq.qs_mp_no_order.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')
+                    # Perform more expensive query: start with no_order version of the MeasuredParameter query set
+                    pt_qs_mp = self.mpq.qs_mp_no_order
     
-                    # Only add this filter if a platform constraint is not in self.mpq.qs_mp, otherwise it results in many nested nested loops in a time consuming query
-                    if str(self.mpq.qs_mp.query).find('stoqs_platform.name IN (') == -1:
-                        # Restrict MeasuredParameters to featureType of 'timeseriesprofile' as parameter names may span featureTypes
-                        logger.debug('Adding filter to look for %s featureTypes', platform[3].lower())
-                        pt_qs_mp = pt_qs_mp.filter(measurement__nominallocation__activity__activityresource__resource__value__iexact=platform[3].lower())
-
-                    logger.debug('Calling self._collectParameters(platform) for platform = %s', platform)
+                    # Initialize structure organized by units for parameters left in the selection 
                     pa_units, is_standard_name, ndCounts, pt = self._collectParameters(platform)
 
-                    logger.debug('Calling self._buildParameterTime')
                     pt, units = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, pt_qs_mp)
 
         return({'pt': pt, 'units': units, 'counts': counts})
+
 
     def getSampleDepthTime(self):
         '''
