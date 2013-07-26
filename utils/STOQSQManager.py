@@ -212,7 +212,11 @@ class STOQSQManager(object):
         results = {}
         for k,v in self.options_functions.iteritems():
             if self.kwargs['only'] != []:
-                if k not in self.kwargs['only']:
+                if k == 'simpledepthtime':
+                    # For 'simpledepthtime' we also need 'platforms'
+                    if k != 'platoforms':
+                        continue
+                elif k not in self.kwargs['only']:
                     continue
 
             if k == 'measuredparametersgroup':

@@ -728,7 +728,6 @@
     var stoqsQuery='{{site_uri}}{% url stoqs-query-summary dbAlias=request.META.dbAlias %}';
     var params={}
     var initData;
-    var zoomedData;
     var widthZoomed = false;
     var request=''
     var map = null; 
@@ -1966,7 +1965,28 @@
     }
 
     $("#time-depth-flot").bind("plotselected", ZoomIn);
-    $("#time-depth-flot").bind('contextmenu',  ZoomOut);
+    $("#time-depth-flot").bind("contextmenu",  ZoomOut);
+
+    $("#time-parameter-flot").bind("plotselected", function (event, ranges) {
+        $('#start-ems').val(ranges.xaxis.from);
+        var ds = new Date(ranges.xaxis.from);
+        $('#start-time').val(getUTCDateString(ds));
+
+        $('#end-ems').val(ranges.xaxis.to);
+        var de = new Date(ranges.xaxis.to);
+        $('#end-time').val(getUTCDateString(de))
+
+        $('#zoomed-button').removeClass('disabled'); 
+        $('#zoomed-button').addClass('btn-primary');
+
+        parametertime_options_zoom = $.extend(true, {}, parametertime_options, {
+                                              xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
+                                          });
+        var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
+        $('#temporal-anchor').html(tLabel);
+
+        rebuildFilters('parametertime');
+    });
 
 
     /*
@@ -2010,7 +2030,6 @@
         function onInit(data, key) {
             // Called from ajax on initial request
             initData = data;
-            zoomedData = initData;
             if (key == 'platforms') {
                 hasTrajectory = false;
                 hasTimeSeries = false;
@@ -2126,25 +2145,6 @@
                     $("#temporal-parameter-li").html('<a href="#temporal-parameter">' + data.parametertime.counts + ' Parameters</a>');
                     $("#temporal-parameter-li").removeClass('disabled');
 
-                    $("#time-parameter-flot").bind("plotselected", function (event, ranges) {
-                        $('#start-ems').val(ranges.xaxis.from);
-                        var ds = new Date(ranges.xaxis.from);
-                        $('#start-time').val(getUTCDateString(ds));
-
-                        $('#end-ems').val(ranges.xaxis.to);
-                        var de = new Date(ranges.xaxis.to);
-                        $('#end-time').val(getUTCDateString(de))
-
-                        rebuildFilters('parametertime');
-                        $('#zoomed-button').removeClass('disabled'); 
-                        $('#zoomed-button').addClass('btn-primary');
-
-                        parametertime_options_zoom = $.extend(true, {}, parametertime_options, {
-                                                              xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
-                                                          });
-                        var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
-                        $('#temporal-anchor').html(tLabel);
-                    });
                 }
             }
             else if (key == 'activityparameterhistograms') {
@@ -2184,7 +2184,6 @@
         function onUpdate(data, key) {
             // Called from ajax to update the selectors base on the new selection
             if (key == 'platforms') {
-                zoomedData = data;
                 hasTrajectory = false;
                 hasTimeSeries = false;
                 hasTimeSeriesProfile = false;
@@ -2211,7 +2210,6 @@
                 });
             }
             else if (key == 'sampledparametersgroup') {
-                zoomedData = data;
                 var ids=[];
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid, convert int id to string
@@ -2229,7 +2227,6 @@
                 });
             }
             else if (key == 'measuredparametersgroup') {
-                zoomedData = data;
                 var ids=[];
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid
@@ -2252,7 +2249,7 @@
             }
             else if (key == 'simpledepthtime') {
                 // Redraw the plot given the saved values
-                theData = getDepthDataset(zoomedData, $('#start-ems').val(), $('#end-ems').val());
+                theData = getDepthDataset(data, $('#start-ems').val(), $('#end-ems').val());
                 if ( ! theData ) {
                     return;
                 }
@@ -2294,10 +2291,9 @@
                     if ( $.isEmptyObject(parmData) ) {
                         return;
                     }
-                    parametertime_options_zoom = $.extend(true, {}, parametertime_options, {
+                    $.plot($("#time-parameter-flot"), parmData.dataset, $.extend(true, {}, parametertime_options, {
                                                               yaxes: parmData.yaxesOptions,
-                                                          });
-                    $.plot($("#time-parameter-flot"), parmData.dataset, parametertime_options_zoom);
+                                                          }));
                 }
                 else {
                     $("#temporal-parameter-li").html('<a href="#temporal-parameter">Parameter</a>');
