@@ -19,6 +19,7 @@ MBARI 15 January 2013
 
 import os
 import sys
+import datetime
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
@@ -40,6 +41,7 @@ campaignName = 'Dorado - All 2011 missions'
 if stride != 1:
     campaignName = campaignName + ' with stride=%d' % stride
 
+# Dorado surveys
 cl = CANONLoader(dbAlias, campaignName)
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2011/netcdf/'
 cl.dorado_files = [ 
@@ -72,7 +74,24 @@ cl.dorado_files = [
                     'Dorado389_2011_285_01_285_01_decim.nc',
                     'Dorado389_2011_286_00_286_00_decim.nc',
                   ]
-cl.stride = stride
-cl.loadDorado()
 
+# Mooring M1ts
+cl.m1ts_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'
+cl.m1ts_files = ['OS_MBARI-M1_R_TS']
+cl.m1ts_parms = [ 'PSAL', 'TEMP' ]
+cl.m1ts_startDatetime = datetime.datetime(2011, 1, 1)
+cl.m1ts_endDatetime = datetime.datetime(2011, 12, 31)
+
+# Mooring M1met
+cl.m1met_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'
+cl.m1met_files = ['OS_MBARI-M1_R_M']
+cl.m1met_parms = [ 'WSPD', 'WDIR', 'ATMP', 'SW', 'RELH' ]
+cl.m1met_startDatetime = datetime.datetime(2011, 1, 1)
+cl.m1met_endDatetime = datetime.datetime(2011, 12, 31)
+
+cl.stride = stride
+
+cl.loadDorado()
+cl.loadM1ts()
+cl.loadM1met()
 
