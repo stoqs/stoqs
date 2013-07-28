@@ -330,8 +330,9 @@ class Base_Loader(STOQS_Loader):
             depth = depths.values()[0]
 
         logger.info('type(depth) = %s', type(depth))
-        if type(depth) not in ('list', 'tuple', 'numpy.ndarray'):
-            # Make scalars arrays 
+        if isinstance(depth, numpy.ndarray):
+            depth_array = depth
+        else:
             depth_array = numpy.array([depth])
 
         return depth_array, lat, lon
