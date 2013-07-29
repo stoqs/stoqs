@@ -1,3 +1,4 @@
+{% load url from future %}
 <!DOCTYPE html> <!--  HTML5 Doctype -->
 <html lang="en">
   <head>
@@ -115,7 +116,7 @@
           <a class="brand" href="#">{{request.META.dbAlias}}</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li><a href="{% url show-default %}"><i class="icon-list-alt icon-white"></i> Campaign list</a></li>
+              <li><a href="{% url 'show-default' %}"><i class="icon-list-alt icon-white"></i> Campaign list</a></li>
             </ul>
             <!--
             <form action="">
@@ -131,7 +132,7 @@
 
     <div class="row-fluid">
 
-        <div class="span6 stoqs-zoom-width">
+        <div id="left-column" class="span6 stoqs-zoom-width">
 
             <div id="accordion1" class="accordion well">
 
@@ -215,10 +216,15 @@
                         Metadata:</a> <span id="metadata-count" style="color:black;"></span><span id="metadata-ajaxtime" style="color:black;">
                         </h3>
                     </div>
-
                     <div id="collapseMetadata" class="accordion-body collapse in">
                         <div class="accordion-inner">
-
+							<h3>
+							<a id="permalink" href="#" data-action="{% url 'generate_permalink' dbAlias=request.META.dbAlias %}">Show Permalink</a>
+							<div id="permalink-box" style="display:none">
+							<input type="text" name="permalink" style="width: 100%"></input>
+							</div>
+							</h3>
+								
                             <label class="checkbox">
                                 <input type="checkbox" id="getactualcount" /> Get actual count
                             </label>
@@ -719,13 +725,15 @@
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-typeahead.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/OpenLayers.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/LoadingPanel.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.js"></script>
     <!-- <script type="text/javascript" src="http://x3dom.org/download/dev/x3dom-full.js"></script> -->
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
-    <script type="text/javascript">
+    <script type="text/javascript"><!--
     
-    var stoqsQuery='{{site_uri}}{% url stoqs-query-summary dbAlias=request.META.dbAlias %}';
+    var stoqsQuery='{{site_uri}}{% url 'stoqs-query-summary' dbAlias=request.META.dbAlias %}';
     var params={}
     var initData;
     var widthZoomed = false;
@@ -733,6 +741,7 @@
     var map = null; 
     var kmlurl = '';
     var parametervalues={};     
+    var permalink_bypass=false;
     var polyLayer = new OpenLayers.Layer.Vector( " Selection polygon", {visibility: false} );
     var timedepthplot;
     var options_stack = [];
@@ -860,8 +869,8 @@
         if ( $.isEmptyObject(data['parameterminmax']) ) {
             return;
         }
-        var base_url = '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';
-        var query_url = '{{site_uri}}{% url stoqs-query-ui dbAlias=request.META.dbAlias %}';
+        var base_url = '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';
+        var query_url = '{{site_uri}}{% url 'stoqs-query-ui' dbAlias=request.META.dbAlias %}';
         var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
         if (param != '') {
             param = '?' + param;
@@ -907,7 +916,7 @@
                 var st_text_comm = "% Copy and paste into a Matlab session where stoqstoolbox build 2013-01-08 or\n";
                 st_text_comm = st_text_comm + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
                 st_text = st_text_comm;
-                st_text = st_text + "campaign = '{{http_site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}';\n";
+                st_text = st_text + "campaign = '{{http_site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';\n";
                 $.each(req_params, function(k, v) {
                     if (typeof params[v] != "undefined") {
                         if (v.match(/depth$/)) {
@@ -1148,6 +1157,10 @@
     }
     
     function rebuildFilters(only) {
+        if ((typeof permalink_bypass !== 'undefined') &&
+            (permalink_bypass == true)) {
+			return ;
+        } 
         params={};
         // To tell the backend to process for the list of options in the only list
         // Useful for radio button and checkbox events that do not change the selection
@@ -1293,13 +1306,17 @@
             params['parametertab'] = 1;
             params['secondsperpixel'] = ($('#end-ems').val() - $('#start-ems').val()) / PIXELS_WIDE / 1000.0;
         }
-
+        
+		// Since the old link (if there was one) for the permalink is no longer valid, hide it
+		$('#permalink-box').hide();
+		
         updateShowDataInfo();
         updateSummaryData();
 
         polyLayer.removeAllFeatures();
 
     } // rebuildFilters()
+    
 
     function refreshMap(e) {
         if ( $.isEmptyObject(e) ) {
@@ -1704,7 +1721,7 @@
 
     function showSampleData(label) {
             //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
-            var sample_url = '{{site_uri}}{% url show-sample-datatable dbAlias=request.META.dbAlias format=".json" %}';
+            var sample_url = '{{site_uri}}{% url 'show-sample-datatable' dbAlias=request.META.dbAlias format=".json" %}';
             sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
             console.log('sample_url = ' + sample_url);
 
@@ -1730,8 +1747,8 @@
 
     function showQuickLooks(label) {
             // http://172.16.130.135:8000/stoqs_may2012/resourceactivity.json?resourcetype__name=quick_look&activityresource__activity__name__contains=Dorado389_2012_150_00_150_00_decim
-            //var quicklook_url = '{{site_uri}}{% url show-resourceactivity dbAlias=request.META.dbAlias format=".json" %}?resourcetype__name=quick_look&';
-            var quicklook_url = '{{site_uri}}{% url show-quicklookplots dbAlias=request.META.dbAlias %}?';
+            //var quicklook_url = '{{site_uri}}{% url 'show-resourceactivity' dbAlias=request.META.dbAlias format=".json" %}?resourcetype__name=quick_look&';
+            var quicklook_url = '{{site_uri}}{% url 'show-quicklookplots' dbAlias=request.META.dbAlias %}?';
             quicklook_url = quicklook_url + 'activityresource__activity__name__contains=' + label.split(' ')[0];
             //var nwin = window.open(quicklook_url, '', 'height=800,width=1000');
             //if (window.focus) {
@@ -2438,6 +2455,9 @@
                         onUpdate(data, key)
                     }
                 }
+                if (init == true) {
+		            load_permalink();
+                }
                 $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
                 $('#time-parameter-flot').removeClass('stoqs-background-ajax-loader-pulse ');
                 $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
@@ -2462,6 +2482,131 @@
             dataType: "json"
         });
     } // updateSummaryData()
+    
+    // Collect all the parameters on the page so we can generate our permalink.
+    
+    function collect_parameters() {
+        params={'clicks': []}
+        // Need to do the right column stuff before the left column stuff, since
+        // checkboxes might appear depending on selections on the right.
+        
+        var columns=['#right-column','#left-column'];
+		$.each(columns, function(pos, divcol) {
+	        // Grab all the checked radio buttons on the page and save their information.
+	    	$('input:checked[type="radio"]', divcol).each(function(key, item) {
+	        	var data='input[type="radio"][name="'+ item.name +'"][value="'+ item.value +'"]';
+	        	params['clicks'].push(data);
+	    	});
+	    	// Grab all the buttons that are selected, using their values.
+	    	$('button.btn-primary.stoqs-toggle', divcol).each(function(key, item) {
+	        	var id=$(item).closest('[id]')[0].id
+	        	var data='#' +id +' button.stoqs-toggle:contains("'+$(item).text()+'")'
+	        	params['clicks'].push(data);
+	    	});
+			// Grab all the checkboxes, note that openlayers seems to have ID's with
+			// spaces in them, so we cannot use the '#' to locate those, need to use the
+			// attribute selector instead.
+			
+	    	$('input:checked[type="checkbox"]', divcol).each(function(key, item) {
+	        	var data=''
+	        	if (typeof item.id !== 'undefined') {
+		        	data='input[type="checkbox"][id="' + item.id + '"]'; 
+	        	} else if ((typeof item.name !== 'undefined') && 
+	                	   (typeof item.value !== 'undefined')) {
+	         	    data='input[type="checkbox"][name="'+item.name+'"][value="'+item.value+'"]';
+	        	} else {
+	            	alert('Unable to get unique path for input field, skipping from permalink!');
+	        	}
+	        	if (data != '') {
+	        		params['clicks'].push(data);
+	        	}
+	        });
+		});
+		// Grab the data so we can reset the time/depth plot and temporal values.
+    	params['end-ems']=$('#end-ems').val();
+        params['start-ems']=$('#start-ems').val();
+    	params['end-depth']=$('#end-depth').val();
+        params['start-depth']=$('#start-depth').val();
+        // Grab the center of the map so we can restore the center and lon/lat data.
+        params['map-center']={ 'lonlat': map.getCenter(), 
+                               	'zoom': map.getZoom() };
+       	params['map-layers']=[];
+       	$.each(map.layers, function (pos, layer) { 
+           	if (layer.visibility) { 
+           		params['map-layers'].push(layer.name); 
+            }
+        });
+       	return JSON.stringify(params, null, 2);
+        
+    }
+    
+	function reset_parameters(parameters) {
+		permalink_bypass=true;
+		var ranges={xaxis: {to: $('#end-ems').val(),
+				            from: $('#start-ems').val()},
+		            yaxis: {to: $('#end-depth').val(),
+		        			from: $('#start-depth').val()}
+		    		};
+		// Uncheck the zoom update, since that'll mess up our resetting the 
+		// map.
+		var $update=$('input[type=\"checkbox\"][id=\"zoomtoextentonupdate\"]')
+		if ($update.is(':checked')) { $update.click(); } // uncheck it
+		// Set the time axis and map information first.
+		$.each(parameters, function (key, value) {
+			switch(key) {
+				case 'end-ems':
+					ranges.xaxis.to=value;
+					break;
+				case 'start-ems':
+					ranges.xaxis.from=value;
+					break;
+				case 'end-depth':
+					ranges.yaxis.to=value;
+					break;
+				case 'start-depth': 
+					ranges.yaxis.from=value;
+					break;
+				case 'map-center':
+					var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
+		            map.setCenter(lonlat,value.zoom);
+		            break;
+				case 'map-layers':
+					$.each(map.layers, function (pos, layer) {
+						if ($.inArray(layer.name, value) > -1) {
+							layer.setVisibility(true);
+						} else {
+							layer.setVisibility(false);
+						}
+					});
+					break;
+			}
+		});
+		timedepthplot.setSelection(ranges);
+		$.each(parameters['clicks'], function (pos, item) {
+			$(item).click();
+		});
+		permalink_bypass=false;
+		rebuildFilters();
+		
+	}
+    
+    function load_permalink() {
+		var permalink_id=$.url().param('permalink_id');
+		if (typeof permalink_id !== 'undefined') {
+			var url='{% url 'load_permalink' dbAlias=request.META.dbAlias id='#REPLACE#' %}';
+			url=url.replace('#REPLACE#', permalink_id);
+			console.log(url);
+			$.get(url).
+			done(function (parameters, response, jqXHR) {
+				reset_parameters(parameters);
+			}).
+			fail(function (data, response, jqXHR) {
+				alert('Failed to load the specified permalink: ' + jqXHR);
+			});
+		}
+		
+    }
+    
     
     
     $(function () { 
@@ -2600,7 +2745,7 @@
             projection: map.displayProjection,
             strategies: [new OpenLayers.Strategy.BBOX()],
             protocol: new OpenLayers.Protocol.WFS({
-                url: '{{site_uri}}{% url base-campaign dbAlias=request.META.dbAlias %}wfs',
+                url: '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}wfs',
                 headers: {'X-CSRFToken': csrf_token},
                 featureType: 'Sample'
             }),
@@ -2741,8 +2886,30 @@
         $('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter to enable'});
         $('#showgeox3ddata').parent().tooltip({title: 'Select a Measured Parameter to enable'});
 
+        $('#permalink').on('click', function(ev){
+        	ev.preventDefault();
+        	var $target=$(ev.currentTarget);
+        	var url=$target.data('action');
+        	var params=$target.data('parameters');
+        	if (typeof params === 'undefined') {
+        		params=''
+        	}
+        	// If the permalink is visible, then there's no point in getting
+        	// another one - since the one they are seeing is alredy current so just
+        	// ignore the clicks if that's the case.
+        	if ($('#permalink-box').is(":visible") == false) {
+            	//$.post(url, {'parameters': params })
+            	$.post(url, {'parameters': collect_parameters() })
+	            .done(function (data, response, jqXHR) {
+	                var $el=$('input[name="permalink"]')
+	                $el.val(data);
+	                $('#permalink-box').show();
+	            });
+        	}
+        });
+        
     });
 
-    </script>
+    --></script>
   </body>
 </html>
