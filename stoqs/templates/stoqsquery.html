@@ -455,7 +455,7 @@
                     <div id="collapseSample" class="accordion-body collapse in">
                         <div class="accordion-inner">
 
-                            <ul class="nav nav-tabs">
+                            <ul id="sample-data-tabs" class="nav nav-tabs">
                                 <li class="active"><a href="#table" data-toggle="tab">Table</a></li>
                             </ul>
                             <div class="tab-content">
@@ -484,7 +484,7 @@
                     <div id="collapseDataAccess" class="accordion-body collapse in">
                         <div class="accordion-inner">
 
-                            <ul class="nav nav-tabs">
+                            <ul id="dataaccessdownloadtabs" class="nav nav-tabs">
                                 {% for format in formats %}
                                     {% if format.0 = 'kml' %}
                                 <li class="active"><a href="#{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
@@ -2487,7 +2487,8 @@
     
     function collect_parameters() {
         params={'clicks': [],
-                'accordian': [],}
+                'accordian': [],
+                'tabs': []}
         // Need to do the right column stuff before the left column stuff, since
         // checkboxes might appear depending on selections on the right.
         
@@ -2528,6 +2529,15 @@
 	        $('.accordion-body.in', divcol).each(function (key, item) {
 				params['accordian'].push(item.id);
 	        });
+		});
+		
+		$('.nav-tabs').each(function (pos, item) {
+			$elements=$('li', item);
+			$.each($('li', item), function (pos2, item2) {
+				if ($(item2).hasClass('active')) {
+					params['tabs'].push(['#' + item.id, pos2]);
+				}
+			});
 		});
 		// Grab the data so we can reset the time/depth plot and temporal values.
     	params['end-ems']=$('#end-ems').val();
@@ -2593,6 +2603,13 @@
 						} else {
 							$(item).removeClass('in').height('0px');
 						}
+					});
+					break;
+				case 'tabs': 
+					$.each(value, function (pos, item) {
+						var $elem=$('li', item[0]);
+						$elem.removeClass('active');
+						$($elem[item[1]]).addClass('active');
 					});
 					break;
 			}
