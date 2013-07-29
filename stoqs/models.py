@@ -517,3 +517,12 @@ class SampledParameter(models.Model):
         app_label = 'stoqs'
         unique_together = ['sample','parameter']
 
+class PermaLink(models.Model):
+    '''
+    A simple model for storing permalinks created by users.
+    '''
+    uuid=UUIDField(editable=False, primary_key=True)
+    parameters=models.TextField(null=False, blank=False)
+    create_date=models.DateTimeField(auto_now_add=True)
+    usage_count=models.IntegerField(default=0)
+    last_usage=models.DateTimeField(auto_now=True)
