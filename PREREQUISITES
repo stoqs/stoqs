@@ -115,6 +115,7 @@ pip install django_extensions
 pip install beautifulsoup4
 pip install sqlparse
 pip install lxml
+pip install simplejson
 
 # For server-side Matlab-style plotting of data
 pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
