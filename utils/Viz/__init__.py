@@ -469,6 +469,13 @@ class ParameterParameter(object):
             imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
             ppPngFile = '%s_%s_%s_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['c'], imageID)
             ppPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', ppPngFile)
+            if not os.path.exists(os.path.dirname(ppPngFileFullPath)):
+                try:
+                    os.makedirs(os.path.dirname(ppPngFileFullPath))
+                except Exception,e:
+                    logger.exception('Failed to create path for ' +
+                                     'parameterparameter (%s) file', ppPngFile)
+                    return
             logger.debug('ppPngFileFullPath = %s', ppPngFileFullPath)
 
             # Make the figure
