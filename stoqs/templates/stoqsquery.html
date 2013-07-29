@@ -2486,7 +2486,8 @@
     // Collect all the parameters on the page so we can generate our permalink.
     
     function collect_parameters() {
-        params={'clicks': []}
+        params={'clicks': [],
+                'accordian': [],}
         // Need to do the right column stuff before the left column stuff, since
         // checkboxes might appear depending on selections on the right.
         
@@ -2520,6 +2521,12 @@
 	        	if (data != '') {
 	        		params['clicks'].push(data);
 	        	}
+	        });
+
+	        // Grab the state of all the accordians on the page and store
+	        // them
+	        $('.accordion-body.in', divcol).each(function (key, item) {
+				params['accordian'].push(item.id);
 	        });
 		});
 		// Grab the data so we can reset the time/depth plot and temporal values.
@@ -2579,15 +2586,24 @@
 						}
 					});
 					break;
+				case 'accordian':
+					$('.accordion-body').each(function (pos, item) {
+						if ($.inArray(item.id, value) > -1) {
+							$(item).addClass('in').height('auto');
+						} else {
+							$(item).removeClass('in').height('0px');
+						}
+					});
+					break;
 			}
 		});
 		timedepthplot.setSelection(ranges);
 		$.each(parameters['clicks'], function (pos, item) {
 			$(item).click();
 		});
+		
 		permalink_bypass=false;
 		rebuildFilters();
-		
 	}
     
     function load_permalink() {
