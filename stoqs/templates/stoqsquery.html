@@ -727,6 +727,7 @@
     <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/LoadingPanel.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.js"></script>
     <!-- <script type="text/javascript" src="http://x3dom.org/download/dev/x3dom-full.js"></script> -->
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>
@@ -742,6 +743,7 @@
     var kmlurl = '';
     var parametervalues={};     
     var permalink_bypass=false;
+    var client_side_permalink=false;
     var polyLayer = new OpenLayers.Layer.Vector( " Selection polygon", {visibility: false} );
     var timedepthplot;
     var options_stack = [];
@@ -2626,16 +2628,26 @@
     function load_permalink() {
 		var permalink_id=$.url().param('permalink_id');
 		if (typeof permalink_id !== 'undefined') {
-			var url='{% url 'load_permalink' dbAlias=request.META.dbAlias id='#REPLACE#' %}';
-			url=url.replace('#REPLACE#', permalink_id);
-			console.log(url);
-			$.get(url).
-			done(function (parameters, response, jqXHR) {
-				reset_parameters(parameters);
-			}).
-			fail(function (data, response, jqXHR) {
-				alert('Failed to load the specified permalink: ' + jqXHR);
-			});
+			// If it's longer than 32 characters, it is a client-side permalink
+			if (permalink_id.length > 32) {
+				try {
+					var parameters=JSON.parse(LZString.decompressFromBase64(permalink_id));
+					reset_parameters(parameters);
+	        	} catch (err) {
+	            	alert('Permalink loading failed (perhaps your browser does not support this feature?');
+	        	}
+			} else {
+				var url='{% url 'load_permalink' dbAlias=request.META.dbAlias id='#REPLACE#' %}';
+				url=url.replace('#REPLACE#', permalink_id);
+				console.log(url);
+				$.get(url).
+				done(function (parameters, response, jqXHR) {
+					reset_parameters(parameters);
+				}).
+				fail(function (data, response, jqXHR) {
+					alert('Failed to load the specified permalink: ' + jqXHR);
+				});
+			}
 		}
 		
     }
@@ -2932,12 +2944,23 @@
         	// ignore the clicks if that's the case.
         	if ($('#permalink-box').is(":visible") == false) {
             	//$.post(url, {'parameters': params })
-            	$.post(url, {'parameters': collect_parameters() })
-	            .done(function (data, response, jqXHR) {
-	                var $el=$('input[name="permalink"]')
-	                $el.val(data);
+            	var $el=$('input[name="permalink"]')
+            	if ((typeof client_side_permalink !== 'undefined') &&
+                	(client_side_permalink)) {
+                	var $url=$.url();
+                	var params=$url.param();
+                	params['permalink_id']=LZString.compressToBase64(collect_parameters());
+					var url=$url.attr('source').split('?')[0]+'?'+$.param(params)
+            		$el.val(url);
 	                $('#permalink-box').show();
-	            });
+
+        		} else {
+	            	$.post(url, {'parameters': collect_parameters() })
+		            .done(function (data, response, jqXHR) {
+		                $el.val(data);
+		                $('#permalink-box').show();
+		            });
+        		}
         	}
         });
         
