@@ -542,18 +542,18 @@ class STOQSQManager(object):
                                             'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
                                             'simpledepthtime__nominallocation__depth').order_by('simpledepthtime__epochmilliseconds').distinct()
                 logger.info('qs_tsp = %s', str(qs_tsp.query))
-                # Add to sdt hash date-time series organized by activity__name_nominallocation__depth  key within a platform__name key
+                # Add to sdt hash date-time series organized by activity__name_nominallocation__depth key within a platform__name key
                 for sd in qs_tsp:
                     ##logger.info('sd = %s', sd)
                     an_nd = '%s_%s' % (sd[2], sd[3])
                     try:
                         sdt[p[0]][an_nd].append( [sd[0], '%.2f' % sd[1]] )
                     except KeyError:
-                        sdt[p[0]][an_nd] = []                                    # First time seeing activity__name, make it a list
+                        sdt[p[0]][an_nd] = []                                    # First time seeing activityNname_nominalDepth, make it a list
                         if sd[1]:
-                            sdt[p[0]][an_nd].append( [sd[0], '%.2f' % sd[1]] )     # Append first value
+                            sdt[p[0]][an_nd].append( [sd[0], '%.2f' % sd[1]] )   # Append first value
                     except TypeError:
-                        continue                                                # Likely "float argument required, not NoneType"
+                        continue                                                 # Likely "float argument required, not NoneType"
 
         return({'sdt': sdt, 'colors': colors})
 
@@ -605,7 +605,7 @@ class STOQSQManager(object):
         '''
         # Order by nominal depth first so that strided access collects data correctly from each depth
         pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')
-        for mp in qs_mp[::stride]:
+        for mp in pt_qs_mp[::stride]:
             if not mp['datavalue']:
                 continue
 
@@ -614,11 +614,11 @@ class STOQSQManager(object):
             nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
                                                 # mooring microcat actual depths are put into mp['measurement__depth']
     
-            ##if p == 'sea_water_salinity':
+            ##if p == 'wind_speed':
             ##    logger.debug('nd = %s, tv = %s', nd, tv)
             ##    raise Exception('DEBUG')        # Useful for examining queries in the postgresql log
 
-            an_nd = "%s @ %s" % (a.name, nd,)
+            an_nd = "%s - %s @ %s" % (p, a.name, nd,)
             try:
                 pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
             except KeyError:
@@ -670,6 +670,8 @@ class STOQSQManager(object):
 
             try:
                 secondsperpixel = self.kwargs['secondsperpixel'][0]
+            except IndexError:
+                secondsperpixel = 1500                              # Default is a 2-week view  (86400 * 14 / 800)
             except KeyError:
                 secondsperpixel = 1500                              # Default is a 2-week view  (86400 * 14 / 800)
 
@@ -698,7 +700,7 @@ class STOQSQManager(object):
         Based on the current selected query criteria for activities, return the associated MeasuredParameter datavalue time series
         values as a 2-tuple list inside a 3 level hash of featureType, units, and an "activity__name + nominal depth" key
         for each line to be drawn by flot.  The MeasuredParameter queries here can be costly.  Only perform them if the
-        UI has request only 'parametertime' or if the Parameter tab is active in the UI as indicated by 'stationtab' in self.kwargs.
+        UI has request only 'parametertime' or if the Parameter tab is active in the UI as indicated by 'parametertab' in self.kwargs.
         If part of the larger SummaryData request then return the structure with just counts set - a much cheaper query.
         '''
         pt = {}
@@ -720,7 +722,7 @@ class STOQSQManager(object):
                                     activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower()
                                     ).distinct().count()
 
-                if 'parametertime' in self.kwargs['only'] or 'stationtab' in self.kwargs:
+                if 'parametertime' in self.kwargs['only'] or self.kwargs['parametertab']:
                     # Perform more expensive query: start with no_order version of the MeasuredParameter query set
                     pt_qs_mp = self.mpq.qs_mp_no_order
     

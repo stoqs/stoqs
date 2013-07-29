@@ -1368,12 +1368,13 @@
             stack_depth = 0;
             simpledepthtime_options_zoom = simpledepthtime_options;
             parametertime_options_zoom = parametertime_options;
-            rebuildFilters();
             $("#zoomed-button").removeClass('btn-primary');
             $("#zoomed-button").addClass('disabled');
             $('#zoomed-button').attr('title', ' ').tooltip('fixTitle').tooltip('hide');
             $('#temporal-anchor').html('Temporal');
             $('#temporal-depth-label').html('Depth');
+
+            rebuildFilters();
         }
     });
 
