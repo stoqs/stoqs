@@ -122,6 +122,11 @@ urlpatterns = patterns('',
 
     # If nothing above matches show the quey interface is a dbalias is specified, otherwise show the campaigns
     url(pre + '$', 'stoqs.views.query.queryUI', {}, name='base-campaign'),
+    
+    # Views related to generating permalinks for later use.
+    url(pre + 'generate_permalink/', 'stoqs.views.permalinks.generate_permalink', {}, name='generate_permalink'),
+    url(pre + 'permalink/(?P<id>[^/]*)/', 'stoqs.views.permalinks.load_permalink', {}, name='load_permalink'),
+
     url('^$', 'stoqs.views.management.showCampaigns', {}, name='show-default'),
 
 )
