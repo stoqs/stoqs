@@ -569,6 +569,7 @@ class STOQSQManager(object):
         is_standard_name = {}
         ndCounts = {}
         colors = {}
+        strides = {}
         pt = {}
 
         # Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names
@@ -593,15 +594,17 @@ class STOQSQManager(object):
                 is_standard_name[parameter.standard_name] = True
                 ndCounts[parameter.standard_name] = nds
                 colors[parameter.standard_name] = parameter.id
+                strides[parameter.standard_name] = {}
             else:
                 pa_units[parameter.name] = unit
                 is_standard_name[parameter.name] = False
                 ndCounts[parameter.name] = nds
                 colors[parameter.name] = parameter.id
+                strides[parameter.name] = {}
 
             pt[unit] = {}
 
-        return (pa_units, is_standard_name, ndCounts, pt, colors)
+        return (pa_units, is_standard_name, ndCounts, pt, colors, strides)
 
     def _getParameterTimeFromMP(self, qs_mp, pt, pa_units, a, p, is_standard_name, stride):
         '''
@@ -668,14 +671,13 @@ class STOQSQManager(object):
 
         return isInSelection 
 
-    def _buildParameterTime(self, pa_units, is_standard_name, ndCounts, pt_base, pt_qs_mp):
+    def _buildParameterTime(self, pa_units, is_standard_name, ndCounts, pt_base, strides, pt_qs_mp):
         '''
         Build structure of timeseries/timeseriesprofile parameters organized by units
         '''
         PIXELS_WIDE = 800                   # Approximate pixel width of parameter-time-flot window
         pt = {}
         units = {}
-        strides = {}
 
         # Build units hash of parameter names for labeling axes in flot
         for p,u in pa_units.iteritems():
@@ -719,7 +721,7 @@ class STOQSQManager(object):
                     if stride < 1:
                         stride = 1
                     logger.debug('Getting timeseries from MeasuredParameter table with stride = %s', stride)
-                    strides[a.name] = stride
+                    strides[p][a.name] = stride
                     pt = self._getParameterTimeFromMP(qs_mp_a, pt_base, pa_units, a, p, is_standard_name, stride)
                 else:
                     # Construct just two points for this activity-parameter using the min & max from the AP table
@@ -760,9 +762,9 @@ class STOQSQManager(object):
                     pt_qs_mp = self.mpq.qs_mp_no_order
     
                     # Initialize structure organized by units for parameters left in the selection 
-                    pa_units, is_standard_name, ndCounts, pt, colors = self._collectParameters(platform)
+                    pa_units, is_standard_name, ndCounts, pt, colors, strides = self._collectParameters(platform)
 
-                    pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, pt_qs_mp)
+                    pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
 
         return({'pt': pt, 'units': units, 'counts': counts, 'colors': colors, 'strides': strides})
 
