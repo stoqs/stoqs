@@ -660,7 +660,7 @@ class STOQSQManager(object):
             if p in [parms[0] for parms in self.getParameters(parameterType)]:
                 isInSelection = True
 
-        if 'measuredparametersgroup' in self.kwargs:
+        if self.kwargs['measuredparametersgroup']:
             if p in self.kwargs['measuredparametersgroup']:
                 isInSelection = True
             else:
