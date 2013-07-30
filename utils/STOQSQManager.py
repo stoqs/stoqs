@@ -568,6 +568,7 @@ class STOQSQManager(object):
         pa_units = {}
         is_standard_name = {}
         ndCounts = {}
+        colors = {}
         pt = {}
 
         # Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names
@@ -583,6 +584,7 @@ class STOQSQManager(object):
                                               activity__platform__name=platform[0],
                                               measurement__measuredparameter__parameter=parameter
                                     ).values('depth').distinct().count()
+            logger.debug('nds  = %s', nds )
 
             if parameter.standard_name == 'sea_water_salinity':
                 unit = 'PSU'
@@ -590,22 +592,24 @@ class STOQSQManager(object):
                 pa_units[parameter.standard_name] = unit
                 is_standard_name[parameter.standard_name] = True
                 ndCounts[parameter.standard_name] = nds
+                colors[parameter.standard_name] = parameter.id
             else:
                 pa_units[parameter.name] = unit
                 is_standard_name[parameter.name] = False
                 ndCounts[parameter.name] = nds
+                colors[parameter.name] = parameter.id
 
             pt[unit] = {}
 
-        return (pa_units, is_standard_name, ndCounts, pt)
+        return (pa_units, is_standard_name, ndCounts, pt, colors)
 
-    def _getParameterTimeFromMP(self, qs_mp, pt, pa_units, a, p, stride):
+    def _getParameterTimeFromMP(self, qs_mp, pt, pa_units, a, p, is_standard_name, stride):
         '''
         Return hash of time series measuredparameter data with specified stride
         '''
         # Order by nominal depth first so that strided access collects data correctly from each depth
-        pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')
-        for mp in pt_qs_mp[::stride]:
+        pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')[::stride]
+        for mp in pt_qs_mp:
             if not mp['datavalue']:
                 continue
 
@@ -614,7 +618,7 @@ class STOQSQManager(object):
             nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
                                                 # mooring microcat actual depths are put into mp['measurement__depth']
     
-            ##if p == 'wind_speed':
+            ##if p == 'BED_DEPTH':
             ##    logger.debug('nd = %s, tv = %s', nd, tv)
             ##    raise Exception('DEBUG')        # Useful for examining queries in the postgresql log
 
@@ -643,16 +647,42 @@ class STOQSQManager(object):
 
         return pt
 
+    def _parameterInSelection(self, p, is_standard_name, parameterType=MEASUREDINSITU):
+        '''
+        Return True if parameter name is in the UI selection, either from contraints other than
+        direct selection or and if specifically selected in the UI.  
+        '''
+        isInSelection = False
+        if is_standard_name[p]:
+            if p in [parms[1] for parms in self.getParameters(parameterType)]:
+                isInSelection = True
+        else:
+            if p in [parms[0] for parms in self.getParameters(parameterType)]:
+                isInSelection = True
+
+        if 'measuredparametersgroup' in self.kwargs:
+            if p in self.kwargs['measuredparametersgroup']:
+                isInSelection = True
+            else:
+                isInSelection = False
+
+        return isInSelection 
+
     def _buildParameterTime(self, pa_units, is_standard_name, ndCounts, pt_base, pt_qs_mp):
         '''
         Build structure of timeseries/timeseriesprofile parameters organized by units
         '''
         PIXELS_WIDE = 800                   # Approximate pixel width of parameter-time-flot window
+        pt = {}
         units = {}
+        strides = {}
 
         # Build units hash of parameter names for labeling axes in flot
         for p,u in pa_units.iteritems():
             logger.debug('p, u = %s, %s', p, u)
+            if not self._parameterInSelection(p, is_standard_name):
+                continue
+
             try:
                 units[u] = units[u] + ' ' + p
             except KeyError:
@@ -666,7 +696,7 @@ class STOQSQManager(object):
                 qs_mp = pt_qs_mp.filter(parameter__name=p)
                 qs_awp = self.qs.filter(activityparameter__parameter__name=p)
 
-            qs_awp = qs_awp.filter(activityresource__resource__value__icontains='timeseries')
+            qs_awp = qs_awp.filter(activityresource__resource__value__icontains='timeseries').distinct()
 
             try:
                 secondsperpixel = self.kwargs['secondsperpixel'][0]
@@ -675,7 +705,7 @@ class STOQSQManager(object):
             except KeyError:
                 secondsperpixel = 1500                              # Default is a 2-week view  (86400 * 14 / 800)
 
-            logger.debug('-------------------------------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
+            logger.debug('--------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
             
             # Select each time series by Activity and test against secondsperpixel for deciding on min & max or stride selection
             for a in qs_awp:
@@ -688,12 +718,14 @@ class STOQSQManager(object):
                     stride = qs_mp_a.count() / PIXELS_WIDE / ndCounts[p]        # Integer factors -> integer result
                     if stride < 1:
                         stride = 1
-                    pt = self._getParameterTimeFromMP(qs_mp_a, pt_base, pa_units, a, p, stride)
+                    logger.debug('Getting timeseries from MeasuredParameter table with stride = %s', stride)
+                    strides[a.name] = stride
+                    pt = self._getParameterTimeFromMP(qs_mp_a, pt_base, pa_units, a, p, is_standard_name, stride)
                 else:
                     # Construct just two points for this activity-parameter using the min & max from the AP table
                     pt = self._getParameterTimeFromAP(pt_base, pa_units, a, p)
 
-        return (pt, units)
+        return (pt, units, strides)
 
     def getParameterTime(self):
         '''
@@ -705,12 +737,13 @@ class STOQSQManager(object):
         '''
         pt = {}
         units = {}
+        colors = {}
+        strides = {}
         counts = 0
 
         # The base MeasuredParameter query set for existing UI selections
         if not self.mpq.qs_mp:
             self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-        logger.info('self.mpq.qs_mp = %s', str(self.mpq.qs_mp.query))
 
         # Look for platforms that have featureTypes ammenable for Parameter time series visualization
         for platform in self.getPlatforms():
@@ -727,11 +760,11 @@ class STOQSQManager(object):
                     pt_qs_mp = self.mpq.qs_mp_no_order
     
                     # Initialize structure organized by units for parameters left in the selection 
-                    pa_units, is_standard_name, ndCounts, pt = self._collectParameters(platform)
+                    pa_units, is_standard_name, ndCounts, pt, colors = self._collectParameters(platform)
 
-                    pt, units = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, pt_qs_mp)
+                    pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, pt_qs_mp)
 
-        return({'pt': pt, 'units': units, 'counts': counts})
+        return({'pt': pt, 'units': units, 'counts': counts, 'colors': colors, 'strides': strides})
 
 
     def getSampleDepthTime(self):
