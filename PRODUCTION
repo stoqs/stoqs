@@ -9,7 +9,7 @@ STOQS can be installed on a standard Apache httpd web server employing the wsgi 
 Here are the steps:
 
 1. Add a stoqs.conf file to the server's /etc/httpd/conf.d/ directory.  With this 
-   configuration the system administrator can assign sudo priveledges to administrator
+   configuration the system administrator can assign sudo privileges to administrator
    of the STOQS application, and he/she can make changes without affecting the master
    httpd.conf.
    
