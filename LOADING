@@ -1,0 +1,91 @@
+LOADING
+=======
+
+Instructions for loading your data in STOQS
+
+These instructions will cover loading in situ discrete geometry feature type data from
+OPeNDAP accessible data sources.
+
+1. Add a new file to the loaders directory named to describe the campaign that is 
+   the source of the data.  The campaign name may be a project name or a month_year
+   combination.  It can really be anything you want.  At MBARI for the CANON project
+   we typically have field programs where intensive measurements are collected in
+   an area of the ocean over a several week period, so we name our campaigns like
+   'sept2010' and our stoqs databases like 'stoqs_sept2010' and 'stoqs_june2011'.
+   The point of using separate databases for campaigns is to constrain the size
+   of the databases, which helps in managing them and in evolving stoqs applications
+   while maintaining some level of consistent functionality of access for databases
+   that are not under development.
+   
+2. In your new loadXXXX.py file instantiate a DAPloaders object with accurate attributes
+   for each activity to be loaded.  There are several examples of other load files in
+   the loaders/ directory.  Feel free to use them as a basis for the data you wish to load.
+
+3. The CANON directory in loaders/ contains load scripts for all of the MBARI CANON
+   campaigns.  Much of the commonly used loader code has been factored out into a 
+   CANONLoader class in loaders/CANON/__init__.py so that the load scripts (e.g. 
+   loadCANON_september2012.py) simply need to be constructed with the OPeNDAP URLs
+   and parameter names for each type of platform.
+
+4. Create a PostgreSQL database for your campaign (full instructions are in the 
+   INSTALL file).  At the psql prompt:
+
+     create database stoqs_september2012_s100 owner=stoqsadm template=template_postgis;
+     \c stoqs_september2012_s100
+     grant all on all tables in schema public to stoqsadm;
+
+   The convention is to append the append the stride value ('_s100') to the campaign
+   portion of the database name.
+
+5. Add the new database to your privateSettings file (see INSTALL):
+
+     'stoqs_september2012_s100': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': 'stoqs_september2012_s100',
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': DATABASE_PORT
+     },
+
+6. Restart your server to force a re-read of the settings file.  On a development server
+   simply restart "python manage.py runserver 0.0.0.0:8000" which you normally have running
+   in its own shell window (see DEVELOPMENT).  On a production server restart apache with
+   "sudo /sbin/service httpd restart" (see PRODUCTION). 
+
+7. Synchronize the new database with the stoqs data model.  At a shell prompt in your virtual
+   environment (see PREREQUISITES and INSTALL):
+
+     source venv-stoqs/bin/activate
+     ./manage.py syncdb --database=stoqs_september2012_s100
+
+8. Execute your load script.  If following the example of the scripts in loaders/CANON they
+   take two arguments (<stride> <db_name>).  For example to populate the example database:
+
+     loaders/CANON/loadCANONseptember2012.py 100 stoqs_september2012_s100
+
+   To populated a full-resolution database repeat steps 4-7 with another database name,
+   say "stoqs_september2012" and execute:
+
+     loaders/CANON/loadCANONseptember2012.py 1 stoqs_september2012
+
+9. Notes:
+
+    - As a campaign produces data files those files may be added to the script.  To add
+      data to an existing database simply comment out previously loaded files and re-execute
+      the script (step 8) with the new files.
+    - some programs to create NetCDF files from various original data files (e.g. Seabird underway 
+      and profile CTD) are in the loaders/CANON/toNetCDF directory.  See the README
+      there for instructions on running those scripts to put the data on an OPeNDAP server
+      so that your STOQS loader can load them.
+    - Editing and running the load script during a campaign is an interactive process requiring
+      interaction with people and testing the data sources for valid parameter names as well
+      as monitoring the script's output for warning and error messages.
+    - The stoqs-discuss mail list (https://groups.google.com/forum/?fromgroups=#!forum/stoqs-discuss)
+      is a good place to ask questions if any problems are encountered.
+    
+    
+--
+Mike McCann
+MBARI 23 May 2013
+ 

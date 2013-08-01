@@ -1,0 +1,97 @@
+
+TIDBITS
+=======
+
+The tidbits here are anything that might be useful for developing, working with,
+or using stoqs.
+
+Here's an interactive python session that retrieves measurements and plots a histogram:
+---------------------------------------------------------------------------------------
+
+cd ~/dev/stoqshg
+./manage.py shell
+
+from stoqs import models as m
+import matplotlib.pyplot as plt
+
+# Read from stride=100 database
+data = m.MeasuredParameter.objects.using('stoqs_april2011_s100').filter(parameter__name='salinity')
+sal = [float(mp.datavalue) for mp in data]
+plt.hist(sal,100)
+plt.title('Histogram of salinity from stoqs_april2011_s100')
+plt.xlabel('Salinity')
+plt.ylabel('Count')
+plt.savefig('sal_hist_s100.png')
+
+# Repeat for full-resolution database
+plt.clf()
+data = m.MeasuredParameter.objects.using('stoqs_april2011').filter(parameter__name='salinity')
+sal = [float(mp.datavalue) for mp in data]
+plt.hist(sal,100)
+plt.title('Histogram of salinity from stoqs_april2011')
+plt.xlabel('Salinity')
+plt.ylabel('Count')
+plt.savefig('sal_hist.png')
+
+
+Here's a little script to update the start and end dates for all the Campaigns on a server:
+-----------------------------------------------------------------------------------------
+
+cd ~/dev/stoqshg
+./manage.py shell
+
+from stoqs import models as m
+from django.db.models import Max, Min
+
+dbAliases = [   'stoqs_may2012', 'stoqs_october2010_s100', 'stoqs_september2010_s100', 'stoqs_september2010_s100',
+                'default', 'stoqs_june2011_s100', 'stoqs_september2010', 'stoqs_april2011_s100', 
+                'stoqs_may2012_s100', 'stoqs_april2011', 'stoqs_june2011']
+for dbAlias in dbAliases:
+    ip_qs = m.InstantPoint.objects.using(dbAlias).aggregate(Max('timevalue'), Min('timevalue'))
+    m.Campaign.objects.using(dbAlias).update(startdate = ip_qs['timevalue__min'], enddate = ip_qs['timevalue__max'])
+
+
+Manually managing schema evolution: adding a geometry column to the Activity table to an existing database:
+-----------------------------------------------------------------------------------------------------------
+(Extracted from './manage.py sqlall stoqs')
+\c <database>
+SELECT AddGeometryColumn('stoqs_activity', 'mappoint', 4326, 'POINT', 2);
+CREATE INDEX "stoqs_activity_mappoint_id" ON "stoqs_activity" USING GIST ( "mappoint" GIST_GEOMETRY_OPS );
+
+
+Drop NOT NULL constraint on foreign key where we don't always have an Analysis Method:
+--------------------------------------------------------------------------------------
+ALTER TABLE stoqs_sampledparameter ALTER COLUMN analysismethod_id DROP NOT NULL;
+
+
+Examples of adding columns to accomodate a new schema:
+------------------------------------------------------
+ALTER TABLE stoqs_parametergroup ADD COLUMN "description" varchar(128);
+ALTER TABLE stoqs_measurement ADD COLUMN "nominallocation_id" integer REFERENCES "stoqs_nominallocation" ("id") DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE stoqs_nominallocation ADD COLUMN "activity_id" integer REFERENCES "stoqs_activity" ("id") DEFERRABLE INITIALLY DEFERRED;
+
+
+Change database password:
+-------------------------
+ALTER ROLE stoqsadm login password 'newpassword';
+
+
+Add an 'everyone' Postgres user with read access to all databases - useful for read-only web apps
+-------------------------------------------------------------------------------------------------
+CREATE ROLE readonly nologin;
+GRANT select on all tables in schema public to readonly;
+CREATE ROLE everyone login password 'guest';
+GRANT readonly to everyone;
+
+
+Delete an Activity:
+-------------------
+./manage.py shell
+acts = models.Activity.objects.using('stoqs_march2013_s').filter(name__contains='plm04')
+acts[0].delete(using='stoqs_march2013_s')
+
+
+--
+Mike McCann
+MBARI 20 March 2013
+
