@@ -1041,6 +1041,30 @@
         return date_str
     }
 
+    function getValueOrdinal(value) {
+        // Add a suffix (st, nd, th) to a number 
+        if (value == 1) {
+            ordinal = 'single';
+        }
+        else if (value == 11 || value == 12 || value == 13) {
+            ordinal = value + 'th';
+        }
+        else if (value.toString().match(/1$/)) {
+            ordinal = value + 'st';
+        }
+        else if (value.toString().match(/2$/)) {
+            ordinal = value + 'nd';
+        }
+        else if (value.toString().match(/3$/)) {
+            ordinal = value + 'rd';
+        }
+        else {
+            ordinal = value + 'th';
+        }
+                                
+        return ordinal
+    }
+
     function makeSlider(divid, type, data) {
         if (type == 'time') {
             var start=new Date(data[0]);
@@ -2317,25 +2341,21 @@
                     if ( $.isEmptyObject(parmData) ) {
                         return;
                     }
-                    $.plot($("#time-parameter-flot"), parmData.dataset, $.extend(true, {}, parametertime_options, {
+                    timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, $.extend(true, {}, parametertime_options, {
                                                               yaxes: parmData.yaxesOptions,
                                                           }));
+
+                    $.each(timeparameterplot.getData(), function(index, series) {
+                        series.label;
+                        series.color;
+                    });
                     if ( ! $.isEmptyObject(data.parametertime.strides) ) {
                         $('#stride-info').html('')
-                        $.each(data.parametertime.strides, function(act, value) {
-                            if (value == 1) {
-                                ordinal = 'single';
-                            }
-                            else if (value == 2) {
-                                ordinal = '2nd';
-                            }
-                            else if (value == 3) {
-                                ordinal = '3rd';
-                            }
-                            else {
-                                ordinal = value + 'th';
-                            }
-                            $('#stride-info').append(' Plotting every ' + ordinal + ' point from ' + act + ' ');
+                        $.each(data.parametertime.strides, function(p, act_value) {
+                            $.each(act_value, function(act, value) {
+                                ordinal = getValueOrdinal(value);
+                                $('#stride-info').append(p + ': every ' + ordinal + ' point from ' + act + '<br>');
+                            });
                         });
                     }
                 }
