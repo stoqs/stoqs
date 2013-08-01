@@ -306,6 +306,19 @@ class ParameterGroupParameter(models.Model):
         app_label = 'stoqs'
         unique_together = ['parametergroup', 'parameter']
 
+class CampaignResource(models.Model):
+    '''
+    Association class pairing Campaigns and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    '''
+    uuid = UUIDField(editable=False)
+    campaign = models.ForeignKey(Campaign)
+    resource = models.ForeignKey(Resource)
+    class Meta:
+        verbose_name = 'Campaign Resource'
+        verbose_name_plural = 'Campaign Resource'
+        app_label = 'stoqs'
+        unique_together = ['campaign', 'resource']
+
 class ActivityResource(models.Model):
     '''
     Association class pairing Activities and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
