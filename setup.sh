@@ -71,7 +71,7 @@ chmod g+w log/django.log
 
 # Apply the django patch to escape unicode strings properly
 
-pushd 
+pushd venv-stoqs/lib/python*/site-packages
 patch django/contrib/gis/db/backends/postgis/adapter.py << __EOT__
 --- django/contrib/gis/db/backends/postgis/adapter.py.orig	2011-09-09 11:51:27.769648151 +0100
 +++ django/contrib/gis/db/backends/postgis/adapter.py	2011-09-09 11:51:38.279842827 +0100
