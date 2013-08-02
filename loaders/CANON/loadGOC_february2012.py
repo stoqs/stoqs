@@ -51,7 +51,11 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # Western Flyer Underway CTD
 cl.wfuctd_base = cl.dodsBase + 'GOC_february2012/wf/uctd/'
 cl.wfuctd_files = [ 
-                        'wf_uctd.nc',
+			'goc12m01.nc',
+			'goc12m02.nc',
+			'goc12m03.nc',
+			'goc12m04.nc',
+			'goc12m05.nc',
                       ]
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
