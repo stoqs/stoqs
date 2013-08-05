@@ -3,8 +3,20 @@ LOADING
 
 Instructions for loading your data in STOQS
 
-These instructions will cover loading in situ discrete geometry feature type data from
-OPeNDAP accessible data sources.
+These instructions cover the loading of in situ discrete sampling geometry feature type 
+data from OPeNDAP accessible data sources.  Data adhereing to the Climate and Forecast
+conventions version 1.6 are supported for loading into STOQS.  Specific feature types
+supported are: trajectory, timeSeries, and timeSeriesProfile.  For more information
+please see:
+
+        http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html
+        http://www.nodc.noaa.gov/data/formats/netcdf/
+
+There are many ways to write data adhering to these standards - there are some examples
+using the Python pupynere library here in the loaders/CANON/toNetCDF directory.
+
+Here are the step-by-step instuctions for getting your data into STOQS given the above
+prerequisites:
 
 1. Add a new file to the loaders directory named to describe the campaign that is 
    the source of the data.  The campaign name may be a project name or a month_year
@@ -87,5 +99,5 @@ OPeNDAP accessible data sources.
     
 --
 Mike McCann
-MBARI 23 May 2013
+MBARI 5 August 2013
  
