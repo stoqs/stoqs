@@ -118,6 +118,10 @@
             <ul class="nav">
               <li><a href="{% url 'show-default' %}"><i class="icon-list-alt icon-white"></i> Campaign list</a></li>
             </ul>
+            <ul class="nav">
+              <li><a id="permalink" data-toggle="modal" href="#permalink-popup" data-action="{% url 'generate_permalink' dbAlias=request.META.dbAlias %}">
+                <i class="icon-eye-open icon-white"></i> Share this view</a></li>
+            </ul>
             <!--
             <form action="">
                 <input type="text" placeholder="Search" />
@@ -127,6 +131,23 @@
         </div>
       </div>
     </div>
+
+
+  <div id="permalink-popup" class="modal hide fade in" style="display:none;width:800px;">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">×</a>
+        <h3>Share this view</h3>
+    </div>
+    <div class="modal-body">
+        <h4>Copy this link to your clipboard to and use it in e-mail, etc. to share this view of the data</h4>
+        <div id="permalink-box" style="display:none">
+            <input type="text" name="permalink" style="width: 100%"></input>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+  </div>
 
   <div class="container-fluid">
 
@@ -218,12 +239,6 @@
                     </div>
                     <div id="collapseMetadata" class="accordion-body collapse in">
                         <div class="accordion-inner">
-							<h3>
-							<a id="permalink" href="#" data-action="{% url 'generate_permalink' dbAlias=request.META.dbAlias %}">Show Permalink</a>
-							<div id="permalink-box" style="display:none">
-							<input type="text" name="permalink" style="width: 100%"></input>
-							</div>
-							</h3>
 								
                             <label class="checkbox">
                                 <input type="checkbox" id="getactualcount" /> Get actual count
