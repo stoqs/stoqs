@@ -2314,10 +2314,18 @@
             }
             else if (key == 'simpledepthtime') {
                 // Redraw the plot given the saved values
-                theData = getDepthDataset(data, $('#start-ems').val(), $('#end-ems').val());
-                if ( ! theData ) {
+                if ( $.isEmptyObject(data.simpledepthtime.sdt) ) {
+                    if (! $.isEmptyObject(data.parametertime.pt) ) {
+                        // Show parameter-time data if no trajectory data shown 
+                        // TODO: perhaps better to do with an event listener on presence of data in the flot object
+                        $('#temporal-parameter-li').show();
+                    }
+                    else if (! data.counts.approximate_count) {
+                        alert('No data in your selection.  Clear the Temporal selection and try again.');
+                    }
                     return;
                 }
+                theData = getDepthDataset(data, $('#start-ems').val(), $('#end-ems').val());
                 timedepthplot = $.plot($("#time-depth-flot"), theData, simpledepthtime_options_zoom);
             }
             else if (key == 'parameterplatformdatavaluepng') {
