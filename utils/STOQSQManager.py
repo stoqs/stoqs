@@ -259,12 +259,22 @@ class STOQSQManager(object):
                 actual_count = self.mpq.getMPCount()
                 logger.debug('actual_count = %s', actual_count)
 
+        try:
+            approximate_count_localized = locale.format("%d", approximate_count, grouping=True)
+        except TypeError:
+            logger.exception('Failed to format approximate_count = %s into a number', approximate_count)
+            approximate_count_localized = None
+        
         if actual_count:
-            actual_count_localized = locale.format("%d", actual_count, grouping=True)
+            try:
+                actual_count_localized = locale.format("%d", actual_count, grouping=True)
+            except TypeError:
+                logger.exception('Failed to format actual_count = %s into a number', actual_count)
+
 
         return {    'ap_count': self.getAPCount(), 
                     'approximate_count': approximate_count,
-                    'approximate_count_localized': locale.format("%d", approximate_count, grouping=True),
+                    'approximate_count_localized': approximate_count_localized,
                     'actual_count': actual_count,
                     'actual_count_localized': actual_count_localized
                 }
@@ -489,7 +499,13 @@ class STOQSQManager(object):
         # While only a fraction of a second different, it is 342 times faster!
 
         qs=self.qs.aggregate(Max('enddate'), Min('startdate'))
-        return (time.mktime(qs['startdate__min'].timetuple())*1000, time.mktime(qs['enddate__max'].timetuple())*1000,)
+        try:
+            times = (time.mktime(qs['startdate__min'].timetuple())*1000, time.mktime(qs['enddate__max'].timetuple())*1000,)
+        except AttributeError:
+            logger.exception('Failed to get timetuple from qs = %s', qs)
+            return
+        else:
+            return times
     
     def getDepth(self):
         '''
@@ -502,8 +518,14 @@ class STOQSQManager(object):
 
         # Alternate query to use stats stored with the Activity
         qs=self.qs.aggregate(Max('maxdepth'), Min('mindepth'))
-        return ('%.2f' % qs['mindepth__min'], '%.2f' % qs['maxdepth__max'])
-        
+        try:
+            depths = ('%.2f' % qs['mindepth__min'], '%.2f' % qs['maxdepth__max'])
+        except TypeError:
+            logger.exception('Failed to convert mindepth__min and/or maxdepth__max to float from qs = %s', qs)
+            return
+        else:
+            return depths
+            
     def getSimpleDepthTime(self):
         '''
         Based on the current selected query criteria for activities, return the associated SimpleDepth time series
