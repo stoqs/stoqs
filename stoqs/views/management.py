@@ -25,7 +25,7 @@ MBARI Jan 9, 2012
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.conf import settings
-from django.db import DatabaseError
+from django.db import DatabaseError, close_connection
 from django.http import HttpResponse
 from django.utils import simplejson
 from utils import encoders
@@ -149,6 +149,9 @@ def showCampaigns(request,format=None):
             # Will happen if database defined in privateSettings does not exist yet
             logger.warn("Database alias %s returns django.db.DatabaseError", dbAlias)
             continue
+
+        # Close the database connection, before connecting to the next database
+        close_connection()
 
     # Create a hash keyed by startdate of the dbAliases and campaigns so that we display a time sorted list of campaigns
     timeSortHash = {}
