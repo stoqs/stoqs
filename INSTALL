@@ -19,21 +19,7 @@ following these instructions.
     using postgresql-9.1.
 
 
-3.  There is one thing to change in the postgresql.conf so that all of the non-django queries 
-    work with respect to timezone.  Uncomment the line: 
-
-        #timezone = '(defaults to server environment setting)'
-        
-    and change it to:
-    
-        timezone = 'GMT'
-
-    Then reload the configuration file with:
-
-        sudo /sbin/service postgresql-9.1 reload
-
-
-4.  Most direct interaction with the postgres database is done via commands at the psql prompt.
+3.  Most direct interaction with the postgres database is done via commands at the psql prompt.
     To get the psql prompt become the postgres user with "su postgres" and enter the postgres
     password.  This works if the postgres  account has been set up for login.  The default 
     postgres installation creates the postgres account without login capability.  In this 
@@ -59,12 +45,13 @@ following these instructions.
     Include the single quotes; the password is inside the single quotes. 
 
     
-5.  Create your STOQS database(s) and assign permissions at the psql prompt (assuming 
+4.  Create your STOQS database(s) and assign permissions at the psql prompt (assuming 
     that the DATABASE_USER setting in privateSettings is 'stoqsadm'):
 
         create database stoqs owner=stoqsadm template=template_postgis;
         \c stoqs
         grant all on all tables in schema public to stoqsadm;
+        alter database stoqs set timezone='GMT'
     
     Repeat for additional campaign specific databases.
 
@@ -75,7 +62,7 @@ installed at the system level.  Make sure that you've entered 'source venv-stoqs
 window where you run the following command.  Your shell prompt will begin with '(venv-stoqs)' as an
 indication that you are in the virtual environment.
 
-6.  Sync the model with the database:
+5.  Sync the model with the database:
 
         python manage.py syncdb                 # For the default stoqs database
     
@@ -85,19 +72,19 @@ indication that you are in the virtual environment.
         python manage.py syncdb --database=stoqs_<campaign>     # For campaign specific databases 
     
 
-7.  Start the development web server:
+6.  Start the development web server:
 
         export LD_LIBRARY_PATH=/usr/local/lib/                  # Needed if packages, such as gdal, were installed here
         export GDAL_DATA=/usr/share/gdal/                       # Needed if epsg support files can't be found - your dir may vary
         python manage.py runserver 0.0.0.0:8000 
     
     
-8.  Optional: Start the celerey daemon (which services long-running tasks) in another window:
+7.  Optional: Start the celerey daemon (which services long-running tasks) in another window:
 
         python manage.py celeryd -l INFO
 
 
-9.  Load some data:
+8.  Load some data:
 
     Execute at the (venv-stoqs) shell prompt: 
 
@@ -122,5 +109,5 @@ To continue on to the next steps please read the instructions in the DEVELOPMENT
 
 --
 Mike McCann
-MBARI 21 January 2013
+MBARI 6 August 2013
 

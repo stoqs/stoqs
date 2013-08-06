@@ -45,6 +45,7 @@ prerequisites:
      create database stoqs_september2012_s100 owner=stoqsadm template=template_postgis;
      \c stoqs_september2012_s100
      grant all on all tables in schema public to stoqsadm;
+     alter database stoqs_september2012_s100 set timezone='GMT'
 
    The convention is to append the append the stride value ('_s100') to the campaign
    portion of the database name.
