@@ -1351,6 +1351,9 @@
         updateSummaryData();
 
         polyLayer.removeAllFeatures();
+        // Here we have histogram data passed in, so let's update our histograms
+        // accordingly.
+
 
     } // rebuildFilters()
     
@@ -1954,6 +1957,7 @@
                                                                           });
         parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');
         $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogtram_options_labels);
+        $("#" + parameter_idsafe + "-histogram-flot").trigger('plotloaded');
     }
 
 
@@ -2629,6 +2633,15 @@
                 params['map-layers'].push(layer.name); 
             }
         });
+        
+        // Grab any histograms that might be on the page.
+        params['histograms']={}
+        $('[id$="-histogram-flot"]').each(function(pos, item) {
+            var sel=$(item).data("plot").getSelection();
+            if (sel) {
+				params['histograms'][item.id]=sel;
+            }
+        });
         return JSON.stringify(params);
         
     }
@@ -2660,8 +2673,10 @@
                     ranges.yaxis.from=value;
                     break;
                 case 'map-center':
-                    var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
-                    map.setCenter(lonlat,value.zoom);
+                    if (lonlat && zoom) {
+                         var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
+                   		 map.setCenter(lonlat,value.zoom);
+                    } 
                     break;
                 case 'map-layers':
                     $.each(map.layers, function (pos, layer) {
@@ -2696,7 +2711,22 @@
         });
         
         permalink_bypass=false;
+        // We have to update the historgrams after the page is reloaded,
+        // so in this case, we rebuild filters first, then update histograms.
         rebuildFilters();
+        if ((typeof parameters['histograms'] !== 'undefined')) {
+            $.each(parameters['histograms'], function (key, value) {
+//                console.log(key + ":" + value);
+                if ((typeof value !== 'undefined') && value) {
+	                $('#right-column').on('plotloaded', '#' + key,
+	                		{sel: '#' + key,
+	            		     value:  value }, function (event) {
+		                $(event.data.sel).data("plot").setSelection(event.data.value);
+		                $(this).unbind(event);
+	                });
+                }
+            });
+        } 
     }
     
     function load_permalink() {
