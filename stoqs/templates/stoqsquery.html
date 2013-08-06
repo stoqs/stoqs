@@ -1266,15 +1266,6 @@
             params['min_depth']=$('#start-depth').val();
             params['max_depth']=$('#end-depth').val();
         }
-        else if (params['measuredparametersgroup'].length) {
-            // Force a set of min/max time/depth if a Measured Parameter is selected
-            var start = new Date(timedepthplot.getAxes().xaxis.min);
-            params['start_time'] = getUTCDateString(start)
-            var end = new Date(timedepthplot.getAxes().xaxis.max);
-            params['end_time'] = getUTCDateString(end)
-            params['min_depth'] = timedepthplot.getAxes().yaxis.min
-            params['max_depth'] = timedepthplot.getAxes().yaxis.max
-        }
 
         // Enable/disable showsensortracks checkbox
         $('#showsensortracks').attr('disabled', true);
@@ -1400,7 +1391,6 @@
             var end=new Date(resetData['time'][1]);
             $('#end-ems').val(end.getTime());
             $('#end-time').val(getUTCDateString(end));
-
     }
 
     // Special handling for unzooming the time-depth-plot and time-parameter-plot
@@ -2189,12 +2179,10 @@
                 var end = new Date(data[key][1]);
                 $('#end-ems').val(end.getTime());
                 $('#end-time').val(getUTCDateString(end));
-                //makeSlider('slider-' + key, key, data[key])
             }
             else if (key == 'depth') {
                 $('#start-' + key).val(Math.round(data[key][0]*10)/10);
                 $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
-                //makeSlider('slider-' + key, key, data[key])
             }
             else if (key == 'simpledepthtime') {
                 //flotPlot(data)
@@ -2312,6 +2300,18 @@
                     }
                 });
             }
+            else if (key == 'time') { 
+                var start = new Date(data[key][0]);
+                $('#start-ems').val(start.getTime());
+                $('#start-time').val(getUTCDateString(start));
+                var end = new Date(data[key][1]);
+                $('#end-ems').val(end.getTime());
+                $('#end-time').val(getUTCDateString(end));
+            }
+            else if (key == 'depth') {
+                $('#start-' + key).val(Math.round(data[key][0]*10)/10);
+                $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
+            }
             else if (key == 'simpledepthtime') {
                 // Redraw the plot given the saved values
                 if ( $.isEmptyObject(data.simpledepthtime.sdt) ) {
@@ -2325,7 +2325,12 @@
                     }
                     return;
                 }
-                theData = getDepthDataset(data, $('#start-ems').val(), $('#end-ems').val());
+                if ( $('#zoomed-button').hasClass('btn-primary') ) {
+                    theData = getDepthDataset(data, $('#start-ems').val(), $('#end-ems').val());
+                }
+                else {
+                    theData = getDepthDataset(data, initData.time[0], initData.time[1]);
+                }
                 timedepthplot = $.plot($("#time-depth-flot"), theData, simpledepthtime_options_zoom);
             }
             else if (key == 'parameterplatformdatavaluepng') {
@@ -2347,7 +2352,7 @@
                         $('#contourtext').css( { 'color': 'black' } );
                     }
                     else {
-                        $('#contourtext').text(data['parameterplatformdatavaluepng'][2] + "  Try a different selection.");
+                        $('#contourtext').text(data['parameterplatformdatavaluepng'][2]);
                         $('#contourtext').css( { 'color': 'red' } );
                     }
                 }
@@ -2610,10 +2615,11 @@
 			});
 		});
 		// Grab the data so we can reset the time/depth plot and temporal values.
-    	params['end-ems']=$('#end-ems').val();
-        params['start-ems']=$('#start-ems').val();
-    	params['end-depth']=$('#end-depth').val();
-        params['start-depth']=$('#start-depth').val();
+        params['start-ems'] = $('#start-ems').val();
+  	    params['end-ems'] = $('#end-ems').val();
+        params['start-depth'] = $('#start-depth').val();
+   	    params['end-depth'] = $('#end-depth').val();
+
         // Grab the center of the map so we can restore the center and lon/lat data.
         params['map-center']={ 'lonlat': map.getCenter(), 
                                	'zoom': map.getZoom() };
