@@ -2204,38 +2204,7 @@
 
                 }
             }
-            else if (key == 'activityparameterhistograms') {
-                // Create the html placeholders for the plots
-                var parameterunits = data[key]['parameterunits'];
-                var histHtml = '<tbody>';
-                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
-                    histHtml += '<tr>' +
-                        '<td>' +
-                            '<div id="' + parameter + '-histogram-flot" style="width:100%;height:100px;"></div>' +
-                        '</td>' +
-                        '</tr>';
-                });
-                histHtml += '</tbody>';
-                $('#parameter-value-table').html(histHtml);
-                // Bind for parameter value range selection - will trigger rebuildFilters() upon selection event, where onUpdate() will handle
-                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
-                    histdata = [];
-                    $("#" + parameter + "-histogram-flot").bind("plotselected", function (event, ranges) {
-                        parametervalues[parameter] = {'xmin': ranges.xaxis.from, 'xmax': ranges.xaxis.to, 'ymin':0, 'ymax': ranges.yaxis.to };
-                        rebuildFilters();
-                    });
-                });
-                // Plot the histograms and any selected ranges that have been saved in the session
-                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
-                    histdata = [];
-                    $.each(histbyplatformandactivity, function (platform, histbyplatform) {
-                        $.each(histbyplatform, function(activity, histbyactivity) {
-                            histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
-                        });
-                    });
-                    plotHistData(parameter, histdata, parameterunits);
-                });
-            }
+        
         } // onInit()
 
         function onUpdate(data, key) {
@@ -2397,25 +2366,33 @@
                 }
             }
             else if (key == 'activityparameterhistograms') {
-                var histHtml = '<tbody>';
+            	if ($('#parameter-value-table > tbody').length == 0) {
+            		$('#parameter-value-table').html('<tbody></tbody>');
+            	}
+            	var histHtml='';
+                var $elem=$('#parameter-value-table > tbody');
                 var parameterunits = data[key]['parameterunits'];
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');       // HTML ids don't allow spaces
-                    histHtml += '<tr>' +
-                        '<td>' +
-                            '<div id="' + parameter_idsafe + '-histogram-flot" style="width:100%;height:100px;"></div>' +
-                        '</td>' +
-                        '</tr>';
+					var divid=parameter_idsafe + '-histogram-flot';
+                    if ($('#' + divid).length == 0) {
+	                    histHtml += '<tr>' +
+	                        '<td>' +
+	                            '<div id="' + parameter_idsafe + '-histogram-flot" style="width:100%;height:100px;"></div>' +
+	                        '</td>' +
+	                        '</tr>';
+                    }
                 });
-                histHtml += '</tbody>';
-                $('#parameter-value-table').html(histHtml);
-
+                if (histHtml.length) {
+		            $elem.append(histHtml);
+                }
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');       // HTML ids don't allow spaces
                     histdata = [];
                     $("#" + parameter_idsafe + "-histogram-flot").bind("plotselected", function (event, ranges) {
                         parametervalues[parameter] = {'xmin': ranges.xaxis.from, 'xmax': ranges.xaxis.to, 'ymin':0, 'ymax': ranges.yaxis.to };
-                        rebuildFilters();
+                        console.log(parametervalues[parameter]);
+						rebuildFilters();
                     });
                     $.each(histbyplatformandactivity, function (platform, histbyplatform) {
                         $.each(histbyplatform, function(activity, histbyactivity) {
@@ -2636,10 +2613,11 @@
         
         // Grab any histograms that might be on the page.
         params['histograms']={}
-        $('[id$="-histogram-flot"]').each(function(pos, item) {
-            var sel=$(item).data("plot").getSelection();
+        $('div[id$="-histogram-flot"]').each(function(pos, item) {
+            //var sel=$(item).data("plot").getSelection();
+            var sel=$(item).data("plot");
             if (sel) {
-				params['histograms'][item.id]=sel;
+				params['histograms'][item.id]=sel.getSelection();
             }
         });
         return JSON.stringify(params);
