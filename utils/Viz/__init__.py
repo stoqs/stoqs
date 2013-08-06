@@ -315,7 +315,7 @@ class MeasuredParameter(object):
             return sectionPngFile, self.colorbarPngFile, ''
         else:
             logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax)
-            return None, None, 'No depth-time region specified.'
+            return None, None, 'No depth-time region selected.'
 
     def dataValuesX3D(self):
         '''
