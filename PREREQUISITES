@@ -43,12 +43,12 @@ psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/spatial_ref_sys.sql
 mkdir /tmp/media
 su -c 'ln -s /tmp/media /var/www/html/media'
 
-# Build GDAL from source.  Download latest (v1.9 or higher) tar ball from http://download.osgeo.org/gdal/
-# Unpack, and in the top level directory (e.g. gdal-1.9.0/) run ('make install' must be done as root):
-su -c "yum -y install gdal expat-devel"              # Required for csv files and KML parsing support
+# Install prerequisites and build GDAL from source.  Download latest (v1.9 or higher) tar ball 
+# from http://download.osgeo.org/gdal/, unpack, and in the top level directory (e.g. gdal-1.9.2/)
+su -c "yum -y install gdal expat-devel"         # Required for csv files and KML parsing support
 ./configure --with-python
 make
-make install
+su -c "make install"
 
 # Mapserver - these instructions have been tested for version 6.2.1:
 # ------------------------------------------------------------------
@@ -73,12 +73,12 @@ su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel postgresql91-d
 # Make sure that there is a libpg.so file or symlink in /usr/pgsql-9.1/lib.  You may need to do this:
 su -c "ln -s /usr/pgsql-9.1/lib/libpq.so.5.4 /usr/pgsql-9.1/lib/libpq.so
 make 
-make install
+su -c "make install"
 
 
 # Make sure that the apache httpd service is running on your system
-chkconfig httpd on
-/sbin/service httpd start
+su -c "chkconfig httpd on"
+su -c "/sbin/service httpd start"
 
 # The following prerequisites must be installed for each development directory on the system for which the 
 # above system-level prerequisites have been installed.
@@ -99,13 +99,13 @@ source venv-stoqs/bin/activate      # source venv-stoqs/bin/activate.csh if usin
 
 
 # Install additional Python packages required by STOQS. (Make sure you are in your venv
-# - your prompt should look something like "(venv-stoqs)[student@localhost stoqshg]$ "):
+# - your prompt should look something like "(venv-stoqs)[student@localhost stoqshg]$":
 ./setup.sh
 
 # This will take a few minutes to install everything that is specified in requirements.txt
 
 # When running django-admin.py or 'python manage.py' do it in your virtualenv, making
-# sure your prompt looks something like "(venv-stoqs)[student@localhost stoqshg]$ "
+# sure your prompt looks something like "(venv-stoqs)[student@localhost stoqshg]$"
 
 # Proceed to the instructions in the INSTALL file.
 
