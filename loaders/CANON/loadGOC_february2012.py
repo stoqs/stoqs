@@ -30,20 +30,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-try:
-    stride = int(sys.argv[1])
-except IndexError:
-    stride = 100
-try:
-    dbAlias = sys.argv[2]
-except IndexError:
-    dbAlias = 'stoqs_february2012_s100'
-
 
 # ------------------------------------------------------------------------------------
 # Data loads for all the activities, LRAUV have real-time files before full-resolution
 # ------------------------------------------------------------------------------------
-cl = CANONLoader(dbAlias, 'GOC - February 2012')
+
+cl = CANONLoader('stoqs_february2012', 'GOC - February 2012')
 
 cl.tdsBase = 'http://odss.mbari.org:8080/thredds/'      
 cl.dodsBase = cl.tdsBase + 'dodsC/' 
@@ -74,10 +66,21 @@ cl.wfpctd_files = [
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 
 
-cl.stride = stride
-##cl.loadAll()
+# Execute the load
+cl.process_command_line()
 
-# Use same platformName so that section data visualization works in STOQS UI
-cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data')
-cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data')
+if cl.args.test:
+    # Use same platformName so that section data visualization works in STOQS UI
+    ##cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
+    cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
+
+elif cl.args.optimal_stride:
+    # Use same platformName so that section data visualization works in STOQS UI
+    cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=1)
+    cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=1)
+
+else:
+    # Use same platformName so that section data visualization works in STOQS UI
+    cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=cl.args.stride)
+    cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=cl.args.stride)
 

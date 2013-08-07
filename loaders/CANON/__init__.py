@@ -62,9 +62,9 @@ class CANONLoader(object):
                 'espbruce':     '808026',
              }
 
-    def __init__(self, dbAlias, campaignName, stride=1):
-        self.dbAlias = dbAlias
-        self.campaignName = campaignName
+    def __init__(self, base_dbAlias, base_campaignName, stride=1):
+        self.base_dbAlias = base_dbAlias
+        self.base_campaignName = base_campaignName
         self.stride = stride
 
     def loadDorado(self, stride=None):
@@ -317,15 +317,63 @@ class CANONLoader(object):
                     print "WARNING: No data from %s for dbAlias = %s, campaignName = %s" % (loader, self.dbAlias, self.campaignName)
                     pass
 
+    def process_command_line(self):
+        '''
+        The argparse library is a requirement for STOQS.  Support original positional arguments of stride and dbAlias plus
+        these kind of database loads:
+            - Optimal stride
+            - Test version
+            - Uniform stride
+        '''
+        import argparse
+
+        parser = argparse.ArgumentParser(description='Execute STOQS load')
+        parser.add_argument('--dbAlias', action='store', help='Database alias as defined in privateSettings')
+        parser.add_argument('--campaignName', action='store', help='Campaign Name')
+        parser.add_argument('--optimal_stride', action='store_true', help='Run load for optimal stride configuration')
+        parser.add_argument('--test', action='store_true', help='Run load for test configuration')
+        parser.add_argument('--stride', action='store', type=int, default=1, help='Stride value')
+
+        self.args = parser.parse_args()
+
+        # Modify base dbAlias with conventional suffix if dbAlias not specified on command line
+        if not self.args.dbAlias:
+            if self.args.optimal_stride:
+                self.dbAlias = self.base_dbAlias + '_s'
+            elif self.args.test:
+                self.dbAlias = self.base_dbAlias + '_t'
+            elif self.args.stride:
+                if self.args.stride == 1:
+                    self.dbAlias = self.base_dbAlias
+                else:
+                    self.dbAlias = self.base_dbAlias + '_s%d' % self.args.stride
+
+        # Modify base campaignName with conventional suffix if campaignName not specified on command line
+        if not self.args.campaignName:
+            if self.args.optimal_stride:
+                self.campaignName = self.base_campaignName + ' with optimal strides'
+            elif self.args.test:
+                self.campaignName = self.base_campaignName + ' for testing'
+            elif self.args.stride:
+                if self.args.stride == 1:
+                    self.campaignName = self.base_campaignName
+                else:
+                    self.campaignName = self.base_campaignName + ' with uniform stride of %d' % self.args.stride
+                
 
 if __name__ == '__main__':
     '''
     Test operation of this class
     '''
+    # Instance variable settings
     cl = CANONLoader('default', 'Test Load')
     cl.stride = 1000
     cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
     cl.dorado_files = ['Dorado389_2010_300_00_300_00_decim.nc']
+
+    # Execute the load
+    cl.process_command_line()
+
     cl.loadAll()
 
 
