@@ -327,12 +327,13 @@ class CANONLoader(object):
         '''
         import argparse
 
-        parser = argparse.ArgumentParser(description='Execute STOQS load')
-        parser.add_argument('--dbAlias', action='store', help='Database alias as defined in privateSettings')
-        parser.add_argument('--campaignName', action='store', help='Campaign Name')
-        parser.add_argument('--optimal_stride', action='store_true', help='Run load for optimal stride configuration')
-        parser.add_argument('--test', action='store_true', help='Run load for test configuration')
-        parser.add_argument('--stride', action='store', type=int, default=1, help='Stride value')
+        parser = argparse.ArgumentParser(description='STOQS load defaults: dbAlias="%s" campaignName="%s"' 
+                                         % (self.base_dbAlias, self.base_campaignName))
+        parser.add_argument('--dbAlias', action='store', help='Database alias, if different from default (must be defined in privateSettings)')
+        parser.add_argument('--campaignName', action='store', help='Campaign Name, if different from default')
+        parser.add_argument('--optimal_stride', action='store_true', help='Run load for optimal stride configuration as defined in "if cl.args.optimal_stride:" section of load script')
+        parser.add_argument('--test', action='store_true', help='Run load for test configuration as defined in "if cl.args.test:" section of load script')
+        parser.add_argument('--stride', action='store', type=int, default=1, help='Stride value (default=1)')
 
         self.args = parser.parse_args()
 

@@ -25,21 +25,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-try:
-    stride = int(sys.argv[1])
-except IndexError:
-    stride = 100
-try:
-    dbAlias = sys.argv[2]
-except IndexError:
-    dbAlias = 'stoqs_september2010'
-
-# ----------------------------------------------------------------------------------
-campaignName = 'CANON - September 2010'
-if stride != 1:
-    campaignName = campaignName + ' with stride=%d' % stride
-
-cl = CANONLoader(dbAlias, campaignName)
+# Assign input data sources
+cl = CANONLoader('stoqs_september2010', 'CANON - September 2010')
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
 cl.dorado_files = [ 'Dorado389_2010_257_01_258_04_decim.nc',
                     'Dorado389_2010_258_05_258_08_decim.nc',
@@ -47,6 +34,16 @@ cl.dorado_files = [ 'Dorado389_2010_257_01_258_04_decim.nc',
                     'Dorado389_2010_260_00_260_00_decim.nc',
                     'Dorado389_2010_261_00_261_00_decim.nc'
                   ]
-cl.stride = stride
-cl.loadAll()
+
+# Execute the load
+cl.process_command_line()
+
+if cl.args.test:
+    cl.loadDorado(stride=100)
+
+elif cl.args.optimal_stride:
+    cl.loadDorado(stride=2)
+
+else:
+    cl.loadDorado(stride=cl.args.stride)
 
