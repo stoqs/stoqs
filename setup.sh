@@ -114,7 +114,8 @@ __EOT__
 popd
 ##################################################################
 # echo running a quick test to make sure things aren't broke
-export PYTHONPATH=$(pwd)
-export DJANGO_SETTINGS_MODULE=settings
-python stoqs/views/management.py
+# requires privateSettings to be configured - follow instructions in INSTALL
+##export PYTHONPATH=$(pwd)
+##export DJANGO_SETTINGS_MODULE=settings
+##python stoqs/views/management.py
 popd
