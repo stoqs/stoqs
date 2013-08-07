@@ -2273,18 +2273,22 @@
                     }
                 });
             }
-            else if (key == 'time') { 
-                var start = new Date(data[key][0]);
-                $('#start-ems').val(start.getTime());
-                $('#start-time').val(getUTCDateString(start));
-                var end = new Date(data[key][1]);
-                $('#end-ems').val(end.getTime());
-                $('#end-time').val(getUTCDateString(end));
-            }
-            else if (key == 'depth') {
-                $('#start-' + key).val(Math.round(data[key][0]*10)/10);
-                $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
-            }
+
+            // Do not assign time or depth to $('#start-ems'), $('#start-depth'), etc. on update - it breaks parameterplatformdatavaluepng display
+            //else if (key == 'time') { 
+            //    var start = new Date(data[key][0]);
+            //    $('#start-ems').val(start.getTime());
+            //    $('#start-time').val(getUTCDateString(start));
+            //    var end = new Date(data[key][1]);
+            //    $('#end-ems').val(end.getTime());
+            //    $('#end-time').val(getUTCDateString(end));
+            //}
+            //else if (key == 'depth') {
+            //    $('#start-' + key).val(Math.round(data[key][0]*10)/10);
+            //    $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
+            //}
+
+
             else if (key == 'simpledepthtime') {
                 // Redraw the plot given the saved values
                 if ( $.isEmptyObject(data.simpledepthtime.sdt) ) {
