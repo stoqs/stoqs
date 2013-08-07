@@ -20,6 +20,7 @@ DATABASE_PASSWORD = ''
 
 # If your postgres server is the same server that is running Django use '127.0.0.1'
 DATABASE_HOST = ''
+DATABASE_PORT = '5432'
 
 # Mapserver hostname, just the name or address.  Assumes that mapserv is installed in /cgi-bin.
 # - If you set this to the IP address assigned to your VM you can access the web app from your host OS
@@ -53,7 +54,7 @@ MY_DATABASES = {
         'USER': DATABASE_USER,
         'PASSWORD': DATABASE_PASSWORD,
         'HOST': DATABASE_HOST,
-        'PORT': '5432',
+        'PORT': DATABASE_PORT,
     },
 #    'stoqs_campaign': {
 #        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
