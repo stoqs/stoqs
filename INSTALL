@@ -51,7 +51,7 @@ following these instructions.
         create database stoqs owner=stoqsadm template=template_postgis;
         \c stoqs
         grant all on all tables in schema public to stoqsadm;
-        alter database stoqs set timezone='GMT'
+        alter database stoqs set timezone='GMT';
     
     Repeat for additional campaign specific databases.
 
@@ -64,12 +64,11 @@ indication that you are in the virtual environment.
 
 5.  Sync the model with the database:
 
-        python manage.py syncdb                 # For the default stoqs database
+        python manage.py syncdb --noinput                               # For the default stoqs database
     
-    Answer 'no' when asked to create a superuser unless you wish to use the admin interface.
     If you have additional databases sync them with the --database option:
     
-        python manage.py syncdb --database=stoqs_<campaign>     # For campaign specific databases 
+        python manage.py syncdb --noinput --database=stoqs_<campaign>   # For campaign specific databases 
     
 
 6.  Start the development web server:
