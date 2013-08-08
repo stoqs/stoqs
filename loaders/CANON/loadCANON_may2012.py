@@ -5,12 +5,7 @@ __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
 
 __doc__ = '''
-
 Master loader for all May 2012 CANON activities.  
-
-The default is to load data with a stride of 100 into a database named stoqs_may2012_s100.
-
-Execute with "./loadCANON_may2012 1 stoqs_may2012" to load full resolution data.
 
 Mike McCann
 MBARI 21 AUgust 2012
@@ -30,24 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-try:
-    stride = int(sys.argv[1])
-except IndexError:
-    stride = 100
-try:
-    dbAlias = sys.argv[2]
-except IndexError:
-    dbAlias = 'stoqs_may2012_s100'
-
-
-# ------------------------------------------------------------------------------------
-# Data loads for all the activities, LRAUV have real-time files before full-resolution
-# ------------------------------------------------------------------------------------
-campaignName = 'CANON - May 2012'
-if stride != 1:
-    campaignName = campaignName + ' with stride=%d' % stride
-
-cl = CANONLoader(dbAlias, campaignName)
+cl = CANONLoader('stoqs_may2012', 'CANON - May 2012')
 
 # 2-second decimated dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2012/netcdf/'
@@ -169,14 +147,30 @@ cl.waveglider_parms = [
                       ]
 
 
-cl.stride = stride
-cl.loadAll()
+# Execute the load
+cl.process_command_line()
 
-# For testing.  Comment out the loadAll() call, and uncomment one of these as needed
-##cl.loadDorado()
-##cl.loadNps_g29()
-##cl.loadL_662()
-##cl.loadWaveglider()
-##cl.loadDaphne()
-##cl.loadTethys()
+if cl.args.test:
+    cl.loadDorado(stride=200)
+    cl.loadTethys(stride=100)
+    cl.loadDaphne(stride=100)
+    cl.loadNps_g29(stride=100)
+    cl.loadL_662(stride=100)
+    cl.loadWaveglider(stride=100)
+
+elif cl.args.optimal_stride:
+    cl.loadDorado(stride=2)
+    cl.loadTethys(stride=1)
+    cl.loadDaphne(stride=1)
+    cl.loadNps_g29(stride=1)
+    cl.loadL_662(stride=1)
+    cl.loadWaveglider(stride=1)
+
+else:
+    cl.loadDorado(stride=cl.args.stride)
+    cl.loadTethys(stride=cl.args.stride)
+    cl.loadDaphne(stride=cl.args.stride)
+    cl.loadNps_g29(stride=cl.args.stride)
+    cl.loadL_662(stride=cl.args.stride)
+    cl.loadWaveglider(stride=cl.args.stride)
 

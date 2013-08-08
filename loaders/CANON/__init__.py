@@ -319,11 +319,31 @@ class CANONLoader(object):
 
     def process_command_line(self):
         '''
-        The argparse library is a requirement for STOQS.  Support original positional arguments of stride and dbAlias plus
-        these kind of database loads:
+        The argparse library is included in Python 2.7 and is an added package for STOQS. 
+        Process command line arguments to support these kind of database loads:
             - Optimal stride
             - Test version
             - Uniform stride
+
+        Load scripts should have execution code that looks like:
+
+            # Execute the load
+            cl.process_command_line()
+        
+            if cl.args.test:
+                ##cl.loadDorado(stride=100)
+                cl.loadM1ts(stride=10)
+                cl.loadM1met(stride=10)
+            
+            elif cl.args.optimal_stride:
+                cl.loadDorado(stride=2)
+                cl.loadM1ts(stride=1)
+                cl.loadM1met(stride=1)
+        
+            else:
+                cl.loadDorado(stride=cl.args.stride)
+                cl.loadM1ts(stride=cl.args.stride)
+                cl.loadM1met(stride=cl.args.stride)
         '''
         import argparse
 
