@@ -8,10 +8,6 @@ __doc__ = '''
 
 Master loader for all March 2013 CANON-ECOHAB activities.  
 
-The default is to load data with a stride of 100 into a database named stoqs_march2013_s100.
-
-Execute with "./loadCANON_march2013 1 stoqs_march2013" to load full resolution data.
-
 Mike McCann
 MBARI 13 March 2013
 
@@ -30,32 +26,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-try:
-    stride = int(sys.argv[1])
-except IndexError:
-    stride = 100
-except ValueError:
-    # Not an integer
-    stride = 'optimal'
-
-try:
-    dbAlias = sys.argv[2]
-except IndexError:
-    dbAlias = 'stoqs_march2013_s100'
-
-
-# ------------------------------------------------------------------------------------
-# Data loads for all the activities, LRAUV have real-time files before full-resolution
-# ------------------------------------------------------------------------------------
-campaignName = 'CANON-ECOHAB - March 2013'
-if stride != 1:
-    try:
-        campaignName = campaignName + ' with stride=%d' % stride
-    except TypeError:
-        # Not an integer
-        campaignName = campaignName + ' with appropriate strides'
-
-cl = CANONLoader(dbAlias, campaignName)
+cl = CANONLoader('stoqs_march2013', 'CANON-ECOHAB - March 2013')
 
 # Aboard the Carson use zuma
 ##cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
@@ -367,8 +338,23 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 ##cl.l_662_endDatetime = datetime.datetime(2012, 9, 21)
 
 
-# Load the data with appropriate strides for each platform
-if stride == 'optimal':
+# Execute the load
+cl.process_command_line()
+
+if cl.args.test:
+    cl.stride = stride
+    cl.loadDorado()
+    cl.loadDaphne()
+    cl.loadTethys()
+    ##cl.loadESPmack()
+    ##cl.loadESPbruce()
+    cl.loadRCuctd()
+    cl.loadRCpctd()
+    ##cl.loadHeHaPe()
+    ##cl.loadRusalka()
+    ##cl.loadYellowfin()
+
+elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
     cl.loadDaphne(stride=10)
     cl.loadTethys(stride=10)
@@ -379,6 +365,7 @@ if stride == 'optimal':
     ##cl.loadHeHaPe(stride=10)      # As of 3/18/2013 - Bad Lat & Lon
     ##cl.loadRusalka(stride=10)     # As of 3/18/2013 - no good data in file http://zuma.rc.mbari.org/thredds/dodsC/CANON_march2013/usc_glider/Rusalka/processed/OS_Glider_Rusalka_20130301_TS.nc.html
     ##cl.loadYellowfin()
+
 else:
     cl.stride = stride
     cl.loadDorado()
