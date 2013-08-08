@@ -30,31 +30,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from BEDS import BEDSLoader
 
-try:
-    stride = int(sys.argv[1])
-except IndexError:
-    stride = 1
-try:
-    dbAlias = sys.argv[2]
-except IndexError:
-    dbAlias = 'stoqs_beds2013'
+bl = BEDSLoader('stoqs_beds2013', 'BEDS - 2013')
 
-
-# ------------------------------------------------------------------------------------
-# Data loads for all the activities, LRAUV have real-time files before full-resolution
-# ------------------------------------------------------------------------------------
-campaignName = 'BEDS - 2013'
-if stride != 1:
-    campaignName = campaignName + ' with stride=%d' % stride
-cl = BEDSLoader(dbAlias, campaignName)
-
-cl.tdsBase = 'http://odss-test.shore.mbari.org/thredds/'
-cl.dodsBase = cl.tdsBase + 'dodsC/'       
+# Base OPeNDAP server
+bl.tdsBase = 'http://odss-test.shore.mbari.org/thredds/'
+bl.dodsBase = bl.tdsBase + 'dodsC/'       
 
 # Files created by bed2nc.py from the BEDS SVN BEDS repository
-cl.bed_base = cl.dodsBase + 'BEDS_2013/beds01/'
-##cl.bed_files = ['BED%05d.nc' % i for i in range(1,234)]
-cl.bed_files = ['BED00001.nc', 'BED00002.nc', 'BED00003.nc', 'BED00005.nc',
+bl.bed_base = bl.dodsBase + 'BEDS_2013/beds01/'
+##bl.bed_files = ['BED%05d.nc' % i for i in range(1,234)]
+bl.bed_files = ['BED00001.nc', 'BED00002.nc', 'BED00003.nc', 'BED00005.nc',
                 'BED00006.nc', 'BED00008.nc', 'BED00014.nc', 'BED00015.nc',
                 'BED00017.nc', 'BED00018.nc', 'BED00020.nc', 'BED00026.nc',
                 'BED00038.nc', 'BED00039.nc', 'BED00040.nc', 'BED00041.nc',
@@ -89,10 +74,20 @@ cl.bed_files = ['BED00001.nc', 'BED00002.nc', 'BED00003.nc', 'BED00005.nc',
                 'BED00222.nc', 'BED00223.nc', 'BED00224.nc', 'BED00227.nc',
                 'BED00229.nc', 'BED00230.nc', 'BED00231.nc']
 
-##cl.bed_parms = ['XA', 'XR', 'PRESS', 'BED_DEPTH']
-cl.bed_parms = ['XA', 'YA', 'ZA', 'XR', 'YR', 'ZR', 'PRESS', 'BED_DEPTH']
+##bl.bed_parms = ['XA', 'XR', 'PRESS', 'BED_DEPTH']
+bl.bed_parms = ['XA', 'YA', 'ZA', 'XR', 'YR', 'ZR', 'PRESS', 'BED_DEPTH']
 
-cl.stride = stride
 
-cl.loadBEDS()
+# Execute the load
+bl.process_command_line()
+
+if bl.args.test:
+    bl.loadBEDS(stride=10)
+
+elif bl.args.optimal_stride:
+    bl.loadBEDS(stride=1)
+
+else:
+    bl.stride = bl.args.stride
+    bl.loadBEDS()
 
