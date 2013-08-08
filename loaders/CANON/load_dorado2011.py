@@ -5,7 +5,6 @@ __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
 
 __doc__ = '''
-
 Loader for all 2011 Dorado missions written for loading Vrijenhoek Lab SubSamples from Julio
 
 Mike McCann
@@ -26,23 +25,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-try:
-    stride = int(sys.argv[1])
-except IndexError:
-    stride = 100
-try:
-    dbAlias = sys.argv[2]
-except IndexError:
-    dbAlias = 'stoqs_dorado2011_s100'
+cl = CANONLoader('stoqs_dorado2011', 'Dorado - All 2011 missions')
 
-
-# ----------------------------------------------------------------------------------
-campaignName = 'Dorado - All 2011 missions'
-if stride != 1:
-    campaignName = campaignName + ' with stride=%d' % stride
-
-# Dorado surveys
-cl = CANONLoader(dbAlias, campaignName)
+# Dorado surveys in 2011
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2011/netcdf/'
 cl.dorado_files = [ 
                     'Dorado389_2011_060_01_060_01_decim.nc',
@@ -89,9 +74,22 @@ cl.m1met_parms = [ 'WSPD', 'WDIR', 'ATMP', 'SW', 'RELH' ]
 cl.m1met_startDatetime = datetime.datetime(2011, 1, 1)
 cl.m1met_endDatetime = datetime.datetime(2011, 12, 31)
 
-cl.stride = stride
 
-cl.loadDorado()
-cl.loadM1ts()
-cl.loadM1met()
+# Execute the load
+cl.process_command_line()
+
+if cl.args.test:
+    cl.loadDorado(stride=100)
+    cl.loadM1ts(stride=10)
+    cl.loadM1met(stride=10)
+
+elif cl.args.optimal_stride:
+    cl.loadDorado(stride=2)
+    cl.loadM1ts(stride=1)
+    cl.loadM1met(stride=1)
+
+else:
+    cl.loadDorado(stride=cl.args.stride)
+    cl.loadM1ts(stride=cl.args.stride)
+    cl.loadM1met(stride=cl.args.stride)
 

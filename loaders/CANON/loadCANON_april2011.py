@@ -5,8 +5,7 @@ __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
 
 __doc__ = '''
-
-Master loader for all CANON activities
+Master loader for all CANON activities in April 2011
 
 Mike McCann
 MBARI 22 April 2012
@@ -25,22 +24,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-try:
-    stride = int(sys.argv[1])
-except IndexError:
-    stride = 100
-
-try:
-    dbAlias = sys.argv[2]
-except IndexError:
-    dbAlias = 'stoqs_april2011'
-
-# ----------------------------------------------------------------------------------
-campaignName = 'CANON - April 2011'
-if stride != 1:
-    campaignName = campaignName + ' with stride=%d' % stride
-
-cl = CANONLoader(dbAlias, campaignName)
+# Assign input data sources
+cl = CANONLoader('stoqs_april2011', 'CANON - April 2011')
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2011/netcdf/'
 cl.dorado_files = [ 'Dorado389_2011_110_12_110_12_decim.nc',
                     'Dorado389_2011_111_00_111_00_decim.nc',
@@ -68,6 +53,20 @@ cl.tethys_files = [ '20110415_20110418/20110415T163108/slate.nc',
 cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
-cl.stride = stride
-cl.loadAll()
+
+# Execute the load
+cl.process_command_line()
+
+if cl.args.test:
+    cl.loadDorado(stride=100)
+    cl.loadTethys(stride=1000)
+
+elif cl.args.optimal_stride:
+    cl.loadDorado(stride=2)
+    cl.loadTethys(stride=20)
+
+else:
+    cl.loadDorado(stride=cl.args.stride)
+    cl.loadTethys(stride=cl.args.stride)
+    
 

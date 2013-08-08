@@ -5,12 +5,7 @@ __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
 
 __doc__ = '''
-
 Master loader for all February 2012 WF GOC activities.  
-
-The default is to load data with a stride of 100 into a database named stoqs_february2012_s100.
-
-Execute with "./loadGOC_february2012.py 1 stoqs_february2012" to load full resolution data.
 
 Mike McCann
 MBARI 14 January 2012
@@ -30,13 +25,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-
-# ------------------------------------------------------------------------------------
-# Data loads for all the activities, LRAUV have real-time files before full-resolution
-# ------------------------------------------------------------------------------------
-
 cl = CANONLoader('stoqs_february2012', 'GOC - February 2012')
 
+# Base OPenDAP server - if aboard a ship change to the local odss server
 cl.tdsBase = 'http://odss.mbari.org:8080/thredds/'      
 cl.dodsBase = cl.tdsBase + 'dodsC/' 
 

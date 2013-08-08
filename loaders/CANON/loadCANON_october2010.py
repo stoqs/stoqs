@@ -6,7 +6,7 @@ __contact__   = 'mccann at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON activities
+Master loader for all CANON activities in October 201
 
 Mike McCann
 MBARI 22 April 2012
@@ -25,21 +25,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-try:
-    stride = int(sys.argv[1])
-except IndexError:
-    stride = 100
-try:
-    dbAlias = sys.argv[2]
-except IndexError:
-    dbAlias = 'stoqs_october2010'
+cl = CANONLoader('stoqs_october2010', 'CANON - October 2010')
 
-# ----------------------------------------------------------------------------------
-campaignName = 'CANON - October 2010'
-if stride != 1:
-    campaignName = campaignName + ' with stride=%d' % stride
-
-cl = CANONLoader(dbAlias, campaignName)
+# Dorado data - 2 second gridded 
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
 cl.dorado_files = [ 'Dorado389_2010_277_01_277_01_decim.nc',
                     'Dorado389_2010_278_01_278_01_decim.nc',
@@ -98,6 +86,23 @@ cl.martin_files = [ '27710_jhmudas_v1.nc',
                     '30110_jhmudas_v1.nc',
                   ]
 cl.martin_parms = [ 'conductivity', 'temperature', 'salinity', 'fluorescence', 'turbidity']
-cl.stride = stride
-cl.loadAll()
 
+
+# Execute the load
+cl.process_command_line()
+
+if cl.args.test:
+    cl.loadDorado(stride=100)
+    cl.loadTethys(stride=1000)
+    cl.loadMartin(stride=1000)
+
+elif cl.args.optimal_stride:
+    cl.loadDorado(stride=2)
+    cl.loadTethys(stride=2)
+    cl.loadMartin(stride=1)
+
+else:
+    cl.stride = cl.args.stride
+    cl.loadDorado()
+    cl.loadTethys()
+    cl.loadMartin()

@@ -5,12 +5,7 @@ __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
 
 __doc__ = '''
-
 Master loader for all September 2012 CANON activities.  
-
-The default is to load data with a stride of 100 into a database named stoqs_september2012_s100.
-
-Execute with "./loadCANON_september2012 1 stoqs_september2012" to load full resolution data.
 
 Mike McCann
 MBARI 6 September AUgust 2012
@@ -30,39 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from CANON import CANONLoader
 
-try:
-    stride = int(sys.argv[1])
-except IndexError:
-    stride = 100
-except ValueError:
-    # Not an integer
-    if sys.argv[1] == 's':
-        stride = 'optimal'
-    elif sys.argv[1] == 't':
-        stride = 'testing'
-
-try:
-    dbAlias = sys.argv[2]
-except IndexError:
-    dbAlias = 'stoqs_september2012_s100'
-
-
-# ------------------------------------------------------------------------------------
-# Data loads for all the activities, LRAUV have real-time files before full-resolution
-# ------------------------------------------------------------------------------------
-campaignName = 'CANON - September 2012'
-if stride != 1:
-    try:
-        campaignName = campaignName + ' with stride=%d' % stride
-    except TypeError:
-        # Not an integer
-        if stride == 'optimal':
-            campaignName = campaignName + ' with appropriate strides'
-        elif stride == 'testing':
-            campaignName = campaignName + ' for testing'
-
-
-cl = CANONLoader(dbAlias, campaignName)
+cl = CANONLoader('stoqs_september2012', 'CANON - September 2012')
 
 # Aboard the Flyer use malibu's VSAT IP address:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'       
@@ -206,10 +169,11 @@ cl.m1met_parms = [ 'WSPD', 'WDIR', 'ATMP', 'SW', 'RELH' ]
 cl.m1met_startDatetime = datetime.datetime(2012, 9, 1)
 cl.m1met_endDatetime = datetime.datetime(2012, 9, 21)
 
-##cl.loadAll()
 
-# For testing.  Comment out the loadAll() call, and uncomment one of these as needed
-if stride == 'testing':
+# Execute the load
+cl.process_command_line()
+
+if cl.args.test:
     ##cl.loadDorado(stride=100)
     ##cl.loadWaveglider(stride=100)
     ##cl.loadDaphne(stride=10)
@@ -220,8 +184,21 @@ if stride == 'testing':
     ##cl.loadL_662(stride=100)
     cl.loadM1ts(stride=1)
     cl.loadM1met(stride=1)
+
+elif cl.args.optimal_stride:
+    cl.loadDorado(stride=2)
+    cl.loadWaveglider(stride=1)
+    cl.loadDaphne(stride=1)
+    cl.loadTethys(stride=1)
+    cl.loadESPdrift(stride=1)
+    cl.loadWFuctd(stride=1)
+    cl.loadWFpctd(stride=1)
+    cl.loadL_662(stride=1)
+    cl.loadM1ts(stride=1)
+    cl.loadM1met(stride=1)
+
 else:
-    cl.stride = stride
+    cl.stride = cl.args.stride
     cl.loadDorado()
     cl.loadWaveglider()
     cl.loadDaphne()
