@@ -50,7 +50,7 @@ from bs4 import BeautifulSoup
 
 # Set up logging
 logger = logging.getLogger('loaders')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -293,11 +293,13 @@ class SeabirdLoader(STOQS_Loader):
                     if _debug: print 'Fixed header: line = ', line
                 if line.strip() == 'Position        Time':
                     # Append 2nd line of header to first line & write to tmpFile
-                    tmpFH.write(lastLine + line)
+                    if _debug: print 'Writing ' + lastLine + line
+                    tmpFH.write(lastLine + line + '\n')
                 m = re.match('\d\d:\d\d:\d\d', line.strip())
                 if m:
                     # Append Time string to last line & write to tmpFile
                     if _debug: print 'm.group(0) = ', m.group(0)
+                    if _debug: print 'Writing ' + lastLine + m.group(0) + '\n'
                     tmpFH.write(lastLine + ' ' + m.group(0) + '\n')
                 m = re.match('.+[A-Z][a-z][a-z] \d\d \d\d\d\d', line.strip())
                 if m:
@@ -351,7 +353,7 @@ class SeabirdLoader(STOQS_Loader):
             dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
             esDiff = dt - datetime(1970, 1, 1, 0, 0, 0)
             es = 86400 * esDiff.days + esDiff.seconds
-            bName = self.activityName + '_' + r['Bottle']
+            bName = r['Bottle']
 
             # Load data 
             parmNameValues = []
@@ -360,6 +362,8 @@ class SeabirdLoader(STOQS_Loader):
             self.load_data(lat, lon, float(r['DepSM']), dt, parmNameValues)
 
             # Load Bottle sample
+            if _debug:
+                logger.info('Calling load_btl(%s,%s,%s,%s,%s)', lat, lon, float(r['DepSM']), dt, bName)
             self.load_btl(lat, lon, float(r['DepSM']), dt, bName)
 
         os.remove(tmpFile)
@@ -524,12 +528,20 @@ class SubSamplesLoader(STOQS_Loader):
             if r['Cruise'] == '2011_257_00_257_01':
                 r['Cruise'] = '2011_257_00_257_00'      # Correct a typo in spreadsheet
             try:
+                # Try first with %.1f formatted bottle number for Gulper - TODO: Deprecate this!
                 parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
                                                       ).filter( instantpoint__activity__name__contains=r['Cruise'], 
                                                                 name='%.1f' % float(r['Bottle Number']))[0]
             except IndexError:
-                logger.warn('Parent Sample not found for Cruise = %s, Bottle Number = %s', r['Cruise'], r['Bottle Number'])
-                continue
+                try:
+                    # Try without formatted %.1 for bottle number
+                    parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
+                                                          ).filter( instantpoint__activity__name__contains=r['Cruise'], 
+                                                                    name=r['Bottle Number'])[0]
+                except IndexError:
+                    logger.warn('Parent Sample not found for Cruise = %s, Bottle Number = %s', r['Cruise'], r['Bottle Number'])
+                    sys.exit(-1)
+                    continue
 
             if not unloadFlag:
                 # Some useful logger output
