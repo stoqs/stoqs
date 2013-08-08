@@ -39,9 +39,9 @@ class BEDSLoader(object):
                 'bed02':       '4feda0',
              }
 
-    def __init__(self, dbAlias, campaignName, stride=1):
-        self.dbAlias = dbAlias
-        self.campaignName = campaignName
+    def __init__(self, base_dbAlias, base_campaignName, stride=1):
+        self.base_dbAlias = base_dbAlias
+        self.base_campaignName = base_campaignName
         self.stride = stride
 
 
@@ -54,6 +54,71 @@ class BEDSLoader(object):
             url = self.bed_base + file
             DAPloaders.runTimeSeriesLoader(url, self.campaignName, aName, 'bed00', self.colors['bed00'], 'bed', 'deployment', 
                                         self.bed_parms, self.dbAlias, stride)
+    def process_command_line(self):
+        '''
+        The argparse library is included in Python 2.7 and is an added package for STOQS. 
+        Process command line arguments to support these kind of database loads:
+            - Optimal stride
+            - Test version
+            - Uniform stride
+
+        Load scripts should have execution code that looks like:
+
+            # Execute the load
+            cl.process_command_line()
+        
+            if cl.args.test:
+                ##cl.loadDorado(stride=100)
+                cl.loadM1ts(stride=10)
+                cl.loadM1met(stride=10)
+            
+            elif cl.args.optimal_stride:
+                cl.loadDorado(stride=2)
+                cl.loadM1ts(stride=1)
+                cl.loadM1met(stride=1)
+        
+            else:
+                cl.loadDorado(stride=cl.args.stride)
+                cl.loadM1ts(stride=cl.args.stride)
+                cl.loadM1met(stride=cl.args.stride)
+        '''
+        import argparse
+
+        parser = argparse.ArgumentParser(description='STOQS load defaults: dbAlias="%s" campaignName="%s"'
+                                         % (self.base_dbAlias, self.base_campaignName))
+        parser.add_argument('--dbAlias', action='store', help='Database alias, if different from default (must be defined in privateSettings)')
+        parser.add_argument('--campaignName', action='store', help='Campaign Name, if different from default')
+        parser.add_argument('--optimal_stride', action='store_true', help='Run load for optimal stride configuration as defined in "if cl.args.optimal_stride:" section of load script')
+        parser.add_argument('--test', action='store_true', help='Run load for test configuration as defined in "if cl.args.test:" section of load script')
+        parser.add_argument('--stride', action='store', type=int, default=1, help='Stride value (default=1)')
+
+        self.args = parser.parse_args()
+
+        # Modify base dbAlias with conventional suffix if dbAlias not specified on command line
+        if not self.args.dbAlias:
+            if self.args.optimal_stride:
+                self.dbAlias = self.base_dbAlias + '_s'
+            elif self.args.test:
+                self.dbAlias = self.base_dbAlias + '_t'
+            elif self.args.stride:
+                if self.args.stride == 1:
+                    self.dbAlias = self.base_dbAlias
+                else:
+                    self.dbAlias = self.base_dbAlias + '_s%d' % self.args.stride
+
+        # Modify base campaignName with conventional suffix if campaignName not specified on command line
+        if not self.args.campaignName:
+            if self.args.optimal_stride:
+                self.campaignName = self.base_campaignName + ' with optimal strides'
+            elif self.args.test:
+                self.campaignName = self.base_campaignName + ' for testing'
+            elif self.args.stride:
+                if self.args.stride == 1:
+                    self.campaignName = self.base_campaignName
+                else:
+                    self.campaignName = self.base_campaignName + ' with uniform stride of %d' % self.args.stride
+
+
 
 
 if __name__ == '__main__':
