@@ -19,11 +19,13 @@ MBARI 14 January 2012
 import os
 import sys
 import datetime
+
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
 from CANON import CANONLoader
+from SampleLoaders import SubSamplesLoader
 
 cl = CANONLoader('stoqs_february2012', 'GOC - February 2012')
 
@@ -63,7 +65,13 @@ cl.process_command_line()
 if cl.args.test:
     # Use same platformName so that section data visualization works in STOQS UI
     ##cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
-    cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
+    ##cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
+
+    ssl = SubSamplesLoader('', '', dbAlias=cl.dbAlias)
+    scriptDir =  os.path.dirname(os.path.realpath(__file__))
+    for csvFile in ('STOQS_GOC12_SAL.csv', 'STOQS_GOC12_CHL_GFF.csv', 'STOQS_GOC12_CARBON_GFF.csv'):
+        ssFile = os.path.join(scriptDir, csvFile)
+        ssl.process_subsample_file(ssFile, True)
 
 elif cl.args.optimal_stride:
     # Use same platformName so that section data visualization works in STOQS UI

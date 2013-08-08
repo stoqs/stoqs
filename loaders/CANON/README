@@ -72,12 +72,11 @@ To load data for all these databases (campaigns) follow these steps:
 
         resyncCANON_databases.sh
 
-    3. Execute the load script:
+    3. Execute the load scripts, e.g.:
 
-        loadCANON_all.py
-        - or - 
-        loadCANON_all.sh
-
+        loadCANON_september2010.py
+        loadCANON_october2010.py
+        ...
 
 -- 
 Mike McCann
