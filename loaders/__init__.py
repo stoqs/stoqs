@@ -151,6 +151,8 @@ class LoadScript(object):
                     self.dbAlias = self.base_dbAlias
                 else:
                     self.dbAlias = self.base_dbAlias + '_s%d' % self.args.stride
+        else:
+            self.dbAlias = self.args.dbAlias
 
         # Modify base campaignName with conventional suffix if campaignName not specified on command line
         if not self.args.campaignName:
@@ -163,6 +165,8 @@ class LoadScript(object):
                     self.campaignName = self.base_campaignName
                 else:
                     self.campaignName = self.base_campaignName + ' with uniform stride of %d' % self.args.stride
+        else:
+            self.campaignName = self.args.campaignName
                                                                                                                  
 
 class STOQS_Loader(object):
