@@ -335,10 +335,10 @@ class SeabirdLoader(STOQS_Loader):
             self.activity = activity
         except ObjectDoesNotExist:
             logger.error('Failed to find Activity with name like %s.  Must load downcast data before loading bottles.', self.activityName)
-            raise SingleActivityNotFound
+            raise SingleActivityNotFound('Failed to find Activity with name like %s' % self.activityName)
         except MultipleObjectsReturned:
             logger.error('Multiple objects returned for name__contains = %s.  This should not happen.  Fix the database and the reason for this.', self.activityName)
-            raise SingleActivityNotFound
+            raise SingleActivityNotFound('Multiple objects returned for name__contains = %s' % self.activityName)
 
         # Add T & S parameters for the data that we need to load so that we have InstantPoints at the bottle locations
         parmDict = {}
@@ -417,7 +417,10 @@ class SeabirdLoader(STOQS_Loader):
                     self.activityName = file.split('/')[-1].split('.')[-2] 
                     year, lat, lon = get_year_lat_lon(hdrUrl = hdrUrl)
                     btlFH = urllib2.urlopen(btlUrl).read().splitlines()
-                    self.process_btl_file(btlFH, year, lat, lon)
+                    try:
+                        self.process_btl_file(btlFH, year, lat, lon)
+                    except SingleActivityNotFound:
+                        continue
 
 
 class SubSamplesLoader(STOQS_Loader):
