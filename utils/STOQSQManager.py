@@ -1308,19 +1308,27 @@ class STOQSQManager(object):
         # Take the union of all geometry types found in Activities and Samples
         logger.debug("Collected %d geometry extents from Activities and Samples", len(extentList))
         if extentList:
+            logger.debug('extentList = %s', extentList)
             geom_union = fromstr('LINESTRING (%s %s, %s %s)' % extentList[0], srid=srid)
             for extent in extentList[1:]:
-                logger.debug('extent = %s', extent)
-                geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
+                if extent[0] == extent[2] and extent[1] == extent[3]:
+                    logger.debug('Unioning extent = %s as a POINT', extent)
+                    geom_union = geom_union.union(fromstr('POINT (%s %s)' % extent[:2], srid=srid))
+                else:
+                    logger.debug('Unioning extent = %s as a LINESTRING', extent)
+                    geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
 
             # Aggressive try/excepts done here for better reporting on the production servers
-            logger.debug('geom_union = %s', geom_union)
+            logger.debug('Final geom_union = %s', geom_union)
             try:
                 geomstr = 'LINESTRING (%s %s, %s %s)' % geom_union.extent
             except TypeError:
                 logger.exception('Tried to get extent for self.qs.query =  %s, but failed. Check the database loader and make sure a geometry type (maptrack or mappoint) is assigned for each activity.', str(self.qs.query))
+            except ValueError:
+                logger.exception('Tried to get extent for self.qs.query =  %s, but failed. Check the database loader and make sure a geometry type (maptrack or mappoint) is assigned for each activity.', str(self.qs.query))
+            else:
+                logger.debug('geomstr = %s', geomstr)
 
-            logger.debug('geomstr = %s', geomstr)
             try:
                 extent = fromstr(geomstr, srid=srid)
             except:
