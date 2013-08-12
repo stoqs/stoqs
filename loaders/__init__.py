@@ -44,7 +44,7 @@ import pprint
 # Set up logging
 ##logger = logging.getLogger('loaders')
 logger = logging.getLogger('__main__')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -580,8 +580,10 @@ class STOQS_Loader(object):
         are the standard names of those fields.  Classes that inherit from this
         class should set any default standard names at the class level.
         '''
+        if not hasattr(self, 'ds'):
+            # Loaders (such as those in SampleLoaders.py) may inherit this method and not use OPeNDAP
+            return
         try:
-            # Assumes that we have a ds that came from an OPeNDAP call
             for var in self.ds.keys():
                 if self.standard_names.has_key(var): continue # don't override pre-specified names
                 if self.ds[var].attributes.has_key('standard_name'):
@@ -590,7 +592,6 @@ class STOQS_Loader(object):
                     self.standard_names[var]=None # Indicate those without a standard name
         except AttributeError, e:
             logger.warn(e)
-            pass
 
     def updateActivityParameterStats(self, parameterCounts, sampledFlag=False):
         ''' 
