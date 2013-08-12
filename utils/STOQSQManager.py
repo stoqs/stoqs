@@ -395,10 +395,16 @@ class STOQSQManager(object):
                 logger.debug('self.getActivityParametersQS().filter(parameter__id=pid) = %s', str(self.getActivityParametersQS().filter(parameter__id=pid).query))
                 qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'), Avg('median'))
                 logger.debug('qs = %s', qs)
-                results = [pid, round_to_n(qs['p010__min'],3), round_to_n(qs['p990__max'],3)]
+                try:
+                    results = [pid, round_to_n(qs['p010__min'],3), round_to_n(qs['p990__max'],3)]
+                except TypeError:
+                    logger.exception('Failed to get results for qs = %s', qs)
             else:
                 qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
-                results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                try:
+                    results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                except TypeError:
+                    logger.exception('Failed to get results for qs = %s', qs)
             return results
 
         if self.kwargs.has_key('measuredparametersgroup'):
