@@ -58,15 +58,10 @@ cl.wfpctd_files = [
                       ]
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 
-
-# Execute the load
-cl.process_command_line()
-
-if cl.args.test:
-    # Use same platformName so that section data visualization works in STOQS UI
-    cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
-    cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=1)
-
+def loadSubSamples():
+    '''
+    Load water sample analysis Sampled data values from spreadsheets (.csv files)
+    '''
     ssl = SubSamplesLoader('', '', dbAlias=cl.dbAlias)
     scriptDir = os.path.dirname(os.path.realpath(__file__))
     for csvFile in ('STOQS_GOC12_SAL.csv', 'STOQS_GOC12_CHL_GFF.csv', 'STOQS_GOC12_CARBON_GFF.csv'):
@@ -74,13 +69,26 @@ if cl.args.test:
         print "Processing subsamples from file", ssFile
         ssl.process_subsample_file(ssFile, False)
 
+
+# Execute the load
+cl.process_command_line()
+
+if cl.args.test:
+    # Use same platformName so that section data visualization works in STOQS UI
+    cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
+    cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
+    loadSubSamples()
+
 elif cl.args.optimal_stride:
     # Use same platformName so that section data visualization works in STOQS UI
     cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=1)
     cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=1)
+    loadSubSamples()
 
 else:
+    cl.stride = cl.args.stride
     # Use same platformName so that section data visualization works in STOQS UI
-    cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=cl.args.stride)
-    cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=cl.args.stride)
+    cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data')
+    cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data')
+    loadSubSamples()
 
