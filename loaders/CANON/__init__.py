@@ -265,7 +265,7 @@ class CANONLoader(LoadScript):
         sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'])
         sl.tdsBase= self.tdsBase
         sl.pctdDir = self.pctdDir
-        sl.process_btl_files()
+        sl.process_btl_files(self.wfpctd_files)
 
     def loadRCuctd(self, stride=None):
         '''
@@ -293,7 +293,7 @@ class CANONLoader(LoadScript):
         sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['carson'], platformTypeName='ship')
         sl.tdsBase= self.tdsBase
         sl.pctdDir = self.pctdDir
-        sl.process_btl_files()
+        sl.process_btl_files(self.rcpctd_files)
 
 
     def loadAll(self, stride=None):
