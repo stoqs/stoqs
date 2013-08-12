@@ -185,6 +185,72 @@ class SeabirdLoader(STOQS_Loader):
         super(SeabirdLoader, self).__init__(activityName, platformName, dbAlias, campaignName,
                 activitytypeName, platformColor, platformTypeName, stride)
 
+    def buildParmDict(slef):
+        '''
+        Build parameter dictionary akin to that returned by pydap.  The parameters from the .btl file must
+        match the parameters read from the .nc file.  See comments for mapping copied from pctdToNetCDF.py.
+        '''
+
+        # Match the mapping done in pctdToNetCDF.py:
+
+        # self.pr_list.append(float(r['PrDM']))
+        # self.depth = self.ncFile.createVariable('depth', 'float64', ('time',))
+        # self.depth.long_name = 'DEPTH'
+        # self.depth.standard_name = 'depth'
+        # self.depth.units = 'm'
+        # self.depth[:] = csiro.depth(self.pr_list, self.lat_list)      # Convert pressure to depth
+
+        # self.t1_list.append(r['T190C'])
+        # temp = self.ncFile.createVariable('TEMP', 'float64', ('time',))
+        # temp.long_name = 'Temperature, 2 [ITS-90, deg C]'
+        # temp.standard_name = 'sea_water_temperature'
+        # temp.units = 'Celsius'
+
+        # self.sal_list.append(r['Sal00'])
+        # sal = self.ncFile.createVariable('PSAL', 'float64', ('time',))
+        # sal.long_name = 'Salinity, Practical [PSU]'
+        # sal.standard_name = 'sea_water_salinity'
+
+        # self.xmiss_list.append(r['Xmiss'])
+        # xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',))
+        # xmiss.long_name = 'Beam Transmission, Chelsea/Seatech'
+        # xmiss.units = '%'
+
+        # self.ecofl_list.append(r['FlECO-AFL'])
+        # ecofl = self.ncFile.createVariable('ecofl', 'float64', ('time',))
+        # ecofl.long_name = 'Fluorescence, WET Labs ECO-AFL/FL'
+        # ecofl.units = 'mg/m^3'
+
+        # self.oxygen_list.append(r['Sbeox0ML/L'])
+        # oxygen = self.ncFile.createVariable('oxygen', 'float64', ('time',))
+        # oxygen.long_name = 'Oxygen, SBE 43'
+        # oxygen.units = 'ml/l'
+
+        parmDict = {}
+
+        pr = BaseType()
+        pr.attributes = {'colname': 'PrDM', 'units': m , 'long_name': 'DEPTH', 'standard_name': 'depth'}
+
+        temp = BaseType()
+        temp.attributes = {'colname': 'T190C', 'units': 'ITS-90, deg C', 'long_name': 'temperature', 'standard_name': 'sea_water_temperature'}
+
+        sal = BaseType()
+        sal.attributes = {'colname': 'Sal00', 'units': '1' , 'long_name': 'salinity', 'standard_name': 'sea_water_salinity'} 
+
+        xmiss = BaseType()
+        xmiss.attributes = {'colname': 'Xmiss', 'units': '%', 'long_name': 'Beam Transmission, Chelsea/Seatech'}
+
+        ecofl = BaseType()
+        ecofl.attributes = {'colname': 'FlECO-AFL', 'units': 'mg/m^3', 'long_name': 'Fluorescence, WET Labs ECO-AFL/FL'}
+
+        oxygen = BaseType()
+        oxygen.attributes = {'colname': 'Sbeox0ML/L', 'units': 'ml/l', 'long_name': 'Oxygen, SBE 43'}
+
+        # The colname attribute must be the keys that DictReader returns - the keys of this dictionary will be the Parameter names in stoqs
+        parmDict = {'pressure': pr, 'TEMP': temp, 'PSAL': sal, 'xmiss': xmiss, 'ecofl': ecofl, 'oxygen': oxygen}
+
+        return parmDict
+
     def load_data(self, lat, lon, depth, time, parmNameValues):
         '''
         Load the data values recorded at the bottle trips so that we have some InstantPoints to 
@@ -318,6 +384,9 @@ class SeabirdLoader(STOQS_Loader):
         # Create activity for this cast
         self.startDatetime = None
         self.endDatetime = None
+        # Bottle records:
+        # {'': None, 'Par': '1.0000e-12', 'PrDM': '201.442', 'Sbeox0Mm/Kg': '85.099', 'Potemp190C': '8.4225', 'Xmiss': '76.5307', 'Sigma-\xe911': '26.3792', 'DepSM': '199.859', 'Sbeox0PS': '29.72432', 'Sal11': '33.9416', 'V2': '1.0162', 'V1': '3.8616', 'C1S/m': '3.571764', 'T090C': '8.4430', 'V4': '0.0000', 'V5': '0.1305', 'V6': '2.6264', 'Date': 'Feb-04-2012', 'C0S/m': '3.571260', 'Bat': '1.0699', 'FlECO-AFL': '0.4249', 'Bottle': '1', 'Time': '09:20:05', 'Position': '(avg)', 'Sigma-\xe900': '26.3752', 'Sbeox0ML/L': '1.95575', 'Sal00': '33.9365', 'AltM': '52.53', 'Upoly0': '0.0002000', 'Scan': '14341', 'Sbeox0V': '1.0159', 'Potemp090C': '8.4223', 'V3': '0.0370', 'TimeJ': '35.722228', 'T190C': '8.4432'}
+
         for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
             dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
             if not self.startDatetime:
@@ -325,7 +394,6 @@ class SeabirdLoader(STOQS_Loader):
         self.endDatetime = dt
         self.platform = self.getPlatform(self.platformName, self.platformTypeName)
         self.activitytypeName = 'CTD upcast'
-        self.include_names = ['Sal00', 'T090C']
 
         # Bottle samples are to be loaded after downcast data are loaded so that we can use the same activity
         from stoqs import models as m
@@ -334,19 +402,17 @@ class SeabirdLoader(STOQS_Loader):
             logger.debug('Got activity = %s', activity)
             self.activity = activity
         except ObjectDoesNotExist:
-            logger.error('Failed to find Activity with name like %s.  Must load downcast data before loading bottles.', self.activityName)
-            raise SingleActivityNotFound('Failed to find Activity with name like %s' % self.activityName)
+            logger.warn('Failed to find Activity with name like %s.  Expected that downcast was data before loading bottles.', self.activityName)
+            logger.info('Creating Activity for these bottles')
+            self.createActivity()
+            ##raise SingleActivityNotFound('Failed to find Activity with name like %s' % self.activityName)
         except MultipleObjectsReturned:
             logger.error('Multiple objects returned for name__contains = %s.  This should not happen.  Fix the database and the reason for this.', self.activityName)
             raise SingleActivityNotFound('Multiple objects returned for name__contains = %s' % self.activityName)
 
-        # Add T & S parameters for the data that we need to load so that we have InstantPoints at the bottle locations
-        parmDict = {}
-        Sal00 = BaseType()
-        Sal00.attributes = {'units': 1 , 'long_name': 'salinity', 'standard_name': 'sea_water_salinity'} 
-        T090C = BaseType()
-        T090C.attributes = {'units': 'ITS-90, deg C', 'long_name': 'temperature', 'standard_name': 'sea_water_temperature'}
-        parmDict = { 'Sal00': Sal00, 'T090C': T090C }
+        parmDict = self.buildParmDict()
+        logger.debug('Calling addParameters for parmDict = %s', parmDict)
+        self.include_names = parmDict.keys()
         self.addParameters(parmDict)
 
         for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
@@ -358,7 +424,9 @@ class SeabirdLoader(STOQS_Loader):
             # Load data 
             parmNameValues = []
             for name in parmDict.keys():
-                parmNameValues.append((name, float(r[name])))
+                logger.debug('name = %s, parmDict[name].attributes = %s', name, parmDict[name].attributes)
+                parmNameValues.append((name, float(r[parmDict[name].attributes['colname']])))
+
             self.load_data(lat, lon, float(r['DepSM']), dt, parmNameValues)
 
             # Load Bottle sample
@@ -368,7 +436,7 @@ class SeabirdLoader(STOQS_Loader):
 
         os.remove(tmpFile)
 
-    def process_btl_files(self):
+    def process_btl_files(self, seabirdFileList=[]):
         '''
         Loop through all .btl files and insert a Sample record to the database for each bottle trip.  Assumes that c*.btl files 
         are available in a local pctd directory, if not then they are read from a THREDDS server.
@@ -381,6 +449,9 @@ class SeabirdLoader(STOQS_Loader):
               20:30:15                                                                                                    1.7398e-05      0.071      0.071   0.000030   0.000058     0.0003     0.0008     0.0082     0.1775     0.0088     0.0004     0.0004     0.0146     0.0006  0.0000000     0.0000 0.0000e+00     0.0005       0.00     0.0000         35 (sdev)
       3    Sep 10 2012    33.9433    33.9424    26.2372    26.2363    1.91904   29.75985     83.513     9.3330     9.3342 255.147702    150.644    149.478   3.652452   3.652470     9.3495     9.3507     0.4231    89.9630     4.5288     1.0855     1.0858     0.3890     0.0355  0.0002000     0.0000 1.0000e-12     0.1293     100.00     5.0000      14795 (avg)
               20:32:43
+
+        If seabirdFileList is given then process through those files in the list, otherwise process all .btl files in 
+        self.parentInDir.  This is handy for debugging in that only the files in the list are processed.
         '''
         try:
             fileList = glob(os.path.join(self.parentInDir, 'pctd/*c*.btl'))
@@ -409,6 +480,10 @@ class SeabirdLoader(STOQS_Loader):
                 file = link.get('href')
                 if file.endswith('.btl'):
                     logger.debug("file = %s", file)
+                    if file.split('/')[-1].split('.')[0] + '.nc' not in seabirdFileList:
+                        logger.debug('Skipping as it is in not in seabirdFileList = %s', seabirdFileList)
+                        continue
+
                     # btlUrl looks something like: http://odss.mbari.org/thredds/fileServer/CANON_september2012/wf/pctd/c0912c53.btl
                     btlUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + file.split('/')[-1]
                     hdrUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + ''.join(file.split('/')[-1].split('.')[:-1]) + '.hdr'
@@ -421,6 +496,8 @@ class SeabirdLoader(STOQS_Loader):
                         self.process_btl_file(btlFH, year, lat, lon)
                     except SingleActivityNotFound:
                         continue
+
+        # TODO: Adjust Activity downcast + upcast(bottle trips) times to include all data
 
 
 class SubSamplesLoader(STOQS_Loader):
