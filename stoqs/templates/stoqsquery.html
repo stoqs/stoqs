@@ -234,7 +234,8 @@
                 <div id="metadata-group" class="accordian-group">
                     <div class="accordian-heading">
                         <h3><a id="metadata-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMetadata">
-                        Metadata:</a> <span id="metadata-count" style="color:black;"></span><span id="metadata-ajaxtime" style="color:black;">
+                        Metadata:</a> <span id="metadata-count" style="color:black;"></span>
+                        <span id="metadata-ajaxtime" style="color:black;"></span><span id="metadata-loading" style="color:black;"></span
                         </h3>
                     </div>
                     <div id="collapseMetadata" class="accordion-body collapse in">
@@ -2503,7 +2504,8 @@
                 $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader-pp ');
                 $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader-3d ');
                 $('#geo-3dplot').addClass('stoqs-background-ajax-loader-3d-topright ');
-                $('#metadata-ajaxtime').html(" (loading...)");
+                $('#metadata-ajaxtime').css( { 'color': 'grey' } );
+                $('#metadata-loading').html(" loading...)");
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
@@ -2537,7 +2539,9 @@
                         $('#metadata-count').html(data['counts']['actual_count_localized'] + " data values");
                     }
                 }
-                $('#metadata-ajaxtime').html(" (" + nsecs + " seconds)");
+                $('#metadata-ajaxtime').css( { 'color': 'black' } );
+                $('#metadata-ajaxtime').html(" (" + nsecs + " seconds");
+                $('#metadata-loading').html(")");
             },
             dataType: "json"
         });
