@@ -526,10 +526,16 @@ class SubSamplesLoader(STOQS_Loader):
         fps = None
         if row['Filter Pore Size [uM]']:
             fps = float(row['Filter Pore Size [uM]'])
+        if row['Sample Volume [mL]']:
+            vol = row['Sample Volume [mL]']
+        else:
+            logger.warn('Sample Volume [mL] is not specified.  Assigning default value of 280.  PLEASE SPECIFY THE VOLUME IN THE SPREADSHEET.')
+            vol = 280           # Default volume is 280 ml - this is a required field so display a warning
+
         sample = m.Sample(  instantpoint=parentSample.instantpoint,
                             depth=parentSample.depth,
                             geom=parentSample.geom,
-                            volume=float(row['Sample Volume [mL]']),
+                            volume=float(vol),
                             filterdiameter=fd,
                             filterporesize=fps,
                             laboratory=row['Laboratory'],

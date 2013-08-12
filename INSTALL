@@ -49,9 +49,9 @@ following these instructions.
     that the DATABASE_USER setting in privateSettings is 'stoqsadm'):
 
         create database stoqs owner=stoqsadm template=template_postgis;
+        alter database stoqs set timezone='GMT';
         \c stoqs
         grant all on all tables in schema public to stoqsadm;
-        alter database stoqs set timezone='GMT';
     
     Repeat for additional campaign specific databases.
 

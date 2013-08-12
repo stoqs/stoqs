@@ -64,14 +64,15 @@ cl.process_command_line()
 
 if cl.args.test:
     # Use same platformName so that section data visualization works in STOQS UI
-    ##cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
-    ##cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
+    cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
+    cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=1)
 
     ssl = SubSamplesLoader('', '', dbAlias=cl.dbAlias)
-    scriptDir =  os.path.dirname(os.path.realpath(__file__))
+    scriptDir = os.path.dirname(os.path.realpath(__file__))
     for csvFile in ('STOQS_GOC12_SAL.csv', 'STOQS_GOC12_CHL_GFF.csv', 'STOQS_GOC12_CARBON_GFF.csv'):
         ssFile = os.path.join(scriptDir, csvFile)
-        ssl.process_subsample_file(ssFile, True)
+        print "Processing subsamples from file", ssFile
+        ssl.process_subsample_file(ssFile, False)
 
 elif cl.args.optimal_stride:
     # Use same platformName so that section data visualization works in STOQS UI
