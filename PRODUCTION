@@ -20,7 +20,7 @@ Here are the steps:
 # stoqs.conf - connector between apache/wsgi and the stoqs project
 
 # Replace STOQS_PROJ_DIR below with the location where the STOQS project has been 
-# checked out, something like "/home/student/dev/stoqsproj"
+# checked out, something like "/opt/stoqshg"
 
 WSGISocketPrefix /var/run/wsgi
 
@@ -36,6 +36,9 @@ Allow from all
 # WSGIScriptAlias /<parent_web_site> <path_to_stoqs.wsgi_file>, e.g.:
 WSGIScriptAlias /canon STOQS_PROJ_DIR/stoqs.wsgi
 
+NOTE: Multiple WSGIScriptAliass may be configured for different projects served from the
+      same web server.  Simply clone the repository to another directory, set up the
+      virtual environment and execute setup.sh as described in the end of PREREQUISITES.
 
 3. Edit privateSettings if the DATABASE_* settings are different.  (Your Postgres
    server will most likely may have tighter access controls in a production environment.)
