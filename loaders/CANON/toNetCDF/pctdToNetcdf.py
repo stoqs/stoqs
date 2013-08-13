@@ -85,10 +85,11 @@ class ParserWriter(BaseWriter):
             self.lat_list = []
             self.lon_list = []
             self.pr_list = [] 
-            self.t1_list = []
+            self.t_list = []
             self.sal_list = []
             self.xmiss_list = []
             self.ecofl_list = []
+            self.wetstar_list = []
             self.oxygen_list = []
 
             for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
@@ -105,12 +106,30 @@ class ParserWriter(BaseWriter):
                 self.esec_list.append(es)
                 self.lat_list.append(lat)
                 self.lon_list.append(lon)
-                self.pr_list.append(float(r['PrDM']))
-        
-                self.t1_list.append(r['T190C'])
+                try:
+                    self.pr_list.append(float(r['PrDM']))
+                except KeyError:
+                    self.pr_list.append(float(r['PrdM']))       # Sub compact rosette
+       
+                try: 
+                    self.t_list.append(r['T190C'])
+                except KeyError:
+                    pass
+                try:
+                    self.t_list.append(r['Tv290C'])
+                except KeyError:
+                    pass
+
                 self.sal_list.append(r['Sal00'])
                 self.xmiss_list.append(r['Xmiss'])
-                self.ecofl_list.append(r['FlECO-AFL'])
+                try:
+                    self.ecofl_list.append(r['FlECO-AFL'])
+                except KeyError:
+                    pass
+                try:
+                    self.wetstar_list.append(r['WetStar'])
+                except KeyError:
+                    pass
                 try:
                     self.oxygen_list.append(r['Sbeox0ML/L'])
                 except KeyError:
@@ -155,13 +174,13 @@ class ParserWriter(BaseWriter):
         self.depth.units = 'm'
         self.depth[:] = csiro.depth(self.pr_list, self.lat_list)      # Convert pressure to depth
 
-        # Record Variables - Underway CTD Data
+        # Record Variables - Profile CTD Data
         temp = self.ncFile.createVariable('TEMP', 'float64', ('time',))
-        temp.long_name = 'Temperature, 2 [ITS-90, deg C]'
+        temp.long_name = 'Temperature, [ITS-90, deg C]'
         temp.standard_name = 'sea_water_temperature'
         temp.coordinates = 'time depth latitude longitude'
         temp.units = 'Celsius'
-        temp[:] = self.t1_list
+        temp[:] = self.t_list
 
         sal = self.ncFile.createVariable('PSAL', 'float64', ('time',))
         sal.long_name = 'Salinity, Practical [PSU]'
@@ -175,11 +194,19 @@ class ParserWriter(BaseWriter):
         xmiss.units = '%'
         xmiss[:] = self.xmiss_list
 
-        ecofl = self.ncFile.createVariable('ecofl', 'float64', ('time',))
-        ecofl.long_name = 'Fluorescence, WET Labs ECO-AFL/FL'
-        ecofl.coordinates = 'time depth latitude longitude'
-        ecofl.units = 'mg/m^3'
-        ecofl[:] = self.ecofl_list
+        if self.ecofl_list:
+            ecofl = self.ncFile.createVariable('ecofl', 'float64', ('time',))
+            ecofl.long_name = 'Fluorescence, WET Labs ECO-AFL/FL'
+            ecofl.coordinates = 'time depth latitude longitude'
+            ecofl.units = 'mg/m^3'
+            ecofl[:] = self.ecofl_list
+
+        if self.wetstar_list:
+            wetstar = self.ncFile.createVariable('wetstar', 'float64', ('time',))
+            wetstar.long_name = 'Fluorescence, WET Labs WETstar'
+            wetstar.coordinates = 'time depth latitude longitude'
+            wetstar.units = 'mg/m^3'
+            wetstar[:] = self.wetstar_list
 
         if self.oxygen_list:
             oxygen = self.ncFile.createVariable('oxygen', 'float64', ('time',))
