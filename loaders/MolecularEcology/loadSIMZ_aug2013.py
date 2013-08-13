@@ -36,7 +36,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # 2-second decimated dorado data
 cl.dorado_base = cl.dodsBase + 'SIMZ_august2013/dorado/'
 cl.dorado_files = [ 
-                    ##'Dorado389_2013_224_02_224_02_decim.nc',
+                    'Dorado389_2013_224_02_224_02_decim.nc',
                     'Dorado389_2013_225_00_225_00_decim.nc',
                   ]
 
@@ -51,15 +51,18 @@ cl.l_662_endDatetime = datetime.datetime(2013, 8, 17)
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'SIMZ_august2013/carson/uctd/'
 cl.rcuctd_files = [ 
-##                        '07413plm01.nc', 
-                      ]
+                    'simz2013plm01.nc',
+                  ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
 # Rachel Carson Profile CTD
 cl.pctdDir = 'SIMZ_august2013/carson/pctd/'
 cl.rcpctd_base = cl.dodsBase + cl.pctdDir
 cl.rcpctd_files = [ 
-##                    '07413c01.nc', 
+                    'simz2013c01.nc',
+                    'simz2013c02.nc',
+                    'simz2013c03.nc',
+                    'simz2013c04.nc',
                       ]
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
@@ -68,8 +71,8 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = stride
-    cl.loadDorado(stride=10)
+    cl.stride = cl.args.stride
+    cl.loadDorado(stride=100)
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
 
@@ -81,6 +84,6 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
     cl.loadDorado()
-    ##cl.loadRCuctd()
-    ##cl.loadRCpctd()
+    cl.loadRCuctd()
+    cl.loadRCpctd()
 
