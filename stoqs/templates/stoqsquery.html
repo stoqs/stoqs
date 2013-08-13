@@ -2352,6 +2352,7 @@
                                                           }));
 
                     $.each(timeparameterplot.getData(), function(index, series) {
+                        // TODO: color the lables
                         series.label;
                         series.color;
                     });
@@ -2364,6 +2365,10 @@
                             });
                         });
                     }
+                    // Event data shown in plot may be inside original start-ems and end-ems bounds requested, update display with actual
+                    var sd = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamin));
+                    var ed = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamax));
+                    $('#temporal-anchor').html('Temporal: ' + sd + ' to ' + ed);
                 }
                 else {
                     $("#temporal-parameter-li").html('<a href="#temporal-parameter">Parameter</a>');
