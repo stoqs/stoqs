@@ -36,7 +36,8 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # 2-second decimated dorado data
 cl.dorado_base = cl.dodsBase + 'SIMZ_august2013/dorado/'
 cl.dorado_files = [ 
-                    'Dorado389_2013_224_02_224_02_decim.nc',
+                    ##'Dorado389_2013_224_02_224_02_decim.nc',
+                    'Dorado389_2013_225_00_225_00_decim.nc',
                   ]
 
 # Spray glider - for just the duration of the campaign
@@ -80,6 +81,6 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
     cl.loadDorado()
-    cl.loadRCuctd()
-    cl.loadRCpctd()
+    ##cl.loadRCuctd()
+    ##cl.loadRCpctd()
 
