@@ -2510,7 +2510,7 @@
                 $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader-3d ');
                 $('#geo-3dplot').addClass('stoqs-background-ajax-loader-3d-topright ');
                 $('#metadata-ajaxtime').css( { 'color': 'grey' } );
-                $('#metadata-loading').html(" loading...)");
+                $('#metadata-loading').html(" loading...");
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
@@ -2538,15 +2538,15 @@
                 var nsecs = (endAjax - startAjax) / 1000.0;
                 if ( ! $.isEmptyObject(data['counts']) ) {
                     if ( ! $('#getactualcount').is(':checked') ) {
-                        $('#metadata-count').html("about " + data['counts']['approximate_count_localized'] + " data values");
+                        $('#metadata-count').html("about " + data['counts']['approximate_count_localized'] + " data values - ");
                     }
                     else {
-                        $('#metadata-count').html(data['counts']['actual_count_localized'] + " data values");
+                        $('#metadata-count').html(data['counts']['actual_count_localized'] + " data values - ");
                     }
                 }
                 $('#metadata-ajaxtime').css( { 'color': 'black' } );
-                $('#metadata-ajaxtime').html(" (" + nsecs + " seconds");
-                $('#metadata-loading').html(")");
+                $('#metadata-ajaxtime').html(" " + nsecs + " seconds");
+                $('#metadata-loading').html("");
             },
             dataType: "json"
         });
