@@ -234,9 +234,12 @@ class STOQS_Loader(object):
         # ship,W_FLYER
         # ship,ZEPHYR
         # mooring,Bruce
-        logger.info("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
-        tpHandle = csv.DictReader(urllib2.urlopen(paURL))
         tpHandle = []
+        logger.info("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
+        try:
+            tpHandle = csv.DictReader(urllib2.urlopen(paURL))
+        except urllib2.URLError, e:
+            logger.warn(e)
         platformName = ''
         for rec in tpHandle:
             ##print "rec = %s" % rec
