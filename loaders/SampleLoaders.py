@@ -243,6 +243,9 @@ class SeabirdLoader(STOQS_Loader):
         ecofl = BaseType()
         ecofl.attributes = {'colname': 'FlECO-AFL', 'units': 'mg/m^3', 'long_name': 'Fluorescence, WET Labs ECO-AFL/FL'}
 
+        wetstar = BaseType()
+        wetstar.attributes = {'colname': 'WetStar', 'units': 'mg/m^3', 'long_name': 'Fluorescence, WET Labs WETstar'}
+
         oxygen = BaseType()
         oxygen.attributes = {'colname': 'Sbeox0ML/L', 'units': 'ml/l', 'long_name': 'Oxygen, SBE 43'}
 
@@ -425,7 +428,20 @@ class SeabirdLoader(STOQS_Loader):
             parmNameValues = []
             for name in parmDict.keys():
                 logger.debug('name = %s, parmDict[name].attributes = %s', name, parmDict[name].attributes)
-                parmNameValues.append((name, float(r[parmDict[name].attributes['colname']])))
+                try:
+                    parmNameValues.append((name, float(r[parmDict[name].attributes['colname']])))
+                except KeyError, e:
+                    # Accomodations for sub compact CTD
+                    if parmDict[name].attributes['colname'] == 'T190C':
+                        parmNameValues.append((name, float(r['Tv290C'])))
+                    elif parmDict[name].attributes['colname'] == 'PrDM':
+                        parmNameValues.append((name, float(r['PrdM'])))
+                    elif parmDict[name].attributes['colname'] == 'FlECO-AFL':
+                        continue
+                    elif parmDict[name].attributes['colname'] == 'WetStar':
+                        continue
+                    else:
+                        raise KeyError(e)
 
             self.load_data(lat, lon, float(r['DepSM']), dt, parmNameValues)
 
