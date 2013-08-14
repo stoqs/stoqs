@@ -9,7 +9,7 @@ rsync -rv mccann@elvis.shore.mbari.org:/net/atlas/ifs/mbariarchive/BOG_Archive/D
 # scp pCTD.GOC12/*.btl stoqsadm@beach.mbari.org:/ODSS/data/goc/GOC_february2012/wf/pctd
 # rm *bad* *BAD* files that got copied to beach
 
-./pctdToNetcdf.py pCTD.GOC12 pCTD.GOC12 GOC
+../../CANON/toNetCDF/pctdToNetcdf.py pCTD.GOC12 pCTD.GOC12 GOC
 
 scp pCTD.GOC12/*.nc stoqsadm@beach.mbari.org:/ODSS/data/goc/GOC_february2012/wf/pctd
 
