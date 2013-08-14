@@ -562,8 +562,13 @@ class SubSamplesLoader(STOQS_Loader):
 
         samplerelationship = m.SampleRelationship(child=sample, parent=parentSample)
         samplerelationship.save(using=self.dbAlias)
-                   
-        (parameter, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name=row['Parameter Name'], units=row['Parameter Units'])
+                  
+        pName = row['Parameter Name'] 
+        if find(' ', pName) != -1:
+            logger.warn("row['Parameter Name'] = %s contains a space.  Removing it before adding to STOQS.", pName)
+            pName = pName.replace(' ', '')
+
+        (parameter, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name=pName, units=row['Parameter Units'])
     
         analysisMethod = None
         if row['Analysis Method']:
@@ -626,22 +631,27 @@ class SubSamplesLoader(STOQS_Loader):
         lastParentSampleID = 0
         parameterCount = {}
         for r in csv.DictReader(open(fileName)):
-            ##logger.debug(r)
-            if r['Cruise'] == '2011_257_00_257_01':
-                r['Cruise'] = '2011_257_00_257_00'      # Correct a typo in spreadsheet
+            logger.debug(r)
+            aName = r['Cruise']
+            # Hack to remove '_<bottlenumber>' from Reiko's files
+            ##if aName.find('_') != -1:
+            ##    aName = aName.split('_')[0]
+
+            if aName == '2011_257_00_257_01':
+                aName = '2011_257_00_257_00'      # Correct a typo in Julio's spreadsheet
             try:
                 # Try first with %.1f formatted bottle number for Gulper - TODO: Deprecate this!
                 parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
-                                                      ).filter( instantpoint__activity__name__contains=r['Cruise'], 
+                                                      ).filter( instantpoint__activity__name__contains=aName, 
                                                                 name='%.1f' % float(r['Bottle Number']))[0]
             except IndexError:
                 try:
                     # Try without formatted %.1 for bottle number
                     parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
-                                                          ).filter( instantpoint__activity__name__contains=r['Cruise'], 
+                                                          ).filter( instantpoint__activity__name__contains=aName, 
                                                                     name=r['Bottle Number'])[0]
                 except IndexError:
-                    logger.warn('Parent Sample not found for Cruise = %s, Bottle Number = %s', r['Cruise'], r['Bottle Number'])
+                    logger.warn('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
                     sys.exit(-1)
                     continue
 
@@ -650,13 +660,19 @@ class SubSamplesLoader(STOQS_Loader):
                 if parentSample.id != lastParentSampleID:
                     if lastParentSampleID:
                         logger.info('%d sub samples loaded', subCount)
-                    logger.info('Loading subsamples of parentSample (activity, bottle) = (%s, %s)', r['Cruise'], r['Bottle Number'])
+                    logger.info('Loading subsamples of parentSample (activity, bottle) = (%s, %s)', aName, r['Bottle Number'])
                     subCount = 0
 
+                pName = r['Parameter Name'] 
+                if pName.find(' ') != -1:
+                    logger.warn("row['Parameter Name'] = %s contains a space.  Removing it before looking for it in STOQS.", pName)
+                    pName = pName.replace(' ', '')
+
                 try:
-                    p = m.Parameter.objects.using(self.dbAlias).get(name=r['Parameter Name'])
+                    p = m.Parameter.objects.using(self.dbAlias).get(name=pName)
                 except Exception, e:
-                    logger.warn('Could not get Parameter name = %s: %s', r['Parameter Name'], e)
+                    logger.error('Could not get Parameter name = %s: %s', pName, e)
+                    continue
                 else:
                     try:
                         parameterCount[p] += 1
