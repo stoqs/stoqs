@@ -23,14 +23,16 @@ prerequisites:
    combination.  It can really be anything you want.  At MBARI for the CANON project
    we typically have field programs where intensive measurements are collected in
    an area of the ocean over a several week period, so we name our campaigns like
-   'sept2010' and our stoqs databases like 'stoqs_sept2010' and 'stoqs_june2011'.
+   'september2010' and our stoqs databases like 'stoqs_september2010' and 'stoqs_june2011'.
    The point of using separate databases for campaigns is to constrain the size
    of the databases, which helps in managing them and in evolving stoqs applications
    while maintaining some level of consistent functionality of access for databases
    that are not under development.
    
-2. In your new loadXXXX.py file instantiate a DAPloaders object with accurate attributes
-   for each activity to be loaded.  There are several examples of other load files in
+2. In your new loadXXXX.py file instantiate a Loader object with the database alias name
+   and a name for the Campaign.  Member names for the loader are defined in the class that
+   is imported.  For example, look in the loaders/CANON/__init__.py file for what platforms
+   are supported for the CANONLoader.  There are several examples of other load files in
    the loaders/ directory.  Feel free to use them as a basis for the data you wish to load.
 
 3. The CANON directory in loaders/ contains load scripts for all of the MBARI CANON
@@ -40,21 +42,18 @@ prerequisites:
    and parameter names for each type of platform.
 
 4. Create a PostgreSQL database for your campaign (full instructions are in the 
-   INSTALL file).  At the psql prompt:
+   INSTALL file), in this example a test database (with '_t' suffix) is created:
 
-     create database stoqs_september2012_s100 owner=stoqsadm template=template_postgis;
-     \c stoqs_september2012_s100
+     create database stoqs_september2012_t owner=stoqsadm template=template_postgis;
+     alter database stoqs_september2012_t set timezone='GMT'
+     \c stoqs_september2012_t
      grant all on all tables in schema public to stoqsadm;
-     alter database stoqs_september2012_s100 set timezone='GMT'
-
-   The convention is to append the append the stride value ('_s100') to the campaign
-   portion of the database name.
 
 5. Add the new database to your privateSettings file (see INSTALL):
 
-     'stoqs_september2012_s100': {
+     'stoqs_september2012_t': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'stoqs_september2012_s100',
+        'NAME': 'stoqs_september2012_t',
         'USER': DATABASE_USER,
         'PASSWORD': DATABASE_PASSWORD,
         'HOST': DATABASE_HOST,
@@ -70,24 +69,23 @@ prerequisites:
    environment (see PREREQUISITES and INSTALL):
 
      source venv-stoqs/bin/activate
-     ./manage.py syncdb --database=stoqs_september2012_s100
+     ./manage.py syncdb --database=stoqs_september2012_t
 
-8. Execute your load script.  If following the example of the scripts in loaders/CANON they
-   take two arguments (<stride> <db_name>).  For example to populate the example database:
+8. Execute your load script.  
 
-     loaders/CANON/loadCANONseptember2012.py 100 stoqs_september2012_s100
+     loaders/CANON/loadCANONseptember2012.py --test
 
-   To populated a full-resolution database repeat steps 4-7 with another database name,
-   say "stoqs_september2012" and execute:
+   To populate a full-resolution database repeat steps 4-7 with database name without the 
+   '_t' suffix (stoqs_september2012) and execute:
 
-     loaders/CANON/loadCANONseptember2012.py 1 stoqs_september2012
+     loaders/CANON/loadCANONseptember2012.py 
 
 9. Notes:
 
     - As a campaign produces data files those files may be added to the script.  To add
       data to an existing database simply comment out previously loaded files and re-execute
       the script (step 8) with the new files.
-    - some programs to create NetCDF files from various original data files (e.g. Seabird underway 
+    - Some programs to create NetCDF files from various original data files (e.g. Seabird underway 
       and profile CTD) are in the loaders/CANON/toNetCDF directory.  See the README
       there for instructions on running those scripts to put the data on an OPeNDAP server
       so that your STOQS loader can load them.
@@ -100,5 +98,5 @@ prerequisites:
     
 --
 Mike McCann
-MBARI 5 August 2013
+MBARI 14 August 2013
  
