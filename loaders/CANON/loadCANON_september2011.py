@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 __author__    = 'Mike McCann'
-__copyright__ = '2011'
+__copyright__ = '2013'
 __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON activities in September 2010
+Master loader for all CANON activities in September 2011
 
-Mike McCann
-MBARI 22 April 2012
+Mike McCann and Duane Edgington
+MBARI 15 August 2013
 
 @var __date__: Date of last svn commit
 @undocumented: __doc__ parser
