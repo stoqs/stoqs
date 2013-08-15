@@ -20,9 +20,7 @@ MBARI 13 March 2013
 import os
 import sys
 import datetime
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-project_dir = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So that CANON is found
 
 from CANON import CANONLoader
 
