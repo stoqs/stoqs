@@ -32,6 +32,15 @@ cl.dorado_files = [ 'Dorado389_2011_249_00_249_00_decim.nc',
                     
                   ]
 
+# Spray glider - for just the duration of the campaign
+cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662_files = ['OS_Glider_L_662_20110915_TS.nc']
+cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
+cl.l_662_startDatetime = datetime.datetime(2011, 9, 1)
+cl.l_662_endDatetime = datetime.datetime(2011, 9, 20)
+
+
+
 # Execute the load
 cl.process_command_line()
 
