@@ -64,7 +64,22 @@ def loadSubSamples():
     '''
     ssl = SubSamplesLoader('', '', dbAlias=cl.dbAlias)
     scriptDir = os.path.dirname(os.path.realpath(__file__))
-    for csvFile in ('STOQS_GOC12_SAL.csv', 'STOQS_GOC12_CHL_GFF.csv', 'STOQS_GOC12_CARBON_GFF.csv'):
+    bog_data_dir = 'BOG_Data'
+    bog_data_files = [  
+##                        'STOQS_GOC12_CHL_1U.csv',
+##                        'STOQS_GOC12_CHL_5U.csv',
+#                        'STOQS_GOC12_NH4.csv',
+#                        'STOQS_GOC12_NO2.csv',
+#                        'STOQS_GOC12_NO3.csv',
+##                        'STOQS_GOC12_O2.csv',
+##                        'STOQS_GOC12_PHAEO_1U.csv',
+##                        'STOQS_GOC12_PHAEO_5U.csv',
+##                        'STOQS_GOC12_PHAEO_GFF.csv',
+                        'STOQS_GOC12_PO4.csv',
+                        'STOQS_GOC12_SIO4.csv',
+                     ]
+    for csvFile in [ os.path.join(bog_data_dir, f) for f in bog_data_files ]:
+    ##for csvFile in ['BOG_Data/STOQS_GOC12_CARBON_GFF.csv']:
         ssFile = os.path.join(scriptDir, csvFile)
         print "Processing subsamples from file", ssFile
         ssl.process_subsample_file(ssFile, False)
@@ -74,9 +89,9 @@ def loadSubSamples():
 cl.process_command_line()
 
 if cl.args.test:
-    # Use same platformName so that section data visualization works in STOQS UI
-    cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
-    cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=10)
+    # Use same default platformNames - underway and profile can't be visualized together in stoqs ui
+    ##cl.loadWFuctd(stride=10)
+    ##cl.loadWFpctd(stride=100)
     loadSubSamples()
 
 elif cl.args.optimal_stride:
