@@ -1,0 +1,6 @@
+.+\.pyc
+venv
+privateSettings
+.+\.csv
+.+\.xls
+.+\.txt
