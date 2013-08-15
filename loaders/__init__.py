@@ -17,11 +17,17 @@ Base module for STOQS loaders
 
 import sys
 import os.path, os
-#
+
 # The following are required to ensure that the GeoDjango models can be loaded up.
-#
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
 sys.path.insert(0, os.path.abspath('..'))
+os.environ['DJANGO_SETTINGS_MODULE']='settings'
+
+# Remove PYTHONPATH setting in odssadm account on odss servers
+try:
+    sys.path.remove('/home/odssadm/dev/MBARItracking/amqp')
+except ValueError:
+    pass
+
 from django.conf import settings
 from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import Point
