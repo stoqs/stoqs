@@ -19,8 +19,11 @@ MBARI 15 August 2013
 
 import os
 import sys
+import datetime  # needed for glider data
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
+
+# the next line makes it possible to find CANON
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
 from CANON import CANONLoader
