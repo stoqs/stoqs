@@ -20,9 +20,7 @@ MBARI 13 August
 import os
 import sys
 import datetime
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-project_dir = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So that CANON is found
 
 from CANON import CANONLoader
 
@@ -47,7 +45,7 @@ cl.dorado_files = [
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20130711_TS.nc']
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
-cl.l_662_startDatetime = datetime.datetime(2013, 8, 3)
+cl.l_662_startDatetime = datetime.datetime(2013, 8, 10)
 cl.l_662_endDatetime = datetime.datetime(2013, 8, 17)
 
 
