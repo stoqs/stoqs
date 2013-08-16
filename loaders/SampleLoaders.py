@@ -50,7 +50,7 @@ from bs4 import BeautifulSoup
 
 # Set up logging
 logger = logging.getLogger('loaders')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -257,8 +257,8 @@ class SeabirdLoader(STOQS_Loader):
     def load_data(self, lat, lon, depth, time, parmNameValues):
         '''
         Load the data values recorded at the bottle trips so that we have some InstantPoints to 
-        hang off for our Samples.  This is necessary as data are acquired on the down cast and
-        bottles are tripped on the upcast.  
+        hang off for our Samples.  This is necessary as typically data are continuously acquired on the 
+        down cast and bottles are tripped on the upcast with data collected just at the time of the bottle trip.  
         @parmNameValues is a list of 2-tuples of (ParameterName, Value) measured at the time and location specified by
         @lat decimal degrees
         @lon decimal degrees
@@ -564,8 +564,8 @@ class SubSamplesLoader(STOQS_Loader):
         samplerelationship.save(using=self.dbAlias)
                   
         pName = row['Parameter Name'] 
-        if find(' ', pName) != -1:
-            logger.warn("row['Parameter Name'] = %s contains a space.  Removing it before adding to STOQS.", pName)
+        if pName.find(' ') != -1:
+            logger.debug("row['Parameter Name'] = %s contains a space.  Removing it/them before adding to STOQS.", pName)
             pName = pName.replace(' ', '')
 
         (parameter, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name=pName, units=row['Parameter Units'])
@@ -576,6 +576,8 @@ class SubSamplesLoader(STOQS_Loader):
 
         sp = m.SampledParameter(sample=sample, parameter=parameter, datavalue=row['Parameter Value'], analysismethod=analysisMethod)
         sp.save(using=self.dbAlias)
+
+        return parameter
                                 
     def delete_subsample(self, parentSample, row):
         '''
@@ -633,9 +635,6 @@ class SubSamplesLoader(STOQS_Loader):
         for r in csv.DictReader(open(fileName)):
             logger.debug(r)
             aName = r['Cruise']
-            # Hack to remove '_<bottlenumber>' from Reiko's files
-            ##if aName.find('_') != -1:
-            ##    aName = aName.split('_')[0]
 
             if aName == '2011_257_00_257_01':
                 aName = '2011_257_00_257_00'      # Correct a typo in Julio's spreadsheet
@@ -651,44 +650,34 @@ class SubSamplesLoader(STOQS_Loader):
                                                           ).filter( instantpoint__activity__name__contains=aName, 
                                                                     name=r['Bottle Number'])[0]
                 except IndexError:
-                    logger.warn('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
+                    logger.exception('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
                     sys.exit(-1)
-                    continue
 
-            if not unloadFlag:
+            if unloadFlag:
+                # Unload subsample
+                self.delete_subsample(parentSample, r)
+            else:
                 # Some useful logger output
                 if parentSample.id != lastParentSampleID:
                     if lastParentSampleID:
-                        logger.info('%d sub samples loaded', subCount)
+                        logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
                     logger.info('Loading subsamples of parentSample (activity, bottle) = (%s, %s)', aName, r['Bottle Number'])
                     subCount = 0
 
-                pName = r['Parameter Name'] 
-                if pName.find(' ') != -1:
-                    logger.warn("row['Parameter Name'] = %s contains a space.  Removing it before looking for it in STOQS.", pName)
-                    pName = pName.replace(' ', '')
-
-                try:
-                    p = m.Parameter.objects.using(self.dbAlias).get(name=pName)
-                except Exception, e:
-                    logger.error('Could not get Parameter name = %s: %s', pName, e)
-                    continue
-                else:
-                    try:
-                        parameterCount[p] += 1
-                    except KeyError:
-                        parameterCount[p] = 0
-
                 # Load subsample
                 subCount = subCount + 1
-                self.load_subsample(parentSample, r)
+                p = self.load_subsample(parentSample, r)
+                try:
+                    parameterCount[p] += 1
+                except KeyError:
+                    parameterCount[p] = 0
+
                 lastParentSampleID = parentSample.id
-            else:
-                # Unload subsample
-                self.delete_subsample(parentSample, r)
    
         if not unloadFlag: 
-            logger.info('%d sub samples loaded', subCount)
+            # Last logger info message and finish up the loading for this file
+            logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
+
             self.assignParameterGroup(parameterCount, groupName=SAMPLED)
             self.postProcess(parameterCount)
 
