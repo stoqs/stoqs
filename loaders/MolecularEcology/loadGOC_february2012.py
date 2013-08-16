@@ -58,7 +58,7 @@ cl.wfpctd_files = [
                   ]
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 
-# SubSample data files from /net/atlas/ifs/mbariarchive/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
+# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
 cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data')
 cl.subsample_csv_files = [
                             'STOQS_GOC12_CHL_1U.csv',
@@ -80,8 +80,8 @@ cl.process_command_line()
 
 if cl.args.test:
     # Use same default platformNames - underway and profile can't be visualized together in stoqs ui
-    ##cl.loadWFuctd(stride=10)
-    ##cl.loadWFpctd(stride=100)
+    cl.loadWFuctd(stride=10)
+    cl.loadWFpctd(stride=100)
     cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
