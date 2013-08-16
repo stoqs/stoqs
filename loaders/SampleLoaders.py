@@ -633,9 +633,6 @@ class SubSamplesLoader(STOQS_Loader):
         for r in csv.DictReader(open(fileName)):
             logger.debug(r)
             aName = r['Cruise']
-            # Hack to remove '_<bottlenumber>' from Reiko's files
-            ##if aName.find('_') != -1:
-            ##    aName = aName.split('_')[0]
 
             if aName == '2011_257_00_257_01':
                 aName = '2011_257_00_257_00'      # Correct a typo in Julio's spreadsheet

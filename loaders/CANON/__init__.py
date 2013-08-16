@@ -24,7 +24,7 @@ project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 
 import DAPloaders
-from SampleLoaders import SeabirdLoader, load_gulps
+from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader
 from loaders import LoadScript
 
 class CANONLoader(LoadScript):
@@ -295,6 +295,15 @@ class CANONLoader(LoadScript):
         sl.pctdDir = self.pctdDir
         sl.process_btl_files(self.rcpctd_files)
 
+    def loadSubSamples(self):
+        '''
+        Load water sample analysis Sampled data values from spreadsheets (.csv files).  Expects to have the subsample_csv_base and
+        subsample_csv_files set by the load script.
+        '''
+        ssl = SubSamplesLoader('', '', dbAlias=self.dbAlias)
+        for csvFile in [ os.path.join(self.subsample_csv_base, f) for f in self.subsample_csv_files ]:
+            print "Processing subsamples from file", csvFile
+            ssl.process_subsample_file(csvFile, False)
 
     def loadAll(self, stride=None):
         '''
