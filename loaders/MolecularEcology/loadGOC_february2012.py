@@ -36,53 +36,43 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # Western Flyer Underway CTD
 cl.wfuctd_base = cl.dodsBase + 'GOC_february2012/wf/uctd/'
 cl.wfuctd_files = [ 
-			'goc12m01.nc',
-			'goc12m02.nc',
-			'goc12m03.nc',
-			'goc12m04.nc',
-			'goc12m05.nc',
-                      ]
+			        'goc12m01.nc',
+			        'goc12m02.nc',
+			        'goc12m03.nc',
+			        'goc12m04.nc',
+			        'goc12m05.nc',
+                  ]
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
 # Western Flyer Profile CTD
 cl.pctdDir = 'GOC_february2012/wf/pctd/'
 cl.wfpctd_base = cl.dodsBase + cl.pctdDir
 cl.wfpctd_files = [ 
-'GOC12c01.nc', 'GOC12c02.nc', 'GOC12c03.nc', 'GOC12c04.nc', 'GOC12c05.nc', 'GOC12c06.nc', 
-'GOC12c07.nc', 'GOC12c08.nc', 'GOC12c09.nc', 'GOC12c10.nc', 'GOC12c11.nc', 'GOC12c12.nc', 
-'GOC12c13.nc', 'GOC12c14.nc', 'GOC12c15.nc', 'GOC12c16.nc', 'GOC12c17.nc', 'GOC12c18.nc', 
-'GOC12c19.nc', 'GOC12c20.nc', 'GOC12c21.nc', 'GOC12c22.nc', 'GOC12c23.nc', 'GOC12c24.nc', 
-'GOC12c25.nc', 'GOC12c26.nc', 'GOC12c27.nc', 'GOC12c28.nc', 'GOC12c29.nc', 'GOC12c30.nc', 
-'GOC12c31.nc', 'GOC12c32.nc', 'GOC12c33.nc', 'GOC12c34.nc', 'GOC12c35.nc', 'GOC12c36.nc', 
-'GOC12c37.nc', 'GOC12c38.nc', 'GOC12c39.nc', 'GOC12c40.nc', 'GOC12c41.nc'
-                      ]
+                    'GOC12c01.nc', 'GOC12c02.nc', 'GOC12c03.nc', 'GOC12c04.nc', 'GOC12c05.nc', 'GOC12c06.nc', 
+                    'GOC12c07.nc', 'GOC12c08.nc', 'GOC12c09.nc', 'GOC12c10.nc', 'GOC12c11.nc', 'GOC12c12.nc', 
+                    'GOC12c13.nc', 'GOC12c14.nc', 'GOC12c15.nc', 'GOC12c16.nc', 'GOC12c17.nc', 'GOC12c18.nc', 
+                    'GOC12c19.nc', 'GOC12c20.nc', 'GOC12c21.nc', 'GOC12c22.nc', 'GOC12c23.nc', 'GOC12c24.nc', 
+                    'GOC12c25.nc', 'GOC12c26.nc', 'GOC12c27.nc', 'GOC12c28.nc', 'GOC12c29.nc', 'GOC12c30.nc', 
+                    'GOC12c31.nc', 'GOC12c32.nc', 'GOC12c33.nc', 'GOC12c34.nc', 'GOC12c35.nc', 'GOC12c36.nc', 
+                    'GOC12c37.nc', 'GOC12c38.nc', 'GOC12c39.nc', 'GOC12c40.nc', 'GOC12c41.nc'
+                  ]
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 
-def loadSubSamples():
-    '''
-    Load water sample analysis Sampled data values from spreadsheets (.csv files)
-    '''
-    ssl = SubSamplesLoader('', '', dbAlias=cl.dbAlias)
-    scriptDir = os.path.dirname(os.path.realpath(__file__))
-    bog_data_dir = 'BOG_Data'
-    bog_data_files = [  
-##                        'STOQS_GOC12_CHL_1U.csv',
-##                        'STOQS_GOC12_CHL_5U.csv',
-#                        'STOQS_GOC12_NH4.csv',
-#                        'STOQS_GOC12_NO2.csv',
-#                        'STOQS_GOC12_NO3.csv',
-##                        'STOQS_GOC12_O2.csv',
-##                        'STOQS_GOC12_PHAEO_1U.csv',
-##                        'STOQS_GOC12_PHAEO_5U.csv',
-##                        'STOQS_GOC12_PHAEO_GFF.csv',
-                        'STOQS_GOC12_PO4.csv',
-                        'STOQS_GOC12_SIO4.csv',
-                     ]
-    for csvFile in [ os.path.join(bog_data_dir, f) for f in bog_data_files ]:
-    ##for csvFile in ['BOG_Data/STOQS_GOC12_CARBON_GFF.csv']:
-        ssFile = os.path.join(scriptDir, csvFile)
-        print "Processing subsamples from file", ssFile
-        ssl.process_subsample_file(ssFile, False)
+# SubSample data files from /net/atlas/ifs/mbariarchive/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data')
+cl.subsample_csv_files = [
+                            'STOQS_GOC12_CHL_1U.csv',
+                            'STOQS_GOC12_CHL_5U.csv',
+                            'STOQS_GOC12_NH4.csv',
+                            'STOQS_GOC12_NO2.csv',
+                            'STOQS_GOC12_NO3.csv',
+                            'STOQS_GOC12_O2.csv',
+                            'STOQS_GOC12_PHAEO_1U.csv',
+                            'STOQS_GOC12_PHAEO_5U.csv',
+                            'STOQS_GOC12_PHAEO_GFF.csv',
+                            'STOQS_GOC12_PO4.csv',
+                            'STOQS_GOC12_SIO4.csv',
+                         ]
 
 
 # Execute the load
@@ -92,7 +82,7 @@ if cl.args.test:
     # Use same default platformNames - underway and profile can't be visualized together in stoqs ui
     ##cl.loadWFuctd(stride=10)
     ##cl.loadWFpctd(stride=100)
-    loadSubSamples()
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
     # Use same platformName so that section data visualization works in STOQS UI
