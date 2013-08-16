@@ -39,6 +39,9 @@ cl.dorado_files = [
                     'Dorado389_2013_225_01_225_01_decim.nc',
                     'Dorado389_2013_226_01_226_01_decim.nc',
                     'Dorado389_2013_226_03_226_03_decim.nc',
+                    'Dorado389_2013_227_00_227_00_decim.nc',
+                    'Dorado389_2013_227_01_227_01_decim.nc ',
+                    'Dorado389_2013_228_00_228_00_decim.nc',
                   ]
 
 # Spray glider - for just the duration of the campaign
