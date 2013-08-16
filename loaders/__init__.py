@@ -22,12 +22,6 @@ import os.path, os
 sys.path.insert(0, os.path.abspath('..'))
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 
-# Remove PYTHONPATH setting in odssadm account on odss servers
-try:
-    sys.path.remove('/home/odssadm/dev/MBARItracking/amqp')
-except ValueError:
-    pass
-
 from django.conf import settings
 from django.contrib.gis.geos import LineString
 from django.contrib.gis.geos import Point
