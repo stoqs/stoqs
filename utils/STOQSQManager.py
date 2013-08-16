@@ -917,10 +917,10 @@ class STOQSQManager(object):
         if not getShow_Parameter_Platform_Data(self.kwargs):
             return None, None, 'Show data values checkbox not checked.'
         if len(self.kwargs['measuredparametersgroup']) != 1:
-            return None, None, 'A single Parameter name has not been selected.'
+            return None, None, 'Select a single Measured Parameter name'
         if len(self.getPlatforms()) != 1:
             if len(self.kwargs['platforms']) != 1:
-                return None, None, 'Platform not selected.'
+                return None, None, 'Select a Platform name'
         try:
             platformName = self.getPlatforms()[0][0]
         except IndexError, e:
