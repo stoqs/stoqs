@@ -42,6 +42,7 @@ cl.dorado_files = [
                     'Dorado389_2013_227_00_227_00_decim.nc',
                     'Dorado389_2013_227_01_227_01_decim.nc ',
                     'Dorado389_2013_228_00_228_00_decim.nc',
+                    'Dorado389_2013_228_01_228_01_decim.nc',
                   ]
 
 # Spray glider - for just the duration of the campaign
@@ -58,6 +59,8 @@ cl.rcuctd_files = [
                     'simz2013plm01.nc',
                     'simz2013plm02.nc',
                     'simz2013plm03.nc',
+                    'simz2013plm04.nc',
+                    'simz2013plm05.nc',
                   ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
@@ -75,6 +78,14 @@ cl.rcpctd_files = [
                     'simz2013c08.nc',
                     'simz2013c09.nc',
                     'simz2013c10.nc',
+                    'simz2013c11.nc',
+                    'simz2013c12.nc',
+                    'simz2013c13.nc',
+                    'simz2013c14.nc',
+                    'simz2013c15.nc',
+                    'simz2013c16.nc',
+                    'simz2013c17.nc',
+                    'simz2013c18.nc',
                       ]
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
