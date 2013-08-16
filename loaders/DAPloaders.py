@@ -286,7 +286,7 @@ class Base_Loader(STOQS_Loader):
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
         logger.debug('coordDict = %s', coordDict)
         if set(coordDict.keys()) != reqCoords:
-            logger.warn('Required coordinate(s) %s missing.  Consider overriding by setting an auxCoods dictionary in your Loader.', list(reqCoords - set(coordDict.keys())))
+            logger.warn('Required coordinate(s) %s missing.  Consider overriding by setting an auxCoords dictionary in your Loader.', list(reqCoords - set(coordDict.keys())))
             raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
 
         logger.debug('coordDict = %s', coordDict)
@@ -629,7 +629,6 @@ class Base_Loader(STOQS_Loader):
         self.initDB()
 
         self.loaded = 0
-        linestringPoints=[]
         parmCount = {}
         parameterCount = {}
         mindepth = 8000.0
@@ -689,8 +688,6 @@ class Base_Loader(STOQS_Loader):
                         mindepth = depth
                     if depth > maxdepth:
                         maxdepth = depth
-                    logger.debug("Appending to linestringPoints: measurement.geom = %s, %s" , measurement.geom.x, measurement.geom.y)
-                    linestringPoints.append(measurement.geom)
 
             self._insertRow(parmCount, parameterCount, measurement, row)
 
@@ -698,16 +695,18 @@ class Base_Loader(STOQS_Loader):
         # End for row
 
         #
-        # Examine linestringPoints and set to a path for trajectory and stationPoint for timeSeriesProfile and timeSeries
+        # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
         #
         path = None
         stationPoint = None
+        linestringPoints = m.Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
+                                                       ).order_by('instantpoint__timevalue').values_list('geom')
         try:
-            path = LineString(linestringPoints).simplify(tolerance=.001)
+            path = LineString([p[0] for p in linestringPoints]).simplify(tolerance=.001)
         except TypeError, e:
             logger.warn("%s\nSetting path to None", e)
         except Exception as e:
-            logger.warn('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
+            logger.error('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
         else:
             if len(path) == 2:
                 logger.info("Length of path = 2: path = %s", path)
@@ -719,8 +718,8 @@ class Base_Loader(STOQS_Loader):
         # Update the Activity with information we now have following the load
         newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, ' '.join(self.varsLoaded), datetime.utcnow())
         logger.debug("Updating its comment with newComment = %s", newComment)
-    
-        num_updated = m.Activity.objects.using(self.dbAlias).filter(id = self.activity.id).update(
+   
+        num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
                         comment = newComment,
                         maptrack = path,
                         mappoint = stationPoint,
@@ -817,6 +816,7 @@ class Dorado_Loader(Trajectory_Loader):
 
     def initDB(self):
         self.addParameters(self.parmDict)
+        logger.debug('Appending to self.varsLoaded = %s', self.varsLoaded)
         for k in self.parmDict.keys():
             self.varsLoaded.append(k)       # Make sure to add the derived parameters to the list that gets put in the comment
 
@@ -1089,15 +1089,13 @@ def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAl
             platformTypeName = pTypeName,
             stride = stride)
 
+    loader.auxCoords = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     except VariableMissingCoordinatesAttribute, e:
-        logger.warn(e)
-        logger.info('Re-executing with auxCoords specified')
-        loader.auxCoords = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
-        (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
-        
-    logger.debug("Loaded Activity with name = %s", aName)
+        logger.exception(e)
+    else:
+        logger.debug("Loaded Activity with name = %s", aName)
 
 def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride):
     '''
@@ -1151,16 +1149,13 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
+    loader.auxCoords = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     except VariableMissingCoordinatesAttribute, e:
-        logger.warn(e)
-        logger.info('Re-executing with auxCoords specified')
-        # Try mapping for http://www.cencoos.org/thredds/dodsC/gliders/Line66/OS_Glider_L_662_20120816_TS.nc
-        loader.auxCoords = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
-        (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
-        
-    logger.debug("Loaded Activity with name = %s", aName)
+        logger.exception(e)
+    else:    
+        logger.debug("Loaded Activity with name = %s", aName)
 
 def runTimeSeriesLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
     '''
