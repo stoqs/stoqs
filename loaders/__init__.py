@@ -383,6 +383,10 @@ class STOQS_Loader(object):
         if self.campaignName is not None:
             (campaign, created) = m.Campaign.objects.db_manager(self.dbAlias).get_or_create(name = self.campaignName)
             self.campaign = campaign
+            if created:
+                logger.info('Created campaign = %s', self.campaign)
+            else:
+                logger.info('Retrieved campaign = %s', self.campaign)
     
             if self.campaign is not None:
                 self.activity.campaign = self.campaign
@@ -762,9 +766,9 @@ class STOQS_Loader(object):
         try:
             if self.campaign:
                 ip_qs = m.InstantPoint.objects.using(self.dbAlias).aggregate(Max('timevalue'), Min('timevalue'))
-                m.Campaign.objects.using(self.dbAlias).update(
-                                                       startdate = ip_qs['timevalue__min'],
-                                                        enddate = ip_qs['timevalue__max'])
+                m.Campaign.objects.using(self.dbAlias).filter(id=self.campaign.id).update(
+                                                                                startdate = ip_qs['timevalue__min'],
+                                                                                enddate = ip_qs['timevalue__max'])
         except AttributeError, e:
             logger.warn(e)
             pass
