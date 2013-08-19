@@ -953,20 +953,6 @@ class Glider_Loader(Trajectory_Loader):
     '''
     include_names=['TEMP', 'PSAL', 'OPBS', 'FLU2']
 
-    def createActivity(self):
-        '''
-        Use provided activity information to add the activity to the database.
-        '''
-        start = from_udunits(float(self.ds.TIME[0]), self.ds.TIME.units)
-        end = from_udunits(float(self.ds.TIME[-1]), self.ds.TIME.units)
-        self.activity=m.Activity(name=self.activityName,
-                    platform=self.platform,
-                    startdate=start,
-                    enddate=end)
-        if self.activitytypeName is not None:
-            self.activity.activitytypeName = self.activitytypeName
-        self.activity.save(using=self.dbAlias)
-        
     def initDB(self):
         'Needs to use the exact name for the time coordinate in the Glider data'
         if self.startDatetime == None or self.endDatetime == None:
