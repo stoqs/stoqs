@@ -691,6 +691,7 @@
                         Parameter Values</a>
                         <button id="resetparametervaluesselections" class="btn btn-mini disabled">Clear Selection</button> 
                         </h3>
+                        <input type="hidden" id="parametervalues-data" name="parametervalues-data" />
                     </div>
                     <div id="collapseParameterValues" class="accordion-body collapse in">
                         <div class="accordion-inner">
@@ -2395,9 +2396,7 @@
                 }
             }
             else if (key == 'activityparameterhistograms') {
-            	if ($('#parameter-value-table > tbody').length == 0) {
-            		$('#parameter-value-table').html('<tbody></tbody>');
-            	}
+                $('#parameter-value-table').html('<tbody></tbody>');
             	var histHtml='';
                 var $elem=$('#parameter-value-table > tbody');
                 var parameterunits = data[key]['parameterunits'];
@@ -2412,9 +2411,7 @@
 	                        '</tr>';
                     }
                 });
-                if (histHtml.length) {
-		            $elem.append(histHtml);
-                }
+                $elem.html(histHtml);
                 $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
                     parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');       // HTML ids don't allow spaces
                     histdata = [];
@@ -2435,6 +2432,7 @@
                             var max = parametervalues[parameter]['xmax'];
                             if (typeof min != 'undefined' && typeof max != 'undefined') {
                                 histdata = addSelectedParameterValue(histdata, parameter);
+                                $('#parametervalues-data').val(JSON.stringify(parametervalues));
                             }
                         }
                     }
@@ -2643,15 +2641,15 @@
             }
         });
         
-        // Grab any histograms that might be on the page.
-        params['histograms']={}
-        $('div[id$="-histogram-flot"]').each(function(pos, item) {
-            //var sel=$(item).data("plot").getSelection();
-            var sel=$(item).data("plot");
-            if (sel) {
-				params['histograms'][item.id]=sel.getSelection();
+        // Grab any parametervalues selections that have been put into the hidden element
+        params['histograms'] = $('#parametervalues-data').val();
+        $.each(JSON.parse($('#parametervalues-data').val()), function(parameter, data) {
+            if (typeof data.xmin != 'undefined' && typeof data.xmax != 'undefined') {
+                params[parameter + '_MIN'] = data.xmin.toPrecision(4);
+                params[parameter + '_MAX'] = data.xmax.toPrecision(4);
             }
         });
+
         return JSON.stringify(params);
         
     }
@@ -2716,6 +2714,8 @@
                         }
                     });
                     break;
+                case 'histograms':
+                    parametervalues = JSON.parse(value);
             }
         });
         timedepthplot.setSelection(ranges);
@@ -2724,22 +2724,18 @@
         });
         
         permalink_bypass=false;
-        // We have to update the historgrams after the page is reloaded,
-        // so in this case, we rebuild filters first, then update histograms.
         rebuildFilters();
-        if ((typeof parameters['histograms'] !== 'undefined')) {
-            $.each(parameters['histograms'], function (key, value) {
-//                console.log(key + ":" + value);
-                if ((typeof value !== 'undefined') && value) {
-	                $('#right-column').on('plotloaded', '#' + key,
-	                		{sel: '#' + key,
-	            		     value:  value }, function (event) {
-		                $(event.data.sel).data("plot").setSelection(event.data.value);
-		                $(this).unbind(event);
-	                });
+
+        // Redraw selections on the histograms - do this after calling rebuildFilters()
+        if (parametervalues) {
+            if (parametervalues[parameter]) {
+                var min = parametervalues[parameter]['xmin'];
+                var max = parametervalues[parameter]['xmax'];
+                if (typeof min != 'undefined' && typeof max != 'undefined') {
+                    histdata = addSelectedParameterValue(histdata, parameter);
                 }
-            });
-        } 
+            }
+        }
     }
     
     function load_permalink() {
