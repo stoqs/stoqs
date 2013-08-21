@@ -491,7 +491,7 @@ class STOQS_Loader(object):
         '''
         # Brute force QC check on depth to remove egregous outliers
         minDepth = -1000
-        maxDepth = 4000
+        maxDepth = 5000
         if depth < minDepth or depth > maxDepth:
             raise SkipRecord('Bad depth: depth must be > and < %s' % minDepth, maxDepth)
 
