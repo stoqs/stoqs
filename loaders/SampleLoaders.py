@@ -497,13 +497,13 @@ class SeabirdLoader(STOQS_Loader):
                 if file.endswith('.btl'):
                     logger.debug("file = %s", file)
                     if file.split('/')[-1].split('.')[0] + '.nc' not in seabirdFileList:
-                        logger.debug('Skipping as it is in not in seabirdFileList = %s', seabirdFileList)
+                        logger.warn('Skipping %s as it is in not in seabirdFileList = %s', file, seabirdFileList)
                         continue
 
                     # btlUrl looks something like: http://odss.mbari.org/thredds/fileServer/CANON_september2012/wf/pctd/c0912c53.btl
                     btlUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + file.split('/')[-1]
                     hdrUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + ''.join(file.split('/')[-1].split('.')[:-1]) + '.hdr'
-                    logger.debug('btlUrl = %s', btlUrl)
+                    logger.info('btlUrl = %s', btlUrl)
     
                     self.activityName = file.split('/')[-1].split('.')[-2] 
                     year, lat, lon = get_year_lat_lon(hdrUrl = hdrUrl)
@@ -641,17 +641,18 @@ class SubSamplesLoader(STOQS_Loader):
             try:
                 # Try first with %.1f formatted bottle number for Gulper - TODO: Deprecate this!
                 parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
-                                                      ).filter( instantpoint__activity__name__contains=aName, 
+                                                      ).filter( instantpoint__activity__name__icontains=aName, 
                                                                 name='%.1f' % float(r['Bottle Number']))[0]
             except IndexError:
                 try:
                     # Try without formatted %.1 for bottle number
                     parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
-                                                          ).filter( instantpoint__activity__name__contains=aName, 
+                                                          ).filter( instantpoint__activity__name__icontains=aName, 
                                                                     name=r['Bottle Number'])[0]
                 except IndexError:
-                    logger.exception('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
-                    sys.exit(-1)
+                    logger.error('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
+                    continue
+                    ##sys.exit(-1)
 
             if unloadFlag:
                 # Unload subsample
