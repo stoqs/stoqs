@@ -2640,15 +2640,17 @@
                 params['map-layers'].push(layer.name); 
             }
         });
-        
-        // Grab any parametervalues selections that have been put into the hidden element
-        params['histograms'] = $('#parametervalues-data').val();
-        $.each(JSON.parse($('#parametervalues-data').val()), function(parameter, data) {
-            if (typeof data.xmin != 'undefined' && typeof data.xmax != 'undefined') {
-                params[parameter + '_MIN'] = data.xmin.toPrecision(4);
-                params[parameter + '_MAX'] = data.xmax.toPrecision(4);
-            }
-        });
+       
+        if ( $('#parametervalues-data').val() ) { 
+            // Grab any parametervalues selections that have been put into the hidden element
+            params['histograms'] = $('#parametervalues-data').val();
+            $.each(JSON.parse($('#parametervalues-data').val()), function(parameter, data) {
+                if (typeof data.xmin != 'undefined' && typeof data.xmax != 'undefined') {
+                    params[parameter + '_MIN'] = data.xmin.toPrecision(4);
+                    params[parameter + '_MAX'] = data.xmax.toPrecision(4);
+                }
+            });
+        }
 
         return JSON.stringify(params);
         
