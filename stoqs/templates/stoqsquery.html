@@ -136,7 +136,7 @@
     </div>
 
 
-  <div id="permalink-popup" class="modal hide fade in" style="display:none;width:800px;">
+  <div id="permalink-popup" class="modal hide fade in" style="display:none;width:700px;">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">×</a>
         <h3>Share this view</h3>
@@ -2717,7 +2717,9 @@
                     });
                     break;
                 case 'histograms':
-                    parametervalues = JSON.parse(value);
+                    if ( ! $.isEmptyObject(value) ) {
+                        parametervalues = JSON.parse(value);
+                    }
             }
         });
         timedepthplot.setSelection(ranges);
@@ -2729,7 +2731,7 @@
         rebuildFilters();
 
         // Redraw selections on the histograms - do this after calling rebuildFilters()
-        if (parametervalues) {
+        if ( ! $.isEmptyObject(parametervalues) ) {
             if (parametervalues[parameter]) {
                 var min = parametervalues[parameter]['xmin'];
                 var max = parametervalues[parameter]['xmax'];
