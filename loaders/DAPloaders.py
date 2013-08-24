@@ -252,9 +252,12 @@ class Base_Loader(STOQS_Loader):
         Example return value: {'time': 'esecs', 'depth': 'DEPTH', 'latitude': 'lat', 'longitude': 'lon'}
         '''
         if self.auxCoords:
-            # Simply return self.auxCoords if specified in the constructor
-            logger.debug('Returning auxCoords that were specified in the constructor')
-            return self.auxCoords
+            if variable in self.auxCoords:
+                # Simply return self.auxCoords if specified in the constructor
+                logger.debug('Returning auxCoords for variable %s that were specified in the constructor: %s', variable, self.auxCoords[variable])
+                return self.auxCoords[variable]
+            else:
+                raise Exception('auxCoords is specified, but variable requested (%s) is not in %s', variable, self.auxCoords)
 
         # Scan variable standard_name attributes for ('time', 'latitude', 'longitude', 'depth') standard_name's
         # There is no check here for multiple multiple time, latitude, longitude, or depth coordinates.  Should
@@ -308,12 +311,13 @@ class Base_Loader(STOQS_Loader):
      
             # depth may be single-valued or an array 
             if self.getFeatureType() == 'timeseries': 
-                logger.debug('ac = %s', ac)
+                logger.debug('Initializing depths list for timeseries, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']][:][0]
             elif self.getFeatureType() == 'timeseriesprofile':
+                logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']][:]
 
-            # latitude and longitude are single-valued
+            # latitude and longitude are always single-valued
             lats[v] = self.ds[v][ac['latitude']][:][0]
             lons[v] = self.ds[v][ac['longitude']][:][0]
 
@@ -324,18 +328,10 @@ class Base_Loader(STOQS_Loader):
             lat = lats.values()[0]
             lon = lons.values()[0]
 
-        if len(set(lats.values())) != 1:
-            raise Exception('Invalid file coordinates structure.  All variables must have identical nominal depth, depths, depths = %s', depths)
-        else:
-            depth = depths.values()[0]
+        if len(set(lats.values())) != 1 or len(set(lons.values())) != 1:
+            raise Exception('Invalid file coordinates structure.  All variables must have identical nominal latitude and longitude. lats = %s, lons = %s', lats, lons)
 
-        logger.info('type(depth) = %s', type(depth))
-        if isinstance(depth, numpy.ndarray):
-            depth_array = depth
-        else:
-            depth_array = numpy.array([depth])
-
-        return depth_array, lat, lon
+        return depths, lats, lons
 
     def getTimeBegEndIndices(self, timeAxis):
         '''
@@ -376,9 +372,6 @@ class Base_Loader(STOQS_Loader):
         latitudes = {}
         longitudes = {}
         timeUnits = {}
-        nomDepths = {}
-        nomLats = {}
-        nomLons = {}
 
         # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
         # The reads here take advantage of OPeNDAP access mechanisms to effeciently transfer data across the network
@@ -417,7 +410,7 @@ class Base_Loader(STOQS_Loader):
                 longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon
                 timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
 
-                nomDepths[pname], nomLats[pname], nomLons[pname] = self.getNominalLocation()
+                nomDepths, nomLats, nomLons = self.getNominalLocation()
             else:
                 logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.  It has a shape length of %d.', pname, len(self.ds[pname].shape))
 
@@ -428,6 +421,8 @@ class Base_Loader(STOQS_Loader):
             for depthArray in data[pname]:
                 k = 0
                 logger.debug('depthArray = %s', depthArray)
+                logger.debug('nomDepths = %s', nomDepths)
+                ##raw_input('PAUSED')
                 values = {}
                 for dv in depthArray:
                     values[pname] = float(dv)
@@ -1075,7 +1070,11 @@ def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAl
             platformTypeName = pTypeName,
             stride = stride)
 
-    loader.auxCoords = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+    # Auxillary coordinates are the same for all include_names
+    loader.auxCoords = {}
+    for v in loader.include_names:
+        loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     except VariableMissingCoordinatesAttribute, e:
@@ -1135,7 +1134,11 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
-    loader.auxCoords = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+    # Auxillary coordinates are the same for all include_names
+    loader.auxCoords = {}
+    for v in loader.include_names:
+        loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     except VariableMissingCoordinatesAttribute, e:
@@ -1193,7 +1196,23 @@ def runMooringLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, par
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
-    loader.auxCoords = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+    loader.auxCoords = {}
+    if url.endswith('_CMSTV.nc'):
+        # Special for combined file which has different coordinates for different variables
+        for v in loader.include_names:
+            if v in ['eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR']:
+                loader.auxCoords[v] = {'time': 'hr_time_adcp', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'HR_DEPTH_adcp'}
+            elif v in ['SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR']:
+                loader.auxCoords[v] = {'time': 'hr_time_ts', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+            elif v in ['SW_FLUX_HR', 'AIR_TEMPERATURE_HR', 'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR']:
+                loader.auxCoords[v] = {'time': 'hr_time_met', 'latitude': 'Latitude', 'longitude': 'Longitude', 'depth': 'HR_DEPTH_met'}
+            else:
+                logger.error('Do not have an auxCoords assignment for variable %s in include_names', v)
+    else:
+        # Auxillary coordinates are the same for all include_names for _TS and _M files
+        for v in loader.include_names:
+            loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
