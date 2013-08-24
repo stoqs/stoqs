@@ -614,7 +614,6 @@ class STOQSQManager(object):
         p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
         p_qs = p_qs.filter(activityparameter__activity__platform__name=platform[0]).distinct()
         for parameter in p_qs:
-            logger.debug('parameter = %s', parameter)
             unit = parameter.units
 
             # Get the number of nominal depths for this parameter
@@ -623,23 +622,27 @@ class STOQSQManager(object):
                                               activity__platform__name=platform[0],
                                               measurement__measuredparameter__parameter=parameter
                                     ).values('depth').distinct().count()
-            logger.debug('nds  = %s', nds )
 
             if parameter.standard_name == 'sea_water_salinity':
                 unit = 'PSU'
             if parameter.standard_name and parameter.standard_name.strip() != '':
+                logger.debug('Parameter name "%s" has standard_name = %s', parameter.name, parameter.standard_name)
                 pa_units[parameter.standard_name] = unit
                 is_standard_name[parameter.standard_name] = True
                 ndCounts[parameter.standard_name] = nds
                 colors[parameter.standard_name] = parameter.id
                 strides[parameter.standard_name] = {}
             else:
+                logger.debug('Parameter name "%s" does not have a standard_name', parameter.name)
                 pa_units[parameter.name] = unit
                 is_standard_name[parameter.name] = False
                 ndCounts[parameter.name] = nds
                 colors[parameter.name] = parameter.id
                 strides[parameter.name] = {}
 
+            logger.debug('nds  = %s', nds )
+
+            # Initialize pt dictionary of dictionaries with it's keys
             pt[unit] = {}
 
         return (pa_units, is_standard_name, ndCounts, pt, colors, strides)
@@ -691,7 +694,7 @@ class STOQSQManager(object):
     def _parameterInSelection(self, p, is_standard_name, parameterType=MEASUREDINSITU):
         '''
         Return True if parameter name is in the UI selection, either from contraints other than
-        direct selection or and if specifically selected in the UI.  
+        direct selection or if specifically selected in the UI.  
         '''
         isInSelection = False
         if is_standard_name[p]:
@@ -701,11 +704,12 @@ class STOQSQManager(object):
             if p in [parms[0] for parms in self.getParameters(parameterType)]:
                 isInSelection = True
 
-        if self.kwargs['measuredparametersgroup']:
-            if p in self.kwargs['measuredparametersgroup']:
-                isInSelection = True
-            else:
-                isInSelection = False
+        if not isInSelection:
+            if self.kwargs['measuredparametersgroup']:
+                if p in self.kwargs['measuredparametersgroup']:
+                    isInSelection = True
+                else:
+                    isInSelection = False
 
         return isInSelection 
 
@@ -721,6 +725,7 @@ class STOQSQManager(object):
         for p,u in pa_units.iteritems():
             logger.debug('p, u = %s, %s', p, u)
             if not self._parameterInSelection(p, is_standard_name):
+                logger.debug('Parameter is not in selection')
                 continue
 
             try:
