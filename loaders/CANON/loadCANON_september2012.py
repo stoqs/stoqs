@@ -149,39 +149,66 @@ cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = datetime.datetime(2012, 9, 1)
 cl.l_662_endDatetime = datetime.datetime(2012, 9, 21)
 
-# Mooring M1ts - for just the duration of the campaign
-cl.m1ts_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'
-cl.m1ts_files = ['OS_MBARI-M1_R_TS']
-##cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR', 
-##                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR', 
-##                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
-##              ]
-cl.m1ts_parms = [ 'PSAL', 'TEMP' ]
-cl.m1ts_startDatetime = datetime.datetime(2012, 9, 1)
-cl.m1ts_endDatetime = datetime.datetime(2012, 9, 21)
+# Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201202/'
+cl.m1_files = ['OS_M1_20120222hourly_CMSTV.nc']
+cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+              ]
+cl.m1_startDatetime = datetime.datetime(2012, 9, 1)
+cl.m1_endDatetime = datetime.datetime(2012, 9, 21)
 
-# Mooring M1met - for just the duration of the campaign
-cl.m1met_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'
-cl.m1met_files = ['OS_MBARI-M1_R_M']
-cl.m1met_parms = [ 'WSPD', 'WDIR', 'ATMP', 'SW', 'RELH' ]
-cl.m1met_startDatetime = datetime.datetime(2012, 9, 1)
-cl.m1met_endDatetime = datetime.datetime(2012, 9, 21)
+# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/C0912/ copied to local BOG_Data dir
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/C0912/')
+cl.subsample_csv_files = [
+                            'STOQS_C0912_ALTIMETER.csv',
+                            'STOQS_C0912_CARBON_GFF.csv',
+                            'STOQS_C0912_CHL_1U.csv',
+                            'STOQS_C0912_CHL_5U.csv',
+                            'STOQS_C0912_CHLA.csv',
+                            'STOQS_C0912_CHL_GFF.csv',
+                            'STOQS_C0912_COND2.csv',
+                            'STOQS_C0912_CONDUCT.csv',
+                            'STOQS_C0912_FLUOR.csv',
+                            'STOQS_C0912_NH4.csv',
+                            'STOQS_C0912_NO2.csv',
+                            'STOQS_C0912_NO3.csv',
+                            'STOQS_C0912_OXY_ML.csv',
+                            'STOQS_C0912_OXY_PS.csv',
+                            'STOQS_C0912_PAR4PI.csv',
+                            'STOQS_C0912_PARCOS.csv',
+                            'STOQS_C0912_PHAEO_1U.csv',
+                            'STOQS_C0912_PHAEO_5U.csv',
+                            'STOQS_C0912_PHAEO_GFF.csv',
+                            'STOQS_C0912_PO4.csv',
+                            'STOQS_C0912_POT_TMP2.csv',
+                            'STOQS_C0912_POT_TMP.csv',
+                            'STOQS_C0912_SAL2.csv',
+                            'STOQS_C0912_SAL.csv',
+                            'STOQS_C0912_SIG_T.csv',
+                            'STOQS_C0912_SIO4.csv',
+                            'STOQS_C0912_TEMP2.csv',
+                            'STOQS_C0912_TMP.csv',
+                            'STOQS_C0912_TRANSBEAM.csv',
+                            'STOQS_C0912_TRANSMISS.csv',
+                         ]
 
 
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
-    ##cl.loadDorado(stride=100)
-    ##cl.loadWaveglider(stride=100)
-    ##cl.loadDaphne(stride=10)
-    ##cl.loadTethys(stride=10)
-    ##cl.loadESPdrift(stride=10)
-    ##cl.loadWFuctd(stride=10)
-    ##cl.loadWFpctd(stride=10)
-    ##cl.loadL_662(stride=100)
-    cl.loadM1ts(stride=1)
-    cl.loadM1met(stride=1)
+    cl.loadDorado(stride=100)
+    cl.loadWaveglider(stride=100)
+    cl.loadDaphne(stride=10)
+    cl.loadTethys(stride=10)
+    cl.loadESPdrift(stride=10)
+    cl.loadWFuctd(stride=10)
+    cl.loadWFpctd(stride=10)
+    cl.loadL_662(stride=100)
+    cl.loadM1(stride=2)
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
@@ -192,8 +219,8 @@ elif cl.args.optimal_stride:
     cl.loadWFuctd(stride=1)
     cl.loadWFpctd(stride=1)
     cl.loadL_662(stride=1)
-    cl.loadM1ts(stride=1)
-    cl.loadM1met(stride=1)
+    cl.loadM1(stride=1)
+    cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
@@ -205,6 +232,6 @@ else:
     cl.loadWFuctd()
     cl.loadWFpctd()
     cl.loadL_662()
-    cl.loadM1ts()
-    cl.loadM1met()
+    cl.loadM1()
+    cl.loadSubSamples()
 
