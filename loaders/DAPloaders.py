@@ -1136,8 +1136,12 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
 
     # Auxillary coordinates are the same for all include_names
     loader.auxCoords = {}
-    for v in loader.include_names:
-        loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+    if pName == 'waveglider':
+        for v in loader.include_names:
+            loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+    else:
+        for v in loader.include_names:
+            loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
 
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
