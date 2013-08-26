@@ -156,7 +156,7 @@ cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_
                 'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
                 'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
               ]
-cl.m1_startDatetime = datetime.datetime(2012, 9, 1)
+cl.m1_startDatetime = datetime.datetime(2012, 9, 15)        # Good data starts on the 15th
 cl.m1_endDatetime = datetime.datetime(2012, 9, 21)
 
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/C0912/ copied to local BOG_Data dir
