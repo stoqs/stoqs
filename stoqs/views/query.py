@@ -134,18 +134,20 @@ def queryData(request, format=None):
                    'parameterparameter': ('px', 'py', 'pz', 'pc',               # Parameters to plot
                                           'xlog', 'ylog', 'zlog', 'clog'),      # Flags for log-scale
 
-                    # TODO: Could simplify all these flags by putting them into a dictionary...
+                    # TODO: Could simplify these flags by putting them into a dictionary...
                    'get_actual_count': 'get_actual_count',                                  # Flag value from checkbox
                    'showsigmatparametervalues': 'showsigmatparametervalues',                # Flag value from checkbox
                    'showstandardnameparametervalues': 'showstandardnameparametervalues',    # Flag value from checkbox
                    'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
                    'showparameterplatformdata': 'showparameterplatformdata',                # Flag value from checkbox
+                   'parameterplot': ('parameterplotid',                                     # Plot radio button selection
+                                        'platformplotname'),                                # - client knows platform name
                    'showgeox3ddata': 'showgeox3ddata',                                      # Flag value from checkbox
                    'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
 
-                    'only': 'only',                         # List of options to update - when only a partial response is needed
-                    'parametertab': 'parametertab',         # = 1 if Parameter/Station tab is active and full resolution timeSeries data is needed
-                    'secondsperpixel': 'secondsperpixel',   # Resolution of time-depth-flot window
+                   'only': 'only',                          # List of options to update - when only a partial response is needed
+                   'parametertab': 'parametertab',          # = 1 if Parameter/Station tab is active and full resolution timeSeries data is needed
+                   'secondsperpixel': 'secondsperpixel',    # Resolution of time-depth-flot window
                    }
     params = {}
     for key, value in query_parms.iteritems():

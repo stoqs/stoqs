@@ -176,13 +176,13 @@
                                     <div class="row-fluid" id="map" style="height:500px;">
                                     </div>
                                     <div class="row-fluid">
-                                        <div class="span6">
+                                        <div class="span12">
                                             <form class="form-inline">
                                                 <label class="checkbox">
                                                     <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
-                                                </label>
-                                                <label class="checkbox">
-                                                    <input type="checkbox" id="showsensortracks" /><span id="showsensortrackstext"> Show sensor tracks</span>
+                                                </label>&nbsp;
+                                                <label class="checkbox disabled">
+                                                    <input type="checkbox" id="showsensortracks" disabled /><span id="showsensortrackstext">Sensor Tracks</span>
                                                 </label>
                                             </form>
                                         </div>
@@ -573,25 +573,12 @@
                                         <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
                                             <div class="span5">
-                                                <span style="text-decoration: underline;">Measured Parameter</span>
-                                                <label class="checkbox disabled">
-                                                    <input type="checkbox" id="showparameterplatformdata" /><span id="contourtext">Show data</span>
-                                                </label>
+                                                <span id="temporalparameterplotinfo">&nbsp;</span>
+                                                <br>
                                                 <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
                                             <div class="span7" id="sectioncolorbar" style="float:right;"></div>
-                                        </div>
-                                        <div class="row-fluid" style="display:none" id="sampledplotsettings">
-                                            <div class="span5">
-                                                <span style="text-decoration: underline;">Sampled Parameter</span>
-                                                <label class="checkbox disabled">
-                                                    <input type="checkbox" id="showsampledparameterplatformdata" /><span id="sampledcontourtext">Show data</span>
-                                                </label>
-                                                <input type="radio" name="sampledshowdataas" value="contour" style="margin-left:1px;" /> contour
-                                                <input type="radio" name="sampledshowdataas" value="scatter" checked /> scatter
-                                            </div>
-                                            <div class="span7" id="sampledsectioncolorbar" style="float:right;"></div>
                                         </div>
                                     </div>
                                     <input type="hidden" id="start-ems" name="start-ems" />
@@ -634,18 +621,27 @@
                                     <tr>
                                         <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic">Parameter-Parameter</th>
                                         <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
-                                        <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic">Filter</th>
+                                        <th colspan="2" style="text-align:center; text-decoration:underline; font-style:italic">Filter</th>
                                     </tr>
                                     <tr>
                                         <th style="text-align:left;">X</th>
                                         <th style="text-align:left;">Y</th>
                                         <th style="text-align:left;">Z</th>
                                         <th style="text-align:left;">Color</th>
-                                        <th style="text-align:left; text-decoration:underline;">Plot</th>
+                                        <th style="text-align:left; text-decoration:underline;" id="sampledparameter-plot-th">Plot</th>
                                         <th style="text-align:center;">Name</th>
+                                        <th style="text-align:center;">Standard Name</th>
                                     </tr>
                                 </thead>                             
                                 <tbody>
+                                    <tr>
+                                        <td><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
+                                        <td><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
+                                        <td><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
+                                        <td><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
+                                        <td><input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" /></td>
+                                        <td colspan="2"></td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -674,12 +670,21 @@
                                         <th style="text-align:left;">Y</th>
                                         <th style="text-align:left;">Z</th>
                                         <th style="text-align:left;">Color</th>
-                                        <th style="text-align:left; text-decoration:underline;">Plot</th>
+                                        <th style="text-align:left; text-decoration:underline;" id="measuredparameter-plot-th">Plot</th>
                                         <th style="text-align:center;">Name</th>
                                         <th style="text-align:center;">Standard Name</th>
                                     </tr>
                                 </thead>                             
                                 <tbody>
+                                    <tr>
+                                        <td><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
+                                        <td><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
+                                        <td><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
+                                        <td><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
+                                        <td><input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" /></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tbody>
                                 </tbody>
                             </table>
                         </div>
@@ -813,7 +818,7 @@
     function enableButton(element) {
         if ($(element).is('.disabled')) {
             $(element).removeClass('disabled');
-            $(element).attr('title', 'Click to Select').tooltip('fixTitle').tooltip('hide');     // Add generic tooltip
+            //$(element).attr('title', 'Click to Select').tooltip('fixTitle').tooltip('hide');     // Add generic tooltip
         }
     }
     function enableXYZColor(element) {
@@ -830,28 +835,41 @@
     }
 
     function update_sensortrackskml() {
-        if ($('#showsensortracks').is(':checked')) {
-            if (kmlurl.lastIndexOf('http', 0) === 0) {
-                // strideVal can be adjusted based on the current count of measured_parameters so as to prevent long waits for the KML transfer
-                strideVal = '1';
-                // Set colorbar as an attribution - must get the url to the .png from the sensor tracks being turned on
-                // See: http://stackoverflow.com/questions/5539633/adding-a-absolutely-positioned-div-to-the-bottom-of-an-openlayers-map/5568762#5568762
-                //sensortrackskml.attribution = '<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />';
-                // Dynamically set url for sensor tracks display in openlayers
-                sensortrackskml.protocol = new OpenLayers.Protocol.HTTP({
-                        url: kmlurl.replace('.kml', '.kmln') + cmincmax + '&stride=' + strideVal,
-                        format: new OpenLayers.Format.KML({
-                            extractStyles: true,
-                            extractAttributes: true,
-                            maxDepth: 2
-                        })
+        if ( $('#showsensortracks').is(':checked') ) {
+            if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
+                // Generate KML url for the parameters_plot radio button selection - this is separate from the filtered selection for Measurement Data Access
+                var base_url = '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';
+                var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
+                if (param != '') {
+                    param = '?' + param;
+                } 
+                mp_param = getMPparms(params);
+
+                // Override any parameter__name or parameter__standard_name with parameter__id from radio button selection
+                var kmlurl = base_url + 'measuredparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
+
+                // strideVal is adjusted based on the current count of measured_parameters so as to prevent long waits for the KML transfer
+                $.get( kmlurl.replace('.kml', '.count')).
+                done( function(count, status) {
+                    // Ensure that no more that about 300 points are plotted - stride as necessary
+                    strideVal = Math.floor(count / 300);
+                    if (strideVal < 1) {
+                        strideVal = 1;
+                    }
+                    $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info'] + ' (every ' + getValueOrdinal(strideVal) + ' point)');
+                    // Set colorbar as an attribution - must get the url to the .png from the sensor tracks being turned on
+                    // See: http://stackoverflow.com/questions/5539633/adding-a-absolutely-positioned-div-to-the-bottom-of-an-openlayers-map/5568762#5568762
+                    //sensortrackskml.attribution = '<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />';
+                    // Dynamically set url for sensor tracks display in openlayers
+                    updateKMLcmincmax();
+                    //sensortrackskml.loaded = false;
+                    strided_kmlurl = kmlurl.replace('.kml', '.kmln') + cmincmax + '&stride=' + strideVal;
+                    sensortrackskml.refresh({url: strided_kmlurl});
+                }).
+                fail( function (data, response, jqXHR) {
+                    alert('Could not get count of sensor track data: ' + jqXHR);
                 });
             }
-            else {
-                sensortrackskml.removeAllFeatures();
-            }
-            sensortrackskml.loaded = false;
-            sensortrackskml.refresh({force: true});
         }
         else {
             sensortrackskml.removeAllFeatures();
@@ -946,7 +964,6 @@
                         $('#cmax').val('');
                     }
                 }
-                updateKMLcmincmax();
                 update_sensortrackskml();
             }
             else if (value == 'stoqstoolbox') {
@@ -1151,65 +1168,6 @@
 
     } // makeSlider()
 
-    function enableTemporalPlotting() {
-        $('#showparameterplatformdata').tooltip('disable');
-        $('#showparameterplatformdata').removeAttr('disabled');
-        if (typeof params['platforms'] != 'undefined') {
-            if (params['platforms'].length == 1) {
-                $('#contourtext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
-                $('#showgeox3ddatatext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
-                $('#showsensortrackstext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
-                $('#contourtext').css( { 'color': 'black' } );
-            }
-        }
-    }
-
-    function disableTemporalPlotting() {
-        $('#showparameterplatformdata').attr('disabled',true);
-        $('#contourtext').text('Show data');
-        $('#showgeox3ddatatext').text('Show data');
-        $('#showsensortrackstext').text('Show sensor tracks');
-        $('#sectioncolorbar').html('');
-        if ($('#showparameterplatformdata').is(':checked')) {
-            // Seems like there is better utility with leaving checked for when selecting different parameters.
-            // This use is better than having it checked for when it doesn't make sense; comment out for now.
-            //$('#showparameterplatformdata').removeAttr('checked');
-        }
-    }
-
-    function enableSpatialPlotting() {
-        $('#showsensortracks').tooltip('disable');
-        $('#showsensortracks').removeAttr('disabled');
-        $('#showgeox3ddata').tooltip('disable');
-        $('#showgeox3ddata').removeAttr('disabled');
-        $('#showsensortrackstext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
-        $('#showgeox3ddatatext').text('Show ' + params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
-    }
-
-    function disableSpatialPlotting() {
-        $('#showsensortracks').attr('disabled',true);
-        $('#showgeox3ddata').attr('disabled',true);
-        $('#showsensortrackstext').text('Show sensor tracks');
-        $('#showgeox3ddatatext').text('Show data');
-    }
-
-    function updateShowDataInfo() {
-        if (typeof params['measuredparametersgroup'] != 'undefined') {
-            //console.log('measuredparametersgroup = ' + params['measuredparametersgroup']);
-            if (params['measuredparametersgroup'].length == 1 ) {
-                enableTemporalPlotting();
-                enableSpatialPlotting();
-            }
-            else {
-                disableTemporalPlotting();
-                disableSpatialPlotting();
-            }
-        }
-        else {
-            disableTemporalPlotting();
-        }
-    }
-
     function recordUpdatedValues(values, divid, type, formatter, updateTable) {
         var min=formatter(values[0])
         var max=formatter(values[1])
@@ -1285,19 +1243,6 @@
             params['max_depth']=$('#end-depth').val();
         }
 
-        // Enable/disable showsensortracks checkbox
-        $('#showsensortracks').attr('disabled', true);
-        if (params['measuredparametersgroup'].length == 1) {
-            $('#showsensortracks').removeAttr('disabled');
-            $('#showsensortracks').parent().tooltip('disable');
-        }
-        else {
-            if (params['parameterstandardname'].length == 1) {
-                $('#showsensortracks').removeAttr('disabled');
-                $('#showsensortracks').parent().tooltip('disable');
-            }
-        }
-
         params['platforms']=[]
         $('tr',$('#platform-table')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
@@ -1335,20 +1280,28 @@
 
         pp_html = '';
         if ($('input:radio[name=parameters_x]').is(':checked')) {
-            params['px'] = $('input:radio[name=parameters_x]:checked').val();
-            pp_html = pp_html + 'x:' + params['px'] + ' ';
+            if ( $('input:radio[name=parameters_x]:checked').val() ) {
+                params['px'] = $('input:radio[name=parameters_x]:checked').val();
+                pp_html = pp_html + 'x:' + params['px'] + ' ';
+            }
         }
         if ($('input:radio[name=parameters_y]').is(':checked')) {
-            params['py'] = $('input:radio[name=parameters_y]:checked').val();
-            pp_html = pp_html + 'y:' + params['py'] + ' ';
+            if ( $('input:radio[name=parameters_y]:checked').val() ) {
+                params['py'] = $('input:radio[name=parameters_y]:checked').val();
+                pp_html = pp_html + 'y:' + params['py'] + ' ';
+            }
         }
         if ($('input:radio[name=parameters_z]').is(':checked')) {
-            params['pz'] = $('input:radio[name=parameters_z]:checked').val();
-            pp_html = pp_html + 'z:' + params['pz'] + ' ';
+            if ( $('input:radio[name=parameters_z]:checked').val() ) {
+                params['pz'] = $('input:radio[name=parameters_z]:checked').val();
+                pp_html = pp_html + 'z:' + params['pz'] + ' ';
+            }
         }
         if ($('input:radio[name=parameters_c]').is(':checked')) {
-            params['pc'] = $('input:radio[name=parameters_c]:checked').val();
-            pp_html = pp_html + 'c:' + params['pc'] + ' ';
+            if ( $('input:radio[name=parameters_c]:checked').val() ) {
+                params['pc'] = $('input:radio[name=parameters_c]:checked').val();
+                pp_html = pp_html + 'c:' + params['pc'] + ' ';
+            }
         }
         if ( $('input:radio[name=parameters_x]').is(':checked') || $('input:radio[name=parameters_y]').is(':checked') ||
              $('input:radio[name=parameters_z]').is(':checked') || $('input:radio[name=parameters_c]').is(':checked') ) {
@@ -1365,13 +1318,10 @@
         // Since the old link (if there was one) for the permalink is no longer valid, hide it
         $('#permalink-box').hide();
         
-        updateShowDataInfo();
+        //updateShowDataInfo();
         updateSummaryData();
 
         polyLayer.removeAllFeatures();
-        // Here we have histogram data passed in, so let's update our histograms
-        // accordingly.
-
 
     } // rebuildFilters()
     
@@ -1430,12 +1380,14 @@
             $('#temporal-depth-label').html('Depth');
 
             rebuildFilters();
+            update_sensortrackskml();
         }
     });
 
     $(document).on('click', ".stoqs-toggle", function (event) {
         toggleField(this);
         rebuildFilters();
+        update_sensortrackskml();
     });
 
     $('#getactualcount').on('click', function (event) {
@@ -1447,21 +1399,12 @@
         // Don't need to get everything from queryData, only the new histogramdata
         $('#histogram-instruction').html('<em>Click and drag to select parameter ranges</em>');
         rebuildFilters(['activityparameterhistograms']);
-    });
-
-    $('#showparameterplatformdata').on('click', function (event) {
-        // Don't need to get everything from queryData, only the response with the PNG image if checked
-        if ($('#showparameterplatformdata').is(':checked')) {
-            rebuildFilters(['parameterplatformdatavaluepng']);
-        }
-        else {
-            rebuildFilters();
-        }
+        update_sensortrackskml();
     });
 
     $('input[name="showdataas"]').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the PNG image
-        rebuildFilters(['parameterplatformdatavaluepng']);
+        rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
     });
 
     $('#showgeox3ddata').on('click', function (event) {
@@ -1470,7 +1413,6 @@
     });
 
     $('#showsensortracks').on('click', function (event) {
-        updateKMLcmincmax();
         update_sensortrackskml();
     });
 
@@ -1487,6 +1429,34 @@
         $("#clear-pp-button").removeClass('disabled');
         if ( $('input:radio[name=parameters_x]').is(':checked') && $('input:radio[name=parameters_y]').is(':checked') ) {
             rebuildFilters(['parameterparameterpng', 'parameterparameterx3d']);
+        }
+    });
+
+    $('body').on('change', '.parameter-plot-radio', function (e) {
+        if ( $('body').data()['parameterplatforms'][e.target.value] ) {
+            if ( $('body').data()['parameterplatforms'][e.target.value].length == 1 ) {
+                $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
+                                                             $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
+                $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
+                $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
+                $('#showsensortracks').removeAttr('disabled');
+                $('#showgeox3ddatatext').text($('#temporalparameterplotinfo').data()['info']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
+                update_sensortrackskml();
+            }
+            else {
+                alert('Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.  Select just one of them.');
+            }
+        }
+        else {
+            // Remove sensortracks and image from Flot plot
+            $('#temporalparameterplotinfo').data('info', '');
+            $('#temporalparameterplotinfo').text('');
+            $('#showsensortrackstext').text('');
+            $('#showsensortracks').attr('disabled', true);
+            $('#showgeox3ddatatext').text('');
+            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'simpledepthtime', 'platforms', 'sampledepthtime']);
+            update_sensortrackskml();
         }
     });
 
@@ -1628,17 +1598,23 @@
     });
 
     $('.temporal-tab > li').on('click', function (event) {
-        if ($(event.delegateTarget).hasClass('disabled')) {
-            return false;
-        }
+        //if ($(event.delegateTarget).hasClass('disabled')) {
+        //    return false;
+        //}
         // Show the tab then plot the data so that axes are properly drawn
         $('a', event.delegateTarget).tab('show');
        
         if ( event.delegateTarget.id == 'temporal-parameter-li' ) { 
+            $('.parameter-plot-radio').hide();
+            $('#sampledparameter-plot-th').html('');
+            $('#measuredparameter-plot-th').html('');
             rebuildFilters(['parametertime']);
         }
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
-            rebuildFilters(['simpledepthtime']);
+            $('.parameter-plot-radio').show();
+            $('#sampledparameter-plot-th').html('Plot');
+            $('#measuredparameter-plot-th').html('Plot');
+            rebuildFilters(['simpledepthtime', 'platforms', 'sampledepthtime']);
         }
     });
 
@@ -2015,7 +1991,10 @@
         $('#zoomed-button').removeClass('disabled'); 
         $('#zoomed-button').addClass('btn-primary');
         //$('#zoomed-button').attr('title', 'Click to unzoom to original extent. Right-click on plot to unzoom to last zoom level.').tooltip('fixTitle').tooltip('hide');
+
         rebuildFilters();
+        update_sensortrackskml();
+
         var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
         var dLabel = 'Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
         $('#temporal-anchor').html(tLabel);
@@ -2036,6 +2015,7 @@
             $('#end-depth').val(zoom_xy[3]);
         
             rebuildFilters();
+            update_sensortrackskml();
         } 
         // return false to suppress the right-mouse context menu from appearing 
         return false
@@ -2085,10 +2065,13 @@
         if ($('#showallparametervalues').is(':checked')) {
             qstring = qstring + '&showallparametervalues=1';
         }
-        if ($('#showparameterplatformdata').is(':checked')) {
-            qstring = qstring + '&showparameterplatformdata=1';
-            if ($('input:radio[name=showdataas]:checked').val()) {
-                qstring = qstring + '&showdataas=' + $('input:radio[name=showdataas]:checked').val();
+        if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
+            if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                qstring = qstring + '&parameterplotid=' + $('input:radio[name=parameters_plot]:checked').val();
+                qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
+                if ($('input:radio[name=showdataas]:checked').val()) {
+                    qstring = qstring + '&showdataas=' + $('input:radio[name=showdataas]:checked').val();
+                }
             }
         }
         if ($('#showgeox3ddata').is(':checked')) {
@@ -2134,9 +2117,8 @@
             }
             else if (key == 'sampledparametersgroup') {
                 if ( ! $.isEmptyObject(data[key]) ) {
-                    $('#sampledplotsettings').show();
-                    $('#sampledparameters-anchor').parent().parent().show();
-                    $('#sample-anchor').parent().parent().show();
+                    $('#sampledparameters-anchor').parent().parent().parent().show();
+                    $('#sample-anchor').parent().parent().parent().show();
                 }
                 var parameterButtonText = '';
                 $.each(data[key], function (index, value) {
@@ -2161,6 +2143,14 @@
                             '<td id="' + value[2] +'">' +
                                 '<button class="btn btn-mini stoqs-toggle sampledparametersgroup">'+ value[0] +'</button>' + 
                             '</td>';
+                    if (value[1].length != 0) {
+                        // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
+                        // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
+                        parameterButtonText = parameterButtonText +
+                            '<td id="' + value[1] + '--' + value[0] + '-sn">' +
+                                '<button class="btn btn-mini stoqs-toggle sampledparameterstandardname">'+ value[1] +'</button>' + 
+                            '</td>';
+                    }
                     parameterButtonText = parameterButtonText + '</tr>';
                 });
                 parameterButtonText = parameterButtonText + '';
@@ -2231,8 +2221,35 @@
                     $("#temporal-parameter-li").show();
                 }
             }
+            else if (key == 'parameterplatforms') {
+                // Save the dictionary in the body so that asynchronous event handlers can get at it
+                $('body').data(key, data[key]);
+            }
         
         } // onInit()
+
+        function redrawSimpleDepthTime(data) {
+                // Redraw the plot given the saved values
+                if ( $.isEmptyObject(data.simpledepthtime.sdt) ) {
+                    if (! $.isEmptyObject(data.parametertime.pt) ) {
+                        // Show parameter-time data if no trajectory data shown 
+                        // TODO: perhaps better to do with an event listener on presence of data in the flot object
+                        $('#temporal-parameter-li').show();
+                    }
+                    else if (! data.counts.approximate_count) {
+                        alert('No data in your selection.  Clear the Temporal selection and try again.');
+                    }
+                    return;
+                }
+                if ( $('#zoomed-button').hasClass('btn-primary') ) {
+                    theData = getDepthDataset(data, $('#start-ems').val(), $('#end-ems').val());
+                }
+                else {
+                    theData = getDepthDataset(data, initData.time[0], initData.time[1]);
+                }
+                timedepthplot = $.plot($("#time-depth-flot"), theData, simpledepthtime_options_zoom);
+
+        } // redrawSimpleDepthTime()
 
         function onUpdate(data, key) {
             // Called from ajax to update the selectors base on the new selection
@@ -2317,47 +2334,36 @@
 
 
             else if (key == 'simpledepthtime') {
-                // Redraw the plot given the saved values
-                if ( $.isEmptyObject(data.simpledepthtime.sdt) ) {
-                    if (! $.isEmptyObject(data.parametertime.pt) ) {
-                        // Show parameter-time data if no trajectory data shown 
-                        // TODO: perhaps better to do with an event listener on presence of data in the flot object
-                        $('#temporal-parameter-li').show();
-                    }
-                    else if (! data.counts.approximate_count) {
-                        alert('No data in your selection.  Clear the Temporal selection and try again.');
-                    }
-                    return;
-                }
-                if ( $('#zoomed-button').hasClass('btn-primary') ) {
-                    theData = getDepthDataset(data, $('#start-ems').val(), $('#end-ems').val());
-                }
-                else {
-                    theData = getDepthDataset(data, initData.time[0], initData.time[1]);
-                }
-                timedepthplot = $.plot($("#time-depth-flot"), theData, simpledepthtime_options_zoom);
+                redrawSimpleDepthTime(data);
             }
             else if (key == 'parameterplatformdatavaluepng') {
                 // Make the contour plot if checkbox is checked and is not disabled
-                if ($('#showparameterplatformdata').is(':checked')) {
-                    if (data['parameterplatformdatavaluepng'][0]) {
-                        var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
-                                            $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
-                        var options = $.extend(true, {}, simpledepthtime_options_zoom, {
-                            series: { images: { show: true } }
-                        });
+                if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
+                    if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                        if (data['parameterplatformdatavaluepng'][0]) {
+                            var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                                $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
+                            var options = $.extend(true, {}, simpledepthtime_options_zoom, {
+                                series: { images: { show: true } }
+                            });
 
-                        $.plot.image.loadDataImages(flotdata, options, function () {
-                            $.plot($("#time-depth-flot"), flotdata, options);
-                        });
-                        // Show colorbar
-                        $('#sectioncolorbar').html('<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />');
-                        $('#contourtext').text(params['measuredparametersgroup'] + ' from ' + params['platforms'][0]);
-                        $('#contourtext').css( { 'color': 'black' } );
+                            $.plot.image.loadDataImages(flotdata, options, function () {
+                                $.plot($("#time-depth-flot"), flotdata, options);
+                            });
+                            // Show colorbar
+                            $('#sectioncolorbar').html('<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />');
+                            $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
+                                                                 $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
+                            $('#temporalparameterplotinfo').css( { 'color': 'black' } );
+                        }
+                        else {
+                            $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
+                            $('#temporalparameterplotinfo').css( { 'color': 'red' } );
+                        }
                     }
                     else {
-                        $('#contourtext').text(data['parameterplatformdatavaluepng'][2]);
-                        $('#contourtext').css( { 'color': 'red' } );
+                        // Clear button selected redraw without image
+                        redrawSimpleDepthTime(data);
                     }
                 }
                 else {
@@ -2506,6 +2512,10 @@
                         $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data[key]['colorbar'] + '" />');
                     }
                 }
+            }
+            else if (key == 'parameterplatforms') {
+                // Save the dictionary in the body so that asynchronous event handlers can get at it
+                $('body').data(key, data[key]);
             }
 
             // If no parametertime data and Station tab is active then disable it and switch back to Trajectory
@@ -2900,6 +2910,15 @@
             })
         });
 
+        sensortrackskml.events.register("loadend", sensortrackskml, function (e) {
+            if( sensortrackskml.getDataExtent() ) {
+                if ( $('#zoomtoextentonupdate').is(':checked') ) {
+                    map.zoomToExtent(sensortrackskml.getDataExtent());
+                }
+            }
+        });
+
+
 
         // Test of WFS using ga_wfs 
         // As of 11 Feb 2013 this request returns a MissingParameterValue Exception, but does not crash
@@ -3046,9 +3065,8 @@
         $('#getactualcount').parent().tooltip({title: 'Will increase query time'});
 
         // Tootips that are disabled after first use - don't want to annoy users too much
-        $('#showparameterplatformdata').tooltip({title: 'Select a Measured Parameter Name and a Platform to enable'});
-        $('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter to enable'});
-        $('#showgeox3ddata').parent().tooltip({title: 'Select a Measured Parameter to enable'});
+        //$('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter to enable'});
+        //$('#showgeox3ddata').parent().tooltip({title: 'Select a Measured Parameter to enable'});
 
         $('#permalink').on('click', function(ev){
             ev.preventDefault();

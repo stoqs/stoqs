@@ -95,7 +95,7 @@ class MeasuredParameter(BaseOutputer):
     Extend basic MeasuredParameter with additional fields that will return data values for many different constraints
     '''
     # Only fields that exists in the model can be included here.  Use '.x' and '.y' on measurement__geom to get latitude and longitude.
-    fields = [ 'parameter__name', 'parameter__standard_name', 'measurement__depth', 'measurement__geom', 
+    fields = [ 'parameter__id', 'parameter__name', 'parameter__standard_name', 'measurement__depth', 'measurement__geom', 
                'measurement__instantpoint__timevalue',  'measurement__instantpoint__activity__name',
                'measurement__instantpoint__activity__platform__name', 'datavalue', 'parameter__units' ]
 

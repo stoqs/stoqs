@@ -260,6 +260,7 @@ class MPQuery(object):
         self.sql = None
         self._count = None
         self._MProws = []
+        self.parameterID = None
         
     def buildMPQuerySet(self, *args, **kwargs):
         '''
@@ -270,6 +271,12 @@ class MPQuery(object):
 
         if self.qs_mp is None:
             self.kwargs = kwargs
+            if 'parameterplot' in self.kwargs:
+                if self.kwargs['parameterplot'][0]:
+                    self.parameterID = self.kwargs['parameterplot'][0]
+
+            logger.debug('self.parameterID = %s', self.parameterID)
+            
             self.qs_mp = self.getMeasuredParametersQS()
             if self.kwargs['showparameterplatformdata']:
                 logger.debug('Building qs_mp_no_order with values_list = %s', MPQuerySet.ui_timedepth_columns)
@@ -322,7 +329,8 @@ class MPQuery(object):
         Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
         @values_list can be assigned with additional columns that are supported by MPQuerySet(). Note that specificiation
         of a values_list will break the JSON serialization of geometry types. @orderedFlag may be set to False to reduce
-        memory and time taken for queries that don't need ordered values.
+        memory and time taken for queries that don't need ordered values.  If parameterID is not none then that parameter
+        is added to the filter - used for parameterPlatformPNG generation.
         '''
         qparams = self._getQueryParms()
         logger.debug('Building qs_mp...')
@@ -331,6 +339,10 @@ class MPQuery(object):
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*MPQuerySet.rest_columns)
         else:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
+
+        if self.parameterID:
+            logger.debug('Adding parameter__id=%d filter to qs_mp', int(self.parameterID))
+            qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
 
         if orderedFlag:
             qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
