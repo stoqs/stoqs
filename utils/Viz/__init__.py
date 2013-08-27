@@ -91,7 +91,7 @@ class MeasuredParameter(object):
     '''
     Use matploptib to create nice looking contour plots
     '''
-    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName):
+    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName, parameterID=None):
         '''
         Save parameters that can be used by the different product generation methods here
         parameterMinMax is like: (pName, pMin, pMax)
@@ -103,12 +103,18 @@ class MeasuredParameter(object):
         self.parameterMinMax = parameterMinMax
         self.sampleQS = sampleQS
         self.platformName = platformName
+        self.parameterID = parameterID
+
         self.scale_factor = None
         self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
         self.cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
         # - Use a new imageID for each new image
         self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-        self.colorbarPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
+        if self.parameterID:
+            self.colorbarPngFile = str(self.parameterID) + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
+        else:
+            self.colorbarPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
+
         self.colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', self.colorbarPngFile)
         self.x = []
         self.y = []
@@ -174,7 +180,11 @@ class MeasuredParameter(object):
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
             self.request.session['sessionID'] = sessionID
 
-        sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
+        if self.parameterID:
+            sectionPngFile = str(self.parameterID) + '_' + self.platformName + '_' + self.imageID + '.png'
+        else:
+            sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
+
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
@@ -282,6 +292,7 @@ class MeasuredParameter(object):
                     ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=self.cm_jetplus, extend='both')
                     ax.scatter(self.x, self.y, marker='.', s=2, c='k', lw = 0)
                 else:
+                    logger.debug('parm_info = %s', parm_info)
                     ax.scatter(self.x, self.y, c=self.z, s=20, cmap=self.cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
 
                 if self.sampleQS:

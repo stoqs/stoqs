@@ -81,6 +81,7 @@ class STOQSQManager(object):
             'parameterparameterx3d': self.getParameterParameterX3D,
             'measuredparameterx3d': self.getMeasuredParameterX3D,
             'parameterparameterpng': self.getParameterParameterPNG,
+            'parameterplatforms': self.getParameterPlatforms,
         }
         
     def buildQuerySets(self, *args, **kwargs):
@@ -212,11 +213,7 @@ class STOQSQManager(object):
         results = {}
         for k,v in self.options_functions.iteritems():
             if self.kwargs['only'] != []:
-                if k == 'simpledepthtime':
-                    # For 'simpledepthtime' we also need 'platforms'
-                    if k != 'platoforms':
-                        continue
-                elif k not in self.kwargs['only']:
+                if k not in self.kwargs['only']:
                     continue
 
             if k == 'measuredparametersgroup':
@@ -434,6 +431,20 @@ class STOQSQManager(object):
                         results = [sname, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
                 except TypeError, e:
                     logger.exception(e)
+
+        if 'parameterplot' in self.kwargs:
+            if self.kwargs['parameterplot'][0]:
+                parameterID = self.kwargs['parameterplot'][0]
+                try:
+                    if percentileAggregateType == 'extrema':
+                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Min('p025'), Max('p975'))
+                        results = [parameterID, round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
+                    else:
+                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
+                        results = [parameterID, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                except TypeError, e:
+                    logger.exception(e)
+
         return results
     
     def getPlatforms(self):
@@ -580,8 +591,8 @@ class STOQSQManager(object):
                     logger.info('sd = %s', sd)
                     an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
                     logger.info('an_nd = %s', an_nd)
-                    s_ems = 1000 * to_udunits(sd['mintime'], 'seconds since 1970-01-01')
-                    e_ems = 1000 * to_udunits(sd['maxtime'], 'seconds since 1970-01-01')
+                    s_ems = int(1000 * to_udunits(sd['mintime'], 'seconds since 1970-01-01'))
+                    e_ems = int(1000 * to_udunits(sd['maxtime'], 'seconds since 1970-01-01'))
                     try:
                         sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
                         sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
@@ -658,7 +669,7 @@ class STOQSQManager(object):
                 continue
 
             tv = mp['measurement__instantpoint__timevalue']
-            ems = 1000 * to_udunits(tv, 'seconds since 1970-01-01')
+            ems = int(1000 * to_udunits(tv, 'seconds since 1970-01-01'))
             nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
                                                 # mooring microcat actual depths are put into mp['measurement__depth']
     
@@ -684,8 +695,8 @@ class STOQSQManager(object):
 
         aps = models.ActivityParameter.objects.using(self.dbname).filter(activity=a, parameter__name=p).values('min', 'max')
 
-        start_ems = 1000 * to_udunits(a.startdate, 'seconds since 1970-01-01')
-        end_ems = 1000 * to_udunits(a.startdate, 'seconds since 1970-01-01')
+        start_ems = int(1000 * to_udunits(a.startdate, 'seconds since 1970-01-01'))
+        end_ems = int(1000 * to_udunits(a.startdate, 'seconds since 1970-01-01'))
 
         pt[pa_units[p]][a.name] = [[start_ems, aps[0]['min']], [end_ems, aps[0]['max']]]
 
@@ -826,7 +837,7 @@ class STOQSQManager(object):
                                     'name'
                                 ).order_by('instantpoint__timevalue')
             for s in qs:
-                ems = 1000 * to_udunits(s[0], 'seconds since 1970-01-01')
+                ems = int(1000 * to_udunits(s[0], 'seconds since 1970-01-01'))
                 # Kludgy handling of activity names - flot needs 2 items separated by a space to handle sample event clicking
                 if (s[2].find('_decim') != -1):
                     label = '%s %s' % (s[2].split('_decim')[0], s[3],)              # Lop off '_decim.nc (stride=xxx)' part of name
@@ -929,29 +940,29 @@ class STOQSQManager(object):
         produce a depth-time section plot for overlay on the flot plot.  Return a png image file name for inclusion
         in the AJAX response.
         '''
-        if not getShow_Parameter_Platform_Data(self.kwargs):
-            return None, None, 'Show data values checkbox not checked.'
-        if len(self.kwargs['measuredparametersgroup']) != 1:
-            return None, None, 'Select a single Measured Parameter name'
-        if len(self.getPlatforms()) != 1:
-            if len(self.kwargs['platforms']) != 1:
-                return None, None, 'Select a Platform name'
-        try:
-            platformName = self.getPlatforms()[0][0]
-        except IndexError, e:
-            logger.warn(e)
-            return None, None, 'Could not get platform name.'
-            
-        logger.debug('platformName = %s', platformName)
+        # Check for parameter-plot-radio button being selected, which inherently ensures that a
+        # single parameter name is selected for plotting.  The client code will also ensure that
+        # extra platforms measuring the same parameter name are filtered out in the selection so
+        # there's no need for this server code to check for just one platform in the selection.
+        parameterID = None
+        platformName = None
+        logger.debug('self.kwargs = %s', self.kwargs)
+        if 'parameterplot' in self.kwargs:
+            if self.kwargs['parameterplot'][0]:
+                parameterID = self.kwargs['parameterplot'][0]
+            if self.kwargs['parameterplot'][1]:
+                platformName = self.kwargs['parameterplot'][1]
+        if not parameterID or not platformName:
+            return None, None, 'Problem with getting parameter-plot-radio button info'
+
         logger.debug('Instantiating Viz.MeasuredParameter............................................')
         
         self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
         cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order,
-                              self.getParameterMinMax(), self.getSampleQS(), platformName)
+                              self.getParameterMinMax(pid=parameterID), self.getSampleQS(), platformName, parameterID)
 
         return cp.renderDatavaluesForFlot()
-
 
     def getParameterParameterPNG(self):
         '''
@@ -1033,6 +1044,20 @@ class STOQSQManager(object):
                         x3dDict = mpdv.dataValuesX3D()
             
         return x3dDict
+
+    def getParameterPlatforms(self):
+        '''
+        Retrun hash of parmameter ids (keys) and the platforms (a list) that measured/sampled them
+        '''
+        ppHash = {}
+        for ap in models.ActivityParameter.objects.using(self.dbname).filter(activity__in=self.qs).values('parameter__id', 'activity__platform__name').distinct():
+            try:
+                ppHash[ap['parameter__id']].append(ap['activity__platform__name'])
+            except KeyError:
+                ppHash[ap['parameter__id']] = []
+                ppHash[ap['parameter__id']].append(ap['activity__platform__name'])
+    
+        return ppHash
 
     #
     # Methods that generate Q objects used to populate the query.

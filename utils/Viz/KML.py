@@ -40,7 +40,9 @@ class KML(object):
         self.qs_mp = qs_mp
         self.qparams = qparams
 
-        logger.debug('kwargs = %s', kwargs)
+        logger.debug('request = %s', request)
+        ##logger.debug('kwargs = %s', kwargs)
+        logger.debug('qparams = %s', qparams)
         if 'withTimeStamp' in kwargs:
             self.withTimeStampFlag = kwargs['withTimeStamp']
         else:
@@ -72,16 +74,21 @@ class KML(object):
         if self.qs_mp is None:
             raise Exception('self.qs_mp is None.')
     
-        # If both selected parameter__name takes priority over parameter__standard_name
-        if self.qparams.has_key('parameter__standard_name'):
+        # If both selected parameter__name takes priority over parameter__standard_name. If parameter__id supplied that takes overall precedence.
+        pName = None
+        if 'parameter__standard_name' in self.qparams:
             pName = self.qparams['parameter__standard_name']
-        if self.qparams.has_key('parameter__name'):
+        if 'parameter__name' in self.qparams:
             pName = self.qparams['parameter__name']
+        if 'parameter__id' in self.qparams:
+            logger.debug('parameter__id = %s', self.qparams['parameter__id'])
+            pName = m.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.qparams['parameter__id'])).name
+            logger.debug('pName = %s', pName)
     
         if pName:
             logger.info("pName = %s", pName)
         else:
-            raise Exception('Neither parameter__name nor parameter__standard_name selected')
+            raise Exception('parameter__name, parameter__standard_name, nor parameter__id specified')
     
 
         logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
