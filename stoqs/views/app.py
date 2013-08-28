@@ -32,7 +32,7 @@ class SampleDataTable(BaseOutputer):
     fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
                 'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
                 'instantpoint__timevalue', 'instantpoint__activity__name',
-                'instantpoint__id']
+                'instantpoint__id', 'sampledparameter__parameter__name', 'sampledparameter__datavalue']
 
     def assign_qs(self):
         '''
@@ -73,6 +73,8 @@ class SampleDataTable(BaseOutputer):
             row.append(rec['samplepurpose__name'])
             row.append(rec['sampletype__name'])
             row.append(rec['volume'])
+            row.append(rec['sampledparameter__parameter__name'])
+            row.append(rec['sampledparameter__datavalue'])
             table.append(row)
         
         colList = []
@@ -81,8 +83,8 @@ class SampleDataTable(BaseOutputer):
 
         colList.extend( [{'sTitle': 'depth'}, {'sTitle': 'filter diam'}, {'sTitle': 'filter pore size'}, 
                          {'sTitle': 'lon'}, {'sTitle': 'lat'}, {'sTitle': 'activity name'}, {'sTitle': 'time'}, 
-                         {'sTitle': 'lab'}, {'sTitle': 'name'}, {'sTitle': 'res.'}, {'sTitle': 'purpose'}, 
-                         {'sTitle': 'type'}, {'sTitle': 'volume'} ] )
+                         {'sTitle': 'lab'}, {'sTitle': 'sample name'}, {'sTitle': 'res.'}, {'sTitle': 'purpose'}, 
+                         {'sTitle': 'type'}, {'sTitle': 'volume'}, {'sTitle': 'parameter name'}, {'sTitle': 'data value'}] )
 
         # Format complete JSON for jQuery DataTables, see: http://stackoverflow.com/questions/8665309/jquery-datatables-get-columns-from-json
         logger.debug('len(colList) = %d', len(colList))
