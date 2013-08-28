@@ -294,7 +294,8 @@ class SampleOutputer(BaseOutputer):
     '''
     fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
                 'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
-                'instantpoint__timevalue', 'instantpoint__activity__name']
+                'instantpoint__timevalue', 'instantpoint__activity__name', 
+                'sampledparameter__parameter__name', 'sampledparameter__datavalue' ]
 
 def showSample(request, format = 'html'):
     stoqs_object = mod.Sample
