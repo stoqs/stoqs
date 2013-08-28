@@ -867,7 +867,13 @@
                     sensortrackskml.refresh({url: strided_kmlurl});
                 }).
                 fail( function (data, response, jqXHR) {
-                    alert('Could not get count of sensor track data: ' + jqXHR);
+                    if (jqXHR == 'INTERNAL SERVER ERROR') {
+                        $('#showsensortracks').attr({checked: false});
+                        sensortrackskml.removeAllFeatures();
+                    }
+                    else {
+                        alert('Could not get count of sensor track data: ' + jqXHR);
+                    }
                 });
             }
         }
