@@ -704,7 +704,6 @@
                             <div id="histogram-instruction">Show distribution of parameter values</div>
                             <div class="span6">
                                 Histogram display: 
-                                <input type="checkbox" class="pv-histogram-checkbox" id="showsigmatparametervalues" /> sea_water_sigma_t
                                 <input type="checkbox" class="pv-histogram-checkbox" id="showstandardnameparametervalues" /> Standard Names
                                 <input type="checkbox" class="pv-histogram-checkbox" id="showallparametervalues" /> All Parameters
                             </div>
@@ -1403,9 +1402,8 @@
 
     $('.pv-histogram-checkbox').on('click', function (event) {
         // Don't need to get everything from queryData, only the new histogramdata
-        $('#histogram-instruction').html('<em>Click and drag to select parameter ranges</em>');
+        $('#histogram-instruction').html('<em>Click and drag on plots to select parameter ranges</em>');
         rebuildFilters(['activityparameterhistograms']);
-        update_sensortrackskml();
     });
 
     $('input[name="showdataas"]').on('click', function (event) {
@@ -1532,6 +1530,15 @@
         }
     });
 
+    $("#parameter-values-anchor").click(function() {
+        //if ( $("#parameter-values-anchor").hasClass('in') ) {
+            // Force load of some histograms when this accordian is opened
+            $('#showstandardnameparametervalues').attr({checked: true});
+            $('#histogram-instruction').html('<em>Click and drag on plots to select parameter ranges</em>');
+            rebuildFilters(['activityparameterhistograms']);
+        //}
+    });
+    
     $(".zoom-width-button").click(function(element) {
         if (widthZoomed) {
             if ($('.stoqs-zoom-width').hasClass('span12')) {
