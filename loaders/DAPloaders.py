@@ -162,6 +162,52 @@ class Base_Loader(STOQS_Loader):
         self.ignored_names += self.global_ignored_names # add global ignored names to platform specific ignored names.
         self.build_standard_names()
 
+    def _getStartAndEndTimmeFromDS(self):
+        '''
+        Examine all possible time coordinates for include_names and set the overall min and max time for the dataset.
+        To be used for setting Activity startDatetime and endDatetime.
+        '''
+        minDT = {}
+        maxDT = {}
+        for v in self.include_names:
+            try:
+                ac = self.getAuxCoordinates(v)
+            except ParameterNotFound, e:
+                logger.warn(e)
+                continue
+
+            if self.getFeatureType() == 'trajectory': 
+                logger.debug('Getting trajectory min and max times for v = %s', v)
+                logger.debug("self.ds[ac['time']][0] = %s", self.ds[ac['time']][0])
+                minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
+                maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+            elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile': 
+                logger.debug('Getting timeseries start time for v = %s', v)
+                minDT[v] = from_udunits(self.ds[v][ac['time']][:][0][0], self.ds[ac['time']].attributes['units'])
+                maxDT[v] = from_udunits(self.ds[v][ac['time']][:][-1][0], self.ds[ac['time']].attributes['units'])
+
+        logger.debug('minDT = %s', minDT)
+        logger.debug('maxDT = %s', maxDT)
+
+        for v, dt in minDT.iteritems():
+            try:
+                if dt < startDatetime:
+                    startDatetime = dt
+            except NameError:
+                startDatetime = dt
+                
+        for v, dt in maxDT.iteritems():
+            try:
+                if dt > endDatetime:
+                    endDatetime = dt
+            except NameError:
+                endDatetime = dt
+    
+        logger.info('Activity startDatetime = %s, endDatetime = %s', startDatetime, endDatetime)            
+
+        return startDatetime, endDatetime 
+
+
     def initDB(self):
         '''
         Do the intial Database activities that are required before the data are processed: getPlatorm and createActivity.
@@ -170,6 +216,10 @@ class Base_Loader(STOQS_Loader):
         if self.checkForValidData():
             self.platform = self.getPlatform(self.platformName, self.platformTypeName)
             self.addParameters(self.ds)
+
+            # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
+            if not self.startDatetime or not self.endDatetime:
+                self.startDatetime, self.endDatetime = self._getStartAndEndTimmeFromDS()
             self.createActivity()
         else:
             raise NoValidData('No valid data in url %s', self.url)
@@ -200,7 +250,7 @@ class Base_Loader(STOQS_Loader):
     def getFeatureType(self):
         '''
         Return string of featureType from table at http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html.
-        Accomodate previous concepts of this attribute and convert to the new discrete geometry conventions in CF-1.6.
+        Accomodate previous concepts of this attribute and convert to the new discrete sampling geometry conventions in CF-1.6.
         Possible return values: 'trajectory', 'timeseries', 'timeseriesprofile', lowercase versions.
         '''
         conventions = ''
@@ -271,6 +321,9 @@ class Base_Loader(STOQS_Loader):
                     snCoord[self.ds[k].attributes['standard_name']] = k
 
         # Match items in coordinate attribute, via coordinate standard_name to coordinate name
+        if variable not in self.ds:
+            raise ParameterNotFound('Variable %s is not in dataset %s'% (variable, self.url))
+
         coordDict = {}
         if 'coordinates' in self.ds[variable].attributes:
             for coord in self.ds[variable].attributes['coordinates'].split():
@@ -340,12 +393,12 @@ class Base_Loader(STOQS_Loader):
         if self.startDatetime: 
             logger.debug('self.startDatetime, timeAxis.units = %s, %s', self.startDatetime, timeAxis.units)
             s = to_udunits(self.startDatetime, timeAxis.units.lower())
-            logger.info("For startDatetime = %s, the udnits value is %f", self.startDatetime, s)
+            logger.debug("For startDatetime = %s, the udnits value is %f", self.startDatetime, s)
 
         if self.endDatetime:
             'endDatetime may be None, in which case just read until the end'
             e = to_udunits(self.endDatetime, timeAxis.units.lower())
-            logger.info("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
+            logger.debug("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
         else:
             e = timeAxis[-1]
             logger.info("endDatetime not given, using the last value of timeAxis = %f", e)
@@ -642,6 +695,9 @@ class Base_Loader(STOQS_Loader):
             data_generator = self._genTrajectory()
             featureType = 'trajectory'
 
+        if not featureType:
+            raise Exception("Global attribute 'featureType' is not one of 'trajectory', 'timeSeries', or 'timeSeriesProfile' - see http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
+
         for row in data_generator:
             logger.debug(row)
             try:
@@ -754,20 +810,6 @@ class Trajectory_Loader(Base_Loader):
     '''
     include_names = ['temperature', 'conductivity']
 
-    def initDB(self):
-        'Needs to use the exact name for the time coordinate in the Trajectory data'
-        if self.startDatetime == None or self.endDatetime == None:
-            ds = open_url(self.url)
-            if self.startDatetime == None:
-                self.startDatetime = datetime.utcfromtimestamp(ds.time[0])
-                self.dataStartDatetime = datetime.utcfromtimestamp(ds.time[0])
-                logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
-            if self.endDatetime == None:
-                self.endDatetime = datetime.utcfromtimestamp(ds.time[-1])
-                logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
-
-        return super(Trajectory_Loader, self).initDB()
-
     def preProcessParams(self, row):
         '''
         Compute on-the-fly any additional parameters for loading into the database
@@ -810,6 +852,9 @@ class Dorado_Loader(Trajectory_Loader):
                         'sea_water_sigma_t' ]
 
     def initDB(self):
+        '''
+        Make sure our added Parameters of mass_concentration_of_chlorophyll_in_sea_water and sea_water_sigma_t are included
+        '''
         self.addParameters(self.parmDict)
         logger.debug('Appending to self.varsLoaded = %s', self.varsLoaded)
         for k in self.parmDict.keys():
@@ -906,18 +951,6 @@ class Lrauv_Loader(Trajectory_Loader):
                     ]
 
     def initDB(self):
-        'Needs to use the exact name for the time coordinate in the LRAUV data'
-        if self.startDatetime == None or self.endDatetime == None:
-            logger.info('Reading data from %s', self.url)
-            ds = open_url(self.url)
-            if self.startDatetime == None:
-                self.startDatetime = datetime.utcfromtimestamp(ds.Time[0])
-                self.dataStartDatetime = datetime.utcfromtimestamp(ds.Time[0])
-                logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
-            if self.endDatetime == None:
-                self.endDatetime = datetime.utcfromtimestamp(ds.Time[-1])
-                logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
-
         self.addParameters(self.parmDict)
         for k in self.parmDict.keys():
             self.varsLoaded.append(k)       # Make sure to add the derived parameters to the list that gets put in the comment
@@ -928,8 +961,8 @@ class Lrauv_Loader(Trajectory_Loader):
         '''
         Special fixups for 'shore' data
         '''
-        if self.url.find('shore') == -1:
-            # Full-resolution data (whose name does not contain 'shore') are in radians
+        if self.url.find('shore') == -1 and self.url.find('Tethys') == -1 :
+            # Full-resolution data (whose name does not contain 'shore' or 'Tethys') are in radians
             if row.has_key('latitude'):
                 row['latitude'] = row['latitude'] * 180.0 / numpy.pi
             if row.has_key('longitude'):
@@ -980,23 +1013,9 @@ class TimeSeries_Loader(Base_Loader):
     # Subclasses or calling function must specify include_names
     include_names=[]
 
-    def initDB(self):
-        'Needs to use the exact name for the time coordinate in the Trajectory data'
-        if self.startDatetime == None or self.endDatetime == None:
-            ds = open_url(self.url)
-            if self.startDatetime == None:
-                self.startDatetime = datetime.utcfromtimestamp(ds.time[0])
-                self.dataStartDatetime = datetime.utcfromtimestamp(ds.time[0])
-                logger.info("Setting startDatetime for the Activity from the ds url to %s", self.startDatetime)
-            if self.endDatetime == None:
-                self.endDatetime = datetime.utcfromtimestamp(ds.time[-1])
-                logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
-
-        return super(TimeSeries_Loader, self).initDB()
-
     def preProcessParams(self, row):
         '''
-        Placeholder for any special preprocessing
+        Placeholder for any special preprocessing, for example adding sigma-t or other derived parameters
         '''
         return super(TimeSeries_Loader,self).preProcessParams(row)
 
