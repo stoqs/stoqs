@@ -61,10 +61,10 @@ cl.daphne_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
 
-# Realtime telemetered (_r_) tethys data - insert '_r_' to not load the files
+# Realtime telemetered (_r_) tethys data 
 ##cl.tethys_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/tethys/2012/'                    # Tethys realtime
-cl.tethys_base = cl.dodsBase + 'CANON_september2012/lrauv/tethys/realtime/sbdlogs/2012/201209/'
-cl.tethys_files = [ 
+cl.tethys_r_base = cl.dodsBase + 'CANON_september2012/lrauv/tethys/realtime/sbdlogs/2012/201209/'
+cl.tethys_r_files = [ 
                     '20120909T152301/shore.nc',
                     '20120910T190223/shore.nc',
                     '20120911T125230/shore.nc',
@@ -78,17 +78,27 @@ cl.tethys_files = [
                     '20120917T150614/shore.nc',
                     '20120917T151928/shore.nc',
                   ]
-cl.tethys_parms = [ 'platform_battery_charge', 'sea_water_temperature', 'downwelling_photosynthetic_photon_flux_in_sea_water',
+cl.tethys_r_parms = [ 'platform_battery_charge', 'sea_water_temperature', 'downwelling_photosynthetic_photon_flux_in_sea_water',
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water']
 
-# Postrecovery full-resolution tethys data - insert '_d_' for delayed-mode to not load the data
+# Postrecovery full-resolution (_d_) tethys data
 cl.tethys_d_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2012/'
 cl.tethys_d_files = [ 
                   ]
-
 cl.tethys_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
+
+# 2-second binned (_b_) data as produced by John Ryan on 27 August 2013
+cl.tethys_b_base = cl.dodsBase + 'CANON_september2012/lrauv/tethys/'
+cl.tethys_b_files = ['Tethys_CANONFall2012_NoSalinityCorrection.nc']
+cl.tethys_b_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650', 'PAR']
+
+# Assign version of the data to load
+cl.tethys_base = cl.tethys_b_base
+cl.tethys_files = cl.tethys_b_files
+cl.tethys_parms = cl.tethys_b_parms
+
 
 cl.fulmar_base = []
 cl.fulmar_files = []
@@ -114,7 +124,7 @@ cl.espdrift_files = [
                         'ESP_ctd.nc',
                         'ESP_isus.nc',
                       ]
-cl.espdrift_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
+cl.espdrift_parms = [ 'TEMP', 'PSAL', 'chl', 'chl_ini', 'no3' ]
 
 # Western Flyer Underway CTD
 cl.wfuctd_base = cl.dodsBase + 'CANON_september2012/wf/uctd/'
@@ -202,7 +212,7 @@ if cl.args.test:
     cl.loadDorado(stride=100)
     cl.loadWaveglider(stride=100)
     cl.loadDaphne(stride=10)
-    cl.loadTethys(stride=10)
+    cl.loadTethys(stride=100)
     cl.loadESPdrift(stride=10)
     cl.loadWFuctd(stride=10)
     cl.loadWFpctd(stride=10)
