@@ -578,12 +578,17 @@ class STOQSQManager(object):
 
             elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
                 iptvq = Q()
+                qs_tsp = None
                 if 'time' in self.kwargs:
                     if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
                         iptvq = Q(instantpoint__timevalue__gte = self.kwargs['time'][0]) & Q(instantpoint__timevalue__lte = self.kwargs['time'][1])
-                qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ) & iptvq).annotate(mintime=Min('instantpoint__timevalue'), 
-                                            maxtime=Max('instantpoint__timevalue')).select_related().values( 'name',
-                                            'simpledepthtime__nominallocation__depth', 'mintime', 'maxtime').order_by('simpledepthtime__nominallocation__depth').distinct()
+                        qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ) & iptvq).annotate(mintime=Min('instantpoint__timevalue'), 
+                                                maxtime=Max('instantpoint__timevalue')).select_related().values( 'name',
+                                                'simpledepthtime__nominallocation__depth', 'mintime', 'maxtime').order_by('simpledepthtime__nominallocation__depth').distinct()
+                if not qs_tsp:
+                    qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ)).select_related().values( 
+                                            'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
+                                            'simpledepthtime__nominallocation__depth').order_by('simpledepthtime__epochmilliseconds').distinct()
                 logger.info('qs_tsp = %s', str(qs_tsp.query))
 
                 # Add to sdt hash date-time series organized by activity__name_nominallocation__depth key within a platform__name key
@@ -591,18 +596,30 @@ class STOQSQManager(object):
                     logger.info('sd = %s', sd)
                     an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
                     logger.info('an_nd = %s', an_nd)
-                    s_ems = int(1000 * to_udunits(sd['mintime'], 'seconds since 1970-01-01'))
-                    e_ems = int(1000 * to_udunits(sd['maxtime'], 'seconds since 1970-01-01'))
-                    try:
-                        sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                        sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                    except KeyError:
-                        sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
-                        if sd['simpledepthtime__nominallocation__depth']:
+                    logger.info('sd = %s', sd)
+                    if 'simpledepthtime__epochmilliseconds' in sd:
+                        try:
+                            sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                        except KeyError:
+                            sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
+                            if sd['simpledepthtime__nominallocation__depth']:
+                                sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                        except TypeError:
+                            continue                                                 # Likely "float argument required, not NoneType"
+
+                    else:
+                        s_ems = int(1000 * to_udunits(sd['mintime'], 'seconds since 1970-01-01'))
+                        e_ems = int(1000 * to_udunits(sd['maxtime'], 'seconds since 1970-01-01'))
+                        try:
                             sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
                             sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                    except TypeError:
-                        continue                                                 # Likely "float argument required, not NoneType"
+                        except KeyError:
+                            sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
+                            if sd['simpledepthtime__nominallocation__depth']:
+                                sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                                sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                        except TypeError:
+                            continue                                                 # Likely "float argument required, not NoneType"
 
         return({'sdt': sdt, 'colors': colors})
 
@@ -959,6 +976,7 @@ class STOQSQManager(object):
         
         self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
+        # The self.mpq.qs_mp_no_order item should be for SampledParameter if that is the group of the Parameter
         cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order,
                               self.getParameterMinMax(pid=parameterID), self.getSampleQS(), platformName, parameterID)
 
