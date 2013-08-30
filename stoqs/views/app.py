@@ -74,7 +74,7 @@ class SampleDataTable(BaseOutputer):
             row.append(rec['sampletype__name'])
             row.append(rec['volume'])
             row.append(rec['sampledparameter__parameter__name'])
-            row.append(rec['sampledparameter__datavalue'])
+            row.append('%f' % rec['sampledparameter__datavalue'])
             table.append(row)
         
         colList = []
