@@ -373,6 +373,57 @@ class MPQuery(object):
 
         return qs_mpq
 
+
+    def getSampledParametersQS(self, values_list=[], orderedFlag=True):
+        '''
+        Return query set of SampledParameters given the current constraints.  If no parameter is selected return None.
+        @values_list can be assigned with additional columns that are supported by MPQuerySet(). Note that specificiation
+        of a values_list will break the JSON serialization of geometry types. @orderedFlag may be set to False to reduce
+        memory and time taken for queries that don't need ordered values.  If parameterID is not none then that parameter
+        is added to the filter - used for parameterPlatformPNG generation.
+        '''
+        qparams = self._getQueryParms()
+        logger.debug('Building qs_sp...')
+        if values_list == []:
+            # If no .values(...) added to QS then items returned by iteration on qs_sp are model objects, not out wanted dictionaries
+            qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*MPQuerySet.rest_columns)
+        else:
+            qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
+
+        if self.parameterID:
+            logger.debug('Adding parameter__id=%d filter to qs_sp', int(self.parameterID))
+            qs_sp = qs_sp.filter(parameter__id=int(self.parameterID))
+
+        if orderedFlag:
+            qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue')
+
+        # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
+        if self.kwargs.has_key('parametervalues'):
+            if self.kwargs['parametervalues']:
+                # A depth of 4 is needed in order to see Platform
+                qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
+                if orderedFlag:
+                    qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue')
+                sql = postgresifySQL(str(qs_sp.query))
+                logger.debug('\n\nsql before query = %s\n\n', sql)
+                sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
+                logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
+                qs_spq = MPQuerySet(sql, values_list)
+            else:
+                logger.debug('Building MPQuerySet for SampledParameter...')
+                qs_spq = MPQuerySet(None, values_list, qs_sp=qs_sp)
+        else:
+            logger.debug('Building MPQuerySet for SampledParameter...')
+            qs_spq = MPQuerySet(None, values_list, qs_sp=qs_sp)
+
+        if qs_spq is None:
+            logger.debug('qs_spq.query = %s', str(qs_spq.query))
+        else:
+            logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
+
+        return qs_spq
+
+
     def getMPCount(self):
         '''
         Get the actual count of measured parameters giving the exising query.  If private _count
