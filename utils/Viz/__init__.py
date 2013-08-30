@@ -137,6 +137,7 @@ class MeasuredParameter(object):
         self.lat_by_act = {}
 
         i = 0
+        logger.debug('self.qs_mp.query = %s', str(self.qs_mp.query))
         for mp in self.qs_mp:
             if self.scale_factor:
                 self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
@@ -326,7 +327,7 @@ class MeasuredParameter(object):
             return sectionPngFile, self.colorbarPngFile, ''
         else:
             logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax)
-            return None, None, 'No depth-time region selected.'
+            return None, None, 'Select a time-depth range'
 
     def dataValuesX3D(self):
         '''
