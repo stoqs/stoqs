@@ -866,7 +866,7 @@
                     sensortrackskml.refresh({url: strided_kmlurl});
                 }).
                 fail( function (data, response, jqXHR) {
-                    if (jqXHR == 'INTERNAL SERVER ERROR') {
+                    if (jqXHR.toUpperCase() == 'INTERNAL SERVER ERROR') {
                         $('#showsensortracks').attr({checked: false});
                         sensortrackskml.removeAllFeatures();
                     }
