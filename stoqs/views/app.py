@@ -102,6 +102,16 @@ class MeasuredParameter(BaseOutputer):
                'measurement__instantpoint__activity__platform__name', 'datavalue', 'parameter__units' ]
 
 
+class SampledParameter(BaseOutputer):
+    '''
+    Extend basic SampledParameter with additional fields that will return data values for many different constraints
+    '''
+    # Only fields that exists in the model can be included here.  Use '.x' and '.y' on sample__geom to get latitude and longitude.
+    fields = [ 'parameter__id', 'parameter__name', 'parameter__standard_name', 'sample__depth', 'sample__geom', 
+               'sample__instantpoint__timevalue',  'sample__instantpoint__activity__name',
+               'sample__instantpoint__activity__platform__name', 'datavalue', 'parameter__units' ]
+
+
 class ResourceActivity(BaseOutputer):
     '''
     Extend basic Resource with additional fields that stitches it up to Activity fields 
@@ -164,6 +174,13 @@ def showMeasuredParameter(request, format = 'json'):
 
     mp = MeasuredParameter(request, format, query_set, stoqs_object)
     return mp.process_request()
+
+def showSampledParameter(request, format = 'json'):
+    stoqs_object = mod.SampledParameter
+    query_set = stoqs_object.objects.all().order_by('sample__instantpoint__timevalue')
+
+    sp = SampledParameter(request, format, query_set, stoqs_object)
+    return sp.process_request()
 
 def showResourceActivity(request, format = 'json'):
     stoqs_object = mod.Resource
