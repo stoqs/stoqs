@@ -24,7 +24,7 @@ from loaders import MEASUREDINSITU
 from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
-from utils import simplify_points
+from utils import simplify_points, getParameterGroups
 from MPQuery import MPQuery
 from PQuery import PQuery
 from Viz import MeasuredParameter, ParameterParameter
@@ -218,9 +218,6 @@ class STOQSQManager(object):
 
             if k == 'measuredparametersgroup':
                 results[k] = v(MEASUREDINSITU)
-                # To support legacy databases that do not have ParamaterGroup.name populated
-                if not results[k]:
-                    results[k] = v()
             elif k == 'sampledparametersgroup':
                 results[k] = v(SAMPLED)
             else:
@@ -967,18 +964,26 @@ class STOQSQManager(object):
         if 'parameterplot' in self.kwargs:
             if self.kwargs['parameterplot'][0]:
                 parameterID = self.kwargs['parameterplot'][0]
+                parameterGroups = getParameterGroups(self.request.META['dbAlias'], models.Parameter.objects.get(id=parameterID))
             if self.kwargs['parameterplot'][1]:
                 platformName = self.kwargs['parameterplot'][1]
         if not parameterID or not platformName:
+            # With Plot radio button, must have parameterID and platformName
             return None, None, 'Problem with getting parameter-plot-radio button info'
 
         logger.debug('Instantiating Viz.MeasuredParameter............................................')
         
         self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
-        # The self.mpq.qs_mp_no_order item should be for SampledParameter if that is the group of the Parameter
-        cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order,
-                              self.getParameterMinMax(pid=parameterID), self.getSampleQS(), platformName, parameterID)
+        if SAMPLED in parameterGroups:
+            # The fourth item should be for SampledParameter if that is the group of the Parameter
+            cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_sp_no_order,
+                                    self.getParameterMinMax(pid=parameterID), self.getSampleQS(), platformName, 
+                                    parameterID, parameterGroups)
+        else:
+            cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order,
+                                    self.getParameterMinMax(pid=parameterID), self.getSampleQS(), platformName, 
+                                    parameterID, parameterGroups)
 
         return cp.renderDatavaluesForFlot()
 
