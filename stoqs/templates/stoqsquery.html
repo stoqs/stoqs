@@ -2764,7 +2764,8 @@
         // map.
         var $update=$('input[type=\"checkbox\"][id=\"zoomtoextentonupdate\"]')
         if ($update.is(':checked')) { $update.click(); } // uncheck it
-        // Set the time axis and map information first.
+
+        // Set the time axis first
         $.each(parameters, function (key, value) {
             switch(key) {
                 case 'end-ems':
@@ -2779,6 +2780,17 @@
                 case 'start-depth': 
                     ranges.yaxis.from=value;
                     break;
+            }
+        });
+        timedepthplot.setSelection(ranges);
+        $.each(parameters['clicks'], function (pos, item) {
+            $(item).click();
+        });
+
+
+        // Now, the rest of the information
+        $.each(parameters, function (key, value) {
+            switch(key) {
                 case 'map-center':
                     if (lonlat && zoom) {
                          var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
@@ -2818,10 +2830,6 @@
                         parametervalues = JSON.parse(value);
                     }
             }
-        });
-        timedepthplot.setSelection(ranges);
-        $.each(parameters['clicks'], function (pos, item) {
-            $(item).click();
         });
         
         permalink_bypass=false;
