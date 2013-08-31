@@ -484,7 +484,10 @@ class Base_Loader(STOQS_Loader):
                     values['latitude'] = latitudes[pname]
                     values['longitude'] = longitudes[pname]
                     values['timeUnits'] = timeUnits[pname]
-                    values['nomDepth'] = nomDepths[pname][k]
+                    try:
+                        values['nomDepth'] = nomDepths[pname][k]
+                    except IndexError:
+                        values['nomDepth'] = nomDepths[pname]
                     values['nomLat'] = nomLats[pname]
                     values['nomLon'] = nomLons[pname]
                     yield values
