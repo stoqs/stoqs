@@ -461,19 +461,23 @@
                 </div><!-- accordian-group -->
 
 
-                <div id="sample-group" class="accordian-group" style="display:none">
+                <div id="sp-data-access-group" class="accordian-group" style="display:none">
                     <div class="accordian-heading">
-                        <h3><a id="sample-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSample">
-                        Sample Data Access
+                        <h3><a id="sp-data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#sp-collapseDataAccess">
+                        Sampled Parameter Data Access
                         </a></h3>
                     </div>
 
-                    <div id="collapseSample" class="accordion-body collapse in">
+                    <div id="sp-collapseDataAccess" class="accordion-body collapse in">
                         <div class="accordion-inner">
 
-                            <ul id="sample-data-tabs" class="nav nav-tabs">
+                            <ul id="sp-dataaccessdownloadtabs" class="nav nav-tabs">
                                 <li class="active"><a href="#table" data-toggle="tab">Table</a></li>
+                                {% for format in formats %}
+                                <li><a href="#sp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                {% endfor %}            
                             </ul>
+
                             <div class="tab-content">
                                 <div class="tab-pane active" id="table" style="overflow: auto">
                                     <span id="sample-instructions">Click on Sample locations in time-depth plot to get information here</span>
@@ -484,6 +488,33 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                {% for format in formats %}
+                                    {% if format.0 = 'kml' %}
+                                <div class="tab-pane active" id="sp-{{format.0}}">
+                                    {% else %}
+                                <div class="tab-pane" id="sp-{{format.0}}">
+                                    {% endif %} 
+                                    <table>
+                                        <tr>
+                                            <th><a target="_blank" id="sp-{{format.0}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png" alt="sp-{{format.0}}"/></a></th>
+                                            <th style="vertical-align:text-top;"><span>&nbsp;{{format.1}}</span></th>
+                                        </tr>
+                                    </table>
+                                    {% if format.0 = 'kml' %}
+                                        <div style="text-align: center;">
+                                        <span id="sp-kml-parameter"></span>
+                                        <form style="text-align: center;" class="form-inline">
+                                            <input id="sp-cmin" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
+                                            <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" alt="jetplus" />
+                                            <input id="sp-cmax" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
+                                        </form>
+                                        </div>
+                                        <pre id="sp-{{format.0}}-field"></pre>
+                                    {% else %}
+                                        <pre id="sp-{{format.0}}-field"></pre>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}            
                             </div>
                         </div>
                     </div>
@@ -491,50 +522,49 @@
                 </div><!-- accordian-group -->
 
 
-                <div id="data-access-group" class="accordian-group">
+                <div id="mp-data-access-group" class="accordian-group">
                     <div class="accordian-heading">
-                        <h3><a id="data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseDataAccess">
+                        <h3><a id="mp-data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#mp-collapseDataAccess">
                         Measured Parameter Data Access
                         </a> </h3>
                     </div>
-                    <div id="collapseDataAccess" class="accordion-body collapse in">
+                    <div id="mp-collapseDataAccess" class="accordion-body collapse in">
                         <div class="accordion-inner">
 
-                            <ul id="dataaccessdownloadtabs" class="nav nav-tabs">
+                            <ul id="mp-dataaccessdownloadtabs" class="nav nav-tabs">
                                 {% for format in formats %}
                                     {% if format.0 = 'kml' %}
-                                <li class="active"><a href="#{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                <li class="active"><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% else %}
-                                <li><a href="#{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                <li><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% endif %}
-                                    
                                 {% endfor %}            
                             </ul>
                             <div class="tab-content">
                                 {% for format in formats %}
                                     {% if format.0 = 'kml' %}
-                                <div class="tab-pane active" id="{{format.0}}">
+                                <div class="tab-pane active" id="mp-{{format.0}}">
                                     {% else %}
-                                <div class="tab-pane" id="{{format.0}}">
+                                <div class="tab-pane" id="mp-{{format.0}}">
                                     {% endif %} 
                                     <table>
                                         <tr>
-                                            <th><a target="_blank" id="{{format.0}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png" alt="{{format.0}}"/></a></th>
+                                            <th><a target="_blank" id="mp-{{format.0}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png" alt="mp-{{format.0}}"/></a></th>
                                             <th style="vertical-align:text-top;"><span>&nbsp;{{format.1}}</span></th>
                                         </tr>
                                     </table>
                                     {% if format.0 = 'kml' %}
                                         <div style="text-align: center;">
-                                        <span id="kml-parameter"></span>
+                                        <span id="mp-kml-parameter"></span>
                                         <form style="text-align: center;" class="form-inline">
-                                            <input id="cmin" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
+                                            <input id="mp-cmin" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                                             <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" alt="jetplus" />
-                                            <input id="cmax" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
+                                            <input id="mp-cmax" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
                                         </form>
                                         </div>
-                                        <pre id="{{format.0}}-field"></pre>
+                                        <pre id="mp-{{format.0}}-field"></pre>
                                     {% else %}
-                                        <pre id="{{format.0}}-field"></pre>
+                                        <pre id="mp-{{format.0}}-field"></pre>
                                     {% endif %}
                                 </div>
                                 {% endfor %}            
@@ -795,7 +825,8 @@
     var simpledepthtime_options_zoom;
     var parametertime_options;
     var parametertime_options_zoom;
-    var cmincmax = ''
+    var sp_cmincmax = ''
+    var mp_cmincmax = ''
     var hasTrajectory;
     var hasTimeSeries;
     var hasTimeSeriesProfile;
@@ -824,13 +855,20 @@
         $(element).removeAttr('disabled');    // enable the X, Y, Z, Color radio buttons in the row
     }
 
-    function updateKMLcmincmax() {
-        if ($('#cmin').val() && $('#cmax').val()) {
-            cmincmax = 'cmin=' + $('#cmin').val() + '&cmax=' + $('#cmax').val();
+    function updateMP_KMLcmincmax() {
+        if ($('#mp-cmin').val() && $('#mp-cmax').val()) {
+            mp_cmincmax = 'cmin=' + $('#mp-cmin').val() + '&cmax=' + $('#mp-cmax').val();
         }
-        $('#kml-field').text(kmlurl + cmincmax);
-        $('#kml-link').attr('href',kmlurl + cmincmax);
+        $('#mp-kml-field').text(kmlurl + mp_cmincmax);
+        $('#mp-kml-link').attr('href',kmlurl + mp_cmincmax);
+    }
 
+    function updatesP_KMLcmincmax() {
+        if ($('#sp-cmin').val() && $('#sp-cmax').val()) {
+            sp_cmincmax = 'cmin=' + $('#sp-cmin').val() + '&cmax=' + $('#sp-cmax').val();
+        }
+        $('#sp-kml-field').text(kmlurl + sp_cmincmax);
+        $('#sp-kml-link').attr('href',kmlurl + sp_cmincmax);
     }
 
     function update_sensortrackskml() {
@@ -842,7 +880,7 @@
                 if (param != '') {
                     param = '?' + param;
                 } 
-                mp_param = getMPparms(params);
+                mp_param = getMPparms('mp', params);
 
                 // Override any parameter__name or parameter__standard_name with parameter__id from radio button selection
                 var kmlurl = base_url + 'measuredparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
@@ -860,9 +898,9 @@
                     // See: http://stackoverflow.com/questions/5539633/adding-a-absolutely-positioned-div-to-the-bottom-of-an-openlayers-map/5568762#5568762
                     //sensortrackskml.attribution = '<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />';
                     // Dynamically set url for sensor tracks display in openlayers
-                    updateKMLcmincmax();
+                    updateMP_KMLcmincmax();
                     //sensortrackskml.loaded = false;
-                    strided_kmlurl = kmlurl.replace('.kml', '.kmln') + cmincmax + '&stride=' + strideVal;
+                    strided_kmlurl = kmlurl.replace('.kml', '.kmln') + mp_cmincmax + '&stride=' + strideVal;
                     sensortrackskml.refresh({url: strided_kmlurl});
                 }).
                 fail( function (data, response, jqXHR) {
@@ -881,13 +919,30 @@
         }
     }
 
-    function getMPparms(params) {
-        // Construct querystring for measuredparameter REST request, mapping params to Django queries for the MP table
+    function getMPparms(group, params) {
+        // Construct querystring for measuredparameter or sampledparameter REST request, mapping params to Django queries for the MP & SP tables
         // Good for .json, .csv, .tsv, .html responses
+        var group_name;
+        if ( group == 'mp' ) {
+            group_name1 = 'measured';
+            group_name2 = 'measurement';
+        }
+        else if ( group == 'sp' ) {
+            group_name1 = 'sampled';
+            group_name2 = 'sample';
+        }
+        
         var mp_param = '?';
-        if (typeof params['measuredparametersgroup'] != 'undefined') {
-            for (var i=0; i<params['measuredparametersgroup'].length; i++) {
-                mp_param = mp_param + 'parameter__name=' + params['measuredparametersgroup'][i] + '&';
+        if (typeof params[group_name1 + 'parametersgroup'] != 'undefined') {
+            if ( group == 'mp' ) {
+                for (var i=0; i<params[group_name1 + 'parametersgroup'].length; i++) {
+                    mp_param = mp_param + 'parameter__name=' + params[group_name1 + 'parametersgroup'][i] + '&';
+                }
+            }
+            else if ( group == 'sp' ) {
+                for (var i=0; i<params[group_name1 + 'parametersgroup'].length; i++) {
+                    mp_param = mp_param + 'parameter__id=' + params[group_name1 + 'parametersgroup'][i] + '&';
+                }
             }
         }
         if (typeof params['parameterstandardname'] != 'undefined') {
@@ -897,20 +952,20 @@
         }
         if (typeof params['platforms'] != 'undefined') {
             if (params['platforms'].length == 1) {
-                mp_param = mp_param + 'measurement__instantpoint__activity__platform__name=' + params['platforms'][0] + '&';
+                mp_param = mp_param + group_name2 + '__instantpoint__activity__platform__name=' + params['platforms'][0] + '&';
             }
         }
         if (typeof params['start_time'] != 'undefined') {
-            mp_param = mp_param + 'measurement__instantpoint__timevalue__gt=' + params['start_time'] + '&';
+            mp_param = mp_param + group_name2 + '__instantpoint__timevalue__gt=' + params['start_time'] + '&';
         }
         if (typeof params['end_time'] != 'undefined') {
-            mp_param = mp_param + 'measurement__instantpoint__timevalue__lt=' + params['end_time'] + '&';
+            mp_param = mp_param + group_name2 + '__instantpoint__timevalue__lt=' + params['end_time'] + '&';
         }
         if (typeof params['min_depth'] != 'undefined') {
-            mp_param = mp_param + 'measurement__depth__gte=' + params['min_depth'] + '&';
+            mp_param = mp_param + group_name2 + '__depth__gte=' + params['min_depth'] + '&';
         }
         if (typeof params['max_depth'] != 'undefined') {
-            mp_param = mp_param + 'measurement__depth__lte=' + params['max_depth'] + '&';
+            mp_param = mp_param + group_name2 + '__depth__lte=' + params['max_depth'] + '&';
         }
 
         if (parametervalues) {
@@ -927,10 +982,17 @@
         return mp_param
     }
     
-    // Set the URL fields and buttons to use the current queried URL
-    function setDataAccess(data) {
+    // Set the URL fields and buttons to use the current queried URL, group is either 'mp' or 'sp'
+    function setDataAccess(group, data) {
         if ( $.isEmptyObject(data['parameterminmax']) ) {
             return;
+        }
+        var group_name;
+        if ( group == 'mp' ) {
+            group_name = 'measured';
+        }
+        else if ( group == 'sp' ) {
+            group_name = 'sampled';
         }
         var base_url = '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';
         var query_url = '{{site_uri}}{% url 'stoqs-query-ui' dbAlias=request.META.dbAlias %}';
@@ -938,42 +1000,42 @@
         if (param != '') {
             param = '?' + param;
         } 
-        mp_param = getMPparms(params);
+        mp_param = getMPparms(group, params);
 
         var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
         // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
         $.each(formats, function (index, value) {
             var url = query_url + value + param;
             if (value == 'sql') {
-                $('#'+value+'-field').text(data['sql']);
+                $('#'+group+'-'+value+'-field').text(data['sql']);
             }
             else if (value == 'kml') {
                 kmlurl = 'Select a single Parameter to view your selection in Google Earth';
-                var url = base_url + 'measuredparameter.kml' + mp_param;
-                if (typeof params['measuredparametersgroup'] != 'undefined') {
-                    if (params['measuredparametersgroup'].length == 1) {
-                        $('#kml-parameter').text(params['measuredparametersgroup'][0]);
-                        $('#cmin').val(data['parameterminmax'][1]);
-                        $('#cmax').val(data['parameterminmax'][2]);
+                var url = base_url + group_name + 'parameter.kml' + mp_param;
+                if (typeof params[group_name + 'parametersgroup'] != 'undefined') {
+                    if (params[group_name + 'parametersgroup'].length == 1) {
+                        $('#'+group+'-kml-parameter').text(params[group_name + 'parametersgroup'][0]);
+                        $('#'+group+'-cmin').val(data['parameterminmax'][1]);
+                        $('#'+group+'-cmax').val(data['parameterminmax'][2]);
                         kmlurl = url;
                     }
                     else if (params['parameterstandardname'].length == 1) {
-                        $('#kml-parameter').text(params['parameterstandardname'][0]);
-                        $('#cmin').val(data['parameterminmax'][1]);
-                        $('#cmax').val(data['parameterminmax'][2]);
+                        $('#'+group+'-kml-parameter').text(params['parameterstandardname'][0]);
+                        $('#'+group+'-cmin').val(data['parameterminmax'][1]);
+                        $('#'+group+'-cmax').val(data['parameterminmax'][2]);
                         kmlurl = url;
                     }
                     else {
-                        $('#kml-parameter').text('');
-                        $('#cmin').val('');
-                        $('#cmax').val('');
+                        $('#'+group+'-kml-parameter').text('');
+                        $('#'+group+'-cmin').val('');
+                        $('#'+group+'-cmax').val('');
                     }
                 }
                 update_sensortrackskml();
             }
             else if (value == 'stoqstoolbox') {
                 // Required parameters for stoqs_down as of stoqstoolbox release noted in the Matlab comment below
-                var req_params = ['campaign', 'start_time', 'end_time', 'min_depth', 'max_depth', 'platforms', 'measuredparametersgroup', 'parameterstandardname'];
+                var req_params = ['campaign', 'start_time', 'end_time', 'min_depth', 'max_depth', 'platforms', group_name + 'parametersgroup', 'parameterstandardname'];
                 var hasParametervalues = false;
                 var st_text_comm = "% Copy and paste into a Matlab session where stoqstoolbox build 2013-01-08 or\n";
                 st_text_comm = st_text_comm + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
@@ -1006,36 +1068,36 @@
                     };
                 }
                 if (hasParametervalues) {
-                    $('#'+value+'-field').text(st_text_comm + "data = stoqs_down('" + base_url + "measuredparameter.json" + mp_param + "');\n");
+                    $('#'+group+'-'+value+'-field').text(st_text_comm + "data = stoqs_down('" + base_url + group_name + "parameter.json" + mp_param + "');\n");
                 }
                 else {
-                    $('#'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
+                    $('#'+group+'-'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
                 }
             }
-            // Queries made using measuredparameter REST requests - use mp_parm for Django queries for the measuredparameter table
+            // Queries made using measuredparameter or sampledparamter REST requests - use mp_parm for Django queries 
             else if (value == 'json') {
-                var url = base_url + 'measuredparameter.json' + mp_param;
-                $('#'+value+'-field').text(url);
-                $('#'+value+'-link').attr('href',url);
+                var url = base_url + group_name + 'parameter.json' + mp_param;
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else if (value == 'csv') {
-                var url = base_url + 'measuredparameter.csv' + mp_param;
-                $('#'+value+'-field').text(url);
-                $('#'+value+'-link').attr('href',url);
+                var url = base_url + group_name + 'parameter.csv' + mp_param;
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else if (value == 'tsv') {
-                var url = base_url + 'measuredparameter.tsv' + mp_param;
-                $('#'+value+'-field').text(url);
-                $('#'+value+'-link').attr('href',url);
+                var url = base_url + group_name + 'parameter.tsv' + mp_param;
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else if (value == 'html') {
-                var url = base_url + 'measuredparameter.html' + mp_param;
-                $('#'+value+'-field').text(url);
-                $('#'+value+'-link').attr('href',url);
+                var url = base_url + group_name + 'parameter.html' + mp_param;
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else {
-                $('#'+value+'-field').text(url);
-                $('#'+value+'-link').attr('href',url);
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
             }
         });
     }
@@ -1420,12 +1482,20 @@
         update_sensortrackskml();
     });
 
-    $('#cmin').on('keypress', function (event, previousText) {
-        setTimeout(updateKMLcmincmax());
+    $('#mp-cmin').on('keypress', function (event, previousText) {
+        setTimeout(updateMP_KMLcmincmax());
     });
 
-    $('#cmax').on('keypress', function (event, previousText) {
-        setTimeout(updateKMLcmincmax());
+    $('#mp-cmax').on('keypress', function (event, previousText) {
+        setTimeout(updateMP_KMLcmincmax());
+    });
+
+    $('#sp-cmin').on('keypress', function (event, previousText) {
+        setTimeout(updateSP_KMLcmincmax());
+    });
+
+    $('#sp-cmax').on('keypress', function (event, previousText) {
+        setTimeout(updateSP_KMLcmincmax());
     });
 
     $('body').on('change', '.parameter-radio', function (e) {
@@ -1551,8 +1621,8 @@
             $('body').css({'padding-top': '35px'});
             $('#accordion1').addClass('well');
             $('#metadata-group').show();
-            $('#sample-group').show();
-            $('#data-access-group').show();
+            $('#sp-data-access-group').show();
+            $('#mp-data-access-group').show();
             $('#right-column').show();
             if (this.id == 'pp-zoom-width-button') {
                 $('#spatial-group').children().show();
@@ -1584,8 +1654,8 @@
             $('body').css({'padding-top': '0px'});
             $('#accordion1').removeClass('well');
             $('#metadata-group').hide();
-            $('#sample-group').hide();
-            $('#data-access-group').hide();
+            $('#sp-data-access-group').hide();
+            $('#mp-data-access-group').hide();
             $('#right-column').hide();
             if (this.id == 'pp-zoom-width-button') {
                 $('#spatial-group').children().hide();
@@ -1787,8 +1857,8 @@
             });
 
             $('#sample-instructions').text('')
-            if (! $('#collapseSample').hasClass('in')) {
-                $('#sample-anchor').click();
+            if (! $('#sp-collapseDataAccess').hasClass('in')) {
+                $('#sp-data-access-anchor').click();
             }
     }
 
@@ -2131,7 +2201,7 @@
             else if (key == 'sampledparametersgroup') {
                 if ( ! $.isEmptyObject(data[key]) ) {
                     $('#sampledparameters-anchor').parent().parent().parent().show();
-                    $('#sample-anchor').parent().parent().parent().show();
+                    $('#sp-data-access-anchor').parent().parent().parent().show();
                 }
                 var parameterButtonText = '';
                 $.each(data[key], function (index, value) {
@@ -2557,7 +2627,8 @@
             },
             url : stoqsQuery + '?' + qstring,
             success: function (data) {
-                setDataAccess(data);
+                setDataAccess('mp', data);
+                setDataAccess('sp', data);
                 for (var key in data) {
                     if (init == true) {
                         onInit(data, key)
@@ -3071,10 +3142,6 @@
         // Tooltips    
         $('#spatial-anchor').click();
         $('#temporal-anchor').click();
-        //$('#measuredparameters-anchor').tooltip({title: 'Click to toggle Parameters list'});
-        //$('#parameter-values-anchor').tooltip({title: 'Click to see histograms of parameter values and to select Measurement Data by parameter value range'});
-        //$('#platforms-anchor').tooltip({title: 'Click to toggle Platforms list'});
-        //$('#data-access-anchor').tooltip({title: 'Click to toggle data access options'});
         $('#getactualcount').parent().tooltip({title: 'Will increase query time'});
 
         // Tootips that are disabled after first use - don't want to annoy users too much

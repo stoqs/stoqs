@@ -416,6 +416,21 @@ class STOQSQManager(object):
                 except TypeError, e:
                     logger.exception(e)
 
+        if self.kwargs.has_key('sampledparametersgroup'):
+            if len(self.kwargs['sampledparametersgroup']) == 1:
+                spid = self.kwargs['sampledparametersgroup'][0]
+                try:
+                    pid = models.Parameter.objects.using(self.dbname).get(id=spid).id
+                    logger.debug('pid = %s', pid)
+                    if percentileAggregateType == 'extrema':
+                        qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'))
+                        results = [pid, round_to_n(qs['p010__min'],3), round_to_n(qs['p990__max'],3)]
+                    else:
+                        qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
+                        results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                except TypeError, e:
+                    logger.exception(e)
+
         if self.kwargs.has_key('parameterstandardname'):
             if len(self.kwargs['parameterstandardname']) == 1:
                 sname = self.kwargs['parameterstandardname'][0]
