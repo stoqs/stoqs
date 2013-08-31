@@ -9,6 +9,12 @@ MeasuredParameter Query class for managing aspects of building requests for Meas
 Intended to be used by utils/STOQSQManager.py for preventing multiple traversals of qs_mp and by
 views/__init__.py to support query by parameter value for the REST responses.
 
+This module (though called MPQuery) also contains and SPQuerySet class to handle the Sample portion of 
+the STOQS data model. Sample and Measurment are almost synonomous, expecially with their relationships
+to InstantPoint and SampledParameter/MeasuredParameter.  The MPQuery class has a lot of machinery that
+for which checks are made on which ParameterGroup the Parameter belongs to execute to proper code for
+a Sample or a Measurement.
+
 @undocumented: __doc__ parser
 @status: production
 @license: GPL
@@ -18,8 +24,10 @@ from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, ValuesQuerySet
 from django.contrib.gis.db.models.query import GeoQuerySet
 from django.db import DatabaseError
 from datetime import datetime
-from stoqs.models import MeasuredParameter, Parameter
-from utils import postgresifySQL, getGet_Actual_Count
+from stoqs.models import MeasuredParameter, Parameter, SampledParameter, ParameterGroupParameter
+from utils import postgresifySQL, getGet_Actual_Count, getParameterGroups
+from loaders import MEASUREDINSITU
+from loaders.SampleLoaders import SAMPLED
 import logging
 import pprint
 import re
@@ -65,6 +73,7 @@ class MPQuerySet(object):
                      'measurement__instantpoint__activity__name',
                      'datavalue',
                    ]
+
     def __init__(self, query, values_list, qs_mp=None):
         '''
         Initialize MPQuerySet with either raw SQL in @query or a QuerySet in @qs_mp.
@@ -228,6 +237,215 @@ class MPQuerySet(object):
         return qs 
  
 
+
+
+class SPQuerySet(object):
+    '''
+    A class to simulate a GeoQuerySet that's suitable for use everywhere a GeoQuerySet may be used.
+    This special class supports adapting SampledParameter RawQuerySets to make them look like regular
+    GeoQuerySets.  See: http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  (I looked at Google
+    again to see if self-joins are possible in Django, and confirmed that they are probably not.  
+    See: http://stackoverflow.com/questions/1578362/self-join-with-django-orm.)
+    '''
+    rest_columns = [ 'parameter__name',
+                     'parameter__standard_name',
+                     'sample__depth',
+                     'sample__geom',
+                     'sample__instantpoint__timevalue', 
+                     'sample__instantpoint__activity__name',
+                     'sample__instantpoint__activity__platform__name',
+                     'datavalue',
+                     'parameter__units'
+                   ]
+    rest_columns = [ 'parameter__name',
+                     'parameter__standard_name',
+                     'sample__depth',
+                     'sample__geom',
+                     'sample__instantpoint__timevalue', 
+                     'sample__instantpoint__activity__name',
+                     'sample__instantpoint__activity__platform__name',
+                     'datavalue',
+                     'parameter__units'
+                   ]
+    kml_columns = [  'parameter__name',
+                     'parameter__standard_name',
+                     'sample__depth',
+                     'sample__geom',
+                     'sample__instantpoint__timevalue', 
+                     'sample__instantpoint__activity__platform__name',
+                     'datavalue',
+                   ]
+    ui_timedepth_columns = [  
+                     'sample__depth',
+                     'sample__instantpoint__timevalue', 
+                     'sample__instantpoint__activity__name',
+                     'datavalue',
+                   ]
+
+    def __init__(self, query, values_list, qs_sp=None):
+        '''
+        Initialize SPQuerySet with either raw SQL in @query or a QuerySet in @qs_sp.
+        Use @values_list to request just the fields (columns) needed.  The class variables
+        rest_colums and kml_columns are typical value_lists.  Note: specifying a values_list
+        appears to break the correct serialization of geometry types in the json response.
+        Called by stoqs/views/__init__.py when SampledParameter REST requests are made.
+        '''
+        if query is None and qs_sp is not None:
+            logger.debug('query is None and qs_sp is not None')
+            self.query = postgresifySQL(str(qs_sp.query))
+            self.sp_query = qs_sp
+        elif query is not None and qs_sp is None:
+            logger.debug('query is not None and qs_sp is None')
+            self.query = query
+            self.sp_query = SampledParameter.objects.raw(query)
+        else:
+            raise Exception('Either query or qs_sp must be not None and the other be None.')
+
+        self.values_list = values_list
+        self.ordering = ('id',)
+ 
+    def __iter__(self):
+        '''
+        Main way to access data that is used by interators in templates, etc.
+        Simulate behavior of regular GeoQuerySets.  Modify & format output as needed.
+        '''
+        minimal_values_list = False
+        for item in self.rest_columns:
+            if item not in self.values_list:
+                minimal_values_list = True
+                break
+        logger.debug('minimal_values_list = %s', minimal_values_list)
+
+        logger.debug('self.query = %s', self.query)
+        logger.debug('type(self.sp_query) = %s', type(self.sp_query))
+
+        if isinstance(self.sp_query, ValuesQuerySet):
+            logger.debug('self.sp_query is ValuesQuerySet')
+        if isinstance(self.sp_query, GeoQuerySet):
+            logger.debug('self.sp_query is GeoQuerySet')
+        if isinstance(self.sp_query, RawQuerySet):
+            logger.debug('self.sp_query is RawQuerySet')
+
+        # Must have model instance objects for JSON serialization of geometry fields to work right
+        if minimal_values_list:
+            # Likely for Flot contour plot
+            try:
+                # Dictionaries
+                for mp in self.sp_query[:ITER_HARD_LIMIT]:
+                    row = { 'sample__depth': mp['sample__depth'],
+                            'sample__instantpoint__timevalue': mp['sample__instantpoint__timevalue'],
+                            'sample__instantpoint__activity__name': mp['sample__instantpoint__activity__name'],
+                            'datavalue': mp['datavalue'],
+                          }
+                    yield row
+
+            except TypeError:
+                # Model instances
+                for mp in self.sp_query[:ITER_HARD_LIMIT]:
+                    row = { 'sample__depth': mp.sample.depth,
+                            'sample__instantpoint__timevalue': mp.sample.instantpoint.timevalue,
+                            'sample__instantpoint__activity__name': mp.sample.instantpoint.activity.name,
+                            'datavalue': mp.datavalue,
+                          }
+                    yield row
+
+        else:
+            # Likely for building a REST or KML response
+            logger.debug('type(self.sp_query) = %s', type(self.sp_query))
+            try:
+                # Dictionaries
+                for mp in self.sp_query[:ITER_HARD_LIMIT]:
+                    row = { 
+                            'sample__depth': mp['sample__depth'],
+                            'parameter__name': mp['parameter__name'],
+                            'datavalue': mp['datavalue'],
+                            'sample__instantpoint__timevalue': mp['sample__instantpoint__timevalue'],
+                            'parameter__standard_name': mp['parameter__standard_name'],
+                            'sample__instantpoint__activity__name': mp['sample__instantpoint__activity__name'],
+                            'sample__instantpoint__activity__platform__name': mp['sample__instantpoint__activity__platform__name'],
+                            # If .values(...) are requested in the query string then json serialization of the point geometry does not work right
+                            'sample__geom': mp['sample__geom'],
+                            'parameter__units': mp['parameter__units'],
+                          }
+                    yield row
+
+            except TypeError:
+                # Model instances
+                for mp in self.sp_query[:ITER_HARD_LIMIT]:
+                    row = { 
+                            'sample__depth': mp.sample.depth,
+                            'parameter__name': mp.parameter__name,
+                            'datavalue': mp.datavalue,
+                            'sample__instantpoint__timevalue': mp.sample.instantpoint.timevalue,
+                            'parameter__standard_name': mp.parameter.standard_name,
+                            'sample__instantpoint__activity__name': mp.sample.instantpoint.activity.name,
+                            'sample__instantpoint__activity__platform__name': mp.sample.instantpoint.activity.platform.name,
+                            'sample__geom': mp.sample.geom,
+                            'parameter__units': mp.parameter.units,
+                          }
+                    yield row
+ 
+    def __repr__(self):
+        data = list(self[:REPR_OUTPUT_SIZE + 1])
+        if len(data) > REPR_OUTPUT_SIZE:
+            data[-1] = "...(remaining elements truncated)..."
+        return repr(data)
+ 
+    def __getitem__(self, k):
+        '''
+        Boiler plate copied from http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  
+        Is used for slicing data, e.g. for subsampling data for sensortracks
+        '''
+        if not isinstance(k, (slice, int, long)):
+            raise TypeError
+        assert ((not isinstance(k, slice) and (k >= 0))
+                or (isinstance(k, slice) and (k.start is None or k.start >= 0)
+                    and (k.stop is None or k.stop >= 0))), \
+                "Negative indexing is not supported."
+ 
+        if isinstance(k, slice):
+            return self.sp_query[k]
+
+    def count(self):
+        logger.debug('Counting records in self.sp_query which is of type = %s', type(self.sp_query))
+        # self.sp_query should contain no 'ORDER BY' as ensured by the routine that calls .count()
+        try:
+            c = self.sp_query.count()
+            logger.debug('c = %d as retreived from self.sp_query.count()', c)
+        except AttributeError:
+            try:
+                c = sum(1 for mp in self.sp_query)
+                logger.debug('c = %d as retreived from sum(1 for mp in self.sp_query)', c)
+            except DatabaseError:
+                return 0
+        return c
+ 
+    def all(self):
+        return self._clone()
+ 
+    def filter(self, *args, **kwargs):
+        qs = self._clone()
+        logger.debug('type(qs) = %s', type(qs))
+        qs.sp_query = qs.sp_query.filter(*args, **kwargs)
+        return qs.sp_query
+ 
+    def exclude(self, *args, **kwargs):
+        qs = self._clone()
+        qs.sp_query = qs.sp_query.exclude(*args, **kwargs)
+        return qs.sp_query
+ 
+    def order_by(self, *args, **kwargs):
+        qs = self._clone()
+        qs.sp_query = qs.sp_query.order_by(*args, **kwargs)
+        return qs.sp_query
+ 
+    def _clone(self):
+        qs = SPQuerySet(self.query, self.values_list)
+        qs.sp_query = self.sp_query._clone()
+        return qs 
+
+
+
 class MPQuery(object):
     '''
     This class is designed to handle building and managing queries against the MeasuredParameter table of the STOQS database.
@@ -243,6 +461,15 @@ class MPQuery(object):
                          stoqs_platform.name as measurement__instantpoint__activity__platform__name,
                          stoqs_measuredparameter.datavalue as datavalue,
                          stoqs_parameter.units as parameter__units'''
+    sampled_rest_select_items = '''stoqs_parameter.name as parameter__name,
+                         stoqs_parameter.standard_name as parameter__standard_name,
+                         stoqs_sample.depth as sample__depth,
+                         stoqs_sample.geom as sample__geom,
+                         stoqs_instantpoint.timevalue as sample__instantpoint__timevalue, 
+                         stoqs_platform.name as sample__instantpoint__activity__platform__name,
+                         stoqs_sampledparameter.datavalue as datavalue,
+                         stoqs_parameter.units as parameter__units'''
+
 
     kml_select_items = ''
     contour_select_items = ''
@@ -268,24 +495,34 @@ class MPQuery(object):
         and self.qs_mp will have no constraints and will be all of the MeasuredParameters in the database.
         This is called by utils/STOQSQueryManagery.py.
         '''
-
         if self.qs_mp is None:
+            parameterGroups = [MEASUREDINSITU]
             self.kwargs = kwargs
             if 'parameterplot' in self.kwargs:
                 if self.kwargs['parameterplot'][0]:
                     self.parameterID = self.kwargs['parameterplot'][0]
+                    logger.debug('self.parameterID = %s', self.parameterID)
+                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], Parameter.objects.get(id=self.parameterID))
 
-            logger.debug('self.parameterID = %s', self.parameterID)
-            
-            self.qs_mp = self.getMeasuredParametersQS()
-            if self.kwargs['showparameterplatformdata']:
-                logger.debug('Building qs_mp_no_order with values_list = %s', MPQuerySet.ui_timedepth_columns)
-                self.qs_mp_no_order = self.getMeasuredParametersQS(MPQuerySet.ui_timedepth_columns, orderedFlag=False)
+            if SAMPLED in parameterGroups:
+                self.qs_sp = self.getSampledParametersQS()
+                if self.kwargs['showparameterplatformdata']:
+                    logger.debug('Building qs_sp_no_order with values_list = %s', SPQuerySet.ui_timedepth_columns)
+                    self.qs_sp_no_order = self.getSampledParametersQS(SPQuerySet.ui_timedepth_columns, orderedFlag=False)
+                else:
+                    self.qs_sp_no_order = self.getSampledParametersQS(orderedFlag=False)
+                self.sql_sp = self.getSampledParametersPostgreSQL()
             else:
-                self.qs_mp_no_order = self.getMeasuredParametersQS(orderedFlag=False)
-            self.sql = self.getMeasuredParametersPostgreSQL()
+                # The default is to consider the Parameter MEASUREDINSITU if it's not SAMPLED
+                self.qs_mp = self.getMeasuredParametersQS()
+                if self.kwargs['showparameterplatformdata']:
+                    logger.debug('Building qs_mp_no_order with values_list = %s', SPQuerySet.ui_timedepth_columns)
+                    self.qs_mp_no_order = self.getMeasuredParametersQS(SPQuerySet.ui_timedepth_columns, orderedFlag=False)
+                else:
+                    self.qs_mp_no_order = self.getMeasuredParametersQS(orderedFlag=False)
+                self.sql = self.getMeasuredParametersPostgreSQL()
 
-    def _getQueryParms(self):
+    def _getQueryParms(self, group=MEASUREDINSITU):
         '''
         Extract constraints from the querystring kwargs to construct a dictionary of query parameters
         that can be used as a filter for MeasuredParameters.  Handles all constraints except parameter
@@ -293,32 +530,61 @@ class MPQuery(object):
         '''
         qparams = {}
 
-        ##logger.info('self.kwargs = %s', pprint.pformat(self.kwargs))
-        if self.kwargs.has_key('measuredparametersgroup'):
-            if self.kwargs['measuredparametersgroup']:
-                qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
-        if self.kwargs.has_key('parameterstandardname'):
-            if self.kwargs['parameterstandardname']:
-                qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
-        
-        if self.kwargs.has_key('platforms'):
-            if self.kwargs['platforms']:
-                qparams['measurement__instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
-        if self.kwargs.has_key('time'):
-            if self.kwargs['time'][0] is not None:
-                qparams['measurement__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
-            if self.kwargs['time'][1] is not None:
-                qparams['measurement__instantpoint__timevalue__lte'] = self.kwargs['time'][1]
-        if self.kwargs.has_key('depth'):
-            if self.kwargs['depth'][0] is not None:
-                qparams['measurement__depth__gte'] = self.kwargs['depth'][0]
-            if self.kwargs['depth'][1] is not None:
-                qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
+        logger.debug('self.kwargs = %s', pprint.pformat(self.kwargs))
+        logger.debug('group = %s', group)
+        if group == SAMPLED:
+            if 'sampledparametersgroup' in self.kwargs:
+                if self.kwargs['sampledparametersgroup']:
+                    qparams['parameter__name__in'] = self.kwargs['sampledparametersgroup']
+            if 'parameterstandardname' in self.kwargs:
+                if self.kwargs['parameterstandardname']:
+                    qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
+            
+            if 'platforms' in self.kwargs:
+                if self.kwargs['platforms']:
+                    qparams['sample__instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
+            if 'time' in self.kwargs:
+                if self.kwargs['time'][0] is not None:
+                    qparams['sample__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
+                if self.kwargs['time'][1] is not None:
+                    qparams['sample__instantpoint__timevalue__lte'] = self.kwargs['time'][1]
+            if 'depth' in self.kwargs:
+                if self.kwargs['depth'][0] is not None:
+                    qparams['sample__depth__gte'] = self.kwargs['depth'][0]
+                if self.kwargs['depth'][1] is not None:
+                    qparams['sample__depth__lte'] = self.kwargs['depth'][1]
+    
+            if getGet_Actual_Count(self.kwargs):
+                # Make sure that we have at least time so that the instantpoint table is included
+                if not 'sample__instantpoint__timevalue__gte' in qparams:
+                    qparams['sample__instantpoint__pk__isnull'] = False
 
-        if getGet_Actual_Count(self.kwargs):
-            # Make sure that we have at least time so that the instantpoint table is included
-            if not qparams.has_key('measurement__instantpoint__timevalue__gte'):
-                qparams['measurement__instantpoint__pk__isnull'] = False
+        else: 
+            if self.kwargs.has_key('measuredparametersgroup'):
+                if self.kwargs['measuredparametersgroup']:
+                    qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
+            if self.kwargs.has_key('parameterstandardname'):
+                if self.kwargs['parameterstandardname']:
+                    qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
+            
+            if self.kwargs.has_key('platforms'):
+                if self.kwargs['platforms']:
+                    qparams['measurement__instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
+            if self.kwargs.has_key('time'):
+                if self.kwargs['time'][0] is not None:
+                    qparams['measurement__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
+                if self.kwargs['time'][1] is not None:
+                    qparams['measurement__instantpoint__timevalue__lte'] = self.kwargs['time'][1]
+            if self.kwargs.has_key('depth'):
+                if self.kwargs['depth'][0] is not None:
+                    qparams['measurement__depth__gte'] = self.kwargs['depth'][0]
+                if self.kwargs['depth'][1] is not None:
+                    qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
+
+            if getGet_Actual_Count(self.kwargs):
+                # Make sure that we have at least time so that the instantpoint table is included
+                if not qparams.has_key('measurement__instantpoint__timevalue__gte'):
+                    qparams['measurement__instantpoint__pk__isnull'] = False
 
         logger.debug('qparams = %s', pprint.pformat(qparams))
 
@@ -377,16 +643,16 @@ class MPQuery(object):
     def getSampledParametersQS(self, values_list=[], orderedFlag=True):
         '''
         Return query set of SampledParameters given the current constraints.  If no parameter is selected return None.
-        @values_list can be assigned with additional columns that are supported by MPQuerySet(). Note that specificiation
+        @values_list can be assigned with additional columns that are supported by SPQuerySet(). Note that specificiation
         of a values_list will break the JSON serialization of geometry types. @orderedFlag may be set to False to reduce
         memory and time taken for queries that don't need ordered values.  If parameterID is not none then that parameter
         is added to the filter - used for parameterPlatformPNG generation.
         '''
-        qparams = self._getQueryParms()
+        qparams = self._getQueryParms(group=SAMPLED)
         logger.debug('Building qs_sp...')
         if values_list == []:
             # If no .values(...) added to QS then items returned by iteration on qs_sp are model objects, not out wanted dictionaries
-            qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*MPQuerySet.rest_columns)
+            qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*SPQuerySet.rest_columns)
         else:
             qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
 
@@ -397,7 +663,7 @@ class MPQuery(object):
         if orderedFlag:
             qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue')
 
-        # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
+        # Wrap SPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
                 # A depth of 4 is needed in order to see Platform
@@ -406,15 +672,15 @@ class MPQuery(object):
                     qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue')
                 sql = postgresifySQL(str(qs_sp.query))
                 logger.debug('\n\nsql before query = %s\n\n', sql)
-                sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
+                sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.sampled_rest_select_items)
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
-                qs_spq = MPQuerySet(sql, values_list)
+                qs_spq = SPQuerySet(sql, values_list)
             else:
-                logger.debug('Building MPQuerySet for SampledParameter...')
-                qs_spq = MPQuerySet(None, values_list, qs_sp=qs_sp)
+                logger.debug('Building SPQuerySet for SampledParameter...')
+                qs_spq = SPQuerySet(None, values_list, qs_sp=qs_sp)
         else:
-            logger.debug('Building MPQuerySet for SampledParameter...')
-            qs_spq = MPQuerySet(None, values_list, qs_sp=qs_sp)
+            logger.debug('Building SPQuerySet for SampledParameter...')
+            qs_spq = SPQuerySet(None, values_list, qs_sp=qs_sp)
 
         if qs_spq is None:
             logger.debug('qs_spq.query = %s', str(qs_spq.query))
@@ -467,6 +733,27 @@ class MPQuery(object):
                 logger.debug('sql = %s', sql)
 
         return sql
+
+
+    def getSampledParametersPostgreSQL(self):
+        '''
+        Return SQL string that can be executed against the postgres database
+        '''
+        self.qs_sp = self.getSampledParametersQS(SPQuerySet.rest_columns)
+        if self.qs_sp:
+            sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
+            logger.debug('type(self.qs_sp) = %s', type(self.qs_sp))
+            sql +=  str(self.qs_sp.query) + ';'
+            sql = sqlparse.format(sql, reindent=True, keyword_case='upper')
+            # Fix up the formatting
+            sql = sql.replace('INNER JOIN', '     INNER JOIN')
+            sql = sql.replace(' WHERE', '\nWHERE ')
+            p = re.compile('\s+AND')
+            sql = p.sub('\n      AND', sql)
+            logger.debug('sql = %s', sql)
+
+        return sql
+
 
     def addParameterValuesSelfJoins(self, query, pvDict, select_items= '''stoqs_instantpoint.timevalue as measurement__instantpoint__timevalue, 
                                                                           stoqs_measurement.depth as measurement__depth,
