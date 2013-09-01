@@ -30,7 +30,7 @@ class KML(object):
     Manage the construcion of KML files from stoqs.  Several options may be set on initialization and
     clients can get KML output with the kmlResponse() method.
     '''
-    def __init__(self, request, qs_mp, qparams, **kwargs):
+    def __init__(self, request, qs_mp, qparams, stoqs_object_name, **kwargs):
         '''
         Possible kwargs and their default values:
             @withTimeStamp: True
@@ -39,6 +39,7 @@ class KML(object):
         self.request = request
         self.qs_mp = qs_mp
         self.qparams = qparams
+        self.stoqs_object_name = stoqs_object_name
 
         logger.debug('request = %s', request)
         ##logger.debug('kwargs = %s', kwargs)
@@ -94,16 +95,39 @@ class KML(object):
         logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
         logger.debug('self.stride = %d', self.stride)
 
-        try:
-            # Expect the query set self.qs_mp to be a collection of value lists
-            data = [(mp['measurement__instantpoint__timevalue'], mp['measurement__geom'].x, mp['measurement__geom'].y,
-                     mp['measurement__depth'], mp['parameter__name'],  mp['datavalue'], mp['measurement__instantpoint__activity__platform__name'])
-                     for mp in self.qs_mp[::self.stride]]
-        except TypeError:
-            # Otherwise expect self.qs_mp to be a collection of model instances
-            data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
-                     mp.measurement.depth, mp.parameter.name,  mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
-                     for mp in self.qs_mp[::self.stride]]
+        logger.debug('self.stoqs_object_name = %s', self.stoqs_object_name)
+        if self.stoqs_object_name == 'measured_parameter':
+            try:
+                # Expect the query set self.qs_mp to be a collection of value lists
+                data = [(mp['measurement__instantpoint__timevalue'], mp['measurement__geom'].x, mp['measurement__geom'].y,
+                         mp['measurement__depth'], mp['parameter__name'],  mp['datavalue'], mp['measurement__instantpoint__activity__platform__name'])
+                         for mp in self.qs_mp[::self.stride]]
+            except TypeError:
+                # Otherwise expect self.qs_mp to be a collection of model instances
+                data = [(mp.measurement.instantpoint.timevalue, mp.measurement.geom.x, mp.measurement.geom.y,
+                         mp.measurement.depth, mp.parameter.name,  mp.datavalue, mp.measurement.instantpoint.activity.platform.name)
+                         for mp in self.qs_mp[::self.stride]]
+            try:
+                folderName = "%s_%.1f_%.1f" % (pName, float(self.qparams['measurement__depth__gte']), float(self.qparams['measurement__depth__lte']))
+            except KeyError:
+                folderName = "%s_" % (pName,)
+
+        elif self.stoqs_object_name == 'sampled_parameter':
+            try:
+                # Expect the query set self.qs_mp to be a collection of value lists
+                data = [(mp['sample__instantpoint__timevalue'], mp['sample__geom'].x, mp['sample__geom'].y,
+                         mp['sample__depth'], mp['parameter__name'],  mp['datavalue'], mp['sample__instantpoint__activity__platform__name'])
+                         for mp in self.qs_mp[::self.stride]]
+            except TypeError:
+                # Otherwise expect self.qs_mp to be a collection of model instances
+                data = [(mp.sample.instantpoint.timevalue, mp.sample.geom.x, mp.sample.geom.y,
+                         mp.sample.depth, mp.parameter.name,  mp.datavalue, mp.sample.instantpoint.activity.platform.name)
+                         for mp in self.qs_mp[::self.stride]]
+            try:
+                folderName = "%s_%.1f_%.1f" % (pName, float(self.qparams['sample__depth__gte']), float(self.qparams['sample__depth__lte']))
+            except KeyError:
+                folderName = "%s_" % (pName,)
+
 
         dataHash = {}
         for d in data:
@@ -113,10 +137,6 @@ class KML(object):
                 dataHash[d[6]] = []
                 dataHash[d[6]].append(d)
 
-        try:
-            folderName = "%s_%.1f_%.1f" % (pName, float(self.qparams['measurement__depth__gte']), float(self.qparams['measurement__depth__lte']))
-        except KeyError:
-            folderName = "%s_" % (pName,)
         descr = self.request.get_full_path().replace('&', '&amp;')
         logger.debug(descr)
         kml = self.makeKML(self.request.META['dbAlias'], dataHash, pName, folderName, descr, self.request.GET.get('cmin', None), self.request.GET.get('cmax', None))
