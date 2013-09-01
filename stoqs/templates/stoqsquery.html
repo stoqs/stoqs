@@ -863,7 +863,7 @@
         $('#mp-kml-link').attr('href',kmlurl + mp_cmincmax);
     }
 
-    function updatesP_KMLcmincmax() {
+    function updateSP_KMLcmincmax() {
         if ($('#sp-cmin').val() && $('#sp-cmax').val()) {
             sp_cmincmax = 'cmin=' + $('#sp-cmin').val() + '&cmax=' + $('#sp-cmax').val();
         }
@@ -872,20 +872,27 @@
     }
 
     function update_sensortrackskml() {
-        if ( $('#showsensortracks').is(':checked') ) {
-            if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
+        if ( $('#showsensortracks').is(':checked') && $('input:radio[name=parameters_plot]').is(':checked') ) {
+            if ( $('input:radio[name=parameters_plot]:checked').val() ) {
                 // Generate KML url for the parameters_plot radio button selection - this is separate from the filtered selection for Measurement Data Access
                 var base_url = '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';
                 var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
                 if (param != '') {
                     param = '?' + param;
                 } 
-                mp_param = getMPparms('mp', params);
 
                 // Override any parameter__name or parameter__standard_name with parameter__id from radio button selection
-                var kmlurl = base_url + 'measuredparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
+                var kmlurl;
+                if ( $.inArray($('input:radio[name=parameters_plot]:checked').val(), $('#measuredparameters-anchor').data()['ids']) != -1 ) {
+                    mp_param = getMPparms('mp', params);
+                    kmlurl = base_url + 'measuredparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
+                }
+                else if ( $.inArray($('input:radio[name=parameters_plot]:checked').val(), $('#sampledparameters-anchor').data()['ids']) != -1 ) {
+                    mp_param = getMPparms('sp', params);
+                    kmlurl = base_url + 'sampledparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
+                }
 
-                // strideVal is adjusted based on the current count of measured_parameters so as to prevent long waits for the KML transfer
+                // strideVal is adjusted based on the current count of measured/sampled_parameters so as to prevent long waits for the KML transfer
                 $.get( kmlurl.replace('.kml', '.count')).
                 done( function(count, status) {
                     // Ensure that no more that about 300 points are plotted - stride as necessary
@@ -912,6 +919,9 @@
                         alert('Could not get count of sensor track data: ' + jqXHR);
                     }
                 });
+            }
+            else {
+                sensortrackskml.removeAllFeatures();
             }
         }
         else {
@@ -2204,7 +2214,10 @@
                     $('#sp-data-access-anchor').parent().parent().parent().show();
                 }
                 var parameterButtonText = '';
+                var sp_ids = [];
                 $.each(data[key], function (index, value) {
+                    // Save ids in list for assigning as a data item on Sampled Parameters for easy lookup
+                    sp_ids.push(value[2].toString()); 
                     // Use [2], the id for sampledparameters to allow wierd characters in [0], the name
                     parameterButtonText = parameterButtonText + '<tr>' +
                             //'<td id="' + value[2] +'_access">' +
@@ -2236,12 +2249,16 @@
                     }
                     parameterButtonText = parameterButtonText + '</tr>';
                 });
+                $('#sampledparameters-anchor').data('ids', sp_ids);
                 parameterButtonText = parameterButtonText + '';
                 $('#sampledparameter-table > tbody:last').append(parameterButtonText);
             }
             else if (key == 'measuredparametersgroup') {
                 var parameterButtonText = '';
+                var mp_ids = [];
                 $.each(data[key], function (index, value) {
+                    // Save ids in list for assigning as a data item on Sampled Parameters for easy lookup
+                    mp_ids.push(value[2].toString()); 
                     parameterButtonText = parameterButtonText + '<tr>' +
                             '<td>' +
                                 '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio" />' +
@@ -2274,6 +2291,7 @@
                     }
                     parameterButtonText = parameterButtonText + '</tr>';
                 });
+                $('#measuredparameters-anchor').data('ids', mp_ids);
                 $('#measuredparameter-table > tbody:last').append(parameterButtonText);
                 //$('.measuredparametersgroup').tooltip({title: 'Click to select this Parameter name'});
                 //$('.parameterstandardname').tooltip({title: 'Click to select this Parameter standard_name'});
