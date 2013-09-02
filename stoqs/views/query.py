@@ -140,6 +140,7 @@ def queryData(request, format=None):
                    'showstandardnameparametervalues': 'showstandardnameparametervalues',    # Flag value from checkbox
                    'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
                    'showparameterplatformdata': 'showparameterplatformdata',                # Flag value from checkbox
+
                    'parameterplot': ('parameterplotid',                                     # Plot radio button selection
                                         'platformplotname'),                                # - client knows platform name
                    'showgeox3ddata': 'showgeox3ddata',                                      # Flag value from checkbox
@@ -148,6 +149,7 @@ def queryData(request, format=None):
                    'only': 'only',                          # List of options to update - when only a partial response is needed
                    'parametertab': 'parametertab',          # = 1 if Parameter/Station tab is active and full resolution timeSeries data is needed
                    'secondsperpixel': 'secondsperpixel',    # Resolution of time-depth-flot window
+                   'x3dterrains': 'x3dterrains',            # Hash of 3D Terrain info 
                    }
     params = {}
     for key, value in query_parms.iteritems():

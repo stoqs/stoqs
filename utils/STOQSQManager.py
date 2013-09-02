@@ -82,6 +82,7 @@ class STOQSQManager(object):
             'measuredparameterx3d': self.getMeasuredParameterX3D,
             'parameterparameterpng': self.getParameterParameterPNG,
             'parameterplatforms': self.getParameterPlatforms,
+            'x3dterrains': self.getX3DTerrains,
         }
         
     def buildQuerySets(self, *args, **kwargs):
@@ -1096,6 +1097,20 @@ class STOQSQManager(object):
                 ppHash[ap['parameter__id']].append(ap['activity__platform__name'])
     
         return ppHash
+
+    def getX3DTerrains(self):
+        '''
+        Query Resources to get any X3D Terrain information for this Campaign and return as a hash for the STOQS UI to use
+        '''
+        x3dtHash = {}
+        for r in models.Resource.objects.using(self.dbname).filter(resourcetype__name='x3dterrain').all():
+            try:
+                x3dtHash[r.uristring][r.name] = r.value
+            except KeyError:
+                x3dtHash[r.uristring] = {}
+                x3dtHash[r.uristring][r.name] = r.value
+
+        return x3dtHash
 
     #
     # Methods that generate Q objects used to populate the query.
