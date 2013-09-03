@@ -2852,12 +2852,15 @@
                     break;
             }
         });
+        // Execute an ajax call with the time-depth ranges set
         timedepthplot.setSelection(ranges);
+        permalink_bypass=false;
+        rebuildFilters();
+        permalink_bypass=true;
+
         $.each(parameters['clicks'], function (pos, item) {
             $(item).click();
         });
-
-        rebuildFilters();
 
         // Now, the rest of the information
         $.each(parameters, function (key, value) {
