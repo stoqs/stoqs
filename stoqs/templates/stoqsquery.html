@@ -1689,7 +1689,12 @@
             $('.parameter-plot-radio').show();
             $('.parameter-plot-checkbox').hide();
             $('.all-plot-instruction').text('Clear selection');
-            rebuildFilters(['simpledepthtime', 'platforms', 'sampledepthtime']);
+            var ranges={xaxis: {  to: parseFloat($('#end-ems').val()),
+                                from: parseFloat($('#start-ems').val())},
+                        yaxis: {  to: parseFloat($('#end-depth').val()),
+                                from: parseFloat($('#start-depth').val())}
+                        };
+            ZoomIn(event, ranges);    // Calls rebuildFilters() for everything
         }
     });
 
