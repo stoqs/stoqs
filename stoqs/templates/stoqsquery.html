@@ -2839,23 +2839,22 @@
         $.each(parameters, function (key, value) {
             switch(key) {
                 case 'end-ems':
-                    ranges.xaxis.to=value;
+                    ranges.xaxis.to=parseFloat(value);
                     break;
                 case 'start-ems':
-                    ranges.xaxis.from=value;
+                    ranges.xaxis.from=parseFloat(value);
                     break;
                 case 'end-depth':
-                    ranges.yaxis.to=value;
+                    ranges.yaxis.to=parseFloat(value);
                     break;
                 case 'start-depth': 
-                    ranges.yaxis.from=value;
+                    ranges.yaxis.from=parseFloat(value);
                     break;
             }
         });
-        // Execute an ajax call with the time-depth ranges set
-        timedepthplot.setSelection(ranges);
+        // Zoom into Temporal/Depth before "clicking" anything else
         permalink_bypass=false;
-        rebuildFilters();
+        ZoomIn('', ranges);
         permalink_bypass=true;
 
         $.each(parameters['clicks'], function (pos, item) {
