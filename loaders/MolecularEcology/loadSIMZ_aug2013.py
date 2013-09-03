@@ -91,7 +91,7 @@ if cl.args.test:
     cl.loadM1(stride=1)
 
 elif cl.args.optimal_stride:
-    cl.loadL_662(stride=1)
+    ##cl.loadL_662(stride=1)
     cl.loadDorado(stride=1)
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
@@ -99,7 +99,7 @@ elif cl.args.optimal_stride:
 
 else:
     cl.stride = cl.args.stride
-    cl.loadL_662()
+    ##cl.loadL_662()
     cl.loadDorado()
     cl.loadRCuctd()
     cl.loadRCpctd()
