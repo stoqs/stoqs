@@ -617,7 +617,6 @@
                     </div>
                     <div id="collapseSampledParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <form>
                             <fieldset>
                             <table id="sampledparameter-table" class="table table-condensed">
                                 <thead>
@@ -650,7 +649,6 @@
                                 </tbody>
                             </table>
                             </fieldset>
-                            </form> 
                         </div>
                     </div>
                 </div><!-- accordian-group -->
@@ -665,7 +663,6 @@
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <form>
                             <fieldset>
                             <table id="measuredparameter-table" class="table table-condensed">
                                 <thead>
@@ -699,7 +696,6 @@
                                 </tbody>
                             </table>
                             </fieldset>
-                            </form> 
                         </div>
                     </div>
                 </div><!-- accordian-group -->
@@ -1253,7 +1249,7 @@
         }
 
         params['sampledparametersgroup']=[]
-        $('td',$('#sampledparameter-table')).each(function (index, element) {
+        $('td',$('#sampledparameter-table > tbody')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 if ( $('.sampledparametersgroup', $(element)).length) {
                     params['sampledparametersgroup'].push(element.id);
@@ -1272,7 +1268,7 @@
         params['measuredparametersgroup']=[]
         params['parameterstandardname']=[]
         var regExp = new RegExp('--.+-sn');
-        $('td',$('#measuredparameter-table')).each(function (index, element) {
+        $('td',$('#measuredparameter-table > tbody')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 if ( $('.measuredparametersgroup', $(element)).length) {
                     params['measuredparametersgroup'].push(element.id);
@@ -1684,6 +1680,9 @@
             $('.parameter-plot-radio').hide();
             $('.parameter-plot-checkbox').show();
             $('.all-plot-instruction').text('Check all');
+            if ( ! $('input:checkbox[class=parameter-plot-checkbox]').is(':checked') ) {
+                $('input:checkbox[name=mp_all_parameters_plot_cb]').prop('checked',true).triggerHandler('click');
+            }
             rebuildFilters(['parametertime']);
         }
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
@@ -1694,10 +1693,14 @@
         }
     });
 
-    $(function () {
-        $('.checkall').on('click', function () {
-            $(this).closest('fieldset').find(':checkbox:enabled').prop('checked', this.checked);
-        });
+
+    $('body').on('change', '.parameter-plot-checkbox', function (e) {
+        rebuildFilters(['parametertime']);
+    });
+
+    $('.checkall').on('click', function () {
+        $(this).closest('fieldset').find(':checkbox:enabled').prop('checked', this.checked);
+        rebuildFilters(['parametertime']);
     });
 
 
@@ -2156,6 +2159,10 @@
                 }
             }
         }
+        $('input:checked[name=parameters_plot_cb]').each(function (index, elem) {
+            qstring = qstring + '&parametertimeplotid=' + elem.value;
+        });
+
         if ($('#showgeox3ddata').is(':checked')) {
             qstring = qstring + '&showgeox3ddata=1';
         }
@@ -2851,7 +2858,6 @@
         });
 
         rebuildFilters();
-
 
         // Now, the rest of the information
         $.each(parameters, function (key, value) {

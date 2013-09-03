@@ -653,6 +653,9 @@ class STOQSQManager(object):
 
         # Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names
         p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
+        logger.debug("self.kwargs['parametertimeplotid'] = %s", self.kwargs['parametertimeplotid'])
+        if self.kwargs['parametertimeplotid']:
+            p_qs = p_qs.filter(Q(id__in=self.kwargs['parametertimeplotid']))
         p_qs = p_qs.filter(activityparameter__activity__platform__name=platform[0]).distinct()
         for parameter in p_qs:
             unit = parameter.units
@@ -1301,6 +1304,7 @@ class STOQSQManager(object):
         q = (udcc_q1 | udcc_q2 | cf16_q)
     
         return q
+
 
     #
     # Methods to get the query used based on the current Q object.
