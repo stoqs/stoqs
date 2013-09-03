@@ -1744,6 +1744,7 @@
                                 hoverable: true
                             };
     parametertime_options = {   grid: {
+                                        backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
                                         hoverable: true
                                     },
                                     xaxis: { mode: "time" },
@@ -2150,18 +2151,27 @@
         if ($('#showallparametervalues').is(':checked')) {
             qstring = qstring + '&showallparametervalues=1';
         }
+
+        // Plotting options are separate from the filters - so set them here rather than in rebuildFilters()
+        // Add to query string if that tab is active, do one OR the other, not both
         if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
-            if ( $('input:radio[name=parameters_plot]:checked').val() ) {
-                qstring = qstring + '&parameterplotid=' + $('input:radio[name=parameters_plot]:checked').val();
-                qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
-                if ($('input:radio[name=showdataas]:checked').val()) {
-                    qstring = qstring + '&showdataas=' + $('input:radio[name=showdataas]:checked').val();
+            if ($('#temporal-depth-li').hasClass('active')) {
+                if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                    qstring = qstring + '&parameterplotid=' + $('input:radio[name=parameters_plot]:checked').val();
+                    qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
+                    if ($('input:radio[name=showdataas]:checked').val()) {
+                        qstring = qstring + '&showdataas=' + $('input:radio[name=showdataas]:checked').val();
+                    }
                 }
             }
         }
-        $('input:checked[name=parameters_plot_cb]').each(function (index, elem) {
-            qstring = qstring + '&parametertimeplotid=' + elem.value;
-        });
+        if ( $('input:checkbox[name=parameters_plot_cb]').is(':checked') ) {
+            if ($('#temporal-parameter-li').hasClass('active')) {
+                $('input:checked[name=parameters_plot_cb]').each(function (index, elem) {
+                    qstring = qstring + '&parametertimeplotid=' + elem.value;
+                });
+            }
+        }
 
         if ($('#showgeox3ddata').is(':checked')) {
             qstring = qstring + '&showgeox3ddata=1';
