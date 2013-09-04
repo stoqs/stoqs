@@ -1,0 +1,19 @@
+* Sea-Bird SBE 19plus Data File:
+* FileName = C:\Program Files\Sea-Bird\SeasaveV7\27910c09jm.hdr
+* Software Version Seasave V 7.20c
+* Temperature SN = 4262
+* Conductivity SN = 4262
+* System UpLoad Time = Oct 06 2010 15:26:43
+* NMEA Latitude = 36 55.824 N
+* NMEA Longitude = 122 02.783 W
+* NMEA UTC (Time) = Oct 06 2010 22:26:40
+* Store Lat/Lon Data = Append to Every Scan
+** Project: CANON
+** Platform: John Martin
+** Cruise: 27910
+** Site: C09
+** Cast Sequence: C09
+** CTD ID: 4262
+** Only down to 25m
+* Real-Time Sample Interval = 0.2500 seconds
+*END*

@@ -93,6 +93,7 @@ class ParserWriter(BaseWriter):
             self.oxygen_list = []
 
             for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
+		print r
                 if not r['TimeJ']:
                     continue
                 # A TimeJ value of 1.0 is 0000 hours 1 January, so subtract 1 day
