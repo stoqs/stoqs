@@ -1,0 +1,334 @@
+* Sea-Bird SBE 9 Data File:
+* FileName = C:\Program Files\Sea-Bird\SeasaveV7\data\27311c10.hex
+* Software Version Seasave V 7.20c
+* Temperature SN = 0803
+* Conductivity SN = 0444
+* Number of Bytes Per Scan = 37
+* Number of Voltage Words = 4
+* Number of Scans Averaged by the Deck Unit = 1
+* System UpLoad Time = Sep 30 2011 17:01:07
+* NMEA Latitude = 35 47.57 N
+* NMEA Longitude = 124 12.00 W
+* NMEA UTC (Time) = Oct 01 2011  00:01:05
+* Store Lat/Lon Data = Append to Every Scan
+** Project: SECRET
+** Platform: Western Flyer
+** Cruise: CANON11
+** Site: 67-80
+** Cast Sequence: 10
+** CTD ID: 91651
+# nquan = 30
+# nvalues = 1008                        
+# units = specified
+# name 0 = timeJ: Julian Days
+# name 1 = prDM: Pressure, Digiquartz [db]
+# name 2 = depSM: Depth [salt water, m]
+# name 3 = c0S/m: Conductivity [S/m]
+# name 4 = c1S/m: Conductivity, 2 [S/m]
+# name 5 = t090C: Temperature [ITS-90, deg C]
+# name 6 = t190C: Temperature, 2 [ITS-90, deg C]
+# name 7 = potemp090C: Potential Temperature [ITS-90, deg C]
+# name 8 = potemp190C: Potential Temperature, 2 [ITS-90, deg C]
+# name 9 = xmiss: Beam Transmission, Chelsea/Seatech/Wetlab CStar [%]
+# name 10 = bat: Beam Attenuation, Chelsea/Seatech/Wetlab CStar [1/m]
+# name 11 = v1: Voltage 1
+# name 12 = sbeox0V: Oxygen Voltage, SBE 43
+# name 13 = v2: Voltage 2
+# name 14 = flECO-AFL: Fluorescence, Wetlab ECO-AFL/FL [mg/m^3]
+# name 15 = v3: Voltage 3
+# name 16 = upoly0: Upoly 0, QCP-200
+# name 17 = v4: Voltage 4
+# name 18 = par: PAR/Irradiance, Biospherical/Licor
+# name 19 = v5: Voltage 5
+# name 20 = altM: Altimeter [m]
+# name 21 = v6: Voltage 6
+# name 22 = sbeox0ML/L: Oxygen, SBE 43 [ml/l], WS = 2
+# name 23 = sbeox0PS: Oxygen, SBE 43 [% saturation], WS = 2
+# name 24 = sal00: Salinity, Practical [PSU]
+# name 25 = sal11: Salinity, Practical, 2 [PSU]
+# name 26 = sigma-é00: Density [sigma-theta, Kg/m^3]
+# name 27 = sigma-é11: Density, 2 [sigma-theta, Kg/m^3]
+# name 28 = nbin: number of scans per bin
+# name 29 = flag: flag
+# span 0 = 274.001060, 274.016701       
+# span 1 =      5.000,   1012.000       
+# span 2 =      4.965,   1002.184       
+# span 3 =   3.235415,   4.382070       
+# span 4 =   3.235449,   4.381616       
+# span 5 =     3.7677,    18.1406       
+# span 6 =     3.7695,    18.1403       
+# span 7 =     3.6929,    18.1398       
+# span 8 =     3.6947,    18.1394       
+# span 9 =    81.7518,    89.1953       
+# span 10 =     0.4574,     0.8059      
+# span 11 =     4.2475,     4.6288      
+# span 12 =     0.5299,     2.4177      
+# span 13 =     0.5311,     2.4176      
+# span 14 =     0.2936,     4.5521      
+# span 15 =     0.0317,     0.2021      
+# span 16 =  0.0002000,  36.178763      
+# span 17 =     0.0000,     0.0370      
+# span 18 = -1.844e-06, 9.2141e+01      
+# span 19 =     0.1135,     2.4512      
+# span 20 =      95.39,     100.12      
+# span 21 =     4.7695,     5.0058      
+# span 22 =    0.20027,    5.87431      
+# span 23 =    2.80452,  103.89630      
+# span 24 =    32.9812,    34.4730      
+# span 25 =    32.9934,    34.4716      
+# span 26 =    23.7949,    27.3982      
+# span 27 =    23.7923,    27.3969      
+# span 28 =          3,         68      
+# span 29 = 0.0000e+00, 0.0000e+00      
+# interval = decibars: 1                
+# start_time = Oct 01 2011 00:01:05
+# bad_flag = -9.990e-29
+# <?xml version="1.0" encoding="UTF-8"?>
+# <Sensors count="13" >
+#   <sensor Channel="1" >
+#     <!-- Frequency 0, Temperature -->
+#     <TemperatureSensor SensorID="55" >
+#       <SerialNumber>0803</SerialNumber>
+#       <CalibrationDate>29-Jun-10 </CalibrationDate>
+#       <UseG_J>1</UseG_J>
+#       <A>0.00000000e+000</A>
+#       <B>0.00000000e+000</B>
+#       <C>0.00000000e+000</C>
+#       <D>0.00000000e+000</D>
+#       <F0_Old>0.000</F0_Old>
+#       <G>4.84720228e-003</G>
+#       <H>6.78547236e-004</H>
+#       <I>2.79870059e-005</I>
+#       <J>2.34349366e-006</J>
+#       <F0>1000.000</F0>
+#       <Slope>1.00000000</Slope>
+#       <Offset>0.0000</Offset>
+#     </TemperatureSensor>
+#   </sensor>
+#   <sensor Channel="2" >
+#     <!-- Frequency 1, Conductivity -->
+#     <ConductivitySensor SensorID="3" >
+#       <SerialNumber>0444</SerialNumber>
+#       <CalibrationDate>29-Jun-10 </CalibrationDate>
+#       <UseG_J>1</UseG_J>
+#       <!-- Cell const and series R are applicable only for wide range sensors. -->
+#       <SeriesR>0.0000</SeriesR>
+#       <CellConst>2000.0000</CellConst>
+#       <Coefficients equation="0" >
+#         <A>0.00000000e+000</A>
+#         <B>0.00000000e+000</B>
+#         <C>0.00000000e+000</C>
+#         <D>0.00000000e+000</D>
+#         <M>0.0</M>
+#         <CPcor>-9.57000000e-008</CPcor>
+#       </Coefficients>
+#       <Coefficients equation="1" >
+#         <G>-4.26797268e+000</G>
+#         <H>4.83319944e-001</H>
+#         <I>-9.54291625e-004</I>
+#         <J>6.29111408e-005</J>
+#         <CPcor>-9.57000000e-008</CPcor>
+#         <CTcor>3.2500e-006</CTcor>
+#       </Coefficients>
+#       <Slope>1.00000000</Slope>
+#       <Offset>0.00000</Offset>
+#     </ConductivitySensor>
+#   </sensor>
+#   <sensor Channel="3" >
+#     <!-- Frequency 2, Pressure, Digiquartz with TC -->
+#     <PressureSensor SensorID="45" >
+#       <SerialNumber>89088</SerialNumber>
+#       <CalibrationDate>24-Apr-07</CalibrationDate>
+#       <C1>-5.141458e+004</C1>
+#       <C2>3.041563e-001</C2>
+#       <C3>1.509290e-002</C3>
+#       <D1>3.901800e-002</D1>
+#       <D2>0.000000e+000</D2>
+#       <T1>2.987756e+001</T1>
+#       <T2>-2.538008e-004</T2>
+#       <T3>3.916160e-006</T3>
+#       <T4>3.119320e-009</T4>
+#       <Slope>0.99999200</Slope>
+#       <Offset>-0.58950</Offset>
+#       <T5>0.000000e+000</T5>
+#       <AD590M>1.282800e-002</AD590M>
+#       <AD590B>-9.229530e+000</AD590B>
+#     </PressureSensor>
+#   </sensor>
+#   <sensor Channel="4" >
+#     <!-- Frequency 3, Temperature, 2 -->
+#     <TemperatureSensor SensorID="55" >
+#       <SerialNumber>1736</SerialNumber>
+#       <CalibrationDate>29-Jun-10 </CalibrationDate>
+#       <UseG_J>1</UseG_J>
+#       <A>0.00000000e+000</A>
+#       <B>0.00000000e+000</B>
+#       <C>0.00000000e+000</C>
+#       <D>0.00000000e+000</D>
+#       <F0_Old>0.000</F0_Old>
+#       <G>4.86022408e-003</G>
+#       <H>6.80676580e-004</H>
+#       <I>2.77225502e-005</I>
+#       <J>2.19135960e-006</J>
+#       <F0>1000.000</F0>
+#       <Slope>1.00000000</Slope>
+#       <Offset>0.0000</Offset>
+#     </TemperatureSensor>
+#   </sensor>
+#   <sensor Channel="5" >
+#     <!-- Frequency 4, Conductivity, 2 -->
+#     <ConductivitySensor SensorID="3" >
+#       <SerialNumber>0445</SerialNumber>
+#       <CalibrationDate>29-Jun-10 </CalibrationDate>
+#       <UseG_J>1</UseG_J>
+#       <!-- Cell const and series R are applicable only for wide range sensors. -->
+#       <SeriesR>0.0000</SeriesR>
+#       <CellConst>2000.0000</CellConst>
+#       <Coefficients equation="0" >
+#         <A>0.00000000e+000</A>
+#         <B>0.00000000e+000</B>
+#         <C>0.00000000e+000</C>
+#         <D>0.00000000e+000</D>
+#         <M>0.0</M>
+#         <CPcor>-9.57000000e-008</CPcor>
+#       </Coefficients>
+#       <Coefficients equation="1" >
+#         <G>-4.01987855e+000</G>
+#         <H>4.33394782e-001</H>
+#         <I>-5.64412422e-004</I>
+#         <J>4.59866289e-005</J>
+#         <CPcor>-9.57000000e-008</CPcor>
+#         <CTcor>3.2500e-006</CTcor>
+#       </Coefficients>
+#       <Slope>1.00000000</Slope>
+#       <Offset>0.00000</Offset>
+#     </ConductivitySensor>
+#   </sensor>
+#   <sensor Channel="6" >
+#     <!-- A/D voltage 0, Free -->
+#   </sensor>
+#   <sensor Channel="7" >
+#     <!-- A/D voltage 1, Transmissometer, Chelsea/Seatech/Wetlab CStar -->
+#     <TransChelseaSeatechWetlabCStarSensor SensorID="59" >
+#       <SerialNumber>CST-499DR</SerialNumber>
+#       <CalibrationDate>13-May-10</CalibrationDate>
+#       <M>19.5219</M>
+#       <B>-1.1680</B>
+#       <PathLength>0.250</PathLength>
+#     </TransChelseaSeatechWetlabCStarSensor>
+#   </sensor>
+#   <sensor Channel="8" >
+#     <!-- A/D voltage 2, Oxygen, SBE 43 -->
+#     <OxygenSensor SensorID="38" >
+#       <SerialNumber>0361</SerialNumber>
+#       <CalibrationDate>01-Jul-11p</CalibrationDate>
+#       <Use2007Equation>1</Use2007Equation>
+#       <CalibrationCoefficients equation="0" >
+#         <!-- Coefficients for Owens-Millard equation. -->
+#         <Boc>0.0000</Boc>
+#         <Soc>0.0000e+000</Soc>
+#         <offset>0.0000</offset>
+#         <Pcor>0.00e+000</Pcor>
+#         <Tcor>0.0000</Tcor>
+#         <Tau>0.0</Tau>
+#       </CalibrationCoefficients>
+#       <CalibrationCoefficients equation="1" >
+#         <!-- Coefficients for Sea-Bird equation - SBE calibration in 2007 and later. -->
+#         <Soc> 0.5491</Soc>
+#         <offset>-0.4809</offset>
+#         <A>-2.1811e-003</A>
+#         <B> 5.2964e-005</B>
+#         <C>-1.2039e-006</C>
+#         <D0> 2.5826e+000</D0>
+#         <D1> 1.9263e-004</D1>
+#         <D2>-4.6480e-002</D2>
+#         <E> 3.6000e-002</E>
+#         <Tau20> 1.1700</Tau20>
+#         <H1>-3.3000e-002</H1>
+#         <H2> 5.0000e+003</H2>
+#         <H3> 1.4500e+003</H3>
+#       </CalibrationCoefficients>
+#     </OxygenSensor>
+#   </sensor>
+#   <sensor Channel="9" >
+#     <!-- A/D voltage 3, Fluorometer, Wetlab ECO-AFL/FL -->
+#     <FluoroWetlabECO_AFL_FL_Sensor SensorID="20" >
+#       <SerialNumber>263</SerialNumber>
+#       <CalibrationDate>20-jan-10</CalibrationDate>
+#       <ScaleFactor>2.50000000e+001</ScaleFactor>
+#       <Vblank>0.0200</Vblank>
+#     </FluoroWetlabECO_AFL_FL_Sensor>
+#   </sensor>
+#   <sensor Channel="10" >
+#     <!-- A/D voltage 4, User Polynomial -->
+#     <UserPolynomialSensor SensorID="61" >
+#       <SerialNumber>7137</SerialNumber>
+#       <CalibrationDate>08-Feb-10</CalibrationDate>
+#       <SensorName>QCP-200</SensorName>
+#       <A0>0.00020000</A0>
+#       <A1>979.10000000</A1>
+#       <A2>0.00000000</A2>
+#       <A3>0.00000000</A3>
+#     </UserPolynomialSensor>
+#   </sensor>
+#   <sensor Channel="11" >
+#     <!-- A/D voltage 5, PAR/Irradiance, Biospherical/Licor -->
+#     <PAR_BiosphericalLicorChelseaSensor SensorID="42" >
+#       <SerialNumber>4252</SerialNumber>
+#       <CalibrationDate>08-Feb-10</CalibrationDate>
+#       <M>1.00000000</M>
+#       <B>0.00000000</B>
+#       <CalibrationConstant>3048780487.00000000</CalibrationConstant>
+#       <Multiplier>1.00000000</Multiplier>
+#       <Offset>-0.49530000</Offset>
+#     </PAR_BiosphericalLicorChelseaSensor>
+#   </sensor>
+#   <sensor Channel="12" >
+#     <!-- A/D voltage 6, Altimeter -->
+#     <AltimeterSensor SensorID="0" >
+#       <SerialNumber>118347</SerialNumber>
+#       <CalibrationDate>07-Sep-05</CalibrationDate>
+#       <ScaleFactor>15.000</ScaleFactor>
+#       <Offset>0.000</Offset>
+#     </AltimeterSensor>
+#   </sensor>
+#   <sensor Channel="13" >
+#     <!-- A/D voltage 7, Free -->
+#   </sensor>
+# </Sensors>
+# datcnv_date = Oct 02 2011 19:58:38, 7.20c
+# datcnv_in = c:\progra~1\sea-bird\seasaveV7\data\27311c10.hex c:\progra~1\sea-bird\seasaveV7\data\27311c10.XMLCON
+# datcnv_skipover = 0
+# datcnv_ox_hysteresis_correction = yes
+# filter_date = Oct 02 2011 19:58:57, 7.20c
+# filter_in = c:\progra~1\sea-bird\seasaveV7\data\27311c10.cnv
+# filter_low_pass_tc_A = 0.030
+# filter_low_pass_tc_B = 0.150
+# filter_low_pass_A_vars =
+# filter_low_pass_B_vars = prDM
+# alignctd_date = Oct 02 2011 19:58:59, 7.20c
+# alignctd_in = c:\progra~1\sea-bird\seasaveV7\data\27311c10.cnv
+# alignctd_adv = sbeox0V 5.000, v2 5.000                                                                                                                                                                                             
+# celltm_date = Oct 02 2011 19:59:01, 7.20c
+# celltm_in = c:\progra~1\sea-bird\seasaveV7\data\27311c10.cnv
+# celltm_alpha = 0.0300, 0.0300
+# celltm_tau = 7.0000, 7.0000
+# celltm_temp_sensor_use_for_cond = primary, secondary
+# loopedit_date = Oct 02 2011 19:59:03, 7.20c
+# loopedit_in = c:\progra~1\sea-bird\seasaveV7\data\27311c10.cnv
+# loopedit_minVelocity = 0.250                                                                                            
+# loopedit_surfaceSoak: minDepth = 5.0, maxDepth = 20, useDeckPress = 1                                                   
+# loopedit_excl_bad_scans = yes
+# Derive_date = Oct 02 2011 19:59:05, 7.20c
+# Derive_in = c:\progra~1\sea-bird\seasaveV7\data\27311c10.cnv c:\progra~1\sea-bird\seasaveV7\data\27311c10.XMLCON
+# derive_time_window_docdt = seconds: 2
+# derive_ox_tau_correction = yes
+# binavg_date = Oct 02 2011 19:59:08, 7.20c
+# binavg_in = c:\progra~1\sea-bird\seasaveV7\data\27311c10.cnv
+# binavg_bintype = decibars
+# binavg_binsize = 1
+# binavg_excl_bad_scans = yes
+# binavg_skipover = 0
+# binavg_surface_bin = yes, min = 0.300, max = 0.500, value = 0.000
+# file_type = binary
+*END*

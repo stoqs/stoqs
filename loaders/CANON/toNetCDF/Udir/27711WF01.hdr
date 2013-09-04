@@ -1,0 +1,172 @@
+* Sea-Bird SBE 21 Data File:
+* FileName = C:\Program Files\Sea-Bird\SeasaveV7\data\27711wf01.hex
+* Software Version Seasave V 7.20c
+* Temperature SN = 2960
+* Conductivity SN = 2960
+* System UpLoad Time = Oct 04 2011 12:00:51
+* NMEA Latitude = 33 43.8727 N
+* NMEA Longitude = 127 52.9798 W
+* NMEA UTC (Time) = Oct 04 2011 19:00:33
+* Store Lat/Lon Data = Append to Every Scan
+** Project: SECRET
+** Platform: Western Flyer
+** Cruise: CANON11
+** Site: Line67
+** Cast Sequence: 04
+* Real-Time Sample Interval = 10.0000 seconds
+# nquan = 16
+# nvalues = 1679                        
+# units = specified
+# name 0 = timeJ: Julian Days
+# name 1 = latitude: Latitude [deg]
+# name 2 = longitude: Longitude [deg]
+# name 3 = c0S/m: Conductivity [S/m]
+# name 4 = t090C: Temperature [ITS-90, deg C]
+# name 5 = t190C: Temperature, 2 [ITS-90, deg C]
+# name 6 = sal00: Salinity, Practical [PSU]
+# name 7 = xmiss: Beam Transmission, Chelsea/Seatech/Wetlab CStar [%]
+# name 8 = bat: Beam Attenuation, Chelsea/Seatech/Wetlab CStar [1/m]
+# name 9 = v1: Voltage 1
+# name 10 = wetStar: Fluorescence, Wetlab Wetstar [mg/m^3]
+# name 11 = v0: Voltage 0
+# name 12 = upoly0: Upoly 0, Flowmeter
+# name 13 = v2: Voltage 2
+# name 14 = nbin: number of scans per bin
+# name 15 = flag: flag
+# span 0 = 277.792338, 278.957336       
+# span 1 =   33.64877,   35.22142       
+# span 2 = -127.88291, -125.35858       
+# span 3 =   4.319003,   4.564691       
+# span 4 =    17.9297,    19.7248       
+# span 5 =    12.8761,    20.5882       
+# span 6 =    32.7215,    33.3709       
+# span 7 =    84.6515,    88.1867       
+# span 8 =     0.5029,     0.6738       
+# span 9 =     4.3968,     4.5763       
+# span 10 =     1.1932,     1.5717      
+# span 11 =     0.1595,     0.1848      
+# span 12 =  19.256207,  22.318885      
+# span 13 =     1.7702,     1.8928      
+# span 14 =          1,          6      
+# span 15 = 0.0000e+00, 0.0000e+00      
+# interval = seconds: 60                
+# start_time = Oct 04 2011 19:00:33
+# bad_flag = -9.990e-29
+# <?xml version="1.0" encoding="UTF-8"?>
+# <Sensors count="7" >
+#   <sensor Channel="1" >
+#     <!-- Frequency 0, Temperature -->
+#     <TemperatureSensor SensorID="55" >
+#       <SerialNumber>2960</SerialNumber>
+#       <CalibrationDate>02-Feb-11</CalibrationDate>
+#       <UseG_J>1</UseG_J>
+#       <A>0.00000000e+000</A>
+#       <B>0.00000000e+000</B>
+#       <C>0.00000000e+000</C>
+#       <D>0.00000000e+000</D>
+#       <F0_Old>0.000</F0_Old>
+#       <G>4.19368174e-003</G>
+#       <H>6.03636838e-004</H>
+#       <I>3.16783241e-006</I>
+#       <J>-2.12981155e-006</J>
+#       <F0>1000.000</F0>
+#       <Slope>1.00000000</Slope>
+#       <Offset>0.0000</Offset>
+#     </TemperatureSensor>
+#   </sensor>
+#   <sensor Channel="2" >
+#     <!-- Frequency 1, Conductivity -->
+#     <ConductivitySensor SensorID="3" >
+#       <SerialNumber>2960</SerialNumber>
+#       <CalibrationDate>02-Feb-11 </CalibrationDate>
+#       <UseG_J>1</UseG_J>
+#       <!-- Cell const and series R are applicable only for wide range sensors. -->
+#       <SeriesR>0.0000</SeriesR>
+#       <CellConst>2000.0000</CellConst>
+#       <Coefficients equation="0" >
+#         <A>0.00000000e+000</A>
+#         <B>0.00000000e+000</B>
+#         <C>0.00000000e+000</C>
+#         <D>0.00000000e+000</D>
+#         <M>0.0</M>
+#         <CPcor>-9.57000000e-008</CPcor>
+#       </Coefficients>
+#       <Coefficients equation="1" >
+#         <G>-4.09651845e+000</G>
+#         <H>4.88934611e-001</H>
+#         <I>1.15164372e-003</I>
+#         <J>-2.37992888e-005</J>
+#         <CPcor>-9.57000000e-008</CPcor>
+#         <CTcor>3.2500e-006</CTcor>
+#       </Coefficients>
+#       <Slope>1.00000000</Slope>
+#       <Offset>0.00000</Offset>
+#     </ConductivitySensor>
+#   </sensor>
+#   <sensor Channel="3" >
+#     <!-- Frequency 2, Temperature, 2 -->
+#     <TemperatureSensor SensorID="55" >
+#       <SerialNumber>4076</SerialNumber>
+#       <CalibrationDate>28-Apr-10 </CalibrationDate>
+#       <UseG_J>1</UseG_J>
+#       <A>0.00000000e+000</A>
+#       <B>0.00000000e+000</B>
+#       <C>0.00000000e+000</C>
+#       <D>0.00000000e+000</D>
+#       <F0_Old>0.000</F0_Old>
+#       <G>4.36701973e-003</G>
+#       <H>6.43386184e-004</H>
+#       <I>2.17988448e-005</I>
+#       <J>1.64478181e-006</J>
+#       <F0>1000.000</F0>
+#       <Slope>1.00000000</Slope>
+#       <Offset>0.0000</Offset>
+#     </TemperatureSensor>
+#   </sensor>
+#   <sensor Channel="4" >
+#     <!-- A/D voltage 0, Fluorometer, Wetlab Wetstar -->
+#     <FluoroWetlabWetstarSensor SensorID="21" >
+#       <SerialNumber>WS3S-234</SerialNumber>
+#       <CalibrationDate>07-Apl-09</CalibrationDate>
+#       <ScaleFactor>15.000</ScaleFactor>
+#       <Vblank>0.080</Vblank>
+#     </FluoroWetlabWetstarSensor>
+#   </sensor>
+#   <sensor Channel="5" >
+#     <!-- A/D voltage 1, Transmissometer, Chelsea/Seatech/Wetlab CStar -->
+#     <TransChelseaSeatechWetlabCStarSensor SensorID="59" >
+#       <SerialNumber>CST-235PR</SerialNumber>
+#       <CalibrationDate>09-Sep-10</CalibrationDate>
+#       <M>19.6959</M>
+#       <B>-1.9479</B>
+#       <PathLength>0.250</PathLength>
+#     </TransChelseaSeatechWetlabCStarSensor>
+#   </sensor>
+#   <sensor Channel="6" >
+#     <!-- A/D voltage 2, User Polynomial -->
+#     <UserPolynomialSensor SensorID="61" >
+#       <SerialNumber>1</SerialNumber>
+#       <CalibrationDate></CalibrationDate>
+#       <SensorName>Flowmeter</SensorName>
+#       <A0>-25.00000000</A0>
+#       <A1>25.00000000</A1>
+#       <A2>0.00000000</A2>
+#       <A3>0.00000000</A3>
+#     </UserPolynomialSensor>
+#   </sensor>
+#   <sensor Channel="7" >
+#     <!-- A/D voltage 3, Free -->
+#   </sensor>
+# </Sensors>
+# datcnv_date = Oct 06 2011 11:06:25, 7.20c
+# datcnv_in = c:\progra~1\sea-bird\SeasaveV7\data\27711wf01.hex c:\progra~1\sea-bird\SeasaveV7\data\27711wf01.XMLCON
+# datcnv_skipover = 0
+# binavg_date = Oct 06 2011 11:06:27, 7.20c
+# binavg_in = c:\progra~1\sea-bird\SeasaveV7\data\27711wf01.cnv
+# binavg_bintype = seconds
+# binavg_binsize = 60
+# binavg_excl_bad_scans = yes
+# binavg_skipover = 0
+# binavg_surface_bin = no, min = 0.000, max = 0.000, value = 0.000
+# file_type = binary
+*END*
