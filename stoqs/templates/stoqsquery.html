@@ -193,6 +193,35 @@
                                 </div>
                                 <div class="tab-pane" id="geo3d" style="height:100%;">
                                     <div id="geo-3dplot" style="height:500px;">
+                                        <div class="row-fluid">
+                                            <div class="span3">
+                                                <em>Rotate: Left mouse</em><br>
+                                                <em>Translate: Ctrl + left mouse</em><br>
+                                                <em>Zoom: Alt + left mouse</em><br>
+                                                <em>Recenter rotation: double click</em><br>
+                                            </div>
+                                            <div class="span2">
+                                                <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
+                                                <p><a id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
+                                                <form class="form-inline">
+                                                    <label class="checkbox disabled">
+                                                        <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>
+                                                    </label>
+                                                </form>
+                                            </div>
+                                            <div id="geo3d-colorbar" class="span7"></div>
+                                        </div>
+                                        <div>
+                                        <!-- <X3D id="geo_x3d" style="width:100%; height:auto; margin: 0px auto; display:block; border: none;" showLog="true"> -->
+                                        <X3D id="geo_x3d" style="width:100%; height:100%; margin: 0px auto; display:block; border: none;"> 
+                                            <Scene>
+                                                <NavigationInfo speed="0.05"></NavigationInfo>
+                                                <shape id="mp-x3d-track"></shape>
+                                                <Viewpoint></Viewpoint>
+                                                <Inline></Inline>
+                                            </Scene>
+                                        </X3D>
+                                        </div>
                                     </div>
                                 </div>
                             </div><!-- tab-content -->
@@ -2364,46 +2393,14 @@
             }
             else if (key == 'x3dterrains') {
                 if ( ! $.isEmptyObject(data[key]) ) {
-                    // Only a single terrain is supported
-                    var firstTerrain;
+                    // Only a single terrain is supported for now
                     $.each(data[key], function (terrain, viewpoint) {
-                        firstTerrain = terrain;
-                    });
-                    $('#geo-3dplot').html('<div class="row-fluid">\
-                                            <div class="span3">\
-                                                <em>Rotate: Left mouse</em><br>\
-                                                <em>Translate: Ctrl + left mouse</em><br>\
-                                                <em>Zoom: Alt + left mouse</em><br>\
-                                                <em>Recenter rotation: double click</em><br>\
-                                            </div>\
-                                            <div class="span2">\
-                                                <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>\
-                                                <p><a id="geo_x3d-reset-view" class="btn btn-mini" onClick="$("#geo_x3d")[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>\
-                                                <form class="form-inline">\
-                                                    <label class="checkbox disabled">\
-                                                        <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>\
-                                                    </label>\
-                                                </form>\
-                                            </div>\
-                                            <div id="geo3d-colorbar" class="span7"></div>\
-                                        </div>\
-                                        <div>\
-                                        <X3D id="geo_x3d" style="width:100%; margin: 0px auto; display:block; border: none;" showLog="true"> \
-                                            <Scene id="geo_x3d_scene">\
-                                                <NavigationInfo speed="0.05"></NavigationInfo>\
-                                                <shape id="mp-x3d-track"></shape>\
-                                                <Viewpoint id="geo_x3d_viewpoint"></Viewpoint>\
-                                                <Inline url="' + firstTerrain + '" render="true"></Inline>\
-                                            </Scene>\
-                                        </X3D>\
-                                        </div>');
-                    $.each(data[key], function (terrain, viewpoint) {
-                        $('#geo_x3d_viewpoint').attr('position', viewpoint['position']);
-                        $('#geo_x3d_viewpoint').attr('orientation', viewpoint['orientation']);
-                        $('#geo_x3d_viewpoint').attr('centerOfRotation', viewpoint['centerOfRotation']);
+                        $('#geo_x3d > Scene > Viewpoint').attr('position', viewpoint['position']);
+                        $('#geo_x3d > Scene > viewpoint').attr('orientation', viewpoint['orientation']);
+                        $('#geo_x3d > Scene > Viewpoint').attr('centerOfRotation', viewpoint['centerOfRotation']);
+                        $('#geo_x3d > Scene > Inline').attr('url', terrain);
                         return false;       // Do just the first terrain
                     });
-
                     $('#spatial-3d-li').show();
                 }
             }
@@ -2537,7 +2534,6 @@
                                 $.plot($("#time-depth-flot"), flotdata, options);
                             });
                             // Show colorbar
-                            //$('#sectioncolorbar > img').css('visibility', 'visible');
                             $('#sectioncolorbar > img').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
                             $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
@@ -2552,9 +2548,6 @@
                         // Clear button selected redraw without image
                         redrawSimpleDepthTime(data);
                     }
-                }
-                else {
-                    //$('#sectioncolorbar').css('visibility', 'hidden');
                 }
             }
             else if (key == 'parametertime') {
