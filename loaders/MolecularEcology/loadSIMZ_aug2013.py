@@ -77,7 +77,7 @@ cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_
                      'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
                    ]
 cl.m1_startDatetime = datetime.datetime(2013, 8, 12)
-cl.m1_endDatetime = datetime.datetime(2013, 8, 17)
+cl.m1_endDatetime = datetime.datetime(2013, 8, 19)
 
 
 # Execute the load
