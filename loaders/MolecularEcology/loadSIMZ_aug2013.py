@@ -67,7 +67,7 @@ cl.rcpctd_files = [
                     'simz2013c13.nc', 'simz2013c14.nc', 'simz2013c15.nc', 'simz2013c16.nc',
                     'simz2013c17.nc', 'simz2013c18.nc',
                       ]
-cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
+cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
 
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201202/'
