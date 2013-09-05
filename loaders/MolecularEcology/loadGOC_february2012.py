@@ -58,8 +58,8 @@ cl.wfpctd_files = [
                   ]
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' ]
 
-# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
-cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data')
+# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local GOC12 dir
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'GOC12')
 cl.subsample_csv_files = [
                             'STOQS_GOC12_CHL_1U.csv',
                             'STOQS_GOC12_CHL_5U.csv',
@@ -88,12 +88,12 @@ elif cl.args.optimal_stride:
     # Use same platformName so that section data visualization works in STOQS UI
     cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=1)
     cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data', stride=1)
-    loadSubSamples()
+    cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
     # Use same platformName so that section data visualization works in STOQS UI
     cl.loadWFuctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data')
     cl.loadWFpctd(platformName='wf_ctd', activitytypeName='Western Flyer CTD Data')
-    loadSubSamples()
+    cl.loadSubSamples()
 
