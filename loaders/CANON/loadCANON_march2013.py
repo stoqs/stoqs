@@ -370,7 +370,7 @@ elif cl.args.optimal_stride:
     ##cl.loadYellowfin()
 
 else:
-    cl.stride = stride
+    cl.stride = cl.args.stride
     cl.loadDorado()
     cl.loadDaphne()
     cl.loadTethys()
