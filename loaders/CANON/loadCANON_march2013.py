@@ -24,7 +24,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So tha
 
 from CANON import CANONLoader
 
-cl = CANONLoader('stoqs_march2013', 'CANON-ECOHAB - March 2013')
+cl = CANONLoader('stoqs_march2013', 'CANON-ECOHAB - March 2013',
+                    x3dTerrains= { '/stoqs/static/x3d/SanPedroBasin50.x3d': {
+                                        'position': '-2523652.5 -4726093.2 3499413.2',
+                                        'orientation': '0.96902 -0.20915 -0.13134 1.74597',
+                                        'centerOfRotation': '-2505293.6 -4686937.5 3513055.2'
+                                        }
+                                 } )
 
 # Aboard the Carson use zuma
 ##cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
@@ -340,14 +346,13 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.process_command_line()
 
 if cl.args.test:
-    cl.stride = stride
-    cl.loadDorado()
-    cl.loadDaphne()
-    cl.loadTethys()
+    cl.loadDorado(stride=100)
+    cl.loadDaphne(stride=10000)
+    cl.loadTethys(stride=10000)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
-    cl.loadRCuctd()
-    cl.loadRCpctd()
+    cl.loadRCuctd(stride=10)
+    cl.loadRCpctd(stride=10)
     ##cl.loadHeHaPe()
     ##cl.loadRusalka()
     ##cl.loadYellowfin()
@@ -365,7 +370,7 @@ elif cl.args.optimal_stride:
     ##cl.loadYellowfin()
 
 else:
-    cl.stride = stride
+    cl.stride = cl.args.stride
     cl.loadDorado()
     cl.loadDaphne()
     cl.loadTethys()
@@ -377,3 +382,6 @@ else:
     ##cl.loadRusalka()
     ##cl.loadYellowfin()
 
+# Add any X3D Terrain information specified in the constructor to the database
+cl.addTerrainResources()
+print "All done."

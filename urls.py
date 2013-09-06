@@ -79,6 +79,7 @@ urlpatterns = patterns('',
     # Requests that override BaseOutputer
     url(pre + r'sampledatatable.?'   + formatPat, 'stoqs.views.app.showSampleDT',      {}, name='show-sample-datatable'),
     url(pre + r'measuredparameter.?' + formatPat, 'stoqs.views.app.showMeasuredParameter',  {}, name='show-measuredparmeter'),
+    url(pre + r'sampledparameter.?' + formatPat, 'stoqs.views.app.showSampledParameter',  {}, name='show-sampledparmeter'),
     url(pre + r'activityparameterhistogram.?'      
                                      + formatPat, 'stoqs.views.app.showActivityParameterHistogram',  {}, name='show-aph'),
     url(pre + r'resourceactivity.?' + formatPat, 'stoqs.views.app.showResourceActivity',  {}, name='show-resourceactivity'),

@@ -53,3 +53,20 @@ Version 1.2: 6 February 2013
   - Mesasurement Data access (the "Get Data" button) works for the following
     formats: KML, SQL, Matlab (via STOQSTOOLBOX), JSON, CSV, TSV, and HTML
 
+Version 1.3: 5 September 2013
+
+  Time Series Data
+  ----------------
+  - loaders/DAPoaders.py modified to also recognize and load data specified with CF-1.6 
+    Discrete Sampling Geometry featureTypes of "timeSeries" and "timeSeriesProfile".  
+    This is in addition to the already recognized featyreType of "trajectory".
+  
+  User Interface
+  --------------
+  - Plot functionality has been separated from Filter and Data Access functionality.
+    To plot a Parameter spatially and temporally one now selects a radio button next
+    to the Parameter name button.  This works for bot Sampled Parameters and
+    Measured Paramters.
+  - Sampled Paramter datavalue plotting now works.  If sub sample data containing
+    sampledparater datavalues have been loaded then  
+  User Interface

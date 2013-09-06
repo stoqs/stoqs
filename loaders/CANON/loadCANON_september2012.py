@@ -61,10 +61,10 @@ cl.daphne_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
 
-# Realtime telemetered (_r_) tethys data - insert '_r_' to not load the files
+# Realtime telemetered (_r_) tethys data 
 ##cl.tethys_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/tethys/2012/'                    # Tethys realtime
-cl.tethys_base = cl.dodsBase + 'CANON_september2012/lrauv/tethys/realtime/sbdlogs/2012/201209/'
-cl.tethys_files = [ 
+cl.tethys_r_base = cl.dodsBase + 'CANON_september2012/lrauv/tethys/realtime/sbdlogs/2012/201209/'
+cl.tethys_r_files = [ 
                     '20120909T152301/shore.nc',
                     '20120910T190223/shore.nc',
                     '20120911T125230/shore.nc',
@@ -78,17 +78,27 @@ cl.tethys_files = [
                     '20120917T150614/shore.nc',
                     '20120917T151928/shore.nc',
                   ]
-cl.tethys_parms = [ 'platform_battery_charge', 'sea_water_temperature', 'downwelling_photosynthetic_photon_flux_in_sea_water',
+cl.tethys_r_parms = [ 'platform_battery_charge', 'sea_water_temperature', 'downwelling_photosynthetic_photon_flux_in_sea_water',
                     'mass_concentration_of_oxygen_in_sea_water', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water']
 
-# Postrecovery full-resolution tethys data - insert '_d_' for delayed-mode to not load the data
+# Postrecovery full-resolution (_d_) tethys data
 cl.tethys_d_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2012/'
 cl.tethys_d_files = [ 
                   ]
-
 cl.tethys_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
+
+# 2-second binned (_b_) data as produced by John Ryan on 27 August 2013
+cl.tethys_b_base = cl.dodsBase + 'CANON_september2012/lrauv/tethys/'
+cl.tethys_b_files = ['Tethys_CANONFall2012_NoSalinityCorrection.nc']
+cl.tethys_b_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650', 'PAR']
+
+# Assign version of the data to load
+cl.tethys_base = cl.tethys_b_base
+cl.tethys_files = cl.tethys_b_files
+cl.tethys_parms = cl.tethys_b_parms
+
 
 cl.fulmar_base = []
 cl.fulmar_files = []
@@ -114,7 +124,7 @@ cl.espdrift_files = [
                         'ESP_ctd.nc',
                         'ESP_isus.nc',
                       ]
-cl.espdrift_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
+cl.espdrift_parms = [ 'TEMP', 'PSAL', 'chl', 'chl_ini', 'no3' ]
 
 # Western Flyer Underway CTD
 cl.wfuctd_base = cl.dodsBase + 'CANON_september2012/wf/uctd/'
@@ -149,39 +159,66 @@ cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = datetime.datetime(2012, 9, 1)
 cl.l_662_endDatetime = datetime.datetime(2012, 9, 21)
 
-# Mooring M1ts - for just the duration of the campaign
-cl.m1ts_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'
-cl.m1ts_files = ['OS_MBARI-M1_R_TS']
-##cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR', 
-##                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR', 
-##                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
-##              ]
-cl.m1ts_parms = [ 'PSAL', 'TEMP' ]
-cl.m1ts_startDatetime = datetime.datetime(2012, 9, 1)
-cl.m1ts_endDatetime = datetime.datetime(2012, 9, 21)
+# Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201202/'
+cl.m1_files = ['OS_M1_20120222hourly_CMSTV.nc']
+cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+              ]
+cl.m1_startDatetime = datetime.datetime(2012, 9, 15)        # Good data starts on the 15th
+cl.m1_endDatetime = datetime.datetime(2012, 9, 21)
 
-# Mooring M1met - for just the duration of the campaign
-cl.m1met_base = 'http://elvis.shore.mbari.org/thredds/dodsC/agg/'
-cl.m1met_files = ['OS_MBARI-M1_R_M']
-cl.m1met_parms = [ 'WSPD', 'WDIR', 'ATMP', 'SW', 'RELH' ]
-cl.m1met_startDatetime = datetime.datetime(2012, 9, 1)
-cl.m1met_endDatetime = datetime.datetime(2012, 9, 21)
+# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/C0912/ copied to local BOG_Data dir
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/C0912/')
+cl.subsample_csv_files = [
+                            'STOQS_C0912_ALTIMETER.csv',
+                            'STOQS_C0912_CARBON_GFF.csv',
+                            'STOQS_C0912_CHL_1U.csv',
+                            'STOQS_C0912_CHL_5U.csv',
+                            'STOQS_C0912_CHLA.csv',
+                            'STOQS_C0912_CHL_GFF.csv',
+                            'STOQS_C0912_COND2.csv',
+                            'STOQS_C0912_CONDUCT.csv',
+                            'STOQS_C0912_FLUOR.csv',
+                            'STOQS_C0912_NH4.csv',
+                            'STOQS_C0912_NO2.csv',
+                            'STOQS_C0912_NO3.csv',
+                            'STOQS_C0912_OXY_ML.csv',
+                            'STOQS_C0912_OXY_PS.csv',
+                            'STOQS_C0912_PAR4PI.csv',
+                            'STOQS_C0912_PARCOS.csv',
+                            'STOQS_C0912_PHAEO_1U.csv',
+                            'STOQS_C0912_PHAEO_5U.csv',
+                            'STOQS_C0912_PHAEO_GFF.csv',
+                            'STOQS_C0912_PO4.csv',
+                            'STOQS_C0912_POT_TMP2.csv',
+                            'STOQS_C0912_POT_TMP.csv',
+                            'STOQS_C0912_SAL2.csv',
+                            'STOQS_C0912_SAL.csv',
+                            'STOQS_C0912_SIG_T.csv',
+                            'STOQS_C0912_SIO4.csv',
+                            'STOQS_C0912_TEMP2.csv',
+                            'STOQS_C0912_TMP.csv',
+                            'STOQS_C0912_TRANSBEAM.csv',
+                            'STOQS_C0912_TRANSMISS.csv',
+                         ]
 
 
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
-    ##cl.loadDorado(stride=100)
-    ##cl.loadWaveglider(stride=100)
-    ##cl.loadDaphne(stride=10)
-    ##cl.loadTethys(stride=10)
-    ##cl.loadESPdrift(stride=10)
-    ##cl.loadWFuctd(stride=10)
-    ##cl.loadWFpctd(stride=10)
-    ##cl.loadL_662(stride=100)
-    cl.loadM1ts(stride=1)
-    cl.loadM1met(stride=1)
+    cl.loadDorado(stride=100)
+    cl.loadWaveglider(stride=100)
+    cl.loadDaphne(stride=10)
+    cl.loadTethys(stride=100)
+    cl.loadESPdrift(stride=10)
+    cl.loadWFuctd(stride=10)
+    cl.loadWFpctd(stride=10)
+    cl.loadL_662(stride=100)
+    cl.loadM1(stride=2)
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
@@ -192,8 +229,8 @@ elif cl.args.optimal_stride:
     cl.loadWFuctd(stride=1)
     cl.loadWFpctd(stride=1)
     cl.loadL_662(stride=1)
-    cl.loadM1ts(stride=1)
-    cl.loadM1met(stride=1)
+    cl.loadM1(stride=1)
+    cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
@@ -205,6 +242,6 @@ else:
     cl.loadWFuctd()
     cl.loadWFpctd()
     cl.loadL_662()
-    cl.loadM1ts()
-    cl.loadM1met()
+    cl.loadM1()
+    cl.loadSubSamples()
 
