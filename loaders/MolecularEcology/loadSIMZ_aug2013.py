@@ -67,7 +67,7 @@ cl.rcpctd_files = [
                     'simz2013c13.nc', 'simz2013c14.nc', 'simz2013c15.nc', 'simz2013c16.nc',
                     'simz2013c17.nc', 'simz2013c18.nc',
                       ]
-cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
+cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
 
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201202/'
@@ -77,7 +77,7 @@ cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_
                      'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
                    ]
 cl.m1_startDatetime = datetime.datetime(2013, 8, 12)
-cl.m1_endDatetime = datetime.datetime(2013, 8, 17)
+cl.m1_endDatetime = datetime.datetime(2013, 8, 19)
 
 
 # Execute the load

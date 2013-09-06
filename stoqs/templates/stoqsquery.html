@@ -181,7 +181,7 @@
                                                 <label class="checkbox">
                                                     <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
                                                 </label>&nbsp;
-                                                <label class="checkbox disabled">
+                                                <label class="checkbox disabled" id="sensor-tracks-checkbox" style="display:none;">
                                                     <input type="checkbox" id="showsensortracks" disabled /><span id="showsensortrackstext">Sensor Tracks</span>
                                                 </label>
                                             </form>
@@ -193,6 +193,35 @@
                                 </div>
                                 <div class="tab-pane" id="geo3d" style="height:100%;">
                                     <div id="geo-3dplot" style="height:500px;">
+                                        <div class="row-fluid">
+                                            <div class="span3">
+                                                <em>Rotate: Left mouse</em><br>
+                                                <em>Translate: Ctrl + left mouse</em><br>
+                                                <em>Zoom: Alt + left mouse</em><br>
+                                                <em>Recenter rotation: double click</em><br>
+                                            </div>
+                                            <div class="span2">
+                                                <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
+                                                <p><a id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
+                                                <form class="form-inline">
+                                                    <label class="checkbox disabled">
+                                                        <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>
+                                                    </label>
+                                                </form>
+                                            </div>
+                                            <div id="geo3d-colorbar" class="span7"></div>
+                                        </div>
+                                        <div>
+                                        <!-- <X3D id="geo_x3d" style="width:100%; height:auto; margin: 0px auto; display:block; border: none;" showLog="true"> -->
+                                        <X3D id="geo_x3d" style="width:100%; height:100%; margin: 0px auto; display:block; border: none;"> 
+                                            <Scene>
+                                                <NavigationInfo speed="0.05"></NavigationInfo>
+                                                <shape id="mp-x3d-track"></shape>
+                                                <Viewpoint></Viewpoint>
+                                                <Inline></Inline>
+                                            </Scene>
+                                        </X3D>
+                                        </div>
                                     </div>
                                 </div>
                             </div><!-- tab-content -->
@@ -573,13 +602,13 @@
                                     <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
                                         <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
-                                            <div class="span5">
+                                            <div class="span5" id="contour-scatter-buttons" style="display:none;">
                                                 <span id="temporalparameterplotinfo">&nbsp;</span>
                                                 <br>
                                                 <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
-                                            <div class="span7" id="sectioncolorbar" style="float:right;"></div>
+                                            <div class="span7" id="sectioncolorbar" style="float:right;"><img src="" /></div>
                                         </div>
                                     </div>
                                     <input type="hidden" id="start-ems" name="start-ems" />
@@ -644,7 +673,7 @@
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
                                         </td>
-                                        <td colspan="1" class="all-plot-instruction"></td>
+                                        <td colspan="1" class="all-plot-instruction">Clear selection</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -690,7 +719,7 @@
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
                                         </td>
-                                        <td colspan="1" class="all-plot-instruction"></td>
+                                        <td colspan="1" class="all-plot-instruction">Clear selection</td>
                                     </tr>
                                 </tbody>
                                 </tbody>
@@ -1423,7 +1452,19 @@
     // Special handling for unzooming the time-depth-plot and time-parameter-plot
     $("#zoomed-button").click(function() {
         if ( $('.btn-primary', $('#time-depth-plot').length) ) {
-            resetZoomedValues(initData);
+            if ( $('#temporal-parameter-li').hasClass('active') ) {
+                var start=new Date(initData['time'][0]);
+                $('#start-ems').val(start.getTime());
+                $('#start-time').val(getUTCDateString(start));
+                var end=new Date(initData['time'][1]);
+                $('#end-ems').val(end.getTime());
+                $('#end-time').val(getUTCDateString(end));
+            }
+            else {
+                resetZoomedValues(initData);
+                $('#temporal-depth-label').html('Depth');
+            }
+
             options_stack = [];
             zoom_xy_stack = [];
             stack_depth = 0;
@@ -1433,7 +1474,6 @@
             $("#zoomed-button").addClass('disabled');
             $('#zoomed-button').attr('title', ' ').tooltip('fixTitle').tooltip('hide');
             $('#temporal-anchor').html('Temporal');
-            $('#temporal-depth-label').html('Depth');
 
             rebuildFilters();
             update_sensortrackskml();
@@ -1498,6 +1538,8 @@
     $('body').on('change', '.parameter-plot-radio', function (e) {
         if ( $('body').data()['parameterplatforms'][e.target.value] ) {
             if ( $('body').data()['parameterplatforms'][e.target.value].length == 1 ) {
+                $('#contour-scatter-buttons').show();
+                $('#sensor-tracks-checkbox').show();
                 $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
                                                              $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                 $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
@@ -1513,6 +1555,8 @@
         }
         else {
             // Remove sensortracks and image from Flot plot
+            $('#contour-scatter-buttons').hide();
+            $('#sensor-tracks-checkbox').hide();
             $('#temporalparameterplotinfo').data('info', '');
             $('#temporalparameterplotinfo').text('');
             $('#showsensortrackstext').text('');
@@ -1670,9 +1714,6 @@
     });
 
     $('.temporal-tab > li').on('click', function (event) {
-        //if ($(event.delegateTarget).hasClass('disabled')) {
-        //    return false;
-        //}
         // Show the tab then plot the data so that axes are properly drawn
         $('a', event.delegateTarget).tab('show');
        
@@ -1681,7 +1722,13 @@
             $('.parameter-plot-checkbox').show();
             $('.all-plot-instruction').text('Check all');
             if ( ! $('input:checkbox[class=parameter-plot-checkbox]').is(':checked') ) {
-                $('input:checkbox[name=mp_all_parameters_plot_cb]').prop('checked',true).triggerHandler('click');
+                if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                    var parm_id = $('input:radio[name=parameters_plot]:checked').val();
+                    $('input:checkbox[name=parameters_plot_cb][value=' + parm_id + ']').prop('checked',true);
+                }
+                else {
+                    $('input:checkbox[name=mp_all_parameters_plot_cb]').prop('checked',true).triggerHandler('click');
+                }
             }
             rebuildFilters(['parametertime']);
         }
@@ -1689,7 +1736,12 @@
             $('.parameter-plot-radio').show();
             $('.parameter-plot-checkbox').hide();
             $('.all-plot-instruction').text('Clear selection');
-            rebuildFilters(['simpledepthtime', 'platforms', 'sampledepthtime']);
+            var ranges={xaxis: {  to: parseFloat($('#end-ems').val()),
+                                from: parseFloat($('#start-ems').val())},
+                        yaxis: {  to: parseFloat($('#end-depth').val()),
+                                from: parseFloat($('#start-depth').val())}
+                        };
+            ZoomIn(event, ranges);    // Calls rebuildFilters() for everything
         }
     });
 
@@ -2341,46 +2393,14 @@
             }
             else if (key == 'x3dterrains') {
                 if ( ! $.isEmptyObject(data[key]) ) {
-                    // Only a single terrain is supported
-                    var firstTerrain;
+                    // Only a single terrain is supported for now
                     $.each(data[key], function (terrain, viewpoint) {
-                        firstTerrain = terrain;
-                    });
-                    $('#geo-3dplot').html('<div class="row-fluid">\
-                                            <div class="span3">\
-                                                <em>Rotate: Left mouse</em><br>\
-                                                <em>Translate: Ctrl + left mouse</em><br>\
-                                                <em>Zoom: Alt + left mouse</em><br>\
-                                                <em>Recenter rotation: double click</em><br>\
-                                            </div>\
-                                            <div class="span2">\
-                                                <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>\
-                                                <p><a id="geo_x3d-reset-view" class="btn btn-mini" onClick="$("#geo_x3d")[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>\
-                                                <form class="form-inline">\
-                                                    <label class="checkbox disabled">\
-                                                        <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>\
-                                                    </label>\
-                                                </form>\
-                                            </div>\
-                                            <div id="geo3d-colorbar" class="span7"></div>\
-                                        </div>\
-                                        <div>\
-                                        <X3D id="geo_x3d" style="width:100%; margin: 0px auto; display:block; border: none;" showLog="true"> \
-                                            <Scene id="geo_x3d_scene">\
-                                                <NavigationInfo speed="0.05"></NavigationInfo>\
-                                                <shape id="mp-x3d-track"></shape>\
-                                                <Viewpoint id="geo_x3d_viewpoint"></Viewpoint>\
-                                                <Inline url="' + firstTerrain + '" render="true"></Inline>\
-                                            </Scene>\
-                                        </X3D>\
-                                        </div>');
-                    $.each(data[key], function (terrain, viewpoint) {
-                        $('#geo_x3d_viewpoint').attr('position', viewpoint['position']);
-                        $('#geo_x3d_viewpoint').attr('orientation', viewpoint['orientation']);
-                        $('#geo_x3d_viewpoint').attr('centerOfRotation', viewpoint['centerOfRotation']);
+                        $('#geo_x3d > Scene > Viewpoint').attr('position', viewpoint['position']);
+                        $('#geo_x3d > Scene > viewpoint').attr('orientation', viewpoint['orientation']);
+                        $('#geo_x3d > Scene > Viewpoint').attr('centerOfRotation', viewpoint['centerOfRotation']);
+                        $('#geo_x3d > Scene > Inline').attr('url', terrain);
                         return false;       // Do just the first terrain
                     });
-
                     $('#spatial-3d-li').show();
                 }
             }
@@ -2514,7 +2534,7 @@
                                 $.plot($("#time-depth-flot"), flotdata, options);
                             });
                             // Show colorbar
-                            $('#sectioncolorbar').html('<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />');
+                            $('#sectioncolorbar > img').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
                             $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
@@ -2528,9 +2548,6 @@
                         // Clear button selected redraw without image
                         redrawSimpleDepthTime(data);
                     }
-                }
-                else {
-                    $('#sectioncolorbar').html('');
                 }
             }
             else if (key == 'parametertime') {
