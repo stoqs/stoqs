@@ -44,7 +44,7 @@ import pprint
 # Set up logging
 ##logger = logging.getLogger('loaders')
 logger = logging.getLogger('__main__')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
@@ -73,10 +73,11 @@ class LoadScript(object):
     as process_command_line()
     ''' 
 
-    def __init__(self, base_dbAlias, base_campaignName, stride=1):
+    def __init__(self, base_dbAlias, base_campaignName, stride=1, x3dTerrains={}):
         self.base_dbAlias = base_dbAlias
         self.base_campaignName = base_campaignName
         self.stride = stride
+        self.x3dTerrains = x3dTerrains
 
     def process_command_line(self):
         '''
@@ -106,6 +107,11 @@ class LoadScript(object):
                 cl.loadDorado()
                 cl.loadM1ts()
                 cl.loadM1met()
+
+        Optional arguments for associating X3D Terrains and Viewpoints with this Campaign: 
+            - x3dTerrains: List of absolute URL hashes to X3D GeoElevationGrids with hashes of 
+                           viewpoint position, orientation, and centerOfRotation
+
         '''
 
         import argparse
@@ -137,6 +143,8 @@ class LoadScript(object):
                             help='Run load for test configuration as defined in \n"if cl.args.test:" section of load script')
         parser.add_argument('-s', '--stride', action='store', type=int, default=1,
                             help='Stride value (default=1)')
+        parser.add_argument('-v', '--verbose', action='store_true', 
+                            help='Turn on DEBUG level logging output')
 
         self.args = parser.parse_args()
 
@@ -167,7 +175,32 @@ class LoadScript(object):
                     self.campaignName = self.base_campaignName + ' with uniform stride of %d' % self.args.stride
         else:
             self.campaignName = self.args.campaignName
-                                                                                                                 
+
+        if self.args.verbose:
+            logger.setLevel(logging.DEBUG)
+
+    def addTerrainResources(self):
+        '''
+        If X3D Terrain information is specified then add as Resources to Campaign.  To be called after process_command_line().
+        '''
+        if not self.x3dTerrains:
+            return
+
+        resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+                                name='x3dterrain', description='X3D Terrain information for Spatial 3D visualization')
+        logger.info('Adding to ResourceType: %s', resourceType)
+        logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
+        campaign = m.Campaign.objects.using(self.dbAlias).get(name=self.campaignName)
+        
+        for url, viewpoint in self.x3dTerrains.iteritems():
+            logger.debug('url = %s, viewpoint = %s', url, viewpoint)
+            for name, value in viewpoint.iteritems():
+                resource, created = m.Resource.objects.using(self.dbAlias).get_or_create(
+                            uristring=url, name=name, value=value, resourcetype=resourceType)
+                cr, created = m.CampaignResource.objects.using(self.dbAlias).get_or_create(
+                            campaign=campaign, resource=resource)
+                logger.info('Resource uristring=%s, name=%s, value=%s', url, name, value)
+
 
 class STOQS_Loader(object):
     '''
@@ -491,7 +524,7 @@ class STOQS_Loader(object):
         '''
         # Brute force QC check on depth to remove egregous outliers
         minDepth = -1000
-        maxDepth = 4000
+        maxDepth = 5000
         if depth < minDepth or depth > maxDepth:
             raise SkipRecord('Bad depth: depth must be > and < %s' % minDepth, maxDepth)
 

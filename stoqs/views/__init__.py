@@ -256,11 +256,11 @@ class BaseOutputer(object):
             return HttpResponse(simplejson.dumps(self.qs, cls=encoders.STOQSJSONEncoder), 'application/json')
 
         elif self.format == 'kml':
-            kml = KML(self.request, self.qs, self.qparams)
+            kml = KML(self.request, self.qs, self.qparams, self.stoqs_object_name)
             return kml.kmlResponse()
 
         elif self.format == 'kmln':
-            kml = KML(self.request, self.qs, self.qparams, withTimeStamps=False, withLineStrings=False, withFullIconURL=False)
+            kml = KML(self.request, self.qs, self.qparams, self.stoqs_object_name, withTimeStamps=False, withLineStrings=False, withFullIconURL=False)
             return kml.kmlResponse()
 
         elif self.format == 'count':
@@ -294,7 +294,8 @@ class SampleOutputer(BaseOutputer):
     '''
     fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
                 'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
-                'instantpoint__timevalue', 'instantpoint__activity__name']
+                'instantpoint__timevalue', 'instantpoint__activity__name', 
+                'sampledparameter__parameter__name', 'sampledparameter__datavalue' ]
 
 def showSample(request, format = 'html'):
     stoqs_object = mod.Sample

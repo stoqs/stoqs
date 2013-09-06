@@ -91,7 +91,7 @@ class MeasuredParameter(object):
     '''
     Use matploptib to create nice looking contour plots
     '''
-    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName):
+    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName, parameterID=None, parameterGroups=[MEASUREDINSITU]):
         '''
         Save parameters that can be used by the different product generation methods here
         parameterMinMax is like: (pName, pMin, pMax)
@@ -103,12 +103,19 @@ class MeasuredParameter(object):
         self.parameterMinMax = parameterMinMax
         self.sampleQS = sampleQS
         self.platformName = platformName
+        self.parameterID = parameterID
+        self.parameterGroups = parameterGroups
+
         self.scale_factor = None
         self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
         self.cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
         # - Use a new imageID for each new image
         self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-        self.colorbarPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
+        if self.parameterID:
+            self.colorbarPngFile = str(self.parameterID) + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
+        else:
+            self.colorbarPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
+
         self.colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', self.colorbarPngFile)
         self.x = []
         self.y = []
@@ -131,25 +138,47 @@ class MeasuredParameter(object):
         self.lat_by_act = {}
 
         i = 0
-        for mp in self.qs_mp:
-            if self.scale_factor:
-                self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
-            else:
-                self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
-            self.y.append(mp['measurement__depth'])
-            self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
-            self.z.append(mp['datavalue'])
-            self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
-
-            if 'measurement__geom' in mp.keys():
-                self.lon.append(mp['measurement__geom'].x)
-                self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
-                self.lat.append(mp['measurement__geom'].y)
-                self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
-
-            i = i + 1
-            if (i % 1000) == 0:
-                logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
+        logger.debug('self.qs_mp.query = %s', str(self.qs_mp.query))
+        if SAMPLED in self.parameterGroups:
+            for mp in self.qs_mp:
+                if self.scale_factor:
+                    self.x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+                else:
+                    self.x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()))
+                self.y.append(mp['sample__depth'])
+                self.depth_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__depth'])
+                self.z.append(mp['datavalue'])
+                self.value_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['datavalue'])
+    
+                if 'sample__geom' in mp.keys():
+                    self.lon.append(mp['sample__geom'].x)
+                    self.lon_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__geom'].x)
+                    self.lat.append(mp['sample__geom'].y)
+                    self.lat_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__geom'].y)
+    
+                i = i + 1
+                if (i % 1000) == 0:
+                    logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
+        else:
+            for mp in self.qs_mp:
+                if self.scale_factor:
+                    self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+                else:
+                    self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+                self.y.append(mp['measurement__depth'])
+                self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
+                self.z.append(mp['datavalue'])
+                self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
+    
+                if 'measurement__geom' in mp.keys():
+                    self.lon.append(mp['measurement__geom'].x)
+                    self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
+                    self.lat.append(mp['measurement__geom'].y)
+                    self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
+    
+                i = i + 1
+                if (i % 1000) == 0:
+                    logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
 
         self.depth = self.y
         self.value = self.z
@@ -174,7 +203,11 @@ class MeasuredParameter(object):
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
             self.request.session['sessionID'] = sessionID
 
-        sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
+        if self.parameterID:
+            sectionPngFile = str(self.parameterID) + '_' + self.platformName + '_' + self.imageID + '.png'
+        else:
+            sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
+
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
@@ -282,10 +315,11 @@ class MeasuredParameter(object):
                     ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=self.cm_jetplus, extend='both')
                     ax.scatter(self.x, self.y, marker='.', s=2, c='k', lw = 0)
                 else:
+                    logger.debug('parm_info = %s', parm_info)
                     ax.scatter(self.x, self.y, c=self.z, s=20, cmap=self.cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
 
-                if self.sampleQS:
-                    # Add sample locations and names
+                if self.sampleQS and SAMPLED not in self.parameterGroups:
+                    # Add sample locations and names, but not if the underlying data are from the Samples themselves
                     xsamp = []
                     ysamp = []
                     sname = []
@@ -315,7 +349,7 @@ class MeasuredParameter(object):
             return sectionPngFile, self.colorbarPngFile, ''
         else:
             logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax)
-            return None, None, 'No depth-time region selected.'
+            return None, None, 'Select a time-depth range'
 
     def dataValuesX3D(self):
         '''

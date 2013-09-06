@@ -32,7 +32,7 @@ class SampleDataTable(BaseOutputer):
     fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
                 'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
                 'instantpoint__timevalue', 'instantpoint__activity__name',
-                'instantpoint__id']
+                'instantpoint__id', 'sampledparameter__parameter__name', 'sampledparameter__datavalue']
 
     def assign_qs(self):
         '''
@@ -73,6 +73,8 @@ class SampleDataTable(BaseOutputer):
             row.append(rec['samplepurpose__name'])
             row.append(rec['sampletype__name'])
             row.append(rec['volume'])
+            row.append(rec['sampledparameter__parameter__name'])
+            row.append('%f' % rec['sampledparameter__datavalue'])
             table.append(row)
         
         colList = []
@@ -81,8 +83,8 @@ class SampleDataTable(BaseOutputer):
 
         colList.extend( [{'sTitle': 'depth'}, {'sTitle': 'filter diam'}, {'sTitle': 'filter pore size'}, 
                          {'sTitle': 'lon'}, {'sTitle': 'lat'}, {'sTitle': 'activity name'}, {'sTitle': 'time'}, 
-                         {'sTitle': 'lab'}, {'sTitle': 'name'}, {'sTitle': 'res.'}, {'sTitle': 'purpose'}, 
-                         {'sTitle': 'type'}, {'sTitle': 'volume'} ] )
+                         {'sTitle': 'lab'}, {'sTitle': 'sample name'}, {'sTitle': 'res.'}, {'sTitle': 'purpose'}, 
+                         {'sTitle': 'type'}, {'sTitle': 'volume'}, {'sTitle': 'parameter name'}, {'sTitle': 'data value'}] )
 
         # Format complete JSON for jQuery DataTables, see: http://stackoverflow.com/questions/8665309/jquery-datatables-get-columns-from-json
         logger.debug('len(colList) = %d', len(colList))
@@ -95,9 +97,19 @@ class MeasuredParameter(BaseOutputer):
     Extend basic MeasuredParameter with additional fields that will return data values for many different constraints
     '''
     # Only fields that exists in the model can be included here.  Use '.x' and '.y' on measurement__geom to get latitude and longitude.
-    fields = [ 'parameter__name', 'parameter__standard_name', 'measurement__depth', 'measurement__geom', 
+    fields = [ 'parameter__id', 'parameter__name', 'parameter__standard_name', 'measurement__depth', 'measurement__geom', 
                'measurement__instantpoint__timevalue',  'measurement__instantpoint__activity__name',
                'measurement__instantpoint__activity__platform__name', 'datavalue', 'parameter__units' ]
+
+
+class SampledParameter(BaseOutputer):
+    '''
+    Extend basic SampledParameter with additional fields that will return data values for many different constraints
+    '''
+    # Only fields that exists in the model can be included here.  Use '.x' and '.y' on sample__geom to get latitude and longitude.
+    fields = [ 'parameter__id', 'parameter__name', 'parameter__standard_name', 'sample__depth', 'sample__geom', 
+               'sample__instantpoint__timevalue',  'sample__instantpoint__activity__name',
+               'sample__instantpoint__activity__platform__name', 'datavalue', 'parameter__units' ]
 
 
 class ResourceActivity(BaseOutputer):
@@ -162,6 +174,13 @@ def showMeasuredParameter(request, format = 'json'):
 
     mp = MeasuredParameter(request, format, query_set, stoqs_object)
     return mp.process_request()
+
+def showSampledParameter(request, format = 'json'):
+    stoqs_object = mod.SampledParameter
+    query_set = stoqs_object.objects.all().order_by('sample__instantpoint__timevalue')
+
+    sp = SampledParameter(request, format, query_set, stoqs_object)
+    return sp.process_request()
 
 def showResourceActivity(request, format = 'json'):
     stoqs_object = mod.Resource
