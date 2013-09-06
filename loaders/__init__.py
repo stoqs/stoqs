@@ -32,6 +32,7 @@ from stoqs import models as m
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
 import time
+import re
 import math, numpy
 from coards import to_udunits, from_udunits
 import csv
@@ -249,12 +250,16 @@ class STOQS_Loader(object):
 
     
     def getPlatform(self, name, type):
-        '''Given just a platform name get a platform object from the STOQS database.  If no such object is in the
+        '''
+        Given just a platform name get a platform object from the STOQS database.  If no such object is in the
         database then create a new one.  Makes use of the MBARI tracking database to keep the names and types
         consistent.  The intention of the logic here is to make platform settings dynamic, yet consistent in 
         reusing what is already in the database.  There might need to be some independent tests to ensure that
         we make no duplicates.  The aim is to be case insensitive on the lookup, but to preserve the case of
-        what is in MBARItracking.'''
+        what is in MBARItracking.
+
+        Platform names mut be composed of [a-zA-Z0-9_], containing no special characters or spaces.
+        '''
 
         ##paURL = 'http://odss-staging.shore.mbari.org/trackingdb/platformAssociations.csv'
         paURL = 'http://odss.mbari.org/trackingdb/platformAssociations.csv'
@@ -267,6 +272,10 @@ class STOQS_Loader(object):
         # ship,W_FLYER
         # ship,ZEPHYR
         # mooring,Bruce
+
+        if re.search('\W', name):
+            raise Exception('Platform name = "%s" is not allowed.  Name can contain only letters, numbers and "_"' % name)
+
         tpHandle = []
         logger.info("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
         try:
