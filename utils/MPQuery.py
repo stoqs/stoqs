@@ -618,8 +618,14 @@ class MPQuery(object):
             if self.kwargs['parametervalues']:
                 # A depth of 4 is needed in order to see Platform
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
+
+                if self.parameterID:
+                    logger.debug('Adding parameter__id=%d filter to qs_mp', int(self.parameterID))
+                    qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
+
                 if orderedFlag:
                     qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
+
                 sql = postgresifySQL(str(qs_mp.query))
                 logger.debug('\n\nsql before query = %s\n\n', sql)
                 sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
@@ -760,9 +766,9 @@ class MPQuery(object):
                                                                           stoqs_measurement.geom as measurement__geom,
                                                                           stoqs_measuredparameter.datavalue as datavalue'''):
         '''
-        Given a Postgresified MeasuredParameter query string @query' modify it to add the MP self joins needed 
-        to restrict the data selection to the ParameterValues specified in @pvDict.  Add to the required
-        measuredparameter.id the select items in the comma separeated value string @select_items.
+        Given a Postgresified MeasuredParameter query string 'query' modify it to add the MP self joins needed 
+        to restrict the data selection to the ParameterValues specified in 'pvDict'.  Add to the required
+        measuredparameter.id the select items in the comma separeated value string 'select_items'.
         Return a Postgresified query string that can be used by Django's Manage.raw().
         select_items can be altered as needed, examples:
             For Flot contour plot we need just depth and time.
