@@ -915,7 +915,8 @@
                     // Dynamically set url for sensor tracks display in openlayers
                     updateMP_KMLcmincmax();
                     //sensortrackskml.loaded = false;
-                    strided_kmlurl = kmlurl.replace('.kml', '.kmln') + mp_cmincmax + '&stride=' + strideVal;
+                    strided_kmlurl = kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('body').data()['parameterminmax'][1] + 
+                                                                       '&cmax=' + $('body').data()['parameterminmax'][2] + '&stride=' + strideVal;
                     sensortrackskml.refresh({url: strided_kmlurl});
                 }).
                 fail( function (data, response, jqXHR) {
@@ -2693,7 +2694,7 @@
                     }
                 }
             }
-            else if (key == 'parameterplatforms') {
+            else if (key == 'parameterplatforms' || key == 'parameterminmax') {
                 // Save the dictionary in the body so that asynchronous event handlers can get at it
                 $('body').data(key, data[key]);
             }
