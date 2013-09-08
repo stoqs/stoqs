@@ -1070,20 +1070,21 @@ class STOQSQManager(object):
         '''
         x3dDict = None
         if getShow_Geo_X3D_Data(self.kwargs):
-            if self.kwargs.has_key('measuredparametersgroup'):
-                if len(self.kwargs['measuredparametersgroup']) == 1:
-                    if self.kwargs['measuredparametersgroup'][0]:
-                        if not self.mpq.qs_mp:
-                            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-                        try:
-                            platformName = self.getPlatforms()[0][0]
-                        except IndexError, e:
-                            logger.warn(e)
-                            platformName = None
-
-                        mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
-                                      self.getParameterMinMax(), self.getSampleQS(), platformName)
-                        x3dDict = mpdv.dataValuesX3D()
+            if 'parameterplot' in self.kwargs:
+                if self.kwargs['parameterplot'][0]:
+                    parameterID = self.kwargs['parameterplot'][0]
+                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], models.Parameter.objects.get(id=parameterID))
+                    if not self.mpq.qs_mp:
+                        self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                    try:
+                        platformName = self.getPlatforms()[0][0]
+                    except IndexError, e:
+                        logger.warn(e)
+                        platformName = None
+    
+                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
+                                  self.getParameterMinMax(), self.getSampleQS(), platformName, parameterID, parameterGroups)
+                    x3dDict = mpdv.dataValuesX3D()
             
         return x3dDict
 
