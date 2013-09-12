@@ -70,6 +70,8 @@ class CANONLoader(LoadScript):
                 'nemesis':      'FFF026',
                 'ucsc294':      'FFBA26',
                 'ucsc260':      'FF8426',
+                'wg_oa':        '0f9cd4',
+                'wg_tex':       '9626ff',
              }
 
     def loadDorado(self, stride=None):
@@ -227,6 +229,50 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'UCSC294_Glider', self.colors['ucsc294'], 'glider', 'Glider Mission', 
                                         self.ucsc294_ctd_parms, self.dbAlias, stride, self.ucsc294_ctd_startDatetime, self.ucsc294_ctd_endDatetime)
+
+    def load_wg_oa_ctd(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_oa_ctd_files], self.wg_oa_ctd_files):
+            url = self.wg_oa_ctd_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'glider', 'Glider Mission', 
+                                        self.wg_oa_ctd_parms, self.dbAlias, stride, self.wg_oa_ctd_startDatetime, self.wg_oa_ctd_endDatetime)
+
+    def load_wg_tex_ctd(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_tex_ctd_files], self.wg_tex_ctd_files):
+            url = self.wg_tex_ctd_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'glider', 'Glider Mission', 
+                                        self.wg_tex_ctd_parms, self.dbAlias, stride, self.wg_tex_ctd_startDatetime, self.wg_tex_ctd_endDatetime)
+
+    def load_wg_oa_met(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_oa_met_files], self.wg_oa_met_files):
+            url = self.wg_oa_met_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'glider', 'Glider Mission', 
+                                        self.wg_oa_met_parms, self.dbAlias, stride, self.wg_oa_met_startDatetime, self.wg_oa_met_endDatetime)
+
+    def load_wg_tex_met(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_tex_met_files], self.wg_tex_met_files):
+            url = self.wg_tex_met_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'glider', 'Glider Mission', 
+                                        self.wg_tex_met_parms, self.dbAlias, stride, self.wg_tex_met_startDatetime, self.wg_tex_met_endDatetime)
 
     def loadOA1pco2(self, stride=None):
         '''
