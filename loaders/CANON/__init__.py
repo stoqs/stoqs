@@ -415,6 +415,26 @@ class CANONLoader(LoadScript):
             DAPloaders.runMooringLoader(url, self.campaignName, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2met_parms, self.dbAlias, stride, self.OA2met_startDatetime, self.OA2met_endDatetime)
 
+    def loadBruceMoor(self, stride=None):
+        '''
+        Mooring Bruce specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.bruce_moor_files], self.bruce_moor_files):
+            url = os.path.join(self.bruce_moor_base, file)
+            print "url = %s" % url
+            DAPloaders.runMooringLoader(url, self.campaignName, aName, 'ESP_Bruce_Mooring', self.colors['espbruce'], 'mooring', 'Mooring Deployment',                                       self.bruce_moor_parms, self.dbAlias, stride, self.bruce_moor_startDatetime, self.bruce_moor_endDatetime)
+
+    def loadMackMoor(self, stride=None):
+        '''
+        Mooring Mack specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.mack_moor_files], self.mack_moor_files):
+            url = os.path.join(self.mack_moor_base, file)
+            print "url = %s" % url
+            DAPloaders.runMooringLoader(url, self.campaignName, aName, 'ESP_Mack_Mooring', self.colors['espmack'], 'mooring', 'Mooring Deployment',                                       self.mack_moor_parms, self.dbAlias, stride, self.mack_moor_startDatetime, self.mack_moor_endDatetime)
+
 
     def loadM1(self, stride=None):
         '''
