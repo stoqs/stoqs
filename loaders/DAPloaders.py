@@ -404,9 +404,13 @@ class Base_Loader(STOQS_Loader):
             logger.info("endDatetime not given, using the last value of timeAxis = %f", e)
 
         tf = (s <= timeAxis) & (timeAxis <= e)
+        logger.debug('tf = %s', tf)
         tIndx = numpy.nonzero(tf == True)[0]
+        if tIndx.size == 0:
+            raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, s, e))
 
         # For python slicing add 1 to the end index
+        logger.debug('tIndx = %s', tIndx)
         indices = (tIndx[0], tIndx[-1] + 1)
         logger.info('Start and end indices are: %s', indices)
 
@@ -525,7 +529,11 @@ class Base_Loader(STOQS_Loader):
                 #   dsdorado = open_url('http://odss.mbari.org/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_256_00_256_00_decim.nc')
                 #   dsdorado['temperature'].shape = (12288,)
                 ac[pname] = self.getAuxCoordinates(pname)
-                tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
+                try:
+                    tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
+                except NoValidData, e:
+                    logger.warn('Skipping this parameter. %s' % e)
+                    continue
                 try:
                     # Subselect along the time axis
                     logger.info("Using constraints: ds['%s'][%d:%d:%d]", pname, tIndx[0], tIndx[-1], self.stride)
