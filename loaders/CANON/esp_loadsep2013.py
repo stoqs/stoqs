@@ -30,8 +30,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # this makes
 from CANON import CANONLoader
        
 # building input data sources object
-cl = CANONLoader('stoqs_september2011', 'CANON - September 2011')
-#cl = CANONLoader('stoqs_september2013', 'CANON - September 2013')
+#cl = CANONLoader('stoqs_september2011', 'CANON - September 2011')
+cl = CANONLoader('stoqs_september2013', 'CANON - September 2013')
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
