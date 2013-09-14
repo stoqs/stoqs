@@ -30,7 +30,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # this makes
 from CANON import CANONLoader
        
 # building input data sources object
-#cl = CANONLoader('stoqs_september2011', 'CANON - September 2011')
 cl = CANONLoader('stoqs_september2013', 'CANON - September 2013')
 
 # default location of thredds and dods data:
@@ -60,7 +59,7 @@ cl.dorado_files = [# 'Dorado389_2013_228_00_228_00_decim.nc',
 #  GLIDERS
 ######################################################################
 # Set start and end dates for all glider loads
-t =time.strptime("2013-09-07 0:01", "%Y-%m-%d %H:%M")
+t =time.strptime("2013-08-29 0:01", "%Y-%m-%d %H:%M")
 startdate=t[:6]
 t =time.strptime("2013-09-29 0:01", "%Y-%m-%d %H:%M")
 enddate=t[:6]
@@ -85,34 +84,6 @@ cl.nps29_files = [ 'OS_Glider_NPS_G29_20130829_TS.nc']
 cl.nps29_parms = ['TEMP', 'PSAL', 'OPBS']
 cl.nps29_startDatetime = datetime.datetime(*startdate[:])
 cl.nps29_endDatetime = datetime.datetime(*enddate[:])
-
-# nemesis ctd
-cl.nemesis_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
-cl.nemesis_ctd_files = [ 'nemesis_ctd.nc']
-cl.nemesis_ctd_parms = ['TEMP', 'PSAL' ]
-cl.nemesis_ctd_startDatetime = datetime.datetime(*startdate[:])
-cl.nemesis_ctd_endDatetime = datetime.datetime(*enddate[:])
-
-# nemesis met 
-cl.nemesis_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
-cl.nemesis_met_files = [ 'nemesis_met.nc']
-cl.nemesis_met_parms = ['TEMP', 'PSAL' ]
-cl.nemesis_met_startDatetime = datetime.datetime(*startdate[:])
-cl.nemesis_met_endDatetime = datetime.datetime(*enddate[:])
-
-# ucsc294 met 
-cl.ucsc294_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_UCSC_2/'
-cl.ucsc294_met_files = [ 'ucsc294_met.nc']
-cl.ucsc294_met_parms = ['TEMP', 'PSAL' ]
-cl.ucsc294_met_startDatetime = datetime.datetime(*startdate[:])
-cl.ucsc294_met_endDatetime = datetime.datetime(*enddate[:])
-
-# ucsc294 ctd 
-cl.ucsc294_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_UCSC_2/'
-cl.ucsc294_ctd_files = [ 'ucsc294_ctd.nc']
-cl.ucsc294_ctd_parms = ['TEMP', 'PSAL' ,'oxygen','chla','backscatter']
-cl.ucsc294_ctd_startDatetime = datetime.datetime(*startdate[:])
-cl.ucsc294_ctd_endDatetime = datetime.datetime(*enddate[:])
 
 # Liquid Robotics Waveglider
 cl.waveglider_base = cl.dodsBase + 'CANON_september2013/waveglider/'
@@ -325,10 +296,6 @@ if cl.args.test:
 #    cl.loadL_662(stride=100) # done
 #    cl.load_NPS29(stride=100) 
 #    cl.load_NPS34(stride=100) 
-#    cl.load_nemesis_ctd(stride=1) 
-    cl.load_ucsc294_ctd(stride=1) 
-#    cl.load_nemesis_met(stride=1) 
-#    cl.load_ucsc294_met(stride=1) 
     ##cl.loadWFuctd(stride=100) # done
     ##cl.loadWaveglider(stride=100)
     ##cl.loadDaphne(stride=10)
@@ -340,18 +307,18 @@ if cl.args.test:
     ##cl.loadM1met(stride=1)
     ##cl.loadM1met(stride=1)
     ##cl.loadRCuctd(stride=10)
-    ##cl.loadStella203(stride=1)
-    ##cl.loadStella204(stride=1)
-    ##cl.loadOA1ctd(stride=1)
-    ##cl.loadOA1met(stride=1)
-    ##cl.loadOA1pH(stride=1)
-    ##cl.loadOA1pco2(stride=1)
-    ##cl.loadOA1fl(stride=1)
-    ##cl.loadOA1o2(stride=1)
-    ##cl.loadOA2ctd(stride=1)
-    ##cl.loadOA2met(stride=1)
-    ##cl.loadOA2pH(stride=1)
-    ##cl.loadOA2pco2(stride=1)
+    cl.loadStella203(stride=1)
+    cl.loadStella204(stride=1)
+    cl.loadOA1ctd(stride=1)
+    cl.loadOA1met(stride=1)
+    cl.loadOA1pH(stride=1)
+    cl.loadOA1pco2(stride=1)
+    cl.loadOA1fl(stride=1)
+    cl.loadOA1o2(stride=1)
+    cl.loadOA2ctd(stride=1)
+    cl.loadOA2met(stride=1)
+    cl.loadOA2pH(stride=1)
+    cl.loadOA2pco2(stride=1)
 #    cl.loadOA2fl(stride=1)
 #    cl.loadOA2o2(stride=1)
     ##cl.loadRCpctd(stride=1)
