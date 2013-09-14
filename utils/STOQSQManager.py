@@ -71,7 +71,7 @@ class STOQSQManager(object):
             'time': self.getTime,
             'depth': self.getDepth,
             'simpledepthtime': self.getSimpleDepthTime,
-            ##'parametertime': self.getParameterTime,
+            'parametertime': self.getParameterTime,
             'sampledepthtime': self.getSampleDepthTime,
             'counts': self.getCounts,
             'sql': self.getMeasuredParametersPostgreSQL,
