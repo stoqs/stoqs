@@ -2957,7 +2957,7 @@
                     var parameters=JSON.parse(LZString.decompressFromBase64(permalink_id));
                     reset_parameters(parameters);
                 } catch (err) {
-                    alert('Permalink loading failed (perhaps your browser does not support this feature?');
+                    alert('Permalink loading failed: ' + err + ' (Perhaps the permalink_id value is invalid?)');
                 }
             } else {
                 var url='{% url 'load_permalink' dbAlias=request.META.dbAlias id='#REPLACE#' %}';
