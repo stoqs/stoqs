@@ -38,11 +38,11 @@ cl.tdsBase = 'http://odss.mbari.org/thredds/'
 cl.dodsBase = cl.tdsBase + 'dodsC/'
 
 # Set start and end dates for mooring, twice per day.  In the morning and afternoon.
-t =time.strptime("2013-09-10 0:01", "%Y-%m-%d %H:%M")
+#t =time.strptime("2013-09-10 0:01", "%Y-%m-%d %H:%M")
 ##startdate=t[:6]
-#ts=time.time()-(24*60*60)
-#st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
-#t=time.strptime(st,"%Y-%m-%d %H:%M")
+ts=time.time()-(13*60*60)
+st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
+t=time.strptime(st,"%Y-%m-%d %H:%M")
 startdate=t[:6]
 t =time.strptime("2013-10-29 0:01", "%Y-%m-%d %H:%M")
 enddate=t[:6]
