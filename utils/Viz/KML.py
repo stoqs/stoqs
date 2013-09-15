@@ -11,6 +11,14 @@ import pprint
 
 logger = logging.getLogger(__name__)
 
+class NoDataForKML(Exception):
+    pass
+
+
+class InvalidLimits(Exception):
+    pass
+
+
 def readCLT(fileName):
     '''
     Read the color lookup table from disk and return a python list of rgb tuples.
@@ -41,7 +49,7 @@ class KML(object):
         self.qparams = qparams
         self.stoqs_object_name = stoqs_object_name
 
-        logger.debug('request = %s', request)
+        ##logger.debug('request = %s', request)
         ##logger.debug('kwargs = %s', kwargs)
         logger.debug('qparams = %s', qparams)
         if 'withTimeStamp' in kwargs:
@@ -137,9 +145,18 @@ class KML(object):
                 dataHash[d[6]] = []
                 dataHash[d[6]].append(d)
 
+        if not dataHash:
+            logger.exception('No data collected for making KML within the constraints provided')
+            return response
+
         descr = self.request.get_full_path().replace('&', '&amp;')
         logger.debug(descr)
-        kml = self.makeKML(self.request.META['dbAlias'], dataHash, pName, folderName, descr, self.request.GET.get('cmin', None), self.request.GET.get('cmax', None))
+        try:
+            kml = self.makeKML(self.request.META['dbAlias'], dataHash, pName, folderName, descr, self.request.GET.get('cmin', None), self.request.GET.get('cmax', None))
+        except InvalidLimits, e:
+            logger.exception(e)
+            return response
+
         response['Content-Type'] = 'application/vnd.google-earth.kml+xml'
         response.write(kml)
         return response
@@ -165,7 +182,10 @@ class KML(object):
         pointKMLHash = {}
         lineKMLHash = {}
         if cmin and cmax:
-            clim = (float(cmin), float(cmax),)
+            try:
+                clim = (float(cmin), float(cmax),)
+            except ValueError:
+                raise InvalidLimits('Cannot make KML with specified cmin, cmax of %s, %s' % (cmin, cmax))
         else:
             clim = climHash[pName]
         logger.debug('clim = %s', clim)
