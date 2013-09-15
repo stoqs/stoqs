@@ -54,7 +54,7 @@ def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientat
         cb_fig = plt.figure(figsize=(5, 0.8))
         cb_ax = cb_fig.add_axes([0.1, 0.8, 0.8, 0.2])
         norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
-        ticks=round_to_n(list(np.linspace(parm_info[1], parm_info[2], num=4)), 3)
+        ticks=round_to_n(list(np.linspace(parm_info[1], parm_info[2], num=4)), 4)
         cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
                                         norm=norm,
                                         ticks=ticks,
