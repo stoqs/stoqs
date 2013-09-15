@@ -382,7 +382,10 @@ class KML(object):
                 logger.debug("datavalue = %f", float(datavalue))
                 logger.debug("clim = %s", clim)
 
-            clt_index = int(round((float(datavalue) - clim[0]) * ((len(clt) - 1) / float(numpy.diff(clim)))))
+            try:
+                clt_index = int(round((float(datavalue) - clim[0]) * ((len(clt) - 1) / float(numpy.diff(clim)))))
+            except ZeroDivisionError:
+                raise InvalidLimits('cmin and cmax are the same value')
             if clt_index < 0:
                 clt_index = 0;
             if clt_index > (len(clt) - 1):
