@@ -583,9 +583,10 @@ class STOQSQManager(object):
                         ##logger.debug('s[2] = %s', s[2])
                         sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
                     except KeyError:
+                        ##logger.debug('First time seeing activity__name = %s, making it a list in sdt', s[2])
                         sdt[p[0]][s[2]] = []                                    # First time seeing activity__name, make it a list
-                        if s[1]:
-                            sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value
+                        if s[1] is not None:
+                            sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value, even if it is 0.0
                     except TypeError:
                         continue                                                # Likely "float argument required, not NoneType"
 

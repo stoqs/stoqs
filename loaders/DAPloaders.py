@@ -780,7 +780,7 @@ class Base_Loader(STOQS_Loader):
         # Update the Activity with information we now have following the load
         newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, ' '.join(self.varsLoaded), datetime.utcnow())
         logger.debug("Updating its comment with newComment = %s", newComment)
-   
+
         num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
                         comment = newComment,
                         maptrack = path,
