@@ -66,7 +66,12 @@ class CANONLoader(LoadScript):
                 'espmack':      '804026',
                 'espbruce':     '808026',
                 'stella203':    'F08026',
-                'stella204':    'F09026',
+                'stella204':    'AAAA26',
+                'nemesis':      'FFF026',
+                'ucsc294':      'FFBA26',
+                'ucsc260':      'FF8426',
+                'wg_oa':        '0f9cd4',
+                'wg_tex':       '9626ff',
              }
 
     def loadDorado(self, stride=None):
@@ -191,6 +196,83 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'NPS_Glider_34', self.colors['nps34'], 'glider', 'Glider Mission', 
                                         self.nps34_parms, self.dbAlias, stride, self.nps34_startDatetime, self.nps34_endDatetime)
+
+    def load_nemesis_ctd(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.nemesis_ctd_files], self.nemesis_ctd_files):
+            url = self.nemesis_ctd_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Nemesis_Glider', self.colors['nemesis'], 'glider', 'Glider Mission', 
+                                        self.nemesis_ctd_parms, self.dbAlias, stride, self.nemesis_ctd_startDatetime, self.nemesis_ctd_endDatetime)
+
+    def load_nemesis_met(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.nemesis_met_files], self.nemesis_met_files):
+            url = self.nemesis_met_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Nemesis_Glider', self.colors['nemesis'], 'glider', 'Glider Mission', 
+                                        self.nemesis_met_parms, self.dbAlias, stride, self.nemesis_met_startDatetime, self.nemesis_met_endDatetime)
+
+    def load_ucsc294_ctd(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.ucsc294_ctd_files], self.ucsc294_ctd_files):
+            url = self.ucsc294_ctd_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'UCSC294_Glider', self.colors['ucsc294'], 'glider', 'Glider Mission', 
+                                        self.ucsc294_ctd_parms, self.dbAlias, stride, self.ucsc294_ctd_startDatetime, self.ucsc294_ctd_endDatetime)
+
+    def load_wg_oa_ctd(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_oa_ctd_files], self.wg_oa_ctd_files):
+            url = self.wg_oa_ctd_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'glider', 'Glider Mission', 
+                                        self.wg_oa_ctd_parms, self.dbAlias, stride, self.wg_oa_ctd_startDatetime, self.wg_oa_ctd_endDatetime)
+
+    def load_wg_tex_ctd(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_tex_ctd_files], self.wg_tex_ctd_files):
+            url = self.wg_tex_ctd_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'glider', 'Glider Mission', 
+                                        self.wg_tex_ctd_parms, self.dbAlias, stride, self.wg_tex_ctd_startDatetime, self.wg_tex_ctd_endDatetime)
+
+    def load_wg_oa_met(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_oa_met_files], self.wg_oa_met_files):
+            url = self.wg_oa_met_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'glider', 'Glider Mission', 
+                                        self.wg_oa_met_parms, self.dbAlias, stride, self.wg_oa_met_startDatetime, self.wg_oa_met_endDatetime)
+
+    def load_wg_tex_met(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_tex_met_files], self.wg_tex_met_files):
+            url = self.wg_tex_met_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'glider', 'Glider Mission', 
+                                        self.wg_tex_met_parms, self.dbAlias, stride, self.wg_tex_met_startDatetime, self.wg_tex_met_endDatetime)
 
     def loadOA1pco2(self, stride=None):
         '''
@@ -332,6 +414,26 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runMooringLoader(url, self.campaignName, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2met_parms, self.dbAlias, stride, self.OA2met_startDatetime, self.OA2met_endDatetime)
+
+    def loadBruceMoor(self, stride=None):
+        '''
+        Mooring Bruce specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.bruce_moor_files], self.bruce_moor_files):
+            url = os.path.join(self.bruce_moor_base, file)
+            print "url = %s" % url
+            DAPloaders.runMooringLoader(url, self.campaignName, aName, 'ESP_Bruce_Mooring', self.colors['espbruce'], 'mooring', 'Mooring Deployment',                                       self.bruce_moor_parms, self.dbAlias, stride, self.bruce_moor_startDatetime, self.bruce_moor_endDatetime)
+
+    def loadMackMoor(self, stride=None):
+        '''
+        Mooring Mack specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.mack_moor_files], self.mack_moor_files):
+            url = os.path.join(self.mack_moor_base, file)
+            print "url = %s" % url
+            DAPloaders.runMooringLoader(url, self.campaignName, aName, 'ESP_Mack_Mooring', self.colors['espmack'], 'mooring', 'Mooring Deployment',                                       self.mack_moor_parms, self.dbAlias, stride, self.mack_moor_startDatetime, self.mack_moor_endDatetime)
 
 
     def loadM1(self, stride=None):
