@@ -69,7 +69,6 @@ cl.nps34_endDatetime = datetime.datetime(*enddate[:])
 cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.nps29_files = [ 'OS_Glider_NPS_G29_20130829_TS.nc']
 cl.nps29_parms = ['TEMP', 'PSAL', 'FLU2']
-#cl.nps29_parms = ['TEMP', 'PSAL', 'OPBS']
 cl.nps29_startDatetime = datetime.datetime(*startdate[:])
 cl.nps29_endDatetime = datetime.datetime(*enddate[:])
 
