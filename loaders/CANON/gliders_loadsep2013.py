@@ -43,13 +43,14 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 ######################################################################
 # Set start and end dates for all glider loads
 # startdate is 24hours from now
-ts=time.time()-(2.2*60*60)  
+ts=time.time()-(12.2*60*60)  
 st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
 t=time.strptime(st,"%Y-%m-%d %H:%M")
+#t =time.strptime("2013-09-03 20:01", "%Y-%m-%d %H:%M")
 startdate=t[:6]
-t =time.strptime("2013-10-15 0:01", "%Y-%m-%d %H:%M")
+t =time.strptime("2013-10-31 10:37", "%Y-%m-%d %H:%M")
 enddate=t[:6]
-
+print startdate, enddate
 # SPRAY glider - for just the duration of the campaign
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20130711_TS.nc']
@@ -67,7 +68,8 @@ cl.nps34_endDatetime = datetime.datetime(*enddate[:])
 # NPS29
 cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.nps29_files = [ 'OS_Glider_NPS_G29_20130829_TS.nc']
-cl.nps29_parms = ['TEMP', 'PSAL', 'OPBS']
+cl.nps29_parms = ['TEMP', 'PSAL', 'FLU2']
+#cl.nps29_parms = ['TEMP', 'PSAL', 'OPBS']
 cl.nps29_startDatetime = datetime.datetime(*startdate[:])
 cl.nps29_endDatetime = datetime.datetime(*enddate[:])
 
