@@ -1,0 +1,3303 @@
+{% load url from future %}
+<!DOCTYPE html> <!--  HTML5 Doctype -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <title>{{request.META.dbAlias}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Spatial Temporal Oceanographic Query System - User Interface" />
+    <meta name="author" content="Mike McCann, MBARI" />
+
+    <!-- The styles -->
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet"></link>
+    <style>
+        body {
+            padding-top: 35px;  /* 35px to make the container go all the way to the bottom of the topbar */
+            height: 100%;       /* make the percentage height on flot placeholder work */
+        }
+        .stoqs-toggle {
+            width: 100%;
+        }
+        .stoqs-background-ajax-loader-pulse {
+            background-image: url({{STATIC_URL}}images/ajax-loader-pulse.gif);
+        }
+        .stoqs-background-ajax-loader-pp {
+            background-image: url({{STATIC_URL}}images/ajax-loader-rotating1.gif);
+            margin-left: 50%;
+            margin-top: 30%;
+            position: relative;
+            background-position:center;
+            background-repeat:no-repeat;
+        }
+        .stoqs-background-ajax-loader-3d {
+            background-image: url({{STATIC_URL}}images/ajax-loader-rotating1.gif);
+            background-position:center;
+            background-repeat:no-repeat;
+        }
+        .stoqs-background-ajax-loader-3d-topright {
+            background-image: url({{STATIC_URL}}images/ajax-loader.gif);
+            background-position:80% 10%;
+            background-repeat:no-repeat;
+        }
+        .olControlLoadingPanel {
+            background-image:url({{STATIC_URL}}images/ajax-loader-rotating1.gif);
+            margin-left: 50%;
+            margin-top: 30%;
+            width: 100px;
+            height: 100px;
+            position: relative;
+            background-position:center;
+            background-repeat:no-repeat;
+            display: none;
+        }
+        .olControlAttribution {
+            left:10em;
+            top:10em;
+        }
+        .nav-tabs li.active a { 
+            color: black;
+        }
+        .nav-tabs li.disabled a { 
+            color: grey;
+            cursor: no-drop;
+        }
+        .nav-tabs li.disabled a:hover { 
+            border-color: transparent; 
+            background-color: transparent; 
+        }
+
+    </style>
+    <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet"></link>
+    <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet"></link>
+    <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet"></link>
+    <link type="text/css" href="{{ STATIC_URL }}x3dom/css/x3dom.css" rel="stylesheet"></link>
+    
+
+    <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+      <script language="javascript" type="text/javascript" src="{{STATIC_URL}}excanvas_r3/excanvas.js"></script>
+    <![endif]-->
+
+    <!-- The fav and touch icons -->
+    <link rel="shortcut icon" href="{{STATIC_URL}}media/favicon.ico"></link>
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png"></link>
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png"></link>
+    <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png"></link>
+
+    {% if google_analytics_code %}
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', '{{google_analytics_code}}']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    {% endif %}
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner" style="height:34px;">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="http://www.mbari.org" style="padding-top:4px;"><img src="{{STATIC_URL}}images/mbari_bw_logo.gif" alt="MBARI"></a>
+          <a class="brand" href="#">{{request.META.dbAlias}}</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li><a href="{% url 'show-default' %}"><i class="icon-list-alt icon-white"></i> Campaign list</a></li>
+            </ul>
+            <ul class="nav">
+              <li><a id="permalink" data-toggle="modal" href="#permalink-popup" data-action="{% url 'generate_permalink' dbAlias=request.META.dbAlias %}">
+                <i class="icon-eye-open icon-white"></i> Share this view</a></li>
+            </ul>
+            <!--
+            <form action="">
+                <input type="text" placeholder="Search" />
+            </form>
+            -->
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+
+  <div id="permalink-popup" class="modal hide fade in" style="display:none;width:700px;">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">×</a>
+        <h3>Share this view</h3>
+    </div>
+    <div class="modal-body">
+        <h4>Copy this link to your clipboard to and use it in e-mail, etc. to share this view of the data</h4>
+        <div id="permalink-box" style="display:none">
+            <input type="text" name="permalink" style="width: 100%"></input>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+
+    <div class="row-fluid">
+
+        <div id="left-column" class="span6 stoqs-zoom-width">
+
+            <div id="accordion1" class="accordion well">
+
+                <div id="spatial-group" class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="spatial-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseSpatial">
+                        Spatial
+                        </a></h3>
+                    </div>
+                    <div id="collapseSpatial" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul id="spatialTabs" class="nav nav-tabs">
+                                <li class="active"><a href="#map2d" data-toggle="tab">Map</a></li>
+                                <li id="spatial-3d-li" style="display:none"><a href="#geo3d" data-toggle="tab">3D</a></li>
+                            </ul>
+
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="map2d">
+                                    <div class="row-fluid" id="map" style="height:500px;">
+                                    </div>
+                                    <div class="row-fluid">
+                                        <div class="span12">
+                                            <form class="form-inline">
+                                                <label class="checkbox">
+                                                    <input type="checkbox" id="zoomtoextentonupdate" checked /> Zoom to extent on update
+                                                </label>&nbsp;
+                                                <label class="checkbox disabled" id="sensor-tracks-checkbox" style="display:none;">
+                                                    <input type="checkbox" id="showsensortracks" disabled /><span id="showsensortrackstext">Sensor Tracks</span>
+                                                </label>
+                                            </form>
+                                        </div>
+                                        <div id="sensortracks-colorbar" class="span6">
+                                        </div>
+                                    </div>
+                                    <div id="samplePoint"></div>
+                                </div>
+                                <div class="tab-pane" id="geo3d" style="height:100%;">
+                                    <div id="geo-3dplot" style="height:500px;">
+                                        <div class="row-fluid">
+                                            <div class="span3">
+                                                <em>Rotate: Left mouse</em><br>
+                                                <em>Translate: Ctrl + left mouse</em><br>
+                                                <em>Zoom: Alt + left mouse</em><br>
+                                                <em>Recenter rotation: double click</em><br>
+                                            </div>
+                                            <div class="span2">
+                                                <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
+                                                <p><a id="geo_x3d-reset-view" class="btn btn-mini" onClick="$('#geo_x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
+                                                <form class="form-inline">
+                                                    <label class="checkbox disabled">
+                                                        <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>
+                                                    </label>
+                                                </form>
+                                            </div>
+                                            <div id="geo3d-colorbar" class="span7"></div>
+                                        </div>
+                                        <div>
+                                        <!-- <X3D id="geo_x3d" style="width:100%; height:auto; margin: 0px auto; display:block; border: none;" showLog="true"> -->
+                                        <X3D id="geo_x3d" style="width:100%; height:100%; margin: 0px auto; display:block; border: none;"> 
+                                            <Scene>
+                                                <NavigationInfo speed="0.05"></NavigationInfo>
+                                                <shape id="mp-x3d-track"></shape>
+                                                <Viewpoint></Viewpoint>
+                                                <Inline></Inline>
+                                            </Scene>
+                                        </X3D>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div><!-- tab-content -->
+
+                        </div><!-- accordion-inner -->
+                    </div>
+                </div><!-- accordian-group -->
+
+
+                <div id="metadata-group" class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="metadata-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMetadata">
+                        Metadata:</a> <span id="metadata-count" style="color:black;"></span>
+                        <span id="metadata-ajaxtime" style="color:black;"></span><span id="metadata-loading" style="color:black;"></span
+                        </h3>
+                    </div>
+                    <div id="collapseMetadata" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                                
+                            <label class="checkbox">
+                                <input type="checkbox" id="getactualcount" /> Get actual count
+                            </label>
+
+                            <h3>Activities</h3>
+                                <table id="activities-table" class="table table-striped table-bordered">
+                                    <thead>
+                                        <tr><td>Under construction</td></tr>
+                                    </thead> 
+                                    <tbody>
+                                        <tr><td></td></tr>
+                                    </tbody>
+                                </table>
+
+                            <h3>Resources</h3>
+                            <ul id="resourceTabs" class="nav nav-tabs">
+                                <li><a href="#quicklookplots" data-toggle="tab">Quick look plots</a></li>
+                                <li><a href="#netcdfmetadata" data-toggle="tab">NetCDF metadata</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane" id="quicklookplots">
+                                    <div id="metadata-quicklookplots">
+                                        Under construction
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="netcdfmetadata">
+                                    <div id="metadata-netcdfmetadata">
+                                        Under construction
+                                    </div>
+                                </div>
+                            </div><!-- tab-content -->
+
+                        </div><!-- accordion-inner -->
+                    </div>
+                </div><!-- accordian-group -->
+
+
+                <div id="parameter-parameter-group" class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="parameter-parameter-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterParameter">
+                        Parameter-Parameter</a>
+                        <button id="clear-pp-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
+                    </div>
+
+                    <div id="collapseParameterParameter" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul id="parameterParameterTabs" class="nav nav-tabs">
+                                <li><a href="#pp2d" data-toggle="tab">2D</a></li>
+                                <li><a href="#pp3d" data-toggle="tab">3D</a></li>
+                                <li><a href="#ppdata" data-toggle="tab">Data</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane" id="pp2d">
+                                    <div id="parameter-parameter-2dplot" style="overflow: auto; margin:0px auto;">
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="pp3d">
+                                    <div id="parameter-parameter-3dplot" style="height:500px;">
+                                        <div class="row-fluid">
+                                            <div class="span3">
+                                                <em> Rotate: Left mouse<br>Translate: Ctrl + left mouse<br>Zoom: Alt + left mouse </em>
+                                            </div>
+                                            <div class="span2">
+                                                <p><a id="pp-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
+                                                <p><a id="pp_x3d-reset-view" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
+                                            </div>
+                                            <div id="pp3d-colorbar" class="span7"></div>
+                                        </div>
+                                        <div>
+                                        <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
+                                        <X3D id='pp_x3d' style="width:100%; margin: 0px auto; display:block; border: none;">
+                                            <scene>
+                                                <Viewpoint id='x3d-viewpoint' position="-4907.13027 2788.82661 19473.28714" orientation="0.23484 -0.97195 0.01297 0.42414" centerofrotation='5000 5000 5000'></viewpoint>
+
+                                                <Group DEF='Axis'>
+                                                    <Transform translation='0 5000 0'>
+                                                        <Shape>
+                                                            <Appearance DEF='Grey'>
+                                                                <Material diffuseColor='.1 .1 .1' emissiveColor='.2 .2 .2'/>
+                                                            </Appearance>
+                                                            <Cylinder height='10000' radius='20'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                </Group>
+                                                <Transform translation='0 10600 0' scale='300 300 300'>
+                                                    <Shape>
+                                                        <Text solid='false' string='Y'>
+                                                            <FontStyle size='2' justify='MIDDLE'/>
+                                                        </Text>
+                                                        <Appearance USE='Grey'/>
+                                                    </Shape>
+                                                </Transform>
+                                                <Transform rotation='0 1 0 -0.78539816339'>
+                                                    <Transform translation='-400 0 0' scale='300 300 300' rotation='0 0 -1 1.57079632679'>
+                                                        <Shape>
+                                                            <Text id="x3d-ymin" solid='false'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                    <Transform translation='-800 5000 0' scale='400 400 400' rotation='0 0 -1 1.57079632679'>
+                                                        <Shape>
+                                                            <Text id="x3d-yname" solid='false'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                    <Transform translation='-400 10000 0' scale='300 300 300' rotation='0 0 -1 1.57079632679'>
+                                                        <Shape>
+                                                            <Text id="x3d-ymax" solid='false'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                </Transform>
+
+                                                <Transform rotation='0 0 1 -1.57079632679'/>
+                                                    <Group USE='Axis'/>
+                                                </Transform>
+                                                <Transform translation='10600 0 0' scale='300 300 300'>
+                                                    <Shape>
+                                                        <Text solid='false' string='X'>
+                                                            <FontStyle size='2' justify='MIDDLE'/>
+                                                        </Text>
+                                                        <Appearance USE='Grey'/>
+                                                    </Shape>
+                                                </Transform>
+                                                <Transform rotation='1 0 0 0.78539816339'>
+                                                    <Transform translation='0 -400 0' scale='300 300 300'>
+                                                        <Shape>
+                                                            <Text id='x3d-xmin' solid='false'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                    <Transform translation='5000 -800 0' scale='400 400 400'>
+                                                        <Shape>
+                                                            <Text id="x3d-xname" solid='false'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                    <Transform translation='10000 -400 0' scale='300 300 300'>
+                                                        <Shape>
+                                                            <Text id='x3d-xmax' solid='false'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                </Transform>
+
+                                                <Transform rotation='1 0 0 1.57079632679'/>
+                                                    <Group USE='Axis'/>
+                                                </Transform>
+                                                <Transform translation='0 0 10600' scale='300 300 300'>
+                                                    <Shape>
+                                                        <Text solid='false' string='Z'>
+                                                            <FontStyle size='2' justify='MIDDLE'/>
+                                                        </Text>
+                                                        <Appearance USE='Grey'/>
+                                                    </Shape>
+                                                </Transform>
+                                                <Transform rotation='0 0 1 -0.78539816339'>
+                                                    <Transform translation='0 -400 0' scale='300 300 300' rotation='0 1 0 -1.57079632679'>
+                                                        <Shape>
+                                                            <Text id='x3d-zmin' solid='false'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                    <Transform translation='0 -800 5000' scale='400 400 400' rotation='0 1 0 -1.57079632679'>
+                                                        <Shape>
+                                                            <Text id='x3d-zname' solid='false'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                    <Transform translation='0 -400 10000' scale='300 300 300' rotation='0 1 0 -1.57079632679'>
+                                                        <Shape>
+                                                            <Text id='x3d-zmax' solid='false'>
+                                                                <FontStyle size='2' justify='MIDDLE'/>
+                                                            </Text>
+                                                            <Appearance USE='Grey'/>
+                                                        </Shape>
+                                                    </Transform>
+                                                </Transform>
+
+                                                <shape>
+                                                    <pointset>
+                                                        <color id="pointsetcolors"></color>
+                                                        <coordinate id="pointsetcoordinates"></coordinate>
+                                                    </pointset>
+                                                </shape>
+                                            </scene>
+                                        </X3D>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="ppdata">
+                                    <div id="parameter-parameter-data">
+                                        <em>Under construction</em>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- accordian-group -->
+
+
+                <div id="sp-data-access-group" class="accordian-group" style="display:none">
+                    <div class="accordian-heading">
+                        <h3><a id="sp-data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#sp-collapseDataAccess">
+                        Sampled Parameter Data Access
+                        </a></h3>
+                    </div>
+
+                    <div id="sp-collapseDataAccess" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul id="sp-dataaccessdownloadtabs" class="nav nav-tabs">
+                                <li class="active"><a href="#table" data-toggle="tab">Table</a></li>
+                                {% for format in formats %}
+                                <li><a href="#sp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                {% endfor %}            
+                            </ul>
+
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="table" style="overflow: auto">
+                                    <span id="sample-instructions">Click on Sample locations in time-depth plot to get information here</span>
+                                    <table id="sample-table" class="table table-striped table-bordered">
+                                        <thead>
+                                        </thead> 
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% for format in formats %}
+                                    {% if format.0 = 'kml' %}
+                                <div class="tab-pane active" id="sp-{{format.0}}">
+                                    {% else %}
+                                <div class="tab-pane" id="sp-{{format.0}}">
+                                    {% endif %} 
+                                    <table>
+                                        <tr>
+                                            <th><a target="_blank" id="sp-{{format.0}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png" alt="sp-{{format.0}}"/></a></th>
+                                            <th style="vertical-align:text-top;"><span>&nbsp;{{format.1}}</span></th>
+                                        </tr>
+                                    </table>
+                                    {% if format.0 = 'kml' %}
+                                        <div style="text-align: center;">
+                                        <span id="sp-kml-parameter"></span>
+                                        <form style="text-align: center;" class="form-inline">
+                                            <input id="sp-cmin" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
+                                            <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" alt="jetplus" />
+                                            <input id="sp-cmax" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
+                                        </form>
+                                        </div>
+                                        <pre id="sp-{{format.0}}-field"></pre>
+                                    {% else %}
+                                        <pre id="sp-{{format.0}}-field"></pre>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}            
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- accordian-group -->
+
+
+                <div id="mp-data-access-group" class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="mp-data-access-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#mp-collapseDataAccess">
+                        Measured Parameter Data Access
+                        </a> </h3>
+                    </div>
+                    <div id="mp-collapseDataAccess" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul id="mp-dataaccessdownloadtabs" class="nav nav-tabs">
+                                {% for format in formats %}
+                                    {% if format.0 = 'kml' %}
+                                <li class="active"><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                    {% else %}
+                                <li><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                    {% endif %}
+                                {% endfor %}            
+                            </ul>
+                            <div class="tab-content">
+                                {% for format in formats %}
+                                    {% if format.0 = 'kml' %}
+                                <div class="tab-pane active" id="mp-{{format.0}}">
+                                    {% else %}
+                                <div class="tab-pane" id="mp-{{format.0}}">
+                                    {% endif %} 
+                                    <table>
+                                        <tr>
+                                            <th><a target="_blank" id="mp-{{format.0}}-link" href="" title="Click to view"><img src="{{STATIC_URL}}images/{{format.0}}-icon.png" alt="mp-{{format.0}}"/></a></th>
+                                            <th style="vertical-align:text-top;"><span>&nbsp;{{format.1}}</span></th>
+                                        </tr>
+                                    </table>
+                                    {% if format.0 = 'kml' %}
+                                        <div style="text-align: center;">
+                                        <span id="mp-kml-parameter"></span>
+                                        <form style="text-align: center;" class="form-inline">
+                                            <input id="mp-cmin" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
+                                            <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" alt="jetplus" />
+                                            <input id="mp-cmax" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
+                                        </form>
+                                        </div>
+                                        <pre id="mp-{{format.0}}-field"></pre>
+                                    {% else %}
+                                        <pre id="mp-{{format.0}}-field"></pre>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}            
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+            </div><!-- accordian well -->
+
+        </div><!-- span6 -->
+        
+        <div id="right-column" class="span6 stoqs-zoom-width">
+            <div class="accordion well" id="accordion2">
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="temporal-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTemporal">
+                        Temporal</a>
+                        <button id="zoomed-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
+                    </div>
+                    <div id="collapseTemporal" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul id="temporalTabs" class="nav nav-tabs temporal-tab">
+                                <li class="active" id="temporal-depth-li"><a href="#temporal-depth" data-toggle="tab" id="temporal-depth-label">Depth</a></li>
+                                <li id="temporal-parameter-li" style="display:none"><a href="#temporal-parameter" data-toggle="tab">Parameter</a></li>
+                            </ul>
+
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="temporal-depth">
+                                    <em>Click and drag to select a time-depth range</em>
+                                    <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
+                                        <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
+                                        <div class="row-fluid">
+                                            <div class="span5" id="contour-scatter-buttons" style="display:none;">
+                                                <span id="temporalparameterplotinfo">&nbsp;</span>
+                                                <br>
+                                                <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
+                                                <input type="radio" name="showdataas" value="scatter" checked /> scatter
+                                            </div>
+                                            <div class="span7" id="sectioncolorbar" style="float:right;"><img src="" /></div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="start-ems" name="start-ems" />
+                                    <input type="hidden" id="start-time" name="start-time" />
+                                    <input type="hidden" id="end-ems" name="end-ems" /> 
+                                    <input type="hidden" id="end-time" name="end-time"> 
+                                    <input type="hidden" id="start-depth" name="start-depth" />
+                                    <input type="hidden" id="end-depth" name="end-depth" /> 
+                                </div>
+                                <div class="tab-pane" id="temporal-parameter">
+                                    <div class="row-fluid">
+                                        <div class="span6">
+                                            <em>Click and drag to select a time range</em>
+                                        </div>
+                                        <div id="stride-info" class="span6"></div>
+                                    </div>
+                                    <div class="row-fluid" id="time-parameter-plot" style="height:400px" class="disabled row-fluid">
+                                        <div id="time-parameter-flot" style="width:100%;height:90%;" class="disabled"></div>
+                                    </div>
+                                </div>
+                            </div><!-- tab-content -->
+
+
+                        </div><!-- accordion-inner -->
+                    </div>
+                </div><!-- accordian-group -->
+
+
+                <div class="accordian-group" style="display:none">
+                    <div class="accordian-heading">
+                        <h3><a id="sampledparameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSampledParameter">
+                        Sampled Parameters</a>
+                        <button id="clear-sampledparameter-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
+                    </div>
+                    <div id="collapseSampledParameter" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <fieldset>
+                            <table id="sampledparameter-table" class="table table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic">Parameter-Parameter</th>
+                                        <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
+                                        <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic">Filter &amp; Select for data access</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align:center;">X</th>
+                                        <th style="text-align:center;">Y</th>
+                                        <th style="text-align:center;">Z</th>
+                                        <th style="text-align:center;">Color</th>
+                                        <th style="text-align:center; text-decoration:underline;">Plot</th>
+                                        <th style="text-align:center;"></th>
+                                    </tr>
+                                </thead>                             
+                                <tbody>
+                                    <tr>
+                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;">
+                                            <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
+                                            <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
+                                        </td>
+                                        <td colspan="1" class="all-plot-instruction">Clear selection</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            </fieldset>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="measuredparameters-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseMeasuredParameter">
+                        Measured Parameters</a>
+                        <button id="clear-measuredparameter-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
+                    </div>
+                    <div id="collapseMeasuredParameter" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <fieldset>
+                            <table id="measuredparameter-table" class="table table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic">Parameter-Parameter</th>
+                                        <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
+                                        <th colspan="1" style="text-align:center; text-decoration: underline; font-style:italic">Filter &amp; Select for data access</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="text-align:center;">X</th>
+                                        <th style="text-align:center;">Y</th>
+                                        <th style="text-align:center;">Z</th>
+                                        <th style="text-align:center;">Color</th>
+                                        <th style="text-align:center; text-decoration:underline;">Plot</th>
+                                        <th style="text-align:center;"></th>
+                                    </tr>
+                                </thead>                             
+                                <tbody>
+                                    <tr>
+                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;">
+                                            <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
+                                            <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
+                                        </td>
+                                        <td colspan="1" class="all-plot-instruction">Clear selection</td>
+                                    </tr>
+                                </tbody>
+                                </tbody>
+                            </table>
+                            </fieldset>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="parameter-values-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseParameterValues">
+                        Parameter Values</a>
+                        <button id="resetparametervaluesselections" class="btn btn-mini disabled">Clear Selection</button> 
+                        </h3>
+                        <input type="hidden" id="parametervalues-data" name="parametervalues-data" />
+                    </div>
+                    <div id="collapseParameterValues" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <div id="histogram-instruction">Show distribution of parameter values</div>
+                            <div class="span6">
+                                Histogram display: 
+                                <input type="checkbox" class="pv-histogram-checkbox" id="showstandardnameparametervalues" /> Standard Names
+                                <input type="checkbox" class="pv-histogram-checkbox" id="showallparametervalues" /> All Parameters
+                            </div>
+                            <table id="parameter-value-table" class="table table-condensed">
+                            </table>
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+                <div class="accordian-group">
+                    <div class="accordian-heading">
+                        <h3><a id="platforms-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
+                        Platforms</a>
+                        <button id="clear-platforms-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
+                    </div>
+                    <div id="collapseThree" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+                            <table id="platform-table" class="table table-condensed">
+                              <tbody>
+                              </tbody>
+                            </table>                                
+                        </div>
+                    </div>
+                </div><!-- accordian-group -->
+
+            </div><!-- accordian well -->
+
+        </div><!-- span -->
+
+    </div><!-- row-fluid -->
+
+  </div> <!-- container -->
+
+    <!-- The javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery-ui-1.8.17.custom.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.ui.touch-punch.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.dateFormat-1.0.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.selection.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.resize.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.image.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.navigate.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.axislabels.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-scrollspy.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-tab.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-tooltip.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-popover.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-button.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-collapse.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-carousel.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-typeahead.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/OpenLayers.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}OpenLayers-2.11/LoadingPanel.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.js"></script>
+    <!-- <script type="text/javascript" src="http://x3dom.org/download/dev/x3dom-full.js"></script> -->
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>
+    <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
+    <script type="text/javascript"><!--
+    
+    var stoqsQuery='{{site_uri}}{% url 'stoqs-query-summary' dbAlias=request.META.dbAlias %}';
+    var params={}
+    var initData;
+    var widthZoomed = false;
+    var request=''
+    var map = null; 
+    var kmlurl = '';
+    var parametervalues={};     
+    var permalink_bypass=false;
+    var client_side_permalink = true;
+    var polyLayer = new OpenLayers.Layer.Vector( " Selection polygon", {visibility: false} );
+    var timedepthplot;
+    var options_stack = [];
+    var zoom_xy_stack = [];
+    var stack_depth = 0;
+    var simpledepthtime_options;
+    var simpledepthtime_options_zoom;
+    var parametertime_options;
+    var parametertime_options_zoom;
+    var sp_cmincmax = ''
+    var mp_cmincmax = ''
+    var hasTrajectory;
+    var hasTimeSeries;
+    var hasTimeSeriesProfile;
+    var PIXELS_WIDE = 800;                              // Approximate width of $("#time-depth-flot")
+    
+    // Called with an element that was selectable, should make that element non-selectable.
+    function disableButton(element) {
+        if (! $(element).is('.disabled')) {
+            $(element).removeClass('btn-primary');      // Unselect if it's selected.
+            $(element).addClass('disabled');            // Add the disabled class to it.
+            $(element).attr('title', ' ').tooltip('fixTitle').tooltip('show');     // Remove tooltip
+        }
+    }
+    function disableXYZColorPlot(element) {
+        $(element).attr('disabled',true);    // disable the X, Y, Z, Color radio buttons in the row
+    }
+    
+    // Called with an element that was selectable, should make that element selectable.
+    function enableButton(element) {
+        if ($(element).is('.disabled')) {
+            $(element).removeClass('disabled');
+            //$(element).attr('title', 'Click to Select').tooltip('fixTitle').tooltip('hide');     // Add generic tooltip
+        }
+    }
+    function enableXYZColorPlot(element) {
+        $(element).removeAttr('disabled');    // enable the X, Y, Z, Color radio buttons in the row
+    }
+
+    function updateMP_KMLcmincmax() {
+        if ($('#mp-cmin').val() && $('#mp-cmax').val()) {
+            mp_cmincmax = 'cmin=' + $('#mp-cmin').val() + '&cmax=' + $('#mp-cmax').val();
+        }
+        $('#mp-kml-field').text(kmlurl + mp_cmincmax);
+        $('#mp-kml-link').attr('href',kmlurl + mp_cmincmax);
+    }
+
+    function updateSP_KMLcmincmax() {
+        if ($('#sp-cmin').val() && $('#sp-cmax').val()) {
+            sp_cmincmax = 'cmin=' + $('#sp-cmin').val() + '&cmax=' + $('#sp-cmax').val();
+        }
+        $('#sp-kml-field').text(kmlurl + sp_cmincmax);
+        $('#sp-kml-link').attr('href',kmlurl + sp_cmincmax);
+    }
+
+    function update_sensortrackskml() {
+        if ( $('#showsensortracks').is(':checked') && $('input:radio[name=parameters_plot]').is(':checked') ) {
+            if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                // Generate KML url for the parameters_plot radio button selection - this is separate from the filtered selection for Measurement Data Access
+                var base_url = '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';
+                var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
+                if (param != '') {
+                    param = '?' + param;
+                } 
+
+                // Override any parameter__name or parameter__standard_name with parameter__id from radio button selection
+                var kmlurl;
+                if ( $.inArray($('input:radio[name=parameters_plot]:checked').val(), $('#measuredparameters-anchor').data()['ids']) != -1 ) {
+                    mp_param = getMPparms('mp', params);
+                    kmlurl = base_url + 'measuredparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
+                }
+                else if ( $.inArray($('input:radio[name=parameters_plot]:checked').val(), $('#sampledparameters-anchor').data()['ids']) != -1 ) {
+                    mp_param = getMPparms('sp', params);
+                    kmlurl = base_url + 'sampledparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
+                }
+
+                // strideVal is adjusted based on the current count of measured/sampled_parameters so as to prevent long waits for the KML transfer
+                $.get( kmlurl.replace('.kml', '.count')).
+                done( function(count, status) {
+                    // Ensure that no more that about 300 points are plotted - stride as necessary
+                    if (count == 0) {
+                        alert('No data returned for sensortracks');
+                    }
+                    else {
+                        strideVal = Math.floor(count / 300);
+                        if (strideVal < 1) {
+                            strideVal = 1;
+                        }
+                        $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info'] + ' (every ' + getValueOrdinal(strideVal) + ' point)');
+                        // Set colorbar as an attribution - must get the url to the .png from the sensor tracks being turned on
+                        // See: http://stackoverflow.com/questions/5539633/adding-a-absolutely-positioned-div-to-the-bottom-of-an-openlayers-map/5568762#5568762
+                        //sensortrackskml.attribution = '<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />';
+                        // Dynamically set url for sensor tracks display in openlayers
+                        updateMP_KMLcmincmax();
+                        //sensortrackskml.loaded = false;
+                        strided_kmlurl = kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('body').data()['parameterminmax'][1] + 
+                                                                           '&cmax=' + $('body').data()['parameterminmax'][2] + '&stride=' + strideVal;
+                        sensortrackskml.refresh({url: strided_kmlurl});
+                    }
+                }).
+                fail( function (data, response, jqXHR) {
+                    if (jqXHR.toUpperCase() == 'INTERNAL SERVER ERROR') {
+                        $('#showsensortracks').attr({checked: false});
+                        sensortrackskml.removeAllFeatures();
+                    }
+                    else {
+                        alert('Could not get count of sensor track data: ' + jqXHR);
+                    }
+                });
+            }
+            else {
+                sensortrackskml.removeAllFeatures();
+            }
+        }
+        else {
+            sensortrackskml.removeAllFeatures();
+        }
+    }
+
+    function getMPparms(group, params) {
+        // Construct querystring for measuredparameter or sampledparameter REST request, mapping params to Django queries for the MP & SP tables
+        // Good for .json, .csv, .tsv, .html responses
+        var group_name;
+        if ( group == 'mp' ) {
+            group_name1 = 'measured';
+            group_name2 = 'measurement';
+        }
+        else if ( group == 'sp' ) {
+            group_name1 = 'sampled';
+            group_name2 = 'sample';
+        }
+        
+        var mp_param = '?';
+        if (typeof params[group_name1 + 'parametersgroup'] != 'undefined') {
+            if ( group == 'mp' ) {
+                for (var i=0; i<params[group_name1 + 'parametersgroup'].length; i++) {
+                    mp_param = mp_param + 'parameter__name=' + params[group_name1 + 'parametersgroup'][i] + '&';
+                }
+            }
+            else if ( group == 'sp' ) {
+                for (var i=0; i<params[group_name1 + 'parametersgroup'].length; i++) {
+                    mp_param = mp_param + 'parameter__id=' + params[group_name1 + 'parametersgroup'][i] + '&';
+                }
+            }
+        }
+        if (typeof params['parameterstandardname'] != 'undefined') {
+            for (var i=0; i<params['parameterstandardname'].length; i++) {
+                mp_param = mp_param + 'parameter__standard_name=' + params['parameterstandardname'][i] + '&';
+            }
+        }
+        if (typeof params['platforms'] != 'undefined') {
+            if (params['platforms'].length == 1) {
+                mp_param = mp_param + group_name2 + '__instantpoint__activity__platform__name=' + params['platforms'][0] + '&';
+            }
+        }
+        if (typeof params['start_time'] != 'undefined') {
+            mp_param = mp_param + group_name2 + '__instantpoint__timevalue__gt=' + params['start_time'] + '&';
+        }
+        if (typeof params['end_time'] != 'undefined') {
+            mp_param = mp_param + group_name2 + '__instantpoint__timevalue__lt=' + params['end_time'] + '&';
+        }
+        if (typeof params['min_depth'] != 'undefined') {
+            mp_param = mp_param + group_name2 + '__depth__gte=' + params['min_depth'] + '&';
+        }
+        if (typeof params['max_depth'] != 'undefined') {
+            mp_param = mp_param + group_name2 + '__depth__lte=' + params['max_depth'] + '&';
+        }
+
+        if (parametervalues) {
+            for (var parameter in parametervalues) {
+                var min = parametervalues[parameter]['xmin'];
+                var max = parametervalues[parameter]['xmax'];
+                if (typeof min != 'undefined' && typeof max != 'undefined') {
+                    mp_param = mp_param + parameter + "_MIN=" + min.toPrecision(4) + "&";
+                    mp_param = mp_param + parameter + "_MAX=" + max.toPrecision(4) + "&";
+                }
+            };
+        }
+
+        return mp_param
+    }
+    
+    // Set the URL fields and buttons to use the current queried URL, group is either 'mp' or 'sp'
+    function setDataAccess(group, data) {
+        if ( $.isEmptyObject(data['parameterminmax']) ) {
+            return;
+        }
+        var group_name;
+        if ( group == 'mp' ) {
+            group_name = 'measured';
+        }
+        else if ( group == 'sp' ) {
+            group_name = 'sampled';
+        }
+        var base_url = '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';
+        var query_url = '{{site_uri}}{% url 'stoqs-query-ui' dbAlias=request.META.dbAlias %}';
+        var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
+        if (param != '') {
+            param = '?' + param;
+        } 
+        mp_param = getMPparms(group, params);
+
+        var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
+        // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
+        $.each(formats, function (index, value) {
+            var url = query_url + value + param;
+            if (value == 'sql') {
+                $('#'+group+'-'+value+'-field').text(data['sql']);
+            }
+            else if (value == 'kml') {
+                kmlurl = 'Select a single Parameter to view your selection in Google Earth';
+                var url = base_url + group_name + 'parameter.kml' + mp_param;
+                if (typeof params[group_name + 'parametersgroup'] != 'undefined') {
+                    if (params[group_name + 'parametersgroup'].length == 1) {
+                        $('#'+group+'-kml-parameter').text(params[group_name + 'parametersgroup'][0]);
+                        $('#'+group+'-cmin').val(data['parameterminmax'][1]);
+                        $('#'+group+'-cmax').val(data['parameterminmax'][2]);
+                        kmlurl = url;
+                    }
+                    else if (params['parameterstandardname'].length == 1) {
+                        $('#'+group+'-kml-parameter').text(params['parameterstandardname'][0]);
+                        $('#'+group+'-cmin').val(data['parameterminmax'][1]);
+                        $('#'+group+'-cmax').val(data['parameterminmax'][2]);
+                        kmlurl = url;
+                    }
+                    else {
+                        $('#'+group+'-kml-parameter').text('');
+                        $('#'+group+'-cmin').val('');
+                        $('#'+group+'-cmax').val('');
+                    }
+                }
+                update_sensortrackskml();
+            }
+            else if (value == 'stoqstoolbox') {
+                // Required parameters for stoqs_down as of stoqstoolbox release noted in the Matlab comment below
+                var req_params = ['campaign', 'start_time', 'end_time', 'min_depth', 'max_depth', 'platforms', group_name + 'parametersgroup', 'parameterstandardname'];
+                var hasParametervalues = false;
+                var st_text_comm = "% Copy and paste into a Matlab session where stoqstoolbox build 2013-01-08 or\n";
+                st_text_comm = st_text_comm + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
+                st_text = st_text_comm;
+                st_text = st_text + "campaign = '{{http_site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';\n";
+                $.each(req_params, function(k, v) {
+                    if (typeof params[v] != "undefined") {
+                        if (v.match(/depth$/)) {
+                            // Numeric value, don't quote
+                            st_text = st_text + v + " = " + params[v] + ";\n";
+                        }
+                        else {
+                            st_text = st_text + v + " = '" + params[v] + "';\n";
+                        }
+                    }
+                    else if (v != 'campaign') {
+                        st_text = st_text + v + " = '';\n";
+                    }
+                });
+
+                if (parametervalues) {
+                    for (var parameter in parametervalues) {
+                        var min = parametervalues[parameter]['xmin'];
+                        var max = parametervalues[parameter]['xmax'];
+                        if (typeof min != 'undefined' && typeof max != 'undefined') {
+                            st_text = st_text + parameter + "_MIN = " + min.toPrecision(4) + ";\n";
+                            st_text = st_text + parameter + "_MAX = " + max.toPrecision(4) + ";\n";
+                            hasParametervalues = true;
+                        }
+                    };
+                }
+                if (hasParametervalues) {
+                    $('#'+group+'-'+value+'-field').text(st_text_comm + "data = stoqs_down('" + base_url + group_name + "parameter.json" + mp_param + "');\n");
+                }
+                else {
+                    $('#'+group+'-'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
+                }
+            }
+            // Queries made using measuredparameter or sampledparamter REST requests - use mp_parm for Django queries 
+            else if (value == 'json') {
+                var url = base_url + group_name + 'parameter.json' + mp_param;
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
+            }
+            else if (value == 'csv') {
+                var url = base_url + group_name + 'parameter.csv' + mp_param;
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
+            }
+            else if (value == 'tsv') {
+                var url = base_url + group_name + 'parameter.tsv' + mp_param;
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
+            }
+            else if (value == 'html') {
+                var url = base_url + group_name + 'parameter.html' + mp_param;
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
+            }
+            else {
+                $('#'+group+'-'+value+'-field').text(url);
+                $('#'+group+'-'+value+'-link').attr('href',url);
+            }
+        });
+    }
+
+    function toggleField(element) {
+        var $element=$(element);
+        if (! $(element).is('.disabled')) { // If it's disabled, then don't bother toggling it.
+            if ($element.is('.btn-primary')) {
+                $element.removeClass('btn-primary');
+            } else {
+                $element.addClass('btn-primary');
+                if ($(element).hasClass('sampledparametersgroup')) {
+                    $('#clear-sampledparameter-button').removeClass('disabled');
+                    $('#clear-sampledparameter-button').addClass('btn-primary');
+                }
+                if ($(element).hasClass('measuredparametersgroup')) {
+                    $('#clear-measuredparameter-button').removeClass('disabled');
+                    $('#clear-measuredparameter-button').addClass('btn-primary');
+                }
+                if ($(element).hasClass('parameterstandardname')) {
+                    $('#clear-measuredparameter-button').removeClass('disabled');
+                    $('#clear-measuredparameter-button').addClass('btn-primary');
+                }
+                if ($(element).hasClass('platform')) {
+                    $('#clear-platforms-button').removeClass('disabled');
+                    $('#clear-platforms-button').addClass('btn-primary');
+                }
+            }
+        }
+    } // toggleField()
+    
+    function getUTCDateString(date) {
+        // $.format.date(date,'yyyy-MM-dd hh:mm:ss') is broken in Safari, construct SQL friendly date string this way
+        var mon = new String(date.getUTCMonth() + 1);
+        mon = mon.replace(/\d+/g, function(m) {
+           return "0".substr(m.length - 1) + m;
+        });
+        var day = new String(date.getUTCDate());
+        day = day.replace(/\d+/g, function(m) {
+           return "0".substr(m.length - 1) + m;
+        });
+        var hr = new String(date.getUTCHours());
+        hr = hr.replace(/\d+/g, function(m) {
+           return "0".substr(m.length - 1) + m;
+        });
+        var mn = new String(date.getUTCMinutes());
+        mn = mn.replace(/\d+/g, function(m) {
+           return "0".substr(m.length - 1) + m;
+        });
+        var se = new String(date.getUTCSeconds());
+        se = se.replace(/\d+/g, function(m) {
+           return "0".substr(m.length - 1) + m;
+        });
+
+        var date_str = date.getUTCFullYear() + '-' + mon + '-' + day;
+        date_str = date_str + ' ' + hr + ':' + mn + ':' + se;
+
+        return date_str
+    }
+
+    function getValueOrdinal(value) {
+        // Add a suffix (st, nd, th) to a number 
+        if (value == 1) {
+            ordinal = 'single';
+        }
+        else if (value == 11 || value == 12 || value == 13) {
+            ordinal = value + 'th';
+        }
+        else if (value.toString().match(/1$/)) {
+            ordinal = value + 'st';
+        }
+        else if (value.toString().match(/2$/)) {
+            ordinal = value + 'nd';
+        }
+        else if (value.toString().match(/3$/)) {
+            ordinal = value + 'rd';
+        }
+        else {
+            ordinal = value + 'th';
+        }
+                                
+        return ordinal
+    }
+
+    function makeSlider(divid, type, data) {
+        if (type == 'time') {
+            var start=new Date(data[0]);
+            var end=new Date(data[1]);
+            var max=Math.abs((start.getTime() - end.getTime()));
+            var min=0
+        } else if (type == 'depth') {
+            // Float/Decimal type
+            var min=Math.floor(data[0]*10000);
+            var max=Math.ceil(data[1]*10000);
+        }
+        if (type == 'time') {
+            var formatter=function (value) { 
+                var start=new Date(data[0]);
+                var cur=new Date(start.getTime() + value);
+                return getUTCDateString(cur);
+            };
+            var reverseformatter=function (value) {
+                var start=new Date(data[0]);
+                try {
+                    var end=new Date(value);
+                } catch (err) {
+                    var end=new Data(data[1]).getTime();
+                }
+                var cur=Math.abs((start.getTime() - end.getTime()));
+                return cur;
+            };
+        } else if (type == 'depth') {
+            // Float/Decimal type
+            var formatter=function(value) { return value/10000; };
+            var reverseformatter=function(value) { return value *10000; };
+        }
+        var options={max: max,
+                     min: min,
+                     values: [min, max],
+                     range: true
+        };
+        
+        var div=$('#' + divid);
+        div.bind({
+            slide : function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, false); },
+            slidechange:function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, true); }
+        })
+        div.slider(options);
+        
+        div.data("reverseformatter", reverseformatter);
+        if (typeof postaddfunc != "undefined") {
+           //div.data("postaddfunction", postaddfunc);
+        }
+        return div;
+
+    } // makeSlider()
+
+    function recordUpdatedValues(values, divid, type, formatter, updateTable) {
+        var min=formatter(values[0])
+        var max=formatter(values[1])
+        $('#start-' + type).val(min)
+        $('#end-' + type).val(max)
+        if (updateTable) {
+            rebuildFilters();
+        }
+    }
+    
+    function rebuildFilters(only) {
+        if ((typeof permalink_bypass !== 'undefined') &&
+            (permalink_bypass == true)) {
+            return ;
+        } 
+        params={};
+        // To tell the backend to process for the list of options in the only list
+        // Useful for radio button and checkbox events that do not change the selection
+        // and for not updating data for panels not visible in the UI.  Items in the 
+        // only list are the keys of options_functions in utils/STOQSQManager.py.
+        if ( ! $.isEmptyObject(only) ) {
+            params['only'] = only
+        }
+
+        params['sampledparametersgroup']=[]
+        $('td',$('#sampledparameter-table > tbody')).each(function (index, element) {
+            if ($('.btn-primary', $(element)).length) {
+                if ( $('.sampledparametersgroup', $(element)).length) {
+                    params['sampledparametersgroup'].push(element.id);
+                }
+            }
+        });
+        if (params['sampledparametersgroup'].length) {
+            $('#sampledparameters-anchor').html('Sampled Parameter id(s): ' + params['sampledparametersgroup'].join())
+        }
+        else {
+            $('#sampledparameters-anchor').html('Sampled Parameters')
+            $('#clear-sampledparameter-button').removeClass('btn-primary');
+            $('#clear-sampledparameter-button').addClass('disabled');
+        }
+
+        params['measuredparametersgroup']=[]
+        params['parameterstandardname']=[]
+        var regExp = new RegExp('--.+-sn');
+        $('td',$('#measuredparameter-table > tbody')).each(function (index, element) {
+            if ($('.btn-primary', $(element)).length) {
+                if ( $('.measuredparametersgroup', $(element)).length) {
+                    params['measuredparametersgroup'].push(element.id);
+                }
+                if ( $('.parameterstandardname', $(element)).length) {
+                    params['parameterstandardname'].push(element.id.replace(regExp,''));
+                }
+                //$('#' + element.id + ' > button').attr('title', 'Click to unselect').tooltip('fixTitle');
+            }
+        });
+        $('#measuredparameters-anchor').html('Measured Parameter: ')
+        if (params['measuredparametersgroup'].length) {
+            $('#measuredparameters-anchor').append('name(s): ' + params['measuredparametersgroup'].join())
+        }
+        if (params['parameterstandardname'].length) {
+            $('#measuredparameters-anchor').append('standard name(s): ' + params['parameterstandardname'].join())
+        }
+        if ( ! params['measuredparametersgroup'].length && ! params['parameterstandardname'].length) {
+            $('#measuredparameters-anchor').html('Measured Parameters')
+            $('#clear-measuredparameter-button').removeClass('btn-primary');
+            $('#clear-measuredparameter-button').addClass('disabled');
+        }
+
+        if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
+            params['start_time']=$('#start-time').val();
+            params['end_time']=$('#end-time').val();
+            params['min_depth']=$('#start-depth').val();
+            params['max_depth']=$('#end-depth').val();
+        }
+
+        params['platforms']=[]
+        $('tr',$('#platform-table')).each(function (index, element) {
+            if ($('.btn-primary', $(element)).length) {
+                params['platforms'].push(element.id);
+                //$('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
+            }
+        });
+        if (params['platforms'].length) {
+            $('#platforms-anchor').html('Platform name: ' + params['platforms'].join())
+        }
+        else {
+            $('#platforms-anchor').html('Platforms')
+            $('#clear-platforms-button').removeClass('btn-primary');
+            $('#clear-platforms-button').addClass('disabled');
+        }
+
+        if (parametervalues) {
+            valueText = ': ';
+            for (var parameter in parametervalues) {
+                // No CF stantard names end with '_MIN' or '_MAX' and none have upper case letters, so the convention
+                // of adding these identifiers and taking them off should work.
+                var min = parametervalues[parameter]['xmin'];
+                var max = parametervalues[parameter]['xmax'];
+                if (typeof min != 'undefined' && typeof max != 'undefined') {
+                    params[parameter + '_MIN'] = min.toPrecision(4);
+                    params[parameter + '_MAX'] = max.toPrecision(4);
+                    valueText = valueText + parameter + ': ' + min.toPrecision(4) + ' to ' + max.toPrecision(4) + ', ';
+                    $('#resetparametervaluesselections').removeClass('disabled');
+                    $('#resetparametervaluesselections').addClass('btn-primary');
+                }
+            };
+            valueText = valueText.substring(0, valueText.length - 2); 
+            $('#parameter-values-anchor').html('Parameter Values' + valueText);
+        }
+
+        pp_html = '';
+        if ($('input:radio[name=parameters_x]').is(':checked')) {
+            if ( $('input:radio[name=parameters_x]:checked').val() ) {
+                params['px'] = $('input:radio[name=parameters_x]:checked').val();
+                pp_html = pp_html + 'x:' + params['px'] + ' ';
+            }
+        }
+        if ($('input:radio[name=parameters_y]').is(':checked')) {
+            if ( $('input:radio[name=parameters_y]:checked').val() ) {
+                params['py'] = $('input:radio[name=parameters_y]:checked').val();
+                pp_html = pp_html + 'y:' + params['py'] + ' ';
+            }
+        }
+        if ($('input:radio[name=parameters_z]').is(':checked')) {
+            if ( $('input:radio[name=parameters_z]:checked').val() ) {
+                params['pz'] = $('input:radio[name=parameters_z]:checked').val();
+                pp_html = pp_html + 'z:' + params['pz'] + ' ';
+            }
+        }
+        if ($('input:radio[name=parameters_c]').is(':checked')) {
+            if ( $('input:radio[name=parameters_c]:checked').val() ) {
+                params['pc'] = $('input:radio[name=parameters_c]:checked').val();
+                pp_html = pp_html + 'c:' + params['pc'] + ' ';
+            }
+        }
+        if ( $('input:radio[name=parameters_x]').is(':checked') || $('input:radio[name=parameters_y]').is(':checked') ||
+             $('input:radio[name=parameters_z]').is(':checked') || $('input:radio[name=parameters_c]').is(':checked') ) {
+            $('#parameter-parameter-anchor').html('Parameter-Parameter: ' + pp_html.substring(0, pp_html.length - 1))
+        }
+        else {
+            $('#parameter-parameter-anchor').html('Parameter-Parameter')
+        }
+        if ($('#temporal-parameter-li').hasClass('active')) {
+            params['parametertab'] = 1;
+            params['secondsperpixel'] = ($('#end-ems').val() - $('#start-ems').val()) / PIXELS_WIDE / 1000.0;
+        }
+        
+        // Since the old link (if there was one) for the permalink is no longer valid, hide it
+        $('#permalink-box').hide();
+        
+        //updateShowDataInfo();
+        updateSummaryData();
+
+        polyLayer.removeAllFeatures();
+
+    } // rebuildFilters()
+    
+
+    function refreshMap(e) {
+        if ( $.isEmptyObject(e) ) {
+            return;
+        }
+        if (hasTrajectory) {
+            track_lines.setVisibility(true);
+            track_lines.redraw(true);
+        }
+        else {
+            track_lines.setVisibility(false);
+        }
+        if (hasTimeSeries || hasTimeSeriesProfile) {
+            stations.setVisibility(true);
+            stations.redraw(true);
+        }
+        else {
+            stations.setVisibility(false);
+        }
+        sample_points.redraw(true);
+
+        if ($('#zoomtoextentonupdate').is(':checked')) {
+            map.zoomToExtent(new OpenLayers.Bounds(e[0][0],e[0][1],e[1][0],e[1][1]));
+        }
+    }
+
+    function resetZoomedValues(resetData) {
+            // Reset zoom to saved resetData values
+            $('#start-depth').val(resetData['depth'][0]);
+            $('#end-depth').val(resetData['depth'][1]);
+
+            var start=new Date(resetData['time'][0]);
+            $('#start-ems').val(start.getTime());
+            $('#start-time').val(getUTCDateString(start));
+            var end=new Date(resetData['time'][1]);
+            $('#end-ems').val(end.getTime());
+            $('#end-time').val(getUTCDateString(end));
+    }
+
+    // Special handling for unzooming the time-depth-plot and time-parameter-plot
+    $("#zoomed-button").click(function() {
+        if ( $('.btn-primary', $('#time-depth-plot').length) ) {
+            if ( $('#temporal-parameter-li').hasClass('active') ) {
+                var start=new Date(initData['time'][0]);
+                $('#start-ems').val(start.getTime());
+                $('#start-time').val(getUTCDateString(start));
+                var end=new Date(initData['time'][1]);
+                $('#end-ems').val(end.getTime());
+                $('#end-time').val(getUTCDateString(end));
+            }
+            else {
+                resetZoomedValues(initData);
+                $('#temporal-depth-label').html('Depth');
+            }
+
+            options_stack = [];
+            zoom_xy_stack = [];
+            stack_depth = 0;
+            simpledepthtime_options_zoom = simpledepthtime_options;
+            parametertime_options_zoom = parametertime_options;
+            $("#zoomed-button").removeClass('btn-primary');
+            $("#zoomed-button").addClass('disabled');
+            $('#zoomed-button').attr('title', ' ').tooltip('fixTitle').tooltip('hide');
+            $('#temporal-anchor').html('Temporal');
+
+            rebuildFilters();
+            update_sensortrackskml();
+        }
+    });
+
+    $(document).on('click', ".stoqs-toggle", function (event) {
+        toggleField(this);
+        rebuildFilters();
+        update_sensortrackskml();
+    });
+
+    $('#getactualcount').on('click', function (event) {
+        // Don't need to get everything from queryData, only the count
+        rebuildFilters(['counts']);
+    });
+
+    $('.pv-histogram-checkbox').on('click', function (event) {
+        // Don't need to get everything from queryData, only the new histogramdata
+        $('#histogram-instruction').html('<em>Click and drag on plots to select parameter ranges</em>');
+        rebuildFilters(['activityparameterhistograms']);
+    });
+
+    $('input[name="showdataas"]').on('click', function (event) {
+        // Don't need to get everything from queryData, only the response with the PNG image
+        rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
+    });
+
+    $('#showgeox3ddata').on('click', function (event) {
+        // Don't need to get everything from queryData, only the response with the X3D data
+        rebuildFilters(['measuredparameterx3d']);
+    });
+
+    $('#showsensortracks').on('click', function (event) {
+        update_sensortrackskml();
+    });
+
+    $('#mp-cmin').on('keypress', function (event, previousText) {
+        setTimeout(updateMP_KMLcmincmax());
+    });
+
+    $('#mp-cmax').on('keypress', function (event, previousText) {
+        setTimeout(updateMP_KMLcmincmax());
+    });
+
+    $('#sp-cmin').on('keypress', function (event, previousText) {
+        setTimeout(updateSP_KMLcmincmax());
+    });
+
+    $('#sp-cmax').on('keypress', function (event, previousText) {
+        setTimeout(updateSP_KMLcmincmax());
+    });
+
+    $('body').on('change', '.parameter-radio', function (e) {
+        $("#clear-pp-button").addClass('btn-primary');
+        $("#clear-pp-button").removeClass('disabled');
+        if ( $('input:radio[name=parameters_x]').is(':checked') && $('input:radio[name=parameters_y]').is(':checked') ) {
+            rebuildFilters(['parameterparameterpng', 'parameterparameterx3d']);
+        }
+    });
+
+    $('body').on('change', '.parameter-plot-radio', function (e) {
+        if ( $('body').data()['parameterplatforms'][e.target.value] ) {
+            if ( $('body').data()['parameterplatforms'][e.target.value].length == 1 ) {
+                $('#contour-scatter-buttons').show();
+                $('#sensor-tracks-checkbox').show();
+                $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
+                                                             $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
+                $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
+                $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
+                $('#showsensortracks').removeAttr('disabled');
+                $('#showgeox3ddatatext').text($('#temporalparameterplotinfo').data()['info']);
+                rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
+                update_sensortrackskml();
+            }
+            else {
+                alert('Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.  Select just one of them.');
+            }
+        }
+        else {
+            // Remove sensortracks and image from Flot plot
+            $('#contour-scatter-buttons').hide();
+            $('#sensor-tracks-checkbox').hide();
+            $('#temporalparameterplotinfo').data('info', '');
+            $('#temporalparameterplotinfo').text('');
+            $('#showsensortrackstext').text('');
+            $('#showsensortracks').attr('disabled', true);
+            $('#showgeox3ddatatext').text('');
+            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'simpledepthtime', 'platforms', 'sampledepthtime']);
+            update_sensortrackskml();
+        }
+    });
+
+    $("#clear-pp-button").click(function() {
+        if ( $('#clear-pp-button').hasClass('btn-primary')) {
+            $("#clear-pp-button").removeClass('btn-primary');
+            $("#clear-pp-button").addClass('disabled');
+            $('input:radio[name=parameters_x]').prop('checked', false);
+            $('input:radio[name=parameters_y]').prop('checked', false);
+            $('input:radio[name=parameters_z]').prop('checked', false);
+            $('input:radio[name=parameters_c]').prop('checked', false);
+            $('#parameter-parameter-anchor').html('Parameter-Parameter')
+            //$('#pp2d').html('');
+            //$('#pp3d').html('');
+            //$('#ppdata').html('');
+        }
+    });
+
+    $("#clear-sampledparameter-button").click(function() {
+        if ( $('#clear-sampledparameter-button').hasClass('btn-primary')) {
+            $("#clear-sampledparameter-button").removeClass('btn-primary');
+            $("#clear-sampledparameter-button").addClass('disabled');
+            $('td',$('#sampledparameter-table')).each(function (index, element) {
+                if ($('.btn-primary', $(element)).length) {
+                    $('#' + element.id + ' > button').removeClass('btn-primary');
+                }
+            });
+            rebuildFilters();
+            $('#sampledparameters-anchor').html('Sampled Parameters')
+        }
+    });
+
+    $("#clear-measuredparameter-button").click(function() {
+        if ( $('#clear-measuredparameter-button').hasClass('btn-primary')) {
+            $("#clear-measuredparameter-button").removeClass('btn-primary');
+            $("#clear-measuredparameter-button").addClass('disabled');
+            $('td',$('#measuredparameter-table')).each(function (index, element) {
+                if ($('.btn-primary', $(element)).length) {
+                    $('#' + element.id + ' > button').removeClass('btn-primary');
+                }
+            });
+            rebuildFilters();
+            $('#measuredparameters-anchor').html('Measured Parameters')
+        }
+    });
+
+    $("#resetparametervaluesselections").click(function() {
+        if ( $('#resetparametervaluesselections').hasClass('btn-primary')) {
+            $("#resetparametervaluesselections").removeClass('btn-primary');
+            $("#resetparametervaluesselections").addClass('disabled');
+            parametervalues = {};
+            rebuildFilters();
+        }
+    });
+
+    $("#clear-platforms-button").click(function() {
+        if ( $('#clear-platforms-button').hasClass('btn-primary')) {
+            $("#clear-platforms-button").removeClass('btn-primary');
+            $("#clear-platforms-button").addClass('disabled');
+            $('tr',$('#platform-table')).each(function (index, element) {
+                if ($('.btn-primary', $(element)).length) {
+                    $('#' + element.id + ' > td > button').removeClass('btn-primary');
+                }
+            });
+            rebuildFilters();
+            $('#platforms-anchor').html('Platforms')
+        }
+    });
+
+    $("#parameter-values-anchor").click(function() {
+        //if ( $("#parameter-values-anchor").hasClass('in') ) {
+            // Force load of some histograms when this accordian is opened
+            $('#showstandardnameparametervalues').attr({checked: true});
+            $('#histogram-instruction').html('<em>Click and drag on plots to select parameter ranges</em>');
+            rebuildFilters(['activityparameterhistograms']);
+        //}
+    });
+    
+    $(".zoom-width-button").click(function(element) {
+        if (widthZoomed) {
+            if ($('.stoqs-zoom-width').hasClass('span12')) {
+                $('.stoqs-zoom-width').removeClass('span12');
+            }
+            if (! $('.stoqs-zoom-width').hasClass('span6')) {
+                $('.stoqs-zoom-width').addClass('span6');
+            }
+            $('.navbar').show();
+            $('body').css({'padding-top': '35px'});
+            $('#accordion1').addClass('well');
+            $('#metadata-group').show();
+            $('#sp-data-access-group').show();
+            $('#mp-data-access-group').show();
+            $('#right-column').show();
+            if (this.id == 'pp-zoom-width-button') {
+                $('#spatial-group').children().show();
+                $('#parameter-parameter-anchor').parent().show();
+                $('#parameterParameterTabs').show();
+                $('#parameter-parameter-3dplot').css( { 'height': '500px',
+                                                        'width': '',
+                                                        'position': ''
+                                                      } );
+            }
+            if (this.id == 'geo-zoom-width-button') {
+                $('#parameter-parameter-group').children().show();
+                $('#spatial-anchor').parent().show();
+                $('#spatialTabs').show();
+                $('#geo-3dplot').css( { 'height': '500px',
+                                        'width': '',
+                                        'position': ''
+                                      } );
+            }
+            $(this).html('<i class="icon-resize-full"></i> Zoom display');
+        } else {
+            if ($('.stoqs-zoom-width').hasClass('span6')) {
+                $('.stoqs-zoom-width').removeClass('span6');
+            }
+            if (! $('.stoqs-zoom-width').hasClass('span12')) {
+                $('.stoqs-zoom-width').addClass('span12');
+            }
+            $('.navbar').hide();
+            $('body').css({'padding-top': '0px'});
+            $('#accordion1').removeClass('well');
+            $('#metadata-group').hide();
+            $('#sp-data-access-group').hide();
+            $('#mp-data-access-group').hide();
+            $('#right-column').hide();
+            if (this.id == 'pp-zoom-width-button') {
+                $('#spatial-group').children().hide();
+                $('#parameter-parameter-anchor').parent().hide();
+                $('#parameterParameterTabs').hide();
+                $('#parameter-parameter-3dplot').css( { 'height': '90%',
+                                                        'width': '100%',
+                                                        'position': 'fixed'
+                                                      });
+            }
+            if (this.id == 'geo-zoom-width-button') {
+                $('#parameter-parameter-group').children().hide();
+                $('#spatial-anchor').parent().hide();
+                $('#spatialTabs').hide();
+                $('#geo-3dplot').css( { 'height': '90%',
+                                        'width': '100%',
+                                        'position': 'fixed'
+                                      });
+            }
+            $(this).html('<i class="icon-remove-sign"></i> Unzoom display');
+        }
+        widthZoomed = ! widthZoomed;
+    });
+
+    $('.temporal-tab > li').on('click', function (event) {
+        // Show the tab then plot the data so that axes are properly drawn
+        $('a', event.delegateTarget).tab('show');
+       
+        if ( event.delegateTarget.id == 'temporal-parameter-li' ) { 
+            $('.parameter-plot-radio').hide();
+            $('.parameter-plot-checkbox').show();
+            $('.all-plot-instruction').text('Check all');
+            if ( ! $('input:checkbox[class=parameter-plot-checkbox]').is(':checked') ) {
+                if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                    var parm_id = $('input:radio[name=parameters_plot]:checked').val();
+                    $('input:checkbox[name=parameters_plot_cb][value=' + parm_id + ']').prop('checked',true);
+                }
+                else {
+                    $('input:checkbox[name=mp_all_parameters_plot_cb]').prop('checked',true).triggerHandler('click');
+                }
+            }
+            rebuildFilters(['parametertime']);
+        }
+        else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
+            $('.parameter-plot-radio').show();
+            $('.parameter-plot-checkbox').hide();
+            $('.all-plot-instruction').text('Clear selection');
+            var ranges={xaxis: {  to: parseFloat($('#end-ems').val()),
+                                from: parseFloat($('#start-ems').val())},
+                        yaxis: {  to: parseFloat($('#end-depth').val()),
+                                from: parseFloat($('#start-depth').val())}
+                        };
+            ZoomIn(event, ranges);    // Calls rebuildFilters() for everything
+        }
+    });
+
+
+    $('body').on('change', '.parameter-plot-checkbox', function (e) {
+        rebuildFilters(['parametertime']);
+    });
+
+    $('.checkall').on('click', function () {
+        $(this).closest('fieldset').find(':checkbox:enabled').prop('checked', this.checked);
+        rebuildFilters(['parametertime']);
+    });
+
+
+
+    simpledepthtime_options = { grid: { 
+                                        backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
+                                        hoverable: true, 
+                                        clickable: true 
+                                    },
+                                    xaxis: { mode: "time" },
+                                    yaxis: {
+                                        transform: function (v) { return -v; },
+                                        inverseTransform: function (v) { return -v; }
+                                    },
+                                    xaxes: [{
+                                                axisLabel: 'Time (gmt)'
+                                            }],
+                                    yaxes: [{
+                                                position: 'left',
+                                                axisLabel: 'Depth (m)'
+                                            }],
+                                    series: {
+                                        lines: { show: true, fill: false, lineWidth: 1 },
+                                        points: { show: false, fill: false },
+                                        shadowSize: 0
+                                    },
+                                    legend: { show: false },
+                                    selection: { mode: "xy" }
+                                  };
+    histogram_options = {   yaxis: {
+                                    autoscaleMargin: null
+                                },
+                                grid: {
+                                    backgroundColor: "rgb(192, 211, 228)"      //c0d3e4
+                                },
+                                series: {
+                                    lines: { show: false }
+                                },
+                                legend: { show: false },
+                                selection: { mode: "x" },
+                                hoverable: true
+                            };
+    parametertime_options = {   grid: {
+                                        backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
+                                        hoverable: true
+                                    },
+                                    xaxis: { mode: "time" },
+                                    xaxes: [{
+                                                axisLabel: 'Time (gmt)'
+                                            }],
+                                    series: {
+                                        lines: { show: true, fill: false, lineWidth: 1 },
+                                        points: { show: false, fill: false },
+                                        shadowSize: 0
+                                    },
+                                    legend: { show: false },
+                                    selection: { mode: "x" },
+                                    colors: ['white','black','purple','yellow','green','orange','red']
+                                };
+
+
+    /* Default class modification for DataTable*/
+    /*
+    $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sSortAsc": "header headerSortDown",
+        "sSortDesc": "header headerSortUp",
+        "sSortable": "header",
+        "sWrapper": "dataTables_wrapper form-inline",
+        "sPaginationType": "full_numbers",
+        "bJQueryUI": true,
+        "aoColumnDefs": [ { "sWidth": "10%", "aTargets": [ -1 ] }
+    ]
+    });
+    */
+
+    function showTooltip(x, y, contents) {
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#fee',
+            opacity: 0.80
+        }).appendTo("body").fadeIn(200);
+    }
+
+    $("#time-depth-flot").bind("plothover", function (event, pos, item) {
+        if (pos.x && pos.y) {
+            $("#x").text(pos.x.toFixed(2));
+            $("#y").text(pos.y.toFixed(2));
+        }
+        else {
+            return;
+        }
+
+        if (item) {
+            if (typeof previousPoint != 'undefined') {
+                if (previousPoint != item.dataIndex) {
+                    previousPoint = item.dataIndex;
+                    
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+               
+                    showTooltip(item.pageX, item.pageY,
+                                item.series.label);
+                }
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+    $("#time-parameter-flot").bind("plothover", function (event, pos, item) {
+
+        if (item) {
+            if (typeof previousPoint != 'undefined') {
+                if (previousPoint != item.dataIndex) {
+                    previousPoint = item.dataIndex;
+                    
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+               
+                    showTooltip(item.pageX, item.pageY,
+                                item.series.label);
+                }
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+
+    function showSampleData(label) {
+            //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
+            var sample_url = '{{site_uri}}{% url 'show-sample-datatable' dbAlias=request.META.dbAlias format=".json" %}';
+            sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
+            console.log('sample_url = ' + sample_url);
+
+            request = $.ajax({
+                type : 'GET',
+                url : sample_url,
+                success: function (json) {
+                    $("#sample-table").dataTable( {
+                        "bProcessing":  true,
+                        "bDestroy":     true,
+                        "aaData":       json.aaData,
+                        "aoColumns":    json.aoColumns
+                    });
+                },
+                dataType: "json"
+            });
+
+            $('#sample-instructions').text('')
+            if (! $('#sp-collapseDataAccess').hasClass('in')) {
+                $('#sp-data-access-anchor').click();
+            }
+    }
+
+    function showQuickLooks(label) {
+            // http://172.16.130.135:8000/stoqs_may2012/resourceactivity.json?resourcetype__name=quick_look&activityresource__activity__name__contains=Dorado389_2012_150_00_150_00_decim
+            //var quicklook_url = '{{site_uri}}{% url 'show-resourceactivity' dbAlias=request.META.dbAlias format=".json" %}?resourcetype__name=quick_look&';
+            var quicklook_url = '{{site_uri}}{% url 'show-quicklookplots' dbAlias=request.META.dbAlias %}?';
+            quicklook_url = quicklook_url + 'activityresource__activity__name__contains=' + label.split(' ')[0];
+            //var nwin = window.open(quicklook_url, '', 'height=800,width=1000');
+            //if (window.focus) {
+                //nwin.focus();
+            //}
+    }
+                
+    $("#time-depth-flot").bind("plotclick", function (event, pos, item) {
+        // This method of providing quick look plots is annoying as click-n-drag operations will sometimes trigger a plotclick
+        if (item) {
+            // Crude test whether sample or activity click, activities 2nd element may be '(stride=..'
+            console.log(item.series.label)
+            if (item.series.label.split(' ').length == 2) {
+                if (item.series.label.split(' ')[1].indexOf('(') == -1) {
+                    showSampleData(item.series.label)
+                }
+                else if (item.series.label.split(' ')[1].indexOf('(') != -1) {
+                    // Crude test that we have an activity name
+                    showQuickLooks(item.series.label)
+                }
+            }
+        }
+    });
+
+    function getDepthDataset(data, x1, x2) {
+        // Return a dataset of simpledepthtime for flot for only the data between times x1 and x2
+        var dataset = [];
+        var platform_seen = [];
+        if ( ! data ) {
+            return;
+        }
+        var maxLength = 0;
+        $.each(data['platforms'], function (index, platform_value) {
+            // Now add each activity for this platform - separated so that they are not connected with a line
+            $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
+                var rec = [];
+                //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                subset_dts = []
+                $.each(depth_time_series, function (index, td) {
+                    // From each activity push only the times between x1 & x2, inclusive
+                    if (td[0] >= x1 && td[0] <= x2) {
+                        subset_dts.push(td);
+                    }
+                });
+
+                if (subset_dts.length > 0) {
+                    if (subset_dts.length > maxLength) {
+                        maxLength = subset_dts.length;
+                    }
+                    if (! platform_seen[platform_value[0]]) {
+                        //rec["label"] = platform_value[0];
+                        platform_seen[platform_value[0]] = true;
+                    }
+                    dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
+                }
+            });
+        });
+
+        // Add the sample locations, each with a label
+        $.each(data['sampledepthtime'], function (index, sample) {
+            sample["color"] = "#000000";
+            sample["fillColor"] = "#ffffff";
+            sample["points"] = {show: true, fill: true, lineWidth: 1};
+            sample["lines"] = {show: false};
+            sample["hoverable"] = true;
+            sample["clickable"] = true;
+            dataset.push(sample);
+        });
+        if (data['sampledepthtime'].length == 0) {
+            sample_points.setVisibility(false);         // Turn off sample view openlayers
+        }
+        else {
+            sample_points.setVisibility(true);         // Turn on sample view openlayers
+        }
+
+        return dataset;
+
+    } // getDepthDataset()
+
+    function getParameterDataset(data, x1, x2) {
+        // Return a dataset of parameter time series for flot for only the data between times x1 and x2
+        var dataset = [];
+        if ( ! data ) {
+            return;
+        }
+        if ( $.isEmptyObject(data.parametertime.pt) ) {
+            return;
+        }
+
+        var yaxisNumber = {};
+        var yaxisCount = 0;
+        var yaxesOptions = [];
+        var pos;
+        $.each(data.parametertime.pt, function (unit, activity_time_series) {
+            console.log('unit = ' + unit);
+            console.log('activity_time_series = ' + activity_time_series);
+            $.each(activity_time_series, function (activity, time_series) {
+                var hasData = false;
+                $.each(time_series, function (index, td) {
+                    // Test activity for data between times x1 and x2
+                    if (td[0] >= x1 && td[0] <= x2) {
+                        hasData = true;
+                        return false;
+                    }
+                });
+
+                if (hasData) {
+                    if (! (unit in yaxisNumber)) {
+                        yaxisCount = yaxisCount + 1;
+                        yaxisNumber[unit] = yaxisCount;
+                        if (yaxisNumber[unit] % 2 == 0) {
+                            pos = 'right';
+                        }
+                        else {
+                            pos = 'left';
+                        }
+                        yAxisLabel = data.parametertime.units[unit] + ' (' + unit + ')';
+                        yaxesOptions.push({position: pos, axisLabel: yAxisLabel});
+                    }
+                    dataset.push({'label': activity, 'data': time_series, 'yaxis': yaxisNumber[unit], 'color': data.parametertime.colors[activity.split(' ')[0]]});
+                }
+            });
+        });
+
+        return { 
+            'dataset': dataset,
+            'yaxesOptions': yaxesOptions
+        };
+
+    } // getParameterDataset()
+
+    function collectHistData(histdata, platform, color, activity, histbyactivity) {
+        var rec = [];
+        rec["label"] = activity;
+        rec["color"] = color;
+        rec["data"] = histbyactivity['hist'];
+        rec["bars"] = { show: true, barWidth: histbyactivity['binwidth'], fill: true, fillColor: color };
+        histdata.push(rec);
+        return histdata;
+    }
+
+    function addSelectedParameterValue(histdata, parameter) {
+        var rec = [];
+        color = 'rgba(244, 164, 96, 0.2)';
+        rec["label"] = 'selection';
+        rec["color"] = color;
+        //console.log(parametervalues[parameter]);
+        rec["data"] = [[parametervalues[parameter]['xmin'], parametervalues[parameter]['ymax']]];
+        //console.log(rec['data']);
+        binwidth = parametervalues[parameter]['xmax'] - parametervalues[parameter]['xmin'];
+        rec["bars"] = { show: true, barWidth: binwidth, fill: true, fillColor: color };
+        histdata.push(rec);
+        return histdata;
+    }
+    
+    function plotHistData(parameter, histdata, parameterunits) {
+        var units = parameterunits[parameter];
+        histogtram_options_labels = $.extend(true, {}, histogram_options, {
+                                                            xaxes: [{
+                                                                        axisLabel: parameter + ' (' + units + ')'
+                                                                    }],
+                                                            yaxes: [{
+                                                                        position: 'left',
+                                                                        axisLabel: 'Count'
+                                                                    }]
+                                                                          });
+        parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');
+        $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogtram_options_labels);
+        $("#" + parameter_idsafe + "-histogram-flot").trigger('plotloaded');
+    }
+
+
+    function ZoomIn(event, ranges) {
+        // clamp the zooming to prevent eternal zoom
+        if (ranges.xaxis.to - ranges.xaxis.from < 0.00001)
+            ranges.xaxis.to = ranges.xaxis.from + 0.00001;
+        if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
+            ranges.yaxis.to = ranges.yaxis.from + 0.00001;
+
+        // Save this zoom level
+        stack_depth++;
+        options_stack.push(simpledepthtime_options_zoom);
+        zoom_xy_stack.push([ $('#start-ems').val(), $('#end-ems').val(), $('#start-depth').val(), $('#end-depth').val() ]);
+        console.log('stack_depth = ' + stack_depth);
+        console.log('options_stack = ' + options_stack);
+        console.log('zoom_xy_stack = ' + zoom_xy_stack);
+
+        // Save the zoomed values
+        $('#start-depth').val(Math.round(ranges.yaxis.from*100)/100);
+        $('#end-depth').val(Math.round(ranges.yaxis.to*100)/100);
+
+        $('#start-ems').val(ranges.xaxis.from);
+        var ds = new Date(ranges.xaxis.from);
+        $('#start-time').val(getUTCDateString(ds));
+
+        $('#end-ems').val(ranges.xaxis.to);
+        var de = new Date(ranges.xaxis.to);
+        $('#end-time').val(getUTCDateString(de))
+
+        simpledepthtime_options_zoom = $.extend(true, {}, simpledepthtime_options, {
+                                                              xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
+                                                              yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to } 
+                                                          });
+
+        // Apply new depth & time ranges to the query and redraw the plot in rebuildFilters()
+        $('#zoomed-button').removeClass('disabled'); 
+        $('#zoomed-button').addClass('btn-primary');
+        //$('#zoomed-button').attr('title', 'Click to unzoom to original extent. Right-click on plot to unzoom to last zoom level.').tooltip('fixTitle').tooltip('hide');
+
+        rebuildFilters();
+        update_sensortrackskml();
+
+        var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
+        var dLabel = 'Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
+        $('#temporal-anchor').html(tLabel);
+        $('#temporal-depth-label').html(dLabel);
+    }
+
+    function ZoomOut() {
+        if (stack_depth > 0 ) {
+            // Pop options from options stack to restore previous zoom level 
+            stack_depth--;
+            simpledepthtime_options_zoom = options_stack.pop();
+            var zoom_xy = zoom_xy_stack.pop();
+            console.log('stack_depth = ' + stack_depth);
+            console.log('zoom_xy = ' + zoom_xy);
+            $('#start-ems').val(zoom_xy[0]);
+            $('#end-ems').val(zoom_xy[1]);
+            $('#start-depth').val(zoom_xy[2]);
+            $('#end-depth').val(zoom_xy[3]);
+        
+            rebuildFilters();
+            update_sensortrackskml();
+        } 
+        // return false to suppress the right-mouse context menu from appearing 
+        return false
+    }
+
+    $("#time-depth-flot").bind("plotselected", ZoomIn);
+    $("#time-depth-flot").bind("contextmenu",  ZoomOut);
+
+    $("#time-parameter-flot").bind("plotselected", function (event, ranges) {
+        $('#start-ems').val(ranges.xaxis.from);
+        var ds = new Date(ranges.xaxis.from);
+        $('#start-time').val(getUTCDateString(ds));
+
+        $('#end-ems').val(ranges.xaxis.to);
+        var de = new Date(ranges.xaxis.to);
+        $('#end-time').val(getUTCDateString(de))
+
+        $('#zoomed-button').removeClass('disabled'); 
+        $('#zoomed-button').addClass('btn-primary');
+
+        parametertime_options_zoom = $.extend(true, {}, parametertime_options, {
+                                              xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
+                                          });
+        var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
+        $('#temporal-anchor').html(tLabel);
+
+        rebuildFilters('parametertime');
+    });
+
+
+    /*
+     * Perform the AJAX call to get a list of parametername and parameterstandardname, and enable/disable them
+     * If "init" is true then this is the initial page load, and we need to populate the fields rather than toggle them.
+     */
+    function updateSummaryData(init) {
+        var init = typeof init !== 'undefined' ? init : false;
+        var qstring=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
+        if ($('#getactualcount').is(':checked')) {
+            qstring = qstring + '&get_actual_count=1';
+        }
+        if ($('#showsigmatparametervalues').is(':checked')) {
+            qstring = qstring + '&showsigmatparametervalues=1';
+        }
+        if ($('#showstandardnameparametervalues').is(':checked')) {
+            qstring = qstring + '&showstandardnameparametervalues=1';
+        }
+        if ($('#showallparametervalues').is(':checked')) {
+            qstring = qstring + '&showallparametervalues=1';
+        }
+
+        // Plotting options are separate from the filters - so set them here rather than in rebuildFilters()
+        // Add to query string if that tab is active, do one OR the other, not both
+        if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
+            if ($('#temporal-depth-li').hasClass('active')) {
+                if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                    qstring = qstring + '&parameterplotid=' + $('input:radio[name=parameters_plot]:checked').val();
+                    qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
+                    if ($('input:radio[name=showdataas]:checked').val()) {
+                        qstring = qstring + '&showdataas=' + $('input:radio[name=showdataas]:checked').val();
+                    }
+                }
+            }
+        }
+        if ( $('input:checkbox[name=parameters_plot_cb]').is(':checked') ) {
+            if ($('#temporal-parameter-li').hasClass('active')) {
+                $('input:checked[name=parameters_plot_cb]').each(function (index, elem) {
+                    qstring = qstring + '&parametertimeplotid=' + elem.value;
+                });
+            }
+        }
+
+        if ($('#showgeox3ddata').is(':checked')) {
+            qstring = qstring + '&showgeox3ddata=1';
+        }
+        if ( ! $('#showallparametervalues').is(':checked')) {
+            //$('#parameter-value-table').html('<tbody></tbody>');
+        }
+        if (! init) {
+            if (request.readyState < 3) {
+                request.abort();
+            }
+        }
+        var me = this;
+
+        function onInit(data, key) {
+            // Called from ajax on initial request
+            initData = data;
+            if (key == 'platforms') {
+                hasTrajectory = false;
+                hasTimeSeries = false;
+                hasTimeSeriesProfile = false;
+                $.each(data[key], function (index, value) {
+                    $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td style="text-align:center;">' +
+                            '<div id="' + value[1] + '_icon" style="text-align: center;float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
+                                '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;margin-left:auto;margin-right:auto;border-bottom-color:#' + 
+                                    data['simpledepthtime']['colors'][value[1]] + ';">' +
+                            '</div></div>' +
+                            '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;">'+ value[0] +'</button></td>' +
+                        '</tr>');
+                    $('#' + value[1] + '_icon').click( function () { $('#' + value[1] + ' > td > button').click() } );
+                    if (value[3].toLowerCase() == 'trajectory') {
+                        hasTrajectory = true;
+                    }
+                    if (value[3].toLowerCase() == 'timeseries') {
+                        hasTimeSeries = true;
+                    }
+                    if (value[3].toLowerCase() == 'timeseriesprofile') {
+                        hasTimeSeriesProfile = true;
+                    }
+                });
+                //$('.platform').tooltip({title: 'Click to select this Platform'});
+            }
+            else if (key == 'sampledparametersgroup') {
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    $('#sampledparameters-anchor').parent().parent().parent().show();
+                    $('#sp-data-access-anchor').parent().parent().parent().show();
+                }
+                var parameterButtonText = '';
+                var sp_ids = [];
+                $.each(data[key], function (index, value) {
+                    // Save ids in list for assigning as a data item on Sampled Parameters for easy lookup
+                    sp_ids.push(value[2].toString()); 
+                    // Use [2], the id for sampledparameters to allow wierd characters in [0], the name
+                    parameterButtonText = parameterButtonText + '<tr>' +
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio" />' +
+                            '</td>' +
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_y" value="' + value[2] + '" class="parameter-radio" />' +
+                            '</td>' +
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_z" value="' + value[2] + '" class="parameter-radio" />' +
+                            '</td>' +
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio" />' +
+                            '</td>' +
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_plot" value="' + value[2] + '" class="parameter-plot-radio" />' +
+                                '<input type="checkbox" name="parameters_plot_cb" value="' + value[2] + '" class="parameter-plot-checkbox" style="display:none;" />' +
+                            '</td>' +
+                            '<td id="' + value[2] +'" style="text-align:center;">' +
+                                '<button class="btn btn-mini stoqs-toggle sampledparametersgroup">'+ value[0] +'</button>' + 
+                            '</td>';
+                    if (value[1].length != 0) {
+                        // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
+                        // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
+                        parameterButtonText = parameterButtonText +
+                        '<tr>' +
+                            '<td colspan="5" style="text-align: center; border-color: transparent;">Standard Name</td>' +
+                            '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color: transparent;">' +
+                                '<button class="btn btn-mini stoqs-toggle sampledparameterstandardname">'+ value[1] +'</button>' + 
+                            '</td>' +
+                        '</tr>';
+                    }
+                    parameterButtonText = parameterButtonText + '</tr>';
+                });
+                $('#sampledparameters-anchor').data('ids', sp_ids);
+                parameterButtonText = parameterButtonText + '';
+                $('#sampledparameter-table > tbody:last').append(parameterButtonText);
+            }
+            else if (key == 'measuredparametersgroup') {
+                var parameterButtonText = '';
+                var mp_ids = [];
+                $.each(data[key], function (index, value) {
+                    // Save ids in list for assigning as a data item on Sampled Parameters for easy lookup
+                    mp_ids.push(value[2].toString()); 
+                    parameterButtonText = parameterButtonText + '<tr>' +
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio" />' +
+                            '</td>' +
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_y" value="' + value[2] + '" class="parameter-radio" />' +
+                            '</td>' +
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_z" value="' + value[2] + '" class="parameter-radio" />' +
+                            '</td>' +
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio" />' +
+                            '</td>' +
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_plot" value="' + value[2] + '" class="parameter-plot-radio" />' +
+                                '<input type="checkbox" name="parameters_plot_cb" value="' + value[2] + '" class="parameter-plot-checkbox" style="display:none;"/>' +
+                            '</td>' +
+                            '<td id="' + value[0] +'">' +
+                                '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' + 
+                            '</td>';
+                    if (value[1].length != 0) {
+                        // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
+                        // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
+                        parameterButtonText = parameterButtonText +
+                        '<tr>' +
+                            '<td colspan="5" style="text-align: center; border-color: transparent;">Standard Name</td>' +
+                            '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color: transparent;">' +
+                                '<button class="btn btn-mini stoqs-toggle parameterstandardname">'+ value[1] +'</button>' + 
+                            '</td>' +
+                        '</tr>';
+                    }
+                    else {
+                        parameterButtonText = parameterButtonText + '<td>&nbsp;</td>';
+                    }
+                    parameterButtonText = parameterButtonText + '</tr>';
+                });
+                $('#measuredparameters-anchor').data('ids', mp_ids);
+                $('#measuredparameter-table > tbody:last').append(parameterButtonText);
+                //$('.measuredparametersgroup').tooltip({title: 'Click to select this Parameter name'});
+                //$('.parameterstandardname').tooltip({title: 'Click to select this Parameter standard_name'});
+            }
+            else if (key == 'time') { 
+                var start = new Date(data[key][0]);
+                $('#start-ems').val(start.getTime());
+                $('#start-time').val(getUTCDateString(start));
+                var end = new Date(data[key][1]);
+                $('#end-ems').val(end.getTime());
+                $('#end-time').val(getUTCDateString(end));
+            }
+            else if (key == 'depth') {
+                $('#start-' + key).val(Math.round(data[key][0]*10)/10);
+                $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
+            }
+            else if (key == 'simpledepthtime') {
+                //flotPlot(data)
+                var start = new Date(data['time'][0]);
+                var end = new Date(data['time'][1]);
+                simpledepthtime_options_zoom = simpledepthtime_options;
+                timedepthplot = $.plot($("#time-depth-flot"), getDepthDataset(initData, start.getTime(), end.getTime()), 
+                                                              simpledepthtime_options_zoom);
+            }
+            else if (key == 'parametertime') {
+                // Just check the count and enable tab if not 0
+                if (data.parametertime.counts != 0) {
+                    $("#temporal-parameter-li").show();
+                }
+            }
+            else if (key == 'parameterplatforms') {
+                // Save the dictionary in the body so that asynchronous event handlers can get at it
+                $('body').data(key, data[key]);
+            }
+            else if (key == 'x3dterrains') {
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    // Only a single terrain is supported for now
+                    $.each(data[key], function (terrain, viewpoint) {
+                        $('#geo_x3d > Scene > Viewpoint').attr('position', viewpoint['position']);
+                        $('#geo_x3d > Scene > viewpoint').attr('orientation', viewpoint['orientation']);
+                        $('#geo_x3d > Scene > Viewpoint').attr('centerOfRotation', viewpoint['centerOfRotation']);
+                        $('#geo_x3d > Scene > Inline').attr('url', terrain);
+                        return false;       // Do just the first terrain
+                    });
+                    $('#spatial-3d-li').show();
+                }
+            }
+        
+        } // onInit()
+
+        function redrawSimpleDepthTime(data) {
+                // Redraw the plot given the saved values
+                if ( $.isEmptyObject(data.simpledepthtime.sdt) ) {
+                    if (! $.isEmptyObject(data.parametertime.pt) ) {
+                        // Show parameter-time data if no trajectory data shown 
+                        // TODO: perhaps better to do with an event listener on presence of data in the flot object
+                        $('#temporal-parameter-li').show();
+                    }
+                    else if (! data.counts.approximate_count) {
+                        alert('No data in your selection.  Clear the Temporal selection and try again.');
+                    }
+                    return;
+                }
+                if ( $('#zoomed-button').hasClass('btn-primary') ) {
+                    theData = getDepthDataset(data, $('#start-ems').val(), $('#end-ems').val());
+                }
+                else {
+                    theData = getDepthDataset(data, initData.time[0], initData.time[1]);
+                }
+                timedepthplot = $.plot($("#time-depth-flot"), theData, simpledepthtime_options_zoom);
+
+        } // redrawSimpleDepthTime()
+
+        function onUpdate(data, key) {
+            // Called from ajax to update the selectors base on the new selection
+            if (key == 'platforms') {
+                hasTrajectory = false;
+                hasTimeSeries = false;
+                hasTimeSeriesProfile = false;
+                var ids=[];
+                $.each(data[key], function (index, value) {
+                    // Here we need to enable those that are still valid.
+                    var element=$('#' + value[1]);
+                    enableButton($('button', element));             // enable the button in the table row
+                    ids.push(value[1]);
+                    if (value[3].toLowerCase() == 'trajectory') {
+                        hasTrajectory = true;
+                    }
+                    if (value[3].toLowerCase() == 'timeseries') {
+                        hasTimeSeries = true;
+                    }
+                    if (value[3].toLowerCase() == 'timeseriesprofile') {
+                        hasTimeSeriesProfile = true;
+                    }
+                });
+                $('#platform-table > tbody > tr').each(function (index, elem) { 
+                    if ($.inArray((elem.id).toString(), ids) == -1) {
+                        disableButton($('button', $(elem)));        // disable the button in the table row
+                    }
+                });
+            }
+            else if (key == 'sampledparametersgroup') {
+                var ids=[];
+                $.each(data[key], function (index, value) {
+                    // Here we need to enable those that are still valid, convert int id to string
+                    enableButton($('button', '#' + value[2]));                                                  // enable the button in the table row
+                    enableXYZColorPlot($('input:radio', $('button', '#' + value[2]).parent().parent()));        // enable the X, Y, Z, Color, Plot radio buttons in the row
+                    enableXYZColorPlot($('input:checkbox', $('button', '#' + value[2]).parent().parent()));     // enable the Plot checkbox in the row
+                    ids.push(value[2].toString());
+                });
+                $('#sampledparameter-table > tbody > tr > td > button').each(function (index, elem) { 
+                    if (elem.parentNode.id.length != 0) {
+                        if ($.inArray(elem.parentNode.id.toString(), ids) == -1) {
+                            disableButton($(elem));                                                         // disable the button in the table row
+                            disableXYZColorPlot($('input:radio', $(elem).parent().parent()));               // disable the X, Y, Z, Color, Plot radio buttons in the row
+                            disableXYZColorPlot($('input:checkbox', $(elem).parent().parent()));            // disable the Plot checkbox in the row
+                        }
+                    }
+                });
+            }
+            else if (key == 'measuredparametersgroup') {
+                var ids=[];
+                $.each(data[key], function (index, value) {
+                    // Here we need to enable those that are still valid
+                    enableButton($('button', '#' + value[0]));      // enable the name button in the table row
+                    enableXYZColorPlot($('input:radio', $('button', '#' + value[0]).parent().parent()));        // enable the X, Y, Z, Color radio buttons in the row
+                    enableXYZColorPlot($('input:checkbox', $('button', '#' + value[0]).parent().parent()));     // enable the Plot checkbox in the row
+                    ids.push(value[0]);
+                    if (value[1].length != 0) {
+                        enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));    // Enable the standard_name button in the table row
+                        ids.push(value[1] + '--' + value[0] + '-sn');
+                    }
+                });
+                $('#measuredparameter-table > tbody > tr > td > button').each(function (index, elem) { 
+                    if (elem.parentNode.id.length != 0) {
+                        if ($.inArray(elem.parentNode.id.toString(), ids) == -1) {
+                            disableButton($(elem));                                                         // disable the button in the table row
+                            disableXYZColorPlot($('input:radio', $(elem).parent().parent()));               // disable the X, Y, Z, Color radio buttons in the row
+                            disableXYZColorPlot($('input:checkbox', $(elem).parent().parent()));            // disable the Plot checkbox in the row
+                        }
+                    }
+                });
+            }
+
+            // Do not assign time or depth to $('#start-ems'), $('#start-depth'), etc. on update - it breaks parameterplatformdatavaluepng display
+            //else if (key == 'time') { 
+            //    var start = new Date(data[key][0]);
+            //    $('#start-ems').val(start.getTime());
+            //    $('#start-time').val(getUTCDateString(start));
+            //    var end = new Date(data[key][1]);
+            //    $('#end-ems').val(end.getTime());
+            //    $('#end-time').val(getUTCDateString(end));
+            //}
+            //else if (key == 'depth') {
+            //    $('#start-' + key).val(Math.round(data[key][0]*10)/10);
+            //    $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
+            //}
+
+
+            else if (key == 'simpledepthtime') {
+                redrawSimpleDepthTime(data);
+            }
+            else if (key == 'parameterplatformdatavaluepng') {
+                // Make the contour plot if checkbox is checked and is not disabled
+                if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
+                    if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                        if (data['parameterplatformdatavaluepng'][0]) {
+                            var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                                $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
+                            var options = $.extend(true, {}, simpledepthtime_options_zoom, {
+                                series: { images: { show: true } }
+                            });
+
+                            $.plot.image.loadDataImages(flotdata, options, function () {
+                                $.plot($("#time-depth-flot"), flotdata, options);
+                            });
+                            // Show colorbar
+                            $('#sectioncolorbar > img').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
+                            $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
+                                                                 $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
+                            $('#temporalparameterplotinfo').css( { 'color': 'black' } );
+                        }
+                        else {
+                            $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
+                            $('#temporalparameterplotinfo').css( { 'color': 'red' } );
+                        }
+                    }
+                    else {
+                        // Clear button selected redraw without image
+                        redrawSimpleDepthTime(data);
+                    }
+                }
+            }
+            else if (key == 'parametertime') {
+                if ( data.parametertime.counts != 0 ) {
+                    $("#temporal-parameter-li").show();
+                    parmData = getParameterDataset(data, $('#start-ems').val(), $('#end-ems').val());
+                
+                    if ( $.isEmptyObject(parmData) ) {
+                        return;
+                    }
+                    timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, $.extend(true, {}, parametertime_options, {
+                                                              yaxes: parmData.yaxesOptions,
+                                                          }));
+
+                    $.each(timeparameterplot.getData(), function(index, series) {
+                        // TODO: color the lables
+                        series.label;
+                        series.color;
+                    });
+                    if ( ! $.isEmptyObject(data.parametertime.strides) ) {
+                        $('#stride-info').html('')
+                        $.each(data.parametertime.strides, function(p, act_value) {
+                            $.each(act_value, function(act, value) {
+                                ordinal = getValueOrdinal(value);
+                                $('#stride-info').append(p + ': every ' + ordinal + ' point from ' + act + '<br>');
+                            });
+                        });
+                    }
+                    // Event data shown in plot may be inside original start-ems and end-ems bounds requested, update display with actual
+                    var sd = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamin));
+                    var ed = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamax));
+                    $('#temporal-anchor').html('Temporal: ' + sd + ' to ' + ed);
+                }
+                else {
+                    $("#temporal-parameter-li").hide();
+                }
+            }
+            else if (key == 'activityparameterhistograms') {
+                $('#parameter-value-table').html('<tbody></tbody>');
+            	var histHtml='';
+                var $elem=$('#parameter-value-table > tbody');
+                var parameterunits = data[key]['parameterunits'];
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');       // HTML ids don't allow spaces
+					var divid=parameter_idsafe + '-histogram-flot';
+                    if ($('#' + divid).length == 0) {
+	                    histHtml += '<tr>' +
+	                        '<td>' +
+	                            '<div id="' + parameter_idsafe + '-histogram-flot" style="width:100%;height:100px;"></div>' +
+	                        '</td>' +
+	                        '</tr>';
+                    }
+                });
+                $elem.html(histHtml);
+                $.each(data[key]['histdata'], function (parameter, histbyplatformandactivity) {
+                    parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');       // HTML ids don't allow spaces
+                    histdata = [];
+                    $("#" + parameter_idsafe + "-histogram-flot").bind("plotselected", function (event, ranges) {
+                        parametervalues[parameter] = {'xmin': ranges.xaxis.from, 'xmax': ranges.xaxis.to, 'ymin':0, 'ymax': ranges.yaxis.to };
+                        console.log(parametervalues[parameter]);
+						rebuildFilters();
+                    });
+                    $.each(histbyplatformandactivity, function (platform, histbyplatform) {
+                        $.each(histbyplatform, function(activity, histbyactivity) {
+                            histdata = collectHistData(histdata, platform, data[key]['rgbacolors'][platform], activity, histbyactivity);
+                        });
+                    });
+
+                    if (parametervalues) {
+                        if (parametervalues[parameter]) {
+                            var min = parametervalues[parameter]['xmin'];
+                            var max = parametervalues[parameter]['xmax'];
+                            if (typeof min != 'undefined' && typeof max != 'undefined') {
+                                histdata = addSelectedParameterValue(histdata, parameter);
+                                $('#parametervalues-data').val(JSON.stringify(parametervalues));
+                            }
+                        }
+                    }
+
+                    plotHistData(parameter, histdata, parameterunits);
+
+                });
+            }
+            else if (key == 'parameterparameterpng') {
+                if (data[key]) {
+                    if (data[key][0]) {
+                        $('#parameter-parameter-2dplot').html('<img src="{{MEDIA_URL}}parameterparameter/' + data[key][0] + '">')
+                        if ( ! $('#collapseParameterParameter').hasClass('in') ) {
+                            $('#parameter-parameter-anchor').click();
+                        }
+                        if ( $('#collapseParameterParameter').hasClass('in') ) {
+                            if ( ! $('#pp2d').hasClass('active') && ! data['parameterparameterx3d']) {
+                                $('a[href=#pp2d]').tab('show');
+                            }
+                        }
+                        if (data[key][1]) {
+                            $('#parameter-parameter-2dplot').append('<pre class="prettyprint">' + data[key][1] + '</pre>');
+                        }
+                    }
+                    else {
+                        alert(data[key][1] + "  Try a different selection.");
+                    }
+                }
+            }
+            else if (key == 'parameterparameterx3d') {
+                if (data[key]) {
+                    if (data[key]['points']) {
+                        $('#pointsetcoordinates').attr('point', data[key]['points']);
+                        $('#pointsetcolors').attr('color', data[key]['colors']);
+                        $('#x3d-xmin').attr('string', data[key]['x'][1]);
+                        $('#x3d-xmax').attr('string', data[key]['x'][2]);
+                        $('#x3d-xname').attr('string', data[key]['x'][3]);
+                        $('#x3d-ymin').attr('string', data[key]['y'][1]);
+                        $('#x3d-ymax').attr('string', data[key]['y'][2]);
+                        $('#x3d-yname').attr('string', data[key]['y'][3]);
+                        $('#x3d-zmin').attr('string', data[key]['z'][1]);
+                        $('#x3d-zmax').attr('string', data[key]['z'][2]);
+                        $('#x3d-zname').attr('string', data[key]['z'][3]);
+                        $('#pp3d-colorbar').html('<img src="{{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + '" />');
+                        //$('#pp_x3d').css( {
+                        //        'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
+                        //        'background-repeat': 'no-repeat',
+                        //        'position': 'relative' } );
+                        if ( ! $('#collapseParameterParameter').hasClass('in') ) {
+                            $('#parameter-parameter-anchor').click();
+                        }
+                        if ( $('#collapseParameterParameter').hasClass('in') ) {
+                            if ( ! $('#pp3d').hasClass('active') ) {
+                                $('a[href=#pp3d]').tab('show');
+                            }
+                        }
+                    }
+                }
+            }
+            else if (key == 'measuredparameterx3d') {
+                if (data[key]) {
+                    if (data[key]['points']) {
+                        $('#mp-x3d-track').append('<indexedlineset coordIndex="' + 
+                                            data[key]['index'] + '"> <color color="' + 
+                                            data[key]['colors'] + '"></color> <geocoordinate point="' + 
+                                            data[key]['points'] + '"></geocoordinate> </indexedlineset>');
+                        $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data[key]['colorbar'] + '" />');
+                    }
+                }
+            }
+            else if (key == 'parameterplatforms' || key == 'parameterminmax') {
+                // Save the dictionary in the body so that asynchronous event handlers can get at it
+                $('body').data(key, data[key]);
+            }
+
+            // If no parametertime data and Station tab is active then disable it and switch back to Trajectory
+            if ( ! $.isEmptyObject(data.parametertime) ) {
+                if ( $.isEmptyObject(data.parametertime.pt) ) {
+                    if ( $('#temporal-parameter-li').hasClass('active') ) {
+                        //$('a', '#temporal-depth-li').tab('show');
+                        $("#temporal-parameter-li").hide();
+                    } 
+                }
+            }
+
+        } // onUpdate()
+
+        var startAjax = new Date().getTime();
+        request = $.ajax({
+            type : 'GET',
+            beforeSend: function() {
+                $('#time-depth-flot').addClass('stoqs-background-ajax-loader-pulse ');
+                $('#time-parameter-flot').addClass('stoqs-background-ajax-loader-pulse ');
+                $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader-pp ');
+                $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader-3d ');
+                $('#geo-3dplot').addClass('stoqs-background-ajax-loader-3d-topright ');
+                $('#metadata-ajaxtime').css( { 'color': 'grey' } );
+                $('#metadata-loading').html(" loading...");
+            },
+            url : stoqsQuery + '?' + qstring,
+            success: function (data) {
+                setDataAccess('mp', data);
+                setDataAccess('sp', data);
+                for (var key in data) {
+                    if (init == true) {
+                        onInit(data, key)
+                    } else {
+                        onUpdate(data, key)
+                    }
+                }
+                if (init == true) {
+                    load_permalink();
+                }
+                $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
+                $('#time-parameter-flot').removeClass('stoqs-background-ajax-loader-pulse ');
+                $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
+                $('#parameter-parameter-3dplot').removeClass('stoqs-background-ajax-loader-3d');
+                $('#geo-3dplot').removeClass('stoqs-background-ajax-loader-3d-topright');
+
+                // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
+                me.refreshMap(data['extent']);
+
+                var endAjax = new Date().getTime();
+                var nsecs = (endAjax - startAjax) / 1000.0;
+                if ( ! $.isEmptyObject(data['counts']) ) {
+                    if ( ! $('#getactualcount').is(':checked') ) {
+                        $('#metadata-count').html("about " + data['counts']['approximate_count_localized'] + " data values - ");
+                    }
+                    else {
+                        $('#metadata-count').html(data['counts']['actual_count_localized'] + " data values - ");
+                    }
+                }
+                $('#metadata-ajaxtime').css( { 'color': 'black' } );
+                $('#metadata-ajaxtime').html(" " + nsecs + " seconds");
+                $('#metadata-loading').html("");
+            },
+            dataType: "json"
+        });
+    } // updateSummaryData()
+    
+    // Collect all the parameters on the page so we can generate our permalink.
+    
+    function collect_parameters() {
+        params={'clicks': [],
+                'accordian': [],
+                'tabs': []}
+        // Need to do the right column stuff before the left column stuff, since
+        // checkboxes might appear depending on selections on the right.
+        
+        var columns=['#right-column','#left-column'];
+        $.each(columns, function(pos, divcol) {
+            // Grab all the checked radio buttons on the page and save their information.
+            $('input:checked[type="radio"]', divcol).each(function(key, item) {
+                var data='input[type="radio"][name="'+ item.name +'"][value="'+ item.value +'"]';
+                params['clicks'].push(data);
+            });
+            // Grab all the buttons that are selected, using their values.
+            $('button.btn-primary.stoqs-toggle', divcol).each(function(key, item) {
+                var id=$(item).closest('[id]')[0].id
+                var data='#' +id +' button.stoqs-toggle:contains("'+$(item).text()+'")'
+                params['clicks'].push(data);
+            });
+            // Grab all the checkboxes, note that openlayers seems to have ID's with
+            // spaces in them, so we cannot use the '#' to locate those, need to use the
+            // attribute selector instead.
+            
+            $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
+                var data=''
+                if (typeof item.id !== 'undefined') {
+                    data='input[type="checkbox"][id="' + item.id + '"]'; 
+                } else if ((typeof item.name !== 'undefined') && 
+                           (typeof item.value !== 'undefined')) {
+                    data='input[type="checkbox"][name="'+item.name+'"][value="'+item.value+'"]';
+                } else {
+                    alert('Unable to get unique path for input field, skipping from permalink!');
+                }
+                if (data != '') {
+                    params['clicks'].push(data);
+                }
+            });
+
+            // Grab the state of all the accordians on the page and store
+            // them
+            $('.accordion-body.in', divcol).each(function (key, item) {
+                params['accordian'].push(item.id);
+            });
+        });
+        
+        $('.nav-tabs').each(function (pos, item) {
+            $elements=$('li', item);
+            $.each($('li', item), function (pos2, item2) {
+                if ($(item2).hasClass('active')) {
+                    params['tabs'].push(['#' + item.id, pos2]);
+                }
+            });
+        });
+        // Grab the data so we can reset the time/depth plot and temporal values.
+        params['start-ems'] = $('#start-ems').val();
+        params['end-ems'] = $('#end-ems').val();
+        params['start-depth'] = $('#start-depth').val();
+        params['end-depth'] = $('#end-depth').val();
+
+        // Grab the center of the map so we can restore the center and lon/lat data.
+        params['map-center']={ 'lonlat': map.getCenter(), 
+                                'zoom': map.getZoom() };
+        params['map-layers']=[];
+        $.each(map.layers, function (pos, layer) { 
+            if (layer.visibility) { 
+                params['map-layers'].push(layer.name); 
+            }
+        });
+       
+        if ( $('#parametervalues-data').val() ) { 
+            // Grab any parametervalues selections that have been put into the hidden element
+            params['histograms'] = $('#parametervalues-data').val();
+            $.each(JSON.parse($('#parametervalues-data').val()), function(parameter, data) {
+                if (typeof data.xmin != 'undefined' && typeof data.xmax != 'undefined') {
+                    params[parameter + '_MIN'] = data.xmin.toPrecision(4);
+                    params[parameter + '_MAX'] = data.xmax.toPrecision(4);
+                }
+            });
+        }
+
+        return JSON.stringify(params);
+        
+    }
+    
+    function reset_parameters(parameters) {
+        permalink_bypass=true;
+        var ranges={xaxis: {to: $('#end-ems').val(),
+                            from: $('#start-ems').val()},
+                    yaxis: {to: $('#end-depth').val(),
+                            from: $('#start-depth').val()}
+                    };
+        // Uncheck the zoom update, since that'll mess up our resetting the 
+        // map.
+        var $update=$('input[type=\"checkbox\"][id=\"zoomtoextentonupdate\"]')
+        if ($update.is(':checked')) { $update.click(); } // uncheck it
+
+        // Set the time axis first
+        $.each(parameters, function (key, value) {
+            switch(key) {
+                case 'end-ems':
+                    ranges.xaxis.to=parseFloat(value);
+                    break;
+                case 'start-ems':
+                    ranges.xaxis.from=parseFloat(value);
+                    break;
+                case 'end-depth':
+                    ranges.yaxis.to=parseFloat(value);
+                    break;
+                case 'start-depth': 
+                    ranges.yaxis.from=parseFloat(value);
+                    break;
+            }
+        });
+        // Zoom into Temporal/Depth before "clicking" anything else
+        permalink_bypass=false;
+        ZoomIn('', ranges);
+        permalink_bypass=true;
+
+        $.each(parameters['clicks'], function (pos, item) {
+            $(item).click();
+        });
+
+        // Now, the rest of the information
+        $.each(parameters, function (key, value) {
+            switch(key) {
+                case 'map-center':
+                    if (lonlat && zoom) {
+                         var lonlat=new OpenLayers.LonLat(value.lonlat.lon, value.lonlat.lat);
+                   		 map.setCenter(lonlat,value.zoom);
+                    } 
+                    break;
+                case 'map-layers':
+                    $.each(map.layers, function (pos, layer) {
+                        if ($.inArray(layer.name, value) > -1) {
+                            layer.setVisibility(true);
+                        } else {
+                            layer.setVisibility(false);
+                        }
+                    });
+                    break;
+                case 'accordian':
+                    $('.accordion-body').each(function (pos, item) {
+                        if ($.inArray(item.id, value) > -1) {
+                            $(item).addClass('in').height('auto');
+                        } else {
+                            $(item).removeClass('in').height('0px');
+                        }
+                    });
+                    break;
+                case 'tabs': 
+                    $.each(value, function (pos, item) {
+                        if ( item[0] != '#parameterParameterTabs' ) {
+                            // ParamaeterParameter tab clicks happen on ajax success - don't do them here
+                            var $elem=$('li', item[0]);
+                            $elem.removeClass('active');
+                            $($elem[item[1]]).addClass('active');
+                        }
+                    });
+                    break;
+                case 'histograms':
+                    if ( ! $.isEmptyObject(value) ) {
+                        parametervalues = JSON.parse(value);
+                    }
+            }
+        });
+        
+        permalink_bypass=false;
+        rebuildFilters();
+
+        // Redraw selections on the histograms - do this after calling rebuildFilters()
+        if ( ! $.isEmptyObject(parametervalues) ) {
+            if (parametervalues[parameter]) {
+                var min = parametervalues[parameter]['xmin'];
+                var max = parametervalues[parameter]['xmax'];
+                if (typeof min != 'undefined' && typeof max != 'undefined') {
+                    histdata = addSelectedParameterValue(histdata, parameter);
+                }
+            }
+        }
+    }
+    
+    function load_permalink() {
+        var permalink_id=$.url().param('permalink_id');
+        if (typeof permalink_id !== 'undefined') {
+            // If it's longer than 32 characters, it is a client-side permalink
+            if (permalink_id.length > 32) {
+                try {
+                    var parameters=JSON.parse(LZString.decompressFromBase64(permalink_id));
+                    reset_parameters(parameters);
+                } catch (err) {
+                    alert('Permalink loading failed: ' + err + ' (Perhaps the permalink_id value is invalid?)');
+                }
+            } else {
+                var url='{% url 'load_permalink' dbAlias=request.META.dbAlias id='#REPLACE#' %}';
+                url=url.replace('#REPLACE#', permalink_id);
+                console.log(url);
+                $.get(url).
+                done(function (parameters, response, jqXHR) {
+                    reset_parameters(parameters);
+                }).
+                fail(function (data, response, jqXHR) {
+                    alert('Failed to load the specified permalink: ' + jqXHR);
+                });
+            }
+        }
+        
+    }
+    
+    
+    $(function () { 
+        // Initialize the accordian fields.
+        $(".collapse").collapse(); // Collapse all the accordian fields, click the Spatial and Temporal ones below
+        
+        // Add this behavior to all text fields, so when someone clicks on a field it highlights 
+        // all the data so it's easy to copy to the clipboard.
+        $(document).on('focus', 'input[type=text]', function(e) {
+            // Select field contents
+            var t=this
+            // This has to be done after 100ms so that standard bootstrap functionality happens first.
+            setTimeout(function() { t.select()}, 100);
+        });
+
+                
+        /* 
+         * Setup OpenLayers with some default background layers.
+         */
+        OpenLayers.IMAGE_RELOAD_ATTEMPTS = 4;
+        OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
+        //ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
+        var options = {
+            projection: new OpenLayers.Projection("EPSG:900913"),
+            displayProjection: new OpenLayers.Projection("EPSG:4326"),
+            units: "m",
+            maxResolution: 156543.0339,
+            maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34,
+                                              20037508.34, 20037508.34),
+            controls: [
+                new OpenLayers.Control.Navigation(
+                    {dragPanOptions: {enableKinetic: true}}
+                )
+            ]
+        };
+        map = new OpenLayers.Map('map',options);
+
+        var bathyEsri = new OpenLayers.Layer.XYZ(
+            ' ESRI Ocean'
+            ,'http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}.jpg'
+            ,{
+               sphericalMercator : true
+              ,isBaseLayer       : true
+              ,wrapDateLine      : true
+              ,opacity           : 1
+              ,visibility        : true
+             }
+        );
+
+        var gebco_noaa = new OpenLayers.Layer.XYZ(
+            " GEBCO & NOAA Tiles",
+            [
+                "http://{{ mapserver_host }}/gebco_noaa/tiles/${z}/${x}/${y}.png"
+            ], 
+            {
+                attribution: "Sources: General Bathymetric Chart of the Oceans "
+                + "(<a href='http://www.gebco.net/'>GEBCO</a>)"
+                + " &amp; NOAA National Geophysical Data Center"
+                + " (<a href='http://www.ngdc.noaa.gov/mgg/dem/demportal.html'>NGDC</a>)",
+                sphericalMercator: true,
+                wrapDateLine: true,
+                transitionEffect: "resize",
+                buffer: 1,
+                numZoomLevels: 16
+            }
+        );
+        var osm=new OpenLayers.Layer.OSM(" OpenStreetMap");
+        map.addLayers([bathyEsri,gebco_noaa,osm]);
+        //ctrlGraticule.activate();
+
+        /*
+         * Maptrack layers selected by UI 
+         */
+        track_lines = new OpenLayers.Layer.WMS(
+            " trajectories",
+            "http://{{ mapserver_host }}/cgi-bin/mapserv",
+            { layers: 'trajectories',
+              map: '{{ mappath }}',
+              transparent: 'True' },
+            { units: 'degrees',
+              displayInLayerSwitcher: true,
+              projection: "EPSG:900913",
+              reproject: false,
+              visibility: true,
+              singleTile: true, ratio: 1,
+              displayOutsideMaxExtent: true } );
+
+        stations = new OpenLayers.Layer.WMS(
+            " stations",
+            "http://{{ mapserver_host }}/cgi-bin/mapserv",
+            { layers: 'timeSeries',
+              map: '{{ mappath }}',
+              transparent: 'True' },
+            { units: 'degrees',
+              displayInLayerSwitcher: true,
+              projection: "EPSG:900913",
+              reproject: false,
+              visibility: true,
+              singleTile: true, ratio: 1,
+              displayOutsideMaxExtent: true } );
+
+        sample_points = new OpenLayers.Layer.WMS(
+            " Sample points",
+            "http://{{ mapserver_host }}/cgi-bin/mapserv",
+            { layers: 'sample_points',
+              map: '{{ mappath }}',
+              transparent: 'True' },
+            { units: 'degrees',
+              displayInLayerSwitcher: true,
+              projection: "EPSG:900913",
+              reproject: false,
+              visibility: true,
+              singleTile: true, ratio: 1,
+              displayOutsideMaxExtent: true } );
+
+        sensortrackskml = new OpenLayers.Layer.Vector(" Sensor tracks", {
+            projection: map.displayProjection,
+            strategies: [new OpenLayers.Strategy.Fixed()],
+            // protocol is Dynamically set in update_sensortrackskml()
+            protocol: new OpenLayers.Protocol.HTTP({
+                url: '',
+                format: new OpenLayers.Format.KML({
+                    extractStyles: true,
+                    extractAttributes: true,
+                    maxDepth: 2
+                })
+            })
+        });
+
+        sensortrackskml.events.register("loadend", sensortrackskml, function (e) {
+            if( sensortrackskml.getDataExtent() ) {
+                if ( $('#zoomtoextentonupdate').is(':checked') ) {
+                    map.zoomToExtent(sensortrackskml.getDataExtent());
+                }
+            }
+        });
+
+
+
+        // Test of WFS using ga_wfs 
+        // As of 11 Feb 2013 this request returns a MissingParameterValue Exception, but does not crash
+        // Note the prerequisite software listed as a comment in urls.py before the url match for 'wfs'
+        var csrf_token = $.cookie('csrftoken');
+        samplewfs = new OpenLayers.Layer.Vector("Sample WFS", {
+            projection: map.displayProjection,
+            strategies: [new OpenLayers.Strategy.BBOX()],
+            protocol: new OpenLayers.Protocol.WFS({
+                url: '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}wfs',
+                headers: {'X-CSRFToken': csrf_token},
+                featureType: 'Sample'
+            }),
+            styleMap: new OpenLayers.StyleMap({
+                    strokeWidth: 3,
+                    strokeColor: "#333333"
+            })
+        });
+        //map.addLayer(samplewfs);
+
+
+        map.addLayer(sensortrackskml);
+        map.addLayer(track_lines); 
+        map.addLayer(stations); 
+        map.addLayer(sample_points); 
+
+        map.addControl(new OpenLayers.Control.LoadingPanel());
+        map.addControl(new OpenLayers.Control.LayerSwitcher());
+        map.addControl(new OpenLayers.Control.MousePosition());
+        map.addControl(new OpenLayers.Control.PanZoom());
+
+
+        // Add polygon drawing tool and capture WKT of polygon as WGS84
+        map.addLayer(polyLayer);
+        var panelControls = [
+            new OpenLayers.Control.Navigation(),
+            new OpenLayers.Control.DrawFeature(polyLayer,
+                OpenLayers.Handler.Polygon,
+                {   'displayClass': 'olControlDrawFeaturePolygon',
+                    featureAdded: function() {
+                        var projWGS84 = new OpenLayers.Projection("EPSG:4326");
+                        var proj900913 = new OpenLayers.Projection("EPSG:900913");
+                        var polyWGS84 = polyLayer.features[0].geometry;
+                        polyWGS84.transform(proj900913, projWGS84);
+                        console.log(polyWGS84);
+                        OpenLayers.Console.userError(polyWGS84);
+                        rebuildFilters();
+                    }
+                }
+            )
+        ];
+        var toolbar = new OpenLayers.Control.Panel({
+            displayClass: 'olControlEditingToolbar',
+            defaultControl: panelControls[0]
+        });
+        // Commented out until it's fully implemented
+        //toolbar.addControls(panelControls);
+        //map.addControl(toolbar);
+
+
+        // Capture Feature info - both methods work with the data template specified as a file
+        // - Put feature info into a <div>
+        //map.events.register('click', map, function (e) {
+        //    OpenLayers.Util.getElement('samplePoint').innerHTML = "Loading... please wait...";
+        //    sample_point_url = sample_points.getFullRequestString({
+        //                            REQUEST: "GetFeatureInfo",
+        //                            EXCEPTIONS: "application/vnd.ogc.se_xml",
+        //                            BBOX: sample_points.map.getExtent().toBBOX(),
+        //                            X: e.xy.x,
+        //                            Y: e.xy.y,
+        //                            FEATURE_COUNT: 1,
+        //                            INFO_FORMAT: 'text/html',
+        //                            QUERY_LAYERS: sample_points.params.LAYERS,
+        //                            WIDTH: sample_points.map.size.w,
+        //                            HEIGHT: sample_points.map.size.h});
+        //    
+        //    OpenLayers.loadURL(sample_point_url, '', this, setHTML);
+        //    OpenLayers.Event.stop(e);
+        //});
+        //function setHTML(response) {
+        //    OpenLayers.Util.getElement('samplePoint').innerHTML = response.responseText;
+        //}
+        // - Create a popup window
+        //var sample_points_info = new OpenLayers.Control.WMSGetFeatureInfo({
+        //        url: "http://{{ mapserver_host }}/cgi-bin/mapserv",
+        //        maxFeatures: 3,
+        //        title: 'Identify features by clicking',
+        //        queryVisible: true,
+        //        layers: [sample_points],
+        //        vendorParams: {
+        //                 map: "{{ mappath }}",
+        //        },
+        //        eventListeners: {
+        //            getfeatureinfo: function(event) {
+        //                console.log(event);
+        //                map.addPopup(new OpenLayers.Popup.FramedCloud(
+        //                    "chicken",
+        //                    map.getLonLatFromPixel(event.xy),
+        //                    null,
+        //                    event.text,
+        //                    null,
+        //                    true
+        //                )); //map.addPopup
+        //            } // getfeatureinfo
+        //        } // eventListeners
+        //    });
+        //map.addControl(sample_points_info);
+        //sample_points_info.activate();
+        //End Capture Feature info tests
+
+
+        /*
+         *
+         */
+        updateSummaryData(true);
+
+          
+        $('body').on('change', '.slider-values', function (e) {
+            var $slider=$('#slider-' + this.id.split('-').reverse()[0])
+            var setting=$slider.data().reverseformatter($(this).val());
+            var pos=0;
+            if (this.id.split('-')[0] == 'start') {
+                pos=0
+            } else {
+                pos=1
+            }
+            var oldvalue=$slider.slider('values',pos);
+            var result=$slider.slider('values',pos,[setting]);
+            if (Math.abs(setting-result) > 1) {
+                jAlert('The data entered was not within the specified range, or exceeds the valid precision for this field. ' +
+                        'the field has been reset to its original value.')
+                $slider.slider("values",pos,[oldvalue])
+            }
+        });
+        
+
+        // Tooltips    
+        $('#spatial-anchor').click();
+        $('#temporal-anchor').click();
+        $('#getactualcount').parent().tooltip({title: 'Will increase query time'});
+
+        // Tootips that are disabled after first use - don't want to annoy users too much
+        //$('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter to enable'});
+        //$('#showgeox3ddata').parent().tooltip({title: 'Select a Measured Parameter to enable'});
+
+        $('#permalink').on('click', function(ev){
+            ev.preventDefault();
+            var $target=$(ev.currentTarget);
+            var url=$target.data('action');
+            var params=$target.data('parameters');
+            if (typeof params === 'undefined') {
+                params=''
+            }
+            // If the permalink is visible, then there's no point in getting
+            // another one - since the one they are seeing is alredy current so just
+            // ignore the clicks if that's the case.
+            if ($('#permalink-box').is(":visible") == false) {
+                //$.post(url, {'parameters': params })
+                var $el=$('input[name="permalink"]')
+                if ((typeof client_side_permalink !== 'undefined') &&
+                    (client_side_permalink)) {
+                    var $url=$.url();
+                    var params=$url.param();
+                    params['permalink_id']=LZString.compressToBase64(collect_parameters());
+                    var url=$url.attr('source').split('?')[0]+'?'+$.param(params)
+                    $el.val(url);
+                    $('#permalink-box').show();
+
+                } else {
+                    $.post(url, {'parameters': collect_parameters() })
+                    .done(function (data, response, jqXHR) {
+                        $el.val(data);
+                        $('#permalink-box').show();
+                    });
+                }
+            }
+        });
+        
+    });
+
+    --></script>
+  </body>
+</html>
