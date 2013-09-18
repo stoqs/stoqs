@@ -349,17 +349,17 @@ if cl.args.test:
     cl.loadL_662(stride=100) 
     cl.load_NPS29(stride=100) 
     cl.load_NPS34(stride=100) 
-    cl.load_nemesis_ctd(stride=1) 
-    cl.load_ucsc294_ctd(stride=1) 
-    cl.load_nemesis_met(stride=1) 
+    cl.load_nemesis_ctd(stride=100) 
+    cl.load_ucsc294_ctd(stride=100) 
+    cl.load_nemesis_met(stride=100) 
 
-    cl.loadDorado(stride=100)
+    cl.loadDorado(stride=1000)
     ##cl.loadDaphne(stride=100)             # Someone needs to make good NetCDF files
     ##cl.loadTethys(stride=100)             # Someone needs to make good NetCDF files
 
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
-    cl.loadJMpctd(stride=10)
+    cl.loadJMpctd(stride=50)
     ##cl.loadWFuctd(stride=100)             # Not until 9/20/13
     ##cl.loadWFpctd(stride=50)
 
@@ -384,29 +384,29 @@ if cl.args.test:
     ##cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
-    cl.loadL_662(stride=100) 
-    cl.load_NPS29(stride=100) 
-    cl.load_NPS34(stride=100) 
+    cl.loadL_662(stride=1) 
+    cl.load_NPS29(stride=1) 
+    cl.load_NPS34(stride=1) 
     cl.load_nemesis_ctd(stride=1) 
     cl.load_ucsc294_ctd(stride=1) 
     cl.load_nemesis_met(stride=1) 
 
-    cl.loadDorado(stride=100)
+    cl.loadDorado(stride=2)
     ##cl.loadDaphne(stride=100)             # Someone needs to make good NetCDF files
     ##cl.loadTethys(stride=100)             # Someone needs to make good NetCDF files
 
-    cl.loadRCuctd(stride=10)
-    cl.loadRCpctd(stride=10)
-    cl.loadJMpctd(stride=10)
+    cl.loadRCuctd(stride=1)
+    cl.loadRCpctd(stride=1)
+    cl.loadJMpctd(stride=1)
     ##cl.loadWFuctd(stride=100)             # Not until 9/20/13
     ##cl.loadWFpctd(stride=50)
 
-    cl.loadM1(stride=10)
+    cl.loadM1(stride=1)
     ##cl.load_ucsc294_met(stride=1)         # No method in CANON/__init__.py yet
-    cl.loadStella203(stride=10)
-    cl.loadStella204(stride=10)
-    cl.loadOA1ctd(stride=10)
-    cl.loadOA1met(stride=10)
+    cl.loadStella203(stride=1)
+    cl.loadStella204(stride=1)
+    cl.loadOA1ctd(stride=1)
+    cl.loadOA1met(stride=1)
     ##cl.loadOA1pH(stride=1)
     ##cl.loadOA1pco2(stride=1)
     ##cl.loadOA1fl(stride=1)
@@ -422,39 +422,40 @@ elif cl.args.optimal_stride:
     ##cl.loadSubSamples()
 
 else:
-    cl.loadL_662(stride=100) 
-    cl.load_NPS29(stride=100) 
-    cl.load_NPS34(stride=100) 
-    cl.load_nemesis_ctd(stride=1) 
-    cl.load_ucsc294_ctd(stride=1) 
-    cl.load_nemesis_met(stride=1) 
+    cl.stride = cl.args.stride
+    cl.loadL_662()
+    cl.load_NPS29()
+    cl.load_NPS34()
+    cl.load_nemesis_ctd()
+    cl.load_ucsc294_ctd() 
+    cl.load_nemesis_met() 
 
-    cl.loadDorado(stride=100)
-    ##cl.loadDaphne(stride=100)             # Someone needs to make good NetCDF files
-    ##cl.loadTethys(stride=100)             # Someone needs to make good NetCDF files
+    cl.loadDorado()
+    ##cl.loadDaphne()             # Someone needs to make good NetCDF files
+    ##cl.loadTethys()             # Someone needs to make good NetCDF files
 
-    cl.loadRCuctd(stride=10)
-    cl.loadRCpctd(stride=10)
-    cl.loadJMpctd(stride=10)
-    ##cl.loadWFuctd(stride=100)             # Not until 9/20/13
-    ##cl.loadWFpctd(stride=50)
+    cl.loadRCuctd()
+    cl.loadRCpctd()
+    cl.loadJMpctd()
+    ##cl.loadWFuctd()             # Not until 9/20/13
+    ##cl.loadWFpctd()
 
-    cl.loadM1(stride=10)
-    ##cl.load_ucsc294_met(stride=1)         # No method in CANON/__init__.py yet
-    cl.loadStella203(stride=10)
-    cl.loadStella204(stride=10)
-    cl.loadOA1ctd(stride=10)
-    cl.loadOA1met(stride=10)
-    ##cl.loadOA1pH(stride=1)
-    ##cl.loadOA1pco2(stride=1)
-    ##cl.loadOA1fl(stride=1)
-    ##cl.loadOA1o2(stride=1)
-    ##cl.loadOA2ctd(stride=1)
-    ##cl.loadOA2met(stride=1)
-    ##cl.loadOA2pH(stride=1)
-    ##cl.loadOA2pco2(stride=1)
-    ##cl.loadOA2fl(stride=1)
-    ##cl.loadOA2o2(stride=1)
+    cl.loadM1()
+    ##cl.load_ucsc294_met()         # No method in CANON/__init__.py yet
+    cl.loadStella203()
+    cl.loadStella204()
+    cl.loadOA1ctd()
+    cl.loadOA1met()
+    ##cl.loadOA1pH()
+    ##cl.loadOA1pco2()
+    ##cl.loadOA1fl()
+    ##cl.loadOA1o2()
+    ##cl.loadOA2ctd()
+    ##cl.loadOA2met()
+    ##cl.loadOA2pH()
+    ##cl.loadOA2pco2()
+    ##cl.loadOA2fl()
+    ##cl.loadOA2o2()
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     ##cl.loadSubSamples()
