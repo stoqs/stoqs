@@ -39,9 +39,9 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 
 ######################################################################
 # Set start and end dates for all glider loads
-#t =time.strptime("2013-09-11 0:01", "%Y-%m-%d %H:%M")
-ts=time.time()-(11*60*60)
-st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
+t =time.strptime("2013-09-11 0:01", "%Y-%m-%d %H:%M")
+#ts=time.time()-(11*60*60)
+#st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
 startdate=t[:6]
 t =time.strptime("2013-09-29 0:01", "%Y-%m-%d %H:%M")
 enddate=t[:6]
