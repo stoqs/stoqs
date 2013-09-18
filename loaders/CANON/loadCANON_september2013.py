@@ -51,6 +51,33 @@ cl.dorado_files = [
                    'Dorado389_2013_259_00_259_00_decim.nc'     # Sep 16
 				   ]
 
+#####################################################################
+#  LRAUV 
+#####################################################################
+
+# From: M Jordan Stanway <mjstanway@mbari.org>
+# Subject: Re: LRAUV netcdf files on OPeNDAP
+# Date: September 18, 2013 1:15:01 PM PDT
+# To: Mike McCann <mccann@mbari.org>
+# 
+# Not to my knowledge.
+# 
+# I've been discouraging people from using the .nc files because the decimation and interpolation can be misleading, and usually causes misunderstandings.
+# 
+# On Sep 18, 2013 12:33 PM, "Mike McCann" <mccann@mbari.org> wrote:
+# Hi Jordan,
+# 
+# Are the netCDF files you have here:
+# 
+# http://aosn.mbari.org/TethysDash/data/daphne/realtime/sbdlogs/2013/201309/20130918T154456/
+# 
+# available on on OPeNDAP server?
+# 
+# If not, and the directory can be mounted on elvis, then I can set them up to be served with Hyrax.
+# 
+# -Mike
+
+
 ######################################################################
 #  GLIDERS
 ######################################################################
@@ -104,12 +131,6 @@ cl.ucsc294_ctd_parms = ['TEMP', 'PSAL' ,'oxygen','chla','backscatter']
 cl.ucsc294_ctd_startDatetime = startdate
 cl.ucsc294_ctd_endDatetime = enddate
 
-# Liquid Robotics Waveglider
-cl.waveglider_base = cl.dodsBase + 'CANON_september2013/waveglider/'
-cl.waveglider_files = [ 'waveglider_gpctd_WG.nc' ]
-cl.waveglider_parms = [ 'TEMP', 'PSAL', 'oxygen' ]
-cl.waveglider_startDatetime = startdate
-cl.waveglider_endDatetime = enddate
 
 ######################################################################
 #  WESTERN FLYER: September 20-27
@@ -183,14 +204,15 @@ cl.subsample_csv_files = [
 #####################################################################
 # JOHN MARTIN
 #####################################################################
-cl.martin_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/uctd/' 
-cl.martin_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar' ]
-cl.martin_files = [ '27710c01jm.nc',   '27910c06jm.nc',   '28410c02jm.nc',   '28710c03jm.nc',   '29810c01jm.nc',
-                  ]
+## No netcdf files as of 18 September 2013
+##cl.JMuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/uctd/' 
+##cl.JMuctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar' ]
+##cl.JMuctd_files = [ '27710c01jm.nc',   '27910c06jm.nc',   '28410c02jm.nc',   '28710c03jm.nc',   '29810c01jm.nc', ]
 
-cl.martin_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/pctd/' 
-cl.martin_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar' ]
-cl.martin_files = [ '25613JMC01.nc',
+cl.pctdDir = 'CANON_september2013/Platforms/Ships/Martin/pctd/'
+cl.JMpctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/pctd/' 
+cl.JMpctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
+cl.JMpctd_files = [ '25613JMC01.nc',
                     '25613JMC02.nc',
                     '25613JMC03.nc',
                     '25613JMC04.nc',
@@ -207,7 +229,7 @@ cl.martin_files = [ '25613JMC01.nc',
 ######################################################################
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201202/'
-cl.m1_files = ['OS_M1_201R2022hourly_CMSTV.nc']
+cl.m1_files = ['OS_M1_20120222hourly_CMSTV.nc']
 cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
                      'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
                      'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
@@ -324,18 +346,16 @@ cl.espmack_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    
-    cl.loadL_662(stride=100) # done
+    cl.loadL_662(stride=100) 
     cl.load_NPS29(stride=100) 
     cl.load_NPS34(stride=100) 
     cl.load_nemesis_ctd(stride=1) 
     cl.load_ucsc294_ctd(stride=1) 
     cl.load_nemesis_met(stride=1) 
 
-    cl.loadWaveglider(stride=100)
     cl.loadDorado(stride=100)
-    cl.loadDaphne(stride=100)
-    cl.loadTethys(stride=100)
+    ##cl.loadDaphne(stride=100)             # Someone needs to make good NetCDF files
+    ##cl.loadTethys(stride=100)             # Someone needs to make good NetCDF files
 
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
@@ -343,14 +363,12 @@ if cl.args.test:
     ##cl.loadWFuctd(stride=100)             # Not until 9/20/13
     ##cl.loadWFpctd(stride=50)
 
-    cl.loadM1(stride=1)
+    cl.loadM1(stride=10)
     ##cl.load_ucsc294_met(stride=1)         # No method in CANON/__init__.py yet
-    ##cl.loadM1ts(stride=1)
-    ##cl.loadM1met(stride=1)
-    cl.loadStella203(stride=1)
-    cl.loadStella204(stride=1)
-    cl.loadOA1ctd(stride=1)
-    cl.loadOA1met(stride=1)
+    cl.loadStella203(stride=10)
+    cl.loadStella204(stride=10)
+    cl.loadOA1ctd(stride=10)
+    cl.loadOA1met(stride=10)
     ##cl.loadOA1pH(stride=1)
     ##cl.loadOA1pco2(stride=1)
     ##cl.loadOA1fl(stride=1)
@@ -359,15 +377,85 @@ if cl.args.test:
     ##cl.loadOA2met(stride=1)
     ##cl.loadOA2pH(stride=1)
     ##cl.loadOA2pco2(stride=1)
-#    cl.loadOA2fl(stride=1)
-#    cl.loadOA2o2(stride=1)
+    ##cl.loadOA2fl(stride=1)
+    ##cl.loadOA2o2(stride=1)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     ##cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
-    pass
+    cl.loadL_662(stride=100) 
+    cl.load_NPS29(stride=100) 
+    cl.load_NPS34(stride=100) 
+    cl.load_nemesis_ctd(stride=1) 
+    cl.load_ucsc294_ctd(stride=1) 
+    cl.load_nemesis_met(stride=1) 
+
+    cl.loadDorado(stride=100)
+    ##cl.loadDaphne(stride=100)             # Someone needs to make good NetCDF files
+    ##cl.loadTethys(stride=100)             # Someone needs to make good NetCDF files
+
+    cl.loadRCuctd(stride=10)
+    cl.loadRCpctd(stride=10)
+    cl.loadJMpctd(stride=10)
+    ##cl.loadWFuctd(stride=100)             # Not until 9/20/13
+    ##cl.loadWFpctd(stride=50)
+
+    cl.loadM1(stride=10)
+    ##cl.load_ucsc294_met(stride=1)         # No method in CANON/__init__.py yet
+    cl.loadStella203(stride=10)
+    cl.loadStella204(stride=10)
+    cl.loadOA1ctd(stride=10)
+    cl.loadOA1met(stride=10)
+    ##cl.loadOA1pH(stride=1)
+    ##cl.loadOA1pco2(stride=1)
+    ##cl.loadOA1fl(stride=1)
+    ##cl.loadOA1o2(stride=1)
+    ##cl.loadOA2ctd(stride=1)
+    ##cl.loadOA2met(stride=1)
+    ##cl.loadOA2pH(stride=1)
+    ##cl.loadOA2pco2(stride=1)
+    ##cl.loadOA2fl(stride=1)
+    ##cl.loadOA2o2(stride=1)
+    ##cl.loadESPmack()
+    ##cl.loadESPbruce()
+    ##cl.loadSubSamples()
 
 else:
-    pass
+    cl.loadL_662(stride=100) 
+    cl.load_NPS29(stride=100) 
+    cl.load_NPS34(stride=100) 
+    cl.load_nemesis_ctd(stride=1) 
+    cl.load_ucsc294_ctd(stride=1) 
+    cl.load_nemesis_met(stride=1) 
+
+    cl.loadDorado(stride=100)
+    ##cl.loadDaphne(stride=100)             # Someone needs to make good NetCDF files
+    ##cl.loadTethys(stride=100)             # Someone needs to make good NetCDF files
+
+    cl.loadRCuctd(stride=10)
+    cl.loadRCpctd(stride=10)
+    cl.loadJMpctd(stride=10)
+    ##cl.loadWFuctd(stride=100)             # Not until 9/20/13
+    ##cl.loadWFpctd(stride=50)
+
+    cl.loadM1(stride=10)
+    ##cl.load_ucsc294_met(stride=1)         # No method in CANON/__init__.py yet
+    cl.loadStella203(stride=10)
+    cl.loadStella204(stride=10)
+    cl.loadOA1ctd(stride=10)
+    cl.loadOA1met(stride=10)
+    ##cl.loadOA1pH(stride=1)
+    ##cl.loadOA1pco2(stride=1)
+    ##cl.loadOA1fl(stride=1)
+    ##cl.loadOA1o2(stride=1)
+    ##cl.loadOA2ctd(stride=1)
+    ##cl.loadOA2met(stride=1)
+    ##cl.loadOA2pH(stride=1)
+    ##cl.loadOA2pco2(stride=1)
+    ##cl.loadOA2fl(stride=1)
+    ##cl.loadOA2o2(stride=1)
+    ##cl.loadESPmack()
+    ##cl.loadESPbruce()
+    ##cl.loadSubSamples()
 
