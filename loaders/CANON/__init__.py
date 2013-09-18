@@ -127,14 +127,14 @@ class CANONLoader(LoadScript):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'RV_John_Martin_UCTD', self.colors['martin'], 'ship', 'cruise', 
                                         self.JMuctd_parms, self.dbAlias, stride)
 
-    def loadJMpctd(self, stride=None):
+    def loadJMpctd(self, stride=None, platformName='RV_John_Martin_PCTD', activitytypeName='John Martin Profile CTD Data'):
         '''
         Martin specific underway load functions
         '''
         stride = stride or self.stride
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.JMpctd_files], self.JMpctd_files):
             url = self.JMpctd_base + file
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'RV_John_Martin_PCTD', self.colors['martin'], 'ship', 'cruise', 
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['martin'], 'ship', activitytypeName,
                                         self.JMpctd_parms, self.dbAlias, stride)
         # load all the bottles           
         sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['martin'], platformTypeName='ship')
