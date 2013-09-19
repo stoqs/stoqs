@@ -49,13 +49,8 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 #####################################################################
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2013/netcdf/'
-cl.dorado_files = ['Dorado389_2013_259_00_259_00_decim.nc'     #Sep 16
-                   # 'Dorado389_2013_259_00_259_01_decim.nc' 
-                   # 'Dorado389_2013_260_00_260_00_decim.nc'     #Sep 17 
-                   # 'Dorado389_2013_260_00_260_01_decim.nc' 
-                   # 'Dorado389_2013_261_00_261_00_decim.nc'     #Sep 18
-                   # 'Dorado389_2013_261_00_261_01_decim.nc' 
-                   # 'Dorado389_2013_262_00_262_00_decim.nc'     #Sep 19
+cl.dorado_files = [# 'Dorado389_2013_259_00_259_00_decim.nc'     #Sep 16 Loaded
+                   'Dorado389_2013_262_00_262_00_decim.nc'     #Sep 19 Dorado389_2013_262_00_262_00 
                    # 'Dorado389_2013_262_00_262_01_decim.nc' 
                    # 'Dorado389_2013_273_00_273_00_decim.nc'     #Sep 30
                    # 'Dorado389_2013_273_00_273_01_decim.nc' 
