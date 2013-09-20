@@ -65,8 +65,13 @@ class CANONLoader(LoadScript):
                 'espdrift':     '802026',
                 'espmack':      '804026',
                 'espbruce':     '808026',
+                'Stella201':    '26f080',
+                'Stella202':    'F02696',
+                'Stella203':    'F08026',
+                'Stella204':    'AAAA26',
                 'stella203':    'F08026',
                 'stella204':    'AAAA26',
+                'Stella205':    '2696f0',
                 'nemesis':      'FFF026',
                 'ucsc294':      'FFBA26',
                 'ucsc260':      'FF8426',
@@ -512,6 +517,18 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'waveglider', self.colors['waveglider'], 'glider', 'Glider Mission', 
                                         self.waveglider_parms, self.dbAlias, stride, self.waveglider_startDatetime, self.waveglider_endDatetime)
+
+    def loadStella(self, stride=None):
+        '''
+        Stella drift specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.stella_files], self.stella_files):
+            url = self.stella_base + file
+            print "url = %s" % url
+	    dname='Stella' + aName[6:9]
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'Drifter_' + dname, self.colors[dname], dname, 'Stella drifter Mission', 
+                                        self.stella_parms, self.dbAlias, stride)
 
     def loadStella204(self, stride=None):
         '''
