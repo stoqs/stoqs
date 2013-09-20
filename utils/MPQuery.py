@@ -49,7 +49,8 @@ class MPQuerySet(object):
     again to see if self-joins are possible in Django, and confirmed that they are probably not.  
     See: http://stackoverflow.com/questions/1578362/self-join-with-django-orm.)
     '''
-    rest_columns = [ 'parameter__name',
+    rest_columns = [ 'parameter__id',
+                     'parameter__name',
                      'parameter__standard_name',
                      'measurement__depth',
                      'measurement__geom',
@@ -149,6 +150,7 @@ class MPQuerySet(object):
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
                     row = { 
                             'measurement__depth': mp['measurement__depth'],
+                            'parameter__id': mp['parameter__id'],
                             'parameter__name': mp['parameter__name'],
                             'datavalue': mp['datavalue'],
                             'measurement__instantpoint__timevalue': mp['measurement__instantpoint__timevalue'],
@@ -166,6 +168,7 @@ class MPQuerySet(object):
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
                     row = { 
                             'measurement__depth': mp.measurement.depth,
+                            'parameter__id': mp.parameter__id,
                             'parameter__name': mp.parameter__name,
                             'datavalue': mp.datavalue,
                             'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
@@ -247,17 +250,8 @@ class SPQuerySet(object):
     again to see if self-joins are possible in Django, and confirmed that they are probably not.  
     See: http://stackoverflow.com/questions/1578362/self-join-with-django-orm.)
     '''
-    rest_columns = [ 'parameter__name',
-                     'parameter__standard_name',
-                     'sample__depth',
-                     'sample__geom',
-                     'sample__instantpoint__timevalue', 
-                     'sample__instantpoint__activity__name',
-                     'sample__instantpoint__activity__platform__name',
-                     'datavalue',
-                     'parameter__units'
-                   ]
-    rest_columns = [ 'parameter__name',
+    rest_columns = [ 'parameter__id',
+                     'parameter__name',
                      'parameter__standard_name',
                      'sample__depth',
                      'sample__geom',
@@ -357,6 +351,7 @@ class SPQuerySet(object):
                 for mp in self.sp_query[:ITER_HARD_LIMIT]:
                     row = { 
                             'sample__depth': mp['sample__depth'],
+                            'parameter__id': mp['parameter__id'],
                             'parameter__name': mp['parameter__name'],
                             'datavalue': mp['datavalue'],
                             'sample__instantpoint__timevalue': mp['sample__instantpoint__timevalue'],
@@ -374,6 +369,7 @@ class SPQuerySet(object):
                 for mp in self.sp_query[:ITER_HARD_LIMIT]:
                     row = { 
                             'sample__depth': mp.sample.depth,
+                            'parameter__id': mp.parameter__id,
                             'parameter__name': mp.parameter__name,
                             'datavalue': mp.datavalue,
                             'sample__instantpoint__timevalue': mp.sample.instantpoint.timevalue,
