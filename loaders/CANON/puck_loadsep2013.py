@@ -6,7 +6,7 @@ __contact__   = 'duane at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON activities in September 2013
+cron loader for  CANON  wave gliders slocum, OA and TEX in September 2013
 
 Mike McCann; Modified by Duane Edgington and Reiko Michisaki
 MBARI 02 September 2013
@@ -43,37 +43,41 @@ else:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
 cl.dodsBase = cl.tdsBase + 'dodsC/'
 
-# Set start and end dates for mooring, twice per day.  In the morning and afternoon.
-##t =time.strptime("2013-09-09 0:01", "%Y-%m-%d %H:%M")
-##startdate=t[:6]
-ts=time.time()-(33*60*60)
+
+######################################################################
+#  GLIDERS
+######################################################################
+# Set start and end dates for all glider loads
+# startdate is 24hours from now
+ts=time.time()-(12.2*60*60)  
 st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
 t=time.strptime(st,"%Y-%m-%d %H:%M")
+t =time.strptime("2013-09-03 0:01", "%Y-%m-%d %H:%M")
 startdate=t[:6]
-t =time.strptime("2013-09-29 0:01", "%Y-%m-%d %H:%M")
+t =time.strptime("2013-10-15 0:01", "%Y-%m-%d %H:%M")
 enddate=t[:6]
-print startdate, enddate
 
-######################################################################
-#  MOORINGS
-######################################################################
-# Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
-cl.m1_base = 'http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201209/'
-cl.m1_files = ['OS_M1_20130918hourly_CMSTV.nc']
-cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
-                     'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-                     'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
-                   ]
-cl.m1_startDatetime = datetime.datetime(*startdate[:])
-cl.m1_endDatetime = datetime.datetime(*enddate[:])
 
+# WG Tex Eco Puck
+cl.wg_tex_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_Tex/NetCDF/'
+cl.wg_tex_ctd_files = [ 'WG_Tex_eco.nc']
+cl.wg_tex_ctd_parms = ['chlorophyll','backscatter650','backscatter470']
+cl.wg_tex_ctd_startDatetime = datetime.datetime(*startdate[:])
+cl.wg_tex_ctd_endDatetime = datetime.datetime(*enddate[:])
+ 
+
+
+###################################################################################################################
+# Execute the load
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadM1(stride=10)
+    cl.load_wg_tex_ctd(stride=1) 
 
 elif cl.args.optimal_stride:
-    cl.loadM1(stride=1)
+    cl.load_wg_tex_ctd(stride=1) 
+#    cl.loadStella204(stride=1)
 
 else:
-    cl.loadM1(stride=1)
+
+    cl.load_wg_tex_ctd(stride=1) 
