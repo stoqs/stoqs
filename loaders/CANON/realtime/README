@@ -1,0 +1,61 @@
+This directory is for scripts to support realtime loading of CANON data
+into realtime databases for CANON-type campaigns.  An example dbAlias for
+such a database is stoqs_may2012_r.
+
+The consumer.py scripts attach to an AMQP exchange to receive Google Protocol
+Buffer messages from the TREX vehicle.
+
+Create the database(s) - at psql prompt:
+----------------------------------------
+
+drop database stoqs_may2012_r;
+create database stoqs_may2012_r owner=stoqsadm template=template_postgis;
+\c stoqs_may2012_r
+grant all on all tables in schema public to stoqsadm;
+
+
+Add the database alias to your privateSettings file:
+----------------------------------------------------
+
+    'stoqs_may2012_r': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': 'stoqs_may2012_r',       
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+
+
+Sync the model to the new database(s) - at shell prompt:
+--------------------------------------------------------
+
+./manage.py syncdb --database=stoqs_may2012_r
+
+
+Install Google Protobuf and pyproj (for converting UTM):
+--------------------------------------------------------
+
+Get tarball from http://code.google.com/p/protobuf/downloads/list
+(Run "./configure --prefix=/usr" to avoid having to set your LD_LIBRARY_PATH)
+
+protoc --python_out=. trex_sensor.proto
+protoc --python_out=. trex.proto
+
+From the python dir in the protobuf source tree execute in your virtual-env:
+
+python setup.py test
+python setup.py install
+
+easy_install pyproj
+
+
+Run the consumer for TREX sensor protobuf messages:
+---------------------------------------------------
+
+./persistTrex.py --en SensorMessagesFromTrex --et fanout --qn macbookvm_persist_trex --vh trackingvhost --persist stoqs_may2012_r
+
+
+-- 
+Mike McCann
+21 May 2012
