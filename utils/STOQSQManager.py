@@ -391,13 +391,13 @@ class STOQSQManager(object):
                 qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'), Avg('median'))
                 logger.debug('qs = %s', qs)
                 try:
-                    results = [pid, round_to_n(qs['p010__min'],3), round_to_n(qs['p990__max'],3)]
+                    results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
                 except TypeError:
                     logger.exception('Failed to get results for qs = %s', qs)
             else:
                 qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
                 try:
-                    results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                    results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError:
                     logger.exception('Failed to get results for qs = %s', qs)
             return results
@@ -410,10 +410,10 @@ class STOQSQManager(object):
                     logger.debug('pid = %s', pid)
                     if percentileAggregateType == 'extrema':
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'))
-                        results = [pid, round_to_n(qs['p010__min'],3), round_to_n(qs['p990__max'],3)]
+                        results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
-                        results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                        results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
@@ -425,10 +425,10 @@ class STOQSQManager(object):
                     logger.debug('pid = %s', pid)
                     if percentileAggregateType == 'extrema':
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'))
-                        results = [pid, round_to_n(qs['p010__min'],3), round_to_n(qs['p990__max'],3)]
+                        results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
-                        results = [pid, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                        results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
@@ -438,10 +438,10 @@ class STOQSQManager(object):
                 try:
                     if percentileAggregateType == 'extrema':
                         qs = self.getActivityParametersQS().filter(parameter__name=sname).aggregate(Min('p025'), Max('p975'))
-                        results = [sname, round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
+                        results = [sname, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__name=sname).aggregate(Avg('p025'), Avg('p975'))
-                        results = [sname, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                        results = [sname, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
@@ -451,10 +451,10 @@ class STOQSQManager(object):
                 try:
                     if percentileAggregateType == 'extrema':
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Min('p025'), Max('p975'))
-                        results = [parameterID, round_to_n(qs['p025__min'],3), round_to_n(qs['p975__max'],3)]
+                        results = [parameterID, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
-                        results = [parameterID, round_to_n(qs['p025__avg'],3), round_to_n(qs['p975__avg'],3)]
+                        results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
@@ -583,9 +583,10 @@ class STOQSQManager(object):
                         ##logger.debug('s[2] = %s', s[2])
                         sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
                     except KeyError:
+                        ##logger.debug('First time seeing activity__name = %s, making it a list in sdt', s[2])
                         sdt[p[0]][s[2]] = []                                    # First time seeing activity__name, make it a list
-                        if s[1]:
-                            sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value
+                        if s[1] is not None:
+                            sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value, even if it is 0.0
                     except TypeError:
                         continue                                                # Likely "float argument required, not NoneType"
 
