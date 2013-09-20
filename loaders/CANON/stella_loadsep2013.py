@@ -75,20 +75,31 @@ cl.stella204_files = [
                         'stella204_data.nc',
                       ]
 
+# Stellas
+cl.stella_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
+cl.stella_parms = [ 'TEMP', 'pH' ]
+cl.stella_files = [ 
+                        'stella202_data.nc',
+                        'stella203_data.nc',
+                      ]
+
 
 ###################################################################################################################
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadStella203(stride=1)
-    cl.loadStella204(stride=1)
+#    cl.loadStella203(stride=1)
+#    cl.loadStella204(stride=1)
+    cl.loadStella(stride=1)
 
 elif cl.args.optimal_stride:
-    cl.loadStella203(stride=1)
-    cl.loadStella204(stride=1)
+#    cl.loadStella203(stride=1)
+#    cl.loadStella204(stride=1)
+    cl.loadStella(stride=1)
 
 else:
-    cl.loadStella203(stride=1)
-    cl.loadStella204(stride=1)
+#    cl.loadStella203(stride=1)
+#    cl.loadStella204(stride=1)
+    cl.loadStella(stride=1)
 
