@@ -30,8 +30,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # this makes
 from CANON import CANONLoader
        
 # building input data sources object
-#cl = CANONLoader('stoqs_september2011', 'CANON - September 2011')
-cl = CANONLoader('stoqs_september2013', 'CANON - September 2013')
+from socket import gethostname
+hostname=gethostname()
+print hostname
+if hostname=='odss-test.shore.mbari.org':
+    cl = CANONLoader('stoqs_september2011', 'CANON - September 2011')
+else:
+    cl = CANONLoader('stoqs_september2013', 'CANON - September 2013')
+
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -39,9 +45,9 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 
 ######################################################################
 # Set start and end dates for all glider loads
-t =time.strptime("2013-09-11 0:01", "%Y-%m-%d %H:%M")
-#ts=time.time()-(11*60*60)
-#st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
+#t =time.strptime("2013-09-11 0:01", "%Y-%m-%d %H:%M")
+ts=time.time()-(11*60*60)
+st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
 startdate=t[:6]
 t =time.strptime("2013-09-29 0:01", "%Y-%m-%d %H:%M")
 enddate=t[:6]
