@@ -235,6 +235,17 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'UCSC294_Glider', self.colors['ucsc294'], 'glider', 'Glider Mission', 
                                         self.ucsc294_ctd_parms, self.dbAlias, stride, self.ucsc294_ctd_startDatetime, self.ucsc294_ctd_endDatetime)
 
+    def load_wg_oa_pco2(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_oa_pco2_files], self.wg_oa_pco2_files):
+            url = self.wg_oa_pco2_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'glider', 'Glider Mission', 
+                                        self.wg_oa_pco2_parms, self.dbAlias, stride, self.wg_oa_pco2_startDatetime, self.wg_oa_pco2_endDatetime)
+
     def load_wg_oa_ctd(self, stride=None):
         '''
         Glider specific load functions
