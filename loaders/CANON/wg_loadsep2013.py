@@ -51,31 +51,30 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 ts=time.time()-(13.2*60*60)  
 st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
 t=time.strptime(st,"%Y-%m-%d %H:%M")
-#t =time.strptime("2013-09-05 0:01", "%Y-%m-%d %H:%M")
+t =time.strptime("2013-09-01 0:01", "%Y-%m-%d %H:%M")
 startdate=t[:6]
 t =time.strptime("2013-10-15 0:01", "%Y-%m-%d %H:%M")
 enddate=t[:6]
 
-# SPRAY glider - for just the duration of the campaign
-cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.l_662_files = ['OS_Glider_L_662_20130711_TS.nc']
-cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
-cl.l_662_startDatetime = datetime.datetime(*startdate[:]) 
-cl.l_662_endDatetime = datetime.datetime(*enddate[:])
 
-# NPS34
-cl.nps34_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.nps34_files = [ 'OS_Glider_NPS_G34_20130829_TS.nc']
-cl.nps34_parms = ['TEMP', 'PSAL']
-cl.nps34_startDatetime = datetime.datetime(*startdate[:])
-cl.nps34_endDatetime = datetime.datetime(*enddate[:])
+# Glider ctd
+cl.glider_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
+cl.glider_ctd_files = [ 'nemesis_ctd.nc',
+                        'ucsc260_ctd.nc',
+                        'ucsc294_ctd.nc']
+cl.glider_ctd_parms = ['TEMP', 'PSAL' ]
+cl.glider_ctd_startDatetime = datetime.datetime(*startdate[:])
+cl.glider_ctd_endDatetime = datetime.datetime(*enddate[:])
 
-# NPS29
-cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.nps29_files = [ 'OS_Glider_NPS_G29_20130829_TS.nc']
-cl.nps29_parms = ['TEMP', 'PSAL', 'FLUO2']
-cl.nps29_startDatetime = datetime.datetime(*startdate[:])
-cl.nps29_endDatetime = datetime.datetime(*enddate[:])
+
+# Glider met 
+cl.glider_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
+cl.glider_met_files = [ 'nemesis_met.nc',
+                        'ucsc260_met.nc',
+                        'ucsc294_met.nc']
+cl.glider_met_parms = ['meanu','meanv' ]
+cl.glider_met_startDatetime = datetime.datetime(*startdate[:])
+cl.glider_met_endDatetime = datetime.datetime(*enddate[:])
 
 # nemesis ctd
 cl.nemesis_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
@@ -159,6 +158,8 @@ if cl.args.test:
     cl.load_wg_tex_ctd(stride=1) 
     cl.load_wg_oa_met(stride=1) 
     cl.load_wg_tex_met(stride=1) 
+    cl.load_glider_ctd(stride=1)
+    cl.load_glider_met(stride=1)
 #    cl.load_NPS29(stride=1) 
 #    cl.load_NPS34(stride=1) 
 #    cl.load_nemesis_met(stride=100) 
