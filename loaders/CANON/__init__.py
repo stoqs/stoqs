@@ -202,6 +202,38 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'NPS_Glider_34', self.colors['nps34'], 'glider', 'Glider Mission', 
                                         self.nps34_parms, self.dbAlias, stride, self.nps34_startDatetime, self.nps34_endDatetime)
 
+    def load_glider_ctd(self, stride=None):
+        '''
+        Glider load functions.  Requires apriori knowledge of glider file names so we can extract platform and color name
+        To be used with gliders that follow the same naming convention, i.e. nemesis_ctd.nc, ucsc260_ctd.nc
+        and that load the exact same parameters, i.e. TEMP, PSAL or TEMP, PSAL, FLU2 or TEMP, FLU2, OPBS etc
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.glider_ctd_files], self.glider_ctd_files):
+            url = self.glider_ctd_base + file
+            gplatform=aName.split('_')[0].upper() + '_Glider'
+            gname=aName.split('_')[0].lower()
+            print "url = %s" % url
+            print "platform = %s" % gplatform 
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, gplatform, self.colors[gname], 'glider', 'Glider Mission', 
+                                        self.glider_ctd_parms, self.dbAlias, stride, self.glider_ctd_startDatetime, self.glider_ctd_endDatetime)
+
+    def load_glider_met(self, stride=None):
+        '''
+        Glider load functions.  Requires apriori knowledge of glider file names so we can extract platform and color name
+        To be used with gliders that follow the same naming convention, i.e. nemesis_met.nc, ucsc260_met.nc
+        and that load the exact same parameters, i.e. meanu,meanv or windspeed, winddirection etc.
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.glider_met_files], self.glider_met_files):
+            url = self.glider_met_base + file
+            gplatform=aName.split('_')[0].upper() + '_Glider'
+            gname=aName.split('_')[0].lower()
+            print "url = %s" % url
+            print "platform = %s" % gplatform 
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, gplatform, self.colors[gname], 'glider', 'Glider Mission', 
+                                        self.glider_met_parms, self.dbAlias, stride, self.glider_met_startDatetime, self.glider_met_endDatetime)
+
     def load_nemesis_ctd(self, stride=None):
         '''
         Glider specific load functions
