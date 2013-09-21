@@ -140,23 +140,12 @@ cl.wg_tex_met_files = [ 'WG_Tex_met.nc']
 cl.wg_tex_met_startDatetime = datetime.datetime(*startdate[:])
 cl.wg_tex_met_endDatetime = datetime.datetime(*enddate[:])
 
-#######################################################################################
-# DRIFTERS
-#######################################################################################
-
-# Stella 203
-cl.stella203_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
-cl.stella203_parms = [ 'TEMP', 'pH' ]
-cl.stella203_files = [ 
-                        'stella203_data.nc',
-                      ]
-
-# Stella 204
-cl.stella204_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
-cl.stella204_parms = [ 'TEMP', 'pH' ]
-cl.stella204_files = [ 
-                        'stella204_data.nc',
-                      ]
+# WG OA
+cl.wg_oa_pco2_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/NetCDF/'
+cl.wg_oa_pco2_files = [ 'WG_OA_pco2.nc']
+cl.wg_oa_pco2_parms = ['pH','eqpco2','airco2','airtemp' ]
+cl.wg_oa_pco2_startDatetime = datetime.datetime(*startdate[:])
+cl.wg_oa_pco2_endDatetime = datetime.datetime(*enddate[:])
 
 
 ###################################################################################################################
@@ -164,13 +153,12 @@ cl.stella204_files = [
 cl.process_command_line()
 
 if cl.args.test:
-#    cl.loadStella203(stride=1)
-#    cl.loadStella204(stride=1)
 #    cl.load_ucsc294_ctd(stride=100) 
-    cl.load_wg_oa_ctd(stride=1) 
-    cl.load_wg_tex_ctd(stride=1) 
-    cl.load_wg_oa_met(stride=1) 
-    cl.load_wg_tex_met(stride=1) 
+    cl.load_wg_oa_pco2(stride=1) 
+#    cl.load_wg_oa_ctd(stride=1) 
+#    cl.load_wg_tex_ctd(stride=1) 
+#    cl.load_wg_oa_met(stride=1) 
+#    cl.load_wg_tex_met(stride=1) 
 #    cl.load_NPS29(stride=1) 
 #    cl.load_NPS34(stride=1) 
 #    cl.load_nemesis_met(stride=100) 
@@ -190,8 +178,6 @@ elif cl.args.optimal_stride:
 #    cl.load_ucsc294_ctd(stride=1) 
 #    cl.load_nemesis_met(stride=1) 
 #    cl.load_ucsc294_met(stride=1) 
-#    cl.loadStella203(stride=1)
-#    cl.loadStella204(stride=1)
 
 else:
     cl.load_wg_oa_ctd(stride=1) 
@@ -205,6 +191,4 @@ else:
 #    cl.load_ucsc294_ctd(stride=1) 
 #    cl.load_nemesis_met(stride=1) 
 #    cl.load_ucsc294_met(stride=1) 
-#    cl.loadStella203(stride=1)
-#    cl.loadStella204(stride=1)
 
