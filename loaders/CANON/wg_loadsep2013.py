@@ -48,7 +48,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 ######################################################################
 # Set start and end dates for all glider loads
 # startdate is 24hours from now
-ts=time.time()-(12.2*60*60)  
+ts=time.time()-(13.2*60*60)  
 st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
 t=time.strptime(st,"%Y-%m-%d %H:%M")
 #t =time.strptime("2013-09-05 0:01", "%Y-%m-%d %H:%M")
@@ -155,10 +155,10 @@ cl.process_command_line()
 if cl.args.test:
 #    cl.load_ucsc294_ctd(stride=100) 
     cl.load_wg_oa_pco2(stride=1) 
-#    cl.load_wg_oa_ctd(stride=1) 
-#    cl.load_wg_tex_ctd(stride=1) 
-#    cl.load_wg_oa_met(stride=1) 
-#    cl.load_wg_tex_met(stride=1) 
+    cl.load_wg_oa_ctd(stride=1) 
+    cl.load_wg_tex_ctd(stride=1) 
+    cl.load_wg_oa_met(stride=1) 
+    cl.load_wg_tex_met(stride=1) 
 #    cl.load_NPS29(stride=1) 
 #    cl.load_NPS34(stride=1) 
 #    cl.load_nemesis_met(stride=100) 
