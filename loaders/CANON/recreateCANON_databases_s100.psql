@@ -1,0 +1,44 @@
+-- USE WITH CAUTION: THIS SCRIPT WILL DESTORY ALL DATABASE AND RE-CREATE THEM 
+-- TO BE USED FOR INSTALLING ON A NEW SYSTEM OR TO USE ON A DEVELOPMENT SYSTEM
+-- AFTER SCHEMA CHANGES.  MUST RUN AS USER postgres LIKE so:
+--    psql < recreateCANON_databases_s100.psql
+--
+-- THEN RE-syncdb all the databases, as your django development user
+--    resyncCANON_databases.sh
+
+
+-- drop database stoqs;
+-- create database stoqs owner=stoqsadm template=template_postgis;
+-- \c stoqs
+-- grant all on all tables in schema public to stoqsadm;
+
+drop database stoqs_september2010_s100;
+create database stoqs_september2010_s100 owner=stoqsadm template=template_postgis;
+\c stoqs_september2010_s100
+grant all on all tables in schema public to stoqsadm;
+
+drop database stoqs_october2010_s100;
+create database stoqs_october2010_s100 owner=stoqsadm template=template_postgis;
+\c stoqs_october2010_s100
+grant all on all tables in schema public to stoqsadm;
+
+drop database stoqs_april2011_s100;
+create database stoqs_april2011_s100 owner=stoqsadm template=template_postgis;
+\c stoqs_april2011_s100
+grant all on all tables in schema public to stoqsadm;
+
+drop database stoqs_june2011_s100;
+create database stoqs_june2011_s100 owner=stoqsadm template=template_postgis;
+\c stoqs_june2011_s100
+grant all on all tables in schema public to stoqsadm;
+
+drop database stoqs_september2011_s100;
+create database stoqs_september2011_s100 owner=stoqsadm template=template_postgis;
+\c stoqs_september2011_s100
+grant all on all tables in schema public to stoqsadm;
+
+drop database stoqs_october2011_s100;
+create database stoqs_october2011_s100 owner=stoqsadm template=template_postgis;
+\c stoqs_october2011_s100
+grant all on all tables in schema public to stoqsadm;
+
