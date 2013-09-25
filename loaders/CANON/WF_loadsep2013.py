@@ -51,10 +51,11 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 cl.wfuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Western_Flyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [ 
-                        'canon13m01.nc', 'canon13m02.nc', 
-                        'canon13m03.nc', 'canon13m04.nc',
-                        'canon13m05.nc', 'canon13m06.nc',
-                        'canon13m07.nc',  
+                    #    'canon13m01.nc', 'canon13m02.nc', 
+                    #    'canon13m03.nc', 'canon13m04.nc',
+                    #    'canon13m05.nc', 'canon13m06.nc',
+                    #    'canon13m07.nc', 
+                    #    'canon13m08.nc', 'canon13m09.nc',
                       ]
 
 # PCTD
@@ -62,10 +63,11 @@ cl.pctdDir = 'CANON_september2013/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_base = cl.dodsBase + cl.pctdDir
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.wfpctd_files = [ 
-                    'canon13c01.nc', 'canon13c02.nc', 'canon13c03.nc', 'canon13c04.nc', 
-                    'canon13c05.nc', 'canon13c06.nc', 'canon13c07.nc', 'canon13c08.nc', 
-                    'canon13c09.nc', 'canon13c10.nc', 'canon13c11.nc', 'canon13c12.nc',
-                    'canon13c13.nc', 'canon13c14.nc', 'canon13c15.nc',  
+                   'canon13c01.nc', 'canon13c02.nc', 'canon13c03.nc', 'canon13c04.nc', 
+                   'canon13c05.nc', 'canon13c06.nc', 'canon13c07.nc', 'canon13c08.nc', 
+                   'canon13c09.nc', 'canon13c10.nc', 'canon13c11.nc', 'canon13c12.nc',
+                   'canon13c13.nc', 'canon13c14.nc', 'canon13c15.nc', 
+                   'canon13c16.nc', 'canon13c17.nc', 
                       ]
 # BCTD
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
@@ -85,18 +87,18 @@ cl.wfpctd_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadWFuctd(stride=1)
+   # cl.loadWFuctd(stride=1)
     cl.loadWFpctd(stride=1)
 
 elif cl.args.optimal_stride:
     cl.loadWFpctd(stride=1)
-    cl.loadWFuctd(stride=1)
+   # cl.loadWFuctd(stride=1)
    #cl.loadMartin(stride=1)
 #    cl.loadRCuctd(stride=1)
 #    cl.loadRCpctd(stride=1)
 
 else:
-    cl.loadWFpctd(stride=1)
+   # cl.loadWFpctd(stride=1)
     cl.loadWFuctd(stride=1)
 #    cl.loadRCuctd(stride=1)
 #    cl.loadRCpctd(stride=1)
