@@ -67,7 +67,7 @@ cl.wfpctd_files = [
                    'canon13c05.nc', 'canon13c06.nc', 'canon13c07.nc', 'canon13c08.nc', 
                    'canon13c09.nc', 'canon13c10.nc', 'canon13c11.nc', 'canon13c12.nc',
                    'canon13c13.nc', 'canon13c14.nc', 'canon13c15.nc', 
-                   'canon13c16.nc', 'canon13c17.nc', 
+                   'canon13c16.nc', 'canon13c17.nc', 'canon13c18.nc', 'canon13c19.nc',   #added Sept 25 and Sept 26 2013 
                       ]
 # BCTD
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
