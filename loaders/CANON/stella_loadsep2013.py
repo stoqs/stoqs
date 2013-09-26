@@ -80,8 +80,8 @@ cl.stella_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/
 cl.stella_parms = [ 'TEMP', 'pH' ]
 cl.stella_files = [ 
                         #'stella202_data.nc',
-                        #'stella203_data.nc',
-                        'stella205_data.nc',
+                        'stella203_data.nc',
+                        #'stella205_data.nc',
                       ]
 
 
