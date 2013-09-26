@@ -48,10 +48,11 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2013/netcdf/'
 cl.dorado_files = [
-                   'Dorado389_2013_259_00_259_00_decim.nc'     # Sep 16
+                   'Dorado389_2013_259_00_259_00_decim.nc',
                    'Dorado389_2013_261_01_261_01_decim.nc',
                    'Dorado389_2013_262_00_262_00_decim.nc',
                    'Dorado389_2013_262_01_262_01_decim.nc',
+                   'Dorado389_2013_268_00_268_00_decim.nc',
 				   ]
 
 #####################################################################
@@ -231,12 +232,15 @@ cl.JMpctd_files = [ '25613JMC01.nc',
 #  MOORINGS
 ######################################################################
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
-cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201202/'
-cl.m1_files = ['OS_M1_20120222hourly_CMSTV.nc']
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
+cl.m1_files = [
+                '201202/OS_M1_20120222hourly_CMSTV.nc', 
+                '201309/OS_M1_20130918hourly_CMSTV.nc'
+              ]
 cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
-                     'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-                     'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
-                   ]
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+              ]
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
 
