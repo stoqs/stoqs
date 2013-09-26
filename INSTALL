@@ -62,6 +62,11 @@ installed at the system level.  Make sure that you've entered 'source venv-stoqs
 window where you run the following command.  Your shell prompt will begin with '(venv-stoqs)' as an
 indication that you are in the virtual environment.
 
+Make sure that your session does not have the PYTHONPATH environment set.  You may need to do:
+
+    unset PYTHONPATH
+
+
 5.  Sync the model with the database:
 
         python manage.py syncdb --noinput                               # For the default stoqs database
