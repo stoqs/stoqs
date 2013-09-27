@@ -21,6 +21,7 @@ import os
 import sys
 import datetime  # needed for glider data
 import time      # for startdate, enddate args
+import csv
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 
@@ -61,46 +62,38 @@ enddate=t[:6]
 # DRIFTERS
 #######################################################################################
 
-# Stella 203
-cl.stella203_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
-cl.stella203_parms = [ 'TEMP', 'pH' ]
-cl.stella203_files = [ 
-                        'stella203_data.nc',
-                      ]
+# Stella drifters, requires input file stella_load.csv with the names of the 
+# stella drifters to load, i.e. stella202 or stella205 etc.
+stella_list=[]
+csvfile='./stella_load.csv'    
+if os.path.exists(csvfile):
+    myReader = csv.DictReader(open(csvfile, 'r'))
+    stella_list=[]
+    for row in myReader:
+        stella_list.append(row['drifter']+'_data.nc')
 
-# Stella 204
-cl.stella204_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
-cl.stella204_parms = [ 'TEMP', 'pH' ]
-cl.stella204_files = [ 
-                        'stella204_data.nc',
-                      ]
-
-# Stellas
-cl.stella_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
-cl.stella_parms = [ 'TEMP', 'pH' ]
-cl.stella_files = [ 
-                        #'stella202_data.nc',
-                        'stella203_data.nc',
-                        #'stella205_data.nc',
-                      ]
-
+    cl.stella_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
+    cl.stella_parms = [ 'TEMP', 'pH' ]
+    cl.stella_files=stella_list
 
 ###################################################################################################################
 # Execute the load
-cl.process_command_line()
+    cl.process_command_line()
 
-if cl.args.test:
-#    cl.loadStella203(stride=1)
-#    cl.loadStella204(stride=1)
-    cl.loadStella(stride=1)
+    if cl.args.test:
+#        cl.loadStella203(stride=1)
+    #    cl.loadStella204(stride=1)
+        cl.loadStella(stride=1)
 
-elif cl.args.optimal_stride:
-#    cl.loadStella203(stride=1)
-#    cl.loadStella204(stride=1)
-    cl.loadStella(stride=1)
+    elif cl.args.optimal_stride:
+    #    cl.loadStella203(stride=1)
+    #    cl.loadStella204(stride=1)
+        cl.loadStella(stride=1)
+
+    else:
+    #    cl.loadStella203(stride=1)
+    #    cl.loadStella204(stride=1)
+        cl.loadStella(stride=1)
 
 else:
-#    cl.loadStella203(stride=1)
-#    cl.loadStella204(stride=1)
-    cl.loadStella(stride=1)
-
+    print "ERROR: File list of drifter names to load, stella_load.csv, not found."
