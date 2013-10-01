@@ -60,7 +60,7 @@ enddate=t[:6]
 # Glider ctd
 cl.glider_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
 cl.glider_ctd_files = [ 'nemesis_ctd.nc',
-                        'ucsc260_ctd.nc',
+#                        'ucsc260_ctd.nc',
                         'ucsc294_ctd.nc']
 cl.glider_ctd_parms = ['TEMP', 'PSAL' ]
 cl.glider_ctd_startDatetime = datetime.datetime(*startdate[:])
@@ -70,7 +70,7 @@ cl.glider_ctd_endDatetime = datetime.datetime(*enddate[:])
 # Glider met 
 cl.glider_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
 cl.glider_met_files = [ 'nemesis_met.nc',
-                        'ucsc260_met.nc',
+#                        'ucsc260_met.nc',
                         'ucsc294_met.nc']
 cl.glider_met_parms = ['meanu','meanv' ]
 cl.glider_met_startDatetime = datetime.datetime(*startdate[:])
