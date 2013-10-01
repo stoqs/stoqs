@@ -52,7 +52,8 @@ cl.rcuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Rachel_Carso
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [ 
                       #  '25913RCm01.nc', '26013RCm01.nc',
-                       '26113RCm01.nc', 
+                      # '26113RCm01.nc',
+                        '27313RCm01.nc', 
                       ]
 
 # PCTD
@@ -60,8 +61,9 @@ cl.pctdDir = 'CANON_september2013/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_base = cl.dodsBase + cl.pctdDir
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [ 
-                    # '25913RCc01.nc', '25913RCc02.nc', '25913RCc03.nc', '26013RCc01.nc',
-                     '26113RCc01.nc' 
+                    '25913RCc01.nc', '25913RCc02.nc', '25913RCc03.nc', '26013RCc01.nc',
+                    '26113RCc01.nc',
+                    '27313RCc01.nc', '27313RCc02.nc', '27313RCc03.nc',  
                       ]
 # BCTD
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
@@ -81,15 +83,13 @@ cl.rcpctd_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadRCuctd(stride=1)
+   # cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
 
 elif cl.args.optimal_stride:
-   #cl.loadMartin(stride=1)
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
 
 else:
-#    cl.loadDorado(stride=cl.args.stride)
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
