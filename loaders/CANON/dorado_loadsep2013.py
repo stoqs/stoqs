@@ -49,11 +49,14 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 #####################################################################
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2013/netcdf/'
-cl.dorado_files = [# 'Dorado389_2013_259_00_259_00_decim.nc'     #Sep 16 Loaded
-                   'Dorado389_2013_262_00_262_00_decim.nc'     #Sep 19 Dorado389_2013_262_00_262_00 
-                   # 'Dorado389_2013_262_00_262_01_decim.nc' 
-                   # 'Dorado389_2013_273_00_273_00_decim.nc'     #Sep 30
-                   # 'Dorado389_2013_273_00_273_01_decim.nc' 
+cl.dorado_files = [# 'Dorado389_2013_259_00_259_00_decim.nc',     #Sep 16 Loaded
+                   # 'Dorado389_2013_261_01_261_01_decim.nc',
+                   # 'Dorado389_2013_262_00_262_00_decim.nc',     #Sep 19 Dorado389_2013_262_00_262_00 
+                   # 'Dorado389_2013_262_01_262_01_decim.nc', 
+                   # 'Dorado389_2013_268_00_268_00_decim.nc',
+                   # 'Dorado389_2013_273_00_273_00_decim.nc',     #Sep 30
+                   # 'Dorado389_2013_274_00_274_00_decim.nc',
+                     'Dorado389_2013_274_01_274_01_decim.nc',
 				   ]
 
 
@@ -63,7 +66,7 @@ cl.dorado_files = [# 'Dorado389_2013_259_00_259_00_decim.nc'     #Sep 16 Loaded
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadDorado(stride=100)
+    cl.loadDorado(stride=1)
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
