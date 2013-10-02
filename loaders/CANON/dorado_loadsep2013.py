@@ -55,8 +55,8 @@ cl.dorado_files = [# 'Dorado389_2013_259_00_259_00_decim.nc',     #Sep 16 Loaded
                    # 'Dorado389_2013_262_01_262_01_decim.nc', 
                    # 'Dorado389_2013_268_00_268_00_decim.nc',
                    # 'Dorado389_2013_273_00_273_00_decim.nc',     #Sep 30
-                   # 'Dorado389_2013_274_00_274_00_decim.nc',
-                     'Dorado389_2013_274_01_274_01_decim.nc',
+                    'Dorado389_2013_274_00_274_00_decim.nc',
+                   #  'Dorado389_2013_274_01_274_01_decim.nc',
 				   ]
 
 
