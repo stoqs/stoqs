@@ -64,7 +64,8 @@ cl.rcpctd_files = [
                     '25913RCc01.nc', '25913RCc02.nc', '25913RCc03.nc', '26013RCc01.nc',
                     '26113RCc01.nc',
                     '27313RCc01.nc', '27313RCc02.nc', '27313RCc03.nc',
-                    '27413RCc01.nc', '27413RCc02.nc', '27413RCc03.nc',  
+                    '27413RCc01.nc', '27413RCc02.nc', '27413RCc03.nc',
+                    '27513RCc01.nc', '27413RCc02.nc',  
                       ]
 # BCTD
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
