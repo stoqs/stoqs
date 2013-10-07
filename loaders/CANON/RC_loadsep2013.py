@@ -54,8 +54,8 @@ cl.rcuctd_files = [
                       #  '25913RCm01.nc', '26013RCm01.nc',
                       #  '26113RCm01.nc',
                       #  '27313RCm01.nc', 
-                      '27413RCm01.nc',
-                      '27513RCm01.nc',
+                      # '27413RCm01.nc',
+                      # '27513RCm01.nc',
                        ]
 
 # PCTD
@@ -68,7 +68,9 @@ cl.rcpctd_files = [
                     '27313RCc01.nc', '27313RCc02.nc', '27313RCc03.nc',
                     '27413RCc01.nc', '27413RCc02.nc', '27413RCc03.nc',
                     '27513RCc01.nc', '27513RCc02.nc',  
-                      ]
+                    '27613RCc01.nc', '27613RCc02.nc', '27613RCc03.nc', '27613RCc04.nc', '27613RCc05.nc',
+                   ]
+
 # BCTD
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
 #cl.bctdDir = 'CANON_september2013/Platforms/Ships/Rachel_Carson/bctd/'
