@@ -53,7 +53,7 @@ st=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
 t=time.strptime(st,"%Y-%m-%d %H:%M")
 #t =time.strptime("2013-09-01 0:01", "%Y-%m-%d %H:%M")
 startdate=t[:6]
-t =time.strptime("2013-10-15 0:01", "%Y-%m-%d %H:%M")
+t =time.strptime("2013-10-31 0:01", "%Y-%m-%d %H:%M")
 enddate=t[:6]
 
 
@@ -153,11 +153,11 @@ cl.process_command_line()
 
 if cl.args.test:
 #    cl.load_ucsc294_ctd(stride=100) 
-    cl.load_wg_oa_pco2(stride=1) 
-    cl.load_wg_oa_ctd(stride=1) 
-    cl.load_wg_oa_met(stride=1) 
-#    cl.load_wg_tex_ctd(stride=1) 
-#    cl.load_wg_tex_met(stride=1) 
+#    cl.load_wg_oa_pco2(stride=1) 
+#    cl.load_wg_oa_ctd(stride=1) 
+#    cl.load_wg_oa_met(stride=1) 
+    cl.load_wg_tex_ctd(stride=1) 
+    cl.load_wg_tex_met(stride=1) 
     cl.load_glider_ctd(stride=1)
     cl.load_glider_met(stride=1)
 #    cl.load_NPS29(stride=1) 
@@ -168,9 +168,9 @@ if cl.args.test:
 #    cl.loadL_662(stride=1) # done
 
 elif cl.args.optimal_stride:
-    cl.load_wg_oa_ctd(stride=1) 
+#    cl.load_wg_oa_ctd(stride=1) 
     cl.load_wg_tex_ctd(stride=1) 
-    cl.load_wg_oa_met(stride=1) 
+#    cl.load_wg_oa_met(stride=1) 
     cl.load_wg_tex_met(stride=1) 
 #    cl.loadL_662(stride=1) # done
 #    cl.load_NPS29(stride=1) 
@@ -181,9 +181,9 @@ elif cl.args.optimal_stride:
 #    cl.load_ucsc294_met(stride=1) 
 
 else:
-    cl.load_wg_oa_ctd(stride=1) 
+#    cl.load_wg_oa_ctd(stride=1) 
     cl.load_wg_tex_ctd(stride=1) 
-    cl.load_wg_oa_met(stride=1) 
+#    cl.load_wg_oa_met(stride=1) 
     cl.load_wg_tex_met(stride=1) 
 #    cl.loadL_662(stride=1) # done
 #    cl.load_NPS29(stride=1) 
