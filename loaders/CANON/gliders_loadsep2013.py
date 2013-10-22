@@ -6,7 +6,7 @@ __contact__   = 'duane at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON activities in September 2013
+Master loader for glider CANON activities in September 2013
 
 Mike McCann; Modified by Duane Edgington and Reiko Michisaki
 MBARI 02 September 2013
@@ -72,95 +72,23 @@ cl.nps29_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.nps29_startDatetime = datetime.datetime(*startdate[:])
 cl.nps29_endDatetime = datetime.datetime(*enddate[:])
 
-# nemesis ctd
-cl.nemesis_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
-cl.nemesis_ctd_files = [ 'nemesis_ctd.nc']
-cl.nemesis_ctd_parms = ['TEMP', 'PSAL' ]
-cl.nemesis_ctd_startDatetime = datetime.datetime(*startdate[:])
-cl.nemesis_ctd_endDatetime = datetime.datetime(*enddate[:])
-
-# nemesis met 
-cl.nemesis_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
-cl.nemesis_met_files = [ 'nemesis_met.nc']
-cl.nemesis_met_parms = ['TEMP', 'PSAL' ]
-cl.nemesis_met_startDatetime = datetime.datetime(*startdate[:])
-cl.nemesis_met_endDatetime = datetime.datetime(*enddate[:])
-
-# ucsc294 met 
-cl.ucsc294_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_UCSC_2/'
-cl.ucsc294_met_files = [ 'ucsc294_met.nc']
-cl.ucsc294_met_parms = ['TEMP', 'PSAL' ]
-cl.ucsc294_met_startDatetime = datetime.datetime(*startdate[:])
-cl.ucsc294_met_endDatetime = datetime.datetime(*enddate[:])
-
-# ucsc294 ctd 
-cl.ucsc294_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_UCSC_2/'
-cl.ucsc294_ctd_files = [ 'ucsc294_ctd.nc']
-cl.ucsc294_ctd_parms = ['TEMP', 'PSAL' ,'oxygen','chla','backscatter']
-cl.ucsc294_ctd_startDatetime = datetime.datetime(*startdate[:])
-cl.ucsc294_ctd_endDatetime = datetime.datetime(*enddate[:])
-
-# Liquid Robotics Waveglider
-cl.waveglider_base = cl.dodsBase + 'CANON_september2013/waveglider/'
-cl.waveglider_files = [ 'waveglider_gpctd_WG.nc' ]
-cl.waveglider_parms = [ 'TEMP', 'PSAL', 'oxygen' ]
-cl.waveglider_startDatetime = datetime.datetime(*startdate[:])
-cl.waveglider_endDatetime = datetime.datetime(*enddate[:])
-
- 
-#######################################################################################
-# DRIFTERS
-#######################################################################################
-
-# Stella 203
-cl.stella203_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
-cl.stella203_parms = [ 'TEMP', 'pH' ]
-cl.stella203_files = [ 
-                        'stella203_data.nc',
-                      ]
-
-# Stella 204
-cl.stella204_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
-cl.stella204_parms = [ 'TEMP', 'pH' ]
-cl.stella204_files = [ 
-                        'stella204_data.nc',
-                      ]
-
 
 ###################################################################################################################
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
-#    cl.loadStella203(stride=1)
-#    cl.loadStella204(stride=1)
-#    cl.load_ucsc294_ctd(stride=1) 
     cl.load_NPS29(stride=1) 
     cl.load_NPS34(stride=1) 
-#    cl.load_nemesis_met(stride=1) 
-#    cl.load_ucsc294_met(stride=1) 
-#    cl.load_nemesis_ctd(stride=1) 
     cl.loadL_662(stride=1) # done
 
 elif cl.args.optimal_stride:
-    cl.loadL_662(stride=1) # done
-    cl.load_NPS29(stride=1) 
-    cl.load_NPS34(stride=1) 
-#    cl.load_nemesis_ctd(stride=1) 
-#    cl.load_ucsc294_ctd(stride=1) 
-#    cl.load_nemesis_met(stride=1) 
-#    cl.load_ucsc294_met(stride=1) 
-#    cl.loadStella203(stride=1)
-#    cl.loadStella204(stride=1)
+    cl.loadL_662(stride=2) # done
+    cl.load_NPS29(stride=2) 
+    cl.load_NPS34(stride=2) 
 
 else:
     cl.loadL_662(stride=1) # done
     cl.load_NPS29(stride=1) 
     cl.load_NPS34(stride=1) 
-#    cl.load_nemesis_ctd(stride=1) 
-#    cl.load_ucsc294_ctd(stride=1) 
-#    cl.load_nemesis_met(stride=1) 
-#    cl.load_ucsc294_met(stride=1) 
-#    cl.loadStella203(stride=1)
-#    cl.loadStella204(stride=1)
 
