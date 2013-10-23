@@ -578,6 +578,27 @@ WHERE
     (p_x.id =6) AND
     (p_c.id =7) AND
     (p_y.id =57)
+
+
+For sampledparameter to sampledparamter query an example is:
+
+  SELECT DISTINCT s_x.depth, sp_x.datavalue as x, sp_y.datavalue as y, p_x.id as px, p_y.id as py FROM stoqs_activity
+    INNER JOIN stoqs_instantpoint ip
+      on ip.activity_id = stoqs_activity.id
+      INNER JOIN stoqs_sample s_x
+        on s_x.instantpoint_id = ip.id
+          INNER JOIN stoqs_sample s_y
+            on s_y.instantpoint_id = ip.id
+              INNER JOIN stoqs_sampledparameter sp_y
+                on sp_y.sample_id = s_y.id
+                  INNER JOIN stoqs_parameter p_y
+                    on sp_y.parameter_id = p_y.id
+                      INNER JOIN stoqs_sampledparameter sp_x
+                        on sp_x.sample_id = s_x.id
+                          INNER JOIN stoqs_parameter p_x
+                            on sp_x.parameter_id = p_x.id
+    WHERE (p_y.id = 10) AND (p_x.id = 8);
+
         '''
 
         logger.debug('initial query = %s', query)
