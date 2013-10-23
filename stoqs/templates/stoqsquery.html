@@ -292,11 +292,14 @@
                             <ul id="parameterParameterTabs" class="nav nav-tabs">
                                 <li><a href="#pp2d" data-toggle="tab">2D</a></li>
                                 <li><a href="#pp3d" data-toggle="tab">3D</a></li>
+                                <li><a href="#ppsql" data-toggle="tab">sql</a></li>
                                 <li><a href="#ppdata" data-toggle="tab">Data</a></li>
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane" id="pp2d">
                                     <div id="parameter-parameter-2dplot" style="overflow: auto; margin:0px auto;">
+                                        <img src="" />
+                                        <pre class="prettyprint"></pre>
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="pp3d">
@@ -447,6 +450,11 @@
                                             </scene>
                                         </X3D>
                                         </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="ppsql">
+                                    <div id="parameter-parameter-sql">
+                                        <pre class="prettyprint"></pre>
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="ppdata">
@@ -2639,20 +2647,20 @@
                 });
             }
             else if (key == 'parameterparameterpng') {
-                if (data[key]) {
+                if (data[key][2]) {
+                    $('#parameter-parameter-sql > pre').html(data[key][2]);
                     if (data[key][0]) {
-                        $('#parameter-parameter-2dplot').html('<img src="{{MEDIA_URL}}parameterparameter/' + data[key][0] + '">')
+                        $('#parameter-parameter-2dplot > img').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key][0]);
+
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
                             $('#parameter-parameter-anchor').click();
                         }
-                        if ( $('#collapseParameterParameter').hasClass('in') ) {
+                        if ( $('#collapseParameterParameter').hasClass('in') && ! $('#ppsql').hasClass('active') ) {
                             if ( ! $('#pp2d').hasClass('active') && ! data['parameterparameterx3d']) {
                                 $('a[href=#pp2d]').tab('show');
                             }
                         }
-                        if (data[key][1]) {
-                            $('#parameter-parameter-2dplot').append('<pre class="prettyprint">' + data[key][1] + '</pre>');
-                        }
+                        $('#parameter-parameter-2dplot > pre').html(data[key][1]);
                     }
                     else {
                         alert(data[key][1] + "  Try a different selection.");

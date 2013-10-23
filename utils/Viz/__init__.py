@@ -490,7 +490,7 @@ class ParameterParameter(object):
                         pass
             # If still no self.x and self.y then selection is not valid for the chosen x and y
             if self.x == [] or self.y == []:
-                return None, 'No Parameter-Parameter data values returned.'
+                return None, 'No Parameter-Parameter data values returned.', sql
             
             # Use session ID so that different users don't stomp on each other with their parameterparameter plots
             # - This does not work for Firefox which just reads the previous image from its cache
@@ -509,7 +509,7 @@ class ParameterParameter(object):
                 except Exception,e:
                     logger.exception('Failed to create path for ' +
                                      'parameterparameter (%s) file', ppPngFile)
-                    return
+                    return None, 'Failed to create path for parameterparameter (%s) file' % ppPngFile, sql
             logger.debug('ppPngFileFullPath = %s', ppPngFileFullPath)
 
             # Make the figure
@@ -574,10 +574,10 @@ class ParameterParameter(object):
             ##infoText = 'Parameter-Parameter: ' + str(type(e))
             infoText = 'Parameter-Parameter: ' + str(e)
             logger.exception('Cannot make 2D parameterparameter plot: %s', e)
-            return None, infoText
+            return None, infoText, sql
 
         else:
-            return ppPngFile, infoText
+            return ppPngFile, infoText, sql
 
     def makeX3D(self):
         '''
