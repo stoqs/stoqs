@@ -76,41 +76,6 @@ cl.glider_met_parms = ['meanu','meanv' ]
 cl.glider_met_startDatetime = datetime.datetime(*startdate[:])
 cl.glider_met_endDatetime = datetime.datetime(*enddate[:])
 
-# nemesis ctd
-cl.nemesis_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
-cl.nemesis_ctd_files = [ 'nemesis_ctd.nc']
-cl.nemesis_ctd_parms = ['TEMP', 'PSAL' ]
-cl.nemesis_ctd_startDatetime = datetime.datetime(*startdate[:])
-cl.nemesis_ctd_endDatetime = datetime.datetime(*enddate[:])
-
-# nemesis met 
-cl.nemesis_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
-cl.nemesis_met_files = [ 'nemesis_met.nc']
-cl.nemesis_met_parms = ['TEMP', 'PSAL' ]
-cl.nemesis_met_startDatetime = datetime.datetime(*startdate[:])
-cl.nemesis_met_endDatetime = datetime.datetime(*enddate[:])
-
-# ucsc294 met 
-cl.ucsc294_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_UCSC_2/'
-cl.ucsc294_met_files = [ 'ucsc294_met.nc']
-cl.ucsc294_met_parms = ['TEMP', 'PSAL' ]
-cl.ucsc294_met_startDatetime = datetime.datetime(*startdate[:])
-cl.ucsc294_met_endDatetime = datetime.datetime(*enddate[:])
-
-# ucsc294 ctd 
-cl.ucsc294_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_UCSC_2/'
-cl.ucsc294_ctd_files = [ 'ucsc294_ctd.nc']
-cl.ucsc294_ctd_parms = ['TEMP', 'PSAL' ,'oxygen','chla','backscatter']
-cl.ucsc294_ctd_startDatetime = datetime.datetime(*startdate[:])
-cl.ucsc294_ctd_endDatetime = datetime.datetime(*enddate[:])
-
-# Liquid Robotics Waveglider
-cl.waveglider_base = cl.dodsBase + 'CANON_september2013/waveglider/'
-cl.waveglider_files = [ 'waveglider_gpctd_WG.nc' ]
-cl.waveglider_parms = [ 'TEMP', 'PSAL', 'oxygen' ]
-cl.waveglider_startDatetime = datetime.datetime(*startdate[:])
-cl.waveglider_endDatetime = datetime.datetime(*enddate[:])
-
 # WG OA
 cl.wg_oa_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/NetCDF/'
 cl.wg_oa_ctd_files = [ 'WG_OA_ctd.nc']
@@ -152,7 +117,6 @@ cl.wg_oa_pco2_endDatetime = datetime.datetime(*enddate[:])
 cl.process_command_line()
 
 if cl.args.test:
-#    cl.load_ucsc294_ctd(stride=100) 
 #    cl.load_wg_oa_pco2(stride=1) 
 #    cl.load_wg_oa_ctd(stride=1) 
 #    cl.load_wg_oa_met(stride=1) 
@@ -160,36 +124,22 @@ if cl.args.test:
     cl.load_wg_tex_met(stride=1) 
     cl.load_glider_ctd(stride=1)
     cl.load_glider_met(stride=1)
-#    cl.load_NPS29(stride=1) 
-#    cl.load_NPS34(stride=1) 
-#    cl.load_nemesis_met(stride=100) 
-#    cl.load_ucsc294_met(stride=1) 
-#    cl.load_nemesis_ctd(stride=1) 
-#    cl.loadL_662(stride=1) # done
 
 elif cl.args.optimal_stride:
-#    cl.load_wg_oa_ctd(stride=1) 
-    cl.load_wg_tex_ctd(stride=1) 
-#    cl.load_wg_oa_met(stride=1) 
-    cl.load_wg_tex_met(stride=1) 
-#    cl.loadL_662(stride=1) # done
-#    cl.load_NPS29(stride=1) 
-#    cl.load_NPS34(stride=1) 
-#    cl.load_nemesis_ctd(stride=1) 
-#    cl.load_ucsc294_ctd(stride=1) 
-#    cl.load_nemesis_met(stride=1) 
-#    cl.load_ucsc294_met(stride=1) 
+#    cl.load_wg_oa_pco2(stride=2) 
+#    cl.load_wg_oa_ctd(stride=2) 
+#    cl.load_wg_oa_met(stride=2) 
+    cl.load_wg_tex_ctd(stride=2) 
+    cl.load_wg_tex_met(stride=2) 
+    cl.load_glider_ctd(stride=2)
+    cl.load_glider_met(stride=2)
 
 else:
+#    cl.load_wg_oa_pco2(stride=1) 
 #    cl.load_wg_oa_ctd(stride=1) 
-    cl.load_wg_tex_ctd(stride=1) 
 #    cl.load_wg_oa_met(stride=1) 
+    cl.load_wg_tex_ctd(stride=1) 
     cl.load_wg_tex_met(stride=1) 
-#    cl.loadL_662(stride=1) # done
-#    cl.load_NPS29(stride=1) 
-#    cl.load_NPS34(stride=1) 
-#    cl.load_nemesis_ctd(stride=1) 
-#    cl.load_ucsc294_ctd(stride=1) 
-#    cl.load_nemesis_met(stride=1) 
-#    cl.load_ucsc294_met(stride=1) 
+    cl.load_glider_ctd(stride=1)
+    cl.load_glider_met(stride=1)
 

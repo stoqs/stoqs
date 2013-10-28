@@ -81,3 +81,29 @@ To load data for all these databases (campaigns) follow these steps:
 -- 
 Mike McCann
 22 April 2012
+
+
+Files specific to September 2013:
+
+dorado_loadsep2013.py  loads dorado missions from September 2013 campaign
+esp_loadsep2013.py     loads esp environmental sensors
+esp_loadsep2013.sh     runs the esp loader (for the crontab)
+gliders_loadsep2013.py loads spray glider and nps glider data from Sept 2013 campaign
+gliders_loadsep2013.sh runs the gliders loader (fro the crontab)
+JM_loadsep2013.py      loads RV John Martin ctd and underway data from Sept 2013 campaign
+m1_loadsep2013.py      loads the m1 environmental sensors
+m1_loadsep2013.sh      runs the m1 loader
+oa_loadsep2013.py      loads environmental data from the two oa moorings
+oa_loadsep2013.sh      runs the oa loader
+puck_loadsep2013.py    loads the tex waveglider ecopuck data
+puck_loadsep2013.sh    runs the puck loader
+RC_loadsep2013.py      loads the RV Rachel Carson underway and cast ctd data
+stella_load.csv        stella drifter data file, with names of stella drifters to load (change frequently during the campaign)
+stella_loadsep2013.py  loads environmental data from the 200 series "android" stella drifters
+WF_loadsep2013.py      loads the RV Western Flyer underway and cast ctd data
+wg_loadsep2013.py      loads the wave glider and other glider data
+wg_loadsep2013.sh      runs the wave glider etc loader
+
+toNetCDF               directory of programs to generate NetCDF files
+pctd2nc_v2.py          writes netCDF files for pctd data including all of the parameters that are measured, uses pctd_param_list2.txt for netCDF attributes
+pctd_param_list2.txt  used by pctd2nc_v2.py netCDF generator

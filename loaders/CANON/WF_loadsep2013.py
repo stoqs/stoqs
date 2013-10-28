@@ -56,7 +56,7 @@ cl.wfuctd_files = [
                     #    'canon13m05.nc', 'canon13m06.nc',
                     #    'canon13m07.nc', 
                     #    'canon13m08.nc', 'canon13m09.nc',
-                      'canon13m10.nc', 'canon13m11.nc',     # loaded 10/1/13
+                    #    'canon13m10.nc', 'canon13m11.nc',     # loaded 10/1/13
                       ]
 
 # PCTD
@@ -69,7 +69,7 @@ cl.wfpctd_files = [
                    'canon13c09.nc', 'canon13c10.nc', 'canon13c11.nc', 'canon13c12.nc',
                    'canon13c13.nc', 'canon13c14.nc', 'canon13c15.nc', 
                    'canon13c16.nc', 'canon13c17.nc',                                      #added Sept 25
-                   # 'canon13c18.nc',                                                     #this file has a bad date in it (12-31-12)
+                   'canon13c18.nc',                                                     #this file had a bad date in it (12-31-12)
                    'canon13c19.nc',                                                       #added Sept 26 2013 
                       ]
 # BCTD
@@ -91,7 +91,7 @@ cl.process_command_line()
 
 if cl.args.test:
    cl.loadWFuctd(stride=1)
-   #  cl.loadWFpctd(stride=1)
+   cl.loadWFpctd(stride=1)
 
 elif cl.args.optimal_stride:
    # cl.loadWFpctd(stride=1)
