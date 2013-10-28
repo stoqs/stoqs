@@ -551,6 +551,7 @@ class SubSamplesLoader(STOQS_Loader):
         sample = m.Sample(  instantpoint=parentSample.instantpoint,
                             depth=parentSample.depth,
                             geom=parentSample.geom,
+                            name=parentSample.name,
                             volume=float(vol),
                             filterdiameter=fd,
                             filterporesize=fps,
