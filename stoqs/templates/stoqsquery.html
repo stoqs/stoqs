@@ -871,20 +871,21 @@
         $(element).removeAttr('disabled');    // enable the X, Y, Z, Color radio buttons in the row
     }
 
-    function updateMP_KMLcmincmax() {
-        if ($('#mp-cmin').val() && $('#mp-cmax').val()) {
-            mp_cmincmax = 'cmin=' + $('#mp-cmin').val() + '&cmax=' + $('#mp-cmax').val();
+    function updateKMLcmincmax(group) {
+        if ( group == 'mp') {
+            if ($('#mp-cmin').val() && $('#mp-cmax').val()) {
+                mp_cmincmax = 'cmin=' + $('#mp-cmin').val() + '&cmax=' + $('#mp-cmax').val();
+            }
+            $('#mp-kml-field').text(kmlurl + mp_cmincmax);
+            $('#mp-kml-link').attr('href',kmlurl + mp_cmincmax);
         }
-        $('#mp-kml-field').text(kmlurl + mp_cmincmax);
-        $('#mp-kml-link').attr('href',kmlurl + mp_cmincmax);
-    }
-
-    function updateSP_KMLcmincmax() {
-        if ($('#sp-cmin').val() && $('#sp-cmax').val()) {
-            sp_cmincmax = 'cmin=' + $('#sp-cmin').val() + '&cmax=' + $('#sp-cmax').val();
+        else if ( group == 'sp') {
+            if ($('#sp-cmin').val() && $('#sp-cmax').val()) {
+                sp_cmincmax = 'cmin=' + $('#sp-cmin').val() + '&cmax=' + $('#sp-cmax').val();
+            }
+            $('#sp-kml-field').text(kmlurl + sp_cmincmax);
+            $('#sp-kml-link').attr('href',kmlurl + sp_cmincmax);
         }
-        $('#sp-kml-field').text(kmlurl + sp_cmincmax);
-        $('#sp-kml-link').attr('href',kmlurl + sp_cmincmax);
     }
 
     function update_sensortrackskml() {
@@ -925,7 +926,7 @@
                         // See: http://stackoverflow.com/questions/5539633/adding-a-absolutely-positioned-div-to-the-bottom-of-an-openlayers-map/5568762#5568762
                         //sensortrackskml.attribution = '<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />';
                         // Dynamically set url for sensor tracks display in openlayers
-                        updateMP_KMLcmincmax();
+                        updateKMLcmincmax('mp');
                         //sensortrackskml.loaded = false;
                         strided_kmlurl = kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('body').data()['parameterminmax'][1] + 
                                                                            '&cmax=' + $('body').data()['parameterminmax'][2] + '&stride=' + strideVal;
@@ -1050,12 +1051,16 @@
                         $('#'+group+'-cmin').val(data['parameterminmax'][1]);
                         $('#'+group+'-cmax').val(data['parameterminmax'][2]);
                         kmlurl = url;
+                        update_sensortrackskml();
+                        updateKMLcmincmax(group);
                     }
                     else if (params['parameterstandardname'].length == 1) {
                         $('#'+group+'-kml-parameter').text(params['parameterstandardname'][0]);
                         $('#'+group+'-cmin').val(data['parameterminmax'][1]);
                         $('#'+group+'-cmax').val(data['parameterminmax'][2]);
                         kmlurl = url;
+                        update_sensortrackskml();
+                        updateKMLcmincmax(group);
                     }
                     else {
                         $('#'+group+'-kml-parameter').text('');
@@ -1063,7 +1068,6 @@
                         $('#'+group+'-cmax').val('');
                     }
                 }
-                update_sensortrackskml();
             }
             else if (value == 'stoqstoolbox') {
                 // Required parameters for stoqs_down as of stoqstoolbox release noted in the Matlab comment below
@@ -1526,19 +1530,19 @@
     });
 
     $('#mp-cmin').on('keypress', function (event, previousText) {
-        setTimeout(updateMP_KMLcmincmax());
+        setTimeout(updateKMLcmincmax('mp'));
     });
 
     $('#mp-cmax').on('keypress', function (event, previousText) {
-        setTimeout(updateMP_KMLcmincmax());
+        setTimeout(updateKMLcmincmax('mp'));
     });
 
     $('#sp-cmin').on('keypress', function (event, previousText) {
-        setTimeout(updateSP_KMLcmincmax());
+        setTimeout(updateKMLcmincmax('sp'));
     });
 
     $('#sp-cmax').on('keypress', function (event, previousText) {
-        setTimeout(updateSP_KMLcmincmax());
+        setTimeout(updateKMLcmincmax('sp'));
     });
 
     $('body').on('change', '.parameter-radio', function (e) {
@@ -2647,7 +2651,7 @@
                 });
             }
             else if (key == 'parameterparameterpng') {
-                if (data[key][2]) {
+                if (data[key]) {
                     $('#parameter-parameter-sql > pre').html(data[key][2]);
                     if (data[key][0]) {
                         $('#parameter-parameter-2dplot > img').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key][0]);
