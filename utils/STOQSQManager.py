@@ -437,10 +437,10 @@ class STOQSQManager(object):
                 sname = self.kwargs['parameterstandardname'][0]
                 try:
                     if percentileAggregateType == 'extrema':
-                        qs = self.getActivityParametersQS().filter(parameter__name=sname).aggregate(Min('p025'), Max('p975'))
+                        qs = self.getActivityParametersQS().filter(parameter__standard_name=sname).aggregate(Min('p025'), Max('p975'))
                         results = [sname, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     else:
-                        qs = self.getActivityParametersQS().filter(parameter__name=sname).aggregate(Avg('p025'), Avg('p975'))
+                        qs = self.getActivityParametersQS().filter(parameter__standard_name=sname).aggregate(Avg('p025'), Avg('p975'))
                         results = [sname, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
