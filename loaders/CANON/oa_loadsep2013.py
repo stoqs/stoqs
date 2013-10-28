@@ -6,7 +6,7 @@ __contact__   = 'duane at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON activities in September 2013
+Loader for OA CANON activities in September 2013
 
 Mike McCann; Modified by Duane Edgington and Reiko Michisaki
 MBARI 02 September 2013
