@@ -74,7 +74,7 @@ class SampleDataTable(BaseOutputer):
             row.append(rec['sampletype__name'])
             row.append(rec['volume'])
             row.append(rec['sampledparameter__parameter__name'])
-            row.append('%f' % rec['sampledparameter__datavalue'])
+            row.append('%s' % rec['sampledparameter__datavalue'])
             table.append(row)
         
         colList = []
@@ -108,7 +108,7 @@ class SampledParameter(BaseOutputer):
     '''
     # Only fields that exists in the model can be included here.  Use '.x' and '.y' on sample__geom to get latitude and longitude.
     fields = [ 'parameter__id', 'parameter__name', 'parameter__standard_name', 'sample__depth', 'sample__geom', 
-               'sample__instantpoint__timevalue',  'sample__instantpoint__activity__name',
+               'sample__instantpoint__timevalue',  'sample__instantpoint__activity__name', 'sample__name',
                'sample__instantpoint__activity__platform__name', 'datavalue', 'parameter__units' ]
 
 
