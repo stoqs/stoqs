@@ -25,6 +25,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So tha
 from CANON import CANONLoader
 
 cl = CANONLoader('stoqs_simz_oct2013', 'Sampling and Identification of Marine Zooplankton - October 2013')
+startDatetime = datetime.datetime(2013, 10, 22)
+endDatetime = datetime.datetime(2013, 10, 29)
 
 # Aboard the Carson use zuma
 cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
@@ -34,12 +36,12 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # 2-second decimated dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2013/netcdf/'   # Dorado archive
 cl.dorado_files = [ 
-                    ##'Dorado389_2013_295_00_295_00_decim.nc', 
-                    ##'Dorado389_2013_295_01_295_01_decim.nc', 
-                    ##'Dorado389_2013_296_00_296_00_decim.nc', 
-                    ##'Dorado389_2013_296_01_296_01_decim.nc', 
-                    ##'Dorado389_2013_297_01_297_01_decim.nc', 
-                    ##'Dorado389_2013_297_02_297_02_decim.nc', 
+                    'Dorado389_2013_295_00_295_00_decim.nc', 
+                    'Dorado389_2013_295_01_295_01_decim.nc', 
+                    'Dorado389_2013_296_00_296_00_decim.nc', 
+                    'Dorado389_2013_296_01_296_01_decim.nc', 
+                    'Dorado389_2013_297_01_297_01_decim.nc', 
+                    'Dorado389_2013_297_02_297_02_decim.nc', 
                     'Dorado389_2013_298_00_298_00_decim.nc',
                     'Dorado389_2013_298_01_298_01_decim.nc',
                     'Dorado389_2013_301_02_301_02_decim.nc',
@@ -51,8 +53,8 @@ cl.dorado_files = [
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20130711_TS.nc']
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
-cl.l_662_startDatetime = datetime.datetime(2013, 10, 21)
-cl.l_662_endDatetime = datetime.datetime(2013, 10, 27)
+cl.l_662_startDatetime = startDatetime
+cl.l_662_endDatetime = endDatetime
 
 
 # Rachel Carson Underway CTD
@@ -82,8 +84,8 @@ cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_
                      'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR', 
                      'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
                    ]
-cl.m1_startDatetime = datetime.datetime(2013, 10, 21)
-cl.m1_endDatetime = datetime.datetime(2013, 10, 27)
+cl.m1_startDatetime = startDatetime
+cl.m1_endDatetime = endDatetime
 
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local GOC12 dir
 cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SIMZAug2013')
