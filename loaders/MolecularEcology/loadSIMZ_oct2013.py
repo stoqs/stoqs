@@ -28,9 +28,10 @@ cl = CANONLoader('stoqs_simz_oct2013', 'Sampling and Identification of Marine Zo
 startDatetime = datetime.datetime(2013, 10, 22)
 endDatetime = datetime.datetime(2013, 10, 29)
 
-# Aboard the Carson use zuma
-cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
-##cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
+# Aboard the Carson use zuma:
+##cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
+# On shore, use the odss server:
+cl.tdsBase = 'http://odss.mbari.org/thredds/'
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # 2-second decimated dorado data
@@ -66,14 +67,14 @@ cl.rcuctd_files = [
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
 # Rachel Carson Profile CTD
-cl.pctdDir = 'SIMZ_august2013/carson/pctd/'
+cl.pctdDir = 'CANON_october2013/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_base = cl.dodsBase + cl.pctdDir
 cl.rcpctd_files = [ 
-                    ##'simz2013c01.nc', 'simz2013c02.nc', 'simz2013c03.nc', 'simz2013c04.nc',
-                    ##'simz2013c05.nc', 'simz2013c06.nc', 'simz2013c07.nc', 'simz2013c08.nc',
-                    ##'simz2013c09.nc', 'simz2013c10.nc', 'simz2013c11.nc', 'simz2013c12.nc',
-                    ##'simz2013c13.nc', 'simz2013c14.nc', 'simz2013c15.nc', 'simz2013c16.nc',
-                    ##'simz2013c17.nc', 'simz2013c18.nc',
+                                                      'simz2013c19.nc', 'simz2013c20.nc',
+'simz2013c21.nc', 'simz2013c22.nc',                   'simz2013c24.nc', 'simz2013c25.nc',
+'simz2013c26.nc', 'simz2013c27.nc', 'simz2013c28.nc', 'simz2013c29.nc', 'simz2013c30.nc',
+'simz2013c31.nc', 'simz2013c32.nc', 'simz2013c33.nc', 'simz2013c34.nc', 'simz2013c35.nc',
+'simz2013c36.nc',
                       ]
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
 
@@ -101,7 +102,7 @@ if cl.args.test:
     ##cl.loadL_662(stride=1)
     cl.loadDorado(stride=2)
     ##cl.loadRCuctd(stride=10)
-    ##cl.loadRCpctd(stride=10)
+    cl.loadRCpctd(stride=1)
     cl.loadM1(stride=1)
     ##cl.loadSubSamples()
 
