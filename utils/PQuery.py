@@ -604,73 +604,81 @@ For sampledparameter to sampledparamter query an example is:
         logger.debug('initial query = %s', query)
     
         # Construct SELECT strings, must be in proper order, include depth for possible sigma-t calculation
-        select_items = 'DISTINCT stoqs_measurement.depth, '
         select_order = ('x', 'y', 'z', 'c')
         containsSampleFlag = False
+        containsMeasuredFlag = False
+        xyzc_items = ''
         for axis in select_order:
             if pDict.has_key(axis):
                 if pDict[axis]:
                     if self.isParameterMeasured(int(pDict[axis])):
-                        select_items = select_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+                        xyzc_items = xyzc_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+                        containsMeasuredFlag = True
                     elif self.isParameterSampled(int(pDict[axis])):
                         containsSampleFlag = True
-                        select_items = select_items + 'sp_' + axis + '.datavalue as ' + axis + ', '
+                        xyzc_items = xyzc_items + 'sp_' + axis + '.datavalue as ' + axis + ', '
                     else:
                         # Default is to assume mp - supports legacy databases w/o the ParameterGroup assignment
-                        select_items = select_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+                        xyzc_items = xyzc_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+
 
         # Include all joins that are possible from the selectors in the UI: time, depth, parameter, platform
-        if containsSampleFlag:
-            replace_from = '''stoqs_sample 
+        # Cannot use aliases because where clause from UI selectors don't use them
+        replace_from = '''stoqs_activity
+            INNER JOIN stoqs_platform 
+              on stoqs_platform.id = stoqs_activity.platform_id
             INNER JOIN stoqs_instantpoint 
-            ON stoqs_sample.instantpoint_id = stoqs_instantpoint.id 
-                INNER JOIN stoqs_measurement 
-                ON stoqs_instantpoint.id = stoqs_measurement.instantpoint_id 
-                    INNER JOIN stoqs_activity 
-                    ON stoqs_instantpoint.activity_id = stoqs_activity.id 
-                        INNER JOIN stoqs_platform 
-                        ON stoqs_activity.platform_id = stoqs_platform.id 
-                            INNER JOIN stoqs_measuredparameter 
-                            ON stoqs_measuredparameter.measurement_id = stoqs_measurement.id 
-                                INNER JOIN stoqs_parameter 
-                                ON stoqs_measuredparameter.parameter_id = stoqs_parameter.id 
+              on stoqs_instantpoint.activity_id = stoqs_activity.id
+        '''
+        if containsSampleFlag and not containsMeasuredFlag:
+            # Only Sampled
+            depth_item = 'DISTINCT stoqs_sample.depth, '
+            replace_from = replace_from + '''
+            INNER JOIN stoqs_sample 
+              on stoqs_sample.instantpoint_id = stoqs_instantpoint.id
+            '''
+        elif containsSampleFlag and containsMeasuredFlag:
+            # Sampled and Measured
+            depth_item = 'DISTINCT stoqs_measurement.depth, '
+            replace_from = replace_from + '''
+            INNER JOIN stoqs_measurement 
+              on stoqs_measurement.instantpoint_id = stoqs_instantpoint.id
+            INNER JOIN stoqs_sample 
+              on stoqs_sample.instantpoint_id = stoqs_instantpoint.id
             '''
         else:
-            replace_from = '''stoqs_instantpoint 
-                INNER JOIN stoqs_measurement 
-                ON stoqs_instantpoint.id = stoqs_measurement.instantpoint_id 
-                    INNER JOIN stoqs_activity 
-                    ON stoqs_instantpoint.activity_id = stoqs_activity.id 
-                        INNER JOIN stoqs_platform 
-                        ON stoqs_activity.platform_id = stoqs_platform.id 
-                            INNER JOIN stoqs_measuredparameter 
-                            ON stoqs_measuredparameter.measurement_id = stoqs_measurement.id 
-                                INNER JOIN stoqs_parameter 
-                                ON stoqs_measuredparameter.parameter_id = stoqs_parameter.id 
+            # Only Measured
+            depth_item = 'DISTINCT stoqs_measurement.depth, '
+            replace_from = replace_from + '''
+            INNER JOIN stoqs_measurement 
+              on stoqs_measurement.instantpoint_id = stoqs_instantpoint.id
             '''
 
+        select_items = depth_item + xyzc_items
+
         # Construct INNER JOINS and WHERE sql for Sampled and Measured Parameter selections
+        # Use aliases for joins on each axis
         where_sql = '' 
         for axis, pid in pDict.iteritems():
             if pid:
                 logger.debug('axis, pid = %s, %s', axis, pid)
-
+                replace_from = replace_from + '\n'
                 if self.isParameterMeasured(int(pid)):
-                    replace_from = replace_from + 'INNER JOIN stoqs_measuredparameter mp_' + axis + ' '
-                    replace_from = replace_from + 'on mp_' + axis + '.measurement_id = stoqs_measurement.id '
-                    replace_from = replace_from + 'INNER JOIN stoqs_parameter p_' + axis + ' '
-                    replace_from = replace_from + 'on mp_' + axis + '.parameter_id = p_' + axis + '.id '
+                    replace_from = replace_from + '\nINNER JOIN stoqs_measurement m_' + axis + ' '
+                    replace_from = replace_from + '\non m_' + axis + '.instantpoint_id = stoqs_instantpoint.id'
+                    replace_from = replace_from + '\nINNER JOIN stoqs_measuredparameter mp_' + axis + ' '
+                    replace_from = replace_from + '\non mp_' + axis + '.measurement_id = m_' + axis + '.id '
+                    replace_from = replace_from + '\nINNER JOIN stoqs_parameter p_' + axis + ' '
+                    replace_from = replace_from + '\non mp_' + axis + '.parameter_id = p_' + axis + '.id '
                 elif self.isParameterSampled(int(pid)):
-                    replace_from = replace_from + 'INNER JOIN stoqs_sampledparameter sp_' + axis + ' '
-                    replace_from = replace_from + 'on sp_' + axis + '.sample_id = stoqs_sample.id '
-                    replace_from = replace_from + 'INNER JOIN stoqs_parameter p_' + axis + ' '
-                    replace_from = replace_from + 'on sp_' + axis + '.parameter_id = p_' + axis + '.id '
+                    replace_from = replace_from + '\nINNER JOIN stoqs_sample s_' + axis + ' '
+                    replace_from = replace_from + '\non s_' + axis + '.instantpoint_id = stoqs_instantpoint.id'
+                    replace_from = replace_from + '\nINNER JOIN stoqs_sampledparameter sp_' + axis + ' '
+                    replace_from = replace_from + '\non sp_' + axis + '.sample_id = s_' + axis + '.id '
+                    replace_from = replace_from + '\nINNER JOIN stoqs_parameter p_' + axis + ' '
+                    replace_from = replace_from + '\non sp_' + axis + '.parameter_id = p_' + axis + '.id '
                 else:
-                    # Default is to assume mp - supports legacy databases w/o the ParameterGroup assignment
-                    replace_from = replace_from + 'INNER JOIN stoqs_measuredparameter mp_' + axis + ' '
-                    replace_from = replace_from + 'on mp_' + axis + '.measurement_id = stoqs_measurement.id '
-                    replace_from = replace_from + 'INNER JOIN stoqs_parameter p_' + axis + ' '
-                    replace_from = replace_from + 'on mp_' + axis + '.parameter_id = p_' + axis + '.id '
+                    logger.error('Encountered parameter (id=%s) that is not in the Measured nor in the Sampled ParameterGroup', pid)
 
                 where_sql = where_sql + '(p_' + axis + '.id = ' + str(pid) + ') AND '
 
@@ -685,6 +693,9 @@ For sampledparameter to sampledparamter query an example is:
             q = q + ' WHERE ' + where_sql[:-4]                      # Remove last 'AND '
         else:
             # Insert our WHERE clause into the filters that are in the original query
+            logger.debug('q = %s', q)
+            if containsSampleFlag and not containsMeasuredFlag:
+                q = q.replace('stoqs_measurement', 'stoqs_sample')
             q = q.replace(' WHERE ', ' WHERE ' + where_sql)
 
         # Completely replace the whole FROM clause
@@ -701,5 +712,7 @@ For sampledparameter to sampledparamter query an example is:
             q = q.replace('WHERE', pv_from_sql + ' WHERE ' + pv_where_sql)
 
         logger.debug('q = %s', q)
+        q = sqlparse.format(q, reindent=True, keyword_case='upper')
+
         return q
 
