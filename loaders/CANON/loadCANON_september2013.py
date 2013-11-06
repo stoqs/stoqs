@@ -21,6 +21,8 @@ import os
 import sys
 import datetime  # needed for glider data
 import time      # for startdate, enddate args
+import csv
+import urllib2
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 
@@ -86,26 +88,91 @@ cl.dorado_files = [
 #  GLIDERS
 ######################################################################
 
-# SPRAY glider - for just the duration of the campaign
+# Glider data files from CeNCOOS thredds server
+# L_662
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20130711_TS.nc']
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
-# NPS34
+# NPS_34
 cl.nps34_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.nps34_files = [ 'OS_Glider_NPS_G34_20130829_TS.nc']
 cl.nps34_parms = ['TEMP', 'PSAL']
 cl.nps34_startDatetime = startdate
 cl.nps34_endDatetime = enddate
 
-# NPS29
+# NPS_29
 cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.nps29_files = [ 'OS_Glider_NPS_G29_20130829_TS.nc']
 cl.nps29_parms = ['TEMP', 'PSAL', 'OPBS']
 cl.nps29_startDatetime = startdate
 cl.nps29_endDatetime = enddate
+
+
+# Other gliders - served from campaign's TDS catalog
+# Generic Glider ctd
+cl.glider_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
+cl.glider_ctd_files = [ 'nemesis_ctd.nc',
+                        'ucsc260_ctd.nc',
+                        'ucsc294_ctd.nc']
+cl.glider_ctd_parms = ['TEMP', 'PSAL' ]
+cl.glider_ctd_startDatetime = startdate
+cl.glider_ctd_endDatetime = enddate
+
+# Glider met 
+cl.glider_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
+cl.glider_met_files = [ 'nemesis_met.nc',
+                        'ucsc260_met.nc',
+                        'ucsc294_met.nc']
+cl.glider_met_parms = ['meanu','meanv' ]
+cl.glider_met_startDatetime = startdate
+cl.glider_met_endDatetime = enddate
+
+# Wavegliders
+# WG OA
+cl.wg_oa_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/NetCDF/'
+cl.wg_oa_ctd_files = [ 'WG_OA_ctd.nc']
+cl.wg_oa_ctd_parms = ['TEMP', 'PSAL','DENSITY','OXYGEN' ]
+cl.wg_oa_ctd_startDatetime = startdate
+cl.wg_oa_ctd_endDatetime = enddate
+
+# WG Tex - load from both CTD and EcoPuck data files
+cl.wg_tex_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_Tex/NetCDF/'
+cl.wg_tex_ctd_files = [ 'WG_Tex_ctd.nc', 'WG_Tex_eco.nc' ]
+cl.wg_tex_ctd_parms = ['TEMP', 'PSAL','DENSITY', 'chlorophyll','backscatter650','backscatter470']
+cl.wg_tex_ctd_startDatetime = startdate
+cl.wg_tex_ctd_endDatetime = enddate
+
+# WG OA
+cl.wg_oa_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/NetCDF/'
+cl.wg_oa_met_files = [ 'WG_OA_met.nc']
+cl.wg_oa_met_parms = ['WINDSPEED','WINDDIRECTION','AIRTEMPERATURE','AIRPRESSURE']
+cl.wg_oa_met_startDatetime = startdate
+cl.wg_oa_met_endDatetime = enddate
+
+# WG Tex
+cl.wg_tex_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_Tex/NetCDF/'
+cl.wg_tex_met_parms = ['WINDSPEED','WINDDIRECTION','AIRTEMPERATURE','AIRPRESSURE']
+cl.wg_tex_met_files = [ 'WG_Tex_met.nc']
+cl.wg_tex_met_startDatetime = startdate
+cl.wg_tex_met_endDatetime = enddate
+
+# WG OA
+cl.wg_oa_pco2_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/NetCDF/'
+cl.wg_oa_pco2_files = [ 'WG_OA_pco2.nc']
+cl.wg_oa_pco2_parms = ['pH','eqpco2','airco2','airtemp' ]
+cl.wg_oa_pco2_startDatetime = startdate
+cl.wg_oa_pco2_endDatetime = enddate
+
+
+
+
+
+
+
+
 
 # nemesis ctd
 cl.nemesis_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
@@ -135,33 +202,34 @@ cl.ucsc294_ctd_parms = ['TEMP', 'PSAL' ,'oxygen','chla','backscatter']
 cl.ucsc294_ctd_startDatetime = startdate
 cl.ucsc294_ctd_endDatetime = enddate
 
+# ucsc260 ctd 
+cl.ucsc260_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_UCSC_1/'
+cl.ucsc260_ctd_files = [ 'ucsc294_ctd.nc']
+cl.ucsc260_ctd_parms = ['TEMP', 'PSAL' ,'oxygen','chla','backscatter']
+cl.ucsc260_ctd_startDatetime = startdate
+cl.ucsc260_ctd_endDatetime = enddate
+
+
 
 ######################################################################
 #  WESTERN FLYER: September 20-27
 ######################################################################
 # UCTD
-cl.wfuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Western_Flyer/netcdf/uctd/'
+cl.wfuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Western_Flyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [ 
-'24211WF01.nc', '27211WF01.nc', '27411WF01.nc', '27511WF01.nc', '27711WF01.nc', '27811WF01.nc', '27911wf01.nc', '28011wf01.nc', '28111wf01.nc',
-'28211wf01.nc'
+'canon13m01.nc', 'canon13m02.nc', 'canon13m03.nc', 'canon13m04.nc', 'canon13m05.nc', 'canon13m06.nc', 'canon13m07.nc', 'canon13m08.nc',
+'canon13m09.nc', 'canon13m10.nc', 'canon13m11.nc', 
                       ]
 
 # PCTD
-cl.pctdDir = 'CANON_september2013/Platforms/Ships/Western_Flyer/netcdf/pctd/'
+cl.pctdDir = 'CANON_september2013/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_base = cl.dodsBase + cl.pctdDir
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [ 
-#'canon13c01.nc', 'canon13c02.nc', 'canon13c03.nc', 'canon13c04.nc', 'canon13c05.nc', 'canon13c06.nc', 'canon13c07.nc',
-#'canon13c08.nc', 'canon13c09.nc', 'canon13c10.nc', 'canon13c11.nc', 'canon13c12.nc', 'canon13c13_A.nc', 'canon13c13_B.nc', 'canon13c14.nc',
-#'canon13c16.nc', 'canon13c17.nc', 'canon13c19_A.nc', 'canon13c20.nc', 'canon13c22.nc', 'canon13c23.nc', 'canon13c24.nc', 'canon13c25.nc',
-#'canon13c26.nc', 'canon13c27.nc', 'canon13c28.nc', 'canon13c29.nc', 'canon13c30.nc', 'canon13c31.nc', 'canon13c32.nc', 'canon13c33.nc',
-#'canon13c34.nc', 'canon13c35.nc', 'canon13c36.nc', 'canon13c37.nc', 'canon13c38.nc', 'canon13c39.nc', 'canon13c40.nc', 'canon13c41.nc',
-#'canon13c42.nc', 'canon13c43.nc', 'canon13c44.nc', 'canon13c45.nc', 'canon13c46.nc', 'canon13c48.nc', 'canon13c49.nc', 'canon13c50.nc',
-#'canon13c51.nc', 'canon13c52.nc', 'canon13c53.nc', 'canon13c54.nc', 'canon13c55.nc', 'canon13c56.nc', 'canon13c57.nc', 'canon13c58.nc',
-#'canon13c59.nc', 'canon13c60.nc', 'canon13c61.nc', 'canon13c62.nc', 'canon13c63.nc', 'canon13c64.nc', 'canon13c65.nc', 'canon13c66.nc',
-#'canon13c67.nc', 'canon13c68.nc', 'canon13c69.nc', 'canon13c70.nc', 'canon13c71.nc', 'canon13c72.nc', 'canon13c73.nc', 'canon13c74.nc',
-#'canon13c75.nc', 'canon13c76.nc', 'canon13c77.nc', 'canon13c78.nc', 'canon13c79.nc', 'canon13c80.nc', 'canon13c81.nc', 'canon13c82.nc' 
+'canon13c01.nc', 'canon13c02.nc', 'canon13c03.nc', 'canon13c04.nc', 'canon13c05.nc', 'canon13c06.nc', 'canon13c07.nc',
+'canon13c08.nc', 'canon13c09.nc', 'canon13c10.nc', 'canon13c11.nc', 'canon13c12.nc', 'canon13c13.nc', 'canon13c14.nc',
+'canon13c15.nc', 'canon13c16.nc', 'canon13c17.nc', 'canon13c18.nc', 'canon13c19.nc', 
 ]
 
 # BCTD
@@ -321,24 +389,21 @@ cl.OA2fl_parms = [ 'fluor' ]
 cl.OA2fl_startDatetime = startdate
 cl.OA2fl_endDatetime = enddate
  
+
 #######################################################################################
 # DRIFTERS
 #######################################################################################
+# Stella drifters, requires input file stella_load.csv with the names of the 
 
-# Stella 203
-cl.stella203_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
-cl.stella203_parms = [ 'TEMP', 'pH' ]
-cl.stella203_files = [ 
-                        'stella203_data.nc',
-                      ]
+cl.stella_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
+cl.stella_parms = [ 'TEMP', 'pH' ]
+cl.stella_files = ['stella203_data.nc', 'stella204_data.nc', 'stella205_data.nc']
 
-# Stella 204
-cl.stella204_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
-cl.stella204_parms = [ 'TEMP', 'pH' ]
-cl.stella204_files = [ 
-                        'stella204_data.nc',
-                      ]
 
+
+#######################################################################################
+# ESPs
+#######################################################################################
 # MBARI ESPs Mack and Bruce
 cl.espmack_base = cl.dodsBase + 'CANON_september2013/Platforms/Moorings/ESP_Mack/NetCDF/'
 cl.espmack_parms = [ 'TEMP', 'PSAL', 'chl', 'chlini', 'no3' ]
@@ -353,39 +418,49 @@ cl.espmack_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadL_662(stride=100) 
-    cl.load_NPS29(stride=100) 
-    cl.load_NPS34(stride=100) 
-    cl.load_nemesis_ctd(stride=100) 
-    cl.load_ucsc294_ctd(stride=100) 
-    cl.load_nemesis_met(stride=100) 
+    #cl.loadL_662(stride=100) 
+    #cl.load_NPS29(stride=100) 
+    #cl.load_NPS34(stride=100) 
+    #cl.load_nemesis_ctd(stride=100) 
+    #cl.load_ucsc294_ctd(stride=100) 
+    #cl.load_glider_ctd(stride=100) 
+    #cl.load_ucsc260_ctd(stride=100) 
+    #cl.load_nemesis_met(stride=100) 
 
-    cl.loadDorado(stride=1000)
+    #cl.load_wg_oa_pco2(stride=100) 
+    #cl.load_wg_oa_ctd(stride=100) 
+    #cl.load_wg_oa_met(stride=100) 
+    #cl.load_wg_tex_ctd(stride=100)
+    #cl.load_wg_tex_met(stride=100)
+    #cl.load_glider_ctd(stride=100)
+    #cl.load_glider_met(stride=100)
+
+    #cl.loadDorado(stride=1000)
     ##cl.loadDaphne(stride=100)             # Someone needs to make good NetCDF files
     ##cl.loadTethys(stride=100)             # Someone needs to make good NetCDF files
 
-    cl.loadRCuctd(stride=10)
-    cl.loadRCpctd(stride=10)
-    cl.loadJMpctd(stride=10)
-    cl.loadWFuctd(stride=100)   
-    cl.loadWFpctd(stride=50)
+    #cl.loadRCuctd(stride=10)
+    #cl.loadRCpctd(stride=10)
+    #cl.loadJMpctd(stride=10)
+    #cl.loadWFuctd(stride=100)   
+    #cl.loadWFpctd(stride=50)
 
-    cl.loadM1(stride=10)
-    ##cl.load_ucsc294_met(stride=1)         # No method in CANON/__init__.py yet
-    cl.loadStella203(stride=10)
-    cl.loadStella204(stride=10)
-    cl.loadOA1ctd(stride=1)
-    cl.loadOA1met(stride=1)
-    cl.loadOA1pH(stride=1)
-    cl.loadOA1pco2(stride=1)
-    cl.loadOA1fl(stride=1)
-    cl.loadOA1o2(stride=1)
-    cl.loadOA2ctd(stride=1)
-    cl.loadOA2met(stride=1)
-    cl.loadOA2pH(stride=1)
-    cl.loadOA2pco2(stride=1)
-    cl.loadOA2fl(stride=1)
-    cl.loadOA2o2(stride=1)
+    #cl.loadM1(stride=10)
+    #cl.loadStella203(stride=10)
+    #cl.loadStella204(stride=10)
+    #cl.loadOA1ctd(stride=1)
+    #cl.loadOA1met(stride=1)
+    #cl.loadOA1pH(stride=1)
+    #cl.loadOA1pco2(stride=1)
+    #cl.loadOA1fl(stride=1)
+    #cl.loadOA1o2(stride=1)
+    #cl.loadOA2ctd(stride=1)
+    #cl.loadOA2met(stride=1)
+    #cl.loadOA2pH(stride=1)
+    ##cl.loadOA2pco2(stride=1)
+    #cl.loadOA2fl(stride=1)
+    #cl.loadOA2o2(stride=1)
+    cl.loadStella(stride=2)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     ##cl.loadSubSamples()
@@ -426,6 +501,8 @@ elif cl.args.optimal_stride:
     ##cl.loadOA2o2(stride=1)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
+
+    cl.load_wg_tex_ctd(stride=1)
     ##cl.loadSubSamples()
 
 else:
