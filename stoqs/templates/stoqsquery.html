@@ -2767,10 +2767,10 @@
                 var nsecs = (endAjax - startAjax) / 1000.0;
                 if ( ! $.isEmptyObject(data['counts']) ) {
                     if ( ! $('#getactualcount').is(':checked') ) {
-                        $('#metadata-count').html("about " + data['counts']['approximate_count_localized'] + " data values - ");
+                        $('#metadata-count').html("about " + data.counts.approximate_count_localized + " data values - ");
                     }
                     else {
-                        $('#metadata-count').html(data['counts']['actual_count_localized'] + " data values - ");
+                        $('#metadata-count').html(data.counts.actual_count_localized + " data values - ");
                     }
                 }
                 $('#metadata-ajaxtime').css( { 'color': 'black' } );
