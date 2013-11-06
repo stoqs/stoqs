@@ -332,7 +332,7 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runMooringLoader(url, self.campaignName, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment', 
                                         self.OA1pco2_parms, self.dbAlias, stride, self.OA1pco2_startDatetime, self.OA1pco2_endDatetime)
-										
+
 
     def loadOA1fl(self, stride=None):
         '''
@@ -344,7 +344,7 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runMooringLoader(url, self.campaignName, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment', 
                                         self.OA1fl_parms, self.dbAlias, stride, self.OA1fl_startDatetime, self.OA1fl_endDatetime)
-										
+
 
     def loadOA1o2(self, stride=None):
         '''
@@ -367,7 +367,7 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runMooringLoader(url, self.campaignName, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment', 
                                         self.OA1ctd_parms, self.dbAlias, stride, self.OA1ctd_startDatetime, self.OA1ctd_endDatetime)
-										
+
 
     def loadOA1pH(self, stride=None):
         '''
@@ -379,7 +379,7 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runMooringLoader(url, self.campaignName, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment', 
                                         self.OA1pH_parms, self.dbAlias, stride, self.OA1pH_startDatetime, self.OA1pH_endDatetime)
-										
+
 
     def loadOA1met(self, stride=None):
         '''
@@ -403,7 +403,7 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runMooringLoader(url, self.campaignName, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2pco2_parms, self.dbAlias, stride, self.OA2pco2_startDatetime, self.OA2pco2_endDatetime)
-										
+
 
     def loadOA2fl(self, stride=None):
         '''
@@ -415,7 +415,7 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runMooringLoader(url, self.campaignName, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2fl_parms, self.dbAlias, stride, self.OA2fl_startDatetime, self.OA2fl_endDatetime)
-										
+
 
     def loadOA2o2(self, stride=None):
         '''
@@ -439,7 +439,7 @@ class CANONLoader(LoadScript):
             DAPloaders.runMooringLoader(url, self.campaignName, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2ctd_parms, self.dbAlias, stride, self.OA2ctd_startDatetime, self.OA2ctd_endDatetime)
 
-										
+
     def loadOA2pH(self, stride=None):
         '''
         Mooring OA specific load functions
@@ -451,7 +451,7 @@ class CANONLoader(LoadScript):
             DAPloaders.runMooringLoader(url, self.campaignName, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2pH_parms, self.dbAlias, stride, self.OA2pH_startDatetime, self.OA2pH_endDatetime)
 
-										
+
     def loadOA2met(self, stride=None):
         '''
         Mooring OA specific load functions
@@ -569,7 +569,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.stella_files], self.stella_files):
             url = self.stella_base + file
             print "url = %s" % url
-	    dname='Stella' + aName[6:9]
+            dname='Stella' + aName[6:9]
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'Drifter_' + dname, self.colors[dname], dname, 'Stella drifter Mission', 
                                         self.stella_parms, self.dbAlias, stride)
 
