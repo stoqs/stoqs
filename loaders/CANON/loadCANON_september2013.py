@@ -336,7 +336,10 @@ cl.OA2fl_endDatetime = enddate
 
 cl.stella_base = cl.dodsBase + 'CANON_september2013/Platforms/Drifters/Stella_1/'
 cl.stella_parms = [ 'TEMP', 'pH' ]
-cl.stella_files = ['stella203_data.nc', 'stella204_data.nc', 'stella205_data.nc']
+cl.stella_files = [ 
+                    'stella202_data.nc',
+                    'stella203_data.nc', 'stella204_data.nc', 'stella205_data.nc'
+                  ]
 
 #######################################################################################
 # ESP MOORINGS
@@ -402,7 +405,7 @@ if cl.args.test:
     cl.loadBruceMoor(stride=1)
     cl.loadMackMoor(stride=1)
 
-    cl.loadStella(stride=2)
+    cl.loadStella(stride=1)
 
     ##cl.loadSubSamples()
 
@@ -455,4 +458,49 @@ elif cl.args.optimal_stride:
 
 else:
     cl.stride = cl.args.stride
+    cl.loadL_662()
+    cl.load_NPS29()
+    cl.load_NPS34()
+
+    cl.load_glider_ctd()
+    cl.load_glider_met()
+
+    cl.load_wg_oa_pco2()
+    cl.load_wg_oa_ctd()
+    cl.load_wg_oa_met()
+    cl.load_wg_tex_ctd()
+    cl.load_wg_tex_met()
+
+    cl.loadDorado()
+    ##cl.loadDaphne()             # Someone needs to make good NetCDF files
+    ##cl.loadTethys()             # Someone needs to make good NetCDF files
+
+    cl.loadRCuctd()
+    cl.loadRCpctd()
+    cl.loadJMpctd()
+    cl.loadWFuctd()
+    cl.loadWFpctd()
+
+    cl.loadM1()
+
+    cl.loadOA1ctd()
+    cl.loadOA1met()
+    cl.loadOA1pH()
+    cl.loadOA1pco2()
+    cl.loadOA1fl()
+    cl.loadOA1o2()
+
+    cl.loadOA2ctd()
+    cl.loadOA2met()
+    cl.loadOA2pH()
+    ##cl.loadOA2pco2()              # No data from http://odss.mbari.org/thredds/dodsC/CANON_september2013/Platforms/Moorings/OA_2/OA2_pco2_2013.nc  between 1378684800.0 and 1380499200.0.
+    cl.loadOA2fl()
+    cl.loadOA2o2()
+
+    cl.loadBruceMoor()
+    cl.loadMackMoor()
+
+    cl.loadStella()
+
+    ##cl.loadSubSamples()
 
