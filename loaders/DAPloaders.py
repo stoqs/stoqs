@@ -243,6 +243,11 @@ class Base_Loader(STOQS_Loader):
             fv = self.ds[var].attributes['_FillValue']
         except KeyError:
             logger.debug('Cannot get attribute _FillValue for variable %s from url %s', var, self.url)
+            try:
+                # Fred's L_662 and other glider data files have the 'FillValue' attribute, not '_FillValue'
+                fv = self.ds[var].attributes['FillValue']
+            except:
+                logger.debug('Cannot get attribute FillValue for variable %s from url %s', var, self.url)
             return None
         else:
             return fv
@@ -602,8 +607,6 @@ class Base_Loader(STOQS_Loader):
             l = 0
             values = {}
             for dv in data[pname]:
-                if numpy.isnan(dv):
-                    continue
                 values[pname] = float(dv)
                 values['time'] = times[pname][l]
                 values['depth'] = depths[pname][l]
@@ -632,7 +635,7 @@ class Base_Loader(STOQS_Loader):
 
                     # If the data have a Z dependence (e.g. mooring tstring/adcp) then value will be an array.
                     logger.debug("value = %s ", value)
-                    if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null': # absence of a value
+                    if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or numpy.isnan(value): # absence of a value
                         continue
                     try:
                         if math.isnan(value): # not a number for a math type
