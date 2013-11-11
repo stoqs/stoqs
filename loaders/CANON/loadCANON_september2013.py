@@ -383,29 +383,29 @@ if cl.args.test:
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
     cl.loadJMpctd(stride=10)
-    cl.loadWFuctd(stride=100)   
-    cl.loadWFpctd(stride=50)
+    cl.loadWFuctd(stride=10)   
+    cl.loadWFpctd(stride=10)
 
     cl.loadM1(stride=10)
 
-    cl.loadOA1ctd(stride=1)
-    cl.loadOA1met(stride=1)
-    cl.loadOA1pH(stride=1)
-    cl.loadOA1pco2(stride=1)
-    cl.loadOA1fl(stride=1)
-    cl.loadOA1o2(stride=1)
+    cl.loadOA1ctd(stride=10)
+    cl.loadOA1met(stride=10)
+    cl.loadOA1pH(stride=10)
+    cl.loadOA1pco2(stride=10)
+    cl.loadOA1fl(stride=10)
+    cl.loadOA1o2(stride=10)
 
-    cl.loadOA2ctd(stride=1)
-    cl.loadOA2met(stride=1)
-    cl.loadOA2pH(stride=1)
+    cl.loadOA2ctd(stride=10)
+    cl.loadOA2met(stride=10)
+    cl.loadOA2pH(stride=10)
     ##cl.loadOA2pco2(stride=1)              # No data from http://odss.mbari.org/thredds/dodsC/CANON_september2013/Platforms/Moorings/OA_2/OA2_pco2_2013.nc  between 1378684800.0 and 1380499200.0.
-    cl.loadOA2fl(stride=1)
-    cl.loadOA2o2(stride=1)
+    cl.loadOA2fl(stride=10)
+    cl.loadOA2o2(stride=10)
 
-    cl.loadBruceMoor(stride=1)
-    cl.loadMackMoor(stride=1)
+    cl.loadBruceMoor(stride=10)
+    cl.loadMackMoor(stride=10)
 
-    cl.loadStella(stride=1)
+    cl.loadStella(stride=10)
 
     ##cl.loadSubSamples()
 
