@@ -234,38 +234,6 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, aName, gplatform, self.colors[gname], 'glider', 'Glider Mission', 
                                         self.glider_met_parms, self.dbAlias, stride, self.glider_met_startDatetime, self.glider_met_endDatetime)
 
-    def load_nemesis_ctd(self, stride=None):
-        '''
-        Glider specific load functions
-        '''
-        stride = stride or self.stride
-        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.nemesis_ctd_files], self.nemesis_ctd_files):
-            url = self.nemesis_ctd_base + file
-            print "url = %s" % url
-            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Nemesis_Glider', self.colors['nemesis'], 'glider', 'Glider Mission', 
-                                        self.nemesis_ctd_parms, self.dbAlias, stride, self.nemesis_ctd_startDatetime, self.nemesis_ctd_endDatetime)
-
-    def load_nemesis_met(self, stride=None):
-        '''
-        Glider specific load functions
-        '''
-        stride = stride or self.stride
-        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.nemesis_met_files], self.nemesis_met_files):
-            url = self.nemesis_met_base + file
-            print "url = %s" % url
-            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Nemesis_Glider', self.colors['nemesis'], 'glider', 'Glider Mission', 
-                                        self.nemesis_met_parms, self.dbAlias, stride, self.nemesis_met_startDatetime, self.nemesis_met_endDatetime)
-
-    def load_ucsc294_ctd(self, stride=None):
-        '''
-        Glider specific load functions
-        '''
-        stride = stride or self.stride
-        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.ucsc294_ctd_files], self.ucsc294_ctd_files):
-            url = self.ucsc294_ctd_base + file
-            print "url = %s" % url
-            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'UCSC294_Glider', self.colors['ucsc294'], 'glider', 'Glider Mission', 
-                                        self.ucsc294_ctd_parms, self.dbAlias, stride, self.ucsc294_ctd_startDatetime, self.ucsc294_ctd_endDatetime)
 
     def load_wg_oa_pco2(self, stride=None):
         '''
@@ -275,7 +243,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_oa_pco2_files], self.wg_oa_pco2_files):
             url = self.wg_oa_pco2_base + file
             print "url = %s" % url
-            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'glider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_pco2_parms, self.dbAlias, stride, self.wg_oa_pco2_startDatetime, self.wg_oa_pco2_endDatetime)
 
     def load_wg_oa_ctd(self, stride=None):
@@ -286,7 +254,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_oa_ctd_files], self.wg_oa_ctd_files):
             url = self.wg_oa_ctd_base + file
             print "url = %s" % url
-            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'glider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_ctd_parms, self.dbAlias, stride, self.wg_oa_ctd_startDatetime, self.wg_oa_ctd_endDatetime)
 
     def load_wg_tex_ctd(self, stride=None):
@@ -297,7 +265,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_tex_ctd_files], self.wg_tex_ctd_files):
             url = self.wg_tex_ctd_base + file
             print "url = %s" % url
-            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'glider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
                                         self.wg_tex_ctd_parms, self.dbAlias, stride, self.wg_tex_ctd_startDatetime, self.wg_tex_ctd_endDatetime)
 
     def load_wg_oa_met(self, stride=None):
@@ -308,7 +276,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_oa_met_files], self.wg_oa_met_files):
             url = self.wg_oa_met_base + file
             print "url = %s" % url
-            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'glider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_met_parms, self.dbAlias, stride, self.wg_oa_met_startDatetime, self.wg_oa_met_endDatetime)
 
     def load_wg_tex_met(self, stride=None):
@@ -319,7 +287,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wg_tex_met_files], self.wg_tex_met_files):
             url = self.wg_tex_met_base + file
             print "url = %s" % url
-            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'glider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
                                         self.wg_tex_met_parms, self.dbAlias, stride, self.wg_tex_met_startDatetime, self.wg_tex_met_endDatetime)
 
     def loadOA1pco2(self, stride=None):
@@ -570,32 +538,8 @@ class CANONLoader(LoadScript):
             url = self.stella_base + file
             print "url = %s" % url
             dname='Stella' + aName[6:9]
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'Drifter_' + dname, self.colors[dname], dname, 'Stella drifter Mission', 
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'Drifter_' + dname, self.colors[dname], 'drifter', 'Stella drifter Mission', 
                                         self.stella_parms, self.dbAlias, stride)
-
-    def loadStella204(self, stride=None):
-        '''
-        Stella drift specific load functions
-        '''
-        stride = stride or self.stride
-        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.stella204_files], self.stella204_files):
-            url = self.stella204_base + file
-            print "url = %s" % url
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'Drifter_Stella204', self.colors['stella204'], 'stella204', 'Stella drifter Mission', 
-                                        self.stella204_parms, self.dbAlias, stride)
-
-
-    def loadStella203(self, stride=None):
-        '''
-        Stella drift specific load functions
-        '''
-        stride = stride or self.stride
-        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.stella203_files], self.stella203_files):
-            url = self.stella203_base + file
-
-            print "url = %s" % url
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'Drifter_Stella203', self.colors['stella203'], 'stella203', 'Stella drifter Mission', 
-                                        self.stella203_parms, self.dbAlias, stride)
 
     def loadESPdrift(self, stride=None):
         '''
@@ -605,7 +549,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.espdrift_files], self.espdrift_files):
             url = self.espdrift_base + file
             print "url = %s" % url
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espdrift', self.colors['espdrift'], 'espdrift', 'ESP drift Mission', 
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espdrift', self.colors['espdrift'], 'drifter', 'ESP drift Mission', 
                                         self.espdrift_parms, self.dbAlias, stride)
 
     def loadESPmack(self, stride=None):
@@ -640,7 +584,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.wfuctd_files], self.wfuctd_files):
             url = self.wfuctd_base + file
             print "url = %s" % url
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], platformName, activitytypeName,
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], 'ship', activitytypeName,
                                         self.wfuctd_parms, self.dbAlias, stride)
 
     def loadWFpctd(self, stride=None, platformName='WesternFlyer_PCTD', activitytypeName='Western Flyer Profile CTD Data'):
