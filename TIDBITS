@@ -90,6 +90,38 @@ Delete an Activity:
 acts = models.Activity.objects.using('stoqs_march2013_s').filter(name__contains='plm04')
 acts[0].delete(using='stoqs_march2013_s')
 
+Perform speacialized Parameter-Parameter query:
+-----------------------------------------------
+# Use STOQS UI to get SQL for your Parameter-Parameter query (on the sql tab)
+# e.g.:
+In [1]: sql='''SELECT DISTINCT stoqs_measurement.depth,
+   ...:                 mp_x.datavalue AS x,
+   ...:                 mp_y.datavalue AS y
+   ...: FROM stoqs_activity
+   ...: INNER JOIN stoqs_platform ON stoqs_platform.id = stoqs_activity.platform_id
+   ...: INNER JOIN stoqs_instantpoint ON stoqs_instantpoint.activity_id = stoqs_activity.id
+   ...: INNER JOIN stoqs_measurement ON stoqs_measurement.instantpoint_id = stoqs_instantpoint.id
+   ...: INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
+   ...: INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
+   ...: INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
+   ...: INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
+   ...: INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
+   ...: INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
+   ...: WHERE (p_y.id = 24)
+   ...:   AND (p_x.id = 26)
+   ...:   AND (stoqs_instantpoint.timevalue >= '2013-09-19 10:04:24'
+   ...:        AND stoqs_measurement.depth >= -2.28
+   ...:        AND stoqs_instantpoint.timevalue <= '2013-09-20 03:24:20'
+   ...:        AND stoqs_platform.name IN ('AUV_Dorado')
+   ...:        AND stoqs_measurement.depth <= 84.21)'''
+
+# Perform the query
+from django.db import connections
+cursor = connections['stoqs_september2013_t'].cursor()
+cursor.execute(sql)
+for row in cursor:
+    print(row)
+
 
 --
 Mike McCann
