@@ -170,17 +170,16 @@ cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [ 
 'canon13m01.nc', 'canon13m02.nc', 'canon13m03.nc', 'canon13m04.nc', 'canon13m05.nc', 'canon13m06.nc', 'canon13m07.nc', 'canon13m08.nc',
 'canon13m09.nc', 'canon13m10.nc', 'canon13m11.nc', 
-                      ]
+                  ]
 
 # PCTD
-cl.pctdDir = 'CANON_september2013/Platforms/Ships/Western_Flyer/pctd/'
-cl.wfpctd_base = cl.dodsBase + cl.pctdDir
+cl.wfpctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [ 
 'canon13c01.nc', 'canon13c02.nc', 'canon13c03.nc', 'canon13c04.nc', 'canon13c05.nc', 'canon13c06.nc', 'canon13c07.nc',
 'canon13c08.nc', 'canon13c09.nc', 'canon13c10.nc', 'canon13c11.nc', 'canon13c12.nc', 'canon13c13.nc', 'canon13c14.nc',
 'canon13c15.nc', 'canon13c16.nc', 'canon13c17.nc', 'canon13c18.nc', 'canon13c19.nc', 
-]
+                  ]
 
 # BCTD
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
@@ -201,15 +200,19 @@ cl.subsample_csv_files = [
 cl.rcuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [ 
-                    '25913RCm01.nc', '26013RCm01.nc', 
-                      ]
+                    '25913RCm01.nc', '26013RCm01.nc', '26113RCm01.nc', '27313RCm01.nc', '27413RCm01.nc', '27513RCm01.nc',
+                  ]
 
 # PCTD
-cl.pctdDir = 'CANON_september2013/Platforms/Ships/Rachel_Carson/pctd/'
-cl.rcpctd_base = cl.dodsBase + cl.pctdDir
+cl.rcpctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [ 
-                    '25913RCc01.nc', '25913RCc02.nc', '25913RCc03.nc', '26013RCc01.nc', 
+                    '25913RCc01.nc', '25913RCc02.nc', '25913RCc03.nc', '26013RCc01.nc',
+                    '26113RCc01.nc',
+                    '27313RCc01.nc', '27313RCc02.nc', '27313RCc03.nc',
+                    '27413RCc01.nc', '27413RCc02.nc', '27413RCc03.nc',
+                    '27513RCc01.nc', '27513RCc02.nc',
+                    '27613RCc01.nc', '27613RCc02.nc', '27613RCc03.nc', '27613RCc04.nc', '27613RCc05.nc',
                       ]
 # BCTD
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
@@ -231,7 +234,6 @@ cl.subsample_csv_files = [
 ##cl.JMuctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 ##cl.JMuctd_files = [ '27710c01jm.nc',   '27910c06jm.nc',   '28410c02jm.nc',   '28710c03jm.nc',   '29810c01jm.nc', ]
 
-cl.pctdDir = 'CANON_september2013/Platforms/Ships/Martin/pctd/'
 cl.JMpctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/pctd/' 
 cl.JMpctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
 cl.JMpctd_files = [ '25613JMC01.nc', '25613JMC02.nc', '25613JMC03.nc', '25613JMC04.nc', '25613JMC05.nc', 
@@ -381,10 +383,10 @@ if cl.args.test:
     ##cl.loadTethys(stride=100)             # Someone needs to make good NetCDF files
 
     cl.loadRCuctd(stride=10)
-    cl.loadRCpctd(stride=10)
-    cl.loadJMpctd(stride=10)
+    cl.loadRCpctd(stride=10, pctdDir='CANON_september2013/Platforms/Ships/Rachel_Carson/pctd/')
+    cl.loadJMpctd(stride=10, pctdDir='CANON_september2013/Platforms/Ships/Martin/pctd/')
     cl.loadWFuctd(stride=10)   
-    cl.loadWFpctd(stride=10)
+    cl.loadWFpctd(stride=10, pctdDir='CANON_september2013/Platforms/Ships/Western_Flyer/pctd/')
 
     cl.loadM1(stride=10)
 
@@ -428,10 +430,10 @@ elif cl.args.optimal_stride:
     ##cl.loadTethys(stride=1)             # Someone needs to make good NetCDF files
 
     cl.loadRCuctd(stride=1)
-    cl.loadRCpctd(stride=1)
-    cl.loadJMpctd(stride=1)
+    cl.loadRCpctd(stride=1, pctdDir='CANON_september2013/Platforms/Ships/Rachel_Carson/pctd/')
+    cl.loadJMpctd(stride=1, pctdDir='CANON_september2013/Platforms/Ships/Martin/pctd/')
     cl.loadWFuctd(stride=1)   
-    cl.loadWFpctd(stride=1)
+    cl.loadWFpctd(stride=1, pctdDir='CANON_september2013/Platforms/Ships/Western_Flyer/pctd/')
 
     cl.loadM1(stride=1)
 
@@ -476,10 +478,11 @@ else:
     ##cl.loadTethys()             # Someone needs to make good NetCDF files
 
     cl.loadRCuctd()
-    cl.loadRCpctd()
-    cl.loadJMpctd()
-    cl.loadWFuctd()
-    cl.loadWFpctd()
+    cl.loadRCpctd(pctdDir='CANON_september2013/Platforms/Ships/Rachel_Carson/pctd/')
+    cl.loadJMpctd(pctdDir='CANON_september2013/Platforms/Ships/Martin/pctd/')
+    cl.loadWFuctd()   
+    cl.loadWFpctd(pctdDir='CANON_september2013/Platforms/Ships/Western_Flyer/pctd/')
+
 
     cl.loadM1()
 

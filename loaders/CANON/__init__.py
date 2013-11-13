@@ -132,7 +132,7 @@ class CANONLoader(LoadScript):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'RV_John_Martin_UCTD', self.colors['martin'], 'ship', 'cruise', 
                                         self.JMuctd_parms, self.dbAlias, stride)
 
-    def loadJMpctd(self, stride=None, platformName='RV_John_Martin_PCTD', activitytypeName='John Martin Profile CTD Data'):
+    def loadJMpctd(self, stride=None, platformName='RV_John_Martin_PCTD', activitytypeName='John Martin Profile CTD Data', pctdDir=None):
         '''
         Martin specific underway load functions
         '''
@@ -142,11 +142,9 @@ class CANONLoader(LoadScript):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['martin'], 'ship', activitytypeName,
                                         self.JMpctd_parms, self.dbAlias, stride)
         # load all the bottles           
-        sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['martin'], platformTypeName='ship')
+        sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['martin'], platformTypeName='ship', pctdDir=pctdDir)
         sl.tdsBase= self.tdsBase
-        sl.pctdDir = self.pctdDir
-        sl.process_btl_files(self.rcpctd_files)
-
+        sl.process_btl_files(self.JMpctd_files)
 
     def loadFulmar(self, stride=None):
         '''
@@ -587,7 +585,7 @@ class CANONLoader(LoadScript):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], 'ship', activitytypeName,
                                         self.wfuctd_parms, self.dbAlias, stride)
 
-    def loadWFpctd(self, stride=None, platformName='WesternFlyer_PCTD', activitytypeName='Western Flyer Profile CTD Data'):
+    def loadWFpctd(self, stride=None, platformName='WesternFlyer_PCTD', activitytypeName='Western Flyer Profile CTD Data', pctdDir=None):
         '''
         WF pctd specific load functions. Override defaults for @platformName and activitytypeName if it's desired
         to consider uctd and pctd coming from the same platform.  You may want to do this to use the data 
@@ -600,9 +598,8 @@ class CANONLoader(LoadScript):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], 'ship', activitytypeName, 
                                         self.wfpctd_parms, self.dbAlias, stride)
         # Now load all the bottles           
-        sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'])
+        sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'], pctdDir=pctdDir)
         sl.tdsBase= self.tdsBase
-        sl.pctdDir = self.pctdDir
         sl.process_btl_files(self.wfpctd_files)
 
     def loadRCuctd(self, stride=None, platformName='RachelCarson_UCTD', activitytypeName='Rachel Carson Underway CTD Data'):
@@ -616,7 +613,7 @@ class CANONLoader(LoadScript):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['carson'], 'ship', activitytypeName, 
                                         self.rcuctd_parms, self.dbAlias, stride)
 
-    def loadRCpctd(self, stride=None, platformName='RachelCarson_PCTD', activitytypeName='Rachel Carson Profile CTD Data'):
+    def loadRCpctd(self, stride=None, platformName='RachelCarson_PCTD', activitytypeName='Rachel Carson Profile CTD Data', pctdDir=None):
         '''
         RC pctd specific load functions
         '''
@@ -628,9 +625,9 @@ class CANONLoader(LoadScript):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['carson'], 'ship', activitytypeName, 
                                         self.rcpctd_parms, self.dbAlias, stride)
         # load all the bottles           
-        sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['carson'], platformTypeName='ship')
+
+        sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['carson'], platformTypeName='ship', pctdDir=pctdDir)
         sl.tdsBase= self.tdsBase
-        sl.pctdDir = self.pctdDir
         sl.process_btl_files(self.rcpctd_files)
 
     def loadSubSamples(self):
