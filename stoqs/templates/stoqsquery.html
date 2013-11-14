@@ -760,17 +760,13 @@
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
-                        <h3><a id="platforms-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
+                        <h3><a id="platforms-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapsePlatforms">
                         Platforms</a>
                         <button id="clear-platforms-button" class="btn btn-mini disabled">Clear Selection</button>
                         </h3>
                     </div>
-                    <div id="collapseThree" class="accordion-body collapse in">
+                    <div id="collapsePlatforms" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <table id="platform-table" class="table table-condensed">
-                              <tbody>
-                              </tbody>
-                            </table>                                
                         </div>
                     </div>
                 </div><!-- accordian-group -->
@@ -1346,7 +1342,7 @@
         }
 
         params['platforms']=[]
-        $('tr',$('#platform-table')).each(function (index, element) {
+        $('tr',$('.stoqs-platform')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 params['platforms'].push(element.id);
                 //$('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
@@ -1579,6 +1575,7 @@
             $('#showsensortrackstext').text('');
             $('#showsensortracks').attr('disabled', true);
             $('#showgeox3ddatatext').text('');
+            $('#sectioncolorbar > img').removeAttr('src');
             rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'simpledepthtime', 'platforms', 'sampledepthtime']);
             update_sensortrackskml();
         }
@@ -1640,7 +1637,7 @@
         if ( $('#clear-platforms-button').hasClass('btn-primary')) {
             $("#clear-platforms-button").removeClass('btn-primary');
             $("#clear-platforms-button").addClass('disabled');
-            $('tr',$('#platform-table')).each(function (index, element) {
+            $('tr',$('.stoqs-platform')).each(function (index, element) {
                 if ($('.btn-primary', $(element)).length) {
                     $('#' + element.id + ' > td > button').removeClass('btn-primary');
                 }
@@ -1971,28 +1968,33 @@
             return;
         }
         var maxLength = 0;
-        $.each(data['platforms'], function (index, platform_value) {
-            // Now add each activity for this platform - separated so that they are not connected with a line
-            $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
-                var rec = [];
-                //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
-                subset_dts = []
-                $.each(depth_time_series, function (index, td) {
-                    // From each activity push only the times between x1 & x2, inclusive
-                    if (td[0] >= x1 && td[0] <= x2) {
-                        subset_dts.push(td);
-                    }
-                });
-
-                if (subset_dts.length > 0) {
-                    if (subset_dts.length > maxLength) {
-                        maxLength = subset_dts.length;
-                    }
-                    if (! platform_seen[platform_value[0]]) {
-                        //rec["label"] = platform_value[0];
-                        platform_seen[platform_value[0]] = true;
-                    }
-                    dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
+        $.each(data['platforms'], function (ptype, platforms) {
+            $.each(platforms, function (index, platform_value) {
+                // Now add each activity for this platform - separated so that they are not connected with a line
+                //console.log('Getting sdt for ' + platform_value[0])
+                if ( ! $.isEmptyObject(data['simpledepthtime']['sdt'][platform_value[0]]) ) {
+                    $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
+                        var rec = [];
+                        //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
+                        subset_dts = []
+                        $.each(depth_time_series, function (index, td) {
+                            // From each activity push only the times between x1 & x2, inclusive
+                            if (td[0] >= x1 && td[0] <= x2) {
+                                subset_dts.push(td);
+                            }
+                        });
+    
+                        if (subset_dts.length > 0) {
+                            if (subset_dts.length > maxLength) {
+                                maxLength = subset_dts.length;
+                            }
+                            if (! platform_seen[platform_value[0]]) {
+                                //rec["label"] = platform_value[0];
+                                platform_seen[platform_value[0]] = true;
+                             }
+                             dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
+                         }
+                    });
                 }
             });
         });
@@ -2263,26 +2265,45 @@
                 hasTrajectory = false;
                 hasTimeSeries = false;
                 hasTimeSeriesProfile = false;
-                $.each(data[key], function (index, value) {
-                    $('#platform-table > tbody:last').append('<tr id="' + value[1] +'"><td style="text-align:center;">' +
-                            '<div id="' + value[1] + '_icon" style="text-align: center;float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
-                                '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;margin-left:auto;margin-right:auto;border-bottom-color:#' + 
-                                    data['simpledepthtime']['colors'][value[1]] + ';">' +
-                            '</div></div>' +
-                            '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;">'+ value[0] +'</button></td>' +
-                        '</tr>');
-                    $('#' + value[1] + '_icon').click( function () { $('#' + value[1] + ' > td > button').click() } );
-                    if (value[3].toLowerCase() == 'trajectory') {
-                        hasTrajectory = true;
-                    }
-                    if (value[3].toLowerCase() == 'timeseries') {
-                        hasTimeSeries = true;
-                    }
-                    if (value[3].toLowerCase() == 'timeseriesprofile') {
-                        hasTimeSeriesProfile = true;
-                    }
+                platformTypeHtml = '';
+
+                // Sort the platformTypes for display
+                platformTypes = $.map(data[key], function(platforms, ptype) {return ptype}).sort();
+                $.each(platformTypes, function (index, ptype) {
+                    platforms = data[key][ptype];
+                    platformTypeHtml += '<div id="' + ptype + '-group" class="accordian-group">' +
+                    '<div class="accordian-heading">' + 
+                       '<h5><a id="' + ptype + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + ptype + '">' + 
+                        ptype + 
+                        '</a></h5>' + 
+                    '</div>' + 
+                    '<div id="collapse-' + ptype + '" class="accordion-body collapse in">' + 
+                        '<div class="accordion-inner">';
+                    platformTypeHtml += '<table class="table table-condensed stoqs-platform"><tbody>';
+
+                    $.each(platforms, function (index, value) {
+                        platformTypeHtml += '<tr id="' + value[1] +'"><td style="text-align:center;">' +
+                                '<div id="' + value[1] + '_icon" style="text-align: center;float:left;width:20%;height:20px;background-color: rgb(192, 211, 228)">' +
+                                    '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;margin-left:auto;margin-right:auto;border-bottom-color:#' + 
+                                        data['simpledepthtime']['colors'][value[1]] + ';">' +
+                                '</div></div>' +
+                                '<button class="btn btn-mini stoqs-toggle platform" style="float:left;width:80%;">'+ value[0] +'</button></td>' +
+                            '</tr>';
+                        $('#' + value[1] + '_icon').click( function () { $('#' + value[1] + ' > td > button').click() } );
+                        if (value[3].toLowerCase() == 'trajectory') {
+                            hasTrajectory = true;
+                        }
+                        if (value[3].toLowerCase() == 'timeseries') {
+                            hasTimeSeries = true;
+                        }
+                        if (value[3].toLowerCase() == 'timeseriesprofile') {
+                            hasTimeSeriesProfile = true;
+                        }
+                    });
+                    platformTypeHtml += '</tbody></table></div></div></div>';
+
                 });
-                //$('.platform').tooltip({title: 'Click to select this Platform'});
+                $('#collapsePlatforms > div').append(platformTypeHtml);
             }
             else if (key == 'sampledparametersgroup') {
                 if ( ! $.isEmptyObject(data[key]) ) {
@@ -2455,22 +2476,24 @@
                 hasTimeSeries = false;
                 hasTimeSeriesProfile = false;
                 var ids=[];
-                $.each(data[key], function (index, value) {
-                    // Here we need to enable those that are still valid.
-                    var element=$('#' + value[1]);
-                    enableButton($('button', element));             // enable the button in the table row
-                    ids.push(value[1]);
-                    if (value[3].toLowerCase() == 'trajectory') {
-                        hasTrajectory = true;
-                    }
-                    if (value[3].toLowerCase() == 'timeseries') {
-                        hasTimeSeries = true;
-                    }
-                    if (value[3].toLowerCase() == 'timeseriesprofile') {
-                        hasTimeSeriesProfile = true;
-                    }
+                $.each(data[key], function (ptype, platforms) {
+                    $.each(platforms, function (index, value) {
+                        // Here we need to enable those that are still valid.
+                        var element=$('#' + value[1]);
+                        enableButton($('button', element));             // enable the button in the table row
+                        ids.push(value[1]);
+                        if (value[3].toLowerCase() == 'trajectory') {
+                            hasTrajectory = true;
+                        }
+                        if (value[3].toLowerCase() == 'timeseries') {
+                            hasTimeSeries = true;
+                        }
+                        if (value[3].toLowerCase() == 'timeseriesprofile') {
+                            hasTimeSeriesProfile = true;
+                        }
+                    });
                 });
-                $('#platform-table > tbody > tr').each(function (index, elem) { 
+                $('.stoqs-platform > tbody > tr').each(function (index, elem) { 
                     if ($.inArray((elem.id).toString(), ids) == -1) {
                         disableButton($('button', $(elem)));        // disable the button in the table row
                     }
@@ -3265,10 +3288,9 @@
         });
         
 
-        // Tooltips    
+        // Open Spatial and Temporal Accordions upon load
         $('#spatial-anchor').click();
         $('#temporal-anchor').click();
-        $('#getactualcount').parent().tooltip({title: 'Will increase query time'});
 
         // Tootips that are disabled after first use - don't want to annoy users too much
         //$('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter to enable'});

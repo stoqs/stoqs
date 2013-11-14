@@ -69,32 +69,34 @@ def buildMapFile(request, qm, options):
     item_list = []      # Replicates queryset from an Activity query (needs name & id) with added geo_query & color attrbutes
 
     trajectory_union_layer_string = ''
-    for p in json.loads(options)['platforms']:
-        if p[3].lower() != 'trajectory':
-            continue
-        item = Item()
-        item.id = p[1]
-        item.name = p[0]
-        trajectory_union_layer_string += str(item.name) + ','
-        item.color = '"#%s"' % p[2]
-        item.type = 'line'
-        item.extra_style = ''
-        item.geo_query = qm.getActivityGeoQuery(Q(platform__name='%s' % p[0]))
-        item_list.append(item)
+    for plats in json.loads(options)['platforms'].values():
+        for p in plats:
+            if p[3].lower() != 'trajectory':
+                continue
+            item = Item()
+            item.id = p[1]
+            item.name = p[0]
+            trajectory_union_layer_string += str(item.name) + ','
+            item.color = '"#%s"' % p[2]
+            item.type = 'line'
+            item.extra_style = ''
+            item.geo_query = qm.getActivityGeoQuery(Q(platform__name='%s' % p[0]))
+            item_list.append(item)
 
     station_union_layer_string = ''
-    for p in json.loads(options)['platforms']:
-        if p[3].lower() != 'timeseries' and p[3].lower() != 'timeseriesprofile':
-            continue
-        item = Item()
-        item.id = p[1]
-        item.name = p[0]
-        station_union_layer_string += str(item.name) + ','
-        item.color = '"#%s"' % p[2]
-        item.type = 'point'
-        item.extra_style = 'SYMBOL "circle"\n        SIZE 7.0\n        OUTLINECOLOR 1 1 1'
-        item.geo_query = qm.getActivityGeoQuery(Q(platform__name='%s' % p[0]), pointFlag=True)
-        item_list.append(item)
+    for plats in json.loads(options)['platforms'].values():
+        for p in plats:
+            if p[3].lower() != 'timeseries' and p[3].lower() != 'timeseriesprofile':
+                continue
+            item = Item()
+            item.id = p[1]
+            item.name = p[0]
+            station_union_layer_string += str(item.name) + ','
+            item.color = '"#%s"' % p[2]
+            item.type = 'point'
+            item.extra_style = 'SYMBOL "circle"\n        SIZE 7.0\n        OUTLINECOLOR 1 1 1'
+            item.geo_query = qm.getActivityGeoQuery(Q(platform__name='%s' % p[0]), pointFlag=True)
+            item_list.append(item)
 
     # Add an item for the samples for the existing query - do not add it to the union, it's a different type
     sample_geo_query = qm.getSampleGeoQuery()

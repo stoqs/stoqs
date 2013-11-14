@@ -464,14 +464,17 @@ class STOQSQManager(object):
         '''
         Get a list of the unique platforms that are left based on the current query criteria.
         We assume here that the name is unique and is also used for the id - this is enforced on 
-        data load.  Organize the platforms into a dictionary keyed by activity featureType.
+        data load.  Organize the platforms into a dictionary keyed by platformType.
         '''
-        qs = self.qs.values('platform__uuid', 'platform__name', 'platform__color').distinct()
+        qs = self.qs.values('platform__uuid', 'platform__name', 'platform__color', 'platform__platformtype__name'
+                            ).distinct().order_by('platform__name')
         results = []
+        platformTypeHash = {}
         for row in qs:
             name=row['platform__name']
             id=row['platform__name']
             color=row['platform__color']
+            platformType = row['platform__platformtype__name']
             if name is not None and id is not None:
                 # Get the featureType from the Resource
                 fts = models.ActivityResource.objects.using(self.dbname).filter(resource__name='featureType', 
@@ -484,9 +487,13 @@ class STOQSQManager(object):
                 if len(fts) > 1:
                     logger.warn('More than one featureType returned for platform %s: %s.  Using the first one.', name, fts)
 
-                results.append((name, id, color, featureType, ))
+                try:
+                    platformTypeHash[platformType].append((name, id, color, featureType, ))
+                except KeyError:
+                    platformTypeHash[platformType] = []
+                    platformTypeHash[platformType].append((name, id, color, featureType, ))
 
-        return results
+        return platformTypeHash
     
     def getTime(self):
         '''
@@ -568,73 +575,73 @@ class STOQSQManager(object):
         timeSeriesQ = self._timeSeriesQ()
         timeSeriesProfileQ = self._timeSeriesProfileQ()
 
-        for p in self.getPlatforms():
-            plq = Q(platform__name = p[0])
-            sdt[p[0]] = {}
-            colors[p[0]] = p[2]
-
-            if p[3].lower() == 'trajectory':
-                qs_traj = self.qs.filter(plq & trajectoryQ).values_list( 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth',
-                                    'name').order_by('simpledepthtime__epochmilliseconds')
-                # Add to sdt hash date-time series organized by activity__name key within a platform__name key
-                # This will let flot plot the series with gaps between the surveys -- not connected
-                for s in qs_traj:
-                    try:
-                        ##logger.debug('s[2] = %s', s[2])
-                        sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
-                    except KeyError:
-                        ##logger.debug('First time seeing activity__name = %s, making it a list in sdt', s[2])
-                        sdt[p[0]][s[2]] = []                                    # First time seeing activity__name, make it a list
-                        if s[1] is not None:
-                            sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value, even if it is 0.0
-                    except TypeError:
-                        continue                                                # Likely "float argument required, not NoneType"
-
-            elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
-                iptvq = Q()
-                qs_tsp = None
-                if 'time' in self.kwargs:
-                    if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
-                        iptvq = Q(instantpoint__timevalue__gte = self.kwargs['time'][0]) & Q(instantpoint__timevalue__lte = self.kwargs['time'][1])
-                        qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ) & iptvq).annotate(mintime=Min('instantpoint__timevalue'), 
-                                                maxtime=Max('instantpoint__timevalue')).select_related().values( 'name',
-                                                'simpledepthtime__nominallocation__depth', 'mintime', 'maxtime').order_by('simpledepthtime__nominallocation__depth').distinct()
-                if not qs_tsp:
-                    qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ)).select_related().values( 
-                                            'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
-                                            'simpledepthtime__nominallocation__depth').order_by('simpledepthtime__epochmilliseconds').distinct()
-                logger.info('qs_tsp = %s', str(qs_tsp.query))
-
-                # Add to sdt hash date-time series organized by activity__name_nominallocation__depth key within a platform__name key
-                for sd in qs_tsp:
-                    logger.info('sd = %s', sd)
-                    an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
-                    logger.info('an_nd = %s', an_nd)
-                    logger.info('sd = %s', sd)
-                    if 'simpledepthtime__epochmilliseconds' in sd:
+        for plats in self.getPlatforms().values():
+            for p in plats:
+                plq = Q(platform__name = p[0])
+                sdt[p[0]] = {}
+                colors[p[0]] = p[2]
+    
+                if p[3].lower() == 'trajectory':
+                    qs_traj = self.qs.filter(plq & trajectoryQ).values_list( 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth',
+                                        'name').order_by('simpledepthtime__epochmilliseconds')
+                    # Add to sdt hash date-time series organized by activity__name key within a platform__name key
+                    # This will let flot plot the series with gaps between the surveys -- not connected
+                    for s in qs_traj:
                         try:
-                            sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                            ##logger.debug('s[2] = %s', s[2])
+                            sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )
                         except KeyError:
-                            sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
-                            if sd['simpledepthtime__nominallocation__depth']:
-                                sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                            ##logger.debug('First time seeing activity__name = %s, making it a list in sdt', s[2])
+                            sdt[p[0]][s[2]] = []                                    # First time seeing activity__name, make it a list
+                            if s[1] is not None:
+                                sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value, even if it is 0.0
                         except TypeError:
-                            continue                                                 # Likely "float argument required, not NoneType"
+                            continue                                                # Likely "float argument required, not NoneType"
 
-                    else:
-                        s_ems = int(1000 * to_udunits(sd['mintime'], 'seconds since 1970-01-01'))
-                        e_ems = int(1000 * to_udunits(sd['maxtime'], 'seconds since 1970-01-01'))
-                        try:
-                            sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                            sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                        except KeyError:
-                            sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
-                            if sd['simpledepthtime__nominallocation__depth']:
+                elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
+                    iptvq = Q()
+                    qs_tsp = None
+                    if 'time' in self.kwargs:
+                        if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
+                            iptvq = Q(instantpoint__timevalue__gte = self.kwargs['time'][0]) & Q(instantpoint__timevalue__lte = self.kwargs['time'][1])
+                            qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ) & iptvq).annotate(mintime=Min('instantpoint__timevalue'), 
+                                                    maxtime=Max('instantpoint__timevalue')).select_related().values( 'name',
+                                                    'simpledepthtime__nominallocation__depth', 'mintime', 'maxtime').order_by('simpledepthtime__nominallocation__depth').distinct()
+                    if not qs_tsp:
+                        qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ)).select_related().values( 
+                                                'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
+                                                'simpledepthtime__nominallocation__depth').order_by('simpledepthtime__epochmilliseconds').distinct()
+                    logger.info('qs_tsp = %s', str(qs_tsp.query))
+    
+                    # Add to sdt hash date-time series organized by activity__name_nominallocation__depth key within a platform__name key
+                    for sd in qs_tsp:
+                        logger.info('sd = %s', sd)
+                        an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
+                        logger.info('an_nd = %s', an_nd)
+                        logger.info('sd = %s', sd)
+                        if 'simpledepthtime__epochmilliseconds' in sd:
+                            try:
+                                sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                            except KeyError:
+                                sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
+                                if sd['simpledepthtime__nominallocation__depth']:
+                                    sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                            except TypeError:
+                                continue                                                 # Likely "float argument required, not NoneType"
+    
+                        else:
+                            s_ems = int(1000 * to_udunits(sd['mintime'], 'seconds since 1970-01-01'))
+                            e_ems = int(1000 * to_udunits(sd['maxtime'], 'seconds since 1970-01-01'))
+                            try:
                                 sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
                                 sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
-                        except TypeError:
-                            continue                                                 # Likely "float argument required, not NoneType"
-
+                            except KeyError:
+                                sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
+                                if sd['simpledepthtime__nominallocation__depth']:
+                                    sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                                    sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
+                            except TypeError:
+                                continue                                                 # Likely "float argument required, not NoneType"
         return({'sdt': sdt, 'colors': colors})
 
     #
@@ -836,23 +843,23 @@ class STOQSQManager(object):
             self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
         # Look for platforms that have featureTypes ammenable for Parameter time series visualization
-        for platform in self.getPlatforms():
+        for plats in self.getPlatforms().values():
+            for platform in plats:
+                if platform[3].lower() == 'timeseriesprofile' or platform[3].lower() == 'timeseries':
+                    # Do cheap query to count the number of timeseriesprofile or timeseries parameters
+                    counts = counts + models.Parameter.objects.using(self.dbname).filter(
+                                        activityparameter__activity__activityresource__resource__name__iexact='featureType',
+                                        activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower()
+                                        ).distinct().count()
 
-            if platform[3].lower() == 'timeseriesprofile' or platform[3].lower() == 'timeseries':
-                # Do cheap query to count the number of timeseriesprofile or timeseries parameters
-                counts = counts + models.Parameter.objects.using(self.dbname).filter(
-                                    activityparameter__activity__activityresource__resource__name__iexact='featureType',
-                                    activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower()
-                                    ).distinct().count()
-
-                if 'parametertime' in self.kwargs['only'] or self.kwargs['parametertab']:
-                    # Perform more expensive query: start with no_order version of the MeasuredParameter query set
-                    pt_qs_mp = self.mpq.qs_mp_no_order
+                    if 'parametertime' in self.kwargs['only'] or self.kwargs['parametertab']:
+                        # Perform more expensive query: start with no_order version of the MeasuredParameter query set
+                        pt_qs_mp = self.mpq.qs_mp_no_order
+        
+                        # Initialize structure organized by units for parameters left in the selection 
+                        pa_units, is_standard_name, ndCounts, pt, colors, strides = self._collectParameters(platform)
     
-                    # Initialize structure organized by units for parameters left in the selection 
-                    pa_units, is_standard_name, ndCounts, pt, colors, strides = self._collectParameters(platform)
-
-                    pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
+                        pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
 
         return({'pt': pt, 'units': units, 'counts': counts, 'colors': colors, 'strides': strides})
 
@@ -962,9 +969,10 @@ class STOQSQManager(object):
 
         # Make RGBA colors from the hex colors - needed for opacity in flot bars
         rgbas = {}
-        for p in self.getPlatforms():
-            r,g,b = (p[2][:2], p[2][2:4], p[2][4:])
-            rgbas[p[0]] = 'rgba(%d, %d, %d, 0.4)' % (int(r,16), int(g,16), int(b,16))
+        for plats in self.getPlatforms().values():
+            for p in plats:
+                r,g,b = (p[2][:2], p[2][2:4], p[2][4:])
+                rgbas[p[0]] = 'rgba(%d, %d, %d, 0.4)' % (int(r,16), int(g,16), int(b,16))
 
         return {'histdata': aphHash, 'rgbacolors': rgbas, 'parameterunits': pUnits}
 
