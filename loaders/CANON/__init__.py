@@ -96,7 +96,7 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
             url = self.dorado_base + file
-            DAPloaders.runDoradoLoader(url, self.campaignName, aName, 'AUV_Dorado', self.colors['dorado'], 'auv', 'AUV mission', 
+            DAPloaders.runDoradoLoader(url, self.campaignName, aName, 'Dorado', self.colors['dorado'], 'auv', 'AUV mission', 
                                         self.dbAlias, stride)
             load_gulps(aName, file, self.dbAlias)
 
@@ -108,7 +108,7 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + file
-            DAPloaders.runLrauvLoader(url, self.campaignName, aName, 'LRAUV_Tethys', self.colors['tethys'], 'auv', 'AUV mission', 
+            DAPloaders.runLrauvLoader(url, self.campaignName, aName, 'Tethys', self.colors['tethys'], 'auv', 'AUV mission', 
                                         self.tethys_parms, self.dbAlias, stride)
 
     def loadDaphne(self, stride=None):
@@ -119,7 +119,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
             url = self.daphne_base + file
             # Set stride to 1 for telemetered data
-            DAPloaders.runLrauvLoader(url, self.campaignName, aName, 'LRAUV_Daphne', self.colors['daphne'], 'auv', 'AUV mission', 
+            DAPloaders.runLrauvLoader(url, self.campaignName, aName, 'Daphne', self.colors['daphne'], 'auv', 'AUV mission', 
                                         self.daphne_parms, self.dbAlias, stride)
 
     def loadMartin(self, stride=None):
@@ -139,10 +139,10 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.JMuctd_files], self.JMuctd_files):
             url = self.JMuctd_base + file
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'RV_John_Martin_UCTD', self.colors['martin'], 'ship', 'cruise', 
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'John_Martin_UCTD', self.colors['martin'], 'ship', 'cruise', 
                                         self.JMuctd_parms, self.dbAlias, stride)
 
-    def loadJMpctd(self, stride=None, platformName='RV_John_Martin_PCTD', activitytypeName='John Martin Profile CTD Data'):
+    def loadJMpctd(self, stride=None, platformName='John_Martin_PCTD', activitytypeName='John Martin Profile CTD Data'):
         '''
         Martin specific underway load functions
         '''
@@ -546,7 +546,7 @@ class CANONLoader(LoadScript):
             url = self.stella_base + file
             print "url = %s" % url
             dname='Stella' + aName[6:9]
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'Drifter_' + dname, self.colors[dname], 'drifter', 'Stella drifter Mission', 
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, dname, self.colors[dname], 'drifter', 'Stella drifter Mission', 
                                         self.stella_parms, self.dbAlias, stride)
 
     def loadESPdrift(self, stride=None):
