@@ -175,7 +175,7 @@ def showCampaigns(request,format=None):
 
     # Build list of hashes to pass to the campaigns.html template
     camList = []
-    for d in sorted(timeSortHash.iterkeys()):
+    for d in sorted(timeSortHash.iterkeys(), reverse=True):
         logger.debug("d = %s, timeSortHash[d] = %s", d, timeSortHash[d])
         for k,c in timeSortHash[d].iteritems():
             logger.debug(k)

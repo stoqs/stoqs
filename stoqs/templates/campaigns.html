@@ -2,23 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
     <title>Campaign List</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <meta name="description" content="Spatial Temporal Oceanographic Query System - Campaign List">
+    <meta name="author" content="Mike McCann, MBARI">
 
     <!-- The styles -->
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.css" rel="stylesheet">
     <style>
-      body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
-      }
-      .stoqs-toggle {
-        width: 100%;
-      }
-      th {
-        align: center; /* Doesn't seem to work '*/
-      }
+        body {
+            padding-top: 35px;  /* 35px to make the container go all the way to the bottom of the topbar */
+        }
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet" />    
@@ -52,63 +47,36 @@
   <body>
 
     <div class="navbar navbar-fixed-top">
-      <div class="navbar-inner">
+      <div class="navbar-inner" style="height:34px;">
         <div class="container container-fixed-bot">
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="http://www.mbari.org"><img src="{{STATIC_URL}}images/mbari_bw_logo.gif"></a>
-          <h3>Campaign List</h3>
-          <div class="nav-collapse">
-            <ul class="nav">
-              <li><a href="{% url show-default %}">Campaign list</a></li>
-            </ul>
-            <!--
-            <form action="">
-                <input type="text" placeholder="Search" />
-            </form>
-            -->
-          </div><!--/.nav-collapse -->
+          <a class="brand" href="http://www.mbari.org" style="padding-top:4px;"><img src="{{STATIC_URL}}images/mbari_bw_logo.gif"></a>
         </div>
       </div>
     </div>
 
     <div class="container-fluid">
-
         <div class="row-fluid">
-
-            <div class="span6">
-                <div class="accordion well" id="accordion1">
-                    <div class="accordian-group">
-                        <div class="accordian-heading">
-                            <h3><a id="campaigns-anchor" class="accordion-toggle" data-parent="#accordion1">
-                            Campaigns on this server
-                            </a></h3>
-                        </div>
-                        <div id="collapseCampaigns" class="accordion-body collapse in">
-                            <div class="accordion-inner">
-    
-                                <table class="table table-condensed table-bordered">
-                                    <thead>
-                                        <tr><th>Database Alias</th><th>Name</th><th>Description</th><th>Start</th><th>End</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for c in cList %}
-                                        <tr>
-                                        <td>{{ c.dbAlias }}</td>
-                                        <td><a href="{{site_uri}}{% url stoqs-query-ui dbAlias=c.dbAlias %}">{{ c.name }}</a></td><td>{{ c.description }}</td>
-                                        <td>{{ c.startdate }}</td><td>{{ c.enddate }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div><!-- accordian-group -->
-                </div><!-- accordian well -->
-
+            <div class="span12">
+                <h2>Campaigns on this server (in reverse time order)</h2>
+                    <table class="table table-condensed table-bordered">
+                        <thead>
+                            <tr><th>Database Alias</th><th>Name</th><th>Description</th><th>Start</th><th>End</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for c in cList %}
+                            <tr>
+                            <td>{{ c.dbAlias }}</td>
+                            <td><a href="{{site_uri}}{% url stoqs-query-ui dbAlias=c.dbAlias %}">{{ c.name }}</a></td><td>{{ c.description }}</td>
+                            <td>{{ c.startdate }}</td><td>{{ c.enddate }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
             </div>
         </div>
 
