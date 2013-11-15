@@ -383,10 +383,10 @@ if cl.args.test:
     ##cl.loadTethys(stride=100)             # Someone needs to make good NetCDF files
 
     cl.loadRCuctd(stride=10)
-    cl.loadRCpctd(stride=10, pctdDir='CANON_september2013/Platforms/Ships/Rachel_Carson/pctd/')
-    cl.loadJMpctd(stride=10, pctdDir='CANON_september2013/Platforms/Ships/Martin/pctd/')
+    cl.loadRCpctd(stride=10)
+    cl.loadJMpctd(stride=10)
     cl.loadWFuctd(stride=10)   
-    cl.loadWFpctd(stride=10, pctdDir='CANON_september2013/Platforms/Ships/Western_Flyer/pctd/')
+    cl.loadWFpctd(stride=10)
 
     cl.loadM1(stride=10)
 
@@ -430,10 +430,10 @@ elif cl.args.optimal_stride:
     ##cl.loadTethys(stride=1)             # Someone needs to make good NetCDF files
 
     cl.loadRCuctd(stride=1)
-    cl.loadRCpctd(stride=1, pctdDir='CANON_september2013/Platforms/Ships/Rachel_Carson/pctd/')
-    cl.loadJMpctd(stride=1, pctdDir='CANON_september2013/Platforms/Ships/Martin/pctd/')
+    cl.loadRCpctd(stride=1)
+    cl.loadJMpctd(stride=1)
     cl.loadWFuctd(stride=1)   
-    cl.loadWFpctd(stride=1, pctdDir='CANON_september2013/Platforms/Ships/Western_Flyer/pctd/')
+    cl.loadWFpctd(stride=1)
 
     cl.loadM1(stride=1)
 
@@ -478,10 +478,10 @@ else:
     ##cl.loadTethys()             # Someone needs to make good NetCDF files
 
     cl.loadRCuctd()
-    cl.loadRCpctd(pctdDir='CANON_september2013/Platforms/Ships/Rachel_Carson/pctd/')
-    cl.loadJMpctd(pctdDir='CANON_september2013/Platforms/Ships/Martin/pctd/')
+    cl.loadRCpctd()
+    cl.loadJMpctd()
     cl.loadWFuctd()   
-    cl.loadWFpctd(pctdDir='CANON_september2013/Platforms/Ships/Western_Flyer/pctd/')
+    cl.loadWFpctd()
 
 
     cl.loadM1()
