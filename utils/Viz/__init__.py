@@ -25,7 +25,7 @@ import matplotlib as mpl
 from pylab import polyfit, polyval
 from django.conf import settings
 from django.db.models.query import RawQuerySet
-from django.db import connections
+from django.db import connections, DatabaseError
 from datetime import datetime
 from KML import readCLT
 from stoqs import models
@@ -478,7 +478,13 @@ class ParameterParameter(object):
 
                 # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
                 cursor = connections[self.request.META['dbAlias']].cursor()
-                cursor.execute(sql)
+                try:
+                    cursor.execute(sql)
+                except DatabaseError, e:
+                    infoText = 'Parameter-Parameter: ' + str(e) + ' Also, make sure you have no Parameters selected in the Filter.'
+                    logger.exception('Cannot execute sql query for Parameter-Parameter plot: %s', e)
+                    return None, infoText, sql
+
                 for row in cursor:
                     # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
                     self.depth.append(float(row[0]))
