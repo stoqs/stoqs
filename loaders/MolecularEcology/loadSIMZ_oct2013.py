@@ -61,8 +61,7 @@ cl.l_662_endDatetime = endDatetime
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'SIMZ_august2013/carson/uctd/'
 cl.rcuctd_files = [ 
-                    ##'simz2013plm01.nc', 'simz2013plm02.nc', 'simz2013plm03.nc', 'simz2013plm04.nc',
-                    ##'simz2013plm05.nc',
+                    'simz2013plm06.nc', 'simz2013plm07.nc', 'simz2013plm08.nc', 'simz2013plm09.nc', 'simz2013plm10.nc',
                   ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
@@ -71,9 +70,9 @@ cl.pctdDir = 'CANON_october2013/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_base = cl.dodsBase + cl.pctdDir
 cl.rcpctd_files = [ 
                                                       'simz2013c19.nc', 'simz2013c20.nc',
-'simz2013c21.nc', 'simz2013c22.nc',                   'simz2013c24.nc', 'simz2013c25.nc',
+'simz2013c21.nc', 'simz2013c22.nc', 'simz2013c23.nc', 'simz2013c24.nc', 'simz2013c25.nc',
 'simz2013c26.nc', 'simz2013c27.nc', 'simz2013c28.nc', 'simz2013c29.nc', 'simz2013c30.nc',
-'simz2013c31.nc', 'simz2013c32.nc', 'simz2013c33.nc', 'simz2013c34.nc', 'simz2013c35.nc',
+'simz2013c31.nc', 'simz2013c32.nc', 'simz2013c33.nc', 'simz2013c34.nc', 'simz2013c35.nc', 'simz2013c35a.nc',
 'simz2013c36.nc',
                       ]
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
@@ -101,7 +100,7 @@ cl.process_command_line()
 if cl.args.test:
     ##cl.loadL_662(stride=1)
     cl.loadDorado(stride=2)
-    ##cl.loadRCuctd(stride=10)
+    cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=1)
     cl.loadM1(stride=1)
     ##cl.loadSubSamples()
@@ -112,14 +111,14 @@ elif cl.args.optimal_stride:
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
     cl.loadM1(stride=1)
-    cl.loadSubSamples()
+    ##cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
     ##cl.loadL_662()
     cl.loadDorado()
-    ##cl.loadRCuctd()
-    ##cl.loadRCpctd()
+    cl.loadRCuctd()
+    cl.loadRCpctd()
     cl.loadM1()
     ##cl.loadSubSamples()
 

@@ -24,5 +24,5 @@ rsync -rv stoqsadm@$RH:/data/canon/2013_Oct/Platforms/Ships/Rachel_Carson/pctd .
 scp pctd/*.nc stoqsadm@$RH:/data/canon/2013_Oct/Platforms/Ships/Rachel_Carson/pctd
 
 # Clean up
-#rm -r pctd
+rm -r pctd
 
