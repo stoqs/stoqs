@@ -59,7 +59,7 @@ cl.l_662_endDatetime = endDatetime
 
 
 # Rachel Carson Underway CTD
-cl.rcuctd_base = cl.dodsBase + 'SIMZ_august2013/carson/uctd/'
+cl.rcuctd_base = cl.dodsBase + 'CANON_october2013/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_files = [ 
                     'simz2013plm06.nc', 'simz2013plm07.nc', 'simz2013plm08.nc', 'simz2013plm09.nc', 'simz2013plm10.nc',
                   ]
@@ -99,10 +99,10 @@ cl.process_command_line()
 
 if cl.args.test:
     ##cl.loadL_662(stride=1)
-    cl.loadDorado(stride=2)
-    cl.loadRCuctd(stride=10)
+    cl.loadDorado(stride=100)
+    cl.loadRCuctd(stride=100)
     cl.loadRCpctd(stride=1)
-    cl.loadM1(stride=1)
+    cl.loadM1(stride=10)
     ##cl.loadSubSamples()
 
 elif cl.args.optimal_stride:

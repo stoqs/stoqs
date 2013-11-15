@@ -180,8 +180,8 @@ class SeabirdLoader(STOQS_Loader):
     '''
 
     def __init__(self, activityName, platformName, dbAlias='default', campaignName=None,
-                activitytypeName=None, platformColor=None, platformTypeName='CTD', stride=1, pctdDir=None):
-        self.pctdDir = pctdDir
+                activitytypeName=None, platformColor=None, platformTypeName='CTD', stride=1, dodsBase=None):
+        self.pctdDir = dodsBase.split('dodsC')[1]
         'Just use the STOQS_Loader constructor'
         super(SeabirdLoader, self).__init__(activityName, platformName, dbAlias, campaignName,
                 activitytypeName, platformColor, platformTypeName, stride)
