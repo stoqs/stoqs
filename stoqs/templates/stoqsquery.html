@@ -817,7 +817,8 @@
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
     <script type="text/javascript"><!--
     
-    var stoqsQuery='{{site_uri}}{% url 'stoqs-query-summary' dbAlias=request.META.dbAlias %}';
+    var summaryQuery='{{site_uri}}{% url 'stoqs-query-summary' dbAlias=request.META.dbAlias %}';
+    var mapQuery='{{site_uri}}{% url 'stoqs-query-map' dbAlias=request.META.dbAlias %}';
     var params={}
     var initData;
     var widthZoomed = false;
@@ -1424,6 +1425,12 @@
     } // rebuildFilters()
     
 
+    function clearMap() {
+        // Clear the map of all WMS layers
+        track_lines.clearGrid();
+        stations.clearGrid();
+        sample_points.clearGrid();
+    }
     function refreshMap(e) {
         if ( $.isEmptyObject(e) ) {
             return;
@@ -2763,7 +2770,7 @@
                 $('#metadata-ajaxtime').css( { 'color': 'grey' } );
                 $('#metadata-loading').html(" loading...");
             },
-            url : stoqsQuery + '?' + qstring,
+            url : summaryQuery + '?' + qstring,
             success: function (data) {
                 setDataAccess('mp', data);
                 setDataAccess('sp', data);
@@ -2783,9 +2790,6 @@
                 $('#parameter-parameter-3dplot').removeClass('stoqs-background-ajax-loader-3d');
                 $('#geo-3dplot').removeClass('stoqs-background-ajax-loader-3d-topright');
 
-                // Refreshing map after processing the JSON response ensures that mapserver is ready to deliver the layers
-                me.refreshMap(data['extent']);
-
                 var endAjax = new Date().getTime();
                 var nsecs = (endAjax - startAjax) / 1000.0;
                 if ( ! $.isEmptyObject(data['counts']) ) {
@@ -2802,6 +2806,22 @@
             },
             dataType: "json"
         });
+
+        $.ajax({
+            type : 'GET',
+            beforeSend: function() {
+                if ( $('#zoomtoextentonupdate').is(':checked') ) {
+                    me.clearMap();
+                }
+            },
+            // Request only the extent and platforms in order to quickly produce the mapfile
+            url : mapQuery + '?' +  qstring + '&only=extent\&only=platforms',
+            success: function (data) {
+                me.refreshMap(data['extent']);
+            },
+            dataType: "json"
+        });
+
     } // updateSummaryData()
     
     // Collect all the parameters on the page so we can generate our permalink.

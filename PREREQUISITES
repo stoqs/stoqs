@@ -10,7 +10,7 @@
 # mail list, which you may join at: # https://groups.google.com/forum/#!forum/stoqs-discuss
 
 su -c "easy_install virtualenv"
-su -c "yum -y install rabbitmq-server scipy mod_wsgi"
+su -c "yum -y install rabbitmq-server scipy mod_wsgi memcached python-memcached"
 
 # Rabbitmq is used by the web app t manage long-running tasks
 su -c "/sbin/chkconfig rabbitmq-server on"
@@ -76,9 +76,11 @@ make
 su -c "make install"
 
 
-# Make sure that the apache httpd service is running on your system
+# Make sure that the apache httpd and memcached services are running on your system
 su -c "chkconfig httpd on"
 su -c "/sbin/service httpd start"
+su -c "chkconfig memcached on"
+su -c "/sbin/service memcached start"
 
 # The following prerequisites must be installed for each development directory on the system for which the 
 # above system-level prerequisites have been installed.

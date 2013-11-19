@@ -19,6 +19,7 @@ from django.utils import simplejson
 from django.conf import settings
 from django.core import serializers
 from django.db.models import Q
+from django.views.decorators.cache import cache_page
 from utils.STOQSQManager import STOQSQManager
 from utils import encoders
 import json
@@ -40,6 +41,38 @@ class InvalidMeasuredParameterQueryException(Exception):
 class NoParameterSelectedException(Exception):
     pass
 
+# Mapping from HTTP request parameters to what STOQSQueryManager needs
+query_parms = {
+                   'sampledparametersgroup': 'sampledparametersgroup',
+                   'measuredparametersgroup': 'measuredparametersgroup',
+                   'parameterstandardname': 'parameterstandardname',        
+                   'parameterminmax': 'parameterminmax',    # Array of name, min, max
+                   'time': ('start_time','end_time'),       # Single values
+                   'depth': ('min_depth', 'max_depth'),     # Single values
+                   'simpledepthtime': [],                   # List of x,y values
+                   'platforms': 'platforms',                # Specified once in the query string for each platform.
+                   'parametervalues': [],                   # Appended to below with any _MIN _MAX request items
+                   'parameterparameter': ('px', 'py', 'pz', 'pc',               # Parameters to plot
+                                          'xlog', 'ylog', 'zlog', 'clog'),      # Flags for log-scale
+
+                    # TODO: Could simplify these flags by putting them into a dictionary...
+                   'get_actual_count': 'get_actual_count',                                  # Flag value from checkbox
+                   'showsigmatparametervalues': 'showsigmatparametervalues',                # Flag value from checkbox
+                   'showstandardnameparametervalues': 'showstandardnameparametervalues',    # Flag value from checkbox
+                   'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
+                   'showparameterplatformdata': 'showparameterplatformdata',                # Flag value from checkbox
+
+                   'parameterplot': ('parameterplotid',                                     # Plot radio button selection
+                                     'platformplotname'),                                   # - client knows platform name
+                   'parametertimeplotid': 'parametertimeplotid',                            # Plot checkbox id values
+                   'showgeox3ddata': 'showgeox3ddata',                                      # Flag value from checkbox
+                   'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
+
+                   'only': 'only',                          # List of options to update - when only a partial response is needed
+                   'parametertab': 'parametertab',          # = 1 if Parameter/Station tab is active and full resolution timeSeries data is needed
+                   'secondsperpixel': 'secondsperpixel',    # Resolution of time-depth-flot window
+                   'x3dterrains': 'x3dterrains',            # Hash of 3D Terrain info 
+}
 
 def get_http_site_uri(request):
     '''
@@ -49,7 +82,7 @@ def get_http_site_uri(request):
     site_uri = site_uri.replace('https', 'http')
     return site_uri
 
-def buildMapFile(request, qm, options):
+def _buildMapFile(request, qm, options):
     if 'platforms' not in json.loads(options):
         return
 
@@ -117,43 +150,14 @@ def buildMapFile(request, qm, options):
     av = ActivityView(request, item_list, trajectory_union_layer_string, station_union_layer_string)
     av.generateActivityMapFile()
 
+# Cache responses from this view for 15 minutes
+@cache_page(60 * 15)
 def queryData(request, format=None):
     '''
     Process data requests from the main query web page.  Returns both summary Activity and actual MeasuredParameter data
     as retreived from STOQSQManager.
     '''
     response = HttpResponse()
-    query_parms = {
-                   'sampledparametersgroup': 'sampledparametersgroup',
-                   'measuredparametersgroup': 'measuredparametersgroup',
-                   'parameterstandardname': 'parameterstandardname',        
-                   'parameterminmax': 'parameterminmax',    # Array of name, min, max
-                   'time': ('start_time','end_time'),       # Single values
-                   'depth': ('min_depth', 'max_depth'),     # Single values
-                   'simpledepthtime': [],                   # List of x,y values
-                   'platforms': 'platforms',                # Specified once in the query string for each platform.
-                   'parametervalues': [],                   # Appended to below with any _MIN _MAX request items
-                   'parameterparameter': ('px', 'py', 'pz', 'pc',               # Parameters to plot
-                                          'xlog', 'ylog', 'zlog', 'clog'),      # Flags for log-scale
-
-                    # TODO: Could simplify these flags by putting them into a dictionary...
-                   'get_actual_count': 'get_actual_count',                                  # Flag value from checkbox
-                   'showsigmatparametervalues': 'showsigmatparametervalues',                # Flag value from checkbox
-                   'showstandardnameparametervalues': 'showstandardnameparametervalues',    # Flag value from checkbox
-                   'showallparametervalues': 'showallparametervalues',                      # Flag value from checkbox
-                   'showparameterplatformdata': 'showparameterplatformdata',                # Flag value from checkbox
-
-                   'parameterplot': ('parameterplotid',                                     # Plot radio button selection
-                                     'platformplotname'),                                   # - client knows platform name
-                   'parametertimeplotid': 'parametertimeplotid',                            # Plot checkbox id values
-                   'showgeox3ddata': 'showgeox3ddata',                                      # Flag value from checkbox
-                   'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
-
-                   'only': 'only',                          # List of options to update - when only a partial response is needed
-                   'parametertab': 'parametertab',          # = 1 if Parameter/Station tab is active and full resolution timeSeries data is needed
-                   'secondsperpixel': 'secondsperpixel',    # Resolution of time-depth-flot window
-                   'x3dterrains': 'x3dterrains',            # Hash of 3D Terrain info 
-                   }
     params = {}
     for key, value in query_parms.iteritems():
         if type(value) in (list, tuple):
@@ -180,7 +184,6 @@ def queryData(request, format=None):
                                # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
     ##logger.debug('options = %s', pprint.pformat(options))
     ##logger.debug('len(simpledepthtime) = %d', len(json.loads(options)['simpledepthtime']))
-    buildMapFile(request, qm, options)
 
     if not format: # here we export in a given format, or just provide summary data if no format is given.
         response['Content-Type'] = 'text/json'
@@ -193,6 +196,32 @@ def queryData(request, format=None):
 
     return response
 
+# Do not cache this "view", it creates the mapfile
+def queryMap(request):
+    '''
+    Build the mapfile in a separate view
+    '''
+    response = HttpResponse()
+    params = {}
+    for key, value in query_parms.iteritems():
+        if type(value) in (list, tuple):
+            params[key] = [request.GET.get(p, None) for p in value]
+        else:
+            params[key] = request.GET.getlist(key)
+
+    qm = STOQSQManager(request, response, request.META['dbAlias'])
+    qm.buildQuerySets(**params)
+    options = simplejson.dumps(qm.generateOptions(),
+                               cls=encoders.STOQSJSONEncoder)
+    logger.debug('options = %s', pprint.pformat(options))
+    _buildMapFile(request, qm, options)
+
+    response['Content-Type'] = 'text/json'
+    response.write(options)
+
+    return response
+
+# Do not cache this "view", otherwise the incrorrect mappath is used
 def queryUI(request):
     '''
     Build and return main query web page
