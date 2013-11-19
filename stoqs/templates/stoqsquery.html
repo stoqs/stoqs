@@ -2806,21 +2806,23 @@
             },
             dataType: "json"
         }))
-        .then($.ajax({
-            //onInit() must finish before map can be drawn
-            type : 'GET',
-            beforeSend: function() {
-                if ( $('#zoomtoextentonupdate').is(':checked') ) {
-                    me.clearMap();
-                }
-            },
-            // Request only the extent and platforms in order to quickly produce the mapfile
-            url : mapQuery + '?' +  qstring + '&only=extent\&only=platforms',
-            success: function (data) {
-                me.refreshMap(data['extent']);
-            },
-            dataType: "json"
-        }));
+        .then(function( data, textStatus, jqXHR ) {
+            $.ajax({
+                //onInit() must finish before map can be drawn
+                type : 'GET',
+                beforeSend: function() {
+                    if ( $('#zoomtoextentonupdate').is(':checked') ) {
+                        me.clearMap();
+                    }
+                },
+                // Request only the extent and platforms in order to quickly produce the mapfile
+                url : mapQuery + '?' +  qstring + '&only=extent\&only=platforms',
+                success: function (data) {
+                    me.refreshMap(data['extent']);
+                },
+                dataType: "json"
+            })
+        });
 
     } // updateSummaryData()
     
