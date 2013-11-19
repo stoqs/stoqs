@@ -27,6 +27,9 @@ DATABASE_PORT = '5432'
 # - In a production environment set it to the host name of your mapserver
 MAPSERVER_HOST = ''
 
+# Memcached - the daemon must be running at location (host:port) - see PREREQUISITES
+MEMCACHED_LOCATION = '127.0.0.1:11211'
+
 # Make this unique, and don't share it with anybody
 # May generate with: 
 #     import string
