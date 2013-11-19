@@ -2759,7 +2759,7 @@
         } // onUpdate()
 
         var startAjax = new Date().getTime();
-        request = $.ajax({
+        $.when($.ajax({
             type : 'GET',
             beforeSend: function() {
                 $('#time-depth-flot').addClass('stoqs-background-ajax-loader-pulse ');
@@ -2805,9 +2805,9 @@
                 $('#metadata-loading').html("");
             },
             dataType: "json"
-        });
-
-        $.ajax({
+        }))
+        .then($.ajax({
+            //onInit() must finish before map can be drawn
             type : 'GET',
             beforeSend: function() {
                 if ( $('#zoomtoextentonupdate').is(':checked') ) {
@@ -2820,7 +2820,7 @@
                 me.refreshMap(data['extent']);
             },
             dataType: "json"
-        });
+        }));
 
     } // updateSummaryData()
     
