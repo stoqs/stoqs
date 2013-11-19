@@ -654,6 +654,7 @@
                     </div>
                     <div id="collapseSampledParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
+                            <input type="checkbox" id="show-filtered-sp-checkbox" /> Show filtered out parameters
                             <fieldset>
                             <table id="sampledparameter-table" class="table table-condensed">
                                 <thead>
@@ -700,6 +701,7 @@
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
+                            <input type="checkbox" id="show-filtered-mp-checkbox" /> Show filtered out parameters
                             <fieldset>
                             <table id="measuredparameter-table" class="table table-condensed">
                                 <thead>
@@ -855,6 +857,27 @@
     function disableXYZColorPlot(element) {
         $(element).attr('disabled',true);    // disable the X, Y, Z, Color radio buttons in the row
     }
+
+    function disableParameterRow(group, element) {
+        if (group == 'sp') {
+            $(element).addClass('disabled');
+            if ( $('#show-filtered-sp-checkbox').is(':checked') ) {
+                $(element).show();
+            }
+            else {
+                $(element).hide();
+            }
+        }
+        else if (group == 'mp') {
+            $(element).addClass('disabled');
+            if ( $('#show-filtered-mp-checkbox').is(':checked') ) {
+                $(element).show();
+            }
+            else {
+                $(element).hide();
+            }
+        }
+    }
     
     // Called with an element that was selectable, should make that element selectable.
     function enableButton(element) {
@@ -865,6 +888,11 @@
     }
     function enableXYZColorPlot(element) {
         $(element).removeAttr('disabled');    // enable the X, Y, Z, Color radio buttons in the row
+    }
+
+    function enableParameterRow(element) {
+        $(element).removeClass('disabled');
+        $(element).show();
     }
 
     function updateKMLcmincmax(group) {
@@ -1529,6 +1557,24 @@
 
     $('#showsensortracks').on('click', function (event) {
         update_sensortrackskml();
+    });
+
+    $('#show-filtered-sp-checkbox').on('click', function (e) {
+        if ( $('#show-filtered-sp-checkbox').is(':checked') ) {
+            $('tr.disabled',$('#sampledparameter-table')).show();
+        }
+        else {
+            $('tr.disabled',$('#sampledparameter-table')).hide();
+        }
+    });
+
+    $('#show-filtered-mp-checkbox').on('click', function (e) {
+        if ( $('#show-filtered-mp-checkbox').is(':checked') ) {
+            $('tr.disabled',$('#measuredparameter-table')).show();
+        }
+        else {
+            $('tr.disabled',$('#measuredparameter-table')).hide();
+        }
     });
 
     $('#mp-cmin').on('keypress', function (event, previousText) {
@@ -2513,6 +2559,7 @@
                     enableButton($('button', '#' + value[2]));                                                  // enable the button in the table row
                     enableXYZColorPlot($('input:radio', $('button', '#' + value[2]).parent().parent()));        // enable the X, Y, Z, Color, Plot radio buttons in the row
                     enableXYZColorPlot($('input:checkbox', $('button', '#' + value[2]).parent().parent()));     // enable the Plot checkbox in the row
+                    enableParameterRow($('button', '#' + value[2]).parent().parent());                          // enable and show the whole row 
                     ids.push(value[2].toString());
                 });
                 $('#sampledparameter-table > tbody > tr > td > button').each(function (index, elem) { 
@@ -2521,6 +2568,7 @@
                             disableButton($(elem));                                                         // disable the button in the table row
                             disableXYZColorPlot($('input:radio', $(elem).parent().parent()));               // disable the X, Y, Z, Color, Plot radio buttons in the row
                             disableXYZColorPlot($('input:checkbox', $(elem).parent().parent()));            // disable the Plot checkbox in the row
+                            disableParameterRow('sp', $(elem).parent().parent());                           // disable the whole row and hide unless show-filtered-parameters is checked
                         }
                     }
                 });
@@ -2532,9 +2580,11 @@
                     enableButton($('button', '#' + value[0]));      // enable the name button in the table row
                     enableXYZColorPlot($('input:radio', $('button', '#' + value[0]).parent().parent()));        // enable the X, Y, Z, Color radio buttons in the row
                     enableXYZColorPlot($('input:checkbox', $('button', '#' + value[0]).parent().parent()));     // enable the Plot checkbox in the row
+                    enableParameterRow($('button', '#' + value[0]).parent().parent());                          // enable and show the whole row 
                     ids.push(value[0]);
                     if (value[1].length != 0) {
-                        enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));    // Enable the standard_name button in the table row
+                        enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));                                // Enable the standard_name button in the table row
+                        enableParameterRow($('button', '#' + value[1] + '--' + value[0] + '-sn').parent().parent());        // enable and show the whole row 
                         ids.push(value[1] + '--' + value[0] + '-sn');
                     }
                 });
@@ -2544,6 +2594,7 @@
                             disableButton($(elem));                                                         // disable the button in the table row
                             disableXYZColorPlot($('input:radio', $(elem).parent().parent()));               // disable the X, Y, Z, Color radio buttons in the row
                             disableXYZColorPlot($('input:checkbox', $(elem).parent().parent()));            // disable the Plot checkbox in the row
+                            disableParameterRow('mp', $(elem).parent().parent());                           // disable the whole row and hide unless show-filtered-parameters is checked
                         }
                     }
                 });
