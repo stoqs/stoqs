@@ -1008,8 +1008,8 @@
             }
         }
         if (typeof params['platforms'] != 'undefined') {
-            if (params['platforms'].length == 1) {
-                mp_param = mp_param + group_name2 + '__instantpoint__activity__platform__name=' + params['platforms'][0] + '&';
+            for (var i=0; i<params['platforms'].length; i++) {
+                mp_param = mp_param + group_name2 + '__instantpoint__activity__platform__name=' + params['platforms'][i] + '&';
             }
         }
         if (typeof params['start_time'] != 'undefined') {
@@ -1374,7 +1374,6 @@
         $('tr',$('.stoqs-platform')).each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 params['platforms'].push(element.id);
-                //$('#' + element.id + ' > td > button').attr('title', 'Click to unselect').tooltip('fixTitle');
             }
         });
         if (params['platforms'].length) {
@@ -2545,11 +2544,6 @@
                             hasTimeSeriesProfile = true;
                         }
                     });
-                });
-                $('.stoqs-platform > tbody > tr').each(function (index, elem) { 
-                    if ($.inArray((elem.id).toString(), ids) == -1) {
-                        disableButton($('button', $(elem)));        // disable the button in the table row
-                    }
                 });
             }
             else if (key == 'sampledparametersgroup') {
