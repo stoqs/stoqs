@@ -2565,6 +2565,11 @@
                         }
                     });
                 });
+                $('.stoqs-platform > tbody > tr').each(function (index, elem) {     
+                    if ($.inArray((elem.id).toString(), ids) == -1) {       
+                        disableButton($('button', $(elem)));        // disable the button in the table row      
+                    }       
+                });
             }
             else if (key == 'sampledparametersgroup') {
                 var ids=[];
