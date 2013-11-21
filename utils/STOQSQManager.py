@@ -136,8 +136,10 @@ class STOQSQManager(object):
                                                                                                     activityparameter__activity__pk__isnull=False,
                                                                                                     simpledepthtime__pk__isnull=False,
                                                                                                     platform__pk__isnull=False)
+                    qs_platform = qs
                 else:
                     qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
+                    qs_platform = qs
             elif fromTable == 'Sample':
                 logger.debug('Making %s based query', fromTable)
                 if (not kwargs):
@@ -178,15 +180,17 @@ class STOQSQManager(object):
             if k == 'fromTable':
                 continue
             if hasattr(self, '_%sQ' % (k,)):
-                # Call the method if it exists, and add the resulting Q object to the filtered
-                # queryset.
+                # Call the method if it exists, and add the resulting Q object to the filtered queryset.
                 q = getattr(self,'_%sQ' % (k,))(v, fromTable)
                 logger.debug('fromTable = %s, k = %s, v = %s, q = %s', fromTable, k, v, q)
                 qs = qs.filter(q)
+                if k != 'platforms' and fromTable == 'Activity':
+                    qs_platform = qs_platform.filter(q)
 
         # Assign query sets for the current UI selections
         if fromTable == 'Activity':
             self.qs = qs.using(self.dbname)
+            self.qs_platform = qs_platform.using(self.dbname)
             ##logger.debug('Activity query = %s', str(self.qs.query))
         elif fromTable == 'Sample':
             self.sample_qs = qs.using(self.dbname)
@@ -466,7 +470,7 @@ class STOQSQManager(object):
         We assume here that the name is unique and is also used for the id - this is enforced on 
         data load.  Organize the platforms into a dictionary keyed by platformType.
         '''
-        qs = self.qs.values('platform__uuid', 'platform__name', 'platform__color', 'platform__platformtype__name'
+        qs = self.qs_platform.values('platform__uuid', 'platform__name', 'platform__color', 'platform__platformtype__name'
                             ).distinct().order_by('platform__name')
         results = []
         platformTypeHash = {}
