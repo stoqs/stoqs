@@ -773,16 +773,22 @@
                                 <thead>
                                     <tr>
                                         <th style="width:15%;border-top-width:0;"></th>
-                                        <th style="text-align:center;width:10%;border-top-width:0;">Plot<br>Data</th>
-                                        <th style="width:75%;border-top-width:0;"></th><tr>
+                                        <th style="text-align:center;width:5%;border-top-width:0;display:none;" class="platform-plot-instruction">Space</th>
+                                        <th style="text-align:center;width:5%;border-top-width:0;display:none;" class="platform-plot-instruction">Time</th>
+                                        <th style="width:75%;border-top-width:0;"></th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                    <td style="width:15%;border-top-width:0;"></td>
-                                    <td style="text-align:center;width:10%;border-top-width:0;">
-                                        <input type="radio" name="platforms_plot" value="" class="platform-plot-radio" />
-                                        <input type="checkbox" name="mp_all_platforms_plot_cb" value="" class="platform-plot-checkbox checkall" style="display:none;"/>
-                                    </td>
-                                    <td colspan="1" class="all-platform-plot-instruction" style="width:75%;border-top-width:0;">Clear selection</td>
+                                    <tr>
+                                        <td style="width:15%;border-top-width:0;"></td>
+                                        <td style="text-align:center;width:5%;border-top-width:0;">
+                                            <input type="checkbox" name="platforms_plot_map" value="" class="platform-plot-map-checkbox" style="display:none;" />
+                                        </td>
+                                        <td style="text-align:center;width:5%;border-top-width:0;">
+                                            <input type="radio" name="platforms_plot_section" value="" class="platform-plot-section-radio checkall" style="display:none;"/>
+                                        </td>
+                                        <td style="width:75%;border-top-width:0;display:none;" class="all-platform-plot-instruction">Check all / Clear</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -2355,9 +2361,11 @@
                                     '<div id="' + value[1] + '_color" style="border-bottom:2px solid;width:90%;height:9px;margin-left:auto;margin-right:auto;border-bottom-color:#' + 
                                         data['simpledepthtime']['colors'][value[1]] + ';">' +
                                 '</div></div></td>' +
-                                '<td style="text-align:center;width:10%;border-top-width:0;">' +
-                                    '<input type="radio" name="platforms_plot" value="' + value[1] + '" class="platform-plot-radio" />' +
-                                    '<input type="checkbox" name="platforms_plot_cb" value="' + value[1] + '" class="platform-plot-checkbox" style="display:none;" />' +
+                                '<td style="text-align:center;width:5%;border-top-width:0;">' +
+                                    '<input type="checkbox" name="platforms_plot" value="' + value[1] + '" class="platform-plot-map-checkbox" style="display:none;" />' +
+                                '</td>' +
+                                '<td style="text-align:center;width:5%;border-top-width:0;">' +
+                                    '<input type="radio" name="platforms_plot_cb" value="' + value[1] + '" class="platform-plot-section-radio" style="display:none;" />' +
                                 '</td>' +
                                 '<td style="width:75%;border-top-width:0;"><button class="btn btn-mini stoqs-toggle platform" style="float:left;">'+ value[0] +'</button></td>' +
                             '</tr>';
@@ -2873,6 +2881,12 @@
                 $('#metadata-ajaxtime').css( { 'color': 'black' } );
                 $('#metadata-ajaxtime').html(" " + nsecs + " seconds");
                 $('#metadata-loading').html("");
+
+                // For Development - turn on Platform plot controls
+                //$('.platform-plot-instruction').show()
+                //$('.platform-plot-map-checkbox').show()
+                //$('.platform-plot-section-radio').show()
+
             },
             dataType: "json"
         }))
