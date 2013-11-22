@@ -60,28 +60,10 @@ cl.dorado_files = [
 #####################################################################
 #  LRAUV 
 #####################################################################
-
-# From: M Jordan Stanway <mjstanway@mbari.org>
-# Subject: Re: LRAUV netcdf files on OPeNDAP
-# Date: September 18, 2013 1:15:01 PM PDT
-# To: Mike McCann <mccann@mbari.org>
-# 
-# Not to my knowledge.
-# 
-# I've been discouraging people from using the .nc files because the decimation and interpolation can be misleading, and usually causes misunderstandings.
-# 
-# On Sep 18, 2013 12:33 PM, "Mike McCann" <mccann@mbari.org> wrote:
-# Hi Jordan,
-# 
-# Are the netCDF files you have here:
-# 
-# http://aosn.mbari.org/TethysDash/data/daphne/realtime/sbdlogs/2013/201309/20130918T154456/
-# 
-# available on on OPeNDAP server?
-# 
-# If not, and the directory can be mounted on elvis, then I can set them up to be served with Hyrax.
-# 
-# -Mike
+# NetCDF files produced (binned, etc.) by John Ryan
+cl.tethys_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Tethys/NetCDF/'
+cl.tethys_files = ['Tethys_CANON_Fall2013.nc']
+cl.tethys_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650']
 
 
 ######################################################################
@@ -398,7 +380,7 @@ if cl.args.test:
 
     cl.loadDorado(stride=1000)
     ##cl.loadDaphne(stride=100)             # Someone needs to make good NetCDF files
-    ##cl.loadTethys(stride=100)             # Someone needs to make good NetCDF files
+    cl.loadTethys(stride=100)
 
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
@@ -445,7 +427,7 @@ elif cl.args.optimal_stride:
 
     cl.loadDorado(stride=1)
     ##cl.loadDaphne(stride=1)             # Someone needs to make good NetCDF files
-    ##cl.loadTethys(stride=1)             # Someone needs to make good NetCDF files
+    cl.loadTethys(stride=1)
 
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
@@ -493,7 +475,7 @@ else:
 
     cl.loadDorado()
     ##cl.loadDaphne()             # Someone needs to make good NetCDF files
-    ##cl.loadTethys()             # Someone needs to make good NetCDF files
+    cl.loadTethys()
 
     cl.loadRCuctd()
     cl.loadRCpctd()
