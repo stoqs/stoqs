@@ -395,14 +395,16 @@ class Base_Loader(STOQS_Loader):
         '''
         Return begining and ending indices for the corresponding time axis indices
         '''
+        timeAxisUnits =  timeAxis.units.lower()
+        timeAxisUnits = timeAxisUnits.replace('utc', 'UTC')        # coards requires UTC to be upper case 
         if self.startDatetime: 
             logger.debug('self.startDatetime, timeAxis.units = %s, %s', self.startDatetime, timeAxis.units)
-            s = to_udunits(self.startDatetime, timeAxis.units.lower())
+            s = to_udunits(self.startDatetime, timeAxisUnits)
             logger.debug("For startDatetime = %s, the udnits value is %f", self.startDatetime, s)
 
         if self.endDatetime:
             'endDatetime may be None, in which case just read until the end'
-            e = to_udunits(self.endDatetime, timeAxis.units.lower())
+            e = to_udunits(self.endDatetime, timeAxisUnits)
             logger.debug("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
         else:
             e = timeAxis[-1]
@@ -474,6 +476,7 @@ class Base_Loader(STOQS_Loader):
                 latitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])      # TODO lookup more precise gps lat
                 longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon
                 timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
+                timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
 
                 nomDepths, nomLats, nomLons = self.getNominalLocation()
             else:
@@ -538,6 +541,7 @@ class Base_Loader(STOQS_Loader):
                 #   dsdorado['temperature'].shape = (12288,)
                 ac[pname] = self.getAuxCoordinates(pname)
                 try:
+                    logger.debug("ac[pname]['time'] = %s", ac[pname]['time'])
                     tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
                 except NoValidData, e:
                     logger.warn('Skipping this parameter. %s' % e)
@@ -998,24 +1002,6 @@ class Glider_Loader(Trajectory_Loader):
     '''
     include_names=['TEMP', 'PSAL', 'OPBS', 'FLU2']
 
-    def initDB(self):
-        'Needs to use the exact name for the time coordinate in the Glider data'
-        if self.startDatetime == None or self.endDatetime == None:
-            ds = open_url(self.url)
-            if self.startDatetime == None:
-                logger.debug("self.ds.TIME[0] = %f, self.ds.TIME.units = %s", self.ds.TIME[0], self.ds.TIME.units)
-                self.startDatetime = from_udunits(float(self.ds.TIME[0]), self.ds.TIME.units)
-            if self.endDatetime == None:
-                self.endDatetime = from_udunits(float(self.ds.TIME[-1]), self.ds.TIME.units)
-                logger.info("Setting endDatetime for the Activity from the ds url to %s", self.endDatetime)
-
-        if self.dataStartDatetime == None:
-            self.dataStartDatetime = from_udunits(float(self.ds.TIME[0]), self.ds.TIME.units)
-        else:
-            logger.info("Using dataStartDatetime to read data from the source starting at %s", self.dataStartDatetime)
-
-        return super(Glider_Loader, self).initDB()
-
     def preProcessParams(self, row):
         '''
         Placeholder for any special preprocessing for Glider data
@@ -1178,6 +1164,8 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
     else:
         for v in loader.include_names:
             loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+
+    # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications
 
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()

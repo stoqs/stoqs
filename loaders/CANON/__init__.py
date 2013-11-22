@@ -84,7 +84,9 @@ class CANONLoader(LoadScript):
                 'Stella205':    '2696f0',
                 'nemesis':      'FFF026',
                 'ucsc294':      'FFBA26',
+                'slocum_294':   'FFBA26',
                 'ucsc260':      'FF8426',
+                'slocum_260':   'FF8426',
                 'wg_oa':        '0f9cd4',
                 'wg_tex':       '9626ff',
              }
@@ -242,6 +244,28 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, aName, gplatform, self.colors[gname], 'glider', 'Glider Mission', 
                                         self.glider_met_parms, self.dbAlias, stride, self.glider_met_startDatetime, self.glider_met_endDatetime)
 
+
+    def load_slocum_260(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.slocum_260_files], self.slocum_260_files):
+            url = self.slocum_260_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Slocum_260', self.colors['slocum_260'], 'glider', 'Glider Mission', 
+                                        self.slocum_260_parms, self.dbAlias, stride, self.slocum_260_startDatetime, self.slocum_260_endDatetime)
+
+    def load_slocum_294(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.slocum_294_files], self.slocum_294_files):
+            url = self.slocum_294_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Slocum_294', self.colors['slocum_294'], 'glider', 'Glider Mission', 
+                                        self.slocum_294_parms, self.dbAlias, stride, self.slocum_294_startDatetime, self.slocum_294_endDatetime)
 
     def load_wg_oa_pco2(self, stride=None):
         '''
