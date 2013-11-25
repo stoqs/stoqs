@@ -581,8 +581,13 @@ class ParameterParameter(object):
                             round_to_n(m,4), xp.name, round_to_n(b,4), round_to_n(c**2,4), round_to_n(pr,4), len(self.x))
 
             # Save the figure
-            fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
-            plt.close()
+            try:
+                fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
+            except Exception, e:
+                infoText = 'Parameter-Parameter: ' + str(e)
+                return None, infoText, sql
+            else:
+                plt.close()
 
         except TypeError, e:
             ##infoText = 'Parameter-Parameter: ' + str(type(e))
