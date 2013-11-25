@@ -606,7 +606,10 @@
 
                             <div class="tab-content">
                                 <div class="tab-pane active" id="temporal-depth">
-                                    <em>Click and drag to select a time-depth range</em>
+                                    <div class="row-fluid">
+                                        <div class="span6"><em>Click and drag to select a time-depth range</em></div>
+                                        <div id="temporalparameterstrideinfo" class="span6" style="text-align:right;"></div>
+                                    </div>
                                     <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
                                         <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
@@ -2664,6 +2667,7 @@
                             $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
+                            $('#temporalparameterstrideinfo').text(data['parameterplatformdatavaluepng'][2]);
                         }
                         else {
                             $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
