@@ -484,6 +484,7 @@ class MPQuery(object):
         self._count = None
         self._MProws = []
         self.parameterID = None
+        self.initialQuery = True
         
     def buildMPQuerySet(self, *args, **kwargs):
         '''
@@ -598,8 +599,10 @@ class MPQuery(object):
         logger.debug('Building qs_mp...')
         if values_list == []:
             # If no .values(...) added to QS then items returned by iteration on qs_mp are model objects, not out wanted dictionaries
+            logger.debug('... with values_list = []; using default rest_columns')
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*MPQuerySet.rest_columns)
         else:
+            logger.debug('... with values_list = %s', values_list)
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
 
         if self.parameterID:
@@ -628,10 +631,10 @@ class MPQuery(object):
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
                 qs_mpq = MPQuerySet(sql, values_list)
             else:
-                logger.debug('Building MPQuerySet...')
+                logger.debug('Building MPQuerySet with qs_mpquery = %s', str(qs_mp.query))
                 qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
         else:
-            logger.debug('Building MPQuerySet...')
+            logger.debug('Building MPQuerySet with qs_mpquery = %s', str(qs_mp.query))
             qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
 
         if qs_mpq is None:
@@ -699,8 +702,12 @@ class MPQuery(object):
         return the count.
         '''
         if not self._count:
-            logger.debug('Calling self.qs_mp_no_order.count()...')
-            self._count = self.qs_mp_no_order.count()
+            logger.debug('self._count does not exist, getting count...')
+            if self.initialQuery:
+                logger.debug('... getting initialCount from simple QuerySet')
+                self._count = MeasuredParameter.objects.using(self.request.META['dbAlias']).count()
+            else:
+                self._count = self.qs_mp_no_order.count()
 
         logger.debug('self._count = %d', self._count)
         return int(self._count)

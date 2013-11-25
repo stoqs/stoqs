@@ -58,6 +58,7 @@ class STOQSQManager(object):
         self.pq = PQuery(request)
         self.pp = None
         self._actual_count = None
+        self.initialQuery = True
 
         # monkey patch sql/query.py to make it use our database for sql generation
         query.DEFAULT_DB_ALIAS = dbname
@@ -171,10 +172,22 @@ class STOQSQManager(object):
     
         self.args = args
         self.kwargs = kwargs
+
+        # Determine if this is the intial query and set a flag
         for k, v in kwargs.iteritems():
-            '''
-            Check to see if there is a "builder" for a Q object using the given parameters.
-            '''
+            # Test keys that can affect the MeasuredParameter count
+            if  k == 'depth' or k == 'time':
+                if v[0] is not None or v[1] is not None:
+                    self.initialQuery = False
+            elif k in ['measuredparametersgroup', 'parameterstandardname', 'platforms']:
+                if v:
+                    logger.debug('Setting self.initialQuery = False because %s = %s', k, v)
+                    self.initialQuery = False
+
+        logger.debug('self.initialQuery = %s', self.initialQuery)
+
+        # Check to see if there is a "builder" for a Q object using the given parameters and build up the filter from the Q objects
+        for k, v in kwargs.iteritems():
             if not v:
                 continue
             if k == 'fromTable':
@@ -286,6 +299,7 @@ class STOQSQManager(object):
         if getGet_Actual_Count(self.kwargs):
             if not self.mpq.qs_mp:
                 self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                self.mpq.initialQuery = self.initialQuery
                 sql = self.mpq.getMeasuredParametersPostgreSQL()
                 self._actual_count = self.mpq.getMPCount()
 
@@ -621,8 +635,8 @@ class STOQSQManager(object):
                     for sd in qs_tsp:
                         logger.info('sd = %s', sd)
                         an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
-                        logger.info('an_nd = %s', an_nd)
-                        logger.info('sd = %s', sd)
+                        logger.debug('an_nd = %s', an_nd)
+                        ##logger.debug('sd = %s', sd)
                         if 'simpledepthtime__epochmilliseconds' in sd:
                             try:
                                 sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
@@ -845,10 +859,6 @@ class STOQSQManager(object):
         colors = {}
         counts = 0
 
-        # The base MeasuredParameter query set for existing UI selections
-        if not self.mpq.qs_mp:
-            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-
         # Look for platforms that have featureTypes ammenable for Parameter time series visualization
         for plats in self.getPlatforms().values():
             for platform in plats:
@@ -864,16 +874,21 @@ class STOQSQManager(object):
                         logger.debug('Calling self._collectParameters() with platform = %s', platform)
                         pa_units, is_standard_name, ndCounts, pt, colors, strides = self._collectParameters(platform, pt, 
                                                                     pa_units, is_standard_name, ndCounts, strides, colors)
-   
-        # Perform more expensive query: start with no_order version of the MeasuredParameter query set
-        pt_qs_mp = self.mpq.qs_mp_no_order
-        
-        logger.debug('Before self._buildParameterTime: pt = %s', pt.keys()) 
-        pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
-        logger.debug('After self._buildParameterTime: pt = %s', pt.keys()) 
+  
+        if pa_units: 
+            # The base MeasuredParameter query set for existing UI selections
+            if not self.mpq.qs_mp:
+                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                self.mpq.initialQuery = self.initialQuery
+
+            # Perform more expensive query: start with no_order version of the MeasuredParameter query set
+            pt_qs_mp = self.mpq.qs_mp_no_order
+            
+            logger.debug('Before self._buildParameterTime: pt = %s', pt.keys()) 
+            pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
+            logger.debug('After self._buildParameterTime: pt = %s', pt.keys()) 
 
         return({'pt': pt, 'units': units, 'counts': counts, 'colors': colors, 'strides': strides})
-
 
     def getSampleDepthTime(self):
         '''
