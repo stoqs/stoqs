@@ -241,6 +241,7 @@ TEMPLATE_CONTEXT_PROCESSORS=("django.contrib.auth.context_processors.auth",
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        ##'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         'LOCATION': MEMCACHED_LOCATION,
     }
 } 
