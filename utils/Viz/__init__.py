@@ -137,7 +137,7 @@ class MeasuredParameter(object):
         self.lon_by_act = {}
         self.lat_by_act = {}
 
-        MAX_POINTS = 5000
+        MAX_POINTS = 10000          # Set by visually examing high-res Tethys data for what looks good
         stride = int(self.qs_mp.count() / MAX_POINTS)
         if stride < 1:
             stride = 1
