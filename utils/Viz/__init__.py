@@ -99,7 +99,7 @@ class MeasuredParameter(object):
         self.kwargs = kwargs
         self.request = request
         self.qs = qs
-        self.qs_mp = qs_mp
+        self.qs_mp = qs_mp                      # Calling routine passes the _no_order version of the QuerySet
         self.parameterMinMax = parameterMinMax
         self.sampleQS = sampleQS
         self.platformName = platformName
@@ -137,6 +137,14 @@ class MeasuredParameter(object):
         self.lon_by_act = {}
         self.lat_by_act = {}
 
+        MAX_POINTS = 5000
+        stride = int(self.qs_mp.count() / MAX_POINTS)
+        if stride < 1:
+            stride = 1
+        self.strideInfo = ''
+        if stride != 1:
+            self.strideInfo = 'stride = %d' % stride
+
         i = 0
         logger.debug('self.qs_mp.query = %s', str(self.qs_mp.query))
         if SAMPLED in self.parameterGroups:
@@ -160,7 +168,7 @@ class MeasuredParameter(object):
                 if (i % 1000) == 0:
                     logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
         else:
-            for mp in self.qs_mp:
+            for mp in self.qs_mp[::stride]:
                 if self.scale_factor:
                     self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
                 else:
@@ -269,7 +277,7 @@ class MeasuredParameter(object):
             try:
                 os.remove(sectionPngFileFullPath)
             except Exception, e:
-                logger.warn(e)
+                logger.warn('Could not remove file: %s', e)
 
             if not self.x and not self.y and not self.z:
                 self.loadData()
@@ -346,7 +354,7 @@ class MeasuredParameter(object):
                 logger.exception('Could not plot the colormap')
                 return None, None, 'Could not plot the colormap'
 
-            return sectionPngFile, self.colorbarPngFile, ''
+            return sectionPngFile, self.colorbarPngFile, self.strideInfo
         else:
             logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range'
