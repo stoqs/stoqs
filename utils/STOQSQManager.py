@@ -651,17 +651,11 @@ class STOQSQManager(object):
     #
     # The following set of private (_...) methods are for building the parametertime response
     #
-    def _collectParameters(self, platform):
+    def _collectParameters(self, platform, pt, pa_units, is_standard_name, ndCounts, strides, colors):
         '''
         Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names.
         Return a tuple of pa_units, is_standard_name, ndCounts, and pt dictionaries.
         '''
-        pa_units = {}
-        is_standard_name = {}
-        ndCounts = {}
-        colors = {}
-        strides = {}
-        pt = {}
 
         # Get parameters for this platform and collect units in a parameter name hash, use standard_name if set and repair bad names
         p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
@@ -678,6 +672,9 @@ class STOQSQManager(object):
                                               activity__platform__name=platform[0],
                                               measurement__measuredparameter__parameter=parameter
                                     ).values('depth').distinct().count()
+            logger.debug('nds  = %s', nds )
+            if nds == 0:
+                continue
 
             if parameter.standard_name == 'sea_water_salinity':
                 unit = 'PSU'
@@ -696,10 +693,10 @@ class STOQSQManager(object):
                 colors[parameter.name] = parameter.id
                 strides[parameter.name] = {}
 
-            logger.debug('nds  = %s', nds )
-
-            # Initialize pt dictionary of dictionaries with it's keys
-            pt[unit] = {}
+            # Initialize pt dictionary of dictionaries with its keys
+            if unit not in pt.keys():
+                logger.debug('Initializing pt[%s] = {}', unit)
+                pt[unit] = {}
 
         return (pa_units, is_standard_name, ndCounts, pt, colors, strides)
 
@@ -709,6 +706,7 @@ class STOQSQManager(object):
         '''
         # Order by nominal depth first so that strided access collects data correctly from each depth
         pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')[::stride]
+        logger.debug('Adding time series of parameter = %s in key = %s', p, pa_units[p])
         for mp in pt_qs_mp:
             if not mp['datavalue']:
                 continue
@@ -769,17 +767,16 @@ class STOQSQManager(object):
 
         return isInSelection 
 
-    def _buildParameterTime(self, pa_units, is_standard_name, ndCounts, pt_base, strides, pt_qs_mp):
+    def _buildParameterTime(self, pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp):
         '''
         Build structure of timeseries/timeseriesprofile parameters organized by units
         '''
         PIXELS_WIDE = 800                   # Approximate pixel width of parameter-time-flot window
-        pt = {}
         units = {}
 
         # Build units hash of parameter names for labeling axes in flot
         for p,u in pa_units.iteritems():
-            logger.debug('p, u = %s, %s', p, u)
+            logger.debug('is_standard_name = %s.  p, u = %s, %s', is_standard_name, p, u)
             if not self._parameterInSelection(p, is_standard_name):
                 logger.debug('Parameter is not in selection')
                 continue
@@ -816,15 +813,17 @@ class STOQSQManager(object):
                 logger.debug('a.name = %s, a.startdate = %s, a.enddate %s, aseconds = %s, secondsperpixel = %s', a.name, a.startdate, a.enddate, aseconds, secondsperpixel)
                 if float(aseconds) > float(secondsperpixel):
                     # Multiple points of this activity can be displayed in the flot, get an appropriate stride
+                    logger.debug('PIXELS_WIDE = %s, ndCounts[p] = %s', PIXELS_WIDE, ndCounts[p])
                     stride = qs_mp_a.count() / PIXELS_WIDE / ndCounts[p]        # Integer factors -> integer result
                     if stride < 1:
                         stride = 1
                     logger.debug('Getting timeseries from MeasuredParameter table with stride = %s', stride)
                     strides[p][a.name] = stride
-                    pt = self._getParameterTimeFromMP(qs_mp_a, pt_base, pa_units, a, p, is_standard_name, stride)
+                    logger.debug('Adding timeseries for p = %s, a = %s', p, a)
+                    pt = self._getParameterTimeFromMP(qs_mp_a, pt, pa_units, a, p, is_standard_name, stride)
                 else:
                     # Construct just two points for this activity-parameter using the min & max from the AP table
-                    pt = self._getParameterTimeFromAP(pt_base, pa_units, a, p)
+                    pt = self._getParameterTimeFromAP(pt, pa_units, a, p)
 
         return (pt, units, strides)
 
@@ -840,6 +839,10 @@ class STOQSQManager(object):
         units = {}
         colors = {}
         strides = {}
+        pa_units = {}
+        is_standard_name = {}
+        ndCounts = {}
+        colors = {}
         counts = 0
 
         # The base MeasuredParameter query set for existing UI selections
@@ -857,13 +860,17 @@ class STOQSQManager(object):
                                         ).distinct().count()
 
                     if 'parametertime' in self.kwargs['only'] or self.kwargs['parametertab']:
-                        # Perform more expensive query: start with no_order version of the MeasuredParameter query set
-                        pt_qs_mp = self.mpq.qs_mp_no_order
-        
                         # Initialize structure organized by units for parameters left in the selection 
-                        pa_units, is_standard_name, ndCounts, pt, colors, strides = self._collectParameters(platform)
-    
-                        pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
+                        logger.debug('Calling self._collectParameters() with platform = %s', platform)
+                        pa_units, is_standard_name, ndCounts, pt, colors, strides = self._collectParameters(platform, pt, 
+                                                                    pa_units, is_standard_name, ndCounts, strides, colors)
+   
+        # Perform more expensive query: start with no_order version of the MeasuredParameter query set
+        pt_qs_mp = self.mpq.qs_mp_no_order
+        
+        logger.debug('Before self._buildParameterTime: pt = %s', pt.keys()) 
+        pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
+        logger.debug('After self._buildParameterTime: pt = %s', pt.keys()) 
 
         return({'pt': pt, 'units': units, 'counts': counts, 'colors': colors, 'strides': strides})
 
