@@ -484,7 +484,7 @@ class MPQuery(object):
         self._count = None
         self._MProws = []
         self.parameterID = None
-        self.initialQuery = True
+        self.initialQuery = False
         
     def buildMPQuerySet(self, *args, **kwargs):
         '''
