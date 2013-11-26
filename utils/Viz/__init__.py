@@ -585,6 +585,7 @@ class ParameterParameter(object):
                 fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
             except Exception, e:
                 infoText = 'Parameter-Parameter: ' + str(e)
+                logger.exception('Cannot make 2D parameterparameter plot: %s', e)
                 return None, infoText, sql
             else:
                 plt.close()
