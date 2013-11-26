@@ -590,6 +590,7 @@ class ParameterParameter(object):
             except Exception, e:
                 infoText = 'Parameter-Parameter: ' + str(e)
                 logger.exception('Cannot make 2D parameterparameter plot: %s', e)
+                plt.close()
                 return None, infoText, sql
             else:
                 plt.close()
