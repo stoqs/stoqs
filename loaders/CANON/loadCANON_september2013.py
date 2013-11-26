@@ -243,11 +243,13 @@ cl.JMpctd_files = [ '25613JMC01.nc', '25613JMC02.nc', '25613JMC03.nc', '25613JMC
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
 cl.m1_files = [
                 '201202/OS_M1_20120222hourly_CMSTV.nc', 
-                '201309/OS_M1_20130918hourly_CMSTV.nc'
+                '201309/OS_M1_20130918hourly_CMSTV.nc',
+                '201202/m1_hs2_20120222.nc',
+                '201309/m1_hs2_20130919.nc',
               ]
 cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
                 'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR', 'bb470', 'bb676', 'fl676'
               ]
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
