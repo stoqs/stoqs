@@ -39,6 +39,7 @@ import logging
 import string
 import random
 import time
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -138,8 +139,8 @@ class MeasuredParameter(object):
         self.lon_by_act = {}
         self.lat_by_act = {}
 
-        MAX_POINTS = 10000          # Set by visually examing high-res Tethys data for what looks good
-        stride = int(self.qs_mp.count() / MAX_POINTS)
+        MP_MAX_POINTS = 10000          # Set by visually examing high-res Tethys data for what looks good
+        stride = int(self.qs_mp.count() / MP_MAX_POINTS)
         if stride < 1:
             stride = 1
         self.strideInfo = ''
@@ -474,6 +475,15 @@ class ParameterParameter(object):
         elif xaxis_name == 'sea_water_temperature':
             return t, s, sigmat
 
+    def _getCountSQL(self, sql):
+        '''
+        Modify Parameter-Parameter SQL to return the count for the query
+        '''
+        p = re.compile('SELECT .+ FROM')
+        csql = p.sub('''SELECT count(*) FROM''', sql.replace('\n', ' '))
+        logger.debug('csql = %s', csql)
+        return csql
+
     def make2DPlot(self):
         '''
         Produce a Parameter-Parameter .png image with axis limits set to the 1 and 99 percentiles and draw outside the lines
@@ -487,6 +497,23 @@ class ParameterParameter(object):
 
                 # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
                 cursor = connections[self.request.META['dbAlias']].cursor()
+
+                # Get count and set a stride value if more than a PP_MAX_POINTS which Matplotlib cannot plot, about 200,000 points
+                try:
+                    cursor.execute(self._getCountSQL(sql))
+                except DatabaseError, e:
+                    infoText = 'Parameter-Parameter: ' + str(e) + ' Also, make sure you have no Parameters selected in the Filter.'
+                    logger.exception('Cannot execute count sql query for Parameter-Parameter plot: %s', e)
+                    return None, infoText, sql
+                pp_count = cursor.fetchone()[0]
+                logger.debug('pp_count = %d', pp_count)
+                PP_MAX_POINTS = 200000
+                stride_val = int(pp_count / PP_MAX_POINTS)
+                if stride_val < 1:
+                    stride_val = 1
+                logger.debug('stride_val = %d', stride_val)
+
+                # Get the Parameter-Parameter points
                 try:
                     cursor.execute(sql)
                 except DatabaseError, e:
@@ -494,15 +521,19 @@ class ParameterParameter(object):
                     logger.exception('Cannot execute sql query for Parameter-Parameter plot: %s', e)
                     return None, infoText, sql
 
+                counter = 0
                 for row in cursor:
-                    # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
-                    self.depth.append(float(row[0]))
-                    self.x.append(float(row[1]))
-                    self.y.append(float(row[2]))
-                    try:
-                        self.c.append(float(row[3]))
-                    except IndexError:
-                        pass
+                    if counter % stride_val == 0:
+                        # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
+                        self.depth.append(float(row[0]))
+                        self.x.append(float(row[1]))
+                        self.y.append(float(row[2]))
+                        try:
+                            self.c.append(float(row[3]))
+                        except IndexError:
+                            pass
+                    counter = counter + 1
+
             # If still no self.x and self.y then selection is not valid for the chosen x and y
             if self.x == [] or self.y == []:
                 return None, 'No Parameter-Parameter data values returned.', sql
