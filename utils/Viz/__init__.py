@@ -17,11 +17,12 @@ import os
 import tempfile
 # Setup Matplotlib for running on the server
 os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
-import matplotlib
-matplotlib.use('Agg')               # Force matplotlib to not use any Xwindows backend
+import matplotlib as mpl
+mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
-import matplotlib as mpl
+from matplotlib import figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from pylab import polyfit, polyval
 from django.conf import settings
 from django.db.models.query import RawQuerySet
@@ -108,7 +109,7 @@ class MeasuredParameter(object):
 
         self.scale_factor = None
         self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
-        self.cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
+        self.cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
         # - Use a new imageID for each new image
         self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
         if self.parameterID:
@@ -527,14 +528,15 @@ class ParameterParameter(object):
             logger.debug('ppPngFileFullPath = %s', ppPngFileFullPath)
 
             # Make the figure
-            fig = plt.figure()
+            fig = figure.Figure()
+            canvas = FigureCanvas(fig)
             plt.grid(True)
-            ax = fig.add_subplot(111)
+            ax = fig.add_subplot(111, axisbg=(1,1,1,0))
             ax.set_xlim(self.pMinMax['x'][1], self.pMinMax['x'][2])
             ax.set_ylim(self.pMinMax['y'][1], self.pMinMax['y'][2])
 
             self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
-            cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
+            cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
             if self.c:
                 logger.debug('self.pMinMax = %s', self.pMinMax)
                 logger.debug('Making colored scatter plot of %d points', len(self.x))
@@ -584,7 +586,7 @@ class ParameterParameter(object):
 
             # Save the figure
             try:
-                fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
+                canvas.print_figure(ppPngFileFullPath, dpi=120, facecolor=(1,1,1,0))
             except Exception, e:
                 infoText = 'Parameter-Parameter: ' + str(e)
                 logger.exception('Cannot make 2D parameterparameter plot: %s', e)
@@ -661,7 +663,7 @@ class ParameterParameter(object):
             if colors:
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
                 try:
-                    cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
+                    cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
                     imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
                     colorbarPngFile = '%s_%s_%s_%s_3dcolorbar_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['z'], self.pDict['c'], imageID )
                     colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
