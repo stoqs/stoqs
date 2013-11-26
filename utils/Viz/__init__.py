@@ -537,6 +537,7 @@ class ParameterParameter(object):
             cm_jetplus = matplotlib.colors.ListedColormap(np.array(self.clt))
             if self.c:
                 logger.debug('self.pMinMax = %s', self.pMinMax)
+                logger.debug('Making colored scatter plot of %d points', len(self.x))
                 ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
                 # Add colorbar to the image
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
@@ -548,6 +549,7 @@ class ParameterParameter(object):
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
                 cb.set_label('%s (%s)' % (cp.name, cp.units))
             else:
+                logger.debug('Making scatter plot of %d points', len(self.x))
                 ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0, clip_on=False)
 
             # Label the axes
