@@ -222,7 +222,7 @@ class Base_Loader(STOQS_Loader):
                 self.startDatetime, self.endDatetime = self._getStartAndEndTimmeFromDS()
             self.createActivity()
         else:
-            raise NoValidData('No valid data in url %s', self.url)
+            raise NoValidData('No valid data in url %s' % (self.url))
 
     def getmissing_value(self, var):
         '''
@@ -312,7 +312,7 @@ class Base_Loader(STOQS_Loader):
                 logger.debug('Returning auxCoords for variable %s that were specified in the constructor: %s', variable, self.auxCoords[variable])
                 return self.auxCoords[variable]
             else:
-                raise Exception('auxCoords is specified, but variable requested (%s) is not in %s', variable, self.auxCoords)
+                raise ParameterNotFound('auxCoords is specified, but variable requested (%s) is not in %s' % (variable, self.auxCoords))
 
         # Scan variable standard_name attributes for ('time', 'latitude', 'longitude', 'depth') standard_name's
         # There is no check here for multiple multiple time, latitude, longitude, or depth coordinates.  Should
@@ -327,7 +327,7 @@ class Base_Loader(STOQS_Loader):
 
         # Match items in coordinate attribute, via coordinate standard_name to coordinate name
         if variable not in self.ds:
-            raise ParameterNotFound('Variable %s is not in dataset %s'% (variable, self.url))
+            raise ParameterNotFound('Variable %s is not in dataset %s' % (variable, self.url))
 
         coordDict = {}
         if 'coordinates' in self.ds[variable].attributes:
@@ -365,7 +365,11 @@ class Base_Loader(STOQS_Loader):
         lons = {}
         for v in self.include_names:
             logger.debug('Calling self.getAuxCoordinates() for v = %s', v)
-            ac = self.getAuxCoordinates(v)
+            try:
+                ac = self.getAuxCoordinates(v)
+            except ParameterNotFound, e:
+                logger.warn('Skipping include_name = %s: %s', v, e)
+                continue
      
             # depth may be single-valued or an array 
             if self.getFeatureType() == 'timeseries': 
@@ -387,7 +391,7 @@ class Base_Loader(STOQS_Loader):
             lon = lons.values()[0]
 
         if len(set(lats.values())) != 1 or len(set(lons.values())) != 1:
-            raise Exception('Invalid file coordinates structure.  All variables must have identical nominal latitude and longitude. lats = %s, lons = %s', lats, lons)
+            raise Exception('Invalid file coordinates structure.  All variables must have identical nominal latitude and longitude. lats = %s, lons = %s' % (lats, lons))
 
         return depths, lats, lons
 
@@ -443,6 +447,8 @@ class Base_Loader(STOQS_Loader):
         # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
         # The reads here take advantage of OPeNDAP access mechanisms to effeciently transfer data across the network
         for pname in self.include_names:
+            if pname not in self.ds:
+                continue    # Quietly skip over parameters not in ds: allows combination of variables and files in same loader
             # Peek at the shape and pull apart the data from its grid coordinates 
             logger.info('Reading data from %s: %s', self.url, pname)
             if len(self.ds[pname].shape) == 4 and type(self.ds[pname]) is pydap.model.GridType:
@@ -1161,9 +1167,10 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
     if pName == 'waveglider':
         for v in loader.include_names:
             loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
-    else:
+    elif not pName.startswith('Slocum'):
         for v in loader.include_names:
             loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+
 
     # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications
 
@@ -1236,6 +1243,11 @@ def runMooringLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, par
                 loader.auxCoords[v] = {'time': 'hr_time_met', 'latitude': 'Latitude', 'longitude': 'Longitude', 'depth': 'HR_DEPTH_met'}
             else:
                 logger.error('Do not have an auxCoords assignment for variable %s in include_names', v)
+    elif url.find('_hs2_') != -1:
+        # Special for fluorometer on M1 - the HS2
+        for v in loader.include_names:
+            if v in ['bb470', 'bb676', 'fl676']:
+                loader.auxCoords[v] = {'time': 'esecs', 'latitude': 'Latitude', 'longitude': 'Longitude', 'depth': 'NominalDepth'}
     else:
         # Auxillary coordinates are the same for all include_names for _TS and _M files
         for v in loader.include_names:
