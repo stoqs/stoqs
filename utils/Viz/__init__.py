@@ -31,6 +31,7 @@ from datetime import datetime
 from KML import readCLT
 from stoqs import models
 from utils.utils import postgresifySQL, pearsonr, round_to_n
+from utils.MPQuery import MPQuerySet
 from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
 import seawater.csiro as sw
@@ -127,6 +128,25 @@ class MeasuredParameter(object):
         self.depth = []
         self.value = []
 
+    def _fillXYZ(self, mp):
+        '''
+        Fill up the x, y, and z member lists
+        '''
+        if self.scale_factor:
+            self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+        else:
+            self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+        self.y.append(mp['measurement__depth'])
+        self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
+        self.z.append(mp['datavalue'])
+        self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
+    
+        if 'measurement__geom' in mp.keys():
+            self.lon.append(mp['measurement__geom'].x)
+            self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
+            self.lat.append(mp['measurement__geom'].y)
+            self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
+
     def loadData(self):
         '''
         Read the data from the database into member variables for use by the methods that output various products
@@ -170,30 +190,23 @@ class MeasuredParameter(object):
                 if (i % 1000) == 0:
                     logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
         else:
-            counter = 0
             logger.debug('Reading data with a stride of %s', stride)
-            for mp in self.qs_mp:
-                if counter % stride == 0:
-                    if self.scale_factor:
-                        self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
-                    else:
-                        self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
-                    self.y.append(mp['measurement__depth'])
-                    self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
-                    self.z.append(mp['datavalue'])
-                    self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
-    
-                    if 'measurement__geom' in mp.keys():
-                        self.lon.append(mp['measurement__geom'].x)
-                        self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
-                        self.lat.append(mp['measurement__geom'].y)
-                        self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
-    
+            if type(self.qs_mp) is MPQuerySet:
+                # Our MPQuerySet does not support slicing
+                counter = 0
+                for mp in self.qs_mp:
+                    if counter % stride == 0:
+                        self._fillXYZ(mp)
+                        i = i + 1
+                        if (i % 1000) == 0:
+                            logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
+                    counter = counter + 1
+            else:
+                for mp in self.qs_mp[::stride]:
+                    self._fillXYZ(mp)
                     i = i + 1
                     if (i % 1000) == 0:
                         logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
-
-                counter = counter + 1
 
         self.depth = self.y
         self.value = self.z
