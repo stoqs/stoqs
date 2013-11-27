@@ -170,8 +170,10 @@ class MeasuredParameter(object):
                 if (i % 1000) == 0:
                     logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
         else:
+            counter = 0
+            logger.debug('Reading data with a stride of %s', stride)
             for mp in self.qs_mp:
-                if i % stride == 0:
+                if counter % stride == 0:
                     if self.scale_factor:
                         self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
                     else:
@@ -190,6 +192,8 @@ class MeasuredParameter(object):
                     i = i + 1
                     if (i % 1000) == 0:
                         logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
+
+                counter = counter + 1
 
         self.depth = self.y
         self.value = self.z
