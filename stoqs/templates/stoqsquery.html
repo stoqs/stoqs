@@ -2895,6 +2895,17 @@
             dataType: "json"
         }))
         .then(function( data, textStatus, jqXHR ) {
+            // Remove items that are not needed for new map generation
+            var map_params = params;
+            if ( ! $.isEmptyObject(map_params.only) ) {
+                $.each(map_params.only, function(index, v) {
+                    if ( $.inArray(v, ['parameterparameterpng', 'parameterparameterx3d']) > -1 ) {
+                        delete map_params.only[index];
+                    }
+                });
+            }
+
+            var qstring=($.param($.map(map_params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
             $.ajax({
                 //onInit() must finish before map can be drawn
                 type : 'GET',

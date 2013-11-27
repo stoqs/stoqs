@@ -178,6 +178,7 @@ def queryData(request, format=None):
             logger.info('Adding to parametervalues: %s', pprint.pformat(pminmax))
 
     qm = STOQSQManager(request, response, request.META['dbAlias'])
+    logger.debug('Calling buildQuerySets with params = %s', params)
     qm.buildQuerySets(**params)
     options = simplejson.dumps(qm.generateOptions(),
                                cls=encoders.STOQSJSONEncoder)
@@ -209,7 +210,12 @@ def queryMap(request):
         else:
             params[key] = request.GET.getlist(key)
 
+    # The Javascript the constructs the request items must remove any items that will make the 
+    # server busy with requests that have nothing to do with making a map; for example, removing
+    # 'parameterparameterpng' and 'parameterparameterx3d' removed from 'only' helps speed things up.
+
     qm = STOQSQManager(request, response, request.META['dbAlias'])
+    logger.debug('Calling buildQuerySets with params = %s', params)
     qm.buildQuerySets(**params)
     options = simplejson.dumps(qm.generateOptions(),
                                cls=encoders.STOQSJSONEncoder)

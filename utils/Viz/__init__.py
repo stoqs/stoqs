@@ -498,7 +498,7 @@ class ParameterParameter(object):
                 # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
                 cursor = connections[self.request.META['dbAlias']].cursor()
 
-                # Get count and set a stride value if more than a PP_MAX_POINTS which Matplotlib cannot plot, about 200,000 points
+                # Get count and set a stride value if more than a PP_MAX_POINTS which Matplotlib cannot plot, about 100,000 points
                 try:
                     cursor.execute(self._getCountSQL(sql))
                 except DatabaseError, e:
@@ -507,7 +507,7 @@ class ParameterParameter(object):
                     return None, infoText, sql
                 pp_count = cursor.fetchone()[0]
                 logger.debug('pp_count = %d', pp_count)
-                PP_MAX_POINTS = 200000
+                PP_MAX_POINTS = 100000
                 stride_val = int(pp_count / PP_MAX_POINTS)
                 if stride_val < 1:
                     stride_val = 1
@@ -614,6 +614,8 @@ class ParameterParameter(object):
             ##logger.debug('test_pr = %f (should be 0.981980506062)', test_pr)
             infoText = infoText + 'Linear regression: %s = %s * %s + %s (r<sup>2</sup> = %s, p = %s, n = %d)' % (yp.name, 
                             round_to_n(m,4), xp.name, round_to_n(b,4), round_to_n(c**2,4), round_to_n(pr,4), len(self.x))
+            if stride_val > 1:
+                infoText = infoText.replace(')', ' of %d, stride = %d)' % (pp_count, stride_val))
 
             # Save the figure
             try:
