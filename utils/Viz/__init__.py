@@ -170,25 +170,26 @@ class MeasuredParameter(object):
                 if (i % 1000) == 0:
                     logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
         else:
-            for mp in self.qs_mp[::stride]:
-                if self.scale_factor:
-                    self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
-                else:
-                    self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
-                self.y.append(mp['measurement__depth'])
-                self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
-                self.z.append(mp['datavalue'])
-                self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
+            for mp in self.qs_mp:
+                if i % stride == 0:
+                    if self.scale_factor:
+                        self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+                    else:
+                        self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+                    self.y.append(mp['measurement__depth'])
+                    self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
+                    self.z.append(mp['datavalue'])
+                    self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
     
-                if 'measurement__geom' in mp.keys():
-                    self.lon.append(mp['measurement__geom'].x)
-                    self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
-                    self.lat.append(mp['measurement__geom'].y)
-                    self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
+                    if 'measurement__geom' in mp.keys():
+                        self.lon.append(mp['measurement__geom'].x)
+                        self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
+                        self.lat.append(mp['measurement__geom'].y)
+                        self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
     
-                i = i + 1
-                if (i % 1000) == 0:
-                    logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
+                    i = i + 1
+                    if (i % 1000) == 0:
+                        logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
 
         self.depth = self.y
         self.value = self.z
@@ -378,6 +379,7 @@ class MeasuredParameter(object):
             return x3dResults
 
         if not self.lon and not self.lat and not self.depth and not self.value:
+            logger.debug('Calling self.loadData()...')
             self.loadData()
         try:
             points = ''
@@ -385,6 +387,7 @@ class MeasuredParameter(object):
             indices = ''
             index = 0
             for act in self.value_by_act.keys():
+                logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     # 10x vertical exaggeration - must match the GeoElevationGrid
                     points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * VERT_EXAG)
@@ -493,6 +496,7 @@ class ParameterParameter(object):
             if not self.x and not self.y:
                 # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
                 sql = str(self.pq.qs_mp.query)
+                logger.debug('sql = %s', sql)
                 sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
 
                 # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
