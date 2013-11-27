@@ -1435,7 +1435,8 @@ class STOQSQManager(object):
             except DatabaseError:
                 logger.warn('Database %s does not have field %s', self.dbname, geom_field)
             except TypeError:
-                logger.debug('Field %s is Null in Activity GeoQuerySet: %s', geom_field, str(self.qs) )
+                pass
+                ##logger.debug('Field %s is Null in Activity GeoQuerySet: %s', geom_field, str(self.qs) )
 
         # Append the Sample geometries 
         try:
