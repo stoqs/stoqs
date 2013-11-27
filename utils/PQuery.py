@@ -368,7 +368,7 @@ class PQuery(object):
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
                 sql = postgresifySQL(str(qs_mp.query))
                 logger.debug('\n\nsql before query = %s\n\n', sql)
-                sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
+                sql = self.addMeasuredParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
                 qs_mpq = PQuerySet(sql, values_list)
             else:
@@ -434,9 +434,22 @@ class PQuery(object):
         i = 0
         for pminmax in pvDict:
             i = i + 1
-            add_to_from = add_to_from + 'stoqs_parameter p' + str(i) + ', '
+
+            # Experimenting in Aqua Data Studio, need to add SQL that looks like:
+            #    INNER JOIN stoqs_measurement m1 
+            #    ON m1.instantpoint_id = stoqs_instantpoint.id 
+            #        INNER JOIN stoqs_measuredparameter mp1 
+            #        ON mp1.measurement_id = m1.id 
+            #            INNER JOIN stoqs_parameter p1 
+            #            ON mp1.parameter_id = p1.id
+
+            from_sql = from_sql + 'INNER JOIN stoqs_measurement m' + str(i) + ' '
+            from_sql = from_sql + 'on m' + str(i) + '.instantpoint_id = stoqs_instantpoint.id '
             from_sql = from_sql + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + ' '
-            from_sql = from_sql + 'on mp' + str(i) + '.measurement_id = stoqs_measuredparameter.measurement_id '
+            from_sql = from_sql + 'on mp' + str(i) + '.measurement_id = m' + str(i) + '.id '
+            from_sql = from_sql + 'INNER JOIN stoqs_parameter p' + str(i) + ' '
+            from_sql = from_sql + 'on mp' + str(i) + '.parameter_id = p' + str(i) + '.id '
+
             for k,v in pminmax.iteritems():
                 # Prevent SQL injection attacks
                 if k in Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
@@ -452,7 +465,7 @@ class PQuery(object):
 
         return add_to_from, from_sql, where_sql
 
-    def addParameterValuesSelfJoins(self, query, pvDict, select_items= '''stoqs_instantpoint.timevalue as measurement__instantpoint__timevalue, 
+    def addMeasuredParameterValuesSelfJoins(self, query, pvDict, select_items= '''stoqs_instantpoint.timevalue as measurement__instantpoint__timevalue, 
                                                                           stoqs_measurement.depth as measurement__depth,
                                                                           stoqs_measurement.geom as measurement__geom,
                                                                           stoqs_measuredparameter.datavalue as datavalue'''):
@@ -538,7 +551,7 @@ class PQuery(object):
         Given a Postgresified MeasuredParameter query string @query modify it to add the P self joins needed 
         to return up to 4 parameter data values from the same measurements. The Parameter ids are specified
         by the integer values in @pList.  The original @query string may be one that is modified by 
-        self.addParameterValuesSelfJoins() or not.  
+        self.addMeasuredParameterValuesSelfJoins() or not.  
         Return a Postgresified query string that can be used by Django's Manage.raw().
         Written for use by utils.Viz.ParamaterParameter()
 
@@ -706,7 +719,6 @@ For sampledparameter to sampledparamter query an example is:
         if self.kwargs['parametervalues']:
             # Add SQL fragments for any Parameter Value selections
             pv_add_to_from, pv_from_sql, pv_where_sql = self._pvSQLfragments(self.kwargs['parametervalues'])
-            logger.debug('pv_add_to_from = %s', pv_add_to_from)
             q = q.replace('FROM stoqs_sample', 'FROM ' + pv_add_to_from + 'stoqs_sample')
             q = q.replace('FROM stoqs_instantpoint', 'FROM ' + pv_add_to_from + 'stoqs_instantpoint')
             q = q.replace('WHERE', pv_from_sql + ' WHERE ' + pv_where_sql)
