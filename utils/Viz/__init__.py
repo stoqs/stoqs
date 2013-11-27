@@ -359,7 +359,7 @@ class MeasuredParameter(object):
 
             return sectionPngFile, self.colorbarPngFile, self.strideInfo
         else:
-            logger.debug('xi and yi are None.  tmin, tmax, dmin, dmax = %f, %f, %f, %f, %f, %f ', tmin, tmax, dmin, dmax)
+            logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s, %s, %s ', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range'
 
     def dataValuesX3D(self):
