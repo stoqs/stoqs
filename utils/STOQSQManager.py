@@ -1112,11 +1112,12 @@ class STOQSQManager(object):
                     if not self.mpq.qs_mp:
                         self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
                     try:
-                        platformName = self.getPlatforms()[0][0]
+                        platformName = self.kwargs['parameterplot'][1]
                     except IndexError, e:
                         logger.warn(e)
                         platformName = None
-    
+
+                    logger.debug('Getting data values in X3D for platformName = %s', platformName) 
                     mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
                                   self.getParameterMinMax(), self.getSampleQS(), platformName, parameterID, parameterGroups)
                     x3dDict = mpdv.dataValuesX3D()
