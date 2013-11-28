@@ -373,7 +373,7 @@ class STOQSQManager(object):
         data load.
         '''
         # Django makes it easy to do sub-queries: Get Parameters from list of Activities matching current selection
-        p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs))
+        p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs)).order_by('name')
         if groupName:
             p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
 
