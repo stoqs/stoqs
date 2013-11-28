@@ -1653,6 +1653,7 @@
             $('#showsensortracks').attr('disabled', true);
             $('#showgeox3ddatatext').text('');
             $('#sectioncolorbar > img').removeAttr('src');
+            $('#temporalparameterstrideinfo').text('');
             rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'simpledepthtime', 'platforms', 'sampledepthtime']);
             update_sensortrackskml();
         }
@@ -1662,11 +1663,13 @@
         if ( $('#clear-pp-button').hasClass('btn-primary')) {
             $("#clear-pp-button").removeClass('btn-primary');
             $("#clear-pp-button").addClass('disabled');
-            $('input:radio[name=parameters_x]').prop('checked', false);
-            $('input:radio[name=parameters_y]').prop('checked', false);
-            $('input:radio[name=parameters_z]').prop('checked', false);
-            $('input:radio[name=parameters_c]').prop('checked', false);
             $('#parameter-parameter-anchor').html('Parameter-Parameter')
+            $("input:radio[name='parameters_x'][value='']").prop('checked', true)
+            $("input:radio[name='parameters_y'][value='']").prop('checked', true)
+            $("input:radio[name='parameters_z'][value='']").prop('checked', true)
+            $("input:radio[name='parameters_c'][value='']").prop('checked', true)
+            $('#parameter-parameter-2dplot > img').removeAttr('src');
+            $('#parameter-parameter-2dplot > pre').html('');
             //$('#pp2d').html('');
             //$('#pp3d').html('');
             //$('#ppdata').html('');
