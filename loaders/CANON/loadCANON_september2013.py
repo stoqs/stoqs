@@ -96,7 +96,9 @@ cl.nps29_endDatetime = enddate
 # Slocum_260
 cl.slocum_260_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_260/final/'
 cl.slocum_260_files = [ 'glider-260_20130908T204654_rt0.nc' ]
-cl.slocum_260_parms = [ 'temperature', 'salinity', 'density', 'fluorescence', 'oxygen', 'optical_backscatter700nm', 'u', 'v' ]
+cl.slocum_260_parms = [ 'temperature', 'salinity', 'density', 'fluorescence', 'oxygen', 'optical_backscatter700nm', 
+                        ##'u', 'v'      # NetCDF file needs a depth in the coordinates attributes
+                      ]
 cl.slocum_260_startDatetime = startdate
 cl.slocum_260_endDatetime = enddate
 
@@ -104,7 +106,9 @@ cl.slocum_260_endDatetime = enddate
 cl.slocum_294_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_294/final/'
 cl.slocum_294_files = [ 'glider-294_20130903T013548_rt0.nc' ]
 cl.slocum_294_parms = [ 'temperature', 'salinity', 'density', 'fluorescence', 'oxygen', 'phycoerythrin', 'cdom', 
-                        'optical_backscatter470nm', 'optical_backscatter532nm', 'optical_backscatter660nm', 'optical_backscatter700nm', 'u', 'v' ]
+                        'optical_backscatter470nm', 'optical_backscatter532nm', 'optical_backscatter660nm', 'optical_backscatter700nm', 
+                        ##'u', 'v'      # NetCDF file needs a depth in the coordinates attributes
+                      ]
 cl.slocum_294_startDatetime = startdate
 cl.slocum_294_endDatetime = enddate
 
@@ -421,6 +425,9 @@ elif cl.args.optimal_stride:
     cl.load_glider_ctd(stride=1) 
     cl.load_glider_met(stride=1)
 
+    cl.load_slocum_260(stride=1)
+    cl.load_slocum_294(stride=1)
+
     cl.load_wg_oa_pco2(stride=1) 
     cl.load_wg_oa_ctd(stride=1) 
     cl.load_wg_oa_met(stride=1) 
@@ -429,7 +436,7 @@ elif cl.args.optimal_stride:
 
     cl.loadDorado(stride=1)
     ##cl.loadDaphne(stride=1)             # Someone needs to make good NetCDF files
-    cl.loadTethys(stride=1)
+    cl.loadTethys(stride=10)
 
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
@@ -468,6 +475,9 @@ else:
 
     cl.load_glider_ctd()
     cl.load_glider_met()
+
+    cl.load_slocum_260()
+    cl.load_slocum_294()
 
     cl.load_wg_oa_pco2()
     cl.load_wg_oa_ctd()
