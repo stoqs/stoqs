@@ -577,6 +577,7 @@ class Base_Loader(STOQS_Loader):
                 latitudes[pname] = self.ds[ac[pname]['latitude']][tIndx[0]:tIndx[-1]:self.stride]
                 longitudes[pname] = self.ds[ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
+                timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
 
             elif len(self.ds[pname].shape) == 1 and type(self.ds[pname]) is pydap.model.GridType:
                 # LRAUV data need to be processed as GridType
