@@ -83,6 +83,7 @@ class MPQuerySet(object):
         appears to break the correct serialization of geometry types in the json response.
         Called by stoqs/views/__init__.py when MeasuredParameter REST requests are made.
         '''
+        self.isRawQuerySet = False
         if query is None and qs_mp is not None:
             logger.debug('query is None and qs_mp is not None')
             self.query = postgresifySQL(str(qs_mp.query))
@@ -91,6 +92,7 @@ class MPQuerySet(object):
             logger.debug('query is not None and qs_mp is None')
             self.query = query
             self.mp_query = MeasuredParameter.objects.raw(query)
+            self.isRawQuerySet = True
         else:
             raise Exception('Either query or qs_mp must be not None and the other be None.')
 
@@ -111,13 +113,6 @@ class MPQuerySet(object):
 
         logger.debug('self.query = %s', self.query)
         logger.debug('type(self.mp_query) = %s', type(self.mp_query))
-
-        if isinstance(self.mp_query, ValuesQuerySet):
-            logger.debug('self.mp_query is ValuesQuerySet')
-        if isinstance(self.mp_query, GeoQuerySet):
-            logger.debug('self.mp_query is GeoQuerySet')
-        if isinstance(self.mp_query, RawQuerySet):
-            logger.debug('self.mp_query is RawQuerySet')
 
         # Must have model instance objects for JSON serialization of geometry fields to work right
         if minimal_values_list:
