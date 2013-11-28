@@ -190,12 +190,11 @@ class MeasuredParameter(object):
                 if (i % 1000) == 0:
                     logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
         else:
-            logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
             logger.debug('Reading data with a stride of %s', stride)
-            if isinstance(self.qs_mp, MPQuerySet):
-                # Our MPQuerySet does not support slicing
+            if self.qs_mp.isRawQuerySet:
+                # RawQuerySet does not support normal slicing
                 counter = 0
-                logger.debug('"Slicing" the old-fashion way an MPQuerySet...')
+                logger.debug('Slicing with mod division on a counter...')
                 for mp in self.qs_mp:
                     if counter % stride == 0:
                         self._fillXYZ(mp)
@@ -204,7 +203,7 @@ class MeasuredParameter(object):
                             logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
                     counter = counter + 1
             else:
-                logger.debug('Slicing a non-MPQuerySet...')
+                logger.debug('Slicing Pythonicly...')
                 for mp in self.qs_mp[::stride]:
                     self._fillXYZ(mp)
                     i = i + 1
