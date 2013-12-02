@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
 from matplotlib import figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from pylab import polyfit, polyval
+from pylab import polyval
 from django.conf import settings
 from django.db.models.query import RawQuerySet
 from django.db import connections, DatabaseError
@@ -36,6 +36,7 @@ from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
 import seawater.csiro as sw
 import numpy as np
+from numpy import polyfit
 import logging
 import string
 import random
@@ -630,7 +631,9 @@ class ParameterParameter(object):
                 infoText = 'Sigma-t levels computed for pressure = %.1f dbar<br>' % meanDepth
     
             # Assemble additional information about the correlation
+            logger.debug('polyfit')
             m, b = polyfit(self.x, self.y, 1)
+            logger.debug('polyval')
             yfit = polyval([m, b], self.x)
             ax.plot(self.x, yfit, color='k', linewidth=0.5)
             c = np.corrcoef(self.x, self.y)[0,1]
