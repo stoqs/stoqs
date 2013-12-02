@@ -556,6 +556,8 @@ class ParameterParameter(object):
                         except IndexError:
                             pass
                     counter = counter + 1
+                    if counter % 1000 == 0:
+                        logger.debug('Made it through %d of %d points', counter, pp_count)
 
             # If still no self.x and self.y then selection is not valid for the chosen x and y
             if self.x == [] or self.y == []:
