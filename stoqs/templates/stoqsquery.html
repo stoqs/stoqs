@@ -2520,9 +2520,9 @@
                 if ( ! $.isEmptyObject(data[key]) ) {
                     // Only a single terrain is supported for now
                     $.each(data[key], function (terrain, viewpoint) {
+                        $('#geo_x3d > Scene > Viewpoint').attr('centerOfRotation', viewpoint['centerOfRotation']);
                         $('#geo_x3d > Scene > Viewpoint').attr('position', viewpoint['position']);
                         $('#geo_x3d > Scene > viewpoint').attr('orientation', viewpoint['orientation']);
-                        $('#geo_x3d > Scene > Viewpoint').attr('centerOfRotation', viewpoint['centerOfRotation']);
                         $('#geo_x3d > Scene > Inline').attr('url', terrain);
                         return false;       // Do just the first terrain
                     });
