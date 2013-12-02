@@ -114,7 +114,9 @@ cl.slocum_294_endDatetime = enddate
 
 # Generic Glider ctd
 cl.glider_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
-cl.glider_ctd_files = [ 'nemesis_ctd.nc', 'ucsc260_ctd.nc', 'ucsc294_ctd.nc']
+cl.glider_ctd_files = [ 'nemesis_ctd.nc', 
+                        ## 'ucsc260_ctd.nc', 'ucsc294_ctd.nc'       # Replaced by full-resolution files in separate slocum_xxx loaders
+                      ]
 cl.glider_ctd_parms = ['TEMP', 'PSAL' ]
 cl.glider_ctd_startDatetime = startdate
 cl.glider_ctd_endDatetime = enddate
@@ -375,8 +377,8 @@ if cl.args.test:
     cl.load_glider_ctd(stride=100) 
     cl.load_glider_met(stride=100)
 
-    cl.load_slocum_260(stride=100)
-    cl.load_slocum_294(stride=100)
+    cl.load_slocum_294(stride=10)
+    cl.load_slocum_260(stride=10)
 
     cl.load_wg_oa_pco2(stride=100) 
     cl.load_wg_oa_ctd(stride=100) 
@@ -425,8 +427,8 @@ elif cl.args.optimal_stride:
     cl.load_glider_ctd(stride=1) 
     cl.load_glider_met(stride=1)
 
-    cl.load_slocum_260(stride=1)
-    cl.load_slocum_294(stride=1)
+    cl.load_slocum_260(stride=4)
+    cl.load_slocum_294(stride=4)
 
     cl.load_wg_oa_pco2(stride=1) 
     cl.load_wg_oa_ctd(stride=1) 
@@ -434,9 +436,9 @@ elif cl.args.optimal_stride:
     cl.load_wg_tex_ctd(stride=1)
     cl.load_wg_tex_met(stride=1)
 
-    cl.loadDorado(stride=1)
+    cl.loadDorado(stride=2)
     ##cl.loadDaphne(stride=1)             # Someone needs to make good NetCDF files
-    cl.loadTethys(stride=10)
+    cl.loadTethys(stride=2)
 
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
