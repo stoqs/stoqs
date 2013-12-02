@@ -538,6 +538,7 @@ class ParameterParameter(object):
 
                 # Get the Parameter-Parameter points
                 try:
+                    logger.debug('Executing sql = %s', sql)
                     cursor.execute(sql)
                 except DatabaseError, e:
                     infoText = 'Parameter-Parameter: ' + str(e) + ' Also, make sure you have no Parameters selected in the Filter.'
@@ -545,6 +546,7 @@ class ParameterParameter(object):
                     return None, infoText, sql
 
                 counter = 0
+                logger.debug('Looping through rows in cursor with a stride of %d...', stride_val)
                 for row in cursor:
                     if counter % stride_val == 0:
                         # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
