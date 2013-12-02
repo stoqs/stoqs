@@ -127,7 +127,9 @@ cl.glider_ctd_endDatetime = enddate
 
 # Glider met 
 cl.glider_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
-cl.glider_met_files = [ 'nemesis_met.nc', 'ucsc260_met.nc', 'ucsc294_met.nc']
+cl.glider_met_files = [ 'nemesis_met.nc', 
+                        ## 'ucsc260_met.nc', 'ucsc294_met.nc'
+                      ]
 cl.glider_met_parms = ['meanu','meanv' ]
 cl.glider_met_startDatetime = startdate
 cl.glider_met_endDatetime = enddate
