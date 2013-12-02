@@ -811,7 +811,10 @@ class Base_Loader(STOQS_Loader):
         #
         # Add resources after loading data to capture additional metadata that may be added
         #
-        self.addResources() 
+        try:
+            self.addResources() 
+        except IntegrityError, e:
+            logger.error('Failed to properly addResources: %s', e)
 
         # 
         # Update the stats and store simple line values
