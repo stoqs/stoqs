@@ -583,7 +583,6 @@ class ParameterParameter(object):
                     logger.exception('Failed to create path for ' +
                                      'parameterparameter (%s) file', ppPngFile)
                     return None, 'Failed to create path for parameterparameter (%s) file' % ppPngFile, sql
-            logger.debug('ppPngFileFullPath = %s', ppPngFileFullPath)
 
             # Make the figure
             fig = plt.figure()
@@ -645,22 +644,23 @@ class ParameterParameter(object):
 
             # Save the figure
             try:
+                logger.debug('Saving to file ppPngFileFullPath = %s', ppPngFileFullPath)
                 fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
             except Exception, e:
                 infoText = 'Parameter-Parameter: ' + str(e)
                 logger.exception('Cannot make 2D parameterparameter plot: %s', e)
                 plt.close()
                 return None, infoText, sql
-            else:
-                plt.close()
 
         except TypeError, e:
             ##infoText = 'Parameter-Parameter: ' + str(type(e))
             infoText = 'Parameter-Parameter: ' + str(e)
             logger.exception('Cannot make 2D parameterparameter plot: %s', e)
+            plt.close()
             return None, infoText, sql
 
         else:
+            plt.close()
             return ppPngFile, infoText, sql
 
     def makeX3D(self):
