@@ -31,9 +31,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # this makes
 
 from CANON import CANONLoader
        
-# building input data sources object
-#cl = CANONLoader('stoqs_september2011', 'CANON - September 2011')
-cl = CANONLoader('stoqs_september2013', 'CANON - September 2013')
+cl = CANONLoader('stoqs_september2013', 'CANON-ECOHAB - September 2013', 
+                           x3dTerrains= { '/stoqs/static/x3d/Monterey25_256.x3d': {
+                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236'
+                                        }
+                                 } )
 
 # Set start and end dates for all loads from sources that contain data 
 # beyond the temporal bounds of the campaign
@@ -366,6 +370,7 @@ cl.mack_moor_startDatetime = startdate
 cl.mack_moor_endDatetime = enddate
 
 ###################################################################################################################
+
 # Execute the load
 cl.process_command_line()
 
@@ -520,3 +525,7 @@ else:
 
     ##cl.loadSubSamples()
 
+# Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+cl.addTerrainResources()
+
+print "All Done."
