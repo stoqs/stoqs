@@ -582,10 +582,12 @@ class ParameterParameter(object):
             logger.debug('ppPngFileFullPath = %s', ppPngFileFullPath)
 
             # Make the figure
-            fig = figure.Figure()
-            canvas = FigureCanvas(fig)
+            ##fig = figure.Figure()
+            fig = plt.figure()
+            ##canvas = FigureCanvas(fig)
             plt.grid(True)
-            ax = fig.add_subplot(111, axisbg=(1,1,1,0))
+            ax = fig.add_subplot(111)
+            ##ax = fig.add_subplot(111, axisbg=(1,1,1,0))
             ax.set_xlim(self.pMinMax['x'][1], self.pMinMax['x'][2])
             ax.set_ylim(self.pMinMax['y'][1], self.pMinMax['y'][2])
 
@@ -642,7 +644,8 @@ class ParameterParameter(object):
 
             # Save the figure
             try:
-                canvas.print_figure(ppPngFileFullPath, dpi=120, facecolor=(1,1,1,0))
+                ##canvas.print_figure(ppPngFileFullPath, dpi=120, facecolor=(1,1,1,0))
+                fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
             except Exception, e:
                 infoText = 'Parameter-Parameter: ' + str(e)
                 logger.exception('Cannot make 2D parameterparameter plot: %s', e)
