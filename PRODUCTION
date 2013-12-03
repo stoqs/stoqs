@@ -28,13 +28,15 @@ WSGIDaemonProcess stoqs user=apache group=root threads=25
 WSGIProcessGroup stoqs
 
 <Directory STOQS_PROJ_DIR>
-Order deny,allow
-Allow from all
+    WSGIApplicationGroup %{GLOBAL}
+    Order deny,allow
+    Allow from all
 </Directory>
 
 # Map web server path to location of the stoqs.wsgi file:
 # WSGIScriptAlias /<parent_web_site> <path_to_stoqs.wsgi_file>, e.g.:
 WSGIScriptAlias /canon STOQS_PROJ_DIR/stoqs.wsgi
+
 
 NOTE: Multiple WSGIScriptAliass may be configured for different projects served from the
       same web server.  Simply clone the repository to another directory, set up the
