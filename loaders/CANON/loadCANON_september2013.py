@@ -371,6 +371,40 @@ cl.mack_moor_parms = [ 'TEMP','PSAL','chl','xmiss','oxygen','beamc',
 cl.mack_moor_startDatetime = startdate
 cl.mack_moor_endDatetime = enddate
 
+###################################################################################################
+# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/ 
+#                                   CANON13 25913RC 25913RC 26113RC 27313RC 27413RC 27513RC 27613RC
+#   copied to local CANON2013 dir
+###################################################################################################
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON2013')
+cl.subsample_csv_files = [
+'STOQS_CANON13_CARBON_GFF.csv', 'STOQS_CANON13_CHL_1U.csv', 'STOQS_CANON13_CHL_5U.csv', 'STOQS_CANON13_CHLA.csv',
+'STOQS_CANON13_CHL_GFF.csv', 'STOQS_CANON13_NO2.csv', 'STOQS_CANON13_NO3.csv', 'STOQS_CANON13_PHAEO_1U.csv',
+'STOQS_CANON13_PHAEO_5U.csv', 'STOQS_CANON13_PHAEO_GFF.csv', 'STOQS_CANON13_PO4.csv', 'STOQS_CANON13_SIO4.csv',
+
+'STOQS_25913RC_CHL_1U.csv', 'STOQS_25913RC_CHL_5U.csv', 'STOQS_25913RC_CHLA.csv', 'STOQS_25913RC_CHL_GFF.csv',
+'STOQS_25913RC_NO2.csv', 'STOQS_25913RC_NO3.csv', 'STOQS_25913RC_PHAEO_1U.csv', 'STOQS_25913RC_PHAEO_5U.csv',
+'STOQS_25913RC_PHAEO_GFF.csv', 'STOQS_25913RC_PO4.csv', 'STOQS_25913RC_SIO4.csv',
+
+'STOQS_26013RC_CHL_1U.csv', 'STOQS_26013RC_CHL_5U.csv', 'STOQS_26013RC_CHLA.csv', 'STOQS_26013RC_CHL_GFF.csv',
+'STOQS_26013RC_NO2.csv', 'STOQS_26013RC_NO3.csv', 'STOQS_26013RC_PHAEO_1U.csv', 'STOQS_26013RC_PHAEO_5U.csv',
+'STOQS_26013RC_PHAEO_GFF.csv', 'STOQS_26013RC_PO4.csv', 'STOQS_26013RC_SIO4.csv',
+
+'STOQS_26113RC_CHL_1U.csv', 'STOQS_26113RC_CHL_5U.csv', 'STOQS_26113RC_CHLA.csv', 'STOQS_26113RC_CHL_GFF.csv',
+'STOQS_26113RC_NO2.csv', 'STOQS_26113RC_NO3.csv', 'STOQS_26113RC_PHAEO_1U.csv', 'STOQS_26113RC_PHAEO_5U.csv',
+'STOQS_26113RC_PHAEO_GFF.csv', 'STOQS_26113RC_PO4.csv', 'STOQS_26113RC_SIO4.csv',
+
+'STOQS_27313RC_CHLA.csv',
+
+'STOQS_27413RC_CHLA.csv',
+
+'STOQS_27513RC_CHLA.csv', 'STOQS_27513RC_CHL_GFF.csv', 'STOQS_27513RC_NO2.csv', 'STOQS_27513RC_NO3.csv',
+'STOQS_27513RC_PHAEO_GFF.csv', 'STOQS_27513RC_PO4.csv', 'STOQS_27513RC_SIO4.csv',
+
+'STOQS_27613RC_CHLA.csv',
+                         ]
+
+
 ###################################################################################################################
 
 # Execute the load
@@ -424,7 +458,7 @@ if cl.args.test:
 
     cl.loadStella(stride=10)
 
-    ##cl.loadSubSamples()
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
     cl.loadL_662(stride=1) 
@@ -474,7 +508,7 @@ elif cl.args.optimal_stride:
 
     cl.loadStella(stride=1)
 
-    ##cl.loadSubSamples()
+    cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
@@ -525,7 +559,7 @@ else:
 
     cl.loadStella()
 
-    ##cl.loadSubSamples()
+    cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
