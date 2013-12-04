@@ -14,11 +14,12 @@ View functions to supoprt the main query web page
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 from django.utils import simplejson
 from django.conf import settings
 from django.core import serializers
 from django.db.models import Q
+from django.db.utils import ConnectionDoesNotExist
 from django.views.decorators.cache import cache_page
 from utils.STOQSQManager import STOQSQManager
 from utils import encoders
@@ -180,9 +181,14 @@ def queryData(request, format=None):
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     logger.debug('Calling buildQuerySets with params = %s', params)
     qm.buildQuerySets(**params)
-    options = simplejson.dumps(qm.generateOptions(),
-                               cls=encoders.STOQSJSONEncoder)
-                               # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
+    try:
+        options = simplejson.dumps(qm.generateOptions(),
+                                   cls=encoders.STOQSJSONEncoder)
+                                   # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
+    except ConnectionDoesNotExist, e:
+        logger.warn(e)
+        return HttpResponseNotFound('The database alias <b>%s</b> does not exist on this server.' % request.META['dbAlias'])
+
     ##logger.debug('options = %s', pprint.pformat(options))
     ##logger.debug('len(simpledepthtime) = %d', len(json.loads(options)['simpledepthtime']))
 
