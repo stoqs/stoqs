@@ -339,6 +339,21 @@ def showPlatformType(request, format = 'html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
+def showParameterGroupParameter(request, format = 'html'):
+    stoqs_object = mod.ParameterGroupParameter
+    query_set = stoqs_object.objects.all().order_by('parametergroup', 'parameter')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'uuid', 'parametergroup_id', 'parameter_id', 'parametergroup__name', 'parameter__name']
+    return o.process_request()
+
+def showParameterGroup(request, format = 'html'):
+    stoqs_object = mod.ParameterGroup
+    query_set = stoqs_object.objects.all().order_by('name')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
+
 def showParameter(request, format = 'html'):
     stoqs_object = mod.Parameter
     query_set = stoqs_object.objects.all().order_by('name')
