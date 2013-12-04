@@ -194,9 +194,16 @@ cl.OA2fl_files = ['OA2_fl_2013.nc']
 cl.OA2fl_parms = [ 'fluor' ]
 cl.OA2fl_startDatetime = startdate
 cl.OA2fl_endDatetime = enddate
- 
 
-# add code for Bruce here. we think that all the plumbing is in place for Bruce, just need .nc file(s)
+######################################################################################################
+# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/CN13ID copied to local BOG_Data/CN13ID
+######################################################################################################
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CN13ID')
+cl.subsample_csv_files = [
+'STOQS_CN13ID_CARBON_GFF.csv', 'STOQS_CN13ID_CHL_1U.csv', 'STOQS_CN13ID_CHL_5U.csv', 'STOQS_CN13ID_CHLA.csv',
+'STOQS_CN13ID_CHL_GFF.csv', 'STOQS_CN13ID_PHAEO_1U.csv', 'STOQS_CN13ID_PHAEO_5U.csv', 'STOQS_CN13ID_PHAEO_GFF.csv',
+                         ]
+ 
 
 ###################################################################################################################
 # Execute the load
@@ -205,39 +212,68 @@ cl.process_command_line()
 if cl.args.test:
     cl.loadWFuctd(stride=100)     
     cl.loadWFpctd(stride=50)
-    cl.loadL_662(stride=100) 
+    cl.loadL_662(stride=10) 
     cl.loadDorado(stride=1000)
     cl.loadM1(stride=10)
     cl.loadOA1ctd(stride=10)
     cl.loadOA1met(stride=10)
-    ##cl.loadOA1pH(stride=1)
-    ##cl.loadOA1pco2(stride=1)
-    ##cl.loadOA1fl(stride=1)
-    ##cl.loadOA1o2(stride=1)
-    ##cl.loadOA2ctd(stride=1)
-    ##cl.loadOA2met(stride=1)
-    ##cl.loadOA2pH(stride=1)
-    ##cl.loadOA2pco2(stride=1)
-    ##cl.loadOA2fl(stride=1)
-    ##cl.loadOA2o2(stride=1)
-    ##cl.loadSubSamples()
+
+    cl.loadOA1pH(stride=10)
+    cl.loadOA1pco2(stride=10)
+    cl.loadOA1fl(stride=10)
+    cl.loadOA1o2(stride=10)
+    cl.loadOA2ctd(stride=10)
+    cl.loadOA2met(stride=10)
+    cl.loadOA2pH(stride=10)
+    cl.loadOA2pco2(stride=10)
+    cl.loadOA2fl(stride=10)
+    cl.loadOA2o2(stride=10)
+
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
     cl.loadWFuctd(stride=1)     
     cl.loadWFpctd(stride=1)
-    cl.loadL_662(stride=2) 
+    cl.loadL_662(stride=1) 
     cl.loadDorado(stride=1)
     cl.loadM1(stride=1)
     cl.loadOA1ctd(stride=1)
     cl.loadOA1met(stride=1)
 
+    cl.loadOA1pH(stride=1)
+    cl.loadOA1pco2(stride=1)
+    cl.loadOA1fl(stride=1)
+    cl.loadOA1o2(stride=1)
+    cl.loadOA2ctd(stride=1)
+    cl.loadOA2met(stride=1)
+    cl.loadOA2pH(stride=1)
+    cl.loadOA2pco2(stride=1)
+    cl.loadOA2fl(stride=1)
+    cl.loadOA2o2(stride=1)
+
+    cl.loadSubSamples()
+
 else:
     cl.stride = cl.args.stride
-    cl.loadWFuctd()
+
+    cl.loadWFuctd()     
     cl.loadWFpctd()
-    cl.loadL_662()
+    cl.loadL_662() 
     cl.loadDorado()
     cl.loadM1()
     cl.loadOA1ctd()
     cl.loadOA1met()
+
+    cl.loadOA1pH()
+    cl.loadOA1pco2()
+    cl.loadOA1fl()
+    cl.loadOA1o2()
+    cl.loadOA2ctd()
+    cl.loadOA2met()
+    cl.loadOA2pH()
+    cl.loadOA2pco2()
+    cl.loadOA2fl()
+    cl.loadOA2o2()
+
+    cl.loadSubSamples()
 
