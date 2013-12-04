@@ -468,8 +468,8 @@ elif cl.args.optimal_stride:
     cl.load_glider_ctd(stride=1) 
     cl.load_glider_met(stride=1)
 
-    cl.load_slocum_260(stride=4)
-    cl.load_slocum_294(stride=4)
+    cl.load_slocum_260(stride=10)
+    cl.load_slocum_294(stride=10)
 
     cl.load_wg_oa_pco2(stride=1) 
     cl.load_wg_oa_ctd(stride=1) 
