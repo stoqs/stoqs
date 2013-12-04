@@ -329,6 +329,13 @@ class MeasuredParameter(object):
 
                 logger.debug('zi = %s', zi)
 
+            COLORED_DOT_SIZE_THRESHOLD = 5000
+            if self.qs_mp.count() > COLORED_DOT_SIZE_THRESHOLD:
+                coloredDotSize = 10
+            else:
+                coloredDotSize = 20
+
+
             parm_info = self.parameterMinMax
             try:
                 # Make the plot
@@ -347,7 +354,7 @@ class MeasuredParameter(object):
                     ax.scatter(self.x, self.y, marker='.', s=2, c='k', lw = 0)
                 else:
                     logger.debug('parm_info = %s', parm_info)
-                    ax.scatter(self.x, self.y, c=self.z, s=20, cmap=self.cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+                    ax.scatter(self.x, self.y, c=self.z, s=coloredDotSize, cmap=self.cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
                     # Add sample locations and names, but not if the underlying data are from the Samples themselves
