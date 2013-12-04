@@ -1257,8 +1257,11 @@ def runMooringLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, par
         for v in loader.include_names:
             loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
 
-    (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
-    logger.debug("Loaded Activity with name = %s", aName)
+    try:
+        (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
+        logger.debug("Loaded Activity with name = %s", aName)
+    except NoValidData, e:
+        logger.warning(e)
 
 
 if __name__ == '__main__':
