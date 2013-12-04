@@ -60,6 +60,8 @@ urlpatterns = patterns('',
     # All STOQS objects - full object queries with .json, .xml, .html, and .csv responses
     url(pre + r'platformType.?'      + formatPat, 'stoqs.views.showPlatformType',      {}, name='show-platformtype'),
     url(pre + r'platform.?'          + formatPat, 'stoqs.views.showPlatform',          {}, name='show-platform'),
+    url(pre + r'parametergroupparameter.?'    + formatPat, 'stoqs.views.showParameterGroupParameter',    {}, name='show-parametergroupparameter'),
+    url(pre + r'parametergroup.?'    + formatPat, 'stoqs.views.showParameterGroup',    {}, name='show-parametergroup'),
     url(pre + r'parameter.?'         + formatPat, 'stoqs.views.showParameter',         {}, name='show-parameter'),
     url(pre + r'activityType.?'      + formatPat, 'stoqs.views.showActivityType',      {}, name='show-activitytype'),
     url(pre + r'activity.?'          + formatPat, 'stoqs.views.showActivity',          {}, name='show-activity'),
