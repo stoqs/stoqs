@@ -1100,7 +1100,6 @@
                         $('#'+group+'-cmin').val(data['parameterminmax'][1]);
                         $('#'+group+'-cmax').val(data['parameterminmax'][2]);
                         kmlurl = url;
-                        update_sensortrackskml();
                         updateKMLcmincmax(group);
                     }
                     else if (params['parameterstandardname'].length == 1) {
@@ -1108,7 +1107,6 @@
                         $('#'+group+'-cmin').val(data['parameterminmax'][1]);
                         $('#'+group+'-cmax').val(data['parameterminmax'][2]);
                         kmlurl = url;
-                        update_sensortrackskml();
                         updateKMLcmincmax(group);
                     }
                     else {
@@ -1548,14 +1546,12 @@
             $('#temporal-anchor').html('Temporal');
 
             rebuildFilters();
-            update_sensortrackskml();
         }
     });
 
     $(document).on('click', ".stoqs-toggle", function (event) {
         toggleField(this);
         rebuildFilters();
-        update_sensortrackskml();
     });
 
     $('#getactualcount').on('click', function (event) {
@@ -1637,7 +1633,6 @@
                 $('#showsensortracks').removeAttr('disabled');
                 $('#showgeox3ddatatext').text($('#temporalparameterplotinfo').data()['info']);
                 rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
-                update_sensortrackskml();
             }
             else {
                 alert('Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.  Select just one of them.');
@@ -1655,7 +1650,6 @@
             $('#sectioncolorbar > img').removeAttr('src');
             $('#temporalparameterstrideinfo').text('');
             rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'simpledepthtime', 'platforms', 'sampledepthtime']);
-            update_sensortrackskml();
         }
     });
 
@@ -2231,7 +2225,6 @@
         //$('#zoomed-button').attr('title', 'Click to unzoom to original extent. Right-click on plot to unzoom to last zoom level.').tooltip('fixTitle').tooltip('hide');
 
         rebuildFilters();
-        update_sensortrackskml();
 
         var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
         var dLabel = 'Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
@@ -2253,7 +2246,6 @@
             $('#end-depth').val(zoom_xy[3]);
         
             rebuildFilters();
-            update_sensortrackskml();
         } 
         // return false to suppress the right-mouse context menu from appearing 
         return false
@@ -2908,6 +2900,10 @@
                 });
             }
 
+            // Update kml request after summary request finishes so that cmin and cmax are set for the current data
+            update_sensortrackskml()
+
+            // Perform mapQuery separate from summary query so that it is not cached by memcached
             var qstring=($.param($.map(map_params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
             $.ajax({
                 //onInit() must finish before map can be drawn
