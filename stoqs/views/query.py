@@ -14,10 +14,11 @@ View functions to supoprt the main query web page
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
 from django.utils import simplejson
 from django.conf import settings
 from django.core import serializers
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.db.utils import ConnectionDoesNotExist
 from django.views.decorators.cache import cache_page
@@ -180,7 +181,11 @@ def queryData(request, format=None):
 
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     logger.debug('Calling buildQuerySets with params = %s', params)
-    qm.buildQuerySets(**params)
+    try:
+        qm.buildQuerySets(**params)
+    except ValidationError, e:
+        logger.error(e)
+        return HttpResponseBadRequest('Bad request: ' + str(e))
     try:
         options = simplejson.dumps(qm.generateOptions(),
                                    cls=encoders.STOQSJSONEncoder)
