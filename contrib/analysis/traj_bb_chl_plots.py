@@ -33,7 +33,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # setting
 import matplotlib.pyplot as plt
 from django.db import connections
 from datetime import datetime, timedelta
-from stoqs.models import Activity, ActivityParameter, ParameterResource
+from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform
 from django.contrib.gis.geos import LineString, Point
 from django.db.models import Max, Min
 from utils.utils import round_to_n
@@ -43,6 +43,9 @@ dbAlias = 'stoqs_september2013_t'
 pName = 'tethys'
 xParmName = 'bb470'
 yParmName = 'chlorophyll'
+#pName = 'dorado'
+#xParmName = 'bbp420'
+#yParmName = 'fl700_uncorr'
 timeInterval = timedelta(hours=12)
 
 # Should not need to change anything below
@@ -75,9 +78,9 @@ cursor = connections[dbAlias].cursor()
 
 # Get start and end datetimes, color and geographic extent of the activity
 aQS = Activity.objects.using(dbAlias).filter(platform__name=pName)
-aStart = aQS.values_list('startdate')[0][0]
-aEnd = aQS.values_list('enddate')[0][0]
-color = '#' + aQS.values_list('platform__color')[0][0]
+seaQS = aQS.aggregate(Min('startdate'), Max('enddate'))
+aStart, aEnd = (seaQS['startdate__min'], seaQS['enddate__max'])
+color = '#' + Platform.objects.using(dbAlias).filter(name=pName).values_list('color')[0][0]
 extent = aQS.extent(field_name='maptrack')
 
 # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
@@ -104,6 +107,11 @@ while endTime < aEnd:
         x.append(float(row[1]))
         y.append(float(row[2]))
         points.append(Point(float(row[3]), float(row[4])))
+
+    if len(points) < 2:
+        startTime = endTime
+        endTime = startTime + timeInterval
+        continue
 
     path = LineString(points).simplify(tolerance=.001)
 
