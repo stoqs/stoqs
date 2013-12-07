@@ -121,8 +121,9 @@ while endTime < aEnd:
     # Make the plot 
     ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
     ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
-    ax.set_xlabel(xUnits)
-    ax.set_ylabel(yUnits)
+    ax.set_xlabel('%s (%s)' % (xParmName, xUnits))
+    ax.set_ylabel('%s (%s)' % (yParmName, yUnits))
+    ax.set_title('%s from %s' % (pName, dbAlias)) 
     ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=False)
     ax.plot(xp, yp, c=color)
     ax.text(0.0005, 5.3, startTime.strftime('%Y-%m-%d %H:%M'))
