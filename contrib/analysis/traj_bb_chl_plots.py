@@ -134,7 +134,7 @@ while endTime < aEnd:
     ax.set_title('%s from %s' % (pName, dbAlias)) 
     ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=False)
     ax.plot(xp, yp, c=color)
-    ax.text(0.0005, 5.3, startTime.strftime('%Y-%m-%d %H:%M'))
+    ax.text(0.1, 0.8, startTime.strftime('%Y-%m-%d %H:%M'), transform=ax.transAxes)
     fileName = 'chl_bb_' + startTime.strftime('%Y%m%dT%H%M') + '.png'
     fig.savefig(fileName)
     print 'Saved file', fileName
