@@ -39,7 +39,7 @@ from django.db.models import Max, Min
 from utils.utils import round_to_n
 
 # Change these options
-dbAlias = 'stoqs_september2013_t'
+dbAlias = 'stoqs_september2013_o'
 pName = 'tethys'
 xParmName = 'bb470'
 yParmName = 'chlorophyll'
