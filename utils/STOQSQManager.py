@@ -13,10 +13,9 @@ STOQS Query manager for building ajax responces to selections made for QueryUI
 '''
 
 from django.conf import settings
-from django.db.models import Q, Max, Min, Sum
+from django.db.models import Q, Max, Min, Sum, Avg
 from django.db.models.sql import query
 from django.contrib.gis.geos import fromstr, MultiPoint
-from django.db.models import Avg
 from django.db.utils import DatabaseError
 from django.http import HttpResponse
 from stoqs import models
@@ -405,7 +404,7 @@ class STOQSQManager(object):
         results = []
         if pid:
             if percentileAggregateType == 'extrema':
-                logger.debug('self.getActivityParametersQS().filter(parameter__id=pid) = %s', str(self.getActivityParametersQS().filter(parameter__id=pid).query))
+                logger.debug('self.getActivityParametersQS().filter(parameter__id=%s) = %s', pid, str(self.getActivityParametersQS().filter(parameter__id=pid).query))
                 qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'), Avg('median'))
                 logger.debug('qs = %s', qs)
                 try:
@@ -1095,7 +1094,10 @@ class STOQSQManager(object):
 
                 logger.debug('Instantiating Viz.PropertyPropertyPlots for X3D............................................')
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
-                x3dDict = self.pp.makeX3D()
+                try:
+                    x3dDict = self.pp.makeX3D()
+                except DatabaseError, e:
+                    return '', e
             
         return x3dDict
 

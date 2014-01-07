@@ -26,7 +26,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from pylab import polyval
 from django.conf import settings
 from django.db.models.query import RawQuerySet
-from django.db import connections, DatabaseError
+from django.db import connections, DatabaseError, transaction
 from datetime import datetime
 from KML import readCLT
 from stoqs import models
@@ -674,6 +674,8 @@ class ParameterParameter(object):
             return ppPngFile, infoText, sql
 
     def makeX3D(self):
+      @transaction.commit_on_success(using=self.request.META['dbAlias'])
+      def inner_makeX3D(self):
         '''
         Produce X3D XML text and return it
         '''
@@ -730,7 +732,7 @@ class ParameterParameter(object):
             self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
 
             colorbarPngFile = ''
-            if colors:
+            if self.pDict['c']:
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
                 try:
                     cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
@@ -745,9 +747,11 @@ class ParameterParameter(object):
 
             x3dResults = {'colors': colors, 'points': points, 'info': '', 'x': self.pMinMax['x'], 'y': self.pMinMax['y'], 'z': self.pMinMax['z'], 'colorbar': colorbarPngFile}
 
-        except:
+        except DatabaseError:
             logger.exception('Cannot make parameterparameter X3D')
-            x3dResults = {'colors': [], 'points': [], 'info': 'Cannot make 3D plot.', 'x': [], 'y': [], 'z': [], 'median': ''}
+            raise DatabaseError('Cannot make parameterparameter X3D')
 
         return x3dResults
+
+      return inner_makeX3D(self)
 
