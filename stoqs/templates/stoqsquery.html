@@ -312,7 +312,9 @@
                                                 <p><a id="pp-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
                                                 <p><a id="pp_x3d-reset-view" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                             </div>
-                                            <div id="pp3d-colorbar" class="span7"></div>
+                                            <div class="span7">
+                                                <img src="" />
+                                            </div>
                                         </div>
                                         <div>
                                         <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
@@ -2791,7 +2793,12 @@
                         $('#x3d-zmin').attr('string', data[key]['z'][1]);
                         $('#x3d-zmax').attr('string', data[key]['z'][2]);
                         $('#x3d-zname').attr('string', data[key]['z'][3]);
-                        $('#pp3d-colorbar').html('<img src="{{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + '" />');
+                        if (data[key]['colorbar']) {
+                            $('#parameter-parameter-3dplot > div > div > img').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key]['colorbar']);
+                        }
+                        else {
+                            $('#parameter-parameter-3dplot > div > div > img').removeAttr('src');
+                        }
                         //$('#pp_x3d').css( {
                         //        'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
                         //        'background-repeat': 'no-repeat',
