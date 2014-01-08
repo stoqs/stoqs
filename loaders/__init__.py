@@ -440,6 +440,14 @@ class STOQS_Loader(object):
         Add Resources for this activity, namely the NC_GLOBAL attribute names and values,
         and all the attributes for each variable in include_names.
         '''
+        # The source of the data - this OPeNDAP URL
+        (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name = 'opendap_url')
+        logger.debug("Getting or Creating Resource with name = %s, value = %s", 'opendap_url', self.url )
+        (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                            name='opendap_url', value=self.url, uristring=self.url, resourcetype=resourceType)
+        (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+                    activity=self.activity, resource=resource)
+
         # The NC_GLOBAL attributes from the OPeNDAP URL.  Save them all.
         logger.debug("Getting or Creating ResourceType nc_global...")
         logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
