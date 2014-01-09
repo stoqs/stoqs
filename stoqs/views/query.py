@@ -74,6 +74,7 @@ query_parms = {
                    'parametertab': 'parametertab',          # = 1 if Parameter/Station tab is active and full resolution timeSeries data is needed
                    'secondsperpixel': 'secondsperpixel',    # Resolution of time-depth-flot window
                    'x3dterrains': 'x3dterrains',            # Hash of 3D Terrain info 
+                   'resources': 'resources',                # Hash of Resources for Activities in the selection
 }
 
 def get_http_site_uri(request):
