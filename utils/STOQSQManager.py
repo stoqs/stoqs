@@ -83,6 +83,7 @@ class STOQSQManager(object):
             'parameterparameterpng': self.getParameterParameterPNG,
             'parameterplatforms': self.getParameterPlatforms,
             'x3dterrains': self.getX3DTerrains,
+            'resources': self.getResources,
         }
         
     def buildQuerySets(self, *args, **kwargs):
@@ -1156,6 +1157,44 @@ class STOQSQManager(object):
             logger.warn('No resourcetype__name of x3dterrain in %s: %s', self.dbname, e)
 
         return x3dtHash
+
+    def getResources(self):
+        '''
+        Query ActivityResources to Resources remaining in Activity selection
+        '''
+        netcdfHash = {}
+        # Simple name/value attributes
+        for ar in models.ActivityResource.objects.using(self.dbname).filter(activity__in=self.qs
+                        ,resource__name__in=['title', 'summary', 'opendap_url']
+                        ).values('activity__platform__name', 'activity__name', 'resource__name', 'resource__value').order_by(
+                        'activity__startdate', 'activity__platform__name'):
+            try:
+                netcdfHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__value']
+            except KeyError:
+                try:
+                    netcdfHash[ar['activity__platform__name']][ar['activity__name']] = {}
+                except KeyError:
+                    netcdfHash[ar['activity__platform__name']] = {}
+                    netcdfHash[ar['activity__platform__name']][ar['activity__name']] = {}
+
+                netcdfHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__value']
+
+        # Quick Look plots
+        qlHash = {}
+        for ar in models.ActivityResource.objects.using(self.dbname).filter(activity__in=self.qs, resource__resourcetype__name='quick_look').values(
+                        'activity__platform__name', 'activity__name', 'resource__name', 'resource__uristring').order_by('activity__startdate'):
+            try:
+                qlHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__uristring']
+            except KeyError:
+                try:
+                    qlHash[ar['activity__platform__name']][ar['activity__name']] = {}
+                except KeyError:
+                    qlHash[ar['activity__platform__name']] = {}
+                    qlHash[ar['activity__platform__name']][ar['activity__name']] = {}
+
+                qlHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__uristring']
+
+        return {'netcdf': netcdfHash, 'quick_look': qlHash}
 
     #
     # Methods that generate Q objects used to populate the query.

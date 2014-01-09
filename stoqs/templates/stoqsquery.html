@@ -245,30 +245,17 @@
                                 <input type="checkbox" id="getactualcount" /> Get actual count
                             </label>
 
-                            <h3>Activities</h3>
-                                <table id="activities-table" class="table table-striped table-bordered">
-                                    <thead>
-                                        <tr><td>Under construction</td></tr>
-                                    </thead> 
-                                    <tbody>
-                                        <tr><td></td></tr>
-                                    </tbody>
-                                </table>
-
-                            <h3>Resources</h3>
                             <ul id="resourceTabs" class="nav nav-tabs">
-                                <li><a href="#quicklookplots" data-toggle="tab">Quick look plots</a></li>
-                                <li><a href="#netcdfmetadata" data-toggle="tab">NetCDF metadata</a></li>
+                                <li class="active"><a href="#metadatanetcdf" data-toggle="tab">NetCDF</a></li>
+                                <li><a href="#metadataquicklookplots" data-toggle="tab">Quick look plots</a></li>
                             </ul>
                             <div class="tab-content">
-                                <div class="tab-pane" id="quicklookplots">
-                                    <div id="metadata-quicklookplots">
-                                        Under construction
+                                <div class="tab-pane active" id="metadatanetcdf">
+                                    <div>
                                     </div>
                                 </div>
-                                <div class="tab-pane" id="netcdfmetadata">
-                                    <div id="metadata-netcdfmetadata">
-                                        Under construction
+                                <div class="tab-pane" id="metadataquicklookplots">
+                                    <div>
                                     </div>
                                 </div>
                             </div><!-- tab-content -->
@@ -2332,6 +2319,65 @@
         }
         var me = this;
 
+        function buildMetadataHtml(data) {
+                // Sort the Activities by platform and build HTML for NetCDF tab
+                var platforms = $.map(data.resources.netcdf, function(activities, plat) {return plat}).sort();
+                var platformActivitiesHtml = '';
+                $.each(platforms, function (index, plat) {
+                    activities = data.resources.netcdf[plat];
+                    platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
+                    '<div class="accordian-heading">' + 
+                       '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
+                        plat + 
+                        '</a></h5>' + 
+                    '</div>' + 
+                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
+                        '<div class="accordion-inner" style="padding:0;">';
+                    platformActivitiesHtml += '<table class="table table-condensed"><tbody>';
+
+                    $.each(activities, function (activity, attributes) {
+                        var dsLink = activity;
+                        if (attributes.opendap_url) {
+                            dsLink = '<a target="_blank" href="' + attributes.opendap_url + '.html">' + activity + '</a>';
+                        }
+                        platformActivitiesHtml += '<tr id="' + activity +'">' +
+                                '<td>' + dsLink + '</td>' +
+                                '<td>' + attributes.title + '</td>' +
+                                '<td>' + attributes.summary + '</td>' +
+                            '</tr>';
+                    });
+                    platformActivitiesHtml += '</tbody></table></div></div></div>';
+                });
+                $('#metadatanetcdf > div').html(platformActivitiesHtml);
+
+                // Sort the QuickLook plot URLs by platform and build HTML for Quick look plots tab
+                var platforms = $.map(data.resources.quick_look, function(activities, plat) {return plat}).sort();
+                var platformActivitiesHtml = '';
+                $.each(platforms, function (index, plat) {
+                    activities = data.resources.quick_look[plat];
+                    platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
+                    '<div class="accordian-heading">' + 
+                       '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
+                        plat + 
+                        '</a></h5>' + 
+                    '</div>' + 
+                    '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
+                        '<div class="accordion-inner" style="padding:0;">';
+                    platformActivitiesHtml += '<table class="table table-condensed"><tbody>';
+
+                    $.each(activities, function (activity, plots) {
+                        platformActivitiesHtml += '<tr id="' + activity +'">' +
+                                '<td>' + activity + '</td>';
+                        $.each(plots, function (type, url) {
+                            platformActivitiesHtml += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
+                        });
+                        platformActivitiesHtml += '</tr>';
+                    });
+                    platformActivitiesHtml += '</tbody></table></div></div></div>';
+                });
+                $('#metadataquicklookplots > div').html(platformActivitiesHtml);
+        }
+
         function onInit(data, key) {
             // Called from ajax on initial request
             initData = data;
@@ -2522,6 +2568,9 @@
                     });
                     $('#spatial-3d-li').show();
                 }
+            }
+            else if (key == 'resources') {
+                buildMetadataHtml(data);
             }
         
         } // onInit()
@@ -2828,6 +2877,9 @@
             else if (key == 'parameterplatforms' || key == 'parameterminmax') {
                 // Save the dictionary in the body so that asynchronous event handlers can get at it
                 $('body').data(key, data[key]);
+            }
+            else if (key == 'resources') {
+                buildMetadataHtml(data);
             }
 
             // If no parametertime data and Station tab is active then disable it and switch back to Trajectory
