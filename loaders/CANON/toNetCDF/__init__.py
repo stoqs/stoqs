@@ -36,8 +36,30 @@ class BaseWriter(object):
     '''
 
     def __init__(self, parentInDir, parentOutDir):
+        '''
+        Subclassed methods must assign ncFile 'title' and 'summary' attributes to succintly describe the data.
+
+        title: A short description of the dataset.
+            Write one sentence that describes the scope of the data contained within the file; answer the five "W's": Who, What, Where, Why, When.
+            Please use the following construction guidelines for creating a meaningful title for your netCDF file. 
+            Do not use all capitals or capitalize words other than proper nouns or widely used acronyms. 
+            Avoid using acronyms, especially for projects or organizations. If you feel you must include an acronym, spell out the meaning 
+            of the acronym then put the acronym in parentheses after the meaning. General construction guideline for data set title 
+            "Summary of variables and feature type" collected by instrument(s) from the platform(s) in the sea_name(s) from 
+            time_coverage_start to time_coverage_end; Here are some good examples: 
+            a. Physical and chemical profile data from bottle and conductivity-temperature-depth (CTD) casts from the RV JERE CHASE in the Gulf of Maine from 1982 to 1984; 
+            b. Temperature and salinity trajectory data from thermosalinograph measurements from the RV JERE CHASE in the Gulf of Maine from 1982 to 1984;
+
+            A bad example would be: Temperature, Salinity and Chlorophyll Data from WADOE during NWCOP San Juan from the '80's.
+
+        summary: A paragraph describing the dataset.
+            Write a paragraph or abstract about the data contained within the file, expanding on the title to provide more information.
+        '''
+
         self.parentInDir = parentInDir
         self.parentOutDir = parentOutDir
+        self.ncFile.title = ''
+        self.ncFile.summary = ''
             
     def add_global_metadata(self):
         '''
@@ -47,7 +69,6 @@ class BaseWriter(object):
 
         iso_now = datetime.datetime.now().isoformat()
 
-        self.ncFile.title = ''
         self.ncFile.netcdf_version = '3.6'
         self.ncFile.Conventions = 'CF-1.6'
         self.ncFile.date_created = iso_now

@@ -7,8 +7,7 @@ __maintainer__ = "Mike McCann"
 __email__ = "mccann at mbari.org"
 __doc__ = '''
 
-Script to read data from Western Flyer Seabird underway ctd .asc files and 
-write them to netCDF files.  
+Script to read data from Seabird underway ctd .asc files and write them to netCDF files.  
 
 Use the conventions for Trajectory feature type and write as much metadata as possible.
 
@@ -127,6 +126,10 @@ class ParserWriter(BaseWriter):
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
         self.outFile = outFile
+
+        # Describe the dataset with sufficient detail
+        self.ncFile.title = 'Underway CTD data'
+        self.ncFile.summary = 'Observational oceanographic data translated with no modification from original Seabird data file %s' % inFile
 
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(self.esec_list))

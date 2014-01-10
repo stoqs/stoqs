@@ -149,6 +149,10 @@ class ParserWriter(BaseWriter):
         self.ncFile = netcdf_file(outFile, 'w')
         self.outFile = outFile
 
+        # Describe the dataset with sufficient detail
+        self.ncFile.title = 'Profile CTD cast data'
+        self.ncFile.summary = 'Observational oceanographic data translated with no modification from original Seabird data file %s' % inFile
+
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(self.esec_list))
         self.time = self.ncFile.createVariable('time', 'float64', ('time',))
