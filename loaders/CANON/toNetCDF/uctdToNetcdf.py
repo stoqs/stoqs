@@ -196,6 +196,7 @@ if __name__ == '__main__':
     # Accept optional arguments of input data directory name and output directory name
     # If not specified then the uctd is used. The third argument is the character(s) at
     # the begining of the .asc file names.  The fourrh is the intake water depth in m.
+    # TODO: Use argparse and add aruments for title and summary text
     try:
         inDir = sys.argv[1]
     except IndexError:

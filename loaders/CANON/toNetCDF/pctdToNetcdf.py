@@ -231,6 +231,7 @@ if __name__ == '__main__':
 
     # Accept optional arguments of input data directory name and output directory name
     # If not specified then the current directory is used
+    # TODO: Use argparse and add aruments for title and summary text
     try:
         inDir = sys.argv[1]
     except IndexError:
