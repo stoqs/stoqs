@@ -35,32 +35,6 @@ class BaseWriter(object):
     Common things used by ParserWriters
     '''
 
-    def __init__(self, parentInDir, parentOutDir):
-        '''
-        Subclassed methods must assign ncFile 'title' and 'summary' attributes to succintly describe the data.
-
-        title: A short description of the dataset.
-            Write one sentence that describes the scope of the data contained within the file; answer the five "W's": Who, What, Where, Why, When.
-            Please use the following construction guidelines for creating a meaningful title for your netCDF file. 
-            Do not use all capitals or capitalize words other than proper nouns or widely used acronyms. 
-            Avoid using acronyms, especially for projects or organizations. If you feel you must include an acronym, spell out the meaning 
-            of the acronym then put the acronym in parentheses after the meaning. General construction guideline for data set title 
-            "Summary of variables and feature type" collected by instrument(s) from the platform(s) in the sea_name(s) from 
-            time_coverage_start to time_coverage_end; Here are some good examples: 
-            a. Physical and chemical profile data from bottle and conductivity-temperature-depth (CTD) casts from the RV JERE CHASE in the Gulf of Maine from 1982 to 1984; 
-            b. Temperature and salinity trajectory data from thermosalinograph measurements from the RV JERE CHASE in the Gulf of Maine from 1982 to 1984;
-
-            A bad example would be: Temperature, Salinity and Chlorophyll Data from WADOE during NWCOP San Juan from the '80's.
-
-        summary: A paragraph describing the dataset.
-            Write a paragraph or abstract about the data contained within the file, expanding on the title to provide more information.
-        '''
-
-        self.parentInDir = parentInDir
-        self.parentOutDir = parentOutDir
-        self.ncFile.title = ''
-        self.ncFile.summary = ''
-            
     def add_global_metadata(self):
         '''
         This is the main advantage of using a class for these methods.  This method uses the
@@ -133,21 +107,56 @@ class BaseWriter(object):
         self.ncFile.useconst = 'Not intended for legal use. Data may contain inaccuracies.'
         self.ncFile.history = 'Created by "%s" on %s' % (' '.join(sys.argv), iso_now,)
 
+    def process_command_line(self):
+        '''
+        The argparse library is included in Python 2.7 and is an added package for STOQS. 
+        Guidelines for title and summary descriptions derived from NOAA NODC NetCDF Templates: http://www.nodc.noaa.gov/data/formats/netcdf/
+        '''
+
+        import argparse
+        from argparse import RawTextHelpFormatter
+
+        exampleString = sys.argv[0] + ' -i uctd -d 1.5 '
+        parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
+                                         description='Convert data files to NetCDF format for loading into STOQS',
+                                         epilog='Examples:' + '\n\n' + exampleString + '\n\nOutput files are written to the input directory.')
+        parser.add_argument('-i', '--inDir', action='store', default='.',
+                            help='Directory where the input data files are located')
+        parser.add_argument('-d', '--depth', action='store', 
+                            help='Nominal depth below the sea surface where the water is sampled')
+        parser.add_argument('-t', '--title', action='store',
+                            help='''title: A short description of the dataset.
+Write one sentence that describes the scope of the data contained within the file; answer the five "W's": Who, What, Where, Why, When.
+Please use the following construction guidelines for creating a meaningful title for your netCDF file:
+- Do not use all capitals or capitalize words other than proper nouns or widely used acronyms. 
+- Avoid using acronyms, especially for projects or organizations. If you feel you must include an acronym, spell out the meaning 
+  of the acronym then put the acronym in parentheses after the meaning. 
+General construction guideline for data set title:
+  "Summary of variables and feature type" collected by instrument(s) from the platform(s) in the sea_name(s) from time_coverage_start to time_coverage_end; 
+- Here are some good examples: 
+  a. Physical and chemical profile data from bottle and conductivity-temperature-depth (CTD) casts from the RV JERE CHASE in the Gulf of Maine from 1982 to 1984; 
+  b. Temperature and salinity trajectory data from thermosalinograph measurements from the RV JERE CHASE in the Gulf of Maine from 1982 to 1984;
+                            ''')
+        parser.add_argument('-s', '--summary', action='store',
+                            help='''summary: A paragraph describing the dataset.
+Write a paragraph or abstract about the data contained within the file, expanding on the title to provide more information.
+                            ''')
+        parser.add_argument('-f', '--format', action='store', default='SeaBird',
+                            help='''Input file format: The default input file format is SeaBird .asc. Specify 'Martin_UDAS' for that .txt file format.''')
+        parser.add_argument('-p', '--pattern', action='store', default='*',
+                            help='''Pattern for matching input files in inDir. Specify a pattern according to the rules used by the Unix shell. Quote wild card characters.''')
+        parser.add_argument('-v', '--verbose', action='store_true',
+                            help='Turn on verbose output')
+
+        self.args = parser.parse_args()
+
 
 if __name__ == '__main__':
+    '''
+    Simple instantiation test
+    '''
 
-    # Accept optional arguments of input data directory name, e.g. /mbari/Tracking/gliders, and output directory name
-    # If not specified then the current directory is used
-
-    try:
-        inDir = sys.argv[1]
-    except IndexError:
-        inDir = '.'
-    try:
-        outDir = sys.argv[2]
-    except IndexError:
-        outDir = '.'
-
-    bw = BaseWriter(parentInDir=inDir, parentOutDir=outDir)
-    print "bw.parentInDir = %s, bw.parentOutDir = %s" % (bw.parentInDir, bw.parentOutDir)
+    bw = BaseWriter()
+    bw.process_command_line()
+    print bw.args
 
