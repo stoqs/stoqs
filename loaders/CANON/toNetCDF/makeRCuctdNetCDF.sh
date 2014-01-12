@@ -1,16 +1,23 @@
 #!/bin/bash
 
-# For use on Rachel Carson CANON - ECOHAB March 2013
-# Set Remote Host (RH) to what's appropriate
-##RH=192.168.111.177
+LOGIN=stoqsadm
 ##RH=zuma.rc.mbari.org
 RH=odss.mbari.org
 
-rsync -rv stoqsadm@$RH:/data/canon/2013_Mar/carson/uctd .
 
-./uctdToNetcdf.py uctd uctd 0 1.5
+# Rachel Carson CANON - ECOHAB March 2013
+##DIR=/data/canon/2013_Mar/carson/uctd
+##LOCALDIR=`echo $DIR | cut -d/ -f6`  # -f must match last directory
+##rsync -rv $LOGIN@$RH:$DIR .
+##./uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 1.5
+##scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 
-scp uctd/*.nc stoqsadm@$RH:/data/canon/2013_Mar/carson/uctd
+# Rachel Carson CANON - ECOHAB September 2013
+DIR=/data/canon/2013_Sep/Platforms/Ships/Rachel_Carson/uctd
+LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
+rsync -rv $LOGIN@$RH:$DIR  .
+./uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 1.5 --title "Underway CTD data from R/V Rachel Carson CANON - ECOHAB September 2013"
+scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 
 # Clean up 
-rm -r uctd
+rm -r $LOCALDIR
