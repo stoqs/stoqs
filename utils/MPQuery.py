@@ -444,7 +444,8 @@ class MPQuery(object):
     execute the self joins needed on the measuredparameter table.  The structure of RawQuerySet returned is harmonized
     with the normal GeoQuerySet returned through regular .filter() operations by using the MPQuerySet "adapter".
     '''
-    rest_select_items = '''stoqs_parameter.name as parameter__name,
+    rest_select_items = '''stoqs_parameter.id as parameter__id,
+                         stoqs_parameter.name as parameter__name,
                          stoqs_parameter.standard_name as parameter__standard_name,
                          stoqs_measurement.depth as measurement__depth,
                          stoqs_measurement.geom as measurement__geom,
@@ -452,7 +453,8 @@ class MPQuery(object):
                          stoqs_platform.name as measurement__instantpoint__activity__platform__name,
                          stoqs_measuredparameter.datavalue as datavalue,
                          stoqs_parameter.units as parameter__units'''
-    sampled_rest_select_items = '''stoqs_parameter.name as parameter__name,
+    sampled_rest_select_items = '''stoqs_parameter.id as parameter__id,
+                         stoqs_parameter.name as parameter__name,
                          stoqs_parameter.standard_name as parameter__standard_name,
                          stoqs_sample.depth as sample__depth,
                          stoqs_sample.geom as sample__geom,
