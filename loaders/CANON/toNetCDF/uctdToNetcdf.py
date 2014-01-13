@@ -290,7 +290,7 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
             turb_scufa = self.ncFile.createVariable('turb_scufa', 'float64', ('time',))
             turb_scufa.long_name = 'Turbidity_Scufa'
             turb_scufa.coordinates = 'time depth latitude longitude'
-            turb_scufa.units = 'volts'
+            turb_scufa.units = 'NTU'
             turb_scufa._FillValue = self._FillValue
             turb_scufa.missing_value = self.missing_value
             turb_scufa[:] = self.turb_scufa_list
