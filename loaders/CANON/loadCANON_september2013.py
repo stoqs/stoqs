@@ -238,10 +238,10 @@ cl.subsample_csv_files = [
 #####################################################################
 # JOHN MARTIN
 #####################################################################
-## No netcdf files as of 18 September 2013
-##cl.JMuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/uctd/' 
-##cl.JMuctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar' ]
-##cl.JMuctd_files = [ '27710c01jm.nc',   '27910c06jm.nc',   '28410c02jm.nc',   '28710c03jm.nc',   '29810c01jm.nc', ]
+cl.JMuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/uctd/' 
+cl.JMuctd_parms = ['TEMP', 'PSAL', 'turb_scufa', 'fl_scufa' ]
+cl.JMuctd_files = [ 'jhmudas_2013101.nc', 'jhmudas_2013102.nc', 'jhmudas_2013103.nc', 'jhmudas_2013911.nc', 'jhmudas_2013913.nc', 
+                    'jhmudas_2013916.nc', 'jhmudas_2013917.nc', 'jhmudas_2013919.nc', 'jhmudas_2013923.nc', 'jhmudas_2013930.nc', ]
 
 cl.JMpctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/pctd/' 
 cl.JMpctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
@@ -433,6 +433,7 @@ if cl.args.test:
 
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
+    cl.loadJMuctd(stride=10)
     cl.loadJMpctd(stride=10)
     cl.loadWFuctd(stride=10)   
     cl.loadWFpctd(stride=10)
