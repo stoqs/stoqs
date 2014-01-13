@@ -484,6 +484,7 @@ elif cl.args.optimal_stride:
 
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
+    cl.loadJMuctd(stride=2)
     cl.loadJMpctd(stride=1)
     cl.loadWFuctd(stride=1)   
     cl.loadWFpctd(stride=1)
@@ -535,6 +536,7 @@ else:
 
     cl.loadRCuctd()
     cl.loadRCpctd()
+    cl.loadJMuctd()
     cl.loadJMpctd()
     cl.loadWFuctd()   
     cl.loadWFpctd()
