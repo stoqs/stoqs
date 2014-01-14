@@ -1,16 +1,15 @@
 #!/bin/bash
 
-# For use with the John Martin Septemember 2013 data
-# Set Remote Host (RH) to what's appropriate
-##RH=192.168.111.177
-RH=beach.mbari.org
+LOGIN=stoqsadm
+##RH=zuma.rc.mbari.org
+RH=odss.mbari.org
 
-rsync -rv stoqsadm@$RH:/data/canon/2013_Sep/Platforms/Ships/Martin/pctd .
+# John Martin CANON - ECOHAB September 2013
+DIR=/data/canon/2013_Sep/Platforms/Ships/Martin/pctd
+LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
+rsync -rv $LOGIN@$RH:$DIR  .
+./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V John Martin during CANON - ECOHAB September 2013" 
+scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 
-./pctdToNetcdf.py pctd pctd 2
-
-scp pctd/*.nc stoqsadm@$RH:/data/canon/2013_Sep/Platforms/Ships/Martin/pctd
-
-# Clean up
-rm -r pctd
-
+# Clean up 
+rm -r $LOCALDIR
