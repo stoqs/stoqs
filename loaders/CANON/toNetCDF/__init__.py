@@ -68,7 +68,7 @@ class BaseWriter(object):
         self.ncFile.distribution_statement = 'Any use requires prior approval from the MBARI CANON PI: Dr. Francisco Chavez'
         self.ncFile.license = self.ncFile.distribution_statement
         self.ncFile.useconst = 'Not intended for legal use. Data may contain inaccuracies.'
-        self.ncFile.history = 'Created by "%s" on %s' % (' '.join(sys.argv), iso_now,)
+        self.ncFile.history = 'Created by STOQS software command "%s" on %s' % (' '.join(sys.argv), iso_now,)
 
 
     def add_global_timeseries_metadata(self):
