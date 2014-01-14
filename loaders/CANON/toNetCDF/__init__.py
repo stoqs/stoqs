@@ -116,14 +116,22 @@ class BaseWriter(object):
         import argparse
         from argparse import RawTextHelpFormatter
 
-        exampleString = sys.argv[0] + ' -i uctd -d 1.5 '
+        exampleString = ''
+        # Known subclassed applications show some examples here
+        if sys.argv[0].find('uctdToNetcdf.py') != -1:
+            exampleString = sys.argv[0] + ' -i uctd -d 1.5'
+            exampleString += '\n' + sys.argv[0] + ' -i uctd -d 1.5 -t "Underway CTD data from R/V John Martin during CANON - ECOHAB September 2013" '
+        if sys.argv[0].find('pctdToNetcdf.py') != -1:
+            exampleString = sys.argv[0] + ' -i pctd '
+            exampleString += '\n' + sys.argv[0] + ' -i pctd -t "Profile CTD data from R/V Rachel Carson during CANON - ECOHAB March 2013" '
+
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Convert data files to NetCDF format for loading into STOQS',
                                          epilog='Examples:' + '\n\n' + exampleString + '\n\nOutput files are written to the input directory.')
         parser.add_argument('-i', '--inDir', action='store', default='.',
                             help='Directory where the input data files are located')
         parser.add_argument('-d', '--depth', action='store', 
-                            help='Nominal depth below the sea surface where the water is sampled')
+                            help='Nominal depth below the sea surface where the water is sampled - for uctd data')
         parser.add_argument('-t', '--title', action='store',
                             help='''title: A short description of the dataset.
 Write one sentence that describes the scope of the data contained within the file; answer the five "W's": Who, What, Where, Why, When.
