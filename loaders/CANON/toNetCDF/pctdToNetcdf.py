@@ -47,14 +47,6 @@ class ParserWriter(BaseWriter):
     generated .asc files and write the data as a CF-compliant NetCDF Trajectory file.
     '''
 
-    def __init__(self, inDir, outDir, beginFileString):
-        '''
-        Override BaseWriter's constructor as we need some additional parameters
-        '''
-        self.inDir = inDir
-        self.outDir = outDir
-        self.beginFileString = beginFileString
-
     def process_asc_files(self):
         '''
         Loop through all .asc files and write each one out as a netCDF file trajectory format
@@ -67,11 +59,12 @@ class ParserWriter(BaseWriter):
  255.146622    199.000    197.437   3.624085   3.624098     8.9518     8.9525     0.5547    87.0507     4.3842 -9.990e-29     0.9866     0.3700     0.0348  0.0002000     0.0000 1.0000e-12     0.1294     100.00     5.0000    34.0048    34.0044     8.9306     8.9312    26.3499    26.3494 -9.990e-29 -9.990e-29 -9.990e-29         22 0.0000e+00
         '''
 
-        # Fill up the object's member data item lists from all the files - read only the processed c*.asc files, 
-        # the realtime.asc data will be processed by the end of the cruise
-        fileList = glob(os.path.join(self.inDir, self.beginFileString + '*.asc'))
+        # Fill up the object's member data item lists from all the files - read only the processed *.asc files that match pattern, 
+        fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
         fileList.sort()
         for file in fileList:
+            if not file.endswith('.asc'):
+                continue
             print "file = %s" % file
             if file == './pctd/c0912c01.asc':
                 # Special fix for first cast on September 2012 CANON cruise
@@ -93,7 +86,7 @@ class ParserWriter(BaseWriter):
             self.oxygen_list = []
 
             for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
-		##print r
+                ##print r
                 if not r['TimeJ']:
                     continue
                 # A TimeJ value of 1.0 is 0000 hours 1 January, so subtract 1 day
@@ -147,11 +140,19 @@ class ParserWriter(BaseWriter):
 
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
-        self.outFile = outFile
 
-        # Describe the dataset with sufficient detail
+        # If specified on command line override the default generic title with what is specified
         self.ncFile.title = 'Profile CTD cast data'
-        self.ncFile.summary = 'Observational oceanographic data translated with no modification from original Seabird data file %s' % inFile
+        if self.args.title:
+            self.ncFile.title = self.args.title
+
+        # Combine any summary text specified on commamd line with the generic summary stating the original source file
+        self.ncFile.summary = 'Observational oceanographic data translated with no modification from original data file %s' % inFile
+        if self.args.summary:
+            self.ncFile.summary = self.args.summary
+            if not self.args.summary.endswith('.'):
+                self.ncFile.summary += '.'
+            self.ncFile.summary += ' Translated with no modification from original data file %s' % inFile
 
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(self.esec_list))
@@ -223,29 +224,16 @@ class ParserWriter(BaseWriter):
         self.add_global_metadata()
 
         self.ncFile.close()
+        print 'Wrote ' + outFile
 
         # End write_pctd()
 
 
 if __name__ == '__main__':
 
-    # Accept optional arguments of input data directory name and output directory name
-    # If not specified then the current directory is used
-    # TODO: Use argparse and add aruments for title and summary text
-    try:
-        inDir = sys.argv[1]
-    except IndexError:
-        inDir = 'pctd'
-    try:
-        outDir = sys.argv[2]
-    except IndexError:
-        outDir = 'pctd'
-    try:
-        beginFileString = sys.argv[3]
-    except IndexError:
-        beginFileString = 'c'               # Default of 'c' for CANON cruise data files
-
-    pw = ParserWriter(inDir, outDir, beginFileString)
+    pw = ParserWriter()
+    pw.process_command_line()
     pw.process_asc_files()
+    print 'Done.'
 
 
