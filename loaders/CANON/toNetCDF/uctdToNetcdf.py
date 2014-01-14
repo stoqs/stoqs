@@ -129,6 +129,7 @@ class ParserWriter(BaseWriter):
     def process_martinudas_files(self):
         '''
         Loop through all Martin_UDAS .txt files in inDir matching pattern and load data into lists and call the write_ctd() method.
+        Perform some range-checking quality control and describe the QC performed in the summary text added to the netCDF metadata.
 
         Processed *.txt files look like:
 
@@ -140,6 +141,11 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
 20130923 084906 15:49:06 266.36743 8.81833 36'48.148 121'47.852 0.000000  2.836700 17.313601 0.446990 0.291 0.277 17.800 87.000 30.357 1028.000 14.867 58.760 344.667 12.000 26.573 5.114 196.433 16.998 207.467
 
         '''
+
+        # Allowed min & max values for range-check QC
+        ranges = {  'Salinity_SBE45': (30, 40),
+                    'Temperature_degrees_C_Scufa': (8, 20),
+                 }
 
         # Fill up the object's member data item lists from all the files - read only the processed .asc files that match the specified pattern, 
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
@@ -163,6 +169,8 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
 
                 # Skip over clearly bad values
                 if r['Latitude'] == "0.'000000":
+                    continue
+                if float(r['Salinity_SBE45']) < ranges['Salinity_SBE45'][0] or float(r['Salinity_SBE45']) > ranges['Salinity_SBE45'][1]:
                     continue
 
                 # Convert local time to GMT
@@ -201,9 +209,9 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
                         self.fl_scufa_val = r['Raw_Fluorescence_Volts_Scufa']
                 self.fl_scufa_list.append(self.fl_scufa_val)
 
-            self.write_ctd(file)
+            self.write_ctd(file, ranges)
 
-    def write_ctd(self, inFile):
+    def write_ctd(self, inFile, ranges={}):
         '''
         Write lists out as NetCDF.
         '''
@@ -212,17 +220,22 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
         outFile = '.'.join(inFile.split('.')[:-1]) + '.nc'
         self.ncFile = netcdf_file(outFile, 'w')
 
-        # Describe the dataset with sufficient detail according to guidelines from the NOAA NetCDF Templates
+        # If specified on command line override the default generic title with what is specified
         self.ncFile.title = 'Underway CTD data'
         if self.args.title:
             self.ncFile.title = self.args.title
 
+        # Combine any summary text specified on commamd line with the generic summary stating the original source file
         self.ncFile.summary = 'Observational oceanographic data translated with no modification from original data file %s' % inFile
         if self.args.summary:
             self.ncFile.summary = self.args.summary
             if not self.args.summary.endswith('.'):
                 self.ncFile.summary += '.'
             self.ncFile.summary += ' Translated with no modification from original data file %s' % inFile
+
+        # Add range-checking QC paramters to the summary
+        if ranges:
+            self.ncFile.summary += '. Range checking QC performed on the following variables with values outside of associated ranges discarded: %s' % ranges
 
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(self.esec_list))
