@@ -1,16 +1,16 @@
 #!/bin/bash
 
-# For use for Rachel Carson September 2013 Profile CTD data
-# Set Remote Host (RH) to what's appropriate
-##RH=192.168.111.177
-RH=beach.mbari.org
+LOGIN=stoqsadm
+##RH=zuma.rc.mbari.org
+RH=odss.mbari.org
 
-rsync -rv stoqsadm@$RH:/data/canon/2013_Sep/Platforms/Ships/Rachel_Carson/pctd .
 
-./pctdToNetcdf.py pctd pctd 2
+DIR=/data/canon/2013_Sep/Platforms/Ships/Rachel_Carson/pctd
+LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
+rsync -rv $LOGIN@$RH:$DIR  .
+./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during CANON - ECOHAB September 2013" 
+scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 
-scp pctd/*.nc stoqsadm@$RH:/data/canon/2013_Sep/Platforms/Ships/Rachel_Carson/pctd
-
-# Clean up
-rm -r pctd
+# Clean up 
+rm -r $LOCALDIR
 
