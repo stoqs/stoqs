@@ -21,6 +21,7 @@ import stoqs.models as mod
 import logging 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.views.decorators.cache import cache_page
 
 logger = logging.getLogger(__name__)
 
@@ -168,6 +169,8 @@ def showActivityParameterHistogram(request, format='png'):
     aph = ActivityParameterHistogram(request, format, query_set, stoqs_object)
     return aph.process_request()
 
+# Cache responses from this view for 15 minutes
+@cache_page(60 * 15)
 def showMeasuredParameter(request, format = 'json'):
     stoqs_object = mod.MeasuredParameter
     query_set = stoqs_object.objects.all().order_by('measurement__instantpoint__timevalue')
