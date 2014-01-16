@@ -154,6 +154,10 @@ class ParserWriter(BaseWriter):
                 self.ncFile.summary += '.'
             self.ncFile.summary += ' Translated with no modification from original data file %s' % inFile
 
+        # If specified on command line override the default generic license with what is specified
+        if self.args.license:
+            self.ncFile.license = self.args.license
+
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(self.esec_list))
         self.time = self.ncFile.createVariable('time', 'float64', ('time',))
