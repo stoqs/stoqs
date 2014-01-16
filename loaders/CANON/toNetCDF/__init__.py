@@ -35,7 +35,7 @@ class BaseWriter(object):
     Common things used by ParserWriters
     '''
 
-    def add_global_metadata(self):
+    def add_global_metadata(self, featureType='trajectory'):
         '''
         This is the main advantage of using a class for these methods.  This method uses the
         instance variables to write metadata specific for the data that are written.
@@ -48,7 +48,7 @@ class BaseWriter(object):
         self.ncFile.date_created = iso_now
         self.ncFile.date_update = iso_now
         self.ncFile.date_modified = iso_now
-        self.ncFile.featureType = 'trajectory'
+        self.ncFile.featureType = featureType
         self.ncFile.data_mode = 'R'
         self.ncFile.geospatial_lat_min = np.min(self.latitude[:])
         self.ncFile.geospatial_lat_max = np.max(self.latitude[:])
@@ -65,47 +65,8 @@ class BaseWriter(object):
         self.ncFile.time_coverage_start = coards.from_udunits(self.time[0], self.time.units).isoformat()
         self.ncFile.time_coverage_end = coards.from_udunits(self.time[-1], self.time.units).isoformat()
 
-        self.ncFile.distribution_statement = 'Any use requires prior approval from the MBARI CANON PI: Dr. Francisco Chavez'
-        self.ncFile.license = self.ncFile.distribution_statement
         self.ncFile.useconst = 'Not intended for legal use. Data may contain inaccuracies.'
         self.ncFile.history = 'Created by STOQS software command "%s" on %s' % (' '.join(sys.argv), iso_now,)
-
-
-    def add_global_timeseries_metadata(self):
-        '''
-        This is the main advantage of using a class for these methods.  This method uses the
-        instance variables to write metadata specific for the data that are written.
-        '''
-
-        iso_now = datetime.datetime.now().isoformat()
-
-        self.ncFile.title = ''
-        self.ncFile.netcdf_version = '3.6'
-        self.ncFile.Conventions = 'CF-1.6'
-        self.ncFile.date_created = iso_now
-        self.ncFile.date_update = iso_now
-        self.ncFile.date_modified = iso_now
-        self.ncFile.featureType = 'timeseries'
-        self.ncFile.data_mode = 'R'
-        self.ncFile.geospatial_lat_min = np.min(self.latitude[:])
-        self.ncFile.geospatial_lat_max = np.max(self.latitude[:])
-        self.ncFile.geospatial_lon_min = np.min(self.longitude[:])
-        self.ncFile.geospatial_lon_max = np.max(self.longitude[:])
-        self.ncFile.geospatial_lat_units = 'degree_north'
-        self.ncFile.geospatial_lon_units = 'degree_east'
-
-        self.ncFile.geospatial_vertical_min= np.min(self.depth[:])
-        self.ncFile.geospatial_vertical_max= np.max(self.depth[:])
-        self.ncFile.geospatial_vertical_units = 'm'
-        self.ncFile.geospatial_vertical_positive = 'down'
-
-        self.ncFile.time_coverage_start = coards.from_udunits(self.time[0], self.time.units).isoformat()
-        self.ncFile.time_coverage_end = coards.from_udunits(self.time[-1], self.time.units).isoformat()
-
-        self.ncFile.distribution_statement = 'Any use requires prior approval from the MBARI CANON PI: Dr. Francisco Chavez'
-        self.ncFile.license = self.ncFile.distribution_statement
-        self.ncFile.useconst = 'Not intended for legal use. Data may contain inaccuracies.'
-        self.ncFile.history = 'Created by "%s" on %s' % (' '.join(sys.argv), iso_now,)
 
     def process_command_line(self):
         '''
@@ -148,6 +109,9 @@ General construction guideline for data set title:
         parser.add_argument('-s', '--summary', action='store',
                             help='''summary: A paragraph describing the dataset.
 Write a paragraph or abstract about the data contained within the file, expanding on the title to provide more information.
+                            ''')
+        parser.add_argument('-l', '--license', action='store', default='MBARI provides data "as is", with no warranty, express or implied, of the quality or consistency. Data are provided without support and without obligation on the part of the Monterey Bay Aquarium Research Institute to assist in its use, correction, modification, or enhancement.',
+                            help='''license: Describe the restrictions to data access and distribution.
                             ''')
         parser.add_argument('-f', '--format', action='store', default='SeaBird',
                             help='''Input file format: The default input file format is SeaBird .asc. Specify 'Martin_UDAS' for that .txt file format.''')
