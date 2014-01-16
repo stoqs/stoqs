@@ -237,6 +237,10 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
         if ranges:
             self.ncFile.summary += '. Range checking QC performed on the following variables with values outside of associated ranges discarded: %s' % ranges
 
+        # If specified on command line override the default generic license with what is specified
+        if self.args.license:
+            self.ncFile.license = self.args.license
+
         # Trajectory dataset, time is the only netCDF dimension
         self.ncFile.createDimension('time', len(self.esec_list))
         self.time = self.ncFile.createVariable('time', 'float64', ('time',))
