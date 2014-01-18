@@ -51,8 +51,8 @@ cl.dorado_files = [
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
 ##cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
-cl.daphne_r_base = cl.dodsBase + 'CANON_march2013/lrauv/daphne/realtime/sbdlogs/2013/201303/'
-cl.daphne_r_files = [ 
+daphne_r_base = cl.dodsBase + 'CANON_march2013/lrauv/daphne/realtime/sbdlogs/2013/201303/'
+daphne_r_files = [ 
                     'shore_201303132226_201303140449.nc',
                     'shore_201303140708_201303140729.nc',
                     'shore_201303140729_201303141609.nc',
@@ -62,8 +62,8 @@ cl.daphne_r_files = [
 cl.daphne_r_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water']
 
 # Postrecovery full-resolution (_d_) daphne data - insert '_d_' for delayed-mode to not load the data
-cl.daphne_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/daphne/missionlogs/2013/'
-cl.daphne_files = [ 
+daphne_d_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/daphne/missionlogs/2013/'
+daphne_d_files = [ 
                     '20130313_20130318/20130313T195025/201303131950_201303132226.nc',
                     '20130313_20130318/20130313T222616/201303132226_201303140321.nc',
                     '20130313_20130318/20130313T222616/201303132226_201303140705.nc',
@@ -127,9 +127,19 @@ cl.daphne_files = [
                     '20130319_20130325/20130322T232523/201303250518_201303250848.nc',
                     '20130319_20130325/20130325T084507/201303250845_201303251544.nc',
                   ]
-cl.daphne_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 
+daphne_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
+
+# Binned Daphne data
+daphne_b_base = 'http://odss.mbari.org/thredds/dodsC/CANON_march2013/lrauv/daphne/'
+daphne_b_files = ['Daphne_ECOHAB_March2013.nc']
+daphne_b_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650']
+
+cl.daphne_base = daphne_b_base
+cl.daphne_files = daphne_b_files
+cl.daphne_parms = daphne_b_parms
+
 
 # Realtime telemetered (_r_) tethys data - insert '_r_' to not load the files
 tethys_r_base = cl.dodsBase + 'CANON_march2013/lrauv/tethys/realtime/sbdlogs/2013/201303/'
