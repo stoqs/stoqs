@@ -132,8 +132,8 @@ cl.daphne_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_de
                     'mass_concentration_of_chlorophyll_in_sea_water']
 
 # Realtime telemetered (_r_) tethys data - insert '_r_' to not load the files
-cl.tethys_r_base = cl.dodsBase + 'CANON_march2013/lrauv/tethys/realtime/sbdlogs/2013/201303/'
-cl.tethys_r_files = [ 
+tethys_r_base = cl.dodsBase + 'CANON_march2013/lrauv/tethys/realtime/sbdlogs/2013/201303/'
+tethys_r_files = [ 
                     'shore_201303140812_201303141247.nc',
                     'shore_201303141252_201303141329.nc',
                     'shore_201303141331_201303150644.nc',
@@ -167,12 +167,12 @@ cl.tethys_r_files = [
                     'shore_201303180743_201303181632.nc',       # Incomplete list of shore files
                                                                 # Put effort into loading full-resolution data
                   ]
-cl.tethys_r_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
+tethys_r_parms = [ 'sea_water_temperature', 'mass_concentration_of_chlorophyll_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'platform_x_velocity_current', 'platform_y_velocity_current', 'platform_z_velocity_current']
 
 # Postrecovery full-resolution tethys data - insert '_d_' for delayed-mode to not load the data
-cl.tethys_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/tethys/missionlogs/2013/'
-cl.tethys_files = [ 
+tethys_d_base = 'http://dods.mbari.org/opendap/hyrax/data/lrauv/tethys/missionlogs/2013/'
+tethys_d_files = [ 
                     '20130313_20130320/20130313T203723/201303132037_201303132240.nc',
                     '20130313_20130320/20130313T224020/201303132240_201303140239.nc',
                     '20130313_20130320/20130314T023827/201303140238_201303140547.nc',
@@ -279,9 +279,18 @@ cl.tethys_files = [
                     '20130321_20130325/20130325T155211/201303251552_201303252211.nc',
                   ]
 
-cl.tethys_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 
+tethys_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
+
+# Binned Tethys data
+tethys_b_base = 'http://odss.mbari.org/thredds/dodsC/CANON_march2013/lrauv/tethys/'
+tethys_b_files = ['Tethys_ECOHAB_March2013.nc']
+tethys_b_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650']
+
+cl.tethys_base = tethys_b_base
+cl.tethys_files = tethys_b_files
+cl.tethys_parms = tethys_b_parms
 
 # Webb gliders
 cl.hehape_base = cl.dodsBase + 'CANON_march2013/usc_glider/HeHaPe/processed/'
