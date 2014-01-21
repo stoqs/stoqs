@@ -378,8 +378,8 @@ if cl.args.test:
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
-    cl.loadDaphne(stride=10)
-    cl.loadTethys(stride=10)
+    cl.loadDaphne(stride=2)
+    cl.loadTethys(stride=2)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
     cl.loadRCuctd(stride=1)
