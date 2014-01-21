@@ -541,7 +541,7 @@ class ParameterParameter(object):
                     return None, infoText, sql
                 pp_count = cursor.fetchone()[0]
                 logger.debug('pp_count = %d', pp_count)
-                PP_MAX_POINTS = 100000
+                PP_MAX_POINTS = 50000
                 stride_val = int(pp_count / PP_MAX_POINTS)
                 if stride_val < 1:
                     stride_val = 1
