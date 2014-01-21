@@ -992,8 +992,8 @@ class Lrauv_Loader(Trajectory_Loader):
         '''
         Special fixups for 'shore' data
         '''
-        if self.url.find('shore') == -1 and self.url.find('Tethys') == -1 :
-            # Full-resolution data (whose name does not contain 'shore' or 'Tethys') are in radians
+        if self.url.find('shore') == -1 and self.url.find('Tethys') == -1 and self.url.find('Daphne') == -1 :
+            # Full-resolution data (whose name does not contain 'shore', 'Tethys', 'Daphne') are in radians
             if row.has_key('latitude'):
                 row['latitude'] = row['latitude'] * 180.0 / numpy.pi
             if row.has_key('longitude'):
