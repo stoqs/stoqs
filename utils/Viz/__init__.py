@@ -315,7 +315,10 @@ class MeasuredParameter(object):
                     if self.kwargs['showdataas'][0] == 'scatter':
                         contourFlag = False
           
-            logger.debug('Number of x, y, z data values retrived from database = %d', len(self.z)) 
+            logger.debug('Number of x, y, z data values retrieved from database = %d', len(self.z)) 
+            if len(self.z) == 0:
+                return None, None, 'No data returned from selection'
+
             if contourFlag:
                 try:
                     logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
