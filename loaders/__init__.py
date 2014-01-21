@@ -559,9 +559,9 @@ class STOQS_Loader(object):
             measurement, created = m.Measurement.objects.using(self.dbAlias).get_or_create(instantpoint=ip, 
                                     nominallocation=nl, depth=repr(depth), geom=point)
             ##if created:
-            ##    logger.info('Created measurement.id = %d', measurement.id)
+            ##    logger.debug('Created measurement.id = %d with geom = %s', measurement.id, point)
             ##else:
-            ##    logger.info('Re-using measurement.id = %d', measurement.id)
+            ##    logger.debug('Re-using measurement.id = %d', measurement.id)
 
         except DatabaseError, e:
             logger.exception('''DatabaseError:
