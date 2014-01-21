@@ -914,15 +914,27 @@
             if ($('#mp-cmin').val() && $('#mp-cmax').val()) {
                 mp_cmincmax = 'cmin=' + $('#mp-cmin').val() + '&cmax=' + $('#mp-cmax').val();
             }
-            $('#mp-kml-field').text(kmlurl + mp_cmincmax);
-            $('#mp-kml-link').attr('href',kmlurl + mp_cmincmax);
+            if (kmlurl) {
+                $('#mp-kml-field').text(kmlurl + mp_cmincmax);
+                $('#mp-kml-link').attr('href', kmlurl + mp_cmincmax);
+            }
+            else {
+                $('#mp-kml-field').text('');
+                $('#mp-kml-link').removeAttr('href');
+            }
         }
         else if ( group == 'sp') {
             if ($('#sp-cmin').val() && $('#sp-cmax').val()) {
                 sp_cmincmax = 'cmin=' + $('#sp-cmin').val() + '&cmax=' + $('#sp-cmax').val();
             }
-            $('#sp-kml-field').text(kmlurl + sp_cmincmax);
-            $('#sp-kml-link').attr('href',kmlurl + sp_cmincmax);
+            if (kmlurl) {
+                $('#sp-kml-field').text(kmlurl + sp_cmincmax);
+                $('#sp-kml-link').attr('href', kmlurl + sp_cmincmax);
+            }
+            else {
+                $('#sp-kml-field').text('');
+                $('#sp-kml-link').removeAttr('href');
+            }
         }
     }
 
@@ -937,22 +949,22 @@
                 } 
 
                 // Override any parameter__name or parameter__standard_name with parameter__id from radio button selection
-                var kmlurl;
+                var orig_kmlurl;
                 if ( $.inArray($('input:radio[name=parameters_plot]:checked').val(), $('#measuredparameters-anchor').data()['ids']) != -1 ) {
                     mp_param = getMPparms('mp', params);
-                    kmlurl = base_url + 'measuredparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
+                    orig_kmlurl = base_url + 'measuredparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
                 }
                 else if ( $.inArray($('input:radio[name=parameters_plot]:checked').val(), $('#sampledparameters-anchor').data()['ids']) != -1 ) {
                     mp_param = getMPparms('sp', params);
-                    kmlurl = base_url + 'sampledparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
+                    orig_kmlurl = base_url + 'sampledparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
                 }
 
                 // strideVal is adjusted based on the current count of measured/sampled_parameters so as to prevent long waits for the KML transfer
-                $.get( kmlurl.replace('.kml', '.count')).
+                $.get( orig_kmlurl.replace('.kml', '.count')).
                 done( function(count, status) {
                     // Ensure that no more that about 300 points are plotted - stride as necessary
                     if (count == 0) {
-                        alert('No data returned for sensortracks');
+                        alert('Sensortracks: No data returned from selection');
                     }
                     else {
                         strideVal = Math.floor(count / 300);
@@ -964,10 +976,9 @@
                         // See: http://stackoverflow.com/questions/5539633/adding-a-absolutely-positioned-div-to-the-bottom-of-an-openlayers-map/5568762#5568762
                         //sensortrackskml.attribution = '<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />';
                         // Dynamically set url for sensor tracks display in openlayers
-                        updateKMLcmincmax('mp');
                         //sensortrackskml.loaded = false;
-                        strided_kmlurl = kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('body').data()['parameterminmax'][1] + 
-                                                                           '&cmax=' + $('body').data()['parameterminmax'][2] + '&stride=' + strideVal;
+                        strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('body').data()['parameterminmax']['plot'][1] + 
+                                                                           '&cmax=' + $('body').data()['parameterminmax']['plot'][2] + '&stride=' + strideVal;
                         sensortrackskml.refresh({url: strided_kmlurl});
                     }
                 }).
@@ -1055,9 +1066,6 @@
     
     // Set the URL fields and buttons to use the current queried URL, group is either 'mp' or 'sp'
     function setDataAccess(group, data) {
-        if ( $.isEmptyObject(data['parameterminmax']) ) {
-            return;
-        }
         var group_name;
         if ( group == 'mp' ) {
             group_name = 'measured';
@@ -1081,27 +1089,31 @@
                 $('#'+group+'-'+value+'-field').text(data['sql']);
             }
             else if (value == 'kml') {
-                kmlurl = 'Select a single Parameter to view your selection in Google Earth';
                 var url = base_url + group_name + 'parameter.kml' + mp_param;
+                $('#'+group+'-kml-parameter').html('Select a single ' + group_name + ' parameter <i>for data access</i> to view your selection in Google Earth');
+                $('#'+group+'-kml-parameter').css( { 'color': 'red' } );
                 if (typeof params[group_name + 'parametersgroup'] != 'undefined') {
                     if (params[group_name + 'parametersgroup'].length == 1) {
                         $('#'+group+'-kml-parameter').text(params[group_name + 'parametersgroup'][0]);
-                        $('#'+group+'-cmin').val(data['parameterminmax'][1]);
-                        $('#'+group+'-cmax').val(data['parameterminmax'][2]);
+                        $('#'+group+'-kml-parameter').css( { 'color': 'black' } );
+                        $('#'+group+'-cmin').val(data['parameterminmax']['dataaccess'][1]);
+                        $('#'+group+'-cmax').val(data['parameterminmax']['dataaccess'][2]);
                         kmlurl = url;
                         updateKMLcmincmax(group);
                     }
                     else if (params['parameterstandardname'].length == 1) {
                         $('#'+group+'-kml-parameter').text(params['parameterstandardname'][0]);
-                        $('#'+group+'-cmin').val(data['parameterminmax'][1]);
-                        $('#'+group+'-cmax').val(data['parameterminmax'][2]);
+                        $('#'+group+'-kml-parameter').css( { 'color': 'black' } );
+                        $('#'+group+'-cmin').val(data['parameterminmax']['dataaccess'][1]);
+                        $('#'+group+'-cmax').val(data['parameterminmax']['dataaccess'][2]);
                         kmlurl = url;
                         updateKMLcmincmax(group);
                     }
                     else {
-                        $('#'+group+'-kml-parameter').text('');
                         $('#'+group+'-cmin').val('');
                         $('#'+group+'-cmax').val('');
+                        kmlurl = '';
+                        updateKMLcmincmax(group);
                     }
                 }
             }
@@ -2924,6 +2936,7 @@
                 if (init == true) {
                     load_permalink();
                 }
+
                 $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
                 $('#time-parameter-flot').removeClass('stoqs-background-ajax-loader-pulse ');
                 $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');

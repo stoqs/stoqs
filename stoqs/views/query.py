@@ -48,7 +48,7 @@ query_parms = {
                    'sampledparametersgroup': 'sampledparametersgroup',
                    'measuredparametersgroup': 'measuredparametersgroup',
                    'parameterstandardname': 'parameterstandardname',        
-                   'parameterminmax': 'parameterminmax',    # Array of name, min, max
+                   'parameterminmax': 'parameterminmax',    # Array of name, min, max in hash keyed by 'dataaccess' and 'plot'
                    'time': ('start_time','end_time'),       # Single values
                    'depth': ('min_depth', 'max_depth'),     # Single values
                    'simpledepthtime': [],                   # List of x,y values

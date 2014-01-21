@@ -396,29 +396,31 @@ class STOQSQManager(object):
 
     def getParameterMinMax(self, pid=None, percentileAggregateType='avg'):
         '''
-        If a single parameter has been selected return the average 2.5 and 97.5 percentiles of the
-        data and call them min and max for purposes of plotting.  If @percentileAggregateType is
-        'avg' then the average of all the 2.5 and 97.5 percentiles will be used.  This would be appropriate for
+        If a single parameter has been selected in the filter for data access return the average 2.5 and 97.5 
+        percentiles of the data and call them min and max for purposes of data access, namely KML generation in 
+        the UI - assign these values to the 'dataaccess' key of the return hash.  If pid is specificed then 
+        assign values to the 'plot' key of the return hash.  If @percentileAggregateType is 'avg' (the default)
+        then the average of all the 2.5 and 97.5 percentiles will be used.  This would be appropriate for
         contour or scatter plotting.  If @percentileAggregateType is 'extrema' then the aggregate Min is used 
         for 'p010' and Max for 'p990'.  This is appropriate for parameter-parameter plotting.
         '''
-        results = []
+        da_results = []
+        plot_results = []
         if pid:
             if percentileAggregateType == 'extrema':
                 logger.debug('self.getActivityParametersQS().filter(parameter__id=%s) = %s', pid, str(self.getActivityParametersQS().filter(parameter__id=pid).query))
                 qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'), Avg('median'))
                 logger.debug('qs = %s', qs)
                 try:
-                    results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
+                    plot_results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
                 except TypeError:
-                    logger.exception('Failed to get results for qs = %s', qs)
+                    logger.exception('Failed to get plot_results for qs = %s', qs)
             else:
                 qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
                 try:
-                    results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                    plot_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError:
-                    logger.exception('Failed to get results for qs = %s', qs)
-            return results
+                    logger.exception('Failed to get plot_results for qs = %s', qs)
 
         if self.kwargs.has_key('measuredparametersgroup'):
             if len(self.kwargs['measuredparametersgroup']) == 1:
@@ -428,10 +430,10 @@ class STOQSQManager(object):
                     logger.debug('pid = %s', pid)
                     if percentileAggregateType == 'extrema':
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'))
-                        results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
+                        da_results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
-                        results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                        da_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
@@ -443,10 +445,10 @@ class STOQSQManager(object):
                     logger.debug('pid = %s', pid)
                     if percentileAggregateType == 'extrema':
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'))
-                        results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
+                        da_results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
-                        results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                        da_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
@@ -456,10 +458,10 @@ class STOQSQManager(object):
                 try:
                     if percentileAggregateType == 'extrema':
                         qs = self.getActivityParametersQS().filter(parameter__standard_name=sname).aggregate(Min('p025'), Max('p975'))
-                        results = [sname, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
+                        da_results = [sname, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__standard_name=sname).aggregate(Avg('p025'), Avg('p975'))
-                        results = [sname, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                        da_results = [sname, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
@@ -469,14 +471,14 @@ class STOQSQManager(object):
                 try:
                     if percentileAggregateType == 'extrema':
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Min('p025'), Max('p975'))
-                        results = [parameterID, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
+                        plot_results = [parameterID, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
-                        results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                        plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
-        return results
+        return {'plot': plot_results, 'dataaccess': da_results}
     
     def getPlatforms(self):
         '''
@@ -1032,11 +1034,11 @@ class STOQSQManager(object):
         if SAMPLED in parameterGroups:
             # The fourth item should be for SampledParameter if that is the group of the Parameter
             cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_sp_no_order,
-                                    self.getParameterMinMax(pid=parameterID), self.getSampleQS(), platformName, 
+                                    self.getParameterMinMax(pid=parameterID)['plot'], self.getSampleQS(), platformName, 
                                     parameterID, parameterGroups)
         else:
             cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order,
-                                    self.getParameterMinMax(pid=parameterID), self.getSampleQS(), platformName, 
+                                    self.getParameterMinMax(pid=parameterID)['plot'], self.getSampleQS(), platformName, 
                                     parameterID, parameterGroups)
 
         return cp.renderDatavaluesForFlot()
@@ -1058,9 +1060,9 @@ class STOQSQManager(object):
 
                 # We have enough information to generate a 2D scatter plot
                 ##if not self.pp:     # ...png always gets called before ...x3d - unless we change the key names...
-                pMinMax = { 'x': self.getParameterMinMax(px, percentileAggregateType='extrema'), 
-                            'y': self.getParameterMinMax(py, percentileAggregateType='extrema'), 
-                            'c': self.getParameterMinMax(pc)}
+                pMinMax = { 'x': self.getParameterMinMax(px, percentileAggregateType='extrema')['plot'], 
+                            'y': self.getParameterMinMax(py, percentileAggregateType='extrema')['plot'], 
+                            'c': self.getParameterMinMax(pc)['plot']}
                 if not pMinMax['x'] or not pMinMax['y']:
                     return '', 'Selected x and y axis parameters are not in filtered selection.'
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
@@ -1085,10 +1087,10 @@ class STOQSQManager(object):
                     self.pq.buildPQuerySet(*self.args, **self.kwargs)
 
                 # We have enough information to generate X3D XML
-                pMinMax = { 'x': self.getParameterMinMax(px, percentileAggregateType='extrema'), 
-                            'y': self.getParameterMinMax(py, percentileAggregateType='extrema'), 
-                            'z': self.getParameterMinMax(pz, percentileAggregateType='extrema'), 
-                            'c': self.getParameterMinMax(pc) }
+                pMinMax = { 'x': self.getParameterMinMax(px, percentileAggregateType='extrema')['plot'], 
+                            'y': self.getParameterMinMax(py, percentileAggregateType='extrema')['plot'], 
+                            'z': self.getParameterMinMax(pz, percentileAggregateType='extrema')['plot'], 
+                            'c': self.getParameterMinMax(pc)['plot'] }
                 
                 if not pMinMax['x'] or not pMinMax['y'] or not pMinMax['z']:
                     return '', 'Selected x, y, and z axis parameters are not in filtered selection.'
@@ -1122,7 +1124,7 @@ class STOQSQManager(object):
 
                     logger.debug('Getting data values in X3D for platformName = %s', platformName) 
                     mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
-                                  self.getParameterMinMax(), self.getSampleQS(), platformName, parameterID, parameterGroups)
+                                  self.getParameterMinMax()['plot'], self.getSampleQS(), platformName, parameterID, parameterGroups)
                     x3dDict = mpdv.dataValuesX3D()
             
         return x3dDict
