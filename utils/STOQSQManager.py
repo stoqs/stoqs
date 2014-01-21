@@ -406,6 +406,8 @@ class STOQSQManager(object):
         '''
         da_results = []
         plot_results = []
+
+        # pid takes precedence over parameterplot being specified in kwargs
         if pid:
             if percentileAggregateType == 'extrema':
                 logger.debug('self.getActivityParametersQS().filter(parameter__id=%s) = %s', pid, str(self.getActivityParametersQS().filter(parameter__id=pid).query))
@@ -421,6 +423,18 @@ class STOQSQManager(object):
                     plot_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError:
                     logger.exception('Failed to get plot_results for qs = %s', qs)
+        elif 'parameterplot' in self.kwargs:
+            if self.kwargs['parameterplot'][0]:
+                parameterID = self.kwargs['parameterplot'][0]
+                try:
+                    if percentileAggregateType == 'extrema':
+                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Min('p025'), Max('p975'))
+                        plot_results = [parameterID, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
+                    else:
+                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
+                        plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                except TypeError, e:
+                    logger.exception(e)
 
         if self.kwargs.has_key('measuredparametersgroup'):
             if len(self.kwargs['measuredparametersgroup']) == 1:
@@ -462,19 +476,6 @@ class STOQSQManager(object):
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__standard_name=sname).aggregate(Avg('p025'), Avg('p975'))
                         da_results = [sname, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
-                except TypeError, e:
-                    logger.exception(e)
-
-        if 'parameterplot' in self.kwargs:
-            if self.kwargs['parameterplot'][0]:
-                parameterID = self.kwargs['parameterplot'][0]
-                try:
-                    if percentileAggregateType == 'extrema':
-                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Min('p025'), Max('p975'))
-                        plot_results = [parameterID, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
-                    else:
-                        qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
-                        plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
@@ -1063,6 +1064,7 @@ class STOQSQManager(object):
                 pMinMax = { 'x': self.getParameterMinMax(px, percentileAggregateType='extrema')['plot'], 
                             'y': self.getParameterMinMax(py, percentileAggregateType='extrema')['plot'], 
                             'c': self.getParameterMinMax(pc)['plot']}
+                logger.debug('pMinMax = %s', pMinMax)
                 if not pMinMax['x'] or not pMinMax['y']:
                     return '', 'Selected x and y axis parameters are not in filtered selection.'
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
