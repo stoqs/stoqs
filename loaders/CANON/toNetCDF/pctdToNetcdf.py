@@ -89,6 +89,8 @@ class ParserWriter(BaseWriter):
                 ##print r
                 if not r['TimeJ']:
                     continue
+                if r['TimeJ'] == '-9.990e-29':
+                    continue
                 # A TimeJ value of 1.0 is 0000 hours 1 January, so subtract 1 day
                 dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
 
