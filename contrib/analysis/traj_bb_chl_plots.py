@@ -109,7 +109,12 @@ class BiPlot():
         seaQS = aQS.aggregate(Min('startdate'), Max('enddate'))
         self.activityStartTime = seaQS['startdate__min'] 
         self.activityEndTime = seaQS['enddate__max']
-        self.color = '#' + Platform.objects.using(self.args.database).filter(name=self.args.platform).values_list('color')[0][0]
+        try:
+            self.color = '#' + Platform.objects.using(self.args.database).filter(name=self.args.platform).values_list('color')[0][0]
+        except IndexError, e:
+            print "Error: Unable to get color of platform name", self.args.platform
+            sys.exit(-1)
+
         self.extent = aQS.extent(field_name='maptrack')
 
     def _getAxisInfo(self, parm):
@@ -123,7 +128,11 @@ class BiPlot():
 
         # Get units for each parameter
         prQS = ParameterResource.objects.using(self.args.database).filter(resource__name='units').values_list('resource__value')
-        units = prQS.filter(parameter__name=parm)[0][0]
+        try:
+            units = prQS.filter(parameter__name=parm)[0][0]
+        except IndexError, e:
+            print "Error: Unable to get units for parameter name", parm
+            sys.exit(-1)
 
         return min, max, units
 
@@ -201,8 +210,19 @@ class BiPlot():
         The argparse library is included in Python 2.7 and is an added package for STOQS.
         '''
         import argparse
+        from argparse import RawTextHelpFormatter
+
+        examples = 'Examples:' + '\n\n' 
+        examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
+        examples += sys.argv[0] + ' -d stoqs_march2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
+        examples += sys.argv[0] + ' -d stoqs_march2013_o -p daphne -x bb470 -y chlorophyll\n'
+        examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll\n'
+        examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll --daytime\n'
+        examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll --nighttime\n'
     
-        parser = argparse.ArgumentParser(description='Read Parameter-Parameter data from a STOQS database and make bi-plots')
+        parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
+                                         description='Read Parameter-Parameter data from a STOQS database and make bi-plots',
+                                         epilog=examples)
                                              
         parser.add_argument('-x', '--xParm', action='store', help='Parameter name for the X axis', default='bb470')
         parser.add_argument('-y', '--yParm', action='store', help='Parameter name for the Y axis', default='chlorophyll')
