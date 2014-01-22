@@ -189,11 +189,15 @@ class BiPlot():
             ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=False)
             ax.plot(xp, yp, c=self.color)
             ax.text(0.1, 0.8, startTime.strftime('%Y-%m-%d %H:%M'), transform=ax.transAxes)
-            fileName = 'chl_bb_' + startTime.strftime('%Y%m%dT%H%M')
+            fnTempl= '{platform}_{xParm}_{yParm}_{time}' 
+            fileName = fnTempl.format(platform=self.args.platform, xParm=self.args.xParm, yParm=self.args.yParm, time=startTime.strftime('%Y%m%dT%H%M'))
+            wcName = fnTempl.format(platform=self.args.platform, xParm=self.args.xParm, yParm=self.args.yParm, time=r'*')
             if self.args.daytime:
                 fileName += '_day'
+                wcName += '_day'
             if self.args.nighttime:
                 fileName += '_night'
+                wcName += '_night'
             fileName += '.png'
 
             fig.savefig(fileName)
@@ -203,7 +207,7 @@ class BiPlot():
             startTime = endTime
             endTime = startTime + timeInterval
 
-        print 'Done. Make an animated gif with: convert -delay 100 chl_bb_*.png chl_bb_%s.gif' % self.args.platform
+        print 'Done. Make an animated gif with: convert -delay 100 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:3]))
 
     def process_command_line(self):
         '''
@@ -214,6 +218,9 @@ class BiPlot():
 
         examples = 'Examples:' + '\n\n' 
         examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
+        examples += sys.argv[0] + ' -d stoqs_september2013_o -p tethys -x bb470 -y chlorophyll --hourInterval 24\n'
+        examples += sys.argv[0] + ' -d stoqs_september2013_o -p Slocum_294 -x optical_backscatter470nm -y fluorescence --hourInterval 24\n'
+        examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
         examples += sys.argv[0] + ' -d stoqs_march2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
         examples += sys.argv[0] + ' -d stoqs_march2013_o -p daphne -x bb470 -y chlorophyll\n'
         examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll\n'
@@ -222,7 +229,7 @@ class BiPlot():
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Read Parameter-Parameter data from a STOQS database and make bi-plots',
-                                         epilog=examples)
+                                         epilog=examples + '\n\n(Image files will be written to the current working directory)')
                                              
         parser.add_argument('-x', '--xParm', action='store', help='Parameter name for the X axis', default='bb470')
         parser.add_argument('-y', '--yParm', action='store', help='Parameter name for the Y axis', default='chlorophyll')
