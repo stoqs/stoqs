@@ -38,129 +38,187 @@ from django.contrib.gis.geos import LineString, Point
 from django.db.models import Max, Min
 from utils.utils import round_to_n
 
-# Change these options
-dbAlias = 'stoqs_september2013_o'
-pName = 'tethys'
-xParmName = 'bb470'
-yParmName = 'chlorophyll'
-dayFlag = False
-nightFlag = True
-#pName = 'dorado'
-#xParmName = 'bbp420'
-#yParmName = 'fl700_uncorr'
-timeInterval = timedelta(hours=12)
 
-# Should not need to change anything below
-# ----------------------------------------
+class BiPlot():
+    '''
+    Make customized BiPlots (Parameter Parameter plots) from STOQS.
+    '''
 
-# SQL template copied from STOQS UI Parameter-Parameter -> sql tab
-sql_template = '''SELECT DISTINCT stoqs_measurement.depth,
+    def _getData(self, startDatetime, endDatetime):
+        '''
+        Use the command line arguments and the SQL template to retrieve the X and Y
+        values and other ancillary information from the database
+        '''
+        # SQL template copied from STOQS UI Parameter-Parameter -> sql tab
+        sql_template = '''SELECT DISTINCT stoqs_measurement.depth,
                 mp_x.datavalue AS x, mp_y.datavalue AS y,
                 ST_X(stoqs_measurement.geom) AS lon, ST_Y(stoqs_measurement.geom) AS lat,
                 stoqs_instantpoint.timevalue 
-FROM stoqs_activity
-INNER JOIN stoqs_platform ON stoqs_platform.id = stoqs_activity.platform_id
-INNER JOIN stoqs_instantpoint ON stoqs_instantpoint.activity_id = stoqs_activity.id
-INNER JOIN stoqs_measurement ON stoqs_measurement.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
-INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
-INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
-INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
-WHERE (p_x.name = '{pxname}')
-  AND (p_y.name = '{pyname}')
-  AND (stoqs_instantpoint.timevalue >= '{start}'
-       AND stoqs_instantpoint.timevalue <= '{end}')
-  AND stoqs_platform.name IN ('{platform}')
-  {day_night_clause}
-ORDER BY stoqs_instantpoint.timevalue '''
+            FROM stoqs_activity
+            INNER JOIN stoqs_platform ON stoqs_platform.id = stoqs_activity.platform_id
+            INNER JOIN stoqs_instantpoint ON stoqs_instantpoint.activity_id = stoqs_activity.id
+            INNER JOIN stoqs_measurement ON stoqs_measurement.instantpoint_id = stoqs_instantpoint.id
+            INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
+            INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
+            INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
+            INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
+            INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
+            INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
+            WHERE (p_x.name = '{pxname}')
+                AND (p_y.name = '{pyname}')
+                AND (stoqs_instantpoint.timevalue >= '{start}'
+                AND stoqs_instantpoint.timevalue <= '{end}')
+                AND stoqs_platform.name IN ('{platform}')
+                {day_night_clause}
+            ORDER BY stoqs_instantpoint.timevalue '''
 
-# Get connection to database; dbAlias must be defined in privateSettings
-cursor = connections[dbAlias].cursor()
+        # Get connection to database; self.args.database must be defined in privateSettings
+        cursor = connections[self.args.database].cursor()
 
-# Get start and end datetimes, color and geographic extent of the activity
-aQS = Activity.objects.using(dbAlias).filter(platform__name=pName)
-seaQS = aQS.aggregate(Min('startdate'), Max('enddate'))
-aStart, aEnd = (seaQS['startdate__min'], seaQS['enddate__max'])
-color = '#' + Platform.objects.using(dbAlias).filter(name=pName).values_list('color')[0][0]
-extent = aQS.extent(field_name='maptrack')
+        # Apply SQL where clause to restrict to just do or night measurements
+        daytimeHours = (17, 22)
+        nighttimeHours = (5, 10)
+        dnSQL = ''
+        if self.args.daytime:
+            dnSQL = "AND date_part('hour', stoqs_instantpoint.timevalue) > %d AND date_part('hour', stoqs_instantpoint.timevalue) < %d" % daytimeHours
+        if self.args.nighttime:
+            dnSQL = "AND date_part('hour', stoqs_instantpoint.timevalue) > %d AND date_part('hour', stoqs_instantpoint.timevalue) < %d" % nighttimeHours
 
-# Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
-apQS = ActivityParameter.objects.using(dbAlias).filter(activity__platform__name=pName)
-xpQS = apQS.filter(parameter__name=xParmName).aggregate(Min('p010'), Max('p990'))
-ypQS = apQS.filter(parameter__name=yParmName).aggregate(Min('p010'), Max('p990'))
-xmin, xmax = (xpQS['p010__min'], xpQS['p990__max'])
-ymin, ymax = (ypQS['p010__min'], ypQS['p990__max'])
+        sql = sql_template.format(start=startDatetime, end=endDatetime, pxname=self.args.xParm, pyname=self.args.yParm, 
+                                    platform=self.args.platform, day_night_clause=dnSQL)
+        if self.args.verbose:
+            print "sql =", sql
 
-# Get units for each parameter
-prQS = ParameterResource.objects.using(dbAlias).filter(resource__name='units').values_list('resource__value')
-xUnits = prQS.filter(parameter__name=xParmName)[0][0]
-yUnits = prQS.filter(parameter__name=yParmName)[0][0]
+        x = [] 
+        y = []
+        points = []
+        cursor.execute(sql)
+        for row in cursor:
+            x.append(float(row[1]))
+            y.append(float(row[2]))
+            points.append(Point(float(row[3]), float(row[4])))
 
-# Apply SQL where clause to restrict to just do or night measurements
-daytimeHours = (17, 22)
-nighttimeHours = (5, 10)
-dnSQL = ''
-if dayFlag:
-    dnSQL = "AND date_part('hour', stoqs_instantpoint.timevalue) > %d AND date_part('hour', stoqs_instantpoint.timevalue) < %d" % daytimeHours
-if nightFlag:
-    dnSQL = "AND date_part('hour', stoqs_instantpoint.timevalue) > %d AND date_part('hour', stoqs_instantpoint.timevalue) < %d" % nighttimeHours
+        return x, y, points
 
-# Pull out data and plot at timeInterval intervals
-startTime = aStart
-endTime = startTime + timeInterval
-while endTime < aEnd:
-    cursor.execute(sql_template.format(start=startTime, end=endTime, pxname=xParmName, pyname=yParmName,
-                                       platform=pName, day_night_clause=dnSQL))
-    x = [] 
-    y = []
-    points = []
-    for row in cursor:
-        x.append(float(row[1]))
-        y.append(float(row[2]))
-        points.append(Point(float(row[3]), float(row[4])))
+    def _getActivityInfo(self):
+        '''
+        Get details of the Activities that the platform has. 
+        '''
+        # Get start and end datetimes, color and geographic extent of the activity
+        aQS = Activity.objects.using(self.args.database).filter(platform__name=self.args.platform)
+        seaQS = aQS.aggregate(Min('startdate'), Max('enddate'))
+        self.activityStartTime = seaQS['startdate__min'] 
+        self.activityEndTime = seaQS['enddate__max']
+        self.color = '#' + Platform.objects.using(self.args.database).filter(name=self.args.platform).values_list('color')[0][0]
+        self.extent = aQS.extent(field_name='maptrack')
 
-    if len(points) < 2:
-        startTime = endTime
+    def _getAxisInfo(self, parm):
+        '''
+        Return appropriate min and max values and units for a parameter name
+        '''
+        # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
+        apQS = ActivityParameter.objects.using(self.args.database).filter(activity__platform__name=self.args.platform)
+        pQS = apQS.filter(parameter__name=parm).aggregate(Min('p010'), Max('p990'))
+        min, max = (pQS['p010__min'], pQS['p990__max'])
+
+        # Get units for each parameter
+        prQS = ParameterResource.objects.using(self.args.database).filter(resource__name='units').values_list('resource__value')
+        units = prQS.filter(parameter__name=parm)[0][0]
+
+        return min, max, units
+
+    def makeIntervalPlots(self):
+        '''
+        Make a plot each timeInterval starting at startTime
+        '''
+
+        self._getActivityInfo()
+        xmin, xmax, xUnits = self._getAxisInfo(self.args.xParm)
+        ymin, ymax, yUnits = self._getAxisInfo(self.args.yParm)
+
+        if self.args.hourInterval:
+            timeInterval = timedelta(hours=self.args.hourInterval)
+        else:
+            timeInterval = self.activityEndTime - self.activityStartTime
+ 
+        if self.args.verbose:
+            print "Making time interval plots for platform", self.args.platform
+            print "Activity start:", self.activityStartTime
+            print "Activity end:  ", self.activityEndTime
+            print "Time Interval =", timeInterval
+
+        # Pull out data and plot at timeInterval intervals
+        startTime = self.activityStartTime
         endTime = startTime + timeInterval
-        continue
+        while endTime <= self.activityEndTime:
+            x, y, points = self._getData(startTime, endTime)
+        
+            if len(points) < 2:
+                startTime = endTime
+                endTime = startTime + timeInterval
+                continue
 
-    path = LineString(points).simplify(tolerance=.001)
-
-    fig = plt.figure()
-    plt.grid(True)
-    ax = fig.add_subplot(111)
-
-    # Scale path points to appear in upper right of the plot as a crude indication of the track
-    xp = []
-    yp = []
-    for p in path:
-        xp.append(0.30 * (p[0] - extent[0]) * (xmax - xmin) / (extent[2] - extent[0]) + 0.70 * (xmax - xmin))
-        yp.append(0.18 * (p[1] - extent[1]) * (ymax - ymin) / (extent[3] - extent[1]) + 0.75 * (ymax - ymin))
+            path = LineString(points).simplify(tolerance=.001)
+        
+            fig = plt.figure()
+            plt.grid(True)
+            ax = fig.add_subplot(111)
+    
+            # Scale path points to appear in upper right of the plot as a crude indication of the track
+            xp = []
+            yp = []
+            for p in path:
+                xp.append(0.30 * (p[0] - self.extent[0]) * (xmax - xmin) / (self.extent[2] - self.extent[0]) + 0.70 * (xmax - xmin))
+                yp.append(0.18 * (p[1] - self.extent[1]) * (ymax - ymin) / (self.extent[3] - self.extent[1]) + 0.75 * (ymax - ymin))
        
-    # Make the plot 
-    ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
-    ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
-    ax.set_xlabel('%s (%s)' % (xParmName, xUnits))
-    ax.set_ylabel('%s (%s)' % (yParmName, yUnits))
-    ax.set_title('%s from %s' % (pName, dbAlias)) 
-    ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=False)
-    ax.plot(xp, yp, c=color)
-    ax.text(0.1, 0.8, startTime.strftime('%Y-%m-%d %H:%M'), transform=ax.transAxes)
-    fileName = 'chl_bb_' + startTime.strftime('%Y%m%dT%H%M')
-    if dayFlag:
-        fileName += '_day'
-    if nightFlag:
-        fileName += '_night'
-    fileName += '.png'
+            # Make the plot 
+            ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
+            ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
+            ax.set_xlabel('%s (%s)' % (self.args.xParm, xUnits))
+            ax.set_ylabel('%s (%s)' % (self.args.yParm, yUnits))
+            ax.set_title('%s from %s' % (self.args.platform, self.args.database)) 
+            ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=False)
+            ax.plot(xp, yp, c=self.color)
+            ax.text(0.1, 0.8, startTime.strftime('%Y-%m-%d %H:%M'), transform=ax.transAxes)
+            fileName = 'chl_bb_' + startTime.strftime('%Y%m%dT%H%M')
+            if self.args.daytime:
+                fileName += '_day'
+            if self.args.nighttime:
+                fileName += '_night'
+            fileName += '.png'
 
-    fig.savefig(fileName)
-    print 'Saved file', fileName
-    plt.close()
+            fig.savefig(fileName)
+            print 'Saved file', fileName
+            plt.close()
+    
+            startTime = endTime
+            endTime = startTime + timeInterval
 
-    startTime = endTime
-    endTime = startTime + timeInterval
+        print 'Done. Make an animated gif with: convert -delay 100 chl_bb_*.png chl_bb_%s.gif' % self.args.platform
 
-print 'Done. Make an animated gif with: convert -delay 100 chl_bb_*.png chl_bb_%s.gif' % pName
+    def process_command_line(self):
+        '''
+        The argparse library is included in Python 2.7 and is an added package for STOQS.
+        '''
+        import argparse
+    
+        parser = argparse.ArgumentParser(description='Read Parameter-Parameter data from a STOQS database and make bi-plots')
+                                             
+        parser.add_argument('-x', '--xParm', action='store', help='Parameter name for the X axis', default='bb470')
+        parser.add_argument('-y', '--yParm', action='store', help='Parameter name for the Y axis', default='chlorophyll')
+        parser.add_argument('-p', '--platform', action='store', help='Platform name', default='tethys')
+        parser.add_argument('-d', '--database', action='store', help='Database alias', default='stoqs_september2013_o')
+        parser.add_argument('--hourInterval', action='store', help='Step though the time series and make plots at this hour interval', type=int)
+        parser.add_argument('--daytime', action='store_true', help='Select only daytime hours: 10 am to 2 pm local time')
+        parser.add_argument('--nighttime', action='store_true', help='Select only nighttime hours: 10 pm to 2 am local time')
+        parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
+    
+        self.args = parser.parse_args()
+    
+    
+if __name__ == '__main__':
+
+    bp = BiPlot()
+    bp.process_command_line()
+    bp.makeIntervalPlots()
 
