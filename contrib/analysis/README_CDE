@@ -1,0 +1,22 @@
+STOQS Client cde-package instructions
+=====================================
+
+All required software is included in this cde-package for performing detailed data analysis
+in STOQS.  The Python script you run is executed with a wrapper script (ending in '.cde') 
+that creates the environemnt for all the code and data for the script to run.
+
+This package is meant for running inside MBARI's firewall as direct access is made to the 
+STOQS PostgreSQL databases running on the internal server kraken.  
+
+See file cde-root/home/mccann/dev/stoqshg/privateSettings for details of what databases
+are available.  Use the STOQS UI at http://kraken.shore.mbari.org/canon/ in concert with
+script execution to learn parameter, platform names, etc.
+
+For a usage note (with examples) execute:
+-----------------------------------------
+
+cde-root/home/mccann/dev/stoqshg/contrib/analysis/traj_bb_chl_plots.py.cde --help
+
+--
+Mike McCann
+22 January 2014
