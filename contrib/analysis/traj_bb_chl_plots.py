@@ -43,6 +43,8 @@ dbAlias = 'stoqs_september2013_o'
 pName = 'tethys'
 xParmName = 'bb470'
 yParmName = 'chlorophyll'
+dayFlag = False
+nightFlag = True
 #pName = 'dorado'
 #xParmName = 'bbp420'
 #yParmName = 'fl700_uncorr'
@@ -71,6 +73,7 @@ WHERE (p_x.name = '{pxname}')
   AND (stoqs_instantpoint.timevalue >= '{start}'
        AND stoqs_instantpoint.timevalue <= '{end}')
   AND stoqs_platform.name IN ('{platform}')
+  {day_night_clause}
 ORDER BY stoqs_instantpoint.timevalue '''
 
 # Get connection to database; dbAlias must be defined in privateSettings
@@ -95,11 +98,21 @@ prQS = ParameterResource.objects.using(dbAlias).filter(resource__name='units').v
 xUnits = prQS.filter(parameter__name=xParmName)[0][0]
 yUnits = prQS.filter(parameter__name=yParmName)[0][0]
 
+# Apply SQL where clause to restrict to just do or night measurements
+daytimeHours = (17, 22)
+nighttimeHours = (5, 10)
+dnSQL = ''
+if dayFlag:
+    dnSQL = "AND date_part('hour', stoqs_instantpoint.timevalue) > %d AND date_part('hour', stoqs_instantpoint.timevalue) < %d" % daytimeHours
+if nightFlag:
+    dnSQL = "AND date_part('hour', stoqs_instantpoint.timevalue) > %d AND date_part('hour', stoqs_instantpoint.timevalue) < %d" % nighttimeHours
+
 # Pull out data and plot at timeInterval intervals
 startTime = aStart
 endTime = startTime + timeInterval
 while endTime < aEnd:
-    cursor.execute(sql_template.format(start=startTime, end=endTime, pxname=xParmName, pyname=yParmName, platform=pName))
+    cursor.execute(sql_template.format(start=startTime, end=endTime, pxname=xParmName, pyname=yParmName,
+                                       platform=pName, day_night_clause=dnSQL))
     x = [] 
     y = []
     points = []
@@ -135,7 +148,13 @@ while endTime < aEnd:
     ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=False)
     ax.plot(xp, yp, c=color)
     ax.text(0.1, 0.8, startTime.strftime('%Y-%m-%d %H:%M'), transform=ax.transAxes)
-    fileName = 'chl_bb_' + startTime.strftime('%Y%m%dT%H%M') + '.png'
+    fileName = 'chl_bb_' + startTime.strftime('%Y%m%dT%H%M')
+    if dayFlag:
+        fileName += '_day'
+    if nightFlag:
+        fileName += '_night'
+    fileName += '.png'
+
     fig.savefig(fileName)
     print 'Saved file', fileName
     plt.close()
