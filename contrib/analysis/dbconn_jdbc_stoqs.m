@@ -46,7 +46,7 @@ try
             eval(['iVal=rs.getString(',num2str(cc),');']); %get the column data as string type
             coltype=rsMetaData.getColumnTypeName(cc);      %assess the column type
             switch char(coltype)
-                case {'int','decimal','float','double'} %check to see if a null value is passed, if so assign NaN
+                case {'int4','decimal','float8','float16','double'} %check to see if a null value is passed, if so assign NaN
                     if ~isempty(iVal)
                         eval([deblank(char(rsMetaData.getColumnName(cc))),'(rs.getRow)=str2num(iVal);']);
                     else
