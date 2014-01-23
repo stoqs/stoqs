@@ -354,6 +354,14 @@ def showParameterGroup(request, format = 'html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
+def showParameterResource(request, format = 'html'):
+    stoqs_object = mod.ParameterResource
+    query_set = stoqs_object.objects.all()
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'uuid', 'parameter_id', 'resource_id', 'parameter__name', 'resource__name', 'resource__value']
+    return o.process_request()
+
 def showParameter(request, format = 'html'):
     stoqs_object = mod.Parameter
     query_set = stoqs_object.objects.all().order_by('name')
