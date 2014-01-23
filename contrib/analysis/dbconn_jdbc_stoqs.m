@@ -1,25 +1,22 @@
-function s_array = dbconn_jdbc(database, sqlstr)
-% Connect to STOQS databases, execute SQL string, and pass back structure array.
+function s_array = dbconn_jdbc_stoqs(database, sqlstr)
+% Connect to a STOQS database, execute SQL string, and pass back structure array.
 % Input   database: The database name on the server, e.g. stoqs_september2013_o
 %         sqlstr  : SQL string, i.e. SELECT name FROM stoqs_platform
 % Output  s_array   : structure array
 %
 % Example:
-%   cout = dbconn_jdbc('stoqs_september2013_0', 'Select name from stoqs_parameter where standard_name LIKE 'sea%');
+%   cout = dbconn_jdbc_stoqs('stoqs_september2013_o', 'Select name from stoqs_parameter');
 % 
-% SQL may be copied from the STOQS UI and pasted into a Matlab string with: 
+% SQL may be copied from the STOQS UI into the clipboard and pasted into a 
+% Matlab string with: 
 %   sql = clipboard('paste')
-%   cout = dbconn_jdbc('stoqs_september2013_0', sql)
+%   cout = dbconn_jdbc_stoqs('stoqs_september2013_o', sql)
 %
-% **Note: The Java class path to the sqljdbc driver must be specified before call.
-%         For best results put it in your classpath.txt file.  
-%         Driver download :
-%         http://www.microsoft.com/download/en/details.aspx?id=21599
-%
-% To make work for PostgreSQL/STOQS:
+% To make work in your Matlab installion:
 % 1. Download appropriate .jar file from http://jdbc.postgresql.org/download.html
-% 2. Add the file to the static java classpath, e.g. on my system I added
-%    /Users/mccann/Documents/MATLAB/postgresql-9.3-1100.jdbc4.jar to /Users/mccann/.matlab/R2012b/javaclasspath.txt 
+% 2. Add the file to the static java classpath.  On my system I added
+%      /Users/mccann/Documents/MATLAB/postgresql-9.3-1100.jdbc4.jar to 
+%      /Users/mccann/.matlab/R2012b/javaclasspath.txt 
 
 import java.lang.Thread;
 import java.lang.Class;
@@ -29,12 +26,12 @@ import java.sql.ResultSet;
 current_thread = java.lang.Thread.currentThread();
 class_loader = current_thread.getContextClassLoader();
 class = java.lang.Class.forName('org.postgresql.Driver', false, class_loader);
-database_url = ['jdbc:postgresql://kraken.shore.mbari.org/' database ]
+database_url = ['jdbc:postgresql://kraken.shore.mbari.org/' database ];
 
 try
     conn = java.sql.DriverManager.getConnection(database_url, 'everyone', 'guest');
    
-    %# query database
+    % query database
     q = conn.prepareStatement(sqlstr);
     rs = q.executeQuery();
 
