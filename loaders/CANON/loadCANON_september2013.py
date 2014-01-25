@@ -116,23 +116,12 @@ cl.slocum_294_parms = [ 'temperature', 'salinity', 'density', 'fluorescence', 'o
 cl.slocum_294_startDatetime = startdate
 cl.slocum_294_endDatetime = enddate
 
-# Generic Glider ctd
-cl.glider_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
-cl.glider_ctd_files = [ 'nemesis_ctd.nc', 
-                        ## 'ucsc260_ctd.nc', 'ucsc294_ctd.nc'       # Replaced by full-resolution files in separate slocum_xxx loaders
-                      ]
-cl.glider_ctd_parms = ['TEMP', 'PSAL' ]
-cl.glider_ctd_startDatetime = startdate
-cl.glider_ctd_endDatetime = enddate
-
-# Glider met 
-cl.glider_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/'
-cl.glider_met_files = [ 'nemesis_met.nc', 
-                        ## 'ucsc260_met.nc', 'ucsc294_met.nc'
-                      ]
-cl.glider_met_parms = ['meanu','meanv' ]
-cl.glider_met_startDatetime = startdate
-cl.glider_met_endDatetime = enddate
+# Slocum Teledyne nemesis Glider
+cl.slocum_nemesis_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/final/'
+cl.slocum_nemesis_files = [ 'glider-nemesis_20130716T221027_rt0.nc' ]
+cl.slocum_nemesis_parms = [ 'temperature', 'salinity', 'u', 'v']
+cl.slocum_nemesis_startDatetime = startdate
+cl.slocum_nemesis_endDatetime = enddate
 
 # Wavegliders
 # WG OA
@@ -415,11 +404,9 @@ if cl.args.test:
     cl.load_NPS29(stride=100) 
     cl.load_NPS34(stride=100) 
 
-    cl.load_glider_ctd(stride=100) 
-    cl.load_glider_met(stride=100)
-
-    cl.load_slocum_294(stride=10)
     cl.load_slocum_260(stride=10)
+    cl.load_slocum_294(stride=10)
+    cl.load_slocum_nemesis(stride=10)
 
     cl.load_wg_oa_pco2(stride=100) 
     cl.load_wg_oa_ctd(stride=100) 
@@ -466,11 +453,9 @@ elif cl.args.optimal_stride:
     cl.load_NPS29(stride=1) 
     cl.load_NPS34(stride=1) 
 
-    cl.load_glider_ctd(stride=1) 
-    cl.load_glider_met(stride=1)
-
     cl.load_slocum_260(stride=10)
     cl.load_slocum_294(stride=10)
+    cl.load_slocum_nemesis(stride=10)
 
     cl.load_wg_oa_pco2(stride=1) 
     cl.load_wg_oa_ctd(stride=1) 
@@ -518,11 +503,9 @@ else:
     cl.load_NPS29()
     cl.load_NPS34()
 
-    cl.load_glider_ctd()
-    cl.load_glider_met()
-
     cl.load_slocum_260()
     cl.load_slocum_294()
+    cl.load_slocum_nemesis()
 
     cl.load_wg_oa_pco2()
     cl.load_wg_oa_ctd()
