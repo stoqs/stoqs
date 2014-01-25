@@ -85,6 +85,7 @@ class CANONLoader(LoadScript):
                 'nemesis':      'FFF026',
                 'ucsc294':      'FFBA26',
                 'slocum_294':   'FFBA26',
+                'slocum_nemesis':'FFF026',
                 'ucsc260':      'FF8426',
                 'slocum_260':   'FF8426',
                 'wg_oa':        '0f9cd4',
@@ -266,6 +267,17 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Slocum_294', self.colors['slocum_294'], 'glider', 'Glider Mission', 
                                         self.slocum_294_parms, self.dbAlias, stride, self.slocum_294_startDatetime, self.slocum_294_endDatetime)
+
+    def load_slocum_nemesis(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.slocum_nemesis_files], self.slocum_nemesis_files):
+            url = self.slocum_nemesis_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Slocum_nemesis', self.colors['slocum_nemesis'], 'glider', 'Glider Mission', 
+                                        self.slocum_nemesis_parms, self.dbAlias, stride, self.slocum_nemesis_startDatetime, self.slocum_nemesis_endDatetime)
 
     def load_wg_oa_pco2(self, stride=None):
         '''
