@@ -573,7 +573,13 @@ class Base_Loader(STOQS_Loader):
                 logger.info('ac = %s', ac)
 
                 times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
-                depths[pname] = self.ds[ac[pname]['depth']][tIndx[0]:tIndx[-1]:self.stride]
+                try:
+                    depths[pname] = self.ds[ac[pname]['depth']][tIndx[0]:tIndx[-1]:self.stride]
+                except KeyError:
+                    # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
+                    if isinstance(ac[pname]['depth'], float):
+                        depths[pname] =  ac[pname]['depth'] * numpy.ones(len(times[pname]))
+
                 latitudes[pname] = self.ds[ac[pname]['latitude']][tIndx[0]:tIndx[-1]:self.stride]
                 longitudes[pname] = self.ds[ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
@@ -1174,6 +1180,11 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
     elif not pName.startswith('Slocum'):
         for v in loader.include_names:
             loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+    elif pName.startswith('Slocum_nemesis'):
+        loader.auxCoords['u'] = {'time': 'time_uv', 'latitude': 'lat_uv', 'longitude': 'lon_uv', 'depth': 0.0}
+        loader.auxCoords['v'] = {'time': 'time_uv', 'latitude': 'lat_uv', 'longitude': 'lon_uv', 'depth': 0.0}
+        loader.auxCoords['temperature'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
+        loader.auxCoords['salinity'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
 
 
     # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications
