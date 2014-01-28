@@ -5,7 +5,7 @@ __contact__   = 'mccann at mbari.org'
 
 __doc__ = '''
 
-STOQS Query manager for building ajax responces to selections made for QueryUI
+STOQS Query manager for building ajax responses to selections made for QueryUI
 
 @undocumented: __doc__ parser
 @status: production

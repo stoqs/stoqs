@@ -49,6 +49,7 @@ query_parms = {
                    'measuredparametersgroup': 'measuredparametersgroup',
                    'parameterstandardname': 'parameterstandardname',        
                    'parameterminmax': 'parameterminmax',    # Array of name, min, max in hash keyed by 'dataaccess' and 'plot'
+                   'flotlimits': ('xaxis_min', 'xaxis_max', 'yaxis_min', 'yaxis_max'),       # Flot plot axis limits
                    'time': ('start_time','end_time'),       # Single values
                    'depth': ('min_depth', 'max_depth'),     # Single values
                    'simpledepthtime': [],                   # List of x,y values

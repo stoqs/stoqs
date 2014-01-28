@@ -242,7 +242,9 @@ class MeasuredParameter(object):
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
         
         # Estimate horizontal (time) grid spacing by number of points in selection, expecting that simplified depth-time
-        # query has salient points, typically in the vertices of the yo-yos.  
+        # query has salient points, typically in the vertices of the yo-yos. 
+        # If the time tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
+        # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
         tmin = None
         tmax = None
         xi = None
@@ -252,9 +254,11 @@ class MeasuredParameter(object):
                 dend = datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S') 
                 tmin = time.mktime(dstart.timetuple())
                 tmax = time.mktime(dend.timetuple())
-        ##if not tmin and not tmax:
-        ##    logger.debug('Time range not specified in query, getting it from the database')
-        ##    tmin, tmax = self.getTime()
+
+        if not tmin and not tmax:
+            if self.kwargs['flotlimits'][0] is not None and self.kwargs['flotlimits'][1] is not None:
+                tmin = float(self.kwargs['flotlimits'][0]) / 1000.0
+                tmax = float(self.kwargs['flotlimits'][1]) / 1000.0
 
         if tmin and tmax:
             sdt_count = self.qs.filter(platform__name = self.platformName).values_list('simpledepthtime__depth').count()
@@ -266,7 +270,8 @@ class MeasuredParameter(object):
             xi = np.linspace(tmin, tmax, sdt_count)
             ##logger.debug('xi = %s', xi)
 
-        # Make depth spacing dinc m, limit to time-depth-flot resolution (dgrid_max)
+        # If the depth tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
+        # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
         dmin = None
         dmax = None
         yi = None
@@ -275,6 +280,12 @@ class MeasuredParameter(object):
                 dmin = float(self.kwargs['depth'][0])
                 dmax = float(self.kwargs['depth'][1])
 
+        if not dmin and not dmax:
+            if self.kwargs['flotlimits'][2] is not None and self.kwargs['flotlimits'][3] is not None:
+                dmin = float(self.kwargs['flotlimits'][2])
+                dmax = float(self.kwargs['flotlimits'][3])
+
+        # Make depth spacing dinc m, limit to time-depth-flot resolution (dgrid_max)
         if dmin is not None and dmax is not None:
             y_count = int((dmax - dmin) / dinc )
             if y_count > dgrid_max:
