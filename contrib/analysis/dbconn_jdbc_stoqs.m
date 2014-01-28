@@ -53,7 +53,11 @@ try
                         eval([deblank(char(rsMetaData.getColumnName(cc))),'(rs.getRow)=NaN;']);
                     end
                 otherwise %value is a string, so just pass it into the output array
+                    if ~isempty(iVal)
                         eval([deblank(char(rsMetaData.getColumnName(cc))),'(rs.getRow)=cell(iVal);']);
+                    else
+                        eval([deblank(char(rsMetaData.getColumnName(cc))),'(rs.getRow)='' '';']);
+                    end
             end %switch coltype
         end %for cc=1:colnum
         %make output array, cout
@@ -66,8 +70,8 @@ try
     try rs.close();     catch, end
     
 catch
-    msgbox(['Connection error occurred:' lasterr]);
-    
+    %msgbox(['Connection error occurred:' lasterr]);
+    disp(['Connection error occurred:' lasterr]);
 end
 
 
