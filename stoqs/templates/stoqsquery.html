@@ -858,6 +858,7 @@
     var hasTrajectory;
     var hasTimeSeries;
     var hasTimeSeriesProfile;
+    var clearingTemporalFlag = false;
     var PIXELS_WIDE = 800;                              // Approximate width of $("#time-depth-flot")
     
     // Called with an element that was selectable, should make that element non-selectable.
@@ -1393,6 +1394,13 @@
             params['min_depth']=$('#start-depth').val();
             params['max_depth']=$('#end-depth').val();
         }
+        else {
+            // Not Zoomed in - set params from the current flot axis limits
+            params['xaxis_min'] = timedepthplot.getAxes().xaxis.min;
+            params['xaxis_max'] = timedepthplot.getAxes().xaxis.max;
+            params['yaxis_min'] = timedepthplot.getAxes().yaxis.min;
+            params['yaxis_max'] = timedepthplot.getAxes().yaxis.max;
+        }
 
         params['platforms']=[]
         $('tr',$('.stoqs-platform')).each(function (index, element) {
@@ -1546,7 +1554,18 @@
             $('#zoomed-button').attr('title', ' ').tooltip('fixTitle').tooltip('hide');
             $('#temporal-anchor').html('Temporal');
 
-            rebuildFilters();
+            var items = []
+            var plotDataSelection = $('input:radio[class=parameter-plot-radio]:checked').val();
+            if ( typeof plotDataSelection != 'undefined') {
+                if (plotDataSelection) {
+                    // Setting clearingTemporalFlag to true here causes rebuildFilters() to call itself again in order
+                    // to get the flot axis limits resulting from the remaining selections so that the image for
+                    // parameterplatformdatavaluepng can be properly generated with those axis limits.
+                    clearingTemporalFlag = true;
+                    items = ['parameters', 'platforms', 'simpledepthtime', 'sampledepthtime'];
+                }
+            }
+            rebuildFilters(items);
         }
     });
 
@@ -2715,11 +2734,24 @@
                 if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
                     if ( $('input:radio[name=parameters_plot]:checked').val() ) {
                         if (data['parameterplatformdatavaluepng'][0]) {
-                            var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
-                                                $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
-                            var options = $.extend(true, {}, simpledepthtime_options_zoom, {
-                                series: { images: { show: true } }
-                            });
+                            if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
+                                // Zoomed
+                                var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                    $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
+                                var options = $.extend(true, {}, simpledepthtime_options_zoom, {
+                                    series: { images: { show: true } },
+                                });
+                            }
+                            else {
+                                // Not Zooomed
+                                var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                    timedepthplot.getAxes().xaxis.min, timedepthplot.getAxes().yaxis.min, timedepthplot.getAxes().xaxis.max, timedepthplot.getAxes().yaxis.max] ] ];
+                                var options = $.extend(true, {}, simpledepthtime_options_zoom, {
+                                    series: { images: { show: true } },
+                                    xaxis: { min: timedepthplot.getAxes().xaxis.min, max: timedepthplot.getAxes().xaxis.max },
+                                    yaxis: { min: timedepthplot.getAxes().yaxis.min, max: timedepthplot.getAxes().yaxis.max } 
+                                });
+                            }
 
                             $.plot.image.loadDataImages(flotdata, options, function () {
                                 $.plot($("#time-depth-flot"), flotdata, options);
@@ -2966,6 +2998,13 @@
             dataType: "json"
         }))
         .then(function( data, textStatus, jqXHR ) {
+            // If Update was the result of clearing the Temporal selection and a Plot Data radio button is checked 
+            // then call rebuildFilters() again to re-Update the presentation with a new parameterplatformdatavaluepng
+            if (clearingTemporalFlag) {
+                clearingTemporalFlag = false;
+                rebuildFilters();
+            }
+
             // Remove items that are not needed for new map generation
             var map_params = params;
             if ( ! $.isEmptyObject(map_params.only) ) {
