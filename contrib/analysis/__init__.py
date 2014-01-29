@@ -41,10 +41,10 @@ class BiPlot():
     Make customized BiPlots (Parameter Parameter plots) from STOQS.
     '''
 
-    def _getData(self, startDatetime, endDatetime):
+    def _getData(self, startDatetime, endDatetime, platform, xParm, yParm):
         '''
-        Use the command line arguments and the SQL template to retrieve the X and Y
-        values and other ancillary information from the database
+        Use the SQL template to retrieve the X and Y values and other ancillary information from the database
+        for the passed in platform, xParm and yParm names.
         '''
         # SQL template copied from STOQS UI Parameter-Parameter -> sql tab
         sql_template = '''SELECT DISTINCT stoqs_measurement.depth,
@@ -81,8 +81,8 @@ class BiPlot():
         if self.args.nighttime:
             dnSQL = "AND date_part('hour', stoqs_instantpoint.timevalue) > %d AND date_part('hour', stoqs_instantpoint.timevalue) < %d" % nighttimeHours
 
-        sql = sql_template.format(start=startDatetime, end=endDatetime, pxname=self.args.xParm, pyname=self.args.yParm, 
-                                    platform=self.args.platform, day_night_clause=dnSQL)
+        sql = sql_template.format(start=startDatetime, end=endDatetime, pxname=xParm, pyname=yParm, 
+                                    platform=platform, day_night_clause=dnSQL)
         if self.args.verbose:
             print "sql =", sql
 
@@ -97,29 +97,39 @@ class BiPlot():
 
         return x, y, points
 
-    def _getActivityInfo(self):
+    def _getActivityInfo(self, platform):
         '''
-        Get details of the Activities that the platform has. 
+        Get details of the Activities that the platform has.  Set those details to member variables and
+        also return them as a tuple.  Must work within a single STOQS database.
         '''
         # Get start and end datetimes, color and geographic extent of the activity
-        aQS = Activity.objects.using(self.args.database).filter(platform__name=self.args.platform)
+        # If multiple platforms use them all to get overall start & end times and extent and se tcolor to black
+        if type(platform) in (list, tuple):
+            aQS = Activity.objects.using(self.args.database).filter(platform__name__in=platform)
+        else:
+            aQS = Activity.objects.using(self.args.database).filter(platform__name=platform)
         seaQS = aQS.aggregate(Min('startdate'), Max('enddate'))
         self.activityStartTime = seaQS['startdate__min'] 
         self.activityEndTime = seaQS['enddate__max']
-        try:
-            self.color = '#' + Platform.objects.using(self.args.database).filter(name=self.args.platform).values_list('color')[0][0]
-        except IndexError, e:
-            print "Error: Unable to get color of platform name", self.args.platform
-            sys.exit(-1)
+
+        self.color = 'black'
+        if type(platform) is str:
+            try:
+                self.color = '#' + Platform.objects.using(self.args.database).filter(name=platform).values_list('color')[0][0]
+            except IndexError, e:
+                print "Error: Unable to get color of platform name", platform
+                sys.exit(-1)
 
         self.extent = aQS.extent(field_name='maptrack')
 
-    def _getAxisInfo(self, parm):
+        return self.activityStartTime, self.activityEndTime, self.color, self.extent
+
+    def _getAxisInfo(self, platform, parm):
         '''
         Return appropriate min and max values and units for a parameter name
         '''
         # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
-        apQS = ActivityParameter.objects.using(self.args.database).filter(activity__platform__name=self.args.platform)
+        apQS = ActivityParameter.objects.using(self.args.database).filter(activity__platform__name=platform)
         pQS = apQS.filter(parameter__name=parm).aggregate(Min('p010'), Max('p990'))
         min, max = (pQS['p010__min'], pQS['p990__max'])
 
