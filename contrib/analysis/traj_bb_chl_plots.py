@@ -30,6 +30,7 @@ import sys
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
 
+import matplotlib
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from django.contrib.gis.geos import LineString, Point
@@ -42,7 +43,7 @@ class PlatformsBiPlot(BiPlot):
     Make customized BiPlots (Parameter Parameter plots) for platforms from STOQS.
     '''
 
-    def xySubPlot(self, x, y, platform, color, xParm, yParm, fig, subplot, startTime):
+    def xySubPlot(self, x, y, platform, color, xParm, yParm, ax, startTime):
         '''
         Given names of platform, x & y paramters add a subplot to figure fig.
         '''
@@ -51,23 +52,44 @@ class PlatformsBiPlot(BiPlot):
         ymin, ymax, yUnits = self._getAxisInfo(platform, yParm)
 
         # Make the plot 
-        ax = fig.add_subplot(int(subplot))
         ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
         ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
         ax.set_xlabel('%s (%s)' % (xParm, xUnits))
         ax.set_ylabel('%s (%s)' % (yParm, yUnits))
         ax.set_title('%s' % (platform,)) 
         ##ax.set_title('%s from %s' % (platform, self.args.database)) 
-        ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=False)
+        ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=True)
         ##ax.plot(xp, yp, c=color)
         ##ax.text(0.1, 0.8, startTime.strftime('%Y-%m-%d %H:%M'), transform=ax.transAxes)
+
+    def timeSubPlot(self, platformDTHash, ax, startTime, endTime):
+        '''
+        Make subplot of depth time series for all the platforms and highlight the time range
+        '''
+        datetimeList = []
+        depths = []
+        for pl, ats in platformDTHash.iteritems():
+            color = self._getColor(pl)
+            for a, ts in ats.iteritems():
+                for ems, d in ts:
+                    datetimeList.append(datetime.utcfromtimestamp(ems/1000.0))
+                    depths.append(d)
+            
+                ax.plot_date(matplotlib.dates.date2num(datetimeList), depths, '-', c=color, alpha=0.2)
+
+        # The time extent
+        
+        
+        ax.set_xlabel('Time (GMT)')
+        ax.set_ylabel('Depth (m)')
+        plt.gca().invert_yaxis()
 
     def makeIntervalPlots(self):
         '''
         Make a plot each timeInterval starting at startTime
         '''
 
-        self._getActivityInfo(self.args.platform)
+        self._getActivityExtent(self.args.platform)
         xmin, xmax, xUnits = self._getAxisInfo(self.args.xParm)
         ymin, ymax, yUnits = self._getAxisInfo(self.args.yParm)
 
@@ -86,7 +108,7 @@ class PlatformsBiPlot(BiPlot):
         startTime = self.activityStartTime
         endTime = startTime + timeInterval
         while endTime <= self.activityEndTime:
-            x, y, points = self._getData(startTime, endTime, self.args.platform, self.args.xParm, self.args.yParm)
+            x, y, points = self._getXYData(startTime, endTime, self.args.platform, self.args.xParm, self.args.yParm)
         
             if len(points) < 2:
                 startTime = endTime
@@ -141,7 +163,16 @@ class PlatformsBiPlot(BiPlot):
         for the interval as subplots on the same page.  Include a map overview and timeline such that if a movie 
         is made of the resulting images a nice story is told.
         '''
-        allActivityStartTime, allActivityEndTime, color, extent  = self._getActivityInfo(self.args.platform)
+        # Setup grid for subplots, row 0 is the time plot and spans 2 columns.  Below that we use rcLookup
+        # list to lookup the row column coordinates for the next subplot.
+        nrow = 3
+        ncol = 2
+        rcLookup = []
+        for r in range(nrow):
+            for c in range(ncol):
+                rcLookup.append((r,c))
+
+        allActivityStartTime, allActivityEndTime, extent  = self._getActivityExtent(self.args.platform)
         if self.args.hourInterval:
             timeInterval = timedelta(hours=self.args.hourInterval)
         else:
@@ -149,15 +180,20 @@ class PlatformsBiPlot(BiPlot):
         startTime = allActivityStartTime
         endTime = startTime + timeInterval
 
+        platformDTHash = self._getplatformDTHash(self.args.platform)
+
         # Default subplot is 2 rows, 2 columns.  If len(self.args.platform) > 4 then must change this.
-        subplot_base = '22'
         while endTime <= allActivityEndTime:
  
-            i = 0
-            fig = plt.figure()
+            # Plot spatial-temporal overview (Temoral: rcLookup[0:2], Spatial: rcLookup[2])
+            ax = plt.subplot2grid((3, 2), (0, 0), colspan=2)
+            self.timeSubPlot(platformDTHash, ax, startTime, endTime)
+           
+            # Plot platforms 
+            i = 2
             for pl, xP, yP in zip(self.args.platform, self.args.xParm, self.args.yParm):
                 i = i + 1
-                activityStartTime, activityEndTime, color, extent  = self._getActivityInfo(pl)
+                activityStartTime, activityEndTime, extent  = self._getActivityExtent(pl)
 
                 if self.args.verbose:
                     print "Making time interval plots for platform", pl
@@ -166,7 +202,8 @@ class PlatformsBiPlot(BiPlot):
                     print "Time Interval =", timeInterval
     
                 # Pull out data and plot at timeInterval intervals
-                x, y, points = self._getData(startTime, endTime, pl, xP, yP)
+                x, y, points = self._getXYData(startTime, endTime, pl, xP, yP)
+                color = self._getColor(pl)
             
                 if len(points) < 2:
                     startTime = endTime
@@ -174,8 +211,8 @@ class PlatformsBiPlot(BiPlot):
                     continue
                 path = LineString(points).simplify(tolerance=.001)
 
-                subplot = subplot_base + str(i)
-                self.xySubPlot(x, y, pl, color, xP, yP, fig, subplot, startTime)
+                ax = plt.subplot2grid((3, 2), rcLookup[i])
+                self.xySubPlot(x, y, pl, color, xP, yP, ax, startTime)
 
             startTime = endTime
             endTime = startTime + timeInterval
@@ -191,10 +228,12 @@ class PlatformsBiPlot(BiPlot):
                 wcName += '_night'
             fileName += '.png'
 
-            fig.savefig(fileName)
+            plt.tight_layout()
+            plt.savefig(fileName)
             print 'Saved file', fileName
 
             plt.close()
+            raw_input('P')
 
         print 'Done. Make an animated gif with: convert -delay 100 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:3]))
 
