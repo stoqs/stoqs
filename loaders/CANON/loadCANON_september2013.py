@@ -179,18 +179,6 @@ cl.wfpctd_files = [
 'canon13c15.nc', 'canon13c16.nc', 'canon13c17.nc', 'canon13c18.nc', 'canon13c19.nc', 
                   ]
 
-# BCTD
-# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
-cl.bctdDir = 'CANON_september2013/Platforms/Ships/Western_Flyer/netcdf/bctd/'
-cl.subsample_csv_base = cl.dodsBase + cl.bctdDir
-cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data')
-cl.subsample_csv_files = [
-                            #'STOQS_canon13_CHL_1U.csv', 'STOQS_canon13_CHL_5U.csv', 'STOQS_canon13_NH4.csv', 'STOQS_canon13_NO2.csv',
-                    		#'STOQS_canon13_NO3.csv','STOQS_canon13_OXY_ML.csv', 'STOQS_canon13_PHAEO_1U.csv', 'STOQS_canon13_PHAEO_5U.csv',
-                            #'STOQS_canon13_PHAEO_GFF.csv', 'STOQS_canon13_PO4.csv', 'STOQS_canon13_SIO4.csv', #'STOQS_canon13_CARBON_GFF.csv
-							#'STOQS_canon13_CHL_GFF.csv',
-                         ]
-
 ######################################################################
 #  RACHEL CARSON: September 16-20? (259-262) Sep 30 - Oct 3
 ######################################################################
@@ -212,17 +200,6 @@ cl.rcpctd_files = [
                     '27513RCc01.nc', '27513RCc02.nc',
                     '27613RCc01.nc', '27613RCc02.nc', '27613RCc03.nc', '27613RCc04.nc', '27613RCc05.nc',
                       ]
-# BCTD
-# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local BOG_Data dir
-cl.bctdDir = 'CANON_september2013/Platforms/Ships/Rachel_Carson/bctd/'
-cl.subsample_csv_base = cl.dodsBase + cl.bctdDir
-cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data')
-cl.subsample_csv_files = [
-#               'STOQS_canon13_CHL_1U.csv', 'STOQS_canon13_CHL_5U.csv', 'STOQS_canon13_NH4.csv', 'STOQS_canon13_NO2.csv', 'STOQS_canon13_NO3.csv', 
-			    'STOQS_canon13_OXY_ML.csv', 'STOQS_canon13_PHAEO_1U.csv', 'STOQS_canon13_PHAEO_5U.csv',
-                            'STOQS_canon13_PHAEO_GFF.csv', 'STOQS_canon13_PO4.csv', 'STOQS_canon13_SIO4.csv', 'STOQS_canon13_CARBON_GFF.csv',
-                            'STOQS_canon13_CHL_GFF.csv',
-                         ]
 
 #####################################################################
 # JOHN MARTIN
@@ -254,6 +231,7 @@ cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_
               ]
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
+
 
 # Mooring OA1 CTD
 cl.oaDir = 'CANON_september2013/Platforms/Moorings/OA_1/'
