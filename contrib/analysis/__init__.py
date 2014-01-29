@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # setting
 
 from django.db import connections
 from datetime import datetime, timedelta
-from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform
+from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime
 from django.contrib.gis.geos import LineString, Point
 from django.db.models import Max, Min
 
@@ -41,7 +41,7 @@ class BiPlot():
     Make customized BiPlots (Parameter Parameter plots) from STOQS.
     '''
 
-    def _getData(self, startDatetime, endDatetime, platform, xParm, yParm):
+    def _getXYData(self, startDatetime, endDatetime, platform, xParm, yParm):
         '''
         Use the SQL template to retrieve the X and Y values and other ancillary information from the database
         for the passed in platform, xParm and yParm names.
@@ -97,10 +97,11 @@ class BiPlot():
 
         return x, y, points
 
-    def _getActivityInfo(self, platform):
+    def _getActivityExtent(self, platform):
         '''
-        Get details of the Activities that the platform has.  Set those details to member variables and
-        also return them as a tuple.  Must work within a single STOQS database.
+        Get details of the Activities that the platform(s) ha{s,ve}.  Set those details to member variables and
+        also return them as a tuple.  Polymorphic: if platform is a list or tuple return spatial temporal
+        extent for all of the platforms.
         '''
         # Get start and end datetimes, color and geographic extent of the activity
         # If multiple platforms use them all to get overall start & end times and extent and se tcolor to black
@@ -112,17 +113,21 @@ class BiPlot():
         self.activityStartTime = seaQS['startdate__min'] 
         self.activityEndTime = seaQS['enddate__max']
 
-        self.color = 'black'
-        if type(platform) is str:
-            try:
-                self.color = '#' + Platform.objects.using(self.args.database).filter(name=platform).values_list('color')[0][0]
-            except IndexError, e:
-                print "Error: Unable to get color of platform name", platform
-                sys.exit(-1)
-
         self.extent = aQS.extent(field_name='maptrack')
 
-        return self.activityStartTime, self.activityEndTime, self.color, self.extent
+        return self.activityStartTime, self.activityEndTime, self.extent
+
+    def _getColor(self, platform):
+        '''
+        Return color of the platform
+        '''
+        try:
+            self.color = '#' + Platform.objects.using(self.args.database).filter(name=platform).values_list('color')[0][0]
+        except IndexError, e:
+            print "Error: Unable to get color of platform name", platform
+            sys.exit(-1)
+
+        return self.color
 
     def _getAxisInfo(self, platform, parm):
         '''
@@ -142,4 +147,33 @@ class BiPlot():
             sys.exit(-1)
 
         return min, max, units
+
+    def _getSimpleDepthTime(self, platform):
+        '''
+        Return a time series of depth for all the activities from specified platform. Separate each activity with a mask
+        so that gaps are used when plotted.
+        '''
+        qsDNTS = Activity.objects.using(self.args.database).filter(platform__name=platform).values_list( 
+                                'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name').order_by('simpledepthtime__epochmilliseconds')
+
+        hash = {}
+        for ems, depth, name in qsDNTS:
+            try:
+                hash[name].append((ems, depth))
+            except KeyError:
+                hash[name] = []
+                hash[name].append((ems, depth))
+
+        return hash
+
+    def _getplatformDTHash(self, platforms):
+        '''
+        Build hash of depth time series for all the platforms specified.  Useful for making overview plot.
+        '''
+        hash = {}
+        for pl in self.args.platform:
+            hash[pl] = self._getSimpleDepthTime(pl)
+
+        return hash
+
 
