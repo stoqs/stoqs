@@ -32,11 +32,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # setting
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.dates import DAILY
 from datetime import datetime, timedelta
 from django.contrib.gis.geos import LineString, Point
 from utils.utils import round_to_n
+from textwrap import wrap
 
-from contrib.analysis import BiPlot
+from contrib.analysis import BiPlot, NoXYDataException
 
 class PlatformsBiPlot(BiPlot):
     '''
@@ -54,35 +57,46 @@ class PlatformsBiPlot(BiPlot):
         # Make the plot 
         ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
         ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
-        ax.set_xlabel('%s (%s)' % (xParm, xUnits))
-        ax.set_ylabel('%s (%s)' % (yParm, yUnits))
-        ax.set_title('%s' % (platform,)) 
+        #ax.set_xlabel('%s (%s)' % (xParm, xUnits))
+        #ax.set_ylabel('%s (%s)' % (yParm, yUnits))
+        #ax.set_title('%s' % (platform,)) 
         ##ax.set_title('%s from %s' % (platform, self.args.database)) 
         ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=True)
+        ax.set_xticks([])
+        ax.set_yticks([])
         ##ax.plot(xp, yp, c=color)
         ##ax.text(0.1, 0.8, startTime.strftime('%Y-%m-%d %H:%M'), transform=ax.transAxes)
+        ax.text(0.5, 0.8, platform, transform=ax.transAxes, horizontalalignment='center')
 
-    def timeSubPlot(self, platformDTHash, ax, startTime, endTime):
+    def timeSubPlot(self, platformDTHash, ax, startTime, endTime, swrTS):
         '''
         Make subplot of depth time series for all the platforms and highlight the time range
         '''
-        datetimeList = []
-        depths = []
         for pl, ats in platformDTHash.iteritems():
             color = self._getColor(pl)
             for a, ts in ats.iteritems():
+                datetimeList = []
+                depths = []
                 for ems, d in ts:
                     datetimeList.append(datetime.utcfromtimestamp(ems/1000.0))
                     depths.append(d)
-            
+           
+                ##print "Plotting %s: start = %s, end = %s" % (a, datetimeList[0], datetimeList[-1])
                 ax.plot_date(matplotlib.dates.date2num(datetimeList), depths, '-', c=color, alpha=0.2)
 
-        # The time extent
-        
+        # The time extent for the current plot
+        ax.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='g', alpha=0.2)  
+        plt.gca().invert_yaxis()
+
+        # Plot short wave radiometer data
+        ax2 = ax.twinx()
+        ax2.plot_date(matplotlib.dates.date2num(swrTS[0]), swrTS[1], '-', c='black', alpha=0.5)
         
         ax.set_xlabel('Time (GMT)')
         ax.set_ylabel('Depth (m)')
-        plt.gca().invert_yaxis()
+        ax2.set_ylabel('$SWR (W/m^2)$')
+        loc = ax.xaxis.get_major_locator()
+        loc.maxticks[DAILY] = 6
 
     def makeIntervalPlots(self):
         '''
@@ -90,8 +104,8 @@ class PlatformsBiPlot(BiPlot):
         '''
 
         self._getActivityExtent(self.args.platform)
-        xmin, xmax, xUnits = self._getAxisInfo(self.args.xParm)
-        ymin, ymax, yUnits = self._getAxisInfo(self.args.yParm)
+        xmin, xmax, xUnits = self._getAxisInfo(self.args.platform, self.args.xParm)
+        ymin, ymax, yUnits = self._getAxisInfo(self.args.platform, self.args.yParm)
 
         if self.args.hourInterval:
             timeInterval = timedelta(hours=self.args.hourInterval)
@@ -173,21 +187,29 @@ class PlatformsBiPlot(BiPlot):
                 rcLookup.append((r,c))
 
         allActivityStartTime, allActivityEndTime, extent  = self._getActivityExtent(self.args.platform)
-        if self.args.hourInterval:
-            timeInterval = timedelta(hours=self.args.hourInterval)
+
+        if self.args.hourStep:
+            timeStep = timedelta(hours=self.args.hourStep)
+            if self.args.hourWindow:
+                timeWindow = timedelta(hours=self.args.hourWindow)
+            else:
+                if self.args.hourStep:
+                    timeWindow = timedelta(hours=self.args.hourStep)
         else:
-            timeInterval = allActivityEndTime - allActivityStartTime
+            timeWindow = allActivityEndTime - allActivityStartTime
+
         startTime = allActivityStartTime
-        endTime = startTime + timeInterval
+        endTime = startTime + timeWindow
 
         platformDTHash = self._getplatformDTHash(self.args.platform)
+        swrTS = self._getSWRData(allActivityStartTime, allActivityEndTime)
 
         # Default subplot is 2 rows, 2 columns.  If len(self.args.platform) > 4 then must change this.
         while endTime <= allActivityEndTime:
  
             # Plot spatial-temporal overview (Temoral: rcLookup[0:2], Spatial: rcLookup[2])
             ax = plt.subplot2grid((3, 2), (0, 0), colspan=2)
-            self.timeSubPlot(platformDTHash, ax, startTime, endTime)
+            self.timeSubPlot(platformDTHash, ax, startTime, endTime, swrTS)
            
             # Plot platforms 
             i = 2
@@ -199,23 +221,21 @@ class PlatformsBiPlot(BiPlot):
                     print "Making time interval plots for platform", pl
                     print "Activity start:", activityStartTime
                     print "Activity end:  ", activityEndTime
-                    print "Time Interval =", timeInterval
-    
-                # Pull out data and plot at timeInterval intervals
-                x, y, points = self._getXYData(startTime, endTime, pl, xP, yP)
-                color = self._getColor(pl)
-            
-                if len(points) < 2:
-                    startTime = endTime
-                    endTime = startTime + timeInterval
+   
+                try: 
+                    x, y, points = self._getXYData(startTime, endTime, pl, xP, yP)
+                except NoXYDataException, e:
+                    print e
                     continue
+
+                color = self._getColor(pl)
                 path = LineString(points).simplify(tolerance=.001)
 
                 ax = plt.subplot2grid((3, 2), rcLookup[i])
                 self.xySubPlot(x, y, pl, color, xP, yP, ax, startTime)
 
-            startTime = endTime
-            endTime = startTime + timeInterval
+            startTime = startTime + timeStep
+            endTime = startTime + timeWindow
 
             fnTempl= 'platforms_{time}' 
             fileName = fnTempl.format(time=startTime.strftime('%Y%m%dT%H%M'))
@@ -228,12 +248,13 @@ class PlatformsBiPlot(BiPlot):
                 wcName += '_night'
             fileName += '.png'
 
+            plt.figtext(0.55, 0.0, '\\\n'.join(wrap(self.commandline)), size=7)
             plt.tight_layout()
             plt.savefig(fileName)
             print 'Saved file', fileName
 
             plt.close()
-            raw_input('P')
+            ##raw_input('P')
 
         print 'Done. Make an animated gif with: convert -delay 100 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:3]))
 
@@ -247,8 +268,8 @@ class PlatformsBiPlot(BiPlot):
         examples = 'Examples:' + '\n\n' 
         examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado Slocum_294 tethys -x bbp420 optical_backscatter470nm bb470 -y fl700_uncorr fluorescence chlorophyll\n'
         examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
-        examples += sys.argv[0] + ' -d stoqs_september2013_o -p tethys -x bb470 -y chlorophyll --hourInterval 24\n'
-        examples += sys.argv[0] + ' -d stoqs_september2013_o -p Slocum_294 -x optical_backscatter470nm -y fluorescence --hourInterval 24\n'
+        examples += sys.argv[0] + ' -d stoqs_september2013_o -p tethys -x bb470 -y chlorophyll --hourStep 12 --hourWindow 24\n'
+        examples += sys.argv[0] + ' -d stoqs_september2013_o -p Slocum_294 -x optical_backscatter470nm -y fluorescence --hourStep 12 --hourWindow 24\n'
         examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
         examples += sys.argv[0] + ' -d stoqs_march2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
         examples += sys.argv[0] + ' -d stoqs_march2013_o -p daphne -x bb470 -y chlorophyll\n'
@@ -260,23 +281,25 @@ class PlatformsBiPlot(BiPlot):
                                          description='Read Parameter-Parameter data from a STOQS database and make bi-plots',
                                          epilog=examples + '\n\nMultiple platform and parameter names are paired up in order.\n(Image files will be written to the current working directory)')
                                              
-        parser.add_argument('-x', '--xParm', action='store', help='One or more Parameter names for the X axis', nargs='*', default='bb470')
-        parser.add_argument('-y', '--yParm', action='store', help='One or more Parameter names for the Y axis', nargs='*', default='chlorophyll')
-        parser.add_argument('-p', '--platform', action='store', help='One or more platform names separated by spaces', nargs='*', default='tethys')
-        parser.add_argument('-d', '--database', action='store', help='Database alias', default='stoqs_september2013_o')
-        parser.add_argument('--hourInterval', action='store', help='Step though the time series and make plots at this hour interval', type=int)
+        parser.add_argument('-x', '--xParm', action='store', help='One or more Parameter names for the X axis', nargs='*', default='bb470', required=True)
+        parser.add_argument('-y', '--yParm', action='store', help='One or more Parameter names for the Y axis', nargs='*', default='chlorophyll', required=True)
+        parser.add_argument('-p', '--platform', action='store', help='One or more platform names separated by spaces', nargs='*', default='tethys', required=True)
+        parser.add_argument('-d', '--database', action='store', help='Database alias', default='stoqs_september2013_o', required=True)
+        parser.add_argument('--hourWindow', action='store', help='Window in hours for interval plot. If not specified it will be the same as hourStep.', type=int)
+        parser.add_argument('--hourStep', action='store', help='Step though the time series and make plots at this hour interval', type=int)
         parser.add_argument('--daytime', action='store_true', help='Select only daytime hours: 10 am to 2 pm local time')
         parser.add_argument('--nighttime', action='store_true', help='Select only nighttime hours: 10 pm to 2 am local time')
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
     
         self.args = parser.parse_args()
+        self.commandline = ' '.join(sys.argv)
     
     
 if __name__ == '__main__':
 
     bp = PlatformsBiPlot()
     bp.process_command_line()
-    if len(bp.args.platform) > 1:
+    if len(bp.args.platform) > 0:
         bp.makePlatformsPlots()
     else:
         bp.makeIntervalPlots()
