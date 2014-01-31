@@ -84,9 +84,15 @@ class PlatformsBiPlot(BiPlot):
                 ##print "Plotting %s: start = %s, end = %s" % (a, datetimeList[0], datetimeList[-1])
                 ax.plot_date(matplotlib.dates.date2num(datetimeList), depths, '-', c=color, alpha=0.2)
 
-        # The time extent for the current plot
+        # Highlight the selected time extent
         ax.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='g', alpha=0.2)  
+
         plt.gca().invert_yaxis()
+        if self.args.minDepth is not None:
+            print "setting mindepth to", self.args.minDepth
+            ax.set_ylim(top=self.args.minDepth)
+        if self.args.maxDepth:
+            ax.set_ylim(bottom=self.args.maxDepth)
 
         # Plot short wave radiometer data
         ax2 = ax.twinx()
@@ -289,6 +295,8 @@ class PlatformsBiPlot(BiPlot):
         parser.add_argument('--hourStep', action='store', help='Step though the time series and make plots at this hour interval', type=int)
         parser.add_argument('--daytime', action='store_true', help='Select only daytime hours: 10 am to 2 pm local time')
         parser.add_argument('--nighttime', action='store_true', help='Select only nighttime hours: 10 pm to 2 am local time')
+        parser.add_argument('--minDepth', action='store', help='Minimum depth for data queries', default=None, type=float)
+        parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
     
         self.args = parser.parse_args()

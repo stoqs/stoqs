@@ -71,12 +71,13 @@ class BiPlot():
                 AND stoqs_instantpoint.timevalue <= '{end}')
                 AND stoqs_platform.name IN ('{platform}')
                 {day_night_clause}
+                {depth_clause}
             ORDER BY stoqs_instantpoint.timevalue '''
 
         # Get connection to database; self.args.database must be defined in privateSettings
         cursor = connections[self.args.database].cursor()
 
-        # Apply SQL where clause to restrict to just do or night measurements
+        # Apply SQL where clause to restrict to just do day or night measurements
         daytimeHours = (17, 22)
         nighttimeHours = (5, 10)
         dnSQL = ''
@@ -85,8 +86,15 @@ class BiPlot():
         if self.args.nighttime:
             dnSQL = "AND date_part('hour', stoqs_instantpoint.timevalue) > %d AND date_part('hour', stoqs_instantpoint.timevalue) < %d" % nighttimeHours
 
+        # Apply depth constraints if specified
+        depthSQL = ''
+        if self.args.minDepth:
+            depthSQL += 'AND stoqs_measurement.depth >= %f' % self.args.minDepth
+        if self.args.maxDepth:
+            depthSQL += 'AND stoqs_measurement.depth <= %f' % self.args.maxDepth
+            
         sql = sql_template.format(start=startDatetime, end=endDatetime, pxname=xParm, pyname=yParm, 
-                                    platform=platform, day_night_clause=dnSQL)
+                                    platform=platform, day_night_clause=dnSQL, depth_clause=depthSQL)
         if self.args.verbose:
             print "sql =", sql
 
