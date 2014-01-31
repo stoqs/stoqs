@@ -31,9 +31,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # setting
 
 from django.db import connections
 from datetime import datetime, timedelta
-from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime
+from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter
 from django.contrib.gis.geos import LineString, Point
 from django.db.models import Max, Min
+
+
+class NoXYDataException(Exception):
+    pass
 
 
 class BiPlot():
@@ -95,6 +99,9 @@ class BiPlot():
             y.append(float(row[2]))
             points.append(Point(float(row[3]), float(row[4])))
 
+        if not points:
+            raise NoXYDataException("No (%s, %s) data from (%s) between %s and %s" % (xParm, yParm, platform, startDatetime, endDatetime))
+
         return x, y, points
 
     def _getActivityExtent(self, platform):
@@ -143,7 +150,7 @@ class BiPlot():
         try:
             units = prQS.filter(parameter__name=parm)[0][0]
         except IndexError, e:
-            print "Error: Unable to get units for parameter name", parm
+            raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, platform))
             sys.exit(-1)
 
         return min, max, units
@@ -176,4 +183,18 @@ class BiPlot():
 
         return hash
 
+    def _getSWRData(self, tartDatetime, endDatetime):
+        '''
+        Return time series of Short Wave Radiometer data for the times requested
+        '''
 
+        qsSWR = MeasuredParameter.objects.using(self.args.database).filter(parameter__standard_name=
+                    'surface_downwelling_shortwave_flux_in_air').values('measurement__instantpoint__timevalue', 
+                    'datavalue').order_by('measurement__instantpoint__timevalue')
+        tList = []
+        swrList = []
+        for rs in qsSWR:
+            tList.append(rs['measurement__instantpoint__timevalue'])
+            swrList.append(rs['datavalue'])
+
+        return tList, swrList
