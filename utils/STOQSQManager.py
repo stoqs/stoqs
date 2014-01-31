@@ -1170,9 +1170,10 @@ class STOQSQManager(object):
         # Simple name/value attributes
         for ar in models.ActivityResource.objects.using(self.dbname).filter(activity__in=self.qs
                         ,resource__name__in=['title', 'summary', 'opendap_url']
-                        ).values('activity__platform__name', 'activity__name', 'resource__name', 'resource__value'):
+                        ).values('activity__platform__name', 'activity__name', 'activity__comment', 'resource__name', 'resource__value'):
             try:
                 netcdfHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__value']
+                netcdfHash[ar['activity__platform__name']][ar['activity__name']]['comment'] = ar['activity__comment']
             except KeyError:
                 try:
                     netcdfHash[ar['activity__platform__name']][ar['activity__name']] = {}
@@ -1181,6 +1182,7 @@ class STOQSQManager(object):
                     netcdfHash[ar['activity__platform__name']][ar['activity__name']] = {}
 
                 netcdfHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__value']
+                netcdfHash[ar['activity__platform__name']][ar['activity__name']]['comment'] = ar['activity__comment']
 
         # Quick Look plots
         qlHash = {}
