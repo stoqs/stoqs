@@ -52,6 +52,7 @@ following these instructions.
         alter database stoqs set timezone='GMT';
         \c stoqs
         grant all on all tables in schema public to stoqsadm;
+        grant select on all tables in schema public to everyone;
     
     Repeat for additional campaign specific databases.
 
