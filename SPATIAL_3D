@@ -1,0 +1,27 @@
+SPATIAL_3D
+==========
+
+Creating terrain files for 3D spatial data visualization in STOQS
+-----------------------------------------------------------------
+
+GeoElevationGrid:
+----------------
+
+1. Execute script in mapping@elvis:/mbari/TerrainData/scripts to create .wrl or .x3dv file
+2. Edit resulting file keeping heights and making it X3D:
+
+<scene>
+<shape>
+    <Appearance>
+        <Material diffuseColor='0.7 0.7 0.7'/>
+    </Appearance>
+    <GeoElevationGrid colorPerVertex='true' creaseAngle='3.14' geoGridOrigin='36 -122 0' geoSystem='"GD" "WE"' solid='false' xDimension='1438' xSpacing='0.0005057477' yScale='10' zDimension='1224' zSpacing='0.0005058092' normalPerVertex='true' ccw='true' containerField='geometry' height='-2403.4 ....'>
+    </GeoElevationGrid>
+</shape>
+</scene>
+
+
+--
+Mike McCann
+MBARI 23 May 2013
+
