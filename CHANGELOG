@@ -59,7 +59,12 @@ Version 1.3: 31 January 2014
   ----------------
   - loaders/DAPoaders.py modified to also recognize and load data specified with CF-1.6 
     Discrete Sampling Geometry featureTypes of "timeSeries" and "timeSeriesProfile".  
-    This is in addition to the already recognized featyreType of "trajectory".
+    This is in addition to the already recognized featureType of "trajectory".
+  - The User Interface now offers the 'Parameter' tab in the Temporal section.  Data 
+    that are of featureType timeSeries or timeSeriesProfile can be plotted on Time/
+    Parameter axes.  A time range can be selected with the mouse to zoom into featuures
+    of interest; that filter is applied to all of the other presentations of data helping
+    discovery of correlated spatial/temporal measurements.
   
   User Interface
   --------------
