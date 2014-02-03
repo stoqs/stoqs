@@ -78,17 +78,88 @@ ALTER ROLE stoqsadm login password 'newpassword';
 
 Add an 'everyone' Postgres user with read access to all databases - useful for read-only web apps
 -------------------------------------------------------------------------------------------------
-CREATE ROLE readonly nologin;
-GRANT select on all tables in schema public to readonly;
 CREATE ROLE everyone login password 'guest';
-GRANT readonly to everyone;
-
+\c <database>
+GRANT select on all tables in schema public to everyone;
 
 Delete an Activity:
 -------------------
 ./manage.py shell
 acts = models.Activity.objects.using('stoqs_march2013_s').filter(name__contains='plm04')
-acts[0].delete(using='stoqs_march2013_s')
+for a in acts:
+    a.delete(using='stoqs_march2013_s')
+
+
+Create a movie of Chlorophyll to bb470 from Tethys from september 2013 database (http://tinyurl.com/krfrd3b)
+------------------------------------------------------------------------------------------------------------
+./manage.py shell_plus
+
+import matplotlib.pyplot as plt
+from django.db import connections
+from datetime import datetime, timedelta
+from stoqs.models import Activity
+
+# SQL template copied from STOQS UI Parameter-Parameter -> sql tab
+sql_template = '''SELECT DISTINCT stoqs_measurement.depth,
+                mp_x.datavalue AS x,
+                mp_y.datavalue AS y
+FROM stoqs_activity
+INNER JOIN stoqs_platform ON stoqs_platform.id = stoqs_activity.platform_id
+INNER JOIN stoqs_instantpoint ON stoqs_instantpoint.activity_id = stoqs_activity.id
+INNER JOIN stoqs_measurement ON stoqs_measurement.instantpoint_id = stoqs_instantpoint.id
+INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
+INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
+INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
+INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
+INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
+INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
+WHERE (p_y.name = 'chlorophyll')
+  AND (p_x.name = 'bb470')
+  AND (stoqs_instantpoint.timevalue >= '{start}'
+       AND stoqs_instantpoint.timevalue <= '{end}')
+       AND stoqs_platform.name IN ('tethys') '''
+
+# Get connection to database using dbAlias defined in privateSettings
+dbAlias = 'stoqs_september2013_t'
+cursor = connections[dbAlias].cursor()
+
+# Get start and end datetimes for the activity
+aName = 'Tethys_CANON_Fall2013'
+aStart = Activity.objects.using(dbAlias).filter(name__contains=aName).values_list('startdate')[0][0]
+aEnd = Activity.objects.using(dbAlias).filter(name__contains=aName).values_list('enddate')[0][0]
+
+# Pull out data and plot at timeInterval intervals
+timeInterval = timedelta(hours=6)
+startTime = aStart
+endTime = aStart
+endTime += timeInterval
+while endTime < aEnd:
+    endTime = startTime + timeInterval
+    sql = sql_template.format(start=startTime, end=endTime)
+    print 'Executing sql = ', sql
+    cursor.execute(sql.format(start=startTime, end=endTime))
+    x = []
+    y = []
+    for row in cursor:
+        x.append(row[1])
+        y.append(row[2])
+
+    fig = plt.figure()
+    plt.grid(True)
+    ax = fig.add_subplot(111)
+    ax.set_xlim(0.0, 0.006)
+    ax.set_ylim(0.0, 6.0)
+    ax.set_xlabel('bb470 (m^{-1})')
+    ax.set_ylabel('chlorophyll (mg m-3)')
+    ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=False)
+    fig.savefig('chl_bb470_' + startTime.isoformat() + '.png')
+    plt.close()
+
+    startTime = endTime
+
+
+
+
 
 Perform speacialized Parameter-Parameter query:
 -----------------------------------------------
