@@ -1,0 +1,19 @@
+Directory analysis
+==================
+
+Miscellaneous contributed scripts and programs are located here.
+
+As of February 2014 these scripts exist:
+
+    trajectory_biplots.py:      Python script to step through trajectory data from mobile platforms
+                                and produce biplots of measured parameter vs. measured parameter
+                                along with associated temporal and spatial tracks. Requires
+                                Python 2.7 for cartopy to work.
+
+    dbconn_jdbc_stoqs.m:        Matlab m-file to execute SQL against specified STOQS database and
+                                return columns in a Matlab structure.
+
+
+--
+Mike McCann
+3 February 2014
