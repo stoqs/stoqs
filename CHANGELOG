@@ -53,7 +53,7 @@ Version 1.2: 6 February 2013
   - Mesasurement Data access (the "Get Data" button) works for the following
     formats: KML, SQL, Matlab (via STOQSTOOLBOX), JSON, CSV, TSV, and HTML
 
-Version 1.3: 5 September 2013
+Version 1.3: 31 January 2014
 
   Time Series Data
   ----------------
@@ -65,8 +65,20 @@ Version 1.3: 5 September 2013
   --------------
   - Plot functionality has been separated from Filter and Data Access functionality.
     To plot a Parameter spatially and temporally one now selects a radio button next
-    to the Parameter name button.  This works for bot Sampled Parameters and
+    to the Parameter name button.  This works for both Sampled Parameters and
     Measured Paramters.
-  - Sampled Paramter datavalue plotting now works.  If sub sample data containing
-    sampledparater datavalues have been loaded then  
-  User Interface
+  - Sampled Paramter datavalue plotting now works.  If sample data containing
+    sampledparater datavalues have been loaded into the campaign then those data
+    can be plotted in the Spatial and Temporal views.
+  - Multiple Platforms and Parameters may now be selected for Filter and Data Access.
+  - Added checkbox for showing filtered out Measured Parameters (for campaigns with
+    many parameters, e.g. http://odss.mbari.org/canon/stoqs_september2013_o/query/
+    this helps reduce the size of the list when other filters are applied.
+  - Organized Platforms by Platform Type, each in its own accordion list.
+
+  Usability
+  ---------
+  - Added instructions for installing memcached and deployed memcached on internal
+    and external MBARI stoqs servers.  This greatly improves UI response time, especially
+    in the "going back" operation when filters are cleared.
+
