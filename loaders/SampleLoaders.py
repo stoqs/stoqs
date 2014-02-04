@@ -541,8 +541,13 @@ class SubSamplesLoader(STOQS_Loader):
         if row['Filter Diameter [mm]']:
             fd = float(row['Filter Diameter [mm]'])
         fps = None
-        if row['Filter Pore Size [uM]']:
-            fps = float(row['Filter Pore Size [uM]'])
+        try:
+            if row['Filter Pore Size [uM]']:
+                fps = float(row['Filter Pore Size [uM]'])
+        except KeyError:
+            if row['Filter Pore Size [um]']:
+                fps = float(row['Filter Pore Size [um]'])
+            
         if row['Sample Volume [mL]']:
             vol = row['Sample Volume [mL]']
         else:
