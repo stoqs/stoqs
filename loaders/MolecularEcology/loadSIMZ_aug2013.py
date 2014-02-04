@@ -79,10 +79,12 @@ cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_
 cl.m1_startDatetime = datetime.datetime(2013, 8, 12)
 cl.m1_endDatetime = datetime.datetime(2013, 8, 19)
 
-# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local GOC12 dir
+# SubSample data files received from Julio in email and copied to local directory
 cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SIMZAug2013')
 cl.subsample_csv_files = [
                             '2013_Aug_SIMZ_Niskin_microscopy_STOQS.csv',
+                            '2013_SIMZ_AUV_STOQS.csv',
+                            '2013_SIMZ_Niskins_STOQS.csv',
                          ]
 
 
@@ -90,7 +92,7 @@ cl.subsample_csv_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadL_662(stride=100)
+    ##cl.loadL_662(stride=100)
     cl.loadDorado(stride=100)
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
