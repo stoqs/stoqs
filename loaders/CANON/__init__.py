@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 import DAPloaders
 from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader 
 from loaders import LoadScript
+import logging
 
 def getStrideText(stride):
     '''
@@ -156,6 +157,8 @@ class CANONLoader(LoadScript):
                                         self.JMpctd_parms, self.dbAlias, stride)
         # load all the bottles           
         sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['martin'], platformTypeName='ship', dodsBase=self.JMpctd_base)
+        if self.args.verbose:
+            sl.logger.setLevel(logging.DEBUG)
         sl.tdsBase= self.tdsBase
         sl.process_btl_files(self.JMpctd_files)
 
@@ -645,6 +648,8 @@ class CANONLoader(LoadScript):
                                         self.wfpctd_parms, self.dbAlias, stride)
         # Now load all the bottles           
         sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'], dodsBase=self.wfpctd_base)
+        if self.args.verbose:
+            sl.logger.setLevel(logging.DEBUG)
         sl.tdsBase= self.tdsBase
         sl.process_btl_files(self.wfpctd_files)
 
@@ -673,6 +678,8 @@ class CANONLoader(LoadScript):
         # load all the bottles           
 
         sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['carson'], platformTypeName='ship', dodsBase=self.rcpctd_base)
+        if self.args.verbose:
+            sl.logger.setLevel(logging.DEBUG)
         sl.tdsBase= self.tdsBase
         sl.process_btl_files(self.rcpctd_files)
 
@@ -682,6 +689,8 @@ class CANONLoader(LoadScript):
         subsample_csv_files set by the load script.
         '''
         ssl = SubSamplesLoader('', '', dbAlias=self.dbAlias)
+        if self.args.verbose:
+            ssl.logger.setLevel(logging.DEBUG)
         for csvFile in [ os.path.join(self.subsample_csv_base, f) for f in self.subsample_csv_files ]:
             print "Processing subsamples from file", csvFile
             ssl.process_subsample_file(csvFile, False)
