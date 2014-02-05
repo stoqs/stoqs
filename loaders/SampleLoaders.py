@@ -48,7 +48,7 @@ import re
 import pprint
 from bs4 import BeautifulSoup
 
-# Set up logging
+# Set up logging for module functions
 logger = logging.getLogger('loaders')
 logger.setLevel(logging.INFO)
 
@@ -58,11 +58,11 @@ logger.setLevel(logging.INFO)
 from django.db.backends import BaseDatabaseWrapper
 from django.db.backends.util import CursorWrapper
 
-# Constant for ParameterGroup name - for utils/STOQSQmanager.py to use
-SAMPLED = 'Sampled'
-
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
+
+# Constant for ParameterGroup name - for utils/STOQSQmanager.py to use
+SAMPLED = 'Sampled'
 
 class ClosestTimeNotFoundException(Exception):
     pass
@@ -178,6 +178,8 @@ class SeabirdLoader(STOQS_Loader):
     '''
     Inherit database loading functions from STOQS_Loader and use its constructor
     '''
+    logger = logging.getLogger('loaders')
+    logger.setLevel(logging.INFO)
 
     def __init__(self, activityName, platformName, dbAlias='default', campaignName=None,
                 activitytypeName=None, platformColor=None, platformTypeName='CTD', stride=1, dodsBase=None):
@@ -186,7 +188,7 @@ class SeabirdLoader(STOQS_Loader):
         super(SeabirdLoader, self).__init__(activityName, platformName, dbAlias, campaignName,
                 activitytypeName, platformColor, platformTypeName, stride)
 
-    def buildParmDict(slef):
+    def buildParmDict(self):
         '''
         Build parameter dictionary akin to that returned by pydap.  The parameters from the .btl file must
         match the parameters read from the .nc file.  See comments for mapping copied from pctdToNetCDF.py.
@@ -251,7 +253,7 @@ class SeabirdLoader(STOQS_Loader):
         oxygen.attributes = {'colname': 'Sbeox0ML/L', 'units': 'ml/l', 'long_name': 'Oxygen, SBE 43'}
 
         # The colname attribute must be the keys that DictReader returns - the keys of this dictionary will be the Parameter names in stoqs
-        parmDict = {'pressure': pr, 'TEMP': temp, 'PSAL': sal, 'xmiss': xmiss, 'ecofl': ecofl, 'oxygen': oxygen}
+        parmDict = {'pressure': pr, 'TEMP': temp, 'PSAL': sal, 'xmiss': xmiss, 'ecofl': ecofl, 'oxygen': oxygen, 'wetstar': wetstar}
 
         return parmDict
 
@@ -351,7 +353,8 @@ class SeabirdLoader(STOQS_Loader):
         '''
         _debug = False
         tmpFile = NamedTemporaryFile(dir='/dev/shm', suffix='.btl').name
-        if _debug: print 'tmpFile = ', tmpFile
+        logger.debug('tmpFile = %s', tmpFile)
+        raw_input('PAUSED')
         tmpFH = open(tmpFile, 'w')
         for line in fh:
             # Write to tempfile all lines that don't begin with '*' nor '#' then open that with csv.DictReader
@@ -425,6 +428,7 @@ class SeabirdLoader(STOQS_Loader):
             es = 86400 * esDiff.days + esDiff.seconds
             bName = r['Bottle']
 
+            logger.debug('r = %s', r)
             # Load data 
             parmNameValues = []
             for name in parmDict.keys():
