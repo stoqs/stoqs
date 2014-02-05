@@ -1089,7 +1089,7 @@
             if (value == 'sql') {
                 $('#'+group+'-'+value+'-field').text(data['sql']);
             }
-            else if (value == 'kml') {
+            else if (value == 'kml' && ! $.isEmptyObject(data['parameterminmax'])) {
                 var url = base_url + group_name + 'parameter.kml' + mp_param;
                 $('#'+group+'-kml-parameter').html('Select a single ' + group_name + ' parameter <i>for data access</i> to view your selection in Google Earth');
                 $('#'+group+'-kml-parameter').css( { 'color': 'red' } );
