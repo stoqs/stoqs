@@ -354,7 +354,6 @@ class SeabirdLoader(STOQS_Loader):
         _debug = False
         tmpFile = NamedTemporaryFile(dir='/dev/shm', suffix='.btl').name
         logger.debug('tmpFile = %s', tmpFile)
-        raw_input('PAUSED')
         tmpFH = open(tmpFile, 'w')
         for line in fh:
             # Write to tempfile all lines that don't begin with '*' nor '#' then open that with csv.DictReader
