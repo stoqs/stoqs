@@ -1,17 +1,14 @@
 #!/bin/bash
 
-# For use on Rachel Carson CANON-ECOHAB March 2013
-# Set Remote Host (RH) to what's appropriate
-##RH=192.168.111.177
+LOGIN=odssadm
 RH=zuma.rc.mbari.org
 ##RH=odss.mbari.org
 
-rsync -rv odssadm@$RH:/data/simz/2013_Aug/carson/pctd .
+DIR=/data/simz/2013_Aug/carson/pctd
+LOCALDIR=`echo $DIR | cut -d/ -f6`  # -f must match last directory
+rsync -rv $LOGIN@$RH:$DIR  .
+../../CANON/toNetCDF/pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during SIMZ - August 2013" 
+scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 
-../../CANON/toNetCDF/pctdToNetcdf.py pctd pctd s
-
-scp pctd/*.nc odssadm@$RH:/data/simz/2013_Aug/carson/pctd
-
-# Clean up
-rm -r pctd
-
+# Clean up 
+rm -r $LOCALDIR
