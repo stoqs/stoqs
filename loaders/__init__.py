@@ -42,11 +42,6 @@ from utils.utils import percentile, median, mode, simplify_points
 import pprint
 
 
-# Set up logging
-##logger = logging.getLogger('loaders')
-logger = logging.getLogger('__main__')
-logger.setLevel(logging.INFO)
-
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
 # See http://stackoverflow.com/questions/7768027/turn-off-sql-logging-while-keeping-settings-debug
@@ -73,6 +68,9 @@ class LoadScript(object):
     Base class for load script to inherit from for reusing common utility methods such
     as process_command_line()
     ''' 
+
+    logger = logging.getLogger('__main__')
+    logger.setLevel(logging.INFO)
 
     def __init__(self, base_dbAlias, base_campaignName, stride=1, x3dTerrains={}):
         self.base_dbAlias = base_dbAlias
@@ -178,7 +176,7 @@ class LoadScript(object):
             self.campaignName = self.args.campaignName
 
         if self.args.verbose:
-            logger.setLevel(logging.DEBUG)
+            self.logger.setLevel(logging.DEBUG)
 
     def addTerrainResources(self):
         '''
@@ -189,18 +187,18 @@ class LoadScript(object):
 
         resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
                                 name='x3dterrain', description='X3D Terrain information for Spatial 3D visualization')
-        logger.info('Adding to ResourceType: %s', resourceType)
-        logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
+        self.logger.info('Adding to ResourceType: %s', resourceType)
+        self.logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
         campaign = m.Campaign.objects.using(self.dbAlias).get(name=self.campaignName)
         
         for url, viewpoint in self.x3dTerrains.iteritems():
-            logger.debug('url = %s, viewpoint = %s', url, viewpoint)
+            self.logger.debug('url = %s, viewpoint = %s', url, viewpoint)
             for name, value in viewpoint.iteritems():
                 resource, created = m.Resource.objects.using(self.dbAlias).get_or_create(
                             uristring=url, name=name, value=value, resourcetype=resourceType)
                 cr, created = m.CampaignResource.objects.using(self.dbAlias).get_or_create(
                             campaign=campaign, resource=resource)
-                logger.info('Resource uristring=%s, name=%s, value=%s', url, name, value)
+                self.logger.info('Resource uristring=%s, name=%s, value=%s', url, name, value)
 
 
 class STOQS_Loader(object):
@@ -222,6 +220,9 @@ class STOQS_Loader(object):
                 'LONGITUDE','LATITUDE','TIME', 'NominalDepth', 'esecs', 'Longitude', 'Latitude',
                 'DEPTH','depth'] # A list of parameters that should not be imported as parameters
     global_dbAlias = ''
+
+    logger = logging.getLogger('__main__')
+    logger.setLevel(logging.INFO)
 
     def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, 
                 activitytypeName=None, platformColor=None, platformTypeName=None, stride=1):
@@ -277,11 +278,11 @@ class STOQS_Loader(object):
             raise Exception('Platform name = "%s" is not allowed.  Name can contain only letters, numbers and "_"' % name)
 
         tpHandle = []
-        logger.info("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
+        self.logger.info("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
         try:
             tpHandle = csv.DictReader(urllib2.urlopen(paURL))
         except urllib2.URLError, e:
-            logger.warn(e)
+            self.logger.warn(e)
         platformName = ''
         for rec in tpHandle:
             ##print "rec = %s" % rec
@@ -293,15 +294,15 @@ class STOQS_Loader(object):
         if not platformName:
             platformName = name
             platformTypeName = type
-            logger.warn("Platform name %s not found in tracking database.  Creating new platform anyway.", platformName)
+            self.logger.warn("Platform name %s not found in tracking database.  Creating new platform anyway.", platformName)
 
         # Create PlatformType
-        logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", self.dbAlias, self.platformTypeName)
+        self.logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", self.dbAlias, self.platformTypeName)
         (platformType, created) = m.PlatformType.objects.db_manager(self.dbAlias).get_or_create(name = self.platformTypeName)
         if created:
-            logger.debug("Created platformType.name %s in database %s", platformType.name, self.dbAlias)
+            self.logger.debug("Created platformType.name %s in database %s", platformType.name, self.dbAlias)
         else:
-            logger.debug("Retrived platformType.name %s from database %s", platformType.name, self.dbAlias)
+            self.logger.debug("Retrived platformType.name %s from database %s", platformType.name, self.dbAlias)
 
 
         # Create Platform 
@@ -309,9 +310,9 @@ class STOQS_Loader(object):
                                                                                         color=self.platformColor, 
                                                                                         platformtype=platformType)
         if created:
-            logger.info("Created platform %s in database %s", platformName, self.dbAlias)
+            self.logger.info("Created platform %s in database %s", platformName, self.dbAlias)
         else:
-            logger.info("Retrived platform %s from database %s", platformName, self.dbAlias)
+            self.logger.info("Retrived platform %s from database %s", platformName, self.dbAlias)
 
         return platform
 
@@ -330,15 +331,15 @@ class STOQS_Loader(object):
 
         # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
         for key in parmDict.keys():
-            logger.debug("key = %s", key)
+            self.logger.debug("key = %s", key)
             if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
                 continue
             v = parmDict[key].attributes
-            logger.debug("v = %s", v)
+            self.logger.debug("v = %s", v)
             try:
                 self.getParameterByName(key)
             except ParameterNotFound as e:
-                logger.debug("Parameter not found. Assigning parms from ds variable.")
+                self.logger.debug("Parameter not found. Assigning parms from ds variable.")
                 # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
                 # set.  Check for this on units and override what pydap returns.
                 if type(v.get('units')) == list:
@@ -360,7 +361,7 @@ class STOQS_Loader(object):
                     self.parameter_dict[key].save(using=self.dbAlias)
                     self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
                 except IntegrityError as e:
-                    logger.warn('%s', e)
+                    self.logger.warn('%s', e)
                     transaction.savepoint_rollback(sid)
                     if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
                         self.resetParameterAutoSequenceId()
@@ -369,22 +370,22 @@ class STOQS_Loader(object):
                             self.parameter_dict[key].save(using=self.dbAlias)
                             self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
                         except Exception as e:
-                            logger.error('%s', e)
+                            self.logger.error('%s', e)
                             transaction.savepoint_rollback(sid2,using=self.dbAlias)
                             raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
                     else:
-                        logger.error('Exception %s', e)
+                        self.logger.error('Exception %s', e)
                         raise Exception('''Failed to add parameter for %s
                             %s\nEither add parameter manually, or add to ignored_names''' % (key,
                             '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
                     
                 except Exception as e:
-                    logger.error('%s', e)
+                    self.logger.error('%s', e)
                     transaction.savepoint_rollback(sid,using=self.dbAlias)
                     raise Exception('''Failed to add parameter for %s
                         %s\nEither add parameter manually, or add to ignored_names''' % (key,
                         '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
-                logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
+                self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
 
 
       return innerAddParameters(self, parmDict)
@@ -394,9 +395,9 @@ class STOQS_Loader(object):
         Use provided activity information to add the activity to the database.
         '''
         
-        logger.info("Creating Activity with startDate = %s and endDate = %s", self.startDatetime, self.endDatetime)
+        self.logger.info("Creating Activity with startDate = %s and endDate = %s", self.startDatetime, self.endDatetime)
         comment = 'Loaded on %s with these include_names: %s' % (datetime.now(), ' '.join(self.include_names))
-        logger.info("comment = " + comment)
+        self.logger.info("comment = " + comment)
 
         # Create Platform 
         (self.activity, created) = m.Activity.objects.db_manager(self.dbAlias).get_or_create(    
@@ -407,9 +408,9 @@ class STOQS_Loader(object):
                                         enddate = self.endDatetime)
 
         if created:
-            logger.info("Created activity %s in database %s with startDate = %s and endDate = %s", self.activityName, self.dbAlias, self.startDatetime, self.endDatetime)
+            self.logger.info("Created activity %s in database %s with startDate = %s and endDate = %s", self.activityName, self.dbAlias, self.startDatetime, self.endDatetime)
         else:
-            logger.info("Retrived activity %s from database %s", self.activityName, self.dbAlias)
+            self.logger.info("Retrived activity %s from database %s", self.activityName, self.dbAlias)
 
         # Get or create activityType 
         if self.activitytypeName is not None:
@@ -426,9 +427,9 @@ class STOQS_Loader(object):
             (campaign, created) = m.Campaign.objects.db_manager(self.dbAlias).get_or_create(name = self.campaignName)
             self.campaign = campaign
             if created:
-                logger.info('Created campaign = %s', self.campaign)
+                self.logger.info('Created campaign = %s', self.campaign)
             else:
-                logger.info('Retrieved campaign = %s', self.campaign)
+                self.logger.info('Retrieved campaign = %s', self.campaign)
     
             if self.campaign is not None:
                 self.activity.campaign = self.campaign
@@ -442,39 +443,39 @@ class STOQS_Loader(object):
         '''
         # The source of the data - this OPeNDAP URL
         (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name = 'opendap_url')
-        logger.debug("Getting or Creating Resource with name = %s, value = %s", 'opendap_url', self.url )
+        self.logger.debug("Getting or Creating Resource with name = %s, value = %s", 'opendap_url', self.url )
         (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                             name='opendap_url', value=self.url, uristring=self.url, resourcetype=resourceType)
         (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                     activity=self.activity, resource=resource)
 
         # The NC_GLOBAL attributes from the OPeNDAP URL.  Save them all.
-        logger.debug("Getting or Creating ResourceType nc_global...")
-        logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
+        self.logger.debug("Getting or Creating ResourceType nc_global...")
+        self.logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
         if self.ds.attributes.has_key('NC_GLOBAL'):
             (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name = 'nc_global')
             for rn, value in self.ds.attributes['NC_GLOBAL'].iteritems():
-                logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
+                self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
                 (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                             name=rn, value=value, resourcetype=resourceType)
                 (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                             activity=self.activity, resource=resource)
         else:
-            logger.warn("No NC_GLOBAL attribute in %s", self.url)
+            self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
 
         # Attributes of all the variables in include_names
         for v in self.include_names:
-            logger.info('v = %s', v)
+            self.logger.info('v = %s', v)
             try:
                 for rn, value in self.ds[v].attributes.iteritems():
-                    logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
+                    self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
                     (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                                           name=rn, value=value, resourcetype=resourceType)
                     (ar, created) = m.ParameterResource.objects.db_manager(self.dbAlias).get_or_create(
                                     parameter=self.getParameterByName(v), resource=resource)
             except KeyError:
                 # Just skip deriveed parameters that may have been added for a sub-classed Loader
-                logger.warn('include_name %s is not in %s; assuming it is derived and skipping', v, self.url)
+                self.logger.warn('include_name %s is not in %s; assuming it is derived and skipping', v, self.url)
 
         
     def getParameterByName(self, name):
@@ -486,13 +487,13 @@ class STOQS_Loader(object):
         '''
         # First try to locate the parameter using the standard name (if we have one)
         if not self.parameter_dict.has_key(name):
-            logger.debug("'%s' is not in self.parameter_dict", name)
+            self.logger.debug("'%s' is not in self.parameter_dict", name)
             if self.standard_names.get(name) is not None:
-                logger.debug("self.standard_names.get('%s') is not None", name)
+                self.logger.debug("self.standard_names.get('%s') is not None", name)
                 try:
-                    logger.debug("For name = %s ", name)
-                    logger.debug("standard_names = %s", self.standard_names[name])
-                    logger.debug("retrieving from database %s", self.dbAlias)
+                    self.logger.debug("For name = %s ", name)
+                    self.logger.debug("standard_names = %s", self.standard_names[name])
+                    self.logger.debug("retrieving from database %s", self.dbAlias)
                     self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbAlias).get(standard_name = self.standard_names[name][0])
                 except ObjectDoesNotExist:
                     pass
@@ -500,19 +501,19 @@ class STOQS_Loader(object):
                     pass
         # If we still haven't found the parameter using the standard_name, start looking using the name
         if not self.parameter_dict.has_key(name):
-            logger.debug("Again '%s' is not in self.parameter_dict", name)
+            self.logger.debug("Again '%s' is not in self.parameter_dict", name)
             try:
-                logger.debug("trying to get '%s' from database %s...", name, self.dbAlias)
+                self.logger.debug("trying to get '%s' from database %s...", name, self.dbAlias)
                 ##(parameter, created) = m.Parameter.objects.get(name = name)
                 self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbAlias).get(name = name)
-                logger.debug("self.parameter_dict[name].name = %s", self.parameter_dict[name].name)
+                self.logger.debug("self.parameter_dict[name].name = %s", self.parameter_dict[name].name)
             except ObjectDoesNotExist:
                 ##print >> sys.stderr, "Unable to locate parameter with name %s.  Adding to ignored_names list." % (name,)
                 self.ignored_names.append(name)
                 raise ParameterNotFound('Parameter %s not found in the cache nor the database' % (name,))
         # Finally, since we haven't had an error, we MUST have a parameter for this name.  Return it.
 
-        logger.debug("Returning self.parameter_dict[name].units = %s", self.parameter_dict[name].units)
+        self.logger.debug("Returning self.parameter_dict[name].units = %s", self.parameter_dict[name].units)
         try:
             self.parameter_dict[name].save(using=self.dbAlias)
         except Exception, e:
@@ -550,7 +551,7 @@ class STOQS_Loader(object):
         nl = None
         point = 'POINT(%s %s)' % (repr(long), repr(lat))
         if not (nomDepth == None and nomLat == None and nomLong == None):
-            logger.debug('nomDepth = %s nomLat = %s nomLong = %s', nomDepth, nomLat, nomLong)
+            self.logger.debug('nomDepth = %s nomLat = %s nomLong = %s', nomDepth, nomLat, nomLong)
             nom_point = 'POINT(%s %s)' % (repr(nomLong), repr(nomLat))
             nl, created = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), 
                                     geom=nom_point, activity=self.activity)
@@ -559,12 +560,12 @@ class STOQS_Loader(object):
             measurement, created = m.Measurement.objects.using(self.dbAlias).get_or_create(instantpoint=ip, 
                                     nominallocation=nl, depth=repr(depth), geom=point)
             ##if created:
-            ##    logger.debug('Created measurement.id = %d with geom = %s', measurement.id, point)
+            ##    self.logger.debug('Created measurement.id = %d with geom = %s', measurement.id, point)
             ##else:
-            ##    logger.debug('Re-using measurement.id = %d', measurement.id)
+            ##    self.logger.debug('Re-using measurement.id = %d', measurement.id)
 
         except DatabaseError, e:
-            logger.exception('''DatabaseError:
+            self.logger.exception('''DatabaseError:
                 It is likely that you need https://code.djangoproject.com/attachment/ticket/16778/postgis-adapter.patch.
                 Check the STOQS INSTALL file for instructions on Django patch #16778.
 
@@ -574,8 +575,8 @@ class STOQS_Loader(object):
                 ''')
             sys.exit(-1)
         except Exception, e:
-            logger.error('Exception %s', e)
-            logger.error("Cannot save measurement time = %s, long = %s, lat = %s, depth = %s", time, repr(long), repr(lat), repr(depth))
+            self.logger.error('Exception %s', e)
+            self.logger.error("Cannot save measurement time = %s, long = %s, lat = %s, depth = %s", time, repr(long), repr(lat), repr(depth))
             raise SkipRecord
 
         return measurement
@@ -588,7 +589,7 @@ class STOQS_Loader(object):
         columns such as chlorophyl count, etc.
         @param row: A dictionary representing a single "row" of parameter data to be added to the database. 
         '''
-        logger.debug(row)
+        self.logger.debug(row)
         try:
             if (row['longitude'] == missing_value or row['latitude'] == missing_value or
                 float(row['longitude']) == 0.0 or float(row['latitude']) == 0.0 or
@@ -607,13 +608,13 @@ class STOQS_Loader(object):
 
         allNaNFlag = {}
         anyValidData = False
-        logger.info("Checking for valid data from %s", self.url)
-        logger.debug("include_names = %s", self.include_names)
+        self.logger.info("Checking for valid data from %s", self.url)
+        self.logger.debug("include_names = %s", self.include_names)
         for v in self.include_names:
-            logger.debug("v = %s", v)
+            self.logger.debug("v = %s", v)
             try:
                 vVals = self.ds[v][:]           # Case sensitive
-                logger.debug(len(vVals))
+                self.logger.debug(len(vVals))
                 allNaNFlag[v] = numpy.isnan(vVals).all()
                 if not allNaNFlag[v]:
                     anyValidData = True
@@ -622,11 +623,11 @@ class STOQS_Loader(object):
             except ValueError:
                 pass
 
-        logger.debug("allNaNFlag = %s", allNaNFlag)
+        self.logger.debug("allNaNFlag = %s", allNaNFlag)
         for v in allNaNFlag.keys():
             if not allNaNFlag[v]:
                 self.varsLoaded.append(v)
-        logger.info("Variables that have data: self.varsLoaded = %s", self.varsLoaded)
+        self.logger.info("Variables that have data: self.varsLoaded = %s", self.varsLoaded)
 
         return anyValidData
     
@@ -648,7 +649,7 @@ class STOQS_Loader(object):
                 else:
                     self.standard_names[var]=None # Indicate those without a standard name
         except AttributeError, e:
-            logger.warn(e)
+            self.logger.warn(e)
 
     def updateActivityParameterStats(self, parameterCounts, sampledFlag=False):
         ''' 
@@ -668,12 +669,12 @@ class STOQS_Loader(object):
             numpvar = numpy.array([float(v.datavalue) for v in data])
             numpvar.sort()              
             listvar = list(numpvar)
-            ##logger.debug('%s: listvar = %s', p.name, listvar)
+            ##self.logger.debug('%s: listvar = %s', p.name, listvar)
             if not listvar:
-                logger.warn('No datavalues for p.name = %s in activity %s', p.name, a.name)
+                self.logger.warn('No datavalues for p.name = %s in activity %s', p.name, a.name)
                 continue
 
-            logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f, shape = %s',
+            self.logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f, shape = %s',
                             p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar),
                             percentile(listvar, 0.025), percentile(listvar, 0.975), numpvar.shape)
             number = len(listvar)
@@ -683,7 +684,7 @@ class STOQS_Loader(object):
                 ap, created = m.ActivityParameter.objects.using(self.dbAlias).get_or_create(activity = a, parameter = p)
                     
                 if created: 
-                    logger.info('Created ActivityParameter for parameter.name = %s', p.name)
+                    self.logger.info('Created ActivityParameter for parameter.name = %s', p.name)
 
                 # Set attributes of this ap - if not created, an update will happen
                 ap.number = number
@@ -698,12 +699,12 @@ class STOQS_Loader(object):
                 ap.p990 = percentile(listvar, 0.990)
                 ap.save(using=self.dbAlias)
                 if created: 
-                    logger.info('Saved ActivityParameter for parameter.name = %s', p.name)
+                    self.logger.info('Saved ActivityParameter for parameter.name = %s', p.name)
                 else:
-                    logger.info('Updated ActivityParameter for parameter.name = %s', p.name)
+                    self.logger.info('Updated ActivityParameter for parameter.name = %s', p.name)
 
             except IntegrityError, e:
-                logger.warn('IntegrityError(%s): Cannot create ActivityParameter for parameter.name = %s.', e, p.name)
+                self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter for parameter.name = %s.', e, p.name)
 
             ##raw_input('paused')
 
@@ -712,22 +713,22 @@ class STOQS_Loader(object):
                 (counts, bins) = numpy.histogram(numpvar,10)
             else:
                 (counts, bins) = numpy.histogram(numpvar,100)
-            logger.debug(counts)
-            logger.debug(bins)
+            self.logger.debug(counts)
+            self.logger.debug(bins)
             i = 0
             for count in counts:
                 try:
-                    logger.debug('Creating ActivityParameterHistogram...')
-                    logger.debug('count = %d, binlo = %f, binhi = %f', count, bins[i], bins[i+1])
+                    self.logger.debug('Creating ActivityParameterHistogram...')
+                    self.logger.debug('count = %d, binlo = %f, binhi = %f', count, bins[i], bins[i+1])
                     h, created = m.ActivityParameterHistogram.objects.using(self.dbAlias).get_or_create(
                                                     activityparameter=ap, bincount=count, binlo=bins[i], binhi=bins[i+1])
                     i = i + 1
                     if created:
-                        logger.debug('Created ActivityParameterHistogram for parameter.name = %s, h = %s', p.name, h)
+                        self.logger.debug('Created ActivityParameterHistogram for parameter.name = %s, h = %s', p.name, h)
                 except IntegrityError:
-                    logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
+                    self.logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
 
-        logger.info('Updated statistics for activity.name = %s', a.name)
+        self.logger.info('Updated statistics for activity.name = %s', a.name)
 
     def insertSimpleDepthTimeSeries(self, critSimpleDepthTime=10):
         '''
@@ -747,24 +748,24 @@ class STOQS_Loader(object):
             line.append((ems,d,))
             pklookup.append(pk)
 
-        logger.debug('line = %s', line)
-        logger.info('Number of points in original depth time series = %d', len(line))
+        self.logger.debug('line = %s', line)
+        self.logger.info('Number of points in original depth time series = %d', len(line))
         try:
             # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
             simple_line = simplify_points(line, critSimpleDepthTime)
         except IndexError:
             simple_line = []        # Likely "list index out of range" from a stride that's too big
-        logger.info('Number of points in simplified depth time series = %d', len(simple_line))
-        logger.debug('simple_line = %s', simple_line)
+        self.logger.info('Number of points in simplified depth time series = %d', len(simple_line))
+        self.logger.debug('simple_line = %s', simple_line)
 
         for t,d,k in simple_line:
             try:
                 ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
                 m.SimpleDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = ip, depth = d, epochmilliseconds = t)
             except ObjectDoesNotExist:
-                logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
+                self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
-        logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
+        self.logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
     def insertSimpleDepthTimeSeriesByNominalDepth(self, critSimpleDepthTime=10):
         '''
@@ -775,7 +776,7 @@ class STOQS_Loader(object):
         '''
         for nl in m.NominalLocation.objects.using(self.dbAlias).filter(activity=self.activity):
             nomDepth = nl.depth
-            logger.debug('nomDepth = %s', nomDepth)
+            self.logger.debug('nomDepth = %s', nomDepth)
             # Collect depth time series into a timeseries by activity and nominal depth hash
             ndlqs = m.Measurement.objects.using(self.dbAlias).filter( instantpoint__activity=self.activity, nominallocation__depth=nomDepth
                                                               ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk')
@@ -787,27 +788,27 @@ class STOQS_Loader(object):
                 line.append((ems,d,))
                 pklookup.append(pk)
 
-            logger.debug('line = %s', line)
-            logger.debug('Number of points in original depth time series = %d', len(line))
+            self.logger.debug('line = %s', line)
+            self.logger.debug('Number of points in original depth time series = %d', len(line))
             try:
                 # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
                 simple_line = simplify_points(line, critSimpleDepthTime)
             except IndexError:
                 simple_line = []        # Likely "list index out of range" from a stride that's too big
-            logger.debug('Number of points in simplified depth time series = %d', len(simple_line))
-            logger.debug('simple_line = %s', simple_line)
+            self.logger.debug('Number of points in simplified depth time series = %d', len(simple_line))
+            self.logger.debug('simple_line = %s', simple_line)
 
             for t,d,k in simple_line:
-                logger.debug('t,d,k = %s, %s, %s', t,d,k)
+                self.logger.debug('t,d,k = %s, %s, %s', t,d,k)
                 try:
                     ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
-                    logger.debug('ip = %s', ip)
+                    self.logger.debug('ip = %s', ip)
                     m.SimpleDepthTime.objects.using(self.dbAlias).create(activity=self.activity, nominallocation=nl,
                                                                      instantpoint=ip, depth=d, epochmilliseconds=t)
                 except ObjectDoesNotExist:
-                    logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
+                    self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
-            logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
+            self.logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
     def updateCampaignStartEnd(self):
         '''
@@ -820,7 +821,7 @@ class STOQS_Loader(object):
                                                                                 startdate = ip_qs['timevalue__min'],
                                                                                 enddate = ip_qs['timevalue__max'])
         except AttributeError, e:
-            logger.warn(e)
+            self.logger.warn(e)
             pass
 
     def assignParameterGroup(self, parameterCounts, groupName='Measured in situ'):
@@ -836,7 +837,7 @@ class STOQS_Loader(object):
                 try:
                     pgp.save(using=self.dbAlias)
                 except Exception, e:
-                    logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
+                    self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
 
 if __name__ == '__main__':
