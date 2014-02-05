@@ -27,7 +27,7 @@ MBARI Jan 3, 2012
 from django.conf.urls.defaults import *
 from django.contrib.gis import admin
 from django.conf import settings
-from ga_ows.views.wfs import WFS
+##from ga_ows.views.wfs import WFS
 from stoqs import models as m
 
 admin.autodiscover()
@@ -106,11 +106,11 @@ urlpatterns = patterns('',
     #   pip install lxml
     #   pip install -e git+https://github.com/JeffHeard/ga_ows.git#egg=ga_ows
     #   export LD_LIBRARY_PATH='/usr/local/lib:$LD_LIBRARY_PATH' && python manage.py runserver 0.0.0.0:8000
-    url(pre + r'wfs/?', WFS.as_view(
-        models=[m.Sample],          # everything but this is optional.
-        title='STOQS Sample WFS',
-        provider_name='MBARI',
-    )),
+    ##url(pre + r'wfs/?', WFS.as_view(
+    ##    models=[m.Sample],          # everything but this is optional.
+    ##    title='STOQS Sample WFS',
+    ##    provider_name='MBARI',
+    ##)),
 
     # Animation  
     url(pre + r'activitiesWMSAnimate$', 'stoqs.views.wms.showActivitiesWMSAnimate', {}, name='show-activities-wms-animate'),
