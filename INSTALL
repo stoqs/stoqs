@@ -52,7 +52,6 @@ following these instructions.
         alter database stoqs set timezone='GMT';
         \c stoqs
         grant all on all tables in schema public to stoqsadm;
-        grant select on all tables in schema public to everyone;
     
     Repeat for additional campaign specific databases.
 
@@ -75,7 +74,12 @@ Make sure that your session does not have the PYTHONPATH environment set.  You m
     If you have additional databases sync them with the --database option:
     
         python manage.py syncdb --noinput --database=stoqs_<campaign>   # For campaign specific databases 
-    
+   
+    If you are providing read-only access from your server grant everyone access after syncing, at psql:
+
+        \c stoqs_<campaign>
+        grant select on all tables in schema public to everyone;
+
 
 6.  Start the development web server:
 
