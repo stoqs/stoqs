@@ -674,7 +674,7 @@
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
                                         </td>
-                                        <td colspan="1" class="all-plot-instruction">Clear selection</td>
+                                        <td colspan="2" class="all-plot-instruction">Clear selection</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -721,7 +721,7 @@
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
                                         </td>
-                                        <td colspan="1" class="all-plot-instruction">Clear selection</td>
+                                        <td colspan="2" class="all-plot-instruction">Clear selection</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -908,6 +908,21 @@
     function enableParameterRow(element) {
         $(element).removeClass('disabled');
         $(element).show();
+    }
+
+    function addPlatformSymbols(e, p) {
+        var symbols = '';
+        if ( ! $.isEmptyObject($('body').data().parameterplatforms[p]) ) {
+            $.each($('body').data().parameterplatforms[p], function(index, plat) {
+                if ($('body').data().platformFeatureTypes[plat].toLowerCase() === 'trajectory') {
+                    symbols += '<span style="color:#' + $('body').data().platformColors[plat] + '">|</span>';
+                }
+                else {
+                    symbols += '<span style="color:#' + $('body').data().platformColors[plat] + '">*</span>';
+                }
+            });
+            e.html(symbols);
+        }
     }
 
     function updateKMLcmincmax(group) {
@@ -1372,7 +1387,6 @@
                 if ( $('.parameterstandardname', $(element)).length) {
                     params['parameterstandardname'].push(element.id.replace(regExp,''));
                 }
-                //$('#' + element.id + ' > button').attr('title', 'Click to unselect').tooltip('fixTitle');
             }
         });
         $('#measuredparameters-anchor').html('Measured Parameter: ')
@@ -2414,6 +2428,28 @@
                 $('#metadataquicklookplots > div').html(platformActivitiesHtml);
         }
 
+        function saveBodyData(data) {
+            // Save the dictionary in the body so that asynchronous event handlers can get at it
+            $.each(['parameterplatforms', 'parameterminmax', 'platformColors', 'platformFeatureTypes'], function(index, key) {
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    $('body').data(key, data[key]);
+                }
+            });
+            if ( ! $.isEmptyObject(data.platforms) ) {
+                // Save platform colors and featureTypes for lookup
+                var platformColors = {}
+                var platformFeatureTypes = {}
+                $.each(data.platforms, function (type, list) {
+                    $.each(list, function (index, value) {
+                        platformColors[value[0]] = value[2];
+                        platformFeatureTypes[value[0]] = value[3];
+                    });
+                });
+                $('body').data('platformColors', platformColors);
+                $('body').data('platformFeatureTypes', platformFeatureTypes);
+            }
+        }
+
         function onInit(data, key) {
             // Called from ajax on initial request
             initData = data;
@@ -2497,6 +2533,9 @@
                             '</td>' +
                             '<td id="' + value[2] +'" style="text-align:center;">' +
                                 '<button class="btn btn-mini stoqs-toggle sampledparametersgroup">'+ value[0] +'</button>' + 
+                            '</td>' +
+                            '<td style="width:1%">' +
+                                '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
                             '</td>';
                     if (value[1].length != 0) {
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
@@ -2514,6 +2553,9 @@
                 $('#sampledparameters-anchor').data('ids', sp_ids);
                 parameterButtonText = parameterButtonText + '';
                 $('#sampledparameter-table > tbody:last').append(parameterButtonText);
+                $.each(data[key], function (index, value) {
+                    addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
+                });
             }
             else if (key == 'measuredparametersgroup') {
                 var parameterButtonText = '';
@@ -2540,6 +2582,9 @@
                             '</td>' +
                             '<td id="' + value[0] +'">' +
                                 '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' + 
+                            '</td>' + 
+                            '<td style="width:1%">' +
+                                '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
                             '</td>';
                     if (value[1].length != 0) {
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
@@ -2552,15 +2597,14 @@
                             '</td>' +
                         '</tr>';
                     }
-                    else {
-                        parameterButtonText = parameterButtonText + '<td>&nbsp;</td>';
-                    }
                     parameterButtonText = parameterButtonText + '</tr>';
                 });
+
                 $('#measuredparameters-anchor').data('ids', mp_ids);
                 $('#measuredparameter-table > tbody:last').append(parameterButtonText);
-                //$('.measuredparametersgroup').tooltip({title: 'Click to select this Parameter name'});
-                //$('.parameterstandardname').tooltip({title: 'Click to select this Parameter standard_name'});
+                $.each(data[key], function (index, value) {
+                    addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
+                });
             }
             else if (key == 'time') { 
                 var start = new Date(data[key][0]);
@@ -2587,10 +2631,6 @@
                 if (data.parametertime.counts != 0) {
                     $("#temporal-parameter-li").show();
                 }
-            }
-            else if (key == 'parameterplatforms') {
-                // Save the dictionary in the body so that asynchronous event handlers can get at it
-                $('body').data(key, data[key]);
             }
             else if (key == 'x3dterrains') {
                 if ( ! $.isEmptyObject(data[key]) ) {
@@ -2672,6 +2712,7 @@
                     enableXYZColorPlot($('input:radio', $('button', '#' + value[2]).parent().parent()));        // enable the X, Y, Z, Color, Plot radio buttons in the row
                     enableXYZColorPlot($('input:checkbox', $('button', '#' + value[2]).parent().parent()));     // enable the Plot checkbox in the row
                     enableParameterRow($('button', '#' + value[2]).parent().parent());                          // enable and show the whole row 
+                    addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
                     ids.push(value[2].toString());
                 });
                 $('#sampledparameter-table > tbody > tr > td > button').each(function (index, elem) { 
@@ -2693,6 +2734,7 @@
                     enableXYZColorPlot($('input:radio', $('button', '#' + value[0]).parent().parent()));        // enable the X, Y, Z, Color radio buttons in the row
                     enableXYZColorPlot($('input:checkbox', $('button', '#' + value[0]).parent().parent()));     // enable the Plot checkbox in the row
                     enableParameterRow($('button', '#' + value[0]).parent().parent());                          // enable and show the whole row 
+                    addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
                     ids.push(value[0]);
                     if (value[1].length != 0) {
                         enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));                                // Enable the standard_name button in the table row
@@ -2923,10 +2965,6 @@
                     }
                 }
             }
-            else if (key == 'parameterplatforms' || key == 'parameterminmax') {
-                // Save the dictionary in the body so that asynchronous event handlers can get at it
-                $('body').data(key, data[key]);
-            }
             else if (key == 'resources') {
                 buildMetadataHtml(data);
             }
@@ -2959,6 +2997,7 @@
             success: function (data) {
                 setDataAccess('mp', data);
                 setDataAccess('sp', data);
+                saveBodyData(data);
                 for (var key in data) {
                     if (init == true) {
                         onInit(data, key)
