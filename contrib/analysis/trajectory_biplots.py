@@ -39,8 +39,10 @@ from django.contrib.gis.geos import LineString, Point
 from utils.utils import round_to_n
 from textwrap import wrap
 from mpl_toolkits.basemap import Basemap
+import matplotlib.gridspec as gridspec
 
 from contrib.analysis import BiPlot, NoPPDataException
+
 
 class PlatformsBiPlot(BiPlot):
     '''
@@ -58,16 +60,17 @@ class PlatformsBiPlot(BiPlot):
         # Make the plot 
         ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
         ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
-        #ax.set_xlabel('%s (%s)' % (xParm, xUnits))
-        #ax.set_ylabel('%s (%s)' % (yParm, yUnits))
+        ax.set_xlabel('%s (%s)' % (xParm, xUnits))
+        ax.set_ylabel('%s (%s)' % (yParm, yUnits))
         #ax.set_title('%s' % (platform,)) 
         ##ax.set_title('%s from %s' % (platform, self.args.database)) 
-        ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=True)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ##ax.plot(xp, yp, c=color)
+        ax.scatter(x, y, marker='.', s=10, c=color, lw = 0, clip_on=True)
+        ##ax.set_xticks([])
+        ##ax.set_yticks([])
         ##ax.text(0.1, 0.8, startTime.strftime('%Y-%m-%d %H:%M'), transform=ax.transAxes)
         ax.text(0.5, 0.8, platform, transform=ax.transAxes, horizontalalignment='center')
+
+        return ax
 
     def timeSubPlot(self, platformDTHash, ax, startTime, endTime, swrTS):
         '''
@@ -86,14 +89,14 @@ class PlatformsBiPlot(BiPlot):
                 ax.plot_date(matplotlib.dates.date2num(datetimeList), depths, '-', c=color, alpha=0.2)
 
         # Highlight the selected time extent
-        ax.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='g', alpha=0.2)  
+        ax.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='y', alpha=0.2)  
 
-        plt.gca().invert_yaxis()
         if self.args.minDepth is not None:
             print "setting mindepth to", self.args.minDepth
             ax.set_ylim(top=self.args.minDepth)
         if self.args.maxDepth:
             ax.set_ylim(bottom=self.args.maxDepth)
+        ax.set_ylim(ax.get_ylim()[::-1])
 
         # Plot short wave radiometer data
         ax2 = ax.twinx()
@@ -101,25 +104,28 @@ class PlatformsBiPlot(BiPlot):
         
         ax.set_xlabel('Time (GMT)')
         ax.set_ylabel('Depth (m)')
-        ax2.set_ylabel('$SWR (W/m^2)$')
+        ax2.set_ylabel('SWR (W/m^2)')
         loc = ax.xaxis.get_major_locator()
         loc.maxticks[DAILY] = 6
 
+        return ax
 
     def spatialSubPlot(self, platformLineStringHash, ax, e):
         '''
         Make subplot of tracks for all the platforms within the time range
         '''
-        m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution ='l', ax=ax)
+        m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution ='f', ax=ax)
  
         for pl, LS in platformLineStringHash.iteritems():
             x,y = zip(*LS)
             m.plot(x, y, '-', c=self._getColor(pl))
 
         m.drawcoastlines()
-        m.drawcountries()
-        m.drawmapboundary(fill_color='#99ffff')
+        m.drawmapboundary()
+        m.drawparallels(np.linspace(e[1],e[3],num=4), labels=[True,False,False,False])
+        m.drawmeridians(np.linspace(e[0],e[2],num=4), labels=[False,False,False,True])
 
+        return ax
 
     def makeIntervalPlots(self):
         '''
@@ -198,19 +204,48 @@ class PlatformsBiPlot(BiPlot):
         '''
         Cycle through all the platforms & parameters (there will be more than one) and make the correlation plots
         for the interval as subplots on the same page.  Include a map overview and timeline such that if a movie 
-        is made of the resulting images a nice story is told.
-        '''
-        # Setup grid for subplots, row 0 is the time plot and spans 2 columns.  Below that we use rcLookup
-        # list to lookup the row column coordinates for the next subplot.
-        nrow = 3
-        ncol = 2
-        rcLookup = []
-        for r in range(nrow):
-            for c in range(ncol):
-                rcLookup.append((r,c))
+        is made of the resulting images a nice story is told.  Layout of the plot page is like:
 
+         D  +-------------------------------------------------------------------------------------------+
+         e  |                                                                                           |
+         p  |                                                                                           |
+         t  |                                                                                           |
+         h  +-------------------------------------------------------------------------------------------+
+                                                        Time
+
+            +---------------------------------------+           +-------------------+-------------------+
+            |                                       |           |                   |                   |
+            |                                       |         y |                   |                   |
+         L  |                                       |         P |                   |                   |
+         a  |                                       |         a |    Platform 0     |    Platform 1     |
+         t  |                                       |         r |                   |                   |
+         i  |                                       |         m |                   |                   |
+         t  |                                       |           |                   |                   |
+         u  |                                       |           +-------------------+-------------------+
+         d  |                                       |           |                   |                   |
+         e  |                                       |         y |                   |                   |
+            |                                       |         P |                   |                   |
+            |                                       |         a |    Platform 2     |    Platform 3     |
+            |                                       |         r |                   |                   |
+            |                                       |         m |                   |                   |
+            |                                       |           |                   |                   |
+            +---------------------------------------+           +-------------------+-------------------+
+                           Longitude                                    xParm               xParm
+
+        '''
+        # Plot figure size in inches and nested subplot structure
+        fig = plt.figure(figsize=(9, 6))
+        outer_gs = gridspec.GridSpec(2, 1, height_ratios=[1,4])
+        time_gs  = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=outer_gs[0])
+        lower_gs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=outer_gs[1])
+        map_gs   = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=lower_gs[0])
+        plat_gs  = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=lower_gs[1], wspace=0.0, hspace=0.0, width_ratios=[1,1], height_ratios=[1,1])
+        ##plat_gs  = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=lower_gs[1], width_ratios=[1,1], height_ratios=[1,1])
+
+        # Get overall temporal and spatial extents of platforms requested
         allActivityStartTime, allActivityEndTime, allExtent  = self._getActivityExtent(self.args.platform)
 
+        # Setup the time windowing and stepping - if none specified then use the entire extent that is in the database
         if self.args.hourStep:
             timeStep = timedelta(hours=self.args.hourStep)
             if self.args.hourWindow:
@@ -221,45 +256,39 @@ class PlatformsBiPlot(BiPlot):
         else:
             timeWindow = allActivityEndTime - allActivityStartTime
             timeStep = timeWindow
-
         startTime = allActivityStartTime
         endTime = startTime + timeWindow
 
+        # Get overall temporal data for placement in the temporal subplot
         platformDTHash = self._getplatformDTHash(self.args.platform)
         swrTS = self._getTimeSeriesData(allActivityStartTime, allActivityEndTime, parameterStandardName='surface_downwelling_shortwave_flux_in_air')
 
-        # Default subplot is 2 rows, 2 columns.  If len(self.args.platform) > 4 then must change this.
+        # Loop through sections of the data with temporal query constraints based on the window and step command line parameters
         while endTime <= allActivityEndTime:
  
-            # Plot temporal overview: top row, rcLookup[0:2]
-            ax = plt.subplot2grid((3, 2), (0, 0), colspan=2)
-            self.timeSubPlot(platformDTHash, ax, startTime, endTime, swrTS)
+            # Plot temporal overview
+            ax = plt.Subplot(fig, time_gs[:])
+            ax = self.timeSubPlot(platformDTHash, ax, startTime, endTime, swrTS)
+            fig.add_subplot(ax)
 
-            # Plot platforms 
-            i = 2
+            # Make scatter plots of data fromt the platforms 
             platformLineStringHash = {}
-            for pl, xP, yP in zip(self.args.platform, self.args.xParm, self.args.yParm):
-                i = i + 1
-                activityStartTime, activityEndTime, extent  = self._getActivityExtent(pl)
-
-                if self.args.verbose:
-                    print "Making time interval plots for platform", pl, ' start:', activityStartTime, ' end:', activityEndTime
-   
+            for i, (pl, xP, yP) in enumerate(zip(self.args.platform, self.args.xParm, self.args.yParm)):
                 try: 
                     x, y, points = self._getPPData(startTime, endTime, pl, xP, yP)
+                    platformLineStringHash[pl] = LineString(points).simplify(tolerance=.001)
                 except NoPPDataException, e:
-                    print e
+                    if self.args.verbose: print e
                     continue
 
-                color = self._getColor(pl)
-                platformLineStringHash[pl] = LineString(points).simplify(tolerance=.001)
+                ax = plt.Subplot(fig, plat_gs[i])
+                ax = self.xySubPlot(x, y, pl, self._getColor(pl), xP, yP, ax, startTime)
+                fig.add_subplot(ax, aspect='equal')
 
-                ax = plt.subplot2grid((3, 2), rcLookup[i])
-                self.xySubPlot(x, y, pl, color, xP, yP, ax, startTime)
-
-            # Plot spatial: rcLookup[2]
-            ax = plt.subplot2grid((3, 2), (0, 1), colspan=1)
-            self.spatialSubPlot(platformLineStringHash, ax, allExtent)
+            # Plot spatial
+            ax = plt.Subplot(fig, map_gs[:])
+            ax = self.spatialSubPlot(platformLineStringHash, ax, allExtent)
+            fig.add_subplot(ax)
            
             startTime = startTime + timeStep
             endTime = startTime + timeWindow
@@ -275,13 +304,13 @@ class PlatformsBiPlot(BiPlot):
                 wcName += '_night'
             fileName += '.png'
 
-            plt.figtext(0.55, 0.0, '\\\n'.join(wrap(self.commandline)), size=7)
+            plt.figtext(0.55, 0.0, '\\\n'.join(wrap(self.commandline)), size=7, verticalalignment='bottom')
             plt.tight_layout()
             plt.savefig(fileName)
             print 'Saved file', fileName
 
             plt.close()
-            ##raw_input('P')
+            raw_input('P')
 
         print 'Done. Make an animated gif with: convert -delay 100 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:3]))
 
