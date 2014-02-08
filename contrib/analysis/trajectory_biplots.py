@@ -38,8 +38,9 @@ from datetime import datetime, timedelta
 from django.contrib.gis.geos import LineString, Point
 from utils.utils import round_to_n
 from textwrap import wrap
+from mpl_toolkits.basemap import Basemap
 
-from contrib.analysis import BiPlot, NoXYDataException
+from contrib.analysis import BiPlot, NoPPDataException
 
 class PlatformsBiPlot(BiPlot):
     '''
@@ -104,6 +105,22 @@ class PlatformsBiPlot(BiPlot):
         loc = ax.xaxis.get_major_locator()
         loc.maxticks[DAILY] = 6
 
+
+    def spatialSubPlot(self, platformLineStringHash, ax, e):
+        '''
+        Make subplot of tracks for all the platforms within the time range
+        '''
+        m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution ='l', ax=ax)
+ 
+        for pl, LS in platformLineStringHash.iteritems():
+            x,y = zip(*LS)
+            m.plot(x, y, '-', c=self._getColor(pl))
+
+        m.drawcoastlines()
+        m.drawcountries()
+        m.drawmapboundary(fill_color='#99ffff')
+
+
     def makeIntervalPlots(self):
         '''
         Make a plot each timeInterval starting at startTime
@@ -128,7 +145,7 @@ class PlatformsBiPlot(BiPlot):
         startTime = self.activityStartTime
         endTime = startTime + timeInterval
         while endTime <= self.activityEndTime:
-            x, y, points = self._getXYData(startTime, endTime, self.args.platform, self.args.xParm, self.args.yParm)
+            x, y, points = self._getPPData(startTime, endTime, self.args.platform, self.args.xParm, self.args.yParm)
         
             if len(points) < 2:
                 startTime = endTime
@@ -177,7 +194,7 @@ class PlatformsBiPlot(BiPlot):
 
         print 'Done. Make an animated gif with: convert -delay 100 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:3]))
 
-    def makePlatformsPlots(self):
+    def makePlatformsBiPlots(self):
         '''
         Cycle through all the platforms & parameters (there will be more than one) and make the correlation plots
         for the interval as subplots on the same page.  Include a map overview and timeline such that if a movie 
@@ -192,7 +209,7 @@ class PlatformsBiPlot(BiPlot):
             for c in range(ncol):
                 rcLookup.append((r,c))
 
-        allActivityStartTime, allActivityEndTime, extent  = self._getActivityExtent(self.args.platform)
+        allActivityStartTime, allActivityEndTime, allExtent  = self._getActivityExtent(self.args.platform)
 
         if self.args.hourStep:
             timeStep = timedelta(hours=self.args.hourStep)
@@ -203,43 +220,47 @@ class PlatformsBiPlot(BiPlot):
                     timeWindow = timedelta(hours=self.args.hourStep)
         else:
             timeWindow = allActivityEndTime - allActivityStartTime
+            timeStep = timeWindow
 
         startTime = allActivityStartTime
         endTime = startTime + timeWindow
 
         platformDTHash = self._getplatformDTHash(self.args.platform)
-        swrTS = self._getSWRData(allActivityStartTime, allActivityEndTime)
+        swrTS = self._getTimeSeriesData(allActivityStartTime, allActivityEndTime, parameterStandardName='surface_downwelling_shortwave_flux_in_air')
 
         # Default subplot is 2 rows, 2 columns.  If len(self.args.platform) > 4 then must change this.
         while endTime <= allActivityEndTime:
  
-            # Plot spatial-temporal overview (Temoral: rcLookup[0:2], Spatial: rcLookup[2])
+            # Plot temporal overview: top row, rcLookup[0:2]
             ax = plt.subplot2grid((3, 2), (0, 0), colspan=2)
             self.timeSubPlot(platformDTHash, ax, startTime, endTime, swrTS)
-           
+
             # Plot platforms 
             i = 2
+            platformLineStringHash = {}
             for pl, xP, yP in zip(self.args.platform, self.args.xParm, self.args.yParm):
                 i = i + 1
                 activityStartTime, activityEndTime, extent  = self._getActivityExtent(pl)
 
                 if self.args.verbose:
-                    print "Making time interval plots for platform", pl
-                    print "Activity start:", activityStartTime
-                    print "Activity end:  ", activityEndTime
+                    print "Making time interval plots for platform", pl, ' start:', activityStartTime, ' end:', activityEndTime
    
                 try: 
-                    x, y, points = self._getXYData(startTime, endTime, pl, xP, yP)
-                except NoXYDataException, e:
+                    x, y, points = self._getPPData(startTime, endTime, pl, xP, yP)
+                except NoPPDataException, e:
                     print e
                     continue
 
                 color = self._getColor(pl)
-                path = LineString(points).simplify(tolerance=.001)
+                platformLineStringHash[pl] = LineString(points).simplify(tolerance=.001)
 
                 ax = plt.subplot2grid((3, 2), rcLookup[i])
                 self.xySubPlot(x, y, pl, color, xP, yP, ax, startTime)
 
+            # Plot spatial: rcLookup[2]
+            ax = plt.subplot2grid((3, 2), (0, 1), colspan=1)
+            self.spatialSubPlot(platformLineStringHash, ax, allExtent)
+           
             startTime = startTime + timeStep
             endTime = startTime + timeWindow
 
@@ -282,10 +303,12 @@ class PlatformsBiPlot(BiPlot):
         examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll\n'
         examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll --daytime\n'
         examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll --nighttime\n'
+        examples += '\n\nMultiple platform and parameter names are paired up in respective order.\n'
+        examples += '(Image files will be written to the current working directory)'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Read Parameter-Parameter data from a STOQS database and make bi-plots',
-                                         epilog=examples + '\n\nMultiple platform and parameter names are paired up in order.\n(Image files will be written to the current working directory)')
+                                         epilog=examples)
                                              
         parser.add_argument('-x', '--xParm', action='store', help='One or more Parameter names for the X axis', nargs='*', default='bb470', required=True)
         parser.add_argument('-y', '--yParm', action='store', help='One or more Parameter names for the Y axis', nargs='*', default='chlorophyll', required=True)
@@ -308,7 +331,8 @@ if __name__ == '__main__':
     bp = PlatformsBiPlot()
     bp.process_command_line()
     if len(bp.args.platform) > 0:
-        bp.makePlatformsPlots()
+        bp.makePlatformsBiPlots()
     else:
-        bp.makeIntervalPlots()
+        bp.makePlatformsBiPlots()
+        ##bp.makeIntervalPlots()
 
