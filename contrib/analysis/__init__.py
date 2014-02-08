@@ -36,7 +36,7 @@ from django.contrib.gis.geos import LineString, Point
 from django.db.models import Max, Min
 
 
-class NoXYDataException(Exception):
+class NoPPDataException(Exception):
     pass
 
 
@@ -45,7 +45,7 @@ class BiPlot():
     Make customized BiPlots (Parameter Parameter plots) from STOQS.
     '''
 
-    def _getXYData(self, startDatetime, endDatetime, platform, xParm, yParm):
+    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm):
         '''
         Use the SQL template to retrieve the X and Y values and other ancillary information from the database
         for the passed in platform, xParm and yParm names.
@@ -108,7 +108,7 @@ class BiPlot():
             points.append(Point(float(row[3]), float(row[4])))
 
         if not points:
-            raise NoXYDataException("No (%s, %s) data from (%s) between %s and %s" % (xParm, yParm, platform, startDatetime, endDatetime))
+            raise NoPPDataException("No (%s, %s) data from (%s) between %s and %s" % (xParm, yParm, platform, startDatetime, endDatetime))
 
         return x, y, points
 
@@ -139,8 +139,7 @@ class BiPlot():
         try:
             self.color = '#' + Platform.objects.using(self.args.database).filter(name=platform).values_list('color')[0][0]
         except IndexError, e:
-            print "Error: Unable to get color of platform name", platform
-            sys.exit(-1)
+            raise Exception('Unable to get color of platform name %s' % platform)
 
         return self.color
 
@@ -191,18 +190,35 @@ class BiPlot():
 
         return hash
 
-    def _getSWRData(self, tartDatetime, endDatetime):
+    def _getTimeSeriesData(self, tartDatetime, endDatetime, parameterStandardName, platformName=None, parameterName=None):
         '''
-        Return time series of Short Wave Radiometer data for the times requested
+        Return time series of a Parameter from a Platform
         '''
+        if not (parameterName or parameterStandardName):
+            raise Exception('Must specify either parameterName or parameterStandardName')
 
-        qsSWR = MeasuredParameter.objects.using(self.args.database).filter(parameter__standard_name=
-                    'surface_downwelling_shortwave_flux_in_air').values('measurement__instantpoint__timevalue', 
-                    'datavalue').order_by('measurement__instantpoint__timevalue')
+        qs = MeasuredParameter.objects.using(self.args.database)
+        if parameterStandardName:
+            qs = qs.filter(parameter__standard_name=parameterStandardName)
+        if parameterName:
+            qs = qs.filter(parameter__name=parameterName)
+
+        if platformName:
+            qs = qs.filter(measurement__instantpoint__activity__platform__name=platformName)
+        else:
+            count = qs.values_list('measurement__instantpoint__activity__platform').distinct().count()
+            if count > 1:
+                raise Exception('More that one platform has time series data for parameterStandardName = %s, parameterName = %s' % (parameterStandardName, parameterName))
+            elif count == 0:
+                raise Exception('No platform has time series data for parameterStandardName = %s, parameterName = %s' % (parameterStandardName, parameterName))
+
+        qs = qs.values('measurement__instantpoint__timevalue', 'datavalue').order_by('measurement__instantpoint__timevalue')
+
         tList = []
-        swrList = []
-        for rs in qsSWR:
+        dataList = []
+        for rs in qs:
             tList.append(rs['measurement__instantpoint__timevalue'])
-            swrList.append(rs['datavalue'])
+            dataList.append(rs['datavalue'])
 
-        return tList, swrList
+        return tList, dataList
+
