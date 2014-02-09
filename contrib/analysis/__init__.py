@@ -40,6 +40,10 @@ class NoPPDataException(Exception):
     pass
 
 
+class NoTSDataException(Exception):
+    pass
+
+
 class BiPlot():
     '''
     Make customized BiPlots (Parameter Parameter plots) from STOQS.
@@ -137,9 +141,15 @@ class BiPlot():
         Return color of the platform
         '''
         try:
-            self.color = '#' + Platform.objects.using(self.args.database).filter(name=platform).values_list('color')[0][0]
-        except IndexError, e:
-            raise Exception('Unable to get color of platform name %s' % platform)
+            colorLookup = {}
+            for p,c in zip(self.args.platform, self.args.platformColors):
+                colorLookup[p] = c
+            self.color = colorLookup[platform]
+        except TypeError:
+            try:
+                self.color = '#' + Platform.objects.using(self.args.database).filter(name=platform).values_list('color')[0][0]
+            except IndexError, e:
+                raise Exception('Unable to get color of platform name %s' % platform)
 
         return self.color
 
@@ -208,9 +218,11 @@ class BiPlot():
         else:
             count = qs.values_list('measurement__instantpoint__activity__platform').distinct().count()
             if count > 1:
-                raise Exception('More that one platform has time series data for parameterStandardName = %s, parameterName = %s' % (parameterStandardName, parameterName))
+                raise Exception('More that one platform in %s has time series data for parameterStandardName = %s, parameterName = %s' % (
+                            self.args.database, parameterStandardName, parameterName))
             elif count == 0:
-                raise Exception('No platform has time series data for parameterStandardName = %s, parameterName = %s' % (parameterStandardName, parameterName))
+                raise NoTSDataException('No platform in %s has time series data for parameterStandardName = %s, parameterName = %s' % (
+                            self.args.database, parameterStandardName, parameterName))
 
         qs = qs.values('measurement__instantpoint__timevalue', 'datavalue').order_by('measurement__instantpoint__timevalue')
 

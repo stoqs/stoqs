@@ -41,7 +41,7 @@ from textwrap import wrap
 from mpl_toolkits.basemap import Basemap
 import matplotlib.gridspec as gridspec
 
-from contrib.analysis import BiPlot, NoPPDataException
+from contrib.analysis import BiPlot, NoPPDataException, NoTSDataException
 
 
 class PlatformsBiPlot(BiPlot):
@@ -49,7 +49,7 @@ class PlatformsBiPlot(BiPlot):
     Make customized BiPlots (Parameter Parameter plots) for platforms from STOQS.
     '''
 
-    def xySubPlot(self, x, y, platform, color, xParm, yParm, ax, startTime):
+    def ppSubPlot(self, x, y, platform, color, xParm, yParm, ax, startTime):
         '''
         Given names of platform, x & y paramters add a subplot to figure fig.
         '''
@@ -60,19 +60,27 @@ class PlatformsBiPlot(BiPlot):
         # Make the plot 
         ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
         ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
-        ax.set_xlabel('%s (%s)' % (xParm, xUnits))
-        ax.set_ylabel('%s (%s)' % (yParm, yUnits))
-        #ax.set_title('%s' % (platform,)) 
-        ##ax.set_title('%s from %s' % (platform, self.args.database)) 
-        ax.scatter(x, y, marker='.', s=10, c=color, lw = 0, clip_on=True)
-        ##ax.set_xticks([])
-        ##ax.set_yticks([])
-        ##ax.text(0.1, 0.8, startTime.strftime('%Y-%m-%d %H:%M'), transform=ax.transAxes)
-        ax.text(0.5, 0.8, platform, transform=ax.transAxes, horizontalalignment='center')
+
+        if self.args.xLabel == '':
+            ax.set_xticks([])
+        elif self.args.xLabel:
+            ax.set_xlabel(self.args.xLabel)
+        else:
+            ax.set_xlabel('%s (%s)' % (xParm, xUnits))
+
+        if self.args.yLabel == '':
+            ax.set_yticks([])
+        elif self.args.yLabel:
+            ax.set_ylabel(self.args.yLabel)
+        else:
+            ax.set_ylabel('%s (%s)' % (yParm, yUnits))
+
+        ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=True)
+        ax.text(0.0, 1.0, platform, transform=ax.transAxes, color=color, horizontalalignment='left', verticalalignment='top')
 
         return ax
 
-    def timeSubPlot(self, platformDTHash, ax, startTime, endTime, swrTS):
+    def timeSubPlot(self, platformDTHash, ax, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS):
         '''
         Make subplot of depth time series for all the platforms and highlight the time range
         '''
@@ -85,120 +93,71 @@ class PlatformsBiPlot(BiPlot):
                     datetimeList.append(datetime.utcfromtimestamp(ems/1000.0))
                     depths.append(d)
            
-                ##print "Plotting %s: start = %s, end = %s" % (a, datetimeList[0], datetimeList[-1])
                 ax.plot_date(matplotlib.dates.date2num(datetimeList), depths, '-', c=color, alpha=0.2)
 
         # Highlight the selected time extent
-        ax.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='y', alpha=0.2)  
+        ax.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='k', alpha=0.1)  
 
         if self.args.minDepth is not None:
-            print "setting mindepth to", self.args.minDepth
             ax.set_ylim(top=self.args.minDepth)
         if self.args.maxDepth:
             ax.set_ylim(bottom=self.args.maxDepth)
         ax.set_ylim(ax.get_ylim()[::-1])
 
-        # Plot short wave radiometer data
-        ax2 = ax.twinx()
-        ax2.plot_date(matplotlib.dates.date2num(swrTS[0]), swrTS[1], '-', c='black', alpha=0.5)
+        if swrTS:
+            # Plot short wave radiometer data
+            if self.args.verbose: print 'Plotting swrTS...'
+            ax2 = ax.twinx()
+            ax2.plot_date(matplotlib.dates.date2num(swrTS[0]), swrTS[1], '-', c='black', alpha=0.5)
+            ax2.set_ylabel('SWR (W/m^2)')
+            plt.locator_params(axis='y', nbins=3)
         
         ax.set_xlabel('Time (GMT)')
         ax.set_ylabel('Depth (m)')
-        ax2.set_ylabel('SWR (W/m^2)')
         loc = ax.xaxis.get_major_locator()
-        loc.maxticks[DAILY] = 6
+        loc.maxticks[DAILY] = 4
 
         return ax
 
-    def spatialSubPlot(self, platformLineStringHash, ax, e):
+    def spatialSubPlot(self, platformLineStringHash, ax, e, resolution='l'):
         '''
-        Make subplot of tracks for all the platforms within the time range
+        Make subplot of tracks for all the platforms within the time range. If self.args.coastlines then full resolution
+        coastlines will be draw - significantly increasing execution time.
         '''
-        m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution ='f', ax=ax)
+        if self.args.coastlines:
+            resolution='f'
+        m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution=resolution, ax=ax)
  
         for pl, LS in platformLineStringHash.iteritems():
             x,y = zip(*LS)
             m.plot(x, y, '-', c=self._getColor(pl))
 
-        m.drawcoastlines()
+        if self.args.coastlines:
+            m.drawcoastlines()
         m.drawmapboundary()
-        m.drawparallels(np.linspace(e[1],e[3],num=4), labels=[True,False,False,False])
-        m.drawmeridians(np.linspace(e[0],e[2],num=4), labels=[False,False,False,True])
+        m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False])
+        m.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True])
 
         return ax
 
-    def makeIntervalPlots(self):
+    def getFilename(self, startTime):
         '''
-        Make a plot each timeInterval starting at startTime
+        Construct plot file name
         '''
+        fnTempl= 'platforms_{time}' 
+        fileName = fnTempl.format(time=startTime.strftime('%Y%m%dT%H%M'))
+        wcName = fnTempl.format(time=r'*')
+        if self.args.daytime:
+            fileName += '_day'
+            wcName += '_day'
+        if self.args.nighttime:
+            fileName += '_night'
+            wcName += '_night'
+        fileName += '.png'
 
-        self._getActivityExtent(self.args.platform)
-        xmin, xmax, xUnits = self._getAxisInfo(self.args.platform, self.args.xParm)
-        ymin, ymax, yUnits = self._getAxisInfo(self.args.platform, self.args.yParm)
+        fileName = os.path.join(self.args.plotDir, self.args.plotPrefix + fileName)
 
-        if self.args.hourInterval:
-            timeInterval = timedelta(hours=self.args.hourInterval)
-        else:
-            timeInterval = self.activityEndTime - self.activityStartTime
- 
-        if self.args.verbose:
-            print "Making time interval plots for platform", self.args.platform
-            print "Activity start:", self.activityStartTime
-            print "Activity end:  ", self.activityEndTime
-            print "Time Interval =", timeInterval
-
-        # Pull out data and plot at timeInterval intervals
-        startTime = self.activityStartTime
-        endTime = startTime + timeInterval
-        while endTime <= self.activityEndTime:
-            x, y, points = self._getPPData(startTime, endTime, self.args.platform, self.args.xParm, self.args.yParm)
-        
-            if len(points) < 2:
-                startTime = endTime
-                endTime = startTime + timeInterval
-                continue
-
-            path = LineString(points).simplify(tolerance=.001)
-        
-            fig = plt.figure()
-            plt.grid(True)
-            ax = fig.add_subplot(111)
-    
-            # Scale path points to appear in upper right of the plot as a crude indication of the track
-            xp = []
-            yp = []
-            for p in path:
-                xp.append(0.30 * (p[0] - self.extent[0]) * (xmax - xmin) / (self.extent[2] - self.extent[0]) + 0.70 * (xmax - xmin))
-                yp.append(0.18 * (p[1] - self.extent[1]) * (ymax - ymin) / (self.extent[3] - self.extent[1]) + 0.75 * (ymax - ymin))
-       
-            # Make the plot 
-            ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
-            ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
-            ax.set_xlabel('%s (%s)' % (self.args.xParm, xUnits))
-            ax.set_ylabel('%s (%s)' % (self.args.yParm, yUnits))
-            ax.set_title('%s from %s' % (self.args.platform, self.args.database)) 
-            ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=False)
-            ax.plot(xp, yp, c=self.color)
-            ax.text(0.1, 0.8, startTime.strftime('%Y-%m-%d %H:%M'), transform=ax.transAxes)
-            fnTempl= '{platform}_{xParm}_{yParm}_{time}' 
-            fileName = fnTempl.format(platform=self.args.platform, xParm=self.args.xParm, yParm=self.args.yParm, time=startTime.strftime('%Y%m%dT%H%M'))
-            wcName = fnTempl.format(platform=self.args.platform, xParm=self.args.xParm, yParm=self.args.yParm, time=r'*')
-            if self.args.daytime:
-                fileName += '_day'
-                wcName += '_day'
-            if self.args.nighttime:
-                fileName += '_night'
-                wcName += '_night'
-            fileName += '.png'
-
-            fig.savefig(fileName)
-            print 'Saved file', fileName
-            plt.close()
-    
-            startTime = endTime
-            endTime = startTime + timeInterval
-
-        print 'Done. Make an animated gif with: convert -delay 100 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:3]))
+        return fileName, wcName
 
     def makePlatformsBiPlots(self):
         '''
@@ -239,8 +198,9 @@ class PlatformsBiPlot(BiPlot):
         time_gs  = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=outer_gs[0])
         lower_gs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=outer_gs[1])
         map_gs   = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=lower_gs[0])
-        plat_gs  = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=lower_gs[1], wspace=0.0, hspace=0.0, width_ratios=[1,1], height_ratios=[1,1])
-        ##plat_gs  = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=lower_gs[1], width_ratios=[1,1], height_ratios=[1,1])
+        plat1_gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=lower_gs[1])
+        plat4_gs = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=lower_gs[1], wspace=0.0, hspace=0.0, width_ratios=[1,1], height_ratios=[1,1])
+        ##plat4_gs  = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=lower_gs[1], width_ratios=[1,1], height_ratios=[1,1])
 
         # Get overall temporal and spatial extents of platforms requested
         allActivityStartTime, allActivityEndTime, allExtent  = self._getActivityExtent(self.args.platform)
@@ -261,56 +221,59 @@ class PlatformsBiPlot(BiPlot):
 
         # Get overall temporal data for placement in the temporal subplot
         platformDTHash = self._getplatformDTHash(self.args.platform)
-        swrTS = self._getTimeSeriesData(allActivityStartTime, allActivityEndTime, parameterStandardName='surface_downwelling_shortwave_flux_in_air')
+        try:
+            swrTS = self._getTimeSeriesData(allActivityStartTime, allActivityEndTime, parameterStandardName='surface_downwelling_shortwave_flux_in_air')
+        except NoTSDataException, e:
+            swrTS = None
+            print "WARNING:", e
 
         # Loop through sections of the data with temporal query constraints based on the window and step command line parameters
         while endTime <= allActivityEndTime:
  
             # Plot temporal overview
             ax = plt.Subplot(fig, time_gs[:])
-            ax = self.timeSubPlot(platformDTHash, ax, startTime, endTime, swrTS)
+            ax = self.timeSubPlot(platformDTHash, ax, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS)
             fig.add_subplot(ax)
+            if self.args.title:
+                ax.set_title(self.args.title)
 
             # Make scatter plots of data fromt the platforms 
             platformLineStringHash = {}
             for i, (pl, xP, yP) in enumerate(zip(self.args.platform, self.args.xParm, self.args.yParm)):
                 try: 
+                    if self.args.verbose: print 'Calling self._getPPData...'
                     x, y, points = self._getPPData(startTime, endTime, pl, xP, yP)
                     platformLineStringHash[pl] = LineString(points).simplify(tolerance=.001)
                 except NoPPDataException, e:
                     if self.args.verbose: print e
                     continue
 
-                ax = plt.Subplot(fig, plat_gs[i])
-                ax = self.xySubPlot(x, y, pl, self._getColor(pl), xP, yP, ax, startTime)
+                if len(self.args.platform) == 1:
+                    ax = plt.Subplot(fig, plat1_gs[0])
+                elif len(self.args.platform) < 5:
+                    ax = plt.Subplot(fig, plat4_gs[i])
+                else:
+                    raise Exception('Cannot handle more than 4 platform Parameter-Parameter plots')
+
+                ax = self.ppSubPlot(x, y, pl, self._getColor(pl), xP, yP, ax, startTime)
                 fig.add_subplot(ax, aspect='equal')
 
             # Plot spatial
             ax = plt.Subplot(fig, map_gs[:])
+            if self.args.verbose: print 'Calling self.spatialSubPlot()...'
             ax = self.spatialSubPlot(platformLineStringHash, ax, allExtent)
             fig.add_subplot(ax)
            
             startTime = startTime + timeStep
             endTime = startTime + timeWindow
 
-            fnTempl= 'platforms_{time}' 
-            fileName = fnTempl.format(time=startTime.strftime('%Y%m%dT%H%M'))
-            wcName = fnTempl.format(time=r'*')
-            if self.args.daytime:
-                fileName += '_day'
-                wcName += '_day'
-            if self.args.nighttime:
-                fileName += '_night'
-                wcName += '_night'
-            fileName += '.png'
+            plt.figtext(0.0, 0.0, '\\\n'.join(wrap(self.commandline)), size=7, horizontalalignment='left', verticalalignment='bottom')
 
-            plt.figtext(0.55, 0.0, '\\\n'.join(wrap(self.commandline)), size=7, verticalalignment='bottom')
-            plt.tight_layout()
-            plt.savefig(fileName)
-            print 'Saved file', fileName
-
+            fileName, wcName = self.getFilename(startTime)
+            print 'Saving to file', fileName
+            fig.savefig(fileName)
             plt.close()
-            raw_input('P')
+            ##raw_input('P')
 
         print 'Done. Make an animated gif with: convert -delay 100 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:3]))
 
@@ -322,6 +285,10 @@ class PlatformsBiPlot(BiPlot):
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n' 
+        examples += sys.argv[0] + " -d stoqs_september2013_o -p dorado Slocum_294 tethys Slocum_260 -x bbp700 optical_backscatter660nm bb650 optical_backscatter700nm -y fl700_uncorr fluorescence chlorophyll fluorescence --plotDir /tmp --plotPrefix kraken_ --hourStep 12 --hourWindow 24 --xLabel '' --yLabel '' --title 'Fl vs. bb (red)'\n"
+        examples += sys.argv[0] + " -d stoqs_september2013_o -p dorado Slocum_294 tethys -x bbp420 optical_backscatter470nm bb470 -y fl700_uncorr fluorescence chlorophyll --plotDir /tmp --plotPrefix kraken_ --hourStep 12 --hourWindow 24 --platformColors '#ff0000' '#00ff00' '#0000ff' --xLabel '' --yLabel ''\n"
+        examples += sys.argv[0] + ' -d stoqs_simz_aug2013_t -p dorado dorado dorado dorado -x bbp420 bbp700 salinity salinity -y fl700_uncorr fl700_uncorr fl700_uncorr temperature\n'
+        examples += sys.argv[0] + ' -d stoqs_simz_aug2013_t -p dorado dorado dorado dorado -x bbp420 bbp700 salinity salinity -y fl700_uncorr fl700_uncorr fl700_uncorr temperature --xLabel "" --yLabel ""\n'
         examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado Slocum_294 tethys -x bbp420 optical_backscatter470nm bb470 -y fl700_uncorr fluorescence chlorophyll\n'
         examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
         examples += sys.argv[0] + ' -d stoqs_september2013_o -p tethys -x bb470 -y chlorophyll --hourStep 12 --hourWindow 24\n'
@@ -349,6 +316,13 @@ class PlatformsBiPlot(BiPlot):
         parser.add_argument('--nighttime', action='store_true', help='Select only nighttime hours: 10 pm to 2 am local time')
         parser.add_argument('--minDepth', action='store', help='Minimum depth for data queries', default=None, type=float)
         parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
+        parser.add_argument('--plotDir', action='store', help='Directory where to write the plot output', default='.')
+        parser.add_argument('--plotPrefix', action='store', help='Prefix to use in naming plot files', default='')
+        parser.add_argument('--xLabel', action='store', help='Override Parameter-Parameter X axis label - will be applied to all plots')
+        parser.add_argument('--yLabel', action='store', help='Override Parameter-Parameter Y axis label - will be applied to all plots') 
+        parser.add_argument('--coastlines', action='store_true', help='Draw full resolution coastlines on map - significantly increasing execution time') 
+        parser.add_argument('--platformColors', action='store', help='Override database platform colors - put in quotes, e.g. "#ff0000"', nargs='*')
+        parser.add_argument('--title', action='store', help='Title to appear on top of plot')
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
     
         self.args = parser.parse_args()
@@ -363,5 +337,4 @@ if __name__ == '__main__':
         bp.makePlatformsBiPlots()
     else:
         bp.makePlatformsBiPlots()
-        ##bp.makeIntervalPlots()
 
