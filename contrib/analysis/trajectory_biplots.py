@@ -234,7 +234,8 @@ class PlatformsBiPlot(BiPlot):
 
             # Plot temporal overview
             ax = plt.Subplot(fig, time_gs[:])
-            ax = self.timeSubPlot(platformDTHash, ax, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS)
+            ##ax2 = plt.Subplot(fig, time_gs[:])
+            self.timeSubPlot(platformDTHash, ax, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS)
             fig.add_subplot(ax)
             if self.args.title:
                 ax.set_title(self.args.title)
@@ -269,7 +270,8 @@ class PlatformsBiPlot(BiPlot):
             startTime = startTime + timeStep
             endTime = startTime + timeWindow
 
-            plt.figtext(0.0, 0.0, '\\\n'.join(wrap(self.commandline, width=80)), size=7, horizontalalignment='left', verticalalignment='bottom')
+            provStr = 'Created with STOQS command ' + '\\\n'.join(wrap(self.commandline, width=100)) + ' on ' + datetime.now().ctime()
+            plt.figtext(0.0, 0.0, provStr, size=7, horizontalalignment='left', verticalalignment='bottom')
 
             fileName, wcName = self.getFilename(startTime)
             print 'Saving to file', fileName
@@ -288,8 +290,8 @@ class PlatformsBiPlot(BiPlot):
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n' 
-        examples += sys.argv[0] + " -d stoqs_september2013 -p tethys Slocum_294 dorado Slocum_260 -x bb650 optical_backscatter660nm bbp700 optical_backscatter700nm -y chlorophyll fluorescence fl700_uncorr fluorescence --plotDir /tmp --plotPrefix stoqs_september2013_o_ --hourStep 3 --hourWindow 6 --xLabel '' --yLabel '' --title 'Fl vs. bb (red)' --minDepth 0 --maxDepth 100\n"
-        examples += sys.argv[0] + " -d stoqs_september2013_o -p tethys Slocum_294 dorado Slocum_260 -x bb650 optical_backscatter660nm bbp700 optical_backscatter700nm -y chlorophyll fluorescence fl700_uncorr fluorescence --plotDir /tmp --plotPrefix stoqs_september2013_o_ --hourStep 6 --hourWindow 12 --xLabel '' --yLabel '' --title 'Fl vs. bb (red) --minDepth 0 --maxDepth 100'\n"
+        examples += sys.argv[0] + " -d stoqs_september2013 -p tethys Slocum_294 dorado Slocum_260 -x bb650 optical_backscatter660nm bbp700 optical_backscatter700nm -y chlorophyll fluorescence fl700_uncorr fluorescence --plotDir /tmp --plotPrefix stoqs_september2013_ --hourStep 3 --hourWindow 6 --xLabel '' --yLabel '' --title 'Fl vs. bb (red)' --minDepth 0 --maxDepth 100\n"
+        examples += sys.argv[0] + " -d stoqs_september2013_o -p tethys Slocum_294 dorado Slocum_260 -x bb650 optical_backscatter660nm bbp700 optical_backscatter700nm -y chlorophyll fluorescence fl700_uncorr fluorescence --plotDir /tmp --plotPrefix stoqs_september2013_o_ --hourStep 6 --hourWindow 12 --xLabel '' --yLabel '' --title 'Fl vs. bb (red)' --minDepth 0 --maxDepth 100\n"
         examples += sys.argv[0] + " -d stoqs_september2013_o -p dorado Slocum_294 tethys -x bbp420 optical_backscatter470nm bb470 -y fl700_uncorr fluorescence chlorophyll --plotDir /tmp --plotPrefix kraken_ --hourStep 12 --hourWindow 24 --platformColors '#ff0000' '#00ff00' '#0000ff' --xLabel '' --yLabel ''\n"
         examples += sys.argv[0] + ' -d stoqs_simz_aug2013_t -p dorado dorado dorado dorado -x bbp420 bbp700 salinity salinity -y fl700_uncorr fl700_uncorr fl700_uncorr temperature\n'
         examples += sys.argv[0] + ' -d stoqs_simz_aug2013_t -p dorado dorado dorado dorado -x bbp420 bbp700 salinity salinity -y fl700_uncorr fl700_uncorr fl700_uncorr temperature --xLabel "" --yLabel ""\n'
