@@ -99,9 +99,9 @@ class PlatformsBiPlot(BiPlot):
         ax.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='k', alpha=0.1)  
 
         if self.args.minDepth is not None:
-            ax.set_ylim(top=self.args.minDepth)
+            ax.set_ylim(bottom=self.args.minDepth)
         if self.args.maxDepth:
-            ax.set_ylim(bottom=self.args.maxDepth)
+            ax.set_ylim(top=self.args.maxDepth)
         ax.set_ylim(ax.get_ylim()[::-1])
 
         if swrTS:
@@ -147,6 +147,7 @@ class PlatformsBiPlot(BiPlot):
         fnTempl= 'platforms_{time}' 
         fileName = fnTempl.format(time=startTime.strftime('%Y%m%dT%H%M'))
         wcName = fnTempl.format(time=r'*')
+        wcName = os.path.join(self.args.plotDir, self.args.plotPrefix + wcName)
         if self.args.daytime:
             fileName += '_day'
             wcName += '_day'
@@ -192,15 +193,13 @@ class PlatformsBiPlot(BiPlot):
                            Longitude                                    xParm               xParm
 
         '''
-        # Plot figure size in inches and nested subplot structure
-        fig = plt.figure(figsize=(9, 6))
+        # Nested GridSpecs for Subplots
         outer_gs = gridspec.GridSpec(2, 1, height_ratios=[1,4])
         time_gs  = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=outer_gs[0])
         lower_gs = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=outer_gs[1])
         map_gs   = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=lower_gs[0])
         plat1_gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=lower_gs[1])
         plat4_gs = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=lower_gs[1], wspace=0.0, hspace=0.0, width_ratios=[1,1], height_ratios=[1,1])
-        ##plat4_gs  = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=lower_gs[1], width_ratios=[1,1], height_ratios=[1,1])
 
         # Get overall temporal and spatial extents of platforms requested
         allActivityStartTime, allActivityEndTime, allExtent  = self._getActivityExtent(self.args.platform)
@@ -229,7 +228,10 @@ class PlatformsBiPlot(BiPlot):
 
         # Loop through sections of the data with temporal query constraints based on the window and step command line parameters
         while endTime <= allActivityEndTime:
- 
+
+            # Start a new figure - size is in inches
+            fig = plt.figure(figsize=(9, 6))
+
             # Plot temporal overview
             ax = plt.Subplot(fig, time_gs[:])
             ax = self.timeSubPlot(platformDTHash, ax, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS)
@@ -267,15 +269,16 @@ class PlatformsBiPlot(BiPlot):
             startTime = startTime + timeStep
             endTime = startTime + timeWindow
 
-            plt.figtext(0.0, 0.0, '\\\n'.join(wrap(self.commandline)), size=7, horizontalalignment='left', verticalalignment='bottom')
+            plt.figtext(0.0, 0.0, '\\\n'.join(wrap(self.commandline, width=80)), size=7, horizontalalignment='left', verticalalignment='bottom')
 
             fileName, wcName = self.getFilename(startTime)
             print 'Saving to file', fileName
             fig.savefig(fileName)
+            plt.clf()
             plt.close()
             ##raw_input('P')
 
-        print 'Done. Make an animated gif with: convert -delay 100 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:3]))
+        print 'Done. Make an animated gif with: convert -delay 100 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:-1]))
 
     def process_command_line(self):
         '''
@@ -285,7 +288,8 @@ class PlatformsBiPlot(BiPlot):
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n' 
-        examples += sys.argv[0] + " -d stoqs_september2013_o -p dorado Slocum_294 tethys Slocum_260 -x bbp700 optical_backscatter660nm bb650 optical_backscatter700nm -y fl700_uncorr fluorescence chlorophyll fluorescence --plotDir /tmp --plotPrefix kraken_ --hourStep 12 --hourWindow 24 --xLabel '' --yLabel '' --title 'Fl vs. bb (red)'\n"
+        examples += sys.argv[0] + " -d stoqs_september2013 -p tethys Slocum_294 dorado Slocum_260 -x bb650 optical_backscatter660nm bbp700 optical_backscatter700nm -y chlorophyll fluorescence fl700_uncorr fluorescence --plotDir /tmp --plotPrefix stoqs_september2013_o_ --hourStep 3 --hourWindow 6 --xLabel '' --yLabel '' --title 'Fl vs. bb (red)' --minDepth 0 --maxDepth 100\n"
+        examples += sys.argv[0] + " -d stoqs_september2013_o -p tethys Slocum_294 dorado Slocum_260 -x bb650 optical_backscatter660nm bbp700 optical_backscatter700nm -y chlorophyll fluorescence fl700_uncorr fluorescence --plotDir /tmp --plotPrefix stoqs_september2013_o_ --hourStep 6 --hourWindow 12 --xLabel '' --yLabel '' --title 'Fl vs. bb (red) --minDepth 0 --maxDepth 100'\n"
         examples += sys.argv[0] + " -d stoqs_september2013_o -p dorado Slocum_294 tethys -x bbp420 optical_backscatter470nm bb470 -y fl700_uncorr fluorescence chlorophyll --plotDir /tmp --plotPrefix kraken_ --hourStep 12 --hourWindow 24 --platformColors '#ff0000' '#00ff00' '#0000ff' --xLabel '' --yLabel ''\n"
         examples += sys.argv[0] + ' -d stoqs_simz_aug2013_t -p dorado dorado dorado dorado -x bbp420 bbp700 salinity salinity -y fl700_uncorr fl700_uncorr fl700_uncorr temperature\n'
         examples += sys.argv[0] + ' -d stoqs_simz_aug2013_t -p dorado dorado dorado dorado -x bbp420 bbp700 salinity salinity -y fl700_uncorr fl700_uncorr fl700_uncorr temperature --xLabel "" --yLabel ""\n'
