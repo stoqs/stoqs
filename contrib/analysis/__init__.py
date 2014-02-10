@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # setting
 
 from django.db import connections
 from datetime import datetime, timedelta
-from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter
+from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter, Parameter
 from django.contrib.gis.geos import LineString, Point
 from django.db.models import Max, Min
 
@@ -116,7 +116,7 @@ class BiPlot():
 
         return x, y, points
 
-    def _getActivityExtent(self, platform):
+    def _getActivityExtent(self, platform=None):
         '''
         Get details of the Activities that the platform(s) ha{s,ve}.  Set those details to member variables and
         also return them as a tuple.  Polymorphic: if platform is a list or tuple return spatial temporal
@@ -124,10 +124,14 @@ class BiPlot():
         '''
         # Get start and end datetimes, color and geographic extent of the activity
         # If multiple platforms use them all to get overall start & end times and extent and se tcolor to black
-        if type(platform) in (list, tuple):
-            aQS = Activity.objects.using(self.args.database).filter(platform__name__in=platform)
+        if platform:
+            if type(platform) in (list, tuple):
+                aQS = Activity.objects.using(self.args.database).filter(platform__name__in=platform)
+            else:
+                aQS = Activity.objects.using(self.args.database).filter(platform__name=platform)
         else:
-            aQS = Activity.objects.using(self.args.database).filter(platform__name=platform)
+            aQS = Activity.objects.using(self.args.database).all()
+
         seaQS = aQS.aggregate(Min('startdate'), Max('enddate'))
         self.activityStartTime = seaQS['startdate__min'] 
         self.activityEndTime = seaQS['enddate__max']
@@ -200,7 +204,7 @@ class BiPlot():
 
         return hash
 
-    def _getTimeSeriesData(self, tartDatetime, endDatetime, parameterStandardName, platformName=None, parameterName=None):
+    def _getTimeSeriesData(self, startDatetime, endDatetime, parameterStandardName, platformName=None, parameterName=None):
         '''
         Return time series of a Parameter from a Platform
         '''
@@ -233,4 +237,10 @@ class BiPlot():
             dataList.append(rs['datavalue'])
 
         return tList, dataList
+
+    def _getParameters(self):
+        '''
+        Return list of Parameters from the database
+        '''
+        return Parameter.objects.using(self.args.database).all()
 
