@@ -30,6 +30,7 @@ import sys
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
 
+import re
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -80,7 +81,7 @@ class PlatformsBiPlot(BiPlot):
 
         return ax
 
-    def timeSubPlot(self, platformDTHash, ax, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS):
+    def timeSubPlot(self, platformDTHash, ax1, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS):
         '''
         Make subplot of depth time series for all the platforms and highlight the time range
         '''
@@ -93,31 +94,31 @@ class PlatformsBiPlot(BiPlot):
                     datetimeList.append(datetime.utcfromtimestamp(ems/1000.0))
                     depths.append(d)
            
-                ax.plot_date(matplotlib.dates.date2num(datetimeList), depths, '-', c=color, alpha=0.2)
+                ax1.plot_date(matplotlib.dates.date2num(datetimeList), depths, '-', c=color, alpha=0.2)
 
         # Highlight the selected time extent
-        ax.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='k', alpha=0.1)  
+        ax1.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='k', alpha=0.1)  
 
         if self.args.minDepth is not None:
-            ax.set_ylim(bottom=self.args.minDepth)
+            ax1.set_ylim(bottom=self.args.minDepth)
         if self.args.maxDepth:
-            ax.set_ylim(top=self.args.maxDepth)
-        ax.set_ylim(ax.get_ylim()[::-1])
+            ax1.set_ylim(top=self.args.maxDepth)
+        ax1.set_ylim(ax1.get_ylim()[::-1])
 
         if swrTS:
             # Plot short wave radiometer data
             if self.args.verbose: print 'Plotting swrTS...'
-            ax2 = ax.twinx()
+            ax2 = ax1.twinx()
             ax2.plot_date(matplotlib.dates.date2num(swrTS[0]), swrTS[1], '-', c='black', alpha=0.5)
             ax2.set_ylabel('SWR (W/m^2)')
             plt.locator_params(axis='y', nbins=3)
         
-        ax.set_xlabel('Time (GMT)')
-        ax.set_ylabel('Depth (m)')
-        loc = ax.xaxis.get_major_locator()
+        ax1.set_xlabel('Time (GMT)')
+        ax1.set_ylabel('Depth (m)')
+        loc = ax1.xaxis.get_major_locator()
         loc.maxticks[DAILY] = 4
 
-        return ax
+        return ax1
 
     def spatialSubPlot(self, platformLineStringHash, ax, e, resolution='l'):
         '''
@@ -144,7 +145,12 @@ class PlatformsBiPlot(BiPlot):
         '''
         Construct plot file name
         '''
-        fnTempl= 'platforms_{time}' 
+        if self.args.title:
+            p = re.compile('[\s()]')
+            fnTempl = p.sub('_', self.args.title) + '_{time}'
+        else:
+            fnTempl= 'platforms_{time}' 
+            
         fileName = fnTempl.format(time=startTime.strftime('%Y%m%dT%H%M'))
         wcName = fnTempl.format(time=r'*')
         wcName = os.path.join(self.args.plotDir, self.args.plotPrefix + wcName)
@@ -234,11 +240,10 @@ class PlatformsBiPlot(BiPlot):
 
             # Plot temporal overview
             ax = plt.Subplot(fig, time_gs[:])
-            ##ax2 = plt.Subplot(fig, time_gs[:])
-            self.timeSubPlot(platformDTHash, ax, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS)
             fig.add_subplot(ax)
             if self.args.title:
                 ax.set_title(self.args.title)
+            self.timeSubPlot(platformDTHash, ax, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS)
 
             # Make scatter plots of data fromt the platforms 
             platformLineStringHash = {}
@@ -258,19 +263,19 @@ class PlatformsBiPlot(BiPlot):
                 else:
                     raise Exception('Cannot handle more than 4 platform Parameter-Parameter plots')
 
-                ax = self.ppSubPlot(x, y, pl, self._getColor(pl), xP, yP, ax, startTime)
-                fig.add_subplot(ax, aspect='equal')
+                fig.add_subplot(ax)
+                self.ppSubPlot(x, y, pl, self._getColor(pl), xP, yP, ax, startTime)
 
             # Plot spatial
             ax = plt.Subplot(fig, map_gs[:])
+            fig.add_subplot(ax, aspect='equal')
             if self.args.verbose: print 'Calling self.spatialSubPlot()...'
-            ax = self.spatialSubPlot(platformLineStringHash, ax, allExtent)
-            fig.add_subplot(ax)
+            self.spatialSubPlot(platformLineStringHash, ax, allExtent)
            
             startTime = startTime + timeStep
             endTime = startTime + timeWindow
 
-            provStr = 'Created with STOQS command ' + '\\\n'.join(wrap(self.commandline, width=100)) + ' on ' + datetime.now().ctime()
+            provStr = 'Created with STOQS command ' + '\\\n'.join(wrap(self.commandline, width=100)) + ' on ' + datetime.now().ctime() + ' GMT'
             plt.figtext(0.0, 0.0, provStr, size=7, horizontalalignment='left', verticalalignment='bottom')
 
             fileName, wcName = self.getFilename(startTime)
@@ -280,7 +285,7 @@ class PlatformsBiPlot(BiPlot):
             plt.close()
             ##raw_input('P')
 
-        print 'Done. Make an animated gif with: convert -delay 100 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:-1]))
+        print 'Done. Make an animated gif with: convert -delay 10 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:-1]))
 
     def process_command_line(self):
         '''
