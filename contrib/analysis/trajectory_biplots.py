@@ -285,7 +285,9 @@ class PlatformsBiPlot(BiPlot):
             plt.close()
             ##raw_input('P')
 
-        print 'Done. Make an animated gif with: convert -delay 10 {wcName}.png {gifName}.gif'.format(wcName=wcName, gifName='_'.join(fileName.split('_')[:-1]))
+        print 'Done.'
+        print  'Make an animated gif with: convert -delay 10 {wcName}.png {baseName}.gif'.format(wcName=wcName, baseName='_'.join(fileName.split('_')[:-1]))
+        print  'Make an MPEG 4 with: ffmpeg -r 10 -i {baseName}.gif -vcodec mpeg4 -qscale 1 -y {baseName}.mp4'.format(baseName='_'.join(fileName.split('_')[:-1]))
 
     def process_command_line(self):
         '''
@@ -337,7 +339,13 @@ class PlatformsBiPlot(BiPlot):
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
     
         self.args = parser.parse_args()
-        self.commandline = ' '.join(sys.argv)
+        self.commandline = ""
+        for item in sys.argv:
+            if item == '':
+                # Preserve empty string specifications in the command line
+                self.commandline += "''" + ' '
+            else:
+                self.commandline += item + ' '
     
     
 if __name__ == '__main__':
