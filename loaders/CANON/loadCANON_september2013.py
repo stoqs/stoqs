@@ -69,6 +69,10 @@ cl.tethys_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Tethys/NetCDF
 cl.tethys_files = ['Tethys_CANON_Fall2013.nc']
 cl.tethys_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650']
 
+cl.daphne_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Daphne/NetCDF/'
+cl.daphne_files = ['Daphne_CANON_Fall2013.nc']
+cl.daphne_parms = ['temperature', 'chlorophyll', 'bb470', 'bb650']
+
 
 ######################################################################
 #  GLIDERS
@@ -393,7 +397,7 @@ if cl.args.test:
     cl.load_wg_tex_met(stride=100)
 
     cl.loadDorado(stride=1000)
-    ##cl.loadDaphne(stride=100)             # Someone needs to make good NetCDF files
+    cl.loadDaphne(stride=100)
     cl.loadTethys(stride=100)
 
     cl.loadRCuctd(stride=10)
@@ -442,7 +446,7 @@ elif cl.args.optimal_stride:
     cl.load_wg_tex_met(stride=1)
 
     cl.loadDorado(stride=2)
-    ##cl.loadDaphne(stride=1)             # Someone needs to make good NetCDF files
+    cl.loadDaphne(stride=2)
     cl.loadTethys(stride=2)
 
     cl.loadRCuctd(stride=1)
@@ -492,7 +496,7 @@ else:
     cl.load_wg_tex_met()
 
     cl.loadDorado()
-    ##cl.loadDaphne()             # Someone needs to make good NetCDF files
+    cl.loadDaphne()
     cl.loadTethys()
 
     cl.loadRCuctd()
