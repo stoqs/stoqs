@@ -74,7 +74,8 @@ class STOQSQManager(object):
             'parametertime': self.getParameterTime,
             'sampledepthtime': self.getSampleDepthTime,
             'counts': self.getCounts,
-            'sql': self.getMeasuredParametersPostgreSQL,
+            'mpsql': self.getMeasuredParametersPostgreSQL,
+            'spsql': self.getSampledParametersPostgreSQL,
             'extent': self.getExtent,
             'activityparameterhistograms': self.getActivityParameterHistograms,
             'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
@@ -295,13 +296,22 @@ class STOQSQManager(object):
         '''
         Wrapper around self.mpq.getMeasuredParametersPostgreSQL(), ensure that we have qs_mp built before calling 
         '''
-        sql = 'Check "Get actual count" in Metadata to construct SQL query'
-        if getGet_Actual_Count(self.kwargs):
-            if not self.mpq.qs_mp:
-                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-                self.mpq.initialQuery = self.initialQuery
-                sql = self.mpq.getMeasuredParametersPostgreSQL()
-                self._actual_count = self.mpq.getMPCount()
+        if not self.mpq.qs_mp:
+            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+        self.mpq.initialQuery = self.initialQuery
+        sql = self.mpq.getMeasuredParametersPostgreSQL()
+        self._actual_count = self.mpq.getMPCount()
+
+        return sql
+
+    def getSampledParametersPostgreSQL(self):
+        '''
+        Wrapper around self.mpq.getSampledParametersPostgreSQL(), ensure that we have qs_mp built before calling 
+        '''
+        if not self.mpq.qs_mp:
+            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+        self.mpq.initialQuery = self.initialQuery
+        sql = self.mpq.getSampledParametersPostgreSQL()
 
         return sql
 

@@ -1090,7 +1090,7 @@
         $.each(formats, function (index, value) {
             var url = query_url + value + param;
             if (value == 'sql') {
-                $('#'+group+'-'+value+'-field').text(data['sql']);
+                $('#'+group+'-'+value+'-field').text(data[group+'sql']);
             }
             else if (value == 'kml' && ! $.isEmptyObject(data['parameterminmax'])) {
                 var url = base_url + group_name + 'parameter.kml' + mp_param;
