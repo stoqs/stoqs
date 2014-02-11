@@ -477,6 +477,8 @@ class MPQuery(object):
         self.request = request
         self.qs_mp = None
         self.qs_mp_no_order = None
+        self.qs_sp = None
+        self.qs_sp_no_order = None
         self.sql = None
         self._count = None
         self._MProws = []
@@ -529,7 +531,7 @@ class MPQuery(object):
         if group == SAMPLED:
             if 'sampledparametersgroup' in self.kwargs:
                 if self.kwargs['sampledparametersgroup']:
-                    qparams['parameter__name__in'] = self.kwargs['sampledparametersgroup']
+                    qparams['parameter__id__in'] = self.kwargs['sampledparametersgroup']
             if 'parameterstandardname' in self.kwargs:
                 if self.kwargs['parameterstandardname']:
                     qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
