@@ -66,6 +66,10 @@
             border-color: transparent; 
             background-color: transparent; 
         }
+        .stoqs-color-limit-input {
+            width: 60px;
+            height:15px;
+        }
 
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
@@ -501,9 +505,9 @@
                                         <div style="text-align: center;">
                                         <span id="sp-kml-parameter"></span>
                                         <form style="text-align: center;" class="form-inline">
-                                            <input id="sp-cmin" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
+                                            <input id="sp-cmin" type="text" class="stoqs-color-limit-input" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                                             <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" alt="jetplus" />
-                                            <input id="sp-cmax" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
+                                            <input id="sp-cmax" type="text" class="stoqs-color-limit-input" title="Initial max value is 97.5 percentile" />
                                         </form>
                                         </div>
                                         <pre id="sp-{{format.0}}-field"></pre>
@@ -554,9 +558,9 @@
                                         <div style="text-align: center;">
                                         <span id="mp-kml-parameter"></span>
                                         <form style="text-align: center;" class="form-inline">
-                                            <input id="mp-cmin" type="text" class="input-small" style="text-align:right;" title="Initial min value is 2.5 percentile" />
+                                            <input id="mp-cmin" type="text" class="stoqs-color-limit-input" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                                             <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" alt="jetplus" />
-                                            <input id="mp-cmax" type="text" class="input-small" title="Initial max value is 97.5 percentile" />
+                                            <input id="mp-cmax" type="text" class="stoqs-color-limit-input" title="Initial max value is 97.5 percentile" />
                                         </form>
                                         </div>
                                         <pre id="mp-{{format.0}}-field"></pre>
@@ -840,7 +844,6 @@
     var widthZoomed = false;
     var request=''
     var map = null; 
-    var kmlurl = '';
     var parametervalues={};     
     var permalink_bypass=false;
     var client_side_permalink = true;
@@ -926,31 +929,16 @@
     }
 
     function updateKMLcmincmax(group) {
-        if ( group == 'mp') {
-            if ($('#mp-cmin').val() && $('#mp-cmax').val()) {
-                mp_cmincmax = 'cmin=' + $('#mp-cmin').val() + '&cmax=' + $('#mp-cmax').val();
-            }
-            if (kmlurl) {
-                $('#mp-kml-field').text(kmlurl + mp_cmincmax);
-                $('#mp-kml-link').attr('href', kmlurl + mp_cmincmax);
-            }
-            else {
-                $('#mp-kml-field').text('');
-                $('#mp-kml-link').removeAttr('href');
-            }
+        if ($('#' + group + '-cmin').val() && $('#' + group + '-cmax').val()) {
+            cmincmax = 'cmin=' + $('#' + group + '-cmin').val() + '&cmax=' + $('#' + group + '-cmax').val();
         }
-        else if ( group == 'sp') {
-            if ($('#sp-cmin').val() && $('#sp-cmax').val()) {
-                sp_cmincmax = 'cmin=' + $('#sp-cmin').val() + '&cmax=' + $('#sp-cmax').val();
-            }
-            if (kmlurl) {
-                $('#sp-kml-field').text(kmlurl + sp_cmincmax);
-                $('#sp-kml-link').attr('href', kmlurl + sp_cmincmax);
-            }
-            else {
-                $('#sp-kml-field').text('');
-                $('#sp-kml-link').removeAttr('href');
-            }
+        if ($('body').data()[group + '_kmlurl']) {
+            $('#' + group + '-kml-field').text($('body').data()[group + '_kmlurl'] + cmincmax);
+            $('#' + group + '-kml-link').attr('href', $('body').data()[group + '_kmlurl'] + cmincmax);
+        }
+        else {
+            $('#' + group + '-kml-field').text('');
+            $('#' + group + '-kml-link').removeAttr('href');
         }
     }
 
@@ -1110,11 +1098,12 @@
                 $('#'+group+'-kml-parameter').css( { 'color': 'red' } );
                 if (typeof params[group_name + 'parametersgroup'] != 'undefined') {
                     if (params[group_name + 'parametersgroup'].length == 1) {
-                        $('#'+group+'-kml-parameter').text(params[group_name + 'parametersgroup'][0]);
+                        // Use button text of id for parameter name - expects only one such element in the DOM
+                        $('#'+group+'-kml-parameter').text($('#' + params[group_name + 'parametersgroup'][0]).text());
                         $('#'+group+'-kml-parameter').css( { 'color': 'black' } );
                         $('#'+group+'-cmin').val(data['parameterminmax']['dataaccess'][1]);
                         $('#'+group+'-cmax').val(data['parameterminmax']['dataaccess'][2]);
-                        kmlurl = url;
+                        $('body').data()[group + '_kmlurl'] = url;
                         updateKMLcmincmax(group);
                     }
                     else if (params['parameterstandardname'].length == 1) {
@@ -1122,13 +1111,13 @@
                         $('#'+group+'-kml-parameter').css( { 'color': 'black' } );
                         $('#'+group+'-cmin').val(data['parameterminmax']['dataaccess'][1]);
                         $('#'+group+'-cmax').val(data['parameterminmax']['dataaccess'][2]);
-                        kmlurl = url;
+                        $('body').data()[group + '_kmlurl'] = url;
                         updateKMLcmincmax(group);
                     }
                     else {
                         $('#'+group+'-cmin').val('');
                         $('#'+group+'-cmax').val('');
-                        kmlurl = '';
+                        $('body').data()[group + '_kmlurl'] = '';
                         updateKMLcmincmax(group);
                     }
                 }
