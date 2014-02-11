@@ -92,11 +92,15 @@ prerequisites:
     - Editing and running the load script during a campaign is an interactive process requiring
       interaction with people and testing the data sources for valid parameter names as well
       as monitoring the script's output for warning and error messages.
+    - To provide read-only access to your database  grant everyone select priveleges:
+        \c stoqs_september2012_t
+        grant select on all tables in schema public to everyone;
+
     - The stoqs-discuss mail list (https://groups.google.com/forum/?fromgroups=#!forum/stoqs-discuss)
       is a good place to ask questions if any problems are encountered.
     
     
 --
 Mike McCann
-MBARI 14 August 2013
+MBARI 11 February 2014
  
