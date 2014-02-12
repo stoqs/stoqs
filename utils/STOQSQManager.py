@@ -234,6 +234,8 @@ class STOQSQManager(object):
             if self.kwargs['only'] != []:
                 if k not in self.kwargs['only']:
                     continue
+            if k in self.kwargs['except']:
+                continue
 
             if k == 'measuredparametersgroup':
                 results[k] = v(MEASUREDINSITU)
