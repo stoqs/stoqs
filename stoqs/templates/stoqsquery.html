@@ -475,7 +475,11 @@
                             <ul id="sp-dataaccessdownloadtabs" class="nav nav-tabs">
                                 <li class="active"><a href="#table" data-toggle="tab">Table</a></li>
                                 {% for format in formats %}
-                                <li><a href="#sp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                    {% if format.0 = 'sql' %}
+                                        <li id="spsql" class="sql-tab"><a href="#sp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                    {% else %}
+                                        <li><a href="#sp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                    {% endif %}
                                 {% endfor %}            
                             </ul>
 
@@ -535,18 +539,22 @@
                             <ul id="mp-dataaccessdownloadtabs" class="nav nav-tabs">
                                 {% for format in formats %}
                                     {% if format.0 = 'kml' %}
-                                <li class="active"><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                        <li class="active"><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% else %}
-                                <li><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                        {% if format.0 = 'sql' %}
+                                            <li id="mpsql" class="sql-tab"><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                        {% else %}
+                                            <li><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
+                                        {% endif %}
                                     {% endif %}
                                 {% endfor %}            
                             </ul>
                             <div class="tab-content">
                                 {% for format in formats %}
                                     {% if format.0 = 'kml' %}
-                                <div class="tab-pane active" id="mp-{{format.0}}">
+                                        <div class="tab-pane active" id="mp-{{format.0}}">
                                     {% else %}
-                                <div class="tab-pane" id="mp-{{format.0}}">
+                                        <div class="tab-pane" id="mp-{{format.0}}">
                                     {% endif %} 
                                     <table>
                                         <tr>
@@ -1347,6 +1355,15 @@
         if ( ! $.isEmptyObject(only) ) {
             params['only'] = only
         }
+        // Tell the backend what not to build a response for. Typically used for mpsql
+        // and spsql, which should only be generated if those tabs are open.
+        params['except'] = [];
+        if ( ! $('#sp-sql').hasClass('active') && ($.inArray('spsql', only) == -1) ) {
+            params['except'].push('spsql');
+        }
+        if ( ! $('#mp-sql').hasClass('active') && ($.inArray('mpsql', only) == -1) ) {
+            params['except'].push('mpsql');
+        }
 
         params['sampledparametersgroup']=[]
         $('td',$('#sampledparameter-table > tbody')).each(function (index, element) {
@@ -1854,6 +1871,10 @@
                         };
             ZoomIn(event, ranges);    // Calls rebuildFilters() for everything
         }
+    });
+
+    $('.sql-tab').on('click', function (event) {
+        rebuildFilters([event.delegateTarget.id]);
     });
 
 
@@ -3528,8 +3549,9 @@
 
 
         /*
-         *
+         *  Initial page load - minimize list of items to load
          */
+        params['except'] = ['mpsql', 'spsql'];
         updateSummaryData(true);
 
           
