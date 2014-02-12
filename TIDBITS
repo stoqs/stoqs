@@ -9,7 +9,7 @@ Here's an interactive python session that retrieves measurements and plots a his
 ---------------------------------------------------------------------------------------
 
 cd ~/dev/stoqshg
-./manage.py shell
+./manage.py shell_plus
 
 from stoqs import models as m
 import matplotlib.pyplot as plt
@@ -38,7 +38,7 @@ Here's a little script to update the start and end dates for all the Campaigns o
 -----------------------------------------------------------------------------------------
 
 cd ~/dev/stoqshg
-./manage.py shell
+./manage.py shell_plus
 
 from stoqs import models as m
 from django.db.models import Max, Min
@@ -84,40 +84,10 @@ GRANT select on all tables in schema public to everyone;
 
 Delete an Activity:
 -------------------
-./manage.py shell
-acts = models.Activity.objects.using('stoqs_march2013_s').filter(name__contains='plm04')
+./manage.py shell_plus
+acts = Activity.objects.using('stoqs_march2013_s').filter(name__contains='plm04')
 for a in acts:
     a.delete(using='stoqs_march2013_s')
-
-
-Create a movie of Chlorophyll to bb470 from Tethys from september 2013 database (http://tinyurl.com/krfrd3b)
-------------------------------------------------------------------------------------------------------------
-./manage.py shell_plus
-
-import matplotlib.pyplot as plt
-from django.db import connections
-from datetime import datetime, timedelta
-from stoqs.models import Activity
-
-# SQL template copied from STOQS UI Parameter-Parameter -> sql tab
-sql_template = '''SELECT DISTINCT stoqs_measurement.depth,
-                mp_x.datavalue AS x,
-                mp_y.datavalue AS y
-FROM stoqs_activity
-INNER JOIN stoqs_platform ON stoqs_platform.id = stoqs_activity.platform_id
-INNER JOIN stoqs_instantpoint ON stoqs_instantpoint.activity_id = stoqs_activity.id
-INNER JOIN stoqs_measurement ON stoqs_measurement.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
-INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
-INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
-INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
-INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
-WHERE (p_y.name = 'chlorophyll')
-  AND (p_x.name = 'bb470')
-  AND (stoqs_instantpoint.timevalue >= '{start}'
-       AND stoqs_instantpoint.timevalue <= '{end}')
-       AND stoqs_platform.name IN ('tethys') '''
 
 # Get connection to database using dbAlias defined in privateSettings
 dbAlias = 'stoqs_september2013_t'
@@ -131,5 +101,5 @@ aEnd = Activity.objects.using(dbAlias).filter(name__contains=aName).values_list(
 
 --
 Mike McCann
-MBARI 20 March 2013
+MBARI 11 February 2014
 
