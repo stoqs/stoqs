@@ -49,12 +49,10 @@ class PlatformsBiPlot(BiPlot):
     '''
     Make customized BiPlots (Parameter Parameter plots) for platforms from STOQS.
     '''
-
     def ppSubPlot(self, x, y, platform, color, xParm, yParm, ax, startTime):
         '''
         Given names of platform, x & y paramters add a subplot to figure fig.
         '''
-
         xmin, xmax, xUnits = self._getAxisInfo(platform, xParm)
         ymin, ymax, yUnits = self._getAxisInfo(platform, yParm)
 

@@ -48,6 +48,24 @@ class BiPlot():
     '''
     Make customized BiPlots (Parameter Parameter plots) from STOQS.
     '''
+    def _getAxisInfo(self, platform, parm):
+        '''
+        Return appropriate min and max values and units for a parameter name
+        '''
+        # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
+        apQS = ActivityParameter.objects.using(self.args.database).filter(activity__platform__name=platform)
+        pQS = apQS.filter(parameter__name=parm).aggregate(Min('p010'), Max('p990'))
+        min, max = (pQS['p010__min'], pQS['p990__max'])
+
+        # Get units for each parameter
+        prQS = ParameterResource.objects.using(self.args.database).filter(resource__name='units').values_list('resource__value')
+        try:
+            units = prQS.filter(parameter__name=parm)[0][0]
+        except IndexError, e:
+            raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, platform))
+            sys.exit(-1)
+
+        return min, max, units
 
     def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm):
         '''
@@ -156,25 +174,6 @@ class BiPlot():
                 raise Exception('Unable to get color of platform name %s' % platform)
 
         return self.color
-
-    def _getAxisInfo(self, platform, parm):
-        '''
-        Return appropriate min and max values and units for a parameter name
-        '''
-        # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
-        apQS = ActivityParameter.objects.using(self.args.database).filter(activity__platform__name=platform)
-        pQS = apQS.filter(parameter__name=parm).aggregate(Min('p010'), Max('p990'))
-        min, max = (pQS['p010__min'], pQS['p990__max'])
-
-        # Get units for each parameter
-        prQS = ParameterResource.objects.using(self.args.database).filter(resource__name='units').values_list('resource__value')
-        try:
-            units = prQS.filter(parameter__name=parm)[0][0]
-        except IndexError, e:
-            raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, platform))
-            sys.exit(-1)
-
-        return min, max, units
 
     def _getSimpleDepthTime(self, platform):
         '''
