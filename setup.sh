@@ -4,62 +4,75 @@
 pushd $(dirname $0)
 HOMEDIR=$(pwd)
 LOG_DIR="$HOMEDIR/log"
-REQ="$HOMEDIR/requirements.txt"
+if [ $1 ]; then
+    REQ="$HOMEDIR/$1"
+    echo "Using pip requirements file $1"
+else
+    REQ="$HOMEDIR/requirements.txt"
+fi
 EGG_CACHE="$HOMEDIR/wsgi/egg-cache"
-VENV_NAME="venv-stoqs"
-VENV_DIR="$HOMEDIR/$VENV_NAME"
 PG_CONFIG=$(locate --regex "bin/pg_config$")
 PATH=$(dirname $PG_CONFIG):$PATH
 
+if [ -z $VIRTUAL_ENV ]; then
+    echo "Need to be in your virtual environment."
+    exit 1
+else
+    VENV_NAME=$(basename $VIRTUAL_ENV)
+    VENV_DIR="$HOMEDIR/$VENV_NAME"
+fi
 
 # Required to install the hdf5 libraries
+echo "Need to sudo to install hdf5 packages..."
 sudo yum -y install hdf5 hdf5-devel
+if [ $? -ne 0 ] ; then
+    echo "Exiting $0"
+    exit
+fi
 sudo yum -y remove numpy
 
-which virtualenv &>/dev/null
+# Install GDAL in venv
+CONFIG=$(which gdal-config)
 if [ $? -ne 0 ]; then
- echo "virtualenv command not found"
- echo "sudo easy_install virtualenv"
+    echo "gdal-config is not in PATH"
+    rm -rf $VENV_DIR
+    exit 1
 fi
+ln -s $CONFIG $VENV_DIR/bin/
 
-if [ -d $VENV_NAME ]; then
- echo "virtualenv has already been created"
-else
- virtualenv $VENV_NAME
- # Install GDAL in venv
- CONFIG=$(which gdal-config)
- if [ $? -ne 0 ]; then
-   echo "gdal-config is not in PATH"
-   rm -rf $VENV_DIR
-   exit 1
- fi
- ln -s $CONFIG $VENV_DIR/bin/
-fi
-source $VENV_DIR/bin/activate
+# Make sure weh have pip in the virtualenv
 easy_install pip
 
 # Install numpy
 NUMPY=$(grep numpy requirements.txt)
 echo "Installing numpy (${NUMPY:=numpy})"
 pip install $NUMPY
-
-# Install the stuff thatcomes from GIT
-# For server-side Matlab-style plotting of data
-pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
-
-# For WFS to OpenLayers directly from the Django data model
-pip install -e git+https://github.com/JeffHeard/ga_ows.git#egg=ga_ows
-
-
-if [ -f "$REQ" ]; then
- pip install -r $REQ
+if [ $? -ne 0 ] ; then
+    echo "*** pip install $NUMPY failed. ***"
+    exit 1
 fi
 
+# Install Matplotlib from GIT
+pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
+if [ $? -ne 0 ] ; then
+    echo "*** pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib failed. ***"
+    exit 1
+fi
 
-pip freeze|grep -v pysqlite|grep -v ga_ows|grep -v matplotlib > $REQ
+# Install everything in $REQ
+if [ -f "$REQ" ]; then
+    pip install -r $REQ
+    if [ $? -ne 0 ] ; then
+        echo "*** pip install -r $REQ failed. ***"
+        exit 1
+    fi
+fi
+
+# Save config and give apache access
+pip freeze | grep -v pysqlite | grep -v ga_ows | grep -v matplotlib > requirements_installed.txt
 if [ ! -d $EGG_CACHE ]; then
- echo "Creating the egg cache"
- mkdir -p $EGG_CACHE
+    echo "Creating the egg cache"
+    mkdir -p $EGG_CACHE
 fi
 sudo chown apache $EGG_CACHE
 mkdir -p $LOG_DIR
@@ -67,9 +80,11 @@ sudo chgrp apache $LOG_DIR
 sudo chmod g+s $LOG_DIR
 touch $LOG_DIR/django.log
 chmod g+w log/django.log
+
 ##################################################################
 
 # Apply the django patch to escape unicode strings properly
+# Required for specific versions of psycopg and postgis as of 2013
 
 pushd venv-stoqs/lib/python*/site-packages
 patch django/contrib/gis/db/backends/postgis/adapter.py << __EOT__
@@ -112,10 +127,6 @@ patch django/contrib/gis/db/backends/postgis/adapter.py << __EOT__
          return self
 __EOT__
 popd
-##################################################################
-# echo running a quick test to make sure things aren't broke
-# requires privateSettings to be configured - follow instructions in INSTALL
-##export PYTHONPATH=$(pwd)
-##export DJANGO_SETTINGS_MODULE=settings
-##python stoqs/views/management.py
-popd
+
+echo "$0 finished."
+

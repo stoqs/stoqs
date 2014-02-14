@@ -103,6 +103,7 @@ source venv-stoqs/bin/activate      # source venv-stoqs/bin/activate.csh if usin
 ./setup.sh
 
 # This will take a few minutes to install everything that is specified in requirements.txt
+# You should see a "setup.sh finished." message if everything goes well in this step.
 
 # When running django-admin.py or 'python manage.py' do it in your virtualenv, making
 # sure your prompt looks something like "(venv-stoqs)[student@localhost stoqshg]$"
