@@ -95,6 +95,7 @@ class MeasuredParameter(object):
     '''
     Use matploptib to create nice looking contour plots
     '''
+    logger = logging.getLogger(__name__)
     def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName, parameterID=None, parameterGroups=[MEASUREDINSITU]):
         '''
         Save parameters that can be used by the different product generation methods here
@@ -152,7 +153,7 @@ class MeasuredParameter(object):
         '''
         Read the data from the database into member variables for use by the methods that output various products
         '''
-        logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
+        self.logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
 
         # Save to '_by_act' dictionaries so that X3D and end each IndexedLinestring with a '-1'
         self.depth_by_act = {}
@@ -169,7 +170,7 @@ class MeasuredParameter(object):
             self.strideInfo = 'stride = %d' % stride
 
         i = 0
-        logger.debug('self.qs_mp.query = %s', str(self.qs_mp.query))
+        self.logger.debug('self.qs_mp.query = %s', str(self.qs_mp.query))
         if SAMPLED in self.parameterGroups:
             for mp in self.qs_mp:
                 if self.scale_factor:
@@ -189,27 +190,27 @@ class MeasuredParameter(object):
     
                 i = i + 1
                 if (i % 1000) == 0:
-                    logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
+                    self.logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
         else:
-            logger.debug('Reading data with a stride of %s', stride)
+            self.logger.debug('Reading data with a stride of %s', stride)
             if self.qs_mp.isRawQuerySet:
                 # RawQuerySet does not support normal slicing
                 counter = 0
-                logger.debug('Slicing with mod division on a counter...')
+                self.logger.debug('Slicing with mod division on a counter...')
                 for mp in self.qs_mp:
                     if counter % stride == 0:
                         self._fillXYZ(mp)
                         i = i + 1
                         if (i % 1000) == 0:
-                            logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
+                            self.logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
                     counter = counter + 1
             else:
-                logger.debug('Slicing Pythonicly...')
+                self.logger.debug('Slicing Pythonicly...')
                 for mp in self.qs_mp[::stride]:
                     self._fillXYZ(mp)
                     i = i + 1
                     if (i % 1000) == 0:
-                        logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
+                        self.logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
 
         self.depth = self.y
         self.value = self.z
@@ -263,12 +264,12 @@ class MeasuredParameter(object):
         if tmin and tmax:
             sdt_count = self.qs.filter(platform__name = self.platformName).values_list('simpledepthtime__depth').count()
             sdt_count = int(sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
-            logger.debug('Half of sdt_count from query = %d', sdt_count)
+            self.logger.debug('Half of sdt_count from query = %d', sdt_count)
             if sdt_count > tgrid_max:
                 sdt_count = tgrid_max
 
             xi = np.linspace(tmin, tmax, sdt_count)
-            ##logger.debug('xi = %s', xi)
+            ##self.logger.debug('xi = %s', xi)
 
         # If the depth tuple has values then use those, they represent a zoomed in portion of the Temporal-Depth flot plot
         # in the UI.  If they are not specified then use the Flot plot limits specified separately in the flotlimits tuple.
@@ -291,7 +292,7 @@ class MeasuredParameter(object):
             if y_count > dgrid_max:
                 y_count = dgrid_max
             yi = np.linspace(dmin, dmax, y_count)
-            ##logger.debug('yi = %s', yi)
+            ##self.logger.debug('yi = %s', yi)
 
 
         # Collect the scattered datavalues(time, depth) and grid them
@@ -301,22 +302,22 @@ class MeasuredParameter(object):
             try:
                 self.scale_factor = float(tmax -tmin) / (dmax - dmin) / 3.0
             except ZeroDivisionError, e:
-                logger.warn(e)
-                logger.debug('Not setting self.scale_factor.  Scatter plots will still work.')
+                self.logger.warn(e)
+                self.logger.debug('Not setting self.scale_factor.  Scatter plots will still work.')
                 contourFlag = False
             else:                
-                logger.debug('self.scale_factor = %f', self.scale_factor)
+                self.logger.debug('self.scale_factor = %f', self.scale_factor)
                 xi = xi / self.scale_factor
 
             try:
                 os.remove(sectionPngFileFullPath)
             except Exception, e:
-                logger.warn('Could not remove file: %s', e)
+                self.logger.warn('Could not remove file: %s', e)
 
             if not self.x and not self.y and not self.z:
                 self.loadData()
 
-            logger.debug('self.kwargs = %s', self.kwargs)
+            self.logger.debug('self.kwargs = %s', self.kwargs)
             if self.kwargs.has_key('parametervalues'):
                 if self.kwargs['parametervalues']:
                     contourFlag = False
@@ -326,22 +327,22 @@ class MeasuredParameter(object):
                     if self.kwargs['showdataas'][0] == 'scatter':
                         contourFlag = False
           
-            logger.debug('Number of x, y, z data values retrieved from database = %d', len(self.z)) 
+            self.logger.debug('Number of x, y, z data values retrieved from database = %d', len(self.z)) 
             if len(self.z) == 0:
                 return None, None, 'No data returned from selection'
 
             if contourFlag:
                 try:
-                    logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
+                    self.logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
                     zi = griddata(self.x, self.y, self.z, xi, yi, interp='nn')
                 except KeyError, e:
-                    logger.exception('Got KeyError. Could not grid the data')
+                    self.logger.exception('Got KeyError. Could not grid the data')
                     return None, None, 'Got KeyError. Could not grid the data'
                 except Exception, e:
-                    logger.exception('Could not grid the data')
+                    self.logger.exception('Could not grid the data')
                     return None, None, 'Could not grid the data'
 
-                logger.debug('zi = %s', zi)
+                self.logger.debug('zi = %s', zi)
 
             COLORED_DOT_SIZE_THRESHOLD = 5000
             if self.qs_mp.count() > COLORED_DOT_SIZE_THRESHOLD:
@@ -367,7 +368,7 @@ class MeasuredParameter(object):
                     ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=self.cm_jetplus, extend='both')
                     ax.scatter(self.x, self.y, marker='.', s=2, c='k', lw = 0)
                 else:
-                    logger.debug('parm_info = %s', parm_info)
+                    self.logger.debug('parm_info = %s', parm_info)
                     ax.scatter(self.x, self.y, c=self.z, s=coloredDotSize, cmap=self.cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
@@ -389,18 +390,18 @@ class MeasuredParameter(object):
                 fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
             except Exception,e:
-                logger.exception('Could not plot the data')
+                self.logger.exception('Could not plot the data')
                 return None, None, 'Could not plot the data'
 
             try:
                 makeColorBar(self.request, self.colorbarPngFileFullPath, parm_info, self.cm_jetplus)
             except Exception,e:
-                logger.exception('Could not plot the colormap')
+                self.logger.exception('Could not plot the colormap')
                 return None, None, 'Could not plot the colormap'
 
             return sectionPngFile, self.colorbarPngFile, self.strideInfo
         else:
-            logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s, %s, %s ', tmin, tmax, dmin, dmax)
+            self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s, %s, %s ', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range'
 
     def dataValuesX3D(self):
@@ -420,7 +421,7 @@ class MeasuredParameter(object):
             return x3dResults
 
         if not self.lon and not self.lat and not self.depth and not self.value:
-            logger.debug('Calling self.loadData()...')
+            self.logger.debug('Calling self.loadData()...')
             self.loadData()
         try:
             points = ''
@@ -428,7 +429,7 @@ class MeasuredParameter(object):
             indices = ''
             index = 0
             for act in self.value_by_act.keys():
-                logger.debug('Reading data from act = %s', act)
+                self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     # 10x vertical exaggeration - must match the GeoElevationGrid
                     points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * VERT_EXAG)
@@ -450,13 +451,13 @@ class MeasuredParameter(object):
             try:
                 makeColorBar(self.request, self.colorbarPngFileFullPath, self.parameterMinMax, self.cm_jetplus)
             except Exception,e:
-                logger.exception('Could not plot the colormap')
+                self.logger.exception('Could not plot the colormap')
                 x3dResults = 'Could not plot the colormap'
             else:
                 x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
 
         except Exception,e:
-            logger.exception('Could not create measuredparameterx3d')
+            self.logger.exception('Could not create measuredparameterx3d')
             x3dResults = 'Could not create measuredparameterx3d'
 
         return x3dResults
@@ -466,6 +467,7 @@ class ParameterParameter(object):
     '''
     Use matploplib to create nice looking property-property plots
     '''
+    logger = logging.getLogger(__name__)
     def __init__(self, request, pDict, mpq, pq, pMinMax):
         '''
         Save parameters that can be used by the different plotting methods here
@@ -525,8 +527,69 @@ class ParameterParameter(object):
         '''
         p = re.compile('SELECT .+ FROM')
         csql = p.sub('''SELECT count(*) FROM''', sql.replace('\n', ' '))
-        logger.debug('csql = %s', csql)
+        self.logger.debug('csql = %s', csql)
         return csql
+
+    def _getXYCData(self, strideFlag=True):
+      @transaction.commit_on_success(using=self.request.META['dbAlias'])
+      def inner_getXYCData(self, strideFlag=True):
+        '''
+        Construct SQL and iterate through cursor to get X, Y, and possibly C Parameter Parameter data
+        '''
+        # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
+        sql = str(self.pq.qs_mp.query)
+        self.logger.debug('sql = %s', sql)
+        sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
+
+        # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
+        cursor = connections[self.request.META['dbAlias']].cursor()
+
+        # Get count and set a stride value if more than a PP_MAX_POINTS which Matplotlib cannot plot, about 100,000 points
+        try:
+            cursor.execute(self._getCountSQL(sql))
+        except DatabaseError, e:
+            infoText = 'Parameter-Parameter: ' + str(e) + ' Also, make sure you have no Parameters selected in the Filter.'
+            self.logger.exception('Cannot execute count sql query for Parameter-Parameter plot: %s', e)
+            return None, infoText, sql
+        pp_count = cursor.fetchone()[0]
+        self.logger.debug('pp_count = %d', pp_count)
+        stride_val = 1
+        if strideFlag:
+            PP_MAX_POINTS = 50000
+            stride_val = int(pp_count / PP_MAX_POINTS)
+            if stride_val < 1:
+                stride_val = 1
+            self.logger.debug('stride_val = %d', stride_val)
+
+        # Get the Parameter-Parameter points
+        try:
+            self.logger.debug('Executing sql = %s', sql)
+            cursor.execute(sql)
+        except DatabaseError, e:
+            infoText = 'Parameter-Parameter: ' + str(e) + ' Also, make sure you have no Parameters selected in the Filter.'
+            self.logger.exception('Cannot execute sql query for Parameter-Parameter plot: %s', e)
+            
+            return None, infoText, sql
+
+        counter = 0
+        self.logger.debug('Looping through rows in cursor with a stride of %d...', stride_val)
+        for row in cursor:
+            if counter % stride_val == 0:
+                # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
+                self.depth.append(float(row[0]))
+                self.x.append(float(row[1]))
+                self.y.append(float(row[2]))
+                try:
+                    self.c.append(float(row[3]))
+                except IndexError:
+                    pass
+            counter = counter + 1
+            if counter % 1000 == 0:
+                self.logger.debug('Made it through %d of %d points', counter, pp_count)
+
+        return stride_val, sql
+
+      return inner_getXYCData(self, strideFlag)
 
     def make2DPlot(self):
         '''
@@ -535,53 +598,7 @@ class ParameterParameter(object):
         try:
             # self.x and self.y may already be set for this instance by makeX3D()
             if not self.x and not self.y:
-                # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
-                sql = str(self.pq.qs_mp.query)
-                logger.debug('sql = %s', sql)
-                sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
-
-                # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
-                cursor = connections[self.request.META['dbAlias']].cursor()
-
-                # Get count and set a stride value if more than a PP_MAX_POINTS which Matplotlib cannot plot, about 100,000 points
-                try:
-                    cursor.execute(self._getCountSQL(sql))
-                except DatabaseError, e:
-                    infoText = 'Parameter-Parameter: ' + str(e) + ' Also, make sure you have no Parameters selected in the Filter.'
-                    logger.exception('Cannot execute count sql query for Parameter-Parameter plot: %s', e)
-                    return None, infoText, sql
-                pp_count = cursor.fetchone()[0]
-                logger.debug('pp_count = %d', pp_count)
-                PP_MAX_POINTS = 50000
-                stride_val = int(pp_count / PP_MAX_POINTS)
-                if stride_val < 1:
-                    stride_val = 1
-                logger.debug('stride_val = %d', stride_val)
-
-                # Get the Parameter-Parameter points
-                try:
-                    logger.debug('Executing sql = %s', sql)
-                    cursor.execute(sql)
-                except DatabaseError, e:
-                    infoText = 'Parameter-Parameter: ' + str(e) + ' Also, make sure you have no Parameters selected in the Filter.'
-                    logger.exception('Cannot execute sql query for Parameter-Parameter plot: %s', e)
-                    return None, infoText, sql
-
-                counter = 0
-                logger.debug('Looping through rows in cursor with a stride of %d...', stride_val)
-                for row in cursor:
-                    if counter % stride_val == 0:
-                        # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
-                        self.depth.append(float(row[0]))
-                        self.x.append(float(row[1]))
-                        self.y.append(float(row[2]))
-                        try:
-                            self.c.append(float(row[3]))
-                        except IndexError:
-                            pass
-                    counter = counter + 1
-                    if counter % 1000 == 0:
-                        logger.debug('Made it through %d of %d points', counter, pp_count)
+                stride_val, sql = self._getXYCData()
 
             # If still no self.x and self.y then selection is not valid for the chosen x and y
             if self.x == [] or self.y == []:
@@ -602,7 +619,7 @@ class ParameterParameter(object):
                 try:
                     os.makedirs(os.path.dirname(ppPngFileFullPath))
                 except Exception,e:
-                    logger.exception('Failed to create path for ' +
+                    self.logger.exception('Failed to create path for ' +
                                      'parameterparameter (%s) file', ppPngFile)
                     return None, 'Failed to create path for parameterparameter (%s) file' % ppPngFile, sql
 
@@ -616,8 +633,8 @@ class ParameterParameter(object):
             self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
             cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
             if self.c:
-                logger.debug('self.pMinMax = %s', self.pMinMax)
-                logger.debug('Making colored scatter plot of %d points', len(self.x))
+                self.logger.debug('self.pMinMax = %s', self.pMinMax)
+                self.logger.debug('Making colored scatter plot of %d points', len(self.x))
                 ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
                 # Add colorbar to the image
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
@@ -629,7 +646,7 @@ class ParameterParameter(object):
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
                 cb.set_label('%s (%s)' % (cp.name, cp.units))
             else:
-                logger.debug('Making scatter plot of %d points', len(self.x))
+                self.logger.debug('Making scatter plot of %d points', len(self.x))
                 ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0, clip_on=False)
 
             # Label the axes
@@ -652,15 +669,15 @@ class ParameterParameter(object):
                 infoText = 'Sigma-t levels computed for pressure = %.1f dbar<br>' % meanDepth
     
             # Assemble additional information about the correlation
-            logger.debug('polyfit')
+            self.logger.debug('polyfit')
             m, b = polyfit(self.x, self.y, 1)
-            logger.debug('polyval')
+            self.logger.debug('polyval')
             yfit = polyval([m, b], self.x)
             ax.plot(self.x, yfit, color='k', linewidth=0.5)
             c = np.corrcoef(self.x, self.y)[0,1]
             pr = pearsonr(self.x, self.y)
             ##test_pr = pearsonr([1,2,3], [1,5,7])
-            ##logger.debug('test_pr = %f (should be 0.981980506062)', test_pr)
+            ##self.logger.debug('test_pr = %f (should be 0.981980506062)', test_pr)
             infoText = infoText + 'Linear regression: %s = %s * %s + %s (r<sup>2</sup> = %s, p = %s, n = %d)' % (yp.name, 
                             round_to_n(m,4), xp.name, round_to_n(b,4), round_to_n(c**2,4), round_to_n(pr,4), len(self.x))
             if stride_val > 1:
@@ -668,18 +685,18 @@ class ParameterParameter(object):
 
             # Save the figure
             try:
-                logger.debug('Saving to file ppPngFileFullPath = %s', ppPngFileFullPath)
+                self.logger.debug('Saving to file ppPngFileFullPath = %s', ppPngFileFullPath)
                 fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
             except Exception, e:
                 infoText = 'Parameter-Parameter: ' + str(e)
-                logger.exception('Cannot make 2D parameterparameter plot: %s', e)
+                self.logger.exception('Cannot make 2D parameterparameter plot: %s', e)
                 plt.close()
                 return None, infoText, sql
 
         except TypeError, e:
             ##infoText = 'Parameter-Parameter: ' + str(type(e))
             infoText = 'Parameter-Parameter: ' + str(e)
-            logger.exception('Cannot make 2D parameterparameter plot: %s', e)
+            self.logger.exception('Cannot make 2D parameterparameter plot: %s', e)
             plt.close()
             return None, infoText, sql
 
@@ -697,7 +714,7 @@ class ParameterParameter(object):
         try:
             # Construct special SQL for P-P plot that returns up to 4 data values for the up to 4 Parameters requested for a 3D plot
             sql = str(self.pq.qs_mp.query)
-            logger.debug('self.pDict = %s', self.pDict)
+            self.logger.debug('self.pDict = %s', self.pDict)
             sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
 
             # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
@@ -756,13 +773,13 @@ class ParameterParameter(object):
                     makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus)
 
                 except Exception,e:
-                    logger.exception('Could not plot the colormap')
+                    self.logger.exception('Could not plot the colormap')
                     return None, None, 'Could not plot the colormap'
 
             x3dResults = {'colors': colors, 'points': points, 'info': '', 'x': self.pMinMax['x'], 'y': self.pMinMax['y'], 'z': self.pMinMax['z'], 'colorbar': colorbarPngFile}
 
         except DatabaseError:
-            logger.exception('Cannot make parameterparameter X3D')
+            self.logger.exception('Cannot make parameterparameter X3D')
             raise DatabaseError('Cannot make parameterparameter X3D')
 
         return x3dResults
