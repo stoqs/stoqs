@@ -89,16 +89,34 @@ class BiPlot():
             INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
             WHERE (p_x.name = '{pxname}')
                 AND (p_y.name = '{pyname}')
-                AND (stoqs_instantpoint.timevalue >= '{start}'
-                AND stoqs_instantpoint.timevalue <= '{end}')
-                AND stoqs_platform.name IN ('{platform}')
-                {day_night_clause}
+                {platform_clause}
+                {time_clause}
                 {depth_clause}
+                {day_night_clause}
             ORDER BY stoqs_instantpoint.timevalue '''
 
         # Get connection to database; self.args.database must be defined in privateSettings
         cursor = connections[self.args.database].cursor()
 
+        # Apply platform constraint if specified
+        platformSQL = ''
+        if platform:
+            platformSQL += "AND stoqs_platform.name IN ('platform')"
+
+        # Apply time constraints if specified
+        timeSQL = ''
+        if startDatetime:
+            timeSQL += "AND (stoqs_instantpoint.timevalue >= 'startDatetime'"
+        if endDatetime:
+            timeSQL += "AND (stoqs_instantpoint.timevalue >= 'endDatetime'"
+
+        # Apply depth constraints if specified
+        depthSQL = ''
+        if self.args.minDepth:
+            depthSQL += 'AND stoqs_measurement.depth >= %f' % self.args.minDepth
+        if self.args.maxDepth:
+            depthSQL += 'AND stoqs_measurement.depth <= %f' % self.args.maxDepth
+            
         # Apply SQL where clause to restrict to just do day or night measurements
         daytimeHours = (17, 22)
         nighttimeHours = (5, 10)
@@ -108,15 +126,8 @@ class BiPlot():
         if self.args.nighttime:
             dnSQL = "AND date_part('hour', stoqs_instantpoint.timevalue) > %d AND date_part('hour', stoqs_instantpoint.timevalue) < %d" % nighttimeHours
 
-        # Apply depth constraints if specified
-        depthSQL = ''
-        if self.args.minDepth:
-            depthSQL += 'AND stoqs_measurement.depth >= %f' % self.args.minDepth
-        if self.args.maxDepth:
-            depthSQL += 'AND stoqs_measurement.depth <= %f' % self.args.maxDepth
-            
-        sql = sql_template.format(start=startDatetime, end=endDatetime, pxname=xParm, pyname=yParm, 
-                                    platform=platform, day_night_clause=dnSQL, depth_clause=depthSQL)
+        sql = sql_template.format(pxname=xParm, pyname=yParm, platform_clause=platformSQL,
+                                    time_clause=timeSQL, depth_clause=depthSQL, day_night_clause=dnSQL)
         if self.args.verbose:
             print "sql =", sql
 
