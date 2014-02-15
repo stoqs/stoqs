@@ -268,6 +268,7 @@ class PQuery(object):
 
     kml_select_items = ''
     contour_select_items = ''
+    logger = logging.getLogger(__name__)
 
     def __init__(self, request):
         '''
@@ -318,7 +319,7 @@ class PQuery(object):
         '''
         qparams = {}
 
-        logger.info('self.kwargs = %s', pprint.pformat(self.kwargs))
+        self.logger.info('self.kwargs = %s', pprint.pformat(self.kwargs))
         if self.kwargs.has_key('measuredparametersgroup'):
             if self.kwargs['measuredparametersgroup']:
                 qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
@@ -345,7 +346,7 @@ class PQuery(object):
             if not qparams.has_key('measurement__instantpoint__timevalue__gte'):
                 qparams['measurement__instantpoint__pk__isnull'] = False
 
-        logger.debug('qparams = %s', pprint.pformat(qparams))
+        self.logger.debug('qparams = %s', pprint.pformat(qparams))
 
         return qparams
 
@@ -367,9 +368,9 @@ class PQuery(object):
                 # A depth of 4 is needed in order to see Platform
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
                 sql = postgresifySQL(str(qs_mp.query))
-                logger.debug('\n\nsql before query = %s\n\n', sql)
+                self.logger.debug('\n\nsql before query = %s\n\n', sql)
                 sql = self.addMeasuredParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
-                logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
+                self.logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
                 qs_mpq = PQuerySet(sql, values_list)
             else:
                 qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
@@ -377,10 +378,10 @@ class PQuery(object):
             qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
 
         if qs_mpq:
-            logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
+            self.logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
             
         else:
-            logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
+            self.logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
         return qs_mpq
 
     def getPCount(self):
@@ -390,10 +391,10 @@ class PQuery(object):
         return the count.
         '''
         if not self._count:
-            logger.debug('Calling self.qs_mp.count()...')
+            self.logger.debug('Calling self.qs_mp.count()...')
             self._count = self.qs_mp.count()
 
-        logger.debug('self._count = %d', self._count)
+        self.logger.debug('self._count = %d', self._count)
         return int(self._count)
 
     def getLocalizedPCount(self):
@@ -412,7 +413,7 @@ class PQuery(object):
             self.qs_mp = self.getMeasuredParametersQS(PQuerySet.rest_columns)
             if self.qs_mp:
                 sql = '\c %s\n' % settings.DATABASES[self.request.META['dbAlias']]['NAME']
-                logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
+                self.logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
                 sql +=  str(self.qs_mp.query) + ';'
                 sql = sqlparse.format(sql, reindent=True, keyword_case='upper')
                 # Fix up the formatting
@@ -614,7 +615,7 @@ For sampledparameter to sampledparamter query an example is:
 
         '''
 
-        logger.debug('initial query = %s', query)
+        self.logger.debug('initial query = %s', query)
     
         # Construct SELECT strings, must be in proper order, include depth for possible sigma-t calculation
         select_order = ('x', 'y', 'z', 'c')
@@ -674,7 +675,7 @@ For sampledparameter to sampledparamter query an example is:
         where_sql = '' 
         for axis, pid in pDict.iteritems():
             if pid:
-                logger.debug('axis, pid = %s, %s', axis, pid)
+                self.logger.debug('axis, pid = %s, %s', axis, pid)
                 replace_from = replace_from + '\n'
                 if self.isParameterMeasured(int(pid)):
                     replace_from = replace_from + '\nINNER JOIN stoqs_measurement m_' + axis + ' '
@@ -691,7 +692,7 @@ For sampledparameter to sampledparamter query an example is:
                     replace_from = replace_from + '\nINNER JOIN stoqs_parameter p_' + axis + ' '
                     replace_from = replace_from + '\non sp_' + axis + '.parameter_id = p_' + axis + '.id '
                 else:
-                    logger.error('Encountered parameter (id=%s) that is not in the Measured nor in the Sampled ParameterGroup', pid)
+                    self.logger.error('Encountered parameter (id=%s) that is not in the Measured nor in the Sampled ParameterGroup', pid)
 
                 where_sql = where_sql + '(p_' + axis + '.id = ' + str(pid) + ') AND '
 
@@ -706,7 +707,7 @@ For sampledparameter to sampledparamter query an example is:
             q = q + ' WHERE ' + where_sql[:-4]                      # Remove last 'AND '
         else:
             # Insert our WHERE clause into the filters that are in the original query
-            logger.debug('q = %s', q)
+            self.logger.debug('q = %s', q)
             if containsSampleFlag and not containsMeasuredFlag:
                 q = q.replace('stoqs_measurement', 'stoqs_sample')
             q = q.replace(' WHERE ', ' WHERE ' + where_sql)
@@ -723,7 +724,7 @@ For sampledparameter to sampledparamter query an example is:
             q = q.replace('FROM stoqs_instantpoint', 'FROM ' + pv_add_to_from + 'stoqs_instantpoint')
             q = q.replace('WHERE', pv_from_sql + ' WHERE ' + pv_where_sql)
 
-        logger.debug('q = %s', q)
+        self.logger.debug('q = %s', q)
         q = sqlparse.format(q, reindent=True, keyword_case='upper')
 
         return q
