@@ -34,6 +34,10 @@ from datetime import datetime, timedelta
 from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter, Parameter
 from django.contrib.gis.geos import LineString, Point
 from django.db.models import Max, Min
+from django.http import HttpRequest
+from utils.PQuery import PQuery
+from utils.Viz import ParameterParameter
+import logging
 
 
 class NoPPDataException(Exception):
@@ -67,7 +71,7 @@ class BiPlot():
 
         return min, max, units
 
-    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm):
+    def _getMeasuredPPData(self, startDatetime, endDatetime, platform, xParm, yParm):
         '''
         Use the SQL template to retrieve the X and Y values and other ancillary information from the database
         for the passed in platform, xParm and yParm names.
@@ -101,19 +105,19 @@ class BiPlot():
         # Apply platform constraint if specified
         platformSQL = ''
         if platform:
-            platformSQL += "AND stoqs_platform.name IN ('platform')"
+            platformSQL += "AND stoqs_platform.name IN ('%s')" % platform
 
         # Apply time constraints if specified
         timeSQL = ''
         if startDatetime:
-            timeSQL += "AND (stoqs_instantpoint.timevalue >= 'startDatetime'"
+            timeSQL += "AND stoqs_instantpoint.timevalue >= '%s' " % startDatetime
         if endDatetime:
-            timeSQL += "AND (stoqs_instantpoint.timevalue >= 'endDatetime'"
+            timeSQL += "AND stoqs_instantpoint.timevalue <= '%s'" % endDatetime
 
         # Apply depth constraints if specified
         depthSQL = ''
         if self.args.minDepth:
-            depthSQL += 'AND stoqs_measurement.depth >= %f' % self.args.minDepth
+            depthSQL += 'AND stoqs_measurement.depth >= %f ' % self.args.minDepth
         if self.args.maxDepth:
             depthSQL += 'AND stoqs_measurement.depth <= %f' % self.args.maxDepth
             
@@ -144,6 +148,47 @@ class BiPlot():
             raise NoPPDataException("No (%s, %s) data from (%s) between %s and %s" % (xParm, yParm, platform, startDatetime, endDatetime))
 
         return x, y, points
+
+
+    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm):
+        '''
+        Get Parameter-Parameter data regardless if Parameters are 'Sampled' or 'Measured in situ'
+        '''
+        # Use same query builder that the STOQS UI uses
+        request = HttpRequest
+        request.META = {'dbAlias': self.args.database}
+        pq = PQuery(request)
+        if self.args.verbose:
+            pq.logger.setLevel(logging.DEBUG)
+        else:
+            pq.logger.setLevel(logging.ERROR)
+
+        args = ()
+        kwargs = {'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
+                                          Parameter.objects.using(self.args.database).get(name=yParm).id ]}
+        px, py  = kwargs['parameterparameter']
+
+        kwargs['parametervalues'] = {}
+
+        pq.buildPQuerySet(*args, **kwargs)
+
+        pp = ParameterParameter(request, {'x': px, 'y': py}, None, pq, {})
+        if self.args.verbose:
+            pp.logger.setLevel(logging.DEBUG)
+        else:
+            pp.logger.setLevel(logging.ERROR)
+
+        ##stride_val, sql = pp._getXYCData(strideFlag=False)
+        ret = pp._getXYCData(strideFlag=False)
+        if ret[0] is None or not pp.x or not pp.y:
+            if platform or  startDatetime or  endDatetime:
+                exceptionMessage = "No (%s, %s) data from (%s) between %s and %s" % (xParm, yParm, platform, startDatetime, endDatetime)
+            else:
+                exceptionMessage = "No (%s, %s) data returned" % (xParm, yParm)
+            raise NoPPDataException(exceptionMessage)
+
+        return pp.x, pp.y
+
 
     def _getActivityExtent(self, platform=None):
         '''
@@ -248,9 +293,15 @@ class BiPlot():
 
         return tList, dataList
 
-    def _getParameters(self):
+    def _getParameters(self, groupNames=[], ignoreNames=[]):
         '''
-        Return list of Parameters from the database
+        Return list of Parameter objects from the database
         '''
-        return Parameter.objects.using(self.args.database).all()
+        qs = Parameter.objects.using(self.args.database).all()
+        if groupNames != []:
+            qs = qs.filter(parametergroupparameter__parametergroup__name__in=groupNames)
+        if ignoreNames != []:
+            qs = qs.exclude(name__in=ignoreNames)
+
+        return qs
 
