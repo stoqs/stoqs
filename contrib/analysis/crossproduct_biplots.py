@@ -97,55 +97,56 @@ class CrossProductBiPlot(BiPlot):
 
     def makeCrossProductBiPlots(self):
         '''
-        Cycle through all the Parameters and make biplots against each of the other parameters
+        Cycle through Parameters and make biplots against each of the other parameters
+        Parameters can be restricted with --ignore and and --sampled arguments.
         '''
         allActivityStartTime, allActivityEndTime, allExtent  = self._getActivityExtent(self.args.platform)
-        parmList = self._getParameters()
+        allParms = self._getParameters(ignoreNames=self.args.ignore)
+        if self.args.sampled:
+            xParms = self._getParameters(groupNames=['Sampled'], ignoreNames=self.args.ignore)
+        else:
+            xParms = allParms
 
-        # Start a new figure - size is in inches
-        fig = plt.figure(figsize=(8, 8))
-
+        fig = plt.figure(figsize=(9, 9))
         axisNum = 1
-        for xP in parmList:
-            if xP.name == 'mass_concentration_of_chlorophyll_in_sea_water':
-                continue
-            print xP
-            for yP in parmList:
-                if yP.name == 'mass_concentration_of_chlorophyll_in_sea_water':
+        for xP in xParms:
+            if self.args.verbose: print xP.name
+            print xP.name
+            for yP in allParms:
+                if xP.name == yP.name:
                     continue
-                if xP == yP:
-                    continue
-                print '\t"%s"' % yP
+                if self.args.verbose: print '\t"%s"' % yP.name
+                print '\t%s' % yP.name
 
                 try:
-                    x, y, points = self._getPPData(None, None, None, xP, yP)
+                    x, y = self._getPPData(None, None, None, xP.name, yP.name)
                 except NoPPDataException, e:
                     if self.args.verbose: print e
+                    print e
                     continue
 
-                ax = fig.add_subplot(6, 5, axisNum)
+                ax = fig.add_subplot(4, 4, axisNum)
                 ax.scatter(x, y, marker='.', s=1, c='k')
                 ax.set_xticklabels([])
                 ax.set_yticklabels([])
-                ax.set_xlabel(xP)
-                ax.set_ylabel(yP)
+                ax.set_xlabel(xP.name)
+                ax.set_ylabel(yP.name)
 
                 axisNum += 1
-                if axisNum > 30:
+                if axisNum > 16:
                     break
             else:
                 continue
             break
 
 
-        provStr = 'Created with STOQS command ' + '\\\n'.join(wrap(self.commandline, width=100)) + ' on ' + datetime.now().ctime()
+        provStr = 'Created with STOQS command ' + '\\\n'.join(wrap(self.commandline, width=160)) + ' on ' + datetime.now().ctime()
         plt.figtext(0.0, 0.0, provStr, size=7, horizontalalignment='left', verticalalignment='bottom')
         plt.tight_layout()
 
         fileName = 'cpBiPlot.png'
         print 'Saving to file', fileName
         fig.savefig(fileName)
-        ##raw_input('P')
 
         print 'Done.'
 
@@ -170,6 +171,8 @@ class CrossProductBiPlot(BiPlot):
         parser.add_argument('--nighttime', action='store_true', help='Select only nighttime hours: 10 pm to 2 am local time')
         parser.add_argument('--minDepth', action='store', help='Minimum depth for data queries', default=None, type=float)
         parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
+        parser.add_argument('--sampled', action='store_true', help='Compare Sampled Parameters to every other Parameter')
+        parser.add_argument('--ignore', action='store', help='Ignore these Parameter names', nargs='*')
         parser.add_argument('--plotDir', action='store', help='Directory where to write the plot output', default='.')
         parser.add_argument('--plotPrefix', action='store', help='Prefix to use in naming plot files', default='')
         parser.add_argument('--title', action='store', help='Title to appear on top of plot')
