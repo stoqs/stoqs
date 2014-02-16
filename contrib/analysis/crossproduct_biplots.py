@@ -31,10 +31,12 @@ import numpy as np
 from matplotlib.dates import DAILY
 from datetime import datetime, timedelta
 from django.contrib.gis.geos import LineString, Point
-from utils.utils import round_to_n
+from utils.utils import round_to_n, pearsonr
 from textwrap import wrap
 from mpl_toolkits.basemap import Basemap
 import matplotlib.gridspec as gridspec
+from numpy import polyfit
+from pylab import polyval
 
 from contrib.analysis import BiPlot, NoPPDataException, NoTSDataException
 
@@ -111,26 +113,37 @@ class CrossProductBiPlot(BiPlot):
         axisNum = 1
         for xP in xParms:
             if self.args.verbose: print xP.name
-            print xP.name
             for yP in allParms:
                 if xP.name == yP.name:
                     continue
-                if self.args.verbose: print '\t"%s"' % yP.name
-                print '\t%s' % yP.name
+                if self.args.verbose: print '\t%s' % yP.name
 
                 try:
                     x, y = self._getPPData(None, None, None, xP.name, yP.name)
                 except NoPPDataException, e:
                     if self.args.verbose: print e
-                    print e
                     continue
 
+                # Assess the correlation
+                m, b = polyfit(x, y, 1)
+                yfit = polyval([m, b], x)
+                r = np.corrcoef(x, y)[0,1]
+                pr = pearsonr(x, y)
+
+                if r < self.args.r2threshold:
+                    continue
+
+
+                # Make subplot
                 ax = fig.add_subplot(4, 4, axisNum)
-                ax.scatter(x, y, marker='.', s=1, c='k')
+                ax.scatter(x, y, marker='.', s=3, c='k')
+                ax.plot(x, yfit, color='k', linewidth=0.5)
                 ax.set_xticklabels([])
                 ax.set_yticklabels([])
                 ax.set_xlabel(xP.name)
                 ax.set_ylabel(yP.name)
+
+
 
                 axisNum += 1
                 if axisNum > 16:
@@ -172,6 +185,7 @@ class CrossProductBiPlot(BiPlot):
         parser.add_argument('--minDepth', action='store', help='Minimum depth for data queries', default=None, type=float)
         parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
         parser.add_argument('--sampled', action='store_true', help='Compare Sampled Parameters to every other Parameter')
+        parser.add_argument('--r2threshold', action='store', help='Only plot correlations greater than this r^2 value', type=float)
         parser.add_argument('--ignore', action='store', help='Ignore these Parameter names', nargs='*')
         parser.add_argument('--plotDir', action='store', help='Directory where to write the plot output', default='.')
         parser.add_argument('--plotPrefix', action='store', help='Prefix to use in naming plot files', default='')
