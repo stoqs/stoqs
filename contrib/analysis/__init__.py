@@ -36,7 +36,7 @@ from django.contrib.gis.geos import LineString, Point
 from django.db.models import Max, Min
 from django.http import HttpRequest
 from utils.PQuery import PQuery
-from utils.Viz import ParameterParameter
+from utils.Viz import ParameterParameter, PPDatabaseException
 import logging
 
 
@@ -158,10 +158,9 @@ class BiPlot():
         request = HttpRequest
         request.META = {'dbAlias': self.args.database}
         pq = PQuery(request)
+        pq.logger.setLevel(logging.ERROR)
         if self.args.verbose:
             pq.logger.setLevel(logging.DEBUG)
-        else:
-            pq.logger.setLevel(logging.ERROR)
 
         args = ()
         kwargs = {'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
@@ -173,21 +172,23 @@ class BiPlot():
         pq.buildPQuerySet(*args, **kwargs)
 
         pp = ParameterParameter(request, {'x': px, 'y': py}, None, pq, {})
+        pp.logger.setLevel(logging.ERROR)
         if self.args.verbose:
             pp.logger.setLevel(logging.DEBUG)
-        else:
-            pp.logger.setLevel(logging.ERROR)
 
-        ##stride_val, sql = pp._getXYCData(strideFlag=False)
-        ret = pp._getXYCData(strideFlag=False)
-        if ret[0] is None or not pp.x or not pp.y:
-            if platform or  startDatetime or  endDatetime:
-                exceptionMessage = "No (%s, %s) data from (%s) between %s and %s" % (xParm, yParm, platform, startDatetime, endDatetime)
+        points = []
+        try:
+            pp._getXYCData(strideFlag=False, latlonFlag=True)
+        except PPDatabaseException, e:
+            if platform or startDatetime or endDatetime:
+                raise NoPPDataException("No (%s, %s) data from (%s) between %s and %s" % (xParm, yParm, platform, startDatetime, endDatetime))
             else:
-                exceptionMessage = "No (%s, %s) data returned" % (xParm, yParm)
-            raise NoPPDataException(exceptionMessage)
+                raise NoPPDataException("No (%s, %s) data returned" % (xParm, yParm))
 
-        return pp.x, pp.y
+        for lon, lat in zip(pp.lon, pp.lat):
+            points.append(Point(lon, lat))
+
+        return pp.x, pp.y, points
 
 
     def _getActivityExtent(self, platform=None):
