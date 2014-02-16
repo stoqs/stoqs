@@ -46,80 +46,60 @@ class CrossProductBiPlot(BiPlot):
     Make customized BiPlots (Parameter Parameter plots) for platforms from STOQS.
     '''
 
-    def ppSubPlot(self, x, y, platform, color, xParm, yParm, ax, startTime):
-        '''
-        Given names of platform, x & y paramters add a subplot to figure fig.
-        '''
-
-        xmin, xmax, xUnits = self._getAxisInfo(platform, xParm)
-        ymin, ymax, yUnits = self._getAxisInfo(platform, yParm)
-
-        # Make the plot 
-        ax.set_xlim(round_to_n(xmin, 1), round_to_n(xmax, 1))
-        ax.set_ylim(round_to_n(ymin, 1), round_to_n(ymax, 1))
-
-        if self.args.xLabel == '':
-            ax.set_xticks([])
-        elif self.args.xLabel:
-            ax.set_xlabel(self.args.xLabel)
-        else:
-            ax.set_xlabel('%s (%s)' % (xParm, xUnits))
-
-        if self.args.yLabel == '':
-            ax.set_yticks([])
-        elif self.args.yLabel:
-            ax.set_ylabel(self.args.yLabel)
-        else:
-            ax.set_ylabel('%s (%s)' % (yParm, yUnits))
-
-        ax.scatter(x, y, marker='.', s=10, c='k', lw = 0, clip_on=True)
-        ax.text(0.0, 1.0, platform, transform=ax.transAxes, color=color, horizontalalignment='left', verticalalignment='top')
-
-        return ax
-
-    def getFilename(self, startTime):
+    def getFileName(self, figCount):
         '''
         Construct plot file name
         '''
-        fnTempl= 'platforms_{time}' 
-        fileName = fnTempl.format(time=startTime.strftime('%Y%m%dT%H%M'))
-        wcName = fnTempl.format(time=r'*')
-        wcName = os.path.join(self.args.plotDir, self.args.plotPrefix + wcName)
+        fileName = 'cpBiPlot_%02d' % figCount
         if self.args.daytime:
             fileName += '_day'
-            wcName += '_day'
         if self.args.nighttime:
             fileName += '_night'
-            wcName += '_night'
         fileName += '.png'
 
         fileName = os.path.join(self.args.plotDir, self.args.plotPrefix + fileName)
 
-        return fileName, wcName
+        return fileName
+
+    def saveFigure(self, fig, figCount):
+        '''
+        Save this page
+        '''
+        provStr = 'Created with STOQS command ' + '\\\n'.join(wrap(self.commandline, width=160)) + ' on ' + datetime.now().ctime()
+        plt.figtext(0.0, 0.0, provStr, size=7, horizontalalignment='left', verticalalignment='bottom')
+        plt.tight_layout()
+        if self.args.title:
+            fig.text(0.5, 0.975, self.args.title, horizontalalignment='center', verticalalignment='top')
+
+        fileName = self.getFileName(figCount)
+        print 'Saving file', fileName
+        fig.savefig(fileName)
 
     def makeCrossProductBiPlots(self):
         '''
         Cycle through Parameters and make biplots against each of the other parameters
-        Parameters can be restricted with --ignore and and --sampled arguments.
+        Parameters can be restricted with --ignore, --sampled, and --r_threshold arguments.
         '''
         allActivityStartTime, allActivityEndTime, allExtent  = self._getActivityExtent(self.args.platform)
         allParms = self._getParameters(ignoreNames=self.args.ignore)
+        setList = []
         if self.args.sampled:
             xParms = self._getParameters(groupNames=['Sampled'], ignoreNames=self.args.ignore)
         else:
             xParms = allParms
 
-        fig = plt.figure(figsize=(9, 9))
         axisNum = 1
+        figCount = 1
+        newFigFlag = True
         for xP in xParms:
             if self.args.verbose: print xP.name
             for yP in allParms:
-                if xP.name == yP.name:
+                if xP.name == yP.name or set((xP.name, yP.name)) in setList:
                     continue
                 if self.args.verbose: print '\t%s' % yP.name
 
                 try:
-                    x, y = self._getPPData(None, None, None, xP.name, yP.name)
+                    x, y, points = self._getPPData(None, None, None, xP.name, yP.name)
                 except NoPPDataException, e:
                     if self.args.verbose: print e
                     continue
@@ -129,37 +109,37 @@ class CrossProductBiPlot(BiPlot):
                 yfit = polyval([m, b], x)
                 r = np.corrcoef(x, y)[0,1]
                 pr = pearsonr(x, y)
+                statStr = 'r=%.3f\nn=%d' % (r, len(x))
 
-                if r < self.args.r2threshold:
+                if r < self.args.r_threshold:
                     continue
 
+                if newFigFlag:
+                    fig = plt.figure(figsize=(9, 9))
+                    newFigFlag = False
 
                 # Make subplot
-                ax = fig.add_subplot(4, 4, axisNum)
+                ax = fig.add_subplot(self.args.nrow, self.args.ncol, axisNum)
                 ax.scatter(x, y, marker='.', s=3, c='k')
                 ax.plot(x, yfit, color='k', linewidth=0.5)
-                ax.set_xticklabels([])
-                ax.set_yticklabels([])
+                if not self.args.ticklabels:
+                    ax.set_xticklabels([])
+                    ax.set_yticklabels([])
                 ax.set_xlabel(xP.name)
                 ax.set_ylabel(yP.name)
+                ax.text(1.0, 0.0, statStr, transform=ax.transAxes, horizontalalignment='right', verticalalignment='bottom')
 
-
+                setList.append(set((xP.name, yP.name)))         # Save this pair so that we don't plot is again
 
                 axisNum += 1
-                if axisNum > 16:
-                    break
-            else:
-                continue
-            break
+                if axisNum > self.args.nrow * self.args.ncol:
+                    self.saveFigure(fig, figCount)
+                    newFigFlag = True
+                    axisNum = 1
+                    figCount += 1
 
-
-        provStr = 'Created with STOQS command ' + '\\\n'.join(wrap(self.commandline, width=160)) + ' on ' + datetime.now().ctime()
-        plt.figtext(0.0, 0.0, provStr, size=7, horizontalalignment='left', verticalalignment='bottom')
-        plt.tight_layout()
-
-        fileName = 'cpBiPlot.png'
-        print 'Saving to file', fileName
-        fig.savefig(fileName)
+        # Save last set of subplots
+        self.saveFigure(fig, figCount)
 
         print 'Done.'
 
@@ -185,8 +165,11 @@ class CrossProductBiPlot(BiPlot):
         parser.add_argument('--minDepth', action='store', help='Minimum depth for data queries', default=None, type=float)
         parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
         parser.add_argument('--sampled', action='store_true', help='Compare Sampled Parameters to every other Parameter')
-        parser.add_argument('--r2threshold', action='store', help='Only plot correlations greater than this r^2 value', type=float)
+        parser.add_argument('--r_threshold', action='store', help='Only plot correlations greater than this r^2 value', type=float)
         parser.add_argument('--ignore', action='store', help='Ignore these Parameter names', nargs='*')
+        parser.add_argument('--nrow', action='store', help='Number of subplots in a column', default=4, type=int)
+        parser.add_argument('--ncol', action='store', help='Number of subplots in a row', default=4, type=int)
+        parser.add_argument('--ticklabels', action='store_true', help='Label ticks')
         parser.add_argument('--plotDir', action='store', help='Directory where to write the plot output', default='.')
         parser.add_argument('--plotPrefix', action='store', help='Prefix to use in naming plot files', default='')
         parser.add_argument('--title', action='store', help='Title to appear on top of plot')
