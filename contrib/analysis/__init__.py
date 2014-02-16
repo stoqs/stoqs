@@ -294,15 +294,21 @@ class BiPlot():
 
         return tList, dataList
 
-    def _getParameters(self, groupNames=[], ignoreNames=[]):
+    def _getParametersPlatformHash(self, groupNames=[], ignoreNames=[]):
         '''
-        Return list of Parameter objects from the database
+        Return a hash of Parameter objects keyed with a set of Platform objects as the values
         '''
+        hash = {}
         qs = Parameter.objects.using(self.args.database).all()
         if groupNames != []:
             qs = qs.filter(parametergroupparameter__parametergroup__name__in=groupNames)
         if ignoreNames != []:
             qs = qs.exclude(name__in=ignoreNames)
+        if self.args.platform:
+            qs = qs.filter(activityparameter__activity__platform__name__in=self.args.platform)
 
-        return qs
+        for p in qs:
+            hash[p] = set(Platform.objects.using(self.args.database).filter(activity__activityparameter__parameter=p).distinct())
+
+        return hash
 

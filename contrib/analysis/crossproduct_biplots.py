@@ -81,20 +81,22 @@ class CrossProductBiPlot(BiPlot):
         Parameters can be restricted with --ignore, --sampled, and --r_threshold arguments.
         '''
         allActivityStartTime, allActivityEndTime, allExtent  = self._getActivityExtent(self.args.platform)
-        allParms = self._getParameters(ignoreNames=self.args.ignore)
+        allParmsHash = self._getParametersPlatformHash(ignoreNames=self.args.ignore)
         setList = []
         if self.args.sampled:
-            xParms = self._getParameters(groupNames=['Sampled'], ignoreNames=self.args.ignore)
+            xParmsHash = self._getParametersPlatformHash(groupNames=['Sampled'], ignoreNames=self.args.ignore)
         else:
-            xParms = allParms
+            xParmsHash = allParms
 
         axisNum = 1
         figCount = 1
         newFigFlag = True
-        for xP in xParms:
+        for xP, xPlats in xParmsHash.iteritems():
             if self.args.verbose: print xP.name
-            for yP in allParms:
-                if xP.name == yP.name or set((xP.name, yP.name)) in setList:
+            for yP, yPlats in allParmsHash.iteritems():
+                commonPlatforms = xPlats.intersection(yPlats)
+                platStr = '\n'.join([pl.name for pl in commonPlatforms])
+                if xP.name == yP.name or set((xP.name, yP.name)) in setList or not commonPlatforms:
                     continue
                 if self.args.verbose: print '\t%s' % yP.name
 
@@ -125,11 +127,17 @@ class CrossProductBiPlot(BiPlot):
                 if not self.args.ticklabels:
                     ax.set_xticklabels([])
                     ax.set_yticklabels([])
-                ax.set_xlabel(xP.name)
-                ax.set_ylabel(yP.name)
+                if self.args.units:
+                    ax.set_xlabel('%s (%s)' % (xP.name, xP.units))
+                    ax.set_ylabel('%s (%s)' % (yP.name, yP.units))
+                else:
+                    ax.set_xlabel(xP.name)
+                    ax.set_ylabel(yP.name)
                 ax.text(1.0, 0.0, statStr, transform=ax.transAxes, horizontalalignment='right', verticalalignment='bottom')
+                ax.text(0.0, 1.0, platStr, transform=ax.transAxes, horizontalalignment='left', verticalalignment='top')
 
-                setList.append(set((xP.name, yP.name)))         # Save this pair so that we don't plot is again
+                # Save this pair so that we don't plot it again, even with axes reversed
+                setList.append(set((xP.name, yP.name)))
 
                 axisNum += 1
                 if axisNum > self.args.nrow * self.args.ncol:
@@ -170,6 +178,7 @@ class CrossProductBiPlot(BiPlot):
         parser.add_argument('--nrow', action='store', help='Number of subplots in a column', default=4, type=int)
         parser.add_argument('--ncol', action='store', help='Number of subplots in a row', default=4, type=int)
         parser.add_argument('--ticklabels', action='store_true', help='Label ticks')
+        parser.add_argument('--units', action='store_true', help='Add (units) to axis names')
         parser.add_argument('--plotDir', action='store', help='Directory where to write the plot output', default='.')
         parser.add_argument('--plotPrefix', action='store', help='Prefix to use in naming plot files', default='')
         parser.add_argument('--title', action='store', help='Title to appear on top of plot')
