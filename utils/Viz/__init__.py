@@ -463,6 +463,12 @@ class MeasuredParameter(object):
         return x3dResults
 
 
+class PPDatabaseException(Exception):
+    def __init__(self, message, sql):
+        Exception.__init__(self, message)
+        self.sql = sql
+
+
 class ParameterParameter(object):
     '''
     Use matploplib to create nice looking property-property plots
@@ -484,6 +490,8 @@ class ParameterParameter(object):
         self.y = []
         self.z = []
         self.c = []
+        self.lon = []
+        self.lat = []
 
     def computeSigmat(self, limits, xaxis_name='sea_water_salinity', pressure=0):
         '''
@@ -530,27 +538,27 @@ class ParameterParameter(object):
         self.logger.debug('csql = %s', csql)
         return csql
 
-    def _getXYCData(self, strideFlag=True):
+    def _getXYCData(self, strideFlag=True, latlonFlag=False):
       @transaction.commit_on_success(using=self.request.META['dbAlias'])
-      def inner_getXYCData(self, strideFlag=True):
+      def inner_getXYCData(self, strideFlag, latlonFlag):
         '''
         Construct SQL and iterate through cursor to get X, Y, and possibly C Parameter Parameter data
         '''
         # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
         sql = str(self.pq.qs_mp.query)
-        self.logger.debug('sql = %s', sql)
         sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
 
-        # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
+        # Use cursor so that we can specify the database alias to use.
         cursor = connections[self.request.META['dbAlias']].cursor()
 
         # Get count and set a stride value if more than a PP_MAX_POINTS which Matplotlib cannot plot, about 100,000 points
         try:
             cursor.execute(self._getCountSQL(sql))
         except DatabaseError, e:
-            infoText = 'Parameter-Parameter: ' + str(e) + ' Also, make sure you have no Parameters selected in the Filter.'
-            self.logger.exception('Cannot execute count sql query for Parameter-Parameter plot: %s', e)
-            return None, infoText, sql
+            infoText = 'Parameter-Parameter: Cannot get count. Make sure you have no Parameters selected in the Filter.'
+            self.logger.warn(e)
+            raise PPDatabaseException(infoText, sql)
+
         pp_count = cursor.fetchone()[0]
         self.logger.debug('pp_count = %d', pp_count)
         stride_val = 1
@@ -561,40 +569,52 @@ class ParameterParameter(object):
                 stride_val = 1
             self.logger.debug('stride_val = %d', stride_val)
 
+        if latlonFlag:
+            self.logger.debug('Adding lon lat to SELECT')
+            sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_measurement.geom) AS lon, ST_Y(stoqs_measurement.geom) AS lat,\n')
+
         # Get the Parameter-Parameter points
         try:
             self.logger.debug('Executing sql = %s', sql)
             cursor.execute(sql)
         except DatabaseError, e:
-            infoText = 'Parameter-Parameter: ' + str(e) + ' Also, make sure you have no Parameters selected in the Filter.'
-            self.logger.exception('Cannot execute sql query for Parameter-Parameter plot: %s', e)
-            
-            return None, infoText, sql
+            infoText = 'Parameter-Parameter: Query failed. Make sure you have no Parameters selected in the Filter.'
+            self.logger.warn('Cannot execute sql query for Parameter-Parameter plot: %s', e)
+            raise PPDatabaseException(infoText, sql)
 
         counter = 0
         self.logger.debug('Looping through rows in cursor with a stride of %d...', stride_val)
         for row in cursor:
             if counter % stride_val == 0:
-                # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
-                self.depth.append(float(row[0]))
-                self.x.append(float(row[1]))
-                self.y.append(float(row[2]))
+                # SampledParameter datavalues are Decimal, convert everything to a float for numpy
+                lrow = list(row)
+                if latlonFlag:
+                    self.lon.append(float(lrow.pop(0)))
+                    self.lat.append(float(lrow.pop(0)))
+                    
+                self.depth.append(float(lrow.pop(0)))
+                self.x.append(float(lrow.pop(0)))
+                self.y.append(float(lrow.pop(0)))
                 try:
-                    self.c.append(float(row[3]))
+                    self.c.append(float(lrow.pop(0)))
                 except IndexError:
                     pass
             counter = counter + 1
             if counter % 1000 == 0:
                 self.logger.debug('Made it through %d of %d points', counter, pp_count)
 
+        if self.x == [] or self.y == []:
+            raise PPDatabaseException('No data returned from query', sql)
+
         return stride_val, sql
 
-      return inner_getXYCData(self, strideFlag)
+      return inner_getXYCData(self, strideFlag, latlonFlag)
 
     def make2DPlot(self):
         '''
         Produce a Parameter-Parameter .png image with axis limits set to the 1 and 99 percentiles and draw outside the lines
         '''
+        sql = ''
         try:
             # self.x and self.y may already be set for this instance by makeX3D()
             if not self.x and not self.y:

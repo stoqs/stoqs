@@ -26,7 +26,7 @@ from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_
 from utils import simplify_points, getParameterGroups
 from MPQuery import MPQuery
 from PQuery import PQuery
-from Viz import MeasuredParameter, ParameterParameter
+from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException
 from coards import to_udunits
 from datetime import datetime
 import logging
@@ -1080,7 +1080,10 @@ class STOQSQManager(object):
                 if not pMinMax['x'] or not pMinMax['y']:
                     return '', 'Selected x and y axis parameters are not in filtered selection.'
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
-                plotResults = self.pp.make2DPlot()
+                try:
+                    plotResults = self.pp.make2DPlot()
+                except PPDatabaseException, e:
+                    return None, e.message, e.sql
             
         return plotResults
 

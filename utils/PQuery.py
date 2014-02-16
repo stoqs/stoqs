@@ -692,7 +692,7 @@ For sampledparameter to sampledparamter query an example is:
                     replace_from = replace_from + '\nINNER JOIN stoqs_parameter p_' + axis + ' '
                     replace_from = replace_from + '\non sp_' + axis + '.parameter_id = p_' + axis + '.id '
                 else:
-                    self.logger.error('Encountered parameter (id=%s) that is not in the Measured nor in the Sampled ParameterGroup', pid)
+                    self.logger.warn('Encountered parameter (id=%s) that is not in the Measured nor in the Sampled ParameterGroup', pid)
 
                 where_sql = where_sql + '(p_' + axis + '.id = ' + str(pid) + ') AND '
 
