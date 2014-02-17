@@ -77,8 +77,8 @@ class CrossProductBiPlot(BiPlot):
 
     def makeCrossProductBiPlots(self):
         '''
-        Cycle through Parameters and make biplots against each of the other parameters
-        Parameters can be restricted with --ignore, --sampled, and --r_threshold arguments.
+        Cycle through Parameters in alphabetical order and make biplots against each of the other parameters
+        Parameters can be restricted with --ignore, --sampled, and --r2_greater arguments.
         '''
         allActivityStartTime, allActivityEndTime, allExtent  = self._getActivityExtent(self.args.platform)
         allParmsHash = self._getParametersPlatformHash(ignoreNames=self.args.ignore)
@@ -91,11 +91,16 @@ class CrossProductBiPlot(BiPlot):
         axisNum = 1
         figCount = 1
         newFigFlag = True
-        for xP, xPlats in xParmsHash.iteritems():
+        xpList = xParmsHash.keys()
+        xpList.sort(key=lambda p: p.name.lower())
+        for xP in xpList:
+            xPlats = xParmsHash[xP]
             if self.args.verbose: print xP.name
-            for yP, yPlats in allParmsHash.iteritems():
+            ypList = allParmsHash.keys()
+            ypList.sort(key=lambda p: p.name.lower())
+            for yP in ypList:
+                yPlats = allParmsHash[yP]
                 commonPlatforms = xPlats.intersection(yPlats)
-                platStr = '\n'.join([pl.name for pl in commonPlatforms])
                 if xP.name == yP.name or set((xP.name, yP.name)) in setList or not commonPlatforms:
                     continue
                 if self.args.verbose: print '\t%s' % yP.name
@@ -110,10 +115,10 @@ class CrossProductBiPlot(BiPlot):
                 m, b = polyfit(x, y, 1)
                 yfit = polyval([m, b], x)
                 r = np.corrcoef(x, y)[0,1]
+                r2 = r**2
                 pr = pearsonr(x, y)
-                statStr = 'r=%.3f\nn=%d' % (r, len(x))
 
-                if r < self.args.r_threshold:
+                if r2 < self.args.r2_greater:
                     continue
 
                 if newFigFlag:
@@ -133,8 +138,10 @@ class CrossProductBiPlot(BiPlot):
                 else:
                     ax.set_xlabel(xP.name)
                     ax.set_ylabel(yP.name)
-                ax.text(1.0, 0.0, statStr, transform=ax.transAxes, horizontalalignment='right', verticalalignment='bottom')
-                ax.text(0.0, 1.0, platStr, transform=ax.transAxes, horizontalalignment='left', verticalalignment='top')
+                statStr = '$r^2 = %.3f$\n$n = %d$' % (r2, len(x))
+                ax.text(0.65, 0.05, statStr, size=8, transform=ax.transAxes, horizontalalignment='left', verticalalignment='bottom')
+                platStr = '\n'.join([pl.name for pl in commonPlatforms])
+                ax.text(0.05, 0.95, platStr, size=8, transform=ax.transAxes, horizontalalignment='left', verticalalignment='top')
 
                 # Save this pair so that we don't plot it again, even with axes reversed
                 setList.append(set((xP.name, yP.name)))
@@ -145,6 +152,8 @@ class CrossProductBiPlot(BiPlot):
                     newFigFlag = True
                     axisNum = 1
                     figCount += 1
+
+            # End for yP in ypList
 
         # Save last set of subplots
         self.saveFigure(fig, figCount)
@@ -173,7 +182,7 @@ class CrossProductBiPlot(BiPlot):
         parser.add_argument('--minDepth', action='store', help='Minimum depth for data queries', default=None, type=float)
         parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
         parser.add_argument('--sampled', action='store_true', help='Compare Sampled Parameters to every other Parameter')
-        parser.add_argument('--r_threshold', action='store', help='Only plot correlations greater than this r^2 value', type=float)
+        parser.add_argument('--r2_greater', action='store', help='Only plot correlations greater than this r^2 value', type=float)
         parser.add_argument('--ignore', action='store', help='Ignore these Parameter names', nargs='*')
         parser.add_argument('--nrow', action='store', help='Number of subplots in a column', default=4, type=int)
         parser.add_argument('--ncol', action='store', help='Number of subplots in a row', default=4, type=int)
