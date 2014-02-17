@@ -570,8 +570,12 @@ class ParameterParameter(object):
             self.logger.debug('stride_val = %d', stride_val)
 
         if latlonFlag:
-            self.logger.debug('Adding lon lat to SELECT')
-            sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_measurement.geom) AS lon, ST_Y(stoqs_measurement.geom) AS lat,\n')
+            if sql.find('stoqs_measurement') != -1:
+                self.logger.debug('Adding lon lat to SELECT')
+                sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_measurement.geom) AS lon, ST_Y(stoqs_measurement.geom) AS lat,\n')
+            elif sql.find('stoqs_sample') != -1:
+                self.logger.debug('Adding lon lat to SELECT')
+                sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
 
         # Get the Parameter-Parameter points
         try:
