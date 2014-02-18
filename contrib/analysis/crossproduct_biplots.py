@@ -86,7 +86,7 @@ class CrossProductBiPlot(BiPlot):
         if self.args.sampled:
             xParmsHash = self._getParametersPlatformHash(groupNames=['Sampled'], ignoreNames=self.args.ignore)
         else:
-            xParmsHash = allParms
+            xParmsHash = allParmsHash
 
         axisNum = 1
         figCount = 1
@@ -168,8 +168,9 @@ class CrossProductBiPlot(BiPlot):
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n' 
-        examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
-        examples += '(Image files will be written to the current working directory)'
+        examples += sys.argv[0] + ' -d default\n'
+        examples += sys.argv[0] + ' -d stoqs_simz_aug2013 --ignore mass_concentration_of_chlorophyll_in_sea_water --sampled --r2_greater 0.6\n'
+        examples += 'If running from cde-package replace ".py" with ".py.cde" in the above list.'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Read Parameter-Parameter data from a STOQS database and make bi-plots',

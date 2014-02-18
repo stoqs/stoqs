@@ -308,7 +308,7 @@ class PlatformsBiPlot(BiPlot):
         examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll --daytime\n'
         examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll --nighttime\n'
         examples += '\n\nMultiple platform and parameter names are paired up in respective order.\n'
-        examples += 'If running from cde-package must append ".cde" to the commands in the examples list.'
+        examples += 'If running from cde-package replace ".py" with ".py.cde" in the above list.'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Read Parameter-Parameter data from a STOQS database and make bi-plots',
