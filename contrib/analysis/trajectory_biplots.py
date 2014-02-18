@@ -95,7 +95,7 @@ class PlatformsBiPlot(BiPlot):
                 ax1.plot_date(matplotlib.dates.date2num(datetimeList), depths, '-', c=color, alpha=0.2)
 
         # Highlight the selected time extent
-        ax1.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='k', alpha=0.1)  
+        ax1.axvspan(*matplotlib.dates.date2num([startTime, endTime]), facecolor='k', alpha=0.6)  
 
         if self.args.minDepth is not None:
             ax1.set_ylim(bottom=self.args.minDepth)
@@ -120,22 +120,19 @@ class PlatformsBiPlot(BiPlot):
 
     def spatialSubPlot(self, platformLineStringHash, ax, e, resolution='l'):
         '''
-        Make subplot of tracks for all the platforms within the time range. If self.args.coastlines then full resolution
-        coastlines will be draw - significantly increasing execution time.
+        Make subplot of tracks for all the platforms within the time range. 
         '''
-        if self.args.coastlines:
-            resolution='f'
         m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution=resolution, ax=ax)
+        ##m.wmsimage('http://www.gebco.net/data_and_products/gebco_web_services/web_map_service/mapserv?', layers=['GEBCO_08_Grid'])    # Works, but coarse
+        m.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
  
         for pl, LS in platformLineStringHash.iteritems():
             x,y = zip(*LS)
             m.plot(x, y, '-', c=self._getColor(pl))
 
-        if self.args.coastlines:
-            m.drawcoastlines()
-        m.drawmapboundary()
-        m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False])
-        m.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True])
+        if self.args.mapLabels:
+            m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], linewidth=0)
+            m.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True], linewidth=0)
 
         return ax
 
@@ -243,7 +240,7 @@ class PlatformsBiPlot(BiPlot):
                 ax.set_title(self.args.title)
             self.timeSubPlot(platformDTHash, ax, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS)
 
-            # Make scatter plots of data fromt the platforms 
+            # Make scatter plots of data from the platforms 
             platformLineStringHash = {}
             for i, (pl, xP, yP) in enumerate(zip(self.args.platform, self.args.xParm, self.args.yParm)):
                 try: 
@@ -252,7 +249,7 @@ class PlatformsBiPlot(BiPlot):
                     platformLineStringHash[pl] = LineString(points).simplify(tolerance=.001)
                 except NoPPDataException, e:
                     if self.args.verbose: print e
-                    continue
+                    x, y = ([], [])
 
                 if len(self.args.platform) == 1:
                     ax = plt.Subplot(fig, plat1_gs[0])
@@ -328,7 +325,7 @@ class PlatformsBiPlot(BiPlot):
         parser.add_argument('--plotPrefix', action='store', help='Prefix to use in naming plot files', default='')
         parser.add_argument('--xLabel', action='store', help='Override Parameter-Parameter X axis label - will be applied to all plots')
         parser.add_argument('--yLabel', action='store', help='Override Parameter-Parameter Y axis label - will be applied to all plots') 
-        parser.add_argument('--coastlines', action='store_true', help='Draw full resolution coastlines on map - significantly increasing execution time') 
+        parser.add_argument('--mapLabels', action='store_true', help='Put latitude and longitude labels and tics on the map')
         parser.add_argument('--platformColors', action='store', help='Override database platform colors - put in quotes, e.g. "#ff0000"', nargs='*')
         parser.add_argument('--title', action='store', help='Title to appear on top of plot')
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')

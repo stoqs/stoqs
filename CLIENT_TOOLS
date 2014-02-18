@@ -34,6 +34,8 @@ tar -xvzf basemap-1.0.7.tar
 cd basemap-1.0.7
 python setup.py install
 
+pip install OWSLib
+
 
 
 --
