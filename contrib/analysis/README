@@ -5,57 +5,35 @@ Miscellaneous contributed scripts and programs are located here.
 
 As of February 2014 these scripts exist:
 
+    dbconn_jdbc_stoqs.m:        Matlab m-file to execute SQL against specified STOQS database and
+                                return columns in a Matlab structure.
+
     trajectory_biplots.py:      Python script to step through trajectory data from mobile platforms
                                 and produce biplots of measured parameter vs. measured parameter
                                 along with associated temporal and spatial tracks. Requires
                                 Python 2.7 for cartopy to work.
 
-    dbconn_jdbc_stoqs.m:        Matlab m-file to execute SQL against specified STOQS database and
-                                return columns in a Matlab structure.
-
     crossproduct_biplots.py:    Python script to produce scatter plots and compute correlations
                                 between every single Parameter in a STOQS database.
 
 
-Instructions for packaging in CDE:
-----------------------------------
+Instructions for packaging in CDE so that Python scripts can run without a full STOQS install:
+----------------------------------------------------------------------------------------------
 
-1. Install CDE on your system from http://www.pgbovine.net/cde.html, e.g.:
+0. Install CDE on your system from http://www.pgbovine.net/cde.html, e.g.:
 
     cd ~/dev
     git clone git://github.com/pgbovine/CDE.git
     cd CDE
     make
 
-2. On a development server make sure to have at least one database alias configured in privateSettings for the
-   production server, e.g.:
+This documentation refers to $STOQSHG_DIR, which will be something like ~/dev/stoqshg or /opt/stoqshg.  
 
-    'stoqs_kraken': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'stoqs',
-        'USER': 'everyone',
-        'PASSWORD': 'guest',
-        'HOST': 'kraken.shore.mbari.org',
-        'PORT': '5432',
-    },
+1. Make sure that the privateSettings file in $STOQSHG_DIR contains MY_DATABASES entries that you wish to 
+   share using select-only credentials such as 'everyone', 'guest'.  The DATABASE_HOST needs to be a name 
+   accessible to clients of your target audience.  For example:
 
-3. Execute stoqs script on target architecture with 'cde' command using the production server dbalias, e.g.:
-
-    ~/dev/CDE/cde contrib/analysis/trajectory_biplots.py -d stoqs_kraken -p dorado -x salinity -y temperature --plotDir /tmp
-
-4. Copy the privateSettings file from your production server to the cde-package/cde-root/<STOQSHG_DIR> directory;
-   <STOQSHG_DIR> will be something like /home/mccann/dev/stoqshg or /opt/stoqshg. (Note: this will need to
-   be done if building a cde-package on a development system, if building on the production server cde will
-   grab the correct privateSettings file - it is still necessary to edit the DB credentials in the file.), e.g.:
-
-    scp stoqsadm@kraken.shore.mbari.org:/opt/stoqshg/privateSettings cde-package/cde-root/home/mccann/dev/stoqshg
-
-5. Edit cde-package/cde-root/<STOQSHG_DIR>/privateSettings and set DATABASE_USER, DATABASE_USER and
-   DATABASE_HOST to appropriate values. The database credentials should be a select-only role such as
-   'everyone', 'guest'.  The DATABASE_HOST needs to be a name accessible to external clients.
-    <STOQSHG_DIR> will be something like /home/mccann/dev/stoqshg or /opt/stoqshg, e.g.:
-
-    vi cde-package/cde-root/home/mccann/dev/stoqshg/privateSettings
+    vi $STOQSHG_DIR/privateSettings
 
     ...
     DATABASE_USER = 'everyone'
@@ -64,26 +42,37 @@ Instructions for packaging in CDE:
     DATABASE_HOST = 'kraken.shore.mbari.org'
     ...
 
-6. Copy the appropriate README (README_CDE_32 or README_CDE_64) to cde-package, e.g.:
+2. Execute stoqs script(s) on target architecture with 'cde' command, e.g.:
 
-    cp contrib/analysis/README_CDE_32 cde-package
+    export STOQSHG_DIR=~/dev/stoqshg
+    cd $STOQSHG_DIR/contrib/analysis
+    ~/dev/CDE/cde ./trajectory_biplots.py -d default -p dorado -x salinity -y temperature
+    ~/dev/CDE/cde ./crossproduct_biplots.py -d default 
 
-7. Tar and gzip the directory and copy to server, e.g.:
+   Note: Execute a real command, not just the --help option.
 
-    tar -cvf trajectory_biplots_32bit.tar cde-package
-    gzip trajectory_biplots_32bit.tar
-    scp trajectory_biplots_32bit.tar.gz stoqsadm@odss.mbari.org:/data/canon/2013_Sep/Applications
+3. Copy the appropriate README_CDE to cde-package, e.g.:
 
-8. Test on another server that has never seen STOQS, Django, PostgreSQL or any of the other packages that are
+    cp README_CDE cde-package
+
+4. Tar and gzip the directory using a name suitable for the achitecture ('_32bit' or '_64bit'), e.g.:
+
+    tar -cvf stoqs_biplots_32bit.tar cde-package
+    gzip stoqs_biplots_32bit.tar
+
+5. Copy tarball to an appropriate server, e.g.:
+
+    scp stoqs_biplots_32bit.tar.gz stoqsadm@odss.mbari.org:/data/canon/2013_Sep/Applications
+
+6. Test on another server that has never seen STOQS, Django, PostgreSQL or any of the other packages that are
    self-contained in cde-package, e.g.:
 
     wget "https://odss.mbari.org/data/canon/2013_Sep/Applications/trajectory_biplots_32bit.tar.gz"
     zcat trajectory_biplots_32bit.tar.gz | tar -xvf -
 
-
-
+   Follow instructions in cde-package/README_CDE
 
 
 --
 Mike McCann
-3 February 2014
+18 February 2014

@@ -300,9 +300,9 @@ class BiPlot():
         '''
         hash = {}
         qs = Parameter.objects.using(self.args.database).all()
-        if groupNames != []:
+        if groupNames:
             qs = qs.filter(parametergroupparameter__parametergroup__name__in=groupNames)
-        if ignoreNames != []:
+        if ignoreNames:
             qs = qs.exclude(name__in=ignoreNames)
         if self.args.platform:
             qs = qs.filter(activityparameter__activity__platform__name__in=self.args.platform)
