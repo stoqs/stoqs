@@ -118,7 +118,7 @@ class CrossProductBiPlot(BiPlot):
                 r2 = r**2
                 pr = pearsonr(x, y)
 
-                if r2 < self.args.r2_greater:
+                if r2 < self.args.r2_greater or len(x) < self.args.n_greater:
                     continue
 
                 if newFigFlag:
@@ -170,7 +170,7 @@ class CrossProductBiPlot(BiPlot):
         examples = 'Examples:' + '\n\n' 
         examples += sys.argv[0] + ' -d default\n'
         examples += sys.argv[0] + ' -d stoqs_simz_aug2013 --ignore mass_concentration_of_chlorophyll_in_sea_water --sampled --r2_greater 0.6\n'
-        examples += 'If running from cde-package replace ".py" with ".py.cde" in the above list.'
+        examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Read Parameter-Parameter data from a STOQS database and make bi-plots',
@@ -183,7 +183,8 @@ class CrossProductBiPlot(BiPlot):
         parser.add_argument('--minDepth', action='store', help='Minimum depth for data queries', default=None, type=float)
         parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
         parser.add_argument('--sampled', action='store_true', help='Compare Sampled Parameters to every other Parameter')
-        parser.add_argument('--r2_greater', action='store', help='Only plot correlations greater than this r^2 value', type=float)
+        parser.add_argument('--r2_greater', action='store', help='Plot only correlations with r^2 greater than thisvalue', default=0.0, type=float)
+        parser.add_argument('--n_greater', action='store', help='Plot only correlations with n greater than this value', default=1, type=int)
         parser.add_argument('--ignore', action='store', help='Ignore these Parameter names', nargs='*')
         parser.add_argument('--nrow', action='store', help='Number of subplots in a column', default=4, type=int)
         parser.add_argument('--ncol', action='store', help='Number of subplots in a row', default=4, type=int)

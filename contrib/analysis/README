@@ -67,8 +67,8 @@ This documentation refers to $STOQSHG_DIR, which will be something like ~/dev/st
 6. Test on another server that has never seen STOQS, Django, PostgreSQL or any of the other packages that are
    self-contained in cde-package, e.g.:
 
-    wget "https://odss.mbari.org/data/canon/2013_Sep/Applications/trajectory_biplots_32bit.tar.gz"
-    zcat trajectory_biplots_32bit.tar.gz | tar -xvf -
+    wget "https://odss.mbari.org/data/canon/2013_Sep/Applications/stoqs_biplots_32bit.tar.gz"
+    zcat stoqs_biplots_32bit.tar.gz | tar -xvf -
 
    Follow instructions in cde-package/README_CDE
 
