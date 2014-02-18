@@ -28,13 +28,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # setting
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.dates import DAILY
-from datetime import datetime, timedelta
-from django.contrib.gis.geos import LineString, Point
+from datetime import datetime
 from utils.utils import round_to_n, pearsonr
 from textwrap import wrap
-from mpl_toolkits.basemap import Basemap
-import matplotlib.gridspec as gridspec
 from numpy import polyfit
 from pylab import polyval
 
