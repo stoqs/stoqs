@@ -128,7 +128,7 @@ class PlatformsBiPlot(BiPlot):
  
         for pl, LS in platformLineStringHash.iteritems():
             x,y = zip(*LS)
-            m.plot(x, y, '-', c=self._getColor(pl))
+            m.plot(x, y, '-', c=self._getColor(pl), linewidth=3)
 
         if self.args.mapLabels:
             m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], linewidth=0)
@@ -281,8 +281,9 @@ class PlatformsBiPlot(BiPlot):
             ##raw_input('P')
 
         print 'Done.'
-        print  'Make an animated gif with: convert -delay 10 {wcName}.png {baseName}.gif'.format(wcName=wcName, baseName='_'.join(fileName.split('_')[:-1]))
-        print  'Make an MPEG 4 with: ffmpeg -r 10 -i {baseName}.gif -vcodec mpeg4 -qscale 1 -y {baseName}.mp4'.format(baseName='_'.join(fileName.split('_')[:-1]))
+        print 'Make an animated gif with: convert -delay 10 {wcName}.png {baseName}.gif'.format(wcName=wcName, baseName='_'.join(fileName.split('_')[:-1]))
+        print 'Make an MPEG 4 with: ffmpeg -r 10 -i {baseName}.gif -vcodec mpeg4 -qscale 1 -y {baseName}.mp4'.format(baseName='_'.join(fileName.split('_')[:-1]))
+        print 'On a Mac open the .mp4 file in QuickTime Player and export the file for "iPad, iPhone & Apple TV" (.m4v format) for best portability.'
 
     def process_command_line(self):
         '''
