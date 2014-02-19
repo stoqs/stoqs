@@ -293,7 +293,7 @@ class PlatformsBiPlot(BiPlot):
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n' 
-        examples += sys.argv[0] + " -d stoqs_september2013 -p tethys Slocum_294 dorado Slocum_260 -x bb650 optical_backscatter660nm bbp700 optical_backscatter700nm -y chlorophyll fluorescence fl700_uncorr fluorescence --plotDir /tmp --plotPrefix stoqs_september2013_ --hourStep 3 --hourWindow 6 --xLabel '' --yLabel '' --title 'Fl vs. bb (red)' --minDepth 0 --maxDepth 100\n"
+        examples += sys.argv[0] + " -d stoqs_september2013 -p tethys Slocum_294 daphne Slocum_260 -x bb650 optical_backscatter660nm bb650 optical_backscatter700nm -y chlorophyll fluorescence chlorophyll fluorescence --plotDir /tmp --plotPrefix stoqs_september2013_ --hourStep 1 --hourWindow 2 --xLabel '' --yLabel '' --title 'Fl vs. bb (red)' --minDepth 0 --maxDepth 100\n"
         examples += sys.argv[0] + ' -d stoqs_simz_aug2013_t -p dorado dorado dorado dorado -x bbp420 bbp700 salinity salinity -y fl700_uncorr fl700_uncorr fl700_uncorr temperature --xLabel "" --yLabel ""\n'
         examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado Slocum_294 tethys -x bbp420 optical_backscatter470nm bb470 -y fl700_uncorr fluorescence chlorophyll\n'
         examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
