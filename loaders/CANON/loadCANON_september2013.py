@@ -127,41 +127,23 @@ cl.slocum_nemesis_parms = [ 'temperature', 'salinity', 'u', 'v']
 cl.slocum_nemesis_startDatetime = startdate
 cl.slocum_nemesis_endDatetime = enddate
 
+######################################################################
 # Wavegliders
-# WG OA
-cl.wg_oa_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/NetCDF/'
-cl.wg_oa_ctd_files = [ 'WG_OA_ctd.nc']
-cl.wg_oa_ctd_parms = ['TEMP', 'PSAL','DENSITY','OXYGEN' ]
-cl.wg_oa_ctd_startDatetime = startdate
-cl.wg_oa_ctd_endDatetime = enddate
+######################################################################
+# WG Tex - All instruments combined into one file - one time coordinate
+cl.wg_tex_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_Tex/final/'
+cl.wg_tex_files = [ 'WG_Tex_all_final.nc' ]
+cl.wg_tex_parms = [ 'wind_dir', 'wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'density', 'bb_470', 'bb_650', 'chl' ]
+cl.wg_tex_startDatetime = startdate
+cl.wg_tex_endDatetime = enddate
 
-# WG Tex - load from both CTD and EcoPuck data files
-cl.wg_tex_ctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_Tex/NetCDF/'
-cl.wg_tex_ctd_files = [ 'WG_Tex_ctd.nc', 'WG_Tex_eco.nc' ]
-cl.wg_tex_ctd_parms = ['TEMP', 'PSAL','DENSITY', 'chlorophyll','backscatter650','backscatter470']
-cl.wg_tex_ctd_startDatetime = startdate
-cl.wg_tex_ctd_endDatetime = enddate
-
-# WG OA
-cl.wg_oa_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/NetCDF/'
-cl.wg_oa_met_files = [ 'WG_OA_met.nc']
-cl.wg_oa_met_parms = ['WINDSPEED','WINDDIRECTION','AIRTEMPERATURE','AIRPRESSURE']
-cl.wg_oa_met_startDatetime = startdate
-cl.wg_oa_met_endDatetime = enddate
-
-# WG Tex
-cl.wg_tex_met_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_Tex/NetCDF/'
-cl.wg_tex_met_parms = ['WINDSPEED','WINDDIRECTION','AIRTEMPERATURE','AIRPRESSURE']
-cl.wg_tex_met_files = [ 'WG_Tex_met.nc']
-cl.wg_tex_met_startDatetime = startdate
-cl.wg_tex_met_endDatetime = enddate
-
-# WG OA
-cl.wg_oa_pco2_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/NetCDF/'
-cl.wg_oa_pco2_files = [ 'WG_OA_pco2.nc']
-cl.wg_oa_pco2_parms = ['pH','eqpco2','airco2','airtemp' ]
-cl.wg_oa_pco2_startDatetime = startdate
-cl.wg_oa_pco2_endDatetime = enddate
+# WG OA - All instruments combined into one file - one time coordinate
+cl.wg_oa_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/final/'
+cl.wg_oa_files = [ 'Sept_2013_OAWaveglider_final.nc' ]
+cl.wg_oa_parms = [ 'distance', 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'o2',
+                   'o2_sat', 'chl_bb_depth', 'beta_470', 'bb_470', 'beta_700', 'bb_700', 'chl', 'pCO2_water', 'pCO2_air', 'pH' ]
+cl.wg_oa_startDatetime = startdate
+cl.wg_oa_endDatetime = enddate
 
 ######################################################################
 #  WESTERN FLYER: September 20-27
@@ -395,11 +377,8 @@ if cl.args.test:
     cl.load_slocum_294(stride=10)
     cl.load_slocum_nemesis(stride=10)
 
-    cl.load_wg_oa_pco2(stride=100) 
-    cl.load_wg_oa_ctd(stride=100) 
-    cl.load_wg_oa_met(stride=100) 
-    cl.load_wg_tex_ctd(stride=100)
-    cl.load_wg_tex_met(stride=100)
+    cl.load_wg_tex(stride=10)
+    cl.load_wg_oa(stride=10) 
 
     cl.loadDorado(stride=1000)
     cl.loadDaphne(stride=100)
@@ -444,11 +423,8 @@ elif cl.args.optimal_stride:
     cl.load_slocum_294(stride=10)
     cl.load_slocum_nemesis(stride=10)
 
-    cl.load_wg_oa_pco2(stride=1) 
-    cl.load_wg_oa_ctd(stride=1) 
-    cl.load_wg_oa_met(stride=1) 
-    cl.load_wg_tex_ctd(stride=1)
-    cl.load_wg_tex_met(stride=1)
+    cl.load_wg_tex(stride=1)
+    cl.load_wg_oa(stride=1) 
 
     cl.loadDorado(stride=2)
     cl.loadDaphne(stride=2)
@@ -494,11 +470,8 @@ else:
     cl.load_slocum_294()
     cl.load_slocum_nemesis()
 
-    cl.load_wg_oa_pco2()
-    cl.load_wg_oa_ctd()
-    cl.load_wg_oa_met()
-    cl.load_wg_tex_ctd()
-    cl.load_wg_tex_met()
+    cl.load_wg_tex()
+    cl.load_wg_oa()
 
     cl.loadDorado()
     cl.loadDaphne()

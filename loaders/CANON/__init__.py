@@ -337,6 +337,28 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
                                         self.wg_tex_met_parms, self.dbAlias, stride, self.wg_tex_met_startDatetime, self.wg_tex_met_endDatetime)
 
+    def load_wg_tex(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_tex_files], self.wg_tex_files):
+            url = self.wg_tex_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
+                                        self.wg_tex_parms, self.dbAlias, stride, self.wg_tex_startDatetime, self.wg_tex_endDatetime)
+
+    def load_wg_oa(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_files], self.wg_oa_files):
+            url = self.wg_oa_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
+                                        self.wg_oa_parms, self.dbAlias, stride, self.wg_oa_startDatetime, self.wg_oa_endDatetime)
+
     def loadOA1pco2(self, stride=None):
         '''
         Mooring OA specific load functions
