@@ -60,9 +60,9 @@ This documentation refers to $STOQSHG_DIR, which will be something like ~/dev/st
     ~/dev/CDE/cde ./trajectory_biplots.py -d default -p dorado -x salinity -y temperature
     ~/dev/CDE/cde ./crossproduct_biplots.py -d default 
 
-   Note: Execute a real command, not just the --help option.
+   Note: Execute a real command, not just the --help option.  You can ignore warning messages.
 
-3. Copy the appropriate README_CDE to cde-package, e.g.:
+3. Copy the README_CDE file to cde-package:
 
     cp README_CDE cde-package
 
@@ -98,8 +98,8 @@ This documentation refers to $STOQSHG_DIR, which will be something like ~/dev/st
    Follow instructions in cde-package/README_CDE
 
 7. Remove the cde-package and .tar.gz file you created in contrib/analysis and copy privateSettings.save
-   file to privateSettings if using your development system; if using production system return your
-   database credentials back to stoqsadm or else your database loads will fail.
+   back to privateSettings if using your development system; if using production system restore your
+   database credentials or else your database loads will fail.
 
 --
 Mike McCann
