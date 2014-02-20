@@ -294,17 +294,8 @@ class PlatformsBiPlot(BiPlot):
 
         examples = 'Examples:' + '\n\n' 
         examples += sys.argv[0] + " -d stoqs_september2013 -p tethys Slocum_294 daphne Slocum_260 -x bb650 optical_backscatter660nm bb650 optical_backscatter700nm -y chlorophyll fluorescence chlorophyll fluorescence --plotDir /tmp --plotPrefix stoqs_september2013_ --hourStep 1 --hourWindow 2 --xLabel '' --yLabel '' --title 'Fl vs. bb (red)' --minDepth 0 --maxDepth 100\n"
-        examples += sys.argv[0] + ' -d stoqs_simz_aug2013_t -p dorado dorado dorado dorado -x bbp420 bbp700 salinity salinity -y fl700_uncorr fl700_uncorr fl700_uncorr temperature --xLabel "" --yLabel ""\n'
         examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado Slocum_294 tethys -x bbp420 optical_backscatter470nm bb470 -y fl700_uncorr fluorescence chlorophyll\n'
-        examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
-        examples += sys.argv[0] + ' -d stoqs_september2013_o -p tethys -x bb470 -y chlorophyll --hourStep 12 --hourWindow 24\n'
-        examples += sys.argv[0] + ' -d stoqs_september2013_o -p Slocum_294 -x optical_backscatter470nm -y fluorescence --hourStep 12 --hourWindow 24\n'
-        examples += sys.argv[0] + ' -d stoqs_september2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
-        examples += sys.argv[0] + ' -d stoqs_march2013_o -p dorado -x bbp420 -y fl700_uncorr\n'
-        examples += sys.argv[0] + ' -d stoqs_march2013_o -p daphne -x bb470 -y chlorophyll\n'
-        examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll\n'
-        examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll --daytime\n'
-        examples += sys.argv[0] + ' -d stoqs_march2013_o -p tethys -x bb470 -y chlorophyll --nighttime\n'
+        examples += sys.argv[0] + ' -d stoqs_march2013_o -p daphne tethys -x bb470 bb470 -y chlorophyll chlorophyll --hourStep 6 --hourWindow 12\n'
         examples += '\n\nMultiple platform and parameter names are paired up in respective order.\n'
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
