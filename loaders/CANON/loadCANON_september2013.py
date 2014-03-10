@@ -140,8 +140,8 @@ cl.wg_tex_endDatetime = enddate
 # WG OA - All instruments combined into one file - one time coordinate
 cl.wg_oa_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/final/'
 cl.wg_oa_files = [ 'Sept_2013_OAWaveglider_final.nc' ]
-cl.wg_oa_parms = [ 'distance', 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'o2',
-                   'o2_sat', 'chl_bb_depth', 'beta_470', 'bb_470', 'beta_700', 'bb_700', 'chl', 'pCO2_water', 'pCO2_air', 'pH' ]
+cl.wg_oa_parms = [ 'distance', 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'O2_conc',
+                   'O2_sat', 'beta_470', 'bb_470', 'beta_700', 'bb_700', 'chl', 'pCO2_water', 'pCO2_air', 'pH' ]
 cl.wg_oa_startDatetime = startdate
 cl.wg_oa_endDatetime = enddate
 
