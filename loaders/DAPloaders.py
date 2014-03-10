@@ -1174,9 +1174,10 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
 
     # Auxillary coordinates are the same for all include_names
     loader.auxCoords = {}
-    if pName == 'waveglider':
-        for v in loader.include_names:
-            loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+    if pTypeName == 'waveglider':
+        #for v in loader.include_names:
+        #    loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+        pass
     elif not pName.startswith('Slocum'):
         for v in loader.include_names:
             loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
