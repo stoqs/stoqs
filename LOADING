@@ -45,11 +45,11 @@ prerequisites:
    INSTALL file), in this example a test database (with '_t' suffix) is created:
 
      create database stoqs_september2012_t owner=stoqsadm template=template_postgis;
-     alter database stoqs_september2012_t set timezone='GMT'
+     alter database stoqs_september2012_t set timezone='GMT';
      \c stoqs_september2012_t
      grant all on all tables in schema public to stoqsadm;
 
-5. Add the new database to your privateSettings file (see INSTALL):
+5. Edit the privateSettings file to add a entry for the database you created:
 
      'stoqs_september2012_t': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
@@ -69,11 +69,15 @@ prerequisites:
    environment (see PREREQUISITES and INSTALL):
 
      source venv-stoqs/bin/activate
-     ./manage.py syncdb --database=stoqs_september2012_t
+     ./manage.py syncdb --noinput --database=stoqs_september2012_t
 
-8. Execute your load script.  
+8. Make sure that your session does not have the PYTHONPATH environment set; you may need to do:
 
-     loaders/CANON/loadCANONseptember2012.py --test
+     unset PYTHONPATH
+
+   Then, execute your load script on the test database:
+
+     loaders/CANON/loadCANONseptember2012.py -t
 
    To populate a full-resolution database repeat steps 4-7 with database name without the 
    '_t' suffix (stoqs_september2012) and execute:
