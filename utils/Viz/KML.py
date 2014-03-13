@@ -41,7 +41,7 @@ class KML(object):
     def __init__(self, request, qs_mp, qparams, stoqs_object_name, **kwargs):
         '''
         Possible kwargs and their default values:
-            @withTimeStamp: True
+            @withTimeStamps: True
             @withLineStrings: True
         '''
         self.request = request
@@ -52,10 +52,10 @@ class KML(object):
         ##logger.debug('request = %s', request)
         ##logger.debug('kwargs = %s', kwargs)
         logger.debug('qparams = %s', qparams)
-        if 'withTimeStamp' in kwargs:
-            self.withTimeStampFlag = kwargs['withTimeStamp']
+        if 'withTimeStamps' in kwargs:
+            self.withTimeStampsFlag = kwargs['withTimeStamps']
         else:
-            self.withTimeStampFlag = True
+            self.withTimeStampsFlag = True
 
         if 'withLineStrings' in kwargs:
             self.withLineStringsFlag = kwargs['withLineStrings']
@@ -289,7 +289,7 @@ class KML(object):
             coordStr = "%.6f,%.6f,-%.1f" % (lon, lat, depth)
     
             if lastCoordStr:
-                if self.withTimeStampFlag:
+                if self.withTimeStampsFlag:
                     placemark = """
 <Placemark>
 <styleUrl>#%s</styleUrl>
@@ -394,7 +394,7 @@ class KML(object):
                 logger.debug("clt_index = %d", clt_index)
             ge_color_val = "ff%02x%02x%02x" % ((round(clt[clt_index][2] * 255), round(clt[clt_index][1] * 255), round(clt[clt_index][0] * 255)))
 
-            if self.withTimeStampFlag:
+            if self.withTimeStampsFlag:
                 placemark = """
 <Placemark>
 <styleUrl>#%s</styleUrl>
