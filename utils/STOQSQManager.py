@@ -1131,8 +1131,14 @@ class STOQSQManager(object):
                 if self.kwargs['parameterplot'][0]:
                     parameterID = self.kwargs['parameterplot'][0]
                     parameterGroups = getParameterGroups(self.request.META['dbAlias'], models.Parameter.objects.get(id=parameterID))
-                    if not self.mpq.qs_mp:
+                    try:
+                        count = self.mpq.count()
+                        logger.debug('count = %s', count)
+                    except AttributeError:
+                        logger.debug('Calling self.mpq.buildMPQuerySet()')
                         self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+                    else:
+                        logger.debug('self.mpq.qs_mp = %s', self.mpq.qs_mp)
                     try:
                         platformName = self.kwargs['parameterplot'][1]
                     except IndexError, e:
