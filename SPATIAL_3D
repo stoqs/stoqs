@@ -21,15 +21,16 @@ GeoElevationGrid:
 </scene>
 
 
-POPGeometry from a GMT .grd file:
----------------------------------
+X3DOM popGeometry from a GMT .grd file:
+---------------------------------------
 
-0. Start with a GMT .grd file such as that produced by an mbgrid(1) execution
-1. Convert to an xyz "point cloud", apply 10x vertical exaggeration, convert to Earth Centered Earth Fixed coordinate system, e.g.:
+0. Start with a GMT .grd bathymetry file such as that produced by an mbgrid(1) execution
 
-    grd2xyz MontBay100.grd --D_FORMAT=%f | sed '/NaN/d' | awk '{print $1, $2, 10 * $3}' | mapproject -E > MontBay100_10x.asc
+1. Convert to an xyz .asc "point cloud", apply 10x vertical exaggeration, convert to Earth Centered Earth Fixed coordinate system, e.g.:
 
-2. Use Meshlab to construct a surface from the .asc file and save it as a .x3d IndexedFaceSet.  You need to use Meshlab interactively
+    grd2xyz Monterey25.grd --D_FORMAT=%f | sed '/NaN/d' | awk '{print $1, $2, 10 * $3}' | mapproject -E > Monterey25_10x.asc
+
+2. Use Meshlab to construct a surface from the .asc file and save it as a Stanford .ply file.  You need to use Meshlab interactively
    to load the .asc mesh, construct Normals and a surface, and clean it up before saving as a .ply or .x3d file.  Here are the
    suggested steps relevent to Meshlab_64bit v1.3.3 on a Mac:
 
@@ -44,7 +45,9 @@ POPGeometry from a GMT .grd file:
     expects to create a closed surface and the extrapolated faces need to be removed.)
     File -> Export Mesh As                                      (Pick an appropriate .plyx name and have only Face Normal selected in the dialog)
 
-3. Use InstantReality aopt tool to "flatten" the Scene and create POPGeometry, e.g.:
+   There are several good Meshlab video tutorials online that will help you understand how to use the UI.
+
+3. Use InstantReality aopt tool to "flatten" the Scene and create popGeometry, e.g.:
 
     mkdir /Users/mccann/Downloads/binGeo
     ./aopt -i /Users/mccann/Downloads/Monterey25_10x-clean.ply -F Scene -b /Users/mccann/Downloads/Monterey25_10x-opt.x3db
