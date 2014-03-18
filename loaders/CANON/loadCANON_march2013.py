@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So tha
 from CANON import CANONLoader
 
 cl = CANONLoader('stoqs_march2013', 'CANON-ECOHAB - March 2013',
-                    x3dTerrains= { '/stoqs/static/x3d/SanPedroBasin50.x3d': {
+                    x3dTerrains= { '/stoqs/static/x3d/SanPedroBasin50/SanPedroBasin50_10x-pop.x3d': {
                                         'position': '-2523652.5 -4726093.2 3499413.2',
                                         'orientation': '0.96902 -0.20915 -0.13134 1.74597',
                                         'centerOfRotation': '-2505293.6 -4686937.5 3513055.2'
