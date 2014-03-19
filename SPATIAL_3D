@@ -51,7 +51,7 @@ X3DOM popGeometry from a GMT .grd file:
 
     mkdir /Users/mccann/Downloads/binGeo -or- remove files in /Users/mccann/Downloads/binGeo
     ./aopt -i /Users/mccann/Downloads/Monterey25_10x-clean.ply -F Scene -b /Users/mccann/Downloads/Monterey25_10x-opt.x3db
-    ./aopt -i /Users/mccann/Downloads/Monterey25_10x-opt.x3db -f PrimitiveSet:creaseAngle:4 -V -K "/Users/mccann/Downloads/binGeo/:i" -N /Users/mccann/Downloads/Monterey25_10x.html
+    ./aopt -i /Users/mccann/Downloads/Monterey25_10x-opt.x3db -f PrimitiveSet:creaseAngle:4 -V -K "/Users/mccann/Downloads/binGeo/:ib" -N /Users/mccann/Downloads/Monterey25_10x.html
 
 4. Copy the X3D <scene> element and its contents from the generated .html file into a .x3d file and put it along with the the associated files 
    in binGeo to the stoqs/static/x3d directory.  Replace the paths to the binGeo files with what works on the stoqs server, e.g.:
