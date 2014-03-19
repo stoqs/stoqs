@@ -251,3 +251,5 @@
             <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level14.bin' numIndices='2274' vertexDataBufferOffset='47614'></popGeometryLevel>
           </popGeometry>
         </shape>
+      </scene>
+
