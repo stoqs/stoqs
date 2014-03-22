@@ -38,7 +38,8 @@ X3DOM popGeometry from a GMT .grd file:
     Filters -> Point Set -> Compute normals for point set       (Use defaults on dialog)
     Filters -> Point Set -> Surface Reconstruction Poisson      (Set Octree Depth to 11 and Solver Divide to 10)
     Wait a serveral minutes (There is no progress bar displayed)
-    Filters -> Sampling -> Mesh Element Subsampling             (If needed, to set number of vertices to a number less than 1 million)
+    Filters -> Sampling -> Mesh Element Subsampling             (Subsampling by about a factor of 2 maintains fidelity and helps reduce
+                                                                 spurious faces. Subsample more to reduce the number of triangles.)
     Select the Sampled Mesh layer
     Filters -> Point Set -> Surface Reconstruction Poisson      (Set Octree Depth to 11 and Solver Divide to 10)
     Clean the new mesh by selecting face outside of the original point cloud and deleting them. (The Poisson reconstruction
