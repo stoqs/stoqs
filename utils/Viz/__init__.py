@@ -415,6 +415,11 @@ class MeasuredParameter(object):
                     showGeoX3DDataFlag = True
 
         VERT_EXAG = 10
+        if 've' in self.kwargs.keys():
+            if self.kwargs['ve']:
+                VERT_EXAG = float(self.kwargs['ve'][0])
+
+        logger.debug("Building X3D data values with VERT_EXAG = %f", VERT_EXAG)
 
         x3dResults = {}
         if not showGeoX3DDataFlag:
@@ -431,7 +436,6 @@ class MeasuredParameter(object):
             for act in self.value_by_act.keys():
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
-                    # 10x vertical exaggeration - must match the GeoElevationGrid
                     points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * VERT_EXAG)
 
                     cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
