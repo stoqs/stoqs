@@ -35,7 +35,8 @@ cl = CANONLoader('stoqs_september2013', 'CANON-ECOHAB - September 2013',
                            x3dTerrains= { '/stoqs/static/x3d/Monterey25_256.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236'
+                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                        'VerticalExaggeration': '10',
                                         }
                                  } )
 
