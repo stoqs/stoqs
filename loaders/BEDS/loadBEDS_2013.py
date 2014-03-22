@@ -30,7 +30,23 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 
 from BEDS import BEDSLoader
 
-bl = BEDSLoader('stoqs_beds2013', 'BEDS - 2013')
+bl = BEDSLoader('stoqs_beds2013', 'BEDS - 2013', 
+                                x3dTerrains= { 
+                                    'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x/MontereyCanyonBeds_1m+5m_1x.x3d': {
+                                        'position': '-2706054.97556 -4352297.32558 3798919.71875',
+                                        'orientation': '0.92863 -0.26237 -0.26231 1.59089',
+                                        'centerOfRotation': '-2700040.0076912297 -4342439.858864189 3798898.2847731174',
+                                        'VerticalExaggeration': '1',
+                                    },
+                                    ##'/stoqs/static/x3d/Monterey25/Monterey25_10x-pop.x3d': {
+                                    ##    'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                    ##    'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                    ##    'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                    ##    'VerticalExaggeration': '10',
+                                    ##}
+                                 }
+
+)
 
 # Base OPeNDAP server
 bl.tdsBase = 'http://odss-test.shore.mbari.org/thredds/'
@@ -90,4 +106,9 @@ elif bl.args.optimal_stride:
 else:
     bl.stride = bl.args.stride
     bl.loadBEDS()
+
+# Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+bl.addTerrainResources()
+
+print "All Done."
 

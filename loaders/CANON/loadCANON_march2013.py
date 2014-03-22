@@ -28,7 +28,8 @@ cl = CANONLoader('stoqs_march2013', 'CANON-ECOHAB - March 2013',
                     x3dTerrains= { '/stoqs/static/x3d/SanPedroBasin50/SanPedroBasin50_10x-pop.x3d': {
                                         'position': '-2523652.5 -4726093.2 3499413.2',
                                         'orientation': '0.96902 -0.20915 -0.13134 1.74597',
-                                        'centerOfRotation': '-2505293.6 -4686937.5 3513055.2'
+                                        'centerOfRotation': '-2505293.6 -4686937.5 3513055.2',
+                                        'VerticalExaggeration': '10',
                                         }
                                  } )
 
@@ -365,13 +366,13 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadDorado(stride=100)
-    cl.loadDaphne(stride=10000)
-    cl.loadTethys(stride=10000)
+    cl.loadDorado(stride=10)
+    cl.loadDaphne(stride=10)
+    cl.loadTethys(stride=10)
     ##cl.loadESPmack()
     ##cl.loadESPbruce()
-    cl.loadRCuctd(stride=10)
-    cl.loadRCpctd(stride=10)
+    cl.loadRCuctd(stride=2)
+    cl.loadRCpctd(stride=1)
     ##cl.loadHeHaPe()
     ##cl.loadRusalka()
     ##cl.loadYellowfin()
