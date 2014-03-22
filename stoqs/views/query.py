@@ -77,6 +77,7 @@ query_parms = {
                    'secondsperpixel': 'secondsperpixel',    # Resolution of time-depth-flot window
                    'x3dterrains': 'x3dterrains',            # Hash of 3D Terrain info 
                    'resources': 'resources',                # Hash of Resources for Activities in the selection
+                   've': 've',                              # Vertical Exaggeration of selected terrain in UI
 }
 
 def get_http_site_uri(request):
