@@ -63,8 +63,11 @@ bl.process_command_line()
 
 if bl.args.test:
     bl.bed_files = [ 'bed01/BED00038.nc', 'bed01/BED00039.nc', ]
-    ##bl.loadBEDS(pName='BED01', stride=1000)
+    bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED00038_scene.x3d', 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED00039_scene.x3d' ]
+    bl.loadBEDS(pName='BED01', stride=1000)
+
     bl.bed_files = [ 'bed03/30100046_partial_decimated10.nc', ]
+    bl.bed_x3durls = [ 'http://dods.mbari.org/data/beds/x3d/20140218/BED03/30100046_partial_decimated10_scene.x3d' ]
     bl.loadBEDS(pName='BED03', stride=10)
 
 elif bl.args.optimal_stride:

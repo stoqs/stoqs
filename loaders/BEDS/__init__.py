@@ -31,24 +31,26 @@ class BEDSLoader(LoadScript):
     Common routines for loading all BEDS data
     '''
 
-    brownish = {'bed00':       '8c510a',
-                'bed01':       'bf812d',
-                'bed02':       '4f812d',
+    brownish = {'bed01':       '8c510a',
+                'bed02':       'bf812d',
+                'bed03':       '4f812d',
              }
-    colors = {  'bed00':       'ffeda0',
-                'bed01':       'ffeda0',
-                'bed02':       '4feda0',
+    colors = {  'bed01':       'ffeda0',
+                'bed02':       'ffeda0',
+                'bed03':       '4feda0',
              }
 
-    def loadBEDS(self, stride=None):
+    def loadBEDS(self, pName='BED01', stride=None):
         '''
         BEDS specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + ' (stride=%d)' % stride for a in self.bed_files], self.bed_files):
+        for (aName, file, x3dmodelurl) in zip([ a + ' (stride=%d)' % stride for a in self.bed_files], self.bed_files, self.bed_x3dmodels):
             url = self.bed_base + file
-            DAPloaders.runTimeSeriesLoader(url, self.campaignName, aName, 'bed00', self.colors['bed00'], 'bed', 'deployment', 
+            DAPloaders.runTimeSeriesLoader(url, self.campaignName, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
                                         self.bed_parms, self.dbAlias, stride)
+
+            self.addPlaybackResources(x3dmodelurl, aName)
 
 
 if __name__ == '__main__':
