@@ -183,8 +183,8 @@ class Base_Loader(STOQS_Loader):
                 maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
             elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile': 
                 logger.debug('Getting timeseries start time for v = %s', v)
-                minDT[v] = from_udunits(self.ds[v][ac['time']][:][0][0], self.ds[ac['time']].attributes['units'])
-                maxDT[v] = from_udunits(self.ds[v][ac['time']][:][-1][0], self.ds[ac['time']].attributes['units'])
+                minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
+                maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
 
         logger.debug('minDT = %s', minDT)
         logger.debug('maxDT = %s', maxDT)
