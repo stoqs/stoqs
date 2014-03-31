@@ -201,6 +201,28 @@ class LoadScript(object):
                 self.logger.info('Resource uristring=%s, name=%s, value=%s', url, name, value)
 
 
+    def addPlaybackResources(self, x3dmodelurl, aName):
+        '''
+        If X3D scene graph and DOM control information is specified then add as Resources to Activity.  
+        To be called with each file (Activity) load.
+        '''
+
+        resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+                                name='x3dplayback', description='X3D scene graph for Activity playback')
+        ##resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+        ##                        name='x3dplaybackhtml', description='X3D DOM control HTML stubs for Activity playback')
+
+        self.logger.info('Adding to ResourceType: %s', resourceType)
+        self.logger.debug('Looking in database %s for Activity name = %s', self.dbAlias, aName)
+        activity = m.Activity.objects.using(self.dbAlias).get(name=aName)
+        
+        resource, created = m.Resource.objects.using(self.dbAlias).get_or_create(
+                            uristring=x3dmodelurl, name='X3D_model', value='Output from bed2x3d.py - uristring to be included in GeoLocation node', resourcetype=resourceType)
+        cr, created = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                            activity=activity, resource=resource)
+        self.logger.info('Resource uristring=%s', x3dmodelurl)
+
+
 class STOQS_Loader(object):
     '''
     The STOQSloaders class contains methods common across all loaders for creating and updating
