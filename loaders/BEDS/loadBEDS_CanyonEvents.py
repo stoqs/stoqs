@@ -50,11 +50,6 @@ bl.dodsBase = bl.tdsBase + 'dodsC/'
 
 # Files created by bed2netcdf.py from the BEDS SVN BEDS repository
 bl.bed_base = bl.dodsBase + 'BEDS/'
-bl.bed_files = [
-                'bed01/BED00038.nc', 'bed01/BED00039.nc',
-                'bed03/30100046_partial_decimated10.nc',
-               ]
-
 bl.bed_parms = ['XA', 'YA', 'ZA', 'XR', 'YR', 'ZR', 'ROT', 'A', 'PRESS', 'BED_DEPTH']
 
 
@@ -67,7 +62,7 @@ if bl.args.test:
     bl.loadBEDS(pName='BED01', stride=1000)
 
     bl.bed_files = [ 'bed03/30100046_partial_decimated10.nc', ]
-    bl.bed_x3durls = [ 'http://dods.mbari.org/data/beds/x3d/20140218/BED03/30100046_partial_decimated10_scene.x3d' ]
+    bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20140218/BED03/30100046_partial_decimated10_scene.x3d' ]
     bl.loadBEDS(pName='BED03', stride=10)
 
 elif bl.args.optimal_stride:
@@ -79,7 +74,6 @@ else:
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 bl.addTerrainResources()
-##bl.addPlaybackResources()
 
 print "All Done."
 
