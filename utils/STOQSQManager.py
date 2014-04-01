@@ -84,6 +84,7 @@ class STOQSQManager(object):
             'parameterparameterpng': self.getParameterParameterPNG,
             'parameterplatforms': self.getParameterPlatforms,
             'x3dterrains': self.getX3DTerrains,
+            'x3dplaybacks': self.getX3DPlaybacks,
             'resources': self.getResources,
         }
         
@@ -1182,6 +1183,27 @@ class STOQSQManager(object):
             logger.warn('No resourcetype__name of x3dterrain in %s: %s', self.dbname, e)
 
         return x3dtHash
+
+    def getX3DPlaybacks(self):
+        '''
+        Query Resources to get any X3D Playback information for the Activities remaining in the selection
+        '''
+        x3dpHash = {}
+        try:
+            for r in models.Resource.objects.using(self.dbname).filter(resourcetype__name='x3dplayback').values(
+                        'uristring', 'name', 'value', 'activityresource__activity__name'):
+                ms = models.Measurement.objects.using(self.dbname).filter(instantpoint__activity__name=r['activityresource__activity__name'])
+                try:
+                    x3dpHash[r['uristring']][r['name']] = r['value']
+                    x3dpHash[r['uristring']]['startGeoCoords'] = '%s %s %s' % (ms[0].geom.y, ms[0].geom.x, -ms[0].depth)
+                except KeyError:
+                    x3dpHash[r['uristring']] = {}
+                    x3dpHash[r['uristring']][r['name']] = r['value']
+                    x3dpHash[r['uristring']]['startGeoCoords'] = '%s %s %s' % (ms[0].geom.y, ms[0].geom.x, -ms[0].depth)
+        except DatabaseError, e:
+            logger.warn('No resourcetype__name of x3dplayback in %s: %s', self.dbname, e)
+
+        return x3dpHash
 
     def getResources(self):
         '''
