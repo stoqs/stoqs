@@ -1,0 +1,54 @@
+RELOAD
+======
+
+Instructions to backout and reload data from a STOQS database. 
+
+If source data has been reprocessed or if you need to reload data for other reasons
+here are the steps to make that happen.
+
+1. Copy new source data files to the server where the netCDF creation scripts read them,
+   e.g.:
+
+    cd /mbari/Tempbox/mccann/MartinCTD_CANON_Fall2013
+    scp *.asc stoqsadm@odss.mbari.org:/data/canon/2013_Sep/Platforms/Ships/Martin/pctd
+    scp *.hdr stoqsadm@odss.mbari.org:/data/canon/2013_Sep/Platforms/Ships/Martin/pctd
+    scp *.btl stoqsadm@odss.mbari.org:/data/canon/2013_Sep/Platforms/Ships/Martin/pctd
+
+2. Execute the script that creates netCDF files and copies them back to the OPeNDAP server.
+   e.g.:
+
+    cd loaders/CANON/toNetCDF/
+    ./makeJMpctdNetCDF.sh
+    # Make sure the processing proceeds without error.  Fix any problems and rerun.
+    # Sometimes files are provided with names that don't match.
+
+3. Remove activities associated with the netCDF files.  Launch a Python shell on a system
+   with a privateSettings entry to the database you wish to modify, e.g.:
+
+    (venv-stoqs)[mccann@localhost stoqshg]$ ./manage.py shell_plus
+
+    acts = Activity.objects.using('stoqs_september2013_o').filter(name__contains='JMC')
+    for a in acts:
+        a.delete(using='stoqs_september2013_o')
+   
+4. Edit appropriate load script to load just the new data, e.g.:
+
+    ...
+    elif cl.args.optimal_stride:
+        # Next 2 lines are temporary for addition of reprocessed JM pctd data
+        cl.loadJMpctd(stride=1)
+        sys.exit()
+        ...
+
+5. Execute load, e.g.:
+
+    loaders/CANON/loadCANON_september2013.py -o
+
+
+6. Remove temporary lines added to the load script
+
+
+    
+
+
+6. Check that all looks good in the STOQS UI
