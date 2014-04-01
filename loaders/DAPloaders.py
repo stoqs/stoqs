@@ -1178,9 +1178,6 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
         #for v in loader.include_names:
         #    loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
         pass
-    elif not pName.startswith('Slocum'):
-        for v in loader.include_names:
-            loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
     elif pName.startswith('Slocum_nemesis'):
         loader.auxCoords['u'] = {'time': 'time_uv', 'latitude': 'lat_uv', 'longitude': 'lon_uv', 'depth': 0.0}
         loader.auxCoords['v'] = {'time': 'time_uv', 'latitude': 'lat_uv', 'longitude': 'lon_uv', 'depth': 0.0}
