@@ -88,9 +88,11 @@ cl.m1_startDatetime = startDatetime
 cl.m1_endDatetime = endDatetime
 
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local GOC12 dir
-cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SIMZAug2013')
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SIMZOct2013')
 cl.subsample_csv_files = [
-                            '2013_Aug_SIMZ_Niskin_microscopy_STOQS.csv',
+                            '2013_SIMZ_AUV_STOQS.csv',
+                            '2013_SIMZ_Niskins_STOQS.csv',
+                            ##'2013_SIMZ_TowNets_STOQS.csv',
                          ]
 
 
@@ -103,7 +105,7 @@ if cl.args.test:
     cl.loadRCuctd(stride=100)
     cl.loadRCpctd(stride=1)
     cl.loadM1(stride=10)
-    ##cl.loadSubSamples()
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
     ##cl.loadL_662(stride=1)
@@ -111,7 +113,7 @@ elif cl.args.optimal_stride:
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
     cl.loadM1(stride=1)
-    ##cl.loadSubSamples()
+    cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
@@ -120,5 +122,5 @@ else:
     cl.loadRCuctd()
     cl.loadRCpctd()
     cl.loadM1()
-    ##cl.loadSubSamples()
+    cl.loadSubSamples()
 
