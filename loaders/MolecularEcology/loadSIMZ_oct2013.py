@@ -24,7 +24,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So tha
 
 from CANON import CANONLoader
 
-cl = CANONLoader('stoqs_simz_oct2013', 'Sampling and Identification of Marine Zooplankton - October 2013')
+cl = CANONLoader('stoqs_simz_oct2013', 'Sampling and Identification of Marine Zooplankton - October 2013',
+                                x3dTerrains = {
+                                    '/stoqs/static/x3d/Monterey25/Monterey25_10x-pop.x3d': {
+                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                        'VerticalExaggeration': '10',
+                                    }
+                                }
+                )
+
 startDatetime = datetime.datetime(2013, 10, 22)
 endDatetime = datetime.datetime(2013, 10, 29)
 
@@ -124,3 +134,7 @@ else:
     cl.loadM1()
     cl.loadSubSamples()
 
+# Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+cl.addTerrainResources()
+
+print "All Done."
