@@ -1184,6 +1184,9 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
         loader.auxCoords['temperature'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
         loader.auxCoords['salinity'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
 
+    elif pName.startswith('SPRAY'):
+        for p in loader.include_names:
+            loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
 
     # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications
 
