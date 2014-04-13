@@ -996,10 +996,10 @@ class Lrauv_Loader(Trajectory_Loader):
 
     def preProcessParams(self, row):
         '''
-        Special fixups for 'shore' data
+        Special fixups for 'shore' synchronized data
         '''
-        if self.url.find('shore') == -1 and self.url.find('Tethys') == -1 and self.url.find('Daphne') == -1 :
-            # Full-resolution data (whose name does not contain 'shore', 'Tethys', 'Daphne') are in radians
+        if self.url.find('shore') == -1 and self.url.find('Tethys') == -1 and self.url.find('Daphne') == -1 and self.url.find('hotspot'):
+            # Full-resolution data (whose name does not contain 'shore', 'Tethys', 'Daphne', 'hotspot') are in radians
             if row.has_key('latitude'):
                 row['latitude'] = row['latitude'] * 180.0 / numpy.pi
             if row.has_key('longitude'):
@@ -1120,7 +1120,7 @@ def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAl
     else:
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride):
+def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1136,7 +1136,9 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
             platformName = pName,
             platformColor = pColor,
             platformTypeName = pTypeName,
-            stride = stride)
+            stride = stride,
+            startDatetime = startDatetime,
+            endDatetime = endDatetime)
 
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
