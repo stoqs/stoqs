@@ -28,7 +28,15 @@ X3DOM popGeometry from a GMT .grd file:
 
 1. Convert to an xyz .asc "point cloud", apply 10x vertical exaggeration, convert to Earth Centered Earth Fixed coordinate system, e.g.:
 
+   a. Geocentric - no GeoOrigin:
+
     grd2xyz Monterey25.grd --D_FORMAT=%f | sed '/NaN/d' | awk '{print $1, $2, 10 * $3}' | mapproject -E > Monterey25_10x.asc
+
+   b. With a GeoOrigin:
+
+    echo -121 36 0 | mapproject -E --D_FORMAT=%f      # -2660686.065357 -4428125.227549 3728191.675831
+    grd2xyz MontereyCanyonBeds_1m+5m.grd --D_FORMAT=%f | sed '/NaN/d' | awk '{print $1, $2, 10 * $3}' | mapproject -E --D_FORMAT=%f | \
+        awk '{print $1 - -2660686.065357, $2 - -4428125.227549, $3 - 3728191.675831}' > MontereyCanyonBeds_1m+5m_10x_GeoOrigin_-121_36_0.asc
 
 2. Use Meshlab to construct a surface from the .asc file and save it as a Stanford .ply file.  You need to use Meshlab interactively
    to load the .asc mesh, construct Normals and a surface, and clean it up before saving as a .ply or .x3d file.  Here are the
@@ -47,6 +55,24 @@ X3DOM popGeometry from a GMT .grd file:
     File -> Export Mesh As...                                   (Pick an appropriate .ply name and have only Face Normal selected in the dialog)
 
    There are several good Meshlab video tutorials online that will help you understand how to use the UI.
+
+   Here's another Meshlab set of operations that rendered a high quality mesh for 1m+5m bathymetry data for Monterey Canyon:
+
+        Load .asc file
+        Sampling -> Poisson-disk Sampling (to reduce number of vertices from 49,879,075 to 20,000,000)
+        Point Sets -> Compute normals for point sets
+        Surface Reconstruction: Poisson (Octree Depth: 12, Solver Divide: 10)
+        Remeshing, Simplification and Reconstruction -> Quadric Edge Collapse Decimation:
+                - Preserve Normal
+                - Preseve Topology
+                - Optimal Position of Simplified Vertices
+                - Planar Simplification
+                - Post-simplification cleaning
+        Cleanup (with plenty of intermediate saves)
+        Smoothing ... -> Laplacian smooth (surface preserve)
+        Export mesh to .ply
+
+    (See http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0.html)
 
 3. Use InstantReality aopt tool to "flatten" the Scene and create popGeometry, e.g.:
 

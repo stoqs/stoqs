@@ -28,10 +28,11 @@ from BEDS import BEDSLoader
 
 bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events', 
                                 x3dTerrains= { 
-                                    'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x/MontereyCanyonBeds_1m+5m_1x.x3d': {
-                                        'position': '-2706054.97556 -4352297.32558 3798919.71875',
-                                        'orientation': '0.92863 -0.26237 -0.26231 1.59089',
-                                        'centerOfRotation': '-2700040.0076912297 -4342439.858864189 3798898.2847731174',
+                                    'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0_scene.x3d': {
+                                        'position': '-44571.54862 77379.85721 71401.38520',
+                                        'orientation': '0.92328 -0.26229 -0.28063 1.50408',
+                                        'centerOfRotation': '-39420.23433350699 85753.45910644953 70752.14499748436',
+                                        'geoOrigin': '-121 36 0',
                                         'VerticalExaggeration': '1',
                                     },
                                     ##'/stoqs/static/x3d/Monterey25/Monterey25_10x-pop.x3d': {
@@ -57,13 +58,16 @@ bl.bed_parms = ['XA', 'YA', 'ZA', 'XR', 'YR', 'ZR', 'ROT', 'A', 'PRESS', 'BED_DE
 bl.process_command_line()
 
 if bl.args.test:
-    bl.bed_files = [ 'bed01/BED00038.nc', 'bed01/BED00039.nc', ]
-    bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED00038_scene.x3d', 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED00039_scene.x3d' ]
+    ##bl.bed_files = [ 'bed01/BED00038.nc', 'bed01/BED00039.nc', 'bed01/BED01_1_June_2013.nc']
+    bl.bed_files = [ 'bed01/BED01_1_June_2013.nc']
+    ##bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED00038_scene.x3d', 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED00039_scene.x3d' ]
+    bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED01_1_June_2013_scene.x3d' ]
+    bl.bed_parms = ['XA', 'YA', 'ZA', 'A']
     bl.loadBEDS(pName='BED01', stride=1000)
 
     bl.bed_files = [ 'bed03/30100046_partial_decimated10.nc', ]
     bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20140218/BED03/30100046_partial_decimated10_scene.x3d' ]
-    bl.loadBEDS(pName='BED03', stride=10)
+    ##bl.loadBEDS(pName='BED03', stride=10)
 
 elif bl.args.optimal_stride:
     bl.loadBEDS(stride=1)
