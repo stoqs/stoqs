@@ -10,14 +10,14 @@
 # 15 January 2014
 
 LOGIN=stoqsadm
-##RH=zuma.rc.mbari.org
-RH=odss.mbari.org
+RH=zuma.rc.mbari.org
+##RH=odss.mbari.org
 
 
-DIR=/data/canon/2013_Sep/Platforms/Ships/Rachel_Carson/pctd
+DIR=/data/canon/2014_Apr/Platforms/Ships/Rachel_Carson/pctd
 LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
 rsync -rv $LOGIN@$RH:$DIR  .
-./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during CANON - ECOHAB September 2013" 
+./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during CANON - ECOHAB April 2014" 
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 rm -r $LOCALDIR
 
