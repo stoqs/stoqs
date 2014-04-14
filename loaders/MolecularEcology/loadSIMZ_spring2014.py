@@ -24,14 +24,24 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So tha
 
 from CANON import CANONLoader
 
-cl = CANONLoader('stoqs_simz_spring2014', 'Sampling and Identification of Marine Zooplankton - Spring 2014')
-startDatetime = datetime.datetime(2014, 3, 5)
+cl = CANONLoader('stoqs_simz_spring2014', 'Sampling and Identification of Marine Zooplankton - Spring 2014',
+                                x3dTerrains = {
+                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                        'VerticalExaggeration': '10',
+                                    }
+                                }
+                )
+
+startDatetime = datetime.datetime(2014, 2, 18)
 endDatetime = datetime.datetime(2014, 3, 18)
 
 # Aboard the Carson use zuma:
-cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
+##cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'
 # On shore, use the odss server:
-##cl.tdsBase = 'http://odss.mbari.org/thredds/'
+cl.tdsBase = 'http://odss.mbari.org/thredds/'
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # 2-second decimated dorado data
@@ -90,15 +100,15 @@ cl.subsample_csv_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadL_662(stride=1000)
+    cl.loadL_662(stride=100)
     cl.loadDorado(stride=100)
-    cl.loadRCuctd(stride=100)
+    cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=1)
     cl.loadM1(stride=10)
     ##cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
-    ##cl.loadL_662(stride=1)
+    cl.loadL_662(stride=1)
     cl.loadDorado(stride=1)
     cl.loadRCuctd(stride=1)
     cl.loadRCpctd(stride=1)
@@ -113,4 +123,9 @@ else:
     cl.loadRCpctd()
     cl.loadM1()
     ##cl.loadSubSamples()
+
+# Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+cl.addTerrainResources()
+
+print "All Done."
 
