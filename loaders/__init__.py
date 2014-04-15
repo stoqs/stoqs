@@ -566,7 +566,13 @@ class STOQS_Loader(object):
         minDepth = -1000
         maxDepth = 5000
         if depth < minDepth or depth > maxDepth:
-            raise SkipRecord('Bad depth: depth must be > and < %s' % minDepth, maxDepth)
+            raise SkipRecord('Bad depth: %s (depth must be between %s and %s)' % (depth, minDepth, maxDepth))
+
+        # Brute force QC check on latitude and longitude to remove egregous outliers
+        if lat < -90 or lat > 90:
+            raise SkipRecord('Bad lat: %s (latitude must be between %s and %s)' % (lat, -90, 90))
+        if long < -720 or long > 720:
+            raise SkipRecord('Bad long: %s (longitude must be between %s and %s)' % (long, -720, 720))
 
         ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
 
