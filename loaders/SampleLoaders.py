@@ -290,15 +290,12 @@ class SeabirdLoader(STOQS_Loader):
         for pn,value in parmNameValues:
             logger.debug("pn = %s", pn)
             logger.debug("parameter._state.db = %s", self.getParameterByName(pn)._state.db)
-            mp = m.MeasuredParameter(measurement = measurement,
-                        parameter = self.getParameterByName(pn),
-                        datavalue = value)
             try:
-                mp.save(using=self.dbAlias)
+                mp, created = m.MeasuredParameter.objects.using(self.dbAlias).get_or_create(measurement = measurement,
+                                                  parameter = self.getParameterByName(pn), datavalue = value)
             except Exception, e:
-                logger.error('Exception %s. Skipping this record.', e)
-                logger.error("Bad value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
-                continue
+                logger.error(e)
+                logger.exception("Bad value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
             else:
                 loaded += 1
                 logger.debug("Inserted value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
