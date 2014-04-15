@@ -652,6 +652,15 @@ class Base_Loader(STOQS_Loader):
 
                     # If the data have a Z dependence (e.g. mooring tstring/adcp) then value will be an array.
                     logger.debug("value = %s ", value)
+                    
+                    if value > 1e34 and value != self.get_FillValue(key):
+                        # Workaround for IOOS glider data
+                        if abs(value - self.get_FillValue(key)) < 1e24:
+                            # Equal to 10 digits
+                            continue
+                        else:
+                            import pdb; pdb.set_trace()
+
                     if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or numpy.isnan(value): # absence of a value
                         continue
                     try:
@@ -757,12 +766,13 @@ class Base_Loader(STOQS_Loader):
                         longitude, latitude, time, depth = (row.pop('longitude'), row.pop('latitude'),
                                                             from_udunits(row.pop('time'), row.pop('timeUnits')),
                                                             row.pop('depth'))
+
                         measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, long=longitude)
                 except ValueError:
                     logger.info('Bad time value')
                     continue
-                except SkipRecord:
-                    logger.debug("Got SkipRecord Exception from self.createMeasurement().  Skipping")
+                except SkipRecord, e:
+                    logger.debug("Skipping record: %s", e)
                     continue
                 except Exception, e:
                     logger.exception(e)
