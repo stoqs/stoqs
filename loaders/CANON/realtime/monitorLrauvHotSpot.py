@@ -179,7 +179,7 @@ def process_command_line():
 
         examples = 'Examples:' + '\n\n'
         examples += 'Run on test database:\n'
-        examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /tmp -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"    
+        examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /mbari/LRAUV/daphne/realtime/hotspotlogs -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"    
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
                                          epilog=examples)
