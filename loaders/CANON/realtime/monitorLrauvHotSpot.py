@@ -21,9 +21,10 @@ MBARI 12 March 2014
 
 import os
 import sys
-sys.path.insert(0, "/home/stoqsadm/dev/stoqs/loaders/CANON/toNetCDF")
-sys.path.insert(0, "/home/stoqsadm/dev/stoqs/loaders")
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../toNetCDF"))      # lrauvNc4ToNetcdf.py is in sister toNetCDF dir
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))           # settings.py is two dirs up
+
 
 import DAPloaders
 import logging
@@ -66,11 +67,12 @@ def getNcStartEnd(url, useTds):
     urlNc4Dap   = None
 
     if useTds is True:
-        htmlToScan = 'catalog.html'
+        htmlToScan = os.path.join(url, 'catalog.html')
     else:
-        htmlToScan = 'index.html'
+        htmlToScan = os.path.join(url, 'index.html')
 
-    socket = urllib2.urlopen(url + '/' + htmlToScan)
+    logger.debug("urlopening %s", htmlToScan)
+    socket = urllib2.urlopen(htmlToScan)
     htmlPage = socket.read()
     socket.close()
     html = soup(htmlPage)
@@ -115,7 +117,7 @@ def getNcStartEnd(url, useTds):
 
     return (None, startDatetime, endDatetime)
 
-def getDatetime(url, outDir, useTds, lastDatetime):
+def processDecimated(url, outDir, useTds, lastDatetime):
     '''
     Scrape lrauv web site for first .nc file newer than lastDatetime.
     '''
@@ -128,11 +130,12 @@ def getDatetime(url, outDir, useTds, lastDatetime):
     logger.info("Scanning for start and end times in %s" % (url))
   
     if useTds is True:
-        htmlToScan = 'catalog.html'
+        htmlToScan = os.path.join(url, 'catalog.html')
     else:
-        htmlToScan = 'index.html'
+        htmlToScan = os.path.join(url, 'index.html')
 
-    socket = urllib2.urlopen(url + '/' + htmlToScan)
+    logger.debug("urlopening %s", htmlToScan)
+    socket = urllib2.urlopen(htmlToScan)
     htmlPage = socket.read()
     socket.close()
     html = soup(htmlPage)
@@ -147,24 +150,23 @@ def getDatetime(url, outDir, useTds, lastDatetime):
             folderName = match.group(1)       
             folderDatetime = datetime(*time.strptime(folderName, '%Y%m%dT%H%M%S')[:6])
             if folderDatetime > lastDatetime:
-                (filename, startDatetime, endDatetime) = getNcStartEnd(url + folderName, useTds)
+                logger.debug('Calling getNcStartEnd()...')
+                (filename, startDatetime, endDatetime) = getNcStartEnd(os.path.join(url, folderName), useTds)
                 if startDatetime and endDatetime and filename:
+                    logger.debug('Returning: %s', (folderName, filename, startDatetime, endDatetime))
                     return (folderName, filename, startDatetime, endDatetime)
         except NcFileMissing,(instance):
             # Run the conversion if the nc file is missing and place in the 
             # appropriate directory behind an opendap/thredds server somewhere
+            logger.debug('Calling lrauvNc4ToNetcdf.InterpolatorWriter()...')
             pw = lrauvNc4ToNetcdf.InterpolatorWriter()
             # Formulate new filename from the url. Should be the same name as the .nc4 specified in the url
             # with _i.nc appended to indicate it has interpolated data in .nc format
             nc4f = instance.nc4FileUrl.rsplit('/',1)[1]
-            outFile = outDir + folderName + '/' + '.'.join(nc4f.split('.')[:-1]) + '_i.nc'
+            outFile = os.path.join(outDir, folderName, '.'.join(nc4f.split('.')[:-1]) + '_i.nc')
             # Only create if it doesn't already exists
             if not os.path.isfile(outFile):
-                try:
-                    pw.process(instance.nc4FileUrl, outFile)
-                except Exception,e:
-                    logger.info('Error creating %s: %s' % (outFile, e))
-            continue
+                pw.process(instance.nc4FileUrl, outFile)
 
     raise NoNewHotspotData
 
@@ -176,17 +178,16 @@ def process_command_line():
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n'
-        examples += sys.argv[0] + " -d  'Daphe hotspot data from April 2014 ECOHAB experiment' \
-        -o '/LRAUV/daphne/realtime/hotspotlogs/' -u 'http://dods.mbari.org/opendap/hyrax/data/lrauv/daphne/realtime/hotspotlogs/' -b 'stoqs_march2014' -c 'CANON-ECOHAB - March 2014'\n"    
+        examples += 'Run on test database:\n'
+        examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /tmp -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"    
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
-                                         description='Read lRAUV data transferred over hotstpot and .nc file in \
-                                         compatible CF1-6 Discrete Sampling Geometry forat for loading into STOQS',
+                                         description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
                                          epilog=examples)
                                              
-        parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot logs are', default='.',required=True)   
+        parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot logs are - must be the same location as -o directory', default='.',required=True)   
         parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='.',required=True)  
         parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='.',required=True)    
-        parser.add_argument('-o', '--outDir', action='store', help='output directory to store .nc file', default='.',required=True)   
+        parser.add_argument('-o', '--outDir', action='store', help='output directory to store .nc file - must be the same location as -u URL', default='.',required=True)   
         parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='',required=True)
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
    
@@ -235,7 +236,7 @@ if __name__ == '__main__':
         logger.info("Last lrauv %s data in %s is from %s" % (platformName, args.database, lastDatetime))
 
         try:
-            (folderName, filename, startDatetime, endDatetime) = getDatetime(args.inUrl, args.outDir, useTds, lastDatetime)
+            (folderName, filename, startDatetime, endDatetime) = processDecimated(args.inUrl, args.outDir, useTds, lastDatetime)
             lastDatetime = endDatetime
         except NoNewHotspotData:
             logger.info("No new %s data.  Exiting." % platformName )
