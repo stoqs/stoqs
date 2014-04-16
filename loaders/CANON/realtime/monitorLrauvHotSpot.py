@@ -244,7 +244,7 @@ if __name__ == '__main__':
 
         if len(filename) > 0:
             logger.info("Received new %s data ending at %s in folder %s filename %s" % (platformName, endDatetime, folderName, filename))
-            u = '%s%s/%s' % (args.inUrl, folderName, filename)
+            u = os.path.join(args.inUrl, folderName, filename)
         
             if useTds is True:
                 newURL = u.replace('catalog', 'dodsC')
