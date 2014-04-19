@@ -118,8 +118,9 @@ class ParserWriter(BaseWriter):
                 self.lat_list.append(r['Latitude'])
                 self.lon_list.append(r['Longitude'])
                 self.dep_list.append(self.args.depth) 
-        
-                self.t1_list.append(r['T190C'])
+                
+                self.t1_list.append(r['T090C'])
+
                 self.sal_list.append(r['Sal00'])
                 self.xmiss_list.append(r['Xmiss'])
                 self.wetstar_list.append(r['WetStar'])

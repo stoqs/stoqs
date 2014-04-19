@@ -13,7 +13,6 @@ LOGIN=stoqsadm
 RH=zuma.rc.mbari.org
 ##RH=odss.mbari.org
 
-
 DIR=/data/canon/2014_Apr/Platforms/Ships/Rachel_Carson/pctd
 LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
 rsync -rv $LOGIN@$RH:$DIR  .
