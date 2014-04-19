@@ -1,0 +1,27 @@
+loaders/CANON/toNetCDF
+======================
+
+This directory contains scripts to convert miscellaneous data to NetCDF so that
+it can be put on an OPeNDAP server for loading by STOQS loaders.
+
+The __init__.py file contains a BaseWriter class that is used for consistent
+writing of metadata.  The data are written using CF-1.6 conventions described at
+http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html.
+
+The shell scripts (.sh files) beginning with 'make' are modified and executed
+to copy source data files from their locations, typically an ODSS server, to
+the current directory where the appropriate conversion program is then executed.
+The resulting .nc files are then copied by the make__.sh script back to the ODSS 
+server where a TDS catalog has been configured to serve them.
+
+Conversion scripts for trajectory featureTypes:
+
+    espDriftToNetcdf.py   - ESP data - uses MBARI Tracking database to merge GPS data
+    pctdToNetcdf.py       - Seabird profile CTD data for Western Flyer and Rachel Carson
+    uctdToNetcdf.py       - Seabird underway CTD data for Western Flyer and Rachel Carson
+    wgToNetcdf.py         - Ocean Acidification Waveglider data
+
+
+-- 
+Mike McCann
+23 May 2013

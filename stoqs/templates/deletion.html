@@ -1,0 +1,22 @@
+<html>
+
+<head>
+<title>Deleting Activity {{ activityId }} from {{ dbAlias }}</title>
+<!-- TODO: This works on test server, but not on production server.  Must fix. -->
+<meta http-equiv="refresh" content="2;url=http://localhost:8000/{{ dbAlias }}/mgmt">
+</head>
+
+<body>
+<h1>Deleting Activity {{ activityId }} from {{ dbAlias }}</h1>
+
+Deletion of Activity with id = {{ activityId }} is in progress.  Depending on how many 
+measured_parameters need to be deleted in the cascade delete it may take several minutes for 
+the database to reflect the deletion of this Activity.
+<br>
+<br>
+Redirecting to <a href="/{{ dbAlias }}/mgmt">management page</a> in 2 seconds.  You may need to refresh it to reflection the deletion.
+
+
+</body>
+
+</html>
