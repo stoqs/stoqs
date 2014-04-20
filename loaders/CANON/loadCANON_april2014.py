@@ -39,20 +39,18 @@ cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # Decimated dorado data
-# http://zuma.rc.mbari.org:8280/thredds/dodsC/CANON/2014_Apr/Platforms/AUVs/Dorado/Dorado389_2014_102_00_102_00_decim.nc
-# http://zuma.rc.mbari.org/thredds/dodsC/CANON/2014_Apr/Platforms/AUVs/Dorado/Dorado389_2014_102_00_102_00_decim.nc
 cl.dorado_base = cl.dodsBase + 'CANON/2014_Apr/Platforms/AUVs/Dorado/' 
 cl.dorado_files = [ 
-                    #'Dorado389_2014_102_00_102_00_decim.nc', 'Dorado389_2014_103_00_103_00_decim.nc',
-                    #'Dorado389_2014_103_01_103_01_decim.nc', 'Dorado389_2014_104_01_104_01_decim.nc',
-                    #'Dorado389_2014_107_00_107_00_decim.nc', 'Dorado389_2014_108_01_108_01_decim.nc',
-                    'Dorado389_2014_108_02_108_02_decim.nc',
+                    'Dorado389_2014_102_00_102_00_decim.nc', 'Dorado389_2014_103_00_103_00_decim.nc',
+                    'Dorado389_2014_103_01_103_01_decim.nc', 'Dorado389_2014_104_01_104_01_decim.nc',
+                    'Dorado389_2014_107_00_107_00_decim.nc', 'Dorado389_2014_108_01_108_01_decim.nc',
+                    'Dorado389_2014_108_02_108_02_decim.nc', 'Dorado389_2014_109_00_109_00_decim.nc', 
+                    'Dorado389_2014_109_01_109_01_decim.nc',
                   ]
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Apr/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_files = [ 
-                        #'10214plm01.nc', '10314plm01.nc', '10414plm01.nc', '10714plm01.nc',
-                        '10814plm01.nc',
+                    '10214plm01.nc', '10314plm01.nc', '10414plm01.nc', '10714plm01.nc', '10814plm01.nc', '10914plm01.nc'
                       ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
@@ -60,10 +58,10 @@ cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.pctdDir = 'CANON/2014_Apr/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_base = cl.dodsBase + cl.pctdDir
 cl.rcpctd_files = [ 
-                    #'10214c01.nc', '10214c02.nc', '10214c03.nc', '10214c04.nc', '10214c05.nc', '10214c06.nc', '10314c07.nc', 
-                    #'10314c08.nc', '10314c09.nc', '10314c10.nc', '10314c11.nc', '10414c12.nc', '10414c13.nc', '10414c14.nc',
-                    #'10414c15.nc', '10414c16.nc', '10714c17.nc', '10714c18.nc', '10714c19.nc', '10714c20.nc', '10714c21.nc',
-                    '10814c22.nc', '10814c23.nc', '10814c24.nc', '10814c25.nc',
+                    '10214c01.nc', '10214c02.nc', '10214c03.nc', '10214c04.nc', '10214c05.nc', '10214c06.nc', '10314c07.nc', 
+                    '10314c08.nc', '10314c09.nc', '10314c10.nc', '10314c11.nc', '10414c12.nc', '10414c13.nc', '10414c14.nc',
+                    '10414c15.nc', '10414c16.nc', '10714c17.nc', '10714c18.nc', '10714c19.nc', '10714c20.nc', '10714c21.nc',
+                    '10814c22.nc', '10814c23.nc', '10814c24.nc', '10814c25.nc', '10914c26.nc', '10914c27.nc', '10914c28.nc',
                       ]
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
@@ -199,7 +197,7 @@ else:
     cl.loadRCuctd()
     cl.loadRCpctd()
     ##cl.loadHeHaPe()
-    ##cl.loadRusalka()
+    cl.loadRusalka()
     ##cl.loadYellowfin()
 
 # Add any X3D Terrain information specified in the constructor to the database
