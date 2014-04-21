@@ -1,7 +1,7 @@
       <scene DEF='scene'>
         <shape DEF='_G_0'>
           <appearance DEF='AOPT_Appearance_203731968'>
-            <material diffuseColor='0.7 0.7 0.7' specularColor='0.1 0.1 0.1'></material>
+            <material diffuseColor='0.6 0.6 0.6' specularColor='0.1 0.1 0.1' emissiveColor='0.3 0.3 0.3'></material>
           </appearance>
           <popGeometry DEF='PG_8' vertexCount='385866' primType='"TRIANGLES"' position='-2522405.75 -4682143 3498013.5' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.968655649881 0.168584986434 0.524415973571' bbMaxModF='0.798398130633 0.792709130005 0.17262928035' bbMin='-2531457 -4689893.5 3491813' numAnchorVertices='2672' tightSize='18102.5 15501 12400.75'>
             <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level0.bin' numIndices='8052' vertexDataBufferOffset='0'></popGeometryLevel>
