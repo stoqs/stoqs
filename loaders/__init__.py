@@ -626,6 +626,12 @@ class STOQS_Loader(object):
         except KeyError, e:
             raise SkipRecord('KeyError: ' + str(e))
 
+        # Additional sanity check on latitude and longitude
+        if row['latitude'] > 90 or row['latitude'] < -90:
+            raise SkipRecord('Invalid latitude = %s' % row['latitude'])
+        if row['longitude'] > 720 or row['longitude'] < -720:
+            raise SkipRecord('Invalid longitude = %s' % row['longitude'])
+
         return row
 
     def checkForValidData(self):
