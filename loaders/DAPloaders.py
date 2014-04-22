@@ -45,7 +45,7 @@ import pydap.model
 import time
 from decimal import Decimal
 import math, numpy
-from coards import to_udunits, from_udunits
+from coards import to_udunits, from_udunits, ParserError
 import csv
 import urllib2
 import logging
@@ -179,8 +179,16 @@ class Base_Loader(STOQS_Loader):
             if self.getFeatureType() == 'trajectory': 
                 logger.debug('Getting trajectory min and max times for v = %s', v)
                 logger.debug("self.ds[ac['time']][0] = %s", self.ds[ac['time']][0])
-                minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
-                maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+                try:
+                    minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
+                    maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+                except ParserError, e:
+                    logger.warn("%s. Trying to fix up time units", e)
+                    # Tolerate units like 1970-01-01T00:00:00Z - which is found on the IOOS Glider DAC
+                    if self.ds[ac['time']].attributes['units'] == 'seconds since 1970-01-01T00:00:00Z':
+                        minDT[v] = from_udunits(self.ds[ac['time']][0][0], 'seconds since 1970-01-01 00:00:00')
+                        maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], 'seconds since 1970-01-01 00:00:00')
+                    
             elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile': 
                 logger.debug('Getting timeseries start time for v = %s', v)
                 minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
@@ -401,6 +409,8 @@ class Base_Loader(STOQS_Loader):
         '''
         timeAxisUnits =  timeAxis.units.lower()
         timeAxisUnits = timeAxisUnits.replace('utc', 'UTC')        # coards requires UTC to be upper case 
+        if timeAxis.units == 'seconds since 1970-01-01T00:00:00Z':
+            timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards doesn't like ISO format
         if self.startDatetime: 
             logger.debug('self.startDatetime, timeAxis.units = %s, %s', self.startDatetime, timeAxis.units)
             s = to_udunits(self.startDatetime, timeAxisUnits)
@@ -483,6 +493,8 @@ class Base_Loader(STOQS_Loader):
                 longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon
                 timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
                 timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
+                if self.ds[self.ds[pname].keys()[1]].units == 'seconds since 1970-01-01T00:00:00Z':
+                    timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
 
                 nomDepths, nomLats, nomLons = self.getNominalLocation()
             else:
@@ -584,6 +596,8 @@ class Base_Loader(STOQS_Loader):
                 longitudes[pname] = self.ds[ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
                 timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
+                if self.ds[ac[pname]['time']].units == 'seconds since 1970-01-01T00:00:00Z':
+                    timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
 
             elif len(self.ds[pname].shape) == 1 and type(self.ds[pname]) is pydap.model.GridType:
                 # LRAUV data need to be processed as GridType
