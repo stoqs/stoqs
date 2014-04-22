@@ -34,8 +34,8 @@ cl = CANONLoader('stoqs_canon_apr2014', 'CANON-ECOHAB - April 2014',
                                  } )
 
 # Aboard the Carson use zuma
-cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
-##cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
+##cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
+cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # Decimated dorado data
