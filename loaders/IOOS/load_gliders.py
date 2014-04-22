@@ -9,7 +9,7 @@ __doc__ = '''
 Loader for IOOS Glider DAC
 
 Mike McCann
-MBARI 14 April 2014
+MBARI 22 April 2014
 
 @var __date__: Date of last svn commit
 @undocumented: __doc__ parser
@@ -19,12 +19,16 @@ MBARI 14 April 2014
 
 import os
 import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So that IOOS and DAPloaders are found
+import logging 
 import datetime
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So that IOOS is found
-
 from IOOS import IOOSLoader
+from DAPloaders import runGliderLoader
+from thredds_crawler.crawl import Crawl
 
-il = IOOSLoader('stoqs_ioos_gliders', 'IOOS Gliders', 
+logger = logging.getLogger('__main__')
+
+il = IOOSLoader('stoqs_ioos_gliders', 'IOOS Gliders',
                                 x3dTerrains = {
                                     'http://dods.mbari.org/terrain/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
                                         'position': '14051448.48336 -15407886.51486 6184041.22775',
@@ -35,38 +39,47 @@ il = IOOSLoader('stoqs_ioos_gliders', 'IOOS Gliders',
                                 }
 )
 
-##startDatetime = datetime.datetime(2013, 2, 18)
-##endDatetime = datetime.datetime(2013, 7, 18)
-startDatetime = None
-endDatetime = None
+il.parms = ['temperature', 'salinity', 'density']
 
-# TODO: Use beautiful soup to scrape the TDS html for .ncml files to load
+# Start and end dates of None will load entire archive
+il.startDatetime = None
+il.endDatetime = None
 
-# Spray glider - for just the duration of the campaign
-# http://tds.gliders.ioos.us/thredds/dodsC/Rutgers-University_ru29-20130111T0724_Time.ncml
-il.glider_ctd_base = 'http://tds.gliders.ioos.us/thredds/dodsC/'
-il.glider_ctd_files = ['Rutgers-University_ru29-20130111T0724_Time.ncml']
-# http://tds.gliders.ioos.us/thredds/dodsC/Rutgers-University_ru29-20130111T0724_Files/ru29-20130129T013229_rt0.nc
-##il.glider_ctd_base = 'http://tds.gliders.ioos.us/thredds/dodsC/Rutgers-University_ru29-20130111T0724_Files/'
-##il.glider_ctd_files = ['ru29-20130129T013229_rt0.nc']
-il.glider_ctd_parms = ['temperature', 'salinity', 'density']
-il.glider_ctd_startDatetime = startDatetime
-il.glider_ctd_endDatetime = endDatetime
+def loadGliders(loader, stride=1):
+    '''
+    Crawl the IOOS Glider TDS for OPeNDAP links of Time aggregated files and load into STOQS
+    '''
+
+    c = Crawl("http://tds.gliders.ioos.us/thredds/catalog.xml", select=[".*_Time$"])
+    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+    colors = loader.colors.values()
+
+    for url in urls:
+        aName = url.split('/')[-1].split('.')[0]
+        pName = aName.replace('_Time', '')
+        if pName.find('-') != -1:
+            logger.warn("Replacing '-' characters in platform name %s with '_'s", pName)
+            pName = pName.replace('-', '_')
+
+        logger.info("Executing runGliderLoader with url = %s", url)
+        try:
+            runGliderLoader(url, loader.campaignName, aName, pName, colors.pop(), 'glider', 'Glider Mission', 
+                            loader.parms, loader.dbAlias, stride, loader.startDatetime, loader.endDatetime)
+        except Exception, e:
+            logger.error('%s. Skipping this dataset.', e)
 
 
 # Execute the load
 il.process_command_line()
 
 if il.args.test:
-##    il.load_glider_ctd(stride=100)
-    pass
+    loadGliders(il, stride=100)
 
 elif il.args.optimal_stride:
-    il.load_glider_ctd(stride=1)
+    loadGliders(il, stride=10)
 
 else:
-    il.stride = il.args.stride
-    il.load_glider_ctd()
+    loadGliders(il, stride=il.args.stride)
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 il.addTerrainResources()
