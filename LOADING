@@ -13,7 +13,7 @@ please see:
         http://www.nodc.noaa.gov/data/formats/netcdf/
 
 There are many ways to write data adhering to these standards - there are some examples
-using the Python pupynere library here in the loaders/CANON/toNetCDF directory.
+using the Python pupynere library in the loaders/CANON/toNetCDF directory.
 
 Here are the step-by-step instuctions for getting your data into STOQS given the above
 prerequisites:
@@ -96,7 +96,7 @@ prerequisites:
     - Editing and running the load script during a campaign is an interactive process requiring
       interaction with people and testing the data sources for valid parameter names as well
       as monitoring the script's output for warning and error messages.
-    - To provide read-only access to your database  grant everyone select priveleges:
+    - To provide read-only access to your database  grant everyone select privileges:
         \c stoqs_september2012_t
         grant select on all tables in schema public to everyone;
 

@@ -54,7 +54,7 @@ in making changes that you 'think might work'.
             export LD_LIBRARY_PATH=/usr/local/lib/  # Needed if packages, such as gdal, were installed here 
             python manage.py test stoqs -v 2
 
-    Note: The user that executes manage.py must have priveleges to create and drop database
+    Note: The user that executes manage.py must have privileges to create and drop database
     for Django to run the tests.  You may need to do this at psql for your shell account
     and the stoqsdm account:
 
