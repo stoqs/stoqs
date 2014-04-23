@@ -1,0 +1,302 @@
+.lobosColor
+{
+	color: #9900CC;
+}
+
+.flyerColor
+{
+	color: #009999;
+}
+
+.zephyrColor
+{
+	color: #000099;
+}
+
+.forumColor
+{
+	color: #FF3333;
+}
+
+.generalColor
+{
+	color: #000000;
+}
+
+
+.greenText
+{
+	color: #408080;
+}
+
+.brownText
+{
+	color: brown;
+}
+
+.smallbrownText
+{
+	color: brown;
+	font-size: 9pt;
+}
+
+.errorText
+{
+	color: red;
+}
+
+.underline {
+	text-decoration: underline;
+}
+
+.captionCell
+{
+	vertical-align:	top;
+	font-weight: bold;
+	font-size: smaller;
+	border-bottom: 3px solid black
+}
+
+.dateCell
+{
+	vertical-align:	top;
+	font-weight: bold;
+	background-color: #FFFF00;
+	color: #000000;
+	font-size: smaller;
+}
+
+.coloredCell
+{
+	vertical-align:	top;
+	background-color: #E7F1F1;
+	font-size: smaller;
+}
+
+.topCell
+{
+	vertical-align:	top;
+	font-size: smaller;
+	border:	0px solid black
+}
+/* color of returnCell used to be #f7efde */
+.middleCell
+{
+	vertical-align:	middle;
+	text-align: center;
+	font-size: smaller;
+	border:	0px solid black
+}
+.checkboxCell
+{
+	vertical-align:	middle;
+	text-align: center;
+	font-size: smaller;
+}
+
+.bigCheckbox {
+	width :	40px;
+	height:	40px;
+}
+
+.imageCell
+{
+	vertical-align:	middle;
+	text-align: center;
+	font-size: smaller;
+}
+
+
+.returnCell_Nowrap
+{
+	vertical-align:	top;
+	font-size: smaller;
+	white-space: nowrap;
+}
+
+commentTextarea	{
+	overflow: auto;
+}
+
+.topnavbar
+{
+	padding: 5px 0px 5px 0px;
+	font-weight: bold;
+	font-size: .8em;
+	line-height: 140%;
+}
+
+.navbarSamp
+{
+	padding: 5px 0px 5px 75px;
+	font-weight: bold;
+	font-size: .9em;
+	line-height: 140%;
+}
+
+.subnavbarSamp
+{
+	padding: 5px 0px 5px 100px;
+	font-weight: bold;
+	font-size: smaller;
+	line-height: 100%;
+}
+
+
+body
+{
+	background-color: #FFFFFF;
+	margin:	4px;
+	font-family: Geneva, Helvetica,	Arial, sans-serif;
+	font-size: .9em;
+	color: #000000;
+}
+
+/* TD: This is required	for older browsers that	do not read fonts from the BODY	tag.*/
+td
+{
+	font-family: Geneva, Helvetica,	Arial, sans-serif;
+	font-size: .9em;
+	color: #000000;
+}
+
+/* PAGETABLE: Use this setting to control the width of the web page. Width does	not always work	on Netscape 4 browsers.*/
+#pagetable
+{
+	width: 90%;
+	background-color: #FFFFFF;
+}
+
+#content_cell {	width: 100%; }
+
+#content
+{
+	padding: 0px 15px 15px 15px;
+	border-color: #FFFFFF;
+	border-width: 1px;
+	border-style: solid;
+	margin:	0px;
+	font-family: Geneva, Helvetica,	Arial, sans-serif;
+	font-size: .9em;
+}
+
+/* MISC	FONT SIZE CONTROLS */
+.stoqsLayerSwitcher
+{
+	font-size: .8em;
+	font-family: Geneva, Helvetica,	Arial, sans-serif;
+	background-color: #FFFFFF;
+}
+.smallText
+{
+	font-size: .8em;
+	font-family: Geneva, Helvetica,	Arial, sans-serif;
+}
+.largerText
+{
+	font-size: larger;
+	font-family: Geneva, Helvetica,	Arial, sans-serif;
+	font-weight: bold;
+}
+.smallerText
+{
+	font-size: smaller;
+}
+
+/* APPARENTLY REQUIRED FOR NS 4	*/
+.blue_v	{ font-family: Geneva, Helvetica, Arial, sans-serif; }
+.brown_v { font-family:	Geneva,	Helvetica, Arial, sans-serif; }
+.blue_dot { font-family: Geneva, Helvetica, Arial, sans-serif; }
+.brown_dot { font-family: Geneva, Helvetica, Arial, sans-serif;	}
+
+/* GENERAL SITE	LINKS: These are the links in the main text body.*/
+a:link
+{
+	text-decoration: underline;
+}
+
+a:visited
+{
+	text-decoration: underline;
+}
+
+a:active
+{
+	text-decoration: underline;
+}
+
+a:hover	{ text-decoration: underline; }
+
+
+h1
+{
+	font-size: 20px;
+	font-weight: bold;
+	color: #000000;
+	background-color: #FFFFFF;
+}
+
+h2
+{
+	font-size: 18px;
+	font-weight: bold;
+	color: #000000;
+	background-color: #FFFFFF;
+}
+
+h3
+{
+	font-size: 16px;
+	font-weight: bold;
+	color: #000000;
+	background-color: #FFFFFF;
+}
+
+li {
+	padding: 0px 15px 15px 15px;
+}
+
+/* HORIZONTAL RULES*/
+.blue_line
+{
+	display: block;
+	padding: 2px 0 2px 0;
+	background-color: #336699;
+	margin:	6px 0 6px 0;
+}
+
+.sand_line
+{
+	display: block;
+	padding: 2px 0 2px 0;
+	background-color: #E1E2D5;
+	margin:	6px 0 6px 0;
+}
+ul {
+
+	list-style-image: url(http://www.mbari.org/art/interior_levels/bullets/blue_v.gif);
+	list-style-position: outside;
+	margin:	20px 0 20px 40px;
+}
+
+A:link {
+  text-decoration: none;
+  font-weight: bold;
+}
+
+A:visited {
+  text-decoration: none;
+  font-weight: bold;
+}
+
+A:active {
+  text-decoration: underline;
+  color: #003366;
+  font-weight: bold;
+}
+
+A:hover {
+  text-decoration: underline;
+  color: #003366;
+  font-weight: bold;
+}

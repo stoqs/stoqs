@@ -1,0 +1,109 @@
+This directory contains scripts to manage the loading of all CANON data into
+the stoqs databases.  Your privateSettings file should have a DATABASES section
+that looks like this:
+
+MY_DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs',
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_september2010': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_september2010',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_october2010': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_october2010',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_april2011': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_april2011',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_june2011': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_june2011',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_september2011': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_september2011',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+    'stoqs_october2011': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis', 
+        'NAME': 'stoqs_october2011',                           
+        'USER': DATABASE_USER,                               
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOST,
+        'PORT': '5432',
+    },
+}
+
+
+To load data for all these databases (campaigns) follow these steps:
+
+    1. Create the databases with psql using superuser privedeges on the database:
+
+        psql < recreateCANON_databases.psq
+
+    2. Put the stoqs model into all the datbases
+
+        resyncCANON_databases.sh
+
+    3. Execute the load scripts, e.g.:
+
+        loadCANON_september2010.py
+        loadCANON_october2010.py
+        ...
+
+-- 
+Mike McCann
+22 April 2012
+
+
+Files specific to September 2013:
+
+dorado_loadsep2013.py  loads dorado missions from September 2013 campaign
+esp_loadsep2013.py     loads esp environmental sensors
+esp_loadsep2013.sh     runs the esp loader (for the crontab)
+gliders_loadsep2013.py loads spray glider and nps glider data from Sept 2013 campaign
+gliders_loadsep2013.sh runs the gliders loader (fro the crontab)
+JM_loadsep2013.py      loads RV John Martin ctd and underway data from Sept 2013 campaign
+m1_loadsep2013.py      loads the m1 environmental sensors
+m1_loadsep2013.sh      runs the m1 loader
+oa_loadsep2013.py      loads environmental data from the two oa moorings
+oa_loadsep2013.sh      runs the oa loader
+puck_loadsep2013.py    loads the tex waveglider ecopuck data
+puck_loadsep2013.sh    runs the puck loader
+RC_loadsep2013.py      loads the RV Rachel Carson underway and cast ctd data
+stella_load.csv        stella drifter data file, with names of stella drifters to load (change frequently during the campaign)
+stella_loadsep2013.py  loads environmental data from the 200 series "android" stella drifters
+WF_loadsep2013.py      loads the RV Western Flyer underway and cast ctd data
+wg_loadsep2013.py      loads the wave glider and other glider data
+wg_loadsep2013.sh      runs the wave glider etc loader
+
+toNetCDF               directory of programs to generate NetCDF files
+pctd2nc_v2.py          writes netCDF files for pctd data including all of the parameters that are measured, uses pctd_param_list2.txt for netCDF attributes
+pctd_param_list2.txt  used by pctd2nc_v2.py netCDF generator
