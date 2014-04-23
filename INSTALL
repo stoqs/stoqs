@@ -99,24 +99,24 @@ Make sure that your session does not have the PYTHONPATH environment set.  You m
 
         loaders/loadTestData.py 
 
-    If you get this error: django.db.utils.DatabaseError: invalid byte sequence for encoding "UTF8": 0x00
-    make sure you have installed Django patch #16778 to the django/contrib/gis/db/backends/postgis/adapter.py
-    file in your venv-stoqs/lib/python2.6/site-packages/ (or similar) folder.
-
     If you get the message "Data load complete, 498 records loaded" followed by some sample load messages
     then you will have successfully loaded some data from MBARI's AUVCTD Dorado OPeNDAP data archive.  
-    You should be able to see an ajax-driven user interface  web page at:
+    You should be able to see the STOQS User Interface at:
 
         http://localhost:8000/default/query/ 
     
-    Refer to urls.py and stoqs/tests.py for a complete list of url patterns supported.
+    (Refer to urls.py and stoqs/tests.py for a complete list of url patterns supported.)
     
 
 If you've made it this far you have a working STOQS installation on your computer.  Congratulations!
+
+If you had problems please feel free to post your questions to stoqs-discuss discussion list at:
+
+    https://groups.google.com/forum/#!forum/stoqs-discuss
 
 To continue on to the next steps please read the instructions in the DEVELOPMENT or PRODUCTION files.
 
 --
 Mike McCann
-MBARI 6 August 2013
+MBARI 23 April 2014
 
