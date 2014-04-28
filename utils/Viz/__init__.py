@@ -614,7 +614,7 @@ class ParameterParameter(object):
         if self.x == [] or self.y == []:
             raise PPDatabaseException('No data returned from query', sql)
 
-        return stride_val, sql
+        return stride_val, sql, pp_count
 
       return inner_getXYCData(self, strideFlag, latlonFlag)
 
@@ -626,7 +626,7 @@ class ParameterParameter(object):
         try:
             # self.x and self.y may already be set for this instance by makeX3D()
             if not self.x and not self.y:
-                stride_val, sql = self._getXYCData()
+                stride_val, sql, pp_count = self._getXYCData()
 
             # If still no self.x and self.y then selection is not valid for the chosen x and y
             if self.x == [] or self.y == []:
