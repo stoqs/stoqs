@@ -678,9 +678,42 @@ class ParameterParameter(object):
                 ax.scatter(self.x, self.y, marker='.', s=10, c='k', lw = 0, clip_on=False)
 
             # Label the axes
-            xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
+            try:
+                xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
+            except ValueError:
+                # Likely a coordinate variable
+                xp = models.Parameter
+                xp.name = self.pDict['x']
+                xp.standard_name = self.pDict['x']
+                if self.pDict['x'] == 'longitude':
+                    xp.units = 'degrees_east'
+                elif self.pDict['x'] == 'latitude':
+                    xp.units = 'degrees_north'
+                elif self.pDict['x'] == 'depth':
+                    xp.units = 'm'
+                elif self.pDict['x'] == 'time':
+                    xp.units = 'days since 1950-01-01'
+                else:
+                    xp.units = ''
             ax.set_xlabel('%s (%s)' % (xp.name, xp.units))
-            yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
+            try:
+                yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
+            except ValueError:
+                # Likely a coordinate variable
+                yp = models.Parameter
+                yp.name = self.pDict['y']
+                yp.standard_name = self.pDict['y']
+                if self.pDict['y'] == 'longitude':
+                    xp.units = 'degrees_east'
+                elif self.pDict['y'] == 'latitude':
+                    xp.units = 'degrees_north'
+                elif self.pDict['y'] == 'depth':
+                    plt.gca().invert_yaxis()
+                    yp.units = 'm'
+                elif self.pDict['y'] == 'time':
+                    yp.units = 'days since 1950-01-01'
+                else:
+                    yp.units = ''
             ax.set_ylabel('%s (%s)' % (yp.name, yp.units))
 
             # Add Sigma-t contours if x/y is salinity/temperature, approximate depth to pressure - must fix for deep water...
