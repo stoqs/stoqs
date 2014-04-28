@@ -625,15 +625,30 @@ For sampledparameter to sampledparamter query an example is:
         for axis in select_order:
             if pDict.has_key(axis):
                 if pDict[axis]:
-                    if self.isParameterMeasured(int(pDict[axis])):
-                        xyzc_items = xyzc_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
-                        containsMeasuredFlag = True
-                    elif self.isParameterSampled(int(pDict[axis])):
-                        containsSampleFlag = True
-                        xyzc_items = xyzc_items + 'sp_' + axis + '.datavalue as ' + axis + ', '
-                    else:
-                        # Default is to assume mp - supports legacy databases w/o the ParameterGroup assignment
-                        xyzc_items = xyzc_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+                    try:
+                        if self.isParameterMeasured(int(pDict[axis])):
+                            xyzc_items = xyzc_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+                            containsMeasuredFlag = True
+                        elif self.isParameterSampled(int(pDict[axis])):
+                            containsSampleFlag = True
+                            xyzc_items = xyzc_items + 'sp_' + axis + '.datavalue as ' + axis + ', '
+                        else:
+                            # Default is to assume mp - supports legacy databases w/o the ParameterGroup assignment
+                            xyzc_items = xyzc_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
+                    except ValueError, e:
+                        if pDict[axis] == 'longitude':
+                            xyzc_items = xyzc_items + 'ST_X(stoqs_measurement.geom) as ' + axis + ', '
+                        elif pDict[axis] == 'latitude':
+                            xyzc_items = xyzc_items + 'ST_Y(stoqs_measurement.geom) as ' + axis + ', '
+                        elif pDict[axis] == 'depth':
+                            xyzc_items = xyzc_items + 'stoqs_measurement.depth as ' + axis + ', '
+                        elif pDict[axis] == 'time':
+                            xyzc_items += "(DATE_PART('day', stoqs_instantpoint.timevalue - timestamp '1950-01-01') * 86400 + "
+                            xyzc_items += "DATE_PART('hour', stoqs_instantpoint.timevalue - timestamp '1950-01-01') * 3600 + "
+                            xyzc_items += "DATE_PART('minute', stoqs_instantpoint.timevalue - timestamp '1950-01-01') * 60 + "
+                            xyzc_items += "DATE_PART('second', stoqs_instantpoint.timevalue - timestamp '1950-01-01') ) / 86400 "
+                            xyzc_items += ' as ' + axis + ', '  
+                        logger.error('%s, but axis is not a coordinate', e)
 
 
         # Include all joins that are possible from the selectors in the UI: time, depth, parameter, platform
@@ -677,24 +692,27 @@ For sampledparameter to sampledparamter query an example is:
             if pid:
                 self.logger.debug('axis, pid = %s, %s', axis, pid)
                 replace_from = replace_from + '\n'
-                if self.isParameterMeasured(int(pid)):
-                    replace_from = replace_from + '\nINNER JOIN stoqs_measurement m_' + axis + ' '
-                    replace_from = replace_from + '\non m_' + axis + '.instantpoint_id = stoqs_instantpoint.id'
-                    replace_from = replace_from + '\nINNER JOIN stoqs_measuredparameter mp_' + axis + ' '
-                    replace_from = replace_from + '\non mp_' + axis + '.measurement_id = m_' + axis + '.id '
-                    replace_from = replace_from + '\nINNER JOIN stoqs_parameter p_' + axis + ' '
-                    replace_from = replace_from + '\non mp_' + axis + '.parameter_id = p_' + axis + '.id '
-                elif self.isParameterSampled(int(pid)):
-                    replace_from = replace_from + '\nINNER JOIN stoqs_sample s_' + axis + ' '
-                    replace_from = replace_from + '\non s_' + axis + '.instantpoint_id = stoqs_instantpoint.id'
-                    replace_from = replace_from + '\nINNER JOIN stoqs_sampledparameter sp_' + axis + ' '
-                    replace_from = replace_from + '\non sp_' + axis + '.sample_id = s_' + axis + '.id '
-                    replace_from = replace_from + '\nINNER JOIN stoqs_parameter p_' + axis + ' '
-                    replace_from = replace_from + '\non sp_' + axis + '.parameter_id = p_' + axis + '.id '
-                else:
-                    self.logger.warn('Encountered parameter (id=%s) that is not in the Measured nor in the Sampled ParameterGroup', pid)
-
-                where_sql = where_sql + '(p_' + axis + '.id = ' + str(pid) + ') AND '
+                try:
+                    if self.isParameterMeasured(int(pid)):
+                        replace_from = replace_from + '\nINNER JOIN stoqs_measurement m_' + axis + ' '
+                        replace_from = replace_from + '\non m_' + axis + '.instantpoint_id = stoqs_instantpoint.id'
+                        replace_from = replace_from + '\nINNER JOIN stoqs_measuredparameter mp_' + axis + ' '
+                        replace_from = replace_from + '\non mp_' + axis + '.measurement_id = m_' + axis + '.id '
+                        replace_from = replace_from + '\nINNER JOIN stoqs_parameter p_' + axis + ' '
+                        replace_from = replace_from + '\non mp_' + axis + '.parameter_id = p_' + axis + '.id '
+                    elif self.isParameterSampled(int(pid)):
+                        replace_from = replace_from + '\nINNER JOIN stoqs_sample s_' + axis + ' '
+                        replace_from = replace_from + '\non s_' + axis + '.instantpoint_id = stoqs_instantpoint.id'
+                        replace_from = replace_from + '\nINNER JOIN stoqs_sampledparameter sp_' + axis + ' '
+                        replace_from = replace_from + '\non sp_' + axis + '.sample_id = s_' + axis + '.id '
+                        replace_from = replace_from + '\nINNER JOIN stoqs_parameter p_' + axis + ' '
+                        replace_from = replace_from + '\non sp_' + axis + '.parameter_id = p_' + axis + '.id '
+                    else:
+                        self.logger.warn('Encountered parameter (id=%s) that is not in the Measured nor in the Sampled ParameterGroup', pid)
+                    where_sql = where_sql + '(p_' + axis + '.id = ' + str(pid) + ') AND '
+                except ValueError:
+                    # pid likely a coordinate, ignore
+                    pass
 
 
         # Modify original SQL with new joins and where sql - almost a total rewrite

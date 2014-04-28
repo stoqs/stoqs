@@ -422,20 +422,43 @@ class STOQSQManager(object):
 
         # pid takes precedence over parameterplot being specified in kwargs
         if pid:
-            if percentileAggregateType == 'extrema':
-                logger.debug('self.getActivityParametersQS().filter(parameter__id=%s) = %s', pid, str(self.getActivityParametersQS().filter(parameter__id=pid).query))
-                qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'), Avg('median'))
-                logger.debug('qs = %s', qs)
-                try:
-                    plot_results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
-                except TypeError:
-                    logger.exception('Failed to get plot_results for qs = %s', qs)
-            else:
-                qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
-                try:
-                    plot_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
-                except TypeError:
-                    logger.exception('Failed to get plot_results for qs = %s', qs)
+            try:            
+                if percentileAggregateType == 'extrema':
+                    logger.debug('self.getActivityParametersQS().filter(parameter__id=%s) = %s', pid, str(self.getActivityParametersQS().filter(parameter__id=pid).query))
+                    qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'), Avg('median'))
+                    logger.debug('qs = %s', qs)
+                    try:
+                        plot_results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
+                    except TypeError:
+                        logger.exception('Failed to get plot_results for qs = %s', qs)
+                else:
+                    qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
+                    try:
+                        plot_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                    except TypeError:
+                        logger.exception('Failed to get plot_results for qs = %s', qs)
+            except ValueError, e:
+                if pid in ('longitude', 'latitude'):
+                    # Get limits from Activity maptrack for which we have our getExtent() method
+                    extent = self.getExtent(outputSRID=4326)
+                    if pid == 'longitude':
+                        plot_results = ['longitude', round_to_n(extent[0][0], 4), round_to_n(extent[1][0],4)]
+                    if pid == 'latitude':
+                        plot_results = ['latitude', round_to_n(extent[0][1], 4), round_to_n(extent[1][1],4)]
+                elif pid == 'depth':
+                    dminmax = self.qs.aggregate(Min('mindepth'), Max('maxdepth'))
+                    plot_results = ['depth', round_to_n(dminmax['mindepth__min'], 4), round_to_n(dminmax['maxdepth__max'],4)]
+                elif pid == 'time':
+                    epoch = datetime(1950, 1, 1)        # Use OceanSITES epoch - nicer numbers for plot
+                    tminmax = self.qs.aggregate(Min('startdate'), Max('enddate'))
+                    tmin = (tminmax['startdate__min'] - epoch).days
+                    tmax = (tminmax['enddate__max'] - epoch).days
+                    plot_results = ['time', round_to_n(tmin, 4), round_to_n(tmax,4)]
+                else:
+                    logger.error('%s, but pid text = %s is not a coordinate', e, pid)
+
+                return {'plot': plot_results, 'dataaccess': []}
+
         elif 'parameterplot' in self.kwargs:
             if self.kwargs['parameterplot'][0]:
                 parameterID = self.kwargs['parameterplot'][0]
@@ -1513,7 +1536,7 @@ class STOQSQManager(object):
         extent.transform(900913)
         return extent
 
-    def getExtent(self, srid=4326):
+    def getExtent(self, srid=4326, outputSRID=900913):
         '''
         Return GEOSGeometry extent of all the geometry contained in the Activity and Sample geoquerysets.
         The result can be directly passed out for direct use in a OpenLayers.
@@ -1568,9 +1591,9 @@ class STOQSQManager(object):
                 logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
 
             try:
-                extent.transform(900913)
+                extent.transform(outputSRID)
             except:
-                logger.exception('Cannot get transorm to 900913 for geomstr = %s, srid = %d', geomstr, srid)
+                logger.exception('Cannot get transorm to %s for geomstr = %s, srid = %d', outputSRID, geomstr, srid)
         
         return extent
 
