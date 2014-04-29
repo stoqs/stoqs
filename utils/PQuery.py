@@ -19,7 +19,7 @@ from django.contrib.gis.db.models.query import GeoQuerySet
 from django.db import DatabaseError
 from datetime import datetime
 from stoqs.models import MeasuredParameter, Parameter, ParameterGroupParameter
-from utils import postgresifySQL, getGet_Actual_Count
+from utils import postgresifySQL, getGet_Actual_Count, EPOCH_STRING
 from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
 import logging
@@ -643,12 +643,13 @@ For sampledparameter to sampledparamter query an example is:
                         elif pDict[axis] == 'depth':
                             xyzc_items = xyzc_items + 'stoqs_measurement.depth as ' + axis + ', '
                         elif pDict[axis] == 'time':
-                            xyzc_items += "(DATE_PART('day', stoqs_instantpoint.timevalue - timestamp '1950-01-01') * 86400 + "
-                            xyzc_items += "DATE_PART('hour', stoqs_instantpoint.timevalue - timestamp '1950-01-01') * 3600 + "
-                            xyzc_items += "DATE_PART('minute', stoqs_instantpoint.timevalue - timestamp '1950-01-01') * 60 + "
-                            xyzc_items += "DATE_PART('second', stoqs_instantpoint.timevalue - timestamp '1950-01-01') ) / 86400 "
+                            xyzc_items += "(DATE_PART('day', stoqs_instantpoint.timevalue - timestamp '%s') * 86400 + " % EPOCH_STRING
+                            xyzc_items += "DATE_PART('hour', stoqs_instantpoint.timevalue - timestamp '%s') * 3600 + " % EPOCH_STRING
+                            xyzc_items += "DATE_PART('minute', stoqs_instantpoint.timevalue - timestamp '%s') * 60 + " % EPOCH_STRING
+                            xyzc_items += "DATE_PART('second', stoqs_instantpoint.timevalue - timestamp '%s') ) / 86400 " % EPOCH_STRING
                             xyzc_items += ' as ' + axis + ', '  
-                        logger.error('%s, but axis is not a coordinate', e)
+                        else:
+                            logger.error('%s, but axis = %s is not a coordinate', e, pDict[axis])
 
 
         # Include all joins that are possible from the selectors in the UI: time, depth, parameter, platform
