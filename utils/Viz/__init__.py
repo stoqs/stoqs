@@ -30,7 +30,7 @@ from django.db import connections, DatabaseError, transaction
 from datetime import datetime
 from KML import readCLT
 from stoqs import models
-from utils.utils import postgresifySQL, pearsonr, round_to_n
+from utils.utils import postgresifySQL, pearsonr, round_to_n, EPOCH_STRING
 from utils.MPQuery import MPQuerySet
 from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
@@ -44,6 +44,23 @@ import time
 import re
 
 logger = logging.getLogger(__name__)
+
+def _getCoordUnits(name):
+    '''
+    Assign units given a standard coordinate name
+    '''
+    if name == 'longitude':
+        units = 'degrees_east'
+    elif name == 'latitude':
+        units = 'degrees_north'
+    elif name == 'depth':
+        units = 'm'
+    elif name == 'time':
+        units = 'days since %s' % EPOCH_STRING
+    else:
+        units = ''
+
+    return units
 
 def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientation='horizontal'):
     '''
@@ -64,7 +81,15 @@ def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientat
                                         ticks=ticks,
                                         orientation='horizontal')
         cb.ax.set_xticklabels(ticks)
-        cp = models.Parameter.objects.using(request.META['dbAlias']).get(id=int(parm_info[0]))
+        try:
+            cp = models.Parameter.objects.using(request.META['dbAlias']).get(id=int(parm_info[0]))
+        except ValueError:
+            # Likely a coordinate variable
+            cp = models.Parameter
+            cp.name = parm_info[0]
+            cp.standard_name = parm_info[0]
+            cp.units = _getCoordUnits(parm_info[0])
+
         cb.set_label('%s (%s)' % (cp.name, cp.units))
         cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
         plt.close()
@@ -79,7 +104,15 @@ def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientat
                                         orientation='vertical')
         cb.ax.set_yticklabels([str(parm_info[1]), str(parm_info[2])])
         logger.debug('Getting units for parm_info[0] = %s', parm_info[0])
-        cp = models.Parameter.objects.using(request.META['dbAlias']).get(id=int(parm_info[0]))
+        try:
+            cp = models.Parameter.objects.using(request.META['dbAlias']).get(id=int(parm_info[0]))
+        except ValueError:
+            # Likely a coordinate variable
+            cp = models.Parameter
+            cp.name = parm_info[0]
+            cp.standard_name = parm_info[0]
+            cp.units = _getCoordUnits(parm_info[0])
+
         cb.set_label('%s (%s)' % (cp.name, cp.units), fontsize=10)
         for label in cb.ax.get_yticklabels():
             label.set_fontsize(10)
@@ -396,7 +429,7 @@ class MeasuredParameter(object):
             try:
                 makeColorBar(self.request, self.colorbarPngFileFullPath, parm_info, self.cm_jetplus)
             except Exception,e:
-                self.logger.exception('Could not plot the colormap')
+                self.logger.exception('%s', e)
                 return None, None, 'Could not plot the colormap'
 
             return sectionPngFile, self.colorbarPngFile, self.strideInfo
@@ -671,7 +704,14 @@ class ParameterParameter(object):
                                                 norm=norm,
                                                 ticks=list(np.linspace(self.pMinMax['c'][1], self.pMinMax['c'][2], num=4)),
                                                 orientation='horizontal')
-                cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
+                try:
+                    cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
+                except ValueError:
+                    # Likely a coordinate variable
+                    cp = models.Parameter
+                    cp.name = self.pDict['c']
+                    cp.standard_name = self.pDict['c']
+                    cp.units = _getCoordUnits(self.pDict['c'])
                 cb.set_label('%s (%s)' % (cp.name, cp.units))
             else:
                 self.logger.debug('Making scatter plot of %d points', len(self.x))
@@ -685,17 +725,9 @@ class ParameterParameter(object):
                 xp = models.Parameter
                 xp.name = self.pDict['x']
                 xp.standard_name = self.pDict['x']
-                if self.pDict['x'] == 'longitude':
-                    xp.units = 'degrees_east'
-                elif self.pDict['x'] == 'latitude':
-                    xp.units = 'degrees_north'
-                elif self.pDict['x'] == 'depth':
-                    xp.units = 'm'
-                elif self.pDict['x'] == 'time':
-                    xp.units = 'days since 1950-01-01'
-                else:
-                    xp.units = ''
+                xp.units = _getCoordUnits(self.pDict['x'])
             ax.set_xlabel('%s (%s)' % (xp.name, xp.units))
+
             try:
                 yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
             except ValueError:
@@ -703,17 +735,9 @@ class ParameterParameter(object):
                 yp = models.Parameter
                 yp.name = self.pDict['y']
                 yp.standard_name = self.pDict['y']
-                if self.pDict['y'] == 'longitude':
-                    yp.units = 'degrees_east'
-                elif self.pDict['y'] == 'latitude':
-                    yp.units = 'degrees_north'
-                elif self.pDict['y'] == 'depth':
+                yp.units = _getCoordUnits(self.pDict['y'])
+                if self.pDict['y'] == 'depth':
                     plt.gca().invert_yaxis()
-                    yp.units = 'm'
-                elif self.pDict['y'] == 'time':
-                    yp.units = 'days since 1950-01-01'
-                else:
-                    yp.units = ''
             ax.set_ylabel('%s (%s)' % (yp.name, yp.units))
 
             # Add Sigma-t contours if x/y is salinity/temperature, approximate depth to pressure - must fix for deep water...
@@ -816,16 +840,46 @@ class ParameterParameter(object):
                     colors = colors + '0 0 0 '
 
             # Label the axes
-            xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
+            try:
+                xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
+            except ValueError:
+                # Likely a coordinate variable
+                xp = models.Parameter
+                xp.name = self.pDict['x']
+                xp.standard_name = self.pDict['x']
+                xp.units = _getCoordUnits(self.pDict['x'])
             self.pMinMax['x'].append(('%s (%s)' % (xp.name, xp.units)))
-            yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
+
+            try:
+                yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
+            except ValueError:
+                # Likely a coordinate variable
+                yp = models.Parameter
+                yp.name = self.pDict['y']
+                yp.standard_name = self.pDict['y']
+                yp.units = _getCoordUnits(self.pDict['y'])
             self.pMinMax['y'].append(('%s (%s)' % (yp.name, yp.units)))
-            zp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z']))
+
+            try:
+                zp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z']))
+            except ValueError:
+                # Likely a coordinate variable
+                zp = models.Parameter
+                zp.name = self.pDict['z']
+                zp.standard_name = self.pDict['z']
+                zp.units = _getCoordUnits(self.pDict['z'])
             self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
 
             colorbarPngFile = ''
             if self.pDict['c']:
-                cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
+                try:
+                    cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
+                except ValueError:
+                    # Likely a coordinate variable
+                    cp = models.Parameter
+                    cp.name = self.pDict['c']
+                    cp.standard_name = self.pDict['c']
+                    cp.units = _getCoordUnits(self.pDict['c'])
                 try:
                     cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
                     imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))

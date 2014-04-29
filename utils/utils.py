@@ -1,7 +1,12 @@
 # A collection of various utility functions
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+# An epoch good for time axis labels - OceanSITES uses 1 Jan 1950
+EPOCH_STRING = '1950-01-01'
+EPOCH_DATETIME = datetime(1950, 1, 1)
 
 def round_to_n(x, n):
     '''

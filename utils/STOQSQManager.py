@@ -21,7 +21,7 @@ from django.http import HttpResponse
 from stoqs import models
 from loaders import MEASUREDINSITU
 from loaders.SampleLoaders import SAMPLED
-from utils import round_to_n, postgresifySQL
+from utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
 from utils import simplify_points, getParameterGroups
 from MPQuery import MPQuery
@@ -449,7 +449,7 @@ class STOQSQManager(object):
                     dminmax = self.qs.aggregate(Min('mindepth'), Max('maxdepth'))
                     plot_results = ['depth', round_to_n(dminmax['mindepth__min'], 4), round_to_n(dminmax['maxdepth__max'],4)]
                 elif pid == 'time':
-                    epoch = datetime(1950, 1, 1)        # Use OceanSITES epoch - nicer numbers for plot
+                    epoch = EPOCH_DATETIME
                     tminmax = self.qs.aggregate(Min('startdate'), Max('enddate'))
                     tmin = (tminmax['startdate__min'] - epoch).days + (tminmax['startdate__min'] - epoch).seconds / 86400.
                     tmax = (tminmax['enddate__max'] - epoch).days + (tminmax['enddate__max'] - epoch).seconds / 86400.
