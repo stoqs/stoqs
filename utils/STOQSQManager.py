@@ -451,9 +451,9 @@ class STOQSQManager(object):
                 elif pid == 'time':
                     epoch = datetime(1950, 1, 1)        # Use OceanSITES epoch - nicer numbers for plot
                     tminmax = self.qs.aggregate(Min('startdate'), Max('enddate'))
-                    tmin = (tminmax['startdate__min'] - epoch).days
-                    tmax = (tminmax['enddate__max'] - epoch).days
-                    plot_results = ['time', round_to_n(tmin, 4), round_to_n(tmax,4)]
+                    tmin = (tminmax['startdate__min'] - epoch).days + (tminmax['startdate__min'] - epoch).seconds / 86400.
+                    tmax = (tminmax['enddate__max'] - epoch).days + (tminmax['enddate__max'] - epoch).seconds / 86400.
+                    plot_results = ['time', tmin, tmax]
                 else:
                     logger.error('%s, but pid text = %s is not a coordinate', e, pid)
 
