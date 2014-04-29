@@ -704,9 +704,9 @@ class ParameterParameter(object):
                 yp.name = self.pDict['y']
                 yp.standard_name = self.pDict['y']
                 if self.pDict['y'] == 'longitude':
-                    xp.units = 'degrees_east'
+                    yp.units = 'degrees_east'
                 elif self.pDict['y'] == 'latitude':
-                    xp.units = 'degrees_north'
+                    yp.units = 'degrees_north'
                 elif self.pDict['y'] == 'depth':
                     plt.gca().invert_yaxis()
                     yp.units = 'm'
