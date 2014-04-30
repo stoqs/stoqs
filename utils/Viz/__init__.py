@@ -655,6 +655,9 @@ class ParameterParameter(object):
         '''
         Produce a Parameter-Parameter .png image with axis limits set to the 1 and 99 percentiles and draw outside the lines
         '''
+        pplrFlag = self.request.GET.get('pplr', False)
+        ppfrFlag = self.request.GET.get('ppfr', False)
+     
         sql = ''
         try:
             # self.x and self.y may already be set for this instance by makeX3D()
@@ -688,8 +691,9 @@ class ParameterParameter(object):
             fig = plt.figure()
             plt.grid(True)
             ax = fig.add_subplot(111)
-            ax.set_xlim(self.pMinMax['x'][1], self.pMinMax['x'][2])
-            ax.set_ylim(self.pMinMax['y'][1], self.pMinMax['y'][2])
+            if not ppfrFlag:
+                ax.set_xlim(self.pMinMax['x'][1], self.pMinMax['x'][2])
+                ax.set_ylim(self.pMinMax['y'][1], self.pMinMax['y'][2])
 
             self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
             cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
@@ -742,7 +746,12 @@ class ParameterParameter(object):
 
             # Add Sigma-t contours if x/y is salinity/temperature, approximate depth to pressure - must fix for deep water...
             Z = None
-            infoText = ''
+            infoText = 'n = %d' % len(self.x)
+            if stride_val > 1:
+                infoText += ' (of %d, stride = %d)' % (pp_count, stride_val)
+            infoText += '<br>%s ranges: fixed [%f, %f], actual [%f, %f]<br>%s ranges: fixed [%f, %f], actual [%f, %f]' % (
+                            xp.name, self.pMinMax['x'][1], self.pMinMax['x'][2], np.min(self.x), np.max(self.x),
+                            yp.name, self.pMinMax['y'][1], self.pMinMax['x'][2], np.min(self.y), np.max(self.y))
             meanDepth = round(np.mean(self.depth))
             if xp.standard_name == 'sea_water_salinity' and yp.standard_name == 'sea_water_temperature':
                 X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_salinity', pressure=np.mean(self.depth))
@@ -751,22 +760,21 @@ class ParameterParameter(object):
             if Z is not None:
                 CS = ax.contour(X, Y, Z, colors='k')
                 plt.clabel(CS, inline=1, fontsize=10)
-                infoText = 'Sigma-t levels computed for pressure = %.1f dbar<br>' % meanDepth
-    
-            # Assemble additional information about the correlation
-            self.logger.debug('polyfit')
-            m, b = polyfit(self.x, self.y, 1)
-            self.logger.debug('polyval')
-            yfit = polyval([m, b], self.x)
-            ax.plot(self.x, yfit, color='k', linewidth=0.5)
-            c = np.corrcoef(self.x, self.y)[0,1]
-            pr = pearsonr(self.x, self.y)
-            ##test_pr = pearsonr([1,2,3], [1,5,7])
-            ##self.logger.debug('test_pr = %f (should be 0.981980506062)', test_pr)
-            infoText = infoText + 'Linear regression: %s = %s * %s + %s (r<sup>2</sup> = %s, p = %s, n = %d)' % (yp.name, 
-                            round_to_n(m,4), xp.name, round_to_n(b,4), round_to_n(c**2,4), round_to_n(pr,4), len(self.x))
-            if stride_val > 1:
-                infoText = infoText.replace(')', ' of %d, stride = %d)' % (pp_count, stride_val))
+                infoText += '<br>Sigma-t levels computed for pressure = %.1f dbar' % meanDepth
+   
+            if pplrFlag: 
+                # Assemble additional information about the correlation
+                self.logger.debug('polyfit')
+                m, b = polyfit(self.x, self.y, 1)
+                self.logger.debug('polyval')
+                yfit = polyval([m, b], self.x)
+                ax.plot(self.x, yfit, color='k', linewidth=0.5)
+                c = np.corrcoef(self.x, self.y)[0,1]
+                pr = pearsonr(self.x, self.y)
+                ##test_pr = pearsonr([1,2,3], [1,5,7])
+                ##self.logger.debug('test_pr = %f (should be 0.981980506062)', test_pr)
+                infoText += '<br>Linear regression: %s = %s * %s + %s (r<sup>2</sup> = %s, p = %s)' % (yp.name, 
+                                round_to_n(m,4), xp.name, round_to_n(b,4), round_to_n(c**2,4), round_to_n(pr,4))
 
             # Save the figure
             try:

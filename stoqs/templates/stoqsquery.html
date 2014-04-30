@@ -289,6 +289,8 @@
                             <div class="tab-content">
                                 <div class="tab-pane" id="pp2d">
                                     <div id="parameter-parameter-2dplot" style="overflow: auto; margin:0px auto;">
+                                        <input type="checkbox" id="pp-linear-regression" class="pp-options" checked="checked"> Linear regression
+                                        <input type="checkbox" id="pp-free-range"class="pp-options" > Free range
                                         <img src="" />
                                         <pre class="prettyprint"></pre>
                                     </div>
@@ -1975,6 +1977,9 @@
         rebuildFilters(['parametertime']);
     });
 
+    $('.pp-options').on('click', function (event) {
+        rebuildFilters(['parameterparameterpng']);
+    });
 
 
     simpledepthtime_options = { grid: { 
@@ -2452,6 +2457,13 @@
         if ($('#showgeox3ddata').is(':checked')) {
             qstring = qstring + '&showgeox3ddata=1';
         }
+        if ($('#pp-linear-regression').is(':checked')) {
+            qstring = qstring + '&pplr=1';
+        }
+        if ($('#pp-free-range').is(':checked')) {
+            qstring = qstring + '&ppfr=1';
+        }
+
         if ( ! $('#showallparametervalues').is(':checked')) {
             //$('#parameter-value-table').html('<tbody></tbody>');
         }
