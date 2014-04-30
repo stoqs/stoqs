@@ -79,6 +79,8 @@ query_parms = {
                    'x3dplaybacks': 'x3dplaybacks',          # X3D Playback info
                    'resources': 'resources',                # Hash of Resources for Activities in the selection
                    've': 've',                              # Vertical Exaggeration of selected terrain in UI
+                   'ppfr': 'ppfr',                          # Parameter-Parameter free range flag
+                   'pplr': 'pplr',                          # Parameter-Parameter linear regression flag
 }
 
 def get_http_site_uri(request):
@@ -235,7 +237,7 @@ def queryMap(request):
     qm.buildQuerySets(**params)
     options = simplejson.dumps(qm.generateOptions(),
                                cls=encoders.STOQSJSONEncoder)
-    logger.debug('options = %s', pprint.pformat(options))
+    ##logger.debug('options = %s', pprint.pformat(options))
     _buildMapFile(request, qm, options)
 
     response['Content-Type'] = 'text/json'
