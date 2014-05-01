@@ -529,6 +529,9 @@ class ParameterParameter(object):
         self.c = []
         self.lon = []
         self.lat = []
+        self.sdepth = []
+        self.sx = []
+        self.sy = []
 
     def computeSigmat(self, limits, xaxis_name='sea_water_salinity', pressure=0):
         '''
@@ -584,9 +587,11 @@ class ParameterParameter(object):
         # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
         sql = str(self.pq.qs_mp.query)
         sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
+        sample_sql = self.pq.addSampleConstraint(sql)
 
-        # Use cursor so that we can specify the database alias to use.
+        # Use cursors so that we can specify the database alias to use.
         cursor = connections[self.request.META['dbAlias']].cursor()
+        sample_cursor = connections[self.request.META['dbAlias']].cursor()
 
         # Get count and set a stride value if more than a PP_MAX_POINTS which Matplotlib cannot plot, about 100,000 points
         try:
@@ -623,6 +628,15 @@ class ParameterParameter(object):
             self.logger.warn('Cannot execute sql query for Parameter-Parameter plot: %s', e)
             raise PPDatabaseException(infoText, sql)
 
+        # Get the Sample points
+        try:
+            self.logger.debug('Executing sample_sql = %s', sample_sql)
+            sample_cursor.execute(sample_sql)
+        except DatabaseError, e:
+            infoText = 'Parameter-Parameter: Sample Query failed.'
+            self.logger.warn('Cannot execute sample_sql query for Parameter-Parameter plot: %s', e)
+            raise PPDatabaseException(infoText, sample_sql)
+
         counter = 0
         self.logger.debug('Looping through rows in cursor with a stride of %d...', stride_val)
         for row in cursor:
@@ -647,6 +661,18 @@ class ParameterParameter(object):
         if self.x == [] or self.y == []:
             raise PPDatabaseException('No data returned from query', sql)
 
+        self.logger.debug('Looping through rows in sample_cursor')
+        for row in sample_cursor:
+            lrow = list(row)
+            if latlonFlag:
+                self.lon.append(float(lrow.pop(0)))
+                self.lat.append(float(lrow.pop(0)))
+
+            # Need only the x and y values for sample points                
+            self.sdepth.append(float(lrow.pop(0)))
+            self.sx.append(float(lrow.pop(0)))
+            self.sy.append(float(lrow.pop(0)))
+
         return stride_val, sql, pp_count
 
       return inner_getXYCData(self, strideFlag, latlonFlag)
@@ -657,6 +683,7 @@ class ParameterParameter(object):
         '''
         pplrFlag = self.request.GET.get('pplr', False)
         ppfrFlag = self.request.GET.get('ppfr', False)
+        ppslFlag = self.request.GET.get('ppsl', False)
      
         sql = ''
         try:
@@ -741,7 +768,7 @@ class ParameterParameter(object):
                 yp.standard_name = self.pDict['y']
                 yp.units = _getCoordUnits(self.pDict['y'])
                 if self.pDict['y'] == 'depth':
-                    plt.gca().invert_yaxis()
+                    ax.invert_yaxis()
             ax.set_ylabel('%s (%s)' % (yp.name, yp.units))
 
             # Add Sigma-t contours if x/y is salinity/temperature, approximate depth to pressure - must fix for deep water...
@@ -763,7 +790,7 @@ class ParameterParameter(object):
                 infoText += '<br>Sigma-t levels computed for pressure = %.1f dbar' % meanDepth
    
             if pplrFlag: 
-                # Assemble additional information about the correlation
+                # Do Linear regression and assemble additional information about the correlation
                 self.logger.debug('polyfit')
                 m, b = polyfit(self.x, self.y, 1)
                 self.logger.debug('polyval')
@@ -776,6 +803,19 @@ class ParameterParameter(object):
                 infoText += '<br>Linear regression: %s = %s * %s + %s (r<sup>2</sup> = %s, p = %s)' % (yp.name, 
                                 round_to_n(m,4), xp.name, round_to_n(b,4), round_to_n(c**2,4), round_to_n(pr,4))
 
+            # Add any sample locations
+            if ppslFlag:
+                if self.sx and self.sy:
+                    if self.c:
+                        try:
+                            ax.scatter(self.sx, self.sy, marker='o', c=self.c, s=25, cmap=cm_jetplus, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
+                        except ValueError, e:
+                            # Likely because a Measured Parameter has been selected for color
+                            logger.warn(e)
+                            ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False)
+                    else:
+                        ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False)
+            
             # Save the figure
             try:
                 self.logger.debug('Saving to file ppPngFileFullPath = %s', ppPngFileFullPath)
@@ -899,7 +939,8 @@ class ParameterParameter(object):
                     self.logger.exception('Could not plot the colormap')
                     return None, None, 'Could not plot the colormap'
 
-            x3dResults = {'colors': colors, 'points': points, 'info': '', 'x': self.pMinMax['x'], 'y': self.pMinMax['y'], 'z': self.pMinMax['z'], 'colorbar': colorbarPngFile}
+            x3dResults = {'colors': colors, 'points': points, 'info': '', 'x': self.pMinMax['x'], 'y': self.pMinMax['y'], 'z': self.pMinMax['z'], 
+                          'colorbar': colorbarPngFile, 'sql': sql}
 
         except DatabaseError:
             self.logger.exception('Cannot make parameterparameter X3D')

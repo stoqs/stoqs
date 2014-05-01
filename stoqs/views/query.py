@@ -81,6 +81,7 @@ query_parms = {
                    've': 've',                              # Vertical Exaggeration of selected terrain in UI
                    'ppfr': 'ppfr',                          # Parameter-Parameter free range flag
                    'pplr': 'pplr',                          # Parameter-Parameter linear regression flag
+                   'ppsl': 'ppsl',                          # Parameter-Parameter sample locations flag
 }
 
 def get_http_site_uri(request):

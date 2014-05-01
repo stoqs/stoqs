@@ -291,6 +291,7 @@
                                     <div id="parameter-parameter-2dplot" style="overflow: auto; margin:0px auto;">
                                         <input type="checkbox" id="pp-linear-regression" class="pp-options" checked="checked"> Linear regression
                                         <input type="checkbox" id="pp-free-range"class="pp-options" > Free range
+                                        <input type="checkbox" id="pp-sample-locations"class="pp-options" checked="checked"> Samples
                                         <img src="" />
                                         <pre class="prettyprint"></pre>
                                     </div>
@@ -2463,6 +2464,9 @@
         if ($('#pp-free-range').is(':checked')) {
             qstring = qstring + '&ppfr=1';
         }
+        if ($('#pp-sample-locations').is(':checked')) {
+            qstring = qstring + '&ppsl=1';
+        }
 
         if ( ! $('#showallparametervalues').is(':checked')) {
             //$('#parameter-value-table').html('<tbody></tbody>');
@@ -3023,7 +3027,14 @@
             }
             else if (key == 'parameterparameterpng') {
                 if (data[key]) {
-                    $('#parameter-parameter-sql > pre').html(data[key][2]);
+                    if ( ! $.isEmptyObject(data['parameterparameterx3d']) ) {
+                        if ( ! $.isEmptyObject(data['parameterparameterx3d']['sql']) ) {
+                            $('#parameter-parameter-sql > pre').html(data['parameterparameterx3d']['sql']);
+                        }
+                    }
+                    else {
+                        $('#parameter-parameter-sql > pre').html(data[key][2]);
+                    }
                     if (data[key][0]) {
                         $('#parameter-parameter-2dplot > img').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key][0]);
 
