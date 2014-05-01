@@ -748,3 +748,49 @@ For sampledparameter to sampledparamter query an example is:
 
         return q
 
+    def addSampleConstraint(self, query):
+        '''
+        Modify query to get sample informtation
+        '''
+        # Modified to return just depth, x, y points for places where there are samples (new SQL is all lower case):
+        # 
+        # SELECT DISTINCT stoqs_measurement.depth,
+        #                 mp_x.datavalue AS x,
+        #                 mp_y.datavalue AS y
+        # FROM stoqs_activity
+        # INNER JOIN stoqs_platform ON stoqs_platform.id = stoqs_activity.platform_id
+        # INNER JOIN stoqs_instantpoint ON stoqs_instantpoint.activity_id = stoqs_activity.id
+        # INNER JOIN stoqs_measurement ON stoqs_measurement.instantpoint_id = stoqs_instantpoint.id
+        # INNER JOIN stoqs_measurement m_y ON m_y.instantpoint_id = stoqs_instantpoint.id
+        # INNER JOIN stoqs_measuredparameter mp_y ON mp_y.measurement_id = m_y.id
+        # INNER JOIN stoqs_parameter p_y ON mp_y.parameter_id = p_y.id
+        # INNER JOIN stoqs_measurement m_x ON m_x.instantpoint_id = stoqs_instantpoint.id
+        # INNER JOIN stoqs_measuredparameter mp_x ON mp_x.measurement_id = m_x.id
+        # INNER JOIN stoqs_parameter p_x ON mp_x.parameter_id = p_x.id
+        # 
+        # inner join stoqs_sample on stoqs_sample.instantpoint_id = stoqs_instantpoint.id
+        # 
+        # WHERE (p_y.id = 8)
+        #   AND (p_x.id = 6)
+        # 
+        #   and stoqs_sample.id is not null;
+        # 
+        #        depth       |          x          |          y           
+        # -------------------+---------------------+----------------------
+        #  -0.85070807630861 |  0.0150373139209564 | 0.000853291921996732
+        #   20.8333460743087 | 0.00611123921903796 | 0.000356326309018604
+        #   47.0254516097659 |  0.0166342378584501 | 0.000125864557424297
+        #   41.0084011951115 |  0.0106893958691858 | 0.000111319997500448
+        #   20.7215864415311 |  0.0027162356341817 |  0.00029715946267329
+        #   9.18344644259678 | 0.00478679339998439 | 0.000845079474062416
+        # (6 rows)
+
+        q = query
+        if q.lower().find('inner join stoqs_sample on stoqs_sample.instantpoint_id') == -1:
+            q = q.replace('WHERE', 'inner join stoqs_sample on stoqs_sample.instantpoint_id = stoqs_instantpoint.id WHERE')
+        q += ' and stoqs_sample.id is not null'
+        q = sqlparse.format(q, reindent=True, keyword_case='upper')
+        self.logger.debug('q = %s', q)
+
+        return q
+
