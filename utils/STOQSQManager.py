@@ -299,11 +299,15 @@ class STOQSQManager(object):
         '''
         Wrapper around self.mpq.getMeasuredParametersPostgreSQL(), ensure that we have qs_mp built before calling 
         '''
+        sql = ''
         if not self.mpq.qs_mp:
             self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
         self.mpq.initialQuery = self.initialQuery
-        sql = self.mpq.getMeasuredParametersPostgreSQL()
-        self._actual_count = self.mpq.getMPCount()
+        try:
+            sql = self.mpq.getMeasuredParametersPostgreSQL()
+            self._actual_count = self.mpq.getMPCount()
+        except Exception, e:
+            logger.warn('Could not get MeasuredParametersPostgreSQL: %s', e)
 
         return sql
 
@@ -1091,7 +1095,7 @@ class STOQSQManager(object):
             pc = self.kwargs['parameterparameter'][3]
 
             if (px and py):
-                # Pquery is used here so as to combine Measured and Sampled Parameters
+                # PQuery is used here so as to combine Measured and Sampled Parameters
                 if not self.pq.qs_mp:
                     self.pq.buildPQuerySet(*self.args, **self.kwargs)
 

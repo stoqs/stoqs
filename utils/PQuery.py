@@ -285,18 +285,25 @@ class PQuery(object):
 
     def isParameterSampled(self, id):
         '''
-        Return True Parameter @id is a Sampled Parameter
+        Return True if id is a Sampled Parameter. Where id can be the primary key or the name.
         '''
         value = id in ParameterGroupParameter.objects.using(self.request.META['dbAlias']
                         ).filter(parametergroup__name=SAMPLED).values_list('parameter__id', flat=True)
+        if not value:
+            value = id in ParameterGroupParameter.objects.using(self.request.META['dbAlias']
+                            ).filter(parametergroup__name=SAMPLED).values_list('parameter__name', flat=True)
+            
         return value
         
     def isParameterMeasured(self, id):
         '''
-        Return True Parameter @id is a Measured Parameter
+        Return True if id is a Measured Parameter. Where id can be the primary key or the name.
         '''
         value = id in ParameterGroupParameter.objects.using(self.request.META['dbAlias']
                         ).filter(parametergroup__name=MEASUREDINSITU).values_list('parameter__id', flat=True)
+        if not value:
+            value = id in ParameterGroupParameter.objects.using(self.request.META['dbAlias']
+                            ).filter(parametergroup__name=MEASUREDINSITU).values_list('parameter__name', flat=True)
         return value
 
     def buildPQuerySet(self, *args, **kwargs):
@@ -323,6 +330,9 @@ class PQuery(object):
         if self.kwargs.has_key('measuredparametersgroup'):
             if self.kwargs['measuredparametersgroup']:
                 qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
+        if self.kwargs.has_key('sampledparametersgroup'):
+            if self.kwargs['sampledparametersgroup']:
+                qparams['parameter__name__in'] = self.kwargs['sampledparametersgroup']
         if self.kwargs.has_key('parameterstandardname'):
             if self.kwargs['parameterstandardname']:
                 qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
@@ -369,7 +379,7 @@ class PQuery(object):
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
                 sql = postgresifySQL(str(qs_mp.query))
                 self.logger.debug('\n\nsql before query = %s\n\n', sql)
-                sql = self.addMeasuredParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
+                sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
                 self.logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
                 qs_mpq = PQuerySet(sql, values_list)
             else:
@@ -426,8 +436,8 @@ class PQuery(object):
 
     def _pvSQLfragments(self, pvDict):
         '''
-        Given a dictionary @pvDict of {parameter: (pmin, pmax)} return SQL fragments for the FROM and WHERE portions
-        of a query
+        Given a list dictionary @pvDict of [{parameter: (pmin, pmax)}] return SQL fragments for the FROM and WHERE portions
+        of a query. Deal with both Measured Parameters and Sampled Paramters.
         '''
         add_to_from = ''
         from_sql = '' 
@@ -435,7 +445,6 @@ class PQuery(object):
         i = 0
         for pminmax in pvDict:
             i = i + 1
-
             # Experimenting in Aqua Data Studio, need to add SQL that looks like:
             #    INNER JOIN stoqs_measurement m1 
             #    ON m1.instantpoint_id = stoqs_instantpoint.id 
@@ -444,29 +453,46 @@ class PQuery(object):
             #            INNER JOIN stoqs_parameter p1 
             #            ON mp1.parameter_id = p1.id
 
-            from_sql = from_sql + 'INNER JOIN stoqs_measurement m' + str(i) + ' '
-            from_sql = from_sql + 'on m' + str(i) + '.instantpoint_id = stoqs_instantpoint.id '
-            from_sql = from_sql + 'INNER JOIN stoqs_measuredparameter mp' + str(i) + ' '
-            from_sql = from_sql + 'on mp' + str(i) + '.measurement_id = m' + str(i) + '.id '
-            from_sql = from_sql + 'INNER JOIN stoqs_parameter p' + str(i) + ' '
-            from_sql = from_sql + 'on mp' + str(i) + '.parameter_id = p' + str(i) + '.id '
-
             for k,v in pminmax.iteritems():
-                # Prevent SQL injection attacks
                 if k in Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
                     p = re.compile("[';]")
                     if p.search(v[0]) or p.search(v[1]):
+                        # Prevent SQL injection attacks
                         raise Exception('Invalid ParameterValue constraint expression: %s, %s' % (k, v))
-                    where_sql = where_sql + "(p" + str(i) + ".name = '" + k + "') AND "
-                    if v[0]:
-                        where_sql = where_sql + "(mp" + str(i) + ".datavalue > " + str(v[0]) + ") AND "
-                    if v[1]:
-                        where_sql = where_sql + "(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND "
-                    where_sql = where_sql + "(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
+
+                    if self.isParameterMeasured(k):
+                        from_sql += 'INNER JOIN stoqs_measurement m' + str(i) + ' '
+                        from_sql += 'on m' + str(i) + '.instantpoint_id = stoqs_instantpoint.id '
+                        from_sql += 'INNER JOIN stoqs_measuredparameter mp' + str(i) + ' '
+                        from_sql += 'on mp' + str(i) + '.measurement_id = m' + str(i) + '.id '
+                        from_sql += 'INNER JOIN stoqs_parameter p' + str(i) + ' '
+                        from_sql += 'on mp' + str(i) + '.parameter_id = p' + str(i) + '.id '
+
+                        where_sql += "(p" + str(i) + ".name = '" + k + "') AND "
+                        if v[0]:
+                            where_sql += "(mp" + str(i) + ".datavalue > " + str(v[0]) + ") AND "
+                        if v[1]:
+                            where_sql += "(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND "
+                        where_sql += "(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
+
+                    elif self.isParameterSampled(k):
+                        from_sql += 'INNER JOIN stoqs_sample s' + str(i) + ' '
+                        from_sql += 'on s' + str(i) + '.instantpoint_id = stoqs_instantpoint.id '
+                        from_sql += 'INNER JOIN stoqs_sampledparameter sp' + str(i) + ' '
+                        from_sql += 'on sp' + str(i) + '.sample_id = s' + str(i) + '.id '
+                        from_sql += 'INNER JOIN stoqs_parameter p' + str(i) + ' '
+                        from_sql += 'on sp' + str(i) + '.parameter_id = p' + str(i) + '.id '
+
+                        where_sql += "(p" + str(i) + ".name = '" + k + "') AND "
+                        if v[0]:
+                            where_sql += "(sp" + str(i) + ".datavalue > " + str(v[0]) + ") AND "
+                        if v[1]:
+                            where_sql += "(sp" + str(i) + ".datavalue < " + str(v[1]) + ") AND "
+                        where_sql += "(sp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
 
         return add_to_from, from_sql, where_sql
 
-    def addMeasuredParameterValuesSelfJoins(self, query, pvDict, select_items= '''stoqs_instantpoint.timevalue as measurement__instantpoint__timevalue, 
+    def addParameterValuesSelfJoins(self, query, pvDict, select_items= '''stoqs_instantpoint.timevalue as measurement__instantpoint__timevalue, 
                                                                           stoqs_measurement.depth as measurement__depth,
                                                                           stoqs_measurement.geom as measurement__geom,
                                                                           stoqs_measuredparameter.datavalue as datavalue'''):
@@ -533,11 +559,17 @@ class PQuery(object):
         # Used by getParameterPlatformDatavaluePNG(): 'measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue
         # Used by REST requests in stoqs/views/__init__(): stoqs_parameter.name, stoqs_parameter.standard_name, stoqs_measurement.depth, stoqs_measurement.geom, stoqs_instantpoint.timevalue, stoqs_platform.name, stoqs_measuredparameter.datavalue, stoqs_parameter.units
 
-        select_items = 'stoqs_measuredparameter.id, ' + select_items
 
         add_to_from, from_sql, where_sql = self._pvSQLfragments(pvDict)
 
         q = query
+
+        # Raw query must include the primary key
+        if q.find('FROM stoqs_sampledparameter') != -1:
+            select_items = 'stoqs_sampledparameter.id, ' + select_items
+        else:
+            select_items = 'stoqs_measuredparameter.id, ' + select_items
+
         p = re.compile('SELECT .+ FROM')
         q = p.sub('SELECT ' + select_items + ' FROM', q)
         q = q.replace('SELECT FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
@@ -546,13 +578,12 @@ class PQuery(object):
 
         return q
 
-
     def addParameterParameterSelfJoins(self, query, pDict):
         '''
         Given a Postgresified MeasuredParameter query string @query modify it to add the P self joins needed 
         to return up to 4 parameter data values from the same measurements. The Parameter ids are specified
         by the integer values in @pList.  The original @query string may be one that is modified by 
-        self.addMeasuredParameterValuesSelfJoins() or not.  
+        self.addParameterValuesSelfJoins() or not.  
         Return a Postgresified query string that can be used by Django's Manage.raw().
         Written for use by utils.Viz.ParamaterParameter()
 
@@ -651,39 +682,15 @@ For sampledparameter to sampledparamter query an example is:
                         else:
                             logger.error('%s, but axis = %s is not a coordinate', e, pDict[axis])
 
-
-        # Include all joins that are possible from the selectors in the UI: time, depth, parameter, platform
-        # Cannot use aliases because where clause from UI selectors don't use them
-        replace_from = '''stoqs_activity
-            INNER JOIN stoqs_platform 
-              on stoqs_platform.id = stoqs_activity.platform_id
-            INNER JOIN stoqs_instantpoint 
-              on stoqs_instantpoint.activity_id = stoqs_activity.id
-        '''
+        # Identify the appropriate depth for the SELECT
         if containsSampleFlag and not containsMeasuredFlag:
             # Only Sampled
             depth_item = 'DISTINCT stoqs_sample.depth, '
-            replace_from = replace_from + '''
-            INNER JOIN stoqs_sample 
-              on stoqs_sample.instantpoint_id = stoqs_instantpoint.id
-            '''
-        elif containsSampleFlag and containsMeasuredFlag:
-            # Sampled and Measured
-            depth_item = 'DISTINCT stoqs_measurement.depth, '
-            replace_from = replace_from + '''
-            INNER JOIN stoqs_measurement 
-              on stoqs_measurement.instantpoint_id = stoqs_instantpoint.id
-            INNER JOIN stoqs_sample 
-              on stoqs_sample.instantpoint_id = stoqs_instantpoint.id
-            '''
         else:
-            # Only Measured
+            # Only Measured -or- Sampled and Measured
             depth_item = 'DISTINCT stoqs_measurement.depth, '
-            replace_from = replace_from + '''
-            INNER JOIN stoqs_measurement 
-              on stoqs_measurement.instantpoint_id = stoqs_instantpoint.id
-            '''
 
+        add_to_from = ''
         select_items = depth_item + xyzc_items
 
         # Construct INNER JOINS and WHERE sql for Sampled and Measured Parameter selections
@@ -692,22 +699,22 @@ For sampledparameter to sampledparamter query an example is:
         for axis, pid in pDict.iteritems():
             if pid:
                 self.logger.debug('axis, pid = %s, %s', axis, pid)
-                replace_from = replace_from + '\n'
+                add_to_from += '\n'
                 try:
                     if self.isParameterMeasured(int(pid)):
-                        replace_from = replace_from + '\nINNER JOIN stoqs_measurement m_' + axis + ' '
-                        replace_from = replace_from + '\non m_' + axis + '.instantpoint_id = stoqs_instantpoint.id'
-                        replace_from = replace_from + '\nINNER JOIN stoqs_measuredparameter mp_' + axis + ' '
-                        replace_from = replace_from + '\non mp_' + axis + '.measurement_id = m_' + axis + '.id '
-                        replace_from = replace_from + '\nINNER JOIN stoqs_parameter p_' + axis + ' '
-                        replace_from = replace_from + '\non mp_' + axis + '.parameter_id = p_' + axis + '.id '
+                        add_to_from += '\nINNER JOIN stoqs_measurement m_' + axis + ' '
+                        add_to_from += '\non m_' + axis + '.instantpoint_id = stoqs_instantpoint.id'
+                        add_to_from += '\nINNER JOIN stoqs_measuredparameter mp_' + axis + ' '
+                        add_to_from += '\non mp_' + axis + '.measurement_id = m_' + axis + '.id '
+                        add_to_from += '\nINNER JOIN stoqs_parameter p_' + axis + ' '
+                        add_to_from += '\non mp_' + axis + '.parameter_id = p_' + axis + '.id '
                     elif self.isParameterSampled(int(pid)):
-                        replace_from = replace_from + '\nINNER JOIN stoqs_sample s_' + axis + ' '
-                        replace_from = replace_from + '\non s_' + axis + '.instantpoint_id = stoqs_instantpoint.id'
-                        replace_from = replace_from + '\nINNER JOIN stoqs_sampledparameter sp_' + axis + ' '
-                        replace_from = replace_from + '\non sp_' + axis + '.sample_id = s_' + axis + '.id '
-                        replace_from = replace_from + '\nINNER JOIN stoqs_parameter p_' + axis + ' '
-                        replace_from = replace_from + '\non sp_' + axis + '.parameter_id = p_' + axis + '.id '
+                        add_to_from += '\nINNER JOIN stoqs_sample s_' + axis + ' '
+                        add_to_from += '\non s_' + axis + '.instantpoint_id = stoqs_instantpoint.id'
+                        add_to_from += '\nINNER JOIN stoqs_sampledparameter sp_' + axis + ' '
+                        add_to_from += '\non sp_' + axis + '.sample_id = s_' + axis + '.id '
+                        add_to_from += '\nINNER JOIN stoqs_parameter p_' + axis + ' '
+                        add_to_from += '\non sp_' + axis + '.parameter_id = p_' + axis + '.id '
                     else:
                         self.logger.warn('Encountered parameter (id=%s) that is not in the Measured nor in the Sampled ParameterGroup', pid)
                     where_sql = where_sql + '(p_' + axis + '.id = ' + str(pid) + ') AND '
@@ -728,20 +735,18 @@ For sampledparameter to sampledparamter query an example is:
             # Insert our WHERE clause into the filters that are in the original query
             self.logger.debug('q = %s', q)
             if containsSampleFlag and not containsMeasuredFlag:
-                q = q.replace('stoqs_measurement', 'stoqs_sample')
+                # Brute-force fixup of query string to deal with Sample-only query
+                q = q.replace(
+'FROM stoqs_measuredparameter INNER JOIN stoqs_measurement ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id) INNER JOIN stoqs_instantpoint ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id)', 
+'FROM stoqs_sampledparameter INNER JOIN stoqs_sample ON (stoqs_sampledparameter.sample_id = stoqs_sample.id) INNER JOIN stoqs_instantpoint ON (stoqs_sample.instantpoint_id = stoqs_instantpoint.id)'
+                )
+                q = q.replace(
+'INNER JOIN stoqs_parameter ON (stoqs_measuredparameter.parameter_id = stoqs_parameter.id)',
+'INNER JOIN stoqs_parameter ON (stoqs_sampledparameter.parameter_id = stoqs_parameter.id)'
+                )
             q = q.replace(' WHERE ', ' WHERE ' + where_sql)
 
-        # Completely replace the whole FROM clause
-        p = re.compile('FROM.+WHERE')
-        q = p.sub('FROM ' + replace_from + ' WHERE', q)
-
-        # Check for ParameterValues and add to the SQL
-        if self.kwargs['parametervalues']:
-            # Add SQL fragments for any Parameter Value selections
-            pv_add_to_from, pv_from_sql, pv_where_sql = self._pvSQLfragments(self.kwargs['parametervalues'])
-            q = q.replace('FROM stoqs_sample', 'FROM ' + pv_add_to_from + 'stoqs_sample')
-            q = q.replace('FROM stoqs_instantpoint', 'FROM ' + pv_add_to_from + 'stoqs_instantpoint')
-            q = q.replace('WHERE', pv_from_sql + ' WHERE ' + pv_where_sql)
+        q = q.replace(' WHERE ', add_to_from + ' WHERE')
 
         self.logger.debug('q = %s', q)
         q = sqlparse.format(q, reindent=True, keyword_case='upper')
@@ -786,7 +791,7 @@ For sampledparameter to sampledparamter query an example is:
         # (6 rows)
 
         q = query
-        if q.lower().find('inner join stoqs_sample on stoqs_sample.instantpoint_id') == -1:
+        if q.lower().find('inner join stoqs_sample on') == -1 :
             q = q.replace('WHERE', 'inner join stoqs_sample on stoqs_sample.instantpoint_id = stoqs_instantpoint.id WHERE')
         q += ' and stoqs_sample.id is not null'
         q = sqlparse.format(q, reindent=True, keyword_case='upper')
