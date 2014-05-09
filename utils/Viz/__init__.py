@@ -532,6 +532,7 @@ class ParameterParameter(object):
         self.sdepth = []
         self.sx = []
         self.sy = []
+        self.sample_names = []
 
     def computeSigmat(self, limits, xaxis_name='sea_water_salinity', pressure=0):
         '''
@@ -672,6 +673,7 @@ class ParameterParameter(object):
             self.sdepth.append(float(lrow.pop(0)))
             self.sx.append(float(lrow.pop(0)))
             self.sy.append(float(lrow.pop(0)))
+            self.sample_names.append(lrow.pop(0))
 
         return stride_val, sql, pp_count
 
@@ -815,6 +817,8 @@ class ParameterParameter(object):
                             ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False)
                     else:
                         ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False)
+                    for i, txt in enumerate(self.sample_names):
+                        ax.annotate(txt, xy=(self.sx[i], self.sy[i]), xytext=(3.0, 3.0), textcoords='offset points')
             
             # Save the figure
             try:

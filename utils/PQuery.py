@@ -647,11 +647,23 @@ For sampledparameter to sampledparamter query an example is:
         '''
 
         self.logger.debug('initial query = %s', query)
-    
-        # Construct SELECT strings, must be in proper order, include depth for possible sigma-t calculation
-        select_order = ('x', 'y', 'z', 'c')
+
+        # Peek at selections to set Sample and Measurement flags
         containsSampleFlag = False
         containsMeasuredFlag = False
+        select_order = ('x', 'y', 'z', 'c')
+        for axis in select_order:
+            if pDict.has_key(axis):
+                if pDict[axis]:
+                    try:
+                        if self.isParameterMeasured(int(pDict[axis])):
+                            containsMeasuredFlag = True
+                        elif self.isParameterSampled(int(pDict[axis])):
+                            containsSampleFlag = True
+                    except ValueError, e:
+                        pass
+    
+        # Construct SELECT strings, must be in proper order, include depth for possible sigma-t calculation
         xyzc_items = ''
         for axis in select_order:
             if pDict.has_key(axis):
@@ -659,20 +671,27 @@ For sampledparameter to sampledparamter query an example is:
                     try:
                         if self.isParameterMeasured(int(pDict[axis])):
                             xyzc_items = xyzc_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
-                            containsMeasuredFlag = True
                         elif self.isParameterSampled(int(pDict[axis])):
-                            containsSampleFlag = True
                             xyzc_items = xyzc_items + 'sp_' + axis + '.datavalue as ' + axis + ', '
                         else:
                             # Default is to assume mp - supports legacy databases w/o the ParameterGroup assignment
                             xyzc_items = xyzc_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
                     except ValueError, e:
                         if pDict[axis] == 'longitude':
-                            xyzc_items = xyzc_items + 'ST_X(stoqs_measurement.geom) as ' + axis + ', '
+                            if containsSampleFlag and not containsMeasuredFlag:
+                                xyzc_items = xyzc_items + 'ST_X(stoqs_sample.geom) as ' + axis + ', '
+                            else:
+                                xyzc_items = xyzc_items + 'ST_X(stoqs_measurement.geom) as ' + axis + ', '
                         elif pDict[axis] == 'latitude':
-                            xyzc_items = xyzc_items + 'ST_Y(stoqs_measurement.geom) as ' + axis + ', '
+                            if containsSampleFlag and not containsMeasuredFlag:
+                                xyzc_items = xyzc_items + 'ST_Y(stoqs_sample.geom) as ' + axis + ', '
+                            else:
+                                xyzc_items = xyzc_items + 'ST_Y(stoqs_measurement.geom) as ' + axis + ', '
                         elif pDict[axis] == 'depth':
-                            xyzc_items = xyzc_items + 'stoqs_measurement.depth as ' + axis + ', '
+                            if containsSampleFlag and not containsMeasuredFlag:
+                                xyzc_items = xyzc_items + 'stoqs_sample.depth as ' + axis + ', '
+                            else:
+                                xyzc_items = xyzc_items + 'stoqs_measurement.depth as ' + axis + ', '
                         elif pDict[axis] == 'time':
                             xyzc_items += "(DATE_PART('day', stoqs_instantpoint.timevalue - timestamp '%s') * 86400 + " % EPOCH_STRING
                             xyzc_items += "DATE_PART('hour', stoqs_instantpoint.timevalue - timestamp '%s') * 3600 + " % EPOCH_STRING
@@ -722,31 +741,50 @@ For sampledparameter to sampledparamter query an example is:
                     # pid likely a coordinate, ignore
                     pass
 
-
         # Modify original SQL with new joins and where sql - almost a total rewrite
         q = query
         select_items = select_items[:-2] + ' '                      # Remove ', '
         q = 'SELECT ' + select_items + q[q.find('FROM'):]           # Override original select items
 
-        if q.find('WHERE') == -1:
+        if q.find('WHERE') == -1 and where_sql:
             # Case where no filters applied from UI - no selections and no WHERE clause, add ours
-            q = q + ' WHERE ' + where_sql[:-4]                      # Remove last 'AND '
+            q += ' WHERE ' + where_sql[:-4]                      # Remove last 'AND '
         else:
             # Insert our WHERE clause into the filters that are in the original query
             self.logger.debug('q = %s', q)
-            if containsSampleFlag and not containsMeasuredFlag:
-                # Brute-force fixup of query string to deal with Sample-only query
-                q = q.replace(
-'FROM stoqs_measuredparameter INNER JOIN stoqs_measurement ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id) INNER JOIN stoqs_instantpoint ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id)', 
-'FROM stoqs_sampledparameter INNER JOIN stoqs_sample ON (stoqs_sampledparameter.sample_id = stoqs_sample.id) INNER JOIN stoqs_instantpoint ON (stoqs_sample.instantpoint_id = stoqs_instantpoint.id)'
-                )
-                q = q.replace(
-'INNER JOIN stoqs_parameter ON (stoqs_measuredparameter.parameter_id = stoqs_parameter.id)',
-'INNER JOIN stoqs_parameter ON (stoqs_sampledparameter.parameter_id = stoqs_parameter.id)'
-                )
             q = q.replace(' WHERE ', ' WHERE ' + where_sql)
 
-        q = q.replace(' WHERE ', add_to_from + ' WHERE')
+        # Brute-force fixup of query string to deal with Sample-only query
+        if containsSampleFlag and not containsMeasuredFlag:
+            q = q.replace('FROM stoqs_measuredparameter', 'FROM stoqs_sampledparameter')
+            q = q.replace('INNER JOIN stoqs_measurement ON (stoqs_measuredparameter.measurement_id = stoqs_measurement.id)', 
+                          'INNER JOIN stoqs_sample ON (stoqs_sampledparameter.sample_id = stoqs_sample.id)')
+            q = q.replace('INNER JOIN stoqs_instantpoint ON (stoqs_measurement.instantpoint_id = stoqs_instantpoint.id)',
+                          'INNER JOIN stoqs_instantpoint ON (stoqs_sample.instantpoint_id = stoqs_instantpoint.id)')
+            q = q.replace('INNER JOIN stoqs_parameter ON (stoqs_measuredparameter.parameter_id = stoqs_parameter.id)',
+                          'INNER JOIN stoqs_parameter ON (stoqs_sampledparameter.parameter_id = stoqs_parameter.id)')
+            q = q.replace('AND stoqs_measurement.depth', 'AND stoqs_sample.depth')
+
+        # Add stoqs_measurement inner join if missing and needed for the select
+        if select_items.find('stoqs_measurement') != -1:
+            p = re.compile('FROM stoqs_measuredparameter.* stoqs_measurement')
+            if not p.search(q):
+                put_before = ' inner join stoqs_measurement on stoqs_measurement.id = stoqs_measuredparameter.measurement_id '
+                put_before += ' inner join stoqs_instantpoint on stoqs_measurement.instantpoint_id = stoqs_instantpoint.id ' 
+                add_to_from = put_before + add_to_from
+    
+        # Add stoqs_sample inner join if missing and needed for the select
+        if select_items.find('stoqs_sample') != -1:
+            p = re.compile('FROM stoqs_sampledparameter.* stoqs_sample')
+            if not p.search(q):
+                put_before = ' inner join stoqs_sample on stoqs_sample.id = stoqs_sampledparameter.sample_id '
+                put_before += ' inner join stoqs_instantpoint on stoqs_sample.instantpoint_id = stoqs_instantpoint.id ' 
+                add_to_from = put_before + add_to_from
+
+        if q.lower().find('where') == -1:
+            q += add_to_from
+        else:
+            q = q.replace(' WHERE ', add_to_from + ' WHERE ')
 
         self.logger.debug('q = %s', q)
         q = sqlparse.format(q, reindent=True, keyword_case='upper')
@@ -791,9 +829,34 @@ For sampledparameter to sampledparamter query an example is:
         # (6 rows)
 
         q = query
-        if q.lower().find('inner join stoqs_sample on') == -1 :
-            q = q.replace('WHERE', 'inner join stoqs_sample on stoqs_sample.instantpoint_id = stoqs_instantpoint.id WHERE')
-        q += ' and stoqs_sample.id is not null'
+
+        # Remove any color and z selections
+        p = re.compile(',\s.+datavalue AS c')
+        q = p.sub(' ', q)
+        p = re.compile(',\s.+datavalue AS z')
+        q = p.sub(' ', q)
+
+        # Add sample name to SELECT for labeling the Parameter-Parameter plot
+        q = q.replace('FROM', ', stoqs_sample.name FROM')
+
+        # Make sure we are getting stoqs_sample in our query - warning: very hackish
+        if q.find('FROM stoqs_measuredparameter') != -1:
+            if q.lower().find('inner join stoqs_sample on') == -1 :
+                add_to_from = ''
+                if q.lower().find('inner join stoqs_measurement on ') == -1:
+                    add_to_from += ' inner join stoqs_measurement on stoqs_measurement.instantpoint_id = stoqs_instantpoint.id'
+                add_to_from += ' inner join stoqs_sample on stoqs_sample.instantpoint_id = stoqs_instantpoint.id'
+                if q.lower().find('where') == -1:
+                    # No where clause, so add the inner joins we need - a bit of a hack
+                    q += add_to_from + ' WHERE'
+                else:
+                    q = q.replace('WHERE', add_to_from + ' WHERE')
+
+            if not q.strip().lower().endswith('where'):
+                q += ' and '
+    
+            q += ' stoqs_sample.id is not null'
+
         q = sqlparse.format(q, reindent=True, keyword_case='upper')
         self.logger.debug('q = %s', q)
 
