@@ -290,8 +290,8 @@
                                 <div class="tab-pane" id="pp2d">
                                     <div id="parameter-parameter-2dplot" style="overflow: auto; margin:0px auto;">
                                         <input type="checkbox" id="pp-linear-regression" class="pp-options" checked="checked"> Linear regression
-                                        <input type="checkbox" id="pp-free-range"class="pp-options" > Free range
-                                        <input type="checkbox" id="pp-sample-locations"class="pp-options" checked="checked"> Samples
+                                        <input type="checkbox" id="pp-free-range" class="pp-options" > Free range
+                                        <input type="checkbox" id="pp-sample-locations" class="pp-options" checked="checked"> Samples
                                         <img src="" />
                                         <pre class="prettyprint"></pre>
                                     </div>
@@ -2909,7 +2909,7 @@
                                 var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
                                     $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
                                 var options = $.extend(true, {}, simpledepthtime_options_zoom, {
-                                    series: { images: { show: true } },
+                                    series: { images: { show: true } }
                                 });
                             }
                             else {
@@ -3541,9 +3541,9 @@
         sensortrackskml = new OpenLayers.Layer.Vector(" Sensor tracks", {
             projection: map.displayProjection,
             strategies: [new OpenLayers.Strategy.Fixed()],
-            // protocol is Dynamically set in update_sensortrackskml()
+            // protocol is Dynamically set in update_sensortrackskml(), need placeholder url here for IE8
             protocol: new OpenLayers.Protocol.HTTP({
-                url: '',
+                url: 'measuredparameter.kmln',
                 format: new OpenLayers.Format.KML({
                     extractStyles: true,
                     extractAttributes: true,
