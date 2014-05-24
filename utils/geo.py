@@ -126,6 +126,20 @@ class GPS:
         #Return the ecef coordinates
         return (x, y, z)
 
+    def lla2gcc(self, lla, geoOrigin=''):
+        """
+        Same as lls2ecef, but accepts an X3D-style geoOrigin string for subtraction of it in ecef (gcc) cooridinates
+        """
+        if geoOrigin:
+            lon0, lat0, a0 = [float(c) for c in geoOrigin.split()]
+            x0, y0, z0 = self.lla2ecef((lat0, lon0, a0))
+        else:
+            x0, y0, z0 = 0, 0, 0
+
+        x, y, z = self.lla2ecef(lla)
+        
+        return (x - x0, y - y0, z -z0)
+
     def ecef2lla(self, ecef, tolerance=1e-9):
         """Convert Earth-centered, Earth-fixed coordinates to lat, lon, alt.
         Input: ecef - (x, y, z) in (m, m, m)
