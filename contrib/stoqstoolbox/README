@@ -1,0 +1,23 @@
+STOQSTOOLBOX
+============
+
+Instructions for installing and using stoqstoolbox
+
+The stoqstoolbox software is a toolbox for the Mathworks Matlab software.  To use it perform the 
+following steps:
+
+1. Download the latest stoqstoolbox build .zip file from http://code.google.com/p/stoqs/downloads/list
+   and unzip it.
+
+2. Copy the stoqstoolbox folder to a place where you put your Matlab toolboxes and add it to your
+   matlabpath.
+
+3. Run 'stoqs_demo' to test the installation.
+
+4. Using the stoqs web query interface (e.g. http://odss.mbari.org/canon/stoqs_may2012/query/) copy and 
+   paste provided Matlab code from the stoqstoolbox tab under Measurement Data Access into your Matlab
+   session.
+
+-- 
+Mike McCann
+12 November 2012
