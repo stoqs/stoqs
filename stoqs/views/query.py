@@ -79,6 +79,7 @@ query_parms = {
                    'x3dplaybacks': 'x3dplaybacks',          # X3D Playback info
                    'resources': 'resources',                # Hash of Resources for Activities in the selection
                    've': 've',                              # Vertical Exaggeration of selected terrain in UI
+                   'geoorigin': 'geoorigin',                # GeoOrigin of selected terrain in UI
                    'ppfr': 'ppfr',                          # Parameter-Parameter free range flag
                    'pplr': 'pplr',                          # Parameter-Parameter linear regression flag
                    'ppsl': 'ppsl',                          # Parameter-Parameter sample locations flag
