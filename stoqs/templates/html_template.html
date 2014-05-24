@@ -1,0 +1,46 @@
+<html>
+
+<head>
+    <title>{{ verbose_name_plural }}</title>
+    {% if google_analytics_code %}
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', '{{google_analytics_code}}']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    {% endif %}
+</head>
+
+<body>
+<h1>{{ verbose_name_plural }}</h1>
+<table border="1">
+<tr>
+{% for col in cols %}<th>{{ col }}</th>
+{% endfor %}
+</tr>
+
+{% templatetag openbrace %}% for item in list %{% templatetag closebrace %}
+<tr>
+{% for col in cols %}<td valign="top">{% templatetag openbrace %}% if item.{{ col }} == 0 %{% templatetag closebrace %}
+{% templatetag openbrace %}{% templatetag openbrace %} item.{{ col }} {% templatetag closebrace %}{% templatetag closebrace %}
+{% templatetag openbrace %}% else %{% templatetag closebrace %}
+{% templatetag openbrace %}% if item.{{ col }} %{% templatetag closebrace %}
+{% templatetag openbrace %}{% templatetag openbrace %} item.{{ col }} {% templatetag closebrace %}{% templatetag closebrace %}
+{% templatetag openbrace %}% else %{% templatetag closebrace %}
+&nbsp;
+{% templatetag openbrace %}% endif %{% templatetag closebrace %}
+{% templatetag openbrace %}% endif %{% templatetag closebrace %}</td>
+{% endfor %}
+</tr>
+{% templatetag openbrace %}% endfor %{% templatetag closebrace %}
+</table>
+</body>
+
+</html>
