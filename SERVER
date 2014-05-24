@@ -34,16 +34,31 @@ wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
 wget http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
 sudo rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
 
-# Install PostgreSQL 9.3 (see http://yum.postgresql.org/howtoyum.php):
-# --------------------------------------------------------------------
+# Install PostgreSQL 9.3 (see http://yum.postgresql.org/howtoyum.php)
 # Download appropriate .rpm file, e.g.: pgdg-centos93-9.3-1.noarch.rpm and install it:
 
 sudo rpm -ivh /tmp/pgdg-centos93-9.3-1.noarch.rpm
 sudo yum groupinstall "PostgreSQL Database Server 9.3 PGDG"
 
+# Initialize PostgreSQL cluster with symlinks to appropriate partitions listed above:
 
+sudo mkdir /pgdata/data
+sudo chown postgres /pgdata/data
+sudo rmdir /var/lib/pgsql/9.3/data
+sudo ln -s /pgdata/data /var/lib/pgsql/9.3/data
 
+sudo chkconfig postgresql-9.3 on
+sudo /sbin/service postgresql-9.3 initdb
 
+su -c "su - postgres"
+cd /var/lib/pgsql/9.3/data
+mv pg_xlog pg.xlog.orig
+ln -s /pgxlog pg_xlog
+rm -r pg.xlog.orig
+rmdir pg_tblspc
+ln -s /pgtablespace pg_tblspc
+
+sudo /sbin/service postgresql-9.3 start
 
 # Proceed to the instructions in the PREREQUISITES file.
 
