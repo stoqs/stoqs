@@ -32,6 +32,7 @@ from KML import readCLT
 from stoqs import models
 from utils.utils import postgresifySQL, pearsonr, round_to_n, EPOCH_STRING
 from utils.MPQuery import MPQuerySet
+from utils.geo import GPS
 from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
 import seawater.csiro as sw
@@ -437,9 +438,11 @@ class MeasuredParameter(object):
             self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s, %s, %s ', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range'
 
-    def dataValuesX3D(self):
+    def dataValuesX3D(self, vert_ex=10.0, geoOrigin=None):
         '''
-        Return scatter-like data values as X3D geocoordinates and colors
+        Return scatter-like data values as X3D geocoordinates and colors. A bit of a HACK until GeoOrigin is
+        implemented in X3DOM: if geoOrigin is not None then points will be GCC (ECEF) coordinates with the 
+        geoOrigin subtracted, GD input coordinates assumed.
         '''
         showGeoX3DDataFlag = False
         if self.kwargs.has_key('showgeox3ddata'):
@@ -447,12 +450,7 @@ class MeasuredParameter(object):
                 if self.kwargs['showgeox3ddata']:
                     showGeoX3DDataFlag = True
 
-        VERT_EXAG = 10
-        if 've' in self.kwargs.keys():
-            if self.kwargs['ve']:
-                VERT_EXAG = float(self.kwargs['ve'][0])
-
-        logger.debug("Building X3D data values with VERT_EXAG = %f", VERT_EXAG)
+        logger.debug("Building X3D data values with vert_ex = %f", vert_ex)
 
         x3dResults = {}
         if not showGeoX3DDataFlag:
@@ -466,10 +464,14 @@ class MeasuredParameter(object):
             colors = ''
             indices = ''
             index = 0
+            gps = GPS()
             for act in self.value_by_act.keys():
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
-                    points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * VERT_EXAG)
+                    if geoOrigin:
+                        points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
+                    else:
+                        points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
 
                     cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
                                         (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))

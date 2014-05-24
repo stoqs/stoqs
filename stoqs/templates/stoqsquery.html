@@ -1563,10 +1563,6 @@
             params['secondsperpixel'] = ($('#end-ems').val() - $('#start-ems').val()) / PIXELS_WIDE / 1000.0;
         }
 
-        if ($('body').data()['ve']) {
-            params['ve'] = $('body').data()['ve'];
-        }
-        
         // Since the old link (if there was one) for the permalink is no longer valid, hide it
         $('#permalink-box').hide();
         
@@ -2456,7 +2452,14 @@
         }
 
         if ($('#showgeox3ddata').is(':checked')) {
-            qstring = qstring + '&showgeox3ddata=1';
+            qstring += '&showgeox3ddata=1';
+            // Use the attributes of the terrain that is selected
+            if ($('body').data()['geoorigin']) {
+                qstring += '&geoorigin=' + $('body').data()['geoorigin'];
+            }
+            if ($('body').data()['ve']) {
+                qstring += '&ve=' + $('body').data()['ve'];
+            }
         }
         if ($('#pp-linear-regression').is(':checked')) {
             qstring = qstring + '&pplr=1';
@@ -2754,6 +2757,10 @@
                         $('#mp-x3d-viewpoint1').attr('position', item.position);
                         $('#mp-x3d-viewpoint1').attr('orientation', item.orientation);
                         $('#mp-x3d-terrain1').attr('url', terrain);
+                        if ( item.geoOrigin ) { 
+                            //$('#mp-x3d-track').append('<GeoOrigin DEF="ORIGIN" geoCoords="' + item.geoOrigin + '"></GeoOrigin>');
+                            $('body').data()['geoorigin'] = item.geoOrigin;
+                        }
                         if ( item.VerticalExaggeration ) {
                             $('#x3d-ve').text('Vertical Exaggeration: ' + item.VerticalExaggeration + 'x');
                             $('body').data()['ve'] = item.VerticalExaggeration;
@@ -2953,7 +2960,7 @@
                         return;
                     }
                     timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, $.extend(true, {}, parametertime_options, {
-                                                              yaxes: parmData.yaxesOptions,
+                                                              yaxes: parmData.yaxesOptions
                                                           }));
 
                     $.each(timeparameterplot.getData(), function(index, series) {
@@ -3091,10 +3098,20 @@
             else if (key == 'measuredparameterx3d') {
                 if (data[key]) {
                     if (data[key]['points']) {
-                        $('#mp-x3d-track').append('<indexedlineset coordIndex="' + 
+                        // If geoorigin then use regular coordinate nodes as summary data is returning 
+                        // gcc coords with geoorigin subtracted until geoOrigin is implemented in X3DOM
+                        if ( ! $('body').data()['geoorigin'] ) {
+                            $('#mp-x3d-track').html('<indexedlineset coordIndex="' + 
                                             data[key]['index'] + '"> <color color="' + 
                                             data[key]['colors'] + '"></color> <geocoordinate point="' + 
                                             data[key]['points'] + '"></geocoordinate> </indexedlineset>');
+                        }
+                        else {
+                            $('#mp-x3d-track').html('<indexedlineset coordIndex="' + 
+                                            data[key]['index'] + '"> <color color="' + 
+                                            data[key]['colors'] + '"></color> <coordinate point="' + 
+                                            data[key]['points'] + '"></coordinate> </indexedlineset>');
+                        }
                         $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data[key]['colorbar'] + '" />');
                     }
                 }
