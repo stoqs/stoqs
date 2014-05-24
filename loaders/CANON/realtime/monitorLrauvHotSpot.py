@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))           
 
 
 import DAPloaders
+from CANON import CANONLoader
 import logging
 import lrauvNc4ToNetcdf
 from datetime import datetime, timedelta
@@ -81,7 +82,8 @@ def getNcStartEnd(url, useTds):
 
     for link in links:
         #logger.debug("=============>link = %s" % (link['href']))
-        match = re.match('.+/(hotspot-Normal_.+.nc)',link['href'])
+        ##match = re.match('.+/(hotspot-Normal_.+.nc)',link['href'])
+        match = re.match('.+/(shore.+.nc)',link['href'])
         if match:
             #Open the url and get the time     
             #logger.debug("=================>match = %s" % match.group(1))
@@ -103,7 +105,8 @@ def getNcStartEnd(url, useTds):
             except:
                 # Nc file can't be open; find the .nc4 file and throw exception to 
                 # flag nc file is missing
-                match = re.match('.+/(hotspot.+.nc4)',link['href'])
+                ##match = re.match('.+/(hotspot.+.nc4)',link['href'])
+                match = re.match('.+/(shore.+.nc4)',link['href'])
                 if match:
                     #logger.debug("=================>match = %s" % match.group(1))
                     u = url + '/' + match.group(1)
@@ -145,7 +148,7 @@ def processDecimated(url, outDir, useTds, lastDatetime):
     # look in reverse time order - oldest to newest
     for link in reversed(links):
         try:
-            #logger.debug("=============>link = %s" % (link['href']))
+            ##logger.debug("=============>link = %s" % (link['href']))
             match = re.match('^(\d+T\d+)', link['href'] )
             folderName = match.group(1)       
             folderDatetime = datetime(*time.strptime(folderName, '%Y%m%dT%H%M%S')[:6])
@@ -165,8 +168,11 @@ def processDecimated(url, outDir, useTds, lastDatetime):
             nc4f = instance.nc4FileUrl.rsplit('/',1)[1]
             outFile = os.path.join(outDir, folderName, '.'.join(nc4f.split('.')[:-1]) + '_i.nc')
             # Only create if it doesn't already exists
-            if not os.path.isfile(outFile):
-                pw.process(instance.nc4FileUrl, outFile)
+            if not os.path.isfile(outFile): 
+                try:
+                    pw.process(instance.nc4FileUrl, outFile)
+                except TypeError, e:
+                    logger.warn(e)
 
     raise NoNewHotspotData
 
@@ -260,6 +266,19 @@ if __name__ == '__main__':
                 logger.info("Found activity name = %s" % aName)
             else:
                 try:
+                    cl = CANONLoader(args.database, args.campaign,
+                                x3dTerrains = {
+                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                        'VerticalExaggeration': '10',
+                                    }
+                                }
+                    )
+                    cl.dbAlias = args.database
+                    cl.campaignName = args.campaign
+
                     parms = ['sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water', 'downwelling_photosynthetic_photon_flux_in_sea_water']
                     logger.debug("Instantiating Lrauv_Loader for url = %s", newURL)
                     lrauvLoad = DAPloaders.runLrauvLoader(aName = aName,
@@ -274,6 +293,9 @@ if __name__ == '__main__':
                                                       stride = 1,
                                                       startDatetime = startDatetime,
                                                       endDatetime = endDatetime)
+                    # Add any X3D Terrain information specified in the constructor to the database
+                    cl.addTerrainResources()
+
                 except DAPloaders.NoValidData:
                     logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
 
