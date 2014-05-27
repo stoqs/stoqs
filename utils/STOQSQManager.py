@@ -729,8 +729,11 @@ class STOQSQManager(object):
                                               activity__platform__name=platform[0],
                                               measurement__measuredparameter__parameter=parameter
                                     ).values('depth').distinct().count()
-            logger.debug('nds  = %s', nds )
-            if nds == 0:
+            # Check if timeSeries plotting is requested for trajectory data
+            plotTimeSeriesDepth = models.ParameterResource.objects.using(self.dbname).filter(parameter__name=parameter,
+                                resource__name='plotTimeSeriesDepth').values_list('resource__value')
+            
+            if nds == 0 and not plotTimeSeriesDepth:
                 continue
 
             if parameter.standard_name == 'sea_water_salinity':
@@ -761,6 +764,10 @@ class STOQSQManager(object):
         '''
         Return hash of time series measuredparameter data with specified stride
         '''
+        # See if timeSeries plotting is requested for trajectory data, e.g. BEDS
+        plotTimeSeriesDepth = models.ParameterResource.objects.using(self.dbname).filter(parameter__name=p, 
+                                resource__name='plotTimeSeriesDepth').values_list('resource__value')
+
         # Order by nominal depth first so that strided access collects data correctly from each depth
         pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')[::stride]
         logger.debug('Adding time series of parameter = %s in key = %s', p, pa_units[p])
@@ -772,12 +779,15 @@ class STOQSQManager(object):
             ems = int(1000 * to_udunits(tv, 'seconds since 1970-01-01'))
             nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
                                                 # mooring microcat actual depths are put into mp['measurement__depth']
-    
             ##if p == 'BED_DEPTH':
             ##    logger.debug('nd = %s, tv = %s', nd, tv)
             ##    raise Exception('DEBUG')        # Useful for examining queries in the postgresql log
 
-            an_nd = "%s - %s @ %s" % (p, a.name, nd,)
+            if plotTimeSeriesDepth:
+                an_nd = "%s - %s starting @ %s m" % (p, a.name, plotTimeSeriesDepth[0][0],)
+            else:
+                an_nd = "%s - %s @ %s" % (p, a.name, nd,)
+    
             try:
                 pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))
             except KeyError:
@@ -851,7 +861,8 @@ class STOQSQManager(object):
                 qs_mp = pt_qs_mp.filter(parameter__name=p)
                 qs_awp = self.qs.filter(activityparameter__parameter__name=p)
 
-            qs_awp = qs_awp.filter(activityresource__resource__value__icontains='timeseries').distinct()
+            qs_awp = qs_awp.filter(Q(activityresource__resource__value__icontains='timeseries') |
+                                   Q(activityparameter__parameter__parameterresource__resource__name__icontains='plotTimeSeriesDepth')).distinct()
 
             try:
                 secondsperpixel = self.kwargs['secondsperpixel'][0]
@@ -863,6 +874,8 @@ class STOQSQManager(object):
             logger.debug('--------------------p = %s, u = %s, is_standard_name[p] = %s', p, u, is_standard_name[p])
             
             # Select each time series by Activity and test against secondsperpixel for deciding on min & max or stride selection
+            if not ndCounts[p]:
+                ndCounts[p] = 1         # Trajectories with plotTimeSeriesDepth will not have a nominal depth, set to 1 for calculation below
             for a in qs_awp:
                 qs_mp_a = qs_mp.filter(measurement__instantpoint__activity__name=a.name)
                 ad = (a.enddate-a.startdate)
@@ -905,13 +918,23 @@ class STOQSQManager(object):
         # Look for platforms that have featureTypes ammenable for Parameter time series visualization
         for plats in self.getPlatforms().values():
             for platform in plats:
+                timeSeriesParmCount = 0
+                trajectoryParmCount = 0
                 if platform[3].lower() == 'timeseriesprofile' or platform[3].lower() == 'timeseries':
                     # Do cheap query to count the number of timeseriesprofile or timeseries parameters
-                    counts = counts + models.Parameter.objects.using(self.dbname).filter(
+                    timeSeriesParmCount = models.Parameter.objects.using(self.dbname).filter(
                                         activityparameter__activity__activityresource__resource__name__iexact='featureType',
                                         activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower()
                                         ).distinct().count()
-
+                elif platform[3].lower() == 'trajectory':
+                    # Count trajectory Parameters for which timeSeries plotting has been requested
+                    trajectoryParmCount = models.Parameter.objects.using(self.dbname).filter(
+                                        activityparameter__activity__activityresource__resource__name__iexact='featureType',
+                                        activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower(),
+                                        parameterresource__resource__name__iexact='plotTimeSeriesDepth',
+                                        ).distinct().count()
+                counts += timeSeriesParmCount + trajectoryParmCount
+                if counts:
                     if 'parametertime' in self.kwargs['only'] or self.kwargs['parametertab']:
                         # Initialize structure organized by units for parameters left in the selection 
                         logger.debug('Calling self._collectParameters() with platform = %s', platform)

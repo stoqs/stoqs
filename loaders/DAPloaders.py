@@ -1095,11 +1095,14 @@ class BEDS_TS_Loader(TimeSeries_Loader):
 #
 # Helper methods that expose a common interface for executing the loaders for specific platforms
 #
-def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride):
+def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, plotTimeSeriesDepth=None):
     '''
     Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
+    If a number vaue is given to plotTimeSeriesDepth then that Resource is added for each
+    Parameter loaded; this gives instruction to the STOQS UI to also plot timeSries data
+    in the Parameter tab.
     '''
     logger.debug("Instantiating Trajectory_Loader for url = %s", url)
     loader = Trajectory_Loader(
@@ -1115,6 +1118,10 @@ def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
 
     logger.debug("Setting include_names to %s", parmList)
     loader.include_names = parmList
+    if plotTimeSeriesDepth:
+        # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList, plotTimeSeriesDepth)
+
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 

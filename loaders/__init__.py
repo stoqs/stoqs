@@ -495,8 +495,15 @@ class STOQS_Loader(object):
                                           name=rn, value=value, resourcetype=resourceType)
                     (ar, created) = m.ParameterResource.objects.db_manager(self.dbAlias).get_or_create(
                                     parameter=self.getParameterByName(v), resource=resource)
+                if self.plotTimeSeriesDepth.get(v, False):
+                    (uiResType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name='ui_instruction')
+                    (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                                          name='plotTimeSeriesDepth', value=self.plotTimeSeriesDepth[v], resourcetype=uiResType)
+                    (ar, created) = m.ParameterResource.objects.db_manager(self.dbAlias).get_or_create(
+                                    parameter=self.getParameterByName(v), resource=resource)
+                    
             except KeyError:
-                # Just skip deriveed parameters that may have been added for a sub-classed Loader
+                # Just skip derived parameters that may have been added for a sub-classed Loader
                 self.logger.warn('include_name %s is not in %s; assuming it is derived and skipping', v, self.url)
 
         

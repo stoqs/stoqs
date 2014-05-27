@@ -63,11 +63,11 @@ if bl.args.test:
     ##bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED00038_scene.x3d', 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED00039_scene.x3d' ]
     bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED01_1_June_2013_scene.x3d' ]
     bl.bed_parms = ['XA', 'YA', 'ZA', 'A']
-    bl.loadBEDS(pName='BED01', stride=10)
+    bl.loadBEDS(pName='BED01', stride=2, featureType='trajectory', plotTimeSeriesDepth=303)
 
     bl.bed_files = [ 'bed03/30100046_partial_decimated10.nc', ]
     bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20140218/BED03/30100046_partial_decimated10_scene.x3d' ]
-    bl.loadBEDS(pName='BED03', stride=10)
+    ##bl.loadBEDS(pName='BED03', stride=10)
 
 elif bl.args.optimal_stride:
     bl.loadBEDS(stride=1)
