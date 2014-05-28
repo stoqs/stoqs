@@ -51,30 +51,37 @@ bl.dodsBase = bl.tdsBase + 'dodsC/'
 
 # Files created by bed2netcdf.py from the BEDS SVN BEDS repository
 bl.bed_base = bl.dodsBase + 'BEDS/'
-bl.bed_parms = ['XA', 'YA', 'ZA', 'XR', 'YR', 'ZR', 'ROT', 'A', 'PRESS', 'BED_DEPTH']
+# Copied from ProjectLibrary to Hyrax server on elvis with:
+#   rsync -r /mbari/ProjectLibrary/901006.BEDS/BEDS.Data/CanyonEvents /var/www/dods_html/data/beds
+bl.bed_base = 'http://elvis.shore.mbari.org/opendap/hyrax/data/beds/CanyonEvents/20130601/BED1/netcdf/'
+##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT', 'PRESS', 'BED_DEPTH']   # For timeSeries
+bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT']
 
+bl.bed_files = ['BED01_1_June_2013.nc',
+##                'bed03/30100046_partial_decimated10.nc',
+               ]
+bl.bed_platforms = [ 'BED01',
+##                     'BED03',
+                   ]
+bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED01_1_June_2013_scene.x3d',
+##                     'http://dods.mbari.org/data/beds/x3d/20140218/BED03/30100046_partial_decimated10_scene.x3d',
+                   ]
+bl.bed_depths = [ 303,
+##
+                ]
 
 # Execute the load
 bl.process_command_line()
 
 if bl.args.test:
-    ##bl.bed_files = [ 'bed01/BED00038.nc', 'bed01/BED00039.nc', 'bed01/BED01_1_June_2013.nc']
-    bl.bed_files = [ 'bed01/BED01_1_June_2013.nc']
-    ##bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED00038_scene.x3d', 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED00039_scene.x3d' ]
-    bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED01_1_June_2013_scene.x3d' ]
-    bl.bed_parms = ['XA', 'YA', 'ZA', 'A']
-    bl.loadBEDS(pName='BED01', stride=2, featureType='trajectory', plotTimeSeriesDepth=303)
-
-    bl.bed_files = [ 'bed03/30100046_partial_decimated10.nc', ]
-    bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20140218/BED03/30100046_partial_decimated10_scene.x3d' ]
-    ##bl.loadBEDS(pName='BED03', stride=10)
+    bl.loadBEDS(stride=100, featureType='trajectory')
 
 elif bl.args.optimal_stride:
-    bl.loadBEDS(stride=1)
+    bl.loadBEDS(stride=1, featureType='trajectory')
 
 else:
     bl.stride = bl.args.stride
-    bl.loadBEDS()
+    bl.loadBEDS(featureType='trajectory')
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 bl.addTerrainResources()

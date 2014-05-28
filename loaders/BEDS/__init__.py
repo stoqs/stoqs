@@ -40,16 +40,18 @@ class BEDSLoader(LoadScript):
                 'bed03':       '4feda0',
              }
 
-    def loadBEDS(self, pName='BED01', stride=None, featureType='trajectory', plotTimeSeriesDepth=None):
+    def loadBEDS(self, stride=None, featureType='trajectory'):
         '''
         BEDS specific load functions; featureType can be 'trajectory' or 'timeSeries'.  Use 'trajectory' for events that we've fudged
         into a trajectory netCDF file using the canyon's thalweg.  Use 'timeSeries' for events for which the BED does not significantly translate.
-        To get timeSeries plotting for trajectories (in the Parameter tab of the UI) assign a plotTimeSeriesDepth value of the starting depth in meters.
         '''
         stride = stride or self.stride
-        for (aName, file, x3dmodelurl) in zip([ a + ' (stride=%d)' % stride for a in self.bed_files], self.bed_files, self.bed_x3dmodels):
+        for (aName, pName, file, x3dmodelurl, plotTimeSeriesDepth) in zip(
+                            [ a + ' (stride=%d)' % stride for a in self.bed_files], 
+                            self.bed_platforms, self.bed_files, self.bed_x3dmodels, self.bed_depths):
             url = self.bed_base + file
             if featureType == 'trajectory':
+                # To get timeSeries plotting for trajectories (in the Parameter tab of the UI) assign a plotTimeSeriesDepth value of the starting depth in meters.
                 DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
                                         self.bed_parms, self.dbAlias, stride, plotTimeSeriesDepth=plotTimeSeriesDepth)
             elif featureType == 'timeSeries':
