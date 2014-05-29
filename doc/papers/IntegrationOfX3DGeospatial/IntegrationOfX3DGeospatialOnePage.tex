@@ -103,7 +103,7 @@
 
 \section{Introduction}
 
-Efficient analysis of growing types of oceanographic observations requires new approaches in data management and visualization. The Monterey Bay Aquarium Research Institute designed the Spatial Temporal Oceanographic Query System (STOQS) to create new capabilities for scientists to gain insight from their data. STOQS includes a web-based graphical user interface enabling effective data exploration across all dimensions of the data collection. This user interface is where X3D Geospatial has been integrated to enable 3D geospatial data visualization. This paper describes the STOQS User Interface, how X3DOM fits naturally within the framework, and discusses what service and content standards might be useful for sensor data portrayal. 
+Efficient analysis of growing types of oceanographic observations requires new approaches in data management and visualization. The Monterey Bay Aquarium Research Institute designed the Spatial Temporal Oceanographic Query System (STOQS) \cite{STOQS} to create new capabilities for scientists to gain insight from their data. STOQS includes a web-based graphical user interface enabling effective data exploration across all dimensions of the data collection. This user interface is where X3D Geospatial has been integrated to enable 3D geospatial data visualization. 
 
 \section{Architecture}
 
@@ -127,31 +127,24 @@ STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django ru
 \end{figure}
 
 
-% Prevent hyphenation
-
 
 \section{Geospatial standards}
-The content standard of X3D together with modern web technologies gives a skilled developer quite a bit of flexibility and capability to build data rich 3D scenes.  For example, 
-Fig.~\ref{fig:Monterey25_lrauvs} shows X3DOM PopGeometry terrain underlaying colored IndexLineSets of chlorophyll measurements of month-long deployments of 2 AUVs in Monterey Bay. 
-More complex and interactive 3D scenes can be easily created in STOQS within the confines of the coupled Server-AJAX-JSON-Client environment. 
+The STOQS platform is a good environment for experimenting with ways to portray sensor data and understand patterns of data access. This process can help inform the development of international standards for portrayal of 3D geospatial data.
+Data from the database can be connected to appropriate scene graph elements within the confines of the coupled Server-AJAX-JSON-Client environment. For example, 
+Fig.~\ref{fig:Monterey25_lrauvs} is a screen grab from the STOQS User Interface where the user has selected Autonomous Underwater Vehicle measurements of chlorophyll. The system retrieved the selected data from the database in a custom JSON data structure, JavaScript in the browser then updated IndexLineSets in the scene graph with these data. The terrain underlaying the sensor data is a mesh composed of X3DOM POP Geometry.
 
-The Spatial section of the STOQS User Interface has both 2D and 3D viewing areas. The OpenLayers JavaScript library supports the Open Geospatial Consortium's Web Map Service (WMS) protocol which allows content to be received and "mashed up" from different servers: the basemap is provided by the ESRI or Open Street Map servers and the measurements from the platforms are provided by the STOQS server. The WMS protocol enables this, mainly through its requirement that each GetMap request include a CRS field specifying the EPSG code for the coordinate reference system of the map.
+The Spatial section of the STOQS UI has both 2D (OpenLayers) and 3D (X3DOM) data viewing areas. OpenLayers supports the Open Geospatial Consortium's Web Map Service (WMS) protocol which allows content to be retieved and "mashed up" from different servers. The WMS protocol enables this through its requirement that each GetMap request include a CRS field specifying the EPSG code for the coordinate reference system of the map.  There is not yet an equivalent scheme to deliver 3D data to an X3D scene graph.
 
+The OGC 3D Portrayal Interoperability Experiment (3DPIE) \cite{3DPIE} specifies that a GetScene request will return an entire X3D scene in whatever coordinates the server generates - there is no ability to mash up data from different servers. We think that this situation can be improved. 
 
-The OGC 3D Portrayal Interoperability Experiment (3DPIE) \cite{3DPIE} proposed best practices to use within the city modeling domain.  
-
-For medium and thick clients (those able to render interactive 3D scenes) a GetScene request will return an entire X3D scene in whatever coordinates the server generates. WIth this architecture the server can guarantee consistency of all the elements within a scene. A disadvantage is that all content in the scene must come from the same server which determines independently what 3D coordinate reference system is used.
-
-There are several use cases for 3D mashup capability. The 3DPIE identified sensor data as a source for portrayal but left the implementation of a sensor service capability for a future effort. Data representing such things as atmospheric pollutants could be retrieved from external servers and could be portrayed as a transparent cloud within a model of a city. Examples within the oceanographic domain include adding remotely sensed surface chlorophyll fluorescence data to the scene from servers at NASA and inclusion of features from numerical ocean circulation models. 
-
-The STOQS platform is an good environment for experimenting with various ways to portray data and understand the patterns of data access that lead to best practices and eventually internationally agreed upon standards. Future work for the project includes: 1) giving the user the option of presenting measurement data as a PointSet instead of an IndexedLineSet, 2) improving X3DOM's implementation of the Geospatial component, and 3) testing the mashup of data from external servers.
+There are several use cases for 3D mashup capability. The 3DPIE identified sensor data as a source for portrayal but left the implementation of a sensor service capability for a future effort. Data representing such things as atmospheric pollutants could be retrieved from external servers and could be portrayed as a transparent cloud within a model of a city. Examples within the oceanographic domain include adding to the scene remotely sensed and numerical model model data.
 
 
 
 
 \bibliographystyle{acmsiggraph}
 \nocite{*}
-\bibliography{IntegrationOfX3DGeospatial}
+\bibliography{IntegrationOfX3DGeospatialOnePage}
 
 
 
