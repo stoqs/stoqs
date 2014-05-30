@@ -112,7 +112,7 @@ STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django ru
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=3.3in]{STOQS_Architecture_withX3DOM.png}
-\caption{Major software components that make up STOQS.}
+\caption{STOQS integrates multiple open-source components.}
 \label{fig:STOQSArch}
 \end{figure}
 
@@ -122,7 +122,7 @@ STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django ru
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=3.3in]{Monterey25_lrauvs.png}
-\caption{POP Geometry of 25m resolution Monterey Bay terrain with AUV measured chlorophyll data rendered by X3DOM in STOQS.}
+\caption{POP Geometry mesh of Monterey Bay terrain with AUV measured chlorophyll data.}
 \label{fig:Monterey25_lrauvs}
 \end{figure}
 
@@ -135,7 +135,7 @@ Fig.~\ref{fig:Monterey25_lrauvs} is a screen grab from the STOQS User Interface 
 
 The Spatial section of the STOQS UI has both 2D (OpenLayers) and 3D (X3DOM) data viewing areas. OpenLayers supports the Open Geospatial Consortium's Web Map Service (WMS) protocol which allows content to be retrieved and "mashed up" from different servers. The WMS protocol enables this through its requirement that each GetMap request include a CRS field specifying the EPSG code for the coordinate reference system of the map.  There is not yet an equivalent scheme to deliver 3D data to an X3D scene graph.
 
-The OGC 3D Portrayal Interoperability Experiment (3DPIE) \cite{3DPIE} specifies that a GetScene request will return an entire X3D scene in whatever coordinates the server generates - there is no ability to mash up data from different servers. We think that this situation can be improved. 
+The OGC 3D Portrayal Interoperability Experiment (3DPIE) \cite{3DPIE} specifies that a GetScene request will return an entire X3D scene in whatever coordinates the server generates - there is no ability to mash up data from different servers. We think that this situation can be improved and are implementing the X3D Geospatial Component in X3DOM to explore ways to achieve fully interopable 3D portrayal.
 
 There are several use cases for 3D mashup capability. The 3DPIE identified sensor data as a source for portrayal but left the implementation of a sensor service capability for a future effort. Data representing such things as atmospheric pollutants could be retrieved from external servers and could be portrayed as a transparent cloud within a model of a city. 
 Remote sensing and numerical model data could be retrieved from other servers and rendered in 3D along with the oceanographic sensor data in STOQS.
