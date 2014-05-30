@@ -60,7 +60,10 @@ ln -s /pgtablespace pg_tblspc
 
 sudo /sbin/service postgresql-9.3 start
 
+sudo yum install mercurial
+
 # Proceed to the instructions in the PREREQUISITES file.
+
 
 --
 Mike McCann
