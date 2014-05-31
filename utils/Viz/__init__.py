@@ -469,6 +469,7 @@ class MeasuredParameter(object):
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     if geoOrigin:
+                        depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
                         points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
                     else:
                         points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
