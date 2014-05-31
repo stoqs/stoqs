@@ -464,6 +464,45 @@ class SampleResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['sample', 'resource']
 
+class PlatformResource(models.Model):
+    '''
+    Association class pairing Platforms and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    '''
+    uuid = UUIDField(editable=False)
+    platform = models.ForeignKey(Platform)
+    resource = models.ForeignKey(Resource)
+    class Meta:
+        verbose_name = 'Platform Resource'
+        verbose_name_plural = 'Platform Resource'
+        app_label = 'stoqs'
+        unique_together = ['platform', 'resource']
+
+class InstantPointResource(models.Model):
+    '''
+    Association class pairing InstantPoints and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    '''
+    uuid = UUIDField(editable=False)
+    instantpoint = models.ForeignKey(InstantPoint)
+    resource = models.ForeignKey(Resource)
+    class Meta:
+        verbose_name = 'InstantPoint Resource'
+        verbose_name_plural = 'InstantPoint Resource'
+        app_label = 'stoqs'
+        unique_together = ['instantpoint', 'resource']
+
+class MeasurementResource(models.Model):
+    '''
+    Association class pairing Measurements and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    '''
+    uuid = UUIDField(editable=False)
+    measurement = models.ForeignKey(Measurement)
+    resource = models.ForeignKey(Resource)
+    class Meta:
+        verbose_name = 'Measurement Resource'
+        verbose_name_plural = 'Measurement Resource'
+        app_label = 'stoqs'
+        unique_together = ['measurement', 'resource']
+
 class ActivityParameter(models.Model):
     '''
     Association class pairing Parameters that have been loaded for an Activity
