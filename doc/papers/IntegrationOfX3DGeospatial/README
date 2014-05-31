@@ -1,0 +1,36 @@
+This README file accompanies the 2008/10/21 version of the 'acmsiggraph'
+LaTeX files, to be used to prepare documents for publication in the print
+and/or electronic proceedings of events sponsored by ACM SIGGRAPH.
+
+Files included in this package include:
+
+  README          - this file
+
+  acmsiggraph.bst - BibTeX style file
+  acmsiggraph.cls - LaTeX class file
+
+  template.tex    - sample source document
+  template.bib    - sample BibTeX document
+  sample.eps      - EPS file used in 'template.tex'
+
+  template-review.pdf           - PDF of 'review' mode document
+  template-final.pdf            - PDF of 'final' mode document, 
+                                  prepared for sponsored event
+				  that is not the annual conference.
+  template-final-annualconf.pdf - PDF of 'final' mode document,
+                                  prepared for annual conference.
+  template-final-nocr.pdf       - PDF of 'final' mode document,
+                                  prepared without space left for
+				  the ACM copyright information.
+
+Four versions of the template document are distributed with this package
+to illustrate the commonly-used variants. Of special note is the 
+'template-final-nocr.pdf' which does not leave any space for the ACM
+copyright information, added during production. This example is not to be
+used as guidance for technical papers accepted to a sponsored event or 
+annual conference, but can be used as an example of a poster, talk, or
+other content accepted at a sponsored event.
+
+Questions, comments, and suggestions should be sent to Stephen Spencer at
+'spencer@cs.washington.edu' to be considered for inclusion in a future 
+version of this package.
