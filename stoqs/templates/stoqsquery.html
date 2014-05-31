@@ -3180,6 +3180,10 @@
                 $('#metadata-ajaxtime').html(" " + nsecs + " seconds");
                 $('#metadata-loading').html("");
 
+                // Open Spatial and Temporal Accordions upon load
+                $('#spatial-anchor').click();
+                $('#temporal-anchor').click();
+
                 // For Development - turn on Platform plot controls
                 //$('.platform-plot-instruction').show()
                 //$('.platform-plot-map-checkbox').show()
@@ -3714,10 +3718,6 @@
             }
         });
         
-
-        // Open Spatial and Temporal Accordions upon load
-        $('#spatial-anchor').click();
-        $('#temporal-anchor').click();
 
         // Tootips that are disabled after first use - don't want to annoy users too much
         //$('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter to enable'});
