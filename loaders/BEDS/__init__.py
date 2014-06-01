@@ -59,7 +59,7 @@ class BEDSLoader(LoadScript):
                                         self.bed_parms, self.dbAlias, stride)
 
             self.addPlaybackResources(x3dmodelurl, aName)
-
+            self.addPlatformResources('http://dods.mbari.org/data/beds/x3d/beds_housing_with_axes.x3d', pName)
 
 if __name__ == '__main__':
     '''

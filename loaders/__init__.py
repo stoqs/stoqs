@@ -222,6 +222,25 @@ class LoadScript(object):
                             activity=activity, resource=resource)
         self.logger.info('Resource uristring=%s', x3dmodelurl)
 
+    def addPlatformResources(self, x3dmodelurl, pName, value='X3D model'):
+        '''
+        Add Resources to Platform.  Used initially for adding X3D model of a platform.  Can put additional descriptive 
+        information in value option, e.g.: "X3D model derived from SolidWorks model of ESP and processed through aopt"
+        '''
+
+        resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+                                name='x3dplatformmodel', description='X3D scene for model of a platform')
+
+        self.logger.info('Adding to ResourceType: %s', resourceType)
+        self.logger.debug('Looking in database %s for Platform name = %s', self.dbAlias, pName)
+        platform = m.Platform.objects.using(self.dbAlias).get(name=pName)
+        
+        resource, created = m.Resource.objects.using(self.dbAlias).get_or_create(
+                            uristring=x3dmodelurl, name='X3D_model', value=value, resourcetype=resourceType)
+        cr, created = m.PlatformResource.objects.using(self.dbAlias).get_or_create(
+                            platform=platform, resource=resource)
+        self.logger.info('Resource uristring=%s', x3dmodelurl)
+
 
 class STOQS_Loader(object):
     '''
