@@ -127,6 +127,34 @@ class BaseAndMeasurementViewsTestCase(TestCase):
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
+    def test_parameter_resource(self):
+       for fmt in self.format_types:
+           req = reverse('show-parameterresource', kwargs={'format': fmt,
+                                                          'dbAlias': 'default'})
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_platform_resource(self):
+       for fmt in self.format_types:
+           req = reverse('show-platformresource', kwargs={'format': fmt,
+                                                          'dbAlias': 'default'})
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_instantpoint_resource(self):
+       for fmt in self.format_types:
+           req = reverse('show-instantpointresource', kwargs={'format': fmt,
+                                                          'dbAlias': 'default'})
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_measurement_resource(self):
+       for fmt in self.format_types:
+           req = reverse('show-measurementresource', kwargs={'format': fmt,
+                                                          'dbAlias': 'default'})
+           response = self.client.get(req)
+           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
     def test_sample(self):
        for fmt in self.format_types:
            req = reverse('show-sample', kwargs={'format': fmt,
