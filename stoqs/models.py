@@ -503,6 +503,19 @@ class MeasurementResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['measurement', 'resource']
 
+class ResourceResource(models.Model):
+    '''
+    Association class pairing Resources and Resources for many-to-many from/to relationships.
+    '''
+    uuid = UUIDField(editable=False)
+    fromresource = models.ForeignKey(Resource, related_name='toresource')
+    toresource = models.ForeignKey(Resource, related_name='fromresource')
+    class Meta:
+        verbose_name = 'Resource Resource'
+        verbose_name_plural = 'Resource Resource'
+        app_label = 'stoqs'
+        unique_together = ['fromresource', 'toresource']
+
 class ActivityParameter(models.Model):
     '''
     Association class pairing Parameters that have been loaded for an Activity
