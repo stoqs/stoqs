@@ -346,6 +346,68 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
 
     return q
 
+def spiciness(t,s):
+    """
+    Return spiciness as defined by Flament (2002).
+    see : http://www.satlab.hawaii.edu/spice/spice.html
+    ref : A state variable for characterizing water masses and their 
+          diffusive stability: spiciness. Progress in Oceanography
+          Volume 54, 2002, Pages 493-501. 
+    test : spice(p=0,T=15,S=33)=0.54458641375
+    NB : only for valid p = 0 
+    """
+    B = numpy.zeros((7,6))
+    B[1,1] = 0
+    B[1,2] = 7.7442e-001
+    B[1,3] = -5.85e-003
+    B[1,4] = -9.84e-004
+    B[1,5] = -2.06e-004
+
+    B[2,1] = 5.1655e-002
+    B[2,2] = 2.034e-003
+    B[2,3] = -2.742e-004
+    B[2,4] = -8.5e-006
+    B[2,5] = 1.36e-005
+
+    B[3,1] = 6.64783e-003
+    B[3,2] = -2.4681e-004
+    B[3,3] = -1.428e-005
+    B[3,4] = 3.337e-005
+    B[3,5] = 7.894e-006
+
+    B[4,1] = -5.4023e-005
+    B[4,2] = 7.326e-006
+    B[4,3] = 7.0036e-006
+    B[4,4] = -3.0412e-006
+    B[4,5] = -1.0853e-006
+ 
+    B[5,1] = 3.949e-007
+    B[5,2] = -3.029e-008
+    B[5,3] = -3.8209e-007
+    B[5,4] = 1.0012e-007
+    B[5,5] = 4.7133e-008
+
+    B[6,1] = -6.36e-010
+    B[6,2] = -1.309e-009
+    B[6,3] = 6.048e-009
+    B[6,4] = -1.1409e-009
+    B[6,5] = -6.676e-010
+    # 
+    t = numpy.array(t)
+    s = numpy.array(s)
+    #
+    coefs = B[1:7,1:6]
+    sp = numpy.zeros(t.shape)
+    ss = s - 35.
+    bigT = numpy.ones(t.shape)
+    for i in range(6):
+        bigS = numpy.ones(t.shape)
+        for j in range(5):
+            sp+= coefs[i,j]*bigT*bigS
+            bigS*= ss
+        bigT*=t
+    return sp
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
