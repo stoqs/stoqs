@@ -539,10 +539,10 @@ class ParameterParameter(object):
 
     def computeSigmat(self, limits, xaxis_name='sea_water_salinity', pressure=0):
         '''
-        Given a tuple of limits = (xmin, xmax, ymin, ymax) and an xaxis_name compute 
+        Given a tuple of limits = (xmin, xmax, ymin, ymax) and an xaxis_name compute potential
         density for a range of values between the mins and maxes.  Return the X and Y values
-        for salinity/temperature and density converted to sigma-t.  A pressure argument may
-        be provided for computing sigmat for that pressure.
+        for salinity/temperature and density converted to sigma-t. A pressure value may be passed
+        to compute relative to a pressure other than 0.
         '''
         ns = 50
         nt = 50
@@ -553,7 +553,7 @@ class ParameterParameter(object):
             for ti in t:
                 row = []
                 for si in s:
-                    row.append(sw.dens(si, ti, pressure) - 1000.0)
+                    row.append(sw.pden(si, ti, pressure) - 1000.0)
                 sigmat.append(row)
 
         elif xaxis_name == 'sea_water_temperature':
@@ -562,7 +562,7 @@ class ParameterParameter(object):
             for si in s:
                 row = []
                 for ti in t:
-                    row.append(sw.dens(si, ti, pressure) - 1000.0)
+                    row.append(sw.pden(si, ti, pressure) - 1000.0)
                 sigmat.append(row)
 
         else:
@@ -784,15 +784,13 @@ class ParameterParameter(object):
             infoText += '<br>%s ranges: fixed [%f, %f], actual [%f, %f]<br>%s ranges: fixed [%f, %f], actual [%f, %f]' % (
                             xp.name, self.pMinMax['x'][1], self.pMinMax['x'][2], np.min(self.x), np.max(self.x),
                             yp.name, self.pMinMax['y'][1], self.pMinMax['x'][2], np.min(self.y), np.max(self.y))
-            meanDepth = round(np.mean(self.depth))
             if xp.standard_name == 'sea_water_salinity' and yp.standard_name == 'sea_water_temperature':
-                X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_salinity', pressure=np.mean(self.depth))
+                X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_salinity')
             if xp.standard_name == 'sea_water_temperature' and yp.standard_name == 'sea_water_salinity':
-                X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_temperature', pressure=meanDepth)
+                X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_temperature')
             if Z is not None:
                 CS = ax.contour(X, Y, Z, colors='k')
                 plt.clabel(CS, inline=1, fontsize=10)
-                infoText += '<br>Sigma-t levels computed for pressure = %.1f dbar' % meanDepth
    
             if pplrFlag: 
                 # Do Linear regression and assemble additional information about the correlation
