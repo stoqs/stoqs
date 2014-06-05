@@ -52,7 +52,7 @@ import logging
 import socket
 import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord, missing_value
+from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU
 
 
 # Set up logging
@@ -114,7 +114,8 @@ class Base_Loader(STOQS_Loader):
     global_dbAlias = ''
     def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, 
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
-                startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1 ):
+                startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
+                grdTerrain=None ):
         '''
         Given a URL open the url and store the dataset as an attribute of the object,
         then build a set of standard names using the dataset.
@@ -149,7 +150,7 @@ class Base_Loader(STOQS_Loader):
         self.dataStartDatetime = dataStartDatetime  # For when we append data to an existing Activity
         self.auxCoords = auxCoords
         self.stride = stride
-        
+        self.grdTerrain = grdTerrain
         
         self.url = url
         self.varsLoaded = []
@@ -828,6 +829,13 @@ class Base_Loader(STOQS_Loader):
                     stationPoint = Point(path[0][0], path[0][1])
                     path = None
 
+        # Add additional Parameters for all appropriate Measurements
+        logger.info("Adding SigmaT and Spiciness to the Measurements...")
+        parameterCount = self.addSigmaTandSpice(parameterCount, self.activity)
+        if self.grdTerrain:
+            logger.info("Adding altitude to the Measurements...")
+            parameterCount = self.addAltitude(parameterCount, self.activity)
+
         # Update the Activity with information we now have following the load
         newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, ' '.join(self.varsLoaded), datetime.utcnow())
         logger.debug("Updating its comment with newComment = %s", newComment)
@@ -855,7 +863,7 @@ class Base_Loader(STOQS_Loader):
         #
         self.updateActivityParameterStats(parameterCount)
         self.updateCampaignStartEnd()
-        self.assignParameterGroup(parameterCount, groupName='Measured in situ')
+        self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
         if self.getFeatureType().lower() == 'trajectory':
             self.insertSimpleDepthTimeSeries()
         elif self.getFeatureType().lower() == 'timeseries' or self.getFeatureType().lower() == 'timeseriesprofile':
@@ -937,7 +945,7 @@ class Dorado_Loader(Trajectory_Loader):
 
         # Compute sigma-t
         if row.has_key('salinity') and row.has_key('temperature') and row.has_key('depth') and row.has_key('latitude'):
-            row['sea_water_sigma_t'] = sw.dens(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
+            row['sea_water_sigma_t'] = sw.pden(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
 
         return super(Dorado_Loader, self).preProcessParams(row)
 
@@ -1095,7 +1103,7 @@ class BEDS_TS_Loader(TimeSeries_Loader):
 #
 # Helper methods that expose a common interface for executing the loaders for specific platforms
 #
-def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, plotTimeSeriesDepth=None):
+def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, plotTimeSeriesDepth=None, grdTerrain=None):
     '''
     Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1114,7 +1122,8 @@ def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
             platformName = pName,
             platformColor = pColor,
             platformTypeName = pTypeName,
-            stride = stride)
+            stride = stride,
+            grdTerrain = grdTerrain)
 
     logger.debug("Setting include_names to %s", parmList)
     loader.include_names = parmList
@@ -1125,7 +1134,7 @@ def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
-def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAlias, stride):
+def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAlias, stride, grdTerrain=None):
     '''
     Run the DAPloader for Dorado AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1141,7 +1150,8 @@ def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAl
             platformName = pName,
             platformColor = pColor,
             platformTypeName = pTypeName,
-            stride = stride)
+            stride = stride,
+            grdTerrain = grdTerrain)
 
     # Auxillary coordinates are the same for all include_names
     loader.auxCoords = {}
@@ -1155,7 +1165,7 @@ def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAl
     else:
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1173,7 +1183,8 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
             platformTypeName = pTypeName,
             stride = stride,
             startDatetime = startDatetime,
-            endDatetime = endDatetime)
+            endDatetime = endDatetime,
+            grdTerrain = grdTerrain)
 
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
@@ -1185,7 +1196,7 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None):
     '''
     Run the DAPloader for Spray Glider trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1203,7 +1214,8 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
             platformTypeName = pTypeName,
             stride = stride,
             startDatetime = startDatetime,
-            endDatetime = endDatetime)
+            endDatetime = endDatetime,
+            grdTerrain = grdTerrain)
 
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
