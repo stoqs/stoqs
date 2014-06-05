@@ -101,7 +101,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
             url = self.dorado_base + file
             DAPloaders.runDoradoLoader(url, self.campaignName, aName, 'Dorado', self.colors['dorado'], 'auv', 'AUV mission', 
-                                        self.dbAlias, stride)
+                                        self.dbAlias, stride, grdTerrain=self.grdTerrain)
             load_gulps(aName, file, self.dbAlias)
 
 
@@ -113,7 +113,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + file
             DAPloaders.runLrauvLoader(url, self.campaignName, aName, 'Tethys', self.colors['tethys'], 'auv', 'AUV mission', 
-                                        self.tethys_parms, self.dbAlias, stride)
+                                        self.tethys_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadDaphne(self, stride=None):
         '''
@@ -124,7 +124,7 @@ class CANONLoader(LoadScript):
             url = self.daphne_base + file
             # Set stride to 1 for telemetered data
             DAPloaders.runLrauvLoader(url, self.campaignName, aName, 'Daphne', self.colors['daphne'], 'auv', 'AUV mission', 
-                                        self.daphne_parms, self.dbAlias, stride)
+                                        self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadMartin(self, stride=None):
         '''
@@ -134,7 +134,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.martin_files], self.martin_files):
             url = self.martin_base + file
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'r/v_martin', self.colors['martin'], 'ship', 'cruise', 
-                                        self.martin_parms, self.dbAlias, stride)
+                                        self.martin_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadJMuctd(self, stride=None):
         '''
@@ -144,7 +144,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.JMuctd_files], self.JMuctd_files):
             url = self.JMuctd_base + file
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'John_Martin_UCTD', self.colors['martin'], 'ship', 'cruise', 
-                                        self.JMuctd_parms, self.dbAlias, stride)
+                                        self.JMuctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadJMpctd(self, stride=None, platformName='John_Martin_PCTD', activitytypeName='John Martin Profile CTD Data'):
         '''
@@ -154,7 +154,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.JMpctd_files], self.JMpctd_files):
             url = self.JMpctd_base + file
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['martin'], 'ship', activitytypeName,
-                                        self.JMpctd_parms, self.dbAlias, stride)
+                                        self.JMpctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
         # load all the bottles           
         sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['martin'], platformTypeName='ship', dodsBase=self.JMpctd_base)
         if self.args.verbose:
@@ -170,7 +170,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.fulmar_files], self.fulmar_files):
             url = self.fulmar_base + file
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'fulmar', self.colors['fulmar'], 'ship', 'cruise', 
-                                        self.fulmar_parms, self.dbAlias, stride)
+                                        self.fulmar_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadNps_g29(self, stride=None):
         '''
@@ -181,7 +181,7 @@ class CANONLoader(LoadScript):
             url = self.nps_g29_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'nps_g29', self.colors['nps_g29'], 'glider', 'Glider Mission', 
-                                        self.nps_g29_parms, self.dbAlias, stride)
+                                        self.nps_g29_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadL_662(self, stride=None):
         '''
@@ -192,7 +192,7 @@ class CANONLoader(LoadScript):
             url = self.l_662_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'SPRAY_Glider', self.colors['l_662'], 'glider', 'Glider Mission', 
-                                        self.l_662_parms, self.dbAlias, stride, self.l_662_startDatetime, self.l_662_endDatetime)
+                                        self.l_662_parms, self.dbAlias, stride, self.l_662_startDatetime, self.l_662_endDatetime, grdTerrain=self.grdTerrain)
 
     def load_NPS29(self, stride=None):
         '''
@@ -203,7 +203,7 @@ class CANONLoader(LoadScript):
             url = self.nps29_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'NPS_Glider_29', self.colors['nps29'], 'glider', 'Glider Mission', 
-                                        self.nps29_parms, self.dbAlias, stride, self.nps29_startDatetime, self.nps29_endDatetime)
+                                        self.nps29_parms, self.dbAlias, stride, self.nps29_startDatetime, self.nps29_endDatetime, grdTerrain=self.grdTerrain)
 
     def load_NPS34(self, stride=None):
         '''
@@ -214,7 +214,7 @@ class CANONLoader(LoadScript):
             url = self.nps34_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'NPS_Glider_34', self.colors['nps34'], 'glider', 'Glider Mission', 
-                                        self.nps34_parms, self.dbAlias, stride, self.nps34_startDatetime, self.nps34_endDatetime)
+                                        self.nps34_parms, self.dbAlias, stride, self.nps34_startDatetime, self.nps34_endDatetime, grdTerrain=self.grdTerrain)
 
     def load_glider_ctd(self, stride=None):
         '''
@@ -230,7 +230,7 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             print "platform = %s" % gplatform 
             DAPloaders.runGliderLoader(url, self.campaignName, aName, gplatform, self.colors[gname], 'glider', 'Glider Mission', 
-                                        self.glider_ctd_parms, self.dbAlias, stride, self.glider_ctd_startDatetime, self.glider_ctd_endDatetime)
+                                        self.glider_ctd_parms, self.dbAlias, stride, self.glider_ctd_startDatetime, self.glider_ctd_endDatetime, grdTerrain=self.grdTerrain)
 
     def load_glider_met(self, stride=None):
         '''
@@ -246,7 +246,7 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             print "platform = %s" % gplatform 
             DAPloaders.runGliderLoader(url, self.campaignName, aName, gplatform, self.colors[gname], 'glider', 'Glider Mission', 
-                                        self.glider_met_parms, self.dbAlias, stride, self.glider_met_startDatetime, self.glider_met_endDatetime)
+                                        self.glider_met_parms, self.dbAlias, stride, self.glider_met_startDatetime, self.glider_met_endDatetime, grdTerrain=self.grdTerrain)
 
 
     def load_slocum_260(self, stride=None):
@@ -258,7 +258,7 @@ class CANONLoader(LoadScript):
             url = self.slocum_260_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Slocum_260', self.colors['slocum_260'], 'glider', 'Glider Mission', 
-                                        self.slocum_260_parms, self.dbAlias, stride, self.slocum_260_startDatetime, self.slocum_260_endDatetime)
+                                        self.slocum_260_parms, self.dbAlias, stride, self.slocum_260_startDatetime, self.slocum_260_endDatetime, grdTerrain=self.grdTerrain)
 
     def load_slocum_294(self, stride=None):
         '''
@@ -269,7 +269,8 @@ class CANONLoader(LoadScript):
             url = self.slocum_294_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Slocum_294', self.colors['slocum_294'], 'glider', 'Glider Mission', 
-                                        self.slocum_294_parms, self.dbAlias, stride, self.slocum_294_startDatetime, self.slocum_294_endDatetime)
+                                        self.slocum_294_parms, self.dbAlias, stride, self.slocum_294_startDatetime, self.slocum_294_endDatetime,
+                                        grdTerrain=self.grdTerrain)
 
     def load_slocum_nemesis(self, stride=None):
         '''
@@ -280,7 +281,8 @@ class CANONLoader(LoadScript):
             url = self.slocum_nemesis_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Slocum_nemesis', self.colors['slocum_nemesis'], 'glider', 'Glider Mission', 
-                                        self.slocum_nemesis_parms, self.dbAlias, stride, self.slocum_nemesis_startDatetime, self.slocum_nemesis_endDatetime)
+                                        self.slocum_nemesis_parms, self.dbAlias, stride, self.slocum_nemesis_startDatetime, self.slocum_nemesis_endDatetime,
+                                        grdTerrain=self.grdTerrain)
 
     def load_wg_oa_pco2(self, stride=None):
         '''
@@ -291,7 +293,8 @@ class CANONLoader(LoadScript):
             url = self.wg_oa_pco2_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
-                                        self.wg_oa_pco2_parms, self.dbAlias, stride, self.wg_oa_pco2_startDatetime, self.wg_oa_pco2_endDatetime)
+                                        self.wg_oa_pco2_parms, self.dbAlias, stride, self.wg_oa_pco2_startDatetime, self.wg_oa_pco2_endDatetime,
+                                        grdTerrain=self.grdTerrain)
 
     def load_wg_oa_ctd(self, stride=None):
         '''
@@ -302,7 +305,8 @@ class CANONLoader(LoadScript):
             url = self.wg_oa_ctd_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
-                                        self.wg_oa_ctd_parms, self.dbAlias, stride, self.wg_oa_ctd_startDatetime, self.wg_oa_ctd_endDatetime)
+                                        self.wg_oa_ctd_parms, self.dbAlias, stride, self.wg_oa_ctd_startDatetime, self.wg_oa_ctd_endDatetime,
+                                        grdTerrain=self.grdTerrain)
 
     def load_wg_tex_ctd(self, stride=None):
         '''
@@ -313,7 +317,8 @@ class CANONLoader(LoadScript):
             url = self.wg_tex_ctd_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
-                                        self.wg_tex_ctd_parms, self.dbAlias, stride, self.wg_tex_ctd_startDatetime, self.wg_tex_ctd_endDatetime)
+                                        self.wg_tex_ctd_parms, self.dbAlias, stride, self.wg_tex_ctd_startDatetime, self.wg_tex_ctd_endDatetime,
+                                        grdTerrain=self.grdTerrain)
 
     def load_wg_oa_met(self, stride=None):
         '''
@@ -324,7 +329,8 @@ class CANONLoader(LoadScript):
             url = self.wg_oa_met_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
-                                        self.wg_oa_met_parms, self.dbAlias, stride, self.wg_oa_met_startDatetime, self.wg_oa_met_endDatetime)
+                                        self.wg_oa_met_parms, self.dbAlias, stride, self.wg_oa_met_startDatetime, self.wg_oa_met_endDatetime,
+                                        grdTerrain=self.grdTerrain)
 
     def load_wg_tex_met(self, stride=None):
         '''
@@ -335,7 +341,8 @@ class CANONLoader(LoadScript):
             url = self.wg_tex_met_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
-                                        self.wg_tex_met_parms, self.dbAlias, stride, self.wg_tex_met_startDatetime, self.wg_tex_met_endDatetime)
+                                        self.wg_tex_met_parms, self.dbAlias, stride, self.wg_tex_met_startDatetime, self.wg_tex_met_endDatetime,
+                                        grdTerrain=self.grdTerrain)
 
     def load_wg_tex(self, stride=None):
         '''
@@ -346,7 +353,8 @@ class CANONLoader(LoadScript):
             url = self.wg_tex_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
-                                        self.wg_tex_parms, self.dbAlias, stride, self.wg_tex_startDatetime, self.wg_tex_endDatetime)
+                                        self.wg_tex_parms, self.dbAlias, stride, self.wg_tex_startDatetime, self.wg_tex_endDatetime,
+                                        grdTerrain=self.grdTerrain)
 
     def load_wg_oa(self, stride=None):
         '''
@@ -357,7 +365,8 @@ class CANONLoader(LoadScript):
             url = self.wg_oa_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
-                                        self.wg_oa_parms, self.dbAlias, stride, self.wg_oa_startDatetime, self.wg_oa_endDatetime)
+                                        self.wg_oa_parms, self.dbAlias, stride, self.wg_oa_startDatetime, self.wg_oa_endDatetime,
+                                        grdTerrain=self.grdTerrain)
 
     def loadOA1pco2(self, stride=None):
         '''
@@ -563,7 +572,7 @@ class CANONLoader(LoadScript):
             url = self.hehape_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'hehape', self.colors['hehape'], 'glider', 'Glider Mission', 
-                                        self.hehape_parms, self.dbAlias, stride)
+                                        self.hehape_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadRusalka(self, stride=None):
         '''
@@ -574,7 +583,7 @@ class CANONLoader(LoadScript):
             url = self.rusalka_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'rusalka', self.colors['rusalka'], 'glider', 'Glider Mission', 
-                                        self.rusalka_parms, self.dbAlias, stride)
+                                        self.rusalka_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadCarmen(self, stride=None):
         '''
@@ -585,7 +594,7 @@ class CANONLoader(LoadScript):
             url = self.carmen_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'carmen', self.colors['carmen'], 'glider', 'Glider Mission', 
-                                        self.carmen_parms, self.dbAlias, stride)
+                                        self.carmen_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadWaveglider(self, stride=None):
         '''
@@ -596,7 +605,8 @@ class CANONLoader(LoadScript):
             url = self.waveglider_base + file
             print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, aName, 'waveglider', self.colors['waveglider'], 'glider', 'Glider Mission', 
-                                        self.waveglider_parms, self.dbAlias, stride, self.waveglider_startDatetime, self.waveglider_endDatetime)
+                                        self.waveglider_parms, self.dbAlias, stride, self.waveglider_startDatetime, self.waveglider_endDatetime,
+                                        grdTerrain=self.grdTerrain)
 
     def loadStella(self, stride=None):
         '''
@@ -608,7 +618,7 @@ class CANONLoader(LoadScript):
             print "url = %s" % url
             dname='Stella' + aName[6:9]
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, dname, self.colors[dname], 'drifter', 'Stella drifter Mission', 
-                                        self.stella_parms, self.dbAlias, stride)
+                                        self.stella_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadESPdrift(self, stride=None):
         '''
@@ -619,7 +629,7 @@ class CANONLoader(LoadScript):
             url = self.espdrift_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espdrift', self.colors['espdrift'], 'drifter', 'ESP drift Mission', 
-                                        self.espdrift_parms, self.dbAlias, stride)
+                                        self.espdrift_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadESPmack(self, stride=None):
         '''
@@ -630,7 +640,7 @@ class CANONLoader(LoadScript):
             url = self.espmack_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'ESP_Mack_Drifter', self.colors['espmack'], 'espmack', 'ESP mack Mission', 
-                                        self.espmack_parms, self.dbAlias, stride)
+                                        self.espmack_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadESPbruce(self, stride=None):
         '''
@@ -641,7 +651,7 @@ class CANONLoader(LoadScript):
             url = self.espbruce_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, 'espbruce', self.colors['espbruce'], 'espbruce', 'ESP bruce Mission', 
-                                        self.espbruce_parms, self.dbAlias, stride)
+                                        self.espbruce_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadWFuctd(self, stride=None, platformName='WesternFlyer_UCTD', activitytypeName='Western Flyer Underway CTD Data'):
         '''
@@ -654,7 +664,7 @@ class CANONLoader(LoadScript):
             url = self.wfuctd_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], 'ship', activitytypeName,
-                                        self.wfuctd_parms, self.dbAlias, stride)
+                                        self.wfuctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadWFpctd(self, stride=None, platformName='WesternFlyer_PCTD', activitytypeName='Western Flyer Profile CTD Data'):
         '''
@@ -667,7 +677,7 @@ class CANONLoader(LoadScript):
             url = self.wfpctd_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['flyer'], 'ship', activitytypeName, 
-                                        self.wfpctd_parms, self.dbAlias, stride)
+                                        self.wfpctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
         # Now load all the bottles           
         sl = SeabirdLoader('activity name', platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['flyer'], dodsBase=self.wfpctd_base)
         if self.args.verbose:
@@ -684,7 +694,7 @@ class CANONLoader(LoadScript):
             url = self.rcuctd_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['carson'], 'ship', activitytypeName, 
-                                        self.rcuctd_parms, self.dbAlias, stride)
+                                        self.rcuctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadRCpctd(self, stride=None, platformName='RachelCarson_PCTD', activitytypeName='Rachel Carson Profile CTD Data'):
         '''
@@ -696,7 +706,7 @@ class CANONLoader(LoadScript):
             url = self.rcpctd_base + file
             print "url = %s" % url
             DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, platformName, self.colors['carson'], 'ship', activitytypeName, 
-                                        self.rcpctd_parms, self.dbAlias, stride)
+                                        self.rcpctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
         # load all the bottles           
 
         sl = SeabirdLoader(aName[:5], platformName, dbAlias=self.dbAlias, campaignName=self.campaignName, platformColor=self.colors['carson'], platformTypeName='ship', dodsBase=self.rcpctd_base)
