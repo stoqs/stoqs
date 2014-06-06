@@ -477,36 +477,6 @@ class PlatformResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['platform', 'resource']
 
-class MeasuredParameterResource(models.Model):
-    '''
-    Association class pairing MeasuredParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
-    Class contains activity field for ease of association in the filter set of the UI.
-    '''
-    uuid = UUIDField(editable=False)
-    measuredparameter = models.ForeignKey(MeasuredParameter)
-    resource = models.ForeignKey(Resource)
-    activity = models.ForeignKey(Activity)
-    class Meta:
-        verbose_name = 'MeasuredParameter Resource'
-        verbose_name_plural = 'MeasuredParameter Resource'
-        app_label = 'stoqs'
-        unique_together = ['measuredParameter', 'resource']
-
-class SampledParameterResource(models.Model):
-    '''
-    Association class pairing SampledParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
-    Class contains activity field for ease of association in the filter set of the UI.
-    '''
-    uuid = UUIDField(editable=False)
-    sampledparameter = models.ForeignKey(SampledParameter)
-    resource = models.ForeignKey(Resource)
-    activity = models.ForeignKey(Activity)
-    class Meta:
-        verbose_name = 'SampledParameter Resource'
-        verbose_name_plural = 'SampledParameter Resource'
-        app_label = 'stoqs'
-        unique_together = ['sampledparameter', 'resource']
-
 class ResourceResource(models.Model):
     '''
     Association class pairing Resources and Resources for many-to-many from/to relationships.
@@ -585,6 +555,36 @@ class SampledParameter(models.Model):
         verbose_name_plural = 'Sampled Parameter'
         app_label = 'stoqs'
         unique_together = ['sample','parameter']
+
+class MeasuredParameterResource(models.Model):
+    '''
+    Association class pairing MeasuredParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Class contains activity field for ease of association in the filter set of the UI.
+    '''
+    uuid = UUIDField(editable=False)
+    measuredparameter = models.ForeignKey(MeasuredParameter)
+    resource = models.ForeignKey(Resource)
+    activity = models.ForeignKey(Activity)
+    class Meta:
+        verbose_name = 'MeasuredParameter Resource'
+        verbose_name_plural = 'MeasuredParameter Resource'
+        app_label = 'stoqs'
+        unique_together = ['measuredparameter', 'resource']
+
+class SampledParameterResource(models.Model):
+    '''
+    Association class pairing SampledParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Class contains activity field for ease of association in the filter set of the UI.
+    '''
+    uuid = UUIDField(editable=False)
+    sampledparameter = models.ForeignKey(SampledParameter)
+    resource = models.ForeignKey(Resource)
+    activity = models.ForeignKey(Activity)
+    class Meta:
+        verbose_name = 'SampledParameter Resource'
+        verbose_name_plural = 'SampledParameter Resource'
+        app_label = 'stoqs'
+        unique_together = ['sampledparameter', 'resource']
 
 class PermaLink(models.Model):
     '''
