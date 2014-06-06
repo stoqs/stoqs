@@ -477,31 +477,35 @@ class PlatformResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['platform', 'resource']
 
-class InstantPointResource(models.Model):
+class MeasuredParameterResource(models.Model):
     '''
-    Association class pairing InstantPoints and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing MeasuredParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Class contains activity field for ease of association in the filter set of the UI.
     '''
     uuid = UUIDField(editable=False)
-    instantpoint = models.ForeignKey(InstantPoint)
+    measuredparameter = models.ForeignKey(MeasuredParameter)
     resource = models.ForeignKey(Resource)
+    activity = models.ForeignKey(Activity)
     class Meta:
-        verbose_name = 'InstantPoint Resource'
-        verbose_name_plural = 'InstantPoint Resource'
+        verbose_name = 'MeasuredParameter Resource'
+        verbose_name_plural = 'MeasuredParameter Resource'
         app_label = 'stoqs'
-        unique_together = ['instantpoint', 'resource']
+        unique_together = ['measuredParameter', 'resource']
 
-class MeasurementResource(models.Model):
+class SampledParameterResource(models.Model):
     '''
-    Association class pairing Measurements and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Association class pairing SampledParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Class contains activity field for ease of association in the filter set of the UI.
     '''
     uuid = UUIDField(editable=False)
-    measurement = models.ForeignKey(Measurement)
+    sampledparameter = models.ForeignKey(SampledParameter)
     resource = models.ForeignKey(Resource)
+    activity = models.ForeignKey(Activity)
     class Meta:
-        verbose_name = 'Measurement Resource'
-        verbose_name_plural = 'Measurement Resource'
+        verbose_name = 'SampledParameter Resource'
+        verbose_name_plural = 'SampledParameter Resource'
         app_label = 'stoqs'
-        unique_together = ['measurement', 'resource']
+        unique_together = ['sampledparameter', 'resource']
 
 class ResourceResource(models.Model):
     '''
