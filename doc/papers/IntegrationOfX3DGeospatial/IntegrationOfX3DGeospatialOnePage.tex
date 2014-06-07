@@ -64,7 +64,7 @@
 
 
 %% Keywords that describe your work.
-%%\keywords{3-D Geography, X3D, geospatial, X3D-Earth, X3DOM, PostGIS, terrain rendering, sensor web, Oceanography, data visualization}
+\keywords{X3D, geospatial, sensor data, oceanography, X3DOM}
 
 %%%%%% START OF THE PAPER %%%%%%
 
@@ -87,15 +87,15 @@
 %% See <http://www.acm.org/class/1998/> for details.
 %% The ``\CRcat'' command takes four arguments.
 
-%%%\begin{CRcatlist}
-%\CRcat{I.3.7}{Computing Methodologies}{Computer Graphics}{Three-Dimensional Graphics and Realism}
-%\end{CRcatlist}
+\begin{CRcatlist}
+\CRcat{I.3.6}{Computing Methodologies}{Computer Graphics}{Methodology and Techniques}
+\end{CRcatlist}
 
 %% The ``\keywordlist'' command prints out the keywords.
-%%%\keywordlist
+\keywordlist
 
 
-%%\copyrightspace
+\copyrightspace
 %% The ``\copyrightspace'' command must be the first command after the 
 %% start of the first section of the body of your paper. It ensures the
 %% copyright space is left at the bottom of the first column on the first
@@ -103,15 +103,15 @@
 
 \section{Overview}
 
-Efficient analysis of growing types of oceanographic observations requires new approaches in data management and visualization. The Monterey Bay Aquarium Research Institute designed the Spatial Temporal Oceanographic Query System (STOQS) \cite{STOQS} to create new capabilities for scientists to gain insight from their data. STOQS employs open standards and is a 100\% open source project. It includes a web-based graphical user interface where X3D Geospatial has been integrated to enable 3D geospatial data visualization. 
+The Monterey Bay Aquarium Research Institute designed the Spatial Temporal Oceanographic Query System (STOQS) \cite{STOQS} to create new capabilities for scientists to gain insight from their data. STOQS employs open standards and is a 100\% free and open source project. It includes a web-based graphical user interface where X3D Geospatial has been integrated to enable 3D geospatial data visualization. 
 
 \section{Architecture}
 
-STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django running on a server and client-side technology (HTML5, CSS, jQuery, OpenLayers, X3DOM, Bootstrap) running in a modern web browser (Fig.~\ref{fig:STOQSArch}). The web application provides faceted search capabilities allowing a user to quickly drill into data of interest. Data selection can be constrained by spatial, temporal, and depth selections as well as by parameter values and platform names. The X3DOM JavaScript library provides interactive 3D views of the data in browsers that support WebGL.  
+STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django running on a server and client-side technology (HTML5, CSS, jQuery, OpenLayers, X3DOM, Bootstrap) running in a modern web browser (Fig.~\ref{fig:STOQSArch}). The web application provides faceted search capabilities allowing a user to quickly drill into data of interest. The X3DOM JavaScript library provides interactive 3D views of the data in browsers that support WebGL.  
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=3.3in]{STOQS_Architecture_withX3DOM.png}
+\includegraphics[width=2.7in]{stoqs_arch_simple.png}
 \caption{STOQS integrates multiple open-source components.}
 \label{fig:STOQSArch}
 \end{figure}
@@ -121,8 +121,8 @@ STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django ru
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=3.3in]{Monterey25_lrauvs.png}
-\caption{POP Geometry mesh of Monterey Bay terrain with AUV measured chlorophyll data.}
+\includegraphics[width=2.8in]{Monterey25_lrauvs.png}
+\caption{Chlorophyll sensor data over Monterey Bay bathymetry.}
 \label{fig:Monterey25_lrauvs}
 \end{figure}
 
