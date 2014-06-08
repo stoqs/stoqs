@@ -69,6 +69,7 @@ query_parms = {
                                      'platformplotname'),                                   # - client knows platform name
                    'parametertimeplotid': 'parametertimeplotid',                            # Plot checkbox id values
                    'showgeox3ddata': 'showgeox3ddata',                                      # Flag value from checkbox
+                   'showplatformorientation': 'showplatformorientation',                    # Flag value from checkbox
                    'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
 
                    'only': 'only',                          # List of options to update - when only a partial response is needed

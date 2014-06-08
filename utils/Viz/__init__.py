@@ -189,7 +189,7 @@ class MeasuredParameter(object):
         '''
         self.logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
 
-        # Save to '_by_act' dictionaries so that X3D and end each IndexedLinestring with a '-1'
+        # Save to '_by_act' dictionaries so that X3D can end each IndexedLinestring with a '-1'
         self.depth_by_act = {}
         self.value_by_act = {}
         self.lon_by_act = {}
@@ -441,7 +441,7 @@ class MeasuredParameter(object):
     def dataValuesX3D(self, vert_ex=10.0, geoOrigin=None):
         '''
         Return scatter-like data values as X3D geocoordinates and colors. A bit of a HACK until GeoOrigin is
-        implemented in X3DOM: if geoOrigin is not None then points will be GCC (ECEF) coordinates with the 
+        implemented in X3DOM: if geoOrigin is specified then points will be GCC (ECEF) coordinates with the 
         geoOrigin subtracted, GD input coordinates assumed.
         '''
         showGeoX3DDataFlag = False
@@ -501,6 +501,85 @@ class MeasuredParameter(object):
             x3dResults = 'Could not create measuredparameterx3d'
 
         return x3dResults
+
+class PlatformOrientation(object):
+    '''
+    For Platforms that have Parameters with roll, pitch, and yaw Parameters.
+    '''
+    logger = logging.getLogger(__name__)
+    def __init__(self, kwargs, request, qs, qs_mp):
+        self.kwargs = kwargs
+        self.request = request
+        self.qs = qs
+        self.qs_mp = qs_mp      # Need the ordered version of the query set
+
+    def loadData(self):
+        '''
+        Read the data from the database into member variables for construction of platform orientation time series
+        '''
+        # Save to '_by_act' dictionaries so that each time series can be separately controlled by ROUTES to the orientation
+        self.lon_by_act = {}
+        self.lat_by_act = {}
+        self.depth_by_act = {}
+        self.time_by_act = {}
+
+        self.roll_by_act = {}
+        self.pitch_by_act = {}
+        self.yaw_by_act = {}
+
+        for mp in self.qs_mp:
+            self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
+            self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
+            self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
+            self.time_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(
+                                                            '%.2f' % time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+
+        for mp in self.qs_mp.filter(parameter__standard_name='platform_roll_angle'):
+            self.roll_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append('%d' % mp['datavalue'])
+        for mp in self.qs_mp.filter(parameter__standard_name='platform_pitch_angle'):
+            self.pitch_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append('%d' % mp['datavalue'])
+        for mp in self.qs_mp.filter(parameter__standard_name='platform_yaw_angle'):
+            self.yaw_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append('%d' % mp['datavalue'])
+
+    def platformOrientationDataValuesForX3D(self, vert_ex=10.0, geoOrigin=''):
+        '''
+        Return the associated PlatformOrientation time series values as a dictionary of roll, pitch and yaw inside 
+        a 2 level hash of platform__name and activity__name.  Results are in a format for easy update of an X3D scene graph.
+        '''
+
+        self.loadData()
+
+        try:
+            points = ''
+            indices = ''
+            index = 0
+            gps = GPS()
+            for act in self.yaw_by_act.keys():
+                for lon,lat,depth in zip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act]):
+                    if geoOrigin:
+                        depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
+                        points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
+                    else:
+                        points = points + '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
+
+                    indices = indices + '%i ' % index
+                    index = index + 1
+
+                # End with -1 so that end point does not connect to the beg point
+                indices = indices + '-1 ' 
+
+        except Exception as e:
+            self.logger.exception('Could not create platformorientation')
+            x3dResults = 'Could not create platformorientation'
+
+        return {
+                'points': points,
+                'indices': indices,
+                'times': self.time_by_act,
+                'rolls': self.roll_by_act,
+                'pitches': self.pitch_by_act,
+                'yaws': self.yaw_by_act 
+               }
 
 
 class PPDatabaseException(Exception):
