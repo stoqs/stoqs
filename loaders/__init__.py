@@ -920,6 +920,7 @@ class STOQS_Loader(object):
         if activity:
             ms = ms.filter(instantpoint__activity=activity)
         if not ms:
+            self.logger.info("No sea_water_temperature and sea_water_salinity; can't add SigmaT and Spice.")
             return parameterCounts
 
         # Create our new Parameters
@@ -968,15 +969,24 @@ class STOQS_Loader(object):
       def _innerAddAltitude(self, parameterCounts, activity=None):
         # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
         if self.grdTerrain:
+            fh = netcdf_file(self.grdTerrain)
             try:
-                fh = netcdf_file(self.grdTerrain)
+                # Old GMT format
                 xmin, xmax = fh.variables['x_range'][:]
                 ymin, ymax = fh.variables['y_range'][:]
-                fh.close()
-                bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
-            except Exception, e:
+            except KeyError as e:
+                try:
+                    # New GMT format
+                    xmin, xmax = fh.variables['lon'].actual_range
+                    ymin, ymax = fh.variables['lat'].actual_range
+                except Exception as e:
+                    self.logger.error(e)
+                    return parameterCounts,
+            except Exception as e:
                 self.logger.error(e)
                 return parameterCounts,
+            bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
+            fh.close()
 
         # Build file of Measurement lon & lat for grdtrack to process
         xyFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_LatLon_', suffix='.txt').name
@@ -993,7 +1003,8 @@ class STOQS_Loader(object):
             xyFH.write("%f %f\n" % (me['geom'].x, me['geom'].y))
 
         xyFH.close()
-        self.logger.debug('Wrote file %s', xyFileName)
+        inputFileCount = len(mList)
+        self.logger.debug('Wrote file %s with %d records', xyFileName, inputFileCount)
 
         # Requires GMT (yum install GMT)
         bdepthFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_BDepth', suffix='.txt').name
@@ -1028,8 +1039,8 @@ class STOQS_Loader(object):
         # Cleanup and sanity check
         os.remove(xyFileName)
         os.remove(bdepthFileName)
-        if len(mList) != count:
-            self.logger.warn('Counts are not equal! len(mList) = %s, count from grdtrack output = %s', len(mList), count)
+        if inputFileCount != count:
+            self.logger.warn('Counts are not equal! inputFileCount = %s, count from grdtrack output = %s', inputFileCount, count)
 
         return parameterCounts
 
