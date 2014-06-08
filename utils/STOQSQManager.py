@@ -26,7 +26,7 @@ from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_
 from utils import simplify_points, getParameterGroups
 from MPQuery import MPQuery
 from PQuery import PQuery
-from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException
+from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformOrientation
 from coards import to_udunits
 from datetime import datetime
 import logging
@@ -81,6 +81,7 @@ class STOQSQManager(object):
             'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
             'parameterparameterx3d': self.getParameterParameterX3D,
             'measuredparameterx3d': self.getMeasuredParameterX3D,
+            'platformorientation': self.getPlatformOrientation,
             'parameterparameterpng': self.getParameterParameterPNG,
             'parameterplatforms': self.getParameterPlatforms,
             'x3dterrains': self.getX3DTerrains,
@@ -1203,6 +1204,28 @@ class STOQSQManager(object):
                     x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)), self.request.GET.get('geoorigin', ''))
             
         return x3dDict
+
+    def getPlatformOrientation(self):
+        '''
+        Based on the current selected query criteria for activities, return the associated PlatformOrientation time series
+        values as a dictionary of roll, pitch and yaw inside a 2 level hash of platform__name and activity__name.
+        '''
+        orientDict = {}
+        if self.request.GET.get('showplatformorientation', False):
+            try:
+                count = self.mpq.count()
+            except AttributeError:
+                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
+            # Test for presence of platform_yaw_angle (which is same as heading for a ship) 
+            orientCount = self.mpq.qs_mp_no_order.filter(parameter__standard_name='platform_yaw_angle').count()
+            if orientCount != 0:
+                mppo = PlatformOrientation(self.kwargs, self.request, self.qs, self.mpq.qs_mp)
+                # Default vertical exaggeration is 10x and default geoorigin is and empty string
+                orientDict = mppo.platformOrientationDataValuesForX3D(float(self.request.GET.get('ve', 10)), self.request.GET.get('geoorigin', ''))
+                orientDict['count'] = orientCount
+            
+        return orientDict
 
     def getParameterPlatforms(self):
         '''
