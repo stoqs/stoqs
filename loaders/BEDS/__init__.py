@@ -53,7 +53,7 @@ class BEDSLoader(LoadScript):
             if featureType == 'trajectory':
                 # To get timeSeries plotting for trajectories (in the Parameter tab of the UI) assign a plotTimeSeriesDepth value of the starting depth in meters.
                 DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
-                                        self.bed_parms, self.dbAlias, stride, plotTimeSeriesDepth=plotTimeSeriesDepth)
+                                        self.bed_parms, self.dbAlias, stride, plotTimeSeriesDepth=plotTimeSeriesDepth, grdTerrain=self.grdTerrain)
             elif featureType == 'timeSeries':
                 DAPloaders.runTimeSeriesLoader(url, self.campaignName, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
                                         self.bed_parms, self.dbAlias, stride)
