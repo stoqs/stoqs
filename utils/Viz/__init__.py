@@ -507,6 +507,83 @@ class PlatformOrientation(object):
     For Platforms that have Parameters with roll, pitch, and yaw Parameters.
     '''
     logger = logging.getLogger(__name__)
+
+    x3dEulerBaseScene = '''
+        <Transform DEF="TRANSLATE" scale="1000 1000 1000">
+            <Transform DEF="XROT">
+                <Transform DEF="YROT">
+                    <Transform DEF="ZROT">
+                        <Transform rotation='1 0 0 -1.57079632679489'>
+                            <Inline url="http://dods.mbari.org/data/beds/x3d/beds_housing_with_axes.x3d"></Inline>
+                            <TouchSensor DEF="TOUCH"/>
+                        </Transform>
+                    </Transform>
+                </Transform>
+            </Transform>
+        </Transform>
+
+        <!-- Stationary axes -->
+        <Transform rotation='1 0 0 -1.57079632679489'>
+            <Inline url="http://dods.mbari.org/data/beds/x3d/axes.x3d"></Inline>
+        </Transform>
+
+        <!-- HUD for the timeline slider -->
+        <ProximitySensor DEF="PROX" size="1000 1000 1000"></ProximitySensor>
+        <Transform DEF="HUD">
+            <Transform translation="0.0 -0.5 -1.5">
+                <Transform translation="-0.5 0 0 ">
+                    <Transform DEF="TL">
+                        <Shape>
+                            <Appearance>
+                                <Material diffuseColor="0.0 0.0 1.0"/>
+                            </Appearance>
+                            <Sphere radius=".015"></Sphere>
+                        </Shape>
+                    </Transform>
+                </Transform>
+                <Transform rotation="0 0 1 1.570796326794">
+                    <Shape>
+                        <Cylinder height="1" radius="0.001"></Cylinder>
+                    </Shape>
+                </Transform>
+            </Transform>
+        </Transform>
+
+        <!-- 6 DOF data from the BEDS coded here as position and orientation interpolators -->
+        <PositionInterpolator DEF="POS_INTERP" key="%(pKeys)s" keyValue="%(posValues)s"/>
+        <OrientationInterpolator DEF="X_OI" key="%(oKeys)s" keyValue="%(xRotValues)s"/>
+        <OrientationInterpolator DEF="Y_OI" key="%(oKeys)s" keyValue="%(yRotValues)s"/>
+        <OrientationInterpolator DEF="Z_OI" key="%(oKeys)s" keyValue="%(zRotValues)s"/>
+
+        <!-- The cycleInterval is the time duration in seconds of the data -->
+        <TimeSensor DEF="TS" cycleInterval="%(cycInt)s" loop="true"/>
+
+        <!-- Timeline slider interpolator-->
+        <PositionInterpolator DEF="TIME_INTERP" key="0 1" keyValue="0 0 0 1 0 0"></PositionInterpolator>
+
+        <!-- Wire up the connections between the nodes to animate the motion of the Shape -->
+        <ROUTE fromField="value_changed" fromNode="POS_INTERP" toField="translation" toNode="TRANSLATE"/>
+
+        <ROUTE fromField="value_changed" fromNode="X_OI" toField="rotation" toNode="XROT"/>
+        <ROUTE fromField="value_changed" fromNode="Y_OI" toField="rotation" toNode="YROT"/>
+        <ROUTE fromField="value_changed" fromNode="Z_OI" toField="rotation" toNode="ZROT"/>
+
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="POS_INTERP"/>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="X_OI"/>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="Y_OI"/>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="Z_OI"/>
+
+        <ROUTE fromField="touchTime" fromNode="TOUCH" toField="startTime" toNode="TS"/>
+
+        <!-- Routes for the timeline slider -->
+        <ROUTE fromField="value_changed" fromNode="TIME_INTERP" toField="translation" toNode="TL"></ROUTE>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="TIME_INTERP"></ROUTE>
+
+        <!-- HUD routes -->
+        <ROUTE fromField="orientation_changed" fromNode="PROX" toField="rotation" toNode="HUD"></ROUTE>
+        <ROUTE fromField="position_changed" fromNode="PROX" toField="translation" toNode="HUD"></ROUTE>
+    '''
+
     def __init__(self, kwargs, request, qs, qs_mp):
         self.kwargs = kwargs
         self.request = request
@@ -532,54 +609,58 @@ class PlatformOrientation(object):
             self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
             self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
             self.time_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(
-                                                            '%.2f' % time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+                                                            time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
 
         for mp in self.qs_mp.filter(parameter__standard_name='platform_roll_angle'):
-            self.roll_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append('%d' % mp['datavalue'])
+            self.roll_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
         for mp in self.qs_mp.filter(parameter__standard_name='platform_pitch_angle'):
-            self.pitch_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append('%d' % mp['datavalue'])
+            self.pitch_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
         for mp in self.qs_mp.filter(parameter__standard_name='platform_yaw_angle'):
-            self.yaw_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append('%d' % mp['datavalue'])
+            self.yaw_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
 
     def platformOrientationDataValuesForX3D(self, vert_ex=10.0, geoOrigin=''):
         '''
         Return the associated PlatformOrientation time series values as a dictionary of roll, pitch and yaw inside 
         a 2 level hash of platform__name and activity__name.  Results are in a format for easy update of an X3D scene graph.
         '''
-
+        x3dDict = {}
         self.loadData()
-
         try:
             points = ''
             indices = ''
             index = 0
             gps = GPS()
+            keys = ''
             for act in self.yaw_by_act.keys():
-                for lon,lat,depth in zip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act]):
+                for lon,lat,depth,t in zip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.time_by_act[act]):
                     if geoOrigin:
                         depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
                         points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
                     else:
                         points = points + '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
 
+                    keys += '%.4f' % ((t - self.time_by_act[act][0]) / (self.time_by_act[act][-1] - self.time_by_act[act][0]))
                     indices = indices + '%i ' % index
                     index = index + 1
 
+                # No attempt to earth reference an 'up' orientation here    
+                xRotValues = ' '.join(['1 0 0 %.6f' % (np.pi * x / 180.) for x in self.roll_by_act[act]])
+                yRotValues = ' '.join(['0 1 0 %.6f' % (np.pi * z / 180.) for z in self.pitch_by_act[act]])
+                zRotValues = ' '.join(['0 0 1 %.6f' % (np.pi * -y / 180.) for y in self.yaw_by_act[act]])
+
                 # End with -1 so that end point does not connect to the beg point
                 indices = indices + '-1 ' 
+                cycInt = '%.4f' % (self.time_by_act[act][-1] - self.time_by_act[act][0])
+
+                x3dDict[act] = self.x3dEulerBaseScene % {
+                                               'pKeys': keys, 'posValues': points, 'oKeys': keys, 'xRotValues': xRotValues,
+                                               'yRotValues': yRotValues, 'zRotValues': zRotValues, 'cycInt': cycInt}
 
         except Exception as e:
             self.logger.exception('Could not create platformorientation')
             x3dResults = 'Could not create platformorientation'
 
-        return {
-                'points': points,
-                'indices': indices,
-                'times': self.time_by_act,
-                'rolls': self.roll_by_act,
-                'pitches': self.pitch_by_act,
-                'yaws': self.yaw_by_act 
-               }
+        return x3dDict
 
 
 class PPDatabaseException(Exception):
