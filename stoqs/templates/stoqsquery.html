@@ -2461,8 +2461,13 @@
             }
         }
 
-        if ($('#showgeox3ddata').is(':checked')) {
-            qstring += '&showgeox3ddata=1';
+        if ($('#showgeox3ddata').is(':checked') || $('#showplatformorientation').is(':checked')) {
+            if ($('#showgeox3ddata').is(':checked')) {
+                qstring += '&showgeox3ddata=1';
+            }
+            if ($('#showplatformorientation').is(':checked')) {
+                qstring += '&showplatformorientation=1';
+            }
             // Use the attributes of the terrain that is selected
             if ($('body').data()['geoorigin']) {
                 qstring += '&geoorigin=' + $('body').data()['geoorigin'];
@@ -2470,9 +2475,6 @@
             if ($('body').data()['ve']) {
                 qstring += '&ve=' + $('body').data()['ve'];
             }
-        }
-        if ($('#showplatformorientation').is(':checked')) {
-            qstring += '&showplatformorientation=1';
         }
         if ($('#pp-linear-regression').is(':checked')) {
             qstring = qstring + '&pplr=1';
@@ -3132,6 +3134,11 @@
             }
             else if (key == 'resources') {
                 buildMetadataHtml(data);
+            }
+            else if (key == 'platformorientation') {
+                $.each(data[key], function (act, x3d_scene) {
+                    $('#spatial-3d-x3d > Scene').append(x3d_scene);
+                });
             }
 
             // If no parametertime data and Station tab is active then disable it and switch back to Trajectory
