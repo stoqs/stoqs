@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html style='width:100%; height:100%; border:0; margin:0; padding:0;'>
+  <head>
+    <meta http-equiv='X-UA-Compatible' content='chrome=1'></meta>
+    <meta http-equiv='Content-Type' content='text/html;charset=utf-8'></meta>
+    <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/x3dom/release/x3dom.css'></link>
+    <script type='text/javascript' src='http://www.x3dom.org/x3dom/release/x3dom.js'></script>
+    <style>.x3dom-logContainer { bottom: 0px; position: absolute; }
+    </style>
+  </head>
+  <body style='width:100%; height:100%; border:0; margin:0; padding:0;'>
+    <div id='HUDs_Div'> 
+      <div id='X3DOM_AOPT_Links' class='group' style='margin:2px; margin-top:26px; padding:4px; background-color:rgba(199,202,204,.7); position:absolute; float:center; z-index:1000;'> 
+        <a href='http://www.x3dom.org'>X3DOM
+        </a> output created with 
+        <a href='http://www.instantreality.org'>InstantReality
+        </a> aopt tool. 
+      </div> 
+      <div id='Interaction_Toolbox' style='margin:2px; padding:4px; padding-right:150px; background-color:rgba(199,202,204,.7);position:absolute; z-index:1000; right:0px; top:0px;'> 
+        <table> 
+          <tr> 
+            <td>Navigation Mode: 
+            </td> 
+            <td align='right'> 
+              <select style='float:right;' onchange='if (this.selectedIndex !== undefined) { var e = document.getElementById(&apos;x3dElement&apos;); if (this.options[this.selectedIndex].value === &apos;examine&apos;) { e.runtime.examine(); } else if (this.options[this.selectedIndex].value === &apos;lookat&apos;) { e.runtime.lookAt(); } else if (this.options[this.selectedIndex].value === &apos;walk&apos;) { e.runtime.walk(); } else if (this.options[this.selectedIndex].value === &apos;fly&apos;) { e.runtime.fly(); } else if (this.options[this.selectedIndex].value === &apos;helicopter&apos;) { e.runtime.helicopter(); } else if (this.options[this.selectedIndex].value === &apos;none&apos;) { e.runtime.noNav(); } }'> 
+                <option value='examine'>Examine 
+                </option> 
+                <option value='lookat'>LookAt 
+                </option> 
+                <option value='walk'>Walk 
+                </option> 
+                <option value='fly'>Fly 
+                </option> 
+                <option value='helicopter'>Helicopter 
+                </option> 
+                <option value='none'>None 
+                </option> 
+              </select> 
+            </td> 
+          </tr> 
+          <tr> 
+            <td>Debug Display: 
+            </td> 
+            <td align='right'> 
+              <input type='checkbox' onclick='if (this.checked) { document.getElementById(&apos;x3dElement&apos;).runtime.statistics(true); } else { document.getElementById(&apos;x3dElement&apos;).runtime.statistics(false); }'> 
+              </input> Stats 
+              <input type='checkbox' onclick='document.getElementById(&apos;x3dElement&apos;).runtime.debug();'> 
+              </input> Log 
+            </td> 
+          </tr> 
+          <tr> 
+            <td> 
+              <button onclick='document.getElementById(&apos;x3dElement&apos;).runtime.showAll();'> Show Everything 
+              </button> 
+            </td> 
+            <td> 
+              <button onclick='document.getElementById(&apos;x3dElement&apos;).runtime.resetView();'> Reset View 
+              </button> 
+            </td> 
+          </tr> 
+        </table> 
+      </div> 
+    </div>
+    <x3d id='x3dElement' showStat='false' showLog='false' style='width:100%; height:100%; border:0; margin:0; padding:0;'>
+      <scene DEF='scene'>
+        <transform>
+          <shape DEF='SP_0'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.639216 0.666667 0.678431' shininess='0.3' specularColor='0.447451 0.466667 0.474902'></material>
+            </appearance>
+            <popGeometry DEF='PG_0' vertexCount='660' primType='"TRIANGLES"' position='0.806450009346 -0.0507999993861 -0.253902494907' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='220' indexedRendering='true' bbMinModF='0.888280325808 0.921359207893 0.553002337798' bbMaxModF='0.895302349478 0.988716035569 0.669389692958' bbMin='0.803274989128 -0.0888509973884 -0.291904985905' numAnchorVertices='220' tightSize='0.00635004043579 0.0761019960046 0.0760049819946'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_0_level0.bin' numIndices='660' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_1'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.494118 0.494118 0.494118' emissiveColor='0.148235 0.148235 0.148235' specularColor='0.098824 0.098824 0.098824'></material>
+            </appearance>
+            <popGeometry DEF='PG_1' vertexCount='852' primType='"TRIANGLES"' position='-0.0714375004172 -0.0507999993861 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='284' indexedRendering='true' bbMinModF='0.898181307668 0.921453910159 0.552709852448' bbMaxModF='0.943824169037 0.988621331655 0.669383577645' bbMin='-0.0920749977231 -0.0887439996004 -0.292095988989' numAnchorVertices='284' tightSize='0.041274998337 0.0758880004287 0.0761919915676'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_1_level0.bin' numIndices='852' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_2'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.909804 1' shininess='0.3' specularColor='0.433333 0.454902 0.5'></material>
+            </appearance>
+            <popGeometry DEF='PG_2' vertexCount='612' primType='"TRIANGLES"' position='0.761999964714 -0.0507999993861 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='204' indexedRendering='true' bbMinModF='0.804016569065 0.921315836484 0.552703691499' bbMaxModF='0.88125836805 0.98875940533 0.669389692958' bbMin='0.727074980736 -0.0888999998569 -0.292100012302' numAnchorVertices='204' tightSize='0.0698500275612 0.0762000009418 0.0762000083923'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_2_level0.bin' numIndices='612' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_3'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.494118 0.494118 0.494118' emissiveColor='0.148235 0.148235 0.148235' specularColor='0.098824 0.098824 0.098824'></material>
+            </appearance>
+            <popGeometry DEF='PG_3' vertexCount='852' primType='"TRIANGLES"' position='0.782637476921 -0.0507999993861 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='284' indexedRendering='true' bbMinModF='0.842637501514 0.921423819884 0.552722083072' bbMaxModF='0.888280325808 0.988651424403 0.669371324202' bbMin='0.762000024319 -0.0887779965997 -0.292088001966' numAnchorVertices='284' tightSize='0.0412749648094 0.0759559944272 0.0761760026217'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_3_level0.bin' numIndices='852' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_4'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.639216 0.666667 0.678431' shininess='0.3' specularColor='0.447451 0.466667 0.474902'></material>
+            </appearance>
+            <popGeometry DEF='PG_4' vertexCount='660' primType='"TRIANGLES"' position='-0.0952499955893 -0.0507720001042 -0.253930002451' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='220' indexedRendering='true' bbMinModF='0.891159325193 0.921387530867 0.552924207837' bbMaxModF='0.898181307668 0.9887372778 0.669383577645' bbMin='-0.098425000906 -0.0888189971447 -0.291956007481' numAnchorVertices='220' tightSize='0.00635000318289 0.076093994081 0.0760520100594'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_4_level0.bin' numIndices='660' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_5'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.909804 1' shininess='0.3' specularColor='0.433333 0.454902 0.5'></material>
+            </appearance>
+            <popGeometry DEF='PG_5' vertexCount='1068' primType='"TRIANGLES"' position='0.761999964714 0.535369455814 -0.219258502126' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='356' indexedRendering='true' bbMinModF='0.814549538658 0.978798644754 0.574792884319' bbMaxModF='0.870725398457 0.96889762498 0.753700683104' bbMin='0.736599981785 -0.023954000324 -0.277675002813' numAnchorVertices='356' tightSize='0.0508000254631 1.11864697933 0.116833001375'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_5_level0.bin' numIndices='1068' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_6'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.909804 1' shininess='0.3' specularColor='0.433333 0.454902 0.5'></material>
+            </appearance>
+            <popGeometry DEF='PG_6' vertexCount='1050' primType='"TRIANGLES"' position='-0.0535620003939 0.535369455814 -0.219258502126' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='350' indexedRendering='true' bbMinModF='0.912681970112 0.978798644754 0.574792884319' bbMaxModF='0.968857799015 0.96889762498 0.753700683104' bbMin='-0.0789619982243 -0.023954000324 -0.277675002813' numAnchorVertices='350' tightSize='0.0507999956608 1.11864697933 0.116833001375'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_6_level0.bin' numIndices='1050' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_7'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.909804 1' shininess='0.3' specularColor='0.433333 0.454902 0.5'></material>
+            </appearance>
+            <popGeometry DEF='PG_7' vertexCount='696' primType='"TRIANGLES"' position='0.339725017548 1.16443705559 -0.182417005301' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='228' indexedRendering='true' bbMinModF='0.280879167171 0.95081270363 0.58257347839' bbMaxModF='0.470472586886 0.11044154032 0.858751766554' bbMin='0.254000008106 1.07425999641 -0.272594004869' numAnchorVertices='228' tightSize='0.17144998908 0.180353999138 0.180353999138'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_7_level0.bin' numIndices='696' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_8'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.909804 1' shininess='0.3' specularColor='0.433333 0.454902 0.5'></material>
+            </appearance>
+            <popGeometry DEF='PG_8' vertexCount='504' primType='"TRIANGLES"' position='0.615949988365 1.16490697861 -0.181947499514' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='172' indexedRendering='true' bbMinModF='0.470472586886 0.963835020279 0.604900027476' bbMaxModF='0.891791337643 0.0982512794564 0.837863137334' bbMin='0.425449997187 1.08897304535 -0.258013993502' numAnchorVertices='172' tightSize='0.381000012159 0.151867985725 0.152132987976'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_8_level0.bin' numIndices='504' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_9'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.909804 1' shininess='0.3' specularColor='0.433333 0.454902 0.5'></material>
+            </appearance>
+            <popGeometry DEF='PG_9' vertexCount='504' primType='"TRIANGLES"' position='0.0635000020266 1.16490650177 -0.181946992874' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='172' indexedRendering='true' bbMinModF='0.859560416414 0.963611971086 0.605582980085' bbMaxModF='0.280879167171 0.0984733790541 0.837181702144' bbMin='-0.127000004053 1.08872103691 -0.257568001747' numAnchorVertices='172' tightSize='0.381000012159 0.152370929718 0.151242002845'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_9_level0.bin' numIndices='504' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_11'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.909804 1' shininess='0.3' specularColor='0.433333 0.454902 0.5'></material>
+            </appearance>
+            <popGeometry DEF='PG_11' vertexCount='6012' primType='"TRIANGLES"' position='0.355599999428 0.00634999992326 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='1898' indexedRendering='true' bbMinModF='4.42329381887e-06 0 0.222093384456' bbMaxModF='0.786457225596 0.0112405946703 0' bbMin='3.9999999899e-06 0 -0.508000016212' numAnchorVertices='1840' tightSize='0.711192011833 0.0126999998465 0.508000016212'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_11_level0.bin' numIndices='5688' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_11_level1.bin' numIndices='54' vertexDataBufferOffset='1898'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_11_level2.bin' numIndices='144' vertexDataBufferOffset='1898'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_11_level3.bin' numIndices='120' vertexDataBufferOffset='1898'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_11_level4.bin' numIndices='6' vertexDataBufferOffset='1898'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_10'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.909804 1' shininess='0.3' specularColor='0.433333 0.454902 0.5'></material>
+            </appearance>
+            <popGeometry DEF='PG_10' vertexCount='612' primType='"TRIANGLES"' position='-0.0508000031114 -0.0507999993861 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='204' indexedRendering='true' bbMinModF='0.905203281904 0.921315836484 0.552703691499' bbMaxModF='0.982445052052 0.98875940533 0.669389692958' bbMin='-0.0857250019908 -0.0888999998569 -0.292100012302' numAnchorVertices='204' tightSize='0.0698499977589 0.0762000009418 0.0762000083923'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_10_level0.bin' numIndices='612' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_16'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.494118 0.494118 0.494118' emissiveColor='0.148235 0.148235 0.148235' specularColor='0.098824 0.098824 0.098824'></material>
+            </appearance>
+            <popGeometry DEF='PG_16' vertexCount='20442' primType='"TRIANGLES"' position='0.355599999428 -0.025399999693 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='6552' indexedRendering='true' bbMinModF='0 0.955037621319 0.222093384456' bbMaxModF='0.786461641715 0 0' bbMin='0 -0.0507999993861 -0.508000016212' numAnchorVertices='6406' tightSize='0.711199998856 0.0507999993861 0.508000016212'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_16_level0.bin' numIndices='19350' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_16_level1.bin' numIndices='60' vertexDataBufferOffset='6534'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_16_level2.bin' numIndices='252' vertexDataBufferOffset='6538'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_16_level3.bin' numIndices='294' vertexDataBufferOffset='6550'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_16_level4.bin' numIndices='108' vertexDataBufferOffset='6552'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_16_level5.bin' numIndices='120' vertexDataBufferOffset='6552'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_16_level6.bin' numIndices='54' vertexDataBufferOffset='6552'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_16_level7.bin' numIndices='204' vertexDataBufferOffset='6552'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_15'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.909804 1' shininess='0.3' specularColor='0.433333 0.454902 0.5'></material>
+            </appearance>
+            <popGeometry DEF='PG_15' vertexCount='24' primType='"TRIANGLES"' position='0.0226380005479 1.01277351379 -0.190963998437' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='18' indexedRendering='true' bbMinModF='0.968857799015 0.828900071494 0.695817083807' bbMaxModF='0.081209467119 0.963883660618 0.719331920233' bbMin='-0.0281620007008 0.936519026756 -0.198642000556' numAnchorVertices='18' tightSize='0.101600006223 0.152508974075 0.0153560042381'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_15_level0.bin' numIndices='24' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_13'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.909804 1' shininess='0.3' specularColor='0.433333 0.454902 0.5'></material>
+            </appearance>
+            <popGeometry DEF='PG_13' vertexCount='24' primType='"TRIANGLES"' position='0.685799956322 1.01277351379 -0.190963998437' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='18' indexedRendering='true' bbMinModF='0.702197884972 0.828900071494 0.695817083807' bbMaxModF='0.814549538658 0.963883660618 0.719331920233' bbMin='0.634999990463 0.936519026756 -0.198642000556' numAnchorVertices='18' tightSize='0.101599991322 0.152508974075 0.0153560042381'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_13_level0.bin' numIndices='24' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_14'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.866667 0.890196' shininess='0.31' specularColor='0.866667 0.866667 0.890196'></material>
+            </appearance>
+            <popGeometry DEF='PG_14' vertexCount='660' primType='"TRIANGLES"' position='0.355496019125 0.43180000782 -0.254067480564' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='236' indexedRendering='true' bbMinModF='0.0657146631041 0.044962378681 0.156764597717' bbMaxModF='0.720516998536 0.719398058897 0.0651221154222' bbMin='0.0594259984791 0.0507999993861 -0.550661981106' numAnchorVertices='236' tightSize='0.59214001894 0.761999964714 0.593189001083'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_14_level0.bin' numIndices='660' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_18'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.866667 0.890196' shininess='0.31' specularColor='0.866667 0.866667 0.890196'></material>
+            </appearance>
+            <popGeometry DEF='PG_18' vertexCount='5580' primType='"TRIANGLES"' position='0.355355501175 0.819149971008 -0.254574000835' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='1796' indexedRendering='true' bbMinModF='0.0353432251353 0.696916884393 0.115192521698' bbMaxModF='0.750577648056 0.753119847029 0.105142961454' bbMin='0.0319610014558 0.787400007248 -0.577809989452' numAnchorVertices='1780' tightSize='0.646788954735 0.0634999871254 0.646471977234'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_18_level0.bin' numIndices='5562' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_18_level1.bin' numIndices='18' vertexDataBufferOffset='1796'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_17'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.866667 0.866667 0.890196' shininess='0.31' specularColor='0.866667 0.866667 0.890196'></material>
+            </appearance>
+            <popGeometry DEF='PG_17' vertexCount='5580' primType='"TRIANGLES"' position='0.355944514275 0.0444499999285 -0.254499495029' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='1796' indexedRendering='true' bbMinModF='0.0360233032436 0.0112405946703 0.115232316865' bbMaxModF='0.751200254832 0.0674435696702 0.105331303948' bbMin='0.0325759984553 0.0126999998465 -0.577784001827' numAnchorVertices='1780' tightSize='0.646736979485 0.0635000020266 0.646569013596'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_17_level0.bin' numIndices='5568' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_17_level1.bin' numIndices='12' vertexDataBufferOffset='1796'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_87'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.639216 0.666667 0.678431' shininess='0.3' specularColor='0.447451 0.466667 0.474902'></material>
+            </appearance>
+            <popGeometry DEF='PG_87' vertexCount='3546' primType='"TRIANGLES"' position='0.355599999428 -0.0507999993861 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='1169' indexedRendering='true' bbMinModF='0.898181307668 0.93817673055 0.581875191863' bbMaxModF='0.888280325808 0.971898512088 0.640218192593' bbMin='-0.0920749977231 -0.0698499977589 -0.273050010204' numAnchorVertices='1168' tightSize='0.895349979401 0.0380999967456 0.0381000041962'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_87_level0.bin' numIndices='3546' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_20'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.639216 0.666667 0.678431' shininess='0.3' specularColor='0.447451 0.466667 0.474902'></material>
+            </appearance>
+            <popGeometry DEF='PG_20' vertexCount='672' primType='"TRIANGLES"' position='-0.00634999992326 -0.0507999993861 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='224' indexedRendering='true' bbMinModF='0.989467031437 0.921359207893 0.552703691499' bbMaxModF='0.996489010565 0.988716035569 0.669389692958' bbMin='-0.00952500011772 -0.0888509973884 -0.292100012302' numAnchorVertices='224' tightSize='0.00635000038892 0.0761019960046 0.0762000083923'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_20_level0.bin' numIndices='672' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_19'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 1 1' shininess='0.31' specularColor='1 1 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_19' vertexCount='3936' primType='"TRIANGLES"' position='0.355599999428 -0.304800003767 0.0190500002354' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='1228' indexedRendering='true' bbMinModF='0 0.460451442639 0' bbMaxModF='0.786461641715 0 0.0583429950249' bbMin='0 -0.609600007534 -0' numAnchorVertices='1176' tightSize='0.711199998856 0.609600007534 0.0381000004709'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_19_level0.bin' numIndices='3612' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_19_level1.bin' numIndices='84' vertexDataBufferOffset='1228'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_19_level2.bin' numIndices='84' vertexDataBufferOffset='1228'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_19_level3.bin' numIndices='84' vertexDataBufferOffset='1228'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_19_level4.bin' numIndices='72' vertexDataBufferOffset='1228'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_21'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 1 1' shininess='0.31' specularColor='1 1 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_21' vertexCount='3936' primType='"TRIANGLES"' position='0.355599999428 -0.304800003767 -0.527050018311' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='1228' indexedRendering='true' bbMinModF='0 0.460451442639 0.163750383727' bbMaxModF='0.786461641715 0 0.222093384456' bbMin='0 -0.609600007534 -0.546100020409' numAnchorVertices='1176' tightSize='0.711199998856 0.609600007534 0.0381000041962'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_21_level0.bin' numIndices='3612' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_21_level1.bin' numIndices='84' vertexDataBufferOffset='1228'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_21_level2.bin' numIndices='84' vertexDataBufferOffset='1228'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_21_level3.bin' numIndices='84' vertexDataBufferOffset='1228'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_21_level4.bin' numIndices='72' vertexDataBufferOffset='1228'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_23'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.494118 0.494118 0.494118' emissiveColor='0.148235 0.148235 0.148235' specularColor='0.098824 0.098824 0.098824'></material>
+            </appearance>
+            <popGeometry DEF='PG_23' vertexCount='636' primType='"TRIANGLES"' position='0.355599999428 -0.482599973679 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='216' indexedRendering='true' bbMinModF='0.0280879154813 0.539135632532 0.222093384456' bbMaxModF='0.758373744771 0.606579182419 0' bbMin='0.025399999693 -0.520699977875 -0.508000016212' numAnchorVertices='216' tightSize='0.660400032997 0.07619997859 0.508000016212'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_23_level0.bin' numIndices='636' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_22'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.909804 0.443137 0.031373' shininess='0.31' specularColor='0.909804 0.443137 0.031373'></material>
+            </appearance>
+            <popGeometry DEF='PG_22' vertexCount='1140' primType='"TRIANGLES"' position='0.515652000904 -0.279399991035 -0.25107100606' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='266' indexedRendering='true' bbMinModF='0.401692597982 0.606579182419 0.265473950016' bbMaxModF='0.738747591996 0.898834648792 0.96558988461' bbMin='0.363252013922 -0.444499999285 -0.479671001434' numAnchorVertices='156' tightSize='0.304800003767 0.330200016499 0.457199990749'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_22_level0.bin' numIndices='522' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_22_level1.bin' numIndices='0' vertexDataBufferOffset='201'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_22_level2.bin' numIndices='0' vertexDataBufferOffset='209'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_22_level3.bin' numIndices='12' vertexDataBufferOffset='215'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_22_level4.bin' numIndices='24' vertexDataBufferOffset='230'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_22_level5.bin' numIndices='60' vertexDataBufferOffset='249'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_22_level6.bin' numIndices='108' vertexDataBufferOffset='266'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_22_level7.bin' numIndices='414' vertexDataBufferOffset='266'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_24'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.909804 0.443137 0.031373' shininess='0.31' specularColor='0.909804 0.443137 0.031373'></material>
+            </appearance>
+            <popGeometry DEF='PG_24' vertexCount='1152' primType='"TRIANGLES"' position='0.181238010526 -0.279399991035 -0.252083003521' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='270' indexedRendering='true' bbMinModF='0.0318897361256 0.606579182419 0.263924265971' bbMaxModF='0.368944740439 0.898834648792 0.96404019486' bbMin='0.028837999329 -0.444499999285 -0.480682998896' numAnchorVertices='160' tightSize='0.304800003767 0.330200016499 0.457199990749'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_24_level0.bin' numIndices='516' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_24_level1.bin' numIndices='18' vertexDataBufferOffset='203'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_24_level2.bin' numIndices='0' vertexDataBufferOffset='205'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_24_level3.bin' numIndices='36' vertexDataBufferOffset='216'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_24_level4.bin' numIndices='78' vertexDataBufferOffset='234'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_24_level5.bin' numIndices='48' vertexDataBufferOffset='243'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_24_level6.bin' numIndices='150' vertexDataBufferOffset='265'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_24_level7.bin' numIndices='234' vertexDataBufferOffset='269'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_24_level8.bin' numIndices='54' vertexDataBufferOffset='270'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_24_level9.bin' numIndices='18' vertexDataBufferOffset='270'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_12'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.639216 0.666667 0.678431' shininess='0.3' specularColor='0.447451 0.466667 0.474902'></material>
+            </appearance>
+            <popGeometry DEF='PG_12' vertexCount='816' primType='"TRIANGLES"' position='0.355599999428 -0.55245000124 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='268' indexedRendering='true' bbMinModF='0.308967064115 0.482932617142 0.59159904053' bbMaxModF='0.4774945776 0.539135632532 0.630494366744' bbMin='0.279399991035 -0.584200024605 -0.266699999571' numAnchorVertices='268' tightSize='0.152400016785 0.06350004673 0.0253999978304'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_12_level0.bin' numIndices='816' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_25'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.639216 0.666667 0.678431' shininess='0.3' specularColor='0.447451 0.466667 0.474902'></material>
+            </appearance>
+            <popGeometry DEF='PG_25' vertexCount='672' primType='"TRIANGLES"' position='0.717550039291 -0.0507884994149 -0.253913998604' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='224' indexedRendering='true' bbMinModF='0.78997265355 0.921369824887 0.552968612307' bbMaxModF='0.796994611307 0.98872577221 0.669388164129' bbMin='0.714375019073 -0.0888390019536 -0.291927009821' numAnchorVertices='224' tightSize='0.00634998083115 0.0761010050774 0.0760260075331'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_25_level0.bin' numIndices='672' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_26'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.494118 0.494118 0.494118' emissiveColor='0.148235 0.148235 0.148235' specularColor='0.098824 0.098824 0.098824'></material>
+            </appearance>
+            <popGeometry DEF='PG_26' vertexCount='852' primType='"TRIANGLES"' position='-0.0301625002176 -0.0507999993861 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='284' indexedRendering='true' bbMinModF='0.943824169037 0.921359207893 0.552789442782' bbMaxModF='0.989467031437 0.988716035569 0.669303941674' bbMin='-0.0507999993861 -0.0888509973884 -0.292044013739' numAnchorVertices='284' tightSize='0.041274998337 0.0761019960046 0.0760880112648'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_26_level0.bin' numIndices='852' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_27'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.494118 0.494118 0.494118' emissiveColor='0.148235 0.148235 0.148235' specularColor='0.098824 0.098824 0.098824'></material>
+            </appearance>
+            <popGeometry DEF='PG_27' vertexCount='852' primType='"TRIANGLES"' position='0.741362512112 -0.0508000031114 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='284' indexedRendering='true' bbMinModF='0.796994611307 0.92133353587 0.552856848128' bbMaxModF='0.842637501514 0.988741703471 0.669236559147' bbMin='0.720724999905 -0.0888800024986 -0.291999995708' numAnchorVertices='284' tightSize='0.0412750244141 0.0761599987745 0.0759999901056'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_27_level0.bin' numIndices='852' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_30'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_30' vertexCount='528' primType='"TRIANGLES"' position='0.36596351862 0.859027981758 -0.525927484035' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.401815326525 0.754693536102 0.190672453147' bbMaxModF='0.407566727483 0.765934149731 0.198609215866' bbMin='0.36336299777 0.852678000927 -0.528518974781' numAnchorVertices='192' tightSize='0.00520101189613 0.0127000212669 0.00518298149109'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_30_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_31'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_31' vertexCount='528' primType='"TRIANGLES"' position='0.376313984394 0.859027981758 -0.507999539375' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.413287149699 0.754693536102 0.218107387346' bbMaxModF='0.41898654592 0.765934149731 0.226080933213' bbMin='0.37373700738 0.852678000927 -0.510603010654' numAnchorVertices='192' tightSize='0.00515398383141 0.0127000212669 0.00520700216293'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_31_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_32'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_32' vertexCount='528' primType='"TRIANGLES"' position='0.36596351862 0.859027981758 -0.490072488785' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.401815326525 0.754693536102 0.245577598683' bbMaxModF='0.407566727483 0.765934149731 0.253514407039' bbMin='0.36336299777 0.852678000927 -0.492664009333' numAnchorVertices='192' tightSize='0.00520101189613 0.0127000212669 0.00518301129341'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_32_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_33'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_33' vertexCount='528' primType='"TRIANGLES"' position='0.345262497663 0.859027981758 -0.490072488785' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.378923684914 0.754693536102 0.245577598683' bbMaxModF='0.384675052915 0.765934149731 0.253514407039' bbMin='0.342662006617 0.852678000927 -0.492664009333' numAnchorVertices='192' tightSize='0.00520098209381 0.0127000212669 0.00518301129341'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_33_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_34'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_34' vertexCount='528' primType='"TRIANGLES"' position='0.334912002087 0.859027981758 0' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.36750383352 0.754693536102 0.996013994333' bbMaxModF='0.373203262697 0.765934149731 0.00398600566715' bbMin='0.33233499527 0.852678000927 -0.00260300002992' numAnchorVertices='192' tightSize='0.00515401363373 0.0127000212669 0.00520600005984'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_34_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_35'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_35' vertexCount='528' primType='"TRIANGLES"' position='0.345262497663 0.859027981758 0.017927499488' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.378923684914 0.754693536102 0.0234842042435' bbMaxModF='0.384675052915 0.765934149731 0.0314209940598' bbMin='0.342662006617 0.852678000927 0.0153360003605' numAnchorVertices='192' tightSize='0.00520098209381 0.0127000212669 0.00518299918622'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_35_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_36'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_36' vertexCount='528' primType='"TRIANGLES"' position='0.36596351862 0.859027981758 0.017927499488' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.401815326525 0.754693536102 0.0234842042435' bbMaxModF='0.407566727483 0.765934149731 0.0314209940598' bbMin='0.36336299777 0.852678000927 0.0153360003605' numAnchorVertices='192' tightSize='0.00520101189613 0.0127000212669 0.00518299918622'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_36_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_37'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_37' vertexCount='528' primType='"TRIANGLES"' position='0.376313984394 0.859027981758 0' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.413287149699 0.754693536102 0.996013994333' bbMaxModF='0.41898654592 0.765934149731 0.00398600566715' bbMin='0.37373700738 0.852678000927 -0.00260300002992' numAnchorVertices='192' tightSize='0.00515398383141 0.0127000212669 0.00520600005984'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_37_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_38'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_38' vertexCount='528' primType='"TRIANGLES"' position='0.36596351862 0.859027981758 -0.017927499488' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.401815326525 0.754693536102 0.96857900594' bbMaxModF='0.407566727483 0.765934149731 0.976515795756' bbMin='0.36336299777 0.852678000927 -0.0205189995468' numAnchorVertices='192' tightSize='0.00520101189613 0.0127000212669 0.00518299918622'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_38_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_39'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_39' vertexCount='528' primType='"TRIANGLES"' position='0.345262497663 0.859027981758 -0.017927499488' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.378923684914 0.754693536102 0.96857900594' bbMaxModF='0.384675052915 0.765934149731 0.976515795756' bbMin='0.342662006617 0.852678000927 -0.0205189995468' numAnchorVertices='192' tightSize='0.00520098209381 0.0127000212669 0.00518299918622'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_39_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_40'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 1' shininess='0.31' specularColor='0.752941 0.752941 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_40' vertexCount='1344' primType='"TRIANGLES"' position='0.58421254158 0.866901516914 -0.253940999508' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='464' indexedRendering='true' bbMinModF='0.632024577768 0.74446460988 0.591779716065' bbMaxModF='0.66004722162 0.790100537904 0.630494366744' bbMin='0.571542024612 0.841121017933 -0.266582012177' numAnchorVertices='464' tightSize='0.0253409743309 0.051560997963 0.0252820104361'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_40_level0.bin' numIndices='1344' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_41'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_41' vertexCount='2070' primType='"TRIANGLES"' position='0.584213018417 0.90284204483 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='598' indexedRendering='true' bbMinModF='0.632120743689 0.772565220736 0.59159904053' bbMaxModF='0.659952110294 0.825620805225 0.630494366744' bbMin='0.571628987789 0.872870028019 -0.266699999571' numAnchorVertices='502' tightSize='0.0251680016518 0.0599439740181 0.0253999978304'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_41_level0.bin' numIndices='1506' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_41_level1.bin' numIndices='0' vertexDataBufferOffset='526'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_41_level2.bin' numIndices='0' vertexDataBufferOffset='534'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_41_level3.bin' numIndices='0' vertexDataBufferOffset='538'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_41_level4.bin' numIndices='0' vertexDataBufferOffset='598'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_41_level5.bin' numIndices='6' vertexDataBufferOffset='598'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_41_level6.bin' numIndices='18' vertexDataBufferOffset='598'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_41_level7.bin' numIndices='12' vertexDataBufferOffset='598'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_41_level8.bin' numIndices='528' vertexDataBufferOffset='598'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_42'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_42' vertexCount='1854' primType='"TRIANGLES"' position='0.482632517815 0.862834990025 -0.254012495279' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='446' indexedRendering='true' bbMinModF='0.507398257181 0.760426237975 0.574590759554' bbMaxModF='0.560014428975 0.766940456103 0.647464381381' bbMin='0.458842009306 0.859154999256 -0.277806997299' numAnchorVertices='274' tightSize='0.047580987215 0.00735998153687 0.0475890040398'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_42_level0.bin' numIndices='822' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_42_level1.bin' numIndices='0' vertexDataBufferOffset='360'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_42_level2.bin' numIndices='6' vertexDataBufferOffset='365'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_42_level3.bin' numIndices='0' vertexDataBufferOffset='396'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_42_level4.bin' numIndices='30' vertexDataBufferOffset='434'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_42_level5.bin' numIndices='90' vertexDataBufferOffset='446'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_42_level6.bin' numIndices='186' vertexDataBufferOffset='446'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_42_level7.bin' numIndices='720' vertexDataBufferOffset='446'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_44'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.898039 0.917647 0.929412' shininess='0.3125' specularColor='0.44902 0.458824 0.464706'></material>
+            </appearance>
+            <popGeometry DEF='PG_44' vertexCount='44154' primType='"TRIANGLES"' position='0.355612486601 0.842962503433 -0.253169000149' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='13263' indexedRendering='true' bbMinModF='0.0355831867907 0.730638672526 0.117676251252' bbMaxModF='0.75090608862 0.761550294062 0.106962152792' bbMin='0.0321779996157 0.825500011444 -0.576188027859' numAnchorVertices='11909' tightSize='0.646869003773 0.0349249839783 0.64603805542'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level0.bin' numIndices='35982' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level1.bin' numIndices='240' vertexDataBufferOffset='12522'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level2.bin' numIndices='492' vertexDataBufferOffset='12553'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level3.bin' numIndices='1080' vertexDataBufferOffset='12615'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level4.bin' numIndices='1200' vertexDataBufferOffset='12766'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level5.bin' numIndices='1218' vertexDataBufferOffset='12904'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level6.bin' numIndices='906' vertexDataBufferOffset='13016'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level7.bin' numIndices='660' vertexDataBufferOffset='13068'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level8.bin' numIndices='1026' vertexDataBufferOffset='13173'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level9.bin' numIndices='744' vertexDataBufferOffset='13211'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level10.bin' numIndices='450' vertexDataBufferOffset='13248'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_44_level11.bin' numIndices='156' vertexDataBufferOffset='13263'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_46'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_46' vertexCount='5166' primType='"TRIANGLES"' position='0.355686485767 0.850265026093 -0.508000016212' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='1631' indexedRendering='true' bbMinModF='0.365600717199 0.736821007384 0.183643677404' bbMaxModF='0.421052234718 0.768294630586 0.260543137145' bbMin='0.330614000559 0.832485020161 -0.533109009266' numAnchorVertices='1564' tightSize='0.0501450002193 0.0355599522591 0.0502180159092'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_46_level0.bin' numIndices='4740' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_46_level1.bin' numIndices='6' vertexDataBufferOffset='1625'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_46_level2.bin' numIndices='12' vertexDataBufferOffset='1627'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_46_level3.bin' numIndices='0' vertexDataBufferOffset='1631'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_46_level4.bin' numIndices='60' vertexDataBufferOffset='1631'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_46_level5.bin' numIndices='84' vertexDataBufferOffset='1631'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_46_level6.bin' numIndices='264' vertexDataBufferOffset='1631'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_47'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 1 1' shininess='0.31' specularColor='0 1 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_47' vertexCount='1644' primType='"TRIANGLES"' position='0.355580985546 0.870432496071 -0.508009016514' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='536' indexedRendering='true' bbMinModF='0.375691349921 0.768294630586 0.19780217718' bbMaxModF='0.410728272757 0.772520959083 0.246357072826' bbMin='0.339738994837 0.86804497242 -0.523863017559' numAnchorVertices='536' tightSize='0.0316840112209 0.00477504730225 0.0317080318928'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_47_level0.bin' numIndices='1644' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_48'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_48' vertexCount='2046' primType='"TRIANGLES"' position='0.165824502707 0.865046024323 -0.364122986794' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='674' indexedRendering='true' bbMinModF='0.15433425737 0.74446460988 0.409516846986' bbMaxModF='0.212410992475 0.786815943355 0.475311173289' bbMin='0.139565005898 0.841121017933 -0.385605990887' numAnchorVertices='654' tightSize='0.0525189936161 0.0478499531746 0.042965978384'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_48_level0.bin' numIndices='1896' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_48_level1.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_48_level2.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_48_level3.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_48_level4.bin' numIndices='150' vertexDataBufferOffset='674'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_43'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_43' vertexCount='1812' primType='"TRIANGLES"' position='0.215763494372 0.877071022987 -0.336034476757' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='592' indexedRendering='true' bbMinModF='0.192366840915 0.767496285405 0.442547246365' bbMaxModF='0.284825825787 0.785070588702 0.528305329347' bbMin='0.173958003521 0.86714297533 -0.364035993814' numAnchorVertices='576' tightSize='0.0836109817028 0.0198560357094 0.0560030043125'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_43_level0.bin' numIndices='1698' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_43_level1.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_43_level2.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_43_level3.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_43_level4.bin' numIndices='24' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_43_level5.bin' numIndices='90' vertexDataBufferOffset='592'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_49'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.752941 0.752941 0.752941'></material>
+            </appearance>
+            <popGeometry DEF='PG_49' vertexCount='564' primType='"TRIANGLES"' position='0.355612486601 0.867791056633 -0.368300020695' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='204' indexedRendering='true' bbMinModF='0.382897993703 0.759077391772 0.420733698968' bbMaxModF='0.403591265229 0.777062341925 0.451301726748' bbMin='0.346255987883 0.857631027699 -0.378280997276' numAnchorVertices='204' tightSize='0.0187129974365 0.0203199982643 0.0199619829655'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_49_level0.bin' numIndices='564' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_51'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_51' vertexCount='5166' primType='"TRIANGLES"' position='0.355538994074 0.850265026093 0' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='1631' indexedRendering='true' bbMinModF='0.365438144722 0.736821007384 0.961550281539' bbMaxModF='0.42088857469 0.768294630586 0.0384497184614' bbMin='0.330466985703 0.832485020161 -0.025109000504' numAnchorVertices='1564' tightSize='0.0501440167427 0.0355599522591 0.050218001008'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_51_level0.bin' numIndices='4776' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_51_level1.bin' numIndices='0' vertexDataBufferOffset='1625'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_51_level2.bin' numIndices='0' vertexDataBufferOffset='1627'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_51_level3.bin' numIndices='0' vertexDataBufferOffset='1631'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_51_level4.bin' numIndices='36' vertexDataBufferOffset='1631'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_51_level5.bin' numIndices='354' vertexDataBufferOffset='1631'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_50'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 1 1' shininess='0.31' specularColor='0 1 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_50' vertexCount='1644' primType='"TRIANGLES"' position='0.355644494295 0.870432496071 8.99937003851e-06' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='536' indexedRendering='true' bbMinModF='0.375761019131 0.768294630586 0.975736357267' bbMaxModF='0.410799029519 0.772520959083 0.0242912044234' bbMin='0.339801996946 0.86804497242 -0.0158450007439' numAnchorVertices='536' tightSize='0.0316849946976 0.00477504730225 0.0317080020905'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_50_level0.bin' numIndices='1644' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_52'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_52' vertexCount='1962' primType='"TRIANGLES"' position='0.195421501994 0.877071022987 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='641' indexedRendering='true' bbMinModF='0.166993719779 0.767456455192 0.595736642623' bbMaxModF='0.265209642235 0.785110418915 0.626356764651' bbMin='0.1510130018 0.867097973824 -0.263998001814' numAnchorVertices='624' tightSize='0.0888170003891 0.019946038723 0.0199960023165'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_52_level0.bin' numIndices='1842' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_52_level1.bin' numIndices='0' vertexDataBufferOffset='641'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_52_level2.bin' numIndices='12' vertexDataBufferOffset='641'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_52_level3.bin' numIndices='0' vertexDataBufferOffset='641'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_52_level4.bin' numIndices='12' vertexDataBufferOffset='641'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_52_level5.bin' numIndices='18' vertexDataBufferOffset='641'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_52_level6.bin' numIndices='78' vertexDataBufferOffset='641'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_53'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_53' vertexCount='1812' primType='"TRIANGLES"' position='0.215763494372 0.877071022987 -0.171965003014' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='592' indexedRendering='true' bbMinModF='0.192366840915 0.767496285405 0.693789629574' bbMaxModF='0.284825825787 0.785070588702 0.779546183728' bbMin='0.173958003521 0.86714297533 -0.19996599853' numAnchorVertices='576' tightSize='0.0836109817028 0.0198560357094 0.0560020059347'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_53_level0.bin' numIndices='1698' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_53_level1.bin' numIndices='12' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_53_level2.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_53_level3.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_53_level4.bin' numIndices='12' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_53_level5.bin' numIndices='90' vertexDataBufferOffset='592'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_54'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_54' vertexCount='1812' primType='"TRIANGLES"' position='0.273577988148 0.877071022987 -0.114150501788' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='592' indexedRendering='true' bbMinModF='0.271564799076 0.767496285405 0.761182676512' bbMaxModF='0.333493130906 0.785070588702 0.889217214533' bbMin='0.245576992631 0.86714297533 -0.15595600009' numAnchorVertices='576' tightSize='0.0560020059347 0.0198560357094 0.083610996604'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_54_level0.bin' numIndices='1698' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_54_level1.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_54_level2.bin' numIndices='12' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_54_level3.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_54_level4.bin' numIndices='24' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_54_level5.bin' numIndices='78' vertexDataBufferOffset='592'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_55'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_55' vertexCount='1812' primType='"TRIANGLES"' position='0.437646985054 0.877071022987 -0.114150501788' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='592' indexedRendering='true' bbMinModF='0.452996160983 0.767496285405 0.761182676512' bbMaxModF='0.514924476335 0.785070588702 0.889217214533' bbMin='0.409646004438 0.86714297533 -0.15595600009' numAnchorVertices='576' tightSize='0.0560019910336 0.0198560357094 0.083610996604'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_55_level0.bin' numIndices='1716' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_55_level1.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_55_level2.bin' numIndices='12' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_55_level3.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_55_level4.bin' numIndices='12' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_55_level5.bin' numIndices='72' vertexDataBufferOffset='592'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_56'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_56' vertexCount='1812' primType='"TRIANGLES"' position='0.49546200037 0.877071022987 -0.171965003014' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='592' indexedRendering='true' bbMinModF='0.501663433145 0.767496285405 0.693789629574' bbMaxModF='0.594123538525 0.785070588702 0.779546183728' bbMin='0.453655987978 0.86714297533 -0.19996599853' numAnchorVertices='576' tightSize='0.0836119949818 0.0198560357094 0.0560020059347'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_56_level0.bin' numIndices='1698' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_56_level1.bin' numIndices='12' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_56_level2.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_56_level3.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_56_level4.bin' numIndices='12' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_56_level5.bin' numIndices='90' vertexDataBufferOffset='592'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_57'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_57' vertexCount='1812' primType='"TRIANGLES"' position='0.49546200037 0.877071022987 -0.336034476757' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='592' indexedRendering='true' bbMinModF='0.501663433145 0.767496285405 0.442547246365' bbMaxModF='0.594123538525 0.785070588702 0.528305329347' bbMin='0.453655987978 0.86714297533 -0.364035993814' numAnchorVertices='576' tightSize='0.0836119949818 0.0198560357094 0.0560030043125'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_57_level0.bin' numIndices='1698' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_57_level1.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_57_level2.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_57_level3.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_57_level4.bin' numIndices='24' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_57_level5.bin' numIndices='90' vertexDataBufferOffset='592'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_58'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_58' vertexCount='2100' primType='"TRIANGLES"' position='0.13701300323 0.865046024323 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='692' indexedRendering='true' bbMinModF='0.124972425625 0.74446460988 0.592824111017' bbMaxModF='0.178051960286 0.786815943355 0.629269319076' bbMin='0.113012999296 0.841121017933 -0.265899986029' numAnchorVertices='672' tightSize='0.0480000078678 0.0478499531746 0.0237999856472'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_58_level0.bin' numIndices='1950' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_58_level1.bin' numIndices='0' vertexDataBufferOffset='692'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_58_level2.bin' numIndices='12' vertexDataBufferOffset='692'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_58_level3.bin' numIndices='0' vertexDataBufferOffset='692'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_58_level4.bin' numIndices='18' vertexDataBufferOffset='692'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_58_level5.bin' numIndices='120' vertexDataBufferOffset='692'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_28'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_28' vertexCount='2046' primType='"TRIANGLES"' position='0.165824502707 0.865046024323 -0.143876999617' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='674' indexedRendering='true' bbMinModF='0.15433425737 0.74446460988 0.746782211167' bbMaxModF='0.212410992475 0.786815943355 0.812576571697' bbMin='0.139565005898 0.841121017933 -0.16536000371' numAnchorVertices='654' tightSize='0.0525189936161 0.0478499531746 0.0429660007358'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_28_level0.bin' numIndices='1896' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_28_level1.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_28_level2.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_28_level3.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_28_level4.bin' numIndices='150' vertexDataBufferOffset='674'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_29'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_29' vertexCount='2046' primType='"TRIANGLES"' position='0.245489984751 0.865046024323 -0.0642115026712' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='674' indexedRendering='true' bbMinModF='0.247712190335 0.74446460988 0.861460655977' bbMaxModF='0.295224993585 0.786815943355 0.941883642331' bbMin='0.224006995559 0.841121017933 -0.0904709994793' numAnchorVertices='654' tightSize='0.0429659932852 0.0478499531746 0.0525190010667'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_29_level0.bin' numIndices='1896' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_29_level1.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_29_level2.bin' numIndices='12' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_29_level3.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_29_level4.bin' numIndices='138' vertexDataBufferOffset='674'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_60'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_60' vertexCount='2046' primType='"TRIANGLES"' position='0.465735018253 0.865046024323 -0.0642115026712' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='674' indexedRendering='true' bbMinModF='0.491264298304 0.74446460988 0.861460655977' bbMaxModF='0.538777085076 0.786815943355 0.941883642331' bbMin='0.44425201416 0.841121017933 -0.0904709994793' numAnchorVertices='654' tightSize='0.042965978384 0.0478499531746 0.0525190010667'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_60_level0.bin' numIndices='1908' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_60_level1.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_60_level2.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_60_level3.bin' numIndices='138' vertexDataBufferOffset='674'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_61'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_61' vertexCount='2046' primType='"TRIANGLES"' position='0.545400500298 0.865046024323 -0.143876999617' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='674' indexedRendering='true' bbMinModF='0.574078315891 0.74446460988 0.746782211167' bbMaxModF='0.632155018041 0.786815943355 0.812576571697' bbMin='0.519141018391 0.841121017933 -0.16536000371' numAnchorVertices='654' tightSize='0.0525189638138 0.0478499531746 0.0429660007358'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_61_level0.bin' numIndices='1896' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_61_level1.bin' numIndices='12' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_61_level2.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_61_level3.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_61_level4.bin' numIndices='18' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_61_level5.bin' numIndices='120' vertexDataBufferOffset='674'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_62'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_62' vertexCount='2046' primType='"TRIANGLES"' position='0.545400500298 0.865046024323 -0.364122986794' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='674' indexedRendering='true' bbMinModF='0.574078315891 0.74446460988 0.409516846986' bbMaxModF='0.632155018041 0.786815943355 0.475311173289' bbMin='0.519141018391 0.841121017933 -0.385605990887' numAnchorVertices='654' tightSize='0.0525189638138 0.0478499531746 0.042965978384'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_62_level0.bin' numIndices='1896' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_62_level1.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_62_level2.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_62_level3.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_62_level4.bin' numIndices='36' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_62_level5.bin' numIndices='114' vertexDataBufferOffset='674'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_63'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_63' vertexCount='1812' primType='"TRIANGLES"' position='0.437646985054 0.877071022987 -0.393849492073' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='592' indexedRendering='true' bbMinModF='0.452996160983 0.767496285405 0.332876192741' bbMaxModF='0.514924476335 0.785070588702 0.46091075358' bbMin='0.409646004438 0.86714297533 -0.435654997826' numAnchorVertices='576' tightSize='0.0560019910336 0.0198560357094 0.0836110115051'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_63_level0.bin' numIndices='1716' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_63_level1.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_63_level2.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_63_level3.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_63_level4.bin' numIndices='12' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_63_level5.bin' numIndices='84' vertexDataBufferOffset='592'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_64'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_64' vertexCount='2046' primType='"TRIANGLES"' position='0.465735018253 0.865046024323 -0.44378849864' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='674' indexedRendering='true' bbMinModF='0.491264298304 0.74446460988 0.280209753535' bbMaxModF='0.538777085076 0.786815943355 0.360632774116' bbMin='0.44425201416 0.841121017933 -0.470048010349' numAnchorVertices='654' tightSize='0.042965978384 0.0478499531746 0.0525190234184'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_64_level0.bin' numIndices='1908' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_64_level1.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_64_level2.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_64_level3.bin' numIndices='138' vertexDataBufferOffset='674'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_59'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.225882 0.225882 0.225882'></material>
+            </appearance>
+            <popGeometry DEF='PG_59' vertexCount='2046' primType='"TRIANGLES"' position='0.245489984751 0.865046024323 -0.44378849864' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='674' indexedRendering='true' bbMinModF='0.247712190335 0.74446460988 0.280209753535' bbMaxModF='0.295224993585 0.786815943355 0.360632774116' bbMin='0.224006995559 0.841121017933 -0.470048010349' numAnchorVertices='654' tightSize='0.0429659932852 0.0478499531746 0.0525190234184'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_59_level0.bin' numIndices='1896' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_59_level1.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_59_level2.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_59_level3.bin' numIndices='0' vertexDataBufferOffset='674'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_59_level4.bin' numIndices='150' vertexDataBufferOffset='674'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_66'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_66' vertexCount='1812' primType='"TRIANGLES"' position='0.273577988148 0.877071022987 -0.393849492073' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='592' indexedRendering='true' bbMinModF='0.271564799076 0.767496285405 0.332876192741' bbMaxModF='0.333493130906 0.785070588702 0.46091075358' bbMin='0.245576992631 0.86714297533 -0.435654997826' numAnchorVertices='576' tightSize='0.0560020059347 0.0198560357094 0.0836110115051'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_66_level0.bin' numIndices='1698' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_66_level1.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_66_level2.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_66_level3.bin' numIndices='0' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_66_level4.bin' numIndices='114' vertexDataBufferOffset='592'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_65'>
+            <appearance>
+              <material ambientIntensity='0.52' diffuseColor='0.492549 0.51451 0.539608' shininess='0.4' specularColor='0.615686 0.643137 0.67451'></material>
+            </appearance>
+            <popGeometry DEF='PG_65' vertexCount='4746' primType='"TRIANGLES"' position='0.355561494827 0.887399494648 -0.254000008106' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='907' indexedRendering='true' bbMinModF='0.358135302063 0.747499566592 0.59159904053' bbMaxModF='0.428241181071 0.823350535846 0.630494366744' bbMin='0.323862999678 0.844550013542 -0.266699999571' numAnchorVertices='228' tightSize='0.0633969902992 0.0856989622116 0.0253999978304'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_65_level0.bin' numIndices='666' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_65_level1.bin' numIndices='0' vertexDataBufferOffset='251'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_65_level2.bin' numIndices='0' vertexDataBufferOffset='263'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_65_level3.bin' numIndices='12' vertexDataBufferOffset='286'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_65_level4.bin' numIndices='36' vertexDataBufferOffset='404'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_65_level5.bin' numIndices='198' vertexDataBufferOffset='769'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_65_level6.bin' numIndices='804' vertexDataBufferOffset='907'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_65_level7.bin' numIndices='3030' vertexDataBufferOffset='907'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_67'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0.752941 0.752941 0.752941' shininess='0.3125' specularColor='0.752941 0.752941 0.752941'></material>
+            </appearance>
+            <popGeometry DEF='PG_67' vertexCount='564' primType='"TRIANGLES"' position='0.355612486601 0.867791056633 -0.139699995518' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='204' indexedRendering='true' bbMinModF='0.382897993703 0.759077391772 0.770791657708' bbMaxModF='0.403591265229 0.777062341925 0.801359708307' bbMin='0.346255987883 0.857631027699 -0.149681001902' numAnchorVertices='204' tightSize='0.0187129974365 0.0203199982643 0.0199619978666'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_67_level0.bin' numIndices='564' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_68'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_68' vertexCount='348' primType='"TRIANGLES"' position='0.553586483002 0.846010506153 -0.139699995518' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='128' indexedRendering='true' bbMinModF='0.602363026707 0.74446460988 0.770632408585' bbMaxModF='0.621974810619 0.753119847029 0.801518980248' bbMin='0.544718980789 0.841121017933 -0.149784997106' numAnchorVertices='128' tightSize='0.017735004425 0.00977897644043 0.0201700031757'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_68_level0.bin' numIndices='348' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_69'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_69' vertexCount='348' primType='"TRIANGLES"' position='0.525495529175 0.846010506153 -0.406963527203' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='128' indexedRendering='true' bbMinModF='0.570406939639 0.74446460988 0.361798060579' bbMaxModF='0.591803560404 0.753119847029 0.391825567765' bbMin='0.515820980072 0.841121017933 -0.416768014431' numAnchorVertices='128' tightSize='0.0193490386009 0.00977897644043 0.0196090042591'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_69_level0.bin' numIndices='348' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_70'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_70' vertexCount='348' primType='"TRIANGLES"' position='0.403141498566 0.846010506153 -0.4776045084' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='128' indexedRendering='true' bbMinModF='0.4352886139 0.74446460988 0.253447047329' bbMaxModF='0.456318037719 0.753119847029 0.283829790273' bbMin='0.393633008003 0.841121017933 -0.487524986267' numAnchorVertices='128' tightSize='0.0190169811249 0.00977897644043 0.0198409855366'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_70_level0.bin' numIndices='348' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_71'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_71' vertexCount='348' primType='"TRIANGLES"' position='0.262632995844 0.846010506153 -0.462836503983' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='128' indexedRendering='true' bbMinModF='0.279308874576 0.74446460988 0.277311004199' bbMaxModF='0.301542580464 0.753119847029 0.305194638034' bbMin='0.252579987049 0.841121017933 -0.471940994263' numAnchorVertices='128' tightSize='0.0201060175896 0.00977897644043 0.0182089805603'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_71_level0.bin' numIndices='348' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_72'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_72' vertexCount='348' primType='"TRIANGLES"' position='0.157639503479 0.846010506153 -0.368300020695' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='128' indexedRendering='true' bbMinModF='0.164515568821 0.74446460988 0.420574427026' bbMaxModF='0.184127352733 0.753119847029 0.45146099869' bbMin='0.148772001266 0.841121017933 -0.378385007381' numAnchorVertices='128' tightSize='0.017735004425 0.00977897644043 0.0201700031757'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_72_level0.bin' numIndices='348' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_73'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_73' vertexCount='348' primType='"TRIANGLES"' position='0.128264993429 0.846010506153 -0.230105012655' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='128' indexedRendering='true' bbMinModF='0.130777998184 0.74446460988 0.633368632012' bbMaxModF='0.152898887078 0.753119847029 0.661906170721' bbMin='0.11826299876 0.841121017933 -0.239423006773' numAnchorVertices='128' tightSize='0.0200039967895 0.00977897644043 0.0186360031366'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_73_level0.bin' numIndices='348' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_74'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_74' vertexCount='348' primType='"TRIANGLES"' position='0.185729503632 0.846010506153 -0.101036503911' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='128' indexedRendering='true' bbMinModF='0.194685747963 0.74446460988 0.830267828101' bbMaxModF='0.216082319294 0.753119847029 0.860295323878' bbMin='0.176054999232 0.841121017933 -0.11084099859' numAnchorVertices='128' tightSize='0.0193489938974 0.00977897644043 0.0196089968085'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_74_level0.bin' numIndices='348' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_75'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_75' vertexCount='348' primType='"TRIANGLES"' position='0.308084487915 0.846010506153 -0.0303955003619' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='128' indexedRendering='true' bbMinModF='0.330172341722 0.74446460988 0.938263617002' bbMaxModF='0.351201798497 0.753119847029 0.968646382763' bbMin='0.298575997353 0.841121017933 -0.0403160005808' numAnchorVertices='128' tightSize='0.0190170109272 0.00977897644043 0.0198410004377'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_75_level0.bin' numIndices='348' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_76'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='0 0 1' shininess='0.31' specularColor='0 0 1'></material>
+            </appearance>
+            <popGeometry DEF='PG_76' vertexCount='348' primType='"TRIANGLES"' position='0.448593020439 0.846010506153 -0.0451634973288' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='128' indexedRendering='true' bbMinModF='0.484947831932 0.74446460988 0.916898752127' bbMaxModF='0.507181504864 0.753119847029 0.944782414484' bbMin='0.438540011644 0.841121017933 -0.0542679987848' numAnchorVertices='128' tightSize='0.0201059877872 0.00977897644043 0.0182089991868'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_76_level0.bin' numIndices='348' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_77'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_77' vertexCount='6192' primType='"TRIANGLES"' position='0.355292499065 0.844708502293 -0.254077017307' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='1032' indexedRendering='true' bbMinModF='0.064097951832 0.745532006831 0.15543994804' bbMaxModF='0.721683578818 0.749747678767 0.0664176032742' bbMin='0.0579640008509 0.842326998711 -0.551527023315' tightSize='0.594656944275 0.004763007164 0.594900012016'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_77_level0.bin' numIndices='0' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_77_level1.bin' numIndices='6' vertexDataBufferOffset='6'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_77_level2.bin' numIndices='0' vertexDataBufferOffset='39'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_77_level3.bin' numIndices='42' vertexDataBufferOffset='88'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_77_level4.bin' numIndices='96' vertexDataBufferOffset='150'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_77_level5.bin' numIndices='96' vertexDataBufferOffset='323'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_77_level6.bin' numIndices='300' vertexDataBufferOffset='592'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_77_level7.bin' numIndices='894' vertexDataBufferOffset='909'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_77_level8.bin' numIndices='1356' vertexDataBufferOffset='1032'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_77_level9.bin' numIndices='3402' vertexDataBufferOffset='1032'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_79'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_79' vertexCount='6192' primType='"TRIANGLES"' position='0.35570499301 0.834396481514 -0.253695994616' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='1032' indexedRendering='true' bbMinModF='0.0644230638294 0.736404979492 0.156190305994' bbMaxModF='0.722270790736 0.740620651428 0.0668341176559' bbMin='0.0582580007613 0.832014977932 -0.551037013531' tightSize='0.594893991947 0.004763007164 0.59468203783'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_79_level0.bin' numIndices='0' vertexDataBufferOffset='0'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_79_level1.bin' numIndices='0' vertexDataBufferOffset='33'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_79_level2.bin' numIndices='0' vertexDataBufferOffset='116'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_79_level3.bin' numIndices='42' vertexDataBufferOffset='219'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_79_level4.bin' numIndices='138' vertexDataBufferOffset='319'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_79_level5.bin' numIndices='168' vertexDataBufferOffset='1032'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_79_level6.bin' numIndices='192' vertexDataBufferOffset='1032'></popGeometryLevel>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_79_level7.bin' numIndices='5652' vertexDataBufferOffset='1032'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_80'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_80' vertexCount='528' primType='"TRIANGLES"' position='0.334912002087 0.859027981758 -0.507999539375' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.36750383352 0.754693536102 0.218107387346' bbMaxModF='0.373203262697 0.765934149731 0.226080933213' bbMin='0.33233499527 0.852678000927 -0.510603010654' numAnchorVertices='192' tightSize='0.00515401363373 0.0127000212669 0.00520700216293'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_80_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_78'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_78' vertexCount='528' primType='"TRIANGLES"' position='0.345262497663 0.859027981758 -0.525927484035' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.378923684914 0.754693536102 0.190672453147' bbMaxModF='0.384675052915 0.765934149731 0.198609215866' bbMin='0.342662006617 0.852678000927 -0.528518974781' numAnchorVertices='192' tightSize='0.00520098209381 0.0127000212669 0.00518298149109'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_78_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_82'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_82' vertexCount='468' primType='"TRIANGLES"' position='0.482634007931 0.855522990227 -0.254002511501' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='172' indexedRendering='true' bbMinModF='0.52993934468 0.746937512171 0.605809611735' bbMaxModF='0.537476637086 0.7674856816 0.616276151399' bbMin='0.479225993156 0.843914985657 -0.257420003414' numAnchorVertices='172' tightSize='0.00681599974632 0.02321600914 0.00683501362801'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_82_level0.bin' numIndices='468' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_83'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_83' vertexCount='528' primType='"TRIANGLES"' position='0.334912002087 0.859027981758 0' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.36750383352 0.754693536102 0.996013994333' bbMaxModF='0.373203262697 0.765934149731 0.00398600566715' bbMin='0.33233499527 0.852678000927 -0.00260300002992' numAnchorVertices='192' tightSize='0.00515401363373 0.0127000212669 0.00520600005984'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_83_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_84'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_84' vertexCount='528' primType='"TRIANGLES"' position='0.345262497663 0.859027981758 0.017927499488' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.378923684914 0.754693536102 0.0234842042435' bbMaxModF='0.384675052915 0.765934149731 0.0314209940598' bbMin='0.342662006617 0.852678000927 0.0153360003605' numAnchorVertices='192' tightSize='0.00520098209381 0.0127000212669 0.00518299918622'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_84_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_81'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_81' vertexCount='528' primType='"TRIANGLES"' position='0.36596351862 0.859027981758 0.017927499488' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.401815326525 0.754693536102 0.0234842042435' bbMaxModF='0.407566727483 0.765934149731 0.0314209940598' bbMin='0.36336299777 0.852678000927 0.0153360003605' numAnchorVertices='192' tightSize='0.00520101189613 0.0127000212669 0.00518299918622'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_81_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_45'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_45' vertexCount='528' primType='"TRIANGLES"' position='0.376313984394 0.859027981758 0' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.413287149699 0.754693536102 0.996013994333' bbMaxModF='0.41898654592 0.765934149731 0.00398600566715' bbMin='0.37373700738 0.852678000927 -0.00260300002992' numAnchorVertices='192' tightSize='0.00515398383141 0.0127000212669 0.00520600005984'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_45_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_85'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_85' vertexCount='528' primType='"TRIANGLES"' position='0.36596351862 0.859027981758 -0.017927499488' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.401815326525 0.754693536102 0.96857900594' bbMaxModF='0.407566727483 0.765934149731 0.976515795756' bbMin='0.36336299777 0.852678000927 -0.0205189995468' numAnchorVertices='192' tightSize='0.00520101189613 0.0127000212669 0.00518299918622'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_85_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <transform>
+          <shape DEF='SP_86'>
+            <appearance>
+              <material ambientIntensity='1' diffuseColor='1 0 0' shininess='0.3125' specularColor='1 0 0'></material>
+            </appearance>
+            <popGeometry DEF='PG_86' vertexCount='528' primType='"TRIANGLES"' position='0.345262497663 0.859027981758 -0.017927499488' size='0.904303479195 1.12983344913 0.653034703732' attributeStride='16' normalOffset='8' colorOffset='12' vertexBufferSize='192' indexedRendering='true' bbMinModF='0.378923684914 0.754693536102 0.96857900594' bbMaxModF='0.384675052915 0.765934149731 0.976515795756' bbMin='0.342662006617 0.852678000927 -0.0205189995468' numAnchorVertices='192' tightSize='0.00520098209381 0.0127000212669 0.00518299918622'>
+              <popGeometryLevel src='/x3d/ESPMooring/binGeo/PG_86_level0.bin' numIndices='528' vertexDataBufferOffset='0'></popGeometryLevel>
+            </popGeometry>
+          </shape>
+        </transform>
+        <viewpoint DEF='AOPT_CAM' centerOfRotation='0.341312 0.322507 -0.25398' position='0.341312 0.322507 2.32016'></viewpoint>
+      </scene>
+    </x3d>
+  </body>
+</html>
