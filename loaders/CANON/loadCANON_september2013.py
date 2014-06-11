@@ -26,19 +26,24 @@ import urllib2
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 
-# the next line makes it possible to find CANON
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # this makes it possible to find CANON, one directory up
+parentDir = os.path.join(os.path.dirname(__file__), "../")
+sys.path.insert(0, parentDir)  # this makes it possible to find CANON, one directory up
 
 from CANON import CANONLoader
        
 cl = CANONLoader('stoqs_september2013', 'CANON-ECOHAB - September 2013', 
-                           x3dTerrains= { '/stoqs/static/x3d/Monterey25_256.x3d': {
+                    description = 'Intensive 27 platform observing campaign in Monterey Bay',
+                    x3dTerrains = {
+                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                                         'VerticalExaggeration': '10',
-                                        }
-                                 } )
+                                        'speed': '1',
+                                    }
+                    },
+                    grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
+                  )
 
 # Set start and end dates for all loads from sources that contain data 
 # beyond the temporal bounds of the campaign
