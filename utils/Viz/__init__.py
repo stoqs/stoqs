@@ -508,80 +508,17 @@ class PlatformOrientation(object):
     '''
     logger = logging.getLogger(__name__)
 
-    x3dEulerBaseScene = '''
-        <Transform DEF="TRANSLATE" scale="1000 1000 1000">
-            <Transform DEF="XROT">
-                <Transform DEF="YROT">
-                    <Transform DEF="ZROT">
+    x3dEulerBaseScene = '''<Transform id="TRANSLATE" DEF="TRANSLATE" scale="1000 1000 1000">
+            <Transform id="XROT" DEF="XROT">
+                <Transform id="YROT" DEF="YROT">
+                    <Transform id="ZROT" DEF="ZROT">
                         <Transform rotation='1 0 0 -1.57079632679489'>
                             <Inline url="http://dods.mbari.org/data/beds/x3d/beds_housing_with_axes.x3d"></Inline>
-                            <TouchSensor DEF="TOUCH"/>
                         </Transform>
                     </Transform>
                 </Transform>
             </Transform>
         </Transform>
-
-        <!-- Stationary axes -->
-        <Transform rotation='1 0 0 -1.57079632679489'>
-            <Inline url="http://dods.mbari.org/data/beds/x3d/axes.x3d"></Inline>
-        </Transform>
-
-        <!-- HUD for the timeline slider -->
-        <ProximitySensor DEF="PROX" size="1000 1000 1000"></ProximitySensor>
-        <Transform DEF="HUD">
-            <Transform translation="0.0 -0.5 -1.5">
-                <Transform translation="-0.5 0 0 ">
-                    <Transform DEF="TL">
-                        <Shape>
-                            <Appearance>
-                                <Material diffuseColor="0.0 0.0 1.0"/>
-                            </Appearance>
-                            <Sphere radius=".015"></Sphere>
-                        </Shape>
-                    </Transform>
-                </Transform>
-                <Transform rotation="0 0 1 1.570796326794">
-                    <Shape>
-                        <Cylinder height="1" radius="0.001"></Cylinder>
-                    </Shape>
-                </Transform>
-            </Transform>
-        </Transform>
-
-        <!-- 6 DOF data from the BEDS coded here as position and orientation interpolators -->
-        <PositionInterpolator DEF="POS_INTERP" key="%(pKeys)s" keyValue="%(posValues)s"/>
-        <OrientationInterpolator DEF="X_OI" key="%(oKeys)s" keyValue="%(xRotValues)s"/>
-        <OrientationInterpolator DEF="Y_OI" key="%(oKeys)s" keyValue="%(yRotValues)s"/>
-        <OrientationInterpolator DEF="Z_OI" key="%(oKeys)s" keyValue="%(zRotValues)s"/>
-
-        <!-- The cycleInterval is the time duration in seconds of the data -->
-        <TimeSensor DEF="TS" cycleInterval="%(cycInt)s" loop="true"/>
-
-        <!-- Timeline slider interpolator-->
-        <PositionInterpolator DEF="TIME_INTERP" key="0 1" keyValue="0 0 0 1 0 0"></PositionInterpolator>
-
-        <!-- Wire up the connections between the nodes to animate the motion of the Shape -->
-        <ROUTE fromField="value_changed" fromNode="POS_INTERP" toField="translation" toNode="TRANSLATE"/>
-
-        <ROUTE fromField="value_changed" fromNode="X_OI" toField="rotation" toNode="XROT"/>
-        <ROUTE fromField="value_changed" fromNode="Y_OI" toField="rotation" toNode="YROT"/>
-        <ROUTE fromField="value_changed" fromNode="Z_OI" toField="rotation" toNode="ZROT"/>
-
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="POS_INTERP"/>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="X_OI"/>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="Y_OI"/>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="Z_OI"/>
-
-        <ROUTE fromField="touchTime" fromNode="TOUCH" toField="startTime" toNode="TS"/>
-
-        <!-- Routes for the timeline slider -->
-        <ROUTE fromField="value_changed" fromNode="TIME_INTERP" toField="translation" toNode="TL"></ROUTE>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="TIME_INTERP"></ROUTE>
-
-        <!-- HUD routes -->
-        <ROUTE fromField="orientation_changed" fromNode="PROX" toField="rotation" toNode="HUD"></ROUTE>
-        <ROUTE fromField="position_changed" fromNode="PROX" toField="translation" toNode="HUD"></ROUTE>
     '''
 
     def __init__(self, kwargs, request, qs, qs_mp):
@@ -631,36 +568,40 @@ class PlatformOrientation(object):
             index = 0
             gps = GPS()
             keys = ''
+            translations = []
             for act in self.yaw_by_act.keys():
                 for lon,lat,depth,t in zip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.time_by_act[act]):
                     if geoOrigin:
                         depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
-                        points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
+                        # TEST send translations directly to Transform from JavaScript
+                        translations.append('%.1f,%.1f,%.1f' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin))
                     else:
-                        points = points + '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
+                        points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
 
                     keys += '%.4f' % ((t - self.time_by_act[act][0]) / (self.time_by_act[act][-1] - self.time_by_act[act][0]))
                     indices = indices + '%i ' % index
                     index = index + 1
 
                 # No attempt to earth reference an 'up' orientation here    
-                xRotValues = ' '.join(['1 0 0 %.6f' % (np.pi * x / 180.) for x in self.roll_by_act[act]])
-                yRotValues = ' '.join(['0 1 0 %.6f' % (np.pi * z / 180.) for z in self.pitch_by_act[act]])
-                zRotValues = ' '.join(['0 0 1 %.6f' % (np.pi * -y / 180.) for y in self.yaw_by_act[act]])
+                # TEST send rotations directly to Transforms from JavaScript
+                xRotations = ['1,0,0,%.6f' % (np.pi * x / 180.) for x in self.roll_by_act[act]]
+                yRotations = ['0,1,0,%.6f' % (np.pi * y / 180.) for y in self.pitch_by_act[act]]
+                zRotations = ['0,0,1,%.6f' % (np.pi * -z / 180.) for z in self.yaw_by_act[act]]
 
                 # End with -1 so that end point does not connect to the beg point
                 indices = indices + '-1 ' 
                 cycInt = '%.4f' % (self.time_by_act[act][-1] - self.time_by_act[act][0])
 
-                x3dDict[act] = self.x3dEulerBaseScene % {
-                                               'pKeys': keys, 'posValues': points, 'oKeys': keys, 'xRotValues': xRotValues,
-                                               'yRotValues': yRotValues, 'zRotValues': zRotValues, 'cycInt': cycInt}
+                x3dDict[act] = self.x3dEulerBaseScene
+
+            if x3dDict:
+                limits = (0, len(self.time_by_act[act]))
 
         except Exception as e:
             self.logger.exception('Could not create platformorientation')
             x3dResults = 'Could not create platformorientation'
 
-        return x3dDict
+        return {'x3d': x3dDict, 'limits': limits, 'translation': translations, 'xRotation': xRotations, 'yRotation': yRotations, 'zRotation': zRotations}
 
 
 class PPDatabaseException(Exception):
