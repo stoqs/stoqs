@@ -27,8 +27,9 @@ sys.path.insert(0, parentDir)  # settings.py is one dir up
 
 from BEDS import BEDSLoader
 
-bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events', 
-                                x3dTerrains= { 
+bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
+                                description = 'Benthic Event Detector data for significant events in Monterey Canyon',
+                                x3dTerrains = { 
                                     'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0_scene.x3d': {
                                         'position': '-44571.54862 77379.85721 71401.38520',
                                         'orientation': '0.92328 -0.26229 -0.28063 1.50408',
@@ -67,9 +68,7 @@ bl.bed_files = ['BED01_1_June_2013.nc',
 bl.bed_platforms = [ 'BED01',
 ##                     'BED03',
                    ]
-bl.bed_x3dmodels = [ 'http://dods.mbari.org/data/beds/x3d/20130601/BED01/BED01_1_June_2013_scene.x3d',
-##                     'http://dods.mbari.org/data/beds/x3d/20140218/BED03/30100046_partial_decimated10_scene.x3d',
-                   ]
+
 bl.bed_depths = [ 303,
 ##
                 ]

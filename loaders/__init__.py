@@ -75,9 +75,10 @@ class LoadScript(object):
     logger = logging.getLogger('__main__')
     logger.setLevel(logging.INFO)
 
-    def __init__(self, base_dbAlias, base_campaignName, stride=1, x3dTerrains={}, grdTerrain=None):
+    def __init__(self, base_dbAlias, base_campaignName, description, stride=1, x3dTerrains={}, grdTerrain=None):
         self.base_dbAlias = base_dbAlias
         self.base_campaignName = base_campaignName
+        self.campaignDescription = description
         self.stride = stride
         self.x3dTerrains = x3dTerrains
         self.grdTerrain = grdTerrain
@@ -269,7 +270,7 @@ class STOQS_Loader(object):
     logger = logging.getLogger('__main__')
     logger.setLevel(logging.INFO)
 
-    def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, 
+    def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, stride=1):
         '''
         Intialize with settings that are common for any load of data into STOQS.
@@ -279,11 +280,13 @@ class STOQS_Loader(object):
         @param platformColor: An RGB hex string represnting the color of the platform. 
         @param dbAlias: The name of the database alias as defined in settings.py
         @param campaignName: A string describing the Campaign in which this activity belongs, If that name for a Campaign exists in the DB, it will be used.
+        @param campaignDescription: A string expanding on the campaignName. It should be a short phrase expressing the where and why of a campaign.
         @param activitytypeName: A string such as 'mooring deployment' or 'AUV mission' describing type of activity, If that name for a ActivityType exists in the DB, it will be used.
         @param platformTypeName: A string describing the type of platform, e.g.: 'mooring', 'auv'.  If that name for a PlatformType exists in the DB, it will be used.
         
         '''
         self.campaignName = campaignName
+        self.campaignDescription = campaignDescription
         self.activitytypeName = activitytypeName
         self.platformName = platformName
         self.platformColor = platformColor
@@ -469,7 +472,7 @@ class STOQS_Loader(object):
         
         # Get or create campaign
         if self.campaignName is not None:
-            (campaign, created) = m.Campaign.objects.db_manager(self.dbAlias).get_or_create(name = self.campaignName)
+            (campaign, created) = m.Campaign.objects.db_manager(self.dbAlias).get_or_create(name=self.campaignName, description=self.campaignDescription)
             self.campaign = campaign
             if created:
                 self.logger.info('Created campaign = %s', self.campaign)

@@ -112,7 +112,7 @@ class Base_Loader(STOQS_Loader):
                 'LONGITUDE','LATITUDE','TIME', 'NominalDepth', 'esecs', 'Longitude', 'Latitude',
                 'DEPTH','depth'] # A list of parameters that should not be imported as parameters
     global_dbAlias = ''
-    def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, 
+    def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
                 grdTerrain=None ):
@@ -129,6 +129,7 @@ class Base_Loader(STOQS_Loader):
         @param url: The OPeNDAP URL for the data source
         @param dbAlias: The name of the database alias as defined in settings.py
         @param campaignName: A string describing the Campaign in which this activity belongs, If that name for a Campaign exists in the DB, it will be used.
+        @param campaignDescription: A string expanding on the campaignName. It should be a short phrase expressing the where and why of a campaign.
         @param activitytypeName: A string such as 'mooring deployment' or 'AUV mission' describing type of activity, If that name for a ActivityType exists in the DB, it will be used.
         @param platformTypeName: A string describing the type of platform, e.g.: 'mooring', 'auv'.  If that name for a PlatformType exists in the DB, it will be used.
         @param startDatetime: A Python datetime.dateime object specifying the start date time of data to load
@@ -138,6 +139,7 @@ class Base_Loader(STOQS_Loader):
         @param stride: The stride/step size used to retrieve data from the url.
         '''
         self.campaignName = campaignName
+        self.campaignDescription = campaignDescription
         self.activitytypeName = activitytypeName
         self.platformName = platformName
         self.platformColor = platformColor
@@ -1103,7 +1105,7 @@ class BEDS_TS_Loader(TimeSeries_Loader):
 #
 # Helper methods that expose a common interface for executing the loaders for specific platforms
 #
-def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, plotTimeSeriesDepth=None, grdTerrain=None):
+def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, plotTimeSeriesDepth=None, grdTerrain=None):
     '''
     Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1116,6 +1118,7 @@ def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     loader = Trajectory_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
@@ -1134,7 +1137,7 @@ def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
-def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAlias, stride, grdTerrain=None):
+def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, dbAlias, stride, grdTerrain=None):
     '''
     Run the DAPloader for Dorado AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1144,6 +1147,7 @@ def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAl
     loader = Dorado_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
@@ -1165,7 +1169,7 @@ def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAl
     else:
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None):
+def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1175,6 +1179,7 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
     loader = Lrauv_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
@@ -1196,7 +1201,7 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None):
+def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None):
     '''
     Run the DAPloader for Spray Glider trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1206,6 +1211,7 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
     loader = Glider_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
@@ -1246,7 +1252,7 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runTimeSeriesLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
     '''
     Run the DAPloader for Generic CF Metadata timeSeries featureType data. 
     Following the load important updates are made to the database.
@@ -1255,6 +1261,7 @@ def runTimeSeriesLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     loader = TimeSeries_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
@@ -1272,7 +1279,7 @@ def runTimeSeriesLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
-def runMooringLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
     '''
     Run the DAPloader for OceanSites formatted Mooring Station data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1282,6 +1289,7 @@ def runMooringLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, par
     loader = Mooring_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
