@@ -522,7 +522,7 @@ class CANONLoader(LoadScript):
                     'Mooring Deployment', self.bruce_moor_parms, self.dbAlias, stride, self.bruce_moor_startDatetime, self.bruce_moor_endDatetime)
 
         # Let browser code use {{STATIC_URL}} to fill in the /stoqs/static path
-        self.addPlatformResources('x3d/esp_base.x3d', pName)
+        self.addPlatformResources('x3d/ESPMooring/esp_base_scene.x3d', pName)
 
     def loadMackMoor(self, stride=None):
         '''
@@ -536,7 +536,7 @@ class CANONLoader(LoadScript):
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors['espmack'], 'mooring', 'Mooring Deployment',                                       self.mack_moor_parms, self.dbAlias, stride, self.mack_moor_startDatetime, self.mack_moor_endDatetime)
 
         # Let browser code use {{STATIC_URL}} to fill in the /stoqs/static path
-        self.addPlatformResources('x3d/esp_base.x3d', pName)
+        self.addPlatformResources('x3d/ESPMooring/esp_base_scene.x3d', pName)
 
     def loadM1(self, stride=None):
         '''
