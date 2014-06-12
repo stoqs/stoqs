@@ -557,7 +557,12 @@ class STOQSQManager(object):
                         platformTypeHash[platformType] = []
                         platformTypeHash[platformType].append((name, id, color, featureType, ))
                 else:
+            
                     try:
+                        pr = models.PlatformResource()
+                    except NameError as e:
+                        logger.warn('%s. Assuming legacy database and not looking for X3D models of platforms', e)
+                    else:
                         # Add platform model for only timeSeries and timeSeriesProfile platforms, if there is a model
                         pModel = models.PlatformResource.objects.using(self.dbname).filter(resource__resourcetype__name='x3dplatformmodel',
                                    platform__name=name).values_list('resource__uristring', flat=True).distinct()
@@ -585,8 +590,6 @@ class STOQSQManager(object):
                             except KeyError:
                                 platformTypeHash[platformType] = []
                                 platformTypeHash[platformType].append((name, id, color, featureType, ))
-                    except DatabaseError as e:
-                        logger.warn(e)
 
         return platformTypeHash
     
