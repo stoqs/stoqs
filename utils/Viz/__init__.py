@@ -541,7 +541,8 @@ class PlatformOrientation(object):
         self.pitch_by_act = {}
         self.yaw_by_act = {}
 
-        for mp in self.qs_mp:
+        # Platform must have at least yaw in order for orientation data to make sense; must filter on one Parameter, otherwise we get multiple values
+        for mp in self.qs_mp.filter(parameter__standard_name='platform_yaw_angle'):
             self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
             self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
             self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
