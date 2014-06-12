@@ -545,7 +545,7 @@ class STOQSQManager(object):
                         else:
                             # Pass default geoCoords for GeoLocation to use
                             x,y,z = (geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10)), )
-                    modelInfo = pModel[0], x, y, z
+                        modelInfo = pModel[0], x, y, z
 
             except DatabaseError as e:
                 logger.warn(e)
