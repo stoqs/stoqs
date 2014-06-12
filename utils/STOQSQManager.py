@@ -557,33 +557,36 @@ class STOQSQManager(object):
                         platformTypeHash[platformType] = []
                         platformTypeHash[platformType].append((name, id, color, featureType, ))
                 else:
-                    # Add platform model for only timeSeries and timeSeriesProfile platforms, if there is a model
-                    pModel = models.PlatformResource.objects.using(self.dbname).filter(resource__resourcetype__name='x3dplatformmodel',
-                               platform__name=name).values_list('resource__uristring', flat=True).distinct()
-                    if pModel:
-                        gps = GPS()
-                        try:
-                            geom = self.qs.filter(platform__name=name).values_list('nominallocation__geom')[0][0]
-                            depth = self.qs.filter(platform__name=name).values_list('nominallocation__depth')[0][0]
-                        except IndexError as e:
-                            logger.warn(e)
-                        else:
-                            if self.request.GET.get('geoorigin', ''):
-                                x,y,z = gps.lla2gcc((geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10))), self.request.GET.get('geoorigin', ''))
-                            else:
-                                # Pass default geoCoords for GeoLocation to use
-                                x,y,z = (geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10)), )
+                    try:
+                        # Add platform model for only timeSeries and timeSeriesProfile platforms, if there is a model
+                        pModel = models.PlatformResource.objects.using(self.dbname).filter(resource__resourcetype__name='x3dplatformmodel',
+                                   platform__name=name).values_list('resource__uristring', flat=True).distinct()
+                        if pModel:
+                            gps = GPS()
                             try:
-                                platformTypeHash[platformType].append((name, id, color, featureType, pModel[0], x, y, z))
+                                geom = self.qs.filter(platform__name=name).values_list('nominallocation__geom')[0][0]
+                                depth = self.qs.filter(platform__name=name).values_list('nominallocation__depth')[0][0]
+                            except IndexError as e:
+                                logger.warn(e)
+                            else:
+                                if self.request.GET.get('geoorigin', ''):
+                                    x,y,z = gps.lla2gcc((geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10))), self.request.GET.get('geoorigin', ''))
+                                else:
+                                    # Pass default geoCoords for GeoLocation to use
+                                    x,y,z = (geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10)), )
+                                try:
+                                    platformTypeHash[platformType].append((name, id, color, featureType, pModel[0], x, y, z))
+                                except KeyError:
+                                    platformTypeHash[platformType] = []
+                                    platformTypeHash[platformType].append((name, id, color, featureType, pModel[0], x, y, z))
+                        else:
+                            try:
+                                platformTypeHash[platformType].append((name, id, color, featureType, ))
                             except KeyError:
                                 platformTypeHash[platformType] = []
-                                platformTypeHash[platformType].append((name, id, color, featureType, pModel[0], x, y, z))
-                    else:
-                        try:
-                            platformTypeHash[platformType].append((name, id, color, featureType, ))
-                        except KeyError:
-                            platformTypeHash[platformType] = []
-                            platformTypeHash[platformType].append((name, id, color, featureType, ))
+                                platformTypeHash[platformType].append((name, id, color, featureType, ))
+                    except DatabaseError as e:
+                        logger.warn(e)
 
         return platformTypeHash
     
