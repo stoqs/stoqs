@@ -13,6 +13,7 @@ STOQS Query manager for building ajax responses to selections made for QueryUI
 '''
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q, Max, Min, Sum, Avg
 from django.db.models.sql import query
 from django.contrib.gis.geos import fromstr, MultiPoint
@@ -522,6 +523,37 @@ class STOQSQManager(object):
                     logger.exception(e)
 
         return {'plot': plot_results, 'dataaccess': da_results}
+
+    def _getPlatformModel(self, platformName):
+        @transaction.commit_on_success(using=self.dbname)
+        def _innerGetPlatformModel(self, platform):
+            modelInfo = None, None, None, None
+            try:
+                # Add platform model for only timeSeries and timeSeriesProfile platforms, if there is a model
+                pModel = models.PlatformResource.objects.using(self.dbname).filter(resource__resourcetype__name='x3dplatformmodel',
+                           platform__name=platformName).values_list('resource__uristring', flat=True).distinct()
+                if pModel:
+                    gps = GPS()
+                    try:
+                        geom = self.qs.filter(platform__name=platformName).values_list('nominallocation__geom')[0][0]
+                        depth = self.qs.filter(platform__name=platformName).values_list('nominallocation__depth')[0][0]
+                    except IndexError as e:
+                        logger.warn(e)
+                    else:
+                        if self.request.GET.get('geoorigin', ''):
+                            x,y,z = gps.lla2gcc((geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10))), self.request.GET.get('geoorigin', ''))
+                        else:
+                            # Pass default geoCoords for GeoLocation to use
+                            x,y,z = (geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10)), )
+                    modelInfo = pModel[0], x, y, z
+
+            except DatabaseError as e:
+                logger.warn(e)
+                return modelInfo
+            else:
+                return modelInfo
+
+        return _innerGetPlatformModel(self, platformName)       
     
     def getPlatforms(self):
         '''
@@ -557,39 +589,19 @@ class STOQSQManager(object):
                         platformTypeHash[platformType] = []
                         platformTypeHash[platformType].append((name, id, color, featureType, ))
                 else:
-            
-                    try:
-                        pr = models.PlatformResource()
-                    except NameError as e:
-                        logger.warn('%s. Assuming legacy database and not looking for X3D models of platforms', e)
+                    x3dModel, x, y, z = self._getPlatformModel(name) 
+                    if x3dModel:
+                        try:
+                            platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
+                        except KeyError:
+                            platformTypeHash[platformType] = []
+                            platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
                     else:
-                        # Add platform model for only timeSeries and timeSeriesProfile platforms, if there is a model
-                        pModel = models.PlatformResource.objects.using(self.dbname).filter(resource__resourcetype__name='x3dplatformmodel',
-                                   platform__name=name).values_list('resource__uristring', flat=True).distinct()
-                        if pModel:
-                            gps = GPS()
-                            try:
-                                geom = self.qs.filter(platform__name=name).values_list('nominallocation__geom')[0][0]
-                                depth = self.qs.filter(platform__name=name).values_list('nominallocation__depth')[0][0]
-                            except IndexError as e:
-                                logger.warn(e)
-                            else:
-                                if self.request.GET.get('geoorigin', ''):
-                                    x,y,z = gps.lla2gcc((geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10))), self.request.GET.get('geoorigin', ''))
-                                else:
-                                    # Pass default geoCoords for GeoLocation to use
-                                    x,y,z = (geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10)), )
-                                try:
-                                    platformTypeHash[platformType].append((name, id, color, featureType, pModel[0], x, y, z))
-                                except KeyError:
-                                    platformTypeHash[platformType] = []
-                                    platformTypeHash[platformType].append((name, id, color, featureType, pModel[0], x, y, z))
-                        else:
-                            try:
-                                platformTypeHash[platformType].append((name, id, color, featureType, ))
-                            except KeyError:
-                                platformTypeHash[platformType] = []
-                                platformTypeHash[platformType].append((name, id, color, featureType, ))
+                        try:
+                            platformTypeHash[platformType].append((name, id, color, featureType, ))
+                        except KeyError:
+                            platformTypeHash[platformType] = []
+                            platformTypeHash[platformType].append((name, id, color, featureType, ))
 
         return platformTypeHash
     
