@@ -24,6 +24,7 @@ from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
 from utils import simplify_points, getParameterGroups
+from geo import GPS
 from MPQuery import MPQuery
 from PQuery import PQuery
 from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformOrientation
@@ -549,11 +550,40 @@ class STOQSQManager(object):
                 if len(fts) > 1:
                     logger.warn('More than one featureType returned for platform %s: %s.  Using the first one.', name, fts)
 
-                try:
-                    platformTypeHash[platformType].append((name, id, color, featureType, ))
-                except KeyError:
-                    platformTypeHash[platformType] = []
-                    platformTypeHash[platformType].append((name, id, color, featureType, ))
+                if featureType == 'trajectory':
+                    try:
+                        platformTypeHash[platformType].append((name, id, color, featureType, ))
+                    except KeyError:
+                        platformTypeHash[platformType] = []
+                        platformTypeHash[platformType].append((name, id, color, featureType, ))
+                else:
+                    # Add platform model for only timeSeries and timeSeriesProfile platforms, if there is a model
+                    pModel = models.PlatformResource.objects.using(self.dbname).filter(resource__resourcetype__name='x3dplatformmodel',
+                               platform__name=name).values_list('resource__uristring', flat=True).distinct()
+                    if pModel:
+                        gps = GPS()
+                        try:
+                            geom = self.qs.filter(platform__name=name).values_list('nominallocation__geom')[0][0]
+                            depth = self.qs.filter(platform__name=name).values_list('nominallocation__depth')[0][0]
+                        except IndexError as e:
+                            logger.warn(e)
+                        else:
+                            if self.request.GET.get('geoorigin', ''):
+                                x,y,z = gps.lla2gcc((geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10))), self.request.GET.get('geoorigin', ''))
+                            else:
+                                # Pass default geoCoords for GeoLocation to use
+                                x,y,z = (geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10)), )
+                            try:
+                                platformTypeHash[platformType].append((name, id, color, featureType, pModel[0], x, y, z))
+                            except KeyError:
+                                platformTypeHash[platformType] = []
+                                platformTypeHash[platformType].append((name, id, color, featureType, pModel[0], x, y, z))
+                    else:
+                        try:
+                            platformTypeHash[platformType].append((name, id, color, featureType, ))
+                        except KeyError:
+                            platformTypeHash[platformType] = []
+                            platformTypeHash[platformType].append((name, id, color, featureType, ))
 
         return platformTypeHash
     
@@ -1211,7 +1241,7 @@ class STOQSQManager(object):
         values as a dictionary of roll, pitch and yaw inside a 2 level hash of platform__name and activity__name.
         '''
         orientDict = {}
-        if self.request.GET.get('showplatformorientation', False):
+        if self.request.GET.get('showplatforms', False):
             try:
                 count = self.mpq.count()
             except AttributeError:

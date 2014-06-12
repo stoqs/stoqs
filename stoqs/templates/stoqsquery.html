@@ -199,7 +199,16 @@
                                 <div class="tab-pane" id="geo3d" style="height:100%;">
                                     <div id="geo-3dplot" style="height:500px;">
                                         <div class="row-fluid">
-                                            <div class="span3">
+                                            <!-- Uncomment and comment out next div for video capture -->
+                                            <!--
+                                            <div class="span2">
+                                                <img src="{{STATIC_URL}}images/logo_blue_200_tr.gif"/>
+                                            </div>
+                                            <div class="span2">
+                                                <img src="{{STATIC_URL}}images/X3dSpecificationLogo.png"/>
+                                            </div>
+                                            -->
+                                            <div class="span4">
                                                 <em>Rotate: Left mouse</em><br>
                                                 <em>Translate: Ctrl + left mouse</em><br>
                                                 <em>Zoom: Alt + left mouse</em><br>
@@ -214,12 +223,12 @@
                                                         <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>
                                                     </label>
                                                     <label class="checkbox disabled">
-                                                        <input type="checkbox" id="showplatformorientation" />
-                                                        <span id="showplatformorientationtext">Show platform</span>
+                                                        <input type="checkbox" id="showplatforms" />
+                                                        <span id="showplatforms">Show platforms</span>
                                                     </label>
                                                 </form>
                                             </div>
-                                            <div id="geo3d-colorbar" class="span7"></div>
+                                            <div id="geo3d-colorbar" class="span6"></div>
                                         </div>
                                         <div>
                                         <X3D id="spatial-3d-x3d" style="width:100%; height:100%; margin: 0px auto; display:block; border: none;"> 
@@ -228,13 +237,15 @@
                                                 <Shape id="mp-x3d-track"></Shape>
                                                 <Viewpoint id="mp-x3d-viewpoint1" zNear="1"></Viewpoint>
                                                 <Inline id="mp-x3d-terrain1"></Inline>
+                                                <Group id="platform-orientations"></Group>
+                                                <Group id="platform-models"></Group>
                                             </Scene>
                                         </X3D>
                                         </div>
                                     </div>
                                 </div>
                             </div><!-- tab-content -->
-
+                            <div id="spatial-3d-x3d-controls" class="slider slider-horizontal"></div>
                         </div><!-- accordion-inner -->
                     </div>
                 </div><!-- accordian-group -->
@@ -896,6 +907,7 @@
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.axislabels.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.debounce.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
@@ -1086,6 +1098,22 @@
         else {
             sensortrackskml.removeAllFeatures();
         }
+    }
+
+    function addStationaryPlatformModels() {
+        // For platforms in the selection look in $('body').data()['platformModels'] for x3dModels and add to the scene
+        // If geoorigin is not specified then assum default geoCoords and use GeoLocation, otherwise use straight X3D
+        x3d = ''
+        $.each($('body').data()['platformModels'], function(plat, m) {
+            if ( $.isEmptyObject($('body').data()['geoorigin'])) {
+                x3d += '<GeoLocation geoCoords="' + m[1] + ',' + m[2] + ',' + m[3] + '"><Transform scale="500,500,500">';
+                x3d += '<Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform></GeoLocation>';
+            }
+            else {
+                x3d += '<Transform scale="500,500,500" translation="' + m[1] + ',' + m[2] + ',' + m[3] + '"><Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform>';
+            }
+        });
+        $('#platform-models').html(x3d);
     }
 
     function getMPparms(group, params) {
@@ -1394,7 +1422,9 @@
         
         var div=$('#' + divid);
         div.bind({
-            slide : function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, false); },
+            //slide : function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, false); },
+            //slidechange:function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, true); }
+            slide : function (event, ui) { },
             slidechange:function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, true); }
         })
         div.slider(options);
@@ -1690,9 +1720,10 @@
         rebuildFilters(['measuredparameterx3d']);
     });
 
-    $('#showplatformorientation').on('click', function (event) {
+    $('#showplatforms').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the platform rotation angles
         rebuildFilters(['platformorientation']);
+        addStationaryPlatformModels();
     });
 
     $('#showsensortracks').on('click', function (event) {
@@ -2461,12 +2492,12 @@
             }
         }
 
-        if ($('#showgeox3ddata').is(':checked') || $('#showplatformorientation').is(':checked')) {
+        if ($('#showgeox3ddata').is(':checked') || $('#showplatforms').is(':checked')) {
             if ($('#showgeox3ddata').is(':checked')) {
                 qstring += '&showgeox3ddata=1';
             }
-            if ($('#showplatformorientation').is(':checked')) {
-                qstring += '&showplatformorientation=1';
+            if ($('#showplatforms').is(':checked')) {
+                qstring += '&showplatforms=1';
             }
             // Use the attributes of the terrain that is selected
             if ($('body').data()['geoorigin']) {
@@ -2590,6 +2621,7 @@
                 hasTimeSeries = false;
                 hasTimeSeriesProfile = false;
                 platformTypeHtml = '';
+                $('body').data()['platformModels'] = {};
 
                 // Sort the platformTypes for display
                 platformTypes = $.map(data[key], function(platforms, ptype) {return ptype}).sort();
@@ -2628,6 +2660,12 @@
                         }
                         if (value[3].toLowerCase() == 'timeseriesprofile') {
                             hasTimeSeriesProfile = true;
+                        }
+                        if ( value[3].toLowerCase() == 'timeseries' || value[3].toLowerCase() == 'timeseriesprofile') {
+                            if ( ! $.isEmptyObject(value[4]) ) {
+                                // We have a model, expect to have x, y, and z coordinates to follow
+                                $('body').data()['platformModels'][value[1]] = [value[4], value[5], value[6], value[7]];
+                            }
                         }
                     });
                     platformTypeHtml += '</tbody></table></div></div></div>';
@@ -3136,9 +3174,25 @@
                 buildMetadataHtml(data);
             }
             else if (key == 'platformorientation') {
-                $.each(data[key], function (act, x3d_scene) {
-                    $('#spatial-3d-x3d > Scene').append(x3d_scene);
-                });
+                if (data[key]['x3d']) {
+                    var x3dText = '';
+                    $.each(data[key]['x3d'], function (act, x3d) {
+                        x3dText += x3d;
+                    });
+                    $('#platform-orientations').html(x3dText);
+                }
+                if (data[key]['limits']) {
+                    var limits = data[key]['limits']
+                    $('#spatial-3d-x3d-controls').slider({min: limits[0], max: limits[limits.length - 1], step: 1, value: limits[0], slide: 
+                        $.throttle(function(e, ui) { 
+                            var index = $('#spatial-3d-x3d-controls').slider('option', 'value');
+                            $('#TRANSLATE').attr('translation', data[key]['translation'][index]);
+                            $('#XROT').attr('rotation', data[key]['xRotation'][index]);
+                            $('#YROT').attr('rotation', data[key]['yRotation'][index]);
+                            $('#ZROT').attr('rotation', data[key]['zRotation'][index]);
+                        }, 100)
+                    });
+                }
             }
 
             // If no parametertime data and Station tab is active then disable it and switch back to Trajectory
