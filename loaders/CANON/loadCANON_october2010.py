@@ -19,11 +19,25 @@ MBARI 22 April 2012
 
 import os
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So that CANON is found
+
+parentDir = os.path.join(os.path.dirname(__file__), "../")
+sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
 
-cl = CANONLoader('stoqs_october2010', 'CANON - October 2010')
+cl = CANONLoader('stoqs_october2010', 'CANON - October 2010',
+                    description = 'Bloomex observing campaign in Monterey Bay',
+                    x3dTerrains = {
+                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                        'VerticalExaggeration': '10',
+                                        'speed': '1',
+                                    }
+                    },
+                    grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
+                  )
 
 # Dorado data - 2 second gridded 
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
@@ -104,3 +118,9 @@ else:
     cl.loadDorado()
     cl.loadTethys()
     cl.loadMartin()
+
+# Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+cl.addTerrainResources()
+
+print "All Done."
+
