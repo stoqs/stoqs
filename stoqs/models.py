@@ -242,6 +242,21 @@ class SimpleDepthTime(models.Model):
         verbose_name_plural='Simple depth time series'
         app_label = 'stoqs'
 
+class SimpleBottomDepthTime(models.Model):
+    '''
+    A simplified time series of bottom depth values for an Activity useful for plotting in the UI
+    '''
+    activity = models.ForeignKey(Activity) 
+    nominallocation = models.ForeignKey(NominalLocation, null=True) 
+    instantpoint = models.ForeignKey(InstantPoint)
+    epochmilliseconds = models.FloatField()
+    bottomdepth= models.FloatField()
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name='Simple bottom depth time series'
+        verbose_name_plural='Simple bottom depth time series'
+        app_label = 'stoqs'
+
 class PlannedDepthTime(models.Model):
     '''
     A simplified time series of depth values for an Activity useful for plotting in the UI
@@ -354,6 +369,7 @@ class Measurement(models.Model):
     instantpoint = models.ForeignKey(InstantPoint)
     nominallocation = models.ForeignKey(NominalLocation, null=True)
     depth= models.FloatField(db_index=True)
+    bottomdepth= models.FloatField(db_index=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     objects = models.GeoManager()
     class Meta:
