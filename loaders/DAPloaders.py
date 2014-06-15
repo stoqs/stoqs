@@ -35,7 +35,7 @@ project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 from django.conf import settings
 
-from django.db.utils import IntegrityError
+from django.db.utils import IntegrityError, DatabaseError
 from django.db import connection, transaction
 from stoqs import models as m
 from datetime import datetime, timedelta
@@ -699,8 +699,10 @@ class Base_Loader(STOQS_Loader):
                     logger.debug('Saving parameter_id %s at measurement_id = %s', parameter.id, measurement.id)
                     try:
                         mp.save(using=self.dbAlias)
-                    except IntegrityError, e:
-                        logger.warn('%sSkipping this record.', e)
+                    except IntegrityError as e:
+                        logger.warn('%s: Skipping this record.', e)
+                    except DatabaseError as e:
+                        logger.warn('%s: Skipping this record.', e)
                     else:
                         self.loaded += 1
                         logger.debug("Inserted value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
@@ -868,6 +870,7 @@ class Base_Loader(STOQS_Loader):
         self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
         if self.getFeatureType().lower() == 'trajectory':
             self.insertSimpleDepthTimeSeries()
+            self.insertSimpleBottomDepthTimeSeries()
         elif self.getFeatureType().lower() == 'timeseries' or self.getFeatureType().lower() == 'timeseriesprofile':
             self.insertSimpleDepthTimeSeriesByNominalDepth()
         logger.info("Data load complete, %d records loaded.", self.loaded)

@@ -837,6 +837,57 @@ class STOQS_Loader(object):
 
         self.logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
+    def insertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
+      @transaction.commit_on_success(using=self.dbAlias)
+      def _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
+        '''
+        Read the time series of Parameter altitude and add to depth values to compute BottomDepth, simplify it 
+        and insert the values in the SimpleBottomDepthTime table that is related to the Activity.  
+        While we're at it also add the bottom depth to the Measurement so that our Matplotlib plots can also
+        ieasily include the depth profile.  This procedure is suitable for only trajectory data.
+        @param critSimpleBottomDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
+        '''
+        mpQS = m.MeasuredParameter.objects.using(self.dbAlias).select_related(depth=3
+                                      ).filter( measurement__instantpoint__pk__isnull=False,
+                                                datavalue__isnull=False,
+                                                measurement__instantpoint__activity=self.activity, 
+                                                parameter__standard_name='height_above_sea_floor')
+        line = []
+        pklookup = []
+        for mp in mpQS:
+            ems = 1000 * to_udunits(mp.measurement.instantpoint.timevalue, 'seconds since 1970-01-01')
+            bottomDepth = mp.measurement.depth + mp.datavalue
+            line.append( (ems, bottomDepth,) )
+            pklookup.append(mp.measurement.instantpoint.pk)
+
+            try:
+                # Add bottom depth to the measurement
+                mp.measurement.bottomdepth = bottomDepth
+                mp.measurement.save(using=self.dbAlias)
+            except DatabaseError as e:
+                self.logger.warn(e)
+
+        self.logger.debug('line = %s', line)
+        self.logger.info('Number of points in original bottom depth time series = %d', len(line))
+        try:
+            # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
+            simple_line = simplify_points(line, critSimpleBottomDepthTime)
+        except IndexError:
+            simple_line = []        # Likely "list index out of range" from a stride that's too big
+        self.logger.info('Number of points in simplified depth time series = %d', len(simple_line))
+        self.logger.debug('simple_line = %s', simple_line)
+
+        for t,d,k in simple_line:
+            try:
+                ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
+                m.SimpleBottomDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = ip, bottomdepth = d, epochmilliseconds = t)
+            except ObjectDoesNotExist:
+                self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
+
+        self.logger.info('Inserted %d values into SimpleBottomDepthTime', len(simple_line))
+
+      return _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime)
+
     def insertSimpleDepthTimeSeriesByNominalDepth(self, critSimpleDepthTime=10):
         '''
         Read the time series of depth values for each nominal depth of this activity, simplify them 
@@ -1029,9 +1080,9 @@ class STOQS_Loader(object):
             for line in altFH:
                 lon, lat, bdepth = line.split()
                 alt = -float(bdepth)-depthList.pop(0)
-                meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
-                mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
                 try:
+                    meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
+                    mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
                     mp_alt.save(using=self.dbAlias)
                 except IntegrityError, e:
                     self.logger.warn(e)
