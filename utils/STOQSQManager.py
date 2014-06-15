@@ -73,6 +73,7 @@ class STOQSQManager(object):
             'time': self.getTime,
             'depth': self.getDepth,
             'simpledepthtime': self.getSimpleDepthTime,
+            ##'simplebottomdepthtime': self.getSimpleBottomDepthTime,
             'parametertime': self.getParameterTime,
             'sampledepthtime': self.getSampleDepthTime,
             'counts': self.getCounts,
@@ -753,6 +754,40 @@ class STOQSQManager(object):
                             except TypeError:
                                 continue                                                 # Likely "float argument required, not NoneType"
         return({'sdt': sdt, 'colors': colors})
+
+    def getSimpleBottomDepthTime(self):
+        '''
+        Based on the current selected query criteria for activities, return the associated SimpleBottomDepth time series
+        values as a 2-tuple list inside a 2 level hash of platform__name and activity__name.  Append a third value to the 
+        x,y time series of a maximum depth (positive number in meters) so that Flot will fill downward. See:
+        http://stackoverflow.com/questions/23790277/flot-fill-color-above-a-line-graph
+        '''
+        sbdt = {}
+        maxDepth = 10971        # Max ocean depth 
+
+        trajectoryQ = self._trajectoryQ()
+
+        for plats in self.getPlatforms().values():
+            for p in plats:
+                plq = Q(platform__name = p[0])
+                sbdt[p[0]] = {}
+    
+                if p[3].lower() == 'trajectory':
+                    qs_traj = self.qs.filter(plq & trajectoryQ).values_list( 'simplebottomdepthtime__epochmilliseconds', 'simplebottomdepthtime__bottomdepth',
+                                        'name').order_by('simplebottomdepthtime__epochmilliseconds')
+                    # Add to sbdt hash date-time series organized by activity__name key within a platform__name key
+                    # This will let flot plot the series with gaps between the surveys -- not connected
+                    for s in qs_traj:
+                        try:
+                            sbdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1], maxDepth] )
+                        except KeyError:
+                            sbdt[p[0]][s[2]] = []                                               # First time seeing activity__name, make it a list
+                            if s[1] is not None:
+                                sbdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1], maxDepth] )      # Append first value, even if it is 0.0
+                        except TypeError:
+                            continue                                                            # Likely "float argument required, not NoneType"
+
+        return({'sbdt': sbdt})
 
     #
     # The following set of private (_...) methods are for building the parametertime response
