@@ -2225,7 +2225,13 @@
                     $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
                         var rec = [];
                         //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
-                        subset_dts = []
+                        subset_dts = [];
+                        bottomdepth_time_series = [];
+                        if ( ! $.isEmptyObject(data.simplebottomdepthtime ) ) {
+                            if ( ! $.isEmptyObject(data.simplebottomdepthtime.sbdt[platform_value[0]][label]) ) {
+                                bottomdepth_time_series = data.simplebottomdepthtime.sbdt[platform_value[0]][label];
+                            }
+                        }
                         $.each(depth_time_series, function (index, td) {
                             // From each activity push only the times between x1 & x2, inclusive
                             if (td[0] >= x1 && td[0] <= x2) {
@@ -2242,6 +2248,7 @@
                                 platform_seen[platform_value[0]] = true;
                              }
                              dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
+                             dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
                          }
                     });
                 }
