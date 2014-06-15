@@ -1245,8 +1245,11 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     elif pName.startswith('SPRAY'):
         for p in loader.include_names:
             loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+    elif pName.startswith('NPS'):
+        for p in loader.include_names:
+            loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
 
-    # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications
+    # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications for future files
 
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
