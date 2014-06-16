@@ -1,0 +1,30 @@
+STOQS Client cde-package instructions
+=====================================
+
+All required software is included in this cde-package for performing detailed data analysis
+in STOQS.  The Python script you run is executed with a wrapper script (ending in '.cde') 
+that creates the environemnt for all the code and data for the script to run.
+
+This package is meant for running inside MBARI's firewall as direct access is made to the 
+STOQS PostgreSQL databases running on the internal server kraken.  
+
+This documentation refers to $STOQSHG_DIR, which will be something like /opt/stoqshg or the
+developer's home directory.  Set it with:
+
+export STOQSHG_DIR=$(dirname `find cde-root -name privateSettings | cut -d/ -f2-`)
+
+See file cde-root/$STOQSHG_DIR/privateSettings for details of what databases are available.  
+Use the STOQS UI at http://kraken.shore.mbari.org/canon/ in concert with script execution.
+
+For usage notes (with examples) execute:
+----------------------------------------
+
+cd cde-root/$STOQSHG_DIR/contrib/analysis
+./trajectory_biplots.py.cde --help
+./crossproduct_biplots.py.cde --help
+
+Make sure that you append ".cde" after ".py" to the example commands given in the help messages.
+
+--
+Mike McCann
+18 February 2014

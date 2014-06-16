@@ -1,0 +1,3 @@
+./aopt -i /Users/mccann/Downloads/ESPDeployBase/esp_base.wrl -f PrimitiveSet:creaseAngle:4 -V -K "/Users/mccann/Downloads/ESPDeployBase/binGeo/:ib" -N /Users/mccann/Downloads/ESPDeployBase/esp_base.html
+
+:%s#/Users/mccann/Downloads/ESPDeployBase/binGeo#/stoqs/static/x3d/ESPMooring/binGeo#g
