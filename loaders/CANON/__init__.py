@@ -133,7 +133,7 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.martin_files], self.martin_files):
             url = self.martin_base + file
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, 'r/v_martin', self.colors['martin'], 'ship', 'cruise', 
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, 'Martin', self.colors['martin'], 'ship', 'cruise', 
                                         self.martin_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadJMuctd(self, stride=None):
