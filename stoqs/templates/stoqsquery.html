@@ -1106,11 +1106,11 @@
         x3d = ''
         $.each($('body').data()['platformModels'], function(plat, m) {
             if ( $.isEmptyObject($('body').data()['geoorigin'])) {
-                x3d += '<GeoLocation geoCoords="' + m[1] + ',' + m[2] + ',' + m[3] + '"><Transform scale="500,500,500">';
+                x3d += '<GeoLocation geoCoords="' + m[1] + ',' + m[2] + ',' + m[3] + '"><Transform scale="200,200,200">';
                 x3d += '<Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform></GeoLocation>';
             }
             else {
-                x3d += '<Transform scale="500,500,500" translation="' + m[1] + ',' + m[2] + ',' + m[3] + '"><Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform>';
+                x3d += '<Transform scale="200,200,200" translation="' + m[1] + ',' + m[2] + ',' + m[3] + '"><Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform>';
             }
         });
         $('#platform-models').html(x3d);
