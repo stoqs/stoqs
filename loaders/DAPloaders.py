@@ -1133,6 +1133,13 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
     logger.debug("Setting include_names to %s", parmList)
     loader.include_names = parmList
+
+    # Fix up legacy data files
+    loader.auxCoords = {}
+    if aName.find('_jhmudas_v1') != -1:
+        for p in loader.include_names:
+            loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
     if plotTimeSeriesDepth:
         # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
         loader.plotTimeSeriesDepth = dict.fromkeys(parmList, plotTimeSeriesDepth)
@@ -1197,6 +1204,12 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
+
+    loader.auxCoords = {}
+    if aName.find('_Chl_') != -1:
+        for p in loader.include_names:
+            loader.auxCoords[p] = {'time': 'Time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     except NoValidData, e:
@@ -1236,7 +1249,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         #for v in loader.include_names:
         #    loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
         pass
-    elif pName.startswith('Slocum_nemesis'):
+    elif pName.startswith('Slocum'):
         loader.auxCoords['u'] = {'time': 'time_uv', 'latitude': 'lat_uv', 'longitude': 'lon_uv', 'depth': 0.0}
         loader.auxCoords['v'] = {'time': 'time_uv', 'latitude': 'lat_uv', 'longitude': 'lon_uv', 'depth': 0.0}
         loader.auxCoords['temperature'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
