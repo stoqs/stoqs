@@ -167,8 +167,7 @@ class CrossProductBiPlot(BiPlot):
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n' 
-        examples += sys.argv[0] + ' -d default\n'
-        examples += sys.argv[0] + ' -d stoqs_simz_aug2013 --ignore mass_concentration_of_chlorophyll_in_sea_water --sampled --r2_greater 0.6\n'
+        examples += sys.argv[0] + " -d stoqs_september2013 --train --inputs bbp700 fl700_uncorr--discriminatorSN sea_water_salinity --labels diatom dino1 dino2 sediment --mins   --maxes  \n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
@@ -181,17 +180,14 @@ class CrossProductBiPlot(BiPlot):
         parser.add_argument('--nighttime', action='store_true', help='Select only nighttime hours: 10 pm to 2 am local time')
         parser.add_argument('--minDepth', action='store', help='Minimum depth for data queries', default=None, type=float)
         parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
-        parser.add_argument('--sampled', action='store_true', help='Compare Sampled Parameters to every other Parameter')
-        parser.add_argument('--r2_greater', action='store', help='Plot only correlations with r^2 greater than thisvalue', default=0.0, type=float)
-        parser.add_argument('--n_greater', action='store', help='Plot only correlations with n greater than this value', default=1, type=int)
-        parser.add_argument('--ignore', action='store', help='Ignore these Parameter names', nargs='*')
-        parser.add_argument('--nrow', action='store', help='Number of subplots in a column', default=4, type=int)
-        parser.add_argument('--ncol', action='store', help='Number of subplots in a row', default=4, type=int)
-        parser.add_argument('--ticklabels', action='store_true', help='Label ticks')
-        parser.add_argument('--units', action='store_true', help='Add (units) to axis names')
-        parser.add_argument('--plotDir', action='store', help='Directory where to write the plot output', default='.')
-        parser.add_argument('--plotPrefix', action='store', help='Prefix to use in naming plot files', default='')
-        parser.add_argument('--title', action='store', help='Title to appear on top of plot')
+
+        parser.add_argument('--train', action='store_true', help='Train the model with the --discriminator, --labels, --mins, and --maxes options')
+        parser.add_argument('--inputs', action='store', help='List of Parameters for sample and feature separated by spaces', nargs='*')
+        parser.add_argument('--discriminatorSN', action='store', help='Parameter standard_name to use to discriminate the data')
+        parser.add_argument('--labels', action='store', help='List of labels to create separated by spaces', nargs='*')
+        parser.add_argument('--mins', action='store', help='List of labels to create separated by spaces', nargs='*')
+        parser.add_argument('--maxes', action='store', help='List of labels to create separated by spaces', nargs='*')
+
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
     
         self.args = parser.parse_args()
