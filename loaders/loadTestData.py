@@ -23,19 +23,47 @@ MBARI Dec 28, 2011
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-project_dir = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
+##parentDir = os.path.join(os.path.dirname(__file__), "../")
+##sys.path.insert(0, parentDir)                                       # settings.py is one dir up
 
-import DAPloaders
-from SampleLoaders import load_gulps
+from CANON import CANONLoader
 
-baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'             # NCML to make salinity.units = "1"
-file = 'Dorado389_2010_300_00_300_00_decim.nc'                      # file name is same as activity name
-stride = 1000                                                       # Make large for quicker runs, smaller for denser data
-dbAlias = 'default'
+# Assign input data sources
+cl = CANONLoader('default', 'Initial Test Database',
+                    description = 'Post-setup load of a single AUV mission',
+                    x3dTerrains = {
+                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                        'VerticalExaggeration': '10',
+                                        'speed': '1',
+                                    }
+                    },
+                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
+                )
 
-DAPloaders.runDoradoLoader(baseUrl + file, 'Test Load', '%s (stride=%d)' % (file, stride,), 'dorado', 'ffff00', 'auv', 'AUV Mission', dbAlias, stride)
-load_gulps(file, file, dbAlias)
+# Assign input data sets from OPeNDAP URLs pointing to Discrete Sampling Geometry CF-NetCDF sources
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
+cl.dorado_files = [ 'Dorado389_2010_300_00_300_00_decim.nc' ]
 
+# Execute the load
+cl.process_command_line()
+
+if cl.args.test:
+    cl.loadDorado(stride=100)
+
+elif cl.args.optimal_stride:
+    cl.loadDorado(stride=2)
+
+else:
+    if cl.args.stride:
+        cl.logger.warn("Overriding stride parameter with a value of 1000 for this test load script")
+    cl.args.stride = 1000
+    cl.loadDorado(stride=cl.args.stride)
+
+# Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+cl.addTerrainResources()
+
+print "All Done."
 
