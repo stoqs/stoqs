@@ -450,6 +450,7 @@ class Base_Loader(STOQS_Loader):
         '''
         count = 0
         numDerived = 0
+        trajSingleParameterCount = 0
         for name in self.include_names:
             try:
                 if self.getFeatureType() == 'trajectory':
@@ -462,7 +463,8 @@ class Base_Loader(STOQS_Loader):
                     numDerived += 1
                     
         logger.debug('Adding %d derived parameters of length %d to the count', numDerived, trajSingleParameterCount / self.stride)
-        count += (numDerived * trajSingleParameterCount / self.stride)
+        if trajSingleParameterCount:
+            count += (numDerived * trajSingleParameterCount / self.stride)
 
         return count 
 
