@@ -150,7 +150,7 @@ class BiPlot():
         return x, y, points
 
 
-    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm):
+    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm, pvDict={}):
         '''
         Get Parameter-Parameter data regardless if Parameters are 'Sampled' or 'Measured in situ'
         '''
@@ -167,7 +167,7 @@ class BiPlot():
                                           Parameter.objects.using(self.args.database).get(name=yParm).id ]}
         px, py  = kwargs['parameterparameter']
 
-        kwargs['parametervalues'] = {}
+        kwargs['parametervalues'] = [pvDict]
 
         pq.buildPQuerySet(*args, **kwargs)
 

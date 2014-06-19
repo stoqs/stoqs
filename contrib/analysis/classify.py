@@ -37,13 +37,36 @@ from textwrap import wrap
 from numpy import polyfit
 from pylab import polyval
 
-from contrib.analysis import BiPlot, NoPPDataException, NoTSDataException
+from contrib.analysis import BiPlot, NoPPDataException
+
+from sklearn.cross_validation import train_test_split
+from sklearn.svm import SVC
 
 
-class CrossProductBiPlot(BiPlot):
+class Classification(BiPlot):
     '''
-    Make customized BiPlots (Parameter Parameter plots) for platforms from STOQS.
+    To hold methods and data to support classification of measurements in a STOQS database
     '''
+    def fitModel(self):
+        '''
+        Use scikit-learn module to create a model from the training set on the input vector
+        '''
+        classifier = SVC(gamma=2, C=1)
+        sdt = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+        edt = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+
+        for label,min,max in zip(self.args.labels, self.args.mins, self.args.maxes):
+            pvDict = {self.args.discriminator: (min, max)}
+
+            try:
+                X, y, points = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0], self.args.inputs[1], pvDict)
+            except NoPPDataException, e:
+                print e
+
+            import pdb
+            pdb.set_trace()
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.4)
+
 
     def getFileName(self, figCount):
         '''
@@ -167,14 +190,14 @@ class CrossProductBiPlot(BiPlot):
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n' 
-        examples += sys.argv[0] + " -d stoqs_september2013 --train --inputs bbp700 fl700_uncorr--discriminatorSN sea_water_salinity --labels diatom dino1 dino2 sediment --mins   --maxes  \n"
+        examples += sys.argv[0] + " -d stoqs_september2013 -p dorado --train --start 20130916T124035 --end 20130919T233905 --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment --mins 33.33 33.65 33.65 33.75 --maxes 33.65 33.70 33.75 33.93\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Read Parameter-Parameter data from a STOQS database and make bi-plots',
                                          epilog=examples)
                                              
-        parser.add_argument('-p', '--platform', action='store', help='One or more platform names separated by spaces', nargs='*')
+        parser.add_argument('-p', '--platform', action='store', help='Platform name')
         parser.add_argument('-d', '--database', action='store', help='Database alias', default='stoqs_september2013_o', required=True)
         parser.add_argument('--daytime', action='store_true', help='Select only daytime hours: 10 am to 2 pm local time')
         parser.add_argument('--nighttime', action='store_true', help='Select only nighttime hours: 10 pm to 2 am local time')
@@ -183,7 +206,9 @@ class CrossProductBiPlot(BiPlot):
 
         parser.add_argument('--train', action='store_true', help='Train the model with the --discriminator, --labels, --mins, and --maxes options')
         parser.add_argument('--inputs', action='store', help='List of Parameters for sample and feature separated by spaces', nargs='*')
-        parser.add_argument('--discriminatorSN', action='store', help='Parameter standard_name to use to discriminate the data')
+        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
+        parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
+        parser.add_argument('--discriminator', action='store', help='Parameter name to use to discriminate the data')
         parser.add_argument('--labels', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--mins', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--maxes', action='store', help='List of labels to create separated by spaces', nargs='*')
@@ -196,7 +221,8 @@ class CrossProductBiPlot(BiPlot):
     
 if __name__ == '__main__':
 
-    bp = CrossProductBiPlot()
-    bp.process_command_line()
-    bp.makeCrossProductBiPlots()
+    c = Classification()
+    c.process_command_line()
+    if c.args.train:
+        c.fitModel()
 
