@@ -1065,8 +1065,12 @@ class STOQS_Loader(object):
         cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
         self.logger.info('Executing %s' % cmd)
         os.system(cmd)
+        if self.totalRecords > 1e6:
+            self.logger.info('Sleeping 60 seconds to give time for system call to finsh writing to %s', bdepthFileName)
+            time.sleep(60)
 
         # Create our new Parameter
+        self.logger.info('Getting or creating new altitude Parameter')
         p_alt, created = m.Parameter.objects.using(self.dbAlias).get_or_create( standard_name='height_above_sea_floor',
                                                                                 long_name='Altitude',
                                                                                 units='m',
