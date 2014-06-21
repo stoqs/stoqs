@@ -725,6 +725,8 @@ class ParameterParameter(object):
                 self.logger.debug('Adding lon lat to SELECT')
                 sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
 
+            sample_sql = sample_sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
+
         # Get the Parameter-Parameter points
         try:
             self.logger.debug('Executing sql = %s', sql)
