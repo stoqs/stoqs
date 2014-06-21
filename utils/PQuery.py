@@ -574,7 +574,11 @@ class PQuery(object):
         q = p.sub('SELECT ' + select_items + ' FROM', q)
         q = q.replace('SELECT FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
         q = q.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
-        q = q.replace('WHERE', from_sql + ' WHERE ' + where_sql)
+        if q.find('WHERE') != -1:
+            q = q.replace('WHERE', from_sql + ' WHERE ' + where_sql)
+        else:
+            q += from_sql + ' WHERE ' + where_sql
+            q = q[:-4]                              # Remove last 'AND '
 
         return q
 
