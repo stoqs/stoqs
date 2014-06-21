@@ -364,28 +364,20 @@ def showParameterResource(request, format = 'html'):
     o.fields = ['id', 'uuid', 'parameter_id', 'resource_id', 'parameter__name', 'resource__name', 'resource__value']
     return o.process_request()
 
+def showMeasuredParameterResource(request, format = 'html'):
+    stoqs_object = mod.MeasuredParameterResource
+    query_set = stoqs_object.objects.all()
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'uuid', 'parameter_id', 'resource_id', 'parameter__name', 'datavalue', 'resource__name', 'resource__value']
+    return o.process_request()
+
 def showPlatformResource(request, format = 'html'):
     stoqs_object = mod.PlatformResource
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     o.fields = ['id', 'uuid', 'platform_id', 'resource_id', 'platform__name', 'resource__name', 'resource__value', 'resource__uristring']
-    return o.process_request()
-
-def showInstantPointResource(request, format = 'html'):
-    stoqs_object = mod.InstantPointResource
-    query_set = stoqs_object.objects.all()
-
-    o = BaseOutputer(request, format, query_set, stoqs_object)
-    o.fields = ['id', 'uuid', 'instantpoint_id', 'resource_id', 'instantpoint__timevalue', 'resource__name', 'resource__value', 'resource__uristring']
-    return o.process_request()
-
-def showMeasurementResource(request, format = 'html'):
-    stoqs_object = mod.MeasurementResource
-    query_set = stoqs_object.objects.all()
-
-    o = BaseOutputer(request, format, query_set, stoqs_object)
-    o.fields = ['id', 'uuid', 'measurement_id', 'resource_id', 'measurement__depth', 'measurement__geom', 'resource__name', 'resource__value', 'resource__uristring']
     return o.process_request()
 
 def showParameter(request, format = 'html'):
@@ -456,6 +448,7 @@ def showActivityResource(request, format = 'html'):
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'uuid', 'activity__name', 'resource__name', 'resource__value', 'resource__uristring']
     return o.process_request()
 
 def showActivityParameter(request, format = 'html'):
