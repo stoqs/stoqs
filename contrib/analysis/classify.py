@@ -36,6 +36,7 @@ from utils.utils import round_to_n, pearsonr
 from textwrap import wrap
 from numpy import polyfit
 from pylab import polyval
+from stoqs.models import Activity, ResourceType, Resource, MeasuredParameter, MeasuredParameterResource
 
 from contrib.analysis import BiPlot, NoPPDataException
 
@@ -43,10 +44,31 @@ from sklearn.cross_validation import train_test_split
 from sklearn.svm import SVC
 
 
-class Classification(BiPlot):
+class Classifier(BiPlot):
     '''
     To hold methods and data to support classification of measurements in a STOQS database
     '''
+
+    def getActivity(self, mpx, mpy):
+        '''
+        Return activity object which MeasuredParameters mpx and mpy belong to
+        '''
+        acts = Activity.objects.using(self.args.database).filter(instantpoint__measurement__measuredparameter__id__in=(mpx,mpy)).distinct()
+        if len(acts) != 1:
+            raise Exception('Not exactly 1 activity returned for MeasuredParameter IDs = (%s, %s)' % (mpx, mpy))
+        else:
+            return acts[0]
+        
+    def hashIDs(self, ids, datavalues):
+        '''
+        Create lookup for ID given datavalue
+        '''
+        hash = {}
+        for id,dv in zip(ids, datavalues):
+            hash[dv] = id
+
+        return hash
+
     def fitModel(self):
         '''
         Use scikit-learn module to create a model from the training set on the input vector
@@ -59,13 +81,28 @@ class Classification(BiPlot):
             pvDict = {self.args.discriminator: (min, max)}
 
             try:
-                X, y, points = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0], self.args.inputs[1], pvDict)
+                X_id, y_id, X, y, points = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0], self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
             except NoPPDataException, e:
                 print e
 
-            import pdb
-            pdb.set_trace()
+            # Hash the IDs
+            X_id_hash = self.hashIDs(X_id, X)
+            y_id_hash = self.hashIDs(y_id, y)
+
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.4)
+
+            # Save the training set in MeasuredParameterResource
+            rt_train, created = ResourceType.objects.using(self.args.database).get_or_create(name='Training Set', description='Used for supervised machine learning')
+            r_train, created = Resource.objects.using(self.args.database).get_or_create(name='label', value=label, resourcetype=rt_train)
+            for xt,yt in zip(X_train, y_train):
+                a = self.getActivity(X_id_hash[xt], y_id_hash[yt])
+                mp_x = MeasuredParameter.objects.using(self.args.database).get(pk=X_id_hash[xt])
+                mp_y = MeasuredParameter.objects.using(self.args.database).get(pk=y_id_hash[yt])
+                mpr_x, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
+                                    activity=a, measuredparameter=mp_x, resource=r_train)
+                mpr_y, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
+                                    activity=a, measuredparameter=mp_y, resource=r_train)
+                
 
 
     def getFileName(self, figCount):
@@ -221,7 +258,7 @@ class Classification(BiPlot):
     
 if __name__ == '__main__':
 
-    c = Classification()
+    c = Classifier()
     c.process_command_line()
     if c.args.train:
         c.fitModel()

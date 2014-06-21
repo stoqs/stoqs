@@ -150,7 +150,7 @@ class BiPlot():
         return x, y, points
 
 
-    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm, pvDict={}):
+    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm, pvDict={}, returnIDs=False, sampleFlag=True):
         '''
         Get Parameter-Parameter data regardless if Parameters are 'Sampled' or 'Measured in situ'
         '''
@@ -178,7 +178,7 @@ class BiPlot():
 
         points = []
         try:
-            pp._getXYCData(strideFlag=False, latlonFlag=True)
+            pp._getXYCData(strideFlag=False, latlonFlag=True, returnIDs=returnIDs, sampleFlag=sampleFlag)
         except PPDatabaseException, e:
             if platform or startDatetime or endDatetime:
                 raise NoPPDataException("No (%s, %s) data from (%s) between %s and %s" % (xParm, yParm, platform, startDatetime, endDatetime))
@@ -188,7 +188,10 @@ class BiPlot():
         for lon, lat in zip(pp.lon, pp.lat):
             points.append(Point(lon, lat))
 
-        return pp.x, pp.y, points
+        if returnIDs:
+            return pp.x_id, pp.y_id, pp.x, pp.y, points
+        else:
+            return pp.x, pp.y, points
 
 
     def _getActivityExtent(self, platform=None):
