@@ -1364,7 +1364,7 @@ class STOQSQManager(object):
 
     def getResources(self):
         '''
-        Query ActivityResources to Resources remaining in Activity selection
+        Query ActivityResources for Resources remaining in Activity selection
         '''
         netcdfHash = {}
         # Simple name/value attributes

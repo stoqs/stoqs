@@ -628,6 +628,8 @@ class ParameterParameter(object):
         self.pMinMax = pMinMax
         self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
         self.depth = []
+        self.x_id = []
+        self.y_id = []
         self.x = []
         self.y = []
         self.z = []
@@ -684,7 +686,7 @@ class ParameterParameter(object):
         self.logger.debug('csql = %s', csql)
         return csql
 
-    def _getXYCData(self, strideFlag=True, latlonFlag=False):
+    def _getXYCData(self, strideFlag=True, latlonFlag=False, returnIDs=False, sampleFlag=True):
       @transaction.commit_on_success(using=self.request.META['dbAlias'])
       def inner_getXYCData(self, strideFlag, latlonFlag):
         '''
@@ -693,7 +695,8 @@ class ParameterParameter(object):
         # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
         sql = str(self.pq.qs_mp.query)
         sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
-        sample_sql = self.pq.addSampleConstraint(sql)
+        if sampleFlag:
+            sample_sql = self.pq.addSampleConstraint(sql)
 
         # Use cursors so that we can specify the database alias to use.
         cursor = connections[self.request.META['dbAlias']].cursor()
@@ -725,7 +728,13 @@ class ParameterParameter(object):
                 self.logger.debug('Adding lon lat to SELECT')
                 sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
 
-            sample_sql = sample_sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
+            if sampleFlag:
+                sample_sql = sample_sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
+
+        if returnIDs:
+            if sql.find('stoqs_measurement') != -1:
+                self.logger.debug('Adding ids to SELECT for stoqs_measurement')
+                sql = sql.replace('DISTINCT', 'DISTINCT mp_x.id, mp_y.id,\n')
 
         # Get the Parameter-Parameter points
         try:
@@ -735,22 +744,28 @@ class ParameterParameter(object):
             infoText = 'Parameter-Parameter: Query failed. Make sure you have no Parameters selected in the Filter.'
             self.logger.warn('Cannot execute sql query for Parameter-Parameter plot: %s', e)
             raise PPDatabaseException(infoText, sql)
+       
+        if sampleFlag: 
+            # Get the Sample points
+            try:
+                self.logger.debug('Executing sample_sql = %s', sample_sql)
+                sample_cursor.execute(sample_sql)
+            except DatabaseError, e:
+                infoText = 'Parameter-Parameter: Sample Query failed.'
+                self.logger.warn('Cannot execute sample_sql query for Parameter-Parameter plot: %s', e)
+                raise PPDatabaseException(infoText, sample_sql)
 
-        # Get the Sample points
-        try:
-            self.logger.debug('Executing sample_sql = %s', sample_sql)
-            sample_cursor.execute(sample_sql)
-        except DatabaseError, e:
-            infoText = 'Parameter-Parameter: Sample Query failed.'
-            self.logger.warn('Cannot execute sample_sql query for Parameter-Parameter plot: %s', e)
-            raise PPDatabaseException(infoText, sample_sql)
-
+        # Populate MeasuredParameter x,y,c member variables
         counter = 0
         self.logger.debug('Looping through rows in cursor with a stride of %d...', stride_val)
         for row in cursor:
             if counter % stride_val == 0:
                 # SampledParameter datavalues are Decimal, convert everything to a float for numpy
                 lrow = list(row)
+                if returnIDs:
+                    self.x_id.append(int(lrow.pop(0)))
+                    self.y_id.append(int(lrow.pop(0)))
+
                 if latlonFlag:
                     self.lon.append(float(lrow.pop(0)))
                     self.lat.append(float(lrow.pop(0)))
@@ -769,18 +784,20 @@ class ParameterParameter(object):
         if self.x == [] or self.y == []:
             raise PPDatabaseException('No data returned from query', sql)
 
-        self.logger.debug('Looping through rows in sample_cursor')
-        for row in sample_cursor:
-            lrow = list(row)
-            if latlonFlag:
-                self.lon.append(float(lrow.pop(0)))
-                self.lat.append(float(lrow.pop(0)))
-
-            # Need only the x and y values for sample points                
-            self.sdepth.append(float(lrow.pop(0)))
-            self.sx.append(float(lrow.pop(0)))
-            self.sy.append(float(lrow.pop(0)))
-            self.sample_names.append(lrow.pop(0))
+        if sampleFlag:
+            # Populate SampledParameter x,y,c member variables
+            self.logger.debug('Looping through rows in sample_cursor')
+            for row in sample_cursor:
+                lrow = list(row)
+                if latlonFlag:
+                    self.lon.append(float(lrow.pop(0)))
+                    self.lat.append(float(lrow.pop(0)))
+    
+                # Need only the x and y values for sample points                
+                self.sdepth.append(float(lrow.pop(0)))
+                self.sx.append(float(lrow.pop(0)))
+                self.sy.append(float(lrow.pop(0)))
+                self.sample_names.append(lrow.pop(0))
 
         return stride_val, sql, pp_count
 
