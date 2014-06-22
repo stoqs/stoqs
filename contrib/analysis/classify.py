@@ -36,7 +36,7 @@ from utils.utils import round_to_n, pearsonr
 from textwrap import wrap
 from numpy import polyfit
 from pylab import polyval
-from stoqs.models import Activity, ResourceType, Resource, MeasuredParameter, MeasuredParameterResource
+from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource
 
 from contrib.analysis import BiPlot, NoPPDataException
 
@@ -53,9 +53,12 @@ class Classifier(BiPlot):
         '''
         Return activity object which MeasuredParameters mpx and mpy belong to
         '''
+        meas = Measurement.objects.using(self.args.database).filter(measuredparameter__id__in=(mpx,mpy)).distinct()
         acts = Activity.objects.using(self.args.database).filter(instantpoint__measurement__measuredparameter__id__in=(mpx,mpy)).distinct()
         if len(acts) != 1:
-            raise Exception('Not exactly 1 activity returned for MeasuredParameter IDs = (%s, %s)' % (mpx, mpy))
+            import pdb
+            pdb.set_trace()
+            raise Exception('Not exactly 1 activity returned with SQL = \n%s' % str(acts.query))
         else:
             return acts[0]
         
@@ -65,7 +68,10 @@ class Classifier(BiPlot):
         '''
         hash = {}
         for id,dv in zip(ids, datavalues):
-            hash[dv] = id
+            if dv in hash:
+                print "WARNING: dv = %s already in hash" % dv
+            else:
+                hash[dv] = id
 
         return hash
 
@@ -79,25 +85,23 @@ class Classifier(BiPlot):
 
         for label,min,max in zip(self.args.labels, self.args.mins, self.args.maxes):
             pvDict = {self.args.discriminator: (min, max)}
+            print "Labeling %s with $s" % (label, pvDict)
 
             try:
-                X_id, y_id, X, y, points = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0], self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
+                x_ids, y_ids, xx, yy, points = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0], 
+                                                               self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
             except NoPPDataException, e:
                 print e
 
-            # Hash the IDs
-            X_id_hash = self.hashIDs(X_id, X)
-            y_id_hash = self.hashIDs(y_id, y)
-
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.4)
+            x_id_train, x_id_test, y_id_train, y_id_test = train_test_split(x_ids, y_ids, test_size=.4)
 
             # Save the training set in MeasuredParameterResource
             rt_train, created = ResourceType.objects.using(self.args.database).get_or_create(name='Training Set', description='Used for supervised machine learning')
             r_train, created = Resource.objects.using(self.args.database).get_or_create(name='label', value=label, resourcetype=rt_train)
-            for xt,yt in zip(X_train, y_train):
-                a = self.getActivity(X_id_hash[xt], y_id_hash[yt])
-                mp_x = MeasuredParameter.objects.using(self.args.database).get(pk=X_id_hash[xt])
-                mp_y = MeasuredParameter.objects.using(self.args.database).get(pk=y_id_hash[yt])
+            for x_id_t,y_id_t in zip(x_id_train, y_id_train):
+                a = self.getActivity(x_id_t, y_id_t)
+                mp_x = MeasuredParameter.objects.using(self.args.database).get(pk=x_id_t)
+                mp_y = MeasuredParameter.objects.using(self.args.database).get(pk=y_id_t)
                 mpr_x, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
                                     activity=a, measuredparameter=mp_x, resource=r_train)
                 mpr_y, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
