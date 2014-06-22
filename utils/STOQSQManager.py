@@ -90,6 +90,7 @@ class STOQSQManager(object):
             'x3dterrains': self.getX3DTerrains,
             'x3dplaybacks': self.getX3DPlaybacks,
             'resources': self.getResources,
+            'attributes': self.getAttributes,
         }
         
     def buildQuerySets(self, *args, **kwargs):
@@ -1400,6 +1401,25 @@ class STOQSQManager(object):
                 qlHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__uristring']
 
         return {'netcdf': netcdfHash, 'quick_look': qlHash}
+
+    def getAttributes(self):
+        '''
+        Query for "Attributes" which are specific ResourceTypes or fields of other classes. Initially for tagged measurements
+        and for finding comments about Samples, but can encompass any other way a STOQS database may be filtered os searched.
+        '''
+        measurementHash = {}
+        for mpr in models.MeasuredParameterResource.objects.using(self.dbname).filter(activity__in=self.qs
+                        ,resource__name__in=['label']
+                        ).values('resource__resourcetype__name', 'resource__value').distinct():
+            try:
+                import pdb
+                pdb.set_trace()
+                measurementHash[mpr['resource__resourcetype__name']].append(mpr['resource__value'])
+            except KeyError:
+                measurementHash[mpr['resource__resourcetype__name']] = []
+                measurementHash[mpr['resource__resourcetype__name']].append(mpr['resource__value'])
+
+        return {'measurement': measurementHash}
 
     #
     # Methods that generate Q objects used to populate the query.
