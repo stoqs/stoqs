@@ -706,7 +706,7 @@
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
                                         </td>
-                                        <td colspan="2" class="all-plot-instruction">Clear selection</td>
+                                        <td colspan="2" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
                                     <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
@@ -786,7 +786,7 @@
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
                                         </td>
-                                        <td colspan="2" class="all-plot-instruction">Clear selection</td>
+                                        <td colspan="2" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
                                     <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
@@ -848,6 +848,39 @@
                         </div>
                     </div>
                 </div><!-- accordian-group -->
+
+                <div id="attributes-group" class="accordian-group" style="display:none;">
+                    <div class="accordian-heading">
+                        <h3><a id="attributes-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseAttributes">
+                        Attributes</a>
+                        <button id="clear-pp-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
+                    </div>
+
+                    <div id="collapseAttributes" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul id=attributesTabs" class="nav nav-tabs">
+                                <li class="active"><a href="#amp" data-toggle="tab">Measurements</a></li>
+                                <li><a href="#asp" data-toggle="tab">Samples</a></li>
+                                <li><a href="#ac" data-toggle="tab">Campaign</a></li>
+                                <li><a href="#apl" data-toggle="tab">Platform</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="amp">
+                                    <div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="asp">
+                                    <div>
+                                        <div class="row-fluid">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
@@ -1992,7 +2025,7 @@
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
             $('.parameter-plot-radio').show();
             $('.parameter-plot-checkbox').hide();
-            $('.all-plot-instruction').text('Clear selection');
+            $('.all-plot-instruction').text('Clear Selection');
             var ranges={xaxis: {  to: parseFloat($('#end-ems').val()),
                                 from: parseFloat($('#start-ems').val())},
                         yaxis: {  to: parseFloat($('#end-depth').val()),
@@ -2842,6 +2875,34 @@
             }
             else if (key == 'resources') {
                 buildMetadataHtml(data);
+            }
+            else if (key == 'attributes') {
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    $('#attributes-anchor').parent().parent().parent().show();
+                    if ( ! $.isEmptyObject(data[key]['measurement']) ) {
+                        labelTypeHtml = '';
+                        labelTypes = $.map(data[key]['measurement'], function(labels, labelType) {return labelType}).sort();
+                        $.each(labelTypes, function (index, labelType) {
+                            labels = data[key]['measurement'][labelType];
+                            labelTypeHtml += '<div id="' + labelType + '-group" class="accordian-group">' +
+                            '<div class="accordian-heading">' + 
+                               '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + 
+                                labelType + '">' + labelType + 
+                                '</a></h5>' + 
+                            '</div>' + 
+                            '<div id="collapse-' + labelType + '" class="accordion-body collapse in">' + 
+                                '<div class="accordion-inner" style="padding:0;">';
+                            labelTypeHtml += '<table class="table table-condensed stoqs-platform"><tbody>';
+                            $.each(labels, function (index, label) {
+                                labelTypeHtml += '<tr id="' + label +'">' +
+                                                 '<td><button class="btn btn-mini stoqs-toggle platform">'+ label +'</button></td>' +
+                                                 '</tr>';
+                            });
+                            labelTypeHtml += '</tbody></table></div></div></div>';
+                        });
+                        $('#amp > div').append(labelTypeHtml);
+                    }
+                }
             }
         
         } // onInit()
