@@ -1412,8 +1412,6 @@ class STOQSQManager(object):
                         ,resource__name__in=['label']
                         ).values('resource__resourcetype__name', 'resource__value').distinct():
             try:
-                import pdb
-                pdb.set_trace()
                 measurementHash[mpr['resource__resourcetype__name']].append(mpr['resource__value'])
             except KeyError:
                 measurementHash[mpr['resource__resourcetype__name']] = []
