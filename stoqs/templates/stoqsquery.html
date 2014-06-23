@@ -861,8 +861,8 @@
                         <div class="accordion-inner">
 
                             <ul id=attributesTabs" class="nav nav-tabs">
-                                <li class="active"><a href="#amp" data-toggle="tab">Measurements</a></li>
-                                <li><a href="#asp" data-toggle="tab">Samples</a></li>
+                                <li class="active"><a href="#amp" data-toggle="tab">Measurement</a></li>
+                                <li><a href="#asp" data-toggle="tab">Sample</a></li>
                                 <li><a href="#ac" data-toggle="tab">Campaign</a></li>
                                 <li><a href="#apl" data-toggle="tab">Platform</a></li>
                             </ul>
@@ -2878,8 +2878,8 @@
             }
             else if (key == 'attributes') {
                 if ( ! $.isEmptyObject(data[key]) ) {
-                    $('#attributes-anchor').parent().parent().parent().show();
                     if ( ! $.isEmptyObject(data[key]['measurement']) ) {
+                        $('#attributes-anchor').parent().parent().parent().show();
                         labelTypeHtml = '';
                         labelTypes = $.map(data[key]['measurement'], function(labels, labelType) {return labelType}).sort();
                         $.each(labelTypes, function (index, labelType) {
