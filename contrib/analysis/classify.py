@@ -49,6 +49,9 @@ class Classifier(BiPlot):
     To hold methods and data to support classification of measurements in a STOQS database
     '''
 
+    # ResourceType with meaning for the STOQS UI
+    LABEL = 'label'
+
     def getActivity(self, mpx, mpy):
         '''
         Return activity object which MeasuredParameters mpx and mpy belong to
@@ -62,18 +65,36 @@ class Classifier(BiPlot):
         else:
             return acts[0]
         
-    def hashIDs(self, ids, datavalues):
+    def saveLabelSet(self, label, x_ids, y_ids, typeName, typeDescription):
         '''
-        Create lookup for ID given datavalue
+        Save the set of labels in MeasuredParameterResource. Accepts 2 input vectors. (TODO: generalize to N input vectors)
         '''
-        hash = {}
-        for id,dv in zip(ids, datavalues):
-            if dv in hash:
-                print "WARNING: dv = %s already in hash" % dv
-            else:
-                hash[dv] = id
+        try:
+            rt, created = ResourceType.objects.using(self.args.database).get_or_create(name=typeName, description=typeDescription)
+            r, created = Resource.objects.using(self.args.database).get_or_create(name=self.LABEL, value=label, resourcetype=rt)
+        except IntegrityError as e:
+            print e
+            print "Ignoring"
 
-        return hash
+        print "Saving %d values of '%s' with type '%s'" % (len(x_ids), label, typeName)
+        for x_id,y_id in zip(x_ids, y_ids):
+            a = self.getActivity(x_id, y_id)
+            mp_x = MeasuredParameter.objects.using(self.args.database).get(pk=x_id)
+            mp_y = MeasuredParameter.objects.using(self.args.database).get(pk=y_id)
+            mpr_x, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
+                                activity=a, measuredparameter=mp_x, resource=r)
+            mpr_y, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
+                                activity=a, measuredparameter=mp_y, resource=r)
+
+    def removeLabelSet(self, label, type):
+        '''
+        Deep MeasuredParameterResources that have Resource.name=label and RerourceType.name=type
+        '''
+        mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
+                                    resource__name=self.LABEL, resource__value=label, resource__resourcetype__name=type)
+        print "Removing MeasuredParameterResources with label = '%s' and type = '%s'" % (label, type)
+        for mpr in mprs:
+            mpr.delete(using=self.args.database)
 
     def fitModel(self):
         '''
@@ -84,30 +105,28 @@ class Classifier(BiPlot):
         edt = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
 
         for label,min,max in zip(self.args.labels, self.args.mins, self.args.maxes):
+            # Multiple discriminators are possible
             pvDict = {self.args.discriminator: (min, max)}
-            print "Labeling %s with $s" % (label, pvDict)
+            print "Labeling %s with %s" % (label, pvDict)
 
             try:
+                # Only 2 dimensions wih _getPPData(), but more are possible
                 x_ids, y_ids, xx, yy, points = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0], 
                                                                self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
+                print "(%d, %d) MeasuredParameters returned" % (len(x_ids), len(y_ids))
             except NoPPDataException, e:
                 print e
 
-            x_id_train, x_id_test, y_id_train, y_id_test = train_test_split(x_ids, y_ids, test_size=.4)
+            # Sample a training and test set; train_test_split() appears to accept more than 2 input vectors
+            x_id_train, x_id_test, y_id_train, y_id_test = train_test_split(x_ids, y_ids, test_size=self.args.test_size, train_size=self.args.train_size)
 
-            # Save the training set in MeasuredParameterResource
-            rt_train, created = ResourceType.objects.using(self.args.database).get_or_create(name='Training Set', description='Used for supervised machine learning')
-            r_train, created = Resource.objects.using(self.args.database).get_or_create(name='label', value=label, resourcetype=rt_train)
-            for x_id_t,y_id_t in zip(x_id_train, y_id_train):
-                a = self.getActivity(x_id_t, y_id_t)
-                mp_x = MeasuredParameter.objects.using(self.args.database).get(pk=x_id_t)
-                mp_y = MeasuredParameter.objects.using(self.args.database).get(pk=y_id_t)
-                mpr_x, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
-                                    activity=a, measuredparameter=mp_x, resource=r_train)
-                mpr_y, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
-                                    activity=a, measuredparameter=mp_y, resource=r_train)
-                
+            if self.args.clobber:
+                self.removeLabelSet(label, 'Training Set')
+            self.saveLabelSet(label, x_id_train, y_id_train, 'Training Set', 'Used for supervised machine learning')
 
+            if self.args.clobber:
+                self.removeLabelSet(label, 'Test Set')
+            self.saveLabelSet(label, x_id_test, y_id_test, 'Test Set', 'Used for supervised machine learning')
 
     def getFileName(self, figCount):
         '''
@@ -253,7 +272,10 @@ class Classifier(BiPlot):
         parser.add_argument('--labels', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--mins', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--maxes', action='store', help='List of labels to create separated by spaces', nargs='*')
+        parser.add_argument('--test_size', action='store', help='Proportion of discriminated sample to save as Test set', default=0.4, type=float)
+        parser.add_argument('--train_size', action='store', help='Proportion of discriminated sample to save as Training set', default=0.4, type=float)
 
+        parser.add_argument('--clobber', action='store_true', help='Remove existing MeasuredParameterResource records before adding new classification')
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
     
         self.args = parser.parse_args()
