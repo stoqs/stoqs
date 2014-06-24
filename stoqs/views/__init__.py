@@ -369,7 +369,7 @@ def showMeasuredParameterResource(request, format = 'html'):
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
-    o.fields = ['id', 'measuredparameter__parameter_id', 'resource_id', 'measuredparameter__parameter__name', 
+    o.fields = ['id', 'measuredparameter__id', 'resource_id', 'measuredparameter__parameter__name', 
                 'measuredparameter__datavalue', 'resource__name', 'resource__value', 'resource__resourcetype__name']
     return o.process_request()
 
