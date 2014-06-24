@@ -121,12 +121,12 @@ class Classifier(BiPlot):
             x_id_train, x_id_test, y_id_train, y_id_test = train_test_split(x_ids, y_ids, test_size=self.args.test_size, train_size=self.args.train_size)
 
             if self.args.clobber:
-                self.removeLabelSet(label, 'Training Set')
-            self.saveLabelSet(label, x_id_train, y_id_train, 'Training Set', 'Used for supervised machine learning')
+                self.removeLabelSet(label, 'Train')
+            self.saveLabelSet(label, x_id_train, y_id_train, 'Train', 'Used for supervised machine learning')
 
             if self.args.clobber:
-                self.removeLabelSet(label, 'Test Set')
-            self.saveLabelSet(label, x_id_test, y_id_test, 'Test Set', 'Used for supervised machine learning')
+                self.removeLabelSet(label, 'Test')
+            self.saveLabelSet(label, x_id_test, y_id_test, 'Test', 'Used for supervised machine learning')
 
     def getFileName(self, figCount):
         '''
@@ -273,7 +273,7 @@ class Classifier(BiPlot):
         parser.add_argument('--mins', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--maxes', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--test_size', action='store', help='Proportion of discriminated sample to save as Test set', default=0.4, type=float)
-        parser.add_argument('--train_size', action='store', help='Proportion of discriminated sample to save as Training set', default=0.4, type=float)
+        parser.add_argument('--train_size', action='store', help='Proportion of discriminated sample to save as Train set', default=0.4, type=float)
 
         parser.add_argument('--clobber', action='store_true', help='Remove existing MeasuredParameterResource records before adding new classification')
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
