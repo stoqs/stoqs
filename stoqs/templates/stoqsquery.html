@@ -1358,6 +1358,10 @@
                     $('#clear-platforms-button').removeClass('disabled');
                     $('#clear-platforms-button').addClass('btn-primary');
                 }
+                if ($(element).hasClass('attributes')) {
+                    $('#clear-attributes-button').removeClass('disabled');
+                    $('#clear-attributes-button').addClass('btn-primary');
+                }
             }
         }
     } // toggleField()
@@ -1924,6 +1928,19 @@
         }
     });
 
+    $("#clear-attributes-button").click(function() {
+        if ( $('#clear-attributes-button').hasClass('btn-primary')) {
+            $("#clear-attributes-button").removeClass('btn-primary');
+            $("#clear-attributes-button").addClass('disabled');
+            $('tr',$('.stoqs-attributes')).each(function (index, element) {
+                if ($('.btn-primary', $(element)).length) {
+                    $('#' + element.id + ' > td > button').removeClass('btn-primary');
+                }
+            });
+            rebuildFilters();
+            $('#attributes-anchor').html('Attributes')
+        }
+    });
     $("#clear-platforms-button").click(function() {
         if ( $('#clear-platforms-button').hasClass('btn-primary')) {
             $("#clear-platforms-button").removeClass('btn-primary');
@@ -2895,7 +2912,7 @@
                 if ( ! $.isEmptyObject(data[key]) ) {
                     if ( ! $.isEmptyObject(data[key]['measurement']) ) {
                         $('#attributes-anchor').parent().parent().parent().show();
-                        labelTypeHtml = '';
+                        labelTypeHtml = '<div style="font-style:italic;font-weight:bold;">Filter by labeled Measured Parameter (co-located measurements remain in selection)</div>';
                         labelTypes = $.map(data[key]['measurement'], function(labels, labelType) {return labelType}).sort();
                         $.each(labelTypes, function (index, labelType) {
                             labels = data[key]['measurement'][labelType];
