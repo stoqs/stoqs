@@ -681,7 +681,7 @@ class ParameterParameter(object):
         '''
         Modify Parameter-Parameter SQL to return the count for the query
         '''
-        p = re.compile('SELECT .+ FROM')
+        p = re.compile('SELECT .+? FROM')           # Non-greedy, match to the first 'FROM'
         csql = p.sub('''SELECT count(*) FROM''', sql.replace('\n', ' '))
         self.logger.debug('csql = %s', csql)
         return csql

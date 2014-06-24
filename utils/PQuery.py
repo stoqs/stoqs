@@ -18,7 +18,7 @@ from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, ValuesQuerySet
 from django.contrib.gis.db.models.query import GeoQuerySet
 from django.db import DatabaseError
 from datetime import datetime
-from stoqs.models import MeasuredParameter, Parameter, ParameterGroupParameter
+from stoqs.models import MeasuredParameter, Parameter, ParameterGroupParameter, MeasuredParameterResource
 from utils import postgresifySQL, getGet_Actual_Count, EPOCH_STRING
 from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
@@ -351,6 +351,11 @@ class PQuery(object):
             if self.kwargs['depth'][1] is not None:
                 qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
 
+        if 'mplabels'  in self.kwargs:
+            if self.kwargs['mplabels' ]:
+                qparams['id__in'] = MeasuredParameterResource.objects.using(self.request.META['dbAlias']).filter(
+                                    resource__id__in=self.kwargs['mplabels' ]).values_list('measuredparameter__id', flat=True)
+
         if getGet_Actual_Count(self.kwargs):
             # Make sure that we have at least time so that the instantpoint table is included
             if not qparams.has_key('measurement__instantpoint__timevalue__gte'):
@@ -373,6 +378,7 @@ class PQuery(object):
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
 
         # Wrap PQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
+        qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
                 # A depth of 4 is needed in order to see Platform
@@ -382,16 +388,13 @@ class PQuery(object):
                 sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
                 self.logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
                 qs_mpq = PQuerySet(sql, values_list)
-            else:
-                qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
-        else:
-            qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
 
         if qs_mpq:
             self.logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
             
         else:
             self.logger.debug("No queryset returned for qparams = %s", pprint.pformat(qparams))
+
         return qs_mpq
 
     def getPCount(self):
@@ -746,17 +749,18 @@ For sampledparameter to sampledparamter query an example is:
                     pass
 
         # Modify original SQL with new joins and where sql - almost a total rewrite
+        # - Need to preserve subqueries with their own FROM and WHERE words
         q = query
         select_items = select_items[:-2] + ' '                      # Remove ', '
-        q = 'SELECT ' + select_items + q[q.find('FROM'):]           # Override original select items
+        q = 'SELECT ' + select_items + q[q.find('FROM'):]           # Override original select items, finds first FROM which is what we want
 
         if q.find('WHERE') == -1 and where_sql:
             # Case where no filters applied from UI - no selections and no WHERE clause, add ours
-            q += ' WHERE ' + where_sql[:-4]                      # Remove last 'AND '
+            q += ' WHERE ' + where_sql[:-4]                         # Remove last 'AND '
         else:
             # Insert our WHERE clause into the filters that are in the original query
             self.logger.debug('q = %s', q)
-            q = q.replace(' WHERE ', ' WHERE ' + where_sql)
+            q = q.replace(' WHERE ', ' WHERE ' + where_sql, 1)      # Replace only first occurance to preserve subquery
 
         # Brute-force fixup of query string to deal with Sample-only query
         if containsSampleFlag and not containsMeasuredFlag:
@@ -788,7 +792,7 @@ For sampledparameter to sampledparamter query an example is:
         if q.lower().find('where') == -1:
             q += add_to_from
         else:
-            q = q.replace(' WHERE ', add_to_from + ' WHERE ')
+            q = q.replace(' WHERE ', add_to_from + ' WHERE ', 1)    # Replace only first occurance to preserve subquery
 
         self.logger.debug('q = %s', q)
         q = sqlparse.format(q, reindent=True, keyword_case='upper')
@@ -841,7 +845,7 @@ For sampledparameter to sampledparamter query an example is:
         q = p.sub(' ', q)
 
         # Add sample name to SELECT for labeling the Parameter-Parameter plot
-        q = q.replace('FROM', ', stoqs_sample.name FROM')
+        q = q.replace('FROM', ', stoqs_sample.name FROM', 1)                # Replace just first occurance
 
         # Make sure we are getting stoqs_sample in our query - warning: very hackish
         if q.find('FROM stoqs_measuredparameter') != -1:
@@ -854,15 +858,15 @@ For sampledparameter to sampledparamter query an example is:
                     # No where clause, so add the inner joins we need - a bit of a hack
                     q += add_to_from + ' WHERE'
                 else:
-                    q = q.replace('WHERE', add_to_from + ' WHERE')
+                    q = q.replace('WHERE', add_to_from + ' WHERE', 1)       # Replace just first occurance
 
             if not q.strip().lower().endswith('where'):
                 q += ' and '
     
             q += ' stoqs_sample.id is not null'
 
-        q = sqlparse.format(q, reindent=True, keyword_case='upper')
         self.logger.debug('q = %s', q)
+        q = sqlparse.format(q, reindent=True, keyword_case='upper')
 
         return q
 
