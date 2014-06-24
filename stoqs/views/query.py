@@ -84,6 +84,7 @@ query_parms = {
                    'ppfr': 'ppfr',                          # Parameter-Parameter free range flag
                    'pplr': 'pplr',                          # Parameter-Parameter linear regression flag
                    'ppsl': 'ppsl',                          # Parameter-Parameter sample locations flag
+                   'mplabels': 'mplabels',                  # MeasuredParameter labels from Attributes selections
 }
 
 def get_http_site_uri(request):

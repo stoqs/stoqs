@@ -853,7 +853,7 @@
                     <div class="accordian-heading">
                         <h3><a id="attributes-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseAttributes">
                         Attributes</a>
-                        <button id="clear-pp-button" class="btn btn-mini disabled">Clear Selection</button>
+                        <button id="clear-attributes-button" class="btn btn-mini disabled">Clear Selection</button>
                         </h3>
                     </div>
 
@@ -1573,6 +1573,21 @@
             $('#platforms-anchor').html('Platforms')
             $('#clear-platforms-button').removeClass('btn-primary');
             $('#clear-platforms-button').addClass('disabled');
+        }
+
+        params['mplabels']=[]
+        $('tr',$('#amp')).each(function (index, element) {
+            if ($('.btn-primary', $(element)).length) {
+                params['mplabels'].push(element.id);
+            }
+        });
+        if (params['mplabels'].length) {
+            $('#attributes-anchor').html('Attributes: ' + params['mplabels'].join())
+        }
+        else {
+            $('#attributes-anchor').html('Attributes')
+            $('#clear-attributes-button').removeClass('btn-primary');
+            $('#clear-attributes-button').addClass('disabled');
         }
 
         if (parametervalues) {
@@ -2387,7 +2402,7 @@
     
     function plotHistData(parameter, histdata, parameterunits) {
         var units = parameterunits[parameter];
-        histogtram_options_labels = $.extend(true, {}, histogram_options, {
+        histogram_options_labels = $.extend(true, {}, histogram_options, {
                                                             xaxes: [{
                                                                         axisLabel: parameter + ' (' + units + ')'
                                                                     }],
@@ -2397,7 +2412,7 @@
                                                                     }]
                                                                           });
         parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');
-        $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogtram_options_labels);
+        $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogram_options_labels);
         $("#" + parameter_idsafe + "-histogram-flot").trigger('plotloaded');
     }
 
@@ -2886,16 +2901,16 @@
                             labels = data[key]['measurement'][labelType];
                             labelTypeHtml += '<div id="' + labelType + '-group" class="accordian-group">' +
                             '<div class="accordian-heading">' + 
-                               '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + 
+                               '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#attributes-anchor" href="#collapse-' + 
                                 labelType + '">' + labelType + 
                                 '</a></h5>' + 
                             '</div>' + 
                             '<div id="collapse-' + labelType + '" class="accordion-body collapse in">' + 
                                 '<div class="accordion-inner" style="padding:0;">';
-                            labelTypeHtml += '<table class="table table-condensed stoqs-platform"><tbody>';
+                            labelTypeHtml += '<table class="table table-condensed stoqs-attributes"><tbody>';
                             $.each(labels, function (index, label) {
-                                labelTypeHtml += '<tr id="' + label +'">' +
-                                                 '<td><button class="btn btn-mini stoqs-toggle platform">'+ label +'</button></td>' +
+                                labelTypeHtml += '<tr id="' + label[0] +'">' +
+                                                 '<td><button class="btn btn-mini stoqs-toggle attributes">'+ label[1] +'</button></td>' +
                                                  '</tr>';
                             });
                             labelTypeHtml += '</tbody></table></div></div></div>';
@@ -3240,6 +3255,24 @@
             }
             else if (key == 'resources') {
                 buildMetadataHtml(data);
+            }
+            else if (key == 'attributes') {
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    var ids = [];
+                    $.each(data[key]['measurement'], function (ltype, labels) {
+                        $.each(labels, function (index, label) {
+                            // Here we need to enable those that are still valid.
+                            var element=$('#' + label[0]);
+                            enableButton($('button', element));             // enable the button in the table row
+                            ids.push(label[0]);
+                        });
+                    });
+                    $('.stoqs-attributes > tbody > tr').each(function (index, elem) {     
+                        if ($.inArray(parseInt(elem.id), ids) == -1) {       
+                            disableButton($('button', $(elem)));            // disable the button in the table row      
+                        }       
+                    });
+                }
             }
             else if (key == 'platformorientation') {
                 if (data[key]['x3d']) {
