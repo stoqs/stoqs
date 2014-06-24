@@ -398,8 +398,13 @@ class STOQSQManager(object):
         p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs)).order_by('name')
         if 'mplabels' in self.kwargs:
             if self.kwargs['mplabels']:
-                p_qs = p_qs.filter(Q(id__in=models.MeasuredParameterResource.objects.using(self.dbname).filter(
-                        resource__id__in=self.kwargs['mplabels']).values_list('measuredparameter__parameter__id', flat=True))).distinct()
+                # Get all Parameters that have common Measurements given the filter of the selected labels
+                # - this allows selection of co-located MeasuredParameters
+                commonMeasurements = models.MeasuredParameterResource.objects.using(self.dbname).filter( 
+                                        resource__id__in=self.kwargs['mplabels']).values_list(
+                                        'measuredparameter__measurement__id', flat=True)
+                p_qs = p_qs.filter(Q(id__in=models.MeasuredParameter.objects.using(self.dbname).filter(
+                        Q(measurement__id__in=commonMeasurements)).values_list('parameter__id', flat=True).distinct()))
 
         if groupName:
             p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
@@ -1414,8 +1419,8 @@ class STOQSQManager(object):
         '''
         measurementHash = {}
         for mpr in models.MeasuredParameterResource.objects.using(self.dbname).filter(activity__in=self.qs
-                        ,resource__name__in=['label']
-                        ).values('resource__resourcetype__name', 'resource__value', 'resource__id').distinct():
+                        ,resource__name__in=['label']).values( 'resource__resourcetype__name', 'resource__value', 
+                        'resource__id').distinct().order_by('resource__name'):
             try:
                 measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value']))
             except KeyError:
