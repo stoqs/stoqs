@@ -42,6 +42,8 @@ import tempfile
 
 logger = logging.getLogger(__name__)
 
+LABEL = 'label'             # A constant to be also used by classifiers to label measurements 
+
 class STOQSQManager(object):
     '''
     This class is designed to handle building and managing queries against the STOQS database.
@@ -1419,7 +1421,7 @@ class STOQSQManager(object):
         '''
         measurementHash = {}
         for mpr in models.MeasuredParameterResource.objects.using(self.dbname).filter(activity__in=self.qs
-                        ,resource__name__in=['label']).values( 'resource__resourcetype__name', 'resource__value', 
+                        ,resource__name__in=[LABEL]).values( 'resource__resourcetype__name', 'resource__value', 
                         'resource__id').distinct().order_by('resource__name'):
             try:
                 measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value']))
