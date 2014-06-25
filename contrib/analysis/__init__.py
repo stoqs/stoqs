@@ -132,7 +132,7 @@ class BiPlot():
 
         sql = sql_template.format(pxname=xParm, pyname=yParm, platform_clause=platformSQL,
                                     time_clause=timeSQL, depth_clause=depthSQL, day_night_clause=dnSQL)
-        if self.args.verbose:
+        if self.args.verbose > 1:
             print "sql =", sql
 
         x = [] 
@@ -159,7 +159,7 @@ class BiPlot():
         request.META = {'dbAlias': self.args.database}
         pq = PQuery(request)
         pq.logger.setLevel(logging.ERROR)
-        if self.args.verbose:
+        if self.args.verbose > 2:
             pq.logger.setLevel(logging.DEBUG)
 
         args = ()
@@ -173,7 +173,7 @@ class BiPlot():
 
         pp = ParameterParameter(request, {'x': px, 'y': py}, None, pq, {})
         pp.logger.setLevel(logging.ERROR)
-        if self.args.verbose:
+        if self.args.verbose > 2:
             pp.logger.setLevel(logging.DEBUG)
 
         points = []
