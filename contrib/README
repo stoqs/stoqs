@@ -1,0 +1,14 @@
+This directory holds any contributed software, for example, a
+Matlab toolbox that allows direct reading of data from a STOQS
+database via the REST-API web services.
+
+Create the stoqstoolbox downloadable distrubution with this zip(1) command:
+
+    zip -r stoqstoolbox-YYYYMMDD.zip stoqstoolbox
+
+where YYYYMMDD is replaced with the date of the distribution.  Upload the .zip 
+file to the Google Code downloads area: http://code.google.com/p/stoqs/downloads.
+
+-- 
+Mike McCann
+5 November 2012

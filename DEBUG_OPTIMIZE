@@ -1,0 +1,99 @@
+DEBUG and OPTIMIZE
+==================
+
+Suggestions for debugging, identifying performance bottlenecks and tips for optimizing
+performance, especially of the queries made against the postgresql database.
+
+You should be in a place to run the stoqs application as descibed in DEVELOPMENT.
+
+While developing the stoqs application it's useful to have several separate shell windows
+open in order to monitor log files, enter sample queries to postgresql, and edit and
+check in code.
+
+Shell window environment
+------------------------
+Here's a list of such shells to leave open uring development (access to several of these 
+files requires relevant permissions - on a development system you can use root):
+
+    1. The development server: "python manage.py runserver 0.0.0.0:8000"
+       INFO and DEBUG output from stoqs and django loggers go here.
+       (In production that output goes to apache's error_log file.)
+
+    2. A psql prompt connected to the database: "psql" command as user postgres, and
+       \c stoqs_june2011, for example.
+
+    3. The mapserver log file: "tail -f /tmp/mapserver_stoqshg.log"
+
+    4. The apache access_log file: "tail -f /var/log/httpd/access_log"
+
+    5. The postgresql log file, e.g.: "tail -f /var/lib/pgsql/9.1/data/pg_log/postgresql-Mon.log"
+       To see queries as they are executed on the database edit the configuration file 
+       /var/lib/pgsql/9.1/data/postgresql.conf and change the line:
+           log_statement = 'none'
+       to:
+           log_statement = 'all'
+       then reload the new configuration with: "/sbin/service postgresql-9.1 reload"
+
+       NOTE: Make sure to set this back to 'none' before executing a production data load, 
+             the resulting log file will likely fill up your disk.
+
+    6. Open a web browser with developer tools open (Chrome with alt-cmd-I or Firefox with
+       firebug) and load pages (such as http://localhost:8000/default/query) and
+       observe the output in each of the windows.  If you are running in a VM (don't we
+       all do that now?) you can use your host OS to run the web browser using the IP
+       address instead of 'localhost'.  Executing an 'arp -a' in yout host OS will show 
+       the IP address to use.
+
+    7. As many more windows as you like to edit code and check your changes in.  Check in
+       working code often.  Make sure all unit tests pass before doing an 'hg push'.
+
+
+Debugging and optimizing
+------------------------
+The end of your privateSettings file will have lines like these:
+
+    # Setting PRODUCTION to True ensures that performace-affecting settings are turned off
+    PRODUCTION = False
+
+    # Use 'manage.py collectstatic' to put files in the production location so that DEBUG = False works on the development server.
+    # See http://stackoverflow.com/questions/6405173/static-files-wont-load-when-out-of-debug-in-django
+    TEMPLATE_DEBUG = DEBUG = False         
+
+    # Modify default logging settings, e.g. to help in debugging stoqs or django, ignored is DEBUG is False
+    # Note: Must restart the development server for changes made here to take effect
+    if DEBUG:
+        LOGGING['loggers']['django']['level'] = 'INFO'
+        LOGGING['loggers']['stoqs']['level'] = 'DEBUG'
+        LOGGING['loggers']['stoqs.db_router']['level'] = 'INFO'
+        LOGGING['loggers']['utils']['level'] = 'DEBUG'
+
+To enable debugging for a component set TEMPLATE_DEBUG = DEBUG = True and for the component you are
+debugging (django, stoqs, stoqs.db_router, utils, etc.) set its level to 'DEBUG'.
+
+Setting django's level to 'DEBUG' will generate a lot of output as each SQL statement will be output,
+though it is a pseudo-SQL variant - not something you can cut and paste into your psql prompt.
+This can be useful to observe what Django is doing under the hood.  It was real helpful when a 
+'.select_related()' was missing in a query set definition in measurement.py.  It was easy to see
+that Django was issuing several separate SELECT statements rather than constructing a single query 
+with INNER JOINS.  Fixing this impoved performance by more than an order of madnitude.
+
+To see the exact SQL that postgresql executes examine the postgresql log output in window #5.  If you
+see one of these queries taking a long time to execute you can understand why by pasting it into your 
+psql prompt with 'EXPLAIN ANALYZE ' prepended and ';' appended.  Some examples of where this was
+done are in the comments of utils/STOQSQManager.py.  Massive performance gains were achieved by
+changing the queries to hit the summary Activity information rather than get results from the 
+instantpoint and measurement tables - which have millions of records in them in a typical database.
+
+If you have a long-running query executing you may be "lucky" enough to obseve the actual SQL by
+examinging the current connections on the database with the psql commnd:
+
+    SELECT * FROM pg_stat_activity;
+
+Django has a good web page on optimizing database access:
+
+    https://docs.djangoproject.com/en/1.2/topics/db/optimization/
+
+--
+Mike McCann
+MBARI 9 April 2012
+
