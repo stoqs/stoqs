@@ -144,44 +144,42 @@ class Classifier(BiPlot):
                 self.removeLabelSet(label, LABELED)
             self.saveLabelSet(label, x_ids, y_ids, LABELED, 'Labeled with %s as discriminator' % self.args.discriminator)
 
-    def fitModel(self):
+    def doTrainTest(self):
         '''
         Query the database for labeled training data, fit a model to it, and save the pickled model back to the database
-        Create samples of the classes for Train and Test sets, use IDs of the MeasuredParameters and save the sets to the database
         '''
         clf = SVC(gamma=2, C=1)
-        X_train = []
-        X_test = []
+
+        f0 = np.array(0)
+        f1 = np.array(0)
+        y = np.array(0, dtype=int)
+        target = 0
         for label in self.args.labels:
             mprs = MeasuredParameterResource.objects.using(self.args.database).filter(resource__name=LABEL, 
-                                                resource__value=label).values_list('measuredparameter__datavalue', flat=True)
-            X_train.append(mprs.filter(resource__resourcetype__name=TRAIN, measuredparameter__parameter__name=self.args.inputs[0]))
-            X_train.append(mprs.filter(resource__resourcetype__name=TRAIN, measuredparameter__parameter__name=self.args.inputs[1]))
-            X_test.append(mprs.filter(resource__resourcetype__name=TEST, measuredparameter__parameter__name=self.args.inputs[0]))
-            X_test.append(mprs.filter(resource__resourcetype__name=TEST, measuredparameter__parameter__name=self.args.inputs[1]))
+                                                resource__resourcetype__name=LABELED, resource__value=label
+                                                ).values_list('measuredparameter__datavalue', flat=True)
+            count = mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]).count()
+            f0 = np.append(f0, mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]))
+            f1 = np.append(f1, mprs.filter(measuredparameter__parameter__name=self.args.inputs[1]))
+            y = np.append(y, np.ones(count) * target)
+            target += 1
 
-            commonMeasurementIDs = MeasuredParameterResource.objects.using(self.args.database).filter(resource__name=LABEL,
-                                        resource__value=label).values_list('measuredparameter__measurement__id', flat=True)
-            y_dv = MeasuredParameter.objects.using(self.args.database).filter(parameter__name=self.args.discriminator
-                                        ).values_list('datavalue', flat=True)
-            ##X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size, train_size=self.args.train_size)
-            y_train = np.array(y_dv.filter(Q(measurement__id__in=commonMeasurementIDs.filter(resource__resourcetype__name=TRAIN))))
-            y_test = np.array(y_dv.filter(Q(measurement__id__in=commonMeasurementIDs.filter(resource__resourcetype__name=TEST))))
+        import pdb
+        X = np.concatenate((f0.reshape(-1,1), f1.reshape(-1,1)), axis=1)
+        pdb.set_trace()
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size, train_size=self.args.train_size)
 
-            X_train = np.array(X_train).transpose()
-            X_test = np.array(X_test).transpose()
 
-            X_train = StandardScaler().fit_transform(X_train)
-            X_test = StandardScaler().fit_transform(X_test)
+        X_train = StandardScaler().fit_transform(X_train)
 
-            import pdb
-            clf.fit(X_train, y_train)
-            pdb.set_trace()
-            score = clf.score(X_test, y_test)
-            if self.args.verbose:
-                print "  score = %f" % score
+        import pdb
+        clf.fit(X_train, y_train)
+        pdb.set_trace()
+        score = clf.score(X_test, y_test)
+        if self.args.verbose:
+            print "  score = %f" % score
 
-            s = pickle.dumps(clf)
+        s = pickle.dumps(clf)
 
 
     def getFileName(self, figCount):
@@ -225,7 +223,7 @@ class Classifier(BiPlot):
         examples += "Step 1: Save Labeled features in the database using salinity as a discriminator:\n"
         examples += sys.argv[0] + " -d stoqs_september2013_t --doLabel -p dorado --start 20130916T124035 --end 20130919T233905 --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 --clobber -v\n\n"
         examples += "Step 2: Create a prediction model using the labels created in Step 1\n"
-        examples += sys.argv[0] + " -d stoqs_september2013_t --fit --classifier SVC --labels diatom dino1 dino2 sediment --inputs bbp700 fl700_uncorr --discriminator salinity --modelBaseName SVC_20140625T180100\n\n"
+        examples += sys.argv[0] + " -d stoqs_september2013_t --doTrainTest --classifier SVC --labels diatom dino1 dino2 sediment --inputs bbp700 fl700_uncorr --discriminator salinity --modelBaseName SVC_20140625T180100\n\n"
         examples += "Step 3: Use a model to classify new measurements\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
@@ -239,7 +237,7 @@ class Classifier(BiPlot):
         ##parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
 
         parser.add_argument('--doLabel', action='store_true', help='Label data with --discriminator, --labels, --mins, and --maxes options')
-        parser.add_argument('--fit', action='store_true', help='Fit the model with --classifier to labels in --labels and save in database as --modelName')
+        parser.add_argument('--doTrainTest', action='store_true', help='Fit a model to Labeled data with --classifier to labels in --labels and save in database as --modelName')
         parser.add_argument('--inputs', action='store', help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
@@ -265,6 +263,6 @@ if __name__ == '__main__':
     c.process_command_line()
     if c.args.doLabel:
         c.doLabel()
-    elif c.args.fit:
-        c.fitModel()
+    elif c.args.doTrainTest:
+        c.doTrainTest()
 
