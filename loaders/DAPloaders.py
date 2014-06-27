@@ -862,10 +862,10 @@ class Base_Loader(STOQS_Loader):
 
         # Add additional Parameters for all appropriate Measurements
         logger.info("Adding SigmaT and Spiciness to the Measurements...")
-        parameterCount = self.addSigmaTandSpice(parameterCount, self.activity)
+        self.addSigmaTandSpice(parameterCount, self.activity)
         if self.grdTerrain:
             logger.info("Adding altitude to the Measurements...")
-            parameterCount = self.addAltitude(parameterCount, self.activity)
+            self.addAltitude(parameterCount, self.activity)
 
         # Update the Activity with information we now have following the load
         newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, ' '.join(self.varsLoaded), datetime.utcnow())

@@ -1034,11 +1034,16 @@ class STOQS_Loader(object):
                     xmin, xmax = fh.variables['lon'].actual_range
                     ymin, ymax = fh.variables['lat'].actual_range
                 except Exception as e:
-                    self.logger.error(e)
-                    return parameterCounts,
+                    try:
+                        # Yet another format (seen in SanPedroBasin50.grd)
+                        xmin, xmax = fh.variables['x'].actual_range
+                        ymin, ymax = fh.variables['y'].actual_range
+                    except Exception as e:
+                        self.logger.error('Cannot read range metadata from %s. Not able to load altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
+                        return parameterCounts
             except Exception as e:
                 self.logger.error(e)
-                return parameterCounts,
+                return parameterCounts
             bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
             fh.close()
 
