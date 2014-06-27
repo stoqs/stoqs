@@ -163,11 +163,14 @@ class BiPlot():
             pq.logger.setLevel(logging.DEBUG)
 
         args = ()
-        kwargs = {'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
-                                          Parameter.objects.using(self.args.database).get(name=yParm).id ]}
-        px, py  = kwargs['parameterparameter']
+        kwargs = {  'time': (startDatetime.strftime('%Y-%m-%d %H:%M:%S'), endDatetime.strftime('%Y-%m-%d %H:%M:%S')),
+                    'platforms': (platform,),
+                    'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
+                                            Parameter.objects.using(self.args.database).get(name=yParm).id ],
+                    'parametervalues': [pvDict]
+                 }
 
-        kwargs['parametervalues'] = [pvDict]
+        px, py  = kwargs['parameterparameter']
 
         pq.buildPQuerySet(*args, **kwargs)
 
