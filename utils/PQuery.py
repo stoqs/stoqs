@@ -380,7 +380,7 @@ class PQuery(object):
         # Wrap PQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
         if self.kwargs.has_key('parametervalues'):
-            if self.kwargs['parametervalues']:
+            if self.kwargs['parametervalues'] != [{}]:
                 # A depth of 4 is needed in order to see Platform
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
                 sql = postgresifySQL(str(qs_mp.query))
@@ -562,26 +562,26 @@ class PQuery(object):
         # Used by getParameterPlatformDatavaluePNG(): 'measurement__instantpoint__timevalue', 'measurement__depth', 'datavalue
         # Used by REST requests in stoqs/views/__init__(): stoqs_parameter.name, stoqs_parameter.standard_name, stoqs_measurement.depth, stoqs_measurement.geom, stoqs_instantpoint.timevalue, stoqs_platform.name, stoqs_measuredparameter.datavalue, stoqs_parameter.units
 
+        q = query
 
         add_to_from, from_sql, where_sql = self._pvSQLfragments(pvDict)
 
-        q = query
-
-        # Raw query must include the primary key
-        if q.find('FROM stoqs_sampledparameter') != -1:
-            select_items = 'stoqs_sampledparameter.id, ' + select_items
-        else:
-            select_items = 'stoqs_measuredparameter.id, ' + select_items
-
-        p = re.compile('SELECT .+ FROM')
-        q = p.sub('SELECT ' + select_items + ' FROM', q)
-        q = q.replace('SELECT FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
-        q = q.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
-        if q.find('WHERE') != -1:
-            q = q.replace('WHERE', from_sql + ' WHERE ' + where_sql)
-        else:
-            q += from_sql + ' WHERE ' + where_sql
-            q = q[:-4]                              # Remove last 'AND '
+        if add_to_from or from_sql or where_sql:
+            # Raw query must include the primary key
+            if q.find('FROM stoqs_sampledparameter') != -1:
+                select_items = 'stoqs_sampledparameter.id, ' + select_items
+            else:
+                select_items = 'stoqs_measuredparameter.id, ' + select_items
+    
+            p = re.compile('SELECT .+ FROM')
+            q = p.sub('SELECT ' + select_items + ' FROM', q)
+            q = q.replace('SELECT FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
+            q = q.replace('FROM stoqs_measuredparameter', 'FROM ' + add_to_from + 'stoqs_measuredparameter')
+            if q.find('WHERE') != -1:
+                q = q.replace('WHERE', from_sql + ' WHERE ' + where_sql)
+            else:
+                q += from_sql + ' WHERE ' + where_sql
+                q = q[:-4]                              # Remove last 'AND '
 
         return q
 
