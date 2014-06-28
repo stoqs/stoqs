@@ -837,40 +837,76 @@ class STOQS_Loader(object):
 
         self.logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
-    def insertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
+    def saveBottomDepth(self):
       @transaction.commit_on_success(using=self.dbAlias)
-      def _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
+      def _innerSaveBottomDepth(self):
         '''
-        Read the time series of Parameter altitude and add to depth values to compute BottomDepth, simplify it 
-        and insert the values in the SimpleBottomDepthTime table that is related to the Activity.  
-        While we're at it also add the bottom depth to the Measurement so that our Matplotlib plots can also
-        ieasily include the depth profile.  This procedure is suitable for only trajectory data.
-        @param critSimpleBottomDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
+        Read the time series of Parameter altitude and add to depth values to compute BottomDepth
+        and add it to the Measurement so that our Matplotlib plots can also ieasily include the depth profile.  
+        This procedure is suitable for only trajectory data.
         '''
         mpQS = m.MeasuredParameter.objects.using(self.dbAlias).select_related(depth=3
-                                      ).filter( measurement__instantpoint__pk__isnull=False,
-                                                datavalue__isnull=False,
+                                      ).filter( datavalue__isnull=False,
                                                 measurement__instantpoint__activity=self.activity, 
                                                 parameter__standard_name='height_above_sea_floor')
-        line = []
-        pklookup = []
+        count =  mpQS.count()
+        self.logger.info('mpQS.count() = %s', count)
+
+        counter = 0
         for mp in mpQS:
-            ems = 1000 * to_udunits(mp.measurement.instantpoint.timevalue, 'seconds since 1970-01-01')
+            counter += 1
             bottomDepth = mp.measurement.depth + mp.datavalue
-            line.append( (ems, bottomDepth,) )
-            pklookup.append(mp.measurement.instantpoint.pk)
 
             try:
-                # Add bottom depth to the measurement
                 mp.measurement.bottomdepth = bottomDepth
                 mp.measurement.save(using=self.dbAlias)
             except DatabaseError as e:
                 self.logger.warn(e)
 
-        self.logger.debug('line = %s', line)
-        self.logger.info('Number of points in original bottom depth time series = %d', len(line))
+            if counter % 1000 == 0:
+                self.logger.info('%d of %d mp.measurement.bottomdepth records saved', counter, count)
+
+      return _innerSaveBottomDepth(self)
+
+    def insertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
+      @transaction.commit_on_success(using=self.dbAlias)
+      def _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
+        '''
+        Read the bottomdepth from Measurement for the Activity, simplify it 
+        and insert the values in the SimpleBottomDepthTime table that is related to the Activity.  
+        This procedure is suitable for only trajectory data.
+        @param critSimpleBottomDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
+        '''
+        tbdQS = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement__instantpoint__activity=self.activity
+                                      ).values('measurement__instantpoint__timevalue', 'measurement__bottomdepth',
+                                      'measurement__instantpoint__id')
+        count =  tbdQS.count()
+
+        # simplify_points() has a limit of how many points it can handle
+        maxRecords = .1e6
+        stride = 1
+        if count > maxRecords:
+            stride = int((count + maxRecords / 2)/ maxRecords)
+            self.logger.info('Striding tbdQS by %d to be kind to simplify_points()', stride)
+
+        # Now, get time and bottomdepth that we just saved for building the SimpleBottomDepth time series
+        line = []
+        pklookup = []
+        i = 0
+        counter = 0
+        for tbd in tbdQS:
+            i += 1
+            if i % stride == 0:
+                counter += 1
+                ems = 1000 * to_udunits(tbd['measurement__instantpoint__timevalue'], 'seconds since 1970-01-01')
+                line.append( (ems, tbd['measurement__bottomdepth']) )
+                pklookup.append(tbd['measurement__instantpoint__id'])
+                if counter % 1000 == 0:
+                    self.logger.info('%d of %d points read', counter, int(count / stride))
+
         try:
             # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
+            self.logger.info('Calling simplify_points with len(line) = %d', len(line))
             simple_line = simplify_points(line, critSimpleBottomDepthTime)
         except IndexError:
             simple_line = []        # Likely "list index out of range" from a stride that's too big
