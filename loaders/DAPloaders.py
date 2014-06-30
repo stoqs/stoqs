@@ -897,6 +897,7 @@ class Base_Loader(STOQS_Loader):
         self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
         if self.getFeatureType().lower() == 'trajectory':
             self.insertSimpleDepthTimeSeries()
+            self.saveBottomDepth()
             self.insertSimpleBottomDepthTimeSeries()
         elif self.getFeatureType().lower() == 'timeseries' or self.getFeatureType().lower() == 'timeseriesprofile':
             self.insertSimpleDepthTimeSeriesByNominalDepth()
