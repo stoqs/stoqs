@@ -53,6 +53,7 @@ import socket
 import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
 from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU
+import numpy as np
 
 
 # Set up logging
@@ -443,6 +444,30 @@ class Base_Loader(STOQS_Loader):
 
         return indices
 
+    def getTotalRecords(self):
+        '''
+        For the url count all the records that are to be loaded from all the include_names and return it.
+        '''
+        count = 0
+        numDerived = 0
+        trajSingleParameterCount = 0
+        for name in self.include_names:
+            try:
+                if self.getFeatureType() == 'trajectory':
+                    trajSingleParameterCount = np.prod(self.ds[name].shape)
+                count += (np.prod(self.ds[name].shape) / self.stride)
+            except KeyError as e:
+                if self.getFeatureType() == 'trajectory':
+                    # Assume that it's a derived variable and add same count as 
+                    logger.warn("%s: Assuming it's a derived parameter", e)
+                    numDerived += 1
+                    
+        logger.debug('Adding %d derived parameters of length %d to the count', numDerived, trajSingleParameterCount / self.stride)
+        if trajSingleParameterCount:
+            count += (numDerived * trajSingleParameterCount / self.stride)
+
+        return count 
+
     def _genTimeSeriesGridType(self):
         '''
         Generator of TimeSeriesProfile (tzyx where z is multi-valued) and TimeSeries (tzyx where z is single-valued) data.
@@ -717,7 +742,7 @@ class Base_Loader(STOQS_Loader):
 
                 if self.loaded:
                     if (self.loaded % 500) == 0:
-                        logger.info("%d records loaded.", self.loaded)
+                        logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
 
             # End for key, value
 
@@ -749,6 +774,8 @@ class Base_Loader(STOQS_Loader):
         maxdepth = -8000.0
         for key in self.include_names:
             parmCount[key] = 0
+
+        self.totalRecords = self.getTotalRecords()
 
         logger.info('self.getFeatureType() = %s', self.getFeatureType())
         if self.getFeatureType() == 'timeseriesprofile':
@@ -835,10 +862,10 @@ class Base_Loader(STOQS_Loader):
 
         # Add additional Parameters for all appropriate Measurements
         logger.info("Adding SigmaT and Spiciness to the Measurements...")
-        parameterCount = self.addSigmaTandSpice(parameterCount, self.activity)
+        self.addSigmaTandSpice(parameterCount, self.activity)
         if self.grdTerrain:
             logger.info("Adding altitude to the Measurements...")
-            parameterCount = self.addAltitude(parameterCount, self.activity)
+            self.addAltitude(parameterCount, self.activity)
 
         # Update the Activity with information we now have following the load
         newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, ' '.join(self.varsLoaded), datetime.utcnow())

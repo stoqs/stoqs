@@ -42,6 +42,9 @@ import tempfile
 
 logger = logging.getLogger(__name__)
 
+LABEL = 'label'                 # A constant to be also used by classifiers to label MeasuredParameters
+DESCRIPTION = 'description'     # A constant to be also used by classifiers to describe labels
+
 class STOQSQManager(object):
     '''
     This class is designed to handle building and managing queries against the STOQS database.
@@ -90,6 +93,7 @@ class STOQSQManager(object):
             'x3dterrains': self.getX3DTerrains,
             'x3dplaybacks': self.getX3DPlaybacks,
             'resources': self.getResources,
+            ##'attributes': self.getAttributes,
         }
         
     def buildQuerySets(self, *args, **kwargs):
@@ -395,6 +399,16 @@ class STOQSQManager(object):
         '''
         # Django makes it easy to do sub-queries: Get Parameters from list of Activities matching current selection
         p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs)).order_by('name')
+        if 'mplabels' in self.kwargs:
+            if self.kwargs['mplabels']:
+                # Get all Parameters that have common Measurements given the filter of the selected labels
+                # - this allows selection of co-located MeasuredParameters
+                commonMeasurements = models.MeasuredParameterResource.objects.using(self.dbname).filter( 
+                                        resource__id__in=self.kwargs['mplabels']).values_list(
+                                        'measuredparameter__measurement__id', flat=True)
+                p_qs = p_qs.filter(Q(id__in=models.MeasuredParameter.objects.using(self.dbname).filter(
+                        Q(measurement__id__in=commonMeasurements)).values_list('parameter__id', flat=True).distinct()))
+
         if groupName:
             p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
 
@@ -1364,7 +1378,7 @@ class STOQSQManager(object):
 
     def getResources(self):
         '''
-        Query ActivityResources to Resources remaining in Activity selection
+        Query ActivityResources for Resources remaining in Activity selection
         '''
         netcdfHash = {}
         # Simple name/value attributes
@@ -1400,6 +1414,26 @@ class STOQSQManager(object):
                 qlHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__uristring']
 
         return {'netcdf': netcdfHash, 'quick_look': qlHash}
+
+    def getAttributes(self):
+        '''
+        Query for "Attributes" which are specific ResourceTypes or fields of other classes. Initially for tagged measurements
+        and for finding comments about Samples, but can encompass any other way a STOQS database may be filtered os searched.
+        '''
+        measurementHash = {}
+        for mpr in models.MeasuredParameterResource.objects.using(self.dbname).filter(activity__in=self.qs
+                        ,resource__name__in=[LABEL]).values( 'resource__resourcetype__name', 'resource__value', 
+                        'resource__id').distinct().order_by('resource__value'):
+            # Include all description resources associated with this label
+            descriptions = ' '.join(models.ResourceResource.objects.using(self.dbname).filter(fromresource__id=mpr['resource__id'], 
+                            toresource__name=DESCRIPTION).values_list('toresource__value', flat=True))
+            try:
+                measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value'], descriptions))
+            except KeyError:
+                measurementHash[mpr['resource__resourcetype__name']] = []
+                measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value'], descriptions))
+
+        return {'measurement': measurementHash}
 
     #
     # Methods that generate Q objects used to populate the query.
@@ -1549,6 +1583,25 @@ class STOQSQManager(object):
             elif fromTable == 'ActivityParameterHistogram':
                 q = q & Q(activityparameter__activity__mindepth__lte=depth[1])
         return q
+
+    def _mplabelsQ(self, resourceids, fromTable='Activity'):
+        '''
+        Build a Q object to be added to the current queryset as a filter.  This will ensure that we
+        only generate the other values/sets for attributes (initially resources that have names of 'label' 
+        that are MeasuredParameter labels) that were selected.
+        '''
+        q = Q()
+        if not resourceids:
+            return q
+        else:
+            if fromTable == 'Activity':
+                q = Q(id__in=models.MeasuredParameterResource.objects.using(self.dbname).filter(
+                                                    resource__id__in=resourceids).values_list('activity__id').distinct())
+            elif fromTable == 'ActivityParameter':
+                q = Q(activity__id__in=models.MeasuredParameterResource.objects.using(self.dbname).filter(
+                                                    resource__id__in=resourceids).values_list('activity__id').distinct())
+
+        return q    
 
     def _trajectoryQ(self):
         '''

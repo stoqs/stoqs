@@ -1034,11 +1034,16 @@ class STOQS_Loader(object):
                     xmin, xmax = fh.variables['lon'].actual_range
                     ymin, ymax = fh.variables['lat'].actual_range
                 except Exception as e:
-                    self.logger.error(e)
-                    return parameterCounts,
+                    try:
+                        # Yet another format (seen in SanPedroBasin50.grd)
+                        xmin, xmax = fh.variables['x'].actual_range
+                        ymin, ymax = fh.variables['y'].actual_range
+                    except Exception as e:
+                        self.logger.error('Cannot read range metadata from %s. Not able to load altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
+                        return parameterCounts
             except Exception as e:
                 self.logger.error(e)
-                return parameterCounts,
+                return parameterCounts
             bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
             fh.close()
 
@@ -1065,8 +1070,15 @@ class STOQS_Loader(object):
         cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
         self.logger.info('Executing %s' % cmd)
         os.system(cmd)
+        if self.totalRecords > 1e6:
+            self.logger.info('Sleeping 60 seconds to give time for system call to finsh writing to %s', bdepthFileName)
+            time.sleep(60)
+        if self.totalRecords > 1e7:
+            self.logger.info('Sleeping another 300 seconds to give time for system call to finsh writing to %s for more than 10 million records', bdepthFileName)
+            time.sleep(300)
 
         # Create our new Parameter
+        self.logger.info('Getting or creating new altitude Parameter')
         p_alt, created = m.Parameter.objects.using(self.dbAlias).get_or_create( standard_name='height_above_sea_floor',
                                                                                 long_name='Altitude',
                                                                                 units='m',
