@@ -845,7 +845,7 @@ class STOQS_Loader(object):
         and add it to the Measurement so that our Matplotlib plots can also ieasily include the depth profile.  
         This procedure is suitable for only trajectory data.
         '''
-        mpQS = m.MeasuredParameter.objects.using(self.dbAlias).select_related(depth=3
+        mpQS = m.MeasuredParameter.objects.using(self.dbAlias).select_related(depth=1
                                       ).filter( datavalue__isnull=False,
                                                 measurement__instantpoint__activity=self.activity, 
                                                 parameter__standard_name='height_above_sea_floor')
@@ -855,15 +855,13 @@ class STOQS_Loader(object):
         counter = 0
         for mp in mpQS:
             counter += 1
-            bottomDepth = mp.measurement.depth + mp.datavalue
-
             try:
-                mp.measurement.bottomdepth = bottomDepth
+                mp.measurement.bottomdepth = mp.measurement.depth + mp.datavalue
                 mp.measurement.save(using=self.dbAlias)
             except DatabaseError as e:
                 self.logger.warn(e)
 
-            if counter % 1000 == 0:
+            if counter % 10000 == 0:
                 self.logger.info('%d of %d mp.measurement.bottomdepth records saved', counter, count)
 
       return _innerSaveBottomDepth(self)
@@ -901,7 +899,7 @@ class STOQS_Loader(object):
                 ems = 1000 * to_udunits(tbd['measurement__instantpoint__timevalue'], 'seconds since 1970-01-01')
                 line.append( (ems, tbd['measurement__bottomdepth']) )
                 pklookup.append(tbd['measurement__instantpoint__id'])
-                if counter % 1000 == 0:
+                if counter % 10000 == 0:
                     self.logger.info('%d of %d points read', counter, int(count / stride))
 
         try:
