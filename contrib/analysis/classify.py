@@ -37,8 +37,8 @@ from utils.utils import round_to_n, pearsonr
 from textwrap import wrap
 from numpy import polyfit
 from pylab import polyval
-from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource
-from utils.STOQSQManager import LABEL
+from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource, ResourceResource
+from utils.STOQSQManager import LABEL, DESCRIPTION
 
 from contrib.analysis import BiPlot, NoPPDataException
 
@@ -67,17 +67,26 @@ class Classifier(BiPlot):
         else:
             return acts[0]
         
-    def saveLabelSet(self, label, x_ids, y_ids, typeName, typeDescription):
+    def saveLabelSet(self, label, x_ids, y_ids, description, typeName, typeDescription):
         '''
-        Save the set of labels in MeasuredParameterResource. Accepts 2 input vectors. (TODO: generalize to N input vectors)
+        Save the set of labels in MeasuredParameterResource. Accepts 2 input vectors. (TODO: generalize to N input vectors);
+        description is used to describe the criteria for assigning this label. The typeName and typeDecription may be used to
+        refer to the grouping, and associate via the grouping the other labels made in the heuristic applied.
         '''
         try:
+            # Label
             rt, created = ResourceType.objects.using(self.args.database).get_or_create(name=typeName, description=typeDescription)
             r, created = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
+            # Label's description
+            rdt, created = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
+            rd, created = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=description, resourcetype=rdt)
+            rr = ResourceResource(fromresource=r, toresource=rd)
+            rr.save(using=self.args.database)
         except IntegrityError as e:
             print e
             print "Ignoring"
 
+        # Associate MeasuredParameters with Resource
         if self.args.verbose:
             print "  Saving %d values of '%s' with type '%s'" % (len(x_ids), label, typeName)
         for x_id,y_id in zip(x_ids, y_ids):
@@ -99,24 +108,6 @@ class Classifier(BiPlot):
             print "  Removing MeasuredParameterResources with label = '%s' and type = '%s'" % (label, type)
         for mpr in mprs:
             mpr.delete(using=self.args.database)
-
-    def partOfClass(self, x_all, y_all, x_class, y_class):
-        '''
-        Return array of 0 or 1 with 1 representing indices where x_class, y_class is in x_all, y_all
-        '''
-        y = []
-        count = 0
-        for xa, ya in zip(x_all, y_all):
-            if xa in x_class and ya in y_class:
-                y.append(1)
-                count += 1
-            else:
-                y.append(0)
-
-        if self.args.verbose > 1:
-            print "  %d values in class" % count
-
-        return y
 
     def doLabel(self):
         '''
@@ -142,7 +133,8 @@ class Classifier(BiPlot):
 
             if self.args.clobber:
                 self.removeLabelSet(label, LABELED)
-            self.saveLabelSet(label, x_ids, y_ids, LABELED, 'Labeled with %s as discriminator' % self.args.discriminator)
+            self.saveLabelSet(label, x_ids, y_ids, 'Using Platform %s, Parameter %s from %s to %s' % (self.args.platform, pvDict, self.args.start, self.args.end),
+                                    LABELED, 'Labeled with %s as discriminator' % self.args.discriminator)
 
     def doTrainTest(self):
         '''
@@ -164,22 +156,30 @@ class Classifier(BiPlot):
             y = np.append(y, np.ones(count) * target)
             target += 1
 
-        import pdb
         X = np.concatenate((f0.reshape(-1,1), f1.reshape(-1,1)), axis=1)
-        pdb.set_trace()
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size, train_size=self.args.train_size)
 
 
         X_train = StandardScaler().fit_transform(X_train)
 
-        import pdb
         clf.fit(X_train, y_train)
-        pdb.set_trace()
         score = clf.score(X_test, y_test)
         if self.args.verbose:
             print "  score = %f" % score
 
-        s = pickle.dumps(clf)
+        # Save pickled mode to the database and relate it to the LABELED data resource
+        if self.args.modelBaseName:
+            rt, created = ResourceType.objects.using(self.args.database).get_or_create(name='FittedModel', description='SVC(gamma=2, C=1)')
+            labeledResource = Resource.objects.using(self.args.database).filter(resourcetype__name=LABELED)[0]
+            modelValue = pickle.dumps(clf).encode("zip").encode("base64").strip()
+            modelResource = Resource(name=self.args.modelBaseName, value=modelValue, resourcetype=rt)
+            modelResource.save(using=self.args.database)
+            rr = ResourceResource(fromresource=labeledResource, toresource=modelResource)
+            rr.save(using=self.args.database)
+
+            if self.args.verbose:
+                print 'Saved fitted model to the database with name = %s' %self.args.modelBaseName
+                print 'Retrieve with "clf = pickle.loads(r.value.decode("base64").decode("zip"))"'
 
 
     def getFileName(self, figCount):
@@ -221,9 +221,9 @@ class Classifier(BiPlot):
 
         examples = 'Examples:' + '\n\n' 
         examples += "Step 1: Save Labeled features in the database using salinity as a discriminator:\n"
-        examples += sys.argv[0] + " -d stoqs_september2013_t --doLabel -p dorado --start 20130916T124035 --end 20130919T233905 --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 --clobber -v\n\n"
+        examples += sys.argv[0] + " --doLabel --database stoqs_september2013_t --platform dorado --start 20130916T124035 --end 20130919T233905 --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 --clobber -v\n\n"
         examples += "Step 2: Create a prediction model using the labels created in Step 1\n"
-        examples += sys.argv[0] + " -d stoqs_september2013_t --doTrainTest --classifier SVC --labels diatom dino1 dino2 sediment --inputs bbp700 fl700_uncorr --discriminator salinity --modelBaseName SVC_20140625T180100\n\n"
+        examples += sys.argv[0] + " --doTrainTest --database stoqs_september2013_t --classifier SVC --labels diatom dino1 dino2 sediment --inputs bbp700 fl700_uncorr --discriminator salinity --modelBaseName SVC_20140625T180100\n\n"
         examples += "Step 3: Use a model to classify new measurements\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
@@ -237,7 +237,7 @@ class Classifier(BiPlot):
         ##parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
 
         parser.add_argument('--doLabel', action='store_true', help='Label data with --discriminator, --labels, --mins, and --maxes options')
-        parser.add_argument('--doTrainTest', action='store_true', help='Fit a model to Labeled data with --classifier to labels in --labels and save in database as --modelName')
+        parser.add_argument('--doTrainTest', action='store_true', help='Fit a model to Labeled data with --classifier to labels in --labels and save in database as --modelBaseName')
         parser.add_argument('--inputs', action='store', help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
