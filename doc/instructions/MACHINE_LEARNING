@@ -1,0 +1,15 @@
+MACHINE_LEARNING
+----------------
+
+These are the prerequisites for executing the machine learning code on data within a STOQS database.
+
+The scikit-learn package has several prerequisites, the biggest being scipy.  Here is what worked for
+me on 15 June 2014:
+
+sudo yum -y install scipy blas blas-devel lapack lapack-devel
+pip install scipy
+pip install scikit-learn
+
+--
+Mike McCann
+15 June 2014

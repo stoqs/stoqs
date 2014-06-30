@@ -69,6 +69,7 @@ query_parms = {
                                      'platformplotname'),                                   # - client knows platform name
                    'parametertimeplotid': 'parametertimeplotid',                            # Plot checkbox id values
                    'showgeox3ddata': 'showgeox3ddata',                                      # Flag value from checkbox
+                   'showplatforms': 'showplatforms',                    # Flag value from checkbox
                    'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
 
                    'only': 'only',                          # List of options to update - when only a partial response is needed
@@ -83,6 +84,7 @@ query_parms = {
                    'ppfr': 'ppfr',                          # Parameter-Parameter free range flag
                    'pplr': 'pplr',                          # Parameter-Parameter linear regression flag
                    'ppsl': 'ppsl',                          # Parameter-Parameter sample locations flag
+                   'mplabels': 'mplabels',                  # MeasuredParameter labels from Attributes selections
 }
 
 def get_http_site_uri(request):

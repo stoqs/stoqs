@@ -189,7 +189,7 @@ class MeasuredParameter(object):
         '''
         self.logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
 
-        # Save to '_by_act' dictionaries so that X3D and end each IndexedLinestring with a '-1'
+        # Save to '_by_act' dictionaries so that X3D can end each IndexedLinestring with a '-1'
         self.depth_by_act = {}
         self.value_by_act = {}
         self.lon_by_act = {}
@@ -441,7 +441,7 @@ class MeasuredParameter(object):
     def dataValuesX3D(self, vert_ex=10.0, geoOrigin=None):
         '''
         Return scatter-like data values as X3D geocoordinates and colors. A bit of a HACK until GeoOrigin is
-        implemented in X3DOM: if geoOrigin is not None then points will be GCC (ECEF) coordinates with the 
+        implemented in X3DOM: if geoOrigin is specified then points will be GCC (ECEF) coordinates with the 
         geoOrigin subtracted, GD input coordinates assumed.
         '''
         showGeoX3DDataFlag = False
@@ -469,6 +469,7 @@ class MeasuredParameter(object):
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     if geoOrigin:
+                        depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
                         points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
                     else:
                         points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
@@ -501,6 +502,108 @@ class MeasuredParameter(object):
 
         return x3dResults
 
+class PlatformOrientation(object):
+    '''
+    For Platforms that have Parameters with roll, pitch, and yaw Parameters.
+    '''
+    logger = logging.getLogger(__name__)
+
+    x3dEulerBaseScene = '''<Transform id="TRANSLATE" DEF="TRANSLATE" scale="1000 1000 1000">
+            <Transform id="XROT" DEF="XROT">
+                <Transform id="YROT" DEF="YROT">
+                    <Transform id="ZROT" DEF="ZROT">
+                        <Transform rotation='1 0 0 -1.57079632679489'>
+                            <Inline url="http://dods.mbari.org/data/beds/x3d/beds_housing_with_axes.x3d"></Inline>
+                        </Transform>
+                    </Transform>
+                </Transform>
+            </Transform>
+        </Transform>
+    '''
+
+    def __init__(self, kwargs, request, qs, qs_mp):
+        self.kwargs = kwargs
+        self.request = request
+        self.qs = qs
+        self.qs_mp = qs_mp      # Need the ordered version of the query set
+
+    def loadData(self):
+        '''
+        Read the data from the database into member variables for construction of platform orientation time series
+        '''
+        # Save to '_by_act' dictionaries so that each time series can be separately controlled by ROUTES to the orientation
+        self.lon_by_act = {}
+        self.lat_by_act = {}
+        self.depth_by_act = {}
+        self.time_by_act = {}
+
+        self.roll_by_act = {}
+        self.pitch_by_act = {}
+        self.yaw_by_act = {}
+
+        # Platform must have at least yaw in order for orientation data to make sense; must filter on one Parameter, otherwise we get multiple values
+        for mp in self.qs_mp.filter(parameter__standard_name='platform_yaw_angle'):
+            self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
+            self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
+            self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
+            self.time_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(
+                                                            time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+
+        for mp in self.qs_mp.filter(parameter__standard_name='platform_roll_angle'):
+            self.roll_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
+        for mp in self.qs_mp.filter(parameter__standard_name='platform_pitch_angle'):
+            self.pitch_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
+        for mp in self.qs_mp.filter(parameter__standard_name='platform_yaw_angle'):
+            self.yaw_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
+
+    def platformOrientationDataValuesForX3D(self, vert_ex=10.0, geoOrigin=''):
+        '''
+        Return the associated PlatformOrientation time series values as a dictionary of roll, pitch and yaw inside 
+        a 2 level hash of platform__name and activity__name.  Results are in a format for easy update of an X3D scene graph.
+        '''
+        x3dDict = {}
+        self.loadData()
+        try:
+            points = ''
+            indices = ''
+            index = 0
+            gps = GPS()
+            keys = ''
+            translations = []
+            for act in self.yaw_by_act.keys():
+                for lon,lat,depth,t in zip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.time_by_act[act]):
+                    if geoOrigin:
+                        depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
+                        # TEST send translations directly to Transform from JavaScript
+                        translations.append('%.1f,%.1f,%.1f' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin))
+                    else:
+                        points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
+
+                    keys += '%.4f' % ((t - self.time_by_act[act][0]) / (self.time_by_act[act][-1] - self.time_by_act[act][0]))
+                    indices = indices + '%i ' % index
+                    index = index + 1
+
+                # No attempt to earth reference an 'up' orientation here    
+                # TEST send rotations directly to Transforms from JavaScript
+                xRotations = ['1,0,0,%.6f' % (np.pi * x / 180.) for x in self.roll_by_act[act]]
+                yRotations = ['0,1,0,%.6f' % (np.pi * y / 180.) for y in self.pitch_by_act[act]]
+                zRotations = ['0,0,1,%.6f' % (np.pi * -z / 180.) for z in self.yaw_by_act[act]]
+
+                # End with -1 so that end point does not connect to the beg point
+                indices = indices + '-1 ' 
+                cycInt = '%.4f' % (self.time_by_act[act][-1] - self.time_by_act[act][0])
+
+                x3dDict[act] = self.x3dEulerBaseScene
+
+            if x3dDict:
+                limits = (0, len(self.time_by_act[act]))
+
+        except Exception as e:
+            self.logger.exception('Could not create platformorientation')
+            x3dResults = 'Could not create platformorientation'
+
+        return {'x3d': x3dDict, 'limits': limits, 'translation': translations, 'xRotation': xRotations, 'yRotation': yRotations, 'zRotation': zRotations}
+
 
 class PPDatabaseException(Exception):
     def __init__(self, message, sql):
@@ -525,6 +628,8 @@ class ParameterParameter(object):
         self.pMinMax = pMinMax
         self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
         self.depth = []
+        self.x_id = []
+        self.y_id = []
         self.x = []
         self.y = []
         self.z = []
@@ -538,10 +643,10 @@ class ParameterParameter(object):
 
     def computeSigmat(self, limits, xaxis_name='sea_water_salinity', pressure=0):
         '''
-        Given a tuple of limits = (xmin, xmax, ymin, ymax) and an xaxis_name compute 
+        Given a tuple of limits = (xmin, xmax, ymin, ymax) and an xaxis_name compute potential
         density for a range of values between the mins and maxes.  Return the X and Y values
-        for salinity/temperature and density converted to sigma-t.  A pressure argument may
-        be provided for computing sigmat for that pressure.
+        for salinity/temperature and density converted to sigma-t. A pressure value may be passed
+        to compute relative to a pressure other than 0.
         '''
         ns = 50
         nt = 50
@@ -552,7 +657,7 @@ class ParameterParameter(object):
             for ti in t:
                 row = []
                 for si in s:
-                    row.append(sw.dens(si, ti, pressure) - 1000.0)
+                    row.append(sw.pden(si, ti, pressure) - 1000.0)
                 sigmat.append(row)
 
         elif xaxis_name == 'sea_water_temperature':
@@ -561,7 +666,7 @@ class ParameterParameter(object):
             for si in s:
                 row = []
                 for ti in t:
-                    row.append(sw.dens(si, ti, pressure) - 1000.0)
+                    row.append(sw.pden(si, ti, pressure) - 1000.0)
                 sigmat.append(row)
 
         else:
@@ -576,12 +681,12 @@ class ParameterParameter(object):
         '''
         Modify Parameter-Parameter SQL to return the count for the query
         '''
-        p = re.compile('SELECT .+ FROM')
+        p = re.compile('SELECT .+? FROM')           # Non-greedy, match to the first 'FROM'
         csql = p.sub('''SELECT count(*) FROM''', sql.replace('\n', ' '))
         self.logger.debug('csql = %s', csql)
         return csql
 
-    def _getXYCData(self, strideFlag=True, latlonFlag=False):
+    def _getXYCData(self, strideFlag=True, latlonFlag=False, returnIDs=False, sampleFlag=True):
       @transaction.commit_on_success(using=self.request.META['dbAlias'])
       def inner_getXYCData(self, strideFlag, latlonFlag):
         '''
@@ -590,7 +695,8 @@ class ParameterParameter(object):
         # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
         sql = str(self.pq.qs_mp.query)
         sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
-        sample_sql = self.pq.addSampleConstraint(sql)
+        if sampleFlag:
+            sample_sql = self.pq.addSampleConstraint(sql)
 
         # Use cursors so that we can specify the database alias to use.
         cursor = connections[self.request.META['dbAlias']].cursor()
@@ -622,6 +728,14 @@ class ParameterParameter(object):
                 self.logger.debug('Adding lon lat to SELECT')
                 sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
 
+            if sampleFlag:
+                sample_sql = sample_sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
+
+        if returnIDs:
+            if sql.find('stoqs_measurement') != -1:
+                self.logger.debug('Adding ids to SELECT for stoqs_measurement')
+                sql = sql.replace('DISTINCT', 'DISTINCT mp_x.id, mp_y.id,\n')
+
         # Get the Parameter-Parameter points
         try:
             self.logger.debug('Executing sql = %s', sql)
@@ -630,22 +744,28 @@ class ParameterParameter(object):
             infoText = 'Parameter-Parameter: Query failed. Make sure you have no Parameters selected in the Filter.'
             self.logger.warn('Cannot execute sql query for Parameter-Parameter plot: %s', e)
             raise PPDatabaseException(infoText, sql)
+       
+        if sampleFlag: 
+            # Get the Sample points
+            try:
+                self.logger.debug('Executing sample_sql = %s', sample_sql)
+                sample_cursor.execute(sample_sql)
+            except DatabaseError, e:
+                infoText = 'Parameter-Parameter: Sample Query failed.'
+                self.logger.warn('Cannot execute sample_sql query for Parameter-Parameter plot: %s', e)
+                raise PPDatabaseException(infoText, sample_sql)
 
-        # Get the Sample points
-        try:
-            self.logger.debug('Executing sample_sql = %s', sample_sql)
-            sample_cursor.execute(sample_sql)
-        except DatabaseError, e:
-            infoText = 'Parameter-Parameter: Sample Query failed.'
-            self.logger.warn('Cannot execute sample_sql query for Parameter-Parameter plot: %s', e)
-            raise PPDatabaseException(infoText, sample_sql)
-
+        # Populate MeasuredParameter x,y,c member variables
         counter = 0
         self.logger.debug('Looping through rows in cursor with a stride of %d...', stride_val)
         for row in cursor:
             if counter % stride_val == 0:
                 # SampledParameter datavalues are Decimal, convert everything to a float for numpy
                 lrow = list(row)
+                if returnIDs:
+                    self.x_id.append(int(lrow.pop(0)))
+                    self.y_id.append(int(lrow.pop(0)))
+
                 if latlonFlag:
                     self.lon.append(float(lrow.pop(0)))
                     self.lat.append(float(lrow.pop(0)))
@@ -664,18 +784,20 @@ class ParameterParameter(object):
         if self.x == [] or self.y == []:
             raise PPDatabaseException('No data returned from query', sql)
 
-        self.logger.debug('Looping through rows in sample_cursor')
-        for row in sample_cursor:
-            lrow = list(row)
-            if latlonFlag:
-                self.lon.append(float(lrow.pop(0)))
-                self.lat.append(float(lrow.pop(0)))
-
-            # Need only the x and y values for sample points                
-            self.sdepth.append(float(lrow.pop(0)))
-            self.sx.append(float(lrow.pop(0)))
-            self.sy.append(float(lrow.pop(0)))
-            self.sample_names.append(lrow.pop(0))
+        if sampleFlag:
+            # Populate SampledParameter x,y,c member variables
+            self.logger.debug('Looping through rows in sample_cursor')
+            for row in sample_cursor:
+                lrow = list(row)
+                if latlonFlag:
+                    self.lon.append(float(lrow.pop(0)))
+                    self.lat.append(float(lrow.pop(0)))
+    
+                # Need only the x and y values for sample points                
+                self.sdepth.append(float(lrow.pop(0)))
+                self.sx.append(float(lrow.pop(0)))
+                self.sy.append(float(lrow.pop(0)))
+                self.sample_names.append(lrow.pop(0))
 
         return stride_val, sql, pp_count
 
@@ -783,15 +905,13 @@ class ParameterParameter(object):
             infoText += '<br>%s ranges: fixed [%f, %f], actual [%f, %f]<br>%s ranges: fixed [%f, %f], actual [%f, %f]' % (
                             xp.name, self.pMinMax['x'][1], self.pMinMax['x'][2], np.min(self.x), np.max(self.x),
                             yp.name, self.pMinMax['y'][1], self.pMinMax['x'][2], np.min(self.y), np.max(self.y))
-            meanDepth = round(np.mean(self.depth))
             if xp.standard_name == 'sea_water_salinity' and yp.standard_name == 'sea_water_temperature':
-                X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_salinity', pressure=np.mean(self.depth))
+                X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_salinity')
             if xp.standard_name == 'sea_water_temperature' and yp.standard_name == 'sea_water_salinity':
-                X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_temperature', pressure=meanDepth)
+                X, Y, Z = self.computeSigmat(ax.axis(), xaxis_name='sea_water_temperature')
             if Z is not None:
                 CS = ax.contour(X, Y, Z, colors='k')
                 plt.clabel(CS, inline=1, fontsize=10)
-                infoText += '<br>Sigma-t levels computed for pressure = %.1f dbar' % meanDepth
    
             if pplrFlag: 
                 # Do Linear regression and assemble additional information about the correlation

@@ -189,7 +189,7 @@ class CrossProductBiPlot(BiPlot):
         parser.add_argument('--plotDir', action='store', help='Directory where to write the plot output', default='.')
         parser.add_argument('--plotPrefix', action='store', help='Prefix to use in naming plot files', default='')
         parser.add_argument('--title', action='store', help='Title to appear on top of plot')
-        parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)

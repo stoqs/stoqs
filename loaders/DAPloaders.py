@@ -35,7 +35,7 @@ project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
 from django.conf import settings
 
-from django.db.utils import IntegrityError
+from django.db.utils import IntegrityError, DatabaseError
 from django.db import connection, transaction
 from stoqs import models as m
 from datetime import datetime, timedelta
@@ -52,7 +52,8 @@ import logging
 import socket
 import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord, missing_value
+from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU
+import numpy as np
 
 
 # Set up logging
@@ -112,9 +113,10 @@ class Base_Loader(STOQS_Loader):
                 'LONGITUDE','LATITUDE','TIME', 'NominalDepth', 'esecs', 'Longitude', 'Latitude',
                 'DEPTH','depth'] # A list of parameters that should not be imported as parameters
     global_dbAlias = ''
-    def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, 
+    def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
-                startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1 ):
+                startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
+                grdTerrain=None ):
         '''
         Given a URL open the url and store the dataset as an attribute of the object,
         then build a set of standard names using the dataset.
@@ -128,6 +130,7 @@ class Base_Loader(STOQS_Loader):
         @param url: The OPeNDAP URL for the data source
         @param dbAlias: The name of the database alias as defined in settings.py
         @param campaignName: A string describing the Campaign in which this activity belongs, If that name for a Campaign exists in the DB, it will be used.
+        @param campaignDescription: A string expanding on the campaignName. It should be a short phrase expressing the where and why of a campaign.
         @param activitytypeName: A string such as 'mooring deployment' or 'AUV mission' describing type of activity, If that name for a ActivityType exists in the DB, it will be used.
         @param platformTypeName: A string describing the type of platform, e.g.: 'mooring', 'auv'.  If that name for a PlatformType exists in the DB, it will be used.
         @param startDatetime: A Python datetime.dateime object specifying the start date time of data to load
@@ -137,6 +140,7 @@ class Base_Loader(STOQS_Loader):
         @param stride: The stride/step size used to retrieve data from the url.
         '''
         self.campaignName = campaignName
+        self.campaignDescription = campaignDescription
         self.activitytypeName = activitytypeName
         self.platformName = platformName
         self.platformColor = platformColor
@@ -149,7 +153,7 @@ class Base_Loader(STOQS_Loader):
         self.dataStartDatetime = dataStartDatetime  # For when we append data to an existing Activity
         self.auxCoords = auxCoords
         self.stride = stride
-        
+        self.grdTerrain = grdTerrain
         
         self.url = url
         self.varsLoaded = []
@@ -440,6 +444,30 @@ class Base_Loader(STOQS_Loader):
 
         return indices
 
+    def getTotalRecords(self):
+        '''
+        For the url count all the records that are to be loaded from all the include_names and return it.
+        '''
+        count = 0
+        numDerived = 0
+        trajSingleParameterCount = 0
+        for name in self.include_names:
+            try:
+                if self.getFeatureType() == 'trajectory':
+                    trajSingleParameterCount = np.prod(self.ds[name].shape)
+                count += (np.prod(self.ds[name].shape) / self.stride)
+            except KeyError as e:
+                if self.getFeatureType() == 'trajectory':
+                    # Assume that it's a derived variable and add same count as 
+                    logger.warn("%s: Assuming it's a derived parameter", e)
+                    numDerived += 1
+                    
+        logger.debug('Adding %d derived parameters of length %d to the count', numDerived, trajSingleParameterCount / self.stride)
+        if trajSingleParameterCount:
+            count += (numDerived * trajSingleParameterCount / self.stride)
+
+        return count 
+
     def _genTimeSeriesGridType(self):
         '''
         Generator of TimeSeriesProfile (tzyx where z is multi-valued) and TimeSeries (tzyx where z is single-valued) data.
@@ -696,8 +724,10 @@ class Base_Loader(STOQS_Loader):
                     logger.debug('Saving parameter_id %s at measurement_id = %s', parameter.id, measurement.id)
                     try:
                         mp.save(using=self.dbAlias)
-                    except IntegrityError, e:
-                        logger.warn('%sSkipping this record.', e)
+                    except IntegrityError as e:
+                        logger.warn('%s: Skipping this record.', e)
+                    except DatabaseError as e:
+                        logger.warn('%s: Skipping this record.', e)
                     else:
                         self.loaded += 1
                         logger.debug("Inserted value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
@@ -712,7 +742,7 @@ class Base_Loader(STOQS_Loader):
 
                 if self.loaded:
                     if (self.loaded % 500) == 0:
-                        logger.info("%d records loaded.", self.loaded)
+                        logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
 
             # End for key, value
 
@@ -744,6 +774,8 @@ class Base_Loader(STOQS_Loader):
         maxdepth = -8000.0
         for key in self.include_names:
             parmCount[key] = 0
+
+        self.totalRecords = self.getTotalRecords()
 
         logger.info('self.getFeatureType() = %s', self.getFeatureType())
         if self.getFeatureType() == 'timeseriesprofile':
@@ -828,6 +860,13 @@ class Base_Loader(STOQS_Loader):
                     stationPoint = Point(path[0][0], path[0][1])
                     path = None
 
+        # Add additional Parameters for all appropriate Measurements
+        logger.info("Adding SigmaT and Spiciness to the Measurements...")
+        self.addSigmaTandSpice(parameterCount, self.activity)
+        if self.grdTerrain:
+            logger.info("Adding altitude to the Measurements...")
+            self.addAltitude(parameterCount, self.activity)
+
         # Update the Activity with information we now have following the load
         newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, ' '.join(self.varsLoaded), datetime.utcnow())
         logger.debug("Updating its comment with newComment = %s", newComment)
@@ -855,9 +894,11 @@ class Base_Loader(STOQS_Loader):
         #
         self.updateActivityParameterStats(parameterCount)
         self.updateCampaignStartEnd()
-        self.assignParameterGroup(parameterCount, groupName='Measured in situ')
+        self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
         if self.getFeatureType().lower() == 'trajectory':
             self.insertSimpleDepthTimeSeries()
+            self.saveBottomDepth()
+            self.insertSimpleBottomDepthTimeSeries()
         elif self.getFeatureType().lower() == 'timeseries' or self.getFeatureType().lower() == 'timeseriesprofile':
             self.insertSimpleDepthTimeSeriesByNominalDepth()
         logger.info("Data load complete, %d records loaded.", self.loaded)
@@ -937,7 +978,7 @@ class Dorado_Loader(Trajectory_Loader):
 
         # Compute sigma-t
         if row.has_key('salinity') and row.has_key('temperature') and row.has_key('depth') and row.has_key('latitude'):
-            row['sea_water_sigma_t'] = sw.dens(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
+            row['sea_water_sigma_t'] = sw.pden(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
 
         return super(Dorado_Loader, self).preProcessParams(row)
 
@@ -1095,7 +1136,7 @@ class BEDS_TS_Loader(TimeSeries_Loader):
 #
 # Helper methods that expose a common interface for executing the loaders for specific platforms
 #
-def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, plotTimeSeriesDepth=None):
+def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, plotTimeSeriesDepth=None, grdTerrain=None):
     '''
     Run the DAPloader for Generic AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1108,16 +1149,25 @@ def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     loader = Trajectory_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
             platformColor = pColor,
             platformTypeName = pTypeName,
-            stride = stride)
+            stride = stride,
+            grdTerrain = grdTerrain)
 
     logger.debug("Setting include_names to %s", parmList)
     loader.include_names = parmList
+
+    # Fix up legacy data files
+    loader.auxCoords = {}
+    if aName.find('_jhmudas_v1') != -1:
+        for p in loader.include_names:
+            loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
     if plotTimeSeriesDepth:
         # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
         loader.plotTimeSeriesDepth = dict.fromkeys(parmList, plotTimeSeriesDepth)
@@ -1125,7 +1175,7 @@ def runTrajectoryLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
-def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAlias, stride):
+def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, dbAlias, stride, grdTerrain=None):
     '''
     Run the DAPloader for Dorado AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1135,13 +1185,15 @@ def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAl
     loader = Dorado_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
             platformName = pName,
             platformColor = pColor,
             platformTypeName = pTypeName,
-            stride = stride)
+            stride = stride,
+            grdTerrain = grdTerrain)
 
     # Auxillary coordinates are the same for all include_names
     loader.auxCoords = {}
@@ -1155,7 +1207,7 @@ def runDoradoLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, dbAl
     else:
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1165,6 +1217,7 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
     loader = Lrauv_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
@@ -1173,11 +1226,18 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
             platformTypeName = pTypeName,
             stride = stride,
             startDatetime = startDatetime,
-            endDatetime = endDatetime)
+            endDatetime = endDatetime,
+            grdTerrain = grdTerrain)
 
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
+
+    loader.auxCoords = {}
+    if aName.find('_Chl_') != -1:
+        for p in loader.include_names:
+            loader.auxCoords[p] = {'time': 'Time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     except NoValidData, e:
@@ -1185,7 +1245,7 @@ def runLrauvLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmL
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None):
     '''
     Run the DAPloader for Spray Glider trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1195,6 +1255,7 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
     loader = Glider_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
@@ -1203,7 +1264,8 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
             platformTypeName = pTypeName,
             stride = stride,
             startDatetime = startDatetime,
-            endDatetime = endDatetime)
+            endDatetime = endDatetime,
+            grdTerrain = grdTerrain)
 
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
@@ -1215,7 +1277,7 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
         #for v in loader.include_names:
         #    loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
         pass
-    elif pName.startswith('Slocum_nemesis'):
+    elif pName.startswith('Slocum'):
         loader.auxCoords['u'] = {'time': 'time_uv', 'latitude': 'lat_uv', 'longitude': 'lon_uv', 'depth': 0.0}
         loader.auxCoords['v'] = {'time': 'time_uv', 'latitude': 'lat_uv', 'longitude': 'lon_uv', 'depth': 0.0}
         loader.auxCoords['temperature'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
@@ -1224,8 +1286,11 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
     elif pName.startswith('SPRAY'):
         for p in loader.include_names:
             loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+    elif pName.startswith('NPS'):
+        for p in loader.include_names:
+            loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
 
-    # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications
+    # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications for future files
 
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
@@ -1234,7 +1299,7 @@ def runGliderLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parm
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runTimeSeriesLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
     '''
     Run the DAPloader for Generic CF Metadata timeSeries featureType data. 
     Following the load important updates are made to the database.
@@ -1243,6 +1308,7 @@ def runTimeSeriesLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     loader = TimeSeries_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,
@@ -1260,7 +1326,7 @@ def runTimeSeriesLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, 
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
-def runMooringLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
     '''
     Run the DAPloader for OceanSites formatted Mooring Station data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1270,6 +1336,7 @@ def runMooringLoader(url, cName, aName, pName, pColor, pTypeName, aTypeName, par
     loader = Mooring_Loader(
             url = url,
             campaignName = cName,
+            campaignDescription = cDesc,
             dbAlias = dbAlias,
             activityName = aName,
             activitytypeName = aTypeName,

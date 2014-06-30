@@ -199,7 +199,16 @@
                                 <div class="tab-pane" id="geo3d" style="height:100%;">
                                     <div id="geo-3dplot" style="height:500px;">
                                         <div class="row-fluid">
-                                            <div class="span3">
+                                            <!-- Uncomment and comment out next div for video capture -->
+                                            <!--
+                                            <div class="span2">
+                                                <img src="{{STATIC_URL}}images/logo_blue_200_tr.gif"/>
+                                            </div>
+                                            <div class="span2">
+                                                <img src="{{STATIC_URL}}images/X3dSpecificationLogo.png"/>
+                                            </div>
+                                            -->
+                                            <div class="span4">
                                                 <em>Rotate: Left mouse</em><br>
                                                 <em>Translate: Ctrl + left mouse</em><br>
                                                 <em>Zoom: Alt + left mouse</em><br>
@@ -213,23 +222,30 @@
                                                     <label class="checkbox disabled">
                                                         <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Show data</span>
                                                     </label>
+                                                    <label class="checkbox disabled">
+                                                        <input type="checkbox" id="showplatforms" />
+                                                        <span id="showplatforms">Show platforms</span>
+                                                    </label>
                                                 </form>
                                             </div>
-                                            <div id="geo3d-colorbar" class="span7"></div>
+                                            <div id="geo3d-colorbar" class="span6"></div>
                                         </div>
                                         <div>
                                         <X3D id="spatial-3d-x3d" style="width:100%; height:100%; margin: 0px auto; display:block; border: none;"> 
                                             <Scene>
-                                                <shape id="mp-x3d-track"></shape>
-                                                <Viewpoint id="mp-x3d-viewpoint1"></Viewpoint>
+                                                <NavigationInfo></NavigationInfo>
+                                                <Shape id="mp-x3d-track"></Shape>
+                                                <Viewpoint id="mp-x3d-viewpoint1" zNear="1"></Viewpoint>
                                                 <Inline id="mp-x3d-terrain1"></Inline>
+                                                <Group id="platform-orientations"></Group>
+                                                <Group id="platform-models"></Group>
                                             </Scene>
                                         </X3D>
                                         </div>
                                     </div>
                                 </div>
                             </div><!-- tab-content -->
-
+                            <div id="spatial-3d-x3d-controls" class="slider slider-horizontal"></div>
                         </div><!-- accordion-inner -->
                     </div>
                 </div><!-- accordian-group -->
@@ -437,12 +453,12 @@
                                                     </Transform>
                                                 </Transform>
 
-                                                <shape>
+                                                <Shape>
                                                     <pointset>
                                                         <color id="pointsetcolors"></color>
                                                         <coordinate id="pointsetcoordinates"></coordinate>
                                                     </pointset>
-                                                </shape>
+                                                </Shape>
                                             </scene>
                                         </X3D>
                                         </div>
@@ -661,7 +677,7 @@
                     </div>
                     <div id="collapseSampledParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <input type="checkbox" id="show-coordinates-sp-checkbox" checked="checked"/> Show coordinates
+                            <input type="checkbox" id="show-coordinates-sp-checkbox" /> Show coordinates
                             <input type="checkbox" id="show-filtered-sp-checkbox" /> Show filtered out parameters
                             <fieldset>
                             <table id="sampledparameter-table" class="table table-condensed">
@@ -690,9 +706,9 @@
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
                                         </td>
-                                        <td colspan="2" class="all-plot-instruction">Clear selection</td>
+                                        <td colspan="2" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
-                                    <tr class="sp-pp-coordinates">
+                                    <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
@@ -700,7 +716,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Longitude</td>
                                     </tr>
-                                    <tr class="sp-pp-coordinates">
+                                    <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
@@ -708,7 +724,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Latitude</td>
                                     </tr>
-                                    <tr class="sp-pp-coordinates">
+                                    <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
@@ -716,7 +732,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Depth</td>
                                     </tr>
-                                    <tr class="sp-pp-coordinates">
+                                    <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
@@ -741,7 +757,7 @@
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <input type="checkbox" id="show-coordinates-mp-checkbox" checked="checked"/> Show coordinates
+                            <input type="checkbox" id="show-coordinates-mp-checkbox" /> Show coordinates
                             <input type="checkbox" id="show-filtered-mp-checkbox" /> Show filtered out parameters
                             <fieldset>
                             <table id="measuredparameter-table" class="table table-condensed">
@@ -770,9 +786,9 @@
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
                                         </td>
-                                        <td colspan="2" class="all-plot-instruction">Clear selection</td>
+                                        <td colspan="2" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
-                                    <tr class="mp-pp-coordinates">
+                                    <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
@@ -780,7 +796,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Longitude</td>
                                     </tr>
-                                    <tr class="mp-pp-coordinates">
+                                    <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
@@ -788,7 +804,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Latitude</td>
                                     </tr>
-                                    <tr class="mp-pp-coordinates">
+                                    <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
@@ -796,7 +812,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Depth</td>
                                     </tr>
-                                    <tr class="mp-pp-coordinates">
+                                    <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
@@ -832,6 +848,39 @@
                         </div>
                     </div>
                 </div><!-- accordian-group -->
+
+                <div id="attributes-group" class="accordian-group" style="display:none;">
+                    <div class="accordian-heading">
+                        <h3><a id="attributes-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseAttributes">
+                        Attributes</a>
+                        <button id="clear-attributes-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
+                    </div>
+
+                    <div id="collapseAttributes" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul id=attributesTabs" class="nav nav-tabs">
+                                <li class="active"><a href="#amp" data-toggle="tab">Measurement</a></li>
+                                <li><a href="#asp" data-toggle="tab">Sample</a></li>
+                                <li><a href="#ac" data-toggle="tab">Campaign</a></li>
+                                <li><a href="#apl" data-toggle="tab">Platform</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="amp">
+                                    <div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="asp">
+                                    <div>
+                                        <div class="row-fluid">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
@@ -891,6 +940,7 @@
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.axislabels.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.debounce.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
@@ -1081,6 +1131,22 @@
         else {
             sensortrackskml.removeAllFeatures();
         }
+    }
+
+    function addStationaryPlatformModels() {
+        // For platforms in the selection look in $('body').data()['platformModels'] for x3dModels and add to the scene
+        // If geoorigin is not specified then assum default geoCoords and use GeoLocation, otherwise use straight X3D
+        x3d = ''
+        $.each($('body').data()['platformModels'], function(plat, m) {
+            if ( $.isEmptyObject($('body').data()['geoorigin'])) {
+                x3d += '<GeoLocation geoCoords="' + m[1] + ',' + m[2] + ',' + m[3] + '"><Transform scale="200,200,200">';
+                x3d += '<Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform></GeoLocation>';
+            }
+            else {
+                x3d += '<Transform scale="200,200,200" translation="' + m[1] + ',' + m[2] + ',' + m[3] + '"><Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform>';
+            }
+        });
+        $('#platform-models').html(x3d);
     }
 
     function getMPparms(group, params) {
@@ -1292,6 +1358,10 @@
                     $('#clear-platforms-button').removeClass('disabled');
                     $('#clear-platforms-button').addClass('btn-primary');
                 }
+                if ($(element).hasClass('attributes')) {
+                    $('#clear-attributes-button').removeClass('disabled');
+                    $('#clear-attributes-button').addClass('btn-primary');
+                }
             }
         }
     } // toggleField()
@@ -1389,7 +1459,9 @@
         
         var div=$('#' + divid);
         div.bind({
-            slide : function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, false); },
+            //slide : function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, false); },
+            //slidechange:function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, true); }
+            slide : function (event, ui) { },
             slidechange:function (event, ui) { recordUpdatedValues(ui.values, divid, type, formatter, true); }
         })
         div.slider(options);
@@ -1505,6 +1577,21 @@
             $('#platforms-anchor').html('Platforms')
             $('#clear-platforms-button').removeClass('btn-primary');
             $('#clear-platforms-button').addClass('disabled');
+        }
+
+        params['mplabels']=[]
+        $('tr',$('#amp')).each(function (index, element) {
+            if ($('.btn-primary', $(element)).length) {
+                params['mplabels'].push(element.id);
+            }
+        });
+        if (params['mplabels'].length) {
+            $('#attributes-anchor').html('Attributes: ' + params['mplabels'].join())
+        }
+        else {
+            $('#attributes-anchor').html('Attributes')
+            $('#clear-attributes-button').removeClass('btn-primary');
+            $('#clear-attributes-button').addClass('disabled');
         }
 
         if (parametervalues) {
@@ -1685,6 +1772,12 @@
         rebuildFilters(['measuredparameterx3d']);
     });
 
+    $('#showplatforms').on('click', function (event) {
+        // Don't need to get everything from queryData, only the response with the platform rotation angles
+        rebuildFilters(['platformorientation']);
+        addStationaryPlatformModels();
+    });
+
     $('#showsensortracks').on('click', function (event) {
         update_sensortrackskml();
     });
@@ -1777,7 +1870,7 @@
             $('#showgeox3ddatatext').text('');
             $('#sectioncolorbar > img').removeAttr('src');
             $('#temporalparameterstrideinfo').text('');
-            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'simpledepthtime', 'platforms', 'sampledepthtime']);
+            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime']);
         }
     });
 
@@ -1835,6 +1928,19 @@
         }
     });
 
+    $("#clear-attributes-button").click(function() {
+        if ( $('#clear-attributes-button').hasClass('btn-primary')) {
+            $("#clear-attributes-button").removeClass('btn-primary');
+            $("#clear-attributes-button").addClass('disabled');
+            $('tr',$('.stoqs-attributes')).each(function (index, element) {
+                if ($('.btn-primary', $(element)).length) {
+                    $('#' + element.id + ' > td > button').removeClass('btn-primary');
+                }
+            });
+            rebuildFilters();
+            $('#attributes-anchor').html('Attributes')
+        }
+    });
     $("#clear-platforms-button").click(function() {
         if ( $('#clear-platforms-button').hasClass('btn-primary')) {
             $("#clear-platforms-button").removeClass('btn-primary');
@@ -1951,7 +2057,7 @@
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
             $('.parameter-plot-radio').show();
             $('.parameter-plot-checkbox').hide();
-            $('.all-plot-instruction').text('Clear selection');
+            $('.all-plot-instruction').text('Clear Selection');
             var ranges={xaxis: {  to: parseFloat($('#end-ems').val()),
                                 from: parseFloat($('#start-ems').val())},
                         yaxis: {  to: parseFloat($('#end-depth').val()),
@@ -2184,7 +2290,13 @@
                     $.each(data['simpledepthtime']['sdt'][platform_value[0]], function (label, depth_time_series) {
                         var rec = [];
                         //console.log('Checking time for ' + platform_value[0] + ' label = ' + label + ', times between ' + x1 + ' and ' + x2);
-                        subset_dts = []
+                        subset_dts = [];
+                        bottomdepth_time_series = [];
+                        if ( ! $.isEmptyObject(data.simplebottomdepthtime ) ) {
+                            if ( ! $.isEmptyObject(data.simplebottomdepthtime.sbdt[platform_value[0]][label]) ) {
+                                bottomdepth_time_series = data.simplebottomdepthtime.sbdt[platform_value[0]][label];
+                            }
+                        }
                         $.each(depth_time_series, function (index, td) {
                             // From each activity push only the times between x1 & x2, inclusive
                             if (td[0] >= x1 && td[0] <= x2) {
@@ -2201,6 +2313,7 @@
                                 platform_seen[platform_value[0]] = true;
                              }
                              dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
+                             dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
                          }
                     });
                 }
@@ -2306,7 +2419,7 @@
     
     function plotHistData(parameter, histdata, parameterunits) {
         var units = parameterunits[parameter];
-        histogtram_options_labels = $.extend(true, {}, histogram_options, {
+        histogram_options_labels = $.extend(true, {}, histogram_options, {
                                                             xaxes: [{
                                                                         axisLabel: parameter + ' (' + units + ')'
                                                                     }],
@@ -2316,7 +2429,7 @@
                                                                     }]
                                                                           });
         parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');
-        $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogtram_options_labels);
+        $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogram_options_labels);
         $("#" + parameter_idsafe + "-histogram-flot").trigger('plotloaded');
     }
 
@@ -2451,8 +2564,13 @@
             }
         }
 
-        if ($('#showgeox3ddata').is(':checked')) {
-            qstring += '&showgeox3ddata=1';
+        if ($('#showgeox3ddata').is(':checked') || $('#showplatforms').is(':checked')) {
+            if ($('#showgeox3ddata').is(':checked')) {
+                qstring += '&showgeox3ddata=1';
+            }
+            if ($('#showplatforms').is(':checked')) {
+                qstring += '&showplatforms=1';
+            }
             // Use the attributes of the terrain that is selected
             if ($('body').data()['geoorigin']) {
                 qstring += '&geoorigin=' + $('body').data()['geoorigin'];
@@ -2575,6 +2693,7 @@
                 hasTimeSeries = false;
                 hasTimeSeriesProfile = false;
                 platformTypeHtml = '';
+                $('body').data()['platformModels'] = {};
 
                 // Sort the platformTypes for display
                 platformTypes = $.map(data[key], function(platforms, ptype) {return ptype}).sort();
@@ -2613,6 +2732,12 @@
                         }
                         if (value[3].toLowerCase() == 'timeseriesprofile') {
                             hasTimeSeriesProfile = true;
+                        }
+                        if ( value[3].toLowerCase() == 'timeseries' || value[3].toLowerCase() == 'timeseriesprofile') {
+                            if ( ! $.isEmptyObject(value[4]) ) {
+                                // We have a model, expect to have x, y, and z coordinates to follow
+                                $('body').data()['platformModels'][value[1]] = [value[4], value[5], value[6], value[7]];
+                            }
                         }
                     });
                     platformTypeHtml += '</tbody></table></div></div></div>';
@@ -2753,6 +2878,7 @@
                 if ( ! $.isEmptyObject(data[key]) ) {
                     // Only a single terrain is supported for now
                     $.each(data[key], function (terrain, item) {
+                        $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', item.speed);
                         $('#mp-x3d-viewpoint1').attr('centerOfRotation', item.centerOfRotation);
                         $('#mp-x3d-viewpoint1').attr('position', item.position);
                         $('#mp-x3d-viewpoint1').attr('orientation', item.orientation);
@@ -2781,6 +2907,35 @@
             }
             else if (key == 'resources') {
                 buildMetadataHtml(data);
+            }
+            else if (key == 'attributes') {
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    if ( ! $.isEmptyObject(data[key]['measurement']) ) {
+                        $('#attributes-anchor').parent().parent().parent().show();
+                        labelTypeHtml = '<div style="font-style:italic;font-weight:bold;">Filter by labeled Measured Parameter (co-located measurements remain in selection)</div>';
+                        labelTypes = $.map(data[key]['measurement'], function(labels, labelType) {return labelType}).sort();
+                        $.each(labelTypes, function (index, labelType) {
+                            labels = data[key]['measurement'][labelType];
+                            labelTypeHtml += '<div id="' + labelType + '-group" class="accordian-group">' +
+                            '<div class="accordian-heading">' + 
+                               '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#attributes-anchor" href="#collapse-' + 
+                                labelType + '">' + labelType + 
+                                '</a></h5>' + 
+                            '</div>' + 
+                            '<div id="collapse-' + labelType + '" class="accordion-body collapse in">' + 
+                                '<div class="accordion-inner" style="padding:0;">';
+                            labelTypeHtml += '<table class="table table-condensed stoqs-attributes"><tbody>';
+                            $.each(labels, function (index, label) {
+                                labelTypeHtml += '<tr id="' + label[0] +'">' +
+                                                 '<td><button class="btn btn-mini stoqs-toggle attributes">'+ label[1] +'</button></td>' +
+                                                 '<td>'+ label[2] +'</td>' +
+                                                 '</tr>';
+                            });
+                            labelTypeHtml += '</tbody></table></div></div></div>';
+                        });
+                        $('#amp > div').append(labelTypeHtml);
+                    }
+                }
             }
         
         } // onInit()
@@ -3119,6 +3274,45 @@
             else if (key == 'resources') {
                 buildMetadataHtml(data);
             }
+            else if (key == 'attributes') {
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    var ids = [];
+                    $.each(data[key]['measurement'], function (ltype, labels) {
+                        $.each(labels, function (index, label) {
+                            // Here we need to enable those that are still valid.
+                            var element=$('#' + label[0]);
+                            enableButton($('button', element));             // enable the button in the table row
+                            ids.push(label[0]);
+                        });
+                    });
+                    $('.stoqs-attributes > tbody > tr').each(function (index, elem) {     
+                        if ($.inArray(parseInt(elem.id), ids) == -1) {       
+                            disableButton($('button', $(elem)));            // disable the button in the table row      
+                        }       
+                    });
+                }
+            }
+            else if (key == 'platformorientation') {
+                if (data[key]['x3d']) {
+                    var x3dText = '';
+                    $.each(data[key]['x3d'], function (act, x3d) {
+                        x3dText += x3d;
+                    });
+                    $('#platform-orientations').html(x3dText);
+                }
+                if (data[key]['limits']) {
+                    var limits = data[key]['limits']
+                    $('#spatial-3d-x3d-controls').slider({min: limits[0], max: limits[limits.length - 1], step: 1, value: limits[0], slide: 
+                        $.throttle(function(e, ui) { 
+                            var index = $('#spatial-3d-x3d-controls').slider('option', 'value');
+                            $('#TRANSLATE').attr('translation', data[key]['translation'][index]);
+                            $('#XROT').attr('rotation', data[key]['xRotation'][index]);
+                            $('#YROT').attr('rotation', data[key]['yRotation'][index]);
+                            $('#ZROT').attr('rotation', data[key]['zRotation'][index]);
+                        }, 100)
+                    });
+                }
+            }
 
             // If no parametertime data and Station tab is active then disable it and switch back to Trajectory
             if ( ! $.isEmptyObject(data.parametertime) ) {
@@ -3179,6 +3373,12 @@
                 $('#metadata-ajaxtime').css( { 'color': 'black' } );
                 $('#metadata-ajaxtime').html(" " + nsecs + " seconds");
                 $('#metadata-loading').html("");
+
+                if (init == true) {
+                    // Open Spatial and Temporal Accordions upon load
+                    $('#spatial-anchor').click();
+                    $('#temporal-anchor').click();
+                }
 
                 // For Development - turn on Platform plot controls
                 //$('.platform-plot-instruction').show()
@@ -3714,10 +3914,6 @@
             }
         });
         
-
-        // Open Spatial and Temporal Accordions upon load
-        $('#spatial-anchor').click();
-        $('#temporal-anchor').click();
 
         // Tootips that are disabled after first use - don't want to annoy users too much
         //$('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter to enable'});

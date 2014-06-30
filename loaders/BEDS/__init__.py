@@ -46,20 +46,22 @@ class BEDSLoader(LoadScript):
         into a trajectory netCDF file using the canyon's thalweg.  Use 'timeSeries' for events for which the BED does not significantly translate.
         '''
         stride = stride or self.stride
-        for (aName, pName, file, x3dmodelurl, plotTimeSeriesDepth) in zip(
+        for (aName, pName, file, plotTimeSeriesDepth) in zip(
                             [ a + ' (stride=%d)' % stride for a in self.bed_files], 
-                            self.bed_platforms, self.bed_files, self.bed_x3dmodels, self.bed_depths):
+                            self.bed_platforms, self.bed_files, self.bed_depths):
             url = self.bed_base + file
             if featureType == 'trajectory':
                 # To get timeSeries plotting for trajectories (in the Parameter tab of the UI) assign a plotTimeSeriesDepth value of the starting depth in meters.
-                DAPloaders.runTrajectoryLoader(url, self.campaignName, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
-                                        self.bed_parms, self.dbAlias, stride, plotTimeSeriesDepth=plotTimeSeriesDepth)
+                DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
+                                        self.bed_parms, self.dbAlias, stride, plotTimeSeriesDepth=plotTimeSeriesDepth, grdTerrain=self.grdTerrain)
             elif featureType == 'timeSeries':
-                DAPloaders.runTimeSeriesLoader(url, self.campaignName, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
+                DAPloaders.runTimeSeriesLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
                                         self.bed_parms, self.dbAlias, stride)
 
-            self.addPlaybackResources(x3dmodelurl, aName)
+            # Leave commented out to indicate how this would be used (X3DOM can't handle old style timestamp routing that we used to do in VRML)
+            ##self.addPlaybackResources(x3dplaybackurl, aName)
 
+            self.addPlatformResources('http://dods.mbari.org/data/beds/x3d/beds_housing_with_axes.x3d', pName)
 
 if __name__ == '__main__':
     '''

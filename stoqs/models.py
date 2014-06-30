@@ -242,6 +242,21 @@ class SimpleDepthTime(models.Model):
         verbose_name_plural='Simple depth time series'
         app_label = 'stoqs'
 
+class SimpleBottomDepthTime(models.Model):
+    '''
+    A simplified time series of bottom depth values for an Activity useful for plotting in the UI
+    '''
+    activity = models.ForeignKey(Activity) 
+    nominallocation = models.ForeignKey(NominalLocation, null=True) 
+    instantpoint = models.ForeignKey(InstantPoint)
+    epochmilliseconds = models.FloatField()
+    bottomdepth= models.FloatField()
+    objects = models.GeoManager()
+    class Meta:
+        verbose_name='Simple bottom depth time series'
+        verbose_name_plural='Simple bottom depth time series'
+        app_label = 'stoqs'
+
 class PlannedDepthTime(models.Model):
     '''
     A simplified time series of depth values for an Activity useful for plotting in the UI
@@ -354,6 +369,7 @@ class Measurement(models.Model):
     instantpoint = models.ForeignKey(InstantPoint)
     nominallocation = models.ForeignKey(NominalLocation, null=True)
     depth= models.FloatField(db_index=True)
+    bottomdepth= models.FloatField(db_index=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     objects = models.GeoManager()
     class Meta:
@@ -464,6 +480,32 @@ class SampleResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['sample', 'resource']
 
+class PlatformResource(models.Model):
+    '''
+    Association class pairing Platforms and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    '''
+    uuid = UUIDField(editable=False)
+    platform = models.ForeignKey(Platform)
+    resource = models.ForeignKey(Resource)
+    class Meta:
+        verbose_name = 'Platform Resource'
+        verbose_name_plural = 'Platform Resource'
+        app_label = 'stoqs'
+        unique_together = ['platform', 'resource']
+
+class ResourceResource(models.Model):
+    '''
+    Association class pairing Resources and Resources for many-to-many from/to relationships.
+    '''
+    uuid = UUIDField(editable=False)
+    fromresource = models.ForeignKey(Resource, related_name='toresource')
+    toresource = models.ForeignKey(Resource, related_name='fromresource')
+    class Meta:
+        verbose_name = 'Resource Resource'
+        verbose_name_plural = 'Resource Resource'
+        app_label = 'stoqs'
+        unique_together = ['fromresource', 'toresource']
+
 class ActivityParameter(models.Model):
     '''
     Association class pairing Parameters that have been loaded for an Activity
@@ -529,6 +571,36 @@ class SampledParameter(models.Model):
         verbose_name_plural = 'Sampled Parameter'
         app_label = 'stoqs'
         unique_together = ['sample','parameter']
+
+class MeasuredParameterResource(models.Model):
+    '''
+    Association class pairing MeasuredParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Class contains activity field for ease of association in the filter set of the UI.
+    '''
+    uuid = UUIDField(editable=False)
+    measuredparameter = models.ForeignKey(MeasuredParameter)
+    resource = models.ForeignKey(Resource)
+    activity = models.ForeignKey(Activity)
+    class Meta:
+        verbose_name = 'MeasuredParameter Resource'
+        verbose_name_plural = 'MeasuredParameter Resource'
+        app_label = 'stoqs'
+        unique_together = ['measuredparameter', 'resource']
+
+class SampledParameterResource(models.Model):
+    '''
+    Association class pairing SampledParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
+    Class contains activity field for ease of association in the filter set of the UI.
+    '''
+    uuid = UUIDField(editable=False)
+    sampledparameter = models.ForeignKey(SampledParameter)
+    resource = models.ForeignKey(Resource)
+    activity = models.ForeignKey(Activity)
+    class Meta:
+        verbose_name = 'SampledParameter Resource'
+        verbose_name_plural = 'SampledParameter Resource'
+        app_label = 'stoqs'
+        unique_together = ['sampledparameter', 'resource']
 
 class PermaLink(models.Model):
     '''

@@ -23,11 +23,11 @@ sys.path.insert(0, os.path.abspath('..'))
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 
 from django.conf import settings
-from django.contrib.gis.geos import LineString
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import LineString, Point, Polygon
 from django.db.utils import IntegrityError
 from django.db import connection, transaction, DatabaseError
 from django.db.models import Max, Min
+from django.http import HttpRequest
 from stoqs import models as m
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
@@ -35,11 +35,14 @@ import time
 import re
 import math, numpy
 from coards import to_udunits, from_udunits
+import seawater.csiro as sw
 import csv
 import urllib2
 import logging
-from utils.utils import percentile, median, mode, simplify_points
+from utils.utils import percentile, median, mode, simplify_points, spiciness
+from tempfile import NamedTemporaryFile
 import pprint
+from pupynere import netcdf_file
 
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -72,11 +75,13 @@ class LoadScript(object):
     logger = logging.getLogger('__main__')
     logger.setLevel(logging.INFO)
 
-    def __init__(self, base_dbAlias, base_campaignName, stride=1, x3dTerrains={}):
+    def __init__(self, base_dbAlias, base_campaignName, description, stride=1, x3dTerrains={}, grdTerrain=None):
         self.base_dbAlias = base_dbAlias
         self.base_campaignName = base_campaignName
+        self.campaignDescription = description
         self.stride = stride
         self.x3dTerrains = x3dTerrains
+        self.grdTerrain = grdTerrain
 
     def process_command_line(self):
         '''
@@ -222,6 +227,25 @@ class LoadScript(object):
                             activity=activity, resource=resource)
         self.logger.info('Resource uristring=%s', x3dmodelurl)
 
+    def addPlatformResources(self, x3dmodelurl, pName, value='X3D model'):
+        '''
+        Add Resources to Platform.  Used initially for adding X3D model of a platform.  Can put additional descriptive 
+        information in value option, e.g.: "X3D model derived from SolidWorks model of ESP and processed through aopt"
+        '''
+
+        resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+                                name='x3dplatformmodel', description='X3D scene for model of a platform')
+
+        self.logger.info('Adding to ResourceType: %s', resourceType)
+        self.logger.debug('Looking in database %s for Platform name = %s', self.dbAlias, pName)
+        platform = m.Platform.objects.using(self.dbAlias).get(name=pName)
+        
+        resource, created = m.Resource.objects.using(self.dbAlias).get_or_create(
+                            uristring=x3dmodelurl, name='X3D_model', value=value, resourcetype=resourceType)
+        cr, created = m.PlatformResource.objects.using(self.dbAlias).get_or_create(
+                            platform=platform, resource=resource)
+        self.logger.info('Resource uristring=%s', x3dmodelurl)
+
 
 class STOQS_Loader(object):
     '''
@@ -246,7 +270,7 @@ class STOQS_Loader(object):
     logger = logging.getLogger('__main__')
     logger.setLevel(logging.INFO)
 
-    def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, 
+    def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, stride=1):
         '''
         Intialize with settings that are common for any load of data into STOQS.
@@ -256,11 +280,13 @@ class STOQS_Loader(object):
         @param platformColor: An RGB hex string represnting the color of the platform. 
         @param dbAlias: The name of the database alias as defined in settings.py
         @param campaignName: A string describing the Campaign in which this activity belongs, If that name for a Campaign exists in the DB, it will be used.
+        @param campaignDescription: A string expanding on the campaignName. It should be a short phrase expressing the where and why of a campaign.
         @param activitytypeName: A string such as 'mooring deployment' or 'AUV mission' describing type of activity, If that name for a ActivityType exists in the DB, it will be used.
         @param platformTypeName: A string describing the type of platform, e.g.: 'mooring', 'auv'.  If that name for a PlatformType exists in the DB, it will be used.
         
         '''
         self.campaignName = campaignName
+        self.campaignDescription = campaignDescription
         self.activitytypeName = activitytypeName
         self.platformName = platformName
         self.platformColor = platformColor
@@ -446,7 +472,7 @@ class STOQS_Loader(object):
         
         # Get or create campaign
         if self.campaignName is not None:
-            (campaign, created) = m.Campaign.objects.db_manager(self.dbAlias).get_or_create(name = self.campaignName)
+            (campaign, created) = m.Campaign.objects.db_manager(self.dbAlias).get_or_create(name=self.campaignName, description=self.campaignDescription)
             self.campaign = campaign
             if created:
                 self.logger.info('Created campaign = %s', self.campaign)
@@ -495,12 +521,15 @@ class STOQS_Loader(object):
                                           name=rn, value=value, resourcetype=resourceType)
                     (ar, created) = m.ParameterResource.objects.db_manager(self.dbAlias).get_or_create(
                                     parameter=self.getParameterByName(v), resource=resource)
-                if self.plotTimeSeriesDepth.get(v, False):
-                    (uiResType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name='ui_instruction')
-                    (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
-                                          name='plotTimeSeriesDepth', value=self.plotTimeSeriesDepth[v], resourcetype=uiResType)
-                    (ar, created) = m.ParameterResource.objects.db_manager(self.dbAlias).get_or_create(
-                                    parameter=self.getParameterByName(v), resource=resource)
+                try:
+                    if self.plotTimeSeriesDepth.get(v, False):
+                        (uiResType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name='ui_instruction')
+                        (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                                              name='plotTimeSeriesDepth', value=self.plotTimeSeriesDepth[v], resourcetype=uiResType)
+                        (ar, created) = m.ParameterResource.objects.db_manager(self.dbAlias).get_or_create(
+                                        parameter=self.getParameterByName(v), resource=resource)
+                except AttributeError:
+                    pass
                     
             except KeyError as e:
                 # Just skip derived parameters that may have been added for a sub-classed Loader
@@ -698,7 +727,7 @@ class STOQS_Loader(object):
     def updateActivityParameterStats(self, parameterCounts, sampledFlag=False):
         ''' 
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
-        for this activity.  Store the historgram in the associated table.
+        for this activity.  Store the histogram in the associated table.
         '''                 
         if self.activity:
             a = self.activity
@@ -811,6 +840,91 @@ class STOQS_Loader(object):
 
         self.logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
+    def saveBottomDepth(self):
+      @transaction.commit_on_success(using=self.dbAlias)
+      def _innerSaveBottomDepth(self):
+        '''
+        Read the time series of Parameter altitude and add to depth values to compute BottomDepth
+        and add it to the Measurement so that our Matplotlib plots can also ieasily include the depth profile.  
+        This procedure is suitable for only trajectory data.
+        '''
+        mpQS = m.MeasuredParameter.objects.using(self.dbAlias).select_related(depth=1
+                                      ).filter( datavalue__isnull=False,
+                                                measurement__instantpoint__activity=self.activity, 
+                                                parameter__standard_name='height_above_sea_floor')
+        count =  mpQS.count()
+        self.logger.info('mpQS.count() = %s', count)
+
+        counter = 0
+        for mp in mpQS:
+            counter += 1
+            try:
+                mp.measurement.bottomdepth = mp.measurement.depth + mp.datavalue
+                mp.measurement.save(using=self.dbAlias)
+            except DatabaseError as e:
+                self.logger.warn(e)
+
+            if counter % 10000 == 0:
+                self.logger.info('%d of %d mp.measurement.bottomdepth records saved', counter, count)
+
+      return _innerSaveBottomDepth(self)
+
+    def insertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
+      @transaction.commit_on_success(using=self.dbAlias)
+      def _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
+        '''
+        Read the bottomdepth from Measurement for the Activity, simplify it 
+        and insert the values in the SimpleBottomDepthTime table that is related to the Activity.  
+        This procedure is suitable for only trajectory data.
+        @param critSimpleBottomDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
+        '''
+        tbdQS = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement__instantpoint__activity=self.activity
+                                      ).values('measurement__instantpoint__timevalue', 'measurement__bottomdepth',
+                                      'measurement__instantpoint__id')
+        count =  tbdQS.count()
+
+        # simplify_points() has a limit of how many points it can handle
+        maxRecords = .1e6
+        stride = 1
+        if count > maxRecords:
+            stride = int((count + maxRecords / 2)/ maxRecords)
+            self.logger.info('Striding tbdQS by %d to be kind to simplify_points()', stride)
+
+        # Now, get time and bottomdepth that we just saved for building the SimpleBottomDepth time series
+        line = []
+        pklookup = []
+        i = 0
+        counter = 0
+        for tbd in tbdQS:
+            i += 1
+            if i % stride == 0:
+                counter += 1
+                ems = 1000 * to_udunits(tbd['measurement__instantpoint__timevalue'], 'seconds since 1970-01-01')
+                line.append( (ems, tbd['measurement__bottomdepth']) )
+                pklookup.append(tbd['measurement__instantpoint__id'])
+                if counter % 10000 == 0:
+                    self.logger.info('%d of %d points read', counter, int(count / stride))
+
+        try:
+            # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
+            self.logger.info('Calling simplify_points with len(line) = %d', len(line))
+            simple_line = simplify_points(line, critSimpleBottomDepthTime)
+        except IndexError:
+            simple_line = []        # Likely "list index out of range" from a stride that's too big
+        self.logger.info('Number of points in simplified depth time series = %d', len(simple_line))
+        self.logger.debug('simple_line = %s', simple_line)
+
+        for t,d,k in simple_line:
+            try:
+                ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
+                m.SimpleBottomDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = ip, bottomdepth = d, epochmilliseconds = t)
+            except ObjectDoesNotExist:
+                self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
+
+        self.logger.info('Inserted %d values into SimpleBottomDepthTime', len(simple_line))
+
+      return _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime)
+
     def insertSimpleDepthTimeSeriesByNominalDepth(self, critSimpleDepthTime=10):
         '''
         Read the time series of depth values for each nominal depth of this activity, simplify them 
@@ -868,7 +982,7 @@ class STOQS_Loader(object):
             self.logger.warn(e)
             pass
 
-    def assignParameterGroup(self, parameterCounts, groupName='Measured in situ'):
+    def assignParameterGroup(self, parameterCounts, groupName=MEASUREDINSITU):
         ''' 
         For all the parameters in @parameterCounts create a many-to-many association with the Group named @groupName
         '''                 
@@ -883,6 +997,158 @@ class STOQS_Loader(object):
                 except Exception, e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
+    def addSigmaTandSpice(self, parameterCounts, activity=None):
+      ''' 
+      For all measurements that have standard_name parameters of sea_water_salinity and sea_water_temperature compute sigma-t and add it as a parameter
+      '''                 
+      @transaction.commit_on_success(using=self.dbAlias)
+      def _innerAddSigmaT(self, parameterCounts):
+        
+        # Find all measurements with 'sea_water_temperature' and 'sea_water_salinity'
+        ms = m.Measurement.objects.using(self.dbAlias)
+        ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
+        ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity')
+        if activity:
+            ms = ms.filter(instantpoint__activity=activity)
+        if not ms:
+            self.logger.info("No sea_water_temperature and sea_water_salinity; can't add SigmaT and Spice.")
+            return parameterCounts
+
+        # Create our new Parameters
+        p_sigmat, created = m.Parameter.objects.using(self.dbAlias).get_or_create( standard_name='sea_water_sigma_t',
+                                                                                   long_name='Sigma-T',
+                                                                                   units='kg m-3',
+                                                                                   name='sigmat' )
+        p_spice, created = m.Parameter.objects.using(self.dbAlias).get_or_create( long_name='Spiciness',
+                                                                                   name='spice' )
+        parameterCounts[p_sigmat] = ms.count()
+        parameterCounts[p_spice] = ms.count()
+        self.assignParameterGroup({p_sigmat: ms.count()}, groupName=MEASUREDINSITU)
+        self.assignParameterGroup({p_spice: ms.count()}, groupName=MEASUREDINSITU)
+
+        # Loop through all Measurements, compute Sigma-T, and add to the Measurement
+        for me in ms:
+            try:
+                t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
+                s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, parameter__standard_name='sea_water_salinity').values_list('datavalue')[0][0]
+            except DatabaseError as e:
+                self.logger.warn(e)
+
+            sigmat = sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0
+            spice = spiciness(t, s)
+
+            mp_sigmat = m.MeasuredParameter(datavalue=sigmat, measurement=me, parameter=p_sigmat)
+            mp_spice = m.MeasuredParameter(datavalue=spice, measurement=me, parameter=p_spice)
+            try:
+                mp_sigmat.save(using=self.dbAlias)
+                mp_spice.save(using=self.dbAlias)
+            except IntegrityError, e:
+                self.logger.warn(e)
+            except DatabaseError as e:
+                self.logger.warn(e)
+
+        return parameterCounts
+
+      return _innerAddSigmaT(self, parameterCounts)
+
+    def addAltitude(self, parameterCounts, activity=None):
+      ''' 
+      For all measurements lookup the water depth from a GMT grd file using grdtrack(1), subtract the depth and add altitude as a new Parameter to the Measurement
+      To be called from load script after process_command_line().
+      '''
+      @transaction.commit_on_success(using=self.dbAlias)
+      def _innerAddAltitude(self, parameterCounts, activity=None):
+        # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
+        if self.grdTerrain:
+            fh = netcdf_file(self.grdTerrain)
+            try:
+                # Old GMT format
+                xmin, xmax = fh.variables['x_range'][:]
+                ymin, ymax = fh.variables['y_range'][:]
+            except KeyError as e:
+                try:
+                    # New GMT format
+                    xmin, xmax = fh.variables['lon'].actual_range
+                    ymin, ymax = fh.variables['lat'].actual_range
+                except Exception as e:
+                    try:
+                        # Yet another format (seen in SanPedroBasin50.grd)
+                        xmin, xmax = fh.variables['x'].actual_range
+                        ymin, ymax = fh.variables['y'].actual_range
+                    except Exception as e:
+                        self.logger.error('Cannot read range metadata from %s. Not able to load altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
+                        return parameterCounts
+            except Exception as e:
+                self.logger.error(e)
+                return parameterCounts
+            bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
+            fh.close()
+
+        # Build file of Measurement lon & lat for grdtrack to process
+        xyFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_LatLon_', suffix='.txt').name
+        xyFH = open(xyFileName, 'w')
+        ms = m.Measurement.objects.using(self.dbAlias).filter(geom__within=bbox)
+        if activity:
+            ms = ms.filter(instantpoint__activity=activity)
+        ms = ms.order_by('instantpoint__activity__id', 'instantpoint__timevalue').values('id', 'geom', 'depth').distinct()
+        mList = []
+        depthList = []
+        for me in ms:
+            mList.append(me['id'])
+            depthList.append(me['depth'])
+            xyFH.write("%f %f\n" % (me['geom'].x, me['geom'].y))
+
+        xyFH.close()
+        inputFileCount = len(mList)
+        self.logger.debug('Wrote file %s with %d records', xyFileName, inputFileCount)
+
+        # Requires GMT (yum install GMT)
+        bdepthFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_BDepth', suffix='.txt').name
+        cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+        self.logger.info('Executing %s' % cmd)
+        os.system(cmd)
+        if self.totalRecords > 1e6:
+            self.logger.info('Sleeping 60 seconds to give time for system call to finsh writing to %s', bdepthFileName)
+            time.sleep(60)
+        if self.totalRecords > 1e7:
+            self.logger.info('Sleeping another 300 seconds to give time for system call to finsh writing to %s for more than 10 million records', bdepthFileName)
+            time.sleep(300)
+
+        # Create our new Parameter
+        self.logger.info('Getting or creating new altitude Parameter')
+        p_alt, created = m.Parameter.objects.using(self.dbAlias).get_or_create( standard_name='height_above_sea_floor',
+                                                                                long_name='Altitude',
+                                                                                units='m',
+                                                                                name='altitude' )
+        parameterCounts[p_alt] = ms.count()
+        self.assignParameterGroup({p_alt: ms.count()}, groupName=MEASUREDINSITU)
+
+        # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
+        count = 0
+        with open(bdepthFileName) as altFH:
+            for line in altFH:
+                lon, lat, bdepth = line.split()
+                alt = -float(bdepth)-depthList.pop(0)
+                try:
+                    meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
+                    mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
+                    mp_alt.save(using=self.dbAlias)
+                except IntegrityError, e:
+                    self.logger.warn(e)
+                except DatabaseError as e:
+                    self.logger.warn(e)
+                count += 1
+
+        # Cleanup and sanity check
+        os.remove(xyFileName)
+        os.remove(bdepthFileName)
+        if inputFileCount != count:
+            self.logger.warn('Counts are not equal! inputFileCount = %s, count from grdtrack output = %s', inputFileCount, count)
+
+        return parameterCounts
+
+      return _innerAddAltitude(self, parameterCounts, activity)
+            
 
 if __name__ == '__main__':
     '''

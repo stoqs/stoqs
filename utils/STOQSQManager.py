@@ -13,6 +13,7 @@ STOQS Query manager for building ajax responses to selections made for QueryUI
 '''
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q, Max, Min, Sum, Avg
 from django.db.models.sql import query
 from django.contrib.gis.geos import fromstr, MultiPoint
@@ -24,9 +25,10 @@ from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
 from utils import simplify_points, getParameterGroups
+from geo import GPS
 from MPQuery import MPQuery
 from PQuery import PQuery
-from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException
+from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformOrientation
 from coards import to_udunits
 from datetime import datetime
 import logging
@@ -39,6 +41,9 @@ import os
 import tempfile
 
 logger = logging.getLogger(__name__)
+
+LABEL = 'label'                 # A constant to be also used by classifiers to label MeasuredParameters
+DESCRIPTION = 'description'     # A constant to be also used by classifiers to describe labels
 
 class STOQSQManager(object):
     '''
@@ -71,6 +76,7 @@ class STOQSQManager(object):
             'time': self.getTime,
             'depth': self.getDepth,
             'simpledepthtime': self.getSimpleDepthTime,
+            ##'simplebottomdepthtime': self.getSimpleBottomDepthTime,
             'parametertime': self.getParameterTime,
             'sampledepthtime': self.getSampleDepthTime,
             'counts': self.getCounts,
@@ -81,11 +87,13 @@ class STOQSQManager(object):
             'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
             'parameterparameterx3d': self.getParameterParameterX3D,
             'measuredparameterx3d': self.getMeasuredParameterX3D,
+            'platformorientation': self.getPlatformOrientation,
             'parameterparameterpng': self.getParameterParameterPNG,
             'parameterplatforms': self.getParameterPlatforms,
             'x3dterrains': self.getX3DTerrains,
             'x3dplaybacks': self.getX3DPlaybacks,
             'resources': self.getResources,
+            ##'attributes': self.getAttributes,
         }
         
     def buildQuerySets(self, *args, **kwargs):
@@ -391,6 +399,16 @@ class STOQSQManager(object):
         '''
         # Django makes it easy to do sub-queries: Get Parameters from list of Activities matching current selection
         p_qs = models.Parameter.objects.using(self.dbname).filter(Q(activityparameter__activity__in=self.qs)).order_by('name')
+        if 'mplabels' in self.kwargs:
+            if self.kwargs['mplabels']:
+                # Get all Parameters that have common Measurements given the filter of the selected labels
+                # - this allows selection of co-located MeasuredParameters
+                commonMeasurements = models.MeasuredParameterResource.objects.using(self.dbname).filter( 
+                                        resource__id__in=self.kwargs['mplabels']).values_list(
+                                        'measuredparameter__measurement__id', flat=True)
+                p_qs = p_qs.filter(Q(id__in=models.MeasuredParameter.objects.using(self.dbname).filter(
+                        Q(measurement__id__in=commonMeasurements)).values_list('parameter__id', flat=True).distinct()))
+
         if groupName:
             p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
 
@@ -520,6 +538,37 @@ class STOQSQManager(object):
                     logger.exception(e)
 
         return {'plot': plot_results, 'dataaccess': da_results}
+
+    def _getPlatformModel(self, platformName):
+        @transaction.commit_on_success(using=self.dbname)
+        def _innerGetPlatformModel(self, platform):
+            modelInfo = None, None, None, None
+            try:
+                # Add platform model for only timeSeries and timeSeriesProfile platforms, if there is a model
+                pModel = models.PlatformResource.objects.using(self.dbname).filter(resource__resourcetype__name='x3dplatformmodel',
+                           platform__name=platformName).values_list('resource__uristring', flat=True).distinct()
+                if pModel:
+                    gps = GPS()
+                    try:
+                        geom = self.qs.filter(platform__name=platformName).values_list('nominallocation__geom')[0][0]
+                        depth = self.qs.filter(platform__name=platformName).values_list('nominallocation__depth')[0][0]
+                    except IndexError as e:
+                        logger.warn(e)
+                    else:
+                        if self.request.GET.get('geoorigin', ''):
+                            x,y,z = gps.lla2gcc((geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10))), self.request.GET.get('geoorigin', ''))
+                        else:
+                            # Pass default geoCoords for GeoLocation to use
+                            x,y,z = (geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10)), )
+                        modelInfo = pModel[0], x, y, z
+
+            except DatabaseError as e:
+                logger.warn(e)
+                return modelInfo
+            else:
+                return modelInfo
+
+        return _innerGetPlatformModel(self, platformName)       
     
     def getPlatforms(self):
         '''
@@ -548,11 +597,26 @@ class STOQSQManager(object):
                 if len(fts) > 1:
                     logger.warn('More than one featureType returned for platform %s: %s.  Using the first one.', name, fts)
 
-                try:
-                    platformTypeHash[platformType].append((name, id, color, featureType, ))
-                except KeyError:
-                    platformTypeHash[platformType] = []
-                    platformTypeHash[platformType].append((name, id, color, featureType, ))
+                if featureType == 'trajectory':
+                    try:
+                        platformTypeHash[platformType].append((name, id, color, featureType, ))
+                    except KeyError:
+                        platformTypeHash[platformType] = []
+                        platformTypeHash[platformType].append((name, id, color, featureType, ))
+                else:
+                    x3dModel, x, y, z = self._getPlatformModel(name) 
+                    if x3dModel:
+                        try:
+                            platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
+                        except KeyError:
+                            platformTypeHash[platformType] = []
+                            platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
+                    else:
+                        try:
+                            platformTypeHash[platformType].append((name, id, color, featureType, ))
+                        except KeyError:
+                            platformTypeHash[platformType] = []
+                            platformTypeHash[platformType].append((name, id, color, featureType, ))
 
         return platformTypeHash
     
@@ -704,6 +768,40 @@ class STOQSQManager(object):
                             except TypeError:
                                 continue                                                 # Likely "float argument required, not NoneType"
         return({'sdt': sdt, 'colors': colors})
+
+    def getSimpleBottomDepthTime(self):
+        '''
+        Based on the current selected query criteria for activities, return the associated SimpleBottomDepth time series
+        values as a 2-tuple list inside a 2 level hash of platform__name and activity__name.  Append a third value to the 
+        x,y time series of a maximum depth (positive number in meters) so that Flot will fill downward. See:
+        http://stackoverflow.com/questions/23790277/flot-fill-color-above-a-line-graph
+        '''
+        sbdt = {}
+        maxDepth = 10971        # Max ocean depth 
+
+        trajectoryQ = self._trajectoryQ()
+
+        for plats in self.getPlatforms().values():
+            for p in plats:
+                plq = Q(platform__name = p[0])
+                sbdt[p[0]] = {}
+    
+                if p[3].lower() == 'trajectory':
+                    qs_traj = self.qs.filter(plq & trajectoryQ).values_list( 'simplebottomdepthtime__epochmilliseconds', 'simplebottomdepthtime__bottomdepth',
+                                        'name').order_by('simplebottomdepthtime__epochmilliseconds')
+                    # Add to sbdt hash date-time series organized by activity__name key within a platform__name key
+                    # This will let flot plot the series with gaps between the surveys -- not connected
+                    for s in qs_traj:
+                        try:
+                            sbdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1], maxDepth] )
+                        except KeyError:
+                            sbdt[p[0]][s[2]] = []                                               # First time seeing activity__name, make it a list
+                            if s[1] is not None:
+                                sbdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1], maxDepth] )      # Append first value, even if it is 0.0
+                        except TypeError:
+                            continue                                                            # Likely "float argument required, not NoneType"
+
+        return({'sbdt': sbdt})
 
     #
     # The following set of private (_...) methods are for building the parametertime response
@@ -1204,6 +1302,28 @@ class STOQSQManager(object):
             
         return x3dDict
 
+    def getPlatformOrientation(self):
+        '''
+        Based on the current selected query criteria for activities, return the associated PlatformOrientation time series
+        values as a dictionary of roll, pitch and yaw inside a 2 level hash of platform__name and activity__name.
+        '''
+        orientDict = {}
+        if self.request.GET.get('showplatforms', False):
+            try:
+                count = self.mpq.count()
+            except AttributeError:
+                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+
+            # Test for presence of platform_yaw_angle (which is same as heading for a ship) 
+            orientCount = self.mpq.qs_mp_no_order.filter(parameter__standard_name='platform_yaw_angle').count()
+            if orientCount != 0:
+                mppo = PlatformOrientation(self.kwargs, self.request, self.qs, self.mpq.qs_mp)
+                # Default vertical exaggeration is 10x and default geoorigin is and empty string
+                orientDict = mppo.platformOrientationDataValuesForX3D(float(self.request.GET.get('ve', 10)), self.request.GET.get('geoorigin', ''))
+                orientDict['count'] = orientCount
+            
+        return orientDict
+
     def getParameterPlatforms(self):
         '''
         Retrun hash of parmameter ids (keys) and the platforms (a list) that measured/sampled them
@@ -1258,7 +1378,7 @@ class STOQSQManager(object):
 
     def getResources(self):
         '''
-        Query ActivityResources to Resources remaining in Activity selection
+        Query ActivityResources for Resources remaining in Activity selection
         '''
         netcdfHash = {}
         # Simple name/value attributes
@@ -1294,6 +1414,26 @@ class STOQSQManager(object):
                 qlHash[ar['activity__platform__name']][ar['activity__name']][ar['resource__name']] = ar['resource__uristring']
 
         return {'netcdf': netcdfHash, 'quick_look': qlHash}
+
+    def getAttributes(self):
+        '''
+        Query for "Attributes" which are specific ResourceTypes or fields of other classes. Initially for tagged measurements
+        and for finding comments about Samples, but can encompass any other way a STOQS database may be filtered os searched.
+        '''
+        measurementHash = {}
+        for mpr in models.MeasuredParameterResource.objects.using(self.dbname).filter(activity__in=self.qs
+                        ,resource__name__in=[LABEL]).values( 'resource__resourcetype__name', 'resource__value', 
+                        'resource__id').distinct().order_by('resource__value'):
+            # Include all description resources associated with this label
+            descriptions = ' '.join(models.ResourceResource.objects.using(self.dbname).filter(fromresource__id=mpr['resource__id'], 
+                            toresource__name=DESCRIPTION).values_list('toresource__value', flat=True))
+            try:
+                measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value'], descriptions))
+            except KeyError:
+                measurementHash[mpr['resource__resourcetype__name']] = []
+                measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value'], descriptions))
+
+        return {'measurement': measurementHash}
 
     #
     # Methods that generate Q objects used to populate the query.
@@ -1443,6 +1583,25 @@ class STOQSQManager(object):
             elif fromTable == 'ActivityParameterHistogram':
                 q = q & Q(activityparameter__activity__mindepth__lte=depth[1])
         return q
+
+    def _mplabelsQ(self, resourceids, fromTable='Activity'):
+        '''
+        Build a Q object to be added to the current queryset as a filter.  This will ensure that we
+        only generate the other values/sets for attributes (initially resources that have names of 'label' 
+        that are MeasuredParameter labels) that were selected.
+        '''
+        q = Q()
+        if not resourceids:
+            return q
+        else:
+            if fromTable == 'Activity':
+                q = Q(id__in=models.MeasuredParameterResource.objects.using(self.dbname).filter(
+                                                    resource__id__in=resourceids).values_list('activity__id').distinct())
+            elif fromTable == 'ActivityParameter':
+                q = Q(activity__id__in=models.MeasuredParameterResource.objects.using(self.dbname).filter(
+                                                    resource__id__in=resourceids).values_list('activity__id').distinct())
+
+        return q    
 
     def _trajectoryQ(self):
         '''

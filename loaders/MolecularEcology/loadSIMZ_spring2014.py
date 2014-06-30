@@ -20,19 +20,24 @@ MBARI 12 March 2014
 import os
 import sys
 import datetime
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So that CANON is found
+parentDir = os.path.join(os.path.dirname(__file__), "../")
+sys.path.insert(0, parentDir)      # So that CANON is found
 
 from CANON import CANONLoader
 
 cl = CANONLoader('stoqs_simz_spring2014', 'Sampling and Identification of Marine Zooplankton - Spring 2014',
+                                description = 'Month-long investigation of water in northern Monterey Bay',
                                 x3dTerrains = {
                                     'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                                         'VerticalExaggeration': '10',
+                                        'speed': '1',
                                     }
-                                }
+                                },
+                                # Do not check in .grd files to the repository, keep them in the loaders directory
+                                grdTerrain=os.path.join(parentDir, 'Monterey25.grd'),
                 )
 
 startDatetime = datetime.datetime(2014, 2, 18)
@@ -100,7 +105,7 @@ cl.subsample_csv_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadL_662(stride=100)
+    cl.loadL_662(stride=10)
     cl.loadDorado(stride=100)
     cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=1)

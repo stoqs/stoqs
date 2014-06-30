@@ -41,6 +41,7 @@ import tempfile
 from utils.STOQSQManager import STOQSQManager
 from utils.utils import postgresifySQL
 from utils.MPQuery import MPQuery, MPQuerySet
+from utils.PQuery import PQuery
 from utils import encoders
 from utils.Viz.KML import KML
 
@@ -227,8 +228,9 @@ class BaseOutputer(object):
             pvConstraints = self.parameterValueConstraints()
             if pvConstraints:
                 mpq = MPQuery(self.request)
+                pq = PQuery(self.request)
                 sql = postgresifySQL(str(self.qs.query))
-                sql = mpq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=MPQuery.rest_select_items)
+                sql = pq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=MPQuery.rest_select_items)
                 self.qs = MPQuerySet(sql, MPQuerySet.rest_columns)
             else:
                 self.qs = MPQuerySet(None, MPQuerySet.rest_columns, qs_mp=self.qs)
@@ -362,6 +364,23 @@ def showParameterResource(request, format = 'html'):
     o.fields = ['id', 'uuid', 'parameter_id', 'resource_id', 'parameter__name', 'resource__name', 'resource__value']
     return o.process_request()
 
+def showMeasuredParameterResource(request, format = 'html'):
+    stoqs_object = mod.MeasuredParameterResource
+    query_set = stoqs_object.objects.all()
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'measuredparameter__id', 'resource_id', 'measuredparameter__parameter__name', 
+                'measuredparameter__datavalue', 'resource__name', 'resource__value', 'resource__resourcetype__name']
+    return o.process_request()
+
+def showPlatformResource(request, format = 'html'):
+    stoqs_object = mod.PlatformResource
+    query_set = stoqs_object.objects.all()
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'uuid', 'platform_id', 'resource_id', 'platform__name', 'resource__name', 'resource__value', 'resource__uristring']
+    return o.process_request()
+
 def showParameter(request, format = 'html'):
     stoqs_object = mod.Parameter
     query_set = stoqs_object.objects.all().order_by('name')
@@ -430,6 +449,7 @@ def showActivityResource(request, format = 'html'):
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'uuid', 'activity__name', 'resource__name', 'resource__value', 'resource__uristring']
     return o.process_request()
 
 def showActivityParameter(request, format = 'html'):
