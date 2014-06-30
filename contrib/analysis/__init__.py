@@ -132,7 +132,7 @@ class BiPlot():
 
         sql = sql_template.format(pxname=xParm, pyname=yParm, platform_clause=platformSQL,
                                     time_clause=timeSQL, depth_clause=depthSQL, day_night_clause=dnSQL)
-        if self.args.verbose:
+        if self.args.verbose > 1:
             print "sql =", sql
 
         x = [] 
@@ -150,7 +150,7 @@ class BiPlot():
         return x, y, points
 
 
-    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm):
+    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm, pvDict={}, returnIDs=False, sampleFlag=True):
         '''
         Get Parameter-Parameter data regardless if Parameters are 'Sampled' or 'Measured in situ'
         '''
@@ -159,26 +159,29 @@ class BiPlot():
         request.META = {'dbAlias': self.args.database}
         pq = PQuery(request)
         pq.logger.setLevel(logging.ERROR)
-        if self.args.verbose:
+        if self.args.verbose > 2:
             pq.logger.setLevel(logging.DEBUG)
 
         args = ()
-        kwargs = {'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
-                                          Parameter.objects.using(self.args.database).get(name=yParm).id ]}
-        px, py  = kwargs['parameterparameter']
+        kwargs = {  'time': (startDatetime.strftime('%Y-%m-%d %H:%M:%S'), endDatetime.strftime('%Y-%m-%d %H:%M:%S')),
+                    'platforms': (platform,),
+                    'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
+                                            Parameter.objects.using(self.args.database).get(name=yParm).id ],
+                    'parametervalues': [pvDict]
+                 }
 
-        kwargs['parametervalues'] = {}
+        px, py  = kwargs['parameterparameter']
 
         pq.buildPQuerySet(*args, **kwargs)
 
         pp = ParameterParameter(request, {'x': px, 'y': py}, None, pq, {})
         pp.logger.setLevel(logging.ERROR)
-        if self.args.verbose:
+        if self.args.verbose > 2:
             pp.logger.setLevel(logging.DEBUG)
 
         points = []
         try:
-            pp._getXYCData(strideFlag=False, latlonFlag=True)
+            pp._getXYCData(strideFlag=False, latlonFlag=True, returnIDs=returnIDs, sampleFlag=sampleFlag)
         except PPDatabaseException, e:
             if platform or startDatetime or endDatetime:
                 raise NoPPDataException("No (%s, %s) data from (%s) between %s and %s" % (xParm, yParm, platform, startDatetime, endDatetime))
@@ -188,7 +191,10 @@ class BiPlot():
         for lon, lat in zip(pp.lon, pp.lat):
             points.append(Point(lon, lat))
 
-        return pp.x, pp.y, points
+        if returnIDs:
+            return pp.x_id, pp.y_id, pp.x, pp.y, points
+        else:
+            return pp.x, pp.y, points
 
 
     def _getActivityExtent(self, platform=None):

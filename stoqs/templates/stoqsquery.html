@@ -677,7 +677,7 @@
                     </div>
                     <div id="collapseSampledParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <input type="checkbox" id="show-coordinates-sp-checkbox" checked="checked"/> Show coordinates
+                            <input type="checkbox" id="show-coordinates-sp-checkbox" /> Show coordinates
                             <input type="checkbox" id="show-filtered-sp-checkbox" /> Show filtered out parameters
                             <fieldset>
                             <table id="sampledparameter-table" class="table table-condensed">
@@ -706,9 +706,9 @@
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
                                         </td>
-                                        <td colspan="2" class="all-plot-instruction">Clear selection</td>
+                                        <td colspan="2" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
-                                    <tr class="sp-pp-coordinates">
+                                    <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
@@ -716,7 +716,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Longitude</td>
                                     </tr>
-                                    <tr class="sp-pp-coordinates">
+                                    <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
@@ -724,7 +724,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Latitude</td>
                                     </tr>
-                                    <tr class="sp-pp-coordinates">
+                                    <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
@@ -732,7 +732,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Depth</td>
                                     </tr>
-                                    <tr class="sp-pp-coordinates">
+                                    <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
@@ -757,7 +757,7 @@
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
-                            <input type="checkbox" id="show-coordinates-mp-checkbox" checked="checked"/> Show coordinates
+                            <input type="checkbox" id="show-coordinates-mp-checkbox" /> Show coordinates
                             <input type="checkbox" id="show-filtered-mp-checkbox" /> Show filtered out parameters
                             <fieldset>
                             <table id="measuredparameter-table" class="table table-condensed">
@@ -786,9 +786,9 @@
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
                                         </td>
-                                        <td colspan="2" class="all-plot-instruction">Clear selection</td>
+                                        <td colspan="2" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
-                                    <tr class="mp-pp-coordinates">
+                                    <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
@@ -796,7 +796,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Longitude</td>
                                     </tr>
-                                    <tr class="mp-pp-coordinates">
+                                    <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
@@ -804,7 +804,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Latitude</td>
                                     </tr>
-                                    <tr class="mp-pp-coordinates">
+                                    <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
@@ -812,7 +812,7 @@
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Depth</td>
                                     </tr>
-                                    <tr class="mp-pp-coordinates">
+                                    <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;"><input type="radio" name="parameters_x" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_y" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
@@ -848,6 +848,39 @@
                         </div>
                     </div>
                 </div><!-- accordian-group -->
+
+                <div id="attributes-group" class="accordian-group" style="display:none;">
+                    <div class="accordian-heading">
+                        <h3><a id="attributes-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseAttributes">
+                        Attributes</a>
+                        <button id="clear-attributes-button" class="btn btn-mini disabled">Clear Selection</button>
+                        </h3>
+                    </div>
+
+                    <div id="collapseAttributes" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul id=attributesTabs" class="nav nav-tabs">
+                                <li class="active"><a href="#amp" data-toggle="tab">Measurement</a></li>
+                                <li><a href="#asp" data-toggle="tab">Sample</a></li>
+                                <li><a href="#ac" data-toggle="tab">Campaign</a></li>
+                                <li><a href="#apl" data-toggle="tab">Platform</a></li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="amp">
+                                    <div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="asp">
+                                    <div>
+                                        <div class="row-fluid">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
@@ -1325,6 +1358,10 @@
                     $('#clear-platforms-button').removeClass('disabled');
                     $('#clear-platforms-button').addClass('btn-primary');
                 }
+                if ($(element).hasClass('attributes')) {
+                    $('#clear-attributes-button').removeClass('disabled');
+                    $('#clear-attributes-button').addClass('btn-primary');
+                }
             }
         }
     } // toggleField()
@@ -1540,6 +1577,21 @@
             $('#platforms-anchor').html('Platforms')
             $('#clear-platforms-button').removeClass('btn-primary');
             $('#clear-platforms-button').addClass('disabled');
+        }
+
+        params['mplabels']=[]
+        $('tr',$('#amp')).each(function (index, element) {
+            if ($('.btn-primary', $(element)).length) {
+                params['mplabels'].push(element.id);
+            }
+        });
+        if (params['mplabels'].length) {
+            $('#attributes-anchor').html('Attributes: ' + params['mplabels'].join())
+        }
+        else {
+            $('#attributes-anchor').html('Attributes')
+            $('#clear-attributes-button').removeClass('btn-primary');
+            $('#clear-attributes-button').addClass('disabled');
         }
 
         if (parametervalues) {
@@ -1818,7 +1870,7 @@
             $('#showgeox3ddatatext').text('');
             $('#sectioncolorbar > img').removeAttr('src');
             $('#temporalparameterstrideinfo').text('');
-            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'simpledepthtime', 'platforms', 'sampledepthtime']);
+            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime']);
         }
     });
 
@@ -1876,6 +1928,19 @@
         }
     });
 
+    $("#clear-attributes-button").click(function() {
+        if ( $('#clear-attributes-button').hasClass('btn-primary')) {
+            $("#clear-attributes-button").removeClass('btn-primary');
+            $("#clear-attributes-button").addClass('disabled');
+            $('tr',$('.stoqs-attributes')).each(function (index, element) {
+                if ($('.btn-primary', $(element)).length) {
+                    $('#' + element.id + ' > td > button').removeClass('btn-primary');
+                }
+            });
+            rebuildFilters();
+            $('#attributes-anchor').html('Attributes')
+        }
+    });
     $("#clear-platforms-button").click(function() {
         if ( $('#clear-platforms-button').hasClass('btn-primary')) {
             $("#clear-platforms-button").removeClass('btn-primary');
@@ -1992,7 +2057,7 @@
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
             $('.parameter-plot-radio').show();
             $('.parameter-plot-checkbox').hide();
-            $('.all-plot-instruction').text('Clear selection');
+            $('.all-plot-instruction').text('Clear Selection');
             var ranges={xaxis: {  to: parseFloat($('#end-ems').val()),
                                 from: parseFloat($('#start-ems').val())},
                         yaxis: {  to: parseFloat($('#end-depth').val()),
@@ -2354,7 +2419,7 @@
     
     function plotHistData(parameter, histdata, parameterunits) {
         var units = parameterunits[parameter];
-        histogtram_options_labels = $.extend(true, {}, histogram_options, {
+        histogram_options_labels = $.extend(true, {}, histogram_options, {
                                                             xaxes: [{
                                                                         axisLabel: parameter + ' (' + units + ')'
                                                                     }],
@@ -2364,7 +2429,7 @@
                                                                     }]
                                                                           });
         parameter_idsafe = parameter.replace(/[\s\.\[\]]/g, '_');
-        $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogtram_options_labels);
+        $.plot($("#" + parameter_idsafe + "-histogram-flot"), histdata, histogram_options_labels);
         $("#" + parameter_idsafe + "-histogram-flot").trigger('plotloaded');
     }
 
@@ -2843,6 +2908,35 @@
             else if (key == 'resources') {
                 buildMetadataHtml(data);
             }
+            else if (key == 'attributes') {
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    if ( ! $.isEmptyObject(data[key]['measurement']) ) {
+                        $('#attributes-anchor').parent().parent().parent().show();
+                        labelTypeHtml = '<div style="font-style:italic;font-weight:bold;">Filter by labeled Measured Parameter (co-located measurements remain in selection)</div>';
+                        labelTypes = $.map(data[key]['measurement'], function(labels, labelType) {return labelType}).sort();
+                        $.each(labelTypes, function (index, labelType) {
+                            labels = data[key]['measurement'][labelType];
+                            labelTypeHtml += '<div id="' + labelType + '-group" class="accordian-group">' +
+                            '<div class="accordian-heading">' + 
+                               '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#attributes-anchor" href="#collapse-' + 
+                                labelType + '">' + labelType + 
+                                '</a></h5>' + 
+                            '</div>' + 
+                            '<div id="collapse-' + labelType + '" class="accordion-body collapse in">' + 
+                                '<div class="accordion-inner" style="padding:0;">';
+                            labelTypeHtml += '<table class="table table-condensed stoqs-attributes"><tbody>';
+                            $.each(labels, function (index, label) {
+                                labelTypeHtml += '<tr id="' + label[0] +'">' +
+                                                 '<td><button class="btn btn-mini stoqs-toggle attributes">'+ label[1] +'</button></td>' +
+                                                 '<td>'+ label[2] +'</td>' +
+                                                 '</tr>';
+                            });
+                            labelTypeHtml += '</tbody></table></div></div></div>';
+                        });
+                        $('#amp > div').append(labelTypeHtml);
+                    }
+                }
+            }
         
         } // onInit()
 
@@ -3179,6 +3273,24 @@
             }
             else if (key == 'resources') {
                 buildMetadataHtml(data);
+            }
+            else if (key == 'attributes') {
+                if ( ! $.isEmptyObject(data[key]) ) {
+                    var ids = [];
+                    $.each(data[key]['measurement'], function (ltype, labels) {
+                        $.each(labels, function (index, label) {
+                            // Here we need to enable those that are still valid.
+                            var element=$('#' + label[0]);
+                            enableButton($('button', element));             // enable the button in the table row
+                            ids.push(label[0]);
+                        });
+                    });
+                    $('.stoqs-attributes > tbody > tr').each(function (index, elem) {     
+                        if ($.inArray(parseInt(elem.id), ids) == -1) {       
+                            disableButton($('button', $(elem)));            // disable the button in the table row      
+                        }       
+                    });
+                }
             }
             else if (key == 'platformorientation') {
                 if (data[key]['x3d']) {
