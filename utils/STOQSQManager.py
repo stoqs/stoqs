@@ -42,7 +42,8 @@ import tempfile
 
 logger = logging.getLogger(__name__)
 
-LABEL = 'label'             # A constant to be also used by classifiers to label measurements 
+LABEL = 'label'                 # A constant to be also used by classifiers to label MeasuredParameters
+DESCRIPTION = 'description'     # A constant to be also used by classifiers to describe labels
 
 class STOQSQManager(object):
     '''
@@ -1423,11 +1424,14 @@ class STOQSQManager(object):
         for mpr in models.MeasuredParameterResource.objects.using(self.dbname).filter(activity__in=self.qs
                         ,resource__name__in=[LABEL]).values( 'resource__resourcetype__name', 'resource__value', 
                         'resource__id').distinct().order_by('resource__name'):
+            # Include all description resources associated with this label
+            descriptions = ' '.join(models.ResourceResource.objects.using(self.dbname).filter(fromresource__id=mpr['resource__id'], 
+                            toresource__name=DESCRIPTION).values_list('toresource__value', flat=True))
             try:
-                measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value']))
+                measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value'], descriptions))
             except KeyError:
                 measurementHash[mpr['resource__resourcetype__name']] = []
-                measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value']))
+                measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value'], descriptions))
 
         return {'measurement': measurementHash}
 
