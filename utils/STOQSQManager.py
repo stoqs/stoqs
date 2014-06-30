@@ -1423,7 +1423,7 @@ class STOQSQManager(object):
         measurementHash = {}
         for mpr in models.MeasuredParameterResource.objects.using(self.dbname).filter(activity__in=self.qs
                         ,resource__name__in=[LABEL]).values( 'resource__resourcetype__name', 'resource__value', 
-                        'resource__id').distinct().order_by('resource__name'):
+                        'resource__id').distinct().order_by('resource__value'):
             # Include all description resources associated with this label
             descriptions = ' '.join(models.ResourceResource.objects.using(self.dbname).filter(fromresource__id=mpr['resource__id'], 
                             toresource__name=DESCRIPTION).values_list('toresource__value', flat=True))
