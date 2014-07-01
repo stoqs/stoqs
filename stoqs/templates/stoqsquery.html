@@ -1209,6 +1209,12 @@
             };
         }
 
+        if ( ! $.isEmptyObject(params['mplabels']) ) {
+            for (var i=0; i<params['mplabels'].length; i++) {
+                mp_param = mp_param + 'mplabels=' + params['mplabels'][i] + '&';
+            }
+        }
+
         return mp_param
     }
     
@@ -1597,7 +1603,7 @@
         if (parametervalues) {
             valueText = ': ';
             for (var parameter in parametervalues) {
-                // No CF stantard names end with '_MIN' or '_MAX' and none have upper case letters, so the convention
+                // No CF standard names end with '_MIN' or '_MAX' and none have upper case letters, so the convention
                 // of adding these identifiers and taking them off should work.
                 var min = parametervalues[parameter]['xmin'];
                 var max = parametervalues[parameter]['xmax'];
