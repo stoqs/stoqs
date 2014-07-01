@@ -24,7 +24,7 @@ from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, ValuesQuerySet
 from django.contrib.gis.db.models.query import GeoQuerySet
 from django.db import DatabaseError
 from datetime import datetime
-from stoqs.models import MeasuredParameter, Parameter, SampledParameter, ParameterGroupParameter
+from stoqs.models import MeasuredParameter, Parameter, SampledParameter, ParameterGroupParameter, MeasuredParameterResource
 from utils import postgresifySQL, getGet_Actual_Count, getParameterGroups
 from loaders import MEASUREDINSITU
 from loaders.SampleLoaders import SAMPLED
@@ -577,6 +577,11 @@ class MPQuery(object):
                     qparams['measurement__depth__gte'] = self.kwargs['depth'][0]
                 if self.kwargs['depth'][1] is not None:
                     qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
+
+            if 'mplabels'  in self.kwargs:
+                if self.kwargs['mplabels' ]:
+                    qparams['measurement__id__in'] = MeasuredParameterResource.objects.using(self.request.META['dbAlias']).filter(
+                                        resource__id__in=self.kwargs['mplabels' ]).values_list('measuredparameter__measurement__id', flat=True)
 
             if getGet_Actual_Count(self.kwargs):
                 # Make sure that we have at least time so that the instantpoint table is included

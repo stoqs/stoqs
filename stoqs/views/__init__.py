@@ -198,6 +198,11 @@ class BaseOutputer(object):
                 else:
                     qparams[f + '__in'] = self.request.GET.getlist(f)
 
+        if self.request.GET.get('mplabels', []):
+            # Special addition for labeled data constraint
+            qparams['measurement__id__in'] = mod.MeasuredParameterResource.objects.filter(resource__id__in=[self.request.GET.get('mplabels')]
+                                                                                ).values_list('measuredparameter__measurement__id', flat=True)
+
         self.qparams = qparams
         logger.debug(qparams)
         self.query_set = self.query_set.filter(**qparams)
