@@ -38,6 +38,7 @@ from loaders import MEASUREDINSITU
 import seawater.csiro as sw
 import numpy as np
 from numpy import polyfit
+from itertools import izip
 import logging
 import string
 import random
@@ -418,7 +419,7 @@ class MeasuredParameter(object):
                         ysamp.append(s['depth'])
                         sname.append(s['name'])
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10)
-                    for x,y,sn in zip(xsamp, ysamp, sname):
+                    for x,y,sn in izip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
                 fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
@@ -467,7 +468,7 @@ class MeasuredParameter(object):
             gps = GPS()
             for act in self.value_by_act.keys():
                 self.logger.debug('Reading data from act = %s', act)
-                for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
+                for lon,lat,depth,value in izip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     if geoOrigin:
                         depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
                         points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
@@ -571,7 +572,7 @@ class PlatformOrientation(object):
             keys = ''
             translations = []
             for act in self.yaw_by_act.keys():
-                for lon,lat,depth,t in zip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.time_by_act[act]):
+                for lon,lat,depth,t in izip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.time_by_act[act]):
                     if geoOrigin:
                         depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
                         # TEST send translations directly to Transform from JavaScript
@@ -995,7 +996,7 @@ class ParameterParameter(object):
 
             points = ''
             colors = ''
-            for x,y,z in zip(self.x, self.y, self.z):
+            for x,y,z in izip(self.x, self.y, self.z):
                 # Scale to 10000 on each axis, bounded by min/max values - must be 10000 as X3D in stoqs/templates/stoqsquery.html is hard-coded with 10000
                 # This gives us enough resolution for modern displays and eliminates decimal point characters
                 xs = 10000 * (x - float(self.pMinMax['x'][1])) / (float(self.pMinMax['x'][2]) - float(self.pMinMax['x'][1])) 
