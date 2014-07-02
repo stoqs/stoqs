@@ -6,7 +6,7 @@ __contact__   = 'mccann at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON activities in October 201
+Master loader for all CANON activities in October 2010
 
 Mike McCann
 MBARI 22 April 2012
