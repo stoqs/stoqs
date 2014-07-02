@@ -378,6 +378,15 @@ def showMeasuredParameterResource(request, format = 'html'):
                 'measuredparameter__datavalue', 'resource__name', 'resource__value', 'resource__resourcetype__name']
     return o.process_request()
 
+def showResourceResource(request, format = 'html'):
+    stoqs_object = mod.ResourceResource
+    query_set = stoqs_object.objects.all()
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'fromresource__id', 'fromresource__name', 'fromresource__value', 'fromresource__resourcetype__name', 
+                'toresource__id', 'toresource__name', 'toresource__value', 'toresource__resourcetype__name']
+    return o.process_request()
+
 def showPlatformResource(request, format = 'html'):
     stoqs_object = mod.PlatformResource
     query_set = stoqs_object.objects.all()
