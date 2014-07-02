@@ -705,9 +705,10 @@ class STOQSQManager(object):
                 plq = Q(platform__name = p[0])
                 sdt[p[0]] = {}
                 colors[p[0]] = p[2]
-    
+
                 if p[3].lower() == 'trajectory':
-                    qs_traj = self.qs.filter(plq & trajectoryQ).values_list( 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth',
+                    # Overkill to also filter on trajectoryQ too if p[3].lower() == 'trajectory' - old Tethys data does not have NC_GLOBAL featureType
+                    qs_traj = self.qs.filter(plq).values_list( 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth',
                                         'name').order_by('simpledepthtime__epochmilliseconds')
                     # Add to sdt hash date-time series organized by activity__name key within a platform__name key
                     # This will let flot plot the series with gaps between the surveys -- not connected
