@@ -42,8 +42,10 @@ import tempfile
 
 logger = logging.getLogger(__name__)
 
-LABEL = 'label'                 # A constant to be also used by classifiers to label MeasuredParameters
-DESCRIPTION = 'description'     # A constant to be also used by classifiers to describe labels
+# Constants to be also used by classifiers in contrib/analysis
+LABEL = 'label'
+DESCRIPTION = 'description'
+COMMANDLINE = 'commandline'
 
 class STOQSQManager(object):
     '''

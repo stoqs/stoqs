@@ -33,12 +33,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 from django.db.models import Q
+from django.db.utils import IntegrityError
 from utils.utils import round_to_n, pearsonr
 from textwrap import wrap
 from numpy import polyfit
 from pylab import polyval
 from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource, ResourceResource
-from utils.STOQSQManager import LABEL, DESCRIPTION
+from utils.STOQSQManager import LABEL, DESCRIPTION, COMMANDLINE
 
 from contrib.analysis import BiPlot, NoPPDataException
 
@@ -62,12 +63,23 @@ class Classifier(BiPlot):
         '''
         meas = Measurement.objects.using(self.args.database).filter(measuredparameter__id__in=(mpx,mpy)).distinct()
         acts = Activity.objects.using(self.args.database).filter(instantpoint__measurement__measuredparameter__id__in=(mpx,mpy)).distinct()
-        if len(acts) != 1:
+        if not acts:
+            print "acts = %s" % acts
             raise Exception('Not exactly 1 activity returned with SQL = \n%s' % str(acts.query))
         else:
             return acts[0]
+
+    def saveCommand(self, doOption):
+        '''
+        Save the command executed to a Resource and return it for the doXxxx() method to associate it with the resources it creates
+        '''
+
+        rt, created = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
+        r, created = Resource.objects.using(self.args.database).get_or_create(name=COMMANDLINE, value=self.commandline, resourcetype=rt)
+
+        return r
         
-    def saveLabelSet(self, label, x_ids, y_ids, description, typeName, typeDescription):
+    def saveLabelSet(self, clResource, label, x_ids, y_ids, description, typeName, typeDescription):
         '''
         Save the set of labels in MeasuredParameterResource. Accepts 2 input vectors. (TODO: generalize to N input vectors);
         description is used to describe the criteria for assigning this label. The typeName and typeDecription may be used to
@@ -82,6 +94,9 @@ class Classifier(BiPlot):
             rd, created = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=description, resourcetype=rdt)
             rr = ResourceResource(fromresource=r, toresource=rd)
             rr.save(using=self.args.database)
+            # Associate with commandlineResource
+            ResourceResource.objects.using(self.args.database).get_or_create(fromresource=r, toresource=clResource)
+
         except IntegrityError as e:
             print e
             print "Ignoring"
@@ -98,10 +113,17 @@ class Classifier(BiPlot):
             mpr_y, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
                                 activity=a, measuredparameter=mp_y, resource=r)
 
-    def removeLabelSet(self, label, type):
+    def removeLabelSet(self, clResource, label, description, type):
         '''
         Deep MeasuredParameterResources that have Resource.name=label (such as 'label') and ResourceType.name=type (such as 'Train')
         '''
+        rrs = ResourceResource.objects.using(self.args.database).filter(fromresource__name=LABEL, fromresource__value=label,
+                                                                        toresource__name=DESCRIPTION, toresource__value=description)
+        if self.args.verbose > 1:
+            print "  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description)
+        for rr in rrs:
+            rr.delete(using=self.args.database)
+
         mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
                                     resource__name=LABEL, resource__value=label, resource__resourcetype__name=type)
         if self.args.verbose > 1:
@@ -115,6 +137,8 @@ class Classifier(BiPlot):
         '''
         sdt = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
         edt = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+
+        commandlineResource = self.saveCommand('doLabel')
 
         for label, min, max in zip(self.args.labels, self.args.mins, self.args.maxes):
             # Multiple discriminators are possible...
@@ -131,10 +155,13 @@ class Classifier(BiPlot):
             if self.args.verbose:
                 print "  (%d, %d) MeasuredParameters returned from database %s" % (len(x_ids), len(y_ids), self.args.database)
 
+            description = 'Using Platform %s, Parameter %s from %s to %s' % (self.args.platform, pvDict, self.args.start, self.args.end)
+
             if self.args.clobber:
-                self.removeLabelSet(label, LABELED)
-            self.saveLabelSet(label, x_ids, y_ids, 'Using Platform %s, Parameter %s from %s to %s' % (self.args.platform, pvDict, self.args.start, self.args.end),
-                                    LABELED, 'Labeled with %s as discriminator' % self.args.discriminator)
+                self.removeLabelSet(commandlineResource, label, description, LABELED)
+
+            self.saveLabelSet(commandlineResource, label, x_ids, y_ids, description, LABELED, 
+                                    'Labeled with %s as discriminator' % self.args.discriminator)
 
     def doTrainTest(self):
         '''
