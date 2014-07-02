@@ -40,8 +40,6 @@ cl = CANONLoader('stoqs_september2010', 'CANON - September 2010',
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                 )
 
-
-
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
 cl.dorado_files = [ 'Dorado389_2010_257_01_258_04_decim.nc',
                     'Dorado389_2010_258_05_258_08_decim.nc',
