@@ -938,6 +938,7 @@
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.image.min.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.navigate.min.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.axislabels.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.flot.crosshair.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.cookie.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.debounce.js"></script>
@@ -2113,6 +2114,9 @@
                                         points: { show: false, fill: false },
                                         shadowSize: 0
                                     },
+                                    //crosshair: {
+                                    //    mode: "x"
+                                    //},
                                     legend: { show: false },
                                     selection: { mode: "xy" }
                                   };
