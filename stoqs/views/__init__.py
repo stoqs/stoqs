@@ -469,5 +469,6 @@ def showSimpleDepthTime(request, format = 'html'):
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'activity__name', 'nominallocation', 'instantpoint__timevalue', 'epochmilliseconds', 'depth']
     return o.process_request()
 
