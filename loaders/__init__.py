@@ -900,17 +900,22 @@ class STOQS_Loader(object):
             if i % stride == 0:
                 counter += 1
                 ems = 1000 * to_udunits(tbd['measurement__instantpoint__timevalue'], 'seconds since 1970-01-01')
-                line.append( (ems, tbd['measurement__bottomdepth']) )
-                pklookup.append(tbd['measurement__instantpoint__id'])
-                if counter % 10000 == 0:
-                    self.logger.info('%d of %d points read', counter, int(count / stride))
+                if tbd['measurement__bottomdepth']:
+                    line.append( (ems, tbd['measurement__bottomdepth']) )
+                    pklookup.append(tbd['measurement__instantpoint__id'])
+                    if counter % 10000 == 0:
+                        self.logger.info('%d of %d points read', counter, int(count / stride))
 
-        try:
-            # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
-            self.logger.info('Calling simplify_points with len(line) = %d', len(line))
-            simple_line = simplify_points(line, critSimpleBottomDepthTime)
-        except IndexError:
-            simple_line = []        # Likely "list index out of range" from a stride that's too big
+        if line:
+            try:
+                # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
+                self.logger.info('Calling simplify_points with len(line) = %d', len(line))
+                simple_line = simplify_points(line, critSimpleBottomDepthTime)
+            except IndexError:
+                simple_line = []        # Likely "list index out of range" from a stride that's too big
+        else:
+            simple_line = []
+
         self.logger.info('Number of points in simplified depth time series = %d', len(simple_line))
         self.logger.debug('simple_line = %s', simple_line)
 

@@ -271,7 +271,12 @@ class Base_Loader(STOQS_Loader):
         Possible return values: 'trajectory', 'timeseries', 'timeseriesprofile', lowercase versions.
         '''
         conventions = ''
-        nc_global_keys = self.ds.attributes['NC_GLOBAL']
+        try:
+            nc_global_keys = self.ds.attributes['NC_GLOBAL']
+        except KeyError:
+            logger.warn('Dataset does not have an NC_GLOBAL attribute! Setting featureType to "trajectory" assuming that this is an old Tethys file')
+            return 'trajectory'
+
         if 'Conventions' in nc_global_keys:
             conventions = self.ds.attributes['NC_GLOBAL']['Conventions'].lower()
         elif 'Conventions' in nc_global_keys:
