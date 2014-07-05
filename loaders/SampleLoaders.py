@@ -70,6 +70,9 @@ class ClosestTimeNotFoundException(Exception):
 class SingleActivityNotFound(Exception):
     pass
 
+class SubSampleLoadError(Exception):
+    pass
+
 def removeNonAscii(s): 
     return "".join(i for i in s if ord(i)<128)
 
@@ -178,9 +181,6 @@ class SeabirdLoader(STOQS_Loader):
     '''
     Inherit database loading functions from STOQS_Loader and use its constructor
     '''
-    logger = logging.getLogger('loaders')
-    logger.setLevel(logging.INFO)
-
     def __init__(self, activityName, platformName, dbAlias='default', campaignName=None,
                 activitytypeName=None, platformColor=None, platformTypeName='CTD', stride=1, dodsBase=None):
         self.pctdDir = dodsBase.split('dodsC')[1]
@@ -531,8 +531,8 @@ class SubSamplesLoader(STOQS_Loader):
         Populate the Sample, SampledParameter, SampleRelationship, and associated lookup tables 
         (SampleType, SamplePurpose, AnalysisMethod) with data in the row from the spreadsheet.
         '''
-        if row['Parameter Value'] == '':        # Must have a value to proceed
-            return
+        if row['Parameter Value'] == '':
+            raise SubSampleLoadError("Must have a row['Parameter Value'] to load subsample")
 
         (sampleType, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name='subsample')
         (samplePurpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name=row['Sample Type'])
@@ -571,11 +571,16 @@ class SubSamplesLoader(STOQS_Loader):
         samplerelationship.save(using=self.dbAlias)
                   
         pName = row['Parameter Name'] 
+        spaceRemoveMsg = ''
         if pName.find(' ') != -1:
-            logger.debug("row['Parameter Name'] = %s contains a space.  Removing it/them before adding to STOQS.", pName)
-            pName = pName.replace(' ', '')
+            spaceRemoveMsg = "row['Parameter Name'] = %s contains a space.  Replacing with '_' before adding to STOQS.", pName
+            logger.debug(spaceRemoveMsg)
+            pName = pName.replace(' ', '_')
 
         (parameter, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name=pName, units=row['Parameter Units'])
+        logger.debug('parameter, created = %s, %s', parameter, created)
+        if created and spaceRemoveMsg:
+            logger.info(spaceRemoveMsg)
     
         analysisMethod = None
         if row['Analysis Method']:
@@ -637,7 +642,8 @@ class SubSamplesLoader(STOQS_Loader):
         If @unloadFlag is True then delete the subsamples from @fileName from the database.  This is useful for testing.
         '''
         subCount = 0
-        lastParentSampleID = 0
+        p = None
+        loadedParentSamples = []
         parameterCount = {}
         for r in csv.DictReader(open(fileName)):
             logger.debug(r)
@@ -645,6 +651,7 @@ class SubSamplesLoader(STOQS_Loader):
 
             if aName == '2011_257_00_257_01':
                 aName = '2011_257_00_257_00'      # Correct a typo in Julio's spreadsheet
+
             try:
                 # Try first with %.1f formatted bottle number for Gulper - TODO: Deprecate this!
                 parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
@@ -665,22 +672,27 @@ class SubSamplesLoader(STOQS_Loader):
                 # Unload subsample
                 self.delete_subsample(parentSample, r)
             else:
-                # Some useful logger output
-                if parentSample.id != lastParentSampleID:
-                    if lastParentSampleID:
-                        logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
+                if p and subCount and parentSample not in loadedParentSamples:
+                    # Useful logger output when parentSample changes - more useful when spreadsheet is sorted by parentSample
+                    logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
+
                     logger.info('Loading subsamples of parentSample (activity, bottle) = (%s, %s)', aName, r['Bottle Number'])
                     subCount = 0
 
-                # Load subsample
-                subCount = subCount + 1
-                p = self.load_subsample(parentSample, r)
                 try:
-                    parameterCount[p] += 1
-                except KeyError:
-                    parameterCount[p] = 0
+                    # Load subsample
+                    p = self.load_subsample(parentSample, r)
+                except SubSampleLoadError, e:
+                    logger.warn(e)
+                    continue
+                else:
+                    subCount = subCount + 1
+                    try:
+                        parameterCount[p] += 1
+                    except KeyError:
+                        parameterCount[p] = 0
 
-                lastParentSampleID = parentSample.id
+                    loadedParentSamples.append(parentSample)
    
         if not unloadFlag: 
             # Last logger info message and finish up the loading for this file
