@@ -19,13 +19,25 @@ MBARI 15 January 2013
 import os
 import sys
 import datetime
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-project_dir = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
+
+parentDir = os.path.join(os.path.dirname(__file__), "../")
+sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
 
-cl = CANONLoader('stoqs_dorado2011', 'Dorado - All 2011 missions')
+cl = CANONLoader('stoqs_dorado2011', 'Dorado - All 2011 missions',
+                    description = 'In Monterey Bay and Santa Monica Basin - includes processed Gulper Samples',
+                    x3dTerrains = {
+                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                        'VerticalExaggeration': '10',
+                                        'speed': '1',
+                                    }
+                    },
+                    grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
+                  )
 
 # Dorado surveys in 2011
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2011/netcdf/'
@@ -74,6 +86,12 @@ cl.m1met_parms = [ 'WSPD', 'WDIR', 'ATMP', 'SW', 'RELH' ]
 cl.m1met_startDatetime = datetime.datetime(2011, 1, 1)
 cl.m1met_endDatetime = datetime.datetime(2011, 12, 31)
 
+# SubSample data files received from Julio in email and copied to local directory
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Dorado2011')
+cl.subsample_csv_files = [
+                            '2011_AUVdorado_Samples_Database.csv'
+                         ]
+
 
 # Execute the load
 cl.process_command_line()
@@ -82,14 +100,22 @@ if cl.args.test:
     cl.loadDorado(stride=100)
     cl.loadM1ts(stride=10)
     cl.loadM1met(stride=10)
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
     cl.loadM1ts(stride=1)
     cl.loadM1met(stride=1)
+    cl.loadSubSamples()
 
 else:
     cl.loadDorado(stride=cl.args.stride)
     cl.loadM1ts(stride=cl.args.stride)
     cl.loadM1met(stride=cl.args.stride)
+    cl.loadSubSamples()
+
+# Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+cl.addTerrainResources()
+
+print "All Done."
 
