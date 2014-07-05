@@ -300,7 +300,6 @@
                                 <li><a href="#pp2d" data-toggle="tab">2D</a></li>
                                 <li><a href="#pp3d" data-toggle="tab">3D</a></li>
                                 <li><a href="#ppsql" data-toggle="tab">sql</a></li>
-                                <li><a href="#ppdata" data-toggle="tab">Data</a></li>
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane" id="pp2d">
@@ -465,13 +464,8 @@
                                     </div>
                                 </div>
                                 <div class="tab-pane" id="ppsql">
-                                    <div id="parameter-parameter-sql">
-                                        <pre></pre>
-                                    </div>
-                                </div>
-                                <div class="tab-pane" id="ppdata">
-                                    <div id="parameter-parameter-data">
-                                        <em>Under construction</em>
+                                    <div>
+                                        <pre id="parameter-parameter-sql"></pre>
                                     </div>
                                 </div>
                             </div>
@@ -1003,6 +997,24 @@
     }
     function disableXYZColorPlot(element) {
         $(element).attr('disabled',true);    // disable the X, Y, Z, Color radio buttons in the row
+    }
+
+    function SelectText(element) {
+        var doc = document
+            , text = doc.getElementById(element)
+            , range, selection
+        ;    
+        if (doc.body.createTextRange) {
+            range = document.body.createTextRange();
+            range.moveToElementText(text);
+            range.select();
+        } else if (window.getSelection) {
+            selection = window.getSelection();        
+            range = document.createRange();
+            range.selectNodeContents(text);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
     }
 
     function disableParameterRow(group, element) {
@@ -1969,6 +1981,18 @@
             $('#histogram-instruction').html('<em>Click and drag on plots to select parameter ranges</em>');
             rebuildFilters(['activityparameterhistograms']);
         //}
+    });
+
+    $('#parameter-parameter-sql').click( function() { 
+        SelectText('parameter-parameter-sql') 
+    });
+    
+    $('#mp-sql-field').click( function() { 
+        SelectText('mp-sql-field') 
+    });
+    
+    $('#sp-sql-field').click( function() { 
+        SelectText('sp-sql-field') 
     });
     
     $(".zoom-width-button").click(function(element) {
@@ -3203,11 +3227,11 @@
                 if (data[key]) {
                     if ( ! $.isEmptyObject(data['parameterparameterx3d']) ) {
                         if ( ! $.isEmptyObject(data['parameterparameterx3d']['sql']) ) {
-                            $('#parameter-parameter-sql > pre').html(data['parameterparameterx3d']['sql']);
+                            $('#parameter-parameter-sql').html(data['parameterparameterx3d']['sql']);
                         }
                     }
                     else {
-                        $('#parameter-parameter-sql > pre').html(data[key][2]);
+                        $('#parameter-parameter-sql').html(data[key][2]);
                     }
                     if (data[key][0]) {
                         $('#parameter-parameter-2dplot > img').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key][0]);
