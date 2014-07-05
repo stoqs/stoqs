@@ -2935,6 +2935,8 @@
                             '<div id="collapse-' + labelType + '" class="accordion-body collapse in">' + 
                                 '<div class="accordion-inner" style="padding:0;">';
                             labelTypeHtml += '<table class="table table-condensed stoqs-attributes"><tbody>';
+                            labelTypeHtml += '<tr><td>Source</td><td style="font-family:monospace;font-size:xx-small;">' + 
+                                                    data[key]['measurement']['commandlines'][labelType] + '</td></tr>';
                             $.each(labels, function (index, label) {
                                 labelTypeHtml += '<tr id="' + label[0] +'">' +
                                                  '<td><button class="btn btn-mini stoqs-toggle attributes">'+ label[1] +'</button></td>' +
