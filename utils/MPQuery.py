@@ -741,7 +741,7 @@ class MPQuery(object):
             self.qs_mp = self.getMeasuredParametersQS(MPQuerySet.rest_columns)
             if self.qs_mp:
                 logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
-                sql =  str(self.qs_mp.query) + ';'
+                sql =  str(self.qs_mp.query)
                 sql = sqlparse.format(sql, reindent=True, keyword_case='upper')
                 # Fix up the formatting
                 sql = sql.replace('INNER JOIN', '     INNER JOIN')
@@ -760,7 +760,7 @@ class MPQuery(object):
         self.qs_sp = self.getSampledParametersQS(SPQuerySet.rest_columns)
         if self.qs_sp:
             logger.debug('type(self.qs_sp) = %s', type(self.qs_sp))
-            sql =  str(self.qs_sp.query) + ';'
+            sql =  str(self.qs_sp.query)
             sql = sqlparse.format(sql, reindent=True, keyword_case='upper')
             # Fix up the formatting
             sql = sql.replace('INNER JOIN', '     INNER JOIN')

@@ -465,7 +465,7 @@
                                 </div>
                                 <div class="tab-pane" id="ppsql">
                                     <div>
-                                        <pre id="parameter-parameter-sql"></pre>
+                                        <pre id="parameter-parameter-sql" style="font-size:xx-small;"></pre>
                                     </div>
                                 </div>
                             </div>
@@ -529,7 +529,11 @@
                                         </div>
                                         <pre id="sp-{{format.0}}-field"></pre>
                                     {% else %}
-                                        <pre id="sp-{{format.0}}-field"></pre>
+                                        {% if format.0 = 'sql' %}
+                                            <pre id="sp-{{format.0}}-field" style="font-size:xx-small;"></pre>
+                                        {% else %}
+                                            <pre id="sp-{{format.0}}-field"></pre>
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                                 {% endfor %}            
@@ -586,7 +590,11 @@
                                         </div>
                                         <pre id="mp-{{format.0}}-field"></pre>
                                     {% else %}
-                                        <pre id="mp-{{format.0}}-field"></pre>
+                                        {% if format.0 = 'sql' %}
+                                            <pre id="mp-{{format.0}}-field" style="font-size:xx-small;"></pre>
+                                        {% else %}
+                                            <pre id="mp-{{format.0}}-field"></pre>
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                                 {% endfor %}            
