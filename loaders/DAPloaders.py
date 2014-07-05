@@ -1283,6 +1283,8 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         #    loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
         pass
     elif pName.startswith('Slocum'):
+        # Set depth to 0.0 for u and v as no depth coord is in the dataset's metadata 
+        # - leave it up to the user not the data creator to decide this. :-(.  Must also specify all other auxCoords.
         loader.auxCoords['u'] = {'time': 'time_uv', 'latitude': 'lat_uv', 'longitude': 'lon_uv', 'depth': 0.0}
         loader.auxCoords['v'] = {'time': 'time_uv', 'latitude': 'lat_uv', 'longitude': 'lon_uv', 'depth': 0.0}
         loader.auxCoords['temperature'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
@@ -1292,6 +1294,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         loader.auxCoords['phycoerythrin'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
         loader.auxCoords['cdom'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
         loader.auxCoords['oxygen'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
+        loader.auxCoords['optical_backscatter470nm'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
         loader.auxCoords['optical_backscatter700nm'] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
 
     elif pName.startswith('SPRAY'):
