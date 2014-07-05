@@ -1233,10 +1233,13 @@ class STOQSQManager(object):
                     return '', 'Selected x and y axis parameters are not in filtered selection.'
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
                 try:
-                    plotResults = self.pp.make2DPlot()
+                    ppPngFile, infoText, sql = self.pp.make2DPlot()
                 except PPDatabaseException, e:
-                    return None, e.message, e.sql
-            
+                    return None, e.message, e.sql + ';'
+
+                sql += ';'
+                plotResults = ppPngFile, infoText, sql
+
         return plotResults
 
     def getParameterParameterX3D(self):
@@ -1270,6 +1273,7 @@ class STOQSQManager(object):
                     x3dDict = self.pp.makeX3D()
                 except DatabaseError, e:
                     return '', e
+                x3dDict['sql'] += ';'
             
         return x3dDict
 
