@@ -1235,9 +1235,8 @@ class STOQSQManager(object):
                 try:
                     ppPngFile, infoText, sql = self.pp.make2DPlot()
                 except PPDatabaseException, e:
-                    return None, e.message, e.sql + ';'
+                    return None, e.message, e.sql
 
-                sql += ';'
                 plotResults = ppPngFile, infoText, sql
 
         return plotResults
