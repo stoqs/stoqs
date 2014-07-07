@@ -1431,7 +1431,8 @@ class STOQSQManager(object):
         sources = models.ResourceResource.objects.using(self.dbname).filter(toresource__name=COMMANDLINE
                                 ).values_list('fromresource__resourcetype__name', 'toresource__value').distinct()
 
-        measurementHash['commandlines'] = dict((s[0], s[1]) for s in sources)
+        if sources:
+            measurementHash['commandlines'] = dict((s[0], s[1]) for s in sources)
 
         for mpr in models.MeasuredParameterResource.objects.using(self.dbname).filter(activity__in=self.qs
                         ,resource__name__in=[LABEL]).values( 'resource__resourcetype__name', 'resource__value', 
