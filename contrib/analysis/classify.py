@@ -113,32 +113,56 @@ class Classifier(BiPlot):
             mpr_y, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
                                 activity=a, measuredparameter=mp_y, resource=r)
 
-    def removeLabelSet(self, clResource, label, description, type):
+    def removeLabels(self, labeledGroupName, label=None, description=None, commandline=None):
         '''
-        Deep MeasuredParameterResources that have Resource.name=label (such as 'label') and ResourceType.name=type (such as 'Train')
+        Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Labeled Plankton').  
+        Restrict deletion to the other passed in options, if specified: label is like 'diatom', description is like 
+        'Using Platform dorado, Parameter {'salinity': ('33.65', '33.70')} from 20130916T124035 to 20130919T233905'
+        (commandline is too long to show in this doc string - see examples in usage note).  Note: Some metadatda
+        ResourceTypes will not be removed even though the Resources that use them will be removed.
         '''
-        rrs = ResourceResource.objects.using(self.args.database).filter(fromresource__name=LABEL, fromresource__value=label,
-                                                                        toresource__name=DESCRIPTION, toresource__value=description)
-        if self.args.verbose > 1:
-            print "  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description)
-        for rr in rrs:
-            rr.delete(using=self.args.database)
+        # Remove MeasuredParameter associations with Resource (Labeled data)
+        mprs = MeasuredParameterResource.objects.using(self.args.database).filter(resource__resourcetype__name=labeledGroupName
+                                ).select_related(depth=1)
+        if label:
+            mprs = mprs.filter(resource__name=LABEL, resource__value=label)
 
-        mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
-                                    resource__name=LABEL, resource__value=label, resource__resourcetype__name=type)
         if self.args.verbose > 1:
-            print "  Removing MeasuredParameterResources with label = '%s' and type = '%s'" % (label, type)
+            print "  Removing MeasuredParameterResources with type = '%s' and label = %s" % (labeledGroupName, label)
+
+        rs = []
         for mpr in mprs:
+            rs.append(mpr.resource)
             mpr.delete(using=self.args.database)
 
-    def doLabel(self):
+        # Remove Resource associations with Resource (label metadata), make rs list distinct with set() before iterating on the delete()
+        if label and description and commandline:
+            rrs = ResourceResource.objects.using(self.args.database).filter(
+                                                (Q(fromresource__name=LABEL) & Q(fromresource__value=label))
+                                              & (  (Q(toresource__name=DESCRIPTION) & Q(toresource__value=description))
+                                                 | (Q(toresource__name=COMMANDLINE) & Q(toresource__value=commandline)) ) )
+                                        
+            if self.args.verbose > 1:
+                print "  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description)
+
+            for rr in rrs:
+                rr.delete(using=self.args.database)
+
+        else:
+            if self.args.verbose > 1:
+                print "  Removing Resources associated with labeledGroupName = %s'" % labeledGroupName
+
+            for r in set(rs):
+                r.delete(using=self.args.database)
+
+    def createLabels(self, labeledGroupName):
         '''
         Using discriminator, mins, and maxes label MeasuredParameters in the database so that we can do supervised learning
         '''
         sdt = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
         edt = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
 
-        commandlineResource = self.saveCommand('doLabel')
+        commandlineResource = self.saveCommand('createLabels')
 
         for label, min, max in zip(self.args.labels, self.args.mins, self.args.maxes):
             # Multiple discriminators are possible...
@@ -158,12 +182,12 @@ class Classifier(BiPlot):
             description = 'Using Platform %s, Parameter %s from %s to %s' % (self.args.platform, pvDict, self.args.start, self.args.end)
 
             if self.args.clobber:
-                self.removeLabelSet(commandlineResource, label, description, LABELED)
+                self.removeLabels(labeledGroupName, label, description, commandlineResource.value)
 
-            self.saveLabelSet(commandlineResource, label, x_ids, y_ids, description, LABELED, 
+            self.saveLabelSet(commandlineResource, label, x_ids, y_ids, description, labeledGroupName, 
                                     'Labeled with %s as discriminator' % self.args.discriminator)
 
-    def doTrainTest(self):
+    def doTrainTest(self, labeledGroupName):
         '''
         Query the database for labeled training data, fit a model to it, and save the pickled model back to the database
         '''
@@ -175,7 +199,7 @@ class Classifier(BiPlot):
         target = 0
         for label in self.args.labels:
             mprs = MeasuredParameterResource.objects.using(self.args.database).filter(resource__name=LABEL, 
-                                                resource__resourcetype__name=LABELED, resource__value=label
+                                                resource__resourcetype__name=labeledGroupName, resource__value=label
                                                 ).values_list('measuredparameter__datavalue', flat=True)
             count = mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]).count()
             f0 = np.append(f0, mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]))
@@ -197,7 +221,7 @@ class Classifier(BiPlot):
         # Save pickled mode to the database and relate it to the LABELED data resource
         if self.args.modelBaseName:
             rt, created = ResourceType.objects.using(self.args.database).get_or_create(name='FittedModel', description='SVC(gamma=2, C=1)')
-            labeledResource = Resource.objects.using(self.args.database).filter(resourcetype__name=LABELED)[0]
+            labeledResource = Resource.objects.using(self.args.database).filter(resourcetype__name=labeledGroupName)[0]
             modelValue = pickle.dumps(clf).encode("zip").encode("base64").strip()
             modelResource = Resource(name=self.args.modelBaseName, value=modelValue, resourcetype=rt)
             modelResource.save(using=self.args.database)
@@ -247,8 +271,8 @@ class Classifier(BiPlot):
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n' 
-        examples += "Step 1: Save Labeled features in the database using salinity as a discriminator:\n"
-        examples += sys.argv[0] + " --doLabel --database stoqs_september2013_t --platform dorado --start 20130916T124035 --end 20130919T233905 --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 --clobber -v\n\n"
+        examples += "Step 1: Create Labeled features in the database using salinity as a discriminator:\n"
+        examples += sys.argv[0] + " --createLabels --groupName Plankton --database stoqs_september2013_t --platform dorado --start 20130916T124035 --end 20130919T233905 --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 --clobber -v\n\n"
         examples += "Step 2: Create a prediction model using the labels created in Step 1\n"
         examples += sys.argv[0] + " --doTrainTest --database stoqs_september2013_t --classifier SVC --labels diatom dino1 dino2 sediment --inputs bbp700 fl700_uncorr --discriminator salinity --modelBaseName SVC_20140625T180100\n\n"
         examples += "Step 3: Use a model to classify new measurements\n"
@@ -263,12 +287,14 @@ class Classifier(BiPlot):
         ##parser.add_argument('--minDepth', action='store', help='Minimum depth for data queries', default=None, type=float)
         ##parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
 
-        parser.add_argument('--doLabel', action='store_true', help='Label data with --discriminator, --labels, --mins, and --maxes options')
+        parser.add_argument('--createLabels', action='store_true', help='Label data with --discriminator, --groupName --labels, --mins, and --maxes options')
+        parser.add_argument('--removeLabels', action='store_true', help='Remove Labels with --groupName option')
         parser.add_argument('--doTrainTest', action='store_true', help='Fit a model to Labeled data with --classifier to labels in --labels and save in database as --modelBaseName')
         parser.add_argument('--inputs', action='store', help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--discriminator', action='store', help='Parameter name to use to discriminate the data')
+        parser.add_argument('--groupName', action='store', help='Name to follow "Labeled" in UI describing the group of --labels for --createLabels option')
         parser.add_argument('--labels', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--mins', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--maxes', action='store', help='List of labels to create separated by spaces', nargs='*')
@@ -288,8 +314,13 @@ if __name__ == '__main__':
 
     c = Classifier()
     c.process_command_line()
-    if c.args.doLabel:
-        c.doLabel()
+
+    if c.args.createLabels:
+        c.createLabels(' '.join((LABELED, c.args.groupName)))
+
+    if c.args.removeLabels:
+        c.removeLabels(' '.join((LABELED, c.args.groupName)))
+
     elif c.args.doTrainTest:
-        c.doTrainTest()
+        c.doTrainTest(' '.join((LABELED, c.args.groupName)))
 
