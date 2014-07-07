@@ -20,14 +20,26 @@ import os
 import sys
 import datetime
 
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-project_dir = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
+parentDir = os.path.join(os.path.dirname(__file__), "../")
+sys.path.insert(0, parentDir)  # So that CANON is found
+
 
 from CANON import CANONLoader
 from SampleLoaders import SubSamplesLoader
 
-cl = CANONLoader('stoqs_february2012', 'GOC - February 2012')
+cl = CANONLoader('stoqs_february2012', 'GOC - February 2012',
+                        description = 'Western Flyer profile and underway CTD data from Monterey to Gulf of California with Sample data from BOG',
+                        x3dTerrains = {
+                            'http://dods.mbari.org/terrain/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                                'position': '14051448.48336 -15407886.51486 6184041.22775',
+                                'orientation': '0.83940 0.33030 0.43164 1.44880',
+                                'centerOfRotation': '0 0 0',
+                                'VerticalExaggeration': '10',
+                            }
+                        },
+                        grdTerrain = os.path.join(parentDir, 'Globe_1m_bath.grd')
+                )
+
 
 # Base OPenDAP server - if aboard a ship change to the local odss server
 cl.tdsBase = 'http://odss.mbari.org:8080/thredds/'      
@@ -79,8 +91,8 @@ cl.subsample_csv_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    ##cl.loadWFuctd(stride=10)
-    ##cl.loadWFpctd(stride=1)
+    cl.loadWFuctd(stride=10)
+    cl.loadWFpctd(stride=1)
     cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
@@ -99,4 +111,9 @@ else:
     cl.loadWFuctd()
     cl.loadWFpctd()
     cl.loadSubSamples()
+
+# Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+cl.addTerrainResources()
+
+print "All Done."
 
