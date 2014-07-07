@@ -2957,25 +2957,27 @@
                         labelTypeHtml = '<div style="font-style:italic;font-weight:bold;">Filter by labeled Measured Parameter (co-located measurements remain in selection)</div>';
                         labelTypes = $.map(data[key]['measurement'], function(labels, labelType) {return labelType}).sort();
                         $.each(labelTypes, function (index, labelType) {
-                            labels = data[key]['measurement'][labelType];
-                            labelTypeHtml += '<div id="' + labelType + '-group" class="accordian-group">' +
-                            '<div class="accordian-heading">' + 
-                               '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#attributes-anchor" href="#collapse-' + 
-                                labelType + '">' + labelType + 
-                                '</a></h5>' + 
-                            '</div>' + 
-                            '<div id="collapse-' + labelType + '" class="accordion-body collapse in">' + 
-                                '<div class="accordion-inner" style="padding:0;">';
-                            labelTypeHtml += '<table class="table table-condensed stoqs-attributes"><tbody>';
-                            labelTypeHtml += '<tr><td>Source</td><td style="font-family:monospace;font-size:xx-small;">' + 
-                                                    data[key]['measurement']['commandlines'][labelType] + '</td></tr>';
-                            $.each(labels, function (index, label) {
-                                labelTypeHtml += '<tr id="' + label[0] +'">' +
-                                                 '<td><button class="btn btn-mini stoqs-toggle attributes">'+ label[1] +'</button></td>' +
-                                                 '<td>'+ label[2] +'</td>' +
-                                                 '</tr>';
-                            });
-                            labelTypeHtml += '</tbody></table></div></div></div>';
+                            if (labelType != 'commandlines') {
+                                labels = data[key]['measurement'][labelType];
+                                labelTypeHtml += '<div id="' + labelType + '-group" class="accordian-group">' +
+                                '<div class="accordian-heading">' + 
+                                '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#attributes-anchor" href="#collapse-' + 
+                                    labelType + '">' + labelType + 
+                                    '</a></h5>' + 
+                                '</div>' + 
+                                '<div id="collapse-' + labelType + '" class="accordion-body collapse in">' + 
+                                    '<div class="accordion-inner" style="padding:0;">';
+                                labelTypeHtml += '<table class="table table-condensed stoqs-attributes"><tbody>';
+                                labelTypeHtml += '<tr><td>Source</td><td style="font-family:monospace;font-size:xx-small;">' + 
+                                                        data[key]['measurement']['commandlines'][labelType] + '</td></tr>';
+                                $.each(labels, function (index, label) {
+                                    labelTypeHtml += '<tr id="' + label[0] +'">' +
+                                                     '<td><button class="btn btn-mini stoqs-toggle attributes">'+ label[1] +'</button></td>' +
+                                                     '<td>'+ label[2] +'</td>' +
+                                                     '</tr>';
+                                });
+                                labelTypeHtml += '</tbody></table></div></div></div>';
+                            }
                         });
                         $('#amp > div').append(labelTypeHtml);
                     }
