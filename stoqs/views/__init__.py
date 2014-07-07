@@ -449,6 +449,7 @@ def showResource(request, format = 'html'):
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'name', 'value', 'uristring', 'resourcetype__name', 'resourcetype__description']
     return o.process_request()
 
 def showResourceType(request, format = 'html'):
