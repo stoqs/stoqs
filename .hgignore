@@ -12,3 +12,6 @@ doc/papers/.+/.+\.blg
 doc/papers/.+/.+\.dvi
 doc/papers/.+/.+\.log
 doc/papers/.+/.+\.out
+# Loader GMT grid and output text files
+loaders/.grd 
+loaders/.out
