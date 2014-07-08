@@ -44,8 +44,14 @@ from utils.STOQSQManager import LABEL, DESCRIPTION, COMMANDLINE
 from contrib.analysis import BiPlot, NoPPDataException
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.cross_validation import train_test_split
+from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.lda import LDA
+from sklearn.qda import QDA
 import pickle
 
 LABELED = 'Labeled'
@@ -187,17 +193,17 @@ class Classifier(BiPlot):
             self.saveLabelSet(commandlineResource, label, x_ids, y_ids, description, labeledGroupName, 
                                     'Labeled with %s as discriminator' % self.args.discriminator)
 
-    def doTrainTest(self, labeledGroupName):
+    def _loadLabeledData(self, labeledGroupName):
         '''
-        Query the database for labeled training data, fit a model to it, and save the pickled model back to the database
+        Retrieve from the database to set of Labeled data and return the standard X, and y arrays that the scikit-learn package uses
         '''
-        clf = SVC(gamma=2, C=1)
-
         f0 = np.array(0)
         f1 = np.array(0)
         y = np.array(0, dtype=int)
         target = 0
         for label in self.args.labels:
+            if label.startswith('dino'):
+                continue
             mprs = MeasuredParameterResource.objects.using(self.args.database).filter(resource__name=LABEL, 
                                                 resource__resourcetype__name=labeledGroupName, resource__value=label
                                                 ).values_list('measuredparameter__datavalue', flat=True)
@@ -207,9 +213,51 @@ class Classifier(BiPlot):
             y = np.append(y, np.ones(count) * target)
             target += 1
 
+        # Form the feature vectors into the X matrix that sklearn wanta
         X = np.concatenate((f0.reshape(-1,1), f1.reshape(-1,1)), axis=1)
+
+        return X, y
+
+    def doModelsScore(self, labeledGroupName):
+        '''
+        Print scores for several different classifiers
+        '''
+        names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Decision Tree",
+                 "Random Forest", "AdaBoost", "Naive Bayes", "LDA", "QDA"]
+        classifiers = [
+            KNeighborsClassifier(3),
+            SVC(kernel="linear", C=0.025),
+            SVC(gamma=2, C=1),
+            DecisionTreeClassifier(max_depth=5),
+            RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+            AdaBoostClassifier(),
+            GaussianNB(),
+            LDA(),
+            QDA()]
+
+        X, y = self._loadLabeledData(labeledGroupName)
+
+        for name, clf in zip(names, classifiers):
+            scores = cross_val_score(clf, X, y, cv=5)
+            print("%-18s accuracy: %0.2f (+/- %0.2f)" % (name, scores.mean(), scores.std() * 2))
+
+    def doTrainTest(self, labeledGroupName):
+        '''
+        Query the database for labeled training data, fit a model to it, and save the pickled model back to the database.
+        Follow the pattern in the example at http://scikit-learn.org/stable/auto_examples/plot_classifier_comparison.html
+        and learn about Learning at https://www.youtube.com/watch?v=4ONBVNm3isI (see at time 2:33 and following - though
+        the whole tutorial is worth watching).
+        '''
+        clf = SVC(gamma=1, C=1)
+
+        X, y = self._loadLabeledData(labeledGroupName)
+
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size, train_size=self.args.train_size)
 
+        # TODO: Implement graphical evaluation as in http://scikit-learn.org/stable/auto_examples/plot_classifier_comparison.html
+
+        import pdb
+        pdb.set_trace()
 
         X_train = StandardScaler().fit_transform(X_train)
 
@@ -218,6 +266,13 @@ class Classifier(BiPlot):
         if self.args.verbose:
             print "  score = %f" % score
 
+        self._saveModel()
+
+
+    def _saveModel(self):
+        '''
+        Pickle and save the model in the database 
+        '''
         # Save pickled mode to the database and relate it to the LABELED data resource
         if self.args.modelBaseName:
             rt, created = ResourceType.objects.using(self.args.database).get_or_create(name='FittedModel', description='SVC(gamma=2, C=1)')
@@ -231,7 +286,6 @@ class Classifier(BiPlot):
             if self.args.verbose:
                 print 'Saved fitted model to the database with name = %s' %self.args.modelBaseName
                 print 'Retrieve with "clf = pickle.loads(r.value.decode("base64").decode("zip"))"'
-
 
     def getFileName(self, figCount):
         '''
@@ -290,6 +344,7 @@ class Classifier(BiPlot):
         parser.add_argument('--createLabels', action='store_true', help='Label data with --discriminator, --groupName --labels, --mins, and --maxes options')
         parser.add_argument('--removeLabels', action='store_true', help='Remove Labels with --groupName option')
         parser.add_argument('--doTrainTest', action='store_true', help='Fit a model to Labeled data with --classifier to labels in --labels and save in database as --modelBaseName')
+        parser.add_argument('--doModelsScore', action='store_true', help='Print scores for fits of various models for --groupName')
         parser.add_argument('--inputs', action='store', help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
@@ -323,4 +378,7 @@ if __name__ == '__main__':
 
     elif c.args.doTrainTest:
         c.doTrainTest(' '.join((LABELED, c.args.groupName)))
+
+    elif c.args.doModelsScore:
+        c.doModelsScore(' '.join((LABELED, c.args.groupName)))
 
