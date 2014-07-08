@@ -63,6 +63,16 @@ class Classifier(BiPlot):
     To hold methods and data to support classification of measurements in a STOQS database.
     See http://scikit-learn.org/stable/auto_examples/plot_classifier_comparison.html
     '''
+    classifiers = { 'Nearest_Neighbors': KNeighborsClassifier(3),
+                    'Linear_SVM': SVC(kernel="linear", C=0.025),
+                    'RBF_SVM': SVC(gamma=2, C=1),
+                    'Decision_Tree': DecisionTreeClassifier(max_depth=5),
+                    'Random_Forest': RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+                    'AdaBoost': AdaBoostClassifier(),
+                    'Naive_Bayes': GaussianNB(),
+                    'LDA': LDA(),
+                    'QDA': QDA()
+                  }
     def getActivity(self, mpx, mpy):
         '''
         Return activity object which MeasuredParameters mpx and mpy belong to
@@ -222,42 +232,31 @@ class Classifier(BiPlot):
         '''
         Print scores for several different classifiers
         '''
-        names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Decision Tree",
-                 "Random Forest", "AdaBoost", "Naive Bayes", "LDA", "QDA"]
-        classifiers = [
-            KNeighborsClassifier(3),
-            SVC(kernel="linear", C=0.025),
-            SVC(gamma=2, C=1),
-            DecisionTreeClassifier(max_depth=5),
-            RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
-            AdaBoostClassifier(),
-            GaussianNB(),
-            LDA(),
-            QDA()]
-
         X, y = self._loadLabeledData(labeledGroupName)
 
-        for name, clf in zip(names, classifiers):
-            scores = cross_val_score(clf, X, y, cv=5)
-            print("%-18s accuracy: %0.2f (+/- %0.2f)" % (name, scores.mean(), scores.std() * 2))
+        if X.any() and y.any():
+            for name, clf in self.classifiers.iteritems():
+                scores = cross_val_score(clf, X, y, cv=5)
+                print("%-18s accuracy: %0.2f (+/- %0.2f)" % (name, scores.mean(), scores.std() * 2))
+        else:
+            raise Exception('No data returned for labeledGroupName = %s' % labeledGroupName)
 
-    def doTrainTest(self, labeledGroupName):
+    def createClassifier(self, labeledGroupName):
         '''
         Query the database for labeled training data, fit a model to it, and save the pickled model back to the database.
         Follow the pattern in the example at http://scikit-learn.org/stable/auto_examples/plot_classifier_comparison.html
         and learn about Learning at https://www.youtube.com/watch?v=4ONBVNm3isI (see at time 2:33 and following - though
         the whole tutorial is worth watching).
         '''
-        clf = SVC(gamma=1, C=1)
+        clf = self.classifiers[self.args.classifier]
 
         X, y = self._loadLabeledData(labeledGroupName)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size, train_size=self.args.train_size)
 
-        # TODO: Implement graphical evaluation as in http://scikit-learn.org/stable/auto_examples/plot_classifier_comparison.html
-
         import pdb
         pdb.set_trace()
+        # TODO: Implement graphical evaluation as in http://scikit-learn.org/stable/auto_examples/plot_classifier_comparison.html
 
         X_train = StandardScaler().fit_transform(X_train)
 
@@ -266,10 +265,9 @@ class Classifier(BiPlot):
         if self.args.verbose:
             print "  score = %f" % score
 
-        self._saveModel()
+        self._saveModel(labeledGroupName, clf)
 
-
-    def _saveModel(self):
+    def _saveModel(self, labeledGroupName, clf):
         '''
         Pickle and save the model in the database 
         '''
@@ -324,12 +322,14 @@ class Classifier(BiPlot):
         import argparse
         from argparse import RawTextHelpFormatter
 
-        examples = 'Examples:' + '\n\n' 
+        examples = 'Example machine learning workflow:' + '\n\n' 
         examples += "Step 1: Create Labeled features in the database using salinity as a discriminator:\n"
         examples += sys.argv[0] + " --createLabels --groupName Plankton --database stoqs_september2013_t --platform dorado --start 20130916T124035 --end 20130919T233905 --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 --clobber -v\n\n"
-        examples += "Step 2: Create a prediction model using the labels created in Step 1\n"
-        examples += sys.argv[0] + " --doTrainTest --database stoqs_september2013_t --classifier SVC --labels diatom dino1 dino2 sediment --inputs bbp700 fl700_uncorr --discriminator salinity --modelBaseName SVC_20140625T180100\n\n"
-        examples += "Step 3: Use a model to classify new measurements\n"
+        examples += "Step 2: Evaluate classifiers using the labels created in Step 1\n"
+        examples += sys.argv[0] + " --doModelsScore --groupName Plankton --database stoqs_september2013_t --inputs bbp700 fl700_uncorr --labels diatom dino1 dino2 sediment\n\n"
+        examples += "Step 3: Create a prediction model using the labels created in Step 1\n"
+        examples += sys.argv[0] + " --createClassifier --groupName Plankton --database stoqs_september2013_t --classifier Nearest_Neighbors --labels diatom dino1 dino2 sediment --inputs bbp700 fl700_uncorr --discriminator salinity --modelBaseName Nearest_Neighbors_1\n\n"
+        examples += "Step 4: Use a model to classify new measurements\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
@@ -343,7 +343,7 @@ class Classifier(BiPlot):
 
         parser.add_argument('--createLabels', action='store_true', help='Label data with --discriminator, --groupName --labels, --mins, and --maxes options')
         parser.add_argument('--removeLabels', action='store_true', help='Remove Labels with --groupName option')
-        parser.add_argument('--doTrainTest', action='store_true', help='Fit a model to Labeled data with --classifier to labels in --labels and save in database as --modelBaseName')
+        parser.add_argument('--createClassifier', action='store_true', help='Fit a model to Labeled data with --classifier to labels in --labels and save in database as --modelBaseName')
         parser.add_argument('--doModelsScore', action='store_true', help='Print scores for fits of various models for --groupName')
         parser.add_argument('--inputs', action='store', help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
@@ -355,7 +355,7 @@ class Classifier(BiPlot):
         parser.add_argument('--maxes', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--test_size', action='store', help='Proportion of discriminated sample to save as Test set', default=0.4, type=float)
         parser.add_argument('--train_size', action='store', help='Proportion of discriminated sample to save as Train set', default=0.4, type=float)
-        parser.add_argument('--classifier', choices=['SVC'], help='Specify classifier to use with --fit option')
+        parser.add_argument('--classifier', choices=self.classifiers.keys(), help='Specify classifier to use with --createClassifier option')
         parser.add_argument('--modelBaseName', action='store', help='Base name of the model to store in the database')
 
         parser.add_argument('--clobber', action='store_true', help='Remove existing MeasuredParameterResource records before adding new classification')
@@ -376,9 +376,9 @@ if __name__ == '__main__':
     if c.args.removeLabels:
         c.removeLabels(' '.join((LABELED, c.args.groupName)))
 
-    elif c.args.doTrainTest:
-        c.doTrainTest(' '.join((LABELED, c.args.groupName)))
-
     elif c.args.doModelsScore:
         c.doModelsScore(' '.join((LABELED, c.args.groupName)))
+
+    elif c.args.createClassifier:
+        c.createClassifier(' '.join((LABELED, c.args.groupName)))
 
