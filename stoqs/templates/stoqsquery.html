@@ -2959,13 +2959,14 @@
                         $.each(labelTypes, function (index, labelType) {
                             if (labelType != 'commandlines') {
                                 labels = data[key]['measurement'][labelType];
+                                labelTypeID = labelType.replace(/ /g, '-');
                                 labelTypeHtml += '<div id="' + labelType + '-group" class="accordian-group">' +
                                 '<div class="accordian-heading">' + 
                                 '<h5><a id="' + labelType + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#attributes-anchor" href="#collapse-' + 
-                                    labelType + '">' + labelType + 
+                                    labelTypeID + '">' + labelType + 
                                     '</a></h5>' + 
                                 '</div>' + 
-                                '<div id="collapse-' + labelType + '" class="accordion-body collapse in">' + 
+                                '<div id="collapse-' + labelTypeID + '" class="accordion-body collapse in">' + 
                                     '<div class="accordion-inner" style="padding:0;">';
                                 labelTypeHtml += '<table class="table table-condensed stoqs-attributes"><tbody>';
                                 labelTypeHtml += '<tr><td>Source</td><td style="font-family:monospace;font-size:xx-small;">' + 
