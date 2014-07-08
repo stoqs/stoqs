@@ -71,10 +71,13 @@ class PQuerySet(object):
         self.query = query or postgresifySQL(str(qs_mp.query))
         self.values_list = values_list
         self.ordering = ('timevalue,')
-        if qs_mp:
-            self.mp_query = qs_mp
-        else:
+        if qs_mp is None:
             self.mp_query = MeasuredParameter.objects.raw(query)
+        else:
+            if qs_mp.exists():
+                self.mp_query = qs_mp
+            else:
+                self.mp_query = MeasuredParameter.objects.raw(query)
  
     def __iter__(self):
         '''
@@ -495,6 +498,26 @@ class PQuery(object):
 
         return add_to_from, from_sql, where_sql
 
+    def _getContainsFlags(self, select_order, pDict):
+        '''
+        Return flags indicating if the query set contains MeasuredParameters and SampledParameters
+        '''
+        # Peek at selections to set Sample and Measurement flags
+        containsSampleFlag = False
+        containsMeasuredFlag = False
+        for axis in select_order:
+            if pDict.has_key(axis):
+                if pDict[axis]:
+                    try:
+                        if self.isParameterMeasured(int(pDict[axis])):
+                            containsMeasuredFlag = True
+                        elif self.isParameterSampled(int(pDict[axis])):
+                            containsSampleFlag = True
+                    except ValueError, e:
+                        pass
+   
+        return containsMeasuredFlag, containsSampleFlag 
+
     def addParameterValuesSelfJoins(self, query, pvDict, select_items= '''stoqs_instantpoint.timevalue as measurement__instantpoint__timevalue, 
                                                                           stoqs_measurement.depth as measurement__depth,
                                                                           stoqs_measurement.geom as measurement__geom,
@@ -655,21 +678,9 @@ For sampledparameter to sampledparamter query an example is:
 
         self.logger.debug('initial query = %s', query)
 
-        # Peek at selections to set Sample and Measurement flags
-        containsSampleFlag = False
-        containsMeasuredFlag = False
         select_order = ('x', 'y', 'z', 'c')
-        for axis in select_order:
-            if pDict.has_key(axis):
-                if pDict[axis]:
-                    try:
-                        if self.isParameterMeasured(int(pDict[axis])):
-                            containsMeasuredFlag = True
-                        elif self.isParameterSampled(int(pDict[axis])):
-                            containsSampleFlag = True
-                    except ValueError, e:
-                        pass
-    
+        containsMeasuredFlag, containsSampleFlag = self._getContainsFlags(select_order, pDict)
+
         # Construct SELECT strings, must be in proper order, include depth for possible sigma-t calculation
         xyzc_items = ''
         for axis in select_order:
