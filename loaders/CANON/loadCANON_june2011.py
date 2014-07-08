@@ -77,8 +77,9 @@ elif cl.args.optimal_stride:
     cl.loadTethys(stride=20)
 
 else:
-    cl.loadDorado(stride=cl.args.stride)
-    cl.loadTethys(stride=cl.args.stride)
+    cl.stride = cl.args.stride
+    cl.loadDorado()
+    cl.loadTethys()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
