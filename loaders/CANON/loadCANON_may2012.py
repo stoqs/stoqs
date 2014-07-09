@@ -39,6 +39,8 @@ cl = CANONLoader('stoqs_may2012', 'CANON - May 2012',
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
 
+startdate = datetime.datetime(2012, 5, 15)
+enddate = datetime.datetime(2012, 6, 30)
 
 # 2-second decimated dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2012/netcdf/'
@@ -55,7 +57,7 @@ cl.dorado_files = [
                   ]
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
-cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'
+cl.daphne_base = 'http://elvis.shore.mbari.org/thredds/dodsC/LRAUV/daphne/realtime/sbdlogs/2012/'
 cl.daphne_files = [ 
                     '201205/20120530T160348/shore.nc',
                     '201205/20120530T215940/shore.nc',
@@ -93,7 +95,7 @@ cl.daphne_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_
                     'mass_concentration_of_chlorophyll_in_sea_water']
 
 # Realtime telemetered (_r_) tethys data - insert '_r_' to not load the files
-cl.tethys_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/tethys/2012/'                    # Tethys realtime
+cl.tethys_base = 'http://elvis.shore.mbari.org/thredds/dodsC/LRAUV/tethys/realtime/sbdlogs/2012/'
 cl.tethys_files = [ 
                     '201206/20120604T192851/shore.nc',
                     '201206/20120605T193027/shore.nc',
@@ -131,16 +133,16 @@ cl.fulmar_files = []
 cl.fulmar_parms = []
 
 # NPS glider 
-cl.nps_g29_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
+cl.nps_g29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.nps_g29_files = ['OS_Glider_NPS_G29_20120524_TS.nc']
 cl.nps_g29_parms = ['TEMP', 'PSAL', 'OPBS']
 
 # Spray glider - for just the duration of the campaign
-cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/glider/'
+cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20120424_TS.nc']
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
-cl.l_662_startDatetime = datetime.datetime(2012, 5, 15)
-cl.l_662_endDatetime = datetime.datetime(2012, 6, 30)
+cl.l_662_startDatetime = startdate
+cl.l_662_endDatetime = enddate
 
 # Liquid Robotics Waveglider
 cl.waveglider_base = 'http://odss.mbari.org/thredds/dodsC/CANON_may2012/waveglider/'
@@ -158,6 +160,8 @@ cl.waveglider_parms = [
 ##                        'AirPumpOn_pco2', 'AirPumpOn_Temp', 'AirPumpOn_Pressure', 'AirPumpOff_pco2', 'AirPumpOff_Temp', 'AirPumpOff_Pressure',
 ##                        'AirPumpOff_Humidity',
                       ]
+cl.waveglider_startDatetime = startdate
+cl.waveglider_endDatetime = enddate
 
 
 # Execute the load
