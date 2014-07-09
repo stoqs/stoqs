@@ -145,7 +145,7 @@ cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
 # Liquid Robotics Waveglider
-cl.waveglider_base = 'http://odss.mbari.org/thredds/dodsC/CANON_may2012/waveglider/'
+cl.waveglider_base = 'http://odss.mbari.org/thredds/dodsC/CANON/2012_May/waveglider/netcdf/'
 cl.waveglider_files = [ 
                         'waveglider_gpctd_WG.nc',
 ##                        'waveglider_pco2_WG.nc',
