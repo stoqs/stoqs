@@ -42,7 +42,7 @@ cl = CANONLoader('stoqs_february2012', 'GOC - February 2012',
 
 
 # Base OPenDAP server - if aboard a ship change to the local odss server
-cl.tdsBase = 'http://odss.mbari.org:8080/thredds/'      
+cl.tdsBase = 'http://odss.mbari.org/thredds/'      
 cl.dodsBase = cl.tdsBase + 'dodsC/' 
 
 # Western Flyer Underway CTD
