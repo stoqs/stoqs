@@ -1302,7 +1302,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     elif pName.startswith('SPRAY'):
         for p in loader.include_names:
             loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
-    elif pName.startswith('NPS'):
+    elif pName.upper().startswith('NPS'):
         for p in loader.include_names:
             loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
 
