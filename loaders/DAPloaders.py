@@ -1302,7 +1302,16 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     elif pName.startswith('SPRAY'):
         for p in loader.include_names:
             loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+
     elif pName.upper().startswith('NPS'):
+        for p in loader.include_names:
+            loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+
+    elif url.find('waveglider_gpctd_WG') != -1:
+        for p in loader.include_names:
+            loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
+    elif url.find('waveglider_pco2_WG') != -1:
         for p in loader.include_names:
             loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
 
