@@ -23,8 +23,6 @@ import datetime  # needed for glider data
 import time      # for startdate, enddate args
 import csv
 import urllib2
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-project_dir = os.path.dirname(__file__)
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
