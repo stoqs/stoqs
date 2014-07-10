@@ -802,8 +802,8 @@ class Base_Loader(STOQS_Loader):
                 row = self.preProcessParams(row)
                 logger.debug("After preProcessParams():")
                 logger.debug(row)
-            except SkipRecord:
-                logger.debug("Got SkipRecord Exception from self.preProcessParams().  Skipping")
+            except SkipRecord as e:
+                logger.warn("Got SkipRecord Exception: %s" % e)
                 continue
             except Exception, e:
                 logger.exception(e)
