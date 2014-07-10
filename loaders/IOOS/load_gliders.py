@@ -19,7 +19,10 @@ MBARI 22 April 2014
 
 import os
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So that IOOS and DAPloaders are found
+
+parentDir = os.path.join(os.path.dirname(__file__), "../")
+sys.path.insert(0, parentDir)  # So that IOOS and DAPloaders are found
+
 import logging 
 import datetime
 from IOOS import IOOSLoader
@@ -29,15 +32,17 @@ from thredds_crawler.crawl import Crawl
 logger = logging.getLogger('__main__')
 
 il = IOOSLoader('stoqs_ioos_gliders', 'IOOS Gliders',
-                                x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
-                                        'position': '14051448.48336 -15407886.51486 6184041.22775',
-                                        'orientation': '0.83940 0.33030 0.43164 1.44880',
-                                        'centerOfRotation': '0 0 0',
-                                        'VerticalExaggeration': '10',
-                                    }
-                                }
-)
+                        description = 'Glider data from the Integrated Ocean Observing System Glider DAC',
+                        x3dTerrains = {
+                            'http://dods.mbari.org/terrain/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                                'position': '14051448.48336 -15407886.51486 6184041.22775',
+                                'orientation': '0.83940 0.33030 0.43164 1.44880',
+                                'centerOfRotation': '0 0 0',
+                                'VerticalExaggeration': '10',
+                            }
+                        },
+                        grdTerrain = os.path.join(parentDir, 'Globe_1m_bath.grd')
+               )
 
 il.parms = ['temperature', 'salinity', 'density']
 
@@ -63,7 +68,7 @@ def loadGliders(loader, stride=1):
 
         logger.info("Executing runGliderLoader with url = %s", url)
         try:
-            runGliderLoader(url, loader.campaignName, aName, pName, colors.pop(), 'glider', 'Glider Mission', 
+            runGliderLoader(url, loader.campaignName, il.campaignDescription, aName, pName, colors.pop(), 'glider', 'Glider Mission', 
                             loader.parms, loader.dbAlias, stride, loader.startDatetime, loader.endDatetime)
         except Exception, e:
             logger.error('%s. Skipping this dataset.', e)
