@@ -213,7 +213,9 @@ class Classifier(BiPlot):
         target = 0
         for label in self.args.labels:
             if label.startswith('dino'):
+                print 'Skipping over label = %s' % label
                 continue
+
             mprs = MeasuredParameterResource.objects.using(self.args.database).filter(resource__name=LABEL, 
                                                 resource__resourcetype__name=labeledGroupName, resource__value=label
                                                 ).values_list('measuredparameter__datavalue', flat=True)
