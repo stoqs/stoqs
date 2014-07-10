@@ -69,7 +69,7 @@ def loadGliders(loader, stride=1):
         logger.info("Executing runGliderLoader with url = %s", url)
         try:
             runGliderLoader(url, loader.campaignName, il.campaignDescription, aName, pName, colors.pop(), 'glider', 'Glider Mission', 
-                            loader.parms, loader.dbAlias, stride, loader.startDatetime, loader.endDatetime)
+                            loader.parms, loader.dbAlias, stride, loader.startDatetime, loader.endDatetime, il.grdTerrain)
         except Exception, e:
             logger.error('%s. Skipping this dataset.', e)
 
