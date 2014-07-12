@@ -159,7 +159,10 @@ class Base_Loader(STOQS_Loader):
         self.varsLoaded = []
         try:
             self.ds = open_url(url)
-        except socket.error,e:
+        except socket.error as e:
+            logger.error('Failed in attempt to open_url(%s)', url)
+            raise e
+        except pydap.exceptions.ServerError as e:
             logger.error('Failed in attempt to open_url(%s)', url)
             raise e
 

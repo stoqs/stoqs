@@ -20,25 +20,32 @@ MBARI 13 August
 import os
 import sys
 import datetime
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So that CANON is found
+
+parentDir = os.path.join(os.path.dirname(__file__), "../")
+sys.path.insert(0, parentDir)  # So that CANON is found
+
 
 from CANON import CANONLoader
 
 cl = CANONLoader('stoqs_simz_aug2013', 'Sampling and Identification of Marine Zooplankton - August 2013',
-                            x3dTerrains= { '/stoqs/static/x3d/Monterey25_256.x3d': {
+                        description = 'Rachel Carson and Dorado surveys in Northern Monterey Bay',
+                        x3dTerrains = { '/stoqs/static/x3d/Monterey25_256.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236'
-                                        }
-                                 })
+                                    }
+                             },
+                        grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
+                )
 
 # Aboard the Carson use zuma
-cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
-##cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
+##cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
+cl.tdsBase = 'http://odss.mbari.org/thredds/'       # Use this on shore
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # 2-second decimated dorado data
-cl.dorado_base = cl.dodsBase + 'SIMZ_august2013/dorado/'
+##cl.dorado_base = cl.dodsBase + 'SIMZ/2013_Aug/dorado/'
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2013/netcdf/'
 cl.dorado_files = [ 
                     'Dorado389_2013_224_02_224_02_decim.nc', 'Dorado389_2013_225_00_225_00_decim.nc',
                     'Dorado389_2013_225_01_225_01_decim.nc', 'Dorado389_2013_226_01_226_01_decim.nc',
@@ -56,7 +63,7 @@ cl.l_662_endDatetime = datetime.datetime(2013, 8, 17)
 
 
 # Rachel Carson Underway CTD
-cl.rcuctd_base = cl.dodsBase + 'SIMZ_august2013/carson/uctd/'
+cl.rcuctd_base = cl.dodsBase + 'SIMZ/2013_Aug/carson/uctd/'
 cl.rcuctd_files = [ 
                     'simz2013plm01.nc', 'simz2013plm02.nc', 'simz2013plm03.nc', 'simz2013plm04.nc',
                     'simz2013plm05.nc',
@@ -64,7 +71,7 @@ cl.rcuctd_files = [
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
 # Rachel Carson Profile CTD
-cl.pctdDir = 'SIMZ_august2013/carson/pctd/'
+cl.pctdDir = 'SIMZ/2013_Aug/carson/pctd/'
 cl.rcpctd_base = cl.dodsBase + cl.pctdDir
 cl.rcpctd_files = [ 
                     'simz2013c01.nc', 'simz2013c02.nc', 'simz2013c03.nc', 'simz2013c04.nc',
