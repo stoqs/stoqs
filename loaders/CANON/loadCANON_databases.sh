@@ -11,4 +11,5 @@ loaders/CANON/loadCANON_april2011.py > loaders/CANON/loadCANON_april2011.out 2>&
 loaders/CANON/loadCANON_june2011.py > loaders/CANON/loadCANON_june2011.out 2>&1
 loaders/CANON/loadCANON_may2012.py > loaders/CANON/loadCANON_may2012.out 2>&1
 loaders/CANON/loadCANON_september2012.py > loaders/CANON/loadCANON_september2012.out 2>&1
+loaders/CANON/loadCANON_march2013.py > loaders/CANON/loadCANON_march2013.out 2>&1
 

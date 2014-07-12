@@ -661,7 +661,7 @@ class STOQS_Loader(object):
             if (row['longitude'] == missing_value or row['latitude'] == missing_value or
                 float(row['longitude']) == 0.0 or float(row['latitude']) == 0.0 or
                 math.isnan(row['longitude'] ) or math.isnan(row['latitude'])):
-                raise SkipRecord('Invalid coordinate')
+                raise SkipRecord('Invalid latitude or longitude coordinate')
         except KeyError, e:
             raise SkipRecord('KeyError: ' + str(e))
 
