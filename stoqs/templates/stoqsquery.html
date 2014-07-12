@@ -963,8 +963,8 @@
     <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
     <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.debug.js"></script>-->
     <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom.js"></script> 
-    <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>-->
-    <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>
+    <!-- <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script> -->
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
     <script type="text/javascript"><!--
     
@@ -2655,7 +2655,6 @@
                     '</div>' + 
                     '<div id="collapse-' + plat + '" class="accordion-body collapse in">' + 
                         '<div class="accordion-inner" style="padding:0;">';
-                    platformActivitiesHtml += '<table class="table table-condensed"><tbody>';
 
                     for (var i=0; i<activities.length; i++) {
                         activity = activities[i];
@@ -2664,14 +2663,14 @@
                         if (attributes.opendap_url) {
                             dsLink = '<a target="_blank" href="' + attributes.opendap_url + '.html">' + activity + '</a>';
                         }
-                        platformActivitiesHtml += '<tr id="' + activity +'">' +
-                                '<td>' + dsLink + '</td>' +
-                                '<td>' + attributes.title + '</td>' +
-                                '<td>' + attributes.summary + '</td>' +
-                                '<td>' + attributes.comment + '</td>' +
-                            '</tr>';
+                        platformActivitiesHtml += '<div id="' + activity +'" class="row-fluid">' +
+                                '<div class="span3">' + dsLink + '</div>' +
+                                '<div class="span3"><br>' + attributes.title + '</div>' +
+                                '<div class="span3"><br>' + attributes.summary + '</div>' +
+                                '<div class="span3"><br>' + attributes.comment + '</div>' +
+                            '</div>';
                     }
-                    platformActivitiesHtml += '</tbody></table></div></div></div>';
+                    platformActivitiesHtml += '</div></div></div>';
                 });
                 $('#metadatanetcdf > div').html(platformActivitiesHtml);
 
@@ -2929,6 +2928,8 @@
                             //$('#mp-x3d-track').append('<GeoOrigin DEF="ORIGIN" geoCoords="' + item.geoOrigin + '"></GeoOrigin>');
                             $('body').data()['geoorigin'] = item.geoOrigin;
                         }
+                        // For testing GeoOrigin in APGeospatial.js
+                        //$('#spatial-3d-x3d > Scene').append("<GeoLocation geoSystem='GD' geoCoords='36.8 -121.86 -300'><Transform scale='1000 1000 1000'><inline url='http://dods.mbari.org/data/beds/x3d/beds_housing_with_axes.x3d'></inline></Transform><GeoOrigin geoCoords='36 -121 0' geoSystem='GD'></GeoOrigin></GeoLocation>");
                         if ( item.VerticalExaggeration ) {
                             $('#x3d-ve').text('Vertical Exaggeration: ' + item.VerticalExaggeration + 'x');
                             $('body').data()['ve'] = item.VerticalExaggeration;
