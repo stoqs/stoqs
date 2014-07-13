@@ -20,19 +20,23 @@ MBARI 24 October 2013
 import os
 import sys
 import datetime
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))      # So that CANON is found
+
+parentDir = os.path.join(os.path.dirname(__file__), "../")
+sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
 
 cl = CANONLoader('stoqs_simz_oct2013', 'Sampling and Identification of Marine Zooplankton - October 2013',
-                                x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
-                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
-                                        'VerticalExaggeration': '10',
-                                    }
-                                }
+                        description = 'Rachel Carson and Dorado surveys in Northern Monterey Bay',
+                        x3dTerrains = {
+                            'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                'VerticalExaggeration': '10',
+                            }
+                        },
+                        grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                 )
 
 startDatetime = datetime.datetime(2013, 10, 22)
@@ -138,3 +142,4 @@ else:
 cl.addTerrainResources()
 
 print "All Done."
+
