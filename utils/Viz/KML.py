@@ -384,6 +384,10 @@ class KML(object):
                 clt_index = int(round((float(datavalue) - clim[0]) * ((len(clt) - 1) / float(numpy.diff(clim)))))
             except ZeroDivisionError:
                 raise InvalidLimits('cmin and cmax are the same value')
+            except ValueError as e:
+                # Likely: 'cannot convert float NaN to integer' e.g. for altitude outside of terrain coverage
+                continue
+
             if clt_index < 0:
                 clt_index = 0;
             if clt_index > (len(clt) - 1):
