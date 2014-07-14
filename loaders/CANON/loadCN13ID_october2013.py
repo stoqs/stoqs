@@ -25,13 +25,24 @@ import time      # for startdate, enddate args
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 
-# the next line makes it possible to find CANON
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # this makes it possible to find CANON, one directory up
+parentDir = os.path.join(os.path.dirname(__file__), "../")
+sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
        
 # building input data sources object
-cl = CANONLoader('stoqs_cn13id_oct2013', 'CN13ID - October 2013')
+cl = CANONLoader('stoqs_cn13id_oct2013', 'CN13ID - October 2013',
+                        description = 'Warden cruise on Western Flyer into the California Current System off Monterey Bay',
+                        x3dTerrains = {
+                            'http://dods.mbari.org/terrain/x3d/Globe_1m_bath_10x/Globe_1m_bath_10x_scene.x3d': {
+                                'position': '14051448.48336 -15407886.51486 6184041.22775',
+                                'orientation': '0.83940 0.33030 0.43164 1.44880',
+                                'centerOfRotation': '0 0 0',
+                                'VerticalExaggeration': '10',
+                            }
+                        },
+                        grdTerrain = os.path.join(parentDir, 'Globe_1m_bath.grd')
+                )
 
 # Set start and end dates for all loads from sources that contain data 
 # beyond the temporal bounds of the campaign
@@ -276,4 +287,9 @@ else:
     cl.loadOA2o2()
 
     cl.loadSubSamples()
+
+# Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+cl.addTerrainResources()
+
+print "All Done."
 
