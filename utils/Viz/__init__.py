@@ -475,8 +475,13 @@ class MeasuredParameter(object):
                     else:
                         points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
 
-                    cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
+                    try:
+                        cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
                                         (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))
+                    except ValueError as e:
+                        # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
+                        continue
+
                     if cindx < 0:
                         cindx = 0
                     if cindx > len(self.clt) - 1:
@@ -497,8 +502,8 @@ class MeasuredParameter(object):
             else:
                 x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
 
-        except Exception,e:
-            self.logger.exception('Could not create measuredparameterx3d')
+        except Exception as e:
+            self.logger.exception('Could not create measuredparameterx3d: %s', e)
             x3dResults = 'Could not create measuredparameterx3d'
 
         return x3dResults
@@ -532,7 +537,7 @@ class PlatformOrientation(object):
         '''
         Read the data from the database into member variables for construction of platform orientation time series
         '''
-        # Save to '_by_act' dictionaries so that each time series can be separately controlled by ROUTES to the orientation
+        # Save to '_by_act' dictionaries so that each time series can be separately controlled by ROUTEs or JavaScript controls to the orientation
         self.lon_by_act = {}
         self.lat_by_act = {}
         self.depth_by_act = {}
