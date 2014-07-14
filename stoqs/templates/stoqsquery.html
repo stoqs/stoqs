@@ -3350,15 +3350,24 @@
                 }
                 if (data[key]['limits']) {
                     var limits = data[key]['limits']
+                    function updateTranslateRotate(index) {
+                        $('#TRANSLATE').attr('translation', data[key]['translation'][index]);
+                        $('#XROT').attr('rotation', data[key]['xRotation'][index]);
+                        $('#YROT').attr('rotation', data[key]['yRotation'][index]);
+                        $('#ZROT').attr('rotation', data[key]['zRotation'][index]);
+                    }
                     $('#spatial-3d-x3d-controls').slider({min: limits[0], max: limits[limits.length - 1], step: 1, value: limits[0], slide: 
                         $.throttle(function(e, ui) { 
                             var index = $('#spatial-3d-x3d-controls').slider('option', 'value');
-                            $('#TRANSLATE').attr('translation', data[key]['translation'][index]);
-                            $('#XROT').attr('rotation', data[key]['xRotation'][index]);
-                            $('#YROT').attr('rotation', data[key]['yRotation'][index]);
-                            $('#ZROT').attr('rotation', data[key]['zRotation'][index]);
+                            updateTranslateRotate(index);
                         }, 100)
                     });
+
+                    setInterval(function() {
+                        var index = $('#spatial-3d-x3d-controls').slider('option', 'value');
+                        updateTranslateRotate(index);
+                        $('#spatial-3d-x3d-controls').slider('value', index + 1);
+                    }, 20);
                 }
             }
 
