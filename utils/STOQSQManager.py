@@ -95,7 +95,7 @@ class STOQSQManager(object):
             'x3dterrains': self.getX3DTerrains,
             'x3dplaybacks': self.getX3DPlaybacks,
             'resources': self.getResources,
-            ##'attributes': self.getAttributes,
+            'attributes': self.getAttributes,
         }
         
     def buildQuerySets(self, *args, **kwargs):
