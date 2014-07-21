@@ -36,7 +36,14 @@ bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                                         'centerOfRotation': '-39420.23433350699 85753.45910644953 70752.14499748436',
                                         'geoOrigin': '-121 36 0',
                                         'VerticalExaggeration': '1',
-                                        'speed': '0.01',
+                                        'speed': '0.1',
+                                    },
+                                    'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x/MontereyCanyonBeds_1m+5m_1x_scene.x3d': {
+                                        'position': '-44571.54862 77379.85721 71401.38520',
+                                        'orientation': '0.92328 -0.26229 -0.28063 1.50408',
+                                        'centerOfRotation': '-39420.23433350699 85753.45910644953 70752.14499748436',
+                                        'VerticalExaggeration': '1',
+                                        'speed': '0.1',
                                     },
                                     ##'/stoqs/static/x3d/Monterey25/Monterey25_10x-pop.x3d': {
                                     ##    'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -48,7 +55,7 @@ bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                                  # Do not check in .grd files to the repository, keep them in the loaders directory
                                  grdTerrain=os.path.join(parentDir, 'MontereyCanyonBeds_1m+5m.grd'),
 
-)
+               )
 
 # Base OPeNDAP server
 bl.tdsBase = 'http://odss-test.shore.mbari.org/thredds/'
@@ -60,7 +67,8 @@ bl.bed_base = bl.dodsBase + 'BEDS/'
 #   rsync -r /mbari/ProjectLibrary/901006.BEDS/BEDS.Data/CanyonEvents /var/www/dods_html/data/beds
 bl.bed_base = 'http://elvis.shore.mbari.org/opendap/hyrax/data/beds/CanyonEvents/20130601/BED1/netcdf/'
 ##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT', 'PRESS', 'BED_DEPTH']   # For timeSeries
-bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT']
+##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT']
+bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT', 'ROTRATE']
 
 bl.bed_files = ['BED01_1_June_2013.nc',
 ##                'bed03/30100046_partial_decimated10.nc',
