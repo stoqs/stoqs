@@ -868,6 +868,10 @@ class STOQSQManager(object):
         # See if timeSeries plotting is requested for trajectory data, e.g. BEDS
         plotTimeSeriesDepth = models.ParameterResource.objects.using(self.dbname).filter(parameter__name=p, 
                                 resource__name='plotTimeSeriesDepth').values_list('resource__value')
+        if not plotTimeSeriesDepth:
+            # See if there is one for standard_name
+            plotTimeSeriesDepth = models.ParameterResource.objects.using(self.dbname).filter(parameter__standard_name=p, 
+                                    resource__name='plotTimeSeriesDepth').values_list('resource__value')
 
         # Order by nominal depth first so that strided access collects data correctly from each depth
         pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')[::stride]
