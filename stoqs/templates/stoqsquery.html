@@ -944,6 +944,7 @@
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.cookie.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.debounce.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}jquery/js/jquery.color-2.1.2.min.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
@@ -963,8 +964,8 @@
     <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
     <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.debug.js"></script>-->
     <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom.js"></script> 
-    <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>
-    <!-- <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script> -->
+    <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script> -->
+    <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script>
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
     <script type="text/javascript"><!--
     
@@ -980,6 +981,7 @@
     var client_side_permalink = true;
     var polyLayer = new OpenLayers.Layer.Vector( " Selection polygon", {visibility: false} );
     var timedepthplot;
+    var timeparameterplot;
     var options_stack = [];
     var zoom_xy_stack = [];
     var stack_depth = 0;
@@ -1800,8 +1802,8 @@
     });
 
     $('#showplatforms').on('click', function (event) {
-        // Don't need to get everything from queryData, only the response with the platform rotation angles
-        rebuildFilters(['platformorientation']);
+        // Need time series data to redraw with crosshairs, so get everything
+        rebuildFilters();
         addStationaryPlatformModels();
     });
 
@@ -2091,7 +2093,7 @@
                     $('input:checkbox[name=mp_all_parameters_plot_cb]').prop('checked',true).triggerHandler('click');
                 }
             }
-            rebuildFilters(['parametertime']);
+            rebuildFilters(['parametertime', 'platformorientation']);
         }
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
             $('.parameter-plot-radio').show();
@@ -2146,9 +2148,6 @@
                                         points: { show: false, fill: false },
                                         shadowSize: 0
                                     },
-                                    //crosshair: {
-                                    //    mode: "x"
-                                    //},
                                     legend: { show: false },
                                     selection: { mode: "xy" }
                                   };
@@ -2179,10 +2178,8 @@
                                         shadowSize: 0
                                     },
                                     legend: { show: false },
-                                    selection: { mode: "x" },
-                                    colors: ['white','black','purple','yellow','green','orange','red']
+                                    selection: { mode: "x" }
                                 };
-
 
     /* Default class modification for DataTable*/
     /*
@@ -2561,7 +2558,12 @@
         var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
         $('#temporal-anchor').html(tLabel);
 
-        rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d']);
+        if ($('#showplatforms').is(':checked')) {
+            rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'platformorientation']);
+        }
+        else {
+            rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d']);
+        }
     });
 
 
@@ -3007,9 +3009,65 @@
                 else {
                     theData = getDepthDataset(data, initData.time[0], initData.time[1]);
                 }
-                timedepthplot = $.plot($("#time-depth-flot"), theData, simpledepthtime_options_zoom);
+                var options = simpledepthtime_options_zoom;
+                if ( ! $.isEmptyObject(data.platformorientation) ) {
+                    if ( ! $.isEmptyObject(data.platformorientation.limits) ) {
+                        options = $.extend(true, {}, simpledepthtime_options_zoom, { crosshair: { mode: "x" } });
+                    }
+                }
+                timedepthplot = $.plot($("#time-depth-flot"), theData, options);
 
         } // redrawSimpleDepthTime()
+
+
+        function redrawParameterTime(data) {
+            if ( data.parametertime.counts != 0 ) {
+                $("#temporal-parameter-li").show();
+                parmData = getParameterDataset(data, $('#start-ems').val(), $('#end-ems').val());
+                if ( $.isEmptyObject(parmData) ) {
+                    return;
+                }
+                var options = $.extend(true, {}, parametertime_options, {
+                                                          yaxes: parmData.yaxesOptions
+                                      });
+                // Rotate from red to green - See http://www.benknowscode.com/2013/02/graphing-with-flot-controlling-series_9976.html
+                // and http://en.wikipedia.org/wiki/HSL_and_HSV
+                var len = parmData.dataset.length;
+                options.colors = $.map( parmData.dataset, function ( o, i ) {
+                            var hue = i * 120 / len;
+                            return jQuery.Color({ hue: hue, saturation: 0.95, lightness: 0.35, alpha: 1 }).toHexString();
+                });
+                if ( ! $.isEmptyObject(data.platformorientation) ) {
+                    if ( ! $.isEmptyObject(data.platformorientation.limits) ) {
+                        options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
+                    }
+                }
+                timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, options);
+
+                $.each(timeparameterplot.getData(), function(index, series) {
+                    // TODO: color the lables
+                    series.label;
+                    series.color;
+                });
+                if ( ! $.isEmptyObject(data.parametertime.strides) ) {
+                    $('#stride-info').html('')
+                    $.each(data.parametertime.strides, function(p, act_value) {
+                        $.each(act_value, function(act, value) {
+                            ordinal = getValueOrdinal(value);
+                            $('#stride-info').append(p + ': every ' + ordinal + ' point from ' + act + '<br>');
+                        });
+                    });
+                }
+                // Event data shown in plot may be inside original start-ems and end-ems bounds requested, update display with actual
+                var sd = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamin));
+                var ed = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamax));
+                $('#temporal-anchor').html('Temporal: ' + sd + ' to ' + ed);
+            }
+            else {
+                $("#temporal-parameter-li").hide();
+            }
+        } // redrawParameterTime()
+
 
         function onUpdate(data, key) {
             // Called from ajax to update the selectors base on the new selection
@@ -3155,39 +3213,8 @@
                 }
             }
             else if (key == 'parametertime') {
-                if ( data.parametertime.counts != 0 ) {
-                    $("#temporal-parameter-li").show();
-                    parmData = getParameterDataset(data, $('#start-ems').val(), $('#end-ems').val());
-                
-                    if ( $.isEmptyObject(parmData) ) {
-                        return;
-                    }
-                    timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, $.extend(true, {}, parametertime_options, {
-                                                              yaxes: parmData.yaxesOptions
-                                                          }));
+                redrawParameterTime(data);
 
-                    $.each(timeparameterplot.getData(), function(index, series) {
-                        // TODO: color the lables
-                        series.label;
-                        series.color;
-                    });
-                    if ( ! $.isEmptyObject(data.parametertime.strides) ) {
-                        $('#stride-info').html('')
-                        $.each(data.parametertime.strides, function(p, act_value) {
-                            $.each(act_value, function(act, value) {
-                                ordinal = getValueOrdinal(value);
-                                $('#stride-info').append(p + ': every ' + ordinal + ' point from ' + act + '<br>');
-                            });
-                        });
-                    }
-                    // Event data shown in plot may be inside original start-ems and end-ems bounds requested, update display with actual
-                    var sd = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamin));
-                    var ed = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamax));
-                    $('#temporal-anchor').html('Temporal: ' + sd + ' to ' + ed);
-                }
-                else {
-                    $("#temporal-parameter-li").hide();
-                }
             }
             else if (key == 'activityparameterhistograms') {
                 $('#parameter-value-table').html('<tbody></tbody>');
@@ -3348,6 +3375,13 @@
                     });
                     $('#platform-orientations').html(x3dText);
                 }
+                // Redraw the time series so that we have the crosshair option added and can call lockCrosshair()
+                if (data['simpledepthtime']) {
+                    redrawSimpleDepthTime(data);
+                }
+                if (data['parametertime']) {
+                    redrawParameterTime(data);
+                }
                 if (data[key]['limits']) {
                     var limits = data[key]['limits']
                     function updateTranslateRotate(index) {
@@ -3355,6 +3389,10 @@
                         $('#XROT').attr('rotation', data[key]['xRotation'][index]);
                         $('#YROT').attr('rotation', data[key]['yRotation'][index]);
                         $('#ZROT').attr('rotation', data[key]['zRotation'][index]);
+                        timedepthplot.lockCrosshair({x: data[key]['time'][index], y:0});
+                        if ( ! $.isEmptyObject(timeparameterplot) ) {
+                            timeparameterplot.lockCrosshair({x: data[key]['time'][index], y:0});
+                        }
                     }
                     $('#spatial-3d-x3d-controls').slider({min: limits[0], max: limits[limits.length - 1], step: 1, value: limits[0], slide: 
                         $.throttle(function(e, ui) { 
@@ -3363,11 +3401,13 @@
                         }, 100)
                     });
 
+                    // Compute interval in milliseconds from first two points time array - assumes a regularly spaced time series
+                    var interval = data.platformorientation.time[1] - data.platformorientation.time[0];
                     setInterval(function() {
                         var index = $('#spatial-3d-x3d-controls').slider('option', 'value');
                         updateTranslateRotate(index);
                         $('#spatial-3d-x3d-controls').slider('value', index + 1);
-                    }, 20);
+                    }, interval);
                 }
             }
 

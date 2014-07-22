@@ -548,12 +548,16 @@ class PlatformOrientation(object):
         self.yaw_by_act = {}
 
         # Platform must have at least yaw in order for orientation data to make sense; must filter on one Parameter, otherwise we get multiple values
+        # time_by_act is in Unix epoch milliseconds
         for mp in self.qs_mp.filter(parameter__standard_name='platform_yaw_angle'):
             self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
             self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
             self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
+
+            # Need millisecond accuracy, add microseconds to what timetuple() provides (only to the second)
+            dt = mp['measurement__instantpoint__timevalue']
             self.time_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(
-                                                            time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+                                      int((time.mktime(dt.timetuple()) + dt.microsecond / 1.e6) * 1000.0))
 
         for mp in self.qs_mp.filter(parameter__standard_name='platform_roll_angle'):
             self.roll_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
@@ -574,7 +578,7 @@ class PlatformOrientation(object):
             indices = ''
             index = 0
             gps = GPS()
-            keys = ''
+            ##keys = ''
             translations = []
             for act in self.yaw_by_act.keys():
                 for lon,lat,depth,t in izip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.time_by_act[act]):
@@ -585,7 +589,8 @@ class PlatformOrientation(object):
                     else:
                         points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
 
-                    keys += '%.4f' % ((t - self.time_by_act[act][0]) / (self.time_by_act[act][-1] - self.time_by_act[act][0]))
+                    # If using Interpolators will need keys
+                    ##keys += '%.4f' % ((t - self.time_by_act[act][0]) / (self.time_by_act[act][-1] - self.time_by_act[act][0]))
                     indices = indices + '%i ' % index
                     index = index + 1
 
@@ -594,6 +599,7 @@ class PlatformOrientation(object):
                 xRotations = ['1,0,0,%.6f' % (np.pi * x / 180.) for x in self.roll_by_act[act]]
                 yRotations = ['0,1,0,%.6f' % (np.pi * y / 180.) for y in self.pitch_by_act[act]]
                 zRotations = ['0,0,1,%.6f' % (np.pi * -z / 180.) for z in self.yaw_by_act[act]]
+                times = self.time_by_act[act]
 
                 # End with -1 so that end point does not connect to the beg point
                 indices = indices + '-1 ' 
@@ -608,7 +614,8 @@ class PlatformOrientation(object):
             self.logger.exception('Could not create platformorientation')
             x3dResults = 'Could not create platformorientation'
 
-        return {'x3d': x3dDict, 'limits': limits, 'translation': translations, 'xRotation': xRotations, 'yRotation': yRotations, 'zRotation': zRotations}
+        return {'x3d': x3dDict, 'limits': limits, 'translation': translations, 'time': times,
+                'xRotation': xRotations, 'yRotation': yRotations, 'zRotation': zRotations}
 
 
 class PPDatabaseException(Exception):
