@@ -1,0 +1,55 @@
+This is BibTeX, Version 0.99c (Web2C 7.5.7)
+The top-level auxiliary file: IntegrationOfX3DGeospatial.aux
+The style file: acmsiggraph.bst
+Database file #1: IntegrationOfX3DGeospatial.bib
+Warning--empty organization in Behr:2010:SAH:1836049.1836077
+Warning--empty organization in godin05
+Warning--empty organization in Herzig:2013:XVO:2466533.2466556
+Warning--empty organization in hoppe98
+Warning--empty organization in Limper:2013:FDW:2466533.2466536
+Warning--empty organization in imdis2013
+Warning--empty organization in mccann04
+Warning--empty organization in Silvestre
+Warning--empty organization in yoo09
+You've used 18 entries,
+            2748 wiz_defined-function locations,
+            715 strings with 8158 characters,
+and the built_in function-call counts, 7303 in all, are:
+= -- 722
+> -- 311
+< -- 0
++ -- 103
+- -- 113
+* -- 602
+:= -- 1216
+add.period$ -- 68
+call.type$ -- 18
+change.case$ -- 119
+chr.to.int$ -- 18
+cite$ -- 27
+duplicate$ -- 277
+empty$ -- 601
+format.name$ -- 124
+if$ -- 1486
+int.to.chr$ -- 1
+int.to.str$ -- 0
+missing$ -- 15
+newline$ -- 107
+num.names$ -- 54
+pop$ -- 143
+preamble$ -- 1
+purify$ -- 102
+quote$ -- 0
+skip$ -- 154
+stack$ -- 0
+substring$ -- 363
+swap$ -- 54
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 140
+warning$ -- 9
+while$ -- 69
+width$ -- 22
+write$ -- 264
+(There were 9 warnings)
