@@ -995,6 +995,7 @@
     var hasTimeSeries;
     var hasTimeSeriesProfile;
     var clearingTemporalFlag = false;
+    var platformTimer = null;
     var PIXELS_WIDE = 800;                              // Approximate width of $("#time-depth-flot")
     
     // Called with an element that was selectable, should make that element non-selectable.
@@ -2180,6 +2181,13 @@
                                     legend: { show: false },
                                     selection: { mode: "x" }
                                 };
+    // Rotate from red to green - See http://www.benknowscode.com/2013/02/graphing-with-flot-controlling-series_9976.html
+    parametertime_options.colors = [];
+    var maxColors = 16;
+    for (var i=0; i<=maxColors; i++) {
+        var hue = i * 360 / maxColors;
+        parametertime_options.colors.push(jQuery.Color({ hue: hue, saturation: 0.95, lightness: 0.35, alpha: 1 }).toHexString());
+    }
 
     /* Default class modification for DataTable*/
     /*
@@ -2395,8 +2403,8 @@
         var yaxesOptions = [];
         var pos;
         $.each(data.parametertime.pt, function (unit, activity_time_series) {
-            console.log('unit = ' + unit);
-            console.log('activity_time_series = ' + activity_time_series);
+            //console.log('unit = ' + unit);
+            //console.log('activity_time_series = ' + activity_time_series);
             $.each(activity_time_series, function (activity, time_series) {
                 var hasData = false;
                 $.each(time_series, function (index, td) {
@@ -3030,13 +3038,7 @@
                 var options = $.extend(true, {}, parametertime_options, {
                                                           yaxes: parmData.yaxesOptions
                                       });
-                // Rotate from red to green - See http://www.benknowscode.com/2013/02/graphing-with-flot-controlling-series_9976.html
-                // and http://en.wikipedia.org/wiki/HSL_and_HSV
                 var len = parmData.dataset.length;
-                options.colors = $.map( parmData.dataset, function ( o, i ) {
-                            var hue = i * 120 / len;
-                            return jQuery.Color({ hue: hue, saturation: 0.95, lightness: 0.35, alpha: 1 }).toHexString();
-                });
                 if ( ! $.isEmptyObject(data.platformorientation) ) {
                     if ( ! $.isEmptyObject(data.platformorientation.limits) ) {
                         options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
@@ -3331,18 +3333,22 @@
                         // If geoorigin then use regular coordinate nodes as summary data is returning 
                         // gcc coords with geoorigin subtracted until geoOrigin is implemented in X3DOM
                         if ( ! $('body').data()['geoorigin'] ) {
-                            $('#mp-x3d-track').html('<indexedlineset coordIndex="' + 
-                                            data[key]['index'] + '"> <color color="' + 
-                                            data[key]['colors'] + '"></color> <geocoordinate point="' + 
-                                            data[key]['points'] + '"></geocoordinate> </indexedlineset>');
+                            $('#mp-x3d-track').html([
+                                '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
+                                    '<color color="' + data.measuredparameterx3d.colors + '"></color>',
+                                    '<geocoordinate point="' + data.measuredparameterx3d.points  + '"></geocoordinate>',
+                                '</indexedlineset>'
+                            ].join(''));
                         }
                         else {
-                            $('#mp-x3d-track').html('<indexedlineset coordIndex="' + 
-                                            data[key]['index'] + '"> <color color="' + 
-                                            data[key]['colors'] + '"></color> <coordinate point="' + 
-                                            data[key]['points'] + '"></coordinate> </indexedlineset>');
+                            $('#mp-x3d-track').html([
+                                '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
+                                    '<color color="' + data.measuredparameterx3d.colors + '"></color>',
+                                    '<coordinate point="' + data.measuredparameterx3d.points  + '"></coordinate>',
+                                '</indexedlineset>'
+                            ].join(''));
                         }
-                        $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data[key]['colorbar'] + '" />');
+                        $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.measuredparameterx3d.colorbar + '" />');
                     }
                 }
             }
@@ -3403,7 +3409,7 @@
 
                     // Compute interval in milliseconds from first two points time array - assumes a regularly spaced time series
                     var interval = data.platformorientation.time[1] - data.platformorientation.time[0];
-                    setInterval(function() {
+                    platformTimer = setInterval(function() {
                         var index = $('#spatial-3d-x3d-controls').slider('option', 'value');
                         updateTranslateRotate(index);
                         $('#spatial-3d-x3d-controls').slider('value', index + 1);
