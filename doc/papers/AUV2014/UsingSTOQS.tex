@@ -432,7 +432,7 @@ With increased ability to acquire measurements from various platforms such as sh
 
 With increased ability to acquire measurements from oceanographic platforms such as ships, moorings, drifters, gliders and autonomous underwater vehicles (AUVs), the need to efficiently access and visualize the data they collect is growing. The Monterey Bay Aquarium Research Institute (MBARI) has designed and built the Spatial Temporal Oceanographic Query System (STOQS) specifically to address this issue \cite{imdis2013}. The fundamental issue of providing efficient management and access to multidisciplinary data is addressed by embracing existing standards and employing geospatial relational database technology along with modern web frameworks to build a tool that enables deep exploration of complex data sets. STOQS is an open source software project built upon a framework of free and open source software and is available for anyone to use and extend. For more information please see the STOQS code repository at http://code.google.com/p/stoqs.
 
-\subsection{Data Standards}
+\subsection{CF-NetCDF}
 
 Standards are important for the durability of data archived from oceanographic measurement programs. The data are unique and costly to collect. One of the standards used within the oceanographic community is NetCDF. It is a binary data format used commonly for gridded numerical model output and for remote sensing data. Because of its 20-plus year history of use, its flexibility, and because of its recent adoption as an Open Geospatial Consortium (OGC) standard, NetCDF is used for archiving of MBARI's \textit{in situ} measurement data.
 
@@ -452,9 +452,9 @@ The NetCDF data format (with the Climate and Forecast conventions) provide effic
 \label{fig:MUSE_illus_pp}
 \end{figure}
 
-\subsection{Need for a Relational Database}
+\subsection{Trajectory Data}
 
-This data access advantage does not exist for \textit{in situ} measurement data stored in NetCDF files. Trajectory data is increasingly being collected by a variety of new platforms. These include all the measurements taken by vehicles such as ships, drifters, gliders, and AUVs (Fig.~\ref{fig:MUSE_illus_pp}). These data are structured in NetCDF files with one coordinate dimension: time. Even though the data are distributed through space the only index into the mini-database NetCDF file is time. There is no efficient way to retrieve specific spatial-temporal data directly from a trajectory NetCDF file. For example, if an application program needed to extract just the surface temperatures from a glider data file --- where the glider samples the water column in a sawtooth pattern from 0 to 500 meters depth --- it would have to read all of the data from the NetCDF file and then perform the extraction. This is a very inefficient way to access data; if the trajectory data were in a fully indexed relational database then applications can have efficient data access. This is what STOQS provides. This paper describes its architecture and a web application that provides interactive 3D visualization using standard web technologies.
+This data access advantage does not exist for mobile platform \textit{in situ} measurement data stored in NetCDF files. Trajectory data is increasingly being collected by a variety of new platforms. These include all the measurements taken by vehicles such as ships, drifters, gliders, and AUVs (Fig.~\ref{fig:MUSE_illus_pp}). These data are structured in NetCDF files with one coordinate dimension: time. Even though the data are distributed through space the only index into the mini-database NetCDF file is time. There is no efficient way to retrieve specific spatial-temporal data directly from a trajectory NetCDF file. For example, if an application program needed to extract just the surface temperatures from a glider data file --- where the glider samples the water column in a sawtooth pattern from 0 to 500 meters depth --- it would have to read all of the data from the NetCDF file and then perform the extraction. This is a very inefficient way to access data; if the trajectory data were in a fully indexed relational database then applications can have efficient data access. This is what STOQS provides. This paper describes STOQS and how it is being used to manage, visualize and understand data from AUVs, gliders, and moorings.
 
 
 
@@ -480,7 +480,7 @@ STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django ru
 \label{fig:STOQSArch}
 \end{figure}
 
-\subsection{Web-based User Interface}
+\subsection{User Interface}
 
 The STOQS User Interface displays a map of the vehicle tracks and a time series of depth profiles of the vehicles (Fig.~\ref{fig:STOQSscreencapture}). The bold blue letter text items are each sections that may be expanded revealing lists of items that may be selected for filtering, data selection, and plotting. If a platform is selected for filtering then only the information from that platform are shown in the other sections of the interface. Any selection initiates an instant update of the other items that may be selected. With this faceted search capability the user can quickly narrow a selection for data of interest. For instance in Fig.~\ref{fig:STOQSscreencapture} the platform "daphne"  and a time range of about a half a day have been selected. The interface is reactive to browser screen size and behaves appropriately when viewed on tablets and smart phones.
 
@@ -604,8 +604,10 @@ These operations result in a static web page where the results can be tested for
 \subsection{Temporal}
 
 \subsubsection{Depth}
+The default temporal display is the Depth tab where the vertical axis of the plot is depth. A depth versus time plot is appropriate for trajectory and timeseriesProfile data. The plotting space is interpreted as a depth section through time/distance. 
 
 \subsubsection{Parameter}
+The other display of temporal data is where the vertical axis is the value of parameter(s). This typical time series plot is appropriate for timeseries data that have been recorded by stationary platforms. 
 
 
 \section{Using STOQS}
