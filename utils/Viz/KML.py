@@ -97,7 +97,7 @@ class KML(object):
         if pName:
             logger.info("pName = %s", pName)
         else:
-            raise Exception('parameter__name, parameter__standard_name, nor parameter__id specified')
+            raise NoDataForKML('parameter__name, parameter__standard_name, nor parameter__id specified')
     
 
         logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
