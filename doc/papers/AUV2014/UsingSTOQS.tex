@@ -402,7 +402,7 @@ mccann@mbari.org}
 \begin{abstract}
 %\boldmath
 
-With increased ability to acquire measurements from various platforms such as ships, moorings, drifters, gliders and autonomous underwater vehicles, the need to efficiently access and visualize multi-parameter spatial temporal data is growing. The Monterey Bay Aquarium Research Institute has designed and built the Spatial Temporal Oceanographic Query System (STOQS) specifically to address this issue. The fundamental issue of providing efficient management and access to multidisciplinary data is addressed by embracing existing standards and employing geospatial relational database technology along with modern web frameworks to build a tool that enables deep exploration of complex data sets.  STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django running on a server and client-side technology (jQuery, OpenLayers, Bootstrap, X3DOM) running in a modern web browser. The web application provides faceted search capabilities allowing a user to quickly drill into data of interest. Data selection can be constrained by spatial, temporal, and depth selections as well as by parameter values and platform names. Direct programmatic access to STOQS databases allows for complex analysis and visualization that are not provided by the web-based user interface.
+With increased ability to acquire measurements from various platforms such as ships, moorings, drifters, gliders and autonomous underwater vehicles, the need to efficiently access and visualize multi-parameter spatial temporal data is growing. The Monterey Bay Aquarium Research Institute has designed and built the Spatial Temporal Oceanographic Query System (STOQS) specifically to address this issue. The fundamental issue of providing efficient management and access to multidisciplinary data is addressed by embracing existing standards and employing geospatial relational database technology along with modern web frameworks to build a tool that enables deep exploration of complex data sets. The STOQS User Interface provides faceted search capabilities allowing a user to quickly drill into data of interest. Data selection can be constrained by spatial, temporal, and depth selections as well as by parameter values and platform names. Direct programmatic access to STOQS databases allows for complex analysis and visualization that are not provided by the web-based user interface.
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
 % This preserves the distinction between vectors and scalars. However,
@@ -432,6 +432,8 @@ With increased ability to acquire measurements from various platforms such as sh
 
 With increased ability to acquire measurements from oceanographic platforms such as ships, moorings, drifters, gliders and autonomous underwater vehicles (AUVs), the need to efficiently access and visualize the data they collect is growing. The Monterey Bay Aquarium Research Institute (MBARI) has designed and built the Spatial Temporal Oceanographic Query System (STOQS) specifically to address this issue \cite{imdis2013}. The fundamental issue of providing efficient management and access to multidisciplinary data is addressed by embracing existing standards and employing geospatial relational database technology along with modern web frameworks to build a tool that enables deep exploration of complex data sets. STOQS is an open source software project built upon a framework of free and open source software and is available for anyone to use and extend. For more information please see the STOQS code repository at http://code.google.com/p/stoqs.
 
+\subsection{Data Standards}
+
 Standards are important for the durability of data archived from oceanographic measurement programs. The data are unique and costly to collect. One of the standards used within the oceanographic community is NetCDF. It is a binary data format used commonly for gridded numerical model output and for remote sensing data. Because of its 20-plus year history of use, its flexibility, and because of its recent adoption as an Open Geospatial Consortium (OGC) standard, NetCDF is used for archiving of MBARI's \textit{in situ} measurement data.
 
 The NetCDF data format (with the Climate and Forecast conventions) provide efficient data access for array data, such as from numerical models, because it provides indexed access to data on the coordinate dimensions. A NetCDF file performs like a mini database for data organized on a grid of longitude, latitude, depth, and time values. Retrieving spatial-temporal subsets from from an array happens with a direct seek into the NetCDF file. This is a the fastest way to retrieve data from a file on disk and is why NetCDF is popular for storing array-based data.
@@ -443,21 +445,20 @@ The NetCDF data format (with the Climate and Forecast conventions) provide effic
 %%\label{fig:MUSE_illus_pp}
 %%\end{figure}
 %
-\begin{figure}[!t]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=2.5in]{MUSE_illus_pp.jpg}
-% where an .eps filename suffix will be assumed under latex, 
-% and a .pdf suffix will be assumed for pdflatex; or what has been declared
-% via \DeclareGraphicsExtensions.
 \caption{Illustration of an oceanographic measurement campaign with multiple data collecting platforms.}
-\label{MUSE_illus_pp}
+\label{fig:MUSE_illus_pp}
 \end{figure}
+
+\subsection{Need for a Relational Database}
 
 This data access advantage does not exist for \textit{in situ} measurement data stored in NetCDF files. Trajectory data is increasingly being collected by a variety of new platforms. These include all the measurements taken by vehicles such as ships, drifters, gliders, and AUVs (Fig.~\ref{fig:MUSE_illus_pp}). These data are structured in NetCDF files with one coordinate dimension: time. Even though the data are distributed through space the only index into the mini-database NetCDF file is time. There is no efficient way to retrieve specific spatial-temporal data directly from a trajectory NetCDF file. For example, if an application program needed to extract just the surface temperatures from a glider data file --- where the glider samples the water column in a sawtooth pattern from 0 to 500 meters depth --- it would have to read all of the data from the NetCDF file and then perform the extraction. This is a very inefficient way to access data; if the trajectory data were in a fully indexed relational database then applications can have efficient data access. This is what STOQS provides. This paper describes its architecture and a web application that provides interactive 3D visualization using standard web technologies.
 
 
 
-\section{STOQS}
+\subsection{Operation}
 
 STOQS has been in use at MBARI for over 3 years to help manage and visualize data collected during upper water column measurement campaigns where scientific goals center on improving our understanding of biological processes. The data consist primarily of measurements collected by moving platforms. The platforms have accurate clocks, Global Positioning Sensors and underwater inertial navigation sensors, and one or more instruments that measure parameters such as temperature, salinity, oxygen, nitrate, chlorophyll fluorescence, optical backscatter, and particle sizes. Some platforms can also capture water samples for later laboratory analysis. A typical workflow for is:
 \begin{enumerate}
@@ -479,13 +480,20 @@ STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django ru
 \label{fig:STOQSArch}
 \end{figure}
 
-\subsection{STOQS User Interface}
+\subsection{Web-based User Interface}
 
 The STOQS User Interface displays a map of the vehicle tracks and a time series of depth profiles of the vehicles (Fig.~\ref{fig:STOQSscreencapture}). The bold blue letter text items are each sections that may be expanded revealing lists of items that may be selected for filtering, data selection, and plotting. If a platform is selected for filtering then only the information from that platform are shown in the other sections of the interface. Any selection initiates an instant update of the other items that may be selected. With this faceted search capability the user can quickly narrow a selection for data of interest. For instance in Fig.~\ref{fig:STOQSscreencapture} the platform "daphne"  and a time range of about a half a day have been selected. The interface is reactive to browser screen size and behaves appropriately when viewed on tablets and smart phones.
 
 Within the web application data are retrieved directly from the database via XHR (XMLHttpRequest) requests delivering data in JSON (JavaScript Object Notation) data structures. Client-side JavaScript code then formats these data as needed for display in the web page. Any DOM (Document Model Object) element, such as buttons and checkbox labels can be updated with data from the database. In fact, requested data can update any DOM element, including elements in the 2D Temporal Flot plot an in  X3D scene graphs placed anywhere in the web page.
 
 The overall design approach follows the so-called Shneiderman's mantra: "Overview first, zoom and filter, then details-on-demand" \cite{Whitney:2012:DIN:2597850}. This is in contrast to other data portal web sites which often present the user with empty text boxes in which unfamiliar users are at a loss on what to enter. The STOQS UI adheres to about 9 of the 12 elements of interactive dynamics described in \cite{Heer:2012:IDV:2133416.2146416}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=3.3in]{STOQSscreencapture.png}
+\caption{STOQS User Interface. Parameter chlorophyll is selected showing overview of when, where, and what platforms measured it.}
+\label{fig:STOQSscreencapture}
+\end{figure}
 
 
 \section{Visualization}
@@ -554,9 +562,11 @@ gmt grd2xyz Monterey25.grd \
 \item Process interactively in Meslab:
 \begin{itemize}
 \item Load .asc file
-\item Fliter - Point Sets - Compute normals for point sets
-\item Filter - Surface Reconstruction: Poisson (Octree Depth: 12, Solver Divide: 10)
-\item Filter - Remeshing, Simplification and Reconstruction - Quadric Edge Collapse Decimation:
+\item Filter operations
+\begin{itemize}
+\item Point Sets - Compute normals for point sets
+\item Surface Reconstruction: Poisson (Octree Depth: 12, Solver Divide: 10)
+\item Remeshing, Simplification and Reconstruction - Quadric Edge Collapse Decimation:
 \begin{itemize}
 \item Target number of faces: 1,500,000
 \item Preserve Normal
@@ -564,6 +574,7 @@ gmt grd2xyz Monterey25.grd \
 \item Optimal Position of Simplified Vertices
 \item Planar Simplification
 \item Post-simplification cleaning
+\end{itemize}
 \end{itemize}
 \item Cleanup (with plenty of intermediate saves)
 \item Filter - SmoothingÉ - Laplacian smooth (surface preserve)
@@ -575,7 +586,8 @@ aopt -i Monterey25_10x-smooth.ply \
   -F Scene -b Monterey25_10x-opt.x3db
 aopt -i Monterey25_10x-opt.x3db \
   -f PrimitiveSet:creaseAngle:4 -V \
-  -K "binGeo/:ib" -N Monterey25_10x.html
+  -K "binGeo/:ib" \
+  -N Monterey25_10x.html
 \end{verbatim}
 \end{itemize}
 
@@ -589,11 +601,11 @@ These operations result in a static web page where the results can be tested for
 \end{figure}
 
 
-\section{Temporal}
+\subsection{Temporal}
 
-\subsection{Depth}
+\subsubsection{Depth}
 
-\subsection{Parameter}
+\subsubsection{Parameter}
 
 
 \section{Using STOQS}
