@@ -358,7 +358,7 @@
 % author names and affiliations
 % use a multiple column layout for up to three different
 % affiliations
-\author{\IEEEauthorblockN{Mike McCann, Reiko Michisaki and John Ryan}
+\author{\IEEEauthorblockN{Mike McCann, Danelle Cline, Reiko Michisaki and John Ryan}
 \IEEEauthorblockA{Monterey Bay Aquarium Research Institute (MBARI)\\
 Moss Landing, CA USA\\
 mccann@mbari.org}
@@ -434,7 +434,7 @@ With increased ability to acquire measurements from oceanographic platforms such
 
 \subsection{CF-NetCDF}
 
-Standards are important for the durability of data archived from oceanographic measurement programs. The data are unique and costly to collect. One of the standards used within the oceanographic community is NetCDF. It is a binary data format used commonly for gridded numerical model output and for remote sensing data. Because of its 20-plus year history of use, its flexibility, and because of its recent adoption as an Open Geospatial Consortium (OGC) standard, NetCDF is used for archiving of MBARI's \textit{in situ} measurement data.
+Standards are important for the durability of data archived from oceanographic measurement programs. The data are unique and costly to collect. One of the standards used within the oceanographic community is NetCDF \cite{Rew1990}. It is a binary data format used commonly for gridded numerical model output and for remote sensing data. Because of its 20-plus year history of use, its flexibility, and because of its recent adoption as an Open Geospatial Consortium (OGC) standard, NetCDF is used for archiving of MBARI's \textit{in situ} measurement data.
 
 The NetCDF data format (with the Climate and Forecast conventions) provide efficient data access for array data, such as from numerical models, because it provides indexed access to data on the coordinate dimensions. A NetCDF file performs like a mini database for data organized on a grid of longitude, latitude, depth, and time values. Retrieving spatial-temporal subsets from from an array happens with a direct seek into the NetCDF file. This is a the fastest way to retrieve data from a file on disk and is why NetCDF is popular for storing array-based data.
 
@@ -454,7 +454,13 @@ The NetCDF data format (with the Climate and Forecast conventions) provide effic
 
 \subsection{Trajectory Data}
 
-This data access advantage does not exist for mobile platform \textit{in situ} measurement data stored in NetCDF files. Trajectory data is increasingly being collected by a variety of new platforms. These include all the measurements taken by vehicles such as ships, drifters, gliders, and AUVs (Fig.~\ref{fig:MUSE_illus_pp}). These data are structured in NetCDF files with one coordinate dimension: time. Even though the data are distributed through space the only index into the mini-database NetCDF file is time. There is no efficient way to retrieve specific spatial-temporal data directly from a trajectory NetCDF file. For example, if an application program needed to extract just the surface temperatures from a glider data file --- where the glider samples the water column in a sawtooth pattern from 0 to 500 meters depth --- it would have to read all of the data from the NetCDF file and then perform the extraction. This is a very inefficient way to access data; if the trajectory data were in a fully indexed relational database then applications can have efficient data access. This is what STOQS provides. This paper describes STOQS and how it is being used to manage, visualize and understand data from AUVs, gliders, and moorings.
+This data access advantage does not exist for mobile platform \textit{in situ} measurement data stored in NetCDF files. Trajectory data is increasingly being collected by a variety of new platforms. These include all the measurements taken by vehicles such as ships, drifters, gliders, and AUVs (Fig.~\ref{fig:MUSE_illus_pp}). These data are structured in NetCDF files with one coordinate dimension: time. Even though the data are distributed through space the only index into the mini-database NetCDF file is time. There is no efficient way to retrieve specific spatial-temporal data directly from a trajectory NetCDF file. For example, if an application program needed to extract just the surface temperatures from a glider data file --- where the glider samples the water column in a sawtooth pattern from 0 to 500 meters depth --- it would have to read all of the data from the NetCDF file and then perform the extraction. This is a very inefficient way to access data; if the trajectory data were in a fully indexed relational database then applications can have efficient data access. STOQS is built upon a relational database and therefore provides optimal data access for data visualization and analysis purposes.
+
+
+\subsection{Database Design}
+The trajectory feature type was the primary driver for the design of the STOQS database. However, care was taken to ensure that other discrete sampling geometry types \cite{DSG} that are common in oceanography while keeping the database fairly normalized. efficient storage of timeseries feature types as well, while maintianin third normal form.
+This paper describes STOQS and how it is being used to manage, visualize and understand data from AUVs, gliders, and moorings.
+
 
 
 
@@ -610,22 +616,12 @@ The default temporal display is the Depth tab where the vertical axis of the plo
 The other display of temporal data is where the vertical axis is the value of parameter(s). This typical time series plot is appropriate for timeseries data that have been recorded by stationary platforms. 
 
 
-\section{Using STOQS}
 
-\subsection{Loading Data}
+\input{SectionUsing.tex}
 
-\subsection{Exploring Data}
+\input{SectionUnderstanding.tex}
 
-
-\section{Understanding Data}
-
-\subsection{Labeling}
-
-\subsection{Prediction}
-
-
-
-\section{User Stories}
+\input{SectionUserStories.tex}
 
 
 
@@ -718,7 +714,7 @@ The other display of temporal data is where the vertical axis is the value of pa
 
 
 \section{Conclusion}
-
+The STOQS platform has been successful ...
 
 
 
