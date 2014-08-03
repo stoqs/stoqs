@@ -402,7 +402,8 @@ mccann@mbari.org}
 \begin{abstract}
 %\boldmath
 
-With increased ability to acquire measurements from various platforms such as ships, moorings, drifters, gliders and autonomous underwater vehicles, the need to efficiently access and visualize multi-parameter spatial temporal data is growing. The Monterey Bay Aquarium Research Institute has designed and built the Spatial Temporal Oceanographic Query System (STOQS) specifically to address this issue. The fundamental issue of providing efficient management and access to multidisciplinary data is addressed by embracing existing standards and employing geospatial relational database technology along with modern web frameworks to build a tool that enables deep exploration of complex data sets. The STOQS User Interface provides faceted search capabilities allowing a user to quickly drill into data of interest. Data selection can be constrained by spatial, temporal, and depth selections as well as by parameter values and platform names. Direct programmatic access to STOQS databases allows for complex analysis and visualization that are not provided by the web-based user interface.
+The Monterey Bay Aquarium Research Institute (MBARI)uses the Spatial Temporal Oceanographic Query System (STOQS) to manage data from its muli-platform observational campaigns. STOQS solves the fundamental problem providing efficient access to multidisciplinary data for visualization and analysis. It embraces existing standards and employs geospatial relational database technology along with modern web frameworks to enable deep exploration of complex data sets. Direct programmatic access using the Python programming language allows for complex analysis and visualization of very large data sets. STOQS is a 100\% open source project, free for anyone to use.
+
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
 % This preserves the distinction between vectors and scalars. However,
@@ -431,6 +432,10 @@ With increased ability to acquire measurements from various platforms such as sh
 % no \IEEEPARstart
 
 With increased ability to acquire measurements from oceanographic platforms such as ships, moorings, drifters, gliders and autonomous underwater vehicles (AUVs), the need to efficiently access and visualize the data they collect is growing. The Monterey Bay Aquarium Research Institute (MBARI) has designed and built the Spatial Temporal Oceanographic Query System (STOQS) specifically to address this issue \cite{imdis2013}. The fundamental issue of providing efficient management and access to multidisciplinary data is addressed by embracing existing standards and employing geospatial relational database technology along with modern web frameworks to build a tool that enables deep exploration of complex data sets. STOQS is an open source software project built upon a framework of free and open source software and is available for anyone to use and extend. For more information please see the STOQS code repository at http://code.google.com/p/stoqs.
+
+This paper describes the overall design of STOQS. As visualization is essential for getting insight from data, some of the specialized visualization capabilities are highlighted. The paper closes with stories of using STOQS in the field a discussion using machine learning to extract hidden information in large archives of data.
+
+\section{Overall Design}
 
 \subsection{CF-NetCDF}
 
@@ -463,18 +468,6 @@ This paper describes STOQS and how it is being used to manage, visualize and und
 
 
 
-
-\subsection{Operation}
-
-STOQS has been in use at MBARI for over 3 years to help manage and visualize data collected during upper water column measurement campaigns where scientific goals center on improving our understanding of biological processes. The data consist primarily of measurements collected by moving platforms. The platforms have accurate clocks, Global Positioning Sensors and underwater inertial navigation sensors, and one or more instruments that measure parameters such as temperature, salinity, oxygen, nitrate, chlorophyll fluorescence, optical backscatter, and particle sizes. Some platforms can also capture water samples for later laboratory analysis. A typical workflow for is:
-\begin{enumerate}
-\item Install the STOQS software on a Linux server
-\item Vehicles conduct their missions, collecting data
-\item Create NetCDF files of the instrument data
-\item Construct and execute a STOQS load script
-\item Access and visualize data using the STOQS UI
-\end{enumerate}
-
 \subsection{Architecture}
 
 STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django running on a server and client-side technology (jQuery, OpenLayers, X3DOM, Twitter Bootstrap) running in a modern web browser (Fig.~\ref{fig:STOQSArch}) . The web application provides faceted search capabilities allowing a user to quickly drill into data of interest. Data selection can be constrained by spatial, temporal, and depth selections as well as by parameter values and platform names. The web application layer also provides a REST (Representational State Transfer) Application Programming Interface allowing tools such as Python, Matlab, and Google Earth to retrieve data directly from the database. The X3DOM JavaScript library provides interactive 3D views of the data in browsers that support WebGL.
@@ -485,6 +478,9 @@ STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django ru
 \caption{STOQS integrates multiple open-source components.}
 \label{fig:STOQSArch}
 \end{figure}
+
+
+\section{Visualization}
 
 \subsection{User Interface}
 
@@ -500,9 +496,6 @@ The overall design approach follows the so-called Shneiderman's mantra: "Overvie
 \caption{STOQS User Interface. Parameter chlorophyll is selected showing overview of when, where, and what platforms measured it.}
 \label{fig:STOQSscreencapture}
 \end{figure}
-
-
-\section{Visualization}
 
 \subsection{Spatial}
 
