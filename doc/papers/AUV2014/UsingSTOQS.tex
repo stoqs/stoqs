@@ -524,7 +524,7 @@ Selected Measured Parameter data are delivered to the Spatial 3D display when a 
 \begin{enumerate}
 \item HTML contains X3D scene graph elements for the web page: Fig.~\ref{fig:Spatial3D_DOM}
 \item Data are received by the browser from an XHR request in JSON format: Fig.~\ref{fig:JSONData}
-\item jQuery JavaScript code takes the values from the JSON and writes them to the scene graph elements: Fig.~\ref{fig:jQueryDOMUpdate}
+\item jQuery JavaScript code takes the values from the JSON and writes them to the scene graph elements: Fig.~\ref{fig:jQueryDOMUpdateGeo}
 \end{enumerate}
 
 \begin{figure}[!htbp]
@@ -543,9 +543,9 @@ Selected Measured Parameter data are delivered to the Spatial 3D display when a 
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=3.3in]{jQueryDOMUpdate.png}
+\includegraphics[width=3.3in]{jQueryDOMUpdateGeo.png}
 \caption{JQuery JavaScript code that updates the X3D DOM elements.}
-\label{fig:jQueryDOMUpdate}
+\label{fig:jQueryDOMUpdateGeo}
 \end{figure}
 
 Updates are triggered by any selections in the UI that would result in different data being displayed. An example would be selecting a smaller depth-time region in the Temporal section. Sensor data are represented in X3D as an IndexedLineSet built out of geocoordinate points, which is this case are latitude, longitude, and depth relative to the WGS84 ellipsoid, the default geosystem. X3D Geospatial performs the conversion of geodetic coordinates to geocentric coordinates which is the native coordinate system used by X3D Geospatial.
