@@ -358,7 +358,7 @@
 % author names and affiliations
 % use a multiple column layout for up to three different
 % affiliations
-\author{\IEEEauthorblockN{Mike McCann, Rich Schramm, Danelle Cline, Reiko Michisaki and John Ryan}
+\author{\IEEEauthorblockN{Mike McCann, Rich Schramm, Danelle Cline, Reiko Michisaki, Julio Harvey and John Ryan}
 \IEEEauthorblockA{Monterey Bay Aquarium Research Institute (MBARI)\\
 Moss Landing, CA USA\\
 mccann@mbari.org}
@@ -402,7 +402,7 @@ mccann@mbari.org}
 \begin{abstract}
 %\boldmath
 
-The Monterey Bay Aquarium Research Institute (MBARI) uses the Spatial Temporal Oceanographic Query System (STOQS) to manage data from its muli-platform observational campaigns. STOQS solves the fundamental problem providing efficient access to multidisciplinary data for visualization and analysis. It embraces existing standards and employs geospatial relational database technology along with modern web frameworks to enable deep exploration of complex data sets. Direct programmatic access using the Python programming language allows for detailed analysis and visualization of very large data sets. STOQS is a 100\% open source project, free for anyone to use.
+The Monterey Bay Aquarium Research Institute (MBARI) uses the Spatial Temporal Oceanographic Query System (STOQS) to manage data from its muli-platform observational campaigns. STOQS solves the fundamental problem providing efficient access to multidisciplinary data for visualization and analysis. It embraces existing standards and employs geospatial relational database technology along with modern web frameworks to enable deep exploration of multidisciplinary data sets. Direct programmatic access using the Python programming language allows for detailed analysis and visualization of very large data sets. STOQS is a 100\% open source project, free for anyone to use.
 
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
@@ -451,7 +451,7 @@ The NetCDF data format (with the Climate and Forecast conventions) provide effic
 \label{fig:MUSE_illus_pp}
 \end{figure}
 
-This data access advantage does not exist for mobile platform \textit{in situ} measurement data stored in NetCDF files. Trajectory data is increasingly being collected by a variety of new platforms. These include all the measurements taken by vehicles such as ships, drifters, gliders, and AUVs (Fig.~\ref{fig:MUSE_illus_pp}). These data are structured in NetCDF files with one coordinate dimension: time. Even though the data are distributed through space the only index into the mini-database NetCDF file is time. There is no efficient way to retrieve specific spatial-temporal data directly from a trajectory NetCDF file. For example, if an application program needed to extract just the surface temperatures from a glider data file --- where the glider samples the water column in a sawtooth pattern from 0 to 500 meters depth --- it would have to read all of the data from the NetCDF file and then perform the extraction. This is a very inefficient way to access data; if the trajectory data were in a fully indexed relational database then applications can have efficient data access. STOQS is built upon a relational database and therefore provides optimal data access for data visualization and analysis purposes.
+This data access advantage does not exist for mobile platform \textit{in situ} measurement trajectory data stored in NetCDF files. Trajectory data is increasingly being collected by a variety of new platforms. These include all the measurements taken by vehicles such as ships, drifters, gliders, and AUVs (Fig.~\ref{fig:MUSE_illus_pp}). These data are structured in NetCDF files with one coordinate dimension: time. Even though the data are distributed through space the only index into the mini-database NetCDF file is time. There is no efficient way to retrieve specific spatial-temporal data directly from a trajectory NetCDF file. For example, if an application program needed to extract just the surface temperatures from a glider data file --- where the glider samples the water column in a sawtooth pattern from 0 to 500 meters depth --- it would have to read all of the data from the NetCDF file and then perform the extraction. This is a very inefficient way to access data. A solution is to store the data in a geospatial relational database where any field, such as depth and geographic location,  may be indexed for efficient data access. Therefore, to provide optimal access for data analysis and visualizaion STOQS is built upon the open source PostgreSQL/PostGIS database.
 
 \begin{figure*}[hbp]
 \centering
@@ -462,9 +462,9 @@ This data access advantage does not exist for mobile platform \textit{in situ} m
 
 \subsection{Database Design}
 A proper relational database design must consider many aspects of the scientific workflow: data ingestion, efficient storage, uniform search and access \cite{Bechini:2013:MSS:2425433.2425647}. The design of the STOQS database schema primarily focused on solving the problem of efficient access of \textbf{trajectory} data. However, care was taken to ensure that other discrete sampling geometry feature types \cite{DSG} that are common in oceanography would be supported by the schema.  The other feature type that have been common in MBARI's campaigns have been \textbf{timeseries} and \textbf{timeseriesProfile} which are produced by mooring deployments with instruments at a single depth and at multiple depths. 
-A fourth feature type of \textbf{trajectoryProfile} is produced by profiling instruments aboard a moving platform; examples include shipboard ADCP and AUV measured mulibeam water column measurements. The STOQS schema can also store data of these kind of data.
+A fourth feature type of \textbf{trajectoryProfile} is produced by profiling instruments aboard a moving platform; examples include shipboard ADCP and AUV measured multibeam water column measurements. The STOQS schema is able to store these data as well.
 
-Review of existing practices \cite{Wright} and \cite{MODB} informed the proper layout of the tables, fields and relationships.  The key portion of the STOQS data model which stores data is shown in Fig.~\ref{fig:stoqs_simple_model}. There are 29 other tables in the model which hold metatadata, statistics, and simplified representations which are used by the user interface to help with data visualization and access. The complete data model is available on the project's code repository \cite{STOQS}. 
+Review of existing practices \cite{Wright} and \cite{MODB} informed the proper layout of the tables, fields and relationships.  The key portion of the STOQS data model that stores data is shown in Fig.~\ref{fig:stoqs_simple_model}. There are 29 other tables in the model that hold metatadata, statistics, and simplified representations which are used by the user interface to help with data visualization and access. The complete data model is available on the project's code repository \cite{STOQS}. 
 
 
 
@@ -490,7 +490,7 @@ friction-free data loads (free-form parameter name and CF standard\_name)
 
 \subsection{User Interface}
 
-The STOQS User Interface displays a map of the vehicle tracks and a time series of depth profiles of the vehicles (Fig.~\ref{fig:STOQSscreencapture}). The bold blue letter text items are each sections that may be expanded revealing lists of items that may be selected for filtering, data selection, and plotting. If a platform is selected for filtering then only the information from that platform are shown in the other sections of the interface. Any selection initiates an instant update of the other items that may be selected. With this faceted search capability the user can quickly narrow a selection for data of interest. For instance in Fig.~\ref{fig:STOQSscreencapture} the platform "daphne"  and a time range of about a half a day have been selected. The interface is reactive to browser screen size and behaves appropriately when viewed on tablets and smart phones.
+The STOQS User Interface displays a map of the vehicle tracks and a time series of depth profiles of the vehicles (Fig.~\ref{fig:STOQSscreencapture}). The bold blue letter text items are each sections that may be expanded revealing lists of items that may be selected for filtering, data selection, and plotting. If a platform is selected for filtering then only the information from that platform are shown in the other sections of the interface. Any selection initiates an instant update of the other items that may be selected. With this faceted search capability the user can quickly narrow a selection for data of interest. For instance in Fig.~\ref{fig:STOQSscreencapture} the platform "daphne"  and a time range of about a day have been selected. The interface is reactive to browser screen size and behaves appropriately when viewed on tablets and smart phones. As with the database schema the design of the User Interface was guided by earlier efforts, in particular the MOQuA tool \cite{godin05}.
 
 Within the web application data are retrieved directly from the database via XHR (XMLHttpRequest) requests delivering data in JSON (JavaScript Object Notation) data structures. Client-side JavaScript code then formats these data as needed for display in the web page. Any DOM (Document Model Object) element, such as buttons and checkbox labels can be updated with data from the database. In fact, requested data can update any DOM element, including elements in the 2D Temporal Flot plot an in  X3D scene graphs placed anywhere in the web page.
 
@@ -518,7 +518,7 @@ Next to the Map tab in the Spatial section is a 3D tab. This 3D tab appears only
 \label{fig:x3dTerrains}
 \end{figure}
 
-Selected Measured Parameter data are delivered to the Spatial 3D display when a radio button in the Plot Data column is selected and the checkbox in the 3D panel is checked. The process for the update of the display is:
+Selected Measured Parameter data are delivered to the Spatial 3D display when a radio button in the Plot Data column is selected and the checkbox in the 3D panel is checked. The update of the 3D data uses the same AJAX (asynchronous JavaScript and XML - though the payload is JSON, not XML) process as the other parts of the User Interface:
 
 \begin{enumerate}
 \item HTML contains X3D scene graph elements for the web page: Fig.~\ref{fig:Spatial3D_DOM}
@@ -723,7 +723,7 @@ The STOQS platform has been successful ...
 % use section* for acknowledgement
 \section*{Acknowledgements}
 
-Appreciation is given to the numerous people involved in the deployment, recovery, operation and data handling for all of the platforms whose data are presented here. Development of STOQS is supported by the David and Lucile Packard Foundation at the Monterey Bay Aquarium Research Institute. It was inspired by the MOQuA tool originally developed by Mike Godin \cite{godin05}.
+Appreciation is given to the numerous people involved in the deployment, recovery, operation and data handling for all of the platforms whose data are presented here. Development of STOQS is supported by the David and Lucile Packard Foundation at the Monterey Bay Aquarium Research Institute.
 
 
 
