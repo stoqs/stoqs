@@ -347,25 +347,9 @@
 % correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
 
-% See: http://mintaka.sdsu.edu/GF/bibliog/latex/floats.html
-% Alter some LaTeX defaults for better treatment of figures:
-% See p.105 of "TeX Unbound" for suggested values.
-% See pp. 199-200 of Lamport's "LaTeX" book for details.
-%   General parameters, for ALL pages:
-\renewcommand{\topfraction}{0.9}	% max fraction of floats at top
-\renewcommand{\bottomfraction}{0.8}	% max fraction of floats at bottom
-%   Parameters for TEXT pages (not float pages):
-\setcounter{topnumber}{2}
-\setcounter{bottomnumber}{2}
-\setcounter{totalnumber}{4}     % 2 may work better
-\setcounter{dbltopnumber}{2}    % for 2-column pages
-\renewcommand{\dbltopfraction}{0.9}	% fit big float above 2-col. text
-\renewcommand{\textfraction}{0.07}	% allow minimal text w. figs
-%   Parameters for FLOAT pages (not text pages):
-\renewcommand{\floatpagefraction}{0.7}	% require fuller float pages
-% N.B.: floatpagefraction MUST be less than topfraction !!
-\renewcommand{\dblfloatpagefraction}{0.7}	% require fuller float pages
-% remember to use [htp] or [htpb] for placement
+
+\usepackage[section]{placeins}
+
 
 \begin{document}
 %
@@ -500,9 +484,9 @@ STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django ru
 
 \subsection{Metadata}
 
-ISO 19135-2
-Resource tables
-friction-free data loads (free-form parameter name and CF standard\_name)
+Metadata and its management are key to the success of any data management system. STOQS approches this issue by relying on the community adopted conventions for embedding metadata in the NetCDF files. Important conventions inlclude Climate and Forecast \cite{CF}, those from the Argo and OceanSITES communities \cite{Pouliquen2006} and the Attribute Conventions for Dataset Discovery \cite{ACDD}. Tools upstream of STOQS help ensure proper setting of metadata values; for example, OPeNDAP data servers include tools that verify against the ISO 19115 Metadata Standard for Geographic Data. Regarless of the content of the metadata contained in the NetCDF files all of it will be loaded into STOQS. Global attributes and values are stored as Resources and attached to the Actitity record. Variable attributes that are not fields of the Parameter table are also stored as Resources, but are attached to the Parameter record. Resource entries are used throughout the STOQS data model to store information that cannot be assigned to other parts of the data model.
+
+Another important aspect of metadata is that the barrier for loading and using data in STOQS is low, meaning that a minimum amount of metadata is required to properly identify the spatial and temporal coordinates, but no requirement is placed on consistent naming of variables. For example, the property "sea water temperature" may have names of TEMP, temperature, or water\_temp. All of these data can be loaded and be visualized in the User Interface. Users familiar with the platforms understand the the names given. The writer of the NetCDF file must pick appropriate names that will be understood by users of the data. If the writer knows that a variable is some standard parameter that can be compared then an attribute of "standard\_name" can be assigned with a value from the CF Standard Name table \cite{CFSN}. 
 
 
 \section{Visualization}
@@ -727,8 +711,6 @@ Water samples were acquired by the AUV from both phytoplankton populations (whit
 
 Similarly, in 2014, STOQS has been used in the field to monitor progress and guide decision-making during upper water column sampling aimed at Sampling and Identifying Marine Zooplankton (SIMZ), another MBARI project.  SIMZ sampling methods include the Dorado class AUV Gulper, CTD/Niksin rosette casts (with several water collection options implemented), and ship’s underway environmental data.  During operations, data from these diverse platforms were formatted and loaded into STOQS on a daily basis by research staff on-board the R/V \textit{Rachel Carson}.  This enabled science team members to monitor upper water column conditions and insure sampling in and around phytoplankton thin layers was successful each day. Throughout 2014 SIMZ operations, STOQS functionality has assisted researchers in choosing sampling locations to better serve science requirements during 2–5 day experiments in northern Monterey Bay and near Bodega Bay, California.
 
-The fusion of data from many other experiment platforms allows researchers to relate the AUV data to many other observations.
-
 \begin{figure*}[htbp]
 \centering
 \includegraphics[width=6.6in]{stoqs_simple_model_labels.png}
@@ -743,6 +725,8 @@ The fusion of data from many other experiment platforms allows researchers to re
 \label{fig:LabeledSelectionUI}
 \end{figure*}
 
+The fusion of data from many other experiment platforms allows researchers to relate the AUV data to many other observations.
+
 \section{Understanding Data}
 
 Today's oceanographic campaigns produce tens of millions of diverse measurements; this volume of data is too great for one to understand all of its information, even with an the effective user interface that STOQS provides.
@@ -753,7 +737,7 @@ By extending the model to support labeled data the other capabilities of STOQS m
 
 We are currently exploring ways to enhance data exploration and discovery using both supervised and unsupervised machine-learning methods.  These methods would produce tags that are stored in association tables that can be tied back to the actual data values.  In the future, we envision these tags being further refined through expert validation, or as a feature to other processing, whether it is biological models or further machine learning models. 
 
-The STOQS platform is currently under continued development.  Machine-learning approaches to assess relational patterns within and among multi-platform physical, chemical and biological data already in hand is our current focus.  For example, implementation of additional data labeling within STOQS will empower machine-learning methods to identify and associate specific combinations of optical (e.g., backscatter, transmissometry) or other measurements with biological signals from specific groups of organisms detected in representative water samples (e.g., phytoplankton or zooplankton taxonomic groups). With further development, it may be possible to identify groups of organisms based solely on their specific physical and/or chemical signatures that are more easily measured by in situ electronic sensors.
+The STOQS platform is currently under continued development.  Machine-learning approaches to assess relational patterns within and among multi-platform physical, chemical and biological data already in hand is our current focus.  For example, implementation of additional data labeling within STOQS will empower machine-learning methods to identify and associate specific combinations of optical (e.g., backscatter, transmissometry) or other measurements with biological signals from specific groups of organisms detected in representative water samples (e.g., phytoplankton or zooplankton taxonomic groups). With further development, it may be possible to identify groups of organisms based solely on their specific physical and/or chemical signatures that are more easily measured by \textit{in situ} electronic sensors.
 
 
 
@@ -852,14 +836,13 @@ In summary, STOQS provides an invaluable interface for the visualization and ana
 
 
 
-
 % conference papers do not normally have an appendix
 
 
 % use section* for acknowledgement
 \section*{Acknowledgements}
 
-Appreciation is given to the numerous people involved in the deployment, recovery, operation and data handling for all of the platforms whose data are presented here. Development of STOQS is supported by the David and Lucile Packard Foundation at the Monterey Bay Aquarium Research Institute.
+Appreciation is given to the numerous people involved in the development, deployment, recovery, operation and data handling for all of the platforms whose data are presented here. Development of STOQS is supported by the David and Lucile Packard Foundation at the Monterey Bay Aquarium Research Institute.
 
 
 
