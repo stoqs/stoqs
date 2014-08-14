@@ -653,12 +653,12 @@ To this end, a total of 27 platforms participated in the campaign: 4 ships, 3 AU
 \label{fig:ReikoFigure1}
 \end{figure}
 
-Data from the platforms were received through a variety of portals and the data were in varying states of processing.  Some data were received hourly and other data on a daily basis.  The goal was to process the data as soon as possible and load it into STOQS for decision making.  The process was automated for all platforms, except for the ships, using cron scripts.  For STOQS loading, all data is required to be in NetCDF format.  Compliance with CF naming standards is needed to allow interaction between parameters from different platforms.  After raw data processing and NetCDF conversion, all data was loaded onto the CANON data repository, a THREDDS Server.  A Test STOQS installation was set up for the trainees where new load functions could be tested before loading to the production STOQS installation.   Fig.~\ref{fig:ReikoFigure2} illustrates the data flow.
+Data from the platforms were received through a variety of portals and the data were in varying states of processing.  Some data were received hourly and other data on a daily basis.  The goal was to process the data as soon as possible and load it into STOQS for decision making.  The process was automated for all platforms, except for the ships, using cron scripts.  For STOQS loading, all data is required to be in NetCDF format.  Compliance with CF naming standards is needed to allow interaction between parameters from different platforms.  After raw data processing and NetCDF conversion, all data was loaded onto the CANON data repository, a THREDDS OPeNDAP Server \cite{TDS}.  A Test STOQS installation was set up for the trainees where new load functions could be tested before loading to the production STOQS installation.   Fig.~\ref{fig:ReikoFigure2} illustrates the data flow.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=2.0in]{ReikoFigure2.png}
-\caption{Data flow.}
+\includegraphics[width=2.0in]{canon13_stoqs_flow_chart2.png}
+\caption{The flow of data involves the collection and processing of data from the platform to the data repository on the CANON Thredds server, from which data are loaded into STOQS for user analysis.}
 \label{fig:ReikoFigure2}
 \end{figure}
 
@@ -674,7 +674,7 @@ Loading data from a platform requires:
 
 Platform load functions are defined in the CANONLoader class in the python file loaders/\_\_init\_\_.py   A load function is created for each distinct platform, i.e. Dorado AUV, Tethys LRAUV, ESP mooring. The platform load script will call this function and pass the data location and data file parameters to begin loading data.  One may maintain a full and strided database; a strided data load is subsampled for quicker loading and exploration through the User Interface.
 
-One of the requirements for using STOQS in the CANON campaign was to assist in decisions as the project was in progress. Quick exploration and visual analysis helped the team to assess the environmental conditions to guide AUVs, ships, and gliders.  The CANON project included platforms that were able to sample on a 24 hours basis: LRAUVs, moorings, drifters, and gliders. We automated loading by creating individual load scripts for platforms and using shell scripts scheduled to run using cron. 
+One of the requirements for using STOQS in the CANON campaign was to assist in decisions as the project was in progress. Quick examination and visual analysis helped the team to assess the environmental conditions to guide AUV, ship, and glider exploration.  The CANON project included platforms that were able to sample on a 24 hours basis: LRAUVs, moorings, drifters, and gliders. We automated loading by creating individual load scripts for platforms and using shell scripts scheduled to run using cron. 
 
 In addition to individual loading of platforms, post campaign a master loading script was developed to load all the platform data at once.  This allows custom striding of data, the loading of quality controlled data, and a clean loading of all data sets.  In conclusion, the trainees were able to successfully load CANON campaign data.  Scientists were able to use the analytical tools to study biological dynamics and engineers were able to monitor platform and sensor performance.  
 
@@ -711,6 +711,12 @@ Water samples were acquired by the AUV from both phytoplankton populations (whit
 
 Similarly, in 2014, STOQS has been used in the field to monitor progress and guide decision-making during upper water column sampling aimed at Sampling and Identifying Marine Zooplankton (SIMZ), another MBARI project.  SIMZ sampling methods include the Dorado class AUV Gulper, CTD/Niksin rosette casts (with several water collection options implemented), and ship’s underway environmental data.  During operations, data from these diverse platforms were formatted and loaded into STOQS on a daily basis by research staff on-board the R/V \textit{Rachel Carson}.  This enabled science team members to monitor upper water column conditions and insure sampling in and around phytoplankton thin layers was successful each day. Throughout 2014 SIMZ operations, STOQS functionality has assisted researchers in choosing sampling locations to better serve science requirements during 2–5 day experiments in northern Monterey Bay and near Bodega Bay, California.
 
+The fusion of data from many other experiment platforms allows researchers to relate the AUV data to many other observations.
+
+\section{Understanding Data}
+
+Today's oceanographic campaigns produce tens of millions of diverse measurements; this volume of data is too great for one to understand all of its information, even with an the effective user interface that STOQS provides.
+
 \begin{figure*}[htbp]
 \centering
 \includegraphics[width=6.6in]{stoqs_simple_model_labels.png}
@@ -724,12 +730,6 @@ Similarly, in 2014, STOQS has been used in the field to monitor progress and gui
 \caption{Screen grab of the STOQS UI showing selection of Diatom and Sediment labeled data. The Spatial and Temporal sections of the UI may be explanded to explore the selected data in those dimensions.}
 \label{fig:LabeledSelectionUI}
 \end{figure*}
-
-The fusion of data from many other experiment platforms allows researchers to relate the AUV data to many other observations.
-
-\section{Understanding Data}
-
-Today's oceanographic campaigns produce tens of millions of diverse measurements; this volume of data is too great for one to understand all of its information, even with an the effective user interface that STOQS provides.
 
 The same database foundation that enables uniform data access for visualization purposes can be used for analytical purposes. To assist with the operations required by machine learning techniques we have modified the STOQS schema to support labeling of data. This is accomplished by association tables MeasuredParameterResource and SampledParameterReource as shown in Fig.~\ref{fig:stoqs_simple_model_labels}.
 
