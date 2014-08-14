@@ -347,6 +347,25 @@
 % correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
 
+% See: http://mintaka.sdsu.edu/GF/bibliog/latex/floats.html
+% Alter some LaTeX defaults for better treatment of figures:
+% See p.105 of "TeX Unbound" for suggested values.
+% See pp. 199-200 of Lamport's "LaTeX" book for details.
+%   General parameters, for ALL pages:
+\renewcommand{\topfraction}{0.9}	% max fraction of floats at top
+\renewcommand{\bottomfraction}{0.8}	% max fraction of floats at bottom
+%   Parameters for TEXT pages (not float pages):
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}     % 2 may work better
+\setcounter{dbltopnumber}{2}    % for 2-column pages
+\renewcommand{\dbltopfraction}{0.9}	% fit big float above 2-col. text
+\renewcommand{\textfraction}{0.07}	% allow minimal text w. figs
+%   Parameters for FLOAT pages (not text pages):
+\renewcommand{\floatpagefraction}{0.7}	% require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+\renewcommand{\dblfloatpagefraction}{0.7}	% require fuller float pages
+% remember to use [htp] or [htpb] for placement
 
 \begin{document}
 %
@@ -711,7 +730,7 @@ The other display of temporal data is where the vertical axis is the value of pa
 
 
 \section{Conclusion}
-The STOQS platform has been successful ...
+In summary, STOQS provides an invaluable interface for the visualization and analysis of oceanographic and biological data, often as it is being collected by diverse sampling platforms.  The utility of STOQS has been proven both in the field, to monitor and insure successful operations, as well as post-operationally, to assess and analyze multidisciplinary data sets occurring across broad spatial and temporal scales.
 
 
 
