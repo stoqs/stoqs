@@ -1,5 +1,8 @@
+Parameter
+InstantPoint
+Measurement
+Sample
 ResourceType
-Resource
 Campaign
 CampaignLog
 ActivityType
@@ -20,10 +23,7 @@ AnalysisMethod
 SampleRelationship
 SampleResource
 PlatformResource
-ResourceResource
-ResourceMeasurement
 Activity
 ActivityParameter
 ActivityParameterHistogram
-SampledParameterResource
 PermaLink
