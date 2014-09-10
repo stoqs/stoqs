@@ -428,6 +428,12 @@ class Base_Loader(STOQS_Loader):
             s = to_udunits(self.startDatetime, timeAxisUnits)
             logger.debug("For startDatetime = %s, the udnits value is %f", self.startDatetime, s)
 
+        if self.dataStartDatetime: 
+            # Override s if self.dataStartDatetime is specified
+            logger.debug('self.dataStartDatetime, timeAxis.units = %s, %s', self.dataStartDatetime, timeAxis.units)
+            s = to_udunits(self.dataStartDatetime, timeAxisUnits)
+            logger.debug("For dataStartDatetime = %s, the udnits value is %f", self.dataStartDatetime, s)
+
         if self.endDatetime:
             'endDatetime may be None, in which case just read until the end'
             e = to_udunits(self.endDatetime, timeAxisUnits)
@@ -445,7 +451,7 @@ class Base_Loader(STOQS_Loader):
         # For python slicing add 1 to the end index
         logger.debug('tIndx = %s', tIndx)
         try:
-            indices = (tIndx[0], tIndx[-1] + 1)
+            indices = (tIndx[0] + 1, tIndx[-1] + 1)
         except IndexError:
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
         logger.info('Start and end indices are: %s', indices)
@@ -455,15 +461,17 @@ class Base_Loader(STOQS_Loader):
     def getTotalRecords(self):
         '''
         For the url count all the records that are to be loaded from all the include_names and return it.
+        Computes the sum of the product of the time slice and the rest of the elements of the shape.
         '''
         count = 0
         numDerived = 0
         trajSingleParameterCount = 0
         for name in self.include_names:
+            tIndx = self.getTimeBegEndIndices(self.ds[self.getAuxCoordinates(name)['time']])
             try:
                 if self.getFeatureType() == 'trajectory':
-                    trajSingleParameterCount = np.prod(self.ds[name].shape)
-                count += (np.prod(self.ds[name].shape) / self.stride)
+                    trajSingleParameterCount = np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],))
+                count += (np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],)) / self.stride)
             except KeyError as e:
                 if self.getFeatureType() == 'trajectory':
                     # Assume that it's a derived variable and add same count as 
@@ -733,9 +741,9 @@ class Base_Loader(STOQS_Loader):
                     try:
                         mp.save(using=self.dbAlias)
                     except IntegrityError as e:
-                        logger.warn('%s: Skipping this record.', e)
+                        logger.warn(e)
                     except DatabaseError as e:
-                        logger.warn('%s: Skipping this record.', e)
+                        logger.warn(e)
                     else:
                         self.loaded += 1
                         logger.debug("Inserted value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
@@ -1215,7 +1223,8 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     else:
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None):
+def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None,
+                    dataStartDatetime=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1235,6 +1244,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
             stride = stride,
             startDatetime = startDatetime,
             endDatetime = endDatetime,
+            dataStartDatetime = dataStartDatetime,
             grdTerrain = grdTerrain)
 
     if parmList:
@@ -1354,7 +1364,7 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
-def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
+def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, dataStartDatetime=None):
     '''
     Run the DAPloader for OceanSites formatted Mooring Station data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1373,6 +1383,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             platformTypeName = pTypeName,
             stride = stride,
             startDatetime = startDatetime,
+            dataStartDatetime = dataStartDatetime,
             endDatetime = endDatetime)
 
     if parmList:
