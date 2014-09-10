@@ -48,9 +48,10 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 ######################################################################
 #  MOORINGS
 ######################################################################
-# Set beginning start and end dates for this campaign
+# Set beginning start and end dates for this campaign - if this script is to be run regularly from cron to add new
+# data to STOQS then use the --append option to append new data.  Do not change these values.
 cl.m1_startDatetime = datetime.datetime(2014, 9, 1)
-cl.m1_endDatetime  = datetime.datetime(2014, 10, 10)
+cl.m1_endDatetime  = datetime.datetime(2014, 10, 12)
 
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 cl.m1_base = 'http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201407/'
@@ -61,8 +62,6 @@ cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_
               ]
 
 cl.process_command_line()
-
-##cl.m1_dataStartDatetime = cl.get_last_m1_datetime()
 
 if cl.args.test:
     cl.loadM1(stride=10)

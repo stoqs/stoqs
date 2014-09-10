@@ -147,6 +147,8 @@ class LoadScript(object):
                             help='Run load for test configuration as defined in \n"if cl.args.test:" section of load script')
         parser.add_argument('-s', '--stride', action='store', type=int, default=1,
                             help='Stride value (default=1)')
+        parser.add_argument('-a', '--append', action='store_true', 
+                            help='Append data to existing activity - for use in repetative runs')
         parser.add_argument('-v', '--verbose', action='store_true', 
                             help='Turn on DEBUG level logging output')
 
@@ -1018,6 +1020,9 @@ class STOQS_Loader(object):
         if not ms:
             self.logger.info("No sea_water_temperature and sea_water_salinity; can't add SigmaT and Spice.")
             return parameterCounts
+
+        if self.dataStartDatetime:
+            ms = ms.filter(instantpoint__timevalue__gt=self.dataStartDatetime)
 
         # Create our new Parameters
         p_sigmat, created = m.Parameter.objects.using(self.dbAlias).get_or_create( standard_name='sea_water_sigma_t',

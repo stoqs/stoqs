@@ -26,6 +26,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 import DAPloaders
 from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader 
 from loaders import LoadScript
+from stoqs.models import InstantPoint
+from django.db.models import Max
 import logging
 
 def getStrideText(stride):
@@ -58,6 +60,7 @@ class CANONLoader(LoadScript):
                 'other':        'ffeda0',
                 'tethys':       'fed976',
                 'daphne':       'feb24c',
+                'makai':        'feb34c',
                 'fulmar':       'fd8d3c',
                 'waveglider':   'fc4e2a',
                 'nps_g29':      'e31a1c',
@@ -112,8 +115,13 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + file
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+
             DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Tethys', self.colors['tethys'], 'auv', 'AUV mission', 
-                                        self.tethys_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
+                                        self.tethys_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime)
 
     def loadDaphne(self, stride=None):
         '''
@@ -122,10 +130,30 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
             url = self.daphne_base + file
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+
             # Set stride to 1 for telemetered data
             DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Daphne', self.colors['daphne'], 'auv', 'AUV mission', 
-                                        self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
+                                        self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime)
 
+    def loadMakai(self, stride=None):
+        '''
+        Makai specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
+            url = self.daphne_base + file
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+
+            # Set stride to 1 for telemetered data
+            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Makai', self.colors['makai'], 'auv', 'AUV mission', 
+                                        self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime)
     def loadMartin(self, stride=None):
         '''
         Martin specific load functions
@@ -545,9 +573,14 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.m1_files], self.m1_files):
             url = os.path.join(self.m1_base, file)
-            print "url = %s" % url
+            
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'M1_Mooring', self.colors['m1'], 'mooring', 'Mooring Deployment', 
-                                        self.m1_parms, self.dbAlias, stride, self.m1_startDatetime, self.m1_endDatetime)
+                                        self.m1_parms, self.dbAlias, stride, self.m1_startDatetime, self.m1_endDatetime, dataStartDatetime)
 
     def loadM1ts(self, stride=None):
         '''
