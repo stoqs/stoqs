@@ -1384,8 +1384,6 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
     that loads the data.  Following the load important updates are made to the database.
     '''
     logger.debug("Instantiating Mooring_Loader for url = %s", url)
-    if dataStartDatetime:
-        dataStartDatetime = dataStartDatetime - timedelta(seconds=3600),    # Subract an hour to fill in missing_values at end from previous load
     loader = Mooring_Loader(
             url = url,
             campaignName = cName,

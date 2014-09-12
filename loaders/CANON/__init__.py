@@ -28,6 +28,7 @@ from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader
 from loaders import LoadScript
 from stoqs.models import InstantPoint
 from django.db.models import Max
+from datetime import timedelta
 import logging
 
 def getStrideText(stride):
@@ -578,6 +579,9 @@ class CANONLoader(LoadScript):
             if self.args.append:
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+                if dataStartDatetime:
+                    # Subract an hour to fill in missing_values at end from previous load
+                    dataStartDatetime = dataStartDatetime - timedelta(seconds=3600)
 
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'M1_Mooring', self.colors['m1'], 'mooring', 'Mooring Deployment', 
                                         self.m1_parms, self.dbAlias, stride, self.m1_startDatetime, self.m1_endDatetime, dataStartDatetime)
