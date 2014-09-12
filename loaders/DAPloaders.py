@@ -86,6 +86,10 @@ class VariableMissingCoordinatesAttribute(Exception):
     pass
 
 
+class InvalidSliceRequest(Exception):
+    pass
+
+
 class Base_Loader(STOQS_Loader):
     '''
     A base class for data load operations.  This shouldn't be instantiated directly,
@@ -456,6 +460,9 @@ class Base_Loader(STOQS_Loader):
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
         logger.info('Start and end indices are: %s', indices)
 
+        if tIndx[-1] <= tIndx[0]:
+            raise InvalidSliceRequest('Cannot issue OPeNDAP temporal constraint expression with length 0 or less.')
+
         return indices
 
     def getTotalRecords(self):
@@ -512,6 +519,7 @@ class Base_Loader(STOQS_Loader):
                 tIndx = self.getTimeBegEndIndices(self.ds[self.ds[pname].keys()[1]])
                 try:
                     # Subselect along the time axis, get all z values
+                    logger.info("From: %s", self.url)
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride,:,0,0]
                 except ValueError, err:
@@ -551,8 +559,9 @@ class Base_Loader(STOQS_Loader):
             for depthArray in data[pname]:
                 k = 0
                 logger.debug('depthArray = %s', depthArray)
-                logger.debug('nomDepths = %s', nomDepths)
-                ##raw_input('PAUSED')
+                ##logger.debug('nomDepths = %s', nomDepths)
+                ##import pdb
+                ##pdb.set_trace()
                 values = {}
                 for dv in depthArray:
                     values[pname] = float(dv)
@@ -724,6 +733,10 @@ class Base_Loader(STOQS_Loader):
                             import pdb; pdb.set_trace()
 
                     if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or numpy.isnan(value): # absence of a value
+                        ##logger.debug('Not loading value = %s', value)
+                        ##logger.debug("From: %s", self.url)
+                        ##tIndx = self.getTimeBegEndIndices(self.ds[self.ds[key].keys()[1]])
+                        ##logger.debug("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", key, key, tIndx[0], tIndx[-1], self.stride)
                         continue
                     try:
                         if math.isnan(value): # not a number for a math type
@@ -1383,7 +1396,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             platformTypeName = pTypeName,
             stride = stride,
             startDatetime = startDatetime,
-            dataStartDatetime = dataStartDatetime,
+            dataStartDatetime = dataStartDatetime - timedelta(seconds=3600),    # Subract an hour to fill in missing_values at end from previous load
             endDatetime = endDatetime)
 
     if parmList:
