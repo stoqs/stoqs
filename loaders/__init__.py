@@ -472,10 +472,9 @@ class STOQS_Loader(object):
     
             self.activity.save(using=self.dbAlias)   # Resave with the activitytype
         
-        # Get or create campaign
+        # Get or create campaign by campaignName, update it with campaignDescription if provided
         if self.campaignName is not None:
-            (campaign, created) = m.Campaign.objects.db_manager(self.dbAlias).get_or_create(name=self.campaignName, description=self.campaignDescription)
-            self.campaign = campaign
+            self.campaign, created = m.Campaign.objects.db_manager(self.dbAlias).get_or_create(name=self.campaignName)
             if created:
                 self.logger.info('Created campaign = %s', self.campaign)
             else:
@@ -483,6 +482,9 @@ class STOQS_Loader(object):
     
             if self.campaign is not None:
                 self.activity.campaign = self.campaign
+                if self.campaignDescription:
+                    self.campaign.description = self.campaignDescription
+                    self.campaign.save(using=self.dbAlias)
     
             self.activity.save(using=self.dbAlias)   # Resave with the campaign
 
