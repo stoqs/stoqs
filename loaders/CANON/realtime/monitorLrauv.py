@@ -7,7 +7,7 @@ __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
 __doc__ = '''
 
-Monitor the dods web site for new realtime hotspot data from Tethys and use
+Monitor the dods web site for new realtime hotspot or sbdlog data from LRAUVs and use
 DAPloaders.py to load new data into the stoqs database.
 
 Mike McCann
@@ -170,6 +170,7 @@ def processDecimated(url, outDir, useTds, lastDatetime):
             # Only create if it doesn't already exists
             if not os.path.isfile(outFile): 
                 try:
+                    logger.info('Calling pw.process for outfile = %s', outFile)
                     pw.process(instance.nc4FileUrl, outFile)
                 except TypeError, e:
                     logger.warn(e)
@@ -194,7 +195,8 @@ def process_command_line():
         parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='.',required=True)  
         parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='.',required=True)    
         parser.add_argument('-o', '--outDir', action='store', help='output directory to store .nc file - must be the same location as -u URL', default='.',required=True)   
-        parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='',required=True)
+        parser.add_argument('-d', '--description', action='store', help='Brief description of experiment')
+        parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity')
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
    
         args = parser.parse_args()    
@@ -266,20 +268,17 @@ if __name__ == '__main__':
                 logger.info("Found activity name = %s" % aName)
             else:
                 try:
-                    cl = CANONLoader(args.database, args.campaign,
-                                x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
-                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
-                                        'VerticalExaggeration': '10',
-                                    }
-                                }
-                    )
+                    cl = CANONLoader(args.database, args.campaign)
                     cl.dbAlias = args.database
                     cl.campaignName = args.campaign
 
                     parms = ['sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water', 'downwelling_photosynthetic_photon_flux_in_sea_water']
+
+                    dataStartDatetime = None
+                    if args.append:
+                        # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
+                        dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+
                     logger.debug("Instantiating Lrauv_Loader for url = %s", newURL)
                     lrauvLoad = DAPloaders.runLrauvLoader(aName = aName,
                                                       aTypeName = '',
@@ -292,6 +291,7 @@ if __name__ == '__main__':
                                                       dbAlias = args.database,
                                                       stride = 1,
                                                       startDatetime = startDatetime,
+                                                      dataStartDatetime = dataStartDatetime,
                                                       endDatetime = endDatetime)
                     # Add any X3D Terrain information specified in the constructor to the database
                     cl.addTerrainResources()
