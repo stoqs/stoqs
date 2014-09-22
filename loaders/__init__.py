@@ -30,7 +30,7 @@ from django.db.models import Max, Min
 from django.http import HttpRequest
 from stoqs import models as m
 from datetime import datetime
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 import time
 import re
 import math, numpy
@@ -964,16 +964,55 @@ class STOQS_Loader(object):
                 simple_line = []        # Likely "list index out of range" from a stride that's too big
             self.logger.debug('Number of points in simplified depth time series = %d', len(simple_line))
             self.logger.debug('simple_line = %s', simple_line)
+            if len(simple_line) != 2:
+                self.logger.warn('len(simple_line) != 2. If appending data, then all points will be added to SimpleDepthTime')
 
-            for t,d,k in simple_line:
-                self.logger.debug('t,d,k = %s, %s, %s', t,d,k)
+            if self.dataStartDatetime and len(simple_line) == 2:
+                # Assume that we are appending data. Make sure first time point exists
+                t0,d0,k0 = simple_line[0]
+                self.logger.debug('First point t0,d0,k0 = %s, %s, %s', t0,d0,k0)
                 try:
-                    ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
+                    ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k0])
+                    self.logger.debug('ip = %s', ip)
+                    m.SimpleDepthTime.objects.using(self.dbAlias).get_or_create(activity=self.activity, nominallocation=nl,
+                                                                                instantpoint=ip, depth=d0, epochmilliseconds=t0)
+                except ObjectDoesNotExist:
+                    self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k0], k0)
+                except MultipleObjectsReturned as e:
+                    self.logger.warn(e)
+                    firstPoints = m.SimpleDepthTime.objects.using(self.dbAlias).filter(activity=self.activity, nominallocation=nl,
+                                                                                       instantpoint=ip, depth=d0, epochmilliseconds=t0)
+                    self.logger.info('Deleting multiple points and creating just one.')
+                    for fp in firstPoints:
+                        fp.delete(using=self.dbAlias)
+                    m.SimpleDepthTime.objects.using(self.dbAlias).create(activity=self.activity, nominallocation=nl,
+                                                                         instantpoint=ip, depth=d0, epochmilliseconds=t0)
+
+                # Update last point's time value by first deleting all times at depth for the activity > first time point
+                t1,d1,k1 = simple_line[1]
+                self.logger.debug('Last point t1,d1,k1 = %s, %s, %s', t1,d1,k1)
+                lastPoints = m.SimpleDepthTime.objects.using(self.dbAlias).filter(activity=self.activity, nominallocation=nl, depth=d1, epochmilliseconds__gt=t0)
+                for lp in lastPoints:
+                    self.logger.debug('Deleting SimpleDepthTime point with epochmilliseconds=%s', lp.epochmilliseconds)
+                    lp.delete(using=self.dbAlias)
+                try:
+                    ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k1])
                     self.logger.debug('ip = %s', ip)
                     m.SimpleDepthTime.objects.using(self.dbAlias).create(activity=self.activity, nominallocation=nl,
-                                                                     instantpoint=ip, depth=d, epochmilliseconds=t)
+                                                                         instantpoint=ip, depth=d1, epochmilliseconds=t1)
                 except ObjectDoesNotExist:
-                    self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
+                    self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k1], k1)
+                
+            else:
+                for t,d,k in simple_line:
+                    self.logger.debug('t,d,k = %s, %s, %s', t,d,k)
+                    try:
+                        ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
+                        self.logger.debug('ip = %s', ip)
+                        m.SimpleDepthTime.objects.using(self.dbAlias).create(activity=self.activity, nominallocation=nl,
+                                                                         instantpoint=ip, depth=d, epochmilliseconds=t)
+                    except ObjectDoesNotExist:
+                        self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
             self.logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
