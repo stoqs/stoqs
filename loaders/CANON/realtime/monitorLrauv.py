@@ -31,15 +31,12 @@ from CANON import CANONLoader
 import logging
 import lrauvNc4ToNetcdf
 from datetime import datetime, timedelta
-import urllib2
 import time
-import csv
 import re
 from stoqs import models as mod
-from BeautifulSoup import BeautifulSoup as soup
-import socket
-import pydap.client 
-import pdb
+from pydap.client import open_url
+from thredds_crawler.crawl import Crawl
+from coards import from_udunits
 
 # Set up global variables for logging output to STDOUT
 logger = logging.getLogger('monitorTethysHotSpotLogger')
@@ -58,125 +55,46 @@ class NcFileMissing(Exception):
     def __str__(self):
         return repr(self.nc4FileUrl)
   
-def getNcStartEnd(url, useTds):
+def getNcStartEnd(urlNcDap):
     '''Find the lines in the html with the .nc file, then open it and read the start/end times
     return url to the .nc  and start/end as datetime objects.
     '''
-    startDatetime = None
-    endDatetime = None
-    urlNcDap    = None
-    urlNc4Dap   = None
+    df = open_url(urlNcDap)
+    timeAxisName = 'depth_time'
+    timeAxisUnits = df[timeAxisName].units
+    if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
+        timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
-    if useTds is True:
-        htmlToScan = os.path.join(url, 'catalog.html')
-    else:
-        htmlToScan = os.path.join(url, 'index.html')
+    startDatetime = from_udunits(df[timeAxisName][0][0], timeAxisUnits)
+    endDatetime = from_udunits(df[timeAxisName][-1][0], timeAxisUnits)
 
-    logger.debug("urlopening %s", htmlToScan)
-    socket = urllib2.urlopen(htmlToScan)
-    htmlPage = socket.read()
-    socket.close()
-    html = soup(htmlPage)
+    return startDatetime, endDatetime
 
-    links = html.findAll('a', attrs={'href': re.compile(".*.nc")})
-
-    for link in links:
-        #logger.debug("=============>link = %s" % (link['href']))
-        ##match = re.match('.+/(hotspot-Normal_.+.nc)',link['href'])
-        match = re.match('.+/(shore.+.nc)',link['href'])
-        if match:
-            #Open the url and get the time     
-            #logger.debug("=================>match = %s" % match.group(1))
-            u   = url + '/' + match.group(1)
-
-            if useTds is True:
-                urlNcDap = u.replace('catalog', 'dodsC')
-            else:
-                urlNcDap = u #untested
-
-            try:
-                df = pydap.client.open_url(urlNcDap)
-                v = df['time']
-                startDatetime = datetime.utcfromtimestamp(v[1])
-                endDatetime = datetime.utcfromtimestamp(v[-1])
-                logger.info("Datetime of first data in %s is %s" % (url, startDatetime))
-                logger.info("Datetime of last data in %s is %s" % (url, endDatetime))
-                return (match.group(1), startDatetime, endDatetime)  
-            except:
-                # Nc file can't be open; find the .nc4 file and throw exception to 
-                # flag nc file is missing
-                ##match = re.match('.+/(hotspot.+.nc4)',link['href'])
-                match = re.match('.+/(shore.+.nc4)',link['href'])
-                if match:
-                    #logger.debug("=================>match = %s" % match.group(1))
-                    u = url + '/' + match.group(1)
-                
-                    if useTds is True:
-                        urlNc4Dap = u.replace('catalog', 'dodsC')
-                    else:
-                        urlNc4Dap = u #untested
-
-                    raise NcFileMissing(urlNc4Dap)
-
-    return (None, startDatetime, endDatetime)
-
-def processDecimated(url, outDir, useTds, lastDatetime):
+def processDecimated(inUrl, outDir, lastDatetime, parms):
     '''
-    Scrape lrauv web site for first .nc file newer than lastDatetime.
+    Crawl lrauv TDS site for first shore.nc file newer than lastDatetime.
     '''
     folderName = []
     filename = []
-    startDatetime = None
-    endDatetime = None
 
     # Get directory list from sites
-    logger.info("Scanning for start and end times in %s" % (url))
+    logger.info("Crawling %s for shore.nc files" % (inUrl))
   
-    if useTds is True:
-        htmlToScan = os.path.join(url, 'catalog.html')
-    else:
-        htmlToScan = os.path.join(url, 'index.html')
+    c = Crawl(os.path.join(inUrl, 'catalog.xml'), select=[".*shore_\d+_\d+.nc4$"], debug=True)
+    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
 
-    logger.debug("urlopening %s", htmlToScan)
-    socket = urllib2.urlopen(htmlToScan)
-    htmlPage = socket.read()
-    socket.close()
-    html = soup(htmlPage)
-
-    links = html.findAll('a', attrs={'href': re.compile("^(\d+T\d+)")})
+    pw = lrauvNc4ToNetcdf.InterpolatorWriter()
 
     # look in reverse time order - oldest to newest
-    for link in reversed(links):
-        try:
-            ##logger.debug("=============>link = %s" % (link['href']))
-            match = re.match('^(\d+T\d+)', link['href'] )
-            folderName = match.group(1)       
-            folderDatetime = datetime(*time.strptime(folderName, '%Y%m%dT%H%M%S')[:6])
-            if folderDatetime > lastDatetime:
-                logger.debug('Calling getNcStartEnd()...')
-                (filename, startDatetime, endDatetime) = getNcStartEnd(os.path.join(url, folderName), useTds)
-                if startDatetime and endDatetime and filename:
-                    logger.debug('Returning: %s', (folderName, filename, startDatetime, endDatetime))
-                    return (folderName, filename, startDatetime, endDatetime)
-        except NcFileMissing,(instance):
-            # Run the conversion if the nc file is missing and place in the 
-            # appropriate directory behind an opendap/thredds server somewhere
-            logger.debug('Calling lrauvNc4ToNetcdf.InterpolatorWriter()...')
-            pw = lrauvNc4ToNetcdf.InterpolatorWriter()
-            # Formulate new filename from the url. Should be the same name as the .nc4 specified in the url
-            # with _i.nc appended to indicate it has interpolated data in .nc format
-            nc4f = instance.nc4FileUrl.rsplit('/',1)[1]
-            outFile = os.path.join(outDir, folderName, '.'.join(nc4f.split('.')[:-1]) + '_i.nc')
-            # Only create if it doesn't already exists
-            if not os.path.isfile(outFile): 
-                try:
-                    logger.info('Calling pw.process for outfile = %s', outFile)
-                    pw.process(instance.nc4FileUrl, outFile)
-                except TypeError, e:
-                    logger.warn(e)
-
-    raise NoNewHotspotData
-
+    for url in sorted(urls):
+        outFile_i = os.path.join(outDir, url.split('/')[-1].split('.')[0] + '_i.nc')
+        startDatetime, endDatetime = getNcStartEnd(url)
+        if endDatetime > lastDatetime:
+            pw.process(url, outFile_i, parms)
+            # scp to elvis...
+            url_i = url.replace('.nc4', '_i.nc')
+            return url_i, startDatetime, endDatetime
+    
 def process_command_line():
         '''
         The argparse library is included in Python 2.7 and is an added package for STOQS.
@@ -206,8 +124,6 @@ if __name__ == '__main__':
     colors = {  'tethys':       'fed976',
                 'daphne':       'feb24c'}
   
-    useTds = None
-    
     args = process_command_line()
 
     platformName = None; 
@@ -220,23 +136,19 @@ if __name__ == '__main__':
     if d:
         platformName = 'daphne'
 
-    # Determine if using thredds from url 
-    d = re.match(r'.*thredds*',args.inUrl) 
-    if d:
-        useTds = True
-        htmlToScan = 'catalog.html'
-    else:
-        useTds = False
-        htmlToScan = 'index.html'
-
     if platformName is None:
         raise Exception('cannot find platformName from url %s' % args.inUrl)
 
-    activityBaseName = platformName + ' hotspot - '
 
     # Start back a week from now to load in old data
     lastDatetime = datetime.utcnow() - timedelta(days=7)
     
+    # Assume that the database has already been created with description and terrain information, so use minimal arguments in constructor
+    cl = CANONLoader(args.database, args.campaign)
+    cl.dbAlias = args.database
+    cl.campaignName = args.campaign
+    parms = ['sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water', 'voltage'] 
+                     
     while True: 
         'Loop until we run out of new lrauv data'
         logger.info("-----------------------------------------------------------------------------------------------------------------")
@@ -244,58 +156,38 @@ if __name__ == '__main__':
         logger.info("Last lrauv %s data in %s is from %s" % (platformName, args.database, lastDatetime))
 
         try:
-            (folderName, filename, startDatetime, endDatetime) = processDecimated(args.inUrl, args.outDir, useTds, lastDatetime)
+            (url_i, startDatetime, endDatetime) = processDecimated(args.inUrl, args.outDir, lastDatetime, parms)
             lastDatetime = endDatetime
         except NoNewHotspotData:
             logger.info("No new %s data.  Exiting." % platformName )
             sys.exit(1)
 
-        if len(filename) > 0:
-            logger.info("Received new %s data ending at %s in folder %s filename %s" % (platformName, endDatetime, folderName, filename))
-            u = os.path.join(args.inUrl, folderName, filename)
-        
-            if useTds is True:
-                newURL = u.replace('catalog', 'dodsC')
-            else:
-                newURL = u #untested
-         
-            aName = activityBaseName + folderName
+        if url_i:
+            logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_i))
+            aName = platformName + '_sbdlog_' + startDatetime.strftime('%Y%m%dT%H%M%S')
 
-            # If we have any activities with the same enddate whose name matches the activity name
-            alist = mod.Activity.objects.filter(name = aName)
+            dataStartDatetime = None
+            if args.append:
+                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
 
-            if aName in [a.name for a in alist]:
-                logger.info("Found activity name = %s" % aName)
-            else:
-                try:
-                    cl = CANONLoader(args.database, args.campaign)
-                    cl.dbAlias = args.database
-                    cl.campaignName = args.campaign
-
-                    parms = ['sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water', 'downwelling_photosynthetic_photon_flux_in_sea_water']
-
-                    dataStartDatetime = None
-                    if args.append:
-                        # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
-                        dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
-
-                    logger.debug("Instantiating Lrauv_Loader for url = %s", newURL)
-                    lrauvLoad = DAPloaders.runLrauvLoader(aName = aName,
-                                                      aTypeName = '',
+            try:
+                logger.debug("Instantiating Lrauv_Loader for url_i = %s", url_i)
+                lrauvLoad = DAPloaders.runLrauvLoader(cName = args.campaign,
+                                                      cDesc = None,
+                                                      aName = aName,
+                                                      aTypeName = 'LRAUV mission',
                                                       pName = platformName,
                                                       pTypeName = 'auv',
                                                       pColor = colors[platformName],
-                                                      url = newURL,
+                                                      url = url_i,
                                                       parmList = parms,
-                                                      cName = args.campaign,
                                                       dbAlias = args.database,
                                                       stride = 1,
                                                       startDatetime = startDatetime,
                                                       dataStartDatetime = dataStartDatetime,
                                                       endDatetime = endDatetime)
-                    # Add any X3D Terrain information specified in the constructor to the database
-                    cl.addTerrainResources()
 
-                except DAPloaders.NoValidData:
-                    logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
+            except DAPloaders.NoValidData:
+                logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
 
