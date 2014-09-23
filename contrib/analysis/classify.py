@@ -335,7 +335,7 @@ class Classifier(BiPlot):
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
-                                         description='Read Parameter-Parameter data from a STOQS database and make bi-plots',
+                                         description='Script to execute steps in the classification of measurements',
                                          epilog=examples)
                                              
         parser.add_argument('-p', '--platform', action='store', help='STOQS Platform name for training data access')

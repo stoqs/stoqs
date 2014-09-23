@@ -16,6 +16,11 @@ As of February 2014 these scripts exist:
     crossproduct_biplots.py:    Python script to produce scatter plots and compute correlations
                                 between every single Parameter in a STOQS database.
 
+    classify.py:                Python Script to execute steps in the classification of measurements
+
+    drift_data.py:              Python script to produce products to help understand drifting
+                                data.
+
 
 Instructions for packaging in CDE so that Python scripts can run without a full STOQS install:
 ----------------------------------------------------------------------------------------------
