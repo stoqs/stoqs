@@ -75,7 +75,7 @@ class LoadScript(object):
     logger = logging.getLogger('__main__')
     logger.setLevel(logging.INFO)
 
-    def __init__(self, base_dbAlias, base_campaignName, description, stride=1, x3dTerrains={}, grdTerrain=None):
+    def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains={}, grdTerrain=None):
         self.base_dbAlias = base_dbAlias
         self.base_campaignName = base_campaignName
         self.campaignDescription = description
