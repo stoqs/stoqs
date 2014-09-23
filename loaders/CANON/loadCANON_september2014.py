@@ -275,14 +275,14 @@ elif cl.args.optimal_stride:
 
     cl.loadDorado(stride=2)
 
-    cl.loadSubSamples()
+    ##cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
 
-    cl.loadDorado()
+    ##cl.loadDorado()
 
-    cl.loadSubSamples()
+    ##cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
