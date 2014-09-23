@@ -87,7 +87,11 @@ class Drift():
 
         examples = 'Examples:' + '\n\n' 
         examples += "M1 ADCP progressive vector diagram and Stella drifter data:\n"
-        examples += sys.argv[0] + " \n"
+        examples += sys.argv[0] + " --database stoqs_september2014 --adcpPlatform M1_Mooring --adcpMinDepth 30 --adcpMaxDepth 40"
+        examples += " --drifterData http://odss.mbari.org/trackingdb/position/stella101/between/20140922T171500/20141010T000000/data.csv"
+        examples += " http://odss.mbari.org/trackingdb/position/stella110/between/20140922T171500/20141010T000000/data.csv"
+        examples += " http://odss.mbari.org/trackingdb/position/stella122/between/20140922T171500/20141010T000000/data.csv"
+        examples += "\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
