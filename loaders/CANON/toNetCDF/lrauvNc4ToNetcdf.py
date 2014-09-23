@@ -119,8 +119,11 @@ class InterpolatorWriter(BaseWriter):
      # Create record variable to store in nc file   
      v = self.df[name]
      rc = self.ncFile.createVariable(name, 'float64', ('time',))
-     rc.long_name = v.attributes['standard_name']
-     rc.standard_name = v.attributes['standard_name']
+     if 'long_name' in v.attributes:
+        rc.long_name = v.attributes['long_name']
+     if 'standard_name' in v.attributes:
+        rc.standard_name = v.attributes['standard_name']
+
      rc.coordinates = 'time depth latitude longitude'
      if units is None:
             rc.unit = v.attributes['units']
@@ -149,12 +152,12 @@ class InterpolatorWriter(BaseWriter):
      return(startIndex, endIndex)
      # End getValidTimeRange
 
- def process(self, url, outFile):
+ def process(self, url, outFile, parms):
      self.esec_list = []
      self.df = []
      self.parm_sub_ts = []
      self.chl_ts = None
-     self.parms = ['latitude','longitude','depth','sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water', 'downwelling_photosynthetic_photon_flux_in_sea_water']
+     self.parms = ['latitude','longitude','depth'] + parms
 
      try:
             self.df = pydap.client.open_url(url)
@@ -189,7 +192,7 @@ class InterpolatorWriter(BaseWriter):
                           (startIndex,endIndex) = self.getValidTimeRange(depth_ts)
      except:
             self.logger.info('Could not find valid time range in chlorophyll or depth series. Failed to create .nc file')
-            sys.exit(-1)
+            raise Exception('Could not find valid time range in chlorophyll or depth series. Failed to create .nc file')
 
      t = pd.Series(index=pd.date_range(startIndex,endIndex,freq='500L'))
      #If want to compare to interpolation on actual chlorophyll time, instead of 500msec frequency at chlorophyll timecase, replace ts with this
