@@ -78,6 +78,18 @@ class Drift():
             print '  Saving file', fileName
         fig.savefig(fileName)
 
+    def createGeoTiff(self):
+        '''Your image must be only the geoplot with no decorations like axis titles, axis labels, etc., and you will need accurate upper-left and lower-right coordinates in EPSG:4326 projection, also known as WGS 84 projection,...
+
+The syntax is pretty straightforward, something like the following will convert your image to the correct format:
+
+ gdal_translate <image.png> <image.tiff> -a_ullr -122.25 37.1 -121.57365 36.67558 
+
+There is also a python wrapper for the GDAL library
+ 
+https://pypi.python.org/pypi/GDAL/
+        '''
+
     def process_command_line(self):
         '''
         The argparse library is included in Python 2.7 and is an added package for STOQS.
@@ -109,6 +121,7 @@ class Drift():
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--kmlFileName', action='store', help='Name of file for KML output')
         parser.add_argument('--pngFileName', action='store', help='Name of file for PNG image of map')
+        parser.add_argument('--geotiffFileName', action='store', help='Name of file for geotiff image of map')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
