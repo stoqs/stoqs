@@ -37,6 +37,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 
 
 # insert a comment to test mercurial update
+# insert another comment to test mercuial update again
 
 # special location for dorado data
 #cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2011/netcdf/'
