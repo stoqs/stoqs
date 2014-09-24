@@ -59,6 +59,7 @@ def getNcStartEnd(urlNcDap):
     '''Find the lines in the html with the .nc file, then open it and read the start/end times
     return url to the .nc  and start/end as datetime objects.
     '''
+    logger.debug('open_url on urlNcDap = %s', urlNcDap)
     df = open_url(urlNcDap)
     timeAxisName = 'depth_time'
     timeAxisUnits = df[timeAxisName].units
@@ -70,30 +71,38 @@ def getNcStartEnd(urlNcDap):
 
     return startDatetime, endDatetime
 
-def processDecimated(inUrl, outDir, lastDatetime, parms):
+def processDecimated(pw, url, outDir, lastDatetime, parms):
     '''
-    Crawl lrauv TDS site for first shore.nc file newer than lastDatetime.
+    Interpolate LRAUV data
     '''
-    folderName = []
-    filename = []
 
-    # Get directory list from sites
-    logger.info("Crawling %s for shore.nc files" % (inUrl))
-  
-    c = Crawl(os.path.join(inUrl, 'catalog.xml'), select=[".*shore_\d+_\d+.nc4$"], debug=True)
-    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-
-    pw = lrauvNc4ToNetcdf.InterpolatorWriter()
-
-    # look in reverse time order - oldest to newest
-    for url in sorted(urls):
-        outFile_i = os.path.join(outDir, url.split('/')[-1].split('.')[0] + '_i.nc')
-        startDatetime, endDatetime = getNcStartEnd(url)
-        if endDatetime > lastDatetime:
+    logger.debug('url = %s', url)
+    outFile_i = os.path.join(outDir, url.split('/')[-1].split('.')[0] + '_i.nc')
+    startDatetime, endDatetime = getNcStartEnd(url)
+    logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
+    logger.debug('lastDatetime = %s', lastDatetime)
+    url_i = None
+    if endDatetime > lastDatetime:
+        logger.debug('Calling pw.process with outFile_i = %s', outFile_i)
+        try:
             pw.process(url, outFile_i, parms)
-            # scp to elvis...
+        except TypeError as e:
+            logger.warn('Problem reading data from %s', url)
+            logger.warn('Assumming data are invalid and skipping')
+        else:
+            if outFile_i.startswith('/tmp'):
+                # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
+                dir = '/'.join(url.split('/')[-7:-1])
+                cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/LRAUV/%s' % (outFile_i, dir)
+                print cmd
+                os.system(cmd)
+
             url_i = url.replace('.nc4', '_i.nc')
-            return url_i, startDatetime, endDatetime
+
+    else:
+        logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
+
+    return url_i, startDatetime, endDatetime
     
 def process_command_line():
         '''
@@ -139,7 +148,6 @@ if __name__ == '__main__':
     if platformName is None:
         raise Exception('cannot find platformName from url %s' % args.inUrl)
 
-
     # Start back a week from now to load in old data
     lastDatetime = datetime.utcnow() - timedelta(days=7)
     
@@ -149,18 +157,18 @@ if __name__ == '__main__':
     cl.campaignName = args.campaign
     parms = ['sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water', 'voltage'] 
                      
-    while True: 
-        'Loop until we run out of new lrauv data'
-        logger.info("-----------------------------------------------------------------------------------------------------------------")
-        logger.info("Checking %s" % args.inUrl)
-        logger.info("Last lrauv %s data in %s is from %s" % (platformName, args.database, lastDatetime))
+    # Get directory list from sites
+    logger.info("Crawling %s for shore.nc files" % (args.inUrl))
+  
+    c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore_\d+_\d+.nc4$"], debug=False)
+    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
 
-        try:
-            (url_i, startDatetime, endDatetime) = processDecimated(args.inUrl, args.outDir, lastDatetime, parms)
-            lastDatetime = endDatetime
-        except NoNewHotspotData:
-            logger.info("No new %s data.  Exiting." % platformName )
-            sys.exit(1)
+    pw = lrauvNc4ToNetcdf.InterpolatorWriter()
+
+    # Look in time order - oldest to newest
+    for url in sorted(urls):
+        (url_i, startDatetime, endDatetime) = processDecimated(pw, url, args.outDir, lastDatetime, parms)
+        lastDatetime = endDatetime
 
         if url_i:
             logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_i))
@@ -186,7 +194,7 @@ if __name__ == '__main__':
                                                       url = url_i,
                                                       parmList = parms,
                                                       dbAlias = args.database,
-                                                      stride = 1,
+                                                      stride = 10,
                                                       startDatetime = startDatetime,
                                                       dataStartDatetime = dataStartDatetime,
                                                       endDatetime = endDatetime)
