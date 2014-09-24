@@ -59,7 +59,11 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2014/netcdf/'
 cl.dorado_files = [
                    'Dorado389_2014_265_03_265_03_decim.nc',
+                   'Dorado389_2014_266_04_266_04_decim.nc',
+                   'Dorado389_2014_266_05_266_05_decim.nc',
 				   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
 
 #####################################################################
 #  LRAUV 
@@ -253,7 +257,7 @@ if cl.args.test:
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10) 
 
-    cl.loadDorado(stride=1000)
+    cl.loadDorado(stride=10)
     ##cl.loadDaphne(stride=100)
     ##cl.loadTethys(stride=100)
 
