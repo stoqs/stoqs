@@ -1204,7 +1204,7 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
     (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
-def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, dbAlias, stride, grdTerrain=None):
+def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, grdTerrain=None):
     '''
     Run the DAPloader for Dorado AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1223,6 +1223,10 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             platformTypeName = pTypeName,
             stride = stride,
             grdTerrain = grdTerrain)
+
+    if parmList:
+        logger.debug("Setting include_names to %s", parmList)
+        loader.include_names = parmList
 
     # Auxillary coordinates are the same for all include_names
     loader.auxCoords = {}
