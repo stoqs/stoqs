@@ -284,7 +284,7 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
 
-    ##cl.loadDorado()
+    cl.loadDorado()
 
     ##cl.loadSubSamples()
 
