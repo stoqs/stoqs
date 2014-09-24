@@ -28,6 +28,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+# on odss-test: stoqs_simz_aug2013
        
 cl = CANONLoader('stoqs_september2014', 'CANON-ECOHAB - September 2014',
                     description = 'Fall 2014 Dye Release Experiment in Monterey Bay',
@@ -119,7 +120,7 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 #  WESTERN FLYER: September 20-27
 ######################################################################
 # UCTD
-##cl.wfuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Western_Flyer/uctd/'
+##cl.wfuctd_base = cl.dodsBase + 'CANON_september2014/Platforms/Ships/Western_Flyer/uctd/'
 ##cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 ##cl.wfuctd_files = [ 
 ##'canon13m01.nc', 'canon13m02.nc', 'canon13m03.nc', 'canon13m04.nc', 'canon13m05.nc', 'canon13m06.nc', 'canon13m07.nc', 'canon13m08.nc',
@@ -127,7 +128,7 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 ##                  ]
 
 # PCTD
-##cl.wfpctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Western_Flyer/pctd/'
+##cl.wfpctd_base = cl.dodsBase + 'CANON_september2014/Platforms/Ships/Western_Flyer/pctd/'
 ##cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 ##cl.wfpctd_files = [ 
 ##'canon13c01.nc', 'canon13c02.nc', 'canon13c03.nc', 'canon13c04.nc', 'canon13c05.nc', 'canon13c06.nc', 'canon13c07.nc',
@@ -136,26 +137,22 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 ##                  ]
 
 ######################################################################
-#  RACHEL CARSON: September 16-20? (259-262) Sep 30 - Oct 3
+#  RACHEL CARSON: September 22-26 (265-xxx) Oct 6 - Oct 10
 ######################################################################
 # UCTD
-##cl.rcuctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Rachel_Carson/uctd/'
+##cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/uctd/'
 ##cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 ##cl.rcuctd_files = [ 
-##                    '25913RCm01.nc', '26013RCm01.nc', '26113RCm01.nc', '27313RCm01.nc', '27413RCm01.nc', '27513RCm01.nc',
+##                    '26113RCm01.nc', '27313RCm01.nc', '27413RCm01.nc', '27513RCm01.nc',
 ##                  ]
 
 # PCTD
-##cl.rcpctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Rachel_Carson/pctd/'
-##cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
-##cl.rcpctd_files = [ 
-##                    '25913RCc01.nc', '25913RCc02.nc', '25913RCc03.nc', '26013RCc01.nc',
-##                    '26113RCc01.nc',
-##                    '27313RCc01.nc', '27313RCc02.nc', '27313RCc03.nc',
-##                    '27413RCc01.nc', '27413RCc02.nc', '27413RCc03.nc',
-##                    '27513RCc01.nc', '27513RCc02.nc',
-##                    '27613RCc01.nc', '27613RCc02.nc', '27613RCc03.nc', '27613RCc04.nc', '27613RCc05.nc',
-##                      ]
+# /thredds/dodsC/CANON/2014_Sep/Platforms/Ships/Rachel_Carson/pctd/26514RCc06.nc
+cl.rcpctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/pctd/'
+cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
+cl.rcpctd_files = [ 
+                    '26514RCc01.nc', '26514RCc03.nc', '26514RCc04.nc', '26514RCc05.nc', '26514RCc06.nc',
+                  ]
 
 #####################################################################
 # JOHN MARTIN
@@ -257,12 +254,12 @@ if cl.args.test:
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10) 
 
-    cl.loadDorado(stride=10)
+    #cl.loadDorado(stride=10)
     ##cl.loadDaphne(stride=100)
     ##cl.loadTethys(stride=100)
 
     ##cl.loadRCuctd(stride=10)
-    ##cl.loadRCpctd(stride=10)
+    cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10)
     ##cl.loadJMpctd(stride=10)
     ##cl.loadWFuctd(stride=10)   
@@ -277,13 +274,13 @@ if cl.args.test:
 
 elif cl.args.optimal_stride:
 
-    cl.loadDorado(stride=2)
-
+    #cl.loadDorado(stride=2)
+    cl.loadRCpctd(stride=2)
     ##cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
-
+    #cl.loadRCpctd()
     cl.loadDorado()
 
     ##cl.loadSubSamples()
