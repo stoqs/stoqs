@@ -166,6 +166,9 @@ if __name__ == '__main__':
             logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_i))
             aName = platformName + '_sbdlog_' + startDatetime.strftime('%Y%m%dT%H%M%S')
 
+            # Use Hyrax server to avoid the stupid caching that the TDS does
+            url_i = url_i.replace('http://elvis.shore.mbari.org/thredds/dodsC/LRAUV', 'http://dods.mbari.org/opendap/data/lrauv')
+
             dataStartDatetime = None
             if args.append:
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
