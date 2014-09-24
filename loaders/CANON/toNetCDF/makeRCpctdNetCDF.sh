@@ -10,7 +10,7 @@
 # 15 January 2014
 # modified 23 September 2014 Duane Edgington for Fall CANON campaign 
 
-LOGIN=stoqsadm
+LOGIN=odssadm
 ##RH=zuma.rc.mbari.org  
 # make RH point to the system containing the working location of the profile CTD files
 # for the fall 2014 campaign this is normandy.shore.mbari.org
