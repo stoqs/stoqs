@@ -8,15 +8,18 @@
 # --
 # Mike McCann
 # 15 January 2014
+# modified 23 September 2014 Duane Edgington for Fall CANON campaign 
 
 LOGIN=stoqsadm
-RH=zuma.rc.mbari.org
-##RH=odss.mbari.org
+##RH=zuma.rc.mbari.org  
+# make RH point to the system containing the working location of the profile CTD files
+# for the fall 2014 campaign this is normandy.shore.mbari.org
+RH=odss.mbari.org
 
-DIR=/data/canon/2014_Apr/Platforms/Ships/Rachel_Carson/pctd
+DIR=/data/canon/2014_Sep/Platforms/Ships/Rachel_Carson/pctd
 LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
 rsync -rv $LOGIN@$RH:$DIR  .
-./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during CANON - ECOHAB April 2014" 
+./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during CANON - ECOHAB September 2014" 
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 rm -r $LOCALDIR
 
