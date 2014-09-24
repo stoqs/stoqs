@@ -124,6 +124,8 @@ def process_command_line():
         parser.add_argument('-o', '--outDir', action='store', help='output directory to store .nc file - must be the same location as -u URL', default='.',required=True)   
         parser.add_argument('-d', '--description', action='store', help='Brief description of experiment')
         parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity')
+        parser.add_argument('-p', '--parms', action='store', help='List of space separated parameters to load', nargs='*', default=
+                                    ['sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water'])
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
    
         args = parser.parse_args()    
@@ -155,8 +157,7 @@ if __name__ == '__main__':
     cl = CANONLoader(args.database, args.campaign)
     cl.dbAlias = args.database
     cl.campaignName = args.campaign
-    parms = ['sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water', 'voltage'] 
-                     
+   
     # Get directory list from sites
     logger.info("Crawling %s for shore.nc files" % (args.inUrl))
   
@@ -167,7 +168,7 @@ if __name__ == '__main__':
 
     # Look in time order - oldest to newest
     for url in sorted(urls):
-        (url_i, startDatetime, endDatetime) = processDecimated(pw, url, args.outDir, lastDatetime, parms)
+        (url_i, startDatetime, endDatetime) = processDecimated(pw, url, args.outDir, lastDatetime, args.parms)
         lastDatetime = endDatetime
 
         if url_i:
@@ -192,7 +193,7 @@ if __name__ == '__main__':
                                                       pTypeName = 'auv',
                                                       pColor = colors[platformName],
                                                       url = url_i,
-                                                      parmList = parms,
+                                                      parmList = args.parms,
                                                       dbAlias = args.database,
                                                       stride = 10,
                                                       startDatetime = startDatetime,
