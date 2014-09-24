@@ -105,7 +105,7 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
             url = self.dorado_base + file
             DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, 'Dorado', self.colors['dorado'], 'auv', 'AUV mission', 
-                                        self.dbAlias, stride, grdTerrain=self.grdTerrain)
+                                        self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
             load_gulps(aName, file, self.dbAlias)
 
 
