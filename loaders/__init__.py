@@ -66,6 +66,11 @@ class SkipRecord(Exception):
 class ParameterNotFound(Exception):
     pass
 
+
+class FileNotFound(Exception):
+    pass
+
+
 class LoadScript(object):
     '''
     Base class for load script to inherit from for reusing common utility methods such
@@ -1111,11 +1116,14 @@ class STOQS_Loader(object):
       def _innerAddAltitude(self, parameterCounts, activity=None):
         # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
         if self.grdTerrain:
-            fh = netcdf_file(self.grdTerrain)
             try:
+                fh = netcdf_file(self.grdTerrain)
                 # Old GMT format
                 xmin, xmax = fh.variables['x_range'][:]
                 ymin, ymax = fh.variables['y_range'][:]
+            except IOError as e:
+                self.logger.warn(e)
+                raise FileNotFound('Unable to apply bathymetry to the data. Make sure file %s is present.', self.grdTerrain)
             except KeyError as e:
                 try:
                     # New GMT format
