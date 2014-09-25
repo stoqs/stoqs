@@ -38,6 +38,7 @@ import numpy as np
 from datetime import datetime
 from collections import defaultdict
 from stoqs.models import MeasuredParameter
+from mpl_toolkits.basemap import Basemap
 
 
 class Drift():
@@ -98,8 +99,37 @@ class Drift():
             x[ud].append(u * dt / 1000)
             y[ud].append(u * dt / 1000)
 
+
+    def getExtent(self):
+        '''For all data members find the min and max latitude and longitude
+        '''
+        lonMin = 180
+        lonMax = -180
+        latMin = 90
+        latMax = -90
+        for k,v in self.drifters.iteritems():
+            import pdb
+            pdb.set_trace()
+            if np.min(v['lon']) < lonMin:
+                lonMin = np.min(v['lon'])
+            if np.max(v['lon']) > lonMax:
+                lonMax = np.max(v['lon'])
+            if np.min(v['lat']) < latMin:
+                latMin = np.min(v['lat'])
+            if np.max(v['lat']) > latMax:
+                latMax = np.max(v['lat'])
+
+        return lonMin, latMin, lonMax, latMax
+
+    def createPNG(self):
+        '''Draw processed data on a map and save it as a .png file
+        '''
+        e = self.getExtent() 
         import pdb
         pdb.set_trace()
+        m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution=resolution, ax=ax)
+        m.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
+
 
     def saveFigure(self, fig, figCount):
         '''
@@ -183,9 +213,9 @@ if __name__ == '__main__':
     d.process_command_line()
 
     d.process()
-    if c.args.kmlFileName:
-        c.createKML()
+    if d.args.kmlFileName:
+        d.createKML()
 
-    if c.args.pngFileName:
-        c.createPNG()
+    if d.args.pngFileName:
+        d.createPNG()
 
