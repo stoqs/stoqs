@@ -206,3 +206,6 @@ if __name__ == '__main__':
             except pydap.exceptions.ServerError as e:
                 logger.warn(e)
 
+            except DAPloaders.ParameterNotFound as e:
+                logger.warn(e)
+
