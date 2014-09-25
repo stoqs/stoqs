@@ -37,35 +37,46 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 from collections import defaultdict
-from stoqs.models import MeasuredParameter
+from stoqs.models import MeasuredParameter, NominalLocation
 from mpl_toolkits.basemap import Basemap
 
 
 class Drift():
     '''Data and methods to support drift data product preparation
     '''
-    drifters = defaultdict(lambda: {'es': [], 'lat': [], 'lon': []})
+    drifters = defaultdict(lambda: {'es': [], 'lat': [], 'lon': []})        # Keyed by drifter name
+    adcpDrift = defaultdict(lambda: {'es': [], 'lat': [], 'lon': []})       # Keyed by depth
 
-    def process(self):
-        '''Read in data and build structures that we can generate products from
+    def loadDrifterData(self):
+        '''Fill up drifters dictionary
         '''
-        # Drifter data
         for url in self.args.drifterData:
             # Careful - trackingdb returns the records in reverse time order
             for r in csv.DictReader(urllib2.urlopen(url)):
+                # Use logic to skip appending values if one or the other or both start and end are specified
+                if self.startDatetime:
+                    if datetime.utcfromtimestamp(float(r['epochSeconds'])) < self.startDatetime:
+                        continue
+                if self.endDatetime:
+                    if datetime.utcfromtimestamp(float(r['epochSeconds'])) > self.endDatetime:
+                        continue
+
                 self.drifters[r['platformName']]['es'].append(float(r['epochSeconds']))
                 self.drifters[r['platformName']]['lat'].append(float(r['latitude']))
                 self.drifters[r['platformName']]['lon'].append(float(r['longitude']))
 
-        # ADCP data
+
+    def computeADCPDrift(self):
+        '''Read data from database and put computed progressive vectors into adcpDrift dictionary
+        '''
         if self.args.adcpPlatform:
             adcpQS = MeasuredParameter.objects.using(self.args.database).filter(
                                 measurement__instantpoint__activity__platform__name=self.args.adcpPlatform)
 
         if self.startDatetime:
-            adcpQS = adcpQS.filter(measurement__instantpoint__gte=self.startDatetime)
+            adcpQS = adcpQS.filter(measurement__instantpoint__timevalue__gte=self.startDatetime)
         if self.endDatetime:
-            adcpQS = adcpQS.filter(measurement__instantpoint__lte=self.endDatetime)
+            adcpQS = adcpQS.filter(measurement__instantpoint__timevalue__lte=self.endDatetime)
 
         if self.args.adcpMinDepth:
             adcpQS = adcpQS.filter(measurement__depth__gte=self.args.adcpMinDepth)
@@ -98,6 +109,17 @@ class Drift():
 
             x[ud].append(u * dt / 1000)
             y[ud].append(u * dt / 1000)
+
+        # Work in UTM space to add x & y offsets to begining position of the mooring
+        geom0 = NominalLocation.objects.using(self.args.database).filter(activity__platform__name=self.args.adcpPlatform).values_list('geom')[0][0]
+        import pdb
+        pdb.set_trace()
+
+    def process(self):
+        '''Read in data and build structures that we can generate products from
+        '''
+        self.loadDrifterData()
+        self.computeADCPDrift()
 
 
     def getExtent(self):
