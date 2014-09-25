@@ -52,7 +52,7 @@ import logging
 import socket
 import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU
+from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
 import numpy as np
 
 
@@ -894,7 +894,10 @@ class Base_Loader(STOQS_Loader):
         self.addSigmaTandSpice(parameterCount, self.activity)
         if self.grdTerrain:
             logger.info("Adding altitude to the Measurements...")
-            self.addAltitude(parameterCount, self.activity)
+            try:
+                self.addAltitude(parameterCount, self.activity)
+            except FileNotFound as e:
+                logger.warn(e)
 
         # Update the Activity with information we now have following the load
         newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, ' '.join(self.varsLoaded), datetime.utcnow())
