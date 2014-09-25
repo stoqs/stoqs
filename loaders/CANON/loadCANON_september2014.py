@@ -46,8 +46,8 @@ cl = CANONLoader('stoqs_september2014', 'CANON-ECOHAB - September 2014',
 
 # Set start and end dates for all loads from sources that contain data 
 # beyond the temporal bounds of the campaign
-startdate = datetime.datetime(2013, 9, 10)                 # Fixed start
-enddate = datetime.datetime(2013, 10, 12)                  # Fixed end
+startdate = datetime.datetime(2014, 9, 21)                 # Fixed start
+enddate = datetime.datetime(2014, 10, 12)                  # Fixed end
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -59,9 +59,9 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2014/netcdf/'
 cl.dorado_files = [
-                   ##'Dorado389_2014_265_03_265_03_decim.nc',
-                   ##'Dorado389_2014_266_04_266_04_decim.nc',
-                   ##'Dorado389_2014_266_05_266_05_decim.nc',
+                   'Dorado389_2014_265_03_265_03_decim.nc',
+                   'Dorado389_2014_266_04_266_04_decim.nc',
+                   'Dorado389_2014_266_05_266_05_decim.nc',
                    'Dorado389_2014_267_07_267_07_decim.nc',
 				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
@@ -85,15 +85,15 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 ######################################################################
 # Glider data files from CeNCOOS thredds server
 # L_662
-##cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
-##cl.l_662_files = ['OS_Glider_L_662_20130711_TS.nc']
-##cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
-##cl.l_662_startDatetime = startdate
-##cl.l_662_endDatetime = enddate
+cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662_files = [ 'OS_Glider_L_662_20140923_TS.nc' ]
+cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
+cl.l_662_startDatetime = startdate
+cl.l_662_endDatetime = enddate
 
 # NPS_29
 ##cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
-##cl.nps29_files = [ 'OS_Glider_NPS_G29_20130829_TS.nc']
+##cl.nps29_files = [ 'OS_Glider_NPS_Glider_29_20120524_TS.nc' ]
 ##cl.nps29_parms = ['TEMP', 'PSAL', 'OPBS']
 ##cl.nps29_startDatetime = startdate
 ##cl.nps29_endDatetime = enddate
@@ -177,19 +177,16 @@ cl.rcpctd_files = [
 #  MOORINGS
 ######################################################################
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
-##cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
-##cl.m1_files = [
-##                '201202/OS_M1_20120222hourly_CMSTV.nc', 
-##                '201309/OS_M1_20130918hourly_CMSTV.nc',
-##                '201202/m1_hs2_20120222.nc',
-##                '201309/m1_hs2_20130919.nc',
-##              ]
-##cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
-##                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-##                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR', 'bb470', 'bb676', 'fl676'
-##              ]
-##cl.m1_startDatetime = startdate
-##cl.m1_endDatetime = enddate
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201407/'
+cl.m1_files = [
+                'OS_M1_20140716hourly_CMSTV.nc',
+              ]
+cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR', 
+              ]
+cl.m1_startDatetime = startdate
+cl.m1_endDatetime = enddate
 
  
 #######################################################################################
@@ -249,24 +246,24 @@ cl.rcpctd_files = [
 cl.process_command_line()
 
 if cl.args.test:
-    ##cl.loadL_662(stride=100) 
+    cl.loadL_662(stride=100) 
     ##cl.load_NPS29(stride=100) 
 
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10) 
 
-    cl.loadDorado(stride=10)
+    cl.loadDorado(stride=100)
     ##cl.loadDaphne(stride=100)
     ##cl.loadTethys(stride=100)
 
-    cl.loadRCuctd(stride=10)
-    ##cl.loadRCpctd(stride=10)
+    ##cl.loadRCuctd(stride=10)
+    cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10)
     ##cl.loadJMpctd(stride=10)
     ##cl.loadWFuctd(stride=10)   
     ##cl.loadWFpctd(stride=10)
 
-    ##cl.loadM1(stride=10)
+    cl.loadM1(stride=10)
 
     ##cl.loadBruceMoor(stride=10)
     ##cl.loadMackMoor(stride=10)
@@ -275,6 +272,8 @@ if cl.args.test:
 
 elif cl.args.optimal_stride:
 
+    cl.loadL_662(stride=2) 
+    cl.loadM1(stride=1)
     cl.loadDorado(stride=2)
     cl.loadRCpctd(stride=2)
 
@@ -283,6 +282,8 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
 
+    cl.loadL_662() 
+    cl.loadM1()
     cl.loadDorado()
     cl.loadRCpctd()
 
