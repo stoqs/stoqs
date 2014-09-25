@@ -141,11 +141,11 @@ cl.l_662_endDatetime = enddate
 #  RACHEL CARSON: September 22-26 (265-xxx) Oct 6 - Oct 10
 ######################################################################
 # UCTD
-##cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/uctd/'
-##cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
-##cl.rcuctd_files = [ 
-##                    '26113RCm01.nc', '27313RCm01.nc', '27413RCm01.nc', '27513RCm01.nc',
-##                  ]
+cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/uctd/'
+cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
+cl.rcuctd_files = [ 
+                    '26514RCplm01.nc', 
+                  ]
 
 # PCTD
 # /thredds/dodsC/CANON/2014_Sep/Platforms/Ships/Rachel_Carson/pctd/26514RCc06.nc
@@ -256,7 +256,7 @@ if cl.args.test:
     ##cl.loadDaphne(stride=100)
     ##cl.loadTethys(stride=100)
 
-    ##cl.loadRCuctd(stride=10)
+    cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10)
     ##cl.loadJMpctd(stride=10)
@@ -275,6 +275,7 @@ elif cl.args.optimal_stride:
     cl.loadL_662(stride=2) 
     cl.loadM1(stride=1)
     cl.loadDorado(stride=2)
+    cl.loadRCuctd(stride=2)
     cl.loadRCpctd(stride=2)
 
     ##cl.loadSubSamples()
@@ -285,6 +286,7 @@ else:
     cl.loadL_662() 
     cl.loadM1()
     cl.loadDorado()
+    cl.loadRCuctd()
     cl.loadRCpctd()
 
     ##cl.loadSubSamples()
