@@ -30,38 +30,76 @@ import sys
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
 
+import csv
+import urllib2
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
-from django.db.models import Q
-from django.db.utils import IntegrityError
-from utils.utils import round_to_n, pearsonr
-from textwrap import wrap
-from numpy import polyfit
-from pylab import polyval
-from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource, ResourceResource
-from utils.STOQSQManager import LABEL, DESCRIPTION, COMMANDLINE
+from collections import defaultdict
+from stoqs.models import MeasuredParameter
 
 
 class Drift():
     '''Data and methods to support drift data product preparation
     '''
+    drifters = defaultdict(lambda: {'es': [], 'lat': [], 'lon': []})
 
-    def getFileName(self, figCount):
+    def process(self):
+        '''Read in data and build structures that we can generate products from
         '''
-        Construct plot file name
-        '''
-        fileName = 'cpBiPlot_%02d' % figCount
-        if self.args.daytime:
-            fileName += '_day'
-        if self.args.nighttime:
-            fileName += '_night'
-        fileName += '.png'
+        # Drifter data
+        for url in self.args.drifterData:
+            # Careful - trackingdb returns the records in reverse time order
+            for r in csv.DictReader(urllib2.urlopen(url)):
+                self.drifters[r['platformName']]['es'].append(float(r['epochSeconds']))
+                self.drifters[r['platformName']]['lat'].append(float(r['latitude']))
+                self.drifters[r['platformName']]['lon'].append(float(r['longitude']))
 
-        fileName = os.path.join(self.args.plotDir, self.args.plotPrefix + fileName)
+        # ADCP data
+        if self.args.adcpPlatform:
+            adcpQS = MeasuredParameter.objects.using(self.args.database).filter(
+                                measurement__instantpoint__activity__platform__name=self.args.adcpPlatform)
 
-        return fileName
+        if self.startDatetime:
+            adcpQS = adcpQS.filter(measurement__instantpoint__gte=self.startDatetime)
+        if self.endDatetime:
+            adcpQS = adcpQS.filter(measurement__instantpoint__lte=self.endDatetime)
+
+        if self.args.adcpMinDepth:
+            adcpQS = adcpQS.filter(measurement__depth__gte=self.args.adcpMinDepth)
+        if self.args.adcpMaxDepth:
+            adcpQS = adcpQS.filter(measurement__depth__lte=self.args.adcpMaxDepth)
+
+        utd = adcpQS.filter(parameter__standard_name='eastward_sea_water_velocity').values_list(
+                                'datavalue', 'measurement__instantpoint__timevalue', 'measurement__depth').order_by(
+                                        'measurement__depth', 'measurement__instantpoint__timevalue')
+        vtd = adcpQS.filter(parameter__standard_name='northward_sea_water_velocity').values_list(
+                                'datavalue', 'measurement__instantpoint__timevalue', 'measurement__depth').order_by(
+                                        'measurement__depth', 'measurement__instantpoint__timevalue')
+
+        # Compute positions (progressive vectors) - horizontal displacement in meters
+        x = defaultdict(lambda: [0])
+        y = defaultdict(lambda: [0])
+        for i, ((u, ut, ud), (v, vt, vd)) in enumerate(zip(utd, vtd)):
+            try:
+                udiff = utd[i+1][1] - ut
+                vdiff = vtd[i+1][1] - vt
+            except IndexError:
+                # Extrapolate using last time difference, assuming it's regular and that we are at the last point
+                udiff = utd[i-1][1] - utd[i][1]
+                vdiff = vtd[i-1][1] - vtd[i][1]
+                
+            if udiff != vdiff:
+                raise Exception('udiff != vdiff')
+            else:
+                dt = udiff.seconds + udiff.days * 24 * 3600
+
+            x[ud].append(u * dt / 1000)
+            y[ud].append(u * dt / 1000)
+
+        import pdb
+        pdb.set_trace()
 
     def saveFigure(self, fig, figCount):
         '''
@@ -79,15 +117,16 @@ class Drift():
         fig.savefig(fileName)
 
     def createGeoTiff(self):
-        '''Your image must be only the geoplot with no decorations like axis titles, axis labels, etc., and you will need accurate upper-left and lower-right coordinates in EPSG:4326 projection, also known as WGS 84 projection,...
+        '''Your image must be only the geoplot with no decorations like axis titles, axis labels, etc., and you 
+        will need accurate upper-left and lower-right coordinates in EPSG:4326 projection, also known as WGS 84 projection,...
 
-The syntax is pretty straightforward, something like the following will convert your image to the correct format:
+        The syntax is pretty straightforward, something like the following will convert your image to the correct format:
 
- gdal_translate <image.png> <image.tiff> -a_ullr -122.25 37.1 -121.57365 36.67558 
+            gdal_translate <image.png> <image.tiff> -a_ullr -122.25 37.1 -121.57365 36.67558 
 
-There is also a python wrapper for the GDAL library
+        There is also a python wrapper for the GDAL library
  
-https://pypi.python.org/pypi/GDAL/
+        https://pypi.python.org/pypi/GDAL/
         '''
 
     def process_command_line(self):
@@ -115,10 +154,12 @@ https://pypi.python.org/pypi/GDAL/
         parser.add_argument('--adcpPlatform', action='store', help='STOQS Platform Name for ADCP data')
         parser.add_argument('--adcpMinDepth', action='store', help='Minimum depth of ADCP data for progressive vector data', type=float)
         parser.add_argument('--adcpMaxDepth', action='store', help='Maximum depth of ADCP data for progressive vector data', type=float)
-        parser.add_argument('--drifterData', action='store', help='List of MBARITracking database .csv urls for drifter data', nargs='*')
+
+        parser.add_argument('--drifterData', action='store', help='List of MBARItracking database .csv urls for drifter data', nargs='*', default=[])
     
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
+
         parser.add_argument('--kmlFileName', action='store', help='Name of file for KML output')
         parser.add_argument('--pngFileName', action='store', help='Name of file for PNG image of map')
         parser.add_argument('--geotiffFileName', action='store', help='Name of file for geotiff image of map')
@@ -127,6 +168,13 @@ https://pypi.python.org/pypi/GDAL/
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
+
+        self.startDatetime = None
+        if self.args.start:
+            self.startDatetime = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+        self.endDatetime = None
+        if self.args.end:
+            self.endDatetime = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
     
     
 if __name__ == '__main__':
