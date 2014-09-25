@@ -77,7 +77,11 @@ def processDecimated(pw, url, outDir, lastDatetime, parms):
     '''
 
     logger.debug('url = %s', url)
-    outFile_i = os.path.join(outDir, url.split('/')[-1].split('.')[0] + '_i.nc')
+    if outDir.startswith('/tmp'):
+        outFile_i = os.path.join(outDir, url.split('/')[-1].split('.')[0] + '_i.nc')
+    else:
+        outFile_i = os.path.join(outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + '_i.nc')
+
     startDatetime, endDatetime = getNcStartEnd(url)
     logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
     logger.debug('lastDatetime = %s', lastDatetime)
