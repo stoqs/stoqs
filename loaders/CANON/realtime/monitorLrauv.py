@@ -60,7 +60,7 @@ def getNcStartEnd(urlNcDap):
     return url to the .nc  and start/end as datetime objects.
     '''
     logger.debug('open_url on urlNcDap = %s', urlNcDap)
-    df = pydap.open_url(urlNcDap)
+    df = pydap.client.open_url(urlNcDap)
     timeAxisName = 'depth_time'
     timeAxisUnits = df[timeAxisName].units
     if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
