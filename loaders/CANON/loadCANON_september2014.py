@@ -59,9 +59,10 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2014/netcdf/'
 cl.dorado_files = [
-                   'Dorado389_2014_265_03_265_03_decim.nc',
-                   'Dorado389_2014_266_04_266_04_decim.nc',
-                   'Dorado389_2014_266_05_266_05_decim.nc',
+                   ##'Dorado389_2014_265_03_265_03_decim.nc',
+                   ##'Dorado389_2014_266_04_266_04_decim.nc',
+                   ##'Dorado389_2014_266_05_266_05_decim.nc',
+                   'Dorado389_2014_267_07_267_07_decim.nc',
 				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
@@ -254,12 +255,12 @@ if cl.args.test:
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10) 
 
-    #cl.loadDorado(stride=10)
+    cl.loadDorado(stride=10)
     ##cl.loadDaphne(stride=100)
     ##cl.loadTethys(stride=100)
 
-    ##cl.loadRCuctd(stride=10)
-    cl.loadRCpctd(stride=10)
+    cl.loadRCuctd(stride=10)
+    ##cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10)
     ##cl.loadJMpctd(stride=10)
     ##cl.loadWFuctd(stride=10)   
@@ -274,14 +275,16 @@ if cl.args.test:
 
 elif cl.args.optimal_stride:
 
-    #cl.loadDorado(stride=2)
+    cl.loadDorado(stride=2)
     cl.loadRCpctd(stride=2)
+
     ##cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
-    #cl.loadRCpctd()
+
     cl.loadDorado()
+    cl.loadRCpctd()
 
     ##cl.loadSubSamples()
 
