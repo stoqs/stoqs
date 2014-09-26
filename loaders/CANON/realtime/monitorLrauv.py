@@ -144,7 +144,7 @@ if __name__ == '__main__':
     interpolate = False
 
     # interpolating implied when specifying output directory to store interpolated files
-    if args.outDir:
+    if len(args.outDir) > 1:
         interpolate = True
 
     platformName = None; 
