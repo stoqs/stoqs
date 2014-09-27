@@ -305,6 +305,8 @@ class Base_Loader(STOQS_Loader):
                 featureType = self.ds.attributes['NC_GLOBAL']['CF%3afeatureType']
             elif 'CF_featureType' in nc_global_keys:
                 featureType = self.ds.attributes['NC_GLOBAL']['CF_featureType']
+            elif 'CF:featureType' in nc_global_keys:    # Seen in lrauv/*/realtime/sbdlogs files
+                featureType = self.ds.attributes['NC_GLOBAL']['CF:featureType']
             else:
                 featureType = ''
 
@@ -1073,27 +1075,12 @@ class Lrauv_Loader(Trajectory_Loader):
     '''
     MBARI Long Range AUV data loader.
     '''
-    dens = pydap.model.BaseType()
-    dens.attributes = { 'standard_name':    'sea_water_sigma_t',
-                        'long_name':        'Sigma-T',
-                        'units':            'kg m-3',
-                        'name':             'sea_water_sigma_t'
-                      }
-    parmDict = {'sea_water_sigma_t': dens}
     include_names = [   'mass_concentration_of_oxygen_in_sea_water',
                         'mole_concentration_of_nitrate_in_sea_water',
                         'mass_concentration_of_chlorophyll_in_sea_water',
                         'sea_water_salinity',
                         'sea_water_temperature',
-                        'sea_water_sigma_t',
                     ]
-
-    def initDB(self):
-        self.addParameters(self.parmDict)
-        for k in self.parmDict.keys():
-            self.varsLoaded.append(k)       # Make sure to add the derived parameters to the list that gets put in the comment
-
-        return super(Lrauv_Loader, self).initDB()
 
     def preProcessParams(self, row):
         '''
@@ -1268,8 +1255,12 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
             grdTerrain = grdTerrain)
 
     if parmList:
-        logger.debug("Setting include_names to %s", parmList)
-        loader.include_names = parmList
+        loader.include_names = []
+        for p in parmList:
+            if p.find('.') == -1:
+                loader.include_names.append(p)
+            else:
+                logger.warn('Parameter %s not included. CANNOT HAVE PARAMETER NAMES WITH PERIODS. Period.', p)
 
     loader.auxCoords = {}
     if aName.find('_Chl_') != -1:
@@ -1278,7 +1269,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
 
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
-    except NoValidData, e:
+    except NoValidData as e:
         logger.warn(e)
     else:    
         logger.debug("Loaded Activity with name = %s", aName)

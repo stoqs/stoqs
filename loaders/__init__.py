@@ -687,7 +687,6 @@ class STOQS_Loader(object):
         Do a pre- check on the OPeNDAP url for the include_names variables. If there are non-NaN data in
         any of the varibles return Ture, otherwise return False.
         '''
-
         allNaNFlag = {}
         anyValidData = False
         self.logger.info("Checking for valid data from %s", self.url)
@@ -700,9 +699,11 @@ class STOQS_Loader(object):
                 allNaNFlag[v] = numpy.isnan(vVals).all()
                 if not allNaNFlag[v]:
                     anyValidData = True
-            except KeyError:
-                pass
-            except ValueError:
+            except KeyError as e:
+                self.logger.debug('Parameter %s not in %s. Skipping.', v, self.ds.keys())
+                if v.find('.') != -1:
+                    raise Exception('Parameter names must not contain periods - cannot load data. Paramater %s violates CF conventions.' % v)
+            except ValueError as e:
                 pass
 
         self.logger.debug("allNaNFlag = %s", allNaNFlag)
