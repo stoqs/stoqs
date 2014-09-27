@@ -56,6 +56,9 @@ class NcFileMissing(Exception):
         self.nc4FileUrl = value
     def __str__(self):
         return repr(self.nc4FileUrl)
+
+class ServerError(Exception):
+    pass
   
 def getNcStartEnd(urlNcDap, timeAxisName):
     '''Find the lines in the html with the .nc file, then open it and read the start/end times
@@ -67,8 +70,12 @@ def getNcStartEnd(urlNcDap, timeAxisName):
     if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
         timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
-    startDatetime = from_udunits(df[timeAxisName][0][0], timeAxisUnits)
-    endDatetime = from_udunits(df[timeAxisName][-1][0], timeAxisUnits)
+    try:
+        startDatetime = from_udunits(df[timeAxisName][0][0], timeAxisUnits)
+        endDatetime = from_udunits(df[timeAxisName][-1][0], timeAxisUnits)
+    except pydap.exceptions.ServerError as e:
+        logger.warn(e)
+        raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
 
     return startDatetime, endDatetime
 
@@ -193,8 +200,13 @@ if __name__ == '__main__':
                 hasData = True
                 stride = 10
         else:
-            startDatetime, endDatetime = getNcStartEnd(url,'Time') 
-            url_src = url.replace('http://elvis.shore.mbari.org/opendap/data/lrauv', 'http://dods.mbari.org/opendap/hyrax/data/lrauv') 
+            try:
+                startDatetime, endDatetime = getNcStartEnd(url,'Time') 
+            except ServerError as e:
+                logger.warn(e)
+                continue
+
+            url_src = url.replace('thredds/dodsC/LRAUV', 'opendap/data/lrauv') 
             hasData = True
             stride = 1 
 
