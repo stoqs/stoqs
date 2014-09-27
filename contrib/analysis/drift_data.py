@@ -10,7 +10,7 @@ __doc__ = '''
 
 Script produce products (plots, kml, etc.) to help understand drifting data.
 - Make progressive vector diagram from moored ADCP data (read from STOQS)
-- Plot drogued drifter data (read from Tracking DB)
+- Plot drogued drifter, ship, and other data (read from Tracking DB)
 - Plot sensor data (read from STOQS)
 
 Output as a .png map, .kml file, or ...
@@ -31,10 +31,12 @@ os.environ['DJANGO_SETTINGS_MODULE']='settings'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
 
 import csv
+import pyproj
 import urllib2
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pytz 
 from datetime import datetime
 from collections import defaultdict
 from stoqs.models import MeasuredParameter, NominalLocation
@@ -44,16 +46,16 @@ from mpl_toolkits.basemap import Basemap
 class Drift():
     '''Data and methods to support drift data product preparation
     '''
-    drifters = defaultdict(lambda: {'es': [], 'lat': [], 'lon': []})        # Keyed by drifter name
-    adcpDrift = defaultdict(lambda: {'es': [], 'lat': [], 'lon': []})       # Keyed by depth
+    trackDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': []})        # To be keyed by platform name
+    adcpDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': []})       # To be keyed by depth
 
     def loadDrifterData(self):
-        '''Fill up drifters dictionary
+        '''Fill up trackDrift dictionary
         '''
-        for url in self.args.drifterData:
+        for url in self.args.trackData:
             # Careful - trackingdb returns the records in reverse time order
             for r in csv.DictReader(urllib2.urlopen(url)):
-                # Use logic to skip appending values if one or the other or both start and end are specified
+                # Use logic to skip inserting values if one or the other or both start and end are specified
                 if self.startDatetime:
                     if datetime.utcfromtimestamp(float(r['epochSeconds'])) < self.startDatetime:
                         continue
@@ -61,10 +63,9 @@ class Drift():
                     if datetime.utcfromtimestamp(float(r['epochSeconds'])) > self.endDatetime:
                         continue
 
-                self.drifters[r['platformName']]['es'].append(float(r['epochSeconds']))
-                self.drifters[r['platformName']]['lat'].append(float(r['latitude']))
-                self.drifters[r['platformName']]['lon'].append(float(r['longitude']))
-
+                self.trackDrift[r['platformName']]['es'].insert(0, float(r['epochSeconds']))
+                self.trackDrift[r['platformName']]['lat'].insert(0, float(r['latitude']))
+                self.trackDrift[r['platformName']]['lon'].insert(0, float(r['longitude']))
 
     def computeADCPDrift(self):
         '''Read data from database and put computed progressive vectors into adcpDrift dictionary
@@ -91,30 +92,48 @@ class Drift():
                                         'measurement__depth', 'measurement__instantpoint__timevalue')
 
         # Compute positions (progressive vectors) - horizontal displacement in meters
-        x = defaultdict(lambda: [0])
-        y = defaultdict(lambda: [0])
+        x = defaultdict(lambda: [])
+        y = defaultdict(lambda: [])
+        last_udiff = None
         for i, ((u, ut, ud), (v, vt, vd)) in enumerate(zip(utd, vtd)):
             try:
                 udiff = utd[i+1][1] - ut
                 vdiff = vtd[i+1][1] - vt
-            except IndexError:
-                # Extrapolate using last time difference, assuming it's regular and that we are at the last point
-                udiff = utd[i-1][1] - utd[i][1]
-                vdiff = vtd[i-1][1] - vtd[i][1]
+            except IndexError as e:
+                # Extrapolate using last time difference, assuming it's regular and that we are at the last point, works only for very last point
+                udiff = last_udiff
+                vdiff = last_udiff
+            else:
+                last_udiff = udiff
                 
             if udiff != vdiff:
                 raise Exception('udiff != vdiff')
             else:
                 dt = udiff.seconds + udiff.days * 24 * 3600
 
-            x[ud].append(u * dt / 1000)
-            y[ud].append(u * dt / 1000)
+            if dt < 0:
+                # For intermediate depths where (utd[i+1][1] - ut) is a diff with the time of the next depth
+                dt = last_dt
+
+            if ud != vd:
+                raise Exception('ud != vd')
+            else:
+                x[ud].append(u * dt / 100)
+                y[vd].append(v * dt / 100)
+                self.adcpDrift[ud]['es'].append(ut)
+                last_dt = dt
 
         # Work in UTM space to add x & y offsets to begining position of the mooring
-        geom0 = NominalLocation.objects.using(self.args.database).filter(activity__platform__name=self.args.adcpPlatform).values_list('geom')[0][0]
-        import pdb
-        pdb.set_trace()
-
+        g0 = NominalLocation.objects.using(self.args.database).filter(activity__platform__name=self.args.adcpPlatform).values_list('geom')[0][0]
+        p = pyproj.Proj(proj='utm', zone=10, ellps='WGS84')
+        e0, n0 = p(g0.x, g0.y) 
+        for depth in x:
+            eList = np.cumsum([e0] + x[depth])
+            nList = np.cumsum([n0] + y[depth])
+            lonList, latList = p(eList, nList, inverse=True)
+            self.adcpDrift[depth]['lon'] = lonList
+            self.adcpDrift[depth]['lat'] = latList
+    
     def process(self):
         '''Read in data and build structures that we can generate products from
         '''
@@ -129,44 +148,48 @@ class Drift():
         lonMax = -180
         latMin = 90
         latMax = -90
-        for k,v in self.drifters.iteritems():
-            import pdb
-            pdb.set_trace()
-            if np.min(v['lon']) < lonMin:
-                lonMin = np.min(v['lon'])
-            if np.max(v['lon']) > lonMax:
-                lonMax = np.max(v['lon'])
-            if np.min(v['lat']) < latMin:
-                latMin = np.min(v['lat'])
-            if np.max(v['lat']) > latMax:
-                latMax = np.max(v['lat'])
+        for drift in (self.trackDrift, self.adcpDrift):
+            for k,v in drift.iteritems():
+                if np.min(v['lon']) < lonMin:
+                    lonMin = np.min(v['lon'])
+                if np.max(v['lon']) > lonMax:
+                    lonMax = np.max(v['lon'])
+                if np.min(v['lat']) < latMin:
+                    latMin = np.min(v['lat'])
+                if np.max(v['lat']) > latMax:
+                    latMax = np.max(v['lat'])
 
-        return lonMin, latMin, lonMax, latMax
+        # Expand the computed extent by expandDeg degrees
+        expandDeg = self.args.expand
+        return lonMin - expandDeg, latMin - expandDeg, lonMax + expandDeg, latMax + expandDeg
 
     def createPNG(self):
         '''Draw processed data on a map and save it as a .png file
         '''
         e = self.getExtent() 
-        import pdb
-        pdb.set_trace()
-        m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution=resolution, ax=ax)
+        fig = plt.figure(figsize=(9, 6))
+        m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution='l')
         m.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
 
+        for depth, drift in self.adcpDrift.iteritems():
+            m.plot(drift['lon'], drift['lat'], '-', c='black', linewidth=1)
+            plt.text(drift['lon'][-1], drift['lat'][-1], '%i m' % depth)
 
-    def saveFigure(self, fig, figCount):
-        '''
-        Save this page
-        '''
-        provStr = 'Created with STOQS command ' + '\\\n'.join(wrap(self.commandline, width=160)) + ' on ' + datetime.now().ctime()
-        plt.figtext(0.0, 0.0, provStr, size=7, horizontalalignment='left', verticalalignment='bottom')
-        plt.tight_layout()
-        if self.args.title:
-            fig.text(0.5, 0.975, self.args.title, horizontalalignment='center', verticalalignment='top')
+        for platform, drift in self.trackDrift.iteritems():
+            if platform.startswith('stella'):
+                color = 'yellow'
+            else:
+                color = 'red'
+            m.plot(drift['lon'], drift['lat'], '-', c=color, linewidth=2)
+            plt.text(drift['lon'][-1], drift['lat'][-1], platform)
 
-        fileName = self.getFileName(figCount)
-        if self.args.verbose:
-            print '  Saving file', fileName
-        fig.savefig(fileName)
+        m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], linewidth=0)
+        m.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True], linewidth=0)
+
+        plt.title('%s to %s' %(self.startDatetimeLocal, self.endDatetimeLocal))
+        fig.savefig(self.args.pngFileName)
+        plt.clf()
+        plt.close()
 
     def createGeoTiff(self):
         '''Your image must be only the geoplot with no decorations like axis titles, axis labels, etc., and you 
@@ -189,11 +212,12 @@ class Drift():
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n' 
-        examples += "M1 ADCP progressive vector diagram and Stella drifter data:\n"
+        examples += "M1 ADCP progressive vector diagram and Stella and Rachel Carson position data:\n"
         examples += sys.argv[0] + " --database stoqs_september2014 --adcpPlatform M1_Mooring --adcpMinDepth 30 --adcpMaxDepth 40"
-        examples += " --drifterData http://odss.mbari.org/trackingdb/position/stella101/between/20140922T171500/20141010T000000/data.csv"
-        examples += " http://odss.mbari.org/trackingdb/position/stella110/between/20140922T171500/20141010T000000/data.csv"
+        examples += " --trackData http://odss.mbari.org/trackingdb/position/stella101/between/20140922T171500/20141010T000000/data.csv"
+        examples += " http://odss.mbari.org/trackingdb/position/R_CARSON/between/20140922T171500/20141010T000000/data.csv"
         examples += " http://odss.mbari.org/trackingdb/position/stella122/between/20140922T171500/20141010T000000/data.csv"
+        examples += " --pngFileName foo.png --start 20140923T180000 --end 20140925T150000"
         examples += "\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
@@ -207,10 +231,11 @@ class Drift():
         parser.add_argument('--adcpMinDepth', action='store', help='Minimum depth of ADCP data for progressive vector data', type=float)
         parser.add_argument('--adcpMaxDepth', action='store', help='Maximum depth of ADCP data for progressive vector data', type=float)
 
-        parser.add_argument('--drifterData', action='store', help='List of MBARItracking database .csv urls for drifter data', nargs='*', default=[])
+        parser.add_argument('--trackData', action='store', help='List of MBARItracking database .csv urls for data from drifters, ships, etc.', nargs='*', default=[])
     
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
+        parser.add_argument('--expand', action='store', help='Expand the data extent for the map boundaries by this value in degrees', default=0.05, type=float)
 
         parser.add_argument('--kmlFileName', action='store', help='Name of file for KML output')
         parser.add_argument('--pngFileName', action='store', help='Name of file for PNG image of map')
@@ -221,12 +246,18 @@ class Drift():
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
 
+        utc = pytz.utc
         self.startDatetime = None
+        # Make both naiive and timezone aware datetime data members
         if self.args.start:
             self.startDatetime = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+            self.startDatetimeUTC = utc.localize(self.startDatetime)
+            self.startDatetimeLocal = self.startDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
         self.endDatetime = None
         if self.args.end:
             self.endDatetime = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+            self.endDatetimeUTC = utc.localize(self.endDatetime)
+            self.endDatetimeLocal = self.endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
     
     
 if __name__ == '__main__':
