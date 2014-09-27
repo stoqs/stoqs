@@ -28,7 +28,6 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
-# on odss-test: stoqs_simz_aug2013
        
 cl = CANONLoader('stoqs_september2014', 'CANON-ECOHAB - September 2014',
                     description = 'Fall 2014 Dye Release Experiment in Monterey Bay',
@@ -59,10 +58,10 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2014/netcdf/'
 cl.dorado_files = [
-#                   'Dorado389_2014_265_03_265_03_decim.nc',  #already loaded 
-#                   'Dorado389_2014_266_04_266_04_decim.nc',  #already loaded
-#                   'Dorado389_2014_266_05_266_05_decim.nc',  #already loaded
-#                   'Dorado389_2014_267_07_267_07_decim.nc',  #already loaded
+                   'Dorado389_2014_265_03_265_03_decim.nc', 
+                   'Dorado389_2014_266_04_266_04_decim.nc',  
+                   'Dorado389_2014_266_05_266_05_decim.nc',  
+                   'Dorado389_2014_267_07_267_07_decim.nc',  
                    'Dorado389_2014_268_05_268_05_decim.nc',
 				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
@@ -153,7 +152,7 @@ cl.rcuctd_files = [
 cl.rcpctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [ 
-                  #  '26514RCc01.nc', '26514RCc03.nc', '26514RCc04.nc', '26514RCc05.nc', '26514RCc06.nc', # already loaded
+                    '26514RCc01.nc', '26514RCc03.nc', '26514RCc04.nc', '26514RCc05.nc', '26514RCc06.nc',
                     '26614RCc01.nc', '26614RCc03.nc',  '26614RCc04.nc', '26614RCc05.nc',
                     '26714RCc01.nc', '26714RCc02.nc',  '26714RCc03.nc', '26714RCc04.nc', '26714RCc05.nc',
                     '26814RCc01.nc', '26814RCc02b.nc', '26814RCc02.nc', '26814RCc04.nc', '26814RCc05.nc',
@@ -250,7 +249,7 @@ cl.m1_endDatetime = enddate
 cl.process_command_line()
 
 if cl.args.test:
-    #cl.loadL_662(stride=100) 
+    cl.loadL_662(stride=100) 
     ##cl.load_NPS29(stride=100) 
 
     ##cl.load_wg_tex(stride=10)
@@ -260,14 +259,14 @@ if cl.args.test:
     ##cl.loadDaphne(stride=100)
     ##cl.loadTethys(stride=100)
 
-    #cl.loadRCuctd(stride=10)
+    cl.loadRCuctd(stride=10)
     cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10)
     ##cl.loadJMpctd(stride=10)
     ##cl.loadWFuctd(stride=10)   
     ##cl.loadWFpctd(stride=10)
 
-    #cl.loadM1(stride=10)
+    cl.loadM1(stride=10)
 
     ##cl.loadBruceMoor(stride=10)
     ##cl.loadMackMoor(stride=10)
@@ -287,10 +286,10 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
 
-    #cl.loadL_662() 
-    #cl.loadM1()
+    cl.loadL_662() 
+    cl.loadM1()
     cl.loadDorado()
-    #cl.loadRCuctd()
+    cl.loadRCuctd()
     cl.loadRCpctd()
 
     ##cl.loadSubSamples()
