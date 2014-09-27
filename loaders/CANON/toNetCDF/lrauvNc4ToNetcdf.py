@@ -89,7 +89,6 @@ class InterpolatorWriter(BaseWriter):
         self.add_global_metadata()
 
         self.ncFile.close()
-        print 'Wrote ' + outFile
 
         # End write_pctd()
 

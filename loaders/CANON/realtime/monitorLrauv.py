@@ -197,7 +197,11 @@ if __name__ == '__main__':
     # Look in time order - oldest to newest
     for url in sorted(urls):
         if interpolate:
-            (url_i, startDatetime, endDatetime) = processDecimated(pw, url, args.outDir, lastDatetime, args.parms)
+            try:
+                (url_i, startDatetime, endDatetime) = processDecimated(pw, url, args.outDir, lastDatetime, args.parms)
+            except ServerError as e:
+                logger.warn(e)
+                continue
             if url_i:
                 logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_i))
                 # Use Hyrax server to avoid the stupid caching that the TDS does
