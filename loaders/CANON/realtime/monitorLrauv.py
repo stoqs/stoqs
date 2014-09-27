@@ -76,6 +76,9 @@ def getNcStartEnd(urlNcDap, timeAxisName):
     except pydap.exceptions.ServerError as e:
         logger.warn(e)
         raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
+    except KeyError as e:
+        logger.warn(e)
+        raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
 
     return startDatetime, endDatetime
 
