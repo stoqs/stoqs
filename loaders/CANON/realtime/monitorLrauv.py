@@ -66,7 +66,12 @@ def getNcStartEnd(urlNcDap, timeAxisName):
     '''
     logger.debug('open_url on urlNcDap = %s', urlNcDap)
     df = pydap.client.open_url(urlNcDap)
-    timeAxisUnits = df[timeAxisName].units
+    try:
+        timeAxisUnits = df[timeAxisName].units
+    except KeyError as e:
+        logger.warn(e)
+        raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
+
     if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
         timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
@@ -76,9 +81,6 @@ def getNcStartEnd(urlNcDap, timeAxisName):
     except pydap.exceptions.ServerError as e:
         logger.warn(e)
         raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
-    except KeyError as e:
-        logger.warn(e)
-        raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
 
     return startDatetime, endDatetime
 
