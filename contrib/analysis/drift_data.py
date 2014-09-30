@@ -40,6 +40,7 @@ import pytz
 from datetime import datetime
 from collections import defaultdict
 from stoqs.models import MeasuredParameter, NominalLocation
+from utils.Viz import KML
 from mpl_toolkits.basemap import Basemap
 
 
@@ -144,50 +145,67 @@ class Drift():
     def getExtent(self):
         '''For all data members find the min and max latitude and longitude
         '''
-        lonMin = 180
-        lonMax = -180
-        latMin = 90
-        latMax = -90
-        for drift in (self.trackDrift, self.adcpDrift):
-            for k,v in drift.iteritems():
-                if np.min(v['lon']) < lonMin:
-                    lonMin = np.min(v['lon'])
-                if np.max(v['lon']) > lonMax:
-                    lonMax = np.max(v['lon'])
-                if np.min(v['lat']) < latMin:
-                    latMin = np.min(v['lat'])
-                if np.max(v['lat']) > latMax:
-                    latMax = np.max(v['lat'])
+        if self.args.extent:
+            return self.args.extent
+        else:
+            lonMin = 180
+            lonMax = -180
+            latMin = 90
+            latMax = -90
+            for drift in (self.trackDrift, self.adcpDrift):
+                for k,v in drift.iteritems():
+                    if np.min(v['lon']) < lonMin:
+                        lonMin = np.min(v['lon'])
+                    if np.max(v['lon']) > lonMax:
+                        lonMax = np.max(v['lon'])
+                    if np.min(v['lat']) < latMin:
+                        latMin = np.min(v['lat'])
+                    if np.max(v['lat']) > latMax:
+                        latMax = np.max(v['lat'])
 
-        # Expand the computed extent by expandDeg degrees
-        expandDeg = self.args.expand
-        return lonMin - expandDeg, latMin - expandDeg, lonMax + expandDeg, latMax + expandDeg
+            # Expand the computed extent by extendDeg degrees
+            extendDeg = self.args.extend
+            return lonMin - extendDeg, latMin - extendDeg, lonMax + extendDeg, latMax + extendDeg
 
-    def createPNG(self):
+    def createPNG(self, forGeotiff=False):
         '''Draw processed data on a map and save it as a .png file
         '''
-        e = self.getExtent() 
         fig = plt.figure(figsize=(9, 6))
-        m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution='l')
-        m.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
+        if not forGeotiff:
+            ax = plt.axes()
+        else:
+            ax = plt.axes([0,0,1,1])
+
+        e = self.getExtent() 
+        m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution='l', ax=ax)
+        if not forGeotiff:
+            m.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
 
         for depth, drift in self.adcpDrift.iteritems():
             m.plot(drift['lon'], drift['lat'], '-', c='black', linewidth=1)
             plt.text(drift['lon'][-1], drift['lat'][-1], '%i m' % depth)
 
         for platform, drift in self.trackDrift.iteritems():
+            # Ad hoc coloring of platforms...
             if platform.startswith('stella'):
                 color = 'yellow'
+            elif platform.startswith('daphne'):
+                color = 'orange'
             else:
                 color = 'red'
+
             m.plot(drift['lon'], drift['lat'], '-', c=color, linewidth=2)
             plt.text(drift['lon'][-1], drift['lat'][-1], platform)
 
-        m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], linewidth=0)
-        m.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True], linewidth=0)
+        if not forGeotiff:
+            m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], linewidth=0)
+            m.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True], linewidth=0)
+            plt.title('%s to %s' %(self.startDatetimeLocal, self.endDatetimeLocal))
+            fig.savefig(self.args.pngFileName)
+        else:
+            plt.axis('off')
+            fig.savefig(self.args.geotiffFileName.replace('.tiff', '.png'))
 
-        plt.title('%s to %s' %(self.startDatetimeLocal, self.endDatetimeLocal))
-        fig.savefig(self.args.pngFileName)
         plt.clf()
         plt.close()
 
@@ -204,6 +222,13 @@ class Drift():
         https://pypi.python.org/pypi/GDAL/
         '''
 
+        e = self.getExtent()
+        self.createPNG(forGeotiff=True)
+        cmd = 'gdal_translate %s %s -a_ullr %s %s %s %s' % (self.args.geotiffFileName.replace('.tiff', '.png'), 
+                                                                self.args.geotiffFileName, e[2], e[3], e[0], e[1])
+        print "Executing:\n", cmd
+        os.system(cmd)
+                                    
     def process_command_line(self):
         '''
         The argparse library is included in Python 2.7 and is an added package for STOQS.
@@ -235,7 +260,8 @@ class Drift():
     
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
-        parser.add_argument('--expand', action='store', help='Expand the data extent for the map boundaries by this value in degrees', default=0.05, type=float)
+        parser.add_argument('--extend', action='store', help='Extend the data extent for the map boundaries by this value in degrees', default=0.05, type=float)
+        parser.add_argument('--extent', action='store', help='Space separated specific map boundary in degrees: ll_lon ll_lat ur_lon ur_lat', nargs='*', type=float)
 
         parser.add_argument('--kmlFileName', action='store', help='Name of file for KML output')
         parser.add_argument('--pngFileName', action='store', help='Name of file for PNG image of map')
@@ -271,4 +297,7 @@ if __name__ == '__main__':
 
     if d.args.pngFileName:
         d.createPNG()
+
+    if d.args.geotiffFileName:
+        d.createGeoTiff()
 
