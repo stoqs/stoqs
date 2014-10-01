@@ -1274,7 +1274,8 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
-def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None):
+def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None, 
+                    dataStartDatetime=None):
     '''
     Run the DAPloader for Spray Glider trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1294,6 +1295,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             stride = stride,
             startDatetime = startDatetime,
             endDatetime = endDatetime,
+            dataStartDatetime = dataStartDatetime,
             grdTerrain = grdTerrain)
 
     if parmList:
