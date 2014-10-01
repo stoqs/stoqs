@@ -92,11 +92,11 @@ cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
 # NPS_29
-##cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
-##cl.nps29_files = [ 'OS_Glider_NPS_Glider_29_20120524_TS.nc' ]
-##cl.nps29_parms = ['TEMP', 'PSAL', 'OPBS']
-##cl.nps29_startDatetime = startdate
-##cl.nps29_endDatetime = enddate
+cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
+cl.nps29_parms = ['TEMP', 'PSAL', 'RHOD']
+cl.nps29_startDatetime = startdate
+cl.nps29_endDatetime = enddate
 
 
 ######################################################################
@@ -250,7 +250,7 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.loadL_662(stride=100) 
-    ##cl.load_NPS29(stride=100) 
+    cl.load_NPS29(stride=10) 
 
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10) 
@@ -276,6 +276,7 @@ if cl.args.test:
 elif cl.args.optimal_stride:
 
     cl.loadL_662(stride=2) 
+    cl.load_NPS29(stride=2) 
     cl.loadM1(stride=1)
     cl.loadDorado(stride=2)
     cl.loadRCuctd(stride=2)
@@ -287,6 +288,7 @@ else:
     cl.stride = cl.args.stride
 
     cl.loadL_662() 
+    cl.load_NPS29() 
     cl.loadM1()
     cl.loadDorado()
     cl.loadRCuctd()
