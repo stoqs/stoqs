@@ -168,7 +168,7 @@ class Drift():
             extendDeg = self.args.extend
             return lonMin - extendDeg, latMin - extendDeg, lonMax + extendDeg, latMax + extendDeg
 
-    def createPNG(self, forGeotiff=False):
+    def createPNG(self, fileName=None, forGeotiff=False):
         '''Draw processed data on a map and save it as a .png file
         '''
         fig = plt.figure(figsize=(9, 6))
@@ -177,6 +177,9 @@ class Drift():
         else:
             ax = plt.axes([0,0,1,1])
 
+        if not fileName:
+            fileName = self.args.pngFileName
+
         e = self.getExtent() 
         m = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution='l', ax=ax)
         if not forGeotiff:
@@ -184,7 +187,7 @@ class Drift():
 
         for depth, drift in self.adcpDrift.iteritems():
             m.plot(drift['lon'], drift['lat'], '-', c='black', linewidth=1)
-            plt.text(drift['lon'][-1], drift['lat'][-1], '%i m' % depth)
+            plt.text(drift['lon'][-1], drift['lat'][-1], '%i m' % depth, size='small')
 
         for platform, drift in self.trackDrift.iteritems():
             # Ad hoc coloring of platforms...
@@ -196,17 +199,16 @@ class Drift():
                 color = 'red'
 
             m.plot(drift['lon'], drift['lat'], '-', c=color, linewidth=2)
-            plt.text(drift['lon'][-1], drift['lat'][-1], platform)
+            plt.text(drift['lon'][-1], drift['lat'][-1], platform, size='small')
 
         if not forGeotiff:
             m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], linewidth=0)
             m.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True], linewidth=0)
             plt.title('%s to %s' %(self.startDatetimeLocal, self.endDatetimeLocal))
-            fig.savefig(self.args.pngFileName)
         else:
             plt.axis('off')
-            fig.savefig(self.args.geotiffFileName.replace('.tiff', '.png'))
 
+        fig.savefig(fileName)
         plt.clf()
         plt.close()
 
@@ -224,11 +226,12 @@ class Drift():
         '''
 
         e = self.getExtent()
-        self.createPNG(forGeotiff=True)
-        cmd = 'gdal_translate %s %s -a_ullr %s %s %s %s' % (self.args.geotiffFileName.replace('.tiff', '.png'), 
-                                                                self.args.geotiffFileName, e[0], e[3], e[2], e[1])
+        self.createPNG(self.args.geotiffFileName + '.png', forGeotiff=True)
+        cmd = 'gdal_translate %s %s -a_ullr %s %s %s %s' % (self.args.geotiffFileName + '.png', 
+                                                            self.args.geotiffFileName, e[0], e[3], e[2], e[1])
         print "Executing:\n", cmd
         os.system(cmd)
+        os.remove(self.args.geotiffFileName + '.png')
 
     def createKML(self):
         '''Reuse STOQS utils/Viz code to build some simple KML. Use 'position' for Parameter Name.
