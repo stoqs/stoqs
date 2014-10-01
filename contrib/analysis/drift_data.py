@@ -140,8 +140,11 @@ class Drift():
     def process(self):
         '''Read in data and build structures that we can generate products from
         '''
-        self.loadTrackingData()
-        self.computeADCPDrift()
+        if self.args.trackData:
+            self.loadTrackingData()
+
+        if self.args.adcpPlatform:
+            self.computeADCPDrift()
 
     def getExtent(self):
         '''For all data members find the min and max latitude and longitude
@@ -208,12 +211,18 @@ class Drift():
         if not forGeotiff:
             m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], linewidth=0)
             m.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True], linewidth=0)
-            plt.title(self.title)
+            try:
+                plt.title(self.title)
+            except AttributeError:
+                pass
             fig.savefig(fileName)
             print 'Wrote file', self.args.pngFileName
         else:
             plt.axis('off')
-            plt.text(0.5, 0.95, self.title, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes)
+            try:
+                plt.text(0.5, 0.95, self.title, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes)
+            except AttributeError:
+                pass
             fig.savefig(fileName, transparent=True, dpi=300)
 
         plt.clf()
@@ -266,7 +275,11 @@ class Drift():
             for es, lo, la in zip(drift['es'], drift['lon'], drift['lat']):
                 dataHash[depth].append([datetime.utcfromtimestamp(es), lo, la, float(depth), 'position', 0.0, 'adcp'])
 
-        kml = kml.makeKML(self.args.database, dataHash, 'position', self.title, self.commandline, 0.0, 0.0 )
+        try:
+            title = self.title
+        except AttributeError:
+            title = 'Product of STOQS drift_data.py'
+        kml = kml.makeKML(self.args.database, dataHash, 'position', title, self.commandline, 0.0, 0.0 )
 
         fh = open(self.args.kmlFileName, 'w')
         fh.write(kml)
@@ -293,7 +306,7 @@ class Drift():
                                          description='Script to produce products to help understand drift caused by currents in the ocean',
                                          epilog=examples)
                                              
-        parser.add_argument('-d', '--database', action='store', help='Database alias', default='stoqs_september2014', required=True)
+        parser.add_argument('-d', '--database', action='store', help='Database alias', default='stoqs_september2014')
 
         parser.add_argument('--adcpPlatform', action='store', help='STOQS Platform Name for ADCP data')
         parser.add_argument('--adcpMinDepth', action='store', help='Minimum depth of ADCP data for progressive vector data', type=float)
@@ -306,6 +319,7 @@ class Drift():
         parser.add_argument('--extend', action='store', help='Extend the data extent for the map boundaries by this value in degrees', default=0.05, type=float)
         parser.add_argument('--extent', action='store', help='Space separated specific map boundary in degrees: ll_lon ll_lat ur_lon ur_lat', nargs='*', type=float)
 
+        parser.add_argument('--title', action='store', help='Title for plots, will override default title created if --start specified')
         parser.add_argument('--kmlFileName', action='store', help='Name of file for KML output')
         parser.add_argument('--pngFileName', action='store', help='Name of file for PNG image of map')
         parser.add_argument('--geotiffFileName', action='store', help='Name of file for geotiff image of map')
@@ -322,13 +336,15 @@ class Drift():
             self.startDatetime = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
             self.startDatetimeUTC = utc.localize(self.startDatetime)
             self.startDatetimeLocal = self.startDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+            self.title = 'Drift since %s' % self.startDatetimeLocal
         self.endDatetime = None
         if self.args.end:
             self.endDatetime = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
             self.endDatetimeUTC = utc.localize(self.endDatetime)
             self.endDatetimeLocal = self.endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
 
-        self.title = 'Drift since %s' % self.startDatetimeLocal
+        if self.args.title:
+            self.title = self.args.title
     
     
 if __name__ == '__main__':

@@ -230,9 +230,15 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.nps29_files], self.nps29_files):
             url = self.nps29_base + file
-            print "url = %s" % url
+
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'NPS_Glider_29', self.colors['nps29'], 'glider', 'Glider Mission', 
-                                        self.nps29_parms, self.dbAlias, stride, self.nps29_startDatetime, self.nps29_endDatetime, grdTerrain=self.grdTerrain)
+                                        self.nps29_parms, self.dbAlias, stride, self.nps29_startDatetime, self.nps29_endDatetime, grdTerrain=self.grdTerrain, 
+                                        dataStartDatetime=dataStartDatetime)
 
     def load_NPS34(self, stride=None):
         '''

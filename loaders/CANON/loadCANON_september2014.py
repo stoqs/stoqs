@@ -92,11 +92,11 @@ cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
 # NPS_29
-##cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
-##cl.nps29_files = [ 'OS_Glider_NPS_Glider_29_20120524_TS.nc' ]
-##cl.nps29_parms = ['TEMP', 'PSAL', 'OPBS']
-##cl.nps29_startDatetime = startdate
-##cl.nps29_endDatetime = enddate
+cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
+cl.nps29_parms = ['TEMP', 'PSAL', 'RHOD']
+cl.nps29_startDatetime = startdate
+cl.nps29_endDatetime = enddate
 
 
 ######################################################################
@@ -118,24 +118,25 @@ cl.l_662_endDatetime = enddate
 ##cl.wg_oa_endDatetime = enddate
 
 ######################################################################
-#  WESTERN FLYER: September 20-27
+#  WESTERN FLYER: September 27 - Oct 3
 ######################################################################
 # UCTD
-##cl.wfuctd_base = cl.dodsBase + 'CANON_september2014/Platforms/Ships/Western_Flyer/uctd/'
-##cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
-##cl.wfuctd_files = [ 
-##'canon13m01.nc', 'canon13m02.nc', 'canon13m03.nc', 'canon13m04.nc', 'canon13m05.nc', 'canon13m06.nc', 'canon13m07.nc', 'canon13m08.nc',
-##'canon13m09.nc', 'canon13m10.nc', 'canon13m11.nc', 
-##                  ]
+cl.wfuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Western_Flyer/uctd/'
+cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
+cl.wfuctd_files = [
+  'CANON14M01.nc', 'CANON14M02.nc', 'CANON14M03.nc', 'CANON14M04.nc', 'CANON14M05.nc', 'CANON14M06.nc', 'CANON14M07.nc',
+                  ]
 
 # PCTD
-##cl.wfpctd_base = cl.dodsBase + 'CANON_september2014/Platforms/Ships/Western_Flyer/pctd/'
-##cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
-##cl.wfpctd_files = [ 
-##'canon13c01.nc', 'canon13c02.nc', 'canon13c03.nc', 'canon13c04.nc', 'canon13c05.nc', 'canon13c06.nc', 'canon13c07.nc',
-##'canon13c08.nc', 'canon13c09.nc', 'canon13c10.nc', 'canon13c11.nc', 'canon13c12.nc', 'canon13c13.nc', 'canon13c14.nc',
-##'canon13c15.nc', 'canon13c16.nc', 'canon13c17.nc', 'canon13c18.nc', 'canon13c19.nc', 
-##                  ]
+cl.wfpctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Western_Flyer/pctd/'
+cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
+cl.wfpctd_files = [
+  'canon14c01.nc', 'canon14c04.nc',  'canon14c07.nc',  'canon14c10.nc',  'canon14c13.nc',  'canon14c16.nc',   'canon14c18.nc',  'canon14c21.nc',
+  'canon14c02.nc', 'canon14c05.nc',  'canon14c08.nc',  'canon14c11.nc',  'canon14c14.nc',  'canon14c17.nc',   'canon14c19.nc',  'canon14c22.nc',
+  'canon14c03.nc', 'canon14c06.nc',  'canon14c09.nc',  'canon14c12.nc',  'canon14c15.nc',  'canon14c17x.nc',  'canon14c20.nc',
+  'canon14c23.nc', 'canon14c24.nc',  'canon14c25.nc',  'canon14c26.nc',  'canon14c27.nc',  'canon14c28.nc',
+
+                  ]
 
 ######################################################################
 #  RACHEL CARSON: September 22-26 (265-xxx) Oct 6 - Oct 10
@@ -250,7 +251,7 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.loadL_662(stride=100) 
-    ##cl.load_NPS29(stride=100) 
+    cl.load_NPS29(stride=10) 
 
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10) 
@@ -276,6 +277,7 @@ if cl.args.test:
 elif cl.args.optimal_stride:
 
     cl.loadL_662(stride=2) 
+    cl.load_NPS29(stride=2) 
     cl.loadM1(stride=1)
     cl.loadDorado(stride=2)
     cl.loadRCuctd(stride=2)
@@ -287,10 +289,11 @@ else:
     cl.stride = cl.args.stride
 
     cl.loadL_662() 
+    cl.load_NPS29() 
     cl.loadM1()
     cl.loadDorado()
     cl.loadRCuctd()
-    cl.loadRCpctd()
+    #cl.loadRCpctd()  # busted October 1, 2014. Uncomment when the netcdf files are correct
 
     ##cl.loadSubSamples()
 
