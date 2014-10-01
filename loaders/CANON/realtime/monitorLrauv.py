@@ -168,6 +168,9 @@ if __name__ == '__main__':
     d = re.match(r'.*daphne*',args.inUrl)
     if d:
         platformName = 'daphne'
+    d = re.match(r'.*makai*',args.inUrl)
+    if d:
+        platformName = 'makai'
 
     if platformName is None:
         raise Exception('cannot find platformName from url %s' % args.inUrl)
