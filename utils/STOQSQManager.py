@@ -46,6 +46,14 @@ logger = logging.getLogger(__name__)
 LABEL = 'label'
 DESCRIPTION = 'description'
 COMMANDLINE = 'commandline'
+from django.contrib.gis import gdal
+if gdal.HAS_GDAL:
+    # Use the official spherical mercator projection SRID on versions
+    # of GDAL that support it; otherwise, fallback to 900913.
+    if gdal.GDAL_VERSION >= (1, 7):
+        spherical_mercator_srid = 3857
+    else:
+        spherical_mercator_srid = 900913
 
 class STOQSQManager(object):
     '''
@@ -1738,10 +1746,10 @@ class STOQSQManager(object):
             extent = MultiPoint(ul,lr)
             extent.srid = srid
 
-        extent.transform(900913)
+        extent.transform(self.spherical_mercator_srid)
         return extent
 
-    def getExtent(self, srid=4326, outputSRID=900913):
+    def getExtent(self, srid=4326, outputSRID=spherical_mercator_srid):
         '''
         Return GEOSGeometry extent of all the geometry contained in the Activity and Sample geoquerysets.
         The result can be directly passed out for direct use in a OpenLayers.
