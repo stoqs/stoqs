@@ -8,23 +8,16 @@
 # --
 # Mike McCann
 # 15 January 2014
+# Duane Edgington modified for Fall Canon 2014. September 29, 2014
 
-LOGIN=stoqsadm
+LOGIN=odssadm
 RH=odss.mbari.org
 
 
-DIR=/data/canon/2013_Sep/Platforms/Ships/Western_Flyer/pctd
+DIR=/data/canon/2014_Sep/Platforms/Ships/Western_Flyer/pctd
 LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
 rsync -rv $LOGIN@$RH:$DIR  .
-./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Western Flyer during CANON - ECOHAB September 2013" 
-scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
-rm -r $LOCALDIR
-
-
-DIR=/data/canon/2013_Oct/Platforms/Ships/Western_Flyer/pctd
-LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
-rsync -rv $LOGIN@$RH:$DIR  .
-./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Western Flyer during CN13ID - October 2013" -l "Any use requires prior approval from the MBARI CN13ID PI: Dr. Alexandra Worden."
+./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Western Flyer during CANON - ECOHAB September 2014" 
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 rm -r $LOCALDIR
 
