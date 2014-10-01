@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
             if args.append:
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+                dataStartDatetime = InstantPoint.objects.using(args.database).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
 
             try: 
                 logger.debug("Instantiating Lrauv_Loader for url = %s", url_src) 
