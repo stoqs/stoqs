@@ -5,7 +5,9 @@
 #source venv-stoqs/bin/activate
 #cd contrib/analysis
 
-# stella(s) for just the times in the water
+# stella(s) for just the times in the water; see:
+# http://odss.mbari.org/data/canon/2014_Sep/Platforms/Drifters/Stella/stella_2014_pos.csv
+# TODO: Have the --trackData option read the urls directly from URLs or files like this
 
 ./drift_data.py --title 'Stella deployments for CANON-ECOHAB - September 2014' --trackData \
     http://odss.mbari.org/trackingdb/position/stella122/between/20140922T171500/20140923T141500/data.csv\
