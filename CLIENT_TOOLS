@@ -1,0 +1,44 @@
+
+CLIENT_TOOLS
+============
+
+The STOQS User Interface provides some functionality for exploring the data within a campaign.
+Often more involved analisys and visualization requires a "closer intimacy" with the data.
+This can be achieved by direct access to the data by scripting using Python, Django, and SQL.
+
+The recommended environment is CentOS 6, though other Linux distributions will also work.
+ 
+
+CentOS 6:
+---------
+
+Follow the instructions in the PREREQUESITES file. If your organization supports a STOQS 
+database server hosting campaign databases that you plan to use then the steps for installing
+PostgreSQL and PostGIS may be skipped. These additional installations are helpful for performing
+data analysis and visualization:
+
+Activate your virtual environment: source venv-stoqs/bin/activate
+
+sudo yum install tkinter
+pip install shapely
+pip install cython
+sudo yum install geos-devel
+git clone https://github.com/SciTools/cartopy.git
+cd cartopy
+python setup.py install
+
+# Follow instructions for installing Basemap at http://matplotlib.org/basemap/users/installing.html
+sudo yum install geos-devel
+export GEOS_DIR=/usr
+tar -xvzf basemap-1.0.7.tar
+cd basemap-1.0.7
+python setup.py install
+
+pip install OWSLib
+
+
+
+--
+Mike McCann
+MBARI 20 November 2013
+

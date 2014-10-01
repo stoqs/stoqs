@@ -1,0 +1,257 @@
+      <scene DEF='scene'>
+        <shape DEF='_G_0'>
+          <appearance DEF='AOPT_Appearance_203731968'>
+            <material diffuseColor='0.6 0.6 0.6' specularColor='0.1 0.1 0.1' emissiveColor='0.3 0.3 0.3'></material>
+          </appearance>
+          <popGeometry DEF='PG_8' vertexCount='385866' primType='"TRIANGLES"' position='-2522405.75 -4682143 3498013.5' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.968655649881 0.168584986434 0.524415973571' bbMaxModF='0.798398130633 0.792709130005 0.17262928035' bbMin='-2531457 -4689893.5 3491813' numAnchorVertices='2672' tightSize='18102.5 15501 12400.75'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level0.bin' numIndices='8052' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level1.bin' numIndices='132' vertexDataBufferOffset='4798'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level2.bin' numIndices='282' vertexDataBufferOffset='4862'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level3.bin' numIndices='888' vertexDataBufferOffset='5018'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level4.bin' numIndices='2610' vertexDataBufferOffset='5518'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level5.bin' numIndices='9174' vertexDataBufferOffset='7070'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level6.bin' numIndices='29400' vertexDataBufferOffset='12662'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level7.bin' numIndices='83118' vertexDataBufferOffset='28822'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level8.bin' numIndices='125772' vertexDataBufferOffset='57599'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level9.bin' numIndices='63144' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level10.bin' numIndices='32448' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level11.bin' numIndices='16086' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level12.bin' numIndices='7776' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level13.bin' numIndices='3972' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level14.bin' numIndices='1842' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_8_level15.bin' numIndices='1170' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_1'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_1' vertexCount='381261' primType='"TRIANGLES"' position='-2522111.5 -4679645 3500429.5' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.904691797822 0.120127892906 0.605450804435' bbMaxModF='0.889324889158 0.0423426820427 0.344173261119' bbMin='-2532852.5 -4691097 3493363.25' numAnchorVertices='4179' tightSize='21481.75 22904.5 14132.25'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level0.bin' numIndices='12663' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level1.bin' numIndices='204' vertexDataBufferOffset='7388'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level2.bin' numIndices='342' vertexDataBufferOffset='7468'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level3.bin' numIndices='1128' vertexDataBufferOffset='7650'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level4.bin' numIndices='3390' vertexDataBufferOffset='8254'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level5.bin' numIndices='10764' vertexDataBufferOffset='10230'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level6.bin' numIndices='35148' vertexDataBufferOffset='16437'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level7.bin' numIndices='87666' vertexDataBufferOffset='33302'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level8.bin' numIndices='115278' vertexDataBufferOffset='58797'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level9.bin' numIndices='57066' vertexDataBufferOffset='65532'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level10.bin' numIndices='29022' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level11.bin' numIndices='14808' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level12.bin' numIndices='7194' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level13.bin' numIndices='3804' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level14.bin' numIndices='1674' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_1_level15.bin' numIndices='1110' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_2'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_3' vertexCount='267627' primType='"TRIANGLES"' position='-2521226.75 -4680797 3499888.5' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='46335' indexedRendering='true' bbMinModF='0.985076323474 0.0979829810313 0.549088407158' bbMaxModF='0.890058261879 0.971720544902 0.343977240725' bbMin='-2531098.75 -4691647 3492285' numAnchorVertices='3500' tightSize='19744 21700.5 15206.75'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level0.bin' numIndices='10653' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level1.bin' numIndices='138' vertexDataBufferOffset='6323'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level2.bin' numIndices='336' vertexDataBufferOffset='6383'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level3.bin' numIndices='864' vertexDataBufferOffset='6548'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level4.bin' numIndices='2724' vertexDataBufferOffset='6962'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level5.bin' numIndices='8496' vertexDataBufferOffset='8486'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level6.bin' numIndices='26820' vertexDataBufferOffset='13234'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level7.bin' numIndices='63702' vertexDataBufferOffset='25392'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level8.bin' numIndices='77640' vertexDataBufferOffset='42118'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level9.bin' numIndices='38220' vertexDataBufferOffset='46333'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level10.bin' numIndices='19446' vertexDataBufferOffset='46335'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level11.bin' numIndices='9132' vertexDataBufferOffset='46335'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level12.bin' numIndices='4980' vertexDataBufferOffset='46335'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level13.bin' numIndices='2466' vertexDataBufferOffset='46335'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level14.bin' numIndices='1326' vertexDataBufferOffset='46335'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_3_level15.bin' numIndices='684' vertexDataBufferOffset='46335'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_3'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_4' vertexCount='383859' primType='"TRIANGLES"' position='-2519195.5 -4676495 3514077.5' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.172017613779 0.276692419857 0.338763098246' bbMaxModF='0.889324889158 0.139417923005 0.0377064829825' bbMin='-2527020.25 -4687208.5 3507392' numAnchorVertices='3342' tightSize='15649.5 21427 13371.25'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level0.bin' numIndices='10173' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level1.bin' numIndices='150' vertexDataBufferOffset='6023'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level2.bin' numIndices='402' vertexDataBufferOffset='6097'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level3.bin' numIndices='1140' vertexDataBufferOffset='6315'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level4.bin' numIndices='3564' vertexDataBufferOffset='6969'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level5.bin' numIndices='11598' vertexDataBufferOffset='8968'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level6.bin' numIndices='38514' vertexDataBufferOffset='15822'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level7.bin' numIndices='92934' vertexDataBufferOffset='34222'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level8.bin' numIndices='112494' vertexDataBufferOffset='59122'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level9.bin' numIndices='56298' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level10.bin' numIndices='29058' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level11.bin' numIndices='14634' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level12.bin' numIndices='7068' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level13.bin' numIndices='3378' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level14.bin' numIndices='1608' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_4_level15.bin' numIndices='846' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_4'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_2' vertexCount='380223' primType='"TRIANGLES"' position='-2519262 -4676139 3516917.5' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.165921453031 0.243595842474 0.341638064024' bbMaxModF='0.889324889158 0.201202227134 0.331737073925' bbMin='-2527153.25 -4688030.5 3507447' numAnchorVertices='4535' tightSize='15782.5 23783.5 18941.25'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level0.bin' numIndices='13776' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level1.bin' numIndices='270' vertexDataBufferOffset='8087'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level2.bin' numIndices='468' vertexDataBufferOffset='8186'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level3.bin' numIndices='1104' vertexDataBufferOffset='8391'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level4.bin' numIndices='3450' vertexDataBufferOffset='8933'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level5.bin' numIndices='9972' vertexDataBufferOffset='10845'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level6.bin' numIndices='31608' vertexDataBufferOffset='16534'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level7.bin' numIndices='82530' vertexDataBufferOffset='32520'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level8.bin' numIndices='117882' vertexDataBufferOffset='58743'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level9.bin' numIndices='58596' vertexDataBufferOffset='65531'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level10.bin' numIndices='30300' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level11.bin' numIndices='15492' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level12.bin' numIndices='7728' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level13.bin' numIndices='3996' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level14.bin' numIndices='1764' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_2_level15.bin' numIndices='1287' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_5'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_5' vertexCount='272529' primType='"TRIANGLES"' position='-2519700.5 -4676104 3516862.25' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='47314' indexedRendering='true' bbMinModF='0.12573491968 0.228758751518 0.338763098246' bbMaxModF='0.889324889158 0.218857761419 0.328822904068' bbMin='-2528030 -4688399 3507392' numAnchorVertices='3799' tightSize='16659.25 24590.5 18940.5'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level0.bin' numIndices='11571' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level1.bin' numIndices='186' vertexDataBufferOffset='6802'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level2.bin' numIndices='318' vertexDataBufferOffset='6873'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level3.bin' numIndices='912' vertexDataBufferOffset='7000'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level4.bin' numIndices='2868' vertexDataBufferOffset='7417'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level5.bin' numIndices='8046' vertexDataBufferOffset='8876'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level6.bin' numIndices='24384' vertexDataBufferOffset='13228'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level7.bin' numIndices='60690' vertexDataBufferOffset='24779'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level8.bin' numIndices='81306' vertexDataBufferOffset='42628'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level9.bin' numIndices='41136' vertexDataBufferOffset='47314'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level10.bin' numIndices='20514' vertexDataBufferOffset='47314'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level11.bin' numIndices='10548' vertexDataBufferOffset='47314'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level12.bin' numIndices='5274' vertexDataBufferOffset='47314'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level13.bin' numIndices='2688' vertexDataBufferOffset='47314'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level14.bin' numIndices='1296' vertexDataBufferOffset='47314'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_5_level15.bin' numIndices='792' vertexDataBufferOffset='47314'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_6'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_6' vertexCount='382551' primType='"TRIANGLES"' position='-2501067.5 -4693784.5 3502295.75' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.886895592017 0.696395070059 0.616911463469' bbMaxModF='0.836269497974 0.327444531525 0.527831302235' bbMin='-2511423.75 -4701621 3493582.5' numAnchorVertices='3747' tightSize='20712.5 15673 17426.5'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level0.bin' numIndices='11337' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level1.bin' numIndices='138' vertexDataBufferOffset='6630'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level2.bin' numIndices='372' vertexDataBufferOffset='6690'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level3.bin' numIndices='1074' vertexDataBufferOffset='6877'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level4.bin' numIndices='3258' vertexDataBufferOffset='7444'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level5.bin' numIndices='11124' vertexDataBufferOffset='9293'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level6.bin' numIndices='36396' vertexDataBufferOffset='15568'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level7.bin' numIndices='94110' vertexDataBufferOffset='32821'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level8.bin' numIndices='122262' vertexDataBufferOffset='58831'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level9.bin' numIndices='51180' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level10.bin' numIndices='25788' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level11.bin' numIndices='12984' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level12.bin' numIndices='6420' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level13.bin' numIndices='3684' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level14.bin' numIndices='1470' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_6_level15.bin' numIndices='954' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_7'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_9' vertexCount='383118' primType='"TRIANGLES"' position='-2500610.75 -4694737 3502624.5' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.893106342253 0.782981675488 0.651280372543' bbMaxModF='0.87192974656 0.164176135797 0.527831302235' bbMin='-2511288.25 -4699470.5 3494240' numAnchorVertices='3555' tightSize='21355 9467.5 16769'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level0.bin' numIndices='10884' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level1.bin' numIndices='120' vertexDataBufferOffset='6425'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level2.bin' numIndices='282' vertexDataBufferOffset='6480'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level3.bin' numIndices='882' vertexDataBufferOffset='6629'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level4.bin' numIndices='2838' vertexDataBufferOffset='7073'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level5.bin' numIndices='9312' vertexDataBufferOffset='8654'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level6.bin' numIndices='30480' vertexDataBufferOffset='14169'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level7.bin' numIndices='86910' vertexDataBufferOffset='30156'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level8.bin' numIndices='127200' vertexDataBufferOffset='58010'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level9.bin' numIndices='56862' vertexDataBufferOffset='65528'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level10.bin' numIndices='28764' vertexDataBufferOffset='65532'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level11.bin' numIndices='14736' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level12.bin' numIndices='7410' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level13.bin' numIndices='3858' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level14.bin' numIndices='1818' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_9_level15.bin' numIndices='762' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_8'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_10' vertexCount='270003' primType='"TRIANGLES"' position='-2500807.5 -4694765 3502671.75' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='46122' indexedRendering='true' bbMinModF='0.889324889158 0.701870902814 0.656220086471' bbMaxModF='0.857674814285 0.243032153808 0.527831302235' bbMin='-2511370.75 -4701485 3494334.5' numAnchorVertices='2334' tightSize='21126.5 13440.5 16674.5'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level0.bin' numIndices='7083' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level1.bin' numIndices='138' vertexDataBufferOffset='4092'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level2.bin' numIndices='168' vertexDataBufferOffset='4155'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level3.bin' numIndices='744' vertexDataBufferOffset='4226'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level4.bin' numIndices='2046' vertexDataBufferOffset='4631'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level5.bin' numIndices='6468' vertexDataBufferOffset='5839'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level6.bin' numIndices='21816' vertexDataBufferOffset='9672'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level7.bin' numIndices='62190' vertexDataBufferOffset='21084'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level8.bin' numIndices='89478' vertexDataBufferOffset='40838'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level9.bin' numIndices='40122' vertexDataBufferOffset='46116'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level10.bin' numIndices='20136' vertexDataBufferOffset='46118'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level11.bin' numIndices='10044' vertexDataBufferOffset='46120'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level12.bin' numIndices='5076' vertexDataBufferOffset='46122'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level13.bin' numIndices='2676' vertexDataBufferOffset='46122'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level14.bin' numIndices='1260' vertexDataBufferOffset='46122'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_10_level15.bin' numIndices='558' vertexDataBufferOffset='46122'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_9'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_11' vertexCount='383271' primType='"TRIANGLES"' position='-2504176.5 -4682562 3519588.25' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.889290512311 0.18883751493 0.633812995237' bbMaxModF='0.548867603764 0.738735940246 0.318760523845' bbMin='-2511371.5 -4689390.5 3513036.5' numAnchorVertices='3537' tightSize='14390 13657.5 13103.5'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level0.bin' numIndices='10752' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level1.bin' numIndices='168' vertexDataBufferOffset='6335'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level2.bin' numIndices='336' vertexDataBufferOffset='6386'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level3.bin' numIndices='792' vertexDataBufferOffset='6546'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level4.bin' numIndices='2376' vertexDataBufferOffset='6965'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level5.bin' numIndices='7926' vertexDataBufferOffset='8364'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level6.bin' numIndices='26208' vertexDataBufferOffset='13150'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level7.bin' numIndices='77706' vertexDataBufferOffset='28431'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level8.bin' numIndices='126792' vertexDataBufferOffset='57395'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level9.bin' numIndices='63930' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level10.bin' numIndices='33600' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level11.bin' numIndices='16596' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level12.bin' numIndices='8622' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level13.bin' numIndices='4260' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level14.bin' numIndices='2004' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_11_level15.bin' numIndices='1203' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_10'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_0' vertexCount='378030' primType='"TRIANGLES"' position='-2502694.5 -4683893 3518587' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.889313430209 0.0494252288123 0.525426785403' bbMaxModF='0.684701982536 0.770946721154 0.322458775278' bbMin='-2511371 -4692853 3510963' numAnchorVertices='5236' tightSize='17353 17920 15247.75'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level0.bin' numIndices='15906' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level1.bin' numIndices='186' vertexDataBufferOffset='9342'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level2.bin' numIndices='366' vertexDataBufferOffset='9409'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level3.bin' numIndices='1026' vertexDataBufferOffset='9544'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level4.bin' numIndices='2862' vertexDataBufferOffset='10027'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level5.bin' numIndices='8172' vertexDataBufferOffset='11532'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level6.bin' numIndices='25992' vertexDataBufferOffset='16180'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level7.bin' numIndices='75528' vertexDataBufferOffset='30555'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level8.bin' numIndices='122046' vertexDataBufferOffset='57985'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level9.bin' numIndices='62766' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level10.bin' numIndices='32004' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level11.bin' numIndices='15954' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level12.bin' numIndices='8148' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level13.bin' numIndices='3930' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level14.bin' numIndices='1944' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_0_level15.bin' numIndices='1200' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_11'>
+          <appearance USE='AOPT_Appearance_203731968'></appearance>
+          <popGeometry DEF='PG_7' vertexCount='274782' primType='"TRIANGLES"' position='-2500570.25 -4687455 3518266.75' size='21817.01 24836.405 19130.6625' attributeStride='12' normalOffset='8' vertexBufferSize='47614' indexedRendering='true' bbMinModF='0.889324889158 0.833210361967 0.525426785403' bbMaxModF='0.879423899059 0.700344715751 0.288991560015' bbMin='-2511370.75 -4698223 3510963' numAnchorVertices='3712' tightSize='21601 21536.5 14607.5'>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level0.bin' numIndices='11229' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level1.bin' numIndices='114' vertexDataBufferOffset='6560'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level2.bin' numIndices='270' vertexDataBufferOffset='6600'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level3.bin' numIndices='726' vertexDataBufferOffset='6703'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level4.bin' numIndices='2058' vertexDataBufferOffset='7049'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level5.bin' numIndices='5892' vertexDataBufferOffset='8126'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level6.bin' numIndices='18612' vertexDataBufferOffset='11640'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level7.bin' numIndices='54930' vertexDataBufferOffset='21981'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level8.bin' numIndices='89796' vertexDataBufferOffset='42048'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level9.bin' numIndices='44946' vertexDataBufferOffset='47614'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level10.bin' numIndices='23436' vertexDataBufferOffset='47614'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level11.bin' numIndices='11772' vertexDataBufferOffset='47614'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level12.bin' numIndices='6132' vertexDataBufferOffset='47614'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level13.bin' numIndices='2850' vertexDataBufferOffset='47614'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level14.bin' numIndices='1266' vertexDataBufferOffset='47614'></popGeometryLevel>
+            <popGeometryLevel src='/stoqs/static/x3d/SanPedroBasin50/binGeo/PG_7_level15.bin' numIndices='753' vertexDataBufferOffset='47614'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+      </scene>
+
