@@ -131,11 +131,11 @@ cl.wfuctd_files = [
 cl.wfpctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [
-  'canon14c01.nc', 'canon14c04.nc',  'canon14c07.nc',  'canon14c10.nc',  'canon14c13.nc',  'canon14c16.nc',   'canon14c18.nc',  'canon14c21.nc',
-  'canon14c02.nc', 'canon14c05.nc',  'canon14c08.nc',  'canon14c11.nc',  'canon14c14.nc',  'canon14c17.nc',   'canon14c19.nc',  'canon14c22.nc',
-  'canon14c03.nc', 'canon14c06.nc',  'canon14c09.nc',  'canon14c12.nc',  'canon14c15.nc',  'canon14c17x.nc',  'canon14c20.nc',
-  'canon14c23.nc', 'canon14c24.nc',  'canon14c25.nc',  'canon14c26.nc',  'canon14c27.nc',  'canon14c28.nc',
-
+  'CANON14C01.nc', 'CANON14C02.nc',  'CANON14C03.nc',  'CANON14C04.nc',  'CANON14C05.nc',  'CANON14C06.nc',   'CANON14C07.nc',  'CANON14C08.nc',
+  'CANON14C09.nc', 'CANON14C10.nc',  'CANON14C11.nc',  'CANON14C12.nc',  'CANON14C13.nc',  'CANON14C14.nc',   'CANON14C15.nc',  'CANON14C16.nc',
+  'CANON14C17.nc', 'CANON14C17x.nc', 'CANON14C18.nc',  'CANON14C19.nc',  'CANON14C20.nc',  'CANON14C21.nc',   'CANON14C22.nc',  'CANON14C23.nc',
+  'CANON14C24.nc', 'CANON14C25.nc',  'CANON14C26.nc',  'CANON14C27.nc',  'CANON14C28.nc',
+  'CANON14C29.nc',
                   ]
 
 ######################################################################
@@ -145,7 +145,8 @@ cl.wfpctd_files = [
 cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [ 
-                    '26514RCplm01.nc', 
+                    '26514RCplm01.nc',
+                   '26614RCplm01.nc','26714RCplm01.nc', 
                   ]
 
 # PCTD
@@ -156,7 +157,8 @@ cl.rcpctd_files = [
                     '26514RCc01.nc', '26514RCc03.nc', '26514RCc04.nc', '26514RCc05.nc', '26514RCc06.nc',
                     '26614RCc01.nc', '26614RCc03.nc',  '26614RCc04.nc', '26614RCc05.nc',
                     '26714RCc01.nc', '26714RCc02.nc',  '26714RCc03.nc', '26714RCc04.nc', '26714RCc05.nc',
-                    '26814RCc01.nc', '26814RCc02b.nc', '26814RCc02.nc', '26814RCc04.nc', '26814RCc05.nc',
+                    '26814RCc01.nc', '26814RCc02b.nc', '26814RCc02.nc', '26814RCc04.nc', 
+                    # '26814RCc05.nc', # something wrong with '26814RCc05.nc'
                   ]
 
 #####################################################################
@@ -264,8 +266,8 @@ if cl.args.test:
     cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10)
     ##cl.loadJMpctd(stride=10)
-    ##cl.loadWFuctd(stride=10)   
-    ##cl.loadWFpctd(stride=10)
+    cl.loadWFuctd(stride=10)   
+    cl.loadWFpctd(stride=10)
 
     cl.loadM1(stride=10)
 
@@ -293,7 +295,9 @@ else:
     cl.loadM1()
     cl.loadDorado()
     cl.loadRCuctd()
-    #cl.loadRCpctd()  # busted October 1, 2014. Uncomment when the netcdf files are correct
+    cl.loadRCpctd() 
+    cl.loadWFuctd()   
+    cl.loadWFpctd()
 
     ##cl.loadSubSamples()
 
