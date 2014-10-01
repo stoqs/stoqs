@@ -108,6 +108,8 @@ def processDecimated(pw, url, outDir, lastDatetime, parms):
         except TypeError as e:
             logger.warn('Problem reading data from %s', url)
             logger.warn('Assumming data are invalid and skipping')
+        except IndexError as e:
+            logger.warn('Problem interpolating data from %s', url)
         else:
             if outFile_i.startswith('/tmp'):
                 # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
@@ -261,5 +263,8 @@ if __name__ == '__main__':
                 logger.warn(e)
 
             except DAPloaders.ParameterNotFound as e:
+                logger.warn(e)
+
+            except DAPloaders.InvalidSliceRequest as e:
                 logger.warn(e)
 

@@ -202,7 +202,11 @@ class InterpolatorWriter(BaseWriter):
      for p in parm_ts:
             if not p.empty :
                    i = self.interpolate(p, ts)
-                   isub = i.resample('2S')[:]
+                   try:
+                       isub = i.resample('2S')[:]
+                   except IndexError as e:
+                       self.logger.error(e)
+                       raise e
                    self.parm_sub_ts.append(isub)
             else:
                    self.parm_sub_ts.append(pd.Series())
