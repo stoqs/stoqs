@@ -1,9 +1,6 @@
 #!/bin/bash
 # Thursday's rhodamine deployment start time
 
-export LD_LIBRARY_PATH=/usr/local/lib/                  # Needed if packages, such as gdal, were installed here
-export GDAL_DATA=/usr/share/gdal/                       # Needed for 'from osgeo import gdal' on some systems
-
 START=20140925T170000
 END=20141001T230000
 
