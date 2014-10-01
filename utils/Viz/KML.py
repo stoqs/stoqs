@@ -51,7 +51,7 @@ class KML(object):
 
         ##logger.debug('request = %s', request)
         ##logger.debug('kwargs = %s', kwargs)
-        logger.debug('qparams = %s', qparams)
+        ##logger.debug('qparams = %s', qparams)
         if 'withTimeStamps' in kwargs:
             self.withTimeStampsFlag = kwargs['withTimeStamps']
         else:
@@ -176,7 +176,7 @@ class KML(object):
             pn = p[0]
             qs = m.ActivityParameter.objects.using(dbAlias).filter(parameter__name=pn).aggregate(Avg('p025'), Avg('p975'))
             climHash[pn] = (qs['p025__avg'], qs['p975__avg'],)
-        logger.debug('Color lookup min, max values:\n' + pprint.pformat(climHash))
+        ##logger.debug('Color lookup min, max values:\n' + pprint.pformat(climHash))
 
 
         pointKMLHash = {}
@@ -187,8 +187,13 @@ class KML(object):
             except ValueError:
                 raise InvalidLimits('Cannot make KML with specified cmin, cmax of %s, %s' % (cmin, cmax))
         else:
-            clim = climHash[pName]
-        logger.debug('clim = %s', clim)
+            try:
+                clim = climHash[pName]
+            except KeyError as e:
+                logger.warn('Parameter "%s" not in Parameter table in database %s' % (pName, dbAlias))
+                logger.warn('Setting clim to (-1, 1)')
+                clim = (-1, 1)
+        ##logger.debug('clim = %s', clim)
     
         for k in dataHash.keys():
             (pointStyleKML, pointKMLHash[k]) = self._buildKMLpoints(k, dataHash[k], clt, clim)
@@ -336,7 +341,10 @@ class KML(object):
         # Build the styles for the colors in clt using clim
         #
         if self.withFullIconURLFlag:
-            baseURL = self.request.build_absolute_uri('/')[:-1] + '/' + settings.STATIC_URL
+            try:
+                baseURL = self.request.build_absolute_uri('/')[:-1] + '/' + settings.STATIC_URL
+            except KeyError:
+                baseURL = 'http://odss.mbari.org' + '/' + settings.STATIC_URL
         else:
             baseURL = settings.STATIC_URL
 
