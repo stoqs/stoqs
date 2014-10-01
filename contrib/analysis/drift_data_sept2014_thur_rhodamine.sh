@@ -1,12 +1,15 @@
 #!/bin/bash
 # Thursday's rhodamine deployment start time
 
-cd /opt/stoqshg
+cd /home/stoqsadm/dev/stoqshg
 source venv-stoqs/bin/activate
 cd contrib/analysis
 
 START=20140925T170000
 END=20141010T230000
+
+PRODUCTDIR=/data/canon/2014_Sep/Products/STOQS_Plots
+MAPDIR=/data/mapserver/mapfiles/2014Fall/drift
 
 # R_CARSON for the time of rhodamine pumping
 # stella(s) for just the times in the water
@@ -18,5 +21,9 @@ END=20141010T230000
     http://odss.mbari.org/trackingdb/position/m1/between/$START/$END/data.csv \
     http://odss.mbari.org/trackingdb/position/daphne/between/$START/$END/stride/11/data.csv \
     http://odss.mbari.org/trackingdb/position/wgTiny/between/$START/$END/data.csv \
+    --extent -122.3 36.3 -121.75 37.0 \
     --start $START --end $END \
-    --kmlFileName drift_since_$START.kml --pngFileName drift_since_$START.png --geotiffFileName drift_since_$START.tiff
+    --kmlFileName $PRODUCTDIR/drift_since_$START.kml \
+    --pngFileName $PRODUCTDIR/drift_since_$START.png \
+    --geotiffFileName $MAPDIR/drift_since_$START.tiff \
+    > /home/stoqsadm/dev/stoqshg/contrib/analysis/drift_data_sept2014_thur_rhodamine.out 2>&1
