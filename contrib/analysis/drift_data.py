@@ -171,7 +171,11 @@ class Drift():
     def createPNG(self, fileName=None, forGeotiff=False):
         '''Draw processed data on a map and save it as a .png file
         '''
-        fig = plt.figure(figsize=(9, 6))
+        if not forGeotiff:
+            fig = plt.figure(figsize=(9, 6))
+        else:
+            fig = plt.figure()
+
         if not forGeotiff:
             ax = plt.axes()
         else:
@@ -204,11 +208,14 @@ class Drift():
         if not forGeotiff:
             m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], linewidth=0)
             m.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True], linewidth=0)
-            plt.title('%s to %s' %(self.startDatetimeLocal, self.endDatetimeLocal))
+            plt.title(self.title)
+            fig.savefig(fileName)
+            print 'Wrote file', self.args.pngFileName
         else:
             plt.axis('off')
+            plt.text(0.5, 0.95, self.title, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes)
+            fig.savefig(fileName, transparent=True, dpi=300)
 
-        fig.savefig(fileName)
         plt.clf()
         plt.close()
 
@@ -232,6 +239,7 @@ class Drift():
         print "Executing:\n", cmd
         os.system(cmd)
         os.remove(self.args.geotiffFileName + '.png')
+        print 'Wrote file', self.args.geotiffFileName
 
     def createKML(self):
         '''Reuse STOQS utils/Viz code to build some simple KML. Use 'position' for Parameter Name.
@@ -258,11 +266,12 @@ class Drift():
             for es, lo, la in zip(drift['es'], drift['lon'], drift['lat']):
                 dataHash[depth].append([datetime.utcfromtimestamp(es), lo, la, float(depth), 'position', 0.0, 'adcp'])
 
-        kml = kml.makeKML(self.args.database, dataHash, 'position', '.', 'Description', 0.0, 0.0 )
+        kml = kml.makeKML(self.args.database, dataHash, 'position', self.title, self.commandline, 0.0, 0.0 )
 
         fh = open(self.args.kmlFileName, 'w')
         fh.write(kml)
         fh.close()
+        print 'Wrote file', self.args.kmlFileName
 
     def process_command_line(self):
         '''The argparse library is included in Python 2.7 and is an added package for STOQS.
@@ -318,6 +327,8 @@ class Drift():
             self.endDatetime = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
             self.endDatetimeUTC = utc.localize(self.endDatetime)
             self.endDatetimeLocal = self.endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+
+        self.title = 'Drift since %s' % self.startDatetimeLocal
     
     
 if __name__ == '__main__':
@@ -326,8 +337,6 @@ if __name__ == '__main__':
     d.process_command_line()
 
     d.process()
-    if d.args.kmlFileName:
-        d.createKML()
 
     if d.args.pngFileName:
         d.createPNG()
