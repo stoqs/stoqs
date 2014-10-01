@@ -31,6 +31,7 @@ os.environ['DJANGO_SETTINGS_MODULE']='settings'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
 
 import csv
+import time
 import pyproj
 import urllib2
 import matplotlib
@@ -40,7 +41,8 @@ import pytz
 from datetime import datetime
 from collections import defaultdict
 from stoqs.models import MeasuredParameter, NominalLocation
-from utils.Viz import KML
+from django.http import HttpRequest
+from utils.Viz.KML import KML
 from mpl_toolkits.basemap import Basemap
 
 
@@ -50,7 +52,7 @@ class Drift():
     trackDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': []})        # To be keyed by platform name
     adcpDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': []})       # To be keyed by depth
 
-    def loadDrifterData(self):
+    def loadTrackingData(self):
         '''Fill up trackDrift dictionary
         '''
         for url in self.args.trackData:
@@ -121,7 +123,7 @@ class Drift():
             else:
                 x[ud].append(u * dt / 100)
                 y[vd].append(v * dt / 100)
-                self.adcpDrift[ud]['es'].append(ut)
+                self.adcpDrift[ud]['es'].append(time.mktime(ut.timetuple()))
                 last_dt = dt
 
         # Work in UTM space to add x & y offsets to begining position of the mooring
@@ -138,9 +140,8 @@ class Drift():
     def process(self):
         '''Read in data and build structures that we can generate products from
         '''
-        self.loadDrifterData()
+        self.loadTrackingData()
         self.computeADCPDrift()
-
 
     def getExtent(self):
         '''For all data members find the min and max latitude and longitude
@@ -225,13 +226,43 @@ class Drift():
         e = self.getExtent()
         self.createPNG(forGeotiff=True)
         cmd = 'gdal_translate %s %s -a_ullr %s %s %s %s' % (self.args.geotiffFileName.replace('.tiff', '.png'), 
-                                                                self.args.geotiffFileName, e[2], e[3], e[0], e[1])
+                                                                self.args.geotiffFileName, e[0], e[3], e[2], e[1])
         print "Executing:\n", cmd
         os.system(cmd)
-                                    
-    def process_command_line(self):
+
+    def createKML(self):
+        '''Reuse STOQS utils/Viz code to build some simple KML. Use 'position' for Parameter Name.
+        Fudge data value to distinguish platforms by color, use 0.0 for depth except for adcp data.
         '''
-        The argparse library is included in Python 2.7 and is an added package for STOQS.
+        request = HttpRequest()
+        qs = None
+        qparams = {}
+        stoqs_object_name = None
+        kml = KML(request, qs, qparams, stoqs_object_name, withTimeStamps=True, withLineStrings=True, withFullIconURL=True)
+
+        # Put data into form that KML() expects - use different datavalues (-1, 1) to color the platforms
+        dataHash = defaultdict(lambda: [])  
+        colors = {}
+        values = np.linspace(-1, 1, len(self.trackDrift.keys()))
+        for i, k in enumerate(self.trackDrift.keys()):
+            colors[k] = values[i]
+
+        for platform, drift in self.trackDrift.iteritems():
+            for es, lo, la in zip(drift['es'], drift['lon'], drift['lat']):
+                dataHash[platform].append([datetime.utcfromtimestamp(es), lo, la, 0.0, 'position', colors[platform], platform])
+
+        for depth, drift in self.adcpDrift.iteritems():
+            for es, lo, la in zip(drift['es'], drift['lon'], drift['lat']):
+                dataHash[depth].append([datetime.utcfromtimestamp(es), lo, la, float(depth), 'position', 0.0, 'adcp'])
+
+        kml = kml.makeKML(self.args.database, dataHash, 'position', '.', 'Description', 0.0, 0.0 )
+
+        fh = open(self.args.kmlFileName, 'w')
+        fh.write(kml)
+        fh.close()
+
+    def process_command_line(self):
+        '''The argparse library is included in Python 2.7 and is an added package for STOQS.
         '''
         import argparse
         from argparse import RawTextHelpFormatter
@@ -300,4 +331,7 @@ if __name__ == '__main__':
 
     if d.args.geotiffFileName:
         d.createGeoTiff()
+
+    if d.args.kmlFileName:
+        d.createKML()
 
