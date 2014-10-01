@@ -40,6 +40,7 @@ from stoqs import models as mod
 from thredds_crawler.crawl import Crawl
 from coards import from_udunits
 from stoqs.models import InstantPoint
+from django.db.models import Max
 
 # Set up global variables for logging output to STDOUT
 logger = logging.getLogger('monitorTethysHotSpotLogger')
