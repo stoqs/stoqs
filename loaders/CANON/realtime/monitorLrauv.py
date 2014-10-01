@@ -150,7 +150,8 @@ def process_command_line():
 
 if __name__ == '__main__':
     colors = {  'tethys':       'fed976',
-                'daphne':       'feb24c'}
+                'daphne':       'feb24c',
+                'makai':        'feb2fc'}
   
     args = process_command_line() 
     interpolate = False
