@@ -243,6 +243,10 @@ class Drift():
 
         e = self.getExtent()
         self.createPNG(self.args.geotiffFileName + '.png', forGeotiff=True)
+        cmd = 'mogrify -trim %s' % self.args.geotiffFileName + '.png'
+        print "Executing:\n", cmd
+        os.system(cmd)
+
         cmd = 'gdal_translate %s %s -a_ullr %s %s %s %s' % (self.args.geotiffFileName + '.png', 
                                                             self.args.geotiffFileName, e[0], e[3], e[2], e[1])
         print "Executing:\n", cmd
