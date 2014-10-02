@@ -176,13 +176,10 @@ class Drift():
         '''
         if not forGeotiff:
             fig = plt.figure(figsize=(9, 6))
-        else:
-            fig = plt.figure()
-
-        if not forGeotiff:
             ax = plt.axes()
         else:
-            ax = plt.axes([0,0,1,1])
+            fig = plt.figure()
+            ax = fig.add_axes((0,0,1,1))
 
         if not fileName:
             fileName = self.args.pngFileName
@@ -223,7 +220,7 @@ class Drift():
                 plt.text(0.5, 0.95, self.title, horizontalalignment='center', verticalalignment='top', transform=ax.transAxes)
             except AttributeError:
                 pass
-            fig.savefig(fileName, transparent=True, dpi=300)
+            fig.savefig(fileName, transparent=True, dpi=300, bbox_inches='tight', pad_inches=0)
 
         plt.clf()
         plt.close()
@@ -243,9 +240,6 @@ class Drift():
 
         e = self.getExtent()
         self.createPNG(self.args.geotiffFileName + '.png', forGeotiff=True)
-        cmd = 'mogrify -trim %s' % self.args.geotiffFileName + '.png'
-        print "Executing:\n", cmd
-        os.system(cmd)
 
         cmd = 'gdal_translate %s %s -a_ullr %s %s %s %s' % (self.args.geotiffFileName + '.png', 
                                                             self.args.geotiffFileName, e[0], e[3], e[2], e[1])
