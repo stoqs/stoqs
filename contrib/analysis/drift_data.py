@@ -175,7 +175,7 @@ class Drift():
         '''Draw processed data on a map and save it as a .png file
         '''
         if not forGeotiff:
-            fig = plt.figure(figsize=(9, 6))
+            fig = plt.figure(figsize=(18, 12))
             ax = plt.axes()
         else:
             fig = plt.figure()
@@ -199,11 +199,16 @@ class Drift():
                 color = 'yellow'
             elif platform.startswith('daphne'):
                 color = 'orange'
+            elif platform.startswith('makai'):
+                color = 'magenta'
             else:
                 color = 'red'
 
             m.plot(drift['lon'], drift['lat'], '-', c=color, linewidth=2)
             plt.text(drift['lon'][-1], drift['lat'][-1], platform, size='small')
+
+        nowLocal = str(pytz.utc.localize(datetime.now()).astimezone(pytz.timezone('America/Los_Angeles'))).split('.')[0]
+        plt.text(0.99, 0.01, 'Created: ' + nowLocal , horizontalalignment='right', verticalalignment='bottom', transform=ax.transAxes)
 
         if not forGeotiff:
             m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], linewidth=0)
@@ -327,18 +332,17 @@ class Drift():
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
 
-        utc = pytz.utc
         self.startDatetime = None
         # Make both naiive and timezone aware datetime data members
         if self.args.start:
             self.startDatetime = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
-            self.startDatetimeUTC = utc.localize(self.startDatetime)
+            self.startDatetimeUTC = pytz.utc.localize(self.startDatetime)
             self.startDatetimeLocal = self.startDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
             self.title = 'Drift since %s' % self.startDatetimeLocal
         self.endDatetime = None
         if self.args.end:
             self.endDatetime = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
-            self.endDatetimeUTC = utc.localize(self.endDatetime)
+            self.endDatetimeUTC = pytz.utc.localize(self.endDatetime)
             self.endDatetimeLocal = self.endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
 
         if self.args.title:
