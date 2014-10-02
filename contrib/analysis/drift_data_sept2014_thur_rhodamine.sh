@@ -1,15 +1,24 @@
 #!/bin/bash
 # Thursday's rhodamine deployment start time
 
-cd /home/stoqsadm/dev/stoqshg
-source venv-stoqs/bin/activate
-cd contrib/analysis
+#PRODUCTION=false
+PRODUCTION=true
+if [ "$PRODUCTION" = true ]
+then
+    cd /home/stoqsadm/dev/stoqshg
+    source venv-stoqs/bin/activate
+    cd contrib/analysis
+    PRODUCTDIR=/data/canon/2014_Sep/Products/STOQS_Plots
+    MAPDIR=/data/mapserver/mapfiles/2014Fall/drift
+    LOGFILE='/home/stoqsadm/dev/stoqshg/contrib/analysis/drift_data_sept2014_thur_rhodamine.out'
+else
+    PRODUCTDIR=.
+    MAPDIR=.
+    LOGFILE=/dev/tty
+fi
 
 START=20140925T170000
 END=20141010T230000
-
-PRODUCTDIR=/data/canon/2014_Sep/Products/STOQS_Plots
-MAPDIR=/data/mapserver/mapfiles/2014Fall/drift
 
 # R_CARSON for the time of rhodamine pumping
 # stella(s) for just the times in the water
@@ -23,7 +32,10 @@ MAPDIR=/data/mapserver/mapfiles/2014Fall/drift
     http://odss.mbari.org/trackingdb/position/wgTiny/between/$START/$END/data.csv \
     --extent -122.3 36.3 -121.75 37.0 \
     --start $START --end $END \
+    --geotiffFileName $MAPDIR/drift_since_$START.tiff \
     --kmlFileName $PRODUCTDIR/drift_since_$START.kml \
     --pngFileName $PRODUCTDIR/drift_since_$START.png \
-    --geotiffFileName $MAPDIR/drift_since_$START.tiff \
-    > /home/stoqsadm/dev/stoqshg/contrib/analysis/drift_data_sept2014_thur_rhodamine.out 2>&1
+    > $LOGFILE 2>&1
+
+date >> $LOGFILE
+
