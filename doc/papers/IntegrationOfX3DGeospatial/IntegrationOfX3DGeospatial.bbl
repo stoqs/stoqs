@@ -1,0 +1,133 @@
+\begin{thebibliography}{\protect\citename{Silvestre et~al\mbox{.} }2013}
+
+\bibitem[\protect\citename{Becker }2005]{Becker:2005:NPN:1650409.1650513}
+{\sc Becker, N.~C.}
+\newblock 2005.
+\newblock Note: Painting by numbers: A gmt primer for merging swath-mapping
+  sonar data of different types and resolutions.
+\newblock {\em Comput. Geosci. 31}, 8 (Oct.), 1075--1077.
+
+\bibitem[\protect\citename{Behr et~al\mbox{.}
+  }2010]{Behr:2010:SAH:1836049.1836077}
+{\sc Behr, J., Jung, Y., Keil, J., Drevensek, T., Zoellner, M., Eschler, P.,
+  and Fellner, D.}
+\newblock 2010.
+\newblock A scalable architecture for the html5/x3d integration model x3dom.
+\newblock In {\em Proceedings of the 15th International Conference on Web 3D
+  Technology}, ACM, New York, NY, USA, Web3D '10, 185--194.
+
+\bibitem[\protect\citename{Caress and Chayes }2006]{mbsystem06}
+{\sc Caress, D., and Chayes, D.}, 2006.
+\newblock {MB-System: Mapping the Seafloor}.
+\newblock http://www.ldeo.columbia.edu/res/pi/MB-System and
+  http://www.mbari.org/data/mbsystem.
+
+\bibitem[\protect\citename{CNR }]{Meshlab}
+{\sc CNR, V. C. L.~I.}
+\newblock Meshlab.
+\newblock http://meshlab.sourceforge.net/.
+
+\bibitem[\protect\citename{Godin and Bellingham }2005]{godin05}
+{\sc Godin, M. A.~G., and Bellingham, J.~G.}
+\newblock 2005.
+\newblock {The Metadata Oriented Query Assistant (MOQuA): a Web Tool for
+  Finding Data in Heterogeneous, Multi-Platform Data Collections by
+  Simultaneously Pivoting on Multiple Metadata Hierarchies}.
+\newblock In {\em Fall American Geophysical Union meeting in San Francisco,
+  Abstract IN21B-1176}, AGU.
+
+\bibitem[\protect\citename{Gorman et~al\mbox{.}
+  }2008]{Gorman:2008:SAU:1412755.1412937}
+{\sc Gorman, G.~J., Piggott, M.~D., Wells, M.~R., Pain, C.~C., and Allison,
+  P.~A.}
+\newblock 2008.
+\newblock A systematic approach to unstructured mesh generation for ocean
+  modelling using gmt and terreno.
+\newblock {\em Comput. Geosci. 34}, 12 (Dec.), 1721--1731.
+
+\bibitem[\protect\citename{Heer and Shneiderman
+  }2012]{Heer:2012:IDV:2133416.2146416}
+{\sc Heer, J., and Shneiderman, B.}
+\newblock 2012.
+\newblock Interactive dynamics for visual analysis.
+\newblock {\em Queue 10}, 2 (Feb.), 30:30--30:55.
+
+\bibitem[\protect\citename{Herzig et~al\mbox{.}
+  }2013]{Herzig:2013:XVO:2466533.2466556}
+{\sc Herzig, P., Englert, M., Wagner, S., Jung, Y., and Bockholt, U.}
+\newblock 2013.
+\newblock X3d-earthbrowser: Visualize our earth in your web browser.
+\newblock In {\em Proceedings of the 18th International Conference on 3D Web
+  Technology}, ACM, New York, NY, USA, Web3D '13, 139--142.
+
+\bibitem[\protect\citename{Hoppe }1998]{hoppe98}
+{\sc Hoppe, H.}
+\newblock 1998.
+\newblock Smooth view-dependent level-of-detail control and its application to
+  terrain rendering.
+\newblock In {\em VIS '98: Proceedings of the conference on Visualization '98},
+  IEEE Computer Society Press, Los Alamitos, CA, USA, 35--42.
+
+\bibitem[\protect\citename{Limper et~al\mbox{.}
+  }2013]{Limper:2013:FDW:2466533.2466536}
+{\sc Limper, M., Wagner, S., Stein, C., Jung, Y., and Stork, A.}
+\newblock 2013.
+\newblock Fast delivery of 3d web content: A case study.
+\newblock In {\em Proceedings of the 18th International Conference on 3D Web
+  Technology}, ACM, New York, NY, USA, Web3D '13, 11--17.
+
+\bibitem[\protect\citename{McCann and Harvey }2013]{imdis2013}
+{\sc McCann, M., and Harvey, J.}
+\newblock 2013.
+\newblock Stoqs: The spatial temporal oceanographic query system.
+\newblock In {\em IMDIS 2013 International Conference on Marine Data
+  Information Systems}, Instituto Nazionale di Oceanographia e di Geofisica
+  Sperimentale, Trieste, Italy, 73--75.
+
+\bibitem[\protect\citename{McCann }2004]{mccann04}
+{\sc McCann, M.~P.}
+\newblock 2004.
+\newblock Using geovrml for 3{D} oceanographic data visualizations.
+\newblock In {\em Web3D '04: Proceedings of the ninth international conference
+  on 3D Web technology}, ACM, New York, NY, USA, 15--21.
+
+\bibitem[\protect\citename{OGC }2012]{3DPIE}
+{\sc OGC}, 2012.
+\newblock {Open Geospatial Consortium - 3D Portrayal Interoperability
+  Experiment}.
+\newblock http://www.opengeospatial.org/projects/initiatives/3dpie.
+
+\bibitem[\protect\citename{Silvestre et~al\mbox{.} }2013]{Silvestre}
+{\sc Silvestre, I., Rodrigues, J.~I., Figueiredo, M., and Veiga-Pires, C.}
+\newblock 2013.
+\newblock Framework for 3d data modeling and web visualization of underground
+  caves using open source tools.
+\newblock In {\em Proceedings of the 18th International Conference on 3D Web
+  Technology}, ACM, New York, NY, USA, Web3D '13, 121--128.
+
+\bibitem[\protect\citename{{Web3D Consortium} }2007]{x3d05}
+{\sc {Web3D Consortium}}, 2007.
+\newblock {IISO/IEC 19775-1.2:2008}.
+\newblock http://www.web3d.org/x3d/specifications/, December.
+
+\bibitem[\protect\citename{Wessel et~al\mbox{.} }2013]{GMT}
+{\sc Wessel, P., Smith, W. H.~F., Scharroo, R., Luis, J., and Wobbe, F.}
+\newblock 2013.
+\newblock Generic mapping tools: Improved version released.
+\newblock {\em Eos, Transactions American Geophysical Union 94}, 45, 409--410.
+
+\bibitem[\protect\citename{Whitney }2012]{Whitney:2012:DIN:2597850}
+{\sc Whitney, H.}
+\newblock 2012.
+\newblock {\em Data Insights: New Ways to Visualize and Make Sense of Data}.
+\newblock Morgan Kaufmann Publishers Inc., San Francisco, CA, USA.
+
+\bibitem[\protect\citename{Yoo and Brutzman }2009]{yoo09}
+{\sc Yoo, B., and Brutzman, D.}
+\newblock 2009.
+\newblock {X3D Earth Terrain-Tile Production Chain for Georeferenced
+  Simulation}.
+\newblock In {\em Web3D '09: Proceedings of the 14th international conference
+  on 3D Web technology}, ACM.
+
+\end{thebibliography}
