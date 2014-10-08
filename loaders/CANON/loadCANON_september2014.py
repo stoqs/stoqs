@@ -137,6 +137,13 @@ cl.wfpctd_files = [
   'CANON14C17.nc', 'CANON14C17x.nc', 'CANON14C18.nc',  'CANON14C19.nc',  'CANON14C20.nc',  'CANON14C21.nc',   'CANON14C22.nc',  'CANON14C23.nc',
   'CANON14C24.nc', 'CANON14C25.nc',  'CANON14C26.nc',  'CANON14C27.nc',  'CANON14C28.nc',
   'CANON14C29.nc',
+  'CANON14C30.nc', 'CANON14C31.nc', 'CANON14C32.nc', 'CANON14C33.nc', 'CANON14C34.nc', 'CANON14C35.nc', 'CANON14C36.nc',   
+  'CANON14C37.nc',
+  'CANON14C38.nc', 'CANON14C39.nc',
+  'CANON14C40.nc', 'CANON14C41.nc', 'CANON14C42.nc', 'CANON14C43.nc', 'CANON14C44.nc', 'CANON14C45.nc', 'CANON14C46.nc', 'CANON14C47.nc',
+  'CANON14C48.nc', 'CANON14C49.nc',
+  'CANON14C50.nc', 'CANON14C51.nc', 'CANON14C52.nc', 'CANON14C53.nc', 'CANON14C54.nc', 'CANON14C55.nc', 'CANON14C56.nc', 'CANON14C57.nc',
+  'CANON14C58.nc', 'CANON14C59.nc',
                   ]
 
 ######################################################################
