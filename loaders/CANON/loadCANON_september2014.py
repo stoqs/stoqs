@@ -155,8 +155,8 @@ cl.wfpctd_files = [
 cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [ 
-                    '26514RCplm01.nc',
-                   '26614RCplm01.nc','26714RCplm01.nc', 
+                   '26514RCplm01.nc', '26614RCplm01.nc', '26714RCplm01.nc', 
+                   '28114RCplm01.nc',
                   ]
 
 # PCTD
