@@ -169,6 +169,11 @@ cl.rcpctd_files = [
                     '26714RCc01.nc', '26714RCc02.nc',  '26714RCc03.nc', '26714RCc04.nc', '26714RCc05.nc',
                     '26814RCc01.nc', '26814RCc02b.nc', '26814RCc02.nc', '26814RCc04.nc', 
                     # '26814RCc05.nc', # something wrong with '26814RCc05.nc'
+                    '28014RCC01.nc', '28014RCC02.nc', '28014RCC03.nc', '28014RCC04.nc', '28014RCC05.nc',
+                    '28114RCC01.nc',
+                    # '28114RCC02.nc', something wrong with 28114RCC02.nc
+                    '28114RCC03.nc', '28114RCC04.nc', '28114RCC05.nc',
+                    '28214RCC01.nc', '28214RCC02.nc', '28214RCC03.nc', '28214RCC04.nc',
                   ]
 
 #####################################################################
