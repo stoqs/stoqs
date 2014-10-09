@@ -22,7 +22,8 @@ fi
 START=20141008T180000
 END=20141015T230000
 
-TRACKINGSERVER=odss-test.shore.mbari.org
+#TRACKINGSERVER=odss-test.shore.mbari.org
+TRACKINGSERVER=odss.mbari.org
 
 # R_CARSON for the time of rhodamine pumping
 # stella(s) for just the times in the water
