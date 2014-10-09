@@ -39,7 +39,7 @@ TRACKINGSERVER=odss.mbari.org
     --geotiffFileName $MAPDIR/drift_since_$START.tiff \
     --kmlFileName $PRODUCTDIR/drift_since_$START.kml \
     --pngFileName $PRODUCTDIR/drift_since_$START.png \
-    --verbose 2 \
+    --verbose \
     > $LOGFILE 2>&1
 
 date >> $LOGFILE
