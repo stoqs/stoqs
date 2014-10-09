@@ -28,7 +28,8 @@ MBARI 22 September 2014
 import os
 import sys
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
+project_dir = os.path.join(os.path.dirname(__file__), "../../")         # settings.py is two dirs up
+sys.path.insert(0, project_dir)
 
 import csv
 import time
@@ -40,9 +41,9 @@ import numpy as np
 import pytz 
 from datetime import datetime
 from collections import defaultdict
-from stoqs.models import MeasuredParameter, NominalLocation
+from stoqs.models import MeasuredParameter, NominalLocation, ActivityParameter
 from django.http import HttpRequest
-from utils.Viz.KML import KML
+from utils.Viz.KML import KML, readCLT
 from mpl_toolkits.basemap import Basemap
 
 
@@ -50,13 +51,17 @@ class Drift():
     '''Data and methods to support drift data product preparation
     '''
     trackDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': []})        # To be keyed by platform name
-    adcpDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': []})       # To be keyed by depth
+    adcpDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': []})         # To be keyed by depth
+    # Not to be confused with Stokes Drift - To be keyed by parameter,platform,min,max
+    stoqsDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': [], 'datavalue':[]})
 
     def loadTrackingData(self):
         '''Fill up trackDrift dictionary
         '''
         for url in self.args.trackData:
             # Careful - trackingdb returns the records in reverse time order
+            if self.args.verbose:
+                print 'Opening', url
             for r in csv.DictReader(urllib2.urlopen(url)):
                 # Use logic to skip inserting values if one or the other or both start and end are specified
                 if self.startDatetime:
@@ -136,7 +141,41 @@ class Drift():
             lonList, latList = p(eList, nList, inverse=True)
             self.adcpDrift[depth]['lon'] = lonList
             self.adcpDrift[depth]['lat'] = latList
-    
+
+    def loadSTOQSData(self):
+        '''Fill up stoqsDrift dictionary with platform_parameter as key
+        '''
+        for url in self.args.stoqsData:
+            # Careful - trackingdb returns the records in reverse time order
+            if self.args.verbose:
+                print 'Opening', url
+            for r in csv.DictReader(urllib2.urlopen(url.replace(' ', '%20'))):
+                # Use logic to skip inserting values if one or the other or both start and end are specified
+                dt = datetime.strptime(r['measurement__instantpoint__timevalue'], '%Y-%m-%d %H:%M:%S')
+                if self.startDatetime:
+                    if dt < self.startDatetime:
+                        continue
+                if self.endDatetime:
+                    if dt > self.endDatetime:
+                        continue
+        
+                if self.args.verbose > 1:
+                    print r
+
+                apQS = ActivityParameter.objects.using(self.args.database).filter(
+                            activity__name=r['measurement__instantpoint__activity__name'],
+                            parameter__name=r['parameter__name']) 
+
+                # Mash together a key composed of parameter, platform, min, max for the Activity
+                key = "%s,%s,%f,%f" % ( r['parameter__name'], r['measurement__instantpoint__activity__platform__name'],
+                                        apQS[0].p025, apQS[0].p975 )
+                       
+                self.stoqsDrift[key]['es'].append(time.mktime(dt.timetuple()))
+                lon, lat = r['measurement__geom'].split('(')[-1].split(')')[0].split(' ')
+                self.stoqsDrift[key]['lat'].append(float(lat))
+                self.stoqsDrift[key]['lon'].append(float(lon))
+                self.stoqsDrift[key]['datavalue'].append(r['datavalue'])
+
     def process(self):
         '''Read in data and build structures that we can generate products from
         '''
@@ -145,6 +184,9 @@ class Drift():
 
         if self.args.adcpPlatform:
             self.computeADCPDrift()
+
+        if self.args.stoqsData:
+            self.loadSTOQSData()
 
     def getExtent(self):
         '''For all data members find the min and max latitude and longitude
@@ -207,8 +249,19 @@ class Drift():
             m.plot(drift['lon'], drift['lat'], '-', c=color, linewidth=2)
             plt.text(drift['lon'][-1], drift['lat'][-1], platform, size='small')
 
+        # Plot each data point with it's own color based on the activity statistics from STOQS
+        coloredDotSize = 30
+        STATIC_ROOT = '/var/www/html/stoqs/static'      # Warning: Hard-coded
+        clt = readCLT(os.path.join(STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+        cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
+        for key, drift in self.stoqsDrift.iteritems():
+            min, max = key.split(',')[2:4]
+            ax.scatter(drift['lon'], drift['lat'], c=drift['datavalue'], s=coloredDotSize, cmap=cm_jetplus, lw=0, vmin=min, vmax=max)
+            label = '%s from %s' % tuple(key.split(',')[:2])
+            plt.text(drift['lon'][-1], drift['lat'][-1], label, size='small')
+
         nowLocal = str(pytz.utc.localize(datetime.now()).astimezone(pytz.timezone('America/Los_Angeles'))).split('.')[0]
-        plt.text(0.99, 0.01, 'Created: ' + nowLocal , horizontalalignment='right', verticalalignment='bottom', transform=ax.transAxes)
+        plt.text(0.99, 0.01, 'Created: ' + nowLocal + ' Local', horizontalalignment='right', verticalalignment='bottom', transform=ax.transAxes)
 
         if not forGeotiff:
             m.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], linewidth=0)
@@ -316,6 +369,7 @@ class Drift():
         parser.add_argument('--adcpMaxDepth', action='store', help='Maximum depth of ADCP data for progressive vector data', type=float)
 
         parser.add_argument('--trackData', action='store', help='List of MBARItracking database .csv urls for data from drifters, ships, etc.', nargs='*', default=[])
+        parser.add_argument('--stoqsData', action='store', help='List of STOQS MeasuredParameter Data Access .csv urls for parameter data', nargs='*', default=[])
     
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
