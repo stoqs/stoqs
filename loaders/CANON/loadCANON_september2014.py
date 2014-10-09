@@ -127,6 +127,7 @@ cl.wfuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Western_Flyer/uct
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
   'CANON14M01.nc', 'CANON14M02.nc', 'CANON14M03.nc', 'CANON14M04.nc', 'CANON14M05.nc', 'CANON14M06.nc', 'CANON14M07.nc',
+  'CANON14M08.nc', 'CANON14M09.nc', 'CANON14M10.nc',
                   ]
 
 # PCTD
