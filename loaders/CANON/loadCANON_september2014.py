@@ -65,6 +65,8 @@ cl.dorado_files = [
                    'Dorado389_2014_268_05_268_05_decim.nc',
                    'Dorado389_2014_280_01_280_01_decim.nc',
                    'Dorado389_2014_281_08_281_08_decim.nc',
+                   'Dorado389_2014_282_02_282_02_decim.nc',
+                   'Dorado389_2014_282_03_282_03_decim.nc',
 				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
