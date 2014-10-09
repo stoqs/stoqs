@@ -53,7 +53,7 @@ class Drift():
     trackDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': []})        # To be keyed by platform name
     adcpDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': []})         # To be keyed by depth
     # Not to be confused with Stokes Drift - To be keyed by parameter,platform,min,max
-    stoqsDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': [], 'datavalue':[]})
+    stoqsDrift = defaultdict(lambda: {'es': [], 'lon': [], 'lat': [], 'depth': [], 'datavalue':[]})
 
     def loadTrackingData(self):
         '''Fill up trackDrift dictionary
@@ -174,6 +174,7 @@ class Drift():
                 lon, lat = r['measurement__geom'].split('(')[-1].split(')')[0].split(' ')
                 self.stoqsDrift[key]['lat'].append(float(lat))
                 self.stoqsDrift[key]['lon'].append(float(lon))
+                self.stoqsDrift[key]['depth'].append(float(r['measurement__depth']))
                 self.stoqsDrift[key]['datavalue'].append(r['datavalue'])
 
     def process(self):
@@ -198,7 +199,7 @@ class Drift():
             lonMax = -180
             latMin = 90
             latMax = -90
-            for drift in (self.trackDrift, self.adcpDrift):
+            for drift in (self.trackDrift, self.adcpDrift, self.stoqsDrift):
                 for k,v in drift.iteritems():
                     if np.min(v['lon']) < lonMin:
                         lonMin = np.min(v['lon'])
@@ -331,11 +332,17 @@ class Drift():
             for es, lo, la in zip(drift['es'], drift['lon'], drift['lat']):
                 dataHash[depth].append([datetime.utcfromtimestamp(es), lo, la, float(depth), 'position', 0.0, 'adcp'])
 
+        for key, drift in self.stoqsDrift.iteritems():
+            parm, plat = key.split(',')[:2]
+            for es, lo, la, de, dv in zip(drift['es'], drift['lon'], drift['lat'], drift['depth'], drift['datavalue']):
+                dataHash[parm].append([datetime.utcfromtimestamp(es), lo, la, de, parm, dv, plat])
+
         try:
             title = self.title
         except AttributeError:
             title = 'Product of STOQS drift_data.py'
-        kml = kml.makeKML(self.args.database, dataHash, 'position', title, self.commandline, 0.0, 0.0 )
+        description = self.commandline.replace('&','&amp;')
+        kml = kml.makeKML(self.args.database, dataHash, 'position', title, description, 0.0, 0.0 )
 
         fh = open(self.args.kmlFileName, 'w')
         fh.write(kml)
