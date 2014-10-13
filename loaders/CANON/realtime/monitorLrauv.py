@@ -255,8 +255,10 @@ if __name__ == '__main__':
 
         if hasData:
             logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_src))
-            aName = platformName + '_sbdlog_' + startDatetime.strftime('%Y%m%dT%H%M%S')  +  '_' + '_'.join(parms)
-            
+            # Activity name limited to 128 characters, so reduce this to the first two characters which should make it unique
+            parmsSmall = ''.join(i[0:1] for i in parms)
+            aName = platformName + '_sbdlog_' + startDatetime.strftime('%Y%m%dT%H%M%S')  +  '_' + '_'.join(parmsSmall)
+
             dataStartDatetime = None
 
             if args.append:
