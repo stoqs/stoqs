@@ -1276,7 +1276,7 @@ class STOQSQManager(object):
                             'c': self.getParameterMinMax(pc)['plot'] }
                 
                 if not pMinMax['x'] or not pMinMax['y'] or not pMinMax['z']:
-                    return '', 'Selected x, y, and z axis parameters are not in filtered selection.'
+                    return '', 'Selected x, y, z, c Parameters not in filtered selection.'
 
                 logger.debug('Instantiating Viz.PropertyPropertyPlots for X3D............................................')
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
@@ -1284,7 +1284,10 @@ class STOQSQManager(object):
                     x3dDict = self.pp.makeX3D()
                 except DatabaseError, e:
                     return '', e
-                x3dDict['sql'] += ';'
+                try:
+                    x3dDict['sql'] += ';'
+                except TypeError:
+                    return '', 'Selected x, y, z, c Parameters not in filtered selection.'
             
         return x3dDict
 
