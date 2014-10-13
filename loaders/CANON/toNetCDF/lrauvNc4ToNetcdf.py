@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import matplotlib
+import matplotlib.pyplot as plt
 import sys
 import os
 import errno
@@ -98,6 +100,8 @@ class InterpolatorWriter(BaseWriter):
      xp = np.asarray(data.index,dtype=np.float64)
      fp = np.asarray(data)
      ts = pd.Series(index=times)
+     # interpolate to get data onto spacing of datetimes in times variable
+     # this can be irregularly spaced
      ts[:] = np.interp(x,xp,fp)
      return ts
      # End interpolate
@@ -132,91 +136,167 @@ class InterpolatorWriter(BaseWriter):
      # End initRecordVariable
 
  def getValidTimeRange(self, ts):
-     startIndex = ts.index[0]
-     endIndex = ts.index[-1]
+     start = ts.index[0]
+     end = ts.index[-1]
 
-     if pd.isnull(startIndex) or pd.isnull(endIndex):
+     if pd.isnull(start) or pd.isnull(end):
             self.logger.info('Invalid starting or ending time found. Searching for valid time range')
             selector = np.where(~pd.isnull(ts.index))
 
             if len(selector) > 2:
-                   startIndex = ts[selector[0]]
-                   endIndex = ts[selector[-1]]
+                   start = ts[selector[0]]
+                   end = ts[selector[-1]]
             
             # If still can't find a valid time, then raise exception here
-            if pd.isnull(startIndex) or pd.isnull(endIndex):
+            if pd.isnull(start) or pd.isnull(end):
                    raise Exception('Cannot find a valid time range')
-            return (startIndex, endIndex)
+            return (start, end)
 
-     return(startIndex, endIndex)
+     return(start, end)
      # End getValidTimeRange
 
- def process(self, url, outFile, parms):
+ def processSingleParm(self, url, outFile, parm):
+     pdb.set_trace()
      self.esec_list = []
      self.df = []
      self.parm_sub_ts = []
      self.chl_ts = None
-     self.parms = ['latitude','longitude','depth'] + parms
+     self.parms =  ['latitude','longitude','depth'] + [parm]
+     parm_ts = []
 
      try:
             self.df = pydap.client.open_url(url)
      except socket.error,e:
             self.logger.error('Failed in attempt to open_url(%s)', url)
             raise e
-
-     parm_ts = []
+    
+    # Create pandas time series for each parameter
      for i in range(len(self.parms)):
             parm = self.parms[i]
             try:
                    p_ts = self.createSeriesPydap(parm)
-                   parm_ts.append(p_ts)
-                   if parm == 'mass_concentration_of_chlorophyll_in_sea_water':
-                          self.chl_ts = p_ts
             except KeyError:
-                   parm_ts.append(pd.Series())
-                   self.logger.info('%s missing from %s' % (sys.exc_value, url))
+                   p_ts = pd.Series()
+                   self.logger.info('Key error on ' + parm)
 
+            parm_ts.append(p_ts)
 
-     try:
-            if self.chl_ts is None:
-                   self.logger.info('Chlorophyll time series needed to interpolate, but missing. Defaulting to depth time range')
-                   depth_ts = self.createSeriesPydap('depth')
-                   (startIndex,endIndex) = self.getValidTimeRange(depth_ts)
-            else:
-                   try:
-                          (startIndex,endIndex) = self.getValidTimeRange(self.chl_ts)
-                   except:
-                          self.logger.info('Start/end chlorophyll time range invalid, trying depth time range')
-                          depth_ts = self.createSeriesPydap('depth')
-                          (startIndex,endIndex) = self.getValidTimeRange(depth_ts)
-     except:
-            self.logger.info('Could not find valid time range in chlorophyll or depth series. Failed to create .nc file')
-            raise Exception('Could not find valid time range in chlorophyll or depth series. Failed to create .nc file')
+     # Last time series is the independent parameter to store
+     t = pd.Series(index = parm_ts[-1].index)
 
-     t = pd.Series(index=pd.date_range(startIndex,endIndex,freq='500L'))
-     #If want to compare to interpolation on actual chlorophyll time, instead of 500msec frequency at chlorophyll timecase, replace ts with this
-     #ts = chl_ts.index.values
-     ts = t.index.values
-     tsub = t.resample('2S')
+     # convert time to epoch seconds
+     self.esec_list = t.index.values.astype(float)/1E9
 
+     j = 0
      for p in parm_ts:
             if not p.empty :
-                   i = self.interpolate(p, ts)
-                   try:
-                       isub = i.resample('2S')[:]
+                   # interpolate all time series onto independent parameter time scale
+                   i = self.interpolate(p, t.index)
+                   '''fig, axes = plt.subplots(2)
+                   plt.legend(loc='best')
+                   isub.plot(ax=axes[0],color='r')
+                   p.plot(ax=axes[0])
+                   isub.plot(ax=axes[1],color='g')
+                   i.plot(ax=axes[1])
+                   plt.show()'''
+                   self.parm_sub_ts.append(i)
+            else:
+                   self.parm_sub_ts.append(pd.Series())
+            j = j + 1
+
+     # Write data to the file
+     self.write_netcdf(outFile, url)
+     self.logger.info('Wrote ' + outFile)
+
+     # End processSingleParm
+
+ def process(self, url, outFile, parms, interpFreq, resampleFreq):
+     self.esec_list = []
+     self.df = []
+     self.parm_sub_ts = []
+     self.chl_ts = None
+     self.parms =  ['latitude','longitude','depth'] + parms
+     parm_ts = []
+     start_times = []
+     end_times = []
+
+     try:
+            self.df = pydap.client.open_url(url)
+     except socket.error,e:
+            self.logger.error('Failed in attempt to open_url(%s)', url)
+            raise e
+    
+    # Create pandas time series and get sampling metric for each
+     for i in range(len(self.parms)):
+            parm = self.parms[i]
+            try:
+                   p_ts = self.createSeriesPydap(parm)
+            except KeyError:
+                   p_ts = pd.Series()
+                   self.logger.info('Key error on ' + parm)
+
+            parm_ts.append(p_ts)
+            try:
+                   (start,end) = self.getValidTimeRange(p_ts)   
+                   start_times.append(start)
+                   end_times.append(end)
+            except:
+                   self.logger.info('Start/end ' + parm + ' time range invalid')   
+
+     # the full range should span all the time series data to store
+     start_time = min(start_times)
+     end_time = max(end_times)
+     full_range = pd.date_range(start_time,end_time,freq=interpFreq)
+     t = pd.Series(index = full_range)
+     ts = t.index.values
+
+     # convert time to epoch seconds
+     self.esec_list = t.resample(resampleFreq).index.values.astype(float)/1E9
+
+     j = 0
+     for p in parm_ts:
+            if not p.empty :
+
+                   # swap byte order and create a new series
+                   values = p.values
+                   newvalues = values.byteswap().newbyteorder()
+                   pr = pd.Series(newvalues, index=p.index)
+
+                   # reindex to the full range that covers all data
+                   # forward fill
+                   pr.reindex(index = full_range, method='ffill')
+
+                   # interpolate onto regular time scale
+                   i = self.interpolate(pr, ts)
+                   try:                     
+                       isub = i.resample(resampleFreq)[:]
+
+                       # plotting for debugging
+                       '''fig, axes = plt.subplots(4)
+                       plt.legend(loc='best')
+                       axes[0].set_title('raw ' + self.parms[j] + ' data') 
+                       p.plot(ax=axes[0],color='r')
+                       axes[1].set_title('reindexed') 
+                       pr.plot(ax=axes[1],color='g')
+                       axes[2].set_title('interpolated') 
+                       i.plot(ax=axes[2],color='b')
+                       axes[3].set_title('resampled') 
+                       isub.plot(ax=axes[3],color='y')
+                       plt.show()'''
                    except IndexError as e:
                        self.logger.error(e)
                        raise e
                    self.parm_sub_ts.append(isub)
             else:
                    self.parm_sub_ts.append(pd.Series())
-
-     self.esec_list = tsub.index.values.astype(float)/1E9
+            j = j + 1
 
      # Write data to the file
      self.write_netcdf(outFile, url)
      self.logger.info('Wrote ' + outFile)
             
+     # End process
+
 if __name__ == '__main__':
 
     pw = InterpolatorWriter()
