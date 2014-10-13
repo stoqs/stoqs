@@ -86,25 +86,41 @@ def getNcStartEnd(urlNcDap, timeAxisName):
 
     return startDatetime, endDatetime
 
-def processDecimated(pw, url, outDir, lastDatetime, parms):
+def processDecimated(pw, url, lastDatetime, args):
     '''
-    Interpolate LRAUV data
+    Process decimated LRAUV data
     '''
-
     logger.debug('url = %s', url)
-    if outDir.startswith('/tmp'):
-        outFile_i = os.path.join(outDir, url.split('/')[-1].split('.')[0] + '_i.nc')
-    else:
-        outFile_i = os.path.join(outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + '_i.nc') 
 
-    startDatetime, endDatetime = getNcStartEnd(url, 'depth_time')
+    # If parameter names contains any group forward slash '/' delimiters
+    # replace them with underscores to make file name more readable
+    s = []
+    for p in args.parms:
+        s.append(p.replace('/','_'))
+    parms = "_" + "_".join(s)
+
+    if args.outDir.startswith('/tmp'):
+        outFile_i = os.path.join(args.outDir, url.split('/')[-1].split('.')[0] + parms + '_i.nc')
+    else:
+        outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + parms + '_i.nc') 
+
+    if len(args.parms) == 1 and len(args.interpFreq) == 0 or len(args.resampleFreq) == 0 :
+        startDatetime, endDatetime = getNcStartEnd(url, args.parms[0] + '_time')
+    else:
+        startDatetime, endDatetime = getNcStartEnd(url, 'depth_time')
+
     logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
     logger.debug('lastDatetime = %s', lastDatetime)
     url_i = None
+
     if endDatetime > lastDatetime:
         logger.debug('Calling pw.process with outFile_i = %s', outFile_i)
         try:
-            pw.process(url, outFile_i, parms)
+            if len(args.parms) == 1 and len(args.interpFreq) == 0 or len(args.resampleFreq) == 0 :
+                pw.processSingleParm(url, outFile_i, args.parms[0])
+            else:
+                pw.process(url, outFile_i, args.parms, args.interpFreq, args.resampleFreq)
+
         except TypeError as e:
             logger.warn('Problem reading data from %s', url)
             logger.warn('Assumming data are invalid and skipping')
@@ -118,8 +134,7 @@ def processDecimated(pw, url, outDir, lastDatetime, parms):
                 print cmd
                 os.system(cmd)
 
-            url_i = url.replace('.nc4', '_i.nc')
-
+            url_i = url.replace('.nc4', parms + '_i.nc')
     else:
         logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
 
@@ -142,9 +157,12 @@ def process_command_line():
         parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot logs or other realtime processed data are.  If interpolating, must map to the same location as -o directory', default='.',required=True)   
         parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='.',required=True)  
         parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='.',required=True)    
+        parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1) 
         parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file - must be the same location as -u URL', default='.',required=False)   
         parser.add_argument('-d', '--description', action='store', help='Brief description of experiment')
         parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity')
+        parser.add_argument('-i', '--interpFreq', action='store', help='Interpolation frequency string for interpolating e.g. 500L=500 millisecs, 1S=1 second, 1Min=1 minute,H=1 hour,D=daily', default='')
+        parser.add_argument('-r', '--resampleFreq', action='store', help='Resampling frequency string to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='')  
         parser.add_argument('-p', '--parms', action='store', help='List of space separated parameters to load', nargs='*', default=
                                     ['sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water'])
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
@@ -160,7 +178,7 @@ if __name__ == '__main__':
     args = process_command_line() 
     interpolate = False
 
-    # interpolating implied when specifying output directory to store interpolated files
+    # interpolating implied when specifying output directory
     if len(args.outDir) > 1:
         interpolate = True
 
@@ -189,11 +207,11 @@ if __name__ == '__main__':
     cl.campaignName = args.campaign
    
     # Get directory list from sites
-    logger.info("Crawling %s for shore.nc files" % (args.inUrl))
-
     if interpolate:
+        logger.info("Crawling %s for shore.nc4 files" % (args.inUrl))
         c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore_\d+_\d+.nc4$"], debug=False)
     else:
+        logger.info("Crawling %s for shore.nc files" % (args.inUrl))
         c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore_\d+_\d+.nc$"], debug=False)
     
     urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
@@ -202,11 +220,13 @@ if __name__ == '__main__':
         pw = lrauvNc4ToNetcdf.InterpolatorWriter()
 
     hasData = False
+    parms = []
+
     # Look in time order - oldest to newest
     for url in sorted(urls):
         if interpolate:
             try:
-                (url_i, startDatetime, endDatetime) = processDecimated(pw, url, args.outDir, lastDatetime, args.parms)
+                (url_i, startDatetime, endDatetime) = processDecimated(pw, url, lastDatetime, args)
             except ServerError as e:
                 logger.warn(e)
                 continue
@@ -215,7 +235,12 @@ if __name__ == '__main__':
                 # Use Hyrax server to avoid the stupid caching that the TDS does
                 url_src = url_i.replace('http://elvis.shore.mbari.org/thredds/dodsC/LRAUV', 'http://dods.mbari.org/opendap/data/lrauv') 
                 hasData = True
-                stride = 10
+
+                # If parameter names contains any group forward slash '/' delimiters
+                # replace them with underscores. This is because pydap automatically renames slashes as underscores
+                # and need to reference the parameter correctly in the DAPloader
+                for p in args.parms:
+                    parms.append(p.replace('/','_'))
         else:
             try:
                 startDatetime, endDatetime = getNcStartEnd(url,'Time') 
@@ -225,14 +250,13 @@ if __name__ == '__main__':
 
             url_src = url.replace('thredds/dodsC/LRAUV', 'opendap/data/lrauv') 
             hasData = True
-            stride = 1 
 
         lastDatetime = endDatetime
 
         if hasData:
             logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_src))
-            aName = platformName + '_sbdlog_' + startDatetime.strftime('%Y%m%dT%H%M%S')  
-
+            aName = platformName + '_sbdlog_' + startDatetime.strftime('%Y%m%dT%H%M%S')  +  '_' + '_'.join(parms)
+            
             dataStartDatetime = None
 
             if args.append:
@@ -249,9 +273,9 @@ if __name__ == '__main__':
                                                       pTypeName = 'auv',
                                                       pColor = colors[platformName],
                                                       url = url_src,
-                                                      parmList = args.parms,
+                                                      parmList = parms,
                                                       dbAlias = args.database,
-                                                      stride = stride,
+                                                      stride = args.stride,
                                                       startDatetime = startDatetime,
                                                       dataStartDatetime = dataStartDatetime,
                                                       endDatetime = endDatetime)
