@@ -156,7 +156,6 @@ class InterpolatorWriter(BaseWriter):
      # End getValidTimeRange
 
  def processSingleParm(self, url, outFile, parm):
-     pdb.set_trace()
      self.esec_list = []
      self.df = []
      self.parm_sub_ts = []
