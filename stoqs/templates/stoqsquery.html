@@ -1341,21 +1341,25 @@
             // Queries made using measuredparameter or sampledparamter REST requests - use mp_parm for Django queries 
             else if (value == 'json') {
                 var url = base_url + group_name + 'parameter.json' + mp_param;
+                url = url.replace(/ /g, '%20');
                 $('#'+group+'-'+value+'-field').text(url);
                 $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else if (value == 'csv') {
                 var url = base_url + group_name + 'parameter.csv' + mp_param;
+                url = url.replace(/ /g, '%20');
                 $('#'+group+'-'+value+'-field').text(url);
                 $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else if (value == 'tsv') {
                 var url = base_url + group_name + 'parameter.tsv' + mp_param;
+                url = url.replace(/ /g, '%20');
                 $('#'+group+'-'+value+'-field').text(url);
                 $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else if (value == 'html') {
                 var url = base_url + group_name + 'parameter.html' + mp_param;
+                url = url.replace(/ /g, '%20');
                 $('#'+group+'-'+value+'-field').text(url);
                 $('#'+group+'-'+value+'-link').attr('href',url);
             }
