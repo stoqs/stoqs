@@ -25,8 +25,16 @@ MBARI 23 October 2012
 @license: __license__
 '''
 
+import os
 import sys
 import urllib2
+
+class HdrFileNotFound(Exception):
+    pass
+
+
+class PositionNotFound(Exception):
+    pass
 
 
 def get_year_lat_lon(*args, **kwargs):
@@ -38,7 +46,12 @@ def get_year_lat_lon(*args, **kwargs):
     try:
         FH = urllib2.urlopen(kwargs['hdrUrl'])
     except KeyError:
-        FH = open('.'.join(args[0].split('.')[:-1]) + '.hdr')
+        hdrFile = '.'.join(args[0].split('.')[:-1]) + '.hdr'
+        if os.path.exists(hdrFile):
+            FH = open(hdrFile)
+        else:
+            raise HdrFileNotFound('Header file %s not found' % hdrFile)
+
     for line in FH:
         ##print line
         if line.find('NMEA Latitude') != -1:
@@ -54,15 +67,19 @@ def get_year_lat_lon(*args, **kwargs):
             # Breaking here assumes that the Time line appears after Latitude & Longitude
             break
 
-    if latNS == 'N':
-        lat = float("%4.7f" % (latD + latM / 60))
-    else:
-        lat = float("-%4.7f" % (latD + latM / 60))
+    try:
+        if latNS == 'N':
+            lat = float("%4.7f" % (latD + latM / 60))
+        else:
+            lat = float("-%4.7f" % (latD + latM / 60))
 
-    if lonEW == 'W':
-        lon = float("-%4.7f" % (lonD + lonM / 60))
-    else:
-        lon = float("%4.7f" % (lonD + lonM / 60))
+        if lonEW == 'W':
+            lon = float("-%4.7f" % (lonD + lonM / 60))
+        else:
+            lon = float("%4.7f" % (lonD + lonM / 60))
+
+    except UnboundLocalError:
+        raise PositionNotFound('No NMEA Latitude and Longitude in file %s' % hdrFile)
 
     return year, lat, lon
 

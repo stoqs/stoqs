@@ -39,7 +39,7 @@ from pupynere import netcdf_file
 from seawater import csiro
 
 from CANON.toNetCDF import BaseWriter
-from seabird import get_year_lat_lon, convert_up_to_down
+from seabird import get_year_lat_lon, convert_up_to_down, PositionNotFound, HdrFileNotFound
 
 class ParserWriter(BaseWriter):
     '''
@@ -71,7 +71,15 @@ class ParserWriter(BaseWriter):
                 print "Converting %s up to down" % file
                 file = convert_up_to_down(file)
 
-            year, lat, lon = get_year_lat_lon(file)
+            try:
+                year, lat, lon = get_year_lat_lon(file)
+            except HdrFileNotFound as e:
+                print e
+                print "Please make sure that the archive is consistent with naming of .asc, .btl, and .hdr files"
+                continue
+            except PositionNotFound as e:
+                print e
+                continue
 
             # Initialize member lists for each file processed
             self.esec_list = []
@@ -84,6 +92,9 @@ class ParserWriter(BaseWriter):
             self.ecofl_list = []
             self.wetstar_list = []
             self.oxygen_list = []
+            if self.args.analog:
+                self.an_chan, self.an_var, self.an_units = self.args.analog.split(':')
+                self.analog_list = []
 
             for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
                 ##print r
@@ -100,8 +111,16 @@ class ParserWriter(BaseWriter):
                 ##print datetime.fromtimestamp(es)
                 
                 self.esec_list.append(es)
-                self.lat_list.append(lat)
-                self.lon_list.append(lon)
+                try:
+                    self.lat_list.append(float(r['Latitude']))  # For tow-yo processed data
+                except KeyError:
+                    self.lat_list.append(lat)
+
+                try:
+                    self.lon_list.append(float(r['Longitude'])) # For tow-yo processed data
+                except KeyError:
+                    self.lon_list.append(lon)
+
                 try:
                     self.pr_list.append(float(r['PrDM']))
                 except KeyError:
@@ -117,7 +136,12 @@ class ParserWriter(BaseWriter):
                     pass
 
                 self.sal_list.append(r['Sal00'])
-                self.xmiss_list.append(r['Xmiss'])
+
+                try:
+                    self.xmiss_list.append(float(r['Xmiss']))
+                except ValueError:
+                    self.xmiss_list.append(self.missing_value)
+
                 try:
                     self.ecofl_list.append(r['FlECO-AFL'])
                 except KeyError:
@@ -130,6 +154,12 @@ class ParserWriter(BaseWriter):
                     self.oxygen_list.append(r['Sbeox0ML/L'])
                 except KeyError:
                     pass
+
+                if self.args.analog:
+                    try:
+                        self.analog_list.append(r[self.an_chan])
+                    except KeyError:
+                        pass
 
             self.write_pctd(file)
     
@@ -172,7 +202,12 @@ class ParserWriter(BaseWriter):
         self.latitude.long_name = 'LATITUDE'
         self.latitude.standard_name = 'latitude'
         self.latitude.units = 'degree_north'
-        self.latitude[:] = self.lat_list
+        try:
+            self.latitude[:] = self.lat_list
+        except ValueError as e:
+            print e
+            print "Are records duplicated in the .asc file? Cannot process. Skipping this file."
+            return
 
         self.longitude = self.ncFile.createVariable('longitude', 'float64', ('time',))
         self.longitude.long_name = 'LONGITUDE'
@@ -203,6 +238,8 @@ class ParserWriter(BaseWriter):
         xmiss = self.ncFile.createVariable('xmiss', 'float64', ('time',))
         xmiss.long_name = 'Beam Transmission, Chelsea/Seatech'
         xmiss.coordinates = 'time depth latitude longitude'
+        xmiss.missing_value = self.missing_value
+        xmiss._FillValue = self._FillValue
         xmiss.units = '%'
         xmiss[:] = self.xmiss_list
 
@@ -226,6 +263,12 @@ class ParserWriter(BaseWriter):
             oxygen.coordinates = 'time depth latitude longitude'
             oxygen.units = 'ml/l'
             oxygen[:] = self.oxygen_list
+
+        if self.analog_list:
+            analog = self.ncFile.createVariable(self.an_var, 'float64', ('time',))
+            analog.coordinates = 'time depth latitude longitude'
+            analog.units = self.an_units
+            analog[:] = self.analog_list
 
         self.add_global_metadata()
 

@@ -34,6 +34,8 @@ class BaseWriter(object):
     '''
     Common things used by ParserWriters
     '''
+    _FillValue = -1.e34
+    missing_value = -1.e34
 
     def add_global_metadata(self, featureType='trajectory'):
         '''
@@ -117,6 +119,8 @@ Write a paragraph or abstract about the data contained within the file, expandin
                             help='''Input file format: The default input file format is SeaBird .asc. Specify 'Martin_UDAS' for that .txt file format.''')
         parser.add_argument('-p', '--pattern', action='store', default='*',
                             help='''Pattern for matching input files in inDir. Specify a pattern according to the rules used by the Unix shell. Quote wild card characters.''')
+        parser.add_argument('-a', '--analog', action='store', 
+                            help='''Specify an analog channel to process into a netCDF variable. The format is <chan>:<var>:<units>, e.g. V0:rhodmain:volts''')
         parser.add_argument('-v', '--verbose', action='store_true',
                             help='Turn on verbose output')
 
