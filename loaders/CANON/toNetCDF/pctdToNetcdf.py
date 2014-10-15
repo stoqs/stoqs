@@ -202,12 +202,7 @@ class ParserWriter(BaseWriter):
         self.latitude.long_name = 'LATITUDE'
         self.latitude.standard_name = 'latitude'
         self.latitude.units = 'degree_north'
-        try:
-            self.latitude[:] = self.lat_list
-        except ValueError as e:
-            print e
-            print "Are records duplicated in the .asc file? Cannot process. Skipping this file."
-            return
+        self.latitude[:] = self.lat_list
 
         self.longitude = self.ncFile.createVariable('longitude', 'float64', ('time',))
         self.longitude.long_name = 'LONGITUDE'
