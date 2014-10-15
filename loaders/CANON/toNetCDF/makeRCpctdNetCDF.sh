@@ -19,7 +19,7 @@ RH=odss.mbari.org
 DIR=/data/canon/2014_Sep/Platforms/Ships/Rachel_Carson/pctd
 LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
 rsync -rv $LOGIN@$RH:$DIR  .
-./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during CANON - ECOHAB September 2014" -a V0:rhodamine:volts
+./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during CANON - ECOHAB September 2014" -a V0:rhodamine:V
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 rm -r $LOCALDIR
 
