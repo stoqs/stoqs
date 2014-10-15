@@ -235,10 +235,8 @@
                                             <Scene>
                                                 <NavigationInfo></NavigationInfo>
                                                 <Shape id="mp-x3d-track"></Shape>
-                                                <Viewpoint id="mp-x3d-viewpoint1" zNear="1"></Viewpoint>
-                                            <!--
-                                                <GeoViewpoint id="mp-x3d-geoviewpoint1" geoSystem='"GD" "WE"' position="36 -122 1000" orientation="1 0 0 -1.57"></GeoViewpoint>
-                                            -->
+                                                <Viewpoint id="mp-x3d-viewpoint1"></Viewpoint>
+                                                <GeoViewpoint id="mp-x3d-geoviewpoint1" geoSystem='"GD" "WE"' position="36.8 -122.1 100000" orientation="1 0 0 -1.57"></GeoViewpoint>
                                                 <Inline id="mp-x3d-terrain1"></Inline>
                                                 <Group id="platform-orientations"></Group>
                                                 <Group id="platform-models"></Group>
@@ -966,8 +964,8 @@
     <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
     <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.debug.js"></script>-->
-    <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom.js"></script> 
-    <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script> -->
+    <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom.js"></script>
+    <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>-->
     <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script>
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
     <script type="text/javascript"><!--
@@ -2936,6 +2934,8 @@
                         $('#mp-x3d-viewpoint1').attr('centerOfRotation', item.centerOfRotation);
                         $('#mp-x3d-viewpoint1').attr('position', item.position);
                         $('#mp-x3d-viewpoint1').attr('orientation', item.orientation);
+                        $('#mp-x3d-viewpoint1').attr('zNear', item.zNear);
+                        $('#mp-x3d-viewpoint1').attr('zFar', item.zFar);
                         $('#mp-x3d-terrain1').attr('url', terrain);
                         if ( item.geoOrigin ) { 
                             //$('#mp-x3d-track').append('<GeoOrigin DEF="ORIGIN" geoCoords="' + item.geoOrigin + '"></GeoOrigin>');
@@ -2957,7 +2957,7 @@
                     $.each(data[key], function (modelurl, item) {
                         //$('#spatial-3d-x3d > Scene').append("<Transform translation='-37367.14106213208 84335.25478927698 70689.69166054856'><inline url='" + modelurl + "'></inline></Transform>");
                         //$('#spatial-3d-x3d > Scene').append("<GeoLocation geoSystem='GD' geoCoords='" + item.startGeoCoords + "'><Transform scale='1000 1000 1000'><inline url='" + modelurl + "'></inline></Transform><GeoOrigin geoCoords='36 -121 0' geoSystem='GD'></GeoOrigin></GeoLocation>");
-                        $('#spatial-3d-x3d > Scene').append("<GeoLocation geoSystem='GD' geoCoords='" + item.startGeoCoords + "'><inline url='" + modelurl + "'></inline><GeoOrigin geoCoords='36 -121 0' geoSystem='GD'></GeoOrigin></GeoLocation>");
+                        $('#spatial-3d-x3d > Scene').append("<GeoLocation geoSystem='GD' geoCoords='" + item.startGeoCoords + "'><inline url='" + modelurl + "'></inline><GeoOrigin geoCoords='36 -121 0' geoSystem='GD' rotateYUp='true'></GeoOrigin></GeoLocation>");
                     });
                 }
             }
