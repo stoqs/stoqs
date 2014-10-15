@@ -37,6 +37,7 @@ bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                                         'geoOrigin': '-121 36 0',
                                         'VerticalExaggeration': '1',
                                         'speed': '0.1',
+                                        'zNear': '1.0',
                                     },
                                     'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x/MontereyCanyonBeds_1m+5m_1x_scene.x3d': {
                                         'position': '-44571.54862 77379.85721 71401.38520',
