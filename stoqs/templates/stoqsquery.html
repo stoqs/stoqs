@@ -241,20 +241,119 @@
                                                 <Inline id="mp-x3d-terrain1"></Inline>
                                                 <Group id="platform-orientations"></Group>
                                                 <Group id="platform-models"></Group>
-                                                <Group def="left">
-                                                    <shape>
-                                                        <apperance>
-                                                            <renderedtexture interpupillarydistance="0.03" id="rtLeft" stereomode="LEFT_EYE" update="ALWAYS" dimensions="960 1080 4" repeatS="false" repeatT="false"></renderedtexture>
-                                                        </apperance>
-                                                    </shape>
-                                                </Group>
-                                                <Group def="right">
-                                                    <shape>
-                                                        <apperance>
-                                                            <enderedtexture interpupillarytexture="0.03" id="rtRight" stereomode="RIGHT_EYE" update="ALWAYS" dimensions="960 1080 4" repeatS="false" repeatT="false"></renderedtexture>
-                                                        </apperance>
-                                                    </shape>
-                                                </Group>
+
+
+
+        <group DEF='left'>
+            <shape>
+                <appearance>
+                    <renderedTexture id="rtLeft" stereoMode="LEFT_EYE" update='ALWAYS'
+                                     dimensions='640 800 4' repeatS='false' repeatT='false'>
+                        <viewpoint USE='vp' containerField='viewpoint'></viewpoint>
+                        <background USE='bgnd' containerField='background'></background>
+                        <!--group USE='left' containerField="excludeNodes"></group-->
+                        <group USE='theScene' containerField="scene"></group>
+                    </renderedTexture>
+                    <composedShader>
+                        <field name='tex' type='SFInt32' value='0'></field>
+                        <field name='leftEye' type='SFFloat' value='1'></field>
+                        <shaderPart type='VERTEX'>
+                            attribute vec3 position;
+                            attribute vec2 texcoord;
+
+                            uniform mat4 modelViewProjectionMatrix;
+                            varying vec2 fragTexCoord;
+
+                            void main()
+                            {
+                                vec2 pos = sign(position.xy);
+                                fragTexCoord = texcoord;
+
+                                gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0);
+                                //gl_Position = vec4(pos.xy / 4.0 + vec2(-0.75,0.75), 0.0, 1.0);
+                            }
+                        </shaderPart>
+                        <shaderPart DEF="frag" type='FRAGMENT'>
+                            #ifdef GL_ES
+                            precision highp float;
+                            #endif
+
+                            uniform sampler2D tex;
+                            uniform float leftEye;
+                            varying vec2 fragTexCoord;
+
+                            void main()
+                            {
+                                float distortionScale = 0.7; //0.685;
+                                //float distortionK[4] = float[](1.0, 0.22, 0.24, 0.0);
+                                vec2 lensCenter = vec2(0.151976495726, 0.0);
+                                if (leftEye == 0.0) {
+                                    lensCenter.x *= -1.0;
+                                }
+
+                                vec2 theta = (fragTexCoord * 2.0) - 1.0;
+                                float rSq = theta.x * theta.x + theta.y * theta.y;
+                                vec2 rvec = theta * (1.0 + 0.22 * rSq + 0.24 * rSq * rSq); //+ 0.0 * rSq * rSq * rSq);
+                                vec2 texCoord = (distortionScale*rvec+(1.0-distortionScale)*lensCenter + 1.0) / 2.0;
+
+                                if (any(notEqual(clamp(texCoord, vec2(0.0, 0.0), vec2(1.0, 1.0)) - texCoord,
+                                                       vec2(0.0, 0.0)))) {
+                                    //if (leftEye == 0.0) gl_FragColor = vec4(1.0,1.0,0.0,1.0);
+                                    //else gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+                                    discard;
+                                }
+                                else {
+                                    vec3 col = texture2D(tex, texCoord).rgb;
+                                    gl_FragColor = vec4(col, 1.0);
+                                }
+                                //gl_FragColor = texture2D(tex, fragTexCoord);
+                            }
+                        </shaderPart>
+                    </composedShader>
+                </appearance>
+                <plane solid="false"></plane>
+            </shape>
+        </group>
+        <group DEF='right'>
+            <shape>
+                <appearance>
+                    <renderedTexture id="rtRight" stereoMode="RIGHT_EYE" update='ALWAYS'
+                                     dimensions='640 800 4' repeatS='false' repeatT='false'>
+                        <viewpoint USE='vp' containerField='viewpoint'></viewpoint>
+                        <background USE='bgnd' containerField='background'></background>
+                        <group USE='theScene' containerField="scene"></group>
+                    </renderedTexture>
+                    <composedShader>
+                        <field name='tex' type='SFInt32' value='0'></field>
+                        <field name='leftEye' type='SFFloat' value='0'></field>
+                        <shaderPart type='VERTEX'>
+                            attribute vec3 position;
+                            attribute vec2 texcoord;
+
+                            uniform mat4 modelViewProjectionMatrix;
+                            varying vec2 fragTexCoord;
+
+                            void main()
+                            {
+                                vec2 pos = sign(position.xy);
+                                fragTexCoord = texcoord;
+
+                                gl_Position = vec4((pos.x + 1.0) / 2.0, pos.y, 0.0, 1.0);
+                            }
+                        </shaderPart>
+                        <shaderPart USE="frag" type='FRAGMENT'>
+                        </shaderPart>
+                    </composedShader>
+                </appearance>
+                <plane solid="false"></plane>
+            </shape>
+        </group>
+
+
+
+
+
+
                                             </Scene>
                                         </X3D>
                                         </div>
@@ -2117,7 +2216,71 @@
 
 
     $("#geo-rift-button").click(function(element) {
-        console.log("here");
+
+        console.log("geo-rift");
+
+        // Copied from http://examples.x3dom.org/Demos/ClassroomRift/classroom.html
+
+        runtime = $('#spatial-3d-x3d')[0].runtime;
+
+        rtLeft = document.getElementById('rtLeft');
+        rtRight = document.getElementById('rtRight');
+
+        lastW = +runtime.getWidth();
+        lastH = +runtime.getHeight();
+
+        var hw = Math.round(lastW / 2);
+        rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
+        rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
+
+
+        runtime.exitFrame = function() {
+            var w = +runtime.getWidth();
+            var h = +runtime.getHeight();
+
+            if (w != lastW || h != lastH)
+            {
+                var half = Math.round(w / 2);
+                rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
+                rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
+
+                lastW = w;
+                lastH = h;
+            }
+        };
+        
+        function websocket(location)
+        {
+            if (window.MozWebSocket)
+                return new MozWebSocket(location);
+            else
+                return new WebSocket(location);
+        }
+
+        function start_log(location, name)
+        {
+            var viewpoint = document.getElementById('mp-x3d-viewpoint1');
+            
+            socket_ass = websocket(location);
+            socket_ass.onmessage = function(event)
+            {
+                //console.log(event.data);
+                var h = x3dom.fields.SFVec4f.parse(event.data);
+                var q = new x3dom.fields.Quaternion(h.x, h.y, h.z, h.w);
+                
+                var aa = q.toAxisAngle();           
+                //console.log(aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+            
+                viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+            }
+        }
+
+        var instantIOport = "12345";    // attention: use port as opened in InstantIO
+        start_log("ws://localhost:" + instantIOport + "/InstantIO/element/ovr/Orientation/data.string", "image");
+
+        // End of copy from http://examples.x3dom.org/Demos/ClassroomVR/classroom.html
+
+
     });
 
 
@@ -4042,107 +4205,6 @@
 
 
 
-
-        // Copied from http://examples.x3dom.org/Demos/ClassroomVR/classroom-cardboard.html
-        var runtime = null;
-        var rtLeft, rtRight;
-        var lastW, lastH;
-        var degreeToRadiansFactor = Math.PI / 180;
-
-        x3dom.fields.Quaternion.prototype.setFromEulerYXZ = function (alpha, beta, gamma) {
-
-            var c1 = Math.cos( alpha / 2 );
-            var c2 = Math.cos( beta / 2 );
-            var c3 = Math.cos( gamma / 2 );
-            var s1 = Math.sin( alpha / 2 );
-            var s2 = Math.sin( beta / 2 );
-            var s3 = Math.sin( gamma / 2 );
-
-            this.x = s1 * c2 * c3 + c1 * s2 * s3;
-            this.y = c1 * s2 * c3 - s1 * c2 * s3;
-            this.z = c1 * c2 * s3 - s1 * s2 * c3;
-            this.w = c1 * c2 * c3 + s1 * s2 * s3;
-        }
-
-        var MYAPP={"deviceOrientation":null, "screenOrientation":null};
-        onDeviceOrientationChangeEvent = (function(rawEvtData) {
-            this.deviceOrientation = rawEvtData;
-        }).bind(MYAPP);
-
-        window.addEventListener('deviceorientation', onDeviceOrientationChangeEvent, false);
-
-        function deg2rad(deg){return deg * degreeToRadiansFactor;}
-
-
-            runtime = document.getElementById('spatial-3d-x3d');
-            rtLeft = document.getElementById('rtLeft');
-            rtRight = document.getElementById('rtRight');
-            //rtLeft._x3domNode.lensCenter = 0;
-            //rtRight._x3domNode.lensCenter = 0;
-
-            lastW = $("#geo-3d-plot").width();
-            lastH = $("#geo-3d-plot").height();
-
-            var hw = Math.round(lastW / 2);
-            rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
-            rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
-
-            var element = document.getElementById("spatial-3d-x3d");
-            MYAPP.viewpoint = document.getElementById('vpp');
-
-            //$('#spatial-3d-x3d')[0].runtime.exitFrame = function() {
-            var foo = function() {
-
-                // check if screensize changed
-                var w = $("#geo-3d-plot").width();
-                var h = $("#geo-3d-plot").height();
-                if (w != lastW || h != lastH)
-                {
-                    var half = Math.round(w / 2);
-                    rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
-                    rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
-                    lastW = w;
-                    lastH = h;
-                }
-                //handle device orientation change
-                if(!MYAPP.deviceOrientation)
-                    return;
-                var q0 = x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(0,0,1),-deg2rad(window.orientation)); // phone rotation offset
-                var q = new x3dom.fields.Quaternion();
-                q.setFromEulerYXZ(deg2rad(MYAPP.deviceOrientation.beta), deg2rad(MYAPP.deviceOrientation.alpha), -deg2rad(MYAPP.deviceOrientation.gamma));
-
-                var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
-
-                q = q.multiply(q1);
-                q = q.multiply(q0);
-
-                var aa = q.toAxisAngle();
-
-                MYAPP.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
-            };
-        
-
-        function fullscreen() {
-            //lens center auf null setzten
-            rtLeft = document.getElementById('rtLeft');
-            rtRight = document.getElementById('rtRight');
-            rtLeft._x3domNode.lensCenter = 0;
-            rtRight._x3domNode.lensCenter = 0;
-
-            //fullscreen aktivieren
-            container = document.getElementById('x3dElement');
-            if (container.requestFullscreen) {
-                container.requestFullscreen();
-            } else if (container.msRequestFullscreen) {
-                container.msRequestFullscreen();
-            } else if (container.mozRequestFullScreen) {
-                container.mozRequestFullScreen();
-            } else if (container.webkitRequestFullscreen) {
-                container.webkitRequestFullscreen();
-            }
-        }
-
-        // End of copy from http://examples.x3dom.org/Demos/ClassroomVR/classroom-cardboard.html
 
 
 
