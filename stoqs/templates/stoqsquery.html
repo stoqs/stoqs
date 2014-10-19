@@ -1116,6 +1116,7 @@
     var initData;
     var widthZoomed = false;
     var rifted = false;
+    var rift_feed;
     var request=''
     var map = null; 
     var parametervalues={};     
@@ -2231,6 +2232,9 @@
 
         // Following example from http://examples.x3dom.org/Demos/ClassroomRift/classroom.html
         
+        var instantIOport = "12345";    // attention: use port as opened in InstantIO with Web Node setup on port 12345 and OculusRift as name ovr
+        var restFeed = "ws://localhost:" + instantIOport + "/InstantIO/element/ovr/Orientation/data.string";
+
         function websocket(location)
         {
             if (window.MozWebSocket)
@@ -2239,7 +2243,7 @@
                 return new WebSocket(location);
         }
 
-        function start_log(location, name)
+        function start_feed(location, name)
         {
             var viewpoint = document.getElementById('mp-x3d-viewpoint1');
             
@@ -2255,14 +2259,17 @@
             
                 viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
             }
+            return socket_ass;
         }
+
 
         if ( rifted ) {
             $('#spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-left').attr('render', 'false');
             $('#spatial-3d-right').attr('render', 'false');
             $(this).html('<i class="icon-eye-open"></i> Rift it!');
-            //runtime.exitFrame = function() {}
+            runtime.exitFrame = function() {}
+            rift_feed.close();
         }
         else {
             $('#spatial-3d-root').attr('render', 'false');
@@ -2297,8 +2304,7 @@
                 }
             };
 
-            var instantIOport = "12345";    // attention: use port as opened in InstantIO with Web Node setup on port 12345 and OculusRift as name ovr
-            //start_log("ws://localhost:" + instantIOport + "/InstantIO/element/ovr/Orientation/data.string", "image");
+            rift_feed = start_feed(restFeed, "image");
 
         }
 
