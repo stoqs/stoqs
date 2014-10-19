@@ -217,7 +217,7 @@
                                             </div>
                                             <div class="span2">
                                                 <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
-                                                <p><a id="geo-rift-button" class="btn btn-mini"><i class="icon-eye-open"></i> Rift/Cardboard</a></p>
+                                                <p><a id="geo-rift-button" class="btn btn-mini rift-button"><i class="icon-eye-open"></i> Rift it!</a></p>
                                                 <p><a id="geo-x3d-reset-view" class="btn btn-mini" onClick="$('#spatial-3d-x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                                 <form class="form-inline">
                                                     <label class="checkbox disabled">
@@ -239,7 +239,7 @@
                                                 <Viewpoint id="mp-x3d-viewpoint1" def="vp" centerofrotation="-2711557.9403829873 -4331414.329506527 3801353.4691465236" zNear="1" zFar="300000"></Viewpoint>
                                                 <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" geoSystem='"GD" "WE"' position="36.8 -122.1 100000" orientation="1 0 0 -1.57"  zNear=".01" zFar="3000"></GeoViewpoint>
                                                 <background DEF='bgnd' skyColor="1 1 1"></background>
-                                                <Group id='root' render='false'>
+                                                <Group id='spatial-3d-root' render='true'>
                                                     <Group def="theScene">
                                                         <Shape id="mp-x3d-track"></Shape>
                                                         <Inline id="mp-x3d-terrain1"></Inline>
@@ -250,7 +250,7 @@
 
 
 
-        <group DEF='left'>
+        <group id='spatial-3d-left' DEF='left' render='false'>
             <shape>
                 <appearance>
                     <renderedTexture id="rtLeft" stereoMode="LEFT_EYE" update='ALWAYS'
@@ -323,7 +323,8 @@
                 <plane solid="false"></plane>
             </shape>
         </group>
-        <group DEF='right'>
+
+        <group id='spatial-3d-right' DEF='right' render='false'>
             <shape>
                 <appearance>
                     <renderedTexture id="rtRight" stereoMode="RIGHT_EYE" update='ALWAYS'
@@ -1114,6 +1115,7 @@
     var params={}
     var initData;
     var widthZoomed = false;
+    var rifted = false;
     var request=''
     var map = null; 
     var parametervalues={};     
@@ -2225,39 +2227,9 @@
 
 
 
-    $("#geo-rift-button").click(function(element) {
+    $(".rift-button").click(function(element) {
 
-        console.log("geo-rift");
-
-        // Copied from http://examples.x3dom.org/Demos/ClassroomRift/classroom.html
-
-        runtime = $('#spatial-3d-x3d')[0].runtime;
-
-        rtLeft = document.getElementById('rtLeft');
-        rtRight = document.getElementById('rtRight');
-
-        lastW = +runtime.getWidth();
-        lastH = +runtime.getHeight();
-
-        var hw = Math.round(lastW / 2);
-        rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
-        rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
-
-
-        runtime.exitFrame = function() {
-            var w = +runtime.getWidth();
-            var h = +runtime.getHeight();
-
-            if (w != lastW || h != lastH)
-            {
-                var half = Math.round(w / 2);
-                rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
-                rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
-
-                lastW = w;
-                lastH = h;
-            }
-        };
+        // Following example from http://examples.x3dom.org/Demos/ClassroomRift/classroom.html
         
         function websocket(location)
         {
@@ -2285,11 +2257,54 @@
             }
         }
 
-        var instantIOport = "12345";    // attention: use port as opened in InstantIO with Web Node setup on port 12345 and OculusRift as name ovr
-        //start_log("ws://localhost:" + instantIOport + "/InstantIO/element/ovr/Orientation/data.string", "image");
+        if ( rifted ) {
+            $('#spatial-3d-root').attr('render', 'true');
+            $('#spatial-3d-left').attr('render', 'false');
+            $('#spatial-3d-right').attr('render', 'false');
+            $(this).html('<i class="icon-eye-open"></i> Rift it!');
+            //runtime.exitFrame = function() {}
+        }
+        else {
+            $('#spatial-3d-root').attr('render', 'false');
+            $('#spatial-3d-left').attr('render', 'true');
+            $('#spatial-3d-right').attr('render', 'true');
+            $(this).html('<i class="icon-eye-open"></i> Un Rift');
+
+            runtime = $('#spatial-3d-x3d')[0].runtime;
+
+            rtLeft = document.getElementById('rtLeft');
+            rtRight = document.getElementById('rtRight');
+
+            lastW = +runtime.getWidth();
+            lastH = +runtime.getHeight();
+
+            var hw = Math.round(lastW / 2);
+            rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
+            rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
+
+            runtime.exitFrame = function() {
+                var w = +runtime.getWidth();
+                var h = +runtime.getHeight();
+    
+                if (w != lastW || h != lastH)
+                {
+                    var half = Math.round(w / 2);
+                    rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
+                    rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
+    
+                    lastW = w;
+                    lastH = h;
+                }
+            };
+
+            var instantIOport = "12345";    // attention: use port as opened in InstantIO with Web Node setup on port 12345 and OculusRift as name ovr
+            //start_log("ws://localhost:" + instantIOport + "/InstantIO/element/ovr/Orientation/data.string", "image");
+
+        }
+
+        rifted = ! rifted;
 
         // End of copy from http://examples.x3dom.org/Demos/ClassroomVR/classroom.html
-
 
     });
 
