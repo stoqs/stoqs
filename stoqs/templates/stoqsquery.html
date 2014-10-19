@@ -235,7 +235,7 @@
                                         <X3D id="spatial-3d-x3d" style="width:100%; height:100%; margin: 0px auto; display:block; border: none;"> 
                                             <Scene>
                                                 <Environment frustumCulling="false"></Environment>
-                                                <NavigationInfo speed="1000"></NavigationInfo>
+                                                <NavigationInfo></NavigationInfo>
                                                 <Viewpoint id="mp-x3d-viewpoint1" def="vp" centerofrotation="-2711557.9403829873 -4331414.329506527 3801353.4691465236" zNear="1" zFar="300000"></Viewpoint>
                                                 <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" geoSystem='"GD" "WE"' position="36.8 -122.1 100000" orientation="1 0 0 -1.57"  zNear=".01" zFar="3000"></GeoViewpoint>
                                                 <background DEF='bgnd' skyColor="1 1 1"></background>
@@ -360,7 +360,28 @@
             </shape>
         </group>
 
+                <transform id="handtrafo1" translation="3.8 1.00905 -5.97228">
+                    <transform id="handtrafo" scale="0.0015 0.0015 0.0015" translation="0.1 -0.3 -0.5">
+                        <transform id="hand">
+                            <transform>
+                                <transform>
+                                    <transform>
+                                        <transform scale="40 10 40" center="0 0 -2">
+                                            <shape>
+                                                <appearance>
+                                                    <material diffuseColor="0.603 0.894 0.909"></material>
+                                                </appearance>
+                                                <box></box>
+                                            </shape>
+                                        </transform>
+                                    </transform>
+                                </transform>
+                            </transform>
 
+                            <transform id="bones"></transform>
+                        </transform>
+                    </transform>
+                </transform>
 
 
 
@@ -1093,20 +1114,7 @@
     <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>-->
     <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script>
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    <script type="text/javascript" src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>
 
     <script type="text/javascript"><!--
     
@@ -2235,6 +2243,9 @@
         var instantIOport = "12345";    // attention: use port as opened in InstantIO with Web Node setup on port 12345 and OculusRift as name ovr
         var restFeed = "ws://localhost:" + instantIOport + "/InstantIO/element/ovr/Orientation/data.string";
 
+        var vrHMD = null, vrSensor = null;
+        var pyr = new x3dom.fields.SFVec3f(0, 0, 0);
+
         function websocket(location)
         {
             if (window.MozWebSocket)
@@ -2261,6 +2272,132 @@
             }
             return socket_ass;
         }
+
+
+        // Trying to implement Leap support - bones
+        for (var i = 0; i < 5; i++)
+        {
+            finger = document.createElement("transform");
+
+            for (var j = 0; j < 4; ++j)
+            {
+                mtransform = document.createElement("MatrixTransform");
+                finger.appendChild(mtransform);
+
+                transform = document.createElement("transform");
+                mtransform.appendChild(transform);
+
+                transform.setAttribute("scale", "10 10 10");
+                shape = document.createElement("shape");
+                transform.appendChild(shape);
+
+                app = document.createElement("appearance");
+                mat = document.createElement("material");
+                mat.setAttribute("diffuseColor", "0.603 0.894 0.909");
+                app.appendChild(mat);
+                shape.appendChild(app);
+
+                geometry = document.createElement("box");
+                shape.appendChild(geometry);
+            }
+
+            document.getElementById("bones").appendChild(finger);
+        }
+
+    Leap.loop(function(frame)
+    {
+        if (frame.hands.length)
+        {
+            var hand_frame = frame.hands[0];
+            var hand = document.getElementById("hand");
+
+            var yaw = hand.children[0];
+            var pitch = yaw.children[0];
+            var roll = pitch.children[0];
+
+            yaw.setAttribute("translation", hand_frame.palmPosition[0] + " " + hand_frame.palmPosition[1] + " " + hand_frame.palmPosition[2]);
+
+            yaw.setAttribute("rotation", "0 1 0 " + -hand_frame.yaw());
+            pitch.setAttribute("rotation", "1 0 0 " + hand_frame.pitch());
+            roll.setAttribute("rotation", "0 0 1 " + hand_frame.roll());
+
+            var viewpoint = document.getElementById("mp-x3d-viewpoint1");
+            var vpOrientation = viewpoint.getAttribute("orientation");
+            var m = x3dom.fields.Quaternion.parseAxisAngle( vpOrientation ).toMatrix();
+            var d = new x3dom.fields.SFVec3f(-hand_frame.roll()*2.0, 0, hand_frame.pitch());
+
+            if(d.z < 0)
+            {
+                d.z *= 3.0;
+            }
+
+            pyr = pyr.addScaled(m.multMatrixVec(d), 0.01);
+        }
+
+        for (var i = 0; i < Math.min(frame.fingers.length, 5); i++)
+        {
+            for (var j = 0; j < Math.min(frame.fingers[j].bones.length, 4); ++j)
+            {
+                finger = document.getElementById("bones").children[i];
+                bone = finger.children[j];
+                finger_frame = frame.fingers[i];
+
+                m = finger_frame.bones[j].matrix();
+                arr = new Array;
+
+                for (var x = 0; x < 4; ++x)
+                    for (var y = 0; y < 4; ++y)
+                        arr.push(m[y*4+x]);
+
+                bone.setAttribute("matrix", arr.join(" "));
+            }
+        }
+
+    });
+
+    function vrDeviceCallback(vrdevs) {
+        var i;
+
+        // First, find a HMD -- just use the first one we find
+        for (i = 0; i < vrdevs.length; ++i) {
+            if (vrdevs[i] instanceof HMDVRDevice) {
+                vrHMD = vrdevs[i];
+                console.log(vrHMD);
+                break;
+            }
+        }
+
+        if (!vrHMD)
+            return;
+
+        // Then, find that HMD's position sensor
+        for (i = 0; i < vrdevs.length; ++i) {
+            if (vrdevs[i] instanceof PositionSensorVRDevice &&
+                vrdevs[i].hardwareUnitId == vrHMD.hardwareUnitId) {
+                vrSensor = vrdevs[i];
+                console.log(vrSensor);
+                break;
+            }
+        }
+
+        if (!vrHMD || !vrSensor) {
+            alert("Didn't find a HMD and sensor!");
+            return;
+        }
+
+        var leftFOV = vrHMD.getCurrentEyeFieldOfView("left");
+        var rightFOV = vrHMD.getCurrentEyeFieldOfView("right");
+
+        console.log(leftFOV);
+        console.log(rightFOV);
+
+        var leftTranslation = vrHMD.getEyeTranslation("left");
+        var rightTranslation = vrHMD.getEyeTranslation("right");
+
+        console.log(leftTranslation);
+        console.log(rightTranslation);
+    }
+
 
 
         if ( rifted ) {
@@ -2305,6 +2442,52 @@
             };
 
             rift_feed = start_feed(restFeed, "image");
+
+
+            // Leap data handling
+
+            if (navigator.getVRDevices)
+            navigator.getVRDevices().then(vrDeviceCallback);
+
+            //http://blog.tojicode.com/2014/07/bringing-vr-to-chrome.html
+            //http://blog.bitops.com/blog/2014/08/20/updated-firefox-vr-builds/
+
+
+            runtime.enterFrame = function () {
+                if (!vrSensor)
+                    return;
+                var state = vrSensor.getState();
+
+                if (!initDone) {
+                    console.log(state);
+                }
+
+                var h = state.orientation;
+                var q = new x3dom.fields.Quaternion(h.x, h.y, h.z, h.w);
+    
+                var aa = q.toAxisAngle();
+                //console.log(aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+
+                viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+
+                var posi = viewpoint.requestFieldRef('position');
+                posi.x = 4.17102 + (pyr.x) + state.position.x;
+                posi.y = 1.20905 + (pyr.y) + state.position.y;
+                posi.z = -6.97228 + (pyr.z*2) + state.position.z;
+
+                document.getElementById("handtrafo1").setAttribute("translation", posi.x + " " + posi.y + " " + posi.z);
+                document.getElementById("handtrafo1").setAttribute("rotation",  aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+
+                viewpoint.releaseFieldRef('position');
+            };
+
+            function animate()
+            {
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+
 
         }
 
