@@ -217,6 +217,7 @@
                                             </div>
                                             <div class="span2">
                                                 <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
+                                                <p><a id="geo-rift-button" class="btn btn-mini"><i class="icon-eye-open"></i> Rift/Cardboard</a></p>
                                                 <p><a id="geo-x3d-reset-view" class="btn btn-mini" onClick="$('#spatial-3d-x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                                 <form class="form-inline">
                                                     <label class="checkbox disabled">
@@ -240,6 +241,20 @@
                                                 <Inline id="mp-x3d-terrain1"></Inline>
                                                 <Group id="platform-orientations"></Group>
                                                 <Group id="platform-models"></Group>
+                                                <Group def="left">
+                                                    <shape>
+                                                        <apperance>
+                                                            <renderedtexture interpupillarydistance="0.03" id="rtLeft" stereomode="LEFT_EYE" update="ALWAYS" dimensions="960 1080 4" repeatS="false" repeatT="false"></renderedtexture>
+                                                        </apperance>
+                                                    </shape>
+                                                </Group>
+                                                <Group def="right">
+                                                    <shape>
+                                                        <apperance>
+                                                            <enderedtexture interpupillarytexture="0.03" id="rtRight" stereomode="RIGHT_EYE" update="ALWAYS" dimensions="960 1080 4" repeatS="false" repeatT="false"></renderedtexture>
+                                                        </apperance>
+                                                    </shape>
+                                                </Group>
                                             </Scene>
                                         </X3D>
                                         </div>
@@ -968,6 +983,21 @@
     <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>-->
     <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script>
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <script type="text/javascript"><!--
     
     var summaryQuery='{{site_uri}}{% url 'stoqs-query-summary' dbAlias=request.META.dbAlias %}';
@@ -2081,6 +2111,18 @@
         }
         widthZoomed = ! widthZoomed;
     });
+
+
+
+
+
+    $("#geo-rift-button").click(function(element) {
+        console.log("here");
+    });
+
+
+
+
 
     $('.temporal-tab > li').on('click', function (event) {
         // Show the tab then plot the data so that axes are properly drawn
@@ -3997,6 +4039,117 @@
         //map.addControl(sample_points_info);
         //sample_points_info.activate();
         //End Capture Feature info tests
+
+
+
+
+        // Copied from http://examples.x3dom.org/Demos/ClassroomVR/classroom-cardboard.html
+        var runtime = null;
+        var rtLeft, rtRight;
+        var lastW, lastH;
+        var degreeToRadiansFactor = Math.PI / 180;
+
+        x3dom.fields.Quaternion.prototype.setFromEulerYXZ = function (alpha, beta, gamma) {
+
+            var c1 = Math.cos( alpha / 2 );
+            var c2 = Math.cos( beta / 2 );
+            var c3 = Math.cos( gamma / 2 );
+            var s1 = Math.sin( alpha / 2 );
+            var s2 = Math.sin( beta / 2 );
+            var s3 = Math.sin( gamma / 2 );
+
+            this.x = s1 * c2 * c3 + c1 * s2 * s3;
+            this.y = c1 * s2 * c3 - s1 * c2 * s3;
+            this.z = c1 * c2 * s3 - s1 * s2 * c3;
+            this.w = c1 * c2 * c3 + s1 * s2 * s3;
+        }
+
+        var MYAPP={"deviceOrientation":null, "screenOrientation":null};
+        onDeviceOrientationChangeEvent = (function(rawEvtData) {
+            this.deviceOrientation = rawEvtData;
+        }).bind(MYAPP);
+
+        window.addEventListener('deviceorientation', onDeviceOrientationChangeEvent, false);
+
+        function deg2rad(deg){return deg * degreeToRadiansFactor;}
+
+
+            runtime = document.getElementById('spatial-3d-x3d');
+            rtLeft = document.getElementById('rtLeft');
+            rtRight = document.getElementById('rtRight');
+            //rtLeft._x3domNode.lensCenter = 0;
+            //rtRight._x3domNode.lensCenter = 0;
+
+            lastW = $("#geo-3d-plot").width();
+            lastH = $("#geo-3d-plot").height();
+
+            var hw = Math.round(lastW / 2);
+            rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
+            rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
+
+            var element = document.getElementById("spatial-3d-x3d");
+            MYAPP.viewpoint = document.getElementById('vpp');
+
+            //$('#spatial-3d-x3d')[0].runtime.exitFrame = function() {
+            var foo = function() {
+
+                // check if screensize changed
+                var w = $("#geo-3d-plot").width();
+                var h = $("#geo-3d-plot").height();
+                if (w != lastW || h != lastH)
+                {
+                    var half = Math.round(w / 2);
+                    rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
+                    rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
+                    lastW = w;
+                    lastH = h;
+                }
+                //handle device orientation change
+                if(!MYAPP.deviceOrientation)
+                    return;
+                var q0 = x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(0,0,1),-deg2rad(window.orientation)); // phone rotation offset
+                var q = new x3dom.fields.Quaternion();
+                q.setFromEulerYXZ(deg2rad(MYAPP.deviceOrientation.beta), deg2rad(MYAPP.deviceOrientation.alpha), -deg2rad(MYAPP.deviceOrientation.gamma));
+
+                var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
+
+                q = q.multiply(q1);
+                q = q.multiply(q0);
+
+                var aa = q.toAxisAngle();
+
+                MYAPP.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+            };
+        
+
+        function fullscreen() {
+            //lens center auf null setzten
+            rtLeft = document.getElementById('rtLeft');
+            rtRight = document.getElementById('rtRight');
+            rtLeft._x3domNode.lensCenter = 0;
+            rtRight._x3domNode.lensCenter = 0;
+
+            //fullscreen aktivieren
+            container = document.getElementById('x3dElement');
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            } else if (container.msRequestFullscreen) {
+                container.msRequestFullscreen();
+            } else if (container.mozRequestFullScreen) {
+                container.mozRequestFullScreen();
+            } else if (container.webkitRequestFullscreen) {
+                container.webkitRequestFullscreen();
+            }
+        }
+
+        // End of copy from http://examples.x3dom.org/Demos/ClassroomVR/classroom-cardboard.html
+
+
+
+
+
+
+
 
 
         /*
