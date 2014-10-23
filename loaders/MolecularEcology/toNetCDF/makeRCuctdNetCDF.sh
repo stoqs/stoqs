@@ -30,9 +30,19 @@ RH=zuma.rc.mbari.org
 ##scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 ##rm -r $LOCALDIR
 
-DIR=/data/simz/2014_spring/Platforms/Ships/Rachel_Carson/uctd
-LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
+##DIR=/data/simz/2014_spring/Platforms/Ships/Rachel_Carson/uctd
+##LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
+##rsync -rv $LOGIN@$RH:$DIR  .
+##./uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 1.5 --title "Underway CTD data from R/V Rachel Carson CANON - SIMZ Spring 2014"
+##scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
+##rm -r $LOCALDIR
+
+LOGIN=stoqsadm
+RH=normandy.mbari.org
+DIR=/data/simz/2014_Oct/carson/uctd
+LOCALDIR=`echo $DIR | cut -d/ -f6`  # -f must match last directory
 rsync -rv $LOGIN@$RH:$DIR  .
-./uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 1.5 --title "Underway CTD data from R/V Rachel Carson CANON - SIMZ Spring 2014"
+../../CANON/toNetCDF/uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 1.5 --title "Underway CTD data from R/V Rachel Carson CANON - SIMZ October 2014"
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 rm -r $LOCALDIR
+
