@@ -61,32 +61,25 @@ cl.dorado_files = [
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume' ]
 
-# Spray glider - for just the duration of the campaign
-cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.l_662_files = ['OS_Glider_L_662_20130711_TS.nc']
-cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
-cl.l_662_startDatetime = startDatetime
-cl.l_662_endDatetime = endDatetime
-
-
 # Rachel Carson Underway CTD
-cl.rcuctd_base = cl.dodsBase + 'CANON_october2013/Platforms/Ships/Rachel_Carson/uctd/'
+cl.rcuctd_base = cl.dodsBase + 'SIMZ/2014_Oct/carson/uctd/'
 cl.rcuctd_files = [ 
-                    #'simz2013plm06.nc', 'simz2013plm07.nc', 'simz2013plm08.nc', 'simz2013plm09.nc', 'simz2013plm10.nc',
+                    '28914plm01.nc', '29014plm01.nc', '29314plm01.nc', '29414plm01.nc', '29514plm01.nc',
                   ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
 # Rachel Carson Profile CTD
-cl.pctdDir = 'CANON_october2013/Platforms/Ships/Rachel_Carson/pctd/'
+cl.pctdDir = 'SIMZ/2014_Oct/carson/pctd/'
 cl.rcpctd_base = cl.dodsBase + cl.pctdDir
 cl.rcpctd_files = [ 
-#                                                      'simz2013c19.nc', 'simz2013c20.nc',
-#'simz2013c21.nc', 'simz2013c22.nc', 'simz2013c23.nc', 'simz2013c24.nc', 'simz2013c25.nc',
-#'simz2013c26.nc', 'simz2013c27.nc', 'simz2013c28.nc', 'simz2013c29.nc', 'simz2013c30.nc',
-#'simz2013c31.nc', 'simz2013c32.nc', 'simz2013c33.nc', 'simz2013c34.nc', 'simz2013c35.nc', 'simz2013c35a.nc',
-#'simz2013c36.nc',
+            'SIMZ2014C40.nc', 'SIMZ2014C41.nc', 'SIMZ2014C42.nc', 'SIMZ2014C43.nc', 'SIMZ2014C44.nc',
+            'SIMZ2014C45.nc', 'SIMZ2014C46.nc', 'SIMZ2014C47.nc', 'SIMZ2014C48.nc', 'SIMZ2014C49.nc',
+            'SIMZ2014C50.nc', 'SIMZ2014C51.nc', 'SIMZ2014C52.nc', 'SIMZ2014C53.nc', 'SIMZ2014C54.nc',
+            'SIMZ2014C55.nc', 'SIMZ2014C56.nc', 'SIMZ2014C57.nc', 'SIMZ2014C58.nc', 'SIMZ2014C59.nc',
+            'SIMZ2014C60.nc', 'SIMZ2014C61.nc', 'SIMZ2014C62.nc', 'SIMZ2014C63.nc', 'SIMZ2014C64.nc',
+            'SIMZ2014C65.nc', 'SIMZ2014C66.nc', 'SIMZ2014C67.nc', 'SIMZ2014C68.nc', 'SIMZ2014C69.nc',
                       ]
-cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
+cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201407/'
@@ -113,26 +106,26 @@ cl.process_command_line()
 if cl.args.test:
     ##cl.loadL_662(stride=1)
     cl.loadDorado(stride=100)
-    #cl.loadRCuctd(stride=100)
-    #cl.loadRCpctd(stride=1)
-    #cl.loadM1(stride=10)
+    cl.loadRCuctd(stride=100)
+    cl.loadRCpctd(stride=1)
+    cl.loadM1(stride=10)
     #cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
     ##cl.loadL_662(stride=1)
     cl.loadDorado(stride=1)
-    #cl.loadRCuctd(stride=1)
-    #cl.loadRCpctd(stride=1)
-    #cl.loadM1(stride=1)
+    cl.loadRCuctd(stride=1)
+    cl.loadRCpctd(stride=1)
+    cl.loadM1(stride=1)
     #cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
     ##cl.loadL_662()
     cl.loadDorado()
-    #cl.loadRCuctd()
-    #cl.loadRCpctd()
-    #cl.loadM1()
+    cl.loadRCuctd()
+    cl.loadRCpctd()
+    cl.loadM1()
     #cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
