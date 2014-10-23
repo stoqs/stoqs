@@ -259,11 +259,12 @@ class ParserWriter(BaseWriter):
             oxygen.units = 'ml/l'
             oxygen[:] = self.oxygen_list
 
-        if self.analog_list:
-            analog = self.ncFile.createVariable(self.an_var, 'float64', ('time',))
-            analog.coordinates = 'time depth latitude longitude'
-            analog.units = self.an_units
-            analog[:] = self.analog_list
+        if self.args.analog:
+            if self.analog_list:
+                analog = self.ncFile.createVariable(self.an_var, 'float64', ('time',))
+                analog.coordinates = 'time depth latitude longitude'
+                analog.units = self.an_units
+                analog[:] = self.analog_list
 
         self.add_global_metadata()
 
