@@ -237,6 +237,7 @@
                                                 <Environment frustumCulling="false"></Environment>
                                                 <NavigationInfo></NavigationInfo>
                                                 <Viewpoint id="mp-x3d-viewpoint1" def="vp" centerofrotation="-2711557.9403829873 -4331414.329506527 3801353.4691465236"></Viewpoint>
+                                                <!-- Test GeoViewpoint for Monterey Bay area -->
                                                 <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" geoSystem='"GD" "WE"' position="36.8 -122.1 100000" orientation="1 0 0 -1.57"></GeoViewpoint>
                                                 <Background DEF='bgnd' skyColor="1 1 1"></Background>
                                                 <Group id='spatial-3d-root' render='true'>
@@ -248,15 +249,14 @@
                                                     </Group>
                                                 </Group>
 
-
-
+        <!-- Elements for Rift - Orientations routed to GeoViewpoint, so must page down to that Viewpoint -->
         <group id='spatial-3d-left' DEF='left' render='false'>
             <shape>
                 <appearance>
                     <renderedTexture id="rtLeft" stereoMode="LEFT_EYE" update='ALWAYS'
                                      dimensions='640 800 4' repeatS='false' repeatT='false'>
-                        <viewpoint USE='vp' containerField='viewpoint'></viewpoint>
-                        <!--<geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>-->
+                        <!--<viewpoint USE='vp' containerField='viewpoint'></viewpoint>-->
+                        <geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>
                         <background USE='bgnd' containerField='background'></background>
                         <!--group USE='left' containerField="excludeNodes"></group-->
                         <group USE='theScene' containerField="scene"></group>
@@ -329,8 +329,8 @@
                 <appearance>
                     <renderedTexture id="rtRight" stereoMode="RIGHT_EYE" update='ALWAYS'
                                      dimensions='640 800 4' repeatS='false' repeatT='false'>
-                        <viewpoint USE='vp' containerField='viewpoint'></viewpoint>
-                        <!--<geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>-->
+                        <!--<viewpoint USE='vp' containerField='viewpoint'></viewpoint>-->
+                        <geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>
                         <background USE='bgnd' containerField='background'></background>
                         <group USE='theScene' containerField="scene"></group>
                     </renderedTexture>
@@ -360,6 +360,7 @@
             </shape>
         </group>
 
+                <!-- Elements for Leap Motion -->
                 <transform id="handtrafo1" translation="3.8 1.00905 -5.97228">
                     <transform id="handtrafo" scale="0.0015 0.0015 0.0015" translation="0.1 -0.3 -0.5">
                         <transform id="hand">
@@ -382,8 +383,6 @@
                         </transform>
                     </transform>
                 </transform>
-
-
 
 
                                             </Scene>
@@ -1111,8 +1110,8 @@
     <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
     <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.debug.js"></script>-->
     <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom.js"></script>
-    <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/Geospatial.js"></script>-->
-    <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/zGeospatial.js"></script>
+    <!--<script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script>-->
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
     <script type="text/javascript" src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>
 
@@ -2256,7 +2255,7 @@
 
         function start_feed(location, name)
         {
-            var viewpoint = document.getElementById('mp-x3d-viewpoint1');
+            var viewpoint = document.getElementById('mp-x3d-geoviewpoint1');
             
             socket_ass = websocket(location);
             socket_ass.onmessage = function(event)
@@ -2321,7 +2320,7 @@
             pitch.setAttribute("rotation", "1 0 0 " + hand_frame.pitch());
             roll.setAttribute("rotation", "0 0 1 " + hand_frame.roll());
 
-            var viewpoint = document.getElementById("mp-x3d-viewpoint1");
+            var viewpoint = document.getElementById("mp-x3d-geoviewpoint1");
             var vpOrientation = viewpoint.getAttribute("orientation");
             var m = x3dom.fields.Quaternion.parseAxisAngle( vpOrientation ).toMatrix();
             var d = new x3dom.fields.SFVec3f(-hand_frame.roll()*2.0, 0, hand_frame.pitch());
@@ -2409,6 +2408,8 @@
             $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', newSpeed);
             $('#mp-x3d-viewpoint1').attr('zNear', '10');
             $('#mp-x3d-viewpoint1').attr('zFar', '300000');
+            $('#mp-x3d-geoviewpoint1').attr('zNear', '10');
+            $('#mp-x3d-geoviewpoint1').attr('zFar', '300000');
             $(this).html('<i class="icon-eye-open"></i> Rift it!');
             runtime.exitFrame = function() {}
             rift_feed.close();
@@ -2423,6 +2424,8 @@
             $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', newSpeed);
             $('#mp-x3d-viewpoint1').attr('zNear', '10');
             $('#mp-x3d-viewpoint1').attr('zFar', '300000');
+            $('#mp-x3d-geoviewpoint1').attr('zNear', '10');
+            $('#mp-x3d-geoviewpoint1').attr('zFar', '300000');
             $(this).html('<i class="icon-eye-open"></i> Un Rift');
 
             runtime = $('#spatial-3d-x3d')[0].runtime;
