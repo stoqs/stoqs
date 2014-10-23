@@ -1,0 +1,40 @@
+BOG_Data Directory
+==================
+
+Files provided by Reiko for loading into STOQS with SampleLoaders SubSampleLoader.
+
+Measured STOQS_GOC12_ALTIMETER.csv
+Measured STOQS_GOC12_CHLA.csv
+Sampled  STOQS_GOC12_CHL_1U.csv
+Sampled  STOQS_GOC12_CHL_5U.csv
+Measured  STOQS_GOC12_COND2.csv
+Measured STOQS_GOC12_CONDUCT.csv
+Measured STOQS_GOC12_FLUOR.csv
+Sampled  STOQS_GOC12_NH4.csv
+Sampled  STOQS_GOC12_NO2.csv
+Sampled  STOQS_GOC12_NO3.csv
+Sampled  STOQS_GOC12_O2.csv
+Measured STOQS_GOC12_OXY_ML.csv
+Measured STOQS_GOC12_OXY_PS.csv
+Measured STOQS_GOC12_PAR4PI.csv
+Measured STOQS_GOC12_PARCOS.csv
+Sampled  STOQS_GOC12_PHAEO_1U.csv
+Sampled  STOQS_GOC12_PHAEO_5U.csv
+Sampled  STOQS_GOC12_PHAEO_GFF.csv
+Sampled  STOQS_GOC12_PO4.csv
+Measured STOQS_GOC12_POT_TMP.csv
+Measured STOQS_GOC12_POT_TMP2.csv
+Measured STOQS_GOC12_SAL.csv
+Measured STOQS_GOC12_SAL2.csv
+Measured STOQS_GOC12_SIG_T.csv
+Sampled  STOQS_GOC12_SIO4.csv
+Measured STOQS_GOC12_TEMP2.csv
+Measured STOQS_GOC12_TMP.csv
+Measured STOQS_GOC12_TRANSBEAM.csv
+Measured STOQS_GOC12_TRANSMISS.csv
+
+Include only the Sampled files in the SubSampleLoader.
+
+--
+Mike McCann
+14 August 2013
