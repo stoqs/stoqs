@@ -434,3 +434,11 @@ class KML(object):
 
         return (styleKml, pointKml)
 
+    def _buildKMLlabels(self, plat, data, clt, clim):
+        '''
+        Build KML Placemarks of the last point of the data and give it a label
+
+        Return strings of style and point KML that can be included in a master KML file.
+        '''
+        pass
+
