@@ -52,9 +52,9 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # 2-second decimated dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2014/netcdf/'   # Dorado archive
 cl.dorado_files = [ 
-                    #'Dorado389_2014_289_04_289_04_decim.nc',
-                    #'Dorado389_2014_290_00_290_00_decim.nc',
-                    #'Dorado389_2014_293_00_293_00_decim.nc',
+                    'Dorado389_2014_289_04_289_04_decim.nc',
+                    'Dorado389_2014_290_00_290_00_decim.nc',
+                    'Dorado389_2014_293_00_293_00_decim.nc',
                     'Dorado389_2014_294_00_294_00_decim.nc',
                     'Dorado389_2014_295_00_295_00_decim.nc',
                   ]
