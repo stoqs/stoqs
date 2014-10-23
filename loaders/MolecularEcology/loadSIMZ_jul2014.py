@@ -78,7 +78,7 @@ cl.rcpctd_files = [
                      'simz2014c31.nc', 'simz2014c32.nc', 'simz2014c33.nc',
                      'simz2014c34.nc', 'simz2014c35.nc', 'simz2014c36.nc',
                       ]
-cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
+cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local GOC12 dir
 cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SIMZOct2013')
