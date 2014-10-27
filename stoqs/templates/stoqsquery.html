@@ -825,31 +825,32 @@
                     </div>
                     <div id="collapseSampledParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
+                            <input type="checkbox" id="show-parameter-parameter-sp-checkbox" /> Show Parameter-Parameter
                             <input type="checkbox" id="show-coordinates-sp-checkbox" /> Show coordinates
                             <input type="checkbox" id="show-filtered-sp-checkbox" /> Show filtered out parameters
                             <fieldset>
                             <table id="sampledparameter-table" class="table table-condensed">
                                 <thead>
                                     <tr>
-                                        <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic">Parameter-Parameter</th>
+                                        <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic;display:none;" class="pp-header">Parameter-Parameter</th>
                                         <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
                                         <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic">Filter &amp; Select for data access</th>
                                     </tr>
                                     <tr>
-                                        <th style="text-align:center;">X</th>
-                                        <th style="text-align:center;">Y</th>
-                                        <th style="text-align:center;">Z</th>
-                                        <th style="text-align:center;">C</th>
+                                        <th style="text-align:center;display:none;" class="pp-header">X</th>
+                                        <th style="text-align:center;display:none;" class="pp-header">Y</th>
+                                        <th style="text-align:center;display:none;" class="pp-header">Z</th>
+                                        <th style="text-align:center;display:none;" class="pp-header">C</th>
                                         <th style="text-align:center;">Plot Data</th>
                                         <th style="text-align:center;"></th>
                                     </tr>
                                 </thead>                             
                                 <tbody>
                                     <tr>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;">
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
@@ -857,34 +858,34 @@
                                         <td colspan="2" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
                                     <tr class="sp-pp-coordinates" style="display:none;">
-                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="longitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Longitude</td>
                                     </tr>
                                     <tr class="sp-pp-coordinates" style="display:none;">
-                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="latitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="latitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="latitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Latitude</td>
                                     </tr>
                                     <tr class="sp-pp-coordinates" style="display:none;">
-                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="depth" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="depth" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="depth" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="depth" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="depth" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Depth</td>
                                     </tr>
                                     <tr class="sp-pp-coordinates" style="display:none;">
-                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="time" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="time" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="time" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="time" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="time" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Time</td>
                                     </tr>
@@ -905,31 +906,32 @@
                     </div>
                     <div id="collapseMeasuredParameter" class="accordion-body collapse in">
                         <div class="accordion-inner">
+                            <input type="checkbox" id="show-parameter-parameter-mp-checkbox" /> Show Parameter-Parameter
                             <input type="checkbox" id="show-coordinates-mp-checkbox" /> Show coordinates
                             <input type="checkbox" id="show-filtered-mp-checkbox" /> Show filtered out parameters
                             <fieldset>
                             <table id="measuredparameter-table" class="table table-condensed">
                                 <thead>
                                     <tr>
-                                        <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic">Parameter-Parameter</th>
+                                        <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic;display:none;" class="pp-header">Parameter-Parameter</th>
                                         <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
                                         <th colspan="1" style="text-align:center; text-decoration: underline; font-style:italic">Filter &amp; Select for data access</th>
                                     </tr>
                                     <tr>
-                                        <th style="text-align:center;">X</th>
-                                        <th style="text-align:center;">Y</th>
-                                        <th style="text-align:center;">Z</th>
-                                        <th style="text-align:center;">C</th>
+                                        <th style="text-align:center;display:none;" class="pp-header">X</th>
+                                        <th style="text-align:center;display:none;" class="pp-header">Y</th>
+                                        <th style="text-align:center;display:none;" class="pp-header">Z</th>
+                                        <th style="text-align:center;display:none;" class="pp-header">C</th>
                                         <th style="text-align:center;">Plot Data</th>
                                         <th style="text-align:center;"></th>
                                     </tr>
                                 </thead>                             
                                 <tbody>
                                     <tr>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;">
                                             <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall" style="display:none;"/>
@@ -937,34 +939,34 @@
                                         <td colspan="2" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
                                     <tr class="mp-pp-coordinates" style="display:none;">
-                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="longitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Longitude</td>
                                     </tr>
                                     <tr class="mp-pp-coordinates" style="display:none;">
-                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="latitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="latitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="latitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Latitude</td>
                                     </tr>
                                     <tr class="mp-pp-coordinates" style="display:none;">
-                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="depth" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="depth" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="depth" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="depth" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="depth" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Depth</td>
                                     </tr>
                                     <tr class="mp-pp-coordinates" style="display:none;">
-                                        <td style="text-align:center;"><input type="radio" name="parameters_x" value="time" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_y" value="time" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
-                                        <td style="text-align:center;"><input type="radio" name="parameters_c" value="time" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="time" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="time" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
+                                        <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
                                         <td colspan="2">Time</td>
                                     </tr>
@@ -1984,6 +1986,36 @@
         }
     });
 
+    $('#show-parameter-parameter-sp-checkbox').on('click', function (e) {
+        if ( $('#show-parameter-parameter-sp-checkbox').is(':checked') ) {
+            $('#show-parameter-parameter-mp-checkbox').prop('checked', true);
+            $('.parameter-radio').parent().show();
+            $('.sn-leader').attr('colspan', '5');
+            $('.pp-header').show();
+        }
+        else {
+            $('#show-parameter-parameter-mp-checkbox').prop('checked', false);
+            $('.parameter-radio').parent().hide();
+            $('.sn-leader').attr('colspan', '1');
+            $('.pp-header').hide();
+        }
+    });
+
+    $('#show-parameter-parameter-mp-checkbox').on('click', function (e) {
+        if ( $('#show-parameter-parameter-mp-checkbox').is(':checked') ) {
+            $('#show-parameter-parameter-sp-checkbox').prop('checked', true);
+            $('.parameter-radio').parent().show();
+            $('.sn-leader').attr('colspan', '5');
+            $('.pp-header').show();
+        }
+        else {
+            $('#show-parameter-parameter-sp-checkbox').prop('checked', false);
+            $('.parameter-radio').parent().hide();
+            $('.sn-leader').attr('colspan', '1');
+            $('.pp-header').hide();
+        }
+    });
+
     $('#show-coordinates-sp-checkbox').on('click', function (e) {
         if ( $('#show-coordinates-sp-checkbox').is(':checked') ) {
             $('.sp-pp-coordinates').show();
@@ -2040,7 +2072,7 @@
                 rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
             }
             else {
-                alert('Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.  Select just one of them.');
+                alert('Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter. Select just one of them. (You may plot parameters from multiple platforms by adding platforms after you plot data from a single platform.)');
             }
         }
         else {
@@ -3246,16 +3278,16 @@
                     sp_ids.push(value[2].toString()); 
                     // Use [2], the id for sampledparameters to allow wierd characters in [0], the name
                     parameterButtonText = parameterButtonText + '<tr>' +
-                            '<td style="text-align:center;">' +
+                            '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
-                            '<td style="text-align:center;">' +
+                            '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_y" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
-                            '<td style="text-align:center;">' +
+                            '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_z" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
-                            '<td style="text-align:center;">' +
+                            '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
                             '<td style="text-align:center;">' +
@@ -3273,9 +3305,8 @@
                         // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
                         parameterButtonText = parameterButtonText +
                         '<tr>' +
-                            '<td colspan="5" style="text-align: center; border-color: transparent;">Standard Name</td>' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color: transparent;">' +
-                                '<button class="btn btn-mini stoqs-toggle sampledparameterstandardname">'+ value[1] +'</button>' + 
+                                'Standard Name <button class="btn btn-mini stoqs-toggle sampledparameterstandardname">'+ value[1] +'</button>' + 
                             '</td>' +
                         '</tr>';
                     }
@@ -3295,16 +3326,16 @@
                     // Save ids in list for assigning as a data item on Sampled Parameters for easy lookup
                     mp_ids.push(value[2].toString()); 
                     parameterButtonText = parameterButtonText + '<tr>' +
-                            '<td style="text-align:center;">' +
+                            '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
-                            '<td style="text-align:center;">' +
+                            '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_y" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
-                            '<td style="text-align:center;">' +
+                            '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_z" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
-                            '<td style="text-align:center;">' +
+                            '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
                             '<td style="text-align:center;">' +
@@ -3320,11 +3351,16 @@
                     if (value[1].length != 0) {
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
                         // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
+                        // Change colspan to 5 when Parameter-Parameter radio buttons are shown
                         parameterButtonText = parameterButtonText +
                         '<tr>' +
-                            '<td colspan="5" style="text-align: center; border-color: transparent;">Standard Name</td>' +
+                            '<td colspan="1" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color: transparent;">' +
-                                '<button class="btn btn-mini stoqs-toggle parameterstandardname">'+ value[1] +'</button>' + 
+                                '<div class="row-fluid">' +
+                                    '<div class="span2">Standard Name</div>' +
+                                    '<div class="span8"><button class="btn btn-mini stoqs-toggle parameterstandardname">'+ value[1] +'</button></div>' + 
+                                    '<div class="span2"></div>' +
+                                '</div>' +
                             '</td>' +
                         '</tr>';
                     }
