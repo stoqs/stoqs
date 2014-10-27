@@ -50,6 +50,7 @@ import socket
 import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
 from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
+from loaders.DAPloaders import Base_Loader
 import numpy as np
 
 
@@ -57,7 +58,7 @@ import numpy as np
 logger = logging.getLogger('__main__')
 logger.setLevel(logging.DEBUG)
 
-class ROVCTD_Loader(STOQS_Loader):
+class ROVCTD_Loader(Base_Loader):
     '''
     Loader for ROVCTTD data.  Use all of the well-tested methods used in DAPloaders.py; add
     our own generator for rows of data from the web service for rovtcd data.
@@ -98,7 +99,52 @@ class ROVCTD_Loader(STOQS_Loader):
 
         '''
 
-        pass
+        self.platformName = platformName
+        self.diveNumber = diveNumber
+        self.campaignName = campaignName
+        self.campaignDescription = campaignDescription
+        self.activitytypeName = activitytypeName
+        self.platformColor = platformColor
+        self.dbAlias = dbAlias
+        global_dbAlias = dbAlias
+        self.platformTypeName = platformTypeName
+        self.activityName = activityName
+        self.startDatetime = startDatetime
+        self.endDatetime = endDatetime
+        self.dataStartDatetime = dataStartDatetime  # For when we append data to an existing Activity
+        self.auxCoords = auxCoords
+        self.stride = stride
+        self.grdTerrain = grdTerrain
+
+
+    def _getStartAndEndTimeFromInfoServlet(self):
+        '''Looks like:
+        http://coredata.shore.mbari.org/rovctd/diveinfo/rovdiveinfoservlet?platform=docr&dive=671
+        expdid,diveid,shipname,rovname,divenumber,divestartdtg,diveenddtg,chiefscientist,maxpressure,ctdpcount,minshiplat,maxshiplat,minshiplon,maxshiplon,avgshiplat,avgshiplon
+        5119,6029,wfly,docr,671,2014-10-12T15:16:14Z,2014-10-13T01:38:47Z,Ken Smith,4033.09,2491,35.133035,35.142912,-122.98278,-122.978173,35.13703829,-122.98072495
+        '''
+
+        url = 'http://coredata.shore.mbari.org/rovctd/diveinfo/rovdiveinfoservlet?platform=%s&dive=%d' % (self.platformName, self.diveNumber)
+        
+        for r in csv.DictReader(urllib2.urlopen(url)):
+            sdt = datetime.strptime(r['divestartdtg'], '%Y-%m-%dT%H:%M:%SZ')
+            edt = datetime.strptime(r['diveenddtg'], '%Y-%m-%dT%H:%M:%SZ')
+            start = time.mktime(sdt.timetuple())
+            end = time.mktime(edt.timetuple())
+
+        return start, end
+
+    def initDB(self):
+        '''
+        Skip Checking for valid data from url
+        '''
+        # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
+        if not self.startDatetime or not self.endDatetime:
+            # Would need to read all of the data first to set start and end from the data, maybe better to raise an exception...
+            #raise Exception('Cannot load ROVCTD data without setting an overall start and end time')
+            self.startDatetime, self.endDatetime = self._getStartAndEndTimeFromInfoServlet()
+            self.createActivity()
+
 
     def _genROVCTD(self):
         '''
@@ -157,17 +203,7 @@ def runROVCTDLoader(dNumber, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
-    # Auxillary coordinates are the same for all include_names
-    loader.auxCoords = {}
-    for v in loader.include_names:
-        loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
-
-    try:
-        (nMP, path, parmCountHash, mind, maxd) = loader.process_data(generator)
-    except VariableMissingCoordinatesAttribute, e:
-        logger.exception(e)
-    else:
-        logger.debug("Loaded Activity with name = %s", aName)
+    (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
 
 
 if __name__ == '__main__':
