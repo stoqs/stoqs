@@ -239,7 +239,7 @@
                                                 <Viewpoint id="mp-x3d-viewpoint1" def="vp" centerofrotation="-2711557.9403829873 -4331414.329506527 3801353.4691465236"></Viewpoint>
                                                 <!-- Test GeoViewpoint for Monterey Bay area -->
                                                 <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" geoSystem='"GD" "WE"' position="36.8 -122.1 100000" orientation="1 0 0 -1.57"></GeoViewpoint>
-                                                <Background DEF='bgnd' skyColor="1 1 1"></Background>
+                                                <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
                                                 <Group id='spatial-3d-root' render='true'>
                                                     <Group def="theScene">
                                                         <Shape id="mp-x3d-track"></Shape>
@@ -2448,7 +2448,7 @@
             $('#spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-left').attr('render', 'false');
             $('#spatial-3d-right').attr('render', 'false');
-            $('#spatial-3d-x3d > Scene > Background').attr('skyColor', '1 1 1');
+            $('#spatial-3d-x3d > Scene > Background').attr('skyColor', '.9608 .9608 .9608');
             var newSpeed = $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed') / 100000;
             $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', newSpeed);
             $('#mp-x3d-viewpoint1').attr('zNear', '10');
