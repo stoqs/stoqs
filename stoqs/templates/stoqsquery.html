@@ -2442,6 +2442,10 @@
             $('#mp-x3d-viewpoint1').attr('zFar', '300000');
             $('#mp-x3d-geoviewpoint1').attr('zNear', '10');
             $('#mp-x3d-geoviewpoint1').attr('zFar', '300000');
+            $('#left-column').parent().parent().css( { 'padding-left': '20px' } );
+            $('#collapseSpatial > div').css( { 'padding-top': '9px' } );
+            $('#collapseSpatial > div').css( { 'padding-left': '15px' } );
+            $('#geo-3dplot').css( { 'background-color': '' } );
             $(this).html('<i class="icon-eye-open"></i> Rift it!');
             runtime.exitFrame = function() {}
             rift_feed.close();
@@ -2458,6 +2462,10 @@
             $('#mp-x3d-viewpoint1').attr('zFar', '300000');
             $('#mp-x3d-geoviewpoint1').attr('zNear', '10');
             $('#mp-x3d-geoviewpoint1').attr('zFar', '300000');
+            $('#left-column').parent().parent().css( { 'padding-left': '0px' } );
+            $('#collapseSpatial > div').css( { 'padding-top': '0px' } );
+            $('#collapseSpatial > div').css( { 'padding-left': '0px' } );
+            $('#geo-3dplot').css( { 'background-color': 'black' } );
             $(this).html('<i class="icon-eye-open"></i> Un Rift');
 
             runtime = $('#spatial-3d-x3d')[0].runtime;
