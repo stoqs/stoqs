@@ -116,6 +116,64 @@ class ROVCTD_Loader(Base_Loader):
         self.stride = stride
         self.grdTerrain = grdTerrain
 
+    def makeParmDict(self):
+        '''Make a pydap-type parameter dictionary for passing into self.addParameters()
+        '''
+        p = pydap.model.BaseType()
+        p.attributes = {    'standard_name':    'sea_water_pressure',
+                            'long_name':        'Pressure',
+                            'units':            'db',
+                            'name':             'PRES',
+                       }
+
+        t = pydap.model.BaseType()
+        t.attributes = {    'standard_name':    'sea_water_temperature',
+                            'long_name':        'Temperature',
+                            'units':            'Celsius',
+                            'name':             'TEMP',
+                       }
+
+        s = pydap.model.BaseType()
+        s.attributes = {    'standard_name':    'sea_water_salinity',
+                            'long_name':        'Salinity',
+                            'name':             'PSAL',
+                       }
+
+        o2 = pydap.model.BaseType()
+        o2.attributes = { 
+                            'long_name':        'Oxygen',
+                            'units':            'ml/l',
+                            'name':             'DOXY',
+                       }
+
+        o2alt = pydap.model.BaseType()
+        o2alt.attributes = { 
+                            'long_name':        'Oxygen',
+                            'units':            'ml/l',
+                            'name':             'PSAL',
+                       }
+
+        light = pydap.model.BaseType()
+        light.attributes = { 
+                            'long_name':        'Transmissometer',
+                            'units':            '%',
+                            'name':             'Light',
+                       }
+
+        beamc = pydap.model.BaseType()
+        beamc.attributes = { 
+                            'long_name':        'transmissometer beam attenuation coeff',
+                            'name':             'beamc',
+                       }
+
+        self.parmDict = {   'p': p,
+                            't': t,
+                            's': s,
+                            'o2': o2,
+                            'o2alt': o2alt,
+                            'light': light,
+                            'beamc': beamc,
+                        }
 
     def _getStartAndEndTimeFromInfoServlet(self):
         '''Looks like:
@@ -132,19 +190,20 @@ class ROVCTD_Loader(Base_Loader):
             start = time.mktime(sdt.timetuple())
             end = time.mktime(edt.timetuple())
 
-        return start, end
+        return sdt, edt
 
     def initDB(self):
         '''
-        Skip Checking for valid data from url
         '''
+        # Create Platform and add Parameters
+        self.platform = self.getPlatform(self.platformName, self.platformTypeName)
+        self.makeParmDict()
+        self.addParameters(self.parmDict)
+
         # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
         if not self.startDatetime or not self.endDatetime:
-            # Would need to read all of the data first to set start and end from the data, maybe better to raise an exception...
-            #raise Exception('Cannot load ROVCTD data without setting an overall start and end time')
             self.startDatetime, self.endDatetime = self._getStartAndEndTimeFromInfoServlet()
             self.createActivity()
-
 
     def _genROVCTD(self):
         '''
@@ -156,8 +215,9 @@ class ROVCTD_Loader(Base_Loader):
         '''
 
         ##url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs&r1=p&r2=t&r3=s&r4=o2sbeml&r5=light&r6=beac'
-        url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs'
-        for i,v in enumerate(('elon', 'elon',) + self.vDict.keys()):
+        url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?'
+        url += 'platform=%s&dive=%d&domain=epochsecs' % (self.platformName, self.diveNumber)
+        for i,v in enumerate(['elon', 'elon', 'd', 'lon', 'lat'] + self.vDict.keys()):
             url += '&r%d=%s' % (i, v)
 
         print url
@@ -166,12 +226,18 @@ class ROVCTD_Loader(Base_Loader):
         
             # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
             values = {}
-            for v in self.vDict(keys):
+            for v in self.vDict.keys():
                 values[self.vDict[v]] = r[v]
                 values['time'] = r['epochsecs']
                 values['depth'] = r['d']
-                values['latitude'] = r['elat']
-                values['longitude'] = r['elon']
+                try:
+                    values['latitude'] = r['elat']
+                except KeyError:
+                    values['latitude'] = r['lat']
+                try:
+                    values['longitude'] = r['elon']
+                except KeyError:
+                    values['longitude'] = r['lon']
                 values['timeUnits'] = 'seconds since 1970-01-01 00:00:00'
                 yield values
 
@@ -225,6 +291,7 @@ if __name__ == '__main__':
     # 1413126975,3.6,18.438,33.154,4.901,78.07,0.9903
     # 1413126990,6.5,18.414,33.15,5.333,87.08,0.5534
 
-    runROVCTDLoader(671, 'Test Load', 'Tesing ROVCTD Loader', 'docr671', 'docr', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
+    ##runROVCTDLoader(671, 'Test Load', 'Tesing ROVCTD Loader', 'docr671', 'docr', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
+    runROVCTDLoader(1236, 'Test Load', 'Tesing ROVCTD Loader', 'vnta1236', 'vnta', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
 
 
