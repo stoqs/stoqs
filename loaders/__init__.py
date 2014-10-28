@@ -381,7 +381,7 @@ class STOQS_Loader(object):
         parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
         checks to see if it's in the database.  If it's not in the database it will then add it
         populating the fields from the attributes of the parameter dictionary that is passed.  The
-        dictionary is patterned after the pydab.model.BaseType variable from the NetCDF file (OPeNDAP URL).
+        dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
         '''
 
         # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
