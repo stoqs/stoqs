@@ -217,8 +217,8 @@ class ROVCTD_Loader(Base_Loader):
         ##url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs&r1=p&r2=t&r3=s&r4=o2sbeml&r5=light&r6=beac'
         url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?'
         url += 'platform=%s&dive=%d&domain=epochsecs' % (self.platformName, self.diveNumber)
-        for i,v in enumerate(['elon', 'elon', 'd', 'lon', 'lat'] + self.vDict.keys()):
-            url += '&r%d=%s' % (i, v)
+        for i,v in enumerate(['elon', 'elat', 'd', 'rlon', 'rlat'] + self.vDict.keys()):
+            url += '&r%d=%s' % (i + 1, v)
 
         print url
         for r in csv.DictReader(urllib2.urlopen(url)):
@@ -227,17 +227,17 @@ class ROVCTD_Loader(Base_Loader):
             # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
             values = {}
             for v in self.vDict.keys():
-                values[self.vDict[v]] = r[v]
-                values['time'] = r['epochsecs']
-                values['depth'] = r['d']
+                values[self.vDict[v]] = float(r[v])
+                values['time'] = float(r['epochsecs'])
+                values['depth'] = float(r['d'])
                 try:
-                    values['latitude'] = r['elat']
-                except KeyError:
-                    values['latitude'] = r['lat']
+                    values['latitude'] = float(r['elat'])
+                except ValueError:
+                    values['latitude'] = float(r['rlat'])
                 try:
-                    values['longitude'] = r['elon']
-                except KeyError:
-                    values['longitude'] = r['lon']
+                    values['longitude'] = float(r['elon'])
+                except ValueError:
+                    values['longitude'] = float(r['rlon'])
                 values['timeUnits'] = 'seconds since 1970-01-01 00:00:00'
                 yield values
 
