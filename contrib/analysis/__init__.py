@@ -217,9 +217,19 @@ class BiPlot():
         self.activityStartTime = seaQS['startdate__min'] 
         self.activityEndTime = seaQS['enddate__max']
 
-        self.extent = aQS.extent(field_name='maptrack')
+        self.dataExtent = aQS.extent(field_name='maptrack')
 
-        return self.activityStartTime, self.activityEndTime, self.extent
+        # Expand the computed extent by extendDeg degrees
+        if self.args.extend:
+            allExtent = self.dataExtent
+            extendDeg = self.args.extend
+            allExtent = (allExtent[0] - extendDeg, allExtent[1] - extendDeg, allExtent[2] + extendDeg, allExtent[3] + extendDeg)
+
+        # Override with extent if specified on command line
+        if self.args.extent:
+            allExtent = [float(e) for e in self.args.extent]
+
+        return self.activityStartTime, self.activityEndTime, allExtent
 
     def _getColor(self, platform):
         '''

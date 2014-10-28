@@ -320,6 +320,8 @@ class PlatformsBiPlot(BiPlot):
         parser.add_argument('--mapLabels', action='store_true', help='Put latitude and longitude labels and tics on the map')
         parser.add_argument('--platformColors', action='store', help='Override database platform colors - put in quotes, e.g. "#ff0000"', nargs='*')
         parser.add_argument('--title', action='store', help='Title to appear on top of plot')
+        parser.add_argument('--extend', action='store', help='Extend the data extent for the map boundaries by this value in degrees', type=float)
+        parser.add_argument('--extent', action='store', help='Space separated specific map boundary in degrees: ll_lon ll_lat ur_lon ur_lat', nargs=4, default=[])
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
         self.args = parser.parse_args()
