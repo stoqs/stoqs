@@ -827,7 +827,8 @@
                         <div class="accordion-inner">
                             <input type="checkbox" id="show-parameter-parameter-sp-checkbox" /> Show Parameter-Parameter
                             <input type="checkbox" id="show-coordinates-sp-checkbox" /> Show coordinates
-                            <input type="checkbox" id="show-filtered-sp-checkbox" /> Show filtered out parameters
+                            <input type="checkbox" id="show-filtered-sp-checkbox" /> Filtered out parameters
+                            <input type="checkbox" id="show-sp-standardnames" /> Standard Names
                             <fieldset>
                             <table id="sampledparameter-table" class="table table-condensed">
                                 <thead>
@@ -908,7 +909,8 @@
                         <div class="accordion-inner">
                             <input type="checkbox" id="show-parameter-parameter-mp-checkbox" /> Show Parameter-Parameter
                             <input type="checkbox" id="show-coordinates-mp-checkbox" /> Show coordinates
-                            <input type="checkbox" id="show-filtered-mp-checkbox" /> Show filtered out parameters
+                            <input type="checkbox" id="show-filtered-mp-checkbox" /> Filtered out parameters
+                            <input type="checkbox" id="show-standardnames-mp-checkbox" /> Standard Names
                             <fieldset>
                             <table id="measuredparameter-table" class="table table-condensed">
                                 <thead>
@@ -2013,6 +2015,17 @@
             $('.parameter-radio').parent().hide();
             $('.sn-leader').attr('colspan', '1');
             $('.pp-header').hide();
+        }
+    });
+
+    $('#show-standardnames-mp-checkbox').on('click', function (e) {
+        if ( $('#show-standardnames-mp-checkbox').is(':checked') ) {
+            $('.parameterstandardname').parent().parent().show();
+            enableButton($('.parameterstandardname'));
+        }
+        else {
+            $('.parameterstandardname').parent().parent().hide();
+            disableButton($('.parameterstandardname'));
         }
     });
 
@@ -3312,9 +3325,9 @@
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
                         // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
                         parameterButtonText = parameterButtonText +
-                        '<tr>' +
+                        '<tr style="display:none;">' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color: transparent;">' +
-                                'Standard Name <button class="btn btn-mini stoqs-toggle sampledparameterstandardname">'+ value[1] +'</button>' + 
+                                '<button class="btn btn-mini stoqs-toggle sampledparameterstandardname">'+ value[1] +'</button>' + 
                             '</td>' +
                         '</tr>';
                     }
@@ -3361,14 +3374,10 @@
                         // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
                         // Change colspan to 5 when Parameter-Parameter radio buttons are shown
                         parameterButtonText = parameterButtonText +
-                        '<tr>' +
+                        '<tr style="display:none;">' +
                             '<td colspan="1" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
-                            '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color: transparent;">' +
-                                '<div class="row-fluid">' +
-                                    '<div class="span2">Standard Name</div>' +
-                                    '<div class="span8"><button class="btn btn-mini stoqs-toggle parameterstandardname">'+ value[1] +'</button></div>' + 
-                                    '<div class="span2"></div>' +
-                                '</div>' +
+                            '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color:transparent;text-align:center;">' +
+                                '<button class="btn btn-mini stoqs-toggle parameterstandardname" style="width:75%;">'+ value[1] +'</button>' + 
                             '</td>' +
                         '</tr>';
                     }
@@ -3617,7 +3626,7 @@
                     enableParameterRow($('button', '#' + value[0]).parent().parent());                          // enable and show the whole row 
                     addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
                     ids.push(value[0]);
-                    if (value[1].length != 0) {
+                    if (value[1].length != 0 && $('#show-standardnames-mp-checkbox').is(':checked')) {
                         enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));                                // Enable the standard_name button in the table row
                         enableParameterRow($('button', '#' + value[1] + '--' + value[0] + '-sn').parent().parent());        // enable and show the whole row 
                         ids.push(value[1] + '--' + value[0] + '-sn');
