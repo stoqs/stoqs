@@ -52,25 +52,27 @@ from utils.utils import percentile, median, mode, simplify_points
 from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
 from loaders.DAPloaders import Base_Loader
 import numpy as np
+from collections import defaultdict
 
 
 # Set up logging
 logger = logging.getLogger('__main__')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 class ROVCTD_Loader(Base_Loader):
     '''
     Loader for ROVCTTD data.  Use all of the well-tested methods used in DAPloaders.py; add
     our own generator for rows of data from the web service for rovtcd data.
     '''
-    include_names = ['PRESS', 'TEMP', 'PSAL', 'light', 'sound', 'sigmatheta']
-    vDict = {   'p': 'PRESS',
-                't': 'TEMP',
-                's': 'PSAL',
-                'o2': 'DOXY',
-                'o2alt': 'DOXY_ALT',
-                'light': 'transmissometer',
-                'beac': 'beamc',
+    include_names = ['p', 't', 's', 'o2', 'o2alt', 'light', 'beac']
+    ##include_names = ['p', 't', 's', 'light', 'beac']
+    vDict = {   'p': 'p',
+                't': 't',
+                's': 's',
+                'o2': 'o2',
+                'o2alt': 'o2alt',
+                'light': 'light',
+                'beac': 'beac',
             }
 
     def __init__(self, activityName, platformName, diveNumber, dbAlias='default', campaignName=None, campaignDescription=None,
@@ -150,20 +152,20 @@ class ROVCTD_Loader(Base_Loader):
         o2alt.attributes = { 
                             'long_name':        'Oxygen',
                             'units':            'ml/l',
-                            'name':             'PSAL',
+                            'name':             'DOXYALT',
                        }
 
         light = pydap.model.BaseType()
         light.attributes = { 
                             'long_name':        'Transmissometer',
                             'units':            '%',
-                            'name':             'Light',
+                            'name':             'LIGHT',
                        }
 
-        beamc = pydap.model.BaseType()
-        beamc.attributes = { 
+        beac = pydap.model.BaseType()
+        beac.attributes = { 
                             'long_name':        'transmissometer beam attenuation coeff',
-                            'name':             'beamc',
+                            'name':             'BEAMC',
                        }
 
         self.parmDict = {   'p': p,
@@ -172,7 +174,7 @@ class ROVCTD_Loader(Base_Loader):
                             'o2': o2,
                             'o2alt': o2alt,
                             'light': light,
-                            'beamc': beamc,
+                            'beac': beac,
                         }
 
     def _getStartAndEndTimeFromInfoServlet(self):
@@ -214,22 +216,30 @@ class ROVCTD_Loader(Base_Loader):
         http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs&r1=p&r2=t&r3=s&r4=o2sbeml&r5=light&r6=beac
         '''
 
-        ##url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs&r1=p&r2=t&r3=s&r4=o2sbeml&r5=light&r6=beac'
-        url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?'
-        url += 'platform=%s&dive=%d&domain=epochsecs' % (self.platformName, self.diveNumber)
+        self.url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?'
+        self.url += 'platform=%s&dive=%d&domain=epochsecs' % (self.platformName, self.diveNumber)
         for i,v in enumerate(['elon', 'elat', 'd', 'rlon', 'rlat'] + self.vDict.keys()):
-            url += '&r%d=%s' % (i + 1, v)
+            self.url += '&r%d=%s' % (i + 1, v)
 
-        print url
-        for r in csv.DictReader(urllib2.urlopen(url)):
-            print r
+        print self.url
+        self.vSeen = defaultdict(lambda: 0)
+        for r in csv.DictReader(urllib2.urlopen(self.url)):
         
             # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
             values = {}
             for v in self.vDict.keys():
-                values[self.vDict[v]] = float(r[v])
+                if v not in self.include_names:
+                    continue
+
+                try:
+                    values[self.vDict[v]] = float(r[v])
+                except ValueError:
+                    continue
                 values['time'] = float(r['epochsecs'])
-                values['depth'] = float(r['d'])
+                try:
+                    values['depth'] = float(r['d'])
+                except ValueError:
+                    continue
                 try:
                     values['latitude'] = float(r['elat'])
                 except ValueError:
@@ -239,7 +249,16 @@ class ROVCTD_Loader(Base_Loader):
                 except ValueError:
                     values['longitude'] = float(r['rlon'])
                 values['timeUnits'] = 'seconds since 1970-01-01 00:00:00'
+                self.vSeen[v] += 1
                 yield values
+
+
+    def addResources(self):
+        '''
+        Add Resources for this activity, namely standard links provided in the 
+        Expedition Database.
+        '''
+        pass
 
 
 #
@@ -274,10 +293,8 @@ def runROVCTDLoader(dNumber, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
 if __name__ == '__main__':
     
-    baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'
-    file = 'Dorado389_2010_300_00_300_00_decim.nc'
-    stride = 1000 
-    dbAlias = 'default'
+    stride = 1
+    dbAlias = 'stoqs_rovctd_t'
 
     # OLD Service:
     # http://mww.mbari.org/expd/queries/rovctd-data.asp?date_type=dive&return_type=comma&pltfrm=docr&dive=671
@@ -291,7 +308,7 @@ if __name__ == '__main__':
     # 1413126975,3.6,18.438,33.154,4.901,78.07,0.9903
     # 1413126990,6.5,18.414,33.15,5.333,87.08,0.5534
 
-    ##runROVCTDLoader(671, 'Test Load', 'Tesing ROVCTD Loader', 'docr671', 'docr', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
-    runROVCTDLoader(1236, 'Test Load', 'Tesing ROVCTD Loader', 'vnta1236', 'vnta', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
+    ##runROVCTDLoader(671, 'ROVCTD', 'Tesing ROVCTD Loader', 'docr671', 'docr', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
+    runROVCTDLoader(1236, 'ROVCTD', 'Tesing ROVCTD Loader', 'vnta1236', 'vnta', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
 
 
