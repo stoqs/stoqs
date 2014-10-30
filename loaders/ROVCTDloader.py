@@ -64,8 +64,7 @@ class ROVCTD_Loader(Base_Loader):
     Loader for ROVCTTD data.  Use all of the well-tested methods used in DAPloaders.py; add
     our own generator for rows of data from the web service for rovtcd data.
     '''
-    include_names = ['p', 't', 's', 'o2', 'o2alt', 'light', 'beac']
-    ##include_names = ['p', 't', 's', 'light', 'beac']
+    include_names = ['p', 't', 's', 'o2', 'o2alt', 'light', 'beac', 'analog1', 'analog2', 'analog3', 'analog4']
     vDict = {   'p': 'p',
                 't': 't',
                 's': 's',
@@ -73,6 +72,15 @@ class ROVCTD_Loader(Base_Loader):
                 'o2alt': 'o2alt',
                 'light': 'light',
                 'beac': 'beac',
+                'analog1': 'analog1',
+                'analog2': 'analog2',
+                'analog3': 'analog3',
+                'analog4': 'analog4',
+                'ptsflag': 'ptsflag',
+                'o2flag': 'o2flag',
+                'o2altflag': 'o2altflag',
+                'lightflag': 'lightflag',
+                'latlonflag': 'latlonflag',
             }
 
     def __init__(self, activityName, platformName, diveNumber, dbAlias='default', campaignName=None, campaignDescription=None,
@@ -124,7 +132,7 @@ class ROVCTD_Loader(Base_Loader):
         p = pydap.model.BaseType()
         p.attributes = {    'standard_name':    'sea_water_pressure',
                             'long_name':        'Pressure',
-                            'units':            'db',
+                            'units':            'decibars',
                             'name':             'PRES',
                        }
 
@@ -168,6 +176,30 @@ class ROVCTD_Loader(Base_Loader):
                             'name':             'BEAMC',
                        }
 
+        analog1 = pydap.model.BaseType()
+        analog1.attributes = { 
+                            'long_name':        'A/D channel 1',
+                            'units':            'volts',
+                       }
+
+        analog2 = pydap.model.BaseType()
+        analog2.attributes = { 
+                            'long_name':        'A/D channel 2',
+                            'units':            'volts',
+                       }
+
+        analog3 = pydap.model.BaseType()
+        analog3.attributes = { 
+                            'long_name':        'A/D channel 3',
+                            'units':            'volts',
+                       }
+
+        analog4 = pydap.model.BaseType()
+        analog4.attributes = { 
+                            'long_name':        'A/D channel 4',
+                            'units':            'volts',
+                       }
+
         self.parmDict = {   'p': p,
                             't': t,
                             's': s,
@@ -175,6 +207,10 @@ class ROVCTD_Loader(Base_Loader):
                             'o2alt': o2alt,
                             'light': light,
                             'beac': beac,
+                            'analog1': analog1,
+                            'analog2': analog2,
+                            'analog3': analog3,
+                            'analog4': analog4,
                         }
 
     def _getStartAndEndTimeFromInfoServlet(self):
@@ -313,7 +349,7 @@ if __name__ == '__main__':
     # 1413126975,3.6,18.438,33.154,4.901,78.07,0.9903
     # 1413126990,6.5,18.414,33.15,5.333,87.08,0.5534
 
-    ##runROVCTDLoader(671, 'ROVCTD', 'Tesing ROVCTD Loader', 'docr671', 'docr', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
-    runROVCTDLoader(1236, 'ROVCTD', 'Tesing ROVCTD Loader', 'vnta1236', 'vnta', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
+    #runROVCTDLoader(1236, 'ROVCTD', 'Tesing ROVCTD Loader', 'vnta1236', 'vnta', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
+    runROVCTDLoader(1247, 'ROVCTD', 'Tesing ROVCTD Loader', 'vnta1236', 'vnta', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
 
 
