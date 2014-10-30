@@ -49,7 +49,7 @@ import logging
 import socket
 import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
+from loaders import STOQS_Loader, LoadScript, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
 from loaders.DAPloaders import Base_Loader
 import numpy as np
 from collections import defaultdict
@@ -302,54 +302,83 @@ class ROVCTD_Loader(Base_Loader):
         pass
 
 
-#
-# Helper methods that expose a common interface for executing the loaders for specific platforms
-#
-def runROVCTDLoader(dNumber, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, grdTerrain=None):
+def process_command_line():
+    '''The argparse library is included in Python 2.7 and is an added package for STOQS.
     '''
-    Run the DAPloader for Dorado AUVCTD trajectory data and update the Activity with 
-    attributes resulting from the load into dbAlias. Designed to be called from script
-    that loads the data.  Following the load important updates are made to the database.
-    '''
-    logger.debug("Instantiating ROVCTD_Loader for %s%d" % (pName, dNumber))
-    loader = ROVCTD_Loader(
-            diveNumber = dNumber,
-            campaignName = cName,
-            campaignDescription = cDesc,
-            dbAlias = dbAlias,
-            activityName = aName,
-            activitytypeName = aTypeName,
-            platformName = pName,
-            platformColor = pColor,
-            platformTypeName = pTypeName,
-            stride = stride,
-            grdTerrain = grdTerrain)
+    import argparse
+    from argparse import RawTextHelpFormatter
 
-    if parmList:
-        logger.debug("Setting include_names to %s", parmList)
-        loader.include_names = parmList
+    examples = 'Examples:' + '\n\n'
+    examples += "Initial test dives requested by Rob:\n"
+    examples += sys.argv[0] + " --database stoqs_rovctd_t --dives V1236 V1247 V1321 V1575 V1610 V1668 T257 V1964 V2069 "
+    examples += " V2329 V2354 V2421 V2636 V2661 V2715 V2983 V3006 V3079 V3334 V3363 V3417 V3607 V3630 V3646 D449 D478 V3736"
+    examples += " V3766 V3767 V3774 D646"
+    examples += "\n"
+    examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
 
-    (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
+    parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
+                                     description='Load ROVCTD data into a STOQS database',
+                                     epilog=examples)
+
+    parser.add_argument('-d', '--database', action='store', help='Database alias', required=True)
+    parser.add_argument('--dives', action='store', help='Space separated list of dives in format <ROV_letter><number>', nargs='*', default=[], required=True)
+    parser.add_argument('--campaignName', action='store', help='Short name describing this collection of dives', required=True)
+    parser.add_argument('--campaignDescription', action='store', help='Longer name explaining purpose for having these dives together', default='')
+    parser.add_argument('--stride', action='store', help='Longer name explaining purpose for having these dives together', type=int, default=1)
+
+    args = parser.parse_args()
+    commandline = ' '.join(sys.argv)
+
+    return args, commandline
 
 
 if __name__ == '__main__':
     
-    stride = 1
-    dbAlias = 'stoqs_rovctd_t'
+    args, commandline = process_command_line()
 
-    # OLD Service:
-    # http://mww.mbari.org/expd/queries/rovctd-data.asp?date_type=dive&return_type=comma&pltfrm=docr&dive=671
-    # usec,rovCtdDtg,rovCtdDtgFlag,vehicle,depth,depthFlag,temper,temperFlag,salin,salinFlag,oxyg,oxygFlag,light,lightFlag,sound,soundFlag,sigmatheta,sigmathetaFlag,lat,latFlag,lon,lonFlag
-    # 1413126975,10/12/2014 15:16:15,2,docr,3.57,0,18.438,0,33.154,0,4.901,0,78.07,2,1515.018,0,23.7525,0,36.417282,2,-122.298445,2
-    # 1413126990,10/12/2014 15:16:30,2,docr,6.45,2,18.414,2,33.15,2,5.333,2,87.08,2,1514.992,2,23.7555,2,36.417282,2,-122.298445,2
+    for diveName in args.dives:
+        if diveName[0].lower() == 'v':
+            pName = 'vnta'
+            pColor = 'ff0000'
+        elif diveName[0].lower() == 't':
+            pName = 'tibr'
+            pColor = 'ffff00'
+        elif diveName[0].lower() == 'd':
+            pName = 'docr'
+            pColor = 'ff00ff'
+        dNumber = int(diveName[1:])
 
-    # NEW Service:
-    # http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs&r1=p&r2=t&r3=s&r4=o2sbeml&r5=light&r6=beac
-    # epochsecs,p,t,s,o2sbeml,light,beac
-    # 1413126975,3.6,18.438,33.154,4.901,78.07,0.9903
-    # 1413126990,6.5,18.414,33.15,5.333,87.08,0.5534
+        # Instantiate Loader for this dive
+        loader = ROVCTD_Loader( 
+                    diveNumber = dNumber,
+                    campaignName = args.campaignName,
+                    campaignDescription = args.campaignDescription,
+                    dbAlias = args.database,
+                    activityName = diveName,
+                    activitytypeName = 'ROV Dive',
+                    platformName = pName,
+                    platformColor = pColor,
+                    platformTypeName = 'rov',
+                    stride = args.stride,
+                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
+                )
 
-    #runROVCTDLoader(1236, 'ROVCTD', 'Tesing ROVCTD Loader', 'vnta1236', 'vnta', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
-    runROVCTDLoader(1247, 'ROVCTD', 'Tesing ROVCTD Loader', 'vnta1236', 'vnta', 'ff0000', 'rov', 'ROV Dive', [], dbAlias, stride)
+        # Load the data
+        (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
 
+    ls = LoadScript(args.database, args.campaignName, args.campaignDescription,
+                    x3dTerrains = {
+                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                        'VerticalExaggeration': '10',
+                                        'speed': '1',
+                                    }
+                    },
+                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
+            )
+
+    # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
+    ls.addTerrainResources()
 
