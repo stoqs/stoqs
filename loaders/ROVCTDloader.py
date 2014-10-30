@@ -221,16 +221,16 @@ class ROVCTD_Loader(Base_Loader):
         for i,v in enumerate(['elon', 'elat', 'd', 'rlon', 'rlat'] + self.vDict.keys()):
             self.url += '&r%d=%s' % (i + 1, v)
 
-        print self.url
+        logger.info(self.url)
         self.vSeen = defaultdict(lambda: 0)
+
+        # Read entire response to fill a dictionary so that we can yield by Parameter rather than by Measurement - as process_data expects
+        valuesByParm = defaultdict(lambda: [])
         for r in csv.DictReader(urllib2.urlopen(self.url)):
-        
-            # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
-            values = {}
             for v in self.vDict.keys():
+                values = {}
                 if v not in self.include_names:
                     continue
-
                 try:
                     values[self.vDict[v]] = float(r[v])
                 except ValueError:
@@ -249,9 +249,14 @@ class ROVCTD_Loader(Base_Loader):
                 except ValueError:
                     values['longitude'] = float(r['rlon'])
                 values['timeUnits'] = 'seconds since 1970-01-01 00:00:00'
-                self.vSeen[v] += 1
-                yield values
 
+                valuesByParm[v].append(values)
+                self.vSeen[v] += 1
+
+        # Now yield the rows the same as is done in DAPloaders.py
+        for p,d in valuesByParm.iteritems():
+            for values in d:
+                yield values
 
     def addResources(self):
         '''
