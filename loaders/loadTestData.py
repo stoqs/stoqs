@@ -46,6 +46,7 @@ cl = CANONLoader('default', 'Initial Test Database',
 # Assign input data sets from OPeNDAP URLs pointing to Discrete Sampling Geometry CF-NetCDF sources
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
 cl.dorado_files = [ 'Dorado389_2010_300_00_300_00_decim.nc' ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 'fl700_uncorr', 'salinity', 'biolume' ]
 
 # Execute the load
 cl.process_command_line()
