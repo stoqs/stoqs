@@ -86,7 +86,7 @@ class ROVCTD_Loader(Base_Loader):
     def __init__(self, activityName, platformName, diveNumber, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None,
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
-                grdTerrain=None ):
+                grdTerrain=None, args=None):
         '''
         Given an ROV name (platformName) and a diveNumber retrieve the data and load into a STOQS database.  This is quite similar
         to DAPloaders Base_Loader, but different enough to warrant its own implementation - mainly replacing the url argument with
@@ -118,13 +118,17 @@ class ROVCTD_Loader(Base_Loader):
         self.dbAlias = dbAlias
         global_dbAlias = dbAlias
         self.platformTypeName = platformTypeName
-        self.activityName = activityName
+        if stride > 1:
+            self.activityName = activityName + '(stride=%d)' %stride
+        else:
+            self.activityName = activityName
         self.startDatetime = startDatetime
         self.endDatetime = endDatetime
         self.dataStartDatetime = dataStartDatetime  # For when we append data to an existing Activity
         self.auxCoords = auxCoords
         self.stride = stride
         self.grdTerrain = grdTerrain
+        self.args = args
 
     def makeParmDict(self):
         '''Make a pydap-type parameter dictionary for passing into self.addParameters()
@@ -146,6 +150,7 @@ class ROVCTD_Loader(Base_Loader):
         s = pydap.model.BaseType()
         s.attributes = {    'standard_name':    'sea_water_salinity',
                             'long_name':        'Salinity',
+                            'units':            '',
                             'name':             'PSAL',
                        }
 
@@ -243,12 +248,13 @@ class ROVCTD_Loader(Base_Loader):
             self.startDatetime, self.endDatetime = self._getStartAndEndTimeFromInfoServlet()
             self.createActivity()
 
-    def _genROVCTD(self):
+    def getTotalRecords(self):
+        '''Return number of rows from that the servlet returns for this dive - overriding method in base class
         '''
-        Generator of ROVCTD trajectory data. The data values are a function of time and position as returned
-        by the web service. Yield a row for each measurement along with the spatial/temporal coordinates of
-        that measurement.
-        Example URL to get data: 
+        return self.count
+
+    def _buildValuesByParm(self):
+        '''Example URL to get data: 
         http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs&r1=p&r2=t&r3=s&r4=o2sbeml&r5=light&r6=beac
         '''
 
@@ -261,21 +267,53 @@ class ROVCTD_Loader(Base_Loader):
         self.vSeen = defaultdict(lambda: 0)
 
         # Read entire response to fill a dictionary so that we can yield by Parameter rather than by Measurement - as process_data expects
-        valuesByParm = defaultdict(lambda: [])
-        for r in csv.DictReader(urllib2.urlopen(self.url)):
+        # Apply QC flags and stride here
+        self.valuesByParm = defaultdict(lambda: [])
+        for i, r in enumerate(csv.DictReader(urllib2.urlopen(self.url))):
+            if i % self.args.stride:
+                continue
+
+            try:
+                if int(r['latlonflag']) < self.args.qcFlag:
+                    continue
+            except ValueError:
+                # Some flag values are not set - assume that it would be the default value: 2
+                logger.warn('latlonflag flag value not sets')
+
             for v in self.vDict.keys():
                 values = {}
                 if v not in self.include_names:
                     continue
+
                 try:
                     values[self.vDict[v]] = float(r[v])
                 except ValueError:
                     continue
+                else:
+                    try:
+                        if v in ('p', 't', 's'):
+                            if int(r['ptsflag']) < self.args.qcFlag:
+                                continue
+                        elif v == 'o2':
+                            if int(r['o2flag']) < self.args.qcFlag:
+                                continue
+                        elif v == 'o2alt':
+                            if int(r['o2altflag']) < self.args.qcFlag:
+                                continue
+                        elif v == 'light':
+                            if int(r['lightflag']) < self.args.qcFlag:
+                                continue
+                    except ValueError:
+                        # Some flag values are not set - assume that they would be the default value: 2
+                        logger.warn('QC flag value not set for v = %s' % v)
+    
                 values['time'] = float(r['epochsecs'])
+
                 try:
                     values['depth'] = float(r['d'])
                 except ValueError:
                     continue
+
                 try:
                     values['latitude'] = float(r['elat'])
                 except ValueError:
@@ -284,13 +322,20 @@ class ROVCTD_Loader(Base_Loader):
                     values['longitude'] = float(r['elon'])
                 except ValueError:
                     values['longitude'] = float(r['rlon'])
+
                 values['timeUnits'] = 'seconds since 1970-01-01 00:00:00'
 
-                valuesByParm[v].append(values)
+                self.valuesByParm[v].append(values)
                 self.vSeen[v] += 1
 
-        # Now yield the rows the same as is done in DAPloaders.py
-        for p,d in valuesByParm.iteritems():
+        self.count = np.sum(self.vSeen.values())
+
+    def _genROVCTD(self):
+        '''
+        Generator of ROVCTD trajectory data. The data values are a function of time and position as returned
+        by the web service. Yield values by Parameter.
+        '''
+        for p,d in self.valuesByParm.iteritems():
             for values in d:
                 yield values
 
@@ -299,6 +344,7 @@ class ROVCTD_Loader(Base_Loader):
         Add Resources for this activity, namely standard links provided in the 
         Expedition Database.
         '''
+        # For now just override the base class method which expects an OPeNDAP data source
         pass
 
 
@@ -310,11 +356,13 @@ def process_command_line():
 
     examples = 'Examples:' + '\n\n'
     examples += "Initial test dives requested by Rob:\n"
-    examples += sys.argv[0] + " --database stoqs_rovctd_t --dives V1236 V1247 V1321 V1575 V1610 V1668 T257 V1964 V2069 "
+    examples += sys.argv[0] + " --database stoqs_rovctd_t --dives V1236 V1247 V1321 V1575 V1610 V1668 T257 V1964 V2069"
     examples += " V2329 V2354 V2421 V2636 V2661 V2715 V2983 V3006 V3079 V3334 V3363 V3417 V3607 V3630 V3646 D449 D478 V3736"
-    examples += " V3766 V3767 V3774 D646"
+    examples += " V3766 V3767 V3774 D646\n"
     examples += "\n"
-    examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
+    examples += "Assumes that a STOQS database has already been set up following steps 4-7 from the LOADING file.\n"
+    examples += "\n"
+    examples += '\nIf running from cde-package replace ".py" with ".py.cde".'
 
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                      description='Load ROVCTD data into a STOQS database',
@@ -323,7 +371,8 @@ def process_command_line():
     parser.add_argument('-d', '--database', action='store', help='Database alias', required=True)
     parser.add_argument('--dives', action='store', help='Space separated list of dives in format <ROV_letter><number>', nargs='*', default=[], required=True)
     parser.add_argument('--campaignName', action='store', help='Short name describing this collection of dives', required=True)
-    parser.add_argument('--campaignDescription', action='store', help='Longer name explaining purpose for having these dives together', default='')
+    parser.add_argument('--campaignDescription', action='store', help='Longer name explaining purpose for having these dives assembeled together', default='')
+    parser.add_argument('--qcFlag', action='store', help="Load only data that have flags of this value and above. QC flags: 0=bad, 1=suspect, 2=default, 3=human checked ", type=int, choices=[0,1,2,3], default=2)
     parser.add_argument('--stride', action='store', help='Longer name explaining purpose for having these dives together', type=int, default=1)
 
     args = parser.parse_args()
@@ -360,10 +409,12 @@ if __name__ == '__main__':
                     platformColor = pColor,
                     platformTypeName = 'rov',
                     stride = args.stride,
+                    args = args,
                     grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
                 )
 
         # Load the data
+        loader._buildValuesByParm()
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
 
     ls = LoadScript(args.database, args.campaignName, args.campaignDescription,
@@ -373,7 +424,7 @@ if __name__ == '__main__':
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                                         'VerticalExaggeration': '10',
-                                        'speed': '1',
+                                        'speed': '0.1',
                                     }
                     },
                     grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
