@@ -363,7 +363,7 @@ class Drift():
         examples += " http://odss.mbari.org/trackingdb/position/stella122/between/20140922T171500/20141010T000000/data.csv"
         examples += " --pngFileName foo.png --start 20140923T180000 --end 20140925T150000"
         examples += "\n"
-        examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
+        examples += '\nIf running from cde-package replace ".py" with ".py.cde".'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Script to produce products to help understand drift caused by currents in the ocean',
@@ -381,7 +381,7 @@ class Drift():
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
         parser.add_argument('--extend', action='store', help='Extend the data extent for the map boundaries by this value in degrees', default=0.05, type=float)
-        parser.add_argument('--extent', action='store', help='Space separated specific map boundary in degrees: ll_lon ll_lat ur_lon ur_lat', nargs='*', default=[])
+        parser.add_argument('--extent', action='store', help='Space separated specific map boundary in degrees: ll_lon ll_lat ur_lon ur_lat', nargs=4, default=[])
 
         parser.add_argument('--title', action='store', help='Title for plots, will override default title created if --start specified')
         parser.add_argument('--kmlFileName', action='store', help='Name of file for KML output')
