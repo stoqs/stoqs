@@ -59,6 +59,10 @@ from collections import defaultdict
 logger = logging.getLogger('__main__')
 logger.setLevel(logging.INFO)
 
+class DiveInfoServletException(Exception):
+    pass
+
+
 class ROVCTD_Loader(Base_Loader):
     '''
     Loader for ROVCTTD data.  Use all of the well-tested methods used in DAPloaders.py; add
@@ -232,8 +236,11 @@ class ROVCTD_Loader(Base_Loader):
             edt = datetime.strptime(r['diveenddtg'], '%Y-%m-%dT%H:%M:%SZ')
             start = time.mktime(sdt.timetuple())
             end = time.mktime(edt.timetuple())
-
-        return sdt, edt
+   
+        try: 
+            return sdt, edt
+        except UnboundLocalError:
+            raise DiveInfoServletException('Cannot get start and end time using %s' % url)
 
     def initDB(self):
         '''
@@ -252,6 +259,18 @@ class ROVCTD_Loader(Base_Loader):
         '''Return number of rows from that the servlet returns for this dive - overriding method in base class
         '''
         return self.count
+
+    def inBBOX(self, lon, lat):
+        '''Return True if point is in bbox or if bbox not specified on command line
+        '''
+        if self.args.bbox:
+            bb = [float(e) for e in self.args.bbox]
+            if lon > bb[0] and lon < bb[2] and lat > bb[1] and lat < bb[3]:
+                return True
+            else:
+                return False
+        else:
+            return True
 
     def _buildValuesByParm(self):
         '''Example URL to get data: 
@@ -278,7 +297,7 @@ class ROVCTD_Loader(Base_Loader):
                     continue
             except ValueError:
                 # Some flag values are not set - assume that it would be the default value: 2
-                logger.warn('latlonflag flag value not sets')
+                logger.warn('latlonflag flag value not set in row %d for %s' % (i, self.activityName))
 
             for v in self.vDict.keys():
                 values = {}
@@ -305,7 +324,7 @@ class ROVCTD_Loader(Base_Loader):
                                 continue
                     except ValueError:
                         # Some flag values are not set - assume that they would be the default value: 2
-                        logger.warn('QC flag value not set for v = %s' % v)
+                        logger.warn('QC flag value not set for v = %s in row %d for %s' % (v, i, self.activityName))
     
                 values['time'] = float(r['epochsecs'])
 
@@ -322,6 +341,9 @@ class ROVCTD_Loader(Base_Loader):
                     values['longitude'] = float(r['elon'])
                 except ValueError:
                     values['longitude'] = float(r['rlon'])
+
+                if not self.inBBOX(values['longitude'], values['latitude']):
+                    continue
 
                 values['timeUnits'] = 'seconds since 1970-01-01 00:00:00'
 
@@ -356,9 +378,11 @@ def process_command_line():
 
     examples = 'Examples:' + '\n\n'
     examples += "Initial test dives requested by Rob:\n"
-    examples += sys.argv[0] + " --database stoqs_rovctd_t --dives V1236 V1247 V1321 V1575 V1610 V1668 T257 V1964 V2069"
+    examples += sys.argv[0] + " --database stoqs_rovctd_mw97 --dives V1236 V1247 V1321 V1575 V1610 V1668 T257 V1964 V2069"
     examples += " V2329 V2354 V2421 V2636 V2661 V2715 V2983 V3006 V3079 V3334 V3363 V3417 V3607 V3630 V3646 D449 D478 V3736"
-    examples += " V3766 V3767 V3774 D646\n"
+    examples += " V3766 V3767 V3774 D646 --bbox -122.1 36.65 -122.0 36.75"
+    examples += " --campaignName 'Midwater Transect dives 1997 - 2014'"
+    examples += " --campaignDescription 'Midwater Transect dives made with Ventana and Doc Ricketts from 1997 - 2014. Three to four dives/year selected, representing spring, summer and fall (~ beginning upwelling, upwelling and post-upwelling)'"
     examples += "\n"
     examples += "Assumes that a STOQS database has already been set up following steps 4-7 from the LOADING file.\n"
     examples += "\n"
@@ -374,6 +398,7 @@ def process_command_line():
     parser.add_argument('--campaignDescription', action='store', help='Longer name explaining purpose for having these dives assembeled together', default='')
     parser.add_argument('--qcFlag', action='store', help="Load only data that have flags of this value and above. QC flags: 0=bad, 1=suspect, 2=default, 3=human checked ", type=int, choices=[0,1,2,3], default=2)
     parser.add_argument('--stride', action='store', help='Longer name explaining purpose for having these dives together', type=int, default=1)
+    parser.add_argument('--bbox', action='store', help='Bounding box for measurements to include in degrees: ll_lon ll_lat ur_lon ur_lat', nargs=4, default=[])
 
     args = parser.parse_args()
     commandline = ' '.join(sys.argv)
@@ -415,7 +440,10 @@ if __name__ == '__main__':
 
         # Load the data
         loader._buildValuesByParm()
-        (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
+        try:
+            (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
+        except DiveInfoServletException as e:
+            logger.error(e)
 
     ls = LoadScript(args.database, args.campaignName, args.campaignDescription,
                     x3dTerrains = {
