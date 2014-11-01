@@ -202,8 +202,8 @@ class Base_Loader(STOQS_Loader):
                     
             elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile': 
                 logger.debug('Getting timeseries start time for v = %s', v)
-                minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
-                maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+                minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'].lower())
+                maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'].lower())
 
         logger.debug('minDT = %s', minDT)
         logger.debug('maxDT = %s', maxDT)
@@ -251,6 +251,8 @@ class Base_Loader(STOQS_Loader):
             mv = self.ds[var].attributes['missing_value']
         except KeyError:
             logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
+        except AttributeError as e:
+            logger.debug(e)
         else:
             return mv
 
@@ -268,6 +270,8 @@ class Base_Loader(STOQS_Loader):
             except:
                 logger.debug('Cannot get attribute FillValue for variable %s from url %s', var, self.url)
             return None
+        except AttributeError as e:
+            logger.debug(e)
         else:
             return fv
 
@@ -780,11 +784,11 @@ class Base_Loader(STOQS_Loader):
         return _innerInsertRow(self, parmCount, parameterCount, measurement, row)
 
 
-    def process_data(self): 
+    def process_data(self, generator=None, featureType=''): 
       '''
       Wrapper so as to apply self.dbAlias in the decorator
       '''
-      def innerProcess_data(self):
+      def innerProcess_data(self, generator=None, featureType=''):
         '''
         Iterate over the data source and load the data in by creating new objects
         for each measurement.
@@ -806,18 +810,24 @@ class Base_Loader(STOQS_Loader):
         for key in self.include_names:
             parmCount[key] = 0
 
-        self.totalRecords = self.getTotalRecords()
 
-        logger.info('self.getFeatureType() = %s', self.getFeatureType())
-        if self.getFeatureType() == 'timeseriesprofile':
-            data_generator = self._genTimeSeriesGridType()
-            featureType = 'timeseriesprofile'
-        elif self.getFeatureType() == 'timeseries':
-            data_generator = self._genTimeSeriesGridType()
-            featureType = 'timeseries'
-        elif self.getFeatureType() == 'trajectory':
-            data_generator = self._genTrajectory()
+        if generator:
+            logger.info('Using data generator passed into process_data')
+            data_generator = generator()
             featureType = 'trajectory'
+        else:
+            logger.info('self.getFeatureType() = %s', self.getFeatureType())
+            if self.getFeatureType() == 'timeseriesprofile':
+                data_generator = self._genTimeSeriesGridType()
+                featureType = 'timeseriesprofile'
+            elif self.getFeatureType() == 'timeseries':
+                data_generator = self._genTimeSeriesGridType()
+                featureType = 'timeseries'
+            elif self.getFeatureType() == 'trajectory':
+                data_generator = self._genTrajectory()
+                featureType = 'trajectory'
+
+        self.totalRecords = self.getTotalRecords()
 
         if not featureType:
             raise Exception("Global attribute 'featureType' is not one of 'trajectory', 'timeSeries', or 'timeSeriesProfile' - see http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
@@ -902,7 +912,13 @@ class Base_Loader(STOQS_Loader):
                 logger.warn(e)
 
         # Update the Activity with information we now have following the load
-        newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, ' '.join(self.varsLoaded), datetime.utcnow())
+        try:
+            varList = ' '.join(self.varsLoaded)
+        except AttributeError:
+            # ROVCTDloader creates self.vSeen dictionary with counts of each parameter
+            varList = ' '.join(self.vSeen.keys())
+
+        newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, varList, datetime.utcnow())
         logger.debug("Updating its comment with newComment = %s", newComment)
 
         num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
@@ -929,7 +945,7 @@ class Base_Loader(STOQS_Loader):
         self.updateActivityParameterStats(parameterCount)
         self.updateCampaignStartEnd()
         self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
-        if self.getFeatureType().lower() == 'trajectory':
+        if featureType.lower() == 'trajectory':
             self.insertSimpleDepthTimeSeries()
             self.saveBottomDepth()
             self.insertSimpleBottomDepthTimeSeries()
@@ -940,7 +956,7 @@ class Base_Loader(STOQS_Loader):
 
         return self.loaded, path, parmCount, mindepth, maxdepth
 
-      return innerProcess_data(self)
+      return innerProcess_data(self, generator, featureType)
 
 
 class Trajectory_Loader(Base_Loader):

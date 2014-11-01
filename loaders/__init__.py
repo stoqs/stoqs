@@ -197,8 +197,15 @@ class LoadScript(object):
         if not self.x3dTerrains:
             return
 
+        # Enable use of this method without calling process_command_line() - as is done in ROVCTDloader.py
+        if not hasattr(self, 'dbAlias'):
+            self.dbAlias = self.base_dbAlias
+        if not hasattr(self, 'campaignName'):
+            self.campaignName = self.base_campaignName
+        
         resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
                                 name='x3dterrain', description='X3D Terrain information for Spatial 3D visualization')
+            
         self.logger.info('Adding to ResourceType: %s', resourceType)
         self.logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
         campaign = m.Campaign.objects.using(self.dbAlias).get(name=self.campaignName)
