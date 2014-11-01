@@ -59,6 +59,7 @@ cl.dorado_files = [
                     'Dorado389_2014_072_00_072_00_decim.nc', 
                     'Dorado389_2014_072_01_072_01_decim.nc', 
                   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 'fl700_uncorr', 'salinity', 'biolume' ]
 
 # Spray glider - for just the duration of the campaign
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
@@ -82,7 +83,7 @@ cl.rcpctd_files = [
 'simz2014c01.nc',  'simz2014c04.nc',  'simz2014c07.nc',  'simz2014c10.nc',  'simz2014c13.nc',  'simz2014c16.nc',  'simz2014c19.nc',  'simz2014c22.nc',
 'simz2014c02.nc',  'simz2014c05.nc',  'simz2014c08.nc',  'simz2014c11.nc',  'simz2014c14.nc',  'simz2014c17.nc',  'simz2014c20.nc',  'simz2014c23.nc',
                       ]
-cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
+cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201309/'
