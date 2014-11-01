@@ -53,6 +53,7 @@ cl.dorado_files = [
                     'Dorado389_2013_227_01_227_01_decim.nc', 'Dorado389_2013_228_00_228_00_decim.nc',
                     'Dorado389_2013_228_01_228_01_decim.nc',
                   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 'fl700_uncorr', 'salinity', 'biolume' ]
 
 # Spray glider - for just the duration of the campaign
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
