@@ -461,3 +461,6 @@ if __name__ == '__main__':
     # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
     ls.addTerrainResources()
 
+    print "All Done."
+
+
