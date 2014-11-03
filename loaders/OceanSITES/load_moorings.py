@@ -65,7 +65,8 @@ def loadMoorings(loader, stride=1):
     for url in urls:
         print url
         aName = url.split('/')[-1].split('.')[0]
-        pName = aName.replace('_Time', '')
+        # Use OceanSITES naming convention for platform "OS_<platformName>_xxx_R|D_<type>.nc"
+        pName = aName.split('_')[1]
         if pName.find('-') != -1:
             logger.warn("Replacing '-' characters in platform name %s with '_'s", pName)
             pName = pName.replace('-', '_')
