@@ -59,25 +59,28 @@ def loadMoorings(loader, stride=1):
     ##c = Crawl("http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/catalog.html", select=[".*_TS.nc$"])
     c = Crawl("http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/MBARI/catalog.html", select=[".*_TS.nc$"])
     urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-    # TODO: Replace with HSV rotation values
-    colors = loader.colors.values()
 
+    # First pass through urls matching OceanSITES pattern to collect platform names to get colors
+    # Use OceanSITES naming convention for platform "OS_<platformName>_xxx_R|D_<type>.nc"
+    pNames = set()
     for url in urls:
-        print url
-        aName = url.split('/')[-1].split('.')[0]
-        # Use OceanSITES naming convention for platform "OS_<platformName>_xxx_R|D_<type>.nc"
-        pName = aName.split('_')[1]
-        if pName.find('-') != -1:
-            logger.warn("Replacing '-' characters in platform name %s with '_'s", pName)
-            pName = pName.replace('-', '_')
+        pNames.add(url.split('/')[-1].split('.')[0].split('_')[1])
 
+    pColors = {}
+    for pName, color in zip(sorted(pNames), loader.getColor(len(pNames))) :
+        pColors[pName] = color
+
+    # Now loop again, this time loading the data 
+    for url in urls:
         logger.info("Executing runMooringLoader with url = %s", url)
-        try:
-            runMooringLoader(url, loader.campaignName, osl.campaignDescription, aName, pName, colors.pop(), 'mooring', 'Mooring Deployment', 
+        aName = url.split('/')[-1].split('.')[0]
+        pName = aName.split('_')[1]
+        ##try:
+        runMooringLoader(url, loader.campaignName, osl.campaignDescription, aName, pName, pColors[pName], 'mooring', 'Mooring Deployment', 
                             loader.parms, loader.dbAlias, stride, loader.startDatetime, loader.endDatetime, osl.grdTerrain)
         ##except Exception, e:
-        except KeyError as e:
-            logger.error('%s. Skipping this dataset.', e)
+        ##except KeyError as e:
+        ##    logger.error('%s. Skipping this dataset.', e)
 
 
 # Execute the load

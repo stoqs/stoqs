@@ -28,6 +28,7 @@ import DAPloaders
 from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader 
 from loaders import LoadScript
 import logging
+import colorsys
 
 logger = logging.getLogger('__main__')
 
@@ -45,16 +46,16 @@ class OSLoader(LoadScript):
     '''
     Common routines for loading all CANON data
     '''
-    brownish = {'dorado':       '8c510a',
-                'tethys':       'bf812d',
-             }
-    colors = {  'dorado':       'ffeda0',
-                'tethys':       'fed976',
-             }
+    def getColor(self, numColors):
+        '''Rotate through numCOlors hues to return a next rgb color value
+        '''
+        for hue in range(numColors):
+            hue = 1. * hue / numColors
+            col = [int(x) for x in colorsys.hsv_to_rgb(hue, 1.0, 230)]
+            yield "{0:02x}{1:02x}{2:02x}".format(*col)
 
     def load_mooring(self, stride=None):
-        '''
-        Mooring load function. 
+        '''Mooring load function. 
         '''
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.glider_ctd_files], self.glider_ctd_files):
@@ -66,14 +67,14 @@ class OSLoader(LoadScript):
                 logger.warn("Replacing '-' characters in platform name %s with '_'s", pName)
                 pName = pName.replace('-', '_')
 
+            pColor = self.getColor(32)
             logger.info("Executing runMooringLoader with url = %s", url)
-            DAPloaders.runMooringLoader(url, self.campaignName, aName, pName, 'FFBA26', 'mooring', 'Mooring Deployment', 
+            DAPloaders.runMooringLoader(url, self.campaignName, aName, pName, pColor, 'mooring', 'Mooring Deployment', 
                                         self.glider_ctd_parms, self.dbAlias, stride, self.glider_ctd_startDatetime, self.glider_ctd_endDatetime)
 
 
 if __name__ == '__main__':
-    '''
-    Test operation of this class
+    '''Test operation of this class
     '''
     osl = OSLoader('default', 'Test Load')
     osl.stride = 1000
