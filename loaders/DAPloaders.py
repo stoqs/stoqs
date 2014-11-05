@@ -202,8 +202,8 @@ class Base_Loader(STOQS_Loader):
                     
             elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile': 
                 logger.debug('Getting timeseries start time for v = %s', v)
-                minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'].lower())
-                maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'].lower())
+                minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
+                maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
 
         logger.debug('minDT = %s', minDT)
         logger.debug('maxDT = %s', maxDT)
@@ -290,7 +290,7 @@ class Base_Loader(STOQS_Loader):
 
         if 'Conventions' in nc_global_keys:
             conventions = self.ds.attributes['NC_GLOBAL']['Conventions'].lower()
-        elif 'Conventions' in nc_global_keys:
+        elif 'Convention' in nc_global_keys:
             conventions = self.ds.attributes['NC_GLOBAL']['Convention'].lower()
         elif 'conventions' in nc_global_keys:
             conventions = self.ds.attributes['NC_GLOBAL']['conventions'].lower()
@@ -409,9 +409,21 @@ class Base_Loader(STOQS_Loader):
                 logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']][:]
 
-            # latitude and longitude are always single-valued
-            lats[v] = self.ds[v][ac['latitude']][:][0]
-            lons[v] = self.ds[v][ac['longitude']][:][0]
+            try:
+                lons[v] = self.ds[v][ac['longitude']][:][0]
+            except KeyError:
+                if len(self.ds[ac['longitude']][:]) == 1:
+                    lons[v] = self.ds[ac['longitude']][:][0]
+                else:
+                    logger.warn('Variable %s has longitude auxillary coordinate of length %d, expecting it to be 1.', pname, len(self.ds[ac['longitude']][:]))
+
+            try:
+                lats[v] = self.ds[v][ac['latitude']][:][0]
+            except KeyError:
+                if len(self.ds[ac['latitude']][:]) == 1:
+                    lats[v] = self.ds[ac['latitude']][:][0]
+                else:
+                    logger.warn('Variable %s has latitude auxillary coordidate of length %d, expecting it to be 1.', pname, len(self.ds[ac['latitude']][:]))
 
         # All variables must have the same nominal location 
         if len(set(lats.values())) != 1 or len(set(lons.values())) != 1:
@@ -518,7 +530,7 @@ class Base_Loader(STOQS_Loader):
                 continue    # Quietly skip over parameters not in ds: allows combination of variables and files in same loader
             # Peek at the shape and pull apart the data from its grid coordinates 
             logger.info('Reading data from %s: %s', self.url, pname)
-            if len(self.ds[pname].shape) == 4 and type(self.ds[pname]) is pydap.model.GridType:
+            if type(self.ds[pname]) is pydap.model.GridType:
                 # On tzyx grid - default for all OS formatted station data COARDS coordinate ordering conventions
                 # E.g. for http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74040, 11, 1, 1) 
                 #       or http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74850, 1, 1, 1)
@@ -547,15 +559,25 @@ class Base_Loader(STOQS_Loader):
                 # CF (nee COARDS) has tzyx coordinate ordering
                 times[pname] = self.ds[self.ds[pname].keys()[1]][tIndx[0]:tIndx[-1]:self.stride]
                 depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
-                latitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])      # TODO lookup more precise gps lat
-                longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon
+
                 timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
                 timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
                 if self.ds[self.ds[pname].keys()[1]].units == 'seconds since 1970-01-01T00:00:00Z':
                     timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
 
-                nomDepths, nomLats, nomLons = self.getNominalLocation()
+                nomDepths, nomLats, nomLons = self.getNominalLocation()             # Possible to have both precise and nominal locations with this approach
+
+                if len(self.ds[pname].shape) == 4:
+                    logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', pname)
+                    latitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                    longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                elif len(self.ds[pname].shape) == 2:
+                    logger.info('%s has shape of 2, assuming no latitude and longitude singletime dimensions. Using nominal location read from auxially coordinates', pname)
+                    longitudes[pname] = nomLons[pname]
+                    latitudes[pname] = nomLats[pname]
+                    
             else:
+                logger.warn('Variable %s is not of type pydap.model.GridType', pname)
                 logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.  It has a shape length of %d.', pname, len(self.ds[pname].shape))
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
@@ -564,10 +586,8 @@ class Base_Loader(STOQS_Loader):
             l = 0
             for depthArray in data[pname]:
                 k = 0
-                logger.debug('depthArray = %s', depthArray)
+                ##logger.debug('depthArray = %s', depthArray)
                 ##logger.debug('nomDepths = %s', nomDepths)
-                ##import pdb
-                ##pdb.set_trace()
                 values = {}
                 for dv in depthArray:
                     values[pname] = float(dv)
