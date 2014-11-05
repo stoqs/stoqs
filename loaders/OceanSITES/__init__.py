@@ -25,22 +25,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.p
 import re
 
 import DAPloaders
-from SampleLoaders import SeabirdLoader, load_gulps, SubSamplesLoader 
+from thredds_crawler.crawl import Crawl
 from loaders import LoadScript
+from DAPloaders import Mooring_Loader, NoValidData
 import logging
 import colorsys
 
 logger = logging.getLogger('__main__')
-
-def getStrideText(stride):
-    '''
-    Format stride into a string to be appended to the Activity name, if stride==1 return empty string
-    '''
-    if stride == 1:
-        return ''
-    else:
-        return ' (stride=%d)' % stride
-
 
 class OSLoader(LoadScript):
     '''
@@ -54,37 +45,74 @@ class OSLoader(LoadScript):
             col = [int(x) for x in colorsys.hsv_to_rgb(hue, 1.0, 230)]
             yield "{0:02x}{1:02x}{2:02x}".format(*col)
 
-    def load_mooring(self, stride=None):
-        '''Mooring load function. 
+    def loadStationData(self, stride=1):
+        '''Crawl the OceanSITES Mooring data TDS for OPeNDAP links and load into STOQS
         '''
-        stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.glider_ctd_files], self.glider_ctd_files):
-            url = self.glider_ctd_base + file
-            pName = aName.split('/')[-1].split('.')[0]
-            p = re.compile('-\d+T\d+_Time')
-            pName = p.sub('', pName)
-            if pName.find('-') != -1:
-                logger.warn("Replacing '-' characters in platform name %s with '_'s", pName)
-                pName = pName.replace('-', '_')
+        urls = []
+        for dataSet in self.dataSets:
+            c = Crawl(dataSet[0], select=dataSet[1], debug=self.args.verbose)
+            urls += [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
 
-            pColor = self.getColor(32)
+        # First pass through urls matching OceanSITES pattern to collect platform names to get colors
+        # Use OceanSITES naming convention for platform "OS_<platformName>_xxx_R|D_<type>.nc"
+        pNames = set()
+        for url in urls:
+            pNames.add(url.split('/')[-1].split('.')[0].split('_')[1])
+
+        pColors = {}
+        for pName, color in zip(sorted(pNames), self.getColor(len(pNames))) :
+            pColors[pName] = color
+
+        # Now loop again, this time loading the data 
+        for url in urls:
             logger.info("Executing runMooringLoader with url = %s", url)
-            DAPloaders.runMooringLoader(url, self.campaignName, aName, pName, pColor, 'mooring', 'Mooring Deployment', 
-                                        self.glider_ctd_parms, self.dbAlias, stride, self.glider_ctd_startDatetime, self.glider_ctd_endDatetime)
+            if stride > 1:
+                aName = url.split('/')[-1].split('.')[0] + '(stride=%d)' % stride
+            else:
+                aName = url.split('/')[-1].split('.')[0]
+            pName = aName.split('_')[1]
+    
+            logger.debug("Instantiating Mooring_Loader for url = %s", url)
+            ml = Mooring_Loader(
+                url = url,
+                campaignName = self.campaignName,
+                campaignDescription = self.campaignDescription,
+                dbAlias = self.dbAlias,
+                activityName = aName,
+                activitytypeName = 'Mooring Deployment',
+                platformName = pName,
+                platformColor = pColors[pName],
+                platformTypeName = 'mooring',
+                stride = stride,
+                startDatetime = self.startDatetime,
+                dataStartDatetime = None,
+                endDatetime = self.endDatetime)
 
+            # Special fixes for non standard metadata and if files don't contain the standard TEMP and PSAL parameters
+            if url.find('MBARI-') != -1:
+                ml.include_names = ['TEMP', 'PSAL']
+                ml.auxCoords = {}
+                for v in ml.include_names:
+                    ml.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
+            elif url.find('OS_PAPA_2009PA003_D_CTD_10min') != -1:
+                ml.include_names = ['TEMP']
+            elif url.find('OS_PAPA_2009PA003_D_PSAL_1hr') != -1:
+                ml.include_names = ['PSAL']
+            elif url.find('OS_SOTS_SAZ-15-2012_D_microcat-4422m') != -1:
+                ml.include_names = ['TEMP', 'PSAL']
+                # DEPTH_CN_PR_PS_TE coordinate missing standard_name attribute
+                ml.auxCoords = {}
+                for v in ml.include_names:
+                    ml.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH_CN_PR_PS_TE'}
+                # Only global attribute is 'cdm_data_type: Time-series'; monkey-patch the method
+                Mooring_Loader.getFeatureType = lambda self: 'timeseries'
 
-if __name__ == '__main__':
-    '''Test operation of this class
-    '''
-    osl = OSLoader('default', 'Test Load')
-    osl.stride = 1000
-    osl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
-    osl.dorado_files = ['Dorado389_2010_300_00_300_00_decim.nc']
-
-    # Execute the load
-    osl.process_command_line()
-
-    osl.load_mooring()
-
-
-
+            else:
+                ml.include_names = ['TEMP', 'PSAL']
+    
+            try:
+                (nMP, path, parmCountHash, mind, maxd) = ml.process_data()
+                logger.debug("Loaded Activity with name = %s", aName)
+            except NoValidData, e:
+                logger.warning(e)
+    
