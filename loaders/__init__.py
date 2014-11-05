@@ -43,6 +43,7 @@ from utils.utils import percentile, median, mode, simplify_points, spiciness
 from tempfile import NamedTemporaryFile
 import pprint
 from pupynere import netcdf_file
+import httplib
 
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -336,27 +337,30 @@ class STOQS_Loader(object):
         # ship,ZEPHYR
         # mooring,Bruce
 
-        if re.search('\W', name):
-            raise Exception('Platform name = "%s" is not allowed.  Name can contain only letters, numbers and "_"' % name)
+        if re.search('[^a-zA-Z0-9_-]', name):
+            raise Exception('Platform name = "%s" is not allowed.  Name can contain only letters, numbers, "_", and "-"' % name)
 
         tpHandle = []
-        self.logger.info("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
+        self.logger.debug("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
         try:
             tpHandle = csv.DictReader(urllib2.urlopen(paURL))
         except urllib2.URLError, e:
             self.logger.warn(e)
         platformName = ''
-        for rec in tpHandle:
-            ##print "rec = %s" % rec
-            if rec['PlatformName'].lower() == name.lower():
-                platformName = rec['PlatformName']
-                platformTypeName = rec['PlatformType']
-                break
+        try:
+            for rec in tpHandle:
+                ##print "rec = %s" % rec
+                if rec['PlatformName'].lower() == name.lower():
+                    platformName = rec['PlatformName']
+                    platformTypeName = rec['PlatformType']
+                    break
+        except httplib.IncompleteRead as e:
+            self.logger.warn(e)
 
         if not platformName:
             platformName = name
             platformTypeName = type
-            self.logger.warn("Platform name %s not found in tracking database.  Creating new platform anyway.", platformName)
+            self.logger.debug("Platform name %s not found in tracking database.  Creating new platform anyway.", platformName)
 
         # Create PlatformType
         self.logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", self.dbAlias, self.platformTypeName)
@@ -520,6 +524,14 @@ class STOQS_Loader(object):
             (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name = 'nc_global')
             for rn, value in self.ds.attributes['NC_GLOBAL'].iteritems():
                 self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
+                if rn == 'cdm_data_type' and value == 'Time-series':
+                    # Special fix for SOTS data - add "featureType: timeSeries"
+                    # http://dods.ndbc.noaa.gov/thredds/dodsC/oceansites/DATA/SOTS/OS_SOTS_SAZ-15-2012_D_microcat-4422m.nc.html
+                    (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                                name='featureType', value='timeSeries', resourcetype=resourceType)
+                    (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+                                activity=self.activity, resource=resource)
+
                 (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                             name=rn, value=value, resourcetype=resourceType)
                 (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
