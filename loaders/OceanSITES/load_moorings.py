@@ -43,22 +43,38 @@ osl.startDatetime = None
 osl.endDatetime = None
 
 # Look in each sub-catalog for the data files as it's faster than searching from the root catalog
+# Each tuple contains: <catalog>, <select_list>, <optimal_stride>
 osl.dataSets = [
-    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/MBARI/catalog.html', ['.*M1.*_TS.nc$', '.*M2.*_TS.nc$']),
-    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/WHOTS/catalog.html', ['.*OS_WHOTS_2012_D_TS4631m.nc$']),
-    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/PAPA/catalog.html', ['.*OS_PAPA_2009PA003_D_CTD_10min.nc$']),
-    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/PAPA/catalog.html', ['.*OS_PAPA_2009PA003_D_PSAL_1hr.nc$']),
-    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/SOTS/catalog.html', ['.*OS_SOTS_SAZ-15-2012_D_microcat-4422m.nc$']),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/MBARI/catalog.html', ['.*M1.*_TS.nc$', '.*M2.*_TS.nc$'], 144),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/WHOTS/catalog.html', ['.*OS_WHOTS_2012_D_TS4631m.nc$'], 20),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/PAPA/catalog.html', ['.*OS_PAPA_2009PA003_D_CTD_10min.nc$'], 144),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/PAPA/catalog.html', ['.*OS_PAPA_2009PA003_D_PSAL_1hr.nc$'], 24),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/SOTS/catalog.html', ['.*OS_SOTS_SAZ-15-2012_D_microcat-4422m.nc$'], 12),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/MOVE1/catalog.html', ['.*D_MICROCAT-PART.*$'], 288),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/MOVE2/catalog.html', ['.*D_MICROCAT-PART.*$'], 288),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/MOVE3/catalog.html', ['.*D_MICROCAT-PART.*$'], 288),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/MOVE4/catalog.html', ['.*D_MICROCAT-PART.*$'], 288),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/MOVE5/catalog.html', ['.*D_MICROCAT-PART.*$'], 288),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/NOG/catalog.html', ['.*OS_NOG-1_201211_P_deepTS.nc$'], 10),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/IMOS-EAC/catalog.html', ['.*D_RDI-WORKHORSE-ADCP-615-m.nc$'], 10),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/IMOS-EAC/catalog.html', ['.*D_RDI-WORKHORSE-ADCP-422-m.nc$'], 10),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/IMOS-EAC/catalog.html', ['.*D_RDI-WORKHORSE-ADCP-83-m.nc$'], 10),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA_GRIDDED/PIRATA/catalog.html', ['.*_TVSM_dy.nc$'], 10),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/CCE1/catalog.html', ['.*_MICROCAT.nc$', '.*_SEACAT.nc$'], 50),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/CCE2/catalog.html', ['.*_MICROCAT.nc$', '.*_SEACAT.nc$'], 50),
+    
                ]
 
 # Execute the load
 osl.process_command_line()
 
 if osl.args.test:
-    osl.loadStationData(stride=100)
+    # Doubles the stide in the dataSets list
+    osl.loadStationData()
 
 elif osl.args.optimal_stride:
-    osl.loadStationData(stride=10)
+    # Third item in dataSets tuple will be used for the stride
+    osl.loadStationData()
 
 else:
     osl.loadStationData(stride=osl.args.stride)

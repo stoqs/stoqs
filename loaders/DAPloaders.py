@@ -54,6 +54,7 @@ import seawater.csiro as sw
 from utils.utils import percentile, median, mode, simplify_points
 from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
 import numpy as np
+from collections import defaultdict
 
 
 # Set up logging
@@ -173,7 +174,7 @@ class Base_Loader(STOQS_Loader):
         self.ignored_names += self.global_ignored_names # add global ignored names to platform specific ignored names.
         self.build_standard_names()
 
-    def _getStartAndEndTimmeFromDS(self):
+    def _getStartAndEndTimeFromDS(self):
         '''
         Examine all possible time coordinates for include_names and set the overall min and max time for the dataset.
         To be used for setting Activity startDatetime and endDatetime.
@@ -187,7 +188,7 @@ class Base_Loader(STOQS_Loader):
                 logger.warn(e)
                 continue
 
-            if self.getFeatureType() == 'trajectory': 
+            if self.getFeatureType() == 'trajectory' or self.getFeatureType() == 'trajectoryprofile': 
                 logger.debug('Getting trajectory min and max times for v = %s', v)
                 logger.debug("self.ds[ac['time']][0] = %s", self.ds[ac['time']][0])
                 try:
@@ -200,7 +201,7 @@ class Base_Loader(STOQS_Loader):
                         minDT[v] = from_udunits(self.ds[ac['time']][0][0], 'seconds since 1970-01-01 00:00:00')
                         maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], 'seconds since 1970-01-01 00:00:00')
                     
-            elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile': 
+            elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile':
                 logger.debug('Getting timeseries start time for v = %s', v)
                 minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
                 maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
@@ -238,7 +239,7 @@ class Base_Loader(STOQS_Loader):
 
             # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
             if not self.startDatetime or not self.endDatetime:
-                self.startDatetime, self.endDatetime = self._getStartAndEndTimmeFromDS()
+                self.startDatetime, self.endDatetime = self._getStartAndEndTimeFromDS()
             self.createActivity()
         else:
             raise NoValidData('No valid data in url %s' % (self.url))
@@ -408,6 +409,9 @@ class Base_Loader(STOQS_Loader):
             elif self.getFeatureType() == 'timeseriesprofile':
                 logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']][:]
+            elif self.getFeatureType() == 'trajectoryprofile':
+                logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
+                depths[v] = self.ds[v][ac['depth']][:]
 
             try:
                 lons[v] = self.ds[v][ac['longitude']][:][0]
@@ -513,8 +517,7 @@ class Base_Loader(STOQS_Loader):
         '''
         Generator of TimeSeriesProfile (tzyx where z is multi-valued) and TimeSeries (tzyx where z is single-valued) data.
         Using terminology from CF-1.6 assume data is from a discrete sampling geometry type of timeSeriesProfile or timeSeries.
-        Provides a uniform dictionary that contains attributes and their associated values without the need
-        to individualize code for each data source.
+        Yields a uniform values dictionary for inserting rows into the database.
         '''
         data = {} 
         times = {}
@@ -563,18 +566,21 @@ class Base_Loader(STOQS_Loader):
                 timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
                 timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
                 if self.ds[self.ds[pname].keys()[1]].units == 'seconds since 1970-01-01T00:00:00Z':
-                    timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
+                    timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards 1.0.4 and earlier doesn't like ISO format
 
                 nomDepths, nomLats, nomLons = self.getNominalLocation()             # Possible to have both precise and nominal locations with this approach
 
                 if len(self.ds[pname].shape) == 4:
                     logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', pname)
+                    # Assumes COARDS coordinate ordering
                     latitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                     longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                 elif len(self.ds[pname].shape) == 2:
                     logger.info('%s has shape of 2, assuming no latitude and longitude singletime dimensions. Using nominal location read from auxially coordinates', pname)
                     longitudes[pname] = nomLons[pname]
                     latitudes[pname] = nomLats[pname]
+                else:
+                    raise Exception('%s has shape of %d. Can handle only shapes of 2, and 4', pname, len(self.ds[pname].shape))
                     
             else:
                 logger.warn('Variable %s is not of type pydap.model.GridType', pname)
@@ -726,6 +732,118 @@ class Base_Loader(STOQS_Loader):
                 yield values
                 l = l + 1
 
+    def _genTrajectoryProfileGridType(self):
+        '''
+        Generator of TrajectoryProfile data where data along a t:xyz path are arranged in bins above (or below) the instrument.
+        Using terminology from CF-1.6 assume data is from a discrete sampling geometry type of trajectoryProfile.  Data may be
+        in an upstream format that can be converted to trajectoryProfile data.  Yields a uniform values dictionary for 
+        inserting rows into the database.
+        '''
+        data = {} 
+        times = {}
+        depths = {}
+        nomDepths = {}
+        latitudes = {}
+        longitudes = {}
+        timeUnits = {}
+        self.adcpDepths = defaultdict(lambda: [])            # Special for depth varying ADCP data such as from IMOS-EAC
+
+        # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
+        # The reads here take advantage of OPeNDAP access mechanisms to effeciently transfer data across the network
+        for pname in self.include_names:
+            if pname not in self.ds:
+                continue    # Quietly skip over parameters not in ds: allows combination of variables and files in same loader
+            # Peek at the shape and pull apart the data from its grid coordinates 
+            logger.info('Reading data from %s: %s', self.url, pname)
+            if type(self.ds[pname]) is pydap.model.GridType:
+                # On tzyx grid - default for all OS formatted station data COARDS coordinate ordering conventions
+                # E.g. for http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74040, 11, 1, 1) 
+                #       or http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74850, 1, 1, 1)
+                tIndx = self.getTimeBegEndIndices(self.ds[self.ds[pname].keys()[1]])
+                try:
+                    # Subselect along the time axis, get all z values
+                    logger.info("From: %s", self.url)
+                    logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", pname, pname, tIndx[0], tIndx[-1], self.stride)
+                    v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride,:,0,0]
+                except ValueError, err:
+                    logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
+                    If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
+                    then the cache files must be removed and the tomcat hosting TDS restarted.''')
+                    sys.exit(1)
+                except pydap.exceptions.ServerError as e:
+                    if self.stride > 1:
+                        logger.warn('%s and stride > 1.  Skipping dataset %s', e, self.url)
+                        continue
+                    else:
+                        logger.exception('%s', e)
+                        sys.exit(-1)
+    
+                # The STOQS datavalue 
+                data[pname] = iter(v)      # Iterator on time axis delivering all z values in an array with .next()
+
+                # CF (nee COARDS) has tzyx coordinate ordering
+                times[pname] = self.ds[self.ds[pname].keys()[1]][tIndx[0]:tIndx[-1]:self.stride]
+                depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
+
+                timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
+                timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
+                if self.ds[self.ds[pname].keys()[1]].units == 'seconds since 1970-01-01T00:00:00Z':
+                    timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards 1.0.4 and earlier doesn't like ISO format
+
+                nomD, nomLats, nomLons = self.getNominalLocation()                  # Possible to have both precise and nominal locations with this approach
+
+                # TODO: Handle real CF-1.6 trajectoryProfile data
+                if len(self.ds[pname].shape) == 5:
+                    logger.info('%s has shape of 5, assuming ADCP data from IMOS singleton dimensions are used for nominal latitude and longitude', pname)
+                    # Use DEPTH and values of bin depths for nominal depths & make Integer - overriding what self.getNominalLocation() returns
+                    nomDepths[pname] = [int(float(self.ds['DEPTH'][0]) - float(h)) for h in self.ds['HEIGHT_ABOVE_SENSOR'][:]]
+                    # Add height above sensor array to actual depth of sensor - creates 2D array who's columns need to be delivered in the yields below
+                    heights = self.ds['HEIGHT_ABOVE_SENSOR'][:]
+                    logger.info('Assuming ADCP data from IMOS and that bin depths need to be combined of the sensor depth and height above sensor')
+                    for depth in self.ds['ZPOS']['ZPOS'][tIndx[0]:tIndx[-1]:self.stride]:
+                        self.adcpDepths[pname].append([float(depth) - float(h) for h in heights])
+
+                    # Save last one for insertSimpleDepthTimeSeriesByNominalDepth()
+                    self.timeDepthProfiles = self.adcpDepths[pname]
+
+                    # Assumes COARDS coordinate ordering
+                    latitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                    longitudes[pname] = float(self.ds[self.ds[pname].keys()[5]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                else:
+                    raise Exception('%s has shape of %d. Can handle only shapes of 2, 4, and 5.', pname, len(self.ds[pname].shape))
+                    
+            else:
+                logger.warn('Variable %s is not of type pydap.model.GridType', pname)
+                logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.  It has a shape length of %d.', pname, len(self.ds[pname].shape))
+
+        # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
+        for pname in data.keys():
+            logger.info('Delivering rows of data for %s', pname)
+            l = 0
+            for depthArray in data[pname]:
+                k = 0
+                ##logger.debug('depthArray = %s', depthArray)
+                ##logger.debug('nomDepths = %s', nomDepths)
+                values = {}
+                for dv in depthArray:
+                    values[pname] = float(dv)
+                    values['time'] = times[pname][l]
+                    #values['depth'] = depths[pname][k]
+                    values['depth'] = self.adcpDepths[pname][l][k]
+                    values['latitude'] = latitudes[pname]
+                    values['longitude'] = longitudes[pname]
+                    values['timeUnits'] = timeUnits[pname]
+                    try:
+                        values['nomDepth'] = nomDepths[pname][k]
+                    except IndexError:
+                        values['nomDepth'] = nomDepths[pname]
+                    values['nomLat'] = nomLats[pname]
+                    values['nomLon'] = nomLons[pname]
+                    yield values
+                    k = k + 1
+
+                l = l + 1
+
     def _insertRow(self, parmCount, parameterCount, measurement, row):
         '''
         Insert a row of MeasuredParameters as returned from our data generators.
@@ -840,6 +958,9 @@ class Base_Loader(STOQS_Loader):
             if self.getFeatureType() == 'timeseriesprofile':
                 data_generator = self._genTimeSeriesGridType()
                 featureType = 'timeseriesprofile'
+            elif self.getFeatureType() == 'trajectoryprofile':
+                data_generator = self._genTrajectoryProfileGridType()
+                featureType = 'trajectoryprofile'
             elif self.getFeatureType() == 'timeseries':
                 data_generator = self._genTimeSeriesGridType()
                 featureType = 'timeseries'
@@ -867,18 +988,20 @@ class Base_Loader(STOQS_Loader):
             else:
                 params = {} 
                 try:
-                    if featureType == 'timeseriesprofile' or featureType == 'timeseries':
+                    if featureType == 'timeseriesprofile' or featureType == 'timeseries' or featureType == 'trajectoryprofile':
                         longitude, latitude, time, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
                                                             from_udunits(row.pop('time'), row.pop('timeUnits')),
                                                             row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
                         measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, long=longitude,
                                                             nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
-                    else:
+                    elif featureType == 'trajectory':
                         longitude, latitude, time, depth = (row.pop('longitude'), row.pop('latitude'),
                                                             from_udunits(row.pop('time'), row.pop('timeUnits')),
                                                             row.pop('depth'))
-
                         measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, long=longitude)
+                    else:
+                        raise Exception('No handler for featureType = %s' % featureType)
+
                 except ValueError:
                     logger.info('Bad time value')
                     continue
@@ -971,6 +1094,8 @@ class Base_Loader(STOQS_Loader):
             self.insertSimpleBottomDepthTimeSeries()
         elif self.getFeatureType().lower() == 'timeseries' or self.getFeatureType().lower() == 'timeseriesprofile':
             self.insertSimpleDepthTimeSeriesByNominalDepth()
+        elif self.getFeatureType().lower() == 'trajectoryprofile':
+            self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
         logger.info("Data load complete, %d records loaded.", self.loaded)
 
 

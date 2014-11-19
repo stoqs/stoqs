@@ -1148,6 +1148,7 @@
     var hasTrajectory;
     var hasTimeSeries;
     var hasTimeSeriesProfile;
+    var hasTrajectoryProfile;
     var clearingTemporalFlag = false;
     var platformTimer = null;
     var PIXELS_WIDE = 800;                              // Approximate width of $("#time-depth-flot")
@@ -1866,7 +1867,7 @@
         else {
             track_lines.setVisibility(false);
         }
-        if (hasTimeSeries || hasTimeSeriesProfile) {
+        if (hasTimeSeries || hasTimeSeriesProfile || hasTrajectoryProfile) {
             stations.setVisibility(true);
             stations.redraw(true);
         }
@@ -3234,6 +3235,7 @@
                 hasTrajectory = false;
                 hasTimeSeries = false;
                 hasTimeSeriesProfile = false;
+                hasTrajectoryProfile = false;
                 platformTypeHtml = '';
                 $('body').data()['platformModels'] = {};
 
@@ -3274,6 +3276,9 @@
                         }
                         if (value[3].toLowerCase() == 'timeseriesprofile') {
                             hasTimeSeriesProfile = true;
+                        }
+                        if (value[3].toLowerCase() == 'trajectoryprofile') {
+                            hasTrajectoryProfile = true;
                         }
                         if ( value[3].toLowerCase() == 'timeseries' || value[3].toLowerCase() == 'timeseriesprofile') {
                             if ( ! $.isEmptyObject(value[4]) ) {
@@ -3570,6 +3575,7 @@
                 hasTrajectory = false;
                 hasTimeSeries = false;
                 hasTimeSeriesProfile = false;
+                hasTrajectoryProfile = false;
                 var ids=[];
                 $.each(data[key], function (ptype, platforms) {
                     $.each(platforms, function (index, value) {
@@ -3585,6 +3591,9 @@
                         }
                         if (value[3].toLowerCase() == 'timeseriesprofile') {
                             hasTimeSeriesProfile = true;
+                        }
+                        if (value[3].toLowerCase() == 'trajectoryprofile') {
+                            hasTrajectoryProfile = true;
                         }
                     });
                 });
