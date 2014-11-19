@@ -709,6 +709,7 @@ class STOQSQManager(object):
         trajectoryQ = self._trajectoryQ()
         timeSeriesQ = self._timeSeriesQ()
         timeSeriesProfileQ = self._timeSeriesProfileQ()
+        trajectoryProfileQ = self._trajectoryProfileQ()
 
         for plats in self.getPlatforms().values():
             for p in plats:
@@ -742,18 +743,18 @@ class STOQSQManager(object):
                             iptvq = Q(instantpoint__timevalue__gte = self.kwargs['time'][0]) & Q(instantpoint__timevalue__lte = self.kwargs['time'][1])
                             qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ) & iptvq).annotate(mintime=Min('instantpoint__timevalue'), 
                                                     maxtime=Max('instantpoint__timevalue')).select_related().values( 'name',
-                                                    'simpledepthtime__nominallocation__depth', 'mintime', 'maxtime').order_by('simpledepthtime__nominallocation__depth').distinct()
+                                                    'simpledepthtime__nominallocation__depth', 'mintime', 'maxtime').order_by(
+                                                    'simpledepthtime__nominallocation__depth').distinct()
                     if not qs_tsp:
                         qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ)).select_related().values( 
                                                 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
                                                 'simpledepthtime__nominallocation__depth').order_by('simpledepthtime__epochmilliseconds').distinct()
-                    logger.info('qs_tsp = %s', str(qs_tsp.query))
-    
+
                     # Add to sdt hash date-time series organized by activity__name_nominallocation__depth key within a platform__name key
                     for sd in qs_tsp:
-                        logger.info('sd = %s', sd)
+                        ##logger.debug('sd = %s', sd)
                         an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
-                        logger.debug('an_nd = %s', an_nd)
+                        ##logger.debug('an_nd = %s', an_nd)
                         ##logger.debug('sd = %s', sd)
                         if 'simpledepthtime__epochmilliseconds' in sd:
                             try:
@@ -778,6 +779,39 @@ class STOQSQManager(object):
                                     sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
                             except TypeError:
                                 continue                                                 # Likely "float argument required, not NoneType"
+
+                elif p[3].lower() == 'trajectoryprofile':
+                    iptvq = Q()
+                    qs_tp = None
+                    if 'time' in self.kwargs:
+                        if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
+                            s_ems = time.mktime(datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S').timetuple())*1000
+                            e_ems = time.mktime(datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S').timetuple())*1000
+                            iptvq = Q(simpledepthtime__epochmilliseconds__gte = s_ems) & Q(simpledepthtime__epochmilliseconds__lte = e_ems)
+                            qs_tp = self.qs.filter(plq & trajectoryProfileQ & iptvq).select_related().values( 'name', 'simpledepthtime__depth',
+                                                    'simpledepthtime__nominallocation__depth', 'simpledepthtime__epochmilliseconds').order_by(
+                                                    'simpledepthtime__nominallocation__depth', 'simpledepthtime__epochmilliseconds').distinct()
+                    if not qs_tp:
+                        qs_tp = self.qs.filter(plq & trajectoryProfileQ).select_related().values( 'name', 'simpledepthtime__depth',
+                                                'simpledepthtime__nominallocation__depth', 'simpledepthtime__epochmilliseconds').order_by(
+                                                'simpledepthtime__nominallocation__depth', 'simpledepthtime__epochmilliseconds').distinct()
+
+                    # Add to sdt hash date-time series organized by activity__name_nominallocation__depth key within a platform__name key - use real depths
+                    for sd in qs_tp:
+                        ##logger.debug('sd = %s', sd)
+                        an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
+                        ##logger.debug('an_nd = %s', an_nd)
+                        if 'simpledepthtime__epochmilliseconds' in sd:
+                            try:
+                                sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__depth']] )
+                            except KeyError:
+                                sdt[p[0]][an_nd] = []                                    # First time seeing this activityName_nominalDepth, make it a list
+                                if sd['simpledepthtime__depth']:
+                                    sdt[p[0]][an_nd].append( [sd['simpledepthtime__epochmilliseconds'], '%.2f' % sd['simpledepthtime__depth']] )
+                            except TypeError:
+                                continue                                                 # Likely "float argument required, not NoneType"
+    
+
         return({'sdt': sdt, 'colors': colors})
 
     def getSimpleBottomDepthTime(self):
@@ -1673,6 +1707,16 @@ class STOQSQManager(object):
     
         return q
 
+    def _trajectoryProfileQ(self):
+        '''
+        Return Q object that is True if the activity is of featureType timeSeries
+        '''
+        # Restrict selection to Activities that are trajectoryProfiles - a featureType new in CF-1.6
+        cf16_q = Q(activityresource__resource__name__iexact='featureType') & Q(activityresource__resource__value__iexact='trajectoryProfile')
+
+        q = (cf16_q)
+    
+        return q
 
     #
     # Methods to get the query used based on the current Q object.

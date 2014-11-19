@@ -117,6 +117,7 @@ def _buildMapFile(request, qm, options):
     trajectory_union_layer_string = ''
     for plats in json.loads(options)['platforms'].values():
         for p in plats:
+            # TODO: Test whether it's a point or track for trajectoryprofile data
             if p[3].lower() != 'trajectory':
                 continue
             item = Item()
@@ -132,7 +133,9 @@ def _buildMapFile(request, qm, options):
     station_union_layer_string = ''
     for plats in json.loads(options)['platforms'].values():
         for p in plats:
-            if p[3].lower() != 'timeseries' and p[3].lower() != 'timeseriesprofile':
+            # First trajectoryprofile dataset is IMOS-EAC in which the trajectory is just variation in depth, so plot as a station
+            # TODO: Test whether it's a point or track for trajectoryprofile data
+            if p[3].lower() != 'timeseries' and p[3].lower() != 'timeseriesprofile' and p[3].lower() != 'trajectoryprofile':
                 continue
             item = Item()
             item.id = p[1]

@@ -26,7 +26,7 @@ from django.conf import settings
 from django.contrib.gis.geos import LineString, Point, Polygon
 from django.db.utils import IntegrityError
 from django.db import connection, transaction, DatabaseError
-from django.db.models import Max, Min
+from django.db.models import Max, Min, Q
 from django.http import HttpRequest
 from stoqs import models as m
 from datetime import datetime
@@ -524,18 +524,28 @@ class STOQS_Loader(object):
             (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name = 'nc_global')
             for rn, value in self.ds.attributes['NC_GLOBAL'].iteritems():
                 self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
-                if rn == 'cdm_data_type' and value == 'Time-series':
-                    # Special fix for SOTS data - add "featureType: timeSeries"
-                    # http://dods.ndbc.noaa.gov/thredds/dodsC/oceansites/DATA/SOTS/OS_SOTS_SAZ-15-2012_D_microcat-4422m.nc.html
-                    (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
-                                name='featureType', value='timeSeries', resourcetype=resourceType)
-                    (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
-                                activity=self.activity, resource=resource)
-
                 (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                             name=rn, value=value, resourcetype=resourceType)
                 (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                             activity=self.activity, resource=resource)
+
+            # Use potentially monkey-patched self.getFeatureType() method to write a correct value - as the UI depends on it
+            (mp_resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                        name='featureType', value=self.getFeatureType(), resourcetype=resourceType)
+            ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
+                            resource__resourcetype=resourceType, resource__name='featureType').select_related(depth=1)
+
+            if not ars:
+                # There was no featureType NC_GLOBAL in the dataset - associate to the one from self.getFeatureType()
+                (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+                            activity=self.activity, resource=mp_resource)
+            for ar in ars:
+                if ar.resource.value != mp_resource.value:
+                    # Update (override NC_GLOBAL's) with monkey-patched self.getFeatureType()'s value
+                    ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
+                            resource__resourcetype=resourceType, resource__name='featureType').update(resource=mp_resource)
+                    self.logger.warn('Over-riding featureType from NC_GLOBAL (%s) with monkey-patched value = %s', 
+                            ar.resource.value, mp_resource.value)
         else:
             self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
 
@@ -687,7 +697,7 @@ class STOQS_Loader(object):
         self.logger.debug(row)
         try:
             if (row['longitude'] == missing_value or row['latitude'] == missing_value or
-                float(row['longitude']) == 0.0 or float(row['latitude']) == 0.0 or
+                #float(row['longitude']) == 0.0 or float(row['latitude']) == 0.0 or
                 math.isnan(row['longitude'] ) or math.isnan(row['latitude'])):
                 raise SkipRecord('Invalid latitude or longitude coordinate')
         except KeyError, e:
@@ -959,14 +969,14 @@ class STOQS_Loader(object):
 
       return _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime)
 
-    def insertSimpleDepthTimeSeriesByNominalDepth(self, critSimpleDepthTime=10):
+    def insertSimpleDepthTimeSeriesByNominalDepth(self, critSimpleDepthTime=10, trajectoryProfileDepths=None):
         '''
         Read the time series of depth values for each nominal depth of this activity, simplify them 
         and insert the values in the SimpleDepthTime table that is related via the NominalLocations
         to the Activity.  This procedure is suitable for timeSeries and timeSeriesProfile data
         @param critSimpleDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
         '''
-        for nl in m.NominalLocation.objects.using(self.dbAlias).filter(activity=self.activity):
+        for i,nl in enumerate(m.NominalLocation.objects.using(self.dbAlias).filter(activity=self.activity)):
             nomDepth = nl.depth
             self.logger.debug('nomDepth = %s', nomDepth)
             # Collect depth time series into a timeseries by activity and nominal depth hash
@@ -974,11 +984,19 @@ class STOQS_Loader(object):
                                         ).values_list('instantpoint__timevalue', 'depth', 'instantpoint__pk').order_by('instantpoint__timevalue')
             line = []
             pklookup = []
-            for dt,dd,pk in ndlqs:
-                ems = 1000 * to_udunits(dt, 'seconds since 1970-01-01')
-                d = float(dd)
-                line.append((ems,d,))
-                pklookup.append(pk)
+            if trajectoryProfileDepths:
+                self.logger.info('Loading time varying depths in SimpleDepthTime for nomDepth=%s', nomDepth)
+                for (dt,dd,pk), depths in zip(ndlqs, trajectoryProfileDepths):
+                    ems = 1000 * to_udunits(dt, 'seconds since 1970-01-01')
+                    d = depths[i]
+                    line.append((ems,d,))
+                    pklookup.append(pk)
+            else:
+                for dt,dd,pk in ndlqs:
+                    ems = 1000 * to_udunits(dt, 'seconds since 1970-01-01')
+                    d = float(dd)
+                    line.append((ems,d,))
+                    pklookup.append(pk)
 
             self.logger.debug('line = %s', line)
             self.logger.debug('Number of points in original depth time series = %d', len(line))
@@ -1072,15 +1090,24 @@ class STOQS_Loader(object):
 
     def addSigmaTandSpice(self, parameterCounts, activity=None):
       ''' 
-      For all measurements that have standard_name parameters of sea_water_salinity and sea_water_temperature compute sigma-t and add it as a parameter
+      For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
+      compute sigma-t and add it as a parameter
       '''                 
       @transaction.commit_on_success(using=self.dbAlias)
       def _innerAddSigmaT(self, parameterCounts):
         
-        # Find all measurements with 'sea_water_temperature' and 'sea_water_salinity'
+        # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
         ms = m.Measurement.objects.using(self.dbAlias)
         ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
-        ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity')
+        
+        salinity_standard_name = 'sea_water_salinity'
+        if m.Measurement.objects.using(self.dbAlias).filter(measuredparameter__parameter__standard_name='sea_water_practical_salinity'):
+            salinity_standard_name = 'sea_water_practical_salinity'
+        elif m.Measurement.objects.using(self.dbAlias).filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
+            salinity_standard_name = 'sea_water_salinity'
+
+        ms = ms.filter(measuredparameter__parameter__standard_name=salinity_standard_name)
+
         if activity:
             ms = ms.filter(instantpoint__activity=activity)
         if not ms:
@@ -1106,7 +1133,7 @@ class STOQS_Loader(object):
         for me in ms:
             try:
                 t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
-                s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, parameter__standard_name='sea_water_salinity').values_list('datavalue')[0][0]
+                s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
             except DatabaseError as e:
                 self.logger.warn(e)
 
