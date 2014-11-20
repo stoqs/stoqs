@@ -316,6 +316,8 @@ class ROVCTD_Loader(Base_Loader):
                     values[self.vDict[v]] = float(r[v])
                 except ValueError:
                     continue
+                except TypeError:
+                    continue
                 else:
                     try:
                         if v in ('p', 't', 's'):
@@ -459,7 +461,7 @@ def process_command_line():
     examples += "--campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0\n"
     examples += sys.argv[0] + " --database stoqs_rovctd --rov tibr --start 42 --end 1163 --campaignName 'Monterey Bay ROVCTD data' "
     examples += "--campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0\n"
-    examples += sys.argv[0] + " --database stoqs_rovctd --rov docr --start 1 --end 1000 ---campaignName 'Monterey Bay ROVCTD data' "
+    examples += sys.argv[0] + " --database stoqs_rovctd --rov docr --start 1 --end 1000 --campaignName 'Monterey Bay ROVCTD data' "
     examples += "--campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0\n"
     examples += "\n"
     examples += "Assumes that a STOQS database has already been set up following steps 4-7 from the LOADING file.\n"
