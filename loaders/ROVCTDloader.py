@@ -59,6 +59,11 @@ from collections import defaultdict
 logger = logging.getLogger('__main__')
 logger.setLevel(logging.INFO)
 
+rovColors = {   'vnta': 'ff0000',
+                'tibr': 'ffff00',
+                'docr': 'ff00ff',
+            }
+
 class DiveInfoServletException(Exception):
     pass
 
@@ -369,6 +374,67 @@ class ROVCTD_Loader(Base_Loader):
         # For now just override the base class method which expects an OPeNDAP data source
         pass
 
+def processDiveList(args):
+    '''Given a list of dives to load
+    '''
+    for diveName in args.dives:
+        if diveName[0].lower() == 'v':
+            pName = 'vnta'
+        elif diveName[0].lower() == 't':
+            pName = 'tibr'
+        elif diveName[0].lower() == 'd':
+            pName = 'docr'
+        dNumber = int(diveName[1:])
+
+        # Instantiate Loader for this dive
+        loader = ROVCTD_Loader( 
+                    diveNumber = dNumber,
+                    campaignName = args.campaignName,
+                    campaignDescription = args.campaignDescription,
+                    dbAlias = args.database,
+                    activityName = diveName,
+                    activitytypeName = 'ROV Dive',
+                    platformName = pName,
+                    platformColor = rovColors[pName],
+                    platformTypeName = 'rov',
+                    stride = args.stride,
+                    args = args,
+                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
+                )
+
+        # Load the data
+        loader._buildValuesByParm()
+        try:
+            (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
+        except DiveInfoServletException as e:
+            logger.error(e)
+
+def processDiveRange(args):
+    '''Given an ROV Name and start and end dive number
+    '''
+    for dNumber in range(args.start, args.end + 1):
+        # Instantiate Loader for this dive
+        loader = ROVCTD_Loader( 
+                    diveNumber = dNumber,
+                    campaignName = args.campaignName,
+                    campaignDescription = args.campaignDescription,
+                    dbAlias = args.database,
+                    activityName = args.rov[0].upper() + str(dNumber),
+                    activitytypeName = 'ROV Dive',
+                    platformName = args.rov,
+                    platformColor = rovColors[args.rov],
+                    platformTypeName = 'rov',
+                    stride = args.stride,
+                    args = args,
+                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
+                )
+
+        # Load the data
+        loader._buildValuesByParm()
+        try:
+            (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
+        except DiveInfoServletException as e:
+            logger.error(e)
 
 def process_command_line():
     '''The argparse library is included in Python 2.7 and is an added package for STOQS.
@@ -384,6 +450,13 @@ def process_command_line():
     examples += " --campaignName 'Midwater Transect dives 1997 - 2014'"
     examples += " --campaignDescription 'Midwater Transect dives made with Ventana and Doc Ricketts from 1997 - 2014. Three to four dives/year selected, representing spring, summer and fall (~ beginning upwelling, upwelling and post-upwelling)'"
     examples += "\n"
+    examples += "\n"
+    examples += "All dives in Monterey Bay:\n"
+    examples += sys.argv[0] + " --database stoqs_rovctd_t --rov vnta --start 1 --end 4000 --campaignName 'Monterey Bay ROVCTD data' --campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0"
+    examples += sys.argv[0] + " --database stoqs_rovctd_t --rov tibr --start 42 --end 1163 --campaignName 'Monterey Bay ROVCTD data' --campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0"
+    examples += sys.argv[0] + " --database stoqs_rovctd_t --rov docr --start 1 --end 1000 ---campaignName 'Monterey Bay ROVCTD data' -campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0"
+    examples += "\n"
+    examples += "\n"
     examples += "Assumes that a STOQS database has already been set up following steps 4-7 from the LOADING file.\n"
     examples += "\n"
     examples += '\nIf running from cde-package replace ".py" with ".py.cde".'
@@ -393,7 +466,10 @@ def process_command_line():
                                      epilog=examples)
 
     parser.add_argument('-d', '--database', action='store', help='Database alias', required=True)
-    parser.add_argument('--dives', action='store', help='Space separated list of dives in format <ROV_letter><number>', nargs='*', default=[], required=True)
+    parser.add_argument('--dives', action='store', help='Space separated list of dives in format <ROV_letter><number>', nargs='*', default=[])
+    parser.add_argument('--rov', action='store', help='ROV name', choices=['vnta','tibr','docr'])
+    parser.add_argument('--start', action='store', help='Staring dive number', type=int)
+    parser.add_argument('--end', action='store', help='Ending dive number', type=int)
     parser.add_argument('--campaignName', action='store', help='Short name describing this collection of dives', required=True)
     parser.add_argument('--campaignDescription', action='store', help='Longer name explaining purpose for having these dives assembeled together', default='')
     parser.add_argument('--qcFlag', action='store', help="Load only data that have flags of this value and above. QC flags: 0=bad, 1=suspect, 2=default, 3=human checked ", type=int, choices=[0,1,2,3], default=2)
@@ -410,40 +486,13 @@ if __name__ == '__main__':
     
     args, commandline = process_command_line()
 
-    for diveName in args.dives:
-        if diveName[0].lower() == 'v':
-            pName = 'vnta'
-            pColor = 'ff0000'
-        elif diveName[0].lower() == 't':
-            pName = 'tibr'
-            pColor = 'ffff00'
-        elif diveName[0].lower() == 'd':
-            pName = 'docr'
-            pColor = 'ff00ff'
-        dNumber = int(diveName[1:])
+    if args.dives:
+        processDiveList(args)
+    elif args.rov and args.start and args.end:
+        processDiveRange(args)
+    else:
+        print 'Need a list of dives or a range of dives.'
 
-        # Instantiate Loader for this dive
-        loader = ROVCTD_Loader( 
-                    diveNumber = dNumber,
-                    campaignName = args.campaignName,
-                    campaignDescription = args.campaignDescription,
-                    dbAlias = args.database,
-                    activityName = diveName,
-                    activitytypeName = 'ROV Dive',
-                    platformName = pName,
-                    platformColor = pColor,
-                    platformTypeName = 'rov',
-                    stride = args.stride,
-                    args = args,
-                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
-                )
-
-        # Load the data
-        loader._buildValuesByParm()
-        try:
-            (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
-        except DiveInfoServletException as e:
-            logger.error(e)
 
     ls = LoadScript(args.database, args.campaignName, args.campaignDescription,
                     x3dTerrains = {
@@ -462,5 +511,4 @@ if __name__ == '__main__':
     ls.addTerrainResources()
 
     print "All Done."
-
 
