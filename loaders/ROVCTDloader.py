@@ -303,6 +303,9 @@ class ROVCTD_Loader(Base_Loader):
             except ValueError:
                 # Some flag values are not set - assume that it would be the default value: 2
                 logger.warn('latlonflag flag value not set in row %d for %s' % (i, self.activityName))
+            except TypeError:
+                # Some flag values are not set - assume that it would be the default value: 2
+                logger.warn('latlonflag flag is NoneType value in row %d for %s' % (i, self.activityName))
 
             for v in self.vDict.keys():
                 values = {}
@@ -452,10 +455,12 @@ def process_command_line():
     examples += "\n"
     examples += "\n"
     examples += "All dives in Monterey Bay:\n"
-    examples += sys.argv[0] + " --database stoqs_rovctd_t --rov vnta --start 1 --end 4000 --campaignName 'Monterey Bay ROVCTD data' --campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0"
-    examples += sys.argv[0] + " --database stoqs_rovctd_t --rov tibr --start 42 --end 1163 --campaignName 'Monterey Bay ROVCTD data' --campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0"
-    examples += sys.argv[0] + " --database stoqs_rovctd_t --rov docr --start 1 --end 1000 ---campaignName 'Monterey Bay ROVCTD data' -campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0"
-    examples += "\n"
+    examples += sys.argv[0] + " --database stoqs_rovctd --rov vnta --start 43 --end 4000 --campaignName 'Monterey Bay ROVCTD data' "
+    examples += "--campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0\n"
+    examples += sys.argv[0] + " --database stoqs_rovctd --rov tibr --start 42 --end 1163 --campaignName 'Monterey Bay ROVCTD data' "
+    examples += "--campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0\n"
+    examples += sys.argv[0] + " --database stoqs_rovctd --rov docr --start 1 --end 1000 ---campaignName 'Monterey Bay ROVCTD data' "
+    examples += "--campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0\n"
     examples += "\n"
     examples += "Assumes that a STOQS database has already been set up following steps 4-7 from the LOADING file.\n"
     examples += "\n"
