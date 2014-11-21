@@ -344,15 +344,19 @@ class ROVCTD_Loader(Base_Loader):
                     continue
 
                 try:
-                    values['latitude'] = float(r['elat'])
-                except ValueError:
-                    values['latitude'] = float(r['rlat'])
-                try:
-                    values['longitude'] = float(r['elon'])
-                except ValueError:
-                    values['longitude'] = float(r['rlon'])
+                    try:
+                        values['latitude'] = float(r['elat'])
+                    except ValueError:
+                        values['latitude'] = float(r['rlat'])
+                    try:
+                        values['longitude'] = float(r['elon'])
+                    except ValueError:
+                        values['longitude'] = float(r['rlon'])
 
-                if not self.inBBOX(values['longitude'], values['latitude']):
+                    if not self.inBBOX(values['longitude'], values['latitude']):
+                        continue
+                except ValueError:
+                    logger.error('No position for record r = %s', r)
                     continue
 
                 values['timeUnits'] = 'seconds since 1970-01-01 00:00:00'
