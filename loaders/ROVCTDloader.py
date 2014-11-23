@@ -289,13 +289,20 @@ class ROVCTD_Loader(Base_Loader):
         for i,v in enumerate(['elon', 'elat', 'd', 'rlon', 'rlat'] + self.vDict.keys()):
             self.url += '&r%d=%s' % (i + 1, v)
 
-        logger.info(self.url)
         self.vSeen = defaultdict(lambda: 0)
 
         # Read entire response to fill a dictionary so that we can yield by Parameter rather than by Measurement - as process_data expects
         # Apply QC flags and stride here
         self.valuesByParm = defaultdict(lambda: [])
-        for i, r in enumerate(csv.DictReader(urllib2.urlopen(self.url))):
+        try:
+            logger.info('Reading lines from %s', self.url)
+            lines = urllib2.urlopen(self.url)
+        except Exception as e:
+            logger.error('Failed on urlopen() from %s', self.url)
+            logger.error('Data received: lines = \n%s', lines)
+            logger.exception(e)
+
+        for i, r in enumerate(csv.DictReader(lines)):
             if i % self.args.stride:
                 continue
 
