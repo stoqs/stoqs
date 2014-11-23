@@ -235,6 +235,7 @@ class ROVCTD_Loader(Base_Loader):
         '''
 
         url = 'http://coredata.shore.mbari.org/rovctd/diveinfo/rovdiveinfoservlet?platform=%s&dive=%d' % (self.platformName, self.diveNumber)
+        ##url = 'http://134.89.10.17:8081/rovdiveinfoservlet?platform=%s&dive=%d' % (self.platformName, self.diveNumber)
         
         for r in csv.DictReader(urllib2.urlopen(url)):
             sdt = datetime.strptime(r['divestartdtg'], '%Y-%m-%dT%H:%M:%SZ')
@@ -282,7 +283,8 @@ class ROVCTD_Loader(Base_Loader):
         http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs&r1=p&r2=t&r3=s&r4=o2sbeml&r5=light&r6=beac
         '''
 
-        self.url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?'
+        ##self.url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?'
+        self.url = 'http://134.89.10.17:8081/rovctddataservlet?'
         self.url += 'platform=%s&dive=%d&domain=epochsecs' % (self.platformName, self.diveNumber)
         for i,v in enumerate(['elon', 'elat', 'd', 'rlon', 'rlat'] + self.vDict.keys()):
             self.url += '&r%d=%s' % (i + 1, v)
