@@ -278,6 +278,28 @@ class ROVCTD_Loader(Base_Loader):
         else:
             return True
 
+    def _nodeServletLines(self):
+        '''Returns line-feed terminated rows of data suitable for DictReader
+        '''
+        lines = ''
+        try:
+            logger.info('Reading lines from %s', self.url)
+            response = urllib2.urlopen(self.url)
+            lines = response.read().replace('\r', '')
+        except KeyboardInterrupt as e:
+            logger.error('Interrupted when trying to read lines from %s', self.url)
+            import pdb
+            pdb.set_trace()
+            logger.error('lines = \n%s', lines)
+            logger.exception(e)
+            sys.exit(-1)
+        except Exception as e:
+            logger.error('Failed on urlopen() from %s', self.url)
+            logger.error('Data received: lines = \n%s', lines)
+            logger.exception(e)
+
+        return lines
+
     def _buildValuesByParm(self):
         '''Example URL to get data: 
         http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs&r1=p&r2=t&r3=s&r4=o2sbeml&r5=light&r6=beac
@@ -294,84 +316,92 @@ class ROVCTD_Loader(Base_Loader):
         # Read entire response to fill a dictionary so that we can yield by Parameter rather than by Measurement - as process_data expects
         # Apply QC flags and stride here
         self.valuesByParm = defaultdict(lambda: [])
+
+        lines = self._nodeServletLines()
+
         try:
-            logger.info('Reading lines from %s', self.url)
-            lines = urllib2.urlopen(self.url)
-        except Exception as e:
-            logger.error('Failed on urlopen() from %s', self.url)
-            logger.error('Data received: lines = \n%s', lines)
-            logger.exception(e)
-
-        for i, r in enumerate(csv.DictReader(lines)):
-            if i % self.args.stride:
-                continue
-
-            try:
-                if int(r['latlonflag']) < self.args.qcFlag:
+            for i, r in enumerate(csv.DictReader(lines.split('\n'))):
+                if i % self.args.stride:
                     continue
-            except ValueError:
-                # Some flag values are not set - assume that it would be the default value: 2
-                logger.warn('latlonflag flag value not set in row %d for %s' % (i, self.activityName))
-            except TypeError:
-                # Some flag values are not set - assume that it would be the default value: 2
-                logger.warn('latlonflag flag is NoneType value in row %d for %s' % (i, self.activityName))
-
-            for v in self.vDict.keys():
-                values = {}
-                if v not in self.include_names:
-                    continue
-
-                try:
-                    values[self.vDict[v]] = float(r[v])
-                except ValueError:
-                    continue
-                except TypeError:
-                    continue
-                else:
-                    try:
-                        if v in ('p', 't', 's'):
-                            if int(r['ptsflag']) < self.args.qcFlag:
-                                continue
-                        elif v == 'o2':
-                            if int(r['o2flag']) < self.args.qcFlag:
-                                continue
-                        elif v == 'o2alt':
-                            if int(r['o2altflag']) < self.args.qcFlag:
-                                continue
-                        elif v == 'light':
-                            if int(r['lightflag']) < self.args.qcFlag:
-                                continue
-                    except ValueError:
-                        # Some flag values are not set - assume that they would be the default value: 2
-                        logger.warn('QC flag value not set for v = %s in row %d for %s' % (v, i, self.activityName))
     
-                values['time'] = float(r['epochsecs'])
-
                 try:
-                    values['depth'] = float(r['d'])
-                except ValueError:
-                    continue
-
-                try:
-                    try:
-                        values['latitude'] = float(r['elat'])
-                    except ValueError:
-                        values['latitude'] = float(r['rlat'])
-                    try:
-                        values['longitude'] = float(r['elon'])
-                    except ValueError:
-                        values['longitude'] = float(r['rlon'])
-
-                    if not self.inBBOX(values['longitude'], values['latitude']):
+                    if int(r['latlonflag']) < self.args.qcFlag:
                         continue
                 except ValueError:
-                    logger.error('No position for record r = %s', r)
-                    continue
+                    # Some flag values are not set - assume that it would be the default value: 2
+                    logger.warn('latlonflag flag value not set in row %d for %s' % (i, self.activityName))
+                except TypeError:
+                    # Some flag values are not set - assume that it would be the default value: 2
+                    logger.warn('latlonflag flag is NoneType value in row %d for %s' % (i, self.activityName))
 
-                values['timeUnits'] = 'seconds since 1970-01-01 00:00:00'
+                for v in self.vDict.keys():
+                    values = {}
+                    if v not in self.include_names:
+                        continue
 
-                self.valuesByParm[v].append(values)
-                self.vSeen[v] += 1
+                    try:
+                        values[self.vDict[v]] = float(r[v])
+                    except ValueError:
+                        continue
+                    except TypeError:
+                        continue
+                    else:
+                        try:
+                            if v in ('p', 't', 's'):
+                                if int(r['ptsflag']) < self.args.qcFlag:
+                                    continue
+                            elif v == 'o2':
+                                if int(r['o2flag']) < self.args.qcFlag:
+                                    continue
+                            elif v == 'o2alt':
+                                if int(r['o2altflag']) < self.args.qcFlag:
+                                    continue
+                            elif v == 'light':
+                                if int(r['lightflag']) < self.args.qcFlag:
+                                    continue
+                        except ValueError:
+                            # Some flag values are not set - assume that they would be the default value: 2
+                            logger.warn('QC flag value not set for v = %s in row %d for %s' % (v, i, self.activityName))
+    
+                    values['time'] = float(r['epochsecs'])
+    
+                    try:
+                        values['depth'] = float(r['d'])
+                    except ValueError:
+                        continue
+
+                    try:
+                        try:
+                            values['latitude'] = float(r['elat'])
+                        except ValueError:
+                            values['latitude'] = float(r['rlat'])
+                        try:
+                            values['longitude'] = float(r['elon'])
+                        except ValueError:
+                            values['longitude'] = float(r['rlon'])
+
+                        if not self.inBBOX(values['longitude'], values['latitude']):
+                            continue
+                    except ValueError:
+                        logger.error('No position for record r = %s', r)
+                        continue
+
+                    values['timeUnits'] = 'seconds since 1970-01-01 00:00:00'
+    
+                    self.valuesByParm[v].append(values)
+                    self.vSeen[v] += 1
+
+        except KeyboardInterrupt as e:
+            logger.error('Interrupted while in DictReader() with r = %s', r)
+            import pdb
+            pdb.set_trace()
+            logger.info('lines = \n%s', lines)
+            logger.exception(e)
+            sys.exit(-1)
+        except Exception as e:
+            logger.error('Failed on DictReader() from lines from %s', self.url)
+            logger.error('lines = \n%s', lines)
+            logger.exception(e)
 
         self.count = np.sum(self.vSeen.values())
 
