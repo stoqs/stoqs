@@ -236,7 +236,7 @@ class ROVCTD_Loader(Base_Loader):
                             'analog4': analog4,
                         }
 
-    def _getStartAndEndTimeFromInfoServlet(self):
+    def _nodeServletStartAndEndTimes(self):
         '''Looks like:
         http://coredata.shore.mbari.org/rovctd/diveinfo/rovdiveinfoservlet?platform=docr&dive=671
         expdid,diveid,shipname,rovname,divenumber,divestartdtg,diveenddtg,chiefscientist,maxpressure,ctdpcount,minshiplat,maxshiplat,minshiplon,maxshiplon,avgshiplat,avgshiplon
@@ -257,6 +257,27 @@ class ROVCTD_Loader(Base_Loader):
         except UnboundLocalError:
             raise DiveInfoServletException('Cannot get start and end time using %s' % url)
 
+    def _pymssqlStartAndEndTimes(self):
+        '''Returns start and end Python datetimes for the dive
+        '''
+        sql = '''SELECT expdid, diveid, shipname, rovname, divenumber,
+ dbo.iso8601Format(divestartdtg) as divestartdtg,
+ dbo.iso8601Format(diveenddtg) as diveenddtg,
+ chiefscientist, maxpressure, ctdpcount,
+ minshiplat,maxshiplat,minshiplon,maxshiplon,avgshiplat,avgshiplon
+FROM divesummary
+WHERE rovname = '%s'
+ AND DiveNumber = %d
+ORDER BY divenumber''' % (self.platformName, self.diveNumber)
+
+        cur = self.conn.cursor()
+        cur.execute(sql)
+        r = cur.fetchone()
+        sdt = datetime.strptime(r['divestartdtg'].strip(), '%Y-%m-%dT%H:%M:%SZ')
+        edt = datetime.strptime(r['diveenddtg'].strip(), '%Y-%m-%dT%H:%M:%SZ')
+
+        return sdt, edt
+
     def initDB(self):
         '''
         '''
@@ -267,7 +288,10 @@ class ROVCTD_Loader(Base_Loader):
 
         # Ensure that startDatetime and startDatetime are defined as they are required fields of Activity
         if not self.startDatetime or not self.endDatetime:
-            self.startDatetime, self.endDatetime = self._getStartAndEndTimeFromInfoServlet()
+            if self.args.useNode:
+                self.startDatetime, self.endDatetime = self._nodeServletStartAndEndTimes()
+            else:
+                self.startDatetime, self.endDatetime = self._pymssqlStartAndEndTimes()
             self.createActivity()
 
     def getTotalRecords(self):
