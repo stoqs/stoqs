@@ -53,6 +53,7 @@ from loaders import STOQS_Loader, LoadScript, SkipRecord, missing_value, MEASURE
 from loaders.DAPloaders import Base_Loader
 import numpy as np
 from collections import defaultdict
+import pymssql
 
 
 # Set up logging
@@ -138,6 +139,14 @@ class ROVCTD_Loader(Base_Loader):
         self.stride = stride
         self.grdTerrain = grdTerrain
         self.args = args
+
+        self.conn = pymssql.connect(host='solstice.shore.mbari.org:1433', user='everyone', password='guest', database='expd', as_dict=True)
+        if self.platformName == 'vnta':
+            self.rovDataView = 'VentanaRovCtdBinData'
+        elif self.platformName == 'tibr':
+            self.rovDataView = 'TiburonRovCtdBinData'
+        elif self.platformName == 'docr':
+            self.rovDataView = 'DocRickettsRovCtdBinData'
 
     def makeParmDict(self):
         '''Make a pydap-type parameter dictionary for passing into self.addParameters()
@@ -279,48 +288,68 @@ class ROVCTD_Loader(Base_Loader):
             return True
 
     def _nodeServletLines(self):
-        '''Returns line-feed terminated rows of data suitable for DictReader
+        '''Assigns line-feed terminated rows of data suitable for DictReader and returns list of dictionaries
         '''
-        lines = ''
+
+        self.lines = ''
         try:
             logger.info('Reading lines from %s', self.url)
             response = urllib2.urlopen(self.url)
-            lines = response.read().replace('\r', '')
+            self.lines = response.read().replace('\r', '')
         except KeyboardInterrupt as e:
             logger.error('Interrupted when trying to read lines from %s', self.url)
             import pdb
             pdb.set_trace()
-            logger.error('lines = \n%s', lines)
+            logger.error('lines = \n%s', self.lines)
             logger.exception(e)
             sys.exit(-1)
         except Exception as e:
             logger.error('Failed on urlopen() from %s', self.url)
-            logger.error('Data received: lines = \n%s', lines)
+            logger.error('Data received: lines = \n%s', self.lines)
             logger.exception(e)
 
-        return lines
+        return csv.DictReader(self.lines.split('\n'))
+
+    def _pymssqlLines(self):
+        '''Performs direct SQL query to return records of data dictionaries, just like _nodeServletLines()
+        '''
+        sql = '''SELECT epochsecs,elon,elat,dbo.Depth(p,rlat) as d,rlon,rlat,ptsflag,o2flag,lightflag,light,analog2,p,s,o2altflag,t,latlonflag,o2alt as o2alt,analog4,analog3,o2 as o2,analog1,dbo.BeamAttn(light,0.25) as beac
+FROM %(rovDataView)s, Dive
+WHERE epochsecs is not null
+ AND dive.rovname = '%(rov)s'
+ AND dive.DiveNumber = %(diveNumber)d
+ AND DatetimeGMT between dive.divestartdtg and dive.diveenddtg
+ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformName, 'diveNumber': self.diveNumber}
+        logger.info(sql)
+        cur = self.conn.cursor()
+        cur.execute(sql)
+        return cur
 
     def _buildValuesByParm(self):
-        '''Example URL to get data: 
+        '''Reads entire response to fill a dictionary so that we can yield by Parameter rather than by Measurement - as process_data expects
+        Node query example:
         http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?platform=docr&dive=671&&domain=epochsecs&r1=p&r2=t&r3=s&r4=o2sbeml&r5=light&r6=beac
         '''
 
-        ##self.url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?'
-        self.url = 'http://134.89.10.17:8081/rovctddataservlet?'
-        self.url += 'platform=%s&dive=%d&domain=epochsecs' % (self.platformName, self.diveNumber)
-        for i,v in enumerate(['elon', 'elat', 'd', 'rlon', 'rlat'] + self.vDict.keys()):
-            self.url += '&r%d=%s' % (i + 1, v)
-
         self.vSeen = defaultdict(lambda: 0)
-
-        # Read entire response to fill a dictionary so that we can yield by Parameter rather than by Measurement - as process_data expects
-        # Apply QC flags and stride here
         self.valuesByParm = defaultdict(lambda: [])
 
-        lines = self._nodeServletLines()
+        if self.args.useNode:
+            ##self.url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?'
+            self.url = 'http://134.89.10.17:8081/rovctddataservlet?'
+            self.url += 'platform=%s&dive=%d&domain=epochsecs' % (self.platformName, self.diveNumber)
+            for i,v in enumerate(['elon', 'elat', 'd', 'rlon', 'rlat'] + self.vDict.keys()):
+                self.url += '&r%d=%s' % (i + 1, v)
+
+            records = self._nodeServletLines()
+        else:
+            # Fudge a url string for the SQL query - string after '/' displayed in INFO when loading
+            self.url = 'SQL://solstice/rov=%s&dive=%d' % (self.args.rov, self.diveNumber)
+            records = self._pymssqlLines()
 
         try:
-            for i, r in enumerate(csv.DictReader(lines.split('\n'))):
+            ##for i, r in enumerate(csv.DictReader(lines.split('\n'))):
+            for i, r in enumerate(records):
                 if i % self.args.stride:
                     continue
     
@@ -371,13 +400,18 @@ class ROVCTD_Loader(Base_Loader):
                         continue
 
                     try:
+                        # Use edited positions if not '' or None, otherwise use raw positions
                         try:
                             values['latitude'] = float(r['elat'])
                         except ValueError:
                             values['latitude'] = float(r['rlat'])
+                        except TypeError:
+                            values['latitude'] = float(r['rlat'])
                         try:
                             values['longitude'] = float(r['elon'])
                         except ValueError:
+                            values['longitude'] = float(r['rlon'])
+                        except TypeError:
                             values['longitude'] = float(r['rlon'])
 
                         if not self.inBBOX(values['longitude'], values['latitude']):
@@ -395,12 +429,13 @@ class ROVCTD_Loader(Base_Loader):
             logger.error('Interrupted while in DictReader() with r = %s', r)
             import pdb
             pdb.set_trace()
-            logger.info('lines = \n%s', lines)
+            logger.info('lines = \n%s', self.lines)
             logger.exception(e)
             sys.exit(-1)
         except Exception as e:
             logger.error('Failed on DictReader() from lines from %s', self.url)
-            logger.error('lines = \n%s', lines)
+            if self.args.useNode:
+                logger.error('lines = \n%s', self.lines)
             logger.exception(e)
 
         self.count = np.sum(self.vSeen.values())
@@ -525,6 +560,7 @@ def process_command_line():
     parser.add_argument('--qcFlag', action='store', help="Load only data that have flags of this value and above. QC flags: 0=bad, 1=suspect, 2=default, 3=human checked ", type=int, choices=[0,1,2,3], default=2)
     parser.add_argument('--stride', action='store', help='Longer name explaining purpose for having these dives together', type=int, default=1)
     parser.add_argument('--bbox', action='store', help='Bounding box for measurements to include in degrees: ll_lon ll_lat ur_lon ur_lat', nargs=4, default=[])
+    parser.add_argument('--useNode', action='store_true', help='To use the Node.js server, otherwise query database directly', default=False)
 
     args = parser.parse_args()
     commandline = ' '.join(sys.argv)
