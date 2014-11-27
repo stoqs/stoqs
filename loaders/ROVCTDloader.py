@@ -273,8 +273,11 @@ ORDER BY divenumber''' % (self.platformName, self.diveNumber)
         cur = self.conn.cursor()
         cur.execute(sql)
         r = cur.fetchone()
-        sdt = datetime.strptime(r['divestartdtg'].strip(), '%Y-%m-%dT%H:%M:%SZ')
-        edt = datetime.strptime(r['diveenddtg'].strip(), '%Y-%m-%dT%H:%M:%SZ')
+        try:
+            sdt = datetime.strptime(r['divestartdtg'].strip(), '%Y-%m-%dT%H:%M:%SZ')
+            edt = datetime.strptime(r['diveenddtg'].strip(), '%Y-%m-%dT%H:%M:%SZ')
+        except TypeError:
+            raise DiveInfoServletException('Cannot get start and end times for %s%d' % (self.platformName[0].upper(), self.diveNumber))
 
         return sdt, edt
 
@@ -559,12 +562,20 @@ def process_command_line():
     examples += "\n"
     examples += "\n"
     examples += "All dives in Monterey Bay:\n"
-    examples += sys.argv[0] + " --database stoqs_rovctd --rov vnta --start 43 --end 4000 --campaignName 'Monterey Bay ROVCTD data' "
+    examples += sys.argv[0] + " --database stoqs_rovctd_mb --rov vnta --start 43 --end 4000 --campaignName 'Monterey Bay ROVCTD data' "
     examples += "--campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0\n"
-    examples += sys.argv[0] + " --database stoqs_rovctd --rov tibr --start 42 --end 1163 --campaignName 'Monterey Bay ROVCTD data' "
+    examples += sys.argv[0] + " --database stoqs_rovctd_mb --rov tibr --start 42 --end 1163 --campaignName 'Monterey Bay ROVCTD data' "
     examples += "--campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0\n"
-    examples += sys.argv[0] + " --database stoqs_rovctd --rov docr --start 1 --end 1000 --campaignName 'Monterey Bay ROVCTD data' "
+    examples += sys.argv[0] + " --database stoqs_rovctd_mb --rov docr --start 1 --end 1000 --campaignName 'Monterey Bay ROVCTD data' "
     examples += "--campaignDescription 'All dives in Monterey Bay' --bbox -122.5 36 -121.75 37.0\n"
+    examples += "\n"
+    examples += "All dives in the Gulf of California:\n"
+    examples += sys.argv[0] + " --database stoqs_rovctd_goc --rov vnta --start 43 --end 4000 --campaignName 'Gulf of California ROVCTD data' "
+    examples += "--campaignDescription 'All dives in Gulf of California' --bbox -120 18 -100 33\n"
+    examples += sys.argv[0] + " --database stoqs_rovctd_goc --rov tibr --start 42 --end 1163 --campaignName 'Gulf of California ROVCTD data' "
+    examples += "--campaignDescription 'All dives in Gulf of California' --bbox -120 18 -100 33\n"
+    examples += sys.argv[0] + " --database stoqs_rovctd_goc --rov docr --start 1 --end 1000 --campaignName 'Gulf of California ROVCTD data' "
+    examples += "--campaignDescription 'All dives in Gulf of California' --bbox -120 18 -100 33\n"
     examples += "\n"
     examples += "Assumes that a STOQS database has already been set up following steps 4-7 from the LOADING file.\n"
     examples += "\n"
