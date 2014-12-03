@@ -1352,7 +1352,7 @@ class STOQSQManager(object):
                     logger.debug('Getting data values in X3D for platformName = %s', platformName) 
                     mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
                                   self.getParameterMinMax()['plot'], self.getSampleQS(), platformName, parameterID, parameterGroups)
-                    # Default vertical exaggeration is 10x and default geoorigin is and empty string
+                    # Default vertical exaggeration is 10x and default geoorigin is an empty string
                     x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)), self.request.GET.get('geoorigin', ''))
             
         return x3dDict
@@ -1850,11 +1850,14 @@ class STOQSQManager(object):
             except:
                 logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
 
+            # Compute midpoint of extent for use in GeoViewpoint for Oculus Rift viewpoint setting
+            lon_midpoint = (extent[0][0] + extent[1][0]) / 2.0
+            lat_midpoint = (extent[0][1] + extent[1][1]) / 2.0
+
             try:
                 extent.transform(outputSRID)
             except:
                 logger.exception('Cannot get transorm to %s for geomstr = %s, srid = %d', outputSRID, geomstr, srid)
         
-        return extent
-
+        return (extent, lon_midpoint, lat_midpoint)
 
