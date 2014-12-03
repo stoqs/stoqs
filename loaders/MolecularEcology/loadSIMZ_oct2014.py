@@ -29,12 +29,11 @@ from CANON import CANONLoader
 cl = CANONLoader('stoqs_simz_oct2014', 'Sampling and Identification of Marine Zooplankton - October 2014',
                         description = 'Rachel Carson and Dorado surveys in Northern Monterey Bay',
                         x3dTerrains = {
-                            'http://dods.mbari.org/terrain/x3d/Monterey25_10x_GeoOrigin_-122_3675_0/Monterey25_10x_GeoOrigin_-122_3675_0_scene.x3d': {
-                                'position': '-28552.237 -47480.893 -11887.605',
-                                'orientation': '0.94840 -0.25575 -0.18743 1.73273',
-                                'centerOfRotation': '9698.914 6008.664 13476.855',
+                            'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                                 'VerticalExaggeration': '10',
-                                'geoOrigin': '-122 36.75 0',
                                 'speed': '0.1',
                             }
                         },
