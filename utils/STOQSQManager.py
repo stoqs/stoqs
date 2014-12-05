@@ -566,6 +566,7 @@ class STOQSQManager(object):
                         logger.warn(e)
                     else:
                         if self.request.GET.get('geoorigin', ''):
+                            logger.warn('Passing geoorigin as a request parameter is deprecated as X3DOM now supports GeoOrigin')
                             x,y,z = gps.lla2gcc((geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10))), self.request.GET.get('geoorigin', ''))
                         else:
                             # Pass default geoCoords for GeoLocation to use

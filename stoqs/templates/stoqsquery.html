@@ -198,7 +198,7 @@
                                 </div>
                                 <div class="tab-pane" id="geo3d" style="height:100%;">
                                     <div id="geo-3dplot" style="height:500px;">
-                                        <div class="row-fluid">
+                                        <div id="geo-3dplot-control" class="row-fluid" style='position:absolute;z-index:1000;'>
                                             <!-- Uncomment and comment out next div for video capture -->
                                             <!--
                                             <div class="span2">
@@ -231,19 +231,22 @@
                                             </div>
                                             <div id="geo3d-colorbar" class="span6"></div>
                                         </div>
-                                        <div>
-                                        <X3D id="spatial-3d-x3d" style="width:100%; height:100%; margin: 0px auto; display:block; border: none;"> 
+                                        <div style="height:100%;">
+                                        <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;"> 
                                             <Scene>
                                                 <Environment frustumCulling="false"></Environment>
                                                 <NavigationInfo></NavigationInfo>
-                                                <Viewpoint id="mp-x3d-viewpoint1" def="vp" centerofrotation="-2711557.9403829873 -4331414.329506527 3801353.4691465236"></Viewpoint>
-                                                <!-- Test GeoViewpoint for Monterey Bay area -->
-                                                <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" geoSystem='"GD" "WE"' position="36.8 -122.1 1000" orientation="1 0 0 -1.57"></GeoViewpoint>
+                                                <Viewpoint id="mp-x3d-viewpoint1" def="vp"></Viewpoint>
+                                                <!-- Test GeoViewpoint for Monterey Bay area, user must page-down to bind to it -->
+                                                <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" geoSystem='"GD" "WE"' position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0">
+                                                </GeoViewpoint>
                                                 <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
                                                 <Group id='spatial-3d-root' render='true'>
                                                     <Group def="theScene">
                                                         <Shape id="mp-x3d-track"></Shape>
-                                                        <Inline id="mp-x3d-terrain1"></Inline>
+                                                        <GeoOriginTransform containerField='children'>
+                                                            <Inline id="mp-x3d-terrain1"></Inline>
+                                                        </GeoOrigin>
                                                         <Group id="platform-orientations"></Group>
                                                         <Group id="platform-models"></Group>
                                                     </Group>
@@ -1118,6 +1121,7 @@
     <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script>
     <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
     <script type="text/javascript" src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/GeoOriginTransform.js"></script>
 
     <script type="text/javascript"><!--
     
@@ -1314,16 +1318,12 @@
 
     function addStationaryPlatformModels() {
         // For platforms in the selection look in $('body').data()['platformModels'] for x3dModels and add to the scene
-        // If geoorigin is not specified then assum default geoCoords and use GeoLocation, otherwise use straight X3D
         x3d = ''
         $.each($('body').data()['platformModels'], function(plat, m) {
-            if ( $.isEmptyObject($('body').data()['geoorigin'])) {
-                x3d += '<GeoLocation geoCoords="' + m[1] + ',' + m[2] + ',' + m[3] + '"><Transform scale="200,200,200">';
-                x3d += '<Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform></GeoLocation>';
-            }
-            else {
-                x3d += '<Transform scale="200,200,200" translation="' + m[1] + ',' + m[2] + ',' + m[3] + '"><Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform>';
-            }
+            x3d += '<GeoLocation geoCoords="' + m[1] + ',' + m[2] + ',' + m[3] + '">';
+            x3d += $('body').data()['geoorigin_use'];
+            x3d += '<Transform scale="200,200,200"><Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform>';
+            x3d += '</GeoLocation>';
         });
         $('#platform-models').html(x3d);
     }
@@ -2267,7 +2267,7 @@
                 $('#parameter-parameter-group').children().hide();
                 $('#spatial-anchor').parent().hide();
                 $('#spatialTabs').hide();
-                $('#geo-3dplot').css( { 'height': '90%',
+                $('#geo-3dplot').css( { 'height': '100%',
                                         'width': '100%',
                                         'position': 'fixed'
                                       });
@@ -2349,99 +2349,101 @@
             document.getElementById("bones").appendChild(finger);
         }
 
-    Leap.loop(function(frame)
-    {
-        if (frame.hands.length)
+        // Begin Leap Motion experiment
+        Leap.loop(function(frame)
         {
-            var hand_frame = frame.hands[0];
-            var hand = document.getElementById("hand");
-
-            var yaw = hand.children[0];
-            var pitch = yaw.children[0];
-            var roll = pitch.children[0];
-
-            yaw.setAttribute("translation", hand_frame.palmPosition[0] + " " + hand_frame.palmPosition[1] + " " + hand_frame.palmPosition[2]);
-
-            yaw.setAttribute("rotation", "0 1 0 " + -hand_frame.yaw());
-            pitch.setAttribute("rotation", "1 0 0 " + hand_frame.pitch());
-            roll.setAttribute("rotation", "0 0 1 " + hand_frame.roll());
-
-            var viewpoint = document.getElementById("mp-x3d-geoviewpoint1");
-            var vpOrientation = viewpoint.getAttribute("orientation");
-            var m = x3dom.fields.Quaternion.parseAxisAngle( vpOrientation ).toMatrix();
-            var d = new x3dom.fields.SFVec3f(-hand_frame.roll()*2.0, 0, hand_frame.pitch());
-
-            if(d.z < 0)
+            if (frame.hands.length)
             {
-                d.z *= 3.0;
+                var hand_frame = frame.hands[0];
+                var hand = document.getElementById("hand");
+
+                var yaw = hand.children[0];
+                var pitch = yaw.children[0];
+                var roll = pitch.children[0];
+
+                yaw.setAttribute("translation", hand_frame.palmPosition[0] + " " + hand_frame.palmPosition[1] + " " + hand_frame.palmPosition[2]);
+
+                yaw.setAttribute("rotation", "0 1 0 " + -hand_frame.yaw());
+                pitch.setAttribute("rotation", "1 0 0 " + hand_frame.pitch());
+                roll.setAttribute("rotation", "0 0 1 " + hand_frame.roll());
+
+                var viewpoint = document.getElementById("mp-x3d-geoviewpoint1");
+                var vpOrientation = viewpoint.getAttribute("orientation");
+                var m = x3dom.fields.Quaternion.parseAxisAngle( vpOrientation ).toMatrix();
+                var d = new x3dom.fields.SFVec3f(-hand_frame.roll()*2.0, 0, hand_frame.pitch());
+
+                if(d.z < 0)
+                {
+                    d.z *= 3.0;
+                }
+
+                pyr = pyr.addScaled(m.multMatrixVec(d), 0.01);
             }
 
-            pyr = pyr.addScaled(m.multMatrixVec(d), 0.01);
-        }
-
-        for (var i = 0; i < Math.min(frame.fingers.length, 5); i++)
-        {
-            for (var j = 0; j < Math.min(frame.fingers[j].bones.length, 4); ++j)
+            for (var i = 0; i < Math.min(frame.fingers.length, 5); i++)
             {
-                finger = document.getElementById("bones").children[i];
-                bone = finger.children[j];
-                finger_frame = frame.fingers[i];
+                for (var j = 0; j < Math.min(frame.fingers[j].bones.length, 4); ++j)
+                {
+                    finger = document.getElementById("bones").children[i];
+                    bone = finger.children[j];
+                    finger_frame = frame.fingers[i];
 
-                m = finger_frame.bones[j].matrix();
-                arr = new Array;
+                    m = finger_frame.bones[j].matrix();
+                    arr = new Array;
 
-                for (var x = 0; x < 4; ++x)
-                    for (var y = 0; y < 4; ++y)
-                        arr.push(m[y*4+x]);
+                    for (var x = 0; x < 4; ++x)
+                        for (var y = 0; y < 4; ++y)
+                            arr.push(m[y*4+x]);
 
-                bone.setAttribute("matrix", arr.join(" "));
+                    bone.setAttribute("matrix", arr.join(" "));
+                }
             }
-        }
 
-    });
+        });
 
-    function vrDeviceCallback(vrdevs) {
-        var i;
+        function vrDeviceCallback(vrdevs) {
+            var i;
 
-        // First, find a HMD -- just use the first one we find
-        for (i = 0; i < vrdevs.length; ++i) {
-            if (vrdevs[i] instanceof HMDVRDevice) {
-                vrHMD = vrdevs[i];
-                console.log(vrHMD);
-                break;
+            // First, find a HMD -- just use the first one we find
+            for (i = 0; i < vrdevs.length; ++i) {
+                if (vrdevs[i] instanceof HMDVRDevice) {
+                    vrHMD = vrdevs[i];
+                    console.log(vrHMD);
+                    break;
+                }
             }
-        }
 
-        if (!vrHMD)
-            return;
+            if (!vrHMD)
+                return;
 
-        // Then, find that HMD's position sensor
-        for (i = 0; i < vrdevs.length; ++i) {
-            if (vrdevs[i] instanceof PositionSensorVRDevice &&
-                vrdevs[i].hardwareUnitId == vrHMD.hardwareUnitId) {
-                vrSensor = vrdevs[i];
-                console.log(vrSensor);
-                break;
+            // Then, find that HMD's position sensor
+            for (i = 0; i < vrdevs.length; ++i) {
+                if (vrdevs[i] instanceof PositionSensorVRDevice &&
+                    vrdevs[i].hardwareUnitId == vrHMD.hardwareUnitId) {
+                    vrSensor = vrdevs[i];
+                    console.log(vrSensor);
+                    break;
+                }
             }
+
+            if (!vrHMD || !vrSensor) {
+                alert("Didn't find a HMD and sensor!");
+                return;
+            }
+
+            var leftFOV = vrHMD.getCurrentEyeFieldOfView("left");
+            var rightFOV = vrHMD.getCurrentEyeFieldOfView("right");
+
+            console.log(leftFOV);
+            console.log(rightFOV);
+
+            var leftTranslation = vrHMD.getEyeTranslation("left");
+            var rightTranslation = vrHMD.getEyeTranslation("right");
+
+            console.log(leftTranslation);
+            console.log(rightTranslation);
         }
-
-        if (!vrHMD || !vrSensor) {
-            alert("Didn't find a HMD and sensor!");
-            return;
-        }
-
-        var leftFOV = vrHMD.getCurrentEyeFieldOfView("left");
-        var rightFOV = vrHMD.getCurrentEyeFieldOfView("right");
-
-        console.log(leftFOV);
-        console.log(rightFOV);
-
-        var leftTranslation = vrHMD.getEyeTranslation("left");
-        var rightTranslation = vrHMD.getEyeTranslation("right");
-
-        console.log(leftTranslation);
-        console.log(rightTranslation);
-    }
+        // End Leap Motion Experiment
 
 
 
@@ -2456,6 +2458,8 @@
             $('#mp-x3d-viewpoint1').attr('zFar', '300000');
             $('#mp-x3d-geoviewpoint1').attr('zNear', '10');
             $('#mp-x3d-geoviewpoint1').attr('zFar', '300000');
+            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 10000');
+            $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
             $('#left-column').parent().parent().css( { 'padding-left': '20px' } );
             $('#collapseSpatial > div').css( { 'padding-top': '9px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '15px' } );
@@ -2476,6 +2480,8 @@
             $('#mp-x3d-viewpoint1').attr('zFar', '300000');
             $('#mp-x3d-geoviewpoint1').attr('zNear', '10');
             $('#mp-x3d-geoviewpoint1').attr('zFar', '300000');
+            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 0');
+            $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             $('#left-column').parent().parent().css( { 'padding-left': '0px' } );
             $('#collapseSpatial > div').css( { 'padding-top': '0px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '0px' } );
@@ -3115,10 +3121,6 @@
             if ($('#showplatforms').is(':checked')) {
                 qstring += '&showplatforms=1';
             }
-            // Use the attributes of the terrain that is selected
-            if ($('body').data()['geoorigin']) {
-                qstring += '&geoorigin=' + $('body').data()['geoorigin'];
-            }
             if ($('body').data()['ve']) {
                 qstring += '&ve=' + $('body').data()['ve'];
             }
@@ -3431,14 +3433,21 @@
                         $('#mp-x3d-viewpoint1').attr('orientation', item.orientation);
                         $('#mp-x3d-viewpoint1').attr('zNear', item.zNear);
                         $('#mp-x3d-viewpoint1').attr('zFar', item.zFar);
+
                         $('#mp-x3d-terrain1').attr('url', terrain);
-                        if ( item.geoOrigin ) { 
-                            //$('#mp-x3d-track').append('<GeoOrigin DEF="ORIGIN" geoCoords="' + item.geoOrigin + '"></GeoOrigin>');
+
+                        if ( ! $.isEmptyObject(item.geoOrigin) ) { 
+                            var geoOrigin_def = '<GeoOrigin def="go" geoSystem=\'"GD" "WE"\' geoCoords="' + item.geoOrigin + '" ';
+                            geoOrigin_def += ' rotateYUp="true" elevationScaling="true"></GeoOrigin>' ;
+                            $('#mp-x3d-geoviewpoint1').append(geoOrigin_def);
                             $('body').data()['geoorigin'] = item.geoOrigin;
+                            $('body').data()['geoorigin_use'] = '<GeoOrigin use="go"></GeoOrigin>';
+                            $('#spatial-3d-root > Group > GeoOriginTransform').append($('body').data()['geoorigin_use']);
                         }
-                        // For testing GeoOrigin in APGeospatial.js
-                        //$('#spatial-3d-x3d > Scene').append("<GeoLocation geoSystem='GD' geoCoords='36.8 -121.86 -300'><Transform scale='1000 1000 1000'><inline url='http://dods.mbari.org/data/beds/x3d/beds_housing_with_axes.x3d'></inline></Transform><GeoOrigin geoCoords='36 -121 0' geoSystem='GD'></GeoOrigin></GeoLocation>");
-                        if ( item.VerticalExaggeration ) {
+                        else {
+                            $('body').data()['geoorigin_use'] = '';
+                        }
+                        if ( ! $.isEmptyObject(item.VerticalExaggeration) ) {
                             $('#x3d-ve').text('Vertical Exaggeration: ' + item.VerticalExaggeration + 'x');
                             $('body').data()['ve'] = item.VerticalExaggeration;
                         }
@@ -3450,9 +3459,10 @@
             else if (key == 'x3dplaybacks') {
                 if ( ! $.isEmptyObject(data[key]) ) {
                     $.each(data[key], function (modelurl, item) {
-                        //$('#spatial-3d-x3d > Scene').append("<Transform translation='-37367.14106213208 84335.25478927698 70689.69166054856'><inline url='" + modelurl + "'></inline></Transform>");
-                        //$('#spatial-3d-x3d > Scene').append("<GeoLocation geoSystem='GD' geoCoords='" + item.startGeoCoords + "'><Transform scale='1000 1000 1000'><inline url='" + modelurl + "'></inline></Transform><GeoOrigin geoCoords='36 -121 0' geoSystem='GD'></GeoOrigin></GeoLocation>");
-                        $('#spatial-3d-x3d > Scene').append("<GeoLocation geoSystem='GD' geoCoords='" + item.startGeoCoords + "'><inline url='" + modelurl + "'></inline><GeoOrigin geoCoords='36 -121 0' geoSystem='GD' rotateYUp='true'></GeoOrigin></GeoLocation>");
+                        var playbackX3D = "<GeoLocation geoSystem='GD' geoCoords='" + item.startGeoCoords + "'>";
+                        playbackX3D += "<inline url='" + modelurl + "'></inline>" + $('body').data()['geoorigin_use'];
+                        playbackX3D += "</GeoLocation>";
+                        $('#spatial-3d-x3d > Scene').append(playbackX3D);
                     });
                 }
             }
@@ -3832,21 +3842,11 @@
             else if (key == 'measuredparameterx3d') {
                 if (data[key]) {
                     if (data[key]['points']) {
-                        // If geoorigin then use regular coordinate nodes as summary data is returning 
-                        // gcc coords with geoorigin subtracted until geoOrigin is implemented in X3DOM
-                        if ( ! $('body').data()['geoorigin'] ) {
+                        if ( ! $.isEmptyObject(data.measuredparameterx3d.points) ) {
                             $('#mp-x3d-track').html([
                                 '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
                                     '<color color="' + data.measuredparameterx3d.colors + '"></color>',
-                                    '<geocoordinate point="' + data.measuredparameterx3d.points  + '"></geocoordinate>',
-                                '</indexedlineset>'
-                            ].join(''));
-                        }
-                        else {
-                            $('#mp-x3d-track').html([
-                                '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
-                                    '<color color="' + data.measuredparameterx3d.colors + '"></color>',
-                                    '<coordinate point="' + data.measuredparameterx3d.points  + '"></coordinate>',
+                                    '<geocoordinate point="' + data.measuredparameterx3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>',
                                 '</indexedlineset>'
                             ].join(''));
                         }
@@ -4027,7 +4027,8 @@
                 // Request only the extent and platforms in order to quickly produce the mapfile
                 url : mapQuery + '?' +  qstring + '&only=extent\&only=platforms',
                 success: function (data) {
-                    me.refreshMap(data['extent']);
+                    $('body').data()['extent'] = data['extent'];
+                    me.refreshMap($('body').data()['extent'][0]);
                 },
                 dataType: "json"
             })
