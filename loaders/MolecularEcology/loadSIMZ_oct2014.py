@@ -28,12 +28,16 @@ from CANON import CANONLoader
 
 cl = CANONLoader('stoqs_simz_oct2014', 'Sampling and Identification of Marine Zooplankton - October 2014',
                         description = 'Rachel Carson and Dorado surveys in Northern Monterey Bay',
+                        # Assign a GeoOrigin in the middle of the terrain that is an appropriate 
+                        # location for rotateYUp, making fly navigation work well. All other GCC
+                        # positions are in the GeoOrigin with rotateYUp='true' coordinate system
                         x3dTerrains = {
                             'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
-                                'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                                'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                'position': '-5334.11754 77527.85269 57495.84643',
+                                'orientation': '-0.99840 0.05415 0.01651 0.88794',
+                                'centerOfRotation': '1973.702 -553.761 -10885.8333',
                                 'VerticalExaggeration': '10',
+                                'geoOrigin': '36.75 -122 0',
                                 'speed': '0.1',
                             }
                         },
