@@ -470,6 +470,7 @@ class MeasuredParameter(object):
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in izip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     if geoOrigin:
+                        logger.warn('geoOrigin use is deprecated as X3DOM (post v1.6) now supports its use')
                         depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
                         points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
                     else:
@@ -583,6 +584,7 @@ class PlatformOrientation(object):
             for act in self.yaw_by_act.keys():
                 for lon,lat,depth,t in izip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.time_by_act[act]):
                     if geoOrigin:
+                        logger.warn('geoOrigin use is deprecated as X3DOM (post v1.6) now supports its use')
                         depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
                         # TEST send translations directly to Transform from JavaScript
                         translations.append('%.1f,%.1f,%.1f' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin))
