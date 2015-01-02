@@ -162,6 +162,12 @@ class OSLoader(LoadScript):
             elif url.find('NOG') != -1:
                 ml.include_names = ['TEMP', 'PSAL']
                 Mooring_Loader.getFeatureType = lambda self: 'timeseries'
+            elif url.find('Stratus') != -1:
+                # Variable attrubute coordinates: TIME, DEPTH, LATITUDE, LONGITUDE; it should not contain commas
+                ml.include_names = ['TEMP', 'PSAL']
+                ml.auxCoords = {}
+                for v in ml.include_names:
+                    ml.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
             else:
                 ml.include_names = ['TEMP', 'PSAL']
     

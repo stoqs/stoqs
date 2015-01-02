@@ -62,6 +62,8 @@ osl.dataSets = [
     ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA_GRIDDED/PIRATA/catalog.html', ['.*_TVSM_dy.nc$'], 10),
     ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/CCE1/catalog.html', ['.*_MICROCAT.nc$', '.*_SEACAT.nc$'], 50),
     ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/CCE2/catalog.html', ['.*_MICROCAT.nc$', '.*_SEACAT.nc$'], 50),
+    #('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/Stratus/catalog.html', ['.*_TS.nc$', '.*_M.nc$', '.*TS2000m.nc$'], 50),
+    ('http://dods.ndbc.noaa.gov/thredds/catalog/oceansites/DATA/Stratus/catalog.html', ['.*_TS.nc$'], 50),  # Only _TS.nc are of GridType
     
                ]
 
