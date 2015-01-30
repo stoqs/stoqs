@@ -160,7 +160,7 @@ def showCampaigns(request,format=None):
         logger.debug('k = %s', k)
         for c in cHash[k]:
             logger.debug('c.name = %s', c.name)
-            # Use compination of dbAlias and startdate as different dbAlias's can have the same startdate
+            # Use combination of dbAlias and startdate as different dbAlias's can have the same startdate
             if c.startdate:
                 key = str(c.startdate) + '_' + c.name
                 timeSortHash[key] = {k: c}
@@ -171,7 +171,7 @@ def showCampaigns(request,format=None):
                 timeSortHash[key] = {k: c}
                 logger.debug("Set timeSortHash['%s'] = %s", key, {k: c})
                 dummyTime += timedelta(seconds=1)
-                logger.debug('dunnyTime = %s', dummyTime)
+                logger.debug('dummyTime = %s', dummyTime)
 
     # Build list of hashes to pass to the campaigns.html template
     camList = []
