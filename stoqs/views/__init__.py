@@ -299,21 +299,16 @@ class BaseOutputer(object):
             return render_to_response(self.html_tmpl_path, {'list': self.qs})
 
 
-class SampleOutputer(BaseOutputer):
-    '''
-    Add Activity name and Instantpoint timevalue to the default fields
-    '''
-    fields = [  'uuid', 'depth', 'geom', 'name', 'sampletype__name', 'samplepurpose__name', 
-                'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher',
-                'instantpoint__timevalue', 'instantpoint__activity__name', 
-                'sampledparameter__parameter__name', 'sampledparameter__datavalue' ]
-
 def showSample(request, format = 'html'):
     stoqs_object = mod.Sample
     query_set = stoqs_object.objects.all().order_by('instantpoint__timevalue')
 
-    s = SampleOutputer(request, format, query_set, stoqs_object)
-    return s.process_request()
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['instantpoint__activity__name', 'name', 'instantpoint__timevalue', 'depth', 'geom', 
+                'sampledparameter__parameter__name', 'sampledparameter__datavalue',
+                'sampletype__name', 'samplepurpose__name',
+                'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher']
+    return o.process_request()
 
 def showInstantPoint(request, format = 'html'):
     stoqs_object = mod.InstantPoint
