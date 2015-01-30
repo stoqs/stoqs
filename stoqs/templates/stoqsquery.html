@@ -70,6 +70,9 @@
             width: 60px;
             height:15px;
         }
+        .fail-text { 
+            color: red;
+        }
 
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
@@ -3578,6 +3581,33 @@
             }
         } // redrawParameterTime()
 
+        function resetWaitIndicators(data, error) {
+            $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
+            $('#time-parameter-flot').removeClass('stoqs-background-ajax-loader-pulse ');
+            $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
+            $('#parameter-parameter-3dplot').removeClass('stoqs-background-ajax-loader-3d');
+            $('#geo-3dplot').removeClass('stoqs-background-ajax-loader-3d-topright');
+
+            var endAjax = new Date().getTime();
+            var nsecs = (endAjax - startAjax) / 1000.0;
+            if (! $.isEmptyObject(data) ) {
+                if ( ! $.isEmptyObject(data['counts']) ) {
+                    if ( ! $('#getactualcount').is(':checked') ) {
+                        $('#metadata-count').html("about " + data.counts.approximate_count_localized + " data values - ");
+                    }
+                    else {
+                        $('#metadata-count').html(data.counts.actual_count_localized + " data values - ");
+                    }
+                }
+            }
+            else {
+                $('#metadata-count').html(" <span class='fail-text'>AJAX request for summary data failed</span> - ");
+            }
+            $('#metadata-ajaxtime').css( { 'color': 'black' } );
+            $('#metadata-ajaxtime').html(" " + nsecs + " seconds");
+            $('#metadata-loading').html("");
+        } //resetWaitIndicators()
+
 
         function onUpdate(data, key) {
             // Called from ajax to update the selectors base on the new selection
@@ -3944,6 +3974,10 @@
                 $('#metadata-loading').html(" loading...");
             },
             url : summaryQuery + '?' + qstring,
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert(textStatus);
+                resetWaitIndicators();
+            },
             success: function (data) {
                 setDataAccess('mp', data);
                 setDataAccess('sp', data);
@@ -3959,25 +3993,7 @@
                     load_permalink();
                 }
 
-                $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
-                $('#time-parameter-flot').removeClass('stoqs-background-ajax-loader-pulse ');
-                $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
-                $('#parameter-parameter-3dplot').removeClass('stoqs-background-ajax-loader-3d');
-                $('#geo-3dplot').removeClass('stoqs-background-ajax-loader-3d-topright');
-
-                var endAjax = new Date().getTime();
-                var nsecs = (endAjax - startAjax) / 1000.0;
-                if ( ! $.isEmptyObject(data['counts']) ) {
-                    if ( ! $('#getactualcount').is(':checked') ) {
-                        $('#metadata-count').html("about " + data.counts.approximate_count_localized + " data values - ");
-                    }
-                    else {
-                        $('#metadata-count').html(data.counts.actual_count_localized + " data values - ");
-                    }
-                }
-                $('#metadata-ajaxtime').css( { 'color': 'black' } );
-                $('#metadata-ajaxtime').html(" " + nsecs + " seconds");
-                $('#metadata-loading').html("");
+                resetWaitIndicators(data);
 
                 if (init == true) {
                     // Open Spatial and Temporal Accordions upon load
