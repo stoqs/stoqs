@@ -59,6 +59,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2013/netcdf/'
 cl.dorado_files = [
                    'Dorado389_2013_259_00_259_00_decim.nc',
+                   'Dorado389_2013_260_00_260_00_decim.nc',
                    'Dorado389_2013_261_01_261_01_decim.nc',
                    'Dorado389_2013_262_00_262_00_decim.nc',
                    'Dorado389_2013_262_01_262_01_decim.nc',
@@ -67,8 +68,9 @@ cl.dorado_files = [
                    'Dorado389_2013_274_00_274_00_decim.nc',
                    'Dorado389_2013_275_00_275_00_decim.nc',
                    'Dorado389_2013_276_00_276_00_decim.nc',
-
 				   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
 
 #####################################################################
 #  LRAUV 
