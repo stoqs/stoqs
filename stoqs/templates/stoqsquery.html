@@ -477,9 +477,9 @@
                                                 <img src="" />
                                             </div>
                                         </div>
-                                        <div>
+                                        <div style="height:100%;">
                                         <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
-                                        <X3D id='pp_x3d' style="width:100%; margin: 0px auto; display:block; border: none;">
+                                        <X3D id='pp_x3d' style="width:100%;height:100%;margin:0px auto;display:block;border:none;"> 
                                             <scene>
                                                 <Viewpoint id='x3d-viewpoint' position="-4907.13027 2788.82661 19473.28714" orientation="0.23484 -0.97195 0.01297 0.42414" centerofrotation='5000 5000 5000'></viewpoint>
 
@@ -603,26 +603,21 @@
                                                         </Shape>
                                                     </Transform>
                                                 </Transform>
-
-                                                <Shape>
-                                                    <pointset>
-                                                        <color id="pointsetcolors"></color>
-                                                        <coordinate id="pointsetcoordinates"></coordinate>
-                                                    </pointset>
+                                                <Shape id="pp-3d-pointset">
                                                 </Shape>
                                             </scene>
                                         </X3D>
                                         </div>
-                                    </div>
-                                </div>
+                                    </div><!-- parameter-parameter-3dplot -->
+                                </div><!-- pp3d -->
                                 <div class="tab-pane" id="ppsql">
                                     <div>
                                         <pre id="parameter-parameter-sql" style="font-size:xx-small;"></pre>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
+                            </div><!-- tab-content -->
+                        </div><!-- accordion-inner -->
+                    </div><!-- collapseParameterParameter -->
 
                 </div><!-- accordian-group -->
 
@@ -3837,8 +3832,10 @@
             else if (key == 'parameterparameterx3d') {
                 if (data[key]) {
                     if (data[key]['points']) {
-                        $('#pointsetcoordinates').attr('point', data[key]['points']);
-                        $('#pointsetcolors').attr('color', data[key]['colors']);
+                        $('#pp-3d-pointset').html(['<pointset>',
+                                                   '   <color color="' + data[key]['colors'] + '"></color>',
+                                                   '   <coordinate point="' + data[key]['points'] + '"></coordinate>',
+                                                   '</pointset>'].join(''));
                         $('#x3d-xmin').attr('string', data[key]['x'][1]);
                         $('#x3d-xmax').attr('string', data[key]['x'][2]);
                         $('#x3d-xname').attr('string', data[key]['x'][3]);
