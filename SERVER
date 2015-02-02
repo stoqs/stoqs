@@ -12,7 +12,9 @@
 # Configuring your disk partitions:
 # ---------------------------------
 # A 60 GB disk provides plenty of space to host a STOQS development environment and several
-# full resolution campaign databases.  Here is how I've partitioned a 60 GB drive:
+# full resolution campaign databases.  Guidance from the book "PostgreSQL 9.0 High Performance"
+# suggests creating separate partitions for portions of the database system.  Here is how 
+# I've partitioned a 60 GB drive:
 
 [mccann@localhost ~]$ df      -h
 Filesystem                       Size  Used Avail Use% Mounted on
@@ -27,6 +29,9 @@ tmpfs                            497M  148K  497M   1% /dev/shm
 # (The /pgdata, /pgtablespace, and /pgxlog partitions will be symbolically linked in the
 # installed postgresql directories.)
 #
+# Note that you may forego this sort of partitioning if, for instance, you are setting up
+# a development server.
+#
 # Install RHEL EPEL repository so that yum(1) can find most everything you need to install
 # (See http://wiki.centos.org/AdditionalResources/Repositories for more information):
 
@@ -40,15 +45,20 @@ sudo rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
 sudo rpm -ivh /tmp/pgdg-centos93-9.3-1.noarch.rpm
 sudo yum groupinstall "PostgreSQL Database Server 9.3 PGDG"
 
-# Initialize PostgreSQL cluster with symlinks to appropriate partitions listed above:
+# Initialize PostgreSQL cluster using symlinks to above partitions:
 
-sudo mkdir /pgdata/data
+sudo mkdir -m 700 /pgdata/data
 sudo chown postgres /pgdata/data
 sudo rmdir /var/lib/pgsql/9.3/data
 sudo ln -s /pgdata/data /var/lib/pgsql/9.3/data
 
+sudo chown -R postgres pgxlog pgtablespace pgdata
+sudo chmod go-rx pgxlog pgtablespace pgdata
+
 sudo chkconfig postgresql-9.3 on
 sudo /sbin/service postgresql-9.3 initdb
+
+# Link pg_xlog and pg_tblspc to own partitions after initializing the cluster
 
 su -c "su - postgres"
 cd /var/lib/pgsql/9.3/data
@@ -64,9 +74,8 @@ sudo yum install mercurial
 
 # Proceed to the instructions in the PREREQUISITES file.
 
-
 --
 Mike McCann
-MBARI 13 May 2014
+MBARI 2 February 2015
 
 
