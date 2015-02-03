@@ -30,8 +30,8 @@ su -c "yum -y install ImageMagick"
 su
 su postgres
 
-# Create the postgis template  database (Note: depending on versions, your paths may vary)
-su -c "yum -y install postgis91"		        # The actual package name may vary
+# Create the postgis template  database (Note: depending on versions, your paths may vary - consult postgis documentation)
+su -c "yum -y install postgis91"
 createdb postgis
 createlang plpgsql postgis
 psql -d postgis -f /usr/pgsql-9.1/share/contrib/postgis-1.5/postgis.sql
@@ -51,7 +51,7 @@ su -c "make install"
 # Mapserver - these instructions have been tested for version 6.2.1:
 # ------------------------------------------------------------------
 # To build MapServer some prerequisites will need to be installed:
-su -c "yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel"
+su -c "yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel gdal-devel"
 su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel postgresql91-devel libxslt-devel pam-devel openssl-devel readline-devel"
 
 # Install MapServer following the instructions for your system at http://mapserver.org/.  It is typical to
