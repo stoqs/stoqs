@@ -31,7 +31,7 @@ if [ $? -ne 0 ] ; then
 fi
 sudo yum -y remove numpy
 
-# Install GDAL in venv
+# Put link to gdal-config in venv/bin
 CONFIG=$(which gdal-config)
 if [ $? -ne 0 ]; then
     echo "gdal-config is not in PATH"
@@ -39,6 +39,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 ln -s $CONFIG $VENV_DIR/bin/
+
+# GDAL 1.9.1 pip install requires these environment variables
+export CPLUS_INCLUDE_PATH=/usr/include/gdal
+export C_INCLUDE_PATH=/usr/include/gdal
+
 
 # Make sure weh have pip in the virtualenv
 easy_install pip
