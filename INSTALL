@@ -16,7 +16,7 @@ following these instructions.
     of this documentation.  Please refer to the appropriate sources (http://www.postgresql.org/
     or your DBA) in order to connect to the database with system admin priveledges.  You will
     need these priveleges to create and drop databases.  STOQS is currently being developed
-    using postgresql-9.1.
+    using postgresql-9.3.
 
 
 3.  Most direct interaction with the postgres database is done via commands at the psql prompt.
