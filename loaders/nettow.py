@@ -29,31 +29,66 @@ project_dir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, project_dir)
 
 import csv
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
+from datadiff.tools import assert_equal
 
 
 class NetTow():
     '''Data and methods to support Net Tow Sample data loading
     '''
 
-    def make_csv(self):
-        '''Construct parent Sample csv file and write to output file
+    def _collect_samples(self, file):
+        '''Read records into a hash keyed on 'Cruise', typically the CTD cast 
+        name. The values of the hash are a list of sample_metadata (sm) hashes
+        which are then checked for consistency. For SIMZ cruises the convention
+        has been to conduct one net tow per CTD cast. If data differences 
+        indicate that more than one tow has been done then raise an
+        exception.
         '''
-        ##depthHash = defaultdict(lambda: {})
-        depthHash = {}
-        sample_metadata = {}
+        cast_hash = defaultdict(lambda: [])
         for r in csv.DictReader(open(self.args.subsampleFile)):
-            sample_metadata['name'] = r.get('Name')
-            sample_metadata['depth'] = r.get('Depth [m]')
-            sample_metadata['sampletype'] = r.get('Sample Type')
-            sample_metadata['volume'] = r.get('Sample Volume [mL]')
-            sample_metadata['filterdiameter'] = r.get('Filter Diameter [mm]')
-            sample_metadata['filterporesize'] = r.get('Filter Pore Size [uM]')
+            sm = OrderedDict()
+            sm['name'] = r.get('Name', '')
+            sm['depth'] = r.get('Depth [m]', '')
+            sm['sampletype'] = r.get('Sample Type', '')
+            sm['volume'] = r.get('Sample Volume [mL]', '')
+            sm['filterdiameter'] = r.get('Filter Diameter [mm]', '')
+            try:
+                sm['filterporesize'] = float(r.get('Filter Pore Size [uM]'))
+            except ValueError:
+                sm['filterporesize'] = float(r.get('Filter Pore Size [uM]').split()[0])
             
-            depthHash[r.get('Cruise')] = sample_metadata
+            cast_hash[r.get('Cruise')].append(sm)
 
-            import pdb
-            pdb.set_trace()
+        # Ensure consistency of sample metadata following SIMZ convention
+        cast_hash_consistent = OrderedDict()
+        for cast,sm_list in sorted(cast_hash.items()):
+            for sm_hash in sm_list[1:]:
+                assert_equal(sm_list[0], sm_hash)
+
+            cast_hash_consistent[cast] = sm_list[0]
+                    
+        return cast_hash_consistent
+
+    def make_csv(self):
+        '''Construct and write parent Sample csv file
+        '''
+        try:
+            s = self._collect_samples(self.args.subsampleFile)
+        except AssertionError, e:
+            # TODO: Apply logic to allow multiple net tows at a CTD cast station
+            print "*** Sample metadata differs for net tow within a CTD cast ***\n"
+            raise e 
+
+        with open(self.args.csvFile, 'w') as f:
+            f.write('Cast,')
+            f.write(','.join(s.itervalues().next().keys()))
+            f.write('\n')
+            for k,v in s.iteritems():
+                f.write('%s,' % k)
+                f.write(','.join([str(dv) for dv in v.values()]))
+                f.write('\n')
+            
 
     def load_samples(self):
         '''Load parent Samples into the database
