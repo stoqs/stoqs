@@ -29,17 +29,7 @@ project_dir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, project_dir)
 
 import csv
-import time
-import pyproj
-import urllib2
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-import pytz 
-from datetime import datetime
 from collections import defaultdict
-from stoqs.models import MeasuredParameter, NominalLocation, ActivityParameter
-from django.http import HttpRequest
 
 
 class NetTow():
@@ -49,7 +39,21 @@ class NetTow():
     def make_csv(self):
         '''Construct parent Sample csv file and write to output file
         '''
-        pass
+        ##depthHash = defaultdict(lambda: {})
+        depthHash = {}
+        sample_metadata = {}
+        for r in csv.DictReader(open(self.args.subsampleFile)):
+            sample_metadata['name'] = r.get('Name')
+            sample_metadata['depth'] = r.get('Depth [m]')
+            sample_metadata['sampletype'] = r.get('Sample Type')
+            sample_metadata['volume'] = r.get('Sample Volume [mL]')
+            sample_metadata['filterdiameter'] = r.get('Filter Diameter [mm]')
+            sample_metadata['filterporesize'] = r.get('Filter Pore Size [uM]')
+            
+            depthHash[r.get('Cruise')] = sample_metadata
+
+            import pdb
+            pdb.set_trace()
 
     def load_samples(self):
         '''Load parent Samples into the database
