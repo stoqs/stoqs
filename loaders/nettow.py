@@ -29,13 +29,19 @@ project_dir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, project_dir)
 
 import csv
-from collections import defaultdict, OrderedDict
+import logging
+from datetime import timedelta, datetime
 from datadiff.tools import assert_equal
-
+from collections import defaultdict, OrderedDict
+from stoqs.models import Activity, Sample
+from loaders.SampleLoaders import get_closest_instantpoint
 
 class NetTow():
     '''Data and methods to support Net Tow Sample data loading
     '''
+
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
 
     def _collect_samples(self, file):
         '''Read records into a hash keyed on 'Cruise', typically the CTD cast 
@@ -46,39 +52,60 @@ class NetTow():
         exception.
         '''
         cast_hash = defaultdict(lambda: [])
-        for r in csv.DictReader(open(self.args.subsampleFile)):
-            sm = OrderedDict()
-            sm['name'] = r.get('Name', '')
-            sm['depth'] = r.get('Depth [m]', '')
-            sm['sampletype'] = r.get('Sample Type', '')
-            sm['volume'] = r.get('Sample Volume [mL]', '')
-            sm['filterdiameter'] = r.get('Filter Diameter [mm]', '')
-            try:
-                sm['filterporesize'] = float(r.get('Filter Pore Size [uM]'))
-            except ValueError:
-                sm['filterporesize'] = float(r.get('Filter Pore Size [uM]').split()[0])
-            
-            cast_hash[r.get('Cruise')].append(sm)
+        with open(self.args.subsampleFile) as f:
+            for r in csv.DictReader(f):
+                sm = OrderedDict()
+                sm['name'] = r.get('Name', '')
+                sm['depth'] = r.get('Depth [m]', '')
+                sm['sampletype'] = r.get('Sample Type', '')
+                sm['volume'] = r.get('Sample Volume [mL]', '')
+                sm['filterdiameter'] = r.get('Filter Diameter [mm]', '')
+                try:
+                    sm['filterporesize'] = float(r.get('Filter Pore Size [uM]'))
+                except ValueError:
+                    sm['filterporesize'] = float(r.get('Filter Pore Size [uM]').split()[0])
+                cast_hash[r.get('Cruise')].append(sm)
 
         # Ensure consistency of sample metadata following SIMZ convention
         cast_hash_consistent = OrderedDict()
         for cast,sm_list in sorted(cast_hash.items()):
             for sm_hash in sm_list[1:]:
+                self.logger.debug('Checking consistency of record %s', sm_hash)
                 assert_equal(sm_list[0], sm_hash)
 
             cast_hash_consistent[cast] = sm_list[0]
                     
         return cast_hash_consistent
 
+    def _db_join(self, sm_hash):
+        '''Join Sample data with data already in the database for the CTD cast.
+        Use Cruise/Cast/Activity name as the key to get time, geom, and 
+        environmental information.
+        '''
+        new_hash = OrderedDict()
+        for a_name,v in sm_hash.iteritems():
+            a = Activity.objects.using(self.args.database).get(name__contains=a_name)
+            v['longitude'] = a.mappoint.x
+            v['latitude'] = a.mappoint.y
+            v['datetime_gmt'] = (a.startdate - timedelta(minutes=self.args.subtractMinutes)).isoformat()
+            new_hash[a_name] = v
+
+        return new_hash
+
     def make_csv(self):
         '''Construct and write parent Sample csv file
         '''
         try:
             s = self._collect_samples(self.args.subsampleFile)
-        except AssertionError, e:
+        except AssertionError as e:
             # TODO: Apply logic to allow multiple net tows at a CTD cast station
-            print "*** Sample metadata differs for net tow within a CTD cast ***\n"
-            raise e 
+            self.logger.error('Sample metadata differs for net tow within a CTD cast.')
+            self.logger.error('Are there more than one net tows per cast or is this an error in file %s?', self.args.subsampleFile)
+            self.logger.exception(e)
+            sys.exit(-2)
+
+        # Get spatial-temporal information from the database
+        s = self._db_join(s)
 
         with open(self.args.csvFile, 'w') as f:
             f.write('Cast,')
@@ -88,12 +115,32 @@ class NetTow():
                 f.write('%s,' % k)
                 f.write(','.join([str(dv) for dv in v.values()]))
                 f.write('\n')
-            
 
     def load_samples(self):
         '''Load parent Samples into the database
         '''
-        pass
+        with open(self.args.csvFile) as f:
+            for r in DictReader(f):
+                timevalue = datetime.strptime(r.get('datetime_gmt'), '%Y-%m-%dT%H:%M:%S')
+                ip, seconds_diff = get_closest_instantpoint_by_depth(r.get('Cast'), r.get('depth'), self.args.database)
+                point = 'POINT(%s,%s)' % (r.get('longitude'), r.get('latitude'))
+                samp, created = Sample.objects.using(self.args.database).get_or_create( 
+                                    name = r.get('name'),
+                                    depth = r.get('depth'),
+                                    geom = point,
+                                    instantpoint = ip,
+                                    sampletype = r.get('sampletype'),
+                                    volume = r.get('volume'),
+                                    filterdiameter = r.get('filterdiameter'),
+                                    filterporesize = r.get('filterporesize')
+                                )
+                res, created = Resource.objects.using(self.args.database).get_or_create(
+                                    name = 'Seconds away from InstantPoint',
+                                    value = seconds_diff
+                               )
+
+                self.logger.info('Loaded Sample %s with Resource: %s', samp, res)
+                                    
 
     def process_command_line(self):
         '''The argparse library is included in Python 2.7 and is an added package for STOQS.
@@ -120,6 +167,7 @@ class NetTow():
 
         parser.add_argument('-s', '--subsampleFile', action='store', help='File name containing analysis data from net tows in STOQS subsample format')
         parser.add_argument('-c', '--csvFile', action='store', help='Output comma separated value file containing parent Sample data')
+        parser.add_argument('-m', '--subtractMinutes', action='store', help='Subtract these number of minutes from start of CTD cast for net tow time', type=int)
 
         parser.add_argument('-l', '--loadFile', action='store', help='Load parent Sample data into database')
 
@@ -138,6 +186,10 @@ class NetTow():
         else:
             parser.error('Must provide either --subsampleFile or --loadFile option')
 
+        if self.args.verbose > 1:
+            self.logger.setLevel(logging.DEBUG)
+        elif self.args.verbose >0:
+            self.logger.setLevel(logging.INFO)
     
 if __name__ == '__main__':
 
