@@ -140,8 +140,11 @@ class NetTow():
                             enddate = timevalue + timedelta(minutes=duration_minutes),
                             mindepth = mindepth,
                             maxdepth = r.get('depth'),
-                            ##loaded_date = datetime.utcnow()
                        )
+        # Update loaded_date after get_or_create() so that we can get the old record if script is re-executed
+        act.loaded_date = datetime.utcnow()
+        act.save(using=self.args.database)
+
         ip, created = InstantPoint.objects.using(self.args.database).get_or_create(
                             activity = act,
                             timevalue = timevalue
