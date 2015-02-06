@@ -33,8 +33,8 @@ import logging
 from datetime import timedelta, datetime
 from datadiff.tools import assert_equal
 from collections import defaultdict, OrderedDict
-from stoqs.models import Activity, Sample
-from loaders.SampleLoaders import get_closest_instantpoint
+from loaders.SampleLoaders import NETTOW, VERTICALNETTOW
+from stoqs.models import Activity, Sample, InstantPoint, ActivityType, Campaign, Platform, SampleType, SamplePurpose
 
 class NetTow():
     '''Data and methods to support Net Tow Sample data loading
@@ -82,6 +82,7 @@ class NetTow():
         Use Cruise/Cast/Activity name as the key to get time, geom, and 
         environmental information.
         '''
+        self.logger.info('Joining subsample information with cast data from the database using subtractMinutes = %d', self.args.subtractMinutes)
         new_hash = OrderedDict()
         for a_name,v in sm_hash.iteritems():
             a = Activity.objects.using(self.args.database).get(name__contains=a_name)
@@ -104,7 +105,7 @@ class NetTow():
             self.logger.exception(e)
             sys.exit(-2)
 
-        # Get spatial-temporal information from the database
+        # Get spatial-temporal and campaign information from the database
         s = self._db_join(s)
 
         with open(self.args.csvFile, 'w') as f:
@@ -116,30 +117,86 @@ class NetTow():
                 f.write(','.join([str(dv) for dv in v.values()]))
                 f.write('\n')
 
-    def load_samples(self):
-        '''Load parent Samples into the database
+    def _create_activity_instantpoint(self, r, duration_minutes, nettow_number, point):
+        '''Create an Activity and an InstantPoint from which to hang the Sample. Return the InstantPoint.
         '''
-        with open(self.args.csvFile) as f:
-            for r in DictReader(f):
-                timevalue = datetime.strptime(r.get('datetime_gmt'), '%Y-%m-%dT%H:%M:%S')
-                ip, seconds_diff = get_closest_instantpoint_by_depth(r.get('Cast'), r.get('depth'), self.args.database)
-                point = 'POINT(%s,%s)' % (r.get('longitude'), r.get('latitude'))
+        if r.get('sampletype').lower().find('vertical') != -1:
+            mindepth = 0
+        else:
+            mindepth = r.get('depth')
+
+        campaign = Campaign.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
+        platform = Platform.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
+        at, created = ActivityType.objects.using(self.args.database).get_or_create(name='PlanktonNetTow')
+
+        timevalue = datetime.strptime(r.get('datetime_gmt'), '%Y-%m-%dT%H:%M:%S')
+        act, created = Activity.objects.using(self.args.database).get_or_create(
+                            campaign = campaign,
+                            activitytype = at,
+                            name = r.get('Cast') + '_%s%d' % (NETTOW, nettow_number),
+                            comment = 'Plankton net tow done in conjunction with CTD cast %s' % r.get('Cast'),
+                            platform = platform,
+                            startdate = timevalue,
+                            enddate = timevalue + timedelta(minutes=duration_minutes),
+                            mindepth = mindepth,
+                            maxdepth = r.get('depth'),
+                            ##loaded_date = datetime.utcnow()
+                       )
+        ip, created = InstantPoint.objects.using(self.args.database).get_or_create(
+                            activity = act,
+                            timevalue = timevalue
+                      )
+
+        return ip
+
+    def load_samples(self):
+        '''Load parent Samples into the database.
+        '''
+        # As of February 2015 the convention is one net tow per CTD cast, number the name of the
+        # Samples in preparation in case we will have more than one. This will be over-ridden by name in the .csv file.
+        nettow_number = 1
+        with open(self.args.loadFile) as f:
+            for r in csv.DictReader(f):
+                point = 'POINT(%s %s)' % (r.get('longitude'), r.get('latitude'))
+                # TODO: If net tow numbers are in the .csv file then they will need to be paresed for nettow_number here
+                ip = self._create_activity_instantpoint(r, duration_minutes=2, nettow_number=nettow_number, point=point)
+
+                if r.get('sampletype').lower().find('vertical') != -1:
+                    sampletype_name = VERTICALNETTOW
+                sampletype, created = SampleType.objects.using(self.args.database).get_or_create(name=sampletype_name)
+
+                samplepurpose = None
+                if self.args.purpose:
+                    samplepurpose, created = SamplePurpose.objects.using(self.args.database).get_or_create(name=self.args.purpose)
+                
+                v = None
+                if r.get('volume'):
+                    v = float(r.get('volume'))
+                fd = None
+                if r.get('filterdiameter'):
+                    fd = float(r.get('filterdiameter'))
+                fps = None
+                if r.get('filterporesize'):
+                    fps = float(r.get('filterporesize'))
+                name = str(nettow_number)
+                if r.get('name'):
+                    name = r.get('name')
+
                 samp, created = Sample.objects.using(self.args.database).get_or_create( 
-                                    name = r.get('name'),
+                                    name = name,
                                     depth = r.get('depth'),
                                     geom = point,
                                     instantpoint = ip,
-                                    sampletype = r.get('sampletype'),
-                                    volume = r.get('volume'),
-                                    filterdiameter = r.get('filterdiameter'),
-                                    filterporesize = r.get('filterporesize')
+                                    sampletype = sampletype,
+                                    volume = v,
+                                    filterdiameter = fd,
+                                    filterporesize = fps,
+                                    laboratory = self.args.laboratory,
+                                    researcher = self.args.researcher,
+                                    samplepurpose = samplepurpose
                                 )
-                res, created = Resource.objects.using(self.args.database).get_or_create(
-                                    name = 'Seconds away from InstantPoint',
-                                    value = seconds_diff
-                               )
 
-                self.logger.info('Loaded Sample %s with Resource: %s', samp, res)
+                self.logger.info('Loaded Sample %s', samp)
                                     
 
     def process_command_line(self):
@@ -167,7 +224,11 @@ class NetTow():
 
         parser.add_argument('-s', '--subsampleFile', action='store', help='File name containing analysis data from net tows in STOQS subsample format')
         parser.add_argument('-c', '--csvFile', action='store', help='Output comma separated value file containing parent Sample data')
-        parser.add_argument('-m', '--subtractMinutes', action='store', help='Subtract these number of minutes from start of CTD cast for net tow time', type=int)
+        parser.add_argument('-m', '--subtractMinutes', action='store', help='Subtract these number of minutes from start of CTD cast for net tow time', 
+                                    type=int, default=30)
+        parser.add_argument('--laboratory', action='store', help='Laboratory responsible for the Samples')
+        parser.add_argument('--researcher', action='store', help='Researcher responsible for the Samples')
+        parser.add_argument('--purpose', action='store', help='Purpose of the Sample')
 
         parser.add_argument('-l', '--loadFile', action='store', help='Load parent Sample data into database')
 
@@ -195,7 +256,6 @@ if __name__ == '__main__':
 
     nt = NetTow()
     nt.process_command_line()
-
 
     if nt.args.subsampleFile and nt.args.csvFile:
         nt.make_csv()

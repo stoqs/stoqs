@@ -64,6 +64,12 @@ if settings.DEBUG:
 # Constant for ParameterGroup name - for utils/STOQSQmanager.py to use
 SAMPLED = 'Sampled'
 
+# SampleTypes
+GULPER = 'Gulper'
+NISKIN = 'Niskin'
+NETTOW = 'NetTow'
+VERTICALNETTOW = 'VerticalNetTow'
+
 class ClosestTimeNotFoundException(Exception):
     pass
 
@@ -148,7 +154,7 @@ def load_gulps(activityName, file, dbAlias):
         return
 
     # Get or create SampleType for Gulper
-    (gulper_type, created) = m.SampleType.objects.using(dbAlias).get_or_create(name = 'Gulper')
+    (gulper_type, created) = m.SampleType.objects.using(dbAlias).get_or_create(name=GULPER)
     logger.debug('sampletype %s, created = %s', gulper_type, created)
     for row in reader:
         # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
@@ -317,7 +323,7 @@ class SeabirdLoader(STOQS_Loader):
             activity = m.Activity.objects.using(self.dbAlias).filter(name__contains=self.activityName)[0]
         
         # Get or create SampleType for Niskin
-        (sample_type, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name = 'Niskin')
+        (sample_type, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name=NISKIN)
         logger.debug('sampletype %s, created = %s', sample_type, created)
         # Get or create SamplePurpose for Niskin
         (sample_purpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name = 'StandardDepth')
