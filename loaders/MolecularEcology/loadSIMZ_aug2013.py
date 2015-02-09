@@ -99,6 +99,7 @@ cl.subsample_csv_files = [
                             '2013_Aug_SIMZ_Niskin_microscopy_STOQS.csv',
                             '2013_SIMZ_AUV_STOQS.csv',
                             '2013_SIMZ_Niskins_STOQS.csv',
+                            '2013_SIMZ_TowNets_STOQS.csv',
                          ]
 
 
