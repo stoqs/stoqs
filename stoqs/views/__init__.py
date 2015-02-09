@@ -43,7 +43,7 @@ from utils.utils import postgresifySQL
 from utils.MPQuery import MPQuery, MPQuerySet
 from utils.PQuery import PQuery
 from utils import encoders
-from utils.Viz.KML import KML, NoDataForKML
+from utils.Viz.KML import KML
 
 logger = logging.getLogger(__name__)
 
@@ -268,11 +268,7 @@ class BaseOutputer(object):
 
         elif self.format == 'kmln':
             kml = KML(self.request, self.qs, self.qparams, self.stoqs_object_name, withTimeStamps=False, withLineStrings=False, withFullIconURL=False)
-            try:
-                return kml.kmlResponse()
-            except NoDataForKML:
-                # Silently ignore
-                return HttpResponse()
+            return kml.kmlResponse()
 
         elif self.format == 'count':
             count = self.qs.count()
