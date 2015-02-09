@@ -2880,6 +2880,17 @@
             sample_points.setVisibility(true);         // Turn on sample view openlayers
         }
 
+        // Add the nettow lines, each with a label
+        $.each(data['nettowdepthtime'], function (index, nettow) {
+            nettow["color"] = "#000000";
+            nettow["fillColor"] = "#ffffff";
+            nettow["points"] = {show: true, fill: true, lineWidth: 1};
+            nettow["lines"] = {show: true, lineWidth: 4};
+            nettow["hoverable"] = true;
+            nettow["clickable"] = true;
+            dataset.push(nettow);
+        });
+
         return dataset;
 
     } // getDepthDataset()
