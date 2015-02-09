@@ -34,7 +34,7 @@ from datetime import timedelta, datetime
 from datadiff.tools import assert_equal
 from collections import defaultdict, OrderedDict
 from loaders.SampleLoaders import NETTOW, VERTICALNETTOW
-from stoqs.models import Activity, Sample, InstantPoint, ActivityType, Campaign, Platform, SampleType, SamplePurpose
+from stoqs.models import Activity, Sample, InstantPoint, ActivityType, Campaign, Platform, SampleType, SamplePurpose, PlatformType
 
 class NetTow():
     '''Data and methods to support Net Tow Sample data loading
@@ -117,7 +117,22 @@ class NetTow():
                 f.write(','.join([str(dv) for dv in v.values()]))
                 f.write('\n')
 
-    def _create_activity_instantpoint(self, r, duration_minutes, nettow_number, point):
+    def _get_net_tow_platform(self, cast_platform):
+        '''Use name of profile CTD platform to construct a new Platform for connecting to a NetTow Activity.
+        Return existing Platform if it's already been created.
+        '''
+        pt, created = PlatformType.objects.using(self.args.database).get_or_create(name='ship')
+
+        # Expects name like "RachelCarson_UCTD" with an underscore to split on
+        name = cast_platform.name.split('_')[0] + '_NetTow'
+        platform, created = Platform.objects.using(self.args.database).get_or_create(
+                                name = name, 
+                                platformtype = pt,    
+                                color = cast_platform.color
+                            )
+        return platform
+
+    def _create_activity_instantpoint_platform(self, r, duration_minutes, nettow_number, point):
         '''Create an Activity and an InstantPoint from which to hang the Sample. Return the InstantPoint.
         '''
         if r.get('sampletype').lower().find('vertical') != -1:
@@ -126,7 +141,8 @@ class NetTow():
             mindepth = r.get('depth')
 
         campaign = Campaign.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
-        platform = Platform.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
+        cast_plt = Platform.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
+        platform = self._get_net_tow_platform(cast_plt)
         at, created = ActivityType.objects.using(self.args.database).get_or_create(name='PlanktonNetTow')
 
         timevalue = datetime.strptime(r.get('datetime_gmt'), '%Y-%m-%dT%H:%M:%S')
@@ -162,7 +178,7 @@ class NetTow():
             for r in csv.DictReader(f):
                 point = 'POINT(%s %s)' % (r.get('longitude'), r.get('latitude'))
                 # TODO: If net tow numbers are in the .csv file then they will need to be paresed for nettow_number here
-                ip = self._create_activity_instantpoint(r, duration_minutes=2, nettow_number=nettow_number, point=point)
+                ip = self._create_activity_instantpoint_platform(r, duration_minutes=2, nettow_number=nettow_number, point=point)
 
                 if r.get('sampletype').lower().find('vertical') != -1:
                     sampletype_name = VERTICALNETTOW
