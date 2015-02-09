@@ -68,7 +68,8 @@ SAMPLED = 'Sampled'
 GULPER = 'Gulper'
 NISKIN = 'Niskin'
 NETTOW = 'NetTow'
-VERTICALNETTOW = 'VerticalNetTow'
+VERTICALNETTOW = 'VerticalNetTow'       # Must contain NETTOW string so that a filter for
+HORIZONTALNETTOW = 'VerticalNetTow'     # name__contains=NETTOW returns both vertical and horizontal net tows
 
 class ClosestTimeNotFoundException(Exception):
     pass
@@ -553,6 +554,12 @@ class SubSamplesLoader(STOQS_Loader):
         except KeyError:
             if row['Filter Pore Size [um]']:
                 fps = float(row['Filter Pore Size [um]'])
+        except ValueError as e:
+            # Likely a strange character present in a units string
+            if row.get('Filter Pore Size [um]'):
+                import pdb
+                pdb.set_trace()
+                fps = float(r.get('Filter Pore Size [uM]').split()[0])
             
         if row['Sample Volume [mL]']:
             vol = row['Sample Volume [mL]']
@@ -673,6 +680,15 @@ class SubSamplesLoader(STOQS_Loader):
                     logger.error('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
                     continue
                     ##sys.exit(-1)
+
+            except ValueError as e:
+                # Likely a 'NetTow' string in the Bottle Number column
+                if r['Bottle Number'] == 'NetTow':
+                    parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
+                                                      ).filter(instantpoint__activity__name__icontains=aName + '_NetTow1', )[0]
+                else:
+                    raise e
+
 
             if unloadFlag:
                 # Unload subsample
