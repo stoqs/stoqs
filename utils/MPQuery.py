@@ -527,7 +527,7 @@ class MPQuery(object):
         '''
         qparams = {}
 
-        logger.debug('self.kwargs = %s', pprint.pformat(self.kwargs))
+        ##logger.debug('self.kwargs = %s', pprint.pformat(self.kwargs))
         logger.debug('group = %s', group)
         if group == SAMPLED:
             if 'sampledparametersgroup' in self.kwargs:
