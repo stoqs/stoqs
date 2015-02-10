@@ -2072,20 +2072,18 @@
 
     $('body').on('change', '.parameter-plot-radio', function (e) {
         if ( $('body').data()['parameterplatforms'][e.target.value] ) {
-            if ( $('body').data()['parameterplatforms'][e.target.value].length == 1 ) {
-                $('#contour-scatter-buttons').show();
-                $('#sensor-tracks-checkbox').show();
-                $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
-                                                             $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
-                $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
-                $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
-                $('#showsensortracks').removeAttr('disabled');
-                $('#showgeox3ddatatext').text($('#temporalparameterplotinfo').data()['info']);
-                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
+            if ( $('body').data()['parameterplatforms'][e.target.value].length != 1 ) {
+                alert('WARNING: Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.');
             }
-            else {
-                alert('Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter. Select just one of them. (You may plot parameters from multiple platforms by adding platforms after you plot data from a single platform.)');
-            }
+            $('#contour-scatter-buttons').show();
+            $('#sensor-tracks-checkbox').show();
+            $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
+                                                         $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
+            $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
+            $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
+            $('#showsensortracks').removeAttr('disabled');
+            $('#showgeox3ddatatext').text($('#temporalparameterplotinfo').data()['info']);
+            rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
         }
         else {
             // Remove sensortracks and image from Flot plot
