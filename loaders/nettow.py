@@ -143,7 +143,7 @@ class NetTow():
         campaign = Campaign.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
         cast_plt = Platform.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
         platform = self._get_net_tow_platform(cast_plt)
-        at, created = ActivityType.objects.using(self.args.database).get_or_create(name='PlanktonNetTow')
+        at, created = ActivityType.objects.using(self.args.database).get_or_create(name=VERTICALNETTOW)
 
         timevalue = datetime.strptime(r.get('datetime_gmt'), '%Y-%m-%dT%H:%M:%S')
         act, created = Activity.objects.using(self.args.database).get_or_create(
