@@ -33,7 +33,7 @@ from stoqs import models
 from utils.utils import postgresifySQL, pearsonr, round_to_n, EPOCH_STRING
 from utils.MPQuery import MPQuerySet
 from utils.geo import GPS
-from loaders.SampleLoaders import SAMPLED
+from loaders.SampleLoaders import SAMPLED, NETTOW
 from loaders import MEASUREDINSITU
 import seawater.csiro as sw
 import numpy as np
@@ -250,6 +250,31 @@ class MeasuredParameter(object):
         self.depth = self.y
         self.value = self.z
 
+    def _get_samples_for_markers(self, act_name=None):
+        '''
+        Return time, depth, and name of Samples for plotting as symbols.
+        Restrict to activitytype__name if act_name is specified.
+        '''
+        # Add sample locations and names, but not if the underlying data are from the Samples themselves
+        xsamp = []
+        ysamp = []
+        sname = []
+        qs = self.sampleQS.values('instantpoint__timevalue', 'depth', 'name')
+        if act_name:
+            qs = qs.filter(instantpoint__activity__activitytype__name__contains=act_name)
+
+        for s in qs:
+            if self.scale_factor:
+                xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()) / self.scale_factor)
+            else:
+                xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()))
+            ##import pdb
+            ##pdb.set_trace()
+            ysamp.append(s['depth'])
+            sname.append(s['name'])
+
+        return xsamp, ysamp, sname
+
     def renderDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, nlevels=255, contourFlag=True):
         '''
         Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
@@ -407,18 +432,15 @@ class MeasuredParameter(object):
                     ax.scatter(self.x, self.y, c=self.z, s=coloredDotSize, cmap=self.cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
-                    # Add sample locations and names, but not if the underlying data are from the Samples themselves
-                    xsamp = []
-                    ysamp = []
-                    sname = []
-                    for s in self.sampleQS.values('instantpoint__timevalue', 'depth', 'name'):
-                        if self.scale_factor:
-                            xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()) / self.scale_factor)
-                        else:
-                            xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()))
-                        ysamp.append(s['depth'])
-                        sname.append(s['name'])
+                    # Sample markers for everything but Net Tows
+                    xsamp, ysamp, sname = self._get_samples_for_markers()
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10)
+                    for x,y,sn in izip(xsamp, ysamp, sname):
+                        plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
+
+                    # Sample markers for Net Tows
+                    xsamp, ysamp, sname = self._get_samples_for_markers(act_name=NETTOW)
+                    ax.scatter(xsamp, np.float64(ysamp), marker='s', c='w', s=25, zorder=10)
                     for x,y,sn in izip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
