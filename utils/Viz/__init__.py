@@ -268,10 +268,11 @@ class MeasuredParameter(object):
                 xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()) / self.scale_factor)
             else:
                 xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()))
-            ##import pdb
-            ##pdb.set_trace()
             ysamp.append(s['depth'])
-            sname.append(s['name'])
+            if act_name:
+                sname.append(act_name + s['name'])
+            else:
+                sname.append(s['name'])
 
         return xsamp, ysamp, sname
 
