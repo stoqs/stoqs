@@ -663,7 +663,8 @@ class MPQuery(object):
         logger.debug('Building qs_sp...')
         if values_list == []:
             # If no .values(...) added to QS then items returned by iteration on qs_sp are model objects, not out wanted dictionaries
-            qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*SPQuerySet.rest_columns)
+            values_list = SPQuerySet.rest_columns
+            qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*values_list)
         else:
             qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
 

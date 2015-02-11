@@ -502,6 +502,11 @@ class STOQSQManager(object):
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
                         plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                        if plot_results[1] == plot_results[2]:
+                            logger.debug('Standard min and max for for parameterID %s are the same. Getting the overall min and max values.', parameterID)
+                            qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Min('p025'), Max('p975'))
+                            plot_results = [parameterID, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
+
                 except TypeError, e:
                     logger.exception(e)
 
@@ -532,6 +537,10 @@ class STOQSQManager(object):
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
                         da_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                        if da_results[1] == da_results[2]:
+                            logger.debug('Standard min and max for for pid %s are the same. Getting the overall min and max values.', pid)
+                            qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'))
+                            da_results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
@@ -1390,8 +1399,15 @@ class STOQSQManager(object):
                         platformName = None
 
                     logger.debug('Getting data values in X3D for platformName = %s', platformName) 
-                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
-                                  self.getParameterMinMax()['plot'], self.getSampleQS(), platformName, parameterID, parameterGroups)
+                    if SAMPLED in parameterGroups:
+                        # The fourth item should be for SampledParameter if that is the group of the Parameter
+                        mpdv = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_sp_no_order,
+                                                self.getParameterMinMax(pid=parameterID)['plot'], self.getSampleQS(), platformName, 
+                                                parameterID, parameterGroups)
+                    else:
+                        mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
+                                                self.getParameterMinMax()['plot'], self.getSampleQS(), platformName, parameterID, parameterGroups)
+
                     # Default vertical exaggeration is 10x and default geoorigin is an empty string
                     x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)), self.request.GET.get('geoorigin', ''))
             

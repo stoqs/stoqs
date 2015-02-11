@@ -165,24 +165,41 @@ class MeasuredParameter(object):
         self.depth = []
         self.value = []
 
-    def _fillXYZ(self, mp):
+    def _fillXYZ(self, mp, sampled=False):
         '''
         Fill up the x, y, and z member lists
         '''
-        if self.scale_factor:
-            self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+        if sampled:
+            if self.scale_factor:
+                self.x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+            else:
+                self.x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()))
+            self.y.append(mp['sample__depth'])
+            self.depth_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(float(mp['sample__depth']))
+            self.z.append(mp['datavalue'])
+            self.value_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(float(mp['datavalue']))
+
+            if 'sample__geom' in mp.keys():
+                self.lon.append(mp['sample__geom'].x)
+                self.lon_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__geom'].x)
+                self.lat.append(mp['sample__geom'].y)
+                self.lat_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__geom'].y)
+
         else:
-            self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
-        self.y.append(mp['measurement__depth'])
-        self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
-        self.z.append(mp['datavalue'])
-        self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
-    
-        if 'measurement__geom' in mp.keys():
-            self.lon.append(mp['measurement__geom'].x)
-            self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
-            self.lat.append(mp['measurement__geom'].y)
-            self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
+            if self.scale_factor:
+                self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+            else:
+                self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+            self.y.append(mp['measurement__depth'])
+            self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
+            self.z.append(mp['datavalue'])
+            self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
+        
+            if 'measurement__geom' in mp.keys():
+                self.lon.append(mp['measurement__geom'].x)
+                self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
+                self.lat.append(mp['measurement__geom'].y)
+                self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
 
     def loadData(self):
         '''
@@ -204,46 +221,28 @@ class MeasuredParameter(object):
         if stride != 1:
             self.strideInfo = 'stride = %d' % stride
 
-        i = 0
         self.logger.debug('self.qs_mp.query = %s', str(self.qs_mp.query))
         if SAMPLED in self.parameterGroups:
-            for mp in self.qs_mp:
-                if self.scale_factor:
-                    self.x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()) / self.scale_factor)
-                else:
-                    self.x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()))
-                self.y.append(mp['sample__depth'])
-                self.depth_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__depth'])
-                self.z.append(mp['datavalue'])
-                self.value_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['datavalue'])
-    
-                if 'sample__geom' in mp.keys():
-                    self.lon.append(mp['sample__geom'].x)
-                    self.lon_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__geom'].x)
-                    self.lat.append(mp['sample__geom'].y)
-                    self.lat_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__geom'].y)
-    
-                i = i + 1
+            for i,mp in enumerate(self.qs_mp):
+                self._fillXYZ(mp, sampled=True)
                 if (i % 1000) == 0:
                     self.logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
         else:
             self.logger.debug('Reading data with a stride of %s', stride)
             if self.qs_mp.isRawQuerySet:
                 # RawQuerySet does not support normal slicing
-                counter = 0
+                i = 0
                 self.logger.debug('Slicing with mod division on a counter...')
-                for mp in self.qs_mp:
+                for counter,mp in enumerate(self.qs_mp):
                     if counter % stride == 0:
                         self._fillXYZ(mp)
                         i = i + 1
                         if (i % 1000) == 0:
                             self.logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
-                    counter = counter + 1
             else:
                 self.logger.debug('Slicing Pythonicly...')
-                for mp in self.qs_mp[::stride]:
+                for i,mp in enumerate(self.qs_mp[::stride]):
                     self._fillXYZ(mp)
-                    i = i + 1
                     if (i % 1000) == 0:
                         self.logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
 
@@ -505,6 +504,9 @@ class MeasuredParameter(object):
                     except ValueError as e:
                         # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
                         continue
+                    except ZeroDivisionError as e:
+                        logger.error("Can't make color lookup table with min and max being the same, self.parameterMinMax = %s", self.parameterMinMax)
+                        raise e
 
                     if cindx < 0:
                         cindx = 0
