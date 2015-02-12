@@ -468,6 +468,10 @@ class STOQSQManager(object):
                     qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
                     try:
                         plot_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                        if plot_results[1] == plot_results[2]:
+                            logger.debug('Standard min and max for for pid %s are the same. Getting the overall min and max values.', pid)
+                            qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'))
+                            plot_results = [pid, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     except TypeError:
                         logger.exception('Failed to get plot_results for qs = %s', qs)
             except ValueError, e:
@@ -539,8 +543,8 @@ class STOQSQManager(object):
                         da_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                         if da_results[1] == da_results[2]:
                             logger.debug('Standard min and max for for pid %s are the same. Getting the overall min and max values.', pid)
-                            qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p010'), Max('p990'))
-                            da_results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
+                            qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'))
+                            da_results = [pid, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                 except TypeError, e:
                     logger.exception(e)
 
@@ -556,6 +560,11 @@ class STOQSQManager(object):
                         da_results = [sname, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError, e:
                     logger.exception(e)
+
+        # Sometimes da_results is empty, make it the same as plot_results if this happens
+        # TODO: simplify the logic implemented above...
+        if not da_results:
+            da_results = plot_results
 
         return {'plot': plot_results, 'dataaccess': da_results}
 
