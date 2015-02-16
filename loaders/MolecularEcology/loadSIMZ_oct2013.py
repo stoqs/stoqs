@@ -107,7 +107,7 @@ cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__))
 cl.subsample_csv_files = [
                             '2013_SIMZ_AUV_STOQS.csv',
                             '2013_SIMZ_Niskins_STOQS.csv',
-                            ##'2013_SIMZ_TowNets_STOQS.csv',
+                            '2013_SIMZ_TowNets_STOQS.csv',
                          ]
 
 
