@@ -254,6 +254,10 @@ class SPQuerySet(object):
                      'sample__instantpoint__timevalue', 
                      'sample__instantpoint__activity__name',
                      'sample__instantpoint__activity__platform__name',
+                     'sample__instantpoint__activity__startdate',
+                     'sample__instantpoint__activity__enddate',
+                     'sample__instantpoint__activity__mindepth',
+                     'sample__instantpoint__activity__maxdepth',
                      'datavalue',
                      'parameter__units'
                    ]
@@ -269,6 +273,10 @@ class SPQuerySet(object):
                      'sample__depth',
                      'sample__instantpoint__timevalue', 
                      'sample__instantpoint__activity__name',
+                     'sample__instantpoint__activity__startdate',
+                     'sample__instantpoint__activity__enddate',
+                     'sample__instantpoint__activity__mindepth',
+                     'sample__instantpoint__activity__maxdepth',
                      'datavalue',
                    ]
 

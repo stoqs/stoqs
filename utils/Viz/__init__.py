@@ -33,7 +33,7 @@ from stoqs import models
 from utils.utils import postgresifySQL, pearsonr, round_to_n, EPOCH_STRING
 from utils.MPQuery import MPQuerySet
 from utils.geo import GPS
-from loaders.SampleLoaders import SAMPLED, NETTOW
+from loaders.SampleLoaders import SAMPLED, NETTOW, VERTICALNETTOW
 from loaders import MEASUREDINSITU
 import seawater.csiro as sw
 import numpy as np
@@ -165,9 +165,17 @@ class MeasuredParameter(object):
         self.depth = []
         self.value = []
 
-    def _fillXYZ(self, mp, sampled=False):
+        self.xspan = []
+        self.yspan = []
+        self.zspan = []
+        self.latspan = []
+        self.lonspan = []
+        self.depthspan = []
+
+    def _fillXYZ(self, mp, sampled=False, spanned=False, activitytype=None):
         '''
-        Fill up the x, y, and z member lists
+        Fill up the x, y, and z member lists for measured (default) or sampled data values. 
+        If spanned is True then fill xspan, yspan, and zspan member lists with NetTow like data.
         '''
         if sampled:
             if self.scale_factor:
@@ -185,6 +193,41 @@ class MeasuredParameter(object):
                 self.lat.append(mp['sample__geom'].y)
                 self.lat_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__geom'].y)
 
+            if spanned and activitytype == VERTICALNETTOW:
+                # Save a (start, end) tuple for each coordinate/value, VERTICALNETTOWs start at maxdepth
+                if self.scale_factor:
+                    self.xspan.append(
+                            (time.mktime(mp['sample__instantpoint__activity__startdate'].timetuple()) / self.scale_factor,
+                             time.mktime(mp['sample__instantpoint__activity__enddate'].timetuple()) / self.scale_factor)
+                                     )
+                else:
+                    self.xspan.append(
+                            (time.mktime(mp['sample__instantpoint__activity__startdate'].timetuple()),
+                             time.mktime(mp['sample__instantpoint__activity__enddate'].timetuple()))
+                                     )
+                self.yspan.append(
+                        (mp['sample__instantpoint__activity__maxdepth'],
+                         mp['sample__instantpoint__activity__mindepth'])
+                                 )
+                self.depth_by_act_span.setdefault(mp['sample__instantpoint__activity__name'], []).append(
+                        (mp['sample__instantpoint__activity__maxdepth'],
+                         mp['sample__instantpoint__activity__mindepth'])
+                                 )
+                self.zspan.append(float(mp['datavalue']))
+                self.value_by_act_span.setdefault(mp['sample__instantpoint__activity__name'], []).append(float(mp['datavalue']))
+
+                if 'sample__geom' in mp.keys():
+                    # Implemented for VERTICALNETTOW data where start and end geom are identical
+                    self.lonspan.append((mp['sample__geom'].x, mp['sample__geom'].x))
+                    self.lon_by_act_span.setdefault(mp['sample__instantpoint__activity__name'], []).append(
+                            (mp['sample__geom'].x, mp['sample__geom'].x))
+                    self.latspan.append((mp['sample__geom'].y, mp['sample__geom'].y))
+                    self.lat_by_act_span.setdefault(mp['sample__instantpoint__activity__name'], []).append(
+                            (mp['sample__geom'].y, mp['sample__geom'].y))
+
+            # TODO: Implement for other types of spanned data, e.g. use Activity.maptrack to 
+            # get start and end geom for other Horizontal or Oblique NetTows
+                
         else:
             if self.scale_factor:
                 self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
@@ -213,6 +256,11 @@ class MeasuredParameter(object):
         self.lon_by_act = {}
         self.lat_by_act = {}
 
+        self.depth_by_act_span = {}
+        self.value_by_act_span = {}
+        self.lon_by_act_span = {}
+        self.lat_by_act_span = {}
+
         MP_MAX_POINTS = 10000          # Set by visually examing high-res Tethys data for what looks good
         stride = int(self.qs_mp.count() / MP_MAX_POINTS)
         if stride < 1:
@@ -225,8 +273,16 @@ class MeasuredParameter(object):
         if SAMPLED in self.parameterGroups:
             for i,mp in enumerate(self.qs_mp):
                 self._fillXYZ(mp, sampled=True)
-                if (i % 1000) == 0:
+                if (i % 10) == 0:
                     self.logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
+
+            # Build span data members for VERTICALNETTOW activity types
+            # TODO: Implement other types as they are needed
+            qs = self.qs_mp.filter(sample__instantpoint__activity__activitytype__name__contains=VERTICALNETTOW)
+            for i,mp in enumerate(qs):
+                self._fillXYZ(mp, sampled=True, spanned=True, activitytype=VERTICALNETTOW)
+                if (i % 10) == 0:
+                    self.logger.debug('Appended %i samples to self.xspan, self.yspan, and self.zspan', i)
         else:
             self.logger.debug('Reading data with a stride of %s', stride)
             if self.qs_mp.isRawQuerySet:
@@ -249,7 +305,7 @@ class MeasuredParameter(object):
         self.depth = self.y
         self.value = self.z
 
-    def _get_samples_for_markers(self, act_name=None):
+    def _get_samples_for_markers(self, act_name=None, spanned=False):
         '''
         Return time, depth, and name of Samples for plotting as symbols.
         Restrict to activitytype__name if act_name is specified.
@@ -273,7 +329,39 @@ class MeasuredParameter(object):
             else:
                 sname.append(s['name'])
 
+        if spanned and act_name == VERTICALNETTOW:
+            # Build tuples of start and end for the samples so that lines may be drawn, maxdepth is first
+            qs = qs.values('instantpoint__activity__startdate', 'instantpoint__activity__enddate', 
+                           'instantpoint__activity__maxdepth', 'instantpoint__activity__mindepth', 'name')
+            for s in qs:
+                if self.scale_factor:
+                    xsamp.append((time.mktime(s['instantpoint__activity__startdate'].timetuple()) / self.scale_factor,
+                                  time.mktime(s['instantpoint__activity__enddate'].timetuple()) / self.scale_factor))
+                else:
+                    xsamp.append((time.mktime(s['instantpoint__activity__startdate'].timetuple()),
+                                  time.mktime(s['instantpoint__activity__enddate'].timetuple())))
+
+                ysamp.append((s['instantpoint__activity__maxdepth'], s['instantpoint__activity__mindepth']))
+
+                if act_name:
+                    sname.append(act_name + s['name'])
+                else:
+                    sname.append(s['name'])
+
         return xsamp, ysamp, sname
+
+    def _get_color(self, datavalue, cmin, cmax):
+        '''
+        Return RGB color value for data_value given member's color lookup table and cmin, cmax lookup table limits
+        '''
+        clt = self.cm_jetplus
+        indx = int(round((float(datavalue) - cmin) * ((len(clt.colors) - 1) / float(cmax - cmin))))
+        if indx < 0:
+            indx=0
+        if indx >= len(clt.colors):
+            indx = len(clt.colors) - 1
+        return clt.colors[indx]
+
 
     def renderDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, nlevels=255, contourFlag=True):
         '''
@@ -410,7 +498,6 @@ class MeasuredParameter(object):
             else:
                 coloredDotSize = 20
 
-
             parm_info = self.parameterMinMax
             try:
                 # Make the plot
@@ -430,6 +517,13 @@ class MeasuredParameter(object):
                 else:
                     self.logger.debug('parm_info = %s', parm_info)
                     ax.scatter(self.x, self.y, c=self.z, s=coloredDotSize, cmap=self.cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+                    # Draw any spanned data, e.g. NetTows
+                    for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
+                        try:
+                            ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
+                        except ZeroDivisionError:
+                            # Likely all data is same value and color lookup table can't be computed
+                            return None, None, "Can't plot identical data values"
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
                     # Sample markers for everything but Net Tows
@@ -438,11 +532,16 @@ class MeasuredParameter(object):
                     for x,y,sn in izip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
-                    # Sample markers for Net Tows
+                    # Sample markers for Net Tows - points
                     xsamp, ysamp, sname = self._get_samples_for_markers(act_name=NETTOW)
                     ax.scatter(xsamp, np.float64(ysamp), marker='s', c='w', s=25, zorder=10)
                     for x,y,sn in izip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
+
+                    # Sample markers for Vertical Net Tows - lines
+                    xspan, yspan, sname = self._get_samples_for_markers(act_name=VERTICALNETTOW, spanned=True)
+                    for xs,ys in zip(xspan, yspan):
+                        ax.plot(xs, ys, c='k', lw=3)
 
                 fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
