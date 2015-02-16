@@ -3584,7 +3584,7 @@
             }
         } // redrawParameterTime()
 
-        function resetWaitIndicators(data, error) {
+        function resetWaitIndicators(data) {
             $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
             $('#time-parameter-flot').removeClass('stoqs-background-ajax-loader-pulse ');
             $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
@@ -3604,6 +3604,7 @@
                 }
             }
             else {
+                // No data implies error - this should not happen. Check server log for Exception and reload page.
                 $('#metadata-count').html(" <span class='fail-text'>AJAX request for summary data failed</span> - ");
             }
             $('#metadata-ajaxtime').css( { 'color': 'black' } );
@@ -3751,6 +3752,7 @@
                         else {
                             $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
                             $('#temporalparameterplotinfo').css( { 'color': 'red' } );
+                            $('#sectioncolorbar > img').removeAttr('src');
                         }
                     }
                     else {
