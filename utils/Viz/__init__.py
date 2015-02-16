@@ -523,7 +523,7 @@ class MeasuredParameter(object):
                             ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
                         except ZeroDivisionError:
                             # Likely all data is same value and color lookup table can't be computed
-                            return None, None, "Can't plot identical data values"
+                            return None, None, "Can't plot identical data values of %f" % z
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
                     # Sample markers for everything but Net Tows
