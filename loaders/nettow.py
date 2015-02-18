@@ -59,11 +59,13 @@ class NetTow():
                 sm['depth'] = r.get('Depth [m]', '')
                 sm['sampletype'] = r.get('Sample Type', '')
                 sm['volume'] = r.get('Sample Volume [mL]', '')
+                if not sm['volume']:
+                    sm['volume'] = r.get('Sample Volume [m^3]', '')
                 sm['filterdiameter'] = r.get('Filter Diameter [mm]', '')
                 try:
-                    sm['filterporesize'] = float(r.get('Filter Pore Size [uM]'))
+                    sm['filterporesize'] = float(r.get('Filter Pore Size [um]'))
                 except ValueError:
-                    sm['filterporesize'] = float(r.get('Filter Pore Size [uM]').split()[0])
+                    sm['filterporesize'] = float(r.get('Filter Pore Size [um]').split()[0])
                 cast_hash[r.get('Cruise')].append(sm)
 
         # Ensure consistency of sample metadata following SIMZ convention
@@ -85,11 +87,27 @@ class NetTow():
         self.logger.info('Joining subsample information with cast data from the database using subtractMinutes = %d', self.args.subtractMinutes)
         new_hash = OrderedDict()
         for a_name,v in sm_hash.iteritems():
-            a = Activity.objects.using(self.args.database).get(name__contains=a_name)
-            v['longitude'] = a.mappoint.x
-            v['latitude'] = a.mappoint.y
-            v['datetime_gmt'] = (a.startdate - timedelta(minutes=self.args.subtractMinutes)).isoformat()
-            new_hash[a_name] = v
+            try:
+                a = Activity.objects.using(self.args.database).get(name__contains=a_name)
+                v['longitude'] = a.mappoint.x
+                v['latitude'] = a.mappoint.y
+                v['datetime_gmt'] = (a.startdate - timedelta(minutes=self.args.subtractMinutes)).isoformat()
+                new_hash[a_name] = v
+            except Activity.DoesNotExist as e:
+                self.logger.warn('Activity matching "%s" does not exist in database %s', a_name, self.args.database)
+                continue
+            except Activity.MultipleObjectsReturned as e:
+                self.logger.warn(e)
+                acts = Activity.objects.using(self.args.database).filter(name__contains=a_name).order_by('name')
+                self.logger.warn('Names found:')
+                for a in acts:
+                    self.logger.warn(a.name)
+                self.logger.warn('Creating a load record for the first one, but make sure that this is what you want!')
+                v['longitude'] = acts[0].mappoint.x
+                v['latitude'] = acts[0].mappoint.y
+                v['datetime_gmt'] = (acts[0].startdate - timedelta(minutes=self.args.subtractMinutes)).isoformat()
+                new_hash[a_name] = v
+                continue
 
         return new_hash
 
@@ -166,7 +184,7 @@ class NetTow():
                             timevalue = timevalue
                       )
 
-        return ip
+        return act, ip
 
     def load_samples(self):
         '''Load parent Samples into the database.
@@ -178,7 +196,7 @@ class NetTow():
             for r in csv.DictReader(f):
                 point = 'POINT(%s %s)' % (r.get('longitude'), r.get('latitude'))
                 # TODO: If net tow numbers are in the .csv file then they will need to be paresed for nettow_number here
-                ip = self._create_activity_instantpoint_platform(r, duration_minutes=2, nettow_number=nettow_number, point=point)
+                act, ip = self._create_activity_instantpoint_platform(r, duration_minutes=2, nettow_number=nettow_number, point=point)
 
                 if r.get('sampletype').lower().find('vertical') != -1:
                     sampletype_name = VERTICALNETTOW
@@ -215,7 +233,7 @@ class NetTow():
                                     samplepurpose = samplepurpose
                                 )
 
-                self.logger.info('Loaded Sample %s', samp)
+                self.logger.info('Loaded Sample %s for Activity %s', samp, act)
                                     
 
     def process_command_line(self):
