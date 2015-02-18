@@ -112,7 +112,7 @@ cl.subsample_csv_files = [
 
 # Produce parent samples file with:
 # cd loaders/MolecularEcology/SIMZOct2013
-# ../../../nettow.py --database stoqs_simz_oct2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
+# ../../nettow.py --database stoqs_simz_oct2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
 cl.parent_nettow_file = '2013_SIMZ_TowNet_ParentSamples.csv'
 
 
