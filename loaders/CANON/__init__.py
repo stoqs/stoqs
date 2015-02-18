@@ -29,6 +29,8 @@ from loaders import LoadScript
 from stoqs.models import InstantPoint
 from django.db.models import Max
 from datetime import timedelta
+from argparse import Namespace
+from nettow import NetTow
 import logging
 
 def getStrideText(stride):
@@ -777,6 +779,24 @@ class CANONLoader(LoadScript):
         for csvFile in [ os.path.join(self.subsample_csv_base, f) for f in self.subsample_csv_files ]:
             print "Processing subsamples from file", csvFile
             ssl.process_subsample_file(csvFile, False)
+
+    def loadParentNetTowSamples(self):
+        '''
+        Load Parent NetTow Samples. This must be done after CTD cast data are loaded and before subsamples are loaded.
+        '''
+        nt = NetTow()
+        ns = Namespace()
+
+        # Produce parent samples file, e.g.:
+        # cd loaders/MolecularEcology/SIMZOct2013
+        # ../../nettow.py --database stoqs_simz_oct2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
+        ns.database = self.dbAlias
+        ns.loadFile = os.path.join(self.subsample_csv_base, self.parent_nettow_file)
+        ns.purpose = ''
+        ns.laboratory = ''
+        ns.researcher = ''
+        nt.args = ns
+        nt.load_samples()
 
     def loadAll(self, stride=None):
         '''
