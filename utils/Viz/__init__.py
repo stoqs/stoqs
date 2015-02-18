@@ -591,7 +591,7 @@ class MeasuredParameter(object):
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in izip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     if geoOrigin:
-                        logger.warn('geoOrigin use is deprecated as X3DOM (post v1.6) now supports its use')
+                        logger.warn('geoOrigin flag use is deprecated as X3DOM (post v1.6) now supports its use')
                         depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
                         points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
                     else:
@@ -615,6 +615,34 @@ class MeasuredParameter(object):
                     colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
                     indices = indices + '%i ' % index
                     index = index + 1
+
+                # End the IndexedLinestring with -1 so that end point does not connect to the beg point
+                indices = indices + '-1 ' 
+
+            # Make pairs of points for spanned NetTow-like data
+            for act in self.value_by_act_span.keys():
+                self.logger.debug('Reading data from act = %s', act)
+                for lons,lats,depths,value in izip(self.lon_by_act_span[act], self.lat_by_act_span[act], self.depth_by_act_span[act], self.value_by_act_span[act]):
+                    points = points + '%.5f %.5f %.1f %.5f %.5f %.1f ' % (lats[0], lons[0], -depths[0] * vert_ex, lats[1], lons[1], -depths[1] * vert_ex)
+                    try:
+                        cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
+                                        (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))
+                    except ValueError as e:
+                        # Likely: 'cannot convert float NaN to integer' as happens when rendering something like altitude outside of terrain coverage
+                        continue
+                    except ZeroDivisionError as e:
+                        logger.error("Can't make color lookup table with min and max being the same, self.parameterMinMax = %s", self.parameterMinMax)
+                        raise e
+
+                    if cindx < 0:
+                        cindx = 0
+                    if cindx > len(self.clt) - 1:
+                        cindx = len(self.clt) - 1
+
+                    colors = colors + '%.3f %.3f %.3f %.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2],
+                                                                          self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
+                    indices = indices + '%i %i ' % (index, index + 1)
+                    index = index + 2
 
                 # End the IndexedLinestring with -1 so that end point does not connect to the beg point
                 indices = indices + '-1 ' 
