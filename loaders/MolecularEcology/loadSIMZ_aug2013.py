@@ -96,9 +96,9 @@ cl.m1_endDatetime = datetime.datetime(2013, 8, 19)
 # SubSample data files received from Julio in email and copied to local directory
 cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SIMZAug2013')
 cl.subsample_csv_files = [
-                            #'2013_Aug_SIMZ_Niskin_microscopy_STOQS.csv',
-                            #'2013_SIMZ_AUV_STOQS.csv',
-                            #'2013_SIMZ_Niskins_STOQS.csv',
+                            '2013_Aug_SIMZ_Niskin_microscopy_STOQS.csv',
+                            '2013_SIMZ_AUV_STOQS.csv',
+                            '2013_SIMZ_Niskins_STOQS.csv',
                             '2013_SIMZ_TowNets_STOQS.csv',
                          ]
 
@@ -113,11 +113,11 @@ cl.process_command_line()
 
 if cl.args.test:
     ##cl.loadL_662(stride=100)
-    #cl.loadDorado(stride=100)
-    #cl.loadRCuctd(stride=10)
-    #cl.loadRCpctd(stride=10)
-    #cl.loadM1(stride=1)
-    #cl.loadParentNetTowSamples()
+    cl.loadDorado(stride=100)
+    cl.loadRCuctd(stride=10)
+    cl.loadRCpctd(stride=10)
+    cl.loadM1(stride=1)
+    cl.loadParentNetTowSamples()
     cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
