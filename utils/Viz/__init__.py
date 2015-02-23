@@ -305,7 +305,7 @@ class MeasuredParameter(object):
         self.depth = self.y
         self.value = self.z
 
-    def _get_samples_for_markers(self, act_name=None, spanned=False):
+    def _get_samples_for_markers(self, act_name=None, spanned=False, exclude_act_name=None):
         '''
         Return time, depth, and name of Samples for plotting as symbols.
         Restrict to activitytype__name if act_name is specified.
@@ -314,9 +314,12 @@ class MeasuredParameter(object):
         xsamp = []
         ysamp = []
         sname = []
-        qs = self.sampleQS.values('instantpoint__timevalue', 'depth', 'name')
+        qs = self.sampleQS.values('instantpoint__timevalue', 'instantpoint__activity__name', 'depth', 'name')
         if act_name:
             qs = qs.filter(instantpoint__activity__activitytype__name__contains=act_name)
+        else:
+            if exclude_act_name:
+                qs = qs.exclude(instantpoint__activity__activitytype__name__contains=exclude_act_name)
 
         for s in qs:
             if self.scale_factor:
@@ -325,14 +328,19 @@ class MeasuredParameter(object):
                 xsamp.append(time.mktime(s['instantpoint__timevalue'].timetuple()))
             ysamp.append(s['depth'])
             if act_name:
-                sname.append(act_name + s['name'])
+                # Convention is to use Activity information for things like NetTows
+                sname.append(s['instantpoint__activity__name'])
             else:
                 sname.append(s['name'])
 
         if spanned and act_name == VERTICALNETTOW:
+            xsamp = []
+            ysamp = []
+            sname = []
             # Build tuples of start and end for the samples so that lines may be drawn, maxdepth is first
             qs = qs.values('instantpoint__activity__startdate', 'instantpoint__activity__enddate', 
-                           'instantpoint__activity__maxdepth', 'instantpoint__activity__mindepth', 'name')
+                           'instantpoint__activity__maxdepth', 'instantpoint__activity__mindepth', 
+                           'instantpoint__activity__name', 'name').distinct()
             for s in qs:
                 if self.scale_factor:
                     xsamp.append((time.mktime(s['instantpoint__activity__startdate'].timetuple()) / self.scale_factor,
@@ -342,11 +350,7 @@ class MeasuredParameter(object):
                                   time.mktime(s['instantpoint__activity__enddate'].timetuple())))
 
                 ysamp.append((s['instantpoint__activity__maxdepth'], s['instantpoint__activity__mindepth']))
-
-                if act_name:
-                    sname.append(act_name + s['name'])
-                else:
-                    sname.append(s['name'])
+                sname.append(s['instantpoint__activity__name'])
 
         return xsamp, ysamp, sname
 
@@ -527,21 +531,22 @@ class MeasuredParameter(object):
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
                     # Sample markers for everything but Net Tows
-                    xsamp, ysamp, sname = self._get_samples_for_markers()
+                    xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_name=NETTOW)
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10)
                     for x,y,sn in izip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
-                    # Sample markers for Net Tows - points
+                    # Annotate NetTow Samples at Sample record location - points
                     xsamp, ysamp, sname = self._get_samples_for_markers(act_name=NETTOW)
-                    ax.scatter(xsamp, np.float64(ysamp), marker='s', c='w', s=25, zorder=10)
+                    ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10)
                     for x,y,sn in izip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
-                    # Sample markers for Vertical Net Tows - lines
+                    # Sample markers for Vertical Net Tows (put circle at surface) - lines
                     xspan, yspan, sname = self._get_samples_for_markers(act_name=VERTICALNETTOW, spanned=True)
                     for xs,ys in zip(xspan, yspan):
-                        ax.plot(xs, ys, c='k', lw=3)
+                        ax.plot(xs, ys, c='k', lw=2)
+                        ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10)
 
                 fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
