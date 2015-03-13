@@ -1,0 +1,1 @@
+![http://stoqs.googlecode.com/hg/doc/papers/IntegrationOfX3DGeospatial/STOQS_Architecture_withX3DOM.png](http://stoqs.googlecode.com/hg/doc/papers/IntegrationOfX3DGeospatial/STOQS_Architecture_withX3DOM.png)
