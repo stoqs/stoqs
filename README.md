@@ -46,10 +46,8 @@ Further information is in these files:
     LICENSE       - GNU General Public License text, how this software is licensed
 
 The stoqs project web site has a wiki with links to presentations and periodic feature
-updates.  The stoqs-discuss list in Google Groups is also a good place to post questions
+updates.  The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also a good place to post questions
 or any sort of comments about STOQS.    
 
---
-Mike McCann
-MBARI 23 May 2013
+
 
