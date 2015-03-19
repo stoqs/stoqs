@@ -9,6 +9,7 @@
 # If you run into any difficulties please feel free to post questions on the stoqs-discuss 
 # mail list, which you may join at: https://groups.google.com/forum/#!forum/stoqs-discuss
 
+su -c "yum -y install python-setuptools"
 su -c "easy_install virtualenv"
 su -c "yum -y install rabbitmq-server scipy mod_wsgi memcached python-memcached"
 
