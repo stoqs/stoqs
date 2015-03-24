@@ -17,16 +17,17 @@ Here's a short video giving the context in which STOQS is used:
 
 <a href='http://www.youtube.com/watch?feature=player_embedded&v=E8wO3qMevV8' target='_blank'><img src='http://img.youtube.com/vi/E8wO3qMevV8/0.jpg' width='425' height=344 /></a>
 
-After installation, data is loaded into STOQS from a variety of data sources,
-including OPeNDAP data sets, other relational databases, and flat files.  
-Products are delivered within the STOQS User Interface and in a variety of 
-formats, including KML, via REST-style web requests.
+After installation, data is loaded into STOQS from a variety of data sources, including 
+OPeNDAP data sets, other relational databases, and flat files. Products are delivered 
+within the STOQS User Interface and in a variety of formats, including KML, via REST-style web requests.
 
 Installing
 ----------
-To install the software for your own use fork the project on GitHub, clone it to
-your Linux system (CentOS is preferred), and follow the instructions starting with 
-the PREREQUISITES file.
+To install the software for your own use fork the project on GitHub, clone it to your Linux system (CentOS is preferred), e.g.:
+
+    git clone git@github.com:<your_github_id>/stoqs.git stoqsgit
+    
+and follow the instructions starting with the PREREQUISITES file.
 
 Operation
 ---------
