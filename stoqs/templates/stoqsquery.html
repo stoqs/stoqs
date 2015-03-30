@@ -3930,7 +3930,7 @@
                 if (data[key]['limits']) {
                     var limits = data[key]['limits']
                     function updateTranslateRotate(index) {
-                        $('#TRANSLATE').attr('translation', data[key]['translation'][index]);
+                        $('#BED_GEOLOCATION').attr('geocoords', data[key]['points'][index]);
                         $('#XROT').attr('rotation', data[key]['xRotation'][index]);
                         $('#YROT').attr('rotation', data[key]['yRotation'][index]);
                         $('#ZROT').attr('rotation', data[key]['zRotation'][index]);

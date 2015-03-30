@@ -1435,9 +1435,9 @@ class STOQSQManager(object):
                 self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
             # Test for presence of platform_yaw_angle (which is same as heading for a ship) 
-            orientCount = self.mpq.qs_mp_no_order.filter(parameter__standard_name='platform_yaw_angle').count()
+            orientCount = self.mpq.qs_mp_no_order_no_parm.filter(parameter__standard_name='platform_yaw_angle').count()
             if orientCount != 0:
-                mppo = PlatformOrientation(self.kwargs, self.request, self.qs, self.mpq.qs_mp)
+                mppo = PlatformOrientation(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order_no_parm)
                 # Default vertical exaggeration is 10x and default geoorigin is and empty string
                 orientDict = mppo.platformOrientationDataValuesForX3D(float(self.request.GET.get('ve', 10)), self.request.GET.get('geoorigin', ''))
                 orientDict['count'] = orientCount

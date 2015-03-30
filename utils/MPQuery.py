@@ -486,6 +486,7 @@ class MPQuery(object):
         self.request = request
         self.qs_mp = None
         self.qs_mp_no_order = None
+        self.qs_mp_no_order_no_parm = None
         self.qs_sp = None
         self.qs_sp_no_order = None
         self.sql = None
@@ -618,6 +619,8 @@ class MPQuery(object):
             logger.debug('... with values_list = %s', values_list)
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
 
+        # Save a queryset with no parameter in the filter
+        self.qs_mp_no_order_no_parm = qs_mp
         if self.parameterID:
             logger.debug('Adding parameter__id=%d filter to qs_mp', int(self.parameterID))
             qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
