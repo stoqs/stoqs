@@ -31,9 +31,9 @@ bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                                 description = 'Benthic Event Detector data for significant events in Monterey Canyon',
                                 x3dTerrains = { 
                                     'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x/MontereyCanyonBeds_1m+5m_1x_scene.x3d': {
-                                        'position': '-44571.54862 77379.85721 71401.38520',
-                                        'orientation': '0.92328 -0.26229 -0.28063 1.50408',
-                                        'centerOfRotation': '-39420.23433350699 85753.45910644953 70752.14499748436',
+                                        'position': '-2704971.16560 -4349573.89012 3799706.63115',
+                                        'orientation': '0.91148 -0.29446 -0.28724 1.54276',
+                                        'centerOfRotation': '-2699685.3015410705 -4341783.983487448 3798757.2834846685',
                                         'VerticalExaggeration': '1',
                                         'speed': '0.1',
                                     },
