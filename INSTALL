@@ -31,9 +31,9 @@ following these instructions.
 
     Using Postgres's 'psql' command with administrator priveledges (which you have as user
     postgres) make sure that there is a spatial types database named "template_postgis".  You 
-    may need to make a copy of the template installed from yum with a psql command like:
+    need to make a copy of the proper postgis template installed from yum, e.g.:
 
-        create database template_postgis with template postgis;
+        create database template_postgis with template postgis21;
 
     The Django test runner requires the spatial types template to have the name template_postgis.
 

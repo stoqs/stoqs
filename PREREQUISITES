@@ -30,19 +30,19 @@ su -c "yum -y install ImageMagick"
 su
 su postgres
 
-# Create the postgis template  database (Note: depending on versions, your paths may vary - consult postgis documentation)
+# Install PostGIS 2.x (This is not backward compatible with PostGIS 1.5; new stoqs databases will need to be created.)
+# Note: depending on versions, your paths may vary - consult postgis documentation
 su -c "yum -y install postgis2_93"
-createdb postgis
-createlang plpgsql postgis
+createdb postgis21
+createlang plpgsql postgis21
 cd /usr/pgsql-9.3/share/contrib/postgis-2.1
-psql -d postgis postgis.sql
-psql -d postgis -f postgis.sql
-psql -d postgis -f postgis_comments.sql
-psql -d postgis -f spatial_ref_sys.sql
-psql -d postgis -f rtpostgis.sql
-psql -d postgis -f raster_comments.sql
-psql -d postgis -f topology.sql
-psql -d postgis -f topology_comments.sql
+psql -d postgis21 -f postgis.sql
+psql -d postgis21 -f postgis_comments.sql
+psql -d postgis21 -f spatial_ref_sys.sql
+psql -d postgis21 -f rtpostgis.sql
+psql -d postgis21 -f raster_comments.sql
+psql -d postgis21 -f topology.sql
+psql -d postgis21 -f topology_comments.sql
 
 # For ability to have persistant storage of GIFS - assumes default location of your web server is /var/www/html
 mkdir /tmp/media
