@@ -595,9 +595,11 @@ class MeasuredParameter(object):
             for act in self.value_by_act.keys():
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in izip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
+                    if 'BED01_1_June_2013' in act:
+                        depth -= 43     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
+                        logger.warn("Subtracting 43 from depths for Activity containing 'BED01_1_June_2013'")
                     if geoOrigin:
                         logger.warn('geoOrigin flag use is deprecated as X3DOM (post v1.6) now supports its use')
-                        depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
                         points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
                     else:
                         points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
@@ -672,7 +674,9 @@ class PlatformOrientation(object):
     '''
     logger = logging.getLogger(__name__)
 
-    x3dEulerBaseScene = '''<Transform id="TRANSLATE" DEF="TRANSLATE" scale="1000 1000 1000">
+    # Use id for jQuery and DEF for potential X3D ROUTEs
+    x3dEulerBaseScene = '''<GeoLocation id="BED_GEOLOCATION" DEF="BED_GEOLOCATION">
+    <Transform id="TRANSLATE" DEF="TRANSLATE" scale="1000 1000 1000">
             <Transform id="XROT" DEF="XROT">
                 <Transform id="YROT" DEF="YROT">
                     <Transform id="ZROT" DEF="ZROT">
@@ -683,6 +687,7 @@ class PlatformOrientation(object):
                 </Transform>
             </Transform>
         </Transform>
+    </GeoLocation>
     '''
 
     def __init__(self, kwargs, request, qs, qs_mp):
@@ -732,21 +737,23 @@ class PlatformOrientation(object):
         x3dDict = {}
         self.loadData()
         try:
-            points = ''
             indices = ''
             index = 0
             gps = GPS()
             ##keys = ''
             translations = []
+            points = []
             for act in self.yaw_by_act.keys():
                 for lon,lat,depth,t in izip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.time_by_act[act]):
+                    if 'BED01_1_June_2013' in act:
+                        depth -= 43     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
+                        logger.warn("Subtracting 43 from depths for Activity containing 'BED01_1_June_2013'")
                     if geoOrigin:
                         logger.warn('geoOrigin use is deprecated as X3DOM (post v1.6) now supports its use')
-                        depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
                         # TEST send translations directly to Transform from JavaScript
                         translations.append('%.1f,%.1f,%.1f' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin))
                     else:
-                        points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
+                        points.append('%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex))
 
                     # If using Interpolators will need keys
                     ##keys += '%.4f' % ((t - self.time_by_act[act][0]) / (self.time_by_act[act][-1] - self.time_by_act[act][0]))
@@ -773,7 +780,7 @@ class PlatformOrientation(object):
             self.logger.exception('Could not create platformorientation')
             x3dResults = 'Could not create platformorientation'
 
-        return {'x3d': x3dDict, 'limits': limits, 'translation': translations, 'time': times,
+        return {'x3d': x3dDict, 'limits': limits, 'translation': translations, 'points': points, 'time': times,
                 'xRotation': xRotations, 'yRotation': yRotations, 'zRotation': zRotations}
 
 

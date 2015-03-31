@@ -30,19 +30,10 @@ from BEDS import BEDSLoader
 bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                                 description = 'Benthic Event Detector data for significant events in Monterey Canyon',
                                 x3dTerrains = { 
-                                    'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0_scene.x3d': {
-                                        'position': '-44571.54862 77379.85721 71401.38520',
-                                        'orientation': '0.92328 -0.26229 -0.28063 1.50408',
-                                        'centerOfRotation': '-39420.23433350699 85753.45910644953 70752.14499748436',
-                                        'geoOrigin': '-121 36 0',
-                                        'VerticalExaggeration': '1',
-                                        'speed': '0.1',
-                                        'zNear': '1.0',
-                                    },
                                     'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x/MontereyCanyonBeds_1m+5m_1x_scene.x3d': {
-                                        'position': '-44571.54862 77379.85721 71401.38520',
-                                        'orientation': '0.92328 -0.26229 -0.28063 1.50408',
-                                        'centerOfRotation': '-39420.23433350699 85753.45910644953 70752.14499748436',
+                                        'position': '-2704971.16560 -4349573.89012 3799706.63115',
+                                        'orientation': '0.91148 -0.29446 -0.28724 1.54276',
+                                        'centerOfRotation': '-2699685.3015410705 -4341783.983487448 3798757.2834846685',
                                         'VerticalExaggeration': '1',
                                         'speed': '0.1',
                                     },
@@ -69,7 +60,8 @@ bl.bed_base = bl.dodsBase + 'BEDS/'
 bl.bed_base = 'http://elvis.shore.mbari.org/opendap/hyrax/data/beds/CanyonEvents/20130601/BED1/netcdf/'
 ##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT', 'PRESS', 'BED_DEPTH']   # For timeSeries
 ##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT']
-bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT', 'ROTRATE']
+##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT', 'ROTRATE']
+bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT']
 
 bl.bed_files = ['BED01_1_June_2013.nc',
 ##                'bed03/30100046_partial_decimated10.nc',

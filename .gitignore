@@ -1,0 +1,18 @@
+# Basics
+*.py[cod]
+*.pyc
+__pycache__
+
+# Logs
+*.log
+pip-log.txt
+
+# VirtualEnv
+venv-stoqs
+venv-stoqs/
+
+# Never ever to go into version control
+privateSettings
+
+# Local GMT .grd bathymetry files
+*.grd
