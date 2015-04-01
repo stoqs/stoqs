@@ -3936,8 +3936,8 @@
                     $('body').data()['po_end_time'] = tarray[tarray.length-1];
 
                     // TODO: Wire up UI elements to stop/start and adjust speed of playback
-                    $('#TS').attr('cycleInterval', 60.0);
-                    //$('#TS').attr('cycleInterval', (tarray[tarray.length-1] - tarray[0]) / 1000.0);
+                    //$('#TS').attr('cycleInterval', 60.0);
+                    $('#TS').attr('cycleInterval', (tarray[tarray.length-1] - tarray[0]) / 1000.0);
 
                     // Populate X3D Interpolators that are driven by the TimeSensor (TS)
                     $('#GPI').attr('key', data[key]['keys']);
