@@ -674,7 +674,10 @@ class PlatformOrientation(object):
     '''
     logger = logging.getLogger(__name__)
 
-    # Use id for jQuery and DEF for potential X3D ROUTEs
+    # Use ids for jQuery accessors and DEFs for X3D ROUTEs
+    # TODO: Replace 3 Transforms with a single one using Euler-vector to reduce data volume a factor of 3
+    #       (But this would also replace easy to understand roll, pitch, and yaw in the NetCDF files.)
+    # TODO: Support multiple platforms in the scene
     x3dEulerBaseScene = '''<GeoLocation id="BED_GEOLOCATION" DEF="BED_GEOLOCATION">
     <Transform id="TRANSLATE" DEF="TRANSLATE" scale="1000 1000 1000">
             <Transform id="XROT" DEF="XROT">
@@ -688,6 +691,22 @@ class PlatformOrientation(object):
             </Transform>
         </Transform>
     </GeoLocation>
+    '''
+
+    # See: http://doc.x3dom.org/tutorials/animationInteraction/onoutputchange/example.html
+    x3dSensorsInterpolatorsRoutes = '''<TimeSensor id='TS' DEF='TS' loop='true' onoutputchange='setCrosshair(event)'/>
+    <GeoPositionInterpolator id="GPI" DEF="GPI"/>
+    <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="GPI"/>
+    <ROUTE fromField="geovalue_changed" fromNode="GPI" toField="geoCoords" toNode="BED_GEOLOCATION"/>
+    <OrientationInterpolator id="X_OI" DEF="X_OI"/>
+    <OrientationInterpolator id="Y_OI" DEF="Y_OI"/>
+    <OrientationInterpolator id="Z_OI" DEF="Z_OI"/>
+    <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="X_OI"/>
+    <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="Y_OI"/>
+    <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="Z_OI"/>
+    <ROUTE fromField="value_changed" fromNode="X_OI" toField="rotation" toNode="XROT"/>
+    <ROUTE fromField="value_changed" fromNode="Y_OI" toField="rotation" toNode="YROT"/>
+    <ROUTE fromField="value_changed" fromNode="Z_OI" toField="rotation" toNode="ZROT"/>
     '''
 
     def __init__(self, kwargs, request, qs, qs_mp):
@@ -740,9 +759,9 @@ class PlatformOrientation(object):
             indices = ''
             index = 0
             gps = GPS()
-            ##keys = ''
+            keys = ''
             translations = []
-            points = []
+            points = ''
             for act in self.yaw_by_act.keys():
                 for lon,lat,depth,t in izip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.time_by_act[act]):
                     if 'BED01_1_June_2013' in act:
@@ -753,10 +772,10 @@ class PlatformOrientation(object):
                         # TEST send translations directly to Transform from JavaScript
                         translations.append('%.1f,%.1f,%.1f' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin))
                     else:
-                        points.append('%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex))
+                        points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
 
                     # If using Interpolators will need keys
-                    ##keys += '%.4f' % ((t - self.time_by_act[act][0]) / (self.time_by_act[act][-1] - self.time_by_act[act][0]))
+                    keys += '%.4f ' % (float(t - self.time_by_act[act][0]) / float(self.time_by_act[act][-1] - self.time_by_act[act][0]))
                     indices = indices + '%i ' % index
                     index = index + 1
 
@@ -773,15 +792,13 @@ class PlatformOrientation(object):
 
                 x3dDict[act] = self.x3dEulerBaseScene
 
-            if x3dDict:
-                limits = (0, len(self.time_by_act[act]))
-
         except Exception as e:
             self.logger.exception('Could not create platformorientation')
             x3dResults = 'Could not create platformorientation'
 
-        return {'x3d': x3dDict, 'limits': limits, 'translation': translations, 'points': points, 'time': times,
-                'xRotation': xRotations, 'yRotation': yRotations, 'zRotation': zRotations}
+        return {'x3d': x3dDict, 'translation': translations, 'points': points.rstrip(), 'time': times,
+                'keys': keys.rstrip(), 'xRotation': xRotations, 'yRotation': yRotations, 'zRotation': zRotations,
+                'SensorsInterpolatorsRoutes': self.x3dSensorsInterpolatorsRoutes}
 
 
 class PPDatabaseException(Exception):

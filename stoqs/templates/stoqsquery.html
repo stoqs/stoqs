@@ -249,7 +249,7 @@
                                                         <Shape id="mp-x3d-track"></Shape>
                                                         <GeoOriginTransform containerField='children'>
                                                             <Inline id="mp-x3d-terrain1"></Inline>
-                                                        </GeoOrigin>
+                                                        </GeoOriginTransform>
                                                         <Group id="platform-orientations"></Group>
                                                         <Group id="platform-models"></Group>
                                                     </Group>
@@ -389,7 +389,6 @@
                         </transform>
                     </transform>
                 </transform>
-
 
                                             </Scene>
                                         </X3D>
@@ -3533,7 +3532,7 @@
                 }
                 var options = simpledepthtime_options_zoom;
                 if ( ! $.isEmptyObject(data.platformorientation) ) {
-                    if ( ! $.isEmptyObject(data.platformorientation.limits) ) {
+                    if ( ! $.isEmptyObject(data.platformorientation.time) ) {
                         options = $.extend(true, {}, simpledepthtime_options_zoom, { crosshair: { mode: "x" } });
                     }
                 }
@@ -3554,7 +3553,7 @@
                                       });
                 var len = parmData.dataset.length;
                 if ( ! $.isEmptyObject(data.platformorientation) ) {
-                    if ( ! $.isEmptyObject(data.platformorientation.limits) ) {
+                    if ( ! $.isEmptyObject(data.platformorientation.time) ) {
                         options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
                     }
                 }
@@ -3913,11 +3912,15 @@
                 }
             }
             else if (key == 'platformorientation') {
+                // This code has entanglements with the PlatformOrientation class in utils/Viz/__init__.py
                 if (data[key]['x3d']) {
                     var x3dText = '';
                     $.each(data[key]['x3d'], function (act, x3d) {
                         x3dText += x3d;
                     });
+                    if (! $.isEmptyObject(data[key]['SensorsInterpolatorsRoutes'])) {
+                        x3dText += data[key]['SensorsInterpolatorsRoutes'];
+                    }
                     $('#platform-orientations').html(x3dText);
                 }
                 // Redraw the time series so that we have the crosshair option added and can call lockCrosshair()
@@ -3927,32 +3930,24 @@
                 if (data['parametertime']) {
                     redrawParameterTime(data);
                 }
-                if (data[key]['limits']) {
-                    var limits = data[key]['limits']
-                    function updateTranslateRotate(index) {
-                        $('#BED_GEOLOCATION').attr('geocoords', data[key]['points'][index]);
-                        $('#XROT').attr('rotation', data[key]['xRotation'][index]);
-                        $('#YROT').attr('rotation', data[key]['yRotation'][index]);
-                        $('#ZROT').attr('rotation', data[key]['zRotation'][index]);
-                        timedepthplot.lockCrosshair({x: data[key]['time'][index], y:0});
-                        if ( ! $.isEmptyObject(timeparameterplot) ) {
-                            timeparameterplot.lockCrosshair({x: data[key]['time'][index], y:0});
-                        }
-                    }
-                    $('#spatial-3d-x3d-controls').slider({min: limits[0], max: limits[limits.length - 1], step: 1, value: limits[0], slide: 
-                        $.throttle(function(e, ui) { 
-                            var index = $('#spatial-3d-x3d-controls').slider('option', 'value');
-                            updateTranslateRotate(index);
-                        }, 100)
-                    });
+                if (! $.isEmptyObject(data[key]['time'])) {
+                    var tarray = data[key]['time'];
+                    $('body').data()['po_start_time'] = tarray[0];
+                    $('body').data()['po_end_time'] = tarray[tarray.length-1];
 
-                    // Compute interval in milliseconds from first two points time array - assumes a regularly spaced time series
-                    var interval = data.platformorientation.time[1] - data.platformorientation.time[0];
-                    platformTimer = setInterval(function() {
-                        var index = $('#spatial-3d-x3d-controls').slider('option', 'value');
-                        updateTranslateRotate(index);
-                        $('#spatial-3d-x3d-controls').slider('value', index + 1);
-                    }, interval);
+                    // TODO: Wire up UI elements to stop/start and adjust speed of playback
+                    $('#TS').attr('cycleInterval', 60.0);
+                    //$('#TS').attr('cycleInterval', (tarray[tarray.length-1] - tarray[0]) / 1000.0);
+
+                    // Populate X3D Interpolators that are driven by the TimeSensor (TS)
+                    $('#GPI').attr('key', data[key]['keys']);
+                    $('#GPI').attr('keyvalue', data[key]['points']);
+                    $('#X_OI').attr('key', data[key]['keys']);
+                    $('#X_OI').attr('keyvalue', data[key]['xRotation']);
+                    $('#Y_OI').attr('key', data[key]['keys']);
+                    $('#Y_OI').attr('keyvalue', data[key]['yRotation']);
+                    $('#Z_OI').attr('key', data[key]['keys']);
+                    $('#Z_OI').attr('keyvalue', data[key]['zRotation']);
                 }
             }
 
@@ -4058,9 +4053,22 @@
         });
 
     } // updateSummaryData()
-    
+   
+    function setCrosshair(eventObject) {
+        // Handle events from PlatformOrientation TimeSensor to update crosshair on Temporal flot plot
+        // See: http://doc.x3dom.org/tutorials/animationInteraction/onoutputchange/example.html
+        if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
+            return;
+        
+        var t = $('body').data()['po_start_time'] + eventObject.value * ($('body').data()['po_end_time'] - $('body').data()['po_start_time']);
+
+        timedepthplot.lockCrosshair({x: t, y:0});
+        if ( ! $.isEmptyObject(timeparameterplot) ) {
+            timeparameterplot.lockCrosshair({x: t, y:0});
+        }
+    }
+
     // Collect all the parameters on the page so we can generate our permalink.
-    
     function collect_parameters() {
         params={'clicks': [],
                 'accordian': [],
