@@ -22,7 +22,7 @@ positions, it also delivers measured_paramaters based on various common query cr
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.conf import settings
 from django.db import connection
 from django.db.models import Q
@@ -46,6 +46,11 @@ from utils import encoders
 from utils.Viz.KML import KML
 
 logger = logging.getLogger(__name__)
+
+
+class EmptyQuerySetException(Exception):
+    pass
+
 
 class BaseOutputer(object):
     '''
@@ -226,7 +231,10 @@ class BaseOutputer(object):
         '''
         fields = self.getFields()
         geomFields = self.getGeomFields()
-        self.assign_qs()
+        try:
+            self.assign_qs()
+        except EmptyQuerySetException:
+            raise Http404
 
         if self.stoqs_object_name == 'measured_parameter':
             # Check if the query contains parametervalue constraints, in which case we need to wrap RawQuerySet in an MPQuerySet

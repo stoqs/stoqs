@@ -15,7 +15,7 @@ query view and REST API to the data.
 '''
 
 from django.http import HttpResponse
-from stoqs.views import BaseOutputer
+from stoqs.views import BaseOutputer, EmptyQuerySetException
 import stoqs.models as mod
 ##import matplotlib.pyplot as plt
 import logging 
@@ -39,6 +39,9 @@ class SampleDataTable(BaseOutputer):
         '''
         Assign the processed query string 'qs' with query parameters and fields. May be overridden to restructure response as needed.
         '''
+        if not self.query_set:
+            raise EmptyQuerySetException()
+
         fields = self.getFields()
         logger.debug(fields)
         self.applyQueryParams(self.ammendFields(fields))
