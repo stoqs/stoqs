@@ -30,7 +30,7 @@ su -c "yum -y install ImageMagick"
 su
 su postgres
 
-# Install PostGIS 2.x (This is not backward compatible with PostGIS 1.5; new stoqs databases will need to be created.)
+# Install PostGIS 2.x (This is not easily backward compatible with PostGIS 1.5; legacy stoqs databases will need to be reloaded.)
 # Note: depending on versions, your paths may vary - consult postgis documentation
 su -c "yum -y install postgis2_93"
 createdb postgis21
@@ -47,6 +47,9 @@ psql -d postgis21 -f topology_comments.sql
 # For ability to have persistant storage of GIFS - assumes default location of your web server is /var/www/html
 mkdir /tmp/media
 su -c 'ln -s /tmp/media /var/www/html/media'
+
+# Geospatial libraries as prerequisites for Mapserver, GeoDjango, etc.
+sudo yum install gdal-devel
 
 # Mapserver - version 6.4.1:
 # --------------------------
@@ -70,7 +73,7 @@ su -c "/sbin/service memcached start"
 
 # Go to the directory where you have checked out the stoqs project, e.g.:
 
-cd ~/dev/stoqshg
+cd ~/dev/stoqsgit
 
 # Instructions below are for setting up a development or "sandbox" environment.  If you are running 
 # in a production environment where you have system admin support then it's likely that all of 
@@ -78,25 +81,26 @@ cd ~/dev/stoqshg
 # the venv-stoqs virtual environment with these packages, though you may find it convenient to run
 # the virtual environment regargless.
  
-# Create a venv for a development environment
-virtualenv venv-stoqs
-source venv-stoqs/bin/activate      # source venv-stoqs/bin/activate.csh if using csh or tcsh
+# Create a development virtual environment to contain all the Python prerequisites
+mkdir ~/VirtualEnvs
+virtualenv ~/VirtualEnvs/venv-stoqs
+source ~/VirtualEnvs/venv-stoqs/bin/activate      # Append .csh if your shell is csh or tcsh
 
 
 # Install additional Python packages required by STOQS. (Make sure you are in your venv
-# - your prompt should look something like "(venv-stoqs)[student@localhost stoqshg]$":
-./setup.sh
+# - your prompt should look something like "(venv-stoqs)[student@localhost stoqsgit]$":
+pip install -r requirements_django17upgrade.txt
 
 # This will take a few minutes to install everything that is specified in requirements.txt
 # You should see a "setup.sh finished." message if everything goes well in this step.
 
 # When running django-admin.py or 'python manage.py' do it in your virtualenv, making
-# sure your prompt looks something like "(venv-stoqs)[student@localhost stoqshg]$"
+# sure your prompt looks something like "(venv-stoqs)[student@localhost stoqsgit]$"
 
 # Proceed to the instructions in the INSTALL file.
 
 --
 Mike McCann
-MBARI 20 February 2015
+MBARI 25 March 2015
 
 
