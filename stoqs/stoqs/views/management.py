@@ -27,13 +27,13 @@ from django.template import RequestContext
 from django.conf import settings
 from django.db import DatabaseError, close_connection
 from django.http import HttpResponse
-from django.utils import simplejson
 from utils import encoders
 import stoqs.models as mod
 from datetime import datetime, timedelta
 from stoqs import tasks
 import socket
 import logging
+import json
 import sys
 
 logger = logging.getLogger(__name__)
@@ -194,7 +194,7 @@ def showCampaigns(request,format=None):
 
     logger.debug("camList = %s", camList)
     if format == 'json':
-        return HttpResponse(simplejson.dumps(camList, cls=encoders.STOQSJSONEncoder), 'application/json')
+        return HttpResponse(json.dumps(camList, cls=encoders.STOQSJSONEncoder), 'application/json')
     elif format == 'count':
         return HttpResponse(len(camList), mimetype='text/plain')
     else:

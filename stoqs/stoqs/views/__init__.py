@@ -26,11 +26,11 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.db import connection
 from django.db.models import Q
-from django.utils import simplejson
 from django.core import serializers
 
 from datetime import datetime, timedelta
 import time
+import json
 import stoqs.models as mod
 import csv
 import sys
@@ -260,7 +260,7 @@ class BaseOutputer(object):
             return HttpResponse(serializers.serialize('xml', self.query_set), 'application/xml')
 
         elif self.format == 'json':
-            return HttpResponse(simplejson.dumps(self.qs, cls=encoders.STOQSJSONEncoder), 'application/json')
+            return HttpResponse(json.dumps(self.qs, cls=encoders.STOQSJSONEncoder), 'application/json')
 
         elif self.format == 'kml':
             kml = KML(self.request, self.qs, self.qparams, self.stoqs_object_name)

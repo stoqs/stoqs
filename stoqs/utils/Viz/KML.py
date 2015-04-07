@@ -2,9 +2,9 @@ import os
 import sys
 import time
 import numpy
-import settings
 import logging
 from stoqs import models as m
+from django.conf import settings
 from django.db.models import Avg
 from django.http import HttpResponse
 import pprint

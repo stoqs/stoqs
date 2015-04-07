@@ -1,11 +1,11 @@
-from django.utils import simplejson
 from decimal import Decimal
 import datetime
 import logging
+import json
 
 logger = logging.getLogger(__name__)
  
-class STOQSJSONEncoder(simplejson.JSONEncoder):
+class STOQSJSONEncoder(json.JSONEncoder):
     def default(self, object_to_encode):
         '''
         Convert Decimal object to something we can serialize
@@ -25,4 +25,4 @@ class STOQSJSONEncoder(simplejson.JSONEncoder):
             else:
                 return list(iterable)
 
-        return simplejson.JSONEncoder.default(self, object_to_encode)
+        return json.JSONEncoder.default(self, object_to_encode)

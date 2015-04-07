@@ -35,7 +35,7 @@ from utils.MPQuery import MPQuerySet
 from utils.geo import GPS
 from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
-import seawater.csiro as sw
+import seawater.eos80 as sw
 import numpy as np
 from numpy import polyfit
 from itertools import izip

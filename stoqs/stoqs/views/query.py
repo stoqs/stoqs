@@ -15,7 +15,6 @@ View functions to supoprt the main query web page
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
-from django.utils import simplejson
 from django.conf import settings
 from django.core import serializers
 from django.core.exceptions import ValidationError
@@ -201,7 +200,7 @@ def queryData(request, format=None):
         logger.error(e)
         return HttpResponseBadRequest('Bad request: ' + str(e))
     try:
-        options = simplejson.dumps(qm.generateOptions(),
+        options = json.dumps(qm.generateOptions(),
                                    cls=encoders.STOQSJSONEncoder)
                                    # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
     except ConnectionDoesNotExist, e:
@@ -242,7 +241,7 @@ def queryMap(request):
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     logger.debug('Calling buildQuerySets with params = %s', params)
     qm.buildQuerySets(**params)
-    options = simplejson.dumps(qm.generateOptions(),
+    options = json.dumps(qm.generateOptions(),
                                cls=encoders.STOQSJSONEncoder)
     ##logger.debug('options = %s', pprint.pformat(options))
     _buildMapFile(request, qm, options)

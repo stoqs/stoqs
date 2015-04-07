@@ -21,7 +21,6 @@ from django.template import RequestContext
 from django.http import HttpResponse
 from django.conf import settings
 from django.db import connection
-from django.utils import simplejson
 from django.core import serializers
 
 from datetime import datetime, timedelta

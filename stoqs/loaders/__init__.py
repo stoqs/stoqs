@@ -35,7 +35,7 @@ import time
 import re
 import math, numpy
 from coards import to_udunits, from_udunits
-import seawater.csiro as sw
+import seawater.eos80 as sw
 import csv
 import urllib2
 import logging

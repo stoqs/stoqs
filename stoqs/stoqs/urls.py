@@ -24,7 +24,7 @@ MBARI Jan 3, 2012
 @license: __license__
 '''
 
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, url, include
 from django.contrib.gis import admin
 from django.conf import settings
 ##from ga_ows.views.wfs import WFS
