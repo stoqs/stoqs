@@ -18,9 +18,7 @@ Base module for STOQS loaders
 import sys
 import os.path, os
 
-# The following are required to ensure that the GeoDjango models can be loaded up.
 sys.path.insert(0, os.path.abspath('..'))
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
 
 from django.conf import settings
 from django.contrib.gis.geos import LineString, Point, Polygon
@@ -533,7 +531,7 @@ class STOQS_Loader(object):
             (mp_resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name='featureType', value=self.getFeatureType(), resourcetype=resourceType)
             ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
-                            resource__resourcetype=resourceType, resource__name='featureType').select_related(depth=1)
+                            resource__resourcetype=resourceType, resource__name='featureType').select_related('resource')
 
             if not ars:
                 # There was no featureType NC_GLOBAL in the dataset - associate to the one from self.getFeatureType()
@@ -887,7 +885,7 @@ class STOQS_Loader(object):
         and add it to the Measurement so that our Matplotlib plots can also ieasily include the depth profile.  
         This procedure is suitable for only trajectory data.
         '''
-        mpQS = m.MeasuredParameter.objects.using(self.dbAlias).select_related(depth=1
+        mpQS = m.MeasuredParameter.objects.using(self.dbAlias).select_related('measurement'
                                       ).filter( datavalue__isnull=False,
                                                 measurement__instantpoint__activity=self.activity, 
                                                 parameter__standard_name='height_above_sea_floor')

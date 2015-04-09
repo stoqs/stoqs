@@ -158,7 +158,9 @@ class Common(Configuration):
     USE_L10N = True
 
     # See: https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
-    USE_TZ = True
+    # STOQS assumes all times are GMT, which is the timezone of the database
+    # It's OK to use naiive datetimes with this policy
+    USE_TZ = False
     # END GENERAL CONFIGURATION
 
     # TEMPLATE CONFIGURATION
@@ -284,4 +286,30 @@ class Common(Configuration):
     def post_setup(cls):
         cls.DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+    #
     # Your common stuff: Below this line define 3rd party library settings
+    #
+
+    # STOQS specific logging
+    LOGGING['formatters'] = {
+        'veryverbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(filename)s %(funcName)s():%(lineno)d %(message)s'
+        },
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(filename)s %(funcName)s():%(lineno)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    }
+    LOGGING['handlers']['console'] = {
+                                'level':'DEBUG',
+                                'class':'logging.StreamHandler',
+                                'formatter': 'verbose'
+    }
+    LOGGING['loggers']['loaders'] = {
+                                'handlers':['console'],
+                                'propagate': True,
+                                'level':'DEBUG',
+    }
+    # END STOQS specific logging

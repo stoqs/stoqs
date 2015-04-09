@@ -30,9 +30,8 @@ MBARI Dec 29, 2011
 import os
 import sys
 from django.contrib.gis.geos import GEOSGeometry, LineString, Point
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # config is one dir up
 from django.conf import settings
 
 from django.db.utils import IntegrityError, DatabaseError
@@ -50,7 +49,7 @@ import csv
 import urllib2
 import logging
 import socket
-import seawater.csiro as sw
+import seawater.eos80 as sw
 from utils.utils import percentile, median, mode, simplify_points
 from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
 import numpy as np

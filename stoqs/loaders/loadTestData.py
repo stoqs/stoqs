@@ -22,10 +22,6 @@ MBARI Dec 28, 2011
 '''
 
 import os
-import sys
-##parentDir = os.path.join(os.path.dirname(__file__), "../")
-##sys.path.insert(0, parentDir)                                       # settings.py is one dir up
-
 from CANON import CANONLoader
 
 # Assign input data sources
