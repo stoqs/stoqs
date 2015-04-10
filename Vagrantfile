@@ -14,7 +14,7 @@ Vagrant.configure(2) do |config|
   rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
   echo Step 3 / 18 - Install Git and Postgres
   yum -y install git
-  git clone https://github.com/jergutierrez/stoqs.git
+  git clone https://github.com/stoqs/stoqs.git stoqsgit
   curl -O http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
   rpm -ivh pgdg*
   yum -y install postgresql93-server
@@ -114,9 +114,9 @@ Vagrant.configure(2) do |config|
   su -c "/sbin/service memcached start"
   echo Step 17 / 18 - Virtual environment with Python Tools
   yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc
+  cd /home/vagrant/stoqsgit
   virtualenv venv-stoqs
   source venv-stoqs/bin/activate      
-  cd /home/vagrant/stoqs
   yum -y install numpy scipy python-matplotlib ipython python-pandas sympy python-nose
   export CPLUS_INCLUDE_PATH=/usr/include/gdal
   export C_INCLUDE_PATH=/usr/include/gdal
