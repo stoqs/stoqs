@@ -14,7 +14,6 @@ Vagrant.configure(2) do |config|
   rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
   echo Step 3 / 18 - Install Git and Postgres
   yum -y install git
-  git clone https://github.com/stoqs/stoqs.git stoqsgit
   curl -O http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
   rpm -ivh pgdg*
   yum -y install postgresql93-server
@@ -102,6 +101,7 @@ Vagrant.configure(2) do |config|
   echo Step 15 / 18 - Gdal & psql continued setup
   cd /home/vagrant/cmake-2.8.3
   ./configure --with-proj=/usr --with-ogr=/usr/local/bin/gdal-config --with-gdal=/usr/local/bin/gdal-config --with-wfs --with-wfsclient --with-wmsclient --with-postgis=/usr/pgsql-9.1/bin/pg_config
+  yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc
   su -c "ln -s /usr/pgsql-9.3/lib/libpq.so.5.4 /usr/pgsql-9.3/lib/libpq.so"
   gmake
   make
@@ -112,15 +112,15 @@ Vagrant.configure(2) do |config|
   su -c "/sbin/service httpd start"
   su -c "chkconfig memcached on"
   su -c "/sbin/service memcached start"
-  echo Step 17 / 18 - Virtual environment with Python Tools
-  yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc
-  cd /home/vagrant/stoqsgit
+  echo Step 17 / 18 - Clone STOQS, setup virtual environment with Python Tools as user vagrant
+  su - vagrant
+  mkdir dev
+  cd dev
+  git clone https://github.com/stoqs/stoqs.git stoqsgit
+  cd /home/vagrant/dev/stoqsgit
+  git checkout django17upgrade
   virtualenv venv-stoqs
   source venv-stoqs/bin/activate      
-  yum -y install numpy scipy python-matplotlib ipython python-pandas sympy python-nose
-  export CPLUS_INCLUDE_PATH=/usr/include/gdal
-  export C_INCLUDE_PATH=/usr/include/gdal
-  cd /home/vagrant/stoqs
   ./setup.sh
   SHELL
 end
