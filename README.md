@@ -4,24 +4,19 @@ README
 Spatial Temporal Oceanographic Query System (STOQS)
 ---------------------------------------------------
 
-STOQS is a geospatial database web application designed for providing efficient 
-acccess to *in situ* oceanographic data across any dimension - e.g., retrieving
-a common parameter from all measuring platforms in a specific area over a 
-specific span of time.  STOQS complements other data management technologies
-such as NetCDF and OPeNDAP by providing an ability to index data retrieval 
-across parameter and spatial dimensions in addition to the *a priori* indexed
-coordinate dimensions in NetCDF.  It also provides a functional bridge between 
-NetCDF and Geographic Information Systems technologies. See http://www.stoqs.org
-for videos and general information.
+STOQS is a geospatial database and web application designed for providing efficient 
+acccess to *in situ* oceanographic data across any dimension.
+See http://www.stoqs.org for more information.
 
-Getting started with a STOQS development system:
+Getting started with a STOQS development system with [Vagrant](http://docs.vagrantup.com/v2/installation/index.html)i
+and [VirtualBox](https://www.virtualbox.org/wiki/Downloads):
 
     curl "https://raw.githubusercontent.com/MBARIMike/stoqs/django17upgrade/Vagrantfile" -o Vagrantfile
-    vagrant up
+    vagrant up --provider virtualbox
 
 After your virtual machine has booted log in, finish the Python setup, and load some test data:
 
-    vagrant ssh --provider virtualbox
+    vagrant ssh 
     cd dev/stoqsgit
     source venv-stoqs/bin/activate
     ./setup.sh
