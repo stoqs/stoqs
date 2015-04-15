@@ -9,10 +9,11 @@ Vagrant.configure(2) do |config|
   config.vm.provision "shell", inline: <<-SHELL
   echo Step 1 / 18 - Disable Selinux
   echo 0 > /selinux/enforce
-  echo Step 2 / 18 - Install Pre-requisites
+  mkdir Downloads && cd Downloads
+  echo Step 2 / 18 - Add epel and remi repos
   yum -y install wget
-  wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
-  wget http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
+  wget -q http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+  wget -q http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
   rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
   echo Step 3 / 18 - Install Git and Postgres
   yum -y install git
@@ -34,12 +35,26 @@ Vagrant.configure(2) do |config|
   sudo su - postgres -c 'createuser -s vagrant'
   su - postgres -c "/usr/pgsql-9.3/bin/pg_ctl -D /var/lib/pgsql/9.3/data -l logfile start"
   chown postgres stoqs
-  echo Step 5 / 18 - Install Mercurial
-  yum -y install mercurial
-  echo Step 6 / 18 - Instal the Development Tools for PostGres
+  echo Step 5 / 18 - Install Python 2.7 and its support tools pip and virtalenv
+  yum groupinstall -y development
+  yum install -y zlib-dev openssl-devel sqlite-devel bzip2-devel xz-libs
+  wget -q http://www.python.org/ftp/python/2.7.9/Python-2.7.9.tar.xz
+  xz -d -c Python-2.7.9.tar.xz | tar -xvf -
+  cd Python-2.7.9
+  ./configure
+  make && make altinstall
+  cd ..
+  wget -q --no-check-certificate https://pypi.python.org/packages/source/s/setuptools/setuptools-1.4.2.tar.gz
+  tar -xvf setuptools-1.4.2.tar.gz
+  cd setuptools-1.4.2
+  python2.7 setup.py install
+  cd .
+  curl https://raw.githubusercontent.com/pypa/pip/master/contrib/get-pip.py | sudo /usr/local/bin/python2.7 -
+  /usr/local/bin/pip install virtualenv
+  echo Step 6 / 18 - Install the Development Tools for Postgres
   yum -y groupinstall 'Development Tools'
   echo Step 7 / 18 - Download and install CMake
-  wget http://www.cmake.org/files/v2.8/cmake-2.8.3.tar.gz
+  wget -q http://www.cmake.org/files/v2.8/cmake-2.8.3.tar.gz
   tar xzf cmake-2.8.3.tar.gz
   cd cmake-2.8.3
   ./configure --prefix=/opt/cmake
@@ -79,7 +94,7 @@ Vagrant.configure(2) do |config|
   mkdir -m 700 /tmp/media
   ln -s /tmp/media /var/www/html/media   
   echo Step 12 / 18 - G-dal
-  wget http://download.osgeo.org/gdal/gdal-1.9.2.tar.gz        
+  wget -q http://download.osgeo.org/gdal/gdal-1.9.2.tar.gz        
   yum -y install gdal
   cd cmake-2.8.3
   echo 'pathmunge /cmake-2.8.3' > /etc/profile.d/custompath.sh
@@ -92,8 +107,8 @@ Vagrant.configure(2) do |config|
   cd ..
   echo Step 13 / 18 - Map Server Libraries
   su -c "yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel"
-  su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel postgresql91-devel libxslt-devel pam-devel openssl-devel readline-devel"
-  wget http://download.osgeo.org/mapserver/mapserver-6.4.1.tar.gz
+  su -c "yum -y install proj-nad proj-epsg curl-devel libxml2-devel postgresql91-devel libxslt-devel pam-devel readline-devel"
+  wget -q http://download.osgeo.org/mapserver/mapserver-6.4.1.tar.gz
   yum -y install mapserver
   yum -y install python-psycopg2
   export PATH="/usr/pgsql-9.3/bin:$PATH"
@@ -118,15 +133,9 @@ Vagrant.configure(2) do |config|
   mkdir dev
   cd dev
   git clone https://github.com/stoqs/stoqs.git stoqsgit
-  chown -R vagrant .
   cd /home/vagrant/dev/stoqsgit
   git checkout django17upgrade
   virtualenv venv-stoqs
+  chown -R vagrant .
   SHELL
 end
-
-# vagrant ssh
-# cd dev/stoqsgit
-# source venv-stoqs/bin/activate
-# ./setup.sh
-# ./test.sh
