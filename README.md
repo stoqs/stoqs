@@ -16,7 +16,7 @@ for videos and general information.
 
 Getting started with a STOQS development system:
 
-    wget https://raw.githubusercontent.com/MBARIMike/stoqs/django17upgrade/Vagrantfile
+    curl "https://raw.githubusercontent.com/MBARIMike/stoqs/django17upgrade/Vagrantfile" -o Vagrantfile
     vagrant up
 
 After your virtual machine has booted log in, finish the Python setup, and load some test data:

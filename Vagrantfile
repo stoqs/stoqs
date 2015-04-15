@@ -4,6 +4,8 @@
 Vagrant.configure(2) do |config|
   config.vm.box = "base"
   config.vm.box_url = "https://github.com/2creatives/vagrant-centos/releases/download/v6.5.3/centos65-x86_64-20140116.box"
+  config.ssh.forward_agent = true
+  config.vm.network :forwarded_port, host: 8000, guest: 8000
   config.vm.provision "shell", inline: <<-SHELL
   echo Step 1 / 18 - Disable Selinux
   echo 0 > /selinux/enforce
@@ -112,16 +114,19 @@ Vagrant.configure(2) do |config|
   su -c "/sbin/service httpd start"
   su -c "chkconfig memcached on"
   su -c "/sbin/service memcached start"
-  echo Step 17 / 18 - Clone STOQS, setup virtual environment with Python Tools as user vagrant
-  su - vagrant
+  echo Step 17 / 18 - Clone STOQS, create virtual environment 
   mkdir dev
   cd dev
   git clone https://github.com/stoqs/stoqs.git stoqsgit
+  chown -R vagrant .
   cd /home/vagrant/dev/stoqsgit
   git checkout django17upgrade
   virtualenv venv-stoqs
-  source venv-stoqs/bin/activate      
-  ./setup.sh
   SHELL
 end
 
+# vagrant ssh
+# cd dev/stoqsgit
+# source venv-stoqs/bin/activate
+# ./setup.sh
+# ./test.sh
