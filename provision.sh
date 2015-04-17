@@ -1,13 +1,21 @@
 #!/bin/bash
 # Idempotent shell script to install system level prerequisites for STOQS
 # Designed to be from Vagrantfile, where default USER is vagrant
+# Usage: provision.sh centos vagrant (default) -or- provision.sh ubuntu
 if [ "$EUID" -ne 0 ]
 then echo "Please run as root"
     exit 1
 fi
-if [ $1 ] 
+
+if [ $1 ]
 then
-    USER=$1
+    OS = $1
+else
+    OS = 'centos'
+fi
+if [ $2 ] 
+then
+    USER=$2
 else
     USER='vagrant'
 fi
