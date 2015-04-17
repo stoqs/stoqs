@@ -67,66 +67,41 @@ then
     yum -y install graphviz-devel graphviz-python ImageMagick postgis2_93
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
     yum -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
-    yum -y install python-psycopg2 libpqxx-devel
+    yum -y install python-psycopg2 libpqxx-devel geos geos-devel
     yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
 fi
 
 # Commands that work on any *nix
-echo Modifying pg_hba.conf
-sed -i '1i host all all ::/0 trust' /var/lib/pgsql/9.3/data/pg_hba.conf
-sed -i '1i #IPv6 local connections:' /var/lib/pgsql/9.3/data/pg_hba.conf
-sed -i '1i host all all 10.0.2.0/24 trust' /var/lib/pgsql/9.3/data/pg_hba.conf
-sed -i '1i #IPv4 local connections: ' /var/lib/pgsql/9.3/data/pg_hba.conf
-sed -i '1i local all all trust' /var/lib/pgsql/9.3/data/pg_hba.conf
-sed -i '1i #local is for Unix domain socket connections only' /var/lib/pgsql/9.3/data/pg_hba.conf
-su - postgres -c 'createuser -s $USER'
-su - postgres -c "/usr/pgsql-9.3/bin/pg_ctl -D /var/lib/pgsql/9.3/data -l logfile start"
 
 echo Download and install CMake
 wget -q -N http://www.cmake.org/files/v2.8/cmake-2.8.3.tar.gz
 tar xzf cmake-2.8.3.tar.gz
 cd cmake-2.8.3
 ./configure --prefix=/opt/cmake
-gmake
-make
-make install
-mkdir -m 700 build
+gmake && gmake install
 cd ..
 
-echo Create postgis database
-su - postgres -c "createdb postgis"
-su - postgres -c "createlang plpgsql postgis"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/postgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/spatial_ref_sys.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/postgis_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/rtpostgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/raster_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/topology.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/topology_comments.sql"
-
-echo Build gdal
+echo Build and install gdal
 wget -q -N http://download.osgeo.org/gdal/gdal-1.9.2.tar.gz        
-cd cmake-2.8.3
+tar xzf gdal-1.9.2.tar.gz
+cd gdal-1.9.2
 export PATH=$(pwd):$PATH
 ./configure --with-python
-gmake       
-make
-make install
+gmake && gmake install
 cd ..
 
 echo Build Mapserver
 wget -q -N http://download.osgeo.org/mapserver/mapserver-6.4.1.tar.gz
-export PATH="/usr/pgsql-9.3/bin:$PATH"
-echo Step 14 / 18 - Epsg File Alteration
-sed -i '$a<900913> +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs <>' /usr/share/proj/epsg    
-echo Step 15 / 18 - Gdal 
-cd cmake-2.8.3
-./configure --with-proj=/usr --with-ogr=/usr/local/bin/gdal-config --with-gdal=/usr/local/bin/gdal-config --with-wfs --with-wfsclient --with-wmsclient --with-postgis=/usr/pgsql-9.1/bin/pg_config
-ln -s /usr/pgsql-9.3/lib/libpq.so.5.4 /usr/pgsql-9.3/lib/libpq.so
-gmake
-make
-make install
-cd ..
+tar xzf mapserver-6.4.1.tar.gz
+cd mapserver-6.4.1
+##export PATH="/usr/pgsql-9.3/bin:$PATH"
+##sed -i '$a<900913> +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs <>' /usr/share/proj/epsg    
+mkdir build
+cd build
+cmake .. -DWITH_FRIBIDI=0 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-9.3"
+make && make install
+cp /usr/local/bin/mapserv /var/www/cgi-bin
+cd ../..
 
 echo Build database for locate command
 updatedb
@@ -146,13 +121,34 @@ chkconfig httpd on
 chkconfig memcached on
 /sbin/service memcached start
 
+echo Modifying pg_hba.conf
+sed -i '1i host all all ::/0 trust' /var/lib/pgsql/9.3/data/pg_hba.conf
+sed -i '1i #IPv6 local connections:' /var/lib/pgsql/9.3/data/pg_hba.conf
+sed -i '1i host all all 10.0.2.0/24 trust' /var/lib/pgsql/9.3/data/pg_hba.conf
+sed -i '1i #IPv4 local connections: ' /var/lib/pgsql/9.3/data/pg_hba.conf
+sed -i '1i local all all trust' /var/lib/pgsql/9.3/data/pg_hba.conf
+sed -i '1i #local is for Unix domain socket connections only' /var/lib/pgsql/9.3/data/pg_hba.conf
+su - postgres -c 'createuser -s $USER'
+su - postgres -c "/usr/pgsql-9.3/bin/pg_ctl -D /var/lib/pgsql/9.3/data -l logfile start"
+
+echo Create postgis database
+su - postgres -c "createdb postgis"
+su - postgres -c "createlang plpgsql postgis"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/postgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/spatial_ref_sys.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/postgis_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/rtpostgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/raster_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/topology.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/topology_comments.sql"
+
 echo Clone STOQS repo, create virtual environment 
 cd ..
 mkdir dev && cd dev
-git clone https://github.com/stoqs/stoqs.git stoqsgit
+git clone https://github.com/MBARIMike/stoqs.git stoqsgit
 cd stoqsgit
 git checkout django17upgrade
 export PATH="/usr/local/bin:$PATH"
 virtualenv venv-stoqs
-chown -R $USER .
+chown -R $USER ..
 

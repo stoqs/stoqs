@@ -8,11 +8,11 @@ STOQS is a geospatial database and web application designed for providing effici
 acccess to *in situ* oceanographic data across any dimension.
 See http://www.stoqs.org for more information.
 
-Getting started with a STOQS development system with [Vagrant](http://docs.vagrantup.com/v2/installation/index.html)i
+Getting started with a STOQS development system with [Vagrant](http://docs.vagrantup.com/v2/installation/index.html)
 and [VirtualBox](https://www.virtualbox.org/wiki/Downloads):
 
     curl "https://raw.githubusercontent.com/MBARIMike/stoqs/django17upgrade/Vagrantfile" -o Vagrantfile
-    curl "https://raw.githubusercontent.com/MBARIMike/stoqs/django17upgrade/provision_centos.sh" -o provision_centos.sh
+    curl "https://raw.githubusercontent.com/MBARIMike/stoqs/django17upgrade/provision.sh" -o provision.sh
     vagrant up --provider virtualbox
 
 After your virtual machine has booted log in, finish the Python setup, and load some test data:
