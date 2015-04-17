@@ -230,9 +230,10 @@ class InterpolatorWriter(BaseWriter):
             parm = self.parms[i]
             try:
                    p_ts = self.createSeriesPydap(parm)
-            except KeyError:
+            except KeyError, e:
                    p_ts = pd.Series()
                    self.logger.info('Key error on ' + parm)
+                   raise e
 
             parm_ts.append(p_ts)
             try:

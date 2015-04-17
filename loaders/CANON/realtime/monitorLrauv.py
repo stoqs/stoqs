@@ -83,6 +83,9 @@ def getNcStartEnd(urlNcDap, timeAxisName):
     except pydap.exceptions.ServerError as e:
         logger.warn(e)
         raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
+    except ValueError as e:
+        logger.warn(e)
+        raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap)) 
 
     return startDatetime, endDatetime
 
@@ -127,6 +130,9 @@ def processDecimated(pw, url, lastDatetime, args):
             logger.warn('Assumming data are invalid and skipping')
         except IndexError as e:
             logger.warn('Problem interpolating data from %s', url)
+        except KeyError as e:
+			raise ServerError("Can't read all the parameters from %s" % (url))
+
         else:
             if outFile_i.startswith('/tmp'):
                 # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
@@ -210,10 +216,10 @@ if __name__ == '__main__':
     # Get directory list from sites
     if interpolate:
         logger.info("Crawling %s for shore.nc4 files" % (args.inUrl))
-        c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore_\d+_\d+.nc4$"], debug=False)
+        c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore.nc4$"], debug=False) 
     else:
         logger.info("Crawling %s for shore.nc files" % (args.inUrl))
-        c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore_\d+_\d+.nc$"], debug=False)
+        c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore.nc$"], debug=False)
     
     urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
   
@@ -231,6 +237,7 @@ if __name__ == '__main__':
             except ServerError as e:
                 logger.warn(e)
                 continue
+
             if url_i:
                 logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_i))
                 # Use Hyrax server to avoid the stupid caching that the TDS does
