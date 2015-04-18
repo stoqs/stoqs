@@ -3,7 +3,7 @@ python:
   - "2.7"
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 before_install: 
-  - sudo apt-get install -q rabbitmq-server scipy memcached python-memcache imagemagick
+  - sudo apt-get install -q rabbitmq-server memcached python-memcache imagemagick
   - sudo apt-get install -q python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose
   - sudo apt-get install -q postgis2_93 freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
   - sudo apt-get install -q proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
