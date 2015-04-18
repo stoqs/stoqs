@@ -3,15 +3,17 @@ python:
   - "2.7"
 addons:
   postgresql: "9.3"
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 before_install: 
-  - sudo apt-get install -q rabbitmq-server memcached python-memcache imagemagick
+  - sudo apt-get install -q memcached python-memcache imagemagick
   - sudo apt-get install -q python-numpy python-scipy python-matplotlib 
-  - sudo apt-get install -q python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel
-  - sudo apt-get install -q gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
+  - sudo apt-get install -q python-psycopg2 
+env:
+  - DJANGO=1.7
+install:
+  - pip install -q Django==$DJANGO --use-mirrors
+  - pip install -q -e . --use-mirrors
 before_script:
   - psql -U postgres -c "create extension postgis"
-# command to run tests, e.g. python setup.py test
 script:  
   - setup.sh
   - load.sh
