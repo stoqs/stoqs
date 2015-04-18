@@ -1,4 +1,4 @@
-(https://travis-ci.org/MBARIMike/stoqs.svg?branch=django17upgrade)
+![travis-ci build status](https://travis-ci.org/MBARIMike/stoqs.svg?branch=django17upgrade)
 
 Spatial Temporal Oceanographic Query System
 -------------------------------------------
