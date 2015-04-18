@@ -33,7 +33,7 @@ djangorestframework==3.0.5
 docutils==0.12
 GDAL==1.9.2
 Genshi==0.7
-h5py==2.4.0
+#h5py==2.5.0
 httplib2==0.9
 importlib==1.0.3
 ipython==3.0.0

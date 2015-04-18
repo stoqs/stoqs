@@ -27,20 +27,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-##EGG_CACHE="$HOMEDIR/wsgi/egg-cache"
 PG_CONFIG=$(locate --regex "bin/pg_config$")
 PATH=$(dirname $PG_CONFIG):$PATH
 
 ln -s $CONFIG $VENV_DIR/bin/
 
-# GDAL 1.9.1 pip install requires these environment variables
-##export CPLUS_INCLUDE_PATH=/usr/include/gdal
-##export C_INCLUDE_PATH=/usr/include/gdal
+# GDAL 1.9.2 pip install requires this environment variable
 export LD_PRELOAD=/usr/lib64/libgdal.so.1
 
-
-# Make sure weh have pip in the virtualenv
-easy_install pip
 
 # Install everything in $REQ
 if [ -f "$REQ" ]; then
@@ -50,19 +44,6 @@ if [ -f "$REQ" ]; then
         exit 1
     fi
 fi
-
-# Save config and give apache access
-##pip freeze | grep -v pysqlite | grep -v ga_ows | grep -v matplotlib > requirements_installed.txt
-##if [ ! -d $EGG_CACHE ]; then
-##    echo "Creating the egg cache"
-##    mkdir -p $EGG_CACHE
-##fi
-##sudo chown apache $EGG_CACHE
-##mkdir -p $LOG_DIR
-##sudo chgrp apache $LOG_DIR
-##sudo chmod g+s $LOG_DIR
-##touch $LOG_DIR/django.log
-##chmod g+w log/django.log
 
 popd
 

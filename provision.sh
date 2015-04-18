@@ -67,7 +67,7 @@ then
     yum -y install graphviz-devel graphviz-python ImageMagick postgis2_93
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
     yum -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
-    yum -y install python-psycopg2 libpqxx-devel geos geos-devel
+    yum -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel
     yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
 fi
 
@@ -122,12 +122,8 @@ chkconfig memcached on
 /sbin/service memcached start
 
 echo Modifying pg_hba.conf
-sed -i '1i host all all ::/0 trust' /var/lib/pgsql/9.3/data/pg_hba.conf
-sed -i '1i #IPv6 local connections:' /var/lib/pgsql/9.3/data/pg_hba.conf
 sed -i '1i host all all 10.0.2.0/24 trust' /var/lib/pgsql/9.3/data/pg_hba.conf
-sed -i '1i #IPv4 local connections: ' /var/lib/pgsql/9.3/data/pg_hba.conf
-sed -i '1i local all all trust' /var/lib/pgsql/9.3/data/pg_hba.conf
-sed -i '1i #local is for Unix domain socket connections only' /var/lib/pgsql/9.3/data/pg_hba.conf
+sed -i '1i host all all 10.0.2.0/24 md5' /var/lib/pgsql/9.3/data/pg_hba.conf
 su - postgres -c 'createuser -s $USER'
 su - postgres -c "/usr/pgsql-9.3/bin/pg_ctl -D /var/lib/pgsql/9.3/data -l logfile start"
 
@@ -141,6 +137,7 @@ su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/rt
 su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/raster_comments.sql"
 su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/topology.sql"
 su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/topology_comments.sql"
+service postgresql-9.3 restart
 
 echo Clone STOQS repo, create virtual environment 
 cd ..
