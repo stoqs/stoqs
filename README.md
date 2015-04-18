@@ -1,5 +1,5 @@
-Spatial Temporal Oceanographic Query System (STOQS)
----------------------------------------------------
+Spatial Temporal Oceanographic Query System
+-------------------------------------------
 
 STOQS is a geospatial database and web application designed for providing efficient 
 acccess to *in situ* oceanographic data across any dimension.
