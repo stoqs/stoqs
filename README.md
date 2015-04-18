@@ -1,6 +1,3 @@
-README
-======
-
 Spatial Temporal Oceanographic Query System (STOQS)
 ---------------------------------------------------
 
@@ -27,8 +24,6 @@ After your virtual machine has booted log in, finish the Python setup, and load 
 Visit your own server's STOQS User interface:
 
     http://localhost:8000
-
-
 
 The stoqs project web site has a wiki with links to presentations and periodic feature
 updates.  The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also a good place to post questions
