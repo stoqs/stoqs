@@ -1,1 +1,1 @@
--r requirements/requirements_django17upgrade.txt
+-r requirements/django17upgrade_testing.txt

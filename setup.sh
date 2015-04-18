@@ -7,7 +7,7 @@ LOG_DIR="$HOMEDIR/log"
 if [ $1 ]; then
     REQ="$HOMEDIR/$1"
 else
-    REQ="$HOMEDIR/requirements/requirements_django17upgrade.txt"
+    REQ="$HOMEDIR/requirements.txt"
 fi
 echo "Using pip requirements file $1"
 
