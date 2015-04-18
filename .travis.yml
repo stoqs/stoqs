@@ -2,8 +2,13 @@ language: python
 python:
   - "2.7"
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: 
-  - provision.sh ubuntu travis
-  - setup.sh
+before_install: 
+  - sudo apt-get install -q rabbitmq-server scipy mod_wsgi memcached python-memcache graphviz-devel graphviz-python ImageMagick 
+  - sudo apt-get install -q postgis2_93 freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
+  - sudo apt-get install -q proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
+  - sudo apt-get install -q python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel
+  - sudo apt-get install -q gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
 # command to run tests, e.g. python setup.py test
-script:  test.py
+script:  
+  - setup.sh
+  - load.sh

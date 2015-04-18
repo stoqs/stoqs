@@ -69,6 +69,13 @@ then
     yum -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
     yum -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel
     yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
+elif [ $OS = 'ubuntu' ]
+    apt-get -y install rabbitmq-server scipy mod_wsgi memcached python-memcached
+    apt-get -y install graphviz-devel graphviz-python ImageMagick postgis2_93
+    apt-get -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
+    apt-get -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
+    apt-get -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel
+    apt-get -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
 fi
 
 # Commands that work on any *nix
@@ -90,7 +97,7 @@ export PATH=$(pwd):$PATH
 gmake && gmake install
 cd ..
 
-echo Build Mapserver
+echo Build and install Mapserver
 wget -q -N http://download.osgeo.org/mapserver/mapserver-6.4.1.tar.gz
 tar xzf mapserver-6.4.1.tar.gz
 cd mapserver-6.4.1
@@ -121,13 +128,13 @@ chkconfig httpd on
 chkconfig memcached on
 /sbin/service memcached start
 
-echo Modifying pg_hba.conf
+echo Modify pg_hba.conf
 sed -i '1i host all all 10.0.2.0/24 trust' /var/lib/pgsql/9.3/data/pg_hba.conf
 sed -i '1i host all all 10.0.2.0/24 md5' /var/lib/pgsql/9.3/data/pg_hba.conf
 su - postgres -c 'createuser -s $USER'
 su - postgres -c "/usr/pgsql-9.3/bin/pg_ctl -D /var/lib/pgsql/9.3/data -l logfile start"
 
-echo Create postgis database
+echo Create postgis database and restart postgresql-9.3
 su - postgres -c "createdb postgis"
 su - postgres -c "createlang plpgsql postgis"
 su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/postgis.sql"
