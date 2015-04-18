@@ -1,11 +1,11 @@
 #!/bin/bash
 # Do database operations to create default database and load data for testing
 
-su - postgres -c "psql -c \"CREATE USER stoqsadm WITH PASSWORD 'CHANGEME';\""
-su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\""
-su - postgres -c "psql -c \"CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;\""
-su - postgres -c "psql -c \"ALTER DATABASE stoqs SET TIMEZONE='GMT';\""
-su - postgres -c "psql -c -d stoqs \"GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;\""
+psql -c \"CREATE USER stoqsadm WITH PASSWORD 'CHANGEME';\" -U postgres
+psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\" -U postgres
+psql -c \"CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;\" -U postgres
+psql -c \"ALTER DATABASE stoqs SET TIMEZONE='GMT';\" -U postgres
+psql -c -d stoqs \"GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;\" -U postgres
 
 # Assume in stoqsgit directory
 export DJANGO_SECRET_KEY='SET_YOUR_OWN_IMPOSSIBLE_TO_GUESS_SECRET_KEY_ENVIRONMENT_VARIABLE'
