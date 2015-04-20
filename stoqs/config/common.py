@@ -307,9 +307,11 @@ class Common(Configuration):
                                 'class':'logging.StreamHandler',
                                 'formatter': 'verbose'
     }
-    LOGGING['loggers']['loaders'] = {
+    LOGGING['loggers']['stoqs.loaders'] = {
                                 'handlers':['console'],
                                 'propagate': True,
-                                'level':'DEBUG',
+                                'level':'INFO',
+                                'formatter': 'verbose'
     }
     # END STOQS specific logging
+
