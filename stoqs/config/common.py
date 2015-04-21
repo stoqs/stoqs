@@ -91,6 +91,10 @@ class Common(Configuration):
     SECRET_KEY = values.SecretValue()
     # END SECRET CONFIGURATION
 
+    # Google Analytics code - get for your web site, if you want to track usage
+    # export DJANGO_GOOGLE_ANALYTICS_CODE='SET_YOUR_OWN_GA_CODE_TO_TRACK_USAGE'
+    GOOGLE_ANALYTICS_CODE = values.Value('testing')
+
     # FIXTURE CONFIGURATION
     # See: https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-FIXTURE_DIRS
     FIXTURE_DIRS = (
@@ -181,7 +185,7 @@ class Common(Configuration):
 
     # See: https://docs.djangoproject.com/en/dev/ref/settings/#template-dirs
     TEMPLATE_DIRS = (
-        join(BASE_DIR, 'templates'),
+        join(BASE_DIR, 'stoqs/templates/stoqs'), '/tmp',
     )
 
     TEMPLATE_LOADERS = (

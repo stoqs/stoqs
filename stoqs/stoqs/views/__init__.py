@@ -436,7 +436,7 @@ def showActivityType(request, format = 'html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showCampaign(request, format = 'html'):
+def showCampaign(request, format='html', dbAlias='default'):
     stoqs_object = mod.Campaign
     query_set = stoqs_object.objects.all().order_by('name')
 
