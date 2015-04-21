@@ -13,10 +13,9 @@ certifi==14.5.14
 cookiecutter==0.9.1
 Cython==0.22
 docutils==0.12
-GDAL==1.9.2
+GDAL==1.9.1
 Genshi==0.7
 #h5py==2.5.0
-GDAL==1.9
 ipython==3.0.0
 MarkupSafe==0.23
 Pygments==2.0.2

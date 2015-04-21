@@ -69,13 +69,6 @@ then
     yum -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
     yum -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel
     yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
-elif [ $OS = 'ubuntu' ]
-    apt-get -y install rabbitmq-server scipy mod_wsgi memcached python-memcached
-    apt-get -y install graphviz-devel graphviz-python ImageMagick postgis2_93
-    apt-get -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
-    apt-get -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
-    apt-get -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel
-    apt-get -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
 fi
 
 # Commands that work on any *nix
@@ -129,8 +122,19 @@ chkconfig memcached on
 /sbin/service memcached start
 
 echo Modify pg_hba.conf
-sed -i '1i host all all 10.0.2.0/24 trust' /var/lib/pgsql/9.3/data/pg_hba.conf
-sed -i '1i host all all 10.0.2.0/24 md5' /var/lib/pgsql/9.3/data/pg_hba.conf
+mv -f /var/lib/pgsql/9.3/data/pg_hba.conf /var/lib/pgsql/9.3/data/pg_hba.conf.bak
+cat <<EOT > /var/lib/pgsql/9.3/data/pg_hba.conf
+# Allow user/password login
+host    all     stoqsadm     127.0.0.1/32    md5
+host    all     stoqsadm     10.0.2.0/24     md5
+# Allow root to login as postgres (as travis-ci allows) - See also pg_ident.conf
+local   all     all                     peer map=root_as_others
+host    all     all     127.0.0.1/32    ident map=root_as_others
+EOT
+cat /var/lib/pgsql/9.3/data/pg_hba.conf.bak >> /var/lib/pgsql/9.3/data/pg_hba.conf
+cp /var/lib/pgsql/9.3/data/pg_ident.conf /var/lib/pgsql/9.3/data/pg_ident.conf.bak
+echo "root_as_others  root            postgres" >> /var/lib/pgsql/9.3/data/pg_ident.conf
+
 su - postgres -c 'createuser -s $USER'
 su - postgres -c "/usr/pgsql-9.3/bin/pg_ctl -D /var/lib/pgsql/9.3/data -l logfile start"
 
