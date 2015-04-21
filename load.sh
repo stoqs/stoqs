@@ -7,7 +7,7 @@ psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;" -U pos
 psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
 psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
-cat /var/lib/pgsql/9.3/data/pg_hba.conf
+cat /var/lib/pgsql/data/pg_hba.conf
 
 # Assume in stoqsgit directory
 export DJANGO_SECRET_KEY='SET_YOUR_OWN_IMPOSSIBLE_TO_GUESS_SECRET_KEY_ENVIRONMENT_VARIABLE'
