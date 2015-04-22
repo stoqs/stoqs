@@ -25,6 +25,4 @@ pyparsing==2.0.3
 Shapely==1.5.7
 snowballstemmer==1.2.0
 tornado==4.1
-matplotlib==1.4.3
-numpy==1.9.2
 
