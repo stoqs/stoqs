@@ -2,7 +2,6 @@
 # Do database operations to create default database and load data for testing
 
 psql -c "CREATE USER stoqsadm WITH PASSWORD 'CHANGEME';" -U postgres
-psql -c "CREATE DATABASE template_postgis WITH TEMPLATE postgis;" -U postgres
 psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;" -U postgres
 psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
 psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs

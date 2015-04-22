@@ -19,7 +19,6 @@ before_script:
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - psql -c '\du' -U postgres -d template_postgis
 script:  
-  - ./load.sh
   - ./test.sh
 notifications:
   email:
