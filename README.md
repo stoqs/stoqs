@@ -14,22 +14,28 @@ and [VirtualBox](https://www.virtualbox.org):
     curl "https://raw.githubusercontent.com/MBARIMike/stoqs/django17upgrade/provision.sh" -o provision.sh
     vagrant up --provider virtualbox
 
-After your virtual machine has booted log in, finish the Python setup, and load some test data:
+After your virtual machine has booted log in, finish the Python setup, and test the installation:
 
     vagrant ssh 
     cd dev/stoqsgit
     source venv-stoqs/bin/activate
     ./setup.sh
-    ./load.sh
     ./test.sh
+
+Start the development server:
+
+    export DJANGO_SECRET_KEY='SET_YOUR_OWN_IMPOSSIBLE_TO_GUESS_SECRET_KEY_ENVIRONMENT_VARIABLE'
+    export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
+    stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.local
 
 Visit your own server's STOQS User interface:
 
     http://localhost:8000
 
-The stoqs project web site has a wiki with links to presentations and periodic feature
-updates.  The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also a good place to post questions
-or any sort of comments about STOQS.    
+More instructions are in the doc/instructions directory. Visit the [STOQS Wiki pages](https://github.com/stoqs/stoqs/wiki) for updates and links to presentations.
+The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also a good place to ask questions and engage in discussion 
+with the STOQS user and developer communities.
+
 
 
 

@@ -127,6 +127,7 @@ cat <<EOT > /var/lib/pgsql/9.3/data/pg_hba.conf
 # Allow user/password login
 host    all     stoqsadm     127.0.0.1/32   md5
 host    all     stoqsadm     10.0.2.0/24    md5
+host    all     vagrant      127.0.0.1/32   trust
 local   all     all                         trust
 # Allow root to login as postgres (as travis-ci allows) - See also pg_ident.conf
 local   all     all                     peer map=root_as_others
