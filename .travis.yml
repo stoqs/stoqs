@@ -18,6 +18,7 @@ before_script:
   - psql -c 'CREATE EXTENSION postgis_topology;' -U postgres -d template_postgis
   - psql -c "ALTER ROLE travis CREATEDB NOSUPERUSER NOCREATEROLE;" -U postgres
 script:  
+  - ./load.sh
   - ./test.sh
 notifications:
   email:
