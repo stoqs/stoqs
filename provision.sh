@@ -32,6 +32,7 @@ cd /home/$USER
 mkdir Downloads && cd Downloads
 
 # OS specific provisioning
+# TODO: Add stanza for other OSes, e.g. 'ubuntu'
 if [ $OS = 'centos' ]
 then
     echo 0 > /selinux/enforce

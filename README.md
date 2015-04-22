@@ -14,7 +14,7 @@ and [VirtualBox](https://www.virtualbox.org):
     curl "https://raw.githubusercontent.com/MBARIMike/stoqs/django17upgrade/provision.sh" -o provision.sh
     vagrant up --provider virtualbox
 
-After your virtual machine has booted log in, finish the Python setup, and test the installation:
+After your virtual machine has booted, log in, finish the Python setup, and test the installation:
 
     vagrant ssh 
     cd dev/stoqsgit
