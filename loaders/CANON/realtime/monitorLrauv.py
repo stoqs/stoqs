@@ -61,7 +61,23 @@ class NcFileMissing(Exception):
 
 class ServerError(Exception):
     pass
-  
+
+def abbreviate(parms):
+    '''Return the shortened string that represents the list of parameters. This is used in both activity and file naming conventions'''
+    dict = {'sea_water_temperature':'sst', 'sea_water_salinity':'salt', 'mass_concentration_of_chlorophyll_in_sea_water': 'chl'}
+    abbrev = ''
+    for p in parms:
+        found = False
+        for key,value in dict.iteritems():
+            if p.find(key) != -1:
+                abbrev = abbrev + '_' + value
+                found = True
+                break
+        if not found:
+            abbrev = abbrev + '_' + p[:2]
+
+    return abbrev
+
 def getNcStartEnd(urlNcDap, timeAxisName):
     '''Find the lines in the html with the .nc file, then open it and read the start/end times
     return url to the .nc  and start/end as datetime objects.
@@ -99,17 +115,17 @@ def processDecimated(pw, url, lastDatetime, args):
     # replace them with underscores to make file name more readable
     s = []
     for p in args.parms:
-        s.append(p.replace('/','_')) 
-    sSmall = ''.join(i[:2] for i in s)
-    parms = '_' + '_'.join(sSmall)
+        s.append(p.replace('/','_'))
+
+    abbrev = abbreviate(s)
 
     if args.outDir.startswith('/tmp'):
-        outFile_i = os.path.join(args.outDir, url.split('/')[-1].split('.')[0] + parms + '_i.nc')
+        outFile_i = os.path.join(args.outDir, url.split('/')[-1].split('.')[0] + abbrev + '_i.nc')
     else:
-        outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + parms + '_i.nc') 
+        outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + abbrev + '_i.nc')
 
-    if len(args.parms) == 1 and len(args.interpFreq) == 0 or len(args.resampleFreq) == 0 :
-        startDatetime, endDatetime = getNcStartEnd(url, args.parms[0] + '_time')
+    if len(args.interpFreq) == 0 or len(args.resampleFreq) == 0 :
+        startDatetime, endDatetime = getNcStartEnd(url, args.parms[-1] + '_time')
     else:
         startDatetime, endDatetime = getNcStartEnd(url, 'depth_time')
 
@@ -120,8 +136,8 @@ def processDecimated(pw, url, lastDatetime, args):
     if endDatetime > lastDatetime:
         logger.debug('Calling pw.process with outFile_i = %s', outFile_i)
         try:
-            if len(args.parms) == 1 and len(args.interpFreq) == 0 or len(args.resampleFreq) == 0 :
-                pw.processSingleParm(url, outFile_i, args.parms[0])
+            if len(args.interpFreq) == 0 or len(args.resampleFreq) == 0 :
+                pw.processSingleParm(url, outFile_i, args.parms)
             else:
                 pw.process(url, outFile_i, args.parms, args.interpFreq, args.resampleFreq)
 
@@ -131,17 +147,21 @@ def processDecimated(pw, url, lastDatetime, args):
         except IndexError as e:
             logger.warn('Problem interpolating data from %s', url)
         except KeyError as e:
-			raise ServerError("Can't read all the parameters from %s" % (url))
+            raise ServerError("Can't read all the parameters from %s" % (url))
+        except ValueError as e:
+            raise ServerError("Can't read all the parameters from %s" % (url))
 
         else:
             if outFile_i.startswith('/tmp'):
                 # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
-                dir = '/'.join(url.split('/')[-7:-1])
-                cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/LRAUV/%s' % (outFile_i, dir)
-                print cmd
+                list = url.split('/') # get all strings delimited with /
+                indx = list.index('LRAUV') # find first LRAUV string in the list
+                dir = '/'.join(list[indx:-1]) # grab everything between LRAUV and the last string
+                cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/%s' % (outFile_i, dir)
+                logger.debug('%s', cmd)
                 os.system(cmd)
 
-            url_i = url.replace('.nc4', parms + '_i.nc')
+            url_i = url.replace('.nc4', abbrev + '_i.nc')
     else:
         logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
 
@@ -156,13 +176,13 @@ def process_command_line():
 
         examples = 'Examples:' + '\n\n'
         examples += 'Run on test database:\n'
-        examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /mbari/LRAUV/daphne/realtime/hotspotlogs -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"    
+        examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /mbari/LRAUV/daphne/realtime/hotspotlogs -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs/*.shore.nc4' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
                                          epilog=examples)
                                              
-        parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot logs or other realtime processed data are.  If interpolating, must map to the same location as -o directory', default='.',required=True)   
-        parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='.',required=True)  
+        parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are.  If interpolating, must map to the same location as -o directory', default='.',required=True)
+        parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='.',required=True)
         parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='.',required=True)    
         parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1) 
         parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file - must be the same location as -u URL', default='.',required=False)   
@@ -214,12 +234,12 @@ if __name__ == '__main__':
     cl.campaignName = args.campaign
    
     # Get directory list from sites
-    if interpolate:
-        logger.info("Crawling %s for shore.nc4 files" % (args.inUrl))
-        c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore.nc4$"], debug=False) 
-    else:
-        logger.info("Crawling %s for shore.nc files" % (args.inUrl))
-        c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore.nc$"], debug=False)
+    s = args.inUrl.rsplit('/',1)
+    files = s[1]
+    url = s[0]
+    logger.info("Crawling %s for %s files" % (url, files))
+    c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=False)
+    print c.datasets
     
     urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
   
@@ -246,7 +266,7 @@ if __name__ == '__main__':
 
                 # If parameter names contains any group forward slash '/' delimiters
                 # replace them with underscores. This is because pydap automatically renames slashes as underscores
-                # and need to reference the parameter correctly in the DAPloader
+                # and needs to reference the parameter correctly in the DAPloader
                 for p in args.parms:
                     parms.append(p.replace('/','_'))
         else:
@@ -263,9 +283,9 @@ if __name__ == '__main__':
 
         if hasData:
             logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_src))
-            # Activity name limited to 128 characters, so reduce this to the first two characters which should make it unique
-            parmsSmall = ''.join(i[:2] for i in parms)
-            aName = platformName + '_sbdlog_' + startDatetime.strftime('%Y%m%dT%H%M%S')  +  '_' + '_'.join(parmsSmall)
+            # Activity name limited to 128 characters, so reduce this to abbreviated string it unique
+            abbrev = abbreviate(parms)
+            aName = platformName + '_log_' + startDatetime.strftime('%Y%m%dT%H%M%S')  +  '_' + abbrev
 
             dataStartDatetime = None
 
