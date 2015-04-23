@@ -43,3 +43,5 @@ class Local(Common):
     # end django-debug-toolbar
 
     # Your local stuff: Below this line define 3rd party library settings
+
+    MAPSERVER_HOST = values.Value('10.0.0.5')

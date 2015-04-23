@@ -65,7 +65,7 @@ class BaseOutputer(object):
     fields = []
     geomFields = []
 
-    def __init__(self, request, format, query_set, stoqs_object=None):
+    def __init__(self, request, format, query_set, stoqs_object=None, dbAlias='default'):
         '''
         @query_set is the Query Set without any values assigned, qs is the Query set with values assigned.
         '''
@@ -74,6 +74,8 @@ class BaseOutputer(object):
         self.query_set = query_set
         self.stoqs_object = stoqs_object
         self.stoqs_object_name = stoqs_object._meta.verbose_name.lower().replace(' ', '_')
+        if 'dbAlias' not in  self.request.META:
+            self.request.META['dbAlias'] = dbAlias
         self.html_template = '%s_tmpl.html' % self.stoqs_object_name
         # This file must be writable by the server running this Django app, wherever tempfile puts it should work.
         # /tmp should occasionally be scrubbed of old tempfiles by a cron(1) job.
@@ -277,7 +279,7 @@ class BaseOutputer(object):
         elif self.format == 'count':
             count = self.qs.count()
             logger.debug('count = %d', count)
-            return HttpResponse('%d' % count, mimetype='text/plain')
+            return HttpResponse('%d' % count, content_type='text/plain')
 
         elif self.format == 'help':
             helpText = 'Fields: %s\n\nField Lookups: %s' % (fields, self.fieldLookups)
@@ -285,7 +287,7 @@ class BaseOutputer(object):
                 helpText += '\n\nSpatial and distance Lookups that may be appended to: %s\n\n%s\n\n%s' % (geomFields, 
                             self.distanceLookups, self.spatialLookups)
             helpText += '\n\nResponses: %s' % (self.responses,)
-            response = HttpResponse(helpText, mimetype="text/plain")
+            response = HttpResponse(helpText, content_type="text/plain")
             return response
 
         else:

@@ -167,7 +167,7 @@ def _buildMapFile(request, qm, options):
 
 # Cache responses from this view for 15 minutes
 @cache_page(60 * 15)
-def queryData(request, format=None):
+def queryData(request, format=None, dbAlias='default'):
     '''
     Process data requests from the main query web page.  Returns both summary Activity and actual MeasuredParameter data
     as retreived from STOQSQManager.
@@ -192,6 +192,10 @@ def queryData(request, format=None):
             params['parametervalues'].append(pminmax)
             logger.info('Adding to parametervalues: %s', pprint.pformat(pminmax))
 
+    # To support unit testing and follow-on expectation that dbAlias is in request METAdata
+    if 'dbAlias' not in request.META:
+        request.META['dbAlias'] = dbAlias
+
     qm = STOQSQManager(request, response, request.META['dbAlias'])
     logger.debug('Calling buildQuerySets with params = %s', params)
     try:
@@ -205,7 +209,7 @@ def queryData(request, format=None):
                                    # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
     except ConnectionDoesNotExist, e:
         logger.warn(e)
-        return HttpResponseNotFound('The database alias <b>%s</b> does not exist on this server.' % request.META['dbAlias'])
+        return HttpResponseNotFound('The database alias <b>%s</b> does not exist on this server.' % dbAlias)
 
     ##logger.debug('options = %s', pprint.pformat(options))
     ##logger.debug('len(simpledepthtime) = %d', len(json.loads(options)['simpledepthtime']))
@@ -252,7 +256,7 @@ def queryMap(request):
     return response
 
 # Do not cache this "view", otherwise the incrorrect mappath is used
-def queryUI(request):
+def queryUI(request, dbAlias='default'):
     '''
     Build and return main query web page
     '''

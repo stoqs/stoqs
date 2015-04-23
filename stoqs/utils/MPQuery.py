@@ -92,6 +92,7 @@ class MPQuerySet(object):
         elif query is not None and qs_mp is None:
             logger.debug('query is not None and qs_mp is None')
             self.query = query
+            query = PQuery.addPrimaryKey(query)
             self.mp_query = MeasuredParameter.objects.raw(query)
             self.isRawQuerySet = True
         else:
@@ -99,7 +100,26 @@ class MPQuerySet(object):
 
         self.values_list = values_list
         self.ordering = ('id',)
- 
+
+    def _model_row_generator(self):
+        '''
+        yield rows from model instances
+        '''
+        for mp in self.mp_query[:ITER_HARD_LIMIT]:
+            row = { 
+                    'measurement__depth': mp.measurement.depth,
+                    'parameter__id': mp.parameter__id,
+                    'parameter__name': mp.parameter__name,
+                    'datavalue': mp.datavalue,
+                    'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
+                    'parameter__standard_name': mp.parameter.standard_name,
+                    'measurement__instantpoint__activity__name': mp.measurement.instantpoint.activity.name,
+                    'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
+                    'measurement__geom': mp.measurement.geom,
+                    'parameter__units': mp.parameter.units,
+                  }
+            yield row
+
     def __iter__(self):
         '''
         Main way to access data that is used by interators in templates, etc.
@@ -129,7 +149,6 @@ class MPQuerySet(object):
                     yield row
 
             except TypeError:
-                # Model instances
                 for mp in self.mp_query[:ITER_HARD_LIMIT]:
                     row = { 'measurement__depth': mp.measurement.depth,
                             'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
@@ -160,21 +179,10 @@ class MPQuerySet(object):
                     yield row
 
             except TypeError:
-                # Model instances
-                for mp in self.mp_query[:ITER_HARD_LIMIT]:
-                    row = { 
-                            'measurement__depth': mp.measurement.depth,
-                            'parameter__id': mp.parameter__id,
-                            'parameter__name': mp.parameter__name,
-                            'datavalue': mp.datavalue,
-                            'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
-                            'parameter__standard_name': mp.parameter.standard_name,
-                            'measurement__instantpoint__activity__name': mp.measurement.instantpoint.activity.name,
-                            'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
-                            'measurement__geom': mp.measurement.geom,
-                            'parameter__units': mp.parameter.units,
-                          }
-                    yield row
+                self._model_row_generator()
+ 
+            except AttributeError:
+                self._model_row_generator()
  
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE + 1])
@@ -445,7 +453,8 @@ class MPQuery(object):
     execute the self joins needed on the measuredparameter table.  The structure of RawQuerySet returned is harmonized
     with the normal GeoQuerySet returned through regular .filter() operations by using the MPQuerySet "adapter".
     '''
-    rest_select_items = '''stoqs_parameter.id as parameter__id,
+    rest_select_items = '''id,
+                         stoqs_parameter.id as parameter__id,
                          stoqs_parameter.name as parameter__name,
                          stoqs_parameter.standard_name as parameter__standard_name,
                          stoqs_measurement.depth as measurement__depth,
@@ -608,7 +617,8 @@ class MPQuery(object):
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*MPQuerySet.rest_columns)
         else:
             logger.debug('... with values_list = %s', values_list)
-            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
+            # May need select_related(...)
+            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*values_list)
 
         if self.parameterID:
             logger.debug('Adding parameter__id=%d filter to qs_mp', int(self.parameterID))
@@ -621,7 +631,8 @@ class MPQuery(object):
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
                 # A depth of 4 is needed in order to see Platform
-                qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
+                qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(
+                            'measurement__instantpoint__activity__platform').filter(**qparams)
 
                 if self.parameterID:
                     logger.debug('Adding parameter__id=%d filter to qs_mp', int(self.parameterID))
@@ -665,7 +676,8 @@ class MPQuery(object):
             # If no .values(...) added to QS then items returned by iteration on qs_sp are model objects, not out wanted dictionaries
             qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*SPQuerySet.rest_columns)
         else:
-            qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
+            # May need select_related(...)
+            qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*values_list)
 
         if self.parameterID:
             logger.debug('Adding parameter__id=%d filter to qs_sp', int(self.parameterID))
@@ -678,7 +690,8 @@ class MPQuery(object):
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
                 # A depth of 4 is needed in order to see Platform
-                qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
+                qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).select_related(
+                            'sample__instantpoint__activity__platform').filter(**qparams)
                 if orderedFlag:
                     qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue')
                 sql = postgresifySQL(str(qs_sp.query))

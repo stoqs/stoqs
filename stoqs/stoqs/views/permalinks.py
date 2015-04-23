@@ -39,7 +39,7 @@ _thread_local_vars = threading.local()
 logger=logging.getLogger(__name__)
 
 @csrf_exempt
-def generate_permalink(request):
+def generate_permalink(request, dbAlias='default'):
     data=request.POST.get('parameters')
     if data:
         try:

@@ -153,40 +153,40 @@ class STOQSQManager(object):
             if fromTable == 'Activity':
                 logger.debug('Making default activity based query')
                 if (not kwargs):
-                    qs = models.Activity.objects.using(self.dbname).select_related(depth=3).filter( activityparameter__parameter__pk__isnull=False,
+                    qs = models.Activity.objects.using(self.dbname).filter( activityparameter__parameter__pk__isnull=False,
                                                                                                     activityparameter__activity__pk__isnull=False,
                                                                                                     simpledepthtime__pk__isnull=False,
                                                                                                     platform__pk__isnull=False)
                     qs_platform = qs
                 else:
-                    qs = models.Activity.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
+                    qs = models.Activity.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
                     qs_platform = qs
             elif fromTable == 'Sample':
                 logger.debug('Making %s based query', fromTable)
                 if (not kwargs):
-                    qs = models.Sample.objects.using(self.dbname).select_related(depth=3).filter( sampledparameter__parameter__pk__isnull=False,
+                    qs = models.Sample.objects.using(self.dbname).filter( sampledparameter__parameter__pk__isnull=False,
                                                                                                   instantpoint__activity__pk__isnull=False,
                                                                                                   instantpoint__activity__platform__pk__isnull=False)
                 else:
-                    qs = models.Sample.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
+                    qs = models.Sample.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
                 # Exclude sub (child) samples where name is not set.  Flot UI needs a name for its selector
                 qs = qs.exclude(name__isnull=True)
             elif fromTable == 'ActivityParameter':
                 logger.debug('Making %s based query', fromTable)
                 if (not kwargs):
-                    qs = models.ActivityParameter.objects.using(self.dbname).select_related(depth=3).filter( parameter__pk__isnull=False,
+                    qs = models.ActivityParameter.objects.using(self.dbname).filter( parameter__pk__isnull=False,
                                                                                                   activity__pk__isnull=False,
                                                                                                   activity__platform__pk__isnull=False)
                 else:
-                    qs = models.ActivityParameter.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
+                    qs = models.ActivityParameter.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
             elif fromTable == 'ActivityParameterHistogram':
                 logger.debug('Making %s based query', fromTable)
                 if (not kwargs):
-                    qs = models.ActivityParameterHistogram.objects.using(self.dbname).select_related(depth=3).filter( activityparameter__parameter__pk__isnull=False,
+                    qs = models.ActivityParameterHistogram.objects.using(self.dbname).filter( activityparameter__parameter__pk__isnull=False,
                                                                                                   activityparameter__activity__pk__isnull=False,
                                                                                                   activityparameter__activity__platform__pk__isnull=False)
                 else:
-                    qs = models.ActivityParameterHistogram.objects.using(self.dbname).select_related(depth=3).all()   # To receive filters constructed below from kwargs
+                    qs = models.ActivityParameterHistogram.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
             else:
                 logger.exception('No handler for fromTable = %s', fromTable)
     

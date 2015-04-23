@@ -141,20 +141,6 @@ class BaseAndMeasurementViewsTestCase(TestCase):
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
-    def test_instantpoint_resource(self):
-       for fmt in self.format_types:
-           req = reverse('show-instantpointresource', kwargs={'format': fmt,
-                                                          'dbAlias': 'default'})
-           response = self.client.get(req)
-           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-
-    def test_measurement_resource(self):
-       for fmt in self.format_types:
-           req = reverse('show-measurementresource', kwargs={'format': fmt,
-                                                          'dbAlias': 'default'})
-           response = self.client.get(req)
-           self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-
     def test_sample(self):
        for fmt in self.format_types:
            req = reverse('show-sample', kwargs={'format': fmt,
@@ -217,7 +203,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
             if fmt == '.count':
                 logger.debug(response.content)
-                self.assertEqual(response.content, '30', 'Response should be "50" for %s' % req)
+                self.assertEqual(response.content, '50', 'Response should be "50" for %s' % req)
 
     def test_query_jsonencoded(self):
         req = reverse('stoqs-query-results', kwargs={'format': 'json',
@@ -233,6 +219,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_query_ui(self):
+        logger.info("This test is known to fail; because 'config.' is being prepended to view name for some reason")
         req = reverse('stoqs-query-ui', kwargs={'dbAlias': 'default'})
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
@@ -242,7 +229,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
     def test_manage(self):
         req = '/test_stoqs/mgmt'
         response = self.client.get(req)
-        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s, instead got %s' % (req, response.status_code))
         
         req = '/test_stoqs/activitiesMBARICustom'
         response = self.client.get(req)

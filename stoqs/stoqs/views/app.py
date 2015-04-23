@@ -171,21 +171,21 @@ def showActivityParameterHistogram(request, format='png'):
 
 # Cache responses from this view for 15 minutes
 @cache_page(60 * 15)
-def showMeasuredParameter(request, format = 'json'):
+def showMeasuredParameter(request, format='json', dbAlias='default'):
     stoqs_object = mod.MeasuredParameter
     query_set = stoqs_object.objects.all().order_by('measurement__instantpoint__timevalue')
 
     mp = MeasuredParameter(request, format, query_set, stoqs_object)
     return mp.process_request()
 
-def showSampledParameter(request, format = 'json'):
+def showSampledParameter(request, format='json', dbAlias='default'):
     stoqs_object = mod.SampledParameter
     query_set = stoqs_object.objects.all().order_by('sample__instantpoint__timevalue')
 
     sp = SampledParameter(request, format, query_set, stoqs_object)
     return sp.process_request()
 
-def showResourceActivity(request, format = 'json'):
+def showResourceActivity(request, format='json', dbAlias='default'):
     stoqs_object = mod.Resource
     query_set = stoqs_object.objects.all().order_by('activityresource__activity__startdate')
 
@@ -207,7 +207,7 @@ def showQuickLookPlots(request):
 
     return render_to_response('quicklookplots.html', {'activity': activityName, 'images': ra.qs}, context_instance=RequestContext(request))
 
-def showSampleDT(request, format = 'json'):
+def showSampleDT(request, format='json', dbAlias='default'):
     stoqs_object = mod.Sample
     query_set = stoqs_object.objects.all().order_by('name')
 

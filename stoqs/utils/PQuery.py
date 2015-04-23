@@ -881,3 +881,16 @@ For sampledparameter to sampledparamter query an example is:
 
         return q
 
+    @staticmethod
+    def addPrimaryKey(query, table='stoqs_measuredparameter'):
+        '''
+        Django 1.7 gives InvalidQuery: Raw query must include the primary key if 'id' not in select list
+        '''
+        q = query
+        p = re.compile('SELECT (.+?) FROM')
+        m = p.match(q)
+        if 'id' not in [item.strip() for item in m.group(1).split(',')]:
+            q = p.sub('SELECT ' + table + '.id, ' + m.group(1) + ' FROM', q, count=1)
+
+        return q
+
