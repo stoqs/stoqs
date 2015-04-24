@@ -21,7 +21,7 @@ before_script:
 script:  
   - ./test.sh
 after_script:
-  - COVERALLS_REPO_TOKEN=CYJwURmowYtK3n6UneWuoPW5WdOqHscGX coveralls debug
+  - COVERALLS_REPO_TOKEN=CYJwURmowYtK3n6UneWuoPW5WdOqHscGX coveralls
 notifications:
   email:
     on_success: change
