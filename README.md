@@ -2,7 +2,6 @@ Spatial Temporal Oceanographic Query System
 -------------------------------------------
 
 [![Travis-CI Status](https://travis-ci.org/MBARIMike/stoqs.svg?branch=django17upgrade)](https://travis-ci.org/MBARIMike/stoqs)
-
 [![Coverage Status](https://coveralls.io/repos/MBARIMike/stoqs/badge.svg)](https://coveralls.io/r/MBARIMike/stoqs)
 
 STOQS is a geospatial database and web application designed for providing efficient 
