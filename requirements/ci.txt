@@ -1,1 +1,3 @@
 -r base.txt
+coverage==3.7.1
+coveralls==0.5

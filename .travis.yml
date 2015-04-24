@@ -20,6 +20,8 @@ before_script:
   - psql -c '\du' -U postgres -d template_postgis
 script:  
   - ./test.sh
+after_script:
+  coveralls --verbose
 notifications:
   email:
     on_success: change
