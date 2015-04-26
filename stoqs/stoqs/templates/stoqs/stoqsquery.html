@@ -123,10 +123,10 @@
           <a class="brand" href="#">{{request.META.dbAlias}}</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li><a href="{% url 'show-default' %}"><i class="icon-list-alt icon-white"></i> Campaign list</a></li>
+              <li><a href="{% url 'stoqs:show-default' %}"><i class="icon-list-alt icon-white"></i> Campaign list</a></li>
             </ul>
             <ul class="nav">
-              <li><a id="permalink" data-toggle="modal" href="#permalink-popup" data-action="{% url 'generate_permalink' dbAlias=request.META.dbAlias %}">
+              <li><a id="permalink" data-toggle="modal" href="#permalink-popup" data-action="{% url 'stoqs:generate_permalink' dbAlias=request.META.dbAlias %}">
                 <i class="icon-eye-open icon-white"></i> Share this view</a></li>
             </ul>
             <!--
@@ -1122,8 +1122,8 @@
 
     <script type="text/javascript"><!--
     
-    var summaryQuery='{{site_uri}}{% url 'stoqs-query-summary' dbAlias=request.META.dbAlias %}';
-    var mapQuery='{{site_uri}}{% url 'stoqs-query-map' dbAlias=request.META.dbAlias %}';
+    var summaryQuery='{{site_uri}}{% url 'stoqs:stoqs-query-summary' dbAlias=request.META.dbAlias %}';
+    var mapQuery='{{site_uri}}{% url 'stoqs:stoqs-query-map' dbAlias=request.META.dbAlias %}';
     var params={}
     var initData;
     var widthZoomed = false;
@@ -1254,7 +1254,7 @@
         if ( $('#showsensortracks').is(':checked') && $('input:radio[name=parameters_plot]').is(':checked') ) {
             if ( $('input:radio[name=parameters_plot]:checked').val() ) {
                 // Generate KML url for the parameters_plot radio button selection - this is separate from the filtered selection for Measurement Data Access
-                var base_url = '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';
+                var base_url = '{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}';
                 var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
                 if (param != '') {
                     param = '?' + param;
@@ -1403,8 +1403,8 @@
         else if ( group == 'sp' ) {
             group_name = 'sampled';
         }
-        var base_url = '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';
-        var query_url = '{{site_uri}}{% url 'stoqs-query-ui' dbAlias=request.META.dbAlias %}';
+        var base_url = '{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}';
+        var query_url = '{{site_uri}}{% url 'stoqs:stoqs-query-ui' dbAlias=request.META.dbAlias %}';
         var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
         if (param != '') {
             param = '?' + param;
@@ -1455,7 +1455,7 @@
                 var st_text_comm = "% Copy and paste into a Matlab session where stoqstoolbox build 2013-01-08 or\n";
                 st_text_comm = st_text_comm + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
                 st_text = st_text_comm;
-                st_text = st_text + "campaign = '{{http_site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}';\n";
+                st_text = st_text + "campaign = '{{http_site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}';\n";
                 $.each(req_params, function(k, v) {
                     if (typeof params[v] != "undefined") {
                         if (v.match(/depth$/)) {
@@ -2764,7 +2764,7 @@
 
     function showSampleData(label) {
             //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
-            var sample_url = '{{site_uri}}{% url 'show-sample-datatable' dbAlias=request.META.dbAlias format=".json" %}';
+            var sample_url = '{{site_uri}}{% url 'stoqs:show-sample-datatable' dbAlias=request.META.dbAlias format=".json" %}';
             sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
             console.log('sample_url = ' + sample_url);
 
@@ -2790,8 +2790,8 @@
 
     function showQuickLooks(label) {
             // http://172.16.130.135:8000/stoqs_may2012/resourceactivity.json?resourcetype__name=quick_look&activityresource__activity__name__contains=Dorado389_2012_150_00_150_00_decim
-            //var quicklook_url = '{{site_uri}}{% url 'show-resourceactivity' dbAlias=request.META.dbAlias format=".json" %}?resourcetype__name=quick_look&';
-            var quicklook_url = '{{site_uri}}{% url 'show-quicklookplots' dbAlias=request.META.dbAlias %}?';
+            //var quicklook_url = '{{site_uri}}{% url 'stoqs:show-resourceactivity' dbAlias=request.META.dbAlias format=".json" %}?resourcetype__name=quick_look&';
+            var quicklook_url = '{{site_uri}}{% url 'stoqs:show-quicklookplots' dbAlias=request.META.dbAlias %}?';
             quicklook_url = quicklook_url + 'activityresource__activity__name__contains=' + label.split(' ')[0];
             //var nwin = window.open(quicklook_url, '', 'height=800,width=1000');
             //if (window.focus) {
@@ -4244,7 +4244,7 @@
                     alert('Permalink loading failed: ' + err + ' (Perhaps the permalink_id value is invalid?)');
                 }
             } else {
-                var url='{% url 'load_permalink' dbAlias=request.META.dbAlias id='#REPLACE#' %}';
+                var url='{% url 'stoqs:load_permalink' dbAlias=request.META.dbAlias id='#REPLACE#' %}';
                 url=url.replace('#REPLACE#', permalink_id);
                 console.log(url);
                 $.get(url).
@@ -4405,7 +4405,7 @@
             projection: map.displayProjection,
             strategies: [new OpenLayers.Strategy.BBOX()],
             protocol: new OpenLayers.Protocol.WFS({
-                url: '{{site_uri}}{% url 'base-campaign' dbAlias=request.META.dbAlias %}wfs',
+                url: '{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}wfs',
                 headers: {'X-CSRFToken': csrf_token},
                 featureType: 'Sample'
             }),

@@ -130,6 +130,8 @@ class Common(Configuration):
     DATABASES = values.DatabaseURLValue('postgis://127.0.0.1:5432/stoqs')
     # END DATABASE CONFIGURATION
 
+    DATABASE_ROUTERS = ['stoqs.db_router.DatabaseRouter']
+
     # CACHING
     # Do this here because thanks to django-pylibmc-sasl and pylibmc
     # memcacheify (used on heroku) is painful to install on windows.
@@ -199,14 +201,14 @@ class Common(Configuration):
 
     # STATIC FILE CONFIGURATION
     # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-root
-    STATIC_ROOT = join(os.path.dirname(BASE_DIR), 'stoqs/static')
+    STATIC_ROOT = join(os.path.dirname(BASE_DIR), 'static')
 
     # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-url
     STATIC_URL = '/stoqs/static/'
 
     # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
     STATICFILES_DIRS = (
-        join(BASE_DIR, 'stoqs/static'),
+        join(BASE_DIR, 'static'),
     )
 
     # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders

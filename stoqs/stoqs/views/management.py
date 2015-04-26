@@ -151,7 +151,8 @@ def showCampaigns(request,format=None):
             continue
 
         # Close the database connection, before connecting to the next database
-        close_connection()
+        # TODO: Check for how Django1.7+ does this
+        ##close_connection()
 
     # Create a hash keyed by startdate of the dbAliases and campaigns so that we display a time sorted list of campaigns
     timeSortHash = {}

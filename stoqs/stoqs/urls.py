@@ -46,9 +46,6 @@ formatCl = typePat + r'\.' + formatPat
 
 urlpatterns = patterns('',
             
-    # Admin interface
-    url(pre + r'admin/', include(admin.site.urls)),
-
     # New Map interfaces with inheritence of bootstrap template
     url(pre + r'activityWMS$', 'stoqs.views.wms.showActivityWMS', {}, name='show-activity-wms'),
 
@@ -126,13 +123,13 @@ urlpatterns = patterns('',
             'stoqs.views.animation.createAnimation',  {'rangeFlag': False}, name='create-animation-map'),  
 
     # For testing only 
-    url(r'testAnimateCoastwatch$', 'stoqs.views.wms.showActivitiesWMSAnimateCoastwatch', {} , name='test-animate-wms-coastwatch'),\
+    url(r'testAnimateCoastwatch$', 'stoqs.views.wms.showActivitiesWMSAnimateCoastwatch', {} , name='test-animate-wms-coastwatch'),
 
     # If nothing above matches show the quey interface is a dbalias is specified, otherwise show the campaigns
     url(pre + '$', 'stoqs.views.query.queryUI', {}, name='base-campaign'),
     
     # Views related to generating permalinks for later use.
-    url(pre + r'generate_permalink/', 'stoqs.views.permalinks.generate_permalink', {}, name='generate_permalink'),
+    url(pre + 'generate_permalink/', 'stoqs.views.permalinks.generate_permalink', {}, name='generate_permalink'),
     url(pre + 'permalink/(?P<id>[^/]*)/', 'stoqs.views.permalinks.load_permalink', {}, name='load_permalink'),
 
     url('^$', 'stoqs.views.management.showCampaigns', {}, name='show-default'),

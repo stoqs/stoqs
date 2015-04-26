@@ -11,12 +11,12 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    url(r'^$',  # noqa
-        TemplateView.as_view(template_name='pages/home.html'),
-        name="home"),
-    url(r'^about/$',
-        TemplateView.as_view(template_name='pages/about.html'),
-        name="about"),
+    ##url(r'^$',  # noqa
+    ##    TemplateView.as_view(template_name='pages/home.html'),
+    ##    name="home"),
+    ##url(r'^about/$',
+    ##    TemplateView.as_view(template_name='pages/about.html'),
+    ##    name="about"),
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
@@ -29,6 +29,6 @@ urlpatterns = patterns('',
     ##url(r'^avatar/', include('avatar.urls')),
 
     # Your stuff: custom urls go here
-    url(r'^stoqs/', include('stoqs.urls')),
+    url(r'', include('stoqs.urls', namespace='stoqs')),
 
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
