@@ -9,8 +9,8 @@ conventions version 1.6 are supported for loading into STOQS.  Specific feature 
 supported are: trajectory, timeSeries, and timeSeriesProfile.  For more information
 please see:
 
-        http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html
-        http://www.nodc.noaa.gov/data/formats/netcdf/
+    [http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html]
+    [http://www.nodc.noaa.gov/data/formats/netcdf/]
 
 There are many ways to write data adhering to these standards - there are some examples
 using the Python pupynere library in the loaders/CANON/toNetCDF directory.
@@ -51,6 +51,7 @@ prerequisites:
 
 5. Edit the privateSettings file to add a entry for the database you created:
 
+```python
      'stoqs_september2012_t': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'stoqs_september2012_t',
@@ -59,17 +60,21 @@ prerequisites:
         'HOST': DATABASE_HOST,
         'PORT': DATABASE_PORT
      },
+```
 
 6. Restart your server to force a re-read of the settings file.  On a development server
-   simply restart "python manage.py runserver 0.0.0.0:8000" which you normally have running
+   simply restart "python manage.py runserver 0.0.0.0:8000 --settings=stoqs.config.vagrant"
+   (or whichever config file you want to use)  which you normally have running
    in its own shell window (see DEVELOPMENT).  On a production server restart apache with
    "sudo /sbin/service httpd restart" (see PRODUCTION). 
 
 7. Synchronize the new database with the stoqs data model.  At a shell prompt in your virtual
    environment (see PREREQUISITES and INSTALL):
 
+```
      source venv-stoqs/bin/activate
      ./manage.py syncdb --noinput --database=stoqs_september2012_t
+```
 
 8. Make sure that your session does not have the PYTHONPATH environment set; you may need to do:
 
@@ -97,14 +102,11 @@ prerequisites:
       interaction with people and testing the data sources for valid parameter names as well
       as monitoring the script's output for warning and error messages.
     - To provide read-only access to your database  grant everyone select privileges:
+```
         \c stoqs_september2012_t
         grant select on all tables in schema public to everyone;
+```
 
     - The stoqs-discuss mail list (https://groups.google.com/forum/?fromgroups=#!forum/stoqs-discuss)
       is a good place to ask questions if any problems are encountered.
-    
-    
---
-Mike McCann
-MBARI 11 February 2014
- 
+

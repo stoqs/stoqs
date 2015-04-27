@@ -3,6 +3,7 @@ Spatial Temporal Oceanographic Query System
 
 [![Travis-CI Status](https://travis-ci.org/MBARIMike/stoqs.svg?branch=django17upgrade)](https://travis-ci.org/MBARIMike/stoqs)
 [![Coverage Status](https://coveralls.io/repos/MBARIMike/stoqs/badge.svg?branch=django17upgrade)](https://coveralls.io/r/MBARIMike/stoqs?branch=django17upgrade)
+[![Requirements Status](https://requires.io/github/MBARIMike/stoqs/requirements.svg?branch=django17upgrade)](https://requires.io/github/MBARIMike/stoqs/requirements/?branch=django17upgrade)
 
 STOQS is a geospatial database and web application designed for providing efficient 
 acccess to *in situ* oceanographic data across any dimension.
@@ -33,7 +34,7 @@ Visit your own server's STOQS User interface:
 
     http://localhost:8000
 
-More instructions are in the doc/instructions directory -- see LOADING for how to load your own data. 
+More instructions are in the doc/instructions directory -- see [LOADING.md](doc/instructions/LOADING.md] for how to load your own data. 
 Visit the [STOQS Wiki pages](https://github.com/stoqs/stoqs/wiki) for updates and links to presentations.
 The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also 
 a good place to ask questions and engage in discussion with the STOQS user and developer communities.
