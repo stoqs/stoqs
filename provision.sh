@@ -102,6 +102,11 @@ cd build
 /opt/cmake/bin/cmake .. -DWITH_FRIBIDI=0 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-9.3"
 make && make install
 cp /usr/local/bin/mapserv /var/www/cgi-bin
+cp /etc/sysconfig/httpd /etc/sysconfig/httpd.bak
+cat <<EOT >> /etc/sysconfig/httpd
+# Needed for mapserv in /var/www/cgi-bin
+LD_LIBRARY_PATH=/usr/local/lib64
+EOT
 cd ../..
 
 echo Build database for locate command
