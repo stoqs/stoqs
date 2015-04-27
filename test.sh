@@ -16,7 +16,8 @@ stoqs/loaders/loadTestData.py
 # test_stoqs database created and dropped by role of the shell account using Test framework's DB names
 cd stoqs
 unset DATABASE_URL
-coverage run --source="utils,stoqs" ./manage.py test stoqs.tests --settings=config.ci
+coverage run --source=utils,stoqs ./manage.py test stoqs.tests --settings=config.ci
 coverage report
+cd ..
 
 
