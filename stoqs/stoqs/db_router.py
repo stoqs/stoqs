@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 import threading
 _thread_local_vars = threading.local()
 
+
 class RouterMiddleware(object):
     def process_view(self, request, view_func, pargs, kwargs):
         logger.debug("pargs =")

@@ -66,6 +66,7 @@ class Common(Configuration):
         'django.contrib.auth.middleware.AuthenticationMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'stoqs.db_router.RouterMiddleware',
     )
     # END MIDDLEWARE CONFIGURATION
 
@@ -311,6 +312,11 @@ class Common(Configuration):
     LOGGING['handlers']['console'] = {
                                 'level':'DEBUG',
                                 'class':'logging.StreamHandler',
+                                'formatter': 'verbose'
+    }
+    LOGGING['loggers']['stoqs'] = {
+                                'handlers':['console'],
+                                'level':'INFO',
                                 'formatter': 'verbose'
     }
     LOGGING['loggers']['stoqs.loaders'] = {
