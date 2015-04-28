@@ -31,6 +31,7 @@ from PQuery import PQuery
 from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformOrientation
 from coards import to_udunits
 from datetime import datetime
+from django.contrib.gis import gdal
 import logging
 import pprint
 import calendar
@@ -46,14 +47,7 @@ logger = logging.getLogger(__name__)
 LABEL = 'label'
 DESCRIPTION = 'description'
 COMMANDLINE = 'commandline'
-from django.contrib.gis import gdal
-if gdal.HAS_GDAL:
-    # Use the official spherical mercator projection SRID on versions
-    # of GDAL that support it; otherwise, fallback to 900913.
-    if gdal.GDAL_VERSION >= (1, 7):
-        spherical_mercator_srid = 3857
-    else:
-        spherical_mercator_srid = 900913
+spherical_mercator_srid = 3857
 
 class STOQSQManager(object):
     '''

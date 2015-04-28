@@ -330,4 +330,6 @@ class Common(Configuration):
                                 'level':'INFO',
                                 'formatter': 'verbose'
     }
+    LOGGING['loggers']['stoqs']['level'] = 'DEBUG'
+
     # END STOQS specific logging

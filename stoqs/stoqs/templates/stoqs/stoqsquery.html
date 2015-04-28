@@ -4281,7 +4281,7 @@
         OpenLayers.Util.onImageLoadError = function() {this.style.display="none"; };
         //ctrlGraticule = new OpenLayers.Control.Graticule({autoActivate : false});
         var options = {
-            projection: new OpenLayers.Projection("EPSG:900913"),
+            projection: new OpenLayers.Projection("EPSG:3857"),
             displayProjection: new OpenLayers.Projection("EPSG:4326"),
             units: "m",
             maxResolution: 156543.0339,
@@ -4339,7 +4339,7 @@
               transparent: 'True' },
             { units: 'degrees',
               displayInLayerSwitcher: true,
-              projection: "EPSG:900913",
+              projection: "EPSG:3857",
               reproject: false,
               visibility: true,
               singleTile: true, ratio: 1,
@@ -4353,7 +4353,7 @@
               transparent: 'True' },
             { units: 'degrees',
               displayInLayerSwitcher: true,
-              projection: "EPSG:900913",
+              projection: "EPSG:3857",
               reproject: false,
               visibility: true,
               singleTile: true, ratio: 1,
@@ -4367,7 +4367,7 @@
               transparent: 'True' },
             { units: 'degrees',
               displayInLayerSwitcher: true,
-              projection: "EPSG:900913",
+              projection: "EPSG:3857",
               reproject: false,
               visibility: true,
               singleTile: true, ratio: 1,
@@ -4437,9 +4437,9 @@
                 {   'displayClass': 'olControlDrawFeaturePolygon',
                     featureAdded: function() {
                         var projWGS84 = new OpenLayers.Projection("EPSG:4326");
-                        var proj900913 = new OpenLayers.Projection("EPSG:900913");
+                        var proj3857 = new OpenLayers.Projection("EPSG:3857");
                         var polyWGS84 = polyLayer.features[0].geometry;
-                        polyWGS84.transform(proj900913, projWGS84);
+                        polyWGS84.transform(proj3857, projWGS84);
                         console.log(polyWGS84);
                         OpenLayers.Console.userError(polyWGS84);
                         rebuildFilters();

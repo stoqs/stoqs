@@ -23,7 +23,7 @@
                 var map = null; 
                 function init() {
                     var options = {
-                        projection: new OpenLayers.Projection("EPSG:900913"),
+                        projection: new OpenLayers.Projection("EPSG:3857"),
                         displayProjection: new OpenLayers.Projection("EPSG:4326"),
                         units: "m",
                         maxResolution: 156543.0339,
@@ -52,7 +52,7 @@
                     {
                         units: 'degrees',
                         //displayInLayerSwitcher: false,
-                        projection: "EPSG:900913",
+                        projection: "EPSG:3857",
                         reproject: false,
                         visibility: false,      
                         singleTile: true,
