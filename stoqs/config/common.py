@@ -206,12 +206,13 @@ class Common(Configuration):
 
     # STATIC FILE CONFIGURATION
     # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-root
-    STATIC_ROOT = join(os.path.dirname(BASE_DIR), 'static')
+    STATIC_ROOT = '/var/www/html/stoqsfiles/static/'
 
     # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-url
-    STATIC_URL = '/stoqs/static/'
+    STATIC_URL = '/stoqsfiles/static/'
 
     # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
+    # First directory must include directory containing colormaps/ for Viz routines
     STATICFILES_DIRS = (
         join(BASE_DIR, 'static'),
     )

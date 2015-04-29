@@ -12,13 +12,12 @@ export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
 stoqs/manage.py syncdb --settings=config.local --noinput --database=default
 stoqs/loaders/loadTestData.py
 
-# Run tests twice (one for coverage) using the continuous integration setting and default Local configuration
+# Run tests using the continuous integration setting and default Local class configuration
 # test_stoqs database created and dropped by role of the shell account using Test framework's DB names
 cd stoqs
 unset DATABASE_URL
-./manage.py test stoqs.tests --settings=config.ci
-test_status=$?
 coverage run --source=utils,stoqs ./manage.py test stoqs.tests --settings=config.ci
+test_status=$?
 coverage report
 cd ..
 exit $test_status

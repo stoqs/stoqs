@@ -7,4 +7,5 @@ __pycache__
 *.log
 pip-log.txt
 
-privateSettings
+# Unit test / coverage reports
+.coverage

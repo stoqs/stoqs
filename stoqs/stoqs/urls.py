@@ -1,30 +1,9 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2012, MBARI"
-__credits__ = ["Chander Ganesan, Open Technology Group"]
-__license__ = "GPL"
-__version__ = "$Revision: 12295 $".split()[1]
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-__status__ = "Development"
-__doc__ = '''
-
-The URL patterns for the stoqs database web application.  The first field specifies the
-database that is automatically routed to the associated database.
-
-
-Mike McCann
-MBARI Jan 3, 2012
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@author: __author__
-@status: __status__
-@license: __license__
-'''
-
+from django.conf import settings
 from django.conf.urls import patterns, url
+from django.conf.urls.static import static
 
 # The database alias (the key of the DATABASES dictionary) will prefix all of our requests
 pre = r'^(?P<dbAlias>[^/]+)/'  
@@ -128,4 +107,4 @@ urlpatterns = patterns('',
 
     url('^$', 'stoqs.views.management.showCampaigns', {}, name='show-default'),
 
-)
+) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
