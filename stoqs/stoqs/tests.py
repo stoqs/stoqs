@@ -219,7 +219,6 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_query_ui(self):
-        logger.info("This test is known to fail; because 'config.' is being prepended to view name for some reason")
         req = reverse('stoqs-query-ui', kwargs={'dbAlias': 'default'})
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)

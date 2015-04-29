@@ -35,6 +35,8 @@ mkdir Downloads && cd Downloads
 # TODO: Add stanza for other OSes, e.g. 'ubuntu'
 if [ $OS = 'centos' ]
 then
+    echo Disable SELinux
+    sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
     echo 0 > /selinux/enforce
 
     echo Add epel, remi, and postgres repositories

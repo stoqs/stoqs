@@ -65,7 +65,7 @@ class BaseOutputer(object):
     fields = []
     geomFields = []
 
-    def __init__(self, request, format, query_set, stoqs_object=None, dbAlias='default'):
+    def __init__(self, request, format, query_set, stoqs_object=None):
         '''
         @query_set is the Query Set without any values assigned, qs is the Query set with values assigned.
         '''
@@ -301,7 +301,7 @@ class BaseOutputer(object):
             return render_to_response(self.html_tmpl_path, {'list': self.qs})
 
 
-def showSample(request, format='html', dbAlias='default'):
+def showSample(request, format='html'):
     stoqs_object = mod.Sample
     query_set = stoqs_object.objects.all().order_by('instantpoint__timevalue')
 
@@ -312,42 +312,42 @@ def showSample(request, format='html', dbAlias='default'):
                 'volume', 'filterdiameter', 'filterporesize', 'laboratory', 'researcher']
     return o.process_request()
 
-def showInstantPoint(request, format='html', dbAlias='default'):
+def showInstantPoint(request, format='html'):
     stoqs_object = mod.InstantPoint
     query_set = stoqs_object.objects.all().order_by('timevalue')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showMeasurement(request, format='html', dbAlias='default'):
+def showMeasurement(request, format='html'):
     stoqs_object = mod.Measurement
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showMeasuredParameter(request, format='html', dbAlias='default'):
+def showMeasuredParameter(request, format='html'):
     stoqs_object = mod.MeasuredParameter
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showPlatform(request, format='html', dbAlias='default'):
+def showPlatform(request, format='html'):
     stoqs_object = mod.Platform
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showPlatformType(request, format='html', dbAlias='default'):
+def showPlatformType(request, format='html'):
     stoqs_object = mod.PlatformType
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showParameterGroupParameter(request, format='html', dbAlias='default'):
+def showParameterGroupParameter(request, format='html'):
     stoqs_object = mod.ParameterGroupParameter
     query_set = stoqs_object.objects.all().order_by('parametergroup', 'parameter')
 
@@ -355,14 +355,14 @@ def showParameterGroupParameter(request, format='html', dbAlias='default'):
     o.fields = ['id', 'uuid', 'parametergroup_id', 'parameter_id', 'parametergroup__name', 'parameter__name']
     return o.process_request()
 
-def showParameterGroup(request, format='html', dbAlias='default'):
+def showParameterGroup(request, format='html'):
     stoqs_object = mod.ParameterGroup
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showParameterResource(request, format='html', dbAlias='default'):
+def showParameterResource(request, format='html'):
     stoqs_object = mod.ParameterResource
     query_set = stoqs_object.objects.all()
 
@@ -370,7 +370,7 @@ def showParameterResource(request, format='html', dbAlias='default'):
     o.fields = ['id', 'uuid', 'parameter_id', 'resource_id', 'parameter__name', 'resource__name', 'resource__value']
     return o.process_request()
 
-def showMeasuredParameterResource(request, format='html', dbAlias='default'):
+def showMeasuredParameterResource(request, format='html'):
     stoqs_object = mod.MeasuredParameterResource
     query_set = stoqs_object.objects.all()
 
@@ -379,7 +379,7 @@ def showMeasuredParameterResource(request, format='html', dbAlias='default'):
                 'measuredparameter__datavalue', 'resource__name', 'resource__value', 'resource__resourcetype__name']
     return o.process_request()
 
-def showResourceResource(request, format='html', dbAlias='default'):
+def showResourceResource(request, format='html'):
     stoqs_object = mod.ResourceResource
     query_set = stoqs_object.objects.all()
 
@@ -388,7 +388,7 @@ def showResourceResource(request, format='html', dbAlias='default'):
                 'toresource__id', 'toresource__name', 'toresource__value', 'toresource__resourcetype__name']
     return o.process_request()
 
-def showPlatformResource(request, format='html', dbAlias='default'):
+def showPlatformResource(request, format='html'):
     stoqs_object = mod.PlatformResource
     query_set = stoqs_object.objects.all()
 
@@ -396,56 +396,56 @@ def showPlatformResource(request, format='html', dbAlias='default'):
     o.fields = ['id', 'uuid', 'platform_id', 'resource_id', 'platform__name', 'resource__name', 'resource__value', 'resource__uristring']
     return o.process_request()
 
-def showParameter(request, format='html', dbAlias='default'):
+def showParameter(request, format='html'):
     stoqs_object = mod.Parameter
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showSampleType(request, format='html', dbAlias='default'):
+def showSampleType(request, format='html'):
     stoqs_object = mod.SampleType
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showSamplePurpose(request, format='html', dbAlias='default'):
+def showSamplePurpose(request, format='html'):
     stoqs_object = mod.SamplePurpose
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showAnalysisMethod(request, format='html', dbAlias='default'):
+def showAnalysisMethod(request, format='html'):
     stoqs_object = mod.AnalysisMethod
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showActivity(request, format='html', dbAlias='default'):
+def showActivity(request, format='html'):
     stoqs_object = mod.Activity
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showActivityType(request, format='html', dbAlias='default'):
+def showActivityType(request, format='html'):
     stoqs_object = mod.ActivityType
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showCampaign(request, format='html', dbAlias='default'):
+def showCampaign(request, format='html'):
     stoqs_object = mod.Campaign
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showResource(request, format='html', dbAlias='default'):
+def showResource(request, format='html'):
     stoqs_object = mod.Resource
     query_set = stoqs_object.objects.all().order_by('name')
 
@@ -453,14 +453,14 @@ def showResource(request, format='html', dbAlias='default'):
     o.fields = ['id', 'name', 'value', 'uristring', 'resourcetype__name', 'resourcetype__description']
     return o.process_request()
 
-def showResourceType(request, format='html', dbAlias='default'):
+def showResourceType(request, format='html'):
     stoqs_object = mod.ResourceType
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showActivityResource(request, format='html', dbAlias='default'):
+def showActivityResource(request, format='html'):
     stoqs_object = mod.ActivityResource
     query_set = stoqs_object.objects.all()
 
@@ -468,14 +468,14 @@ def showActivityResource(request, format='html', dbAlias='default'):
     o.fields = ['id', 'uuid', 'activity__name', 'resource__name', 'resource__value', 'resource__uristring']
     return o.process_request()
 
-def showActivityParameter(request, format='html', dbAlias='default'):
+def showActivityParameter(request, format='html'):
     stoqs_object = mod.ActivityParameter
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
-def showSimpleDepthTime(request, format='html', dbAlias='default'):
+def showSimpleDepthTime(request, format='html'):
     stoqs_object = mod.SimpleDepthTime
     query_set = stoqs_object.objects.all()
 

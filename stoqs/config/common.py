@@ -232,7 +232,7 @@ class Common(Configuration):
     # END MEDIA CONFIGURATION
 
     # URL Configuration
-    ROOT_URLCONF = 'urls'
+    ROOT_URLCONF = 'stoqs.urls'
 
     # See: https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
     WSGI_APPLICATION = 'wsgi.application'
@@ -334,7 +334,7 @@ class Common(Configuration):
                                 'level':'INFO',
                                 'formatter': 'verbose'
     }
-    LOGGING['loggers']['stoqs']['level'] = 'DEBUG'
+    LOGGING['loggers']['stoqs']['level'] = 'INFO'
 
     # END STOQS specific logging
 

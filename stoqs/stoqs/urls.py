@@ -11,7 +11,7 @@ __status__ = "Development"
 __doc__ = '''
 
 The URL patterns for the stoqs database web application.  The first field specifies the
-database that is automatically routed to the associated database defined in settings.py.
+database that is automatically routed to the associated database.
 
 
 Mike McCann
@@ -24,13 +24,7 @@ MBARI Jan 3, 2012
 @license: __license__
 '''
 
-from django.conf.urls import patterns, url, include
-from django.contrib.gis import admin
-from django.conf import settings
-##from ga_ows.views.wfs import WFS
-from stoqs import models as m
-
-admin.autodiscover()
+from django.conf.urls import patterns, url
 
 # The database alias (the key of the DATABASES dictionary) will prefix all of our requests
 pre = r'^(?P<dbAlias>[^/]+)/'  
@@ -40,7 +34,7 @@ btwnCl = r'(?P<pName>[^/]+)/between/(?P<startDate>\w+)/(?P<endDate>\w+)/depth/(?
 
 # type is one of: 'data', 'perf'; format is one of: 'html', 'csv', 'kml'
 typePat = r'/(?P<type>[^/]{4,5})'
-formatPat = r'(?P<format>[^/]{0,5})$'
+formatPat = r'(?P<format>[^/]{0,5})'
 formatCl = typePat + r'\.' + formatPat
 
 
@@ -135,19 +129,3 @@ urlpatterns = patterns('',
     url('^$', 'stoqs.views.management.showCampaigns', {}, name='show-default'),
 
 )
-
-# For use on development server, see https://docs.djangoproject.com/en/dev/howto/static-files/
-if settings.DEBUG:
-    urlpatterns += patterns('',
-        url(r'^stoqs/media/(?P<path>.*)$', 'django.views.static.serve', {
-            'document_root': settings.MEDIA_ROOT,
-        }),
-   )
-
-# Not to be used in Production.  Must start development server with --insecure option to run with DEBUG = False:
-#    python manage.py runserver 0.0.0.0:8000 --insecure
-if settings.DEBUG is False and settings.PRODUCTION is False:   #if DEBUG is True it will be served automatically
-    urlpatterns += patterns('',
-        url(r'^(?P<path>.*)$', 'django.contrib.staticfiles.views.serve', {'document_root': settings.STATIC_ROOT})
-    )
-

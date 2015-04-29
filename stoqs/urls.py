@@ -32,3 +32,5 @@ urlpatterns = patterns('',
     url(r'', include('stoqs.urls', namespace='stoqs')),
 
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+import pdb; pdb.set_trace()
