@@ -136,10 +136,14 @@ class Common(Configuration):
     # CACHING
     # Do this here because thanks to django-pylibmc-sasl and pylibmc
     # memcacheify (used on heroku) is painful to install on windows.
+    MEMCACHED_LOCATION = values.Value('127.0.0.1:11211')
     CACHES = {
         'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': ''
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+            ##'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            ##'LOCATION': ''
+            ##'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+            ##'LOCATION': MEMCACHED_LOCATION
         }
     }
     # END CACHING
@@ -333,3 +337,6 @@ class Common(Configuration):
     LOGGING['loggers']['stoqs']['level'] = 'DEBUG'
 
     # END STOQS specific logging
+
+    MAPFILE_DIR = values.Value('/dev/shm')
+

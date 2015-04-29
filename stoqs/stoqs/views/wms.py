@@ -96,7 +96,7 @@ class ActivityView(object):
         if self.request.session.has_key('mappath'):
             logger.info("Reusing request.session['mappath'] = %s", self.request.session['mappath'])
         else:
-            self.request.session['mappath'] =  tempfile.NamedTemporaryFile(dir='/dev/shm', prefix=filename + '_' , suffix=ext).name
+            self.request.session['mappath'] =  tempfile.NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=filename + '_' , suffix=ext).name
             logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
         # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
@@ -121,6 +121,7 @@ class ActivityView(object):
                             'copyright_string': 'MBARI %d' % datetime.today().year,
                             'dbconn': settings.DATABASES[self.request.META['dbAlias']],
                             'mappath': self.mappath,
+                            'imagepath': settings.MAPFILE_DIR,
                             'STATIC_ROOT': settings.STATIC_ROOT},
                             context_instance = RequestContext(self.request))
 
@@ -128,7 +129,7 @@ class ActivityView(object):
             fh = open(self.mappath, 'w')    
         except IOError:
             # In case of accessed denied error, create a new mappath and store it in the session, and open that
-            self.request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
+            self.request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
             self.mappath = self.request.session['mappath']
             fh = open(self.mappath, 'w')
                 

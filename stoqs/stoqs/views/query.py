@@ -102,7 +102,7 @@ def _buildMapFile(request, qm, options):
     if request.session.has_key('mappath'):
         logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
     else:
-        request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
+        request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
         logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     # A rudumentary class of items for passing a list of them to the activity.map template
@@ -265,7 +265,7 @@ def queryUI(request, dbAlias='default'):
     if request.session.has_key('mappath'):
         logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
     else:
-        request.session['mappath'] = NamedTemporaryFile(dir='/dev/shm', prefix=__name__, suffix='.map').name
+        request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
         logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     # Use list of tuples to preserve order

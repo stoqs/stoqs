@@ -8,7 +8,7 @@ MAP
   CONFIG "MS_ERRORFILE" "/tmp/mapserver_stoqshg.log"
   DEBUG 5
   WEB
-    IMAGEPATH "/dev/shm"
+    IMAGEPATH "{{ imagepath }}"
     METADATA
           "ows_enable_request"   "*"
           "wfs_title"       "{{ wfs_title }}"
