@@ -17,8 +17,9 @@ stoqs/loaders/loadTestData.py
 cd stoqs
 unset DATABASE_URL
 ./manage.py test stoqs.tests --settings=config.ci
+test_status=$?
 coverage run --source=utils,stoqs ./manage.py test stoqs.tests --settings=config.ci
 coverage report
 cd ..
-
+exit $test_status
 
