@@ -233,7 +233,7 @@ class Common(Configuration):
     # END MEDIA CONFIGURATION
 
     # URL Configuration
-    ROOT_URLCONF = 'stoqs.urls'
+    ROOT_URLCONF = 'urls'
 
     # See: https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
     WSGI_APPLICATION = 'wsgi.application'

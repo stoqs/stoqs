@@ -8,14 +8,8 @@ from django.conf.urls.static import static
 # The database alias (the key of the DATABASES dictionary) will prefix all of our requests
 pre = r'^(?P<dbAlias>[^/]+)/'  
 
-# Repeated between clause for measurement queries
-btwnCl = r'(?P<pName>[^/]+)/between/(?P<startDate>\w+)/(?P<endDate>\w+)/depth/(?P<dmin>[0-9\.]+)/(?P<dmax>[0-9\.]+)'
-
-# type is one of: 'data', 'perf'; format is one of: 'html', 'csv', 'kml'
-typePat = r'/(?P<type>[^/]{4,5})'
+# format is one of: 'html', 'csv', 'kml', 'json'
 formatPat = r'(?P<format>[^/]{0,5})'
-formatCl = typePat + r'\.' + formatPat
-
 
 urlpatterns = patterns('',
             

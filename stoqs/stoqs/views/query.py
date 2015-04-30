@@ -263,10 +263,10 @@ def queryUI(request):
 
     ##request.session.flush()
     if request.session.has_key('mappath'):
-        logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
+        logger.debug("Reusing request.session['mappath'] = %s", request.session['mappath'])
     else:
         request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
-        logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
+        logger.debug("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     # Use list of tuples to preserve order
     formats=[('kml', 'Keyhole Markup Language - click on icon to view in Google Earth', ),
