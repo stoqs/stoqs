@@ -324,7 +324,19 @@ class Common(Configuration):
                                 'level':'INFO',
                                 'formatter': 'verbose'
     }
+    LOGGING['loggers']['stoqs.db_router'] = {
+                                'handlers':['console'],
+                                'propagate': True,
+                                'level':'INFO',
+                                'formatter': 'verbose'
+    }
     LOGGING['loggers']['stoqs.loaders'] = {
+                                'handlers':['console'],
+                                'propagate': True,
+                                'level':'INFO',
+                                'formatter': 'verbose'
+    }
+    LOGGING['loggers']['utils'] = {
                                 'handlers':['console'],
                                 'propagate': True,
                                 'level':'INFO',

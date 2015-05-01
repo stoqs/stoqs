@@ -233,7 +233,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         req = '/test_stoqs/activitiesMBARICustom'
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-        loadedText = '498 MeasuredParameters'
+        loadedText = '398 MeasuredParameters'
         self.assertTrue(response.content.find(loadedText) != -1, 'Should find "%s" string at %s' % (loadedText, req))
         
         req = '/test_stoqs/deleteActivity/1'
@@ -263,25 +263,7 @@ class SummaryDataTestCase(TestCase):
     multi_db = False
     
     def test_parameterplot_scatter(self):
-        params = {'dbAlias': 'default',
-                'parameterplotid': u'4',
-                'pplr': u'1',
-                'xaxis_max': u'1288279374000',
-                'ppsl': u'1',
-                'yaxis_max': u'50',
-                'except': u'mpsql',
-                'showdataas': u'scatter',
-                'only': u'parameterminmax',
-                'platformplotname': u'dorado',
-                'yaxis_min': u'-10',
-                'xaxis_min': u'1288216319000',
-                }
-
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
-
-        qstring = ''
-        for k,v in params.iteritems():
-            qstring = qstring + k + '=' + str(v) + '&'
 
         qstring = ('only=parameterplatformdatavaluepng'
                    '&only=measuredparameterx3d&only=parameterminmax'
@@ -291,8 +273,21 @@ class SummaryDataTestCase(TestCase):
                    'showdataas=scatter&pplr=1&ppsl=1')
 
         req = base + '?' + qstring
-        import pdb; pdb.set_trace()
         response = self.client.get(req)
         json.loads(response.content) # Verify we don't get an exception when we load the data.
-        import pdb; pdb.set_trace()
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+        # TODO: Assert image was created
+
+    def test_parameterparameterplot(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        qstring = ('only=parameterparameterpng&only=parameterparameterx3d'
+                   '&except=spsql&except=mpsql&xaxis_min=1288216319000'
+                   '&xaxis_max=1288279374000&yaxis_min=-10&yaxis_max=50'
+                   '&px=4&py=5&showstandardnameparametervalues=1&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+        # TODO: Assert image was created

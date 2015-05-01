@@ -147,7 +147,7 @@ class MeasuredParameter(object):
         self.parameterGroups = parameterGroups
 
         self.scale_factor = None
-        self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+        self.clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
         self.cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
         # - Use a new imageID for each new image
         self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
