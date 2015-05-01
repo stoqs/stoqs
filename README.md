@@ -30,7 +30,7 @@ Start the development server:
     export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
     stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.vagrant
 
-Visit your own server's STOQS User interface:
+Visit your server's STOQS User Interface using your host computer's browser:
 
     http://localhost:8000
 
