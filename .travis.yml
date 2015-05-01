@@ -3,10 +3,10 @@ python:
   - "2.7"
 addons:
   postgresql: "9.3"
+services:
+  - rabbitmq 
 before_install: 
-  - sudo apt-get install -q memcached python-memcache imagemagick
   - sudo apt-get install -q python-numpy python-scipy python-matplotlib 
-  - sudo apt-get install -q python-psycopg2 
 env:
   - DJANGO=1.7
 install:
