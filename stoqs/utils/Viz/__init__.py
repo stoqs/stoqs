@@ -346,8 +346,9 @@ class MeasuredParameter(object):
 
             try:
                 os.remove(sectionPngFileFullPath)
-            except Exception, e:
-                self.logger.warn('Could not remove file: %s', e)
+            except OSError:
+                # Silently ignore
+                pass
 
             if not self.x and not self.y and not self.z:
                 self.loadData()
@@ -641,7 +642,7 @@ class ParameterParameter(object):
         self.mpq = mpq
         self.pq = pq
         self.pMinMax = pMinMax
-        self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+        self.clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
         self.depth = []
         self.x_id = []
         self.y_id = []
@@ -863,7 +864,7 @@ class ParameterParameter(object):
                 ax.set_xlim(self.pMinMax['x'][1], self.pMinMax['x'][2])
                 ax.set_ylim(self.pMinMax['y'][1], self.pMinMax['y'][2])
 
-            self.clt = readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+            self.clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
             cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
             if self.c:
                 self.logger.debug('self.pMinMax = %s', self.pMinMax)

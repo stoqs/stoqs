@@ -329,7 +329,6 @@ class PQuery(object):
         '''
         qparams = {}
 
-        self.logger.info('self.kwargs = %s', pprint.pformat(self.kwargs))
         if self.kwargs.has_key('measuredparametersgroup'):
             if self.kwargs['measuredparametersgroup']:
                 qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
@@ -376,7 +375,8 @@ class PQuery(object):
         '''
         qparams = self._getQueryParms()
         if values_list:
-            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=2).filter(**qparams).values(*values_list)
+            qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']
+                    ).filter(**qparams).values(*values_list)
         else:
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams)
 
@@ -385,7 +385,10 @@ class PQuery(object):
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues'] != [{}]:
                 # A depth of 4 is needed in order to see Platform
-                qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(depth=4).filter(**qparams)
+                qs_mp = MeasuredParameter.objects.using(
+                        self.request.META['dbAlias']).select_related(
+                                'measurement__instantpoint__activity__platform'
+                                ).filter(**qparams)
                 sql = postgresifySQL(str(qs_mp.query))
                 self.logger.debug('\n\nsql before query = %s\n\n', sql)
                 sql = self.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)

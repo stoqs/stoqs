@@ -94,9 +94,7 @@ class KML(object):
             pName = m.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.qparams['parameter__id'])).name
             logger.debug('pName = %s', pName)
     
-        if pName:
-            logger.info("pName = %s", pName)
-        else:
+        if not pName:
             raise NoDataForKML('parameter__name, parameter__standard_name, nor parameter__id specified')
     
 

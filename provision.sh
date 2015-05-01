@@ -120,11 +120,11 @@ service postgresql-9.3 initdb
 chkconfig postgresql-9.3 on
 service postgresql-9.3 start
 chkconfig postgresql-9.3 on
-/sbin/chkconfig rabbitmq-server on
-/sbin/service rabbitmq-server start
 rabbitmqctl add_user stoqs stoqs
 rabbitmqctl add_vhost stoqs
 rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
+/sbin/chkconfig rabbitmq-server on
+/sbin/service rabbitmq-server start
 chkconfig httpd on
 /sbin/service httpd start
 chkconfig memcached on

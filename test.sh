@@ -12,16 +12,17 @@ psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d s
 export DJANGO_SECRET_KEY='SET_YOUR_OWN_IMPOSSIBLE_TO_GUESS_SECRET_KEY'
 export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
 stoqs/manage.py syncdb --settings=config.local --noinput --database=default
-stoqs/loaders/loadTestData.py
+
+cd stoqs
+coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadTestData.py
 
 # Run tests using the continuous integration setting and default Local class configuration
 # test_stoqs database created and dropped by role of the shell account using Test framework's DB names
-cd stoqs
 ./manage.py dumpdata --settings=config.ci stoqs > fixtures/stoqs_test_data.json
 unset DATABASE_URL
-coverage run --source=utils,stoqs ./manage.py test stoqs.tests --settings=config.ci
+coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests --settings=config.ci
 test_status=$?
-coverage report
+tools/removeTmpFiles.sh
+coverage report 
 cd ..
 exit $test_status
-
