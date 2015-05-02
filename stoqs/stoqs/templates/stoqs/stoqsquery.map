@@ -1,0 +1,63 @@
+MAP
+  IMAGETYPE PNG24
+  EXTENT -125.817514 28.649011  -88.417199 36.901181
+  SIZE 1024 1024
+  IMAGECOLOR 255 255 255
+  NAME 'MBARI STOQS'
+  UNITS dd
+  CONFIG "MS_ERRORFILE" "/tmp/mapserver_stoqshg.log"
+  DEBUG {{ map_debug_level }}
+  # Not needed with mapserver 6.0.1 and default proj4 install
+  ##CONFIG "PROJ_LIB" "/usr/local/Proj4/share/proj"
+  WEB
+    IMAGEPATH "/tmp"
+    METADATA
+          "wfs_title"       "{{ wfs_title }}"
+          "wfs_onlineresource"   "http://{{ mapserver_host }}/cgi-bin/mapserv?map={{ mappath }}&" 
+          "wfs_srs"         "EPSG:4326 EPSG:3857 "  
+          "wfs_abstract"    "MBARI STOQS"
+          "wfs_enable_request" "GetMap GetFeature GetFeatureInfo"
+          "wms_title"       "MBARI_STOQS"
+          "wms_onlineresource"   "http://{{ mapserver_host }}/cgi-bin/mapserv?map={{ mappath }}&" 
+          "wms_srs"         "EPSG:4326 EPSG:3857 "  
+          "wms_abstract"    "MBARI STOQS"
+          "wms_feature_info_mime_type" "text/html"
+          "wms_enable_request" "GetMap GetFeature GetFeatureInfo"
+        END # METADATA
+  END # WEB
+  PROJECTION
+    "init=epsg:4326"
+  END # PROJECTION
+  LAYER
+    CONNECTIONTYPE POSTGIS
+    CONNECTION "host={{ dbconn.HOST }} port={{ dbconn.PORT }} user={{ dbconn.USER }} password={{ dbconn.PASSWORD }} dbname={{ dbconn.NAME }}"
+    DATA "{{ geo_query|safe }}"
+      DEBUG {{ layer_debug_level }}
+      DUMP true
+      TYPE line
+      STATUS on
+      METADATA
+       "wfs_title"     "track_lines"    # Short description
+       "wms_title"     "track_lines"    # Short description
+       "wms_include_items"  "all"               # Include all attributes
+       "gml_featureid"  "1"     # id is the primary key
+       "gml_include_items"  "all"               # Include all attributes
+       "wfs_abstract"       "Track Lines Activity Tracks."
+    END # DATA
+    PROJECTION
+      "init=epsg:4326"
+    END # PROJECTION
+    TEMPLATE data.html
+    HEADER header.html
+    FOOTER footer.html
+    NAME "track_lines"
+    CLASS
+      NAME "track_lines"
+      STYLE
+        COLOR 200 0 0
+      END # STYLE
+    END # CLASS
+  END # LAYER
+
+END # MAP
+

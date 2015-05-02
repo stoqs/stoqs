@@ -1,0 +1,45 @@
+<html>
+
+<head>
+<title>Manage {{ dbAlias }}</title>
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}stoqs.css">
+</head>
+
+<body>
+<h1>Manage {{ dbAlias }}</h1>
+<h3>In lieu of using the Django Admin interface, use this page to delete activities</h3>
+<table border="1">
+<tr><th>Activity Name</th><th>Delete?</th><th>Measurement Count</th><th>Measured Parameter Count</th></tr>
+{% for a in actList %}
+<!-- 
+sql = {{ a.query }} 
+<tr><td colspan="5">{{ a.m_query }}</td></tr>
+<tr><td colspan="5">{{ a.mp_query }}</td></tr>
+-->
+<tr>
+<td><u>{{ a.name }}</u><br>
+&nbsp;{{ a.startdate }} to {{ a.enddate }} GMT (between/{{ a.isostartdate }}/{{ a.isoenddate }})<br>
+&nbsp;<b>Comment: </b>{{ a.comment }}<br>
+&nbsp;<b>Platform: </b>{{ a.platformName }}</td>
+
+<td><a href="deleteActivity/{{ a.id }}">delete</a>
+
+</td>
+<td align="right">{{ a.mCount }}</td>
+<td align="right">{{ a.mpCount }}</td>
+</tr>
+<tr><td colspan="5">&nbsp;</td></tr>
+{% endfor %}
+</table>
+
+<h3>Overall parameters in this database</h3>
+<table border="1">
+<tr><th>Parameter Name</th><th>Standard Name</th><th>Units</th></tr>
+{% for p in pList %}
+<tr><td>{{ p.name }}</td><td>{{ p.standard_name }}</td><td>{{ p.units }}</td></tr>
+{% endfor %}
+</table>
+
+</body>
+
+</html>
