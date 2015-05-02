@@ -1,6 +1,6 @@
 #!/bin/bash
-# This script should be run whenever new packages are installed to ensure things are
-# set for future runs, and of course to setup a new virtualenv
+# This script is executed following provisioning of a server with the 
+# prerequisite system software.
 pushd $(dirname $0)
 HOMEDIR=$(pwd)
 LOG_DIR="$HOMEDIR/log"
