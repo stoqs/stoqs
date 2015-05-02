@@ -167,7 +167,7 @@ service postgresql-9.3 restart
 echo Clone STOQS repo, create virtual environment 
 cd ..
 mkdir dev && cd dev
-git clone https://github.com/MBARIMike/stoqs.git stoqsgit
+git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
 git checkout django17upgrade
 export PATH="/usr/local/bin:$PATH"
