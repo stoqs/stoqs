@@ -44,7 +44,7 @@ then
     wget -q -N http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
     wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
     rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
-    curl -O http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
+    curl -sS -O http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm > /dev/null
     rpm -ivh pgdg*
     yum -y install postgresql93-server
     yum -y groupinstall "PostgreSQL Database Server 9.3 PGDG"
@@ -63,7 +63,7 @@ then
     cd setuptools-1.4.2
     /usr/local/bin/python2.7 setup.py install
     cd ..
-    curl https://raw.githubusercontent.com/pypa/pip/master/contrib/get-pip.py | sudo /usr/local/bin/python2.7 -
+    curl -sS https://raw.githubusercontent.com/pypa/pip/master/contrib/get-pip.py | sudo /usr/local/bin/python2.7 - > /dev/null
     /usr/local/bin/pip install virtualenv
 
     yum -y install rabbitmq-server scipy mod_wsgi memcached python-memcached
@@ -120,12 +120,11 @@ service postgresql-9.3 initdb
 chkconfig postgresql-9.3 on
 service postgresql-9.3 start
 chkconfig postgresql-9.3 on
+/sbin/chkconfig rabbitmq-server on
 /sbin/service rabbitmq-server start
 rabbitmqctl add_user stoqs stoqs
 rabbitmqctl add_vhost stoqs
 rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
-/sbin/chkconfig rabbitmq-server on
-/sbin/service rabbitmq-server restart
 chkconfig httpd on
 /sbin/service httpd start
 chkconfig memcached on
@@ -175,4 +174,11 @@ export PATH="/usr/local/bin:$PATH"
 virtualenv venv-stoqs
 chown -R $USER ..
 chown -R $USER /home/$USER/Downloads
+
+echo Configuring vim edit environment
+cat <<EOT > /home/$USER/.vimrc
+:set tabstop=4
+:set expandtab
+:set shiftwidth=4
+EOT
 
