@@ -211,7 +211,6 @@ def showActivitiesMBARICustom(request):
 
     # Construct our own Act activity list with an enhanced comment
     actList = []
-    hostname = socket.gethostbyaddr(socket.gethostname())[0]
     for a in aList:
         act = Act()
 
