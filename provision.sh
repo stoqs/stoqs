@@ -173,4 +173,5 @@ git checkout django17upgrade
 export PATH="/usr/local/bin:$PATH"
 virtualenv venv-stoqs
 chown -R $USER ..
+chown -R $USER ~/Downloads
 
