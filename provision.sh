@@ -61,7 +61,7 @@ then
     wget -q --no-check-certificate -N https://pypi.python.org/packages/source/s/setuptools/setuptools-1.4.2.tar.gz
     tar -xvf setuptools-1.4.2.tar.gz
     cd setuptools-1.4.2
-    python2.7 setup.py install
+    /usr/local/bin/python2.7 setup.py install
     cd ..
     curl https://raw.githubusercontent.com/pypa/pip/master/contrib/get-pip.py | sudo /usr/local/bin/python2.7 -
     /usr/local/bin/pip install virtualenv
@@ -120,11 +120,12 @@ service postgresql-9.3 initdb
 chkconfig postgresql-9.3 on
 service postgresql-9.3 start
 chkconfig postgresql-9.3 on
+/sbin/service rabbitmq-server start
 rabbitmqctl add_user stoqs stoqs
 rabbitmqctl add_vhost stoqs
 rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
 /sbin/chkconfig rabbitmq-server on
-/sbin/service rabbitmq-server start
+/sbin/service rabbitmq-server restart
 chkconfig httpd on
 /sbin/service httpd start
 chkconfig memcached on
@@ -173,5 +174,5 @@ git checkout django17upgrade
 export PATH="/usr/local/bin:$PATH"
 virtualenv venv-stoqs
 chown -R $USER ..
-chown -R $USER ~/Downloads
+chown -R $USER /home/$USER/Downloads
 
