@@ -850,7 +850,7 @@ class Base_Loader(STOQS_Loader):
         Perform inside an inner method to commit only on success as some saves may result in 
         database integrity errors and we need to recover from them gracefully.
         '''
-        @transaction.commit_on_success(using=self.dbAlias)
+        @transaction.atomic(using=self.dbAlias)
         def _innerInsertRow(self, parmCount, parameterCount, measurement, row):
 
             for key, value in row.iteritems():

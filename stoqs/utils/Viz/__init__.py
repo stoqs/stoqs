@@ -980,7 +980,7 @@ class ParameterParameter(object):
             return ppPngFile, infoText, sql
 
     def makeX3D(self):
-      @transaction.commit_on_success(using=self.request.META['dbAlias'])
+      @transaction.atomic(using=self.request.META['dbAlias'])
       def inner_makeX3D(self):
         '''
         Produce X3D XML text and return it

@@ -878,7 +878,7 @@ class STOQS_Loader(object):
         self.logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
     def saveBottomDepth(self):
-      @transaction.commit_on_success(using=self.dbAlias)
+      @transaction.atomic(using=self.dbAlias)
       def _innerSaveBottomDepth(self):
         '''
         Read the time series of Parameter altitude and add to depth values to compute BottomDepth
@@ -907,7 +907,7 @@ class STOQS_Loader(object):
       return _innerSaveBottomDepth(self)
 
     def insertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
-      @transaction.commit_on_success(using=self.dbAlias)
+      @transaction.atomic(using=self.dbAlias)
       def _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
         '''
         Read the bottomdepth from Measurement for the Activity, simplify it 
@@ -1091,7 +1091,7 @@ class STOQS_Loader(object):
       For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
       compute sigma-t and add it as a parameter
       '''                 
-      @transaction.commit_on_success(using=self.dbAlias)
+      @transaction.atomic(using=self.dbAlias)
       def _innerAddSigmaT(self, parameterCounts):
         
         # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
@@ -1157,7 +1157,7 @@ class STOQS_Loader(object):
       For all measurements lookup the water depth from a GMT grd file using grdtrack(1), subtract the depth and add altitude as a new Parameter to the Measurement
       To be called from load script after process_command_line().
       '''
-      @transaction.commit_on_success(using=self.dbAlias)
+      @transaction.atomic(using=self.dbAlias)
       def _innerAddAltitude(self, parameterCounts, activity=None):
         # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
         if self.grdTerrain:
