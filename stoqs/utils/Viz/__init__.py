@@ -703,7 +703,7 @@ class ParameterParameter(object):
         return csql
 
     def _getXYCData(self, strideFlag=True, latlonFlag=False, returnIDs=False, sampleFlag=True):
-      @transaction.commit_on_success(using=self.request.META['dbAlias'])
+      @transaction.atomic(using=self.request.META['dbAlias'])
       def inner_getXYCData(self, strideFlag, latlonFlag):
         '''
         Construct SQL and iterate through cursor to get X, Y, and possibly C Parameter Parameter data
@@ -980,7 +980,7 @@ class ParameterParameter(object):
             return ppPngFile, infoText, sql
 
     def makeX3D(self):
-      @transaction.commit_on_success(using=self.request.META['dbAlias'])
+      @transaction.atomic(using=self.request.META['dbAlias'])
       def inner_makeX3D(self):
         '''
         Produce X3D XML text and return it

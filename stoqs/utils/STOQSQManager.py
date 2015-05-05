@@ -544,7 +544,7 @@ class STOQSQManager(object):
         return {'plot': plot_results, 'dataaccess': da_results}
 
     def _getPlatformModel(self, platformName):
-        @transaction.commit_on_success(using=self.dbname)
+        @transaction.atomic(using=self.dbname)
         def _innerGetPlatformModel(self, platform):
             modelInfo = None, None, None, None
             try:

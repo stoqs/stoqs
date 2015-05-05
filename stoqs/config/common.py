@@ -330,7 +330,13 @@ class Common(Configuration):
                                 'level':'INFO',
                                 'formatter': 'verbose'
     }
-    LOGGING['loggers']['stoqs.loaders'] = {
+    LOGGING['loggers']['DAPloaders'] = {
+                                'handlers':['console'],
+                                'propagate': True,
+                                'level':'INFO',
+                                'formatter': 'verbose'
+    }
+    LOGGING['loggers']['SampleLoaders'] = {
                                 'handlers':['console'],
                                 'propagate': True,
                                 'level':'INFO',

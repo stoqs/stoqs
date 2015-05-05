@@ -49,7 +49,7 @@ import pprint
 from bs4 import BeautifulSoup
 
 # Set up logging for module functions
-logger = logging.getLogger('stoqs.loaders')
+logger = logging.getLogger(__name__)
 # Logging level set in stoqs/config/common.py, but may override here
 ##logger.setLevel(logging.INFO)
 

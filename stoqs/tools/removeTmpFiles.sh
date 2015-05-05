@@ -8,6 +8,9 @@ PD=$HOME/dev/stoqsgit
 rm -v $PD/stoqs/media/sections/*.png
 rm -v $PD/stoqs/media/parameterparameter/*.png
 
+# Unit test fixture data
+rm -v $PD/stoqs/fixtures/*.json
+
 # Mapserver .map files and log file
 rm -vf /dev/shm/*.map
 rm -vf /tmp/mapserver_stoqshg.log
