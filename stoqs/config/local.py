@@ -44,5 +44,5 @@ class Local(Common):
     # Your local stuff: Below this line define 3rd party library settings
 
     # Must be address externally accessible if your STOQS server is to be externally accessible
-    MAPSERVER_HOST = values.Value('172.16.130.193')
+    MAPSERVER_HOST = values.Value('172.16.130.190')
 

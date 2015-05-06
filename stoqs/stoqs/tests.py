@@ -10,9 +10,7 @@ __email__ = "mccann at mbari.org"
 __status__ = "Development"
 __doc__ = '''
 
-Unit tests for the STOQS project.  Test with:
-    python -Wall manage.py test stoqs -v 2
-
+Tests for the stoqs application
 
 Mike McCann
 MBARI Dec 29, 2011
