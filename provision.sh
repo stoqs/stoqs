@@ -164,7 +164,7 @@ su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
 service postgresql-9.3 restart
 
-echo Clone STOQS repo, create virtual environment 
+echo Clone STOQS repo from https://github.com/stoqs/stoqs.git. See CONTRIBUTING for how to clone from your fork.
 cd ..
 mkdir dev && cd dev
 git clone https://github.com/stoqs/stoqs.git stoqsgit
