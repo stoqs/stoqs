@@ -38,7 +38,7 @@ with the version that actually ended in upstream, and to submit pull requests fo
 
 4. Push the new branch to your fork on GitHub: `git push origin my_new_feature`
 
-5. Share your contribution with others by issuing a (pull request)[https://help.github.com/articles/using-pull-requests/]: Click Pull Request button on GitHub
+5. Share your contribution with others by issuing a [pull request](https://help.github.com/articles/using-pull-requests/): Click Pull Request button on GitHub
 
 #### Useful Commands
 
