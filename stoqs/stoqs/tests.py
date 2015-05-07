@@ -27,6 +27,7 @@ import sys
 import time
 import json
 
+from django.conf import settings
 from django.utils import unittest
 from django.test.client import Client
 from django.test import TestCase
@@ -272,9 +273,12 @@ class SummaryDataTestCase(TestCase):
 
         req = base + '?' + qstring
         response = self.client.get(req)
-        json.loads(response.content) # Verify we don't get an exception when we load the data.
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-        # TODO: Assert image was created
+        # Assert image was created and is accesible via http
+        img_url = settings.MEDIA_URL + 'sections/' + data.get('parameterplatformdatavaluepng')[0]
+        img_resp = self.client.get(img_url)
+        self.assertEqual(img_resp.status_code, 200, 'Status code for image should be 200 for %s' % img_url)
 
     def test_parameterparameterplot(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
@@ -286,6 +290,10 @@ class SummaryDataTestCase(TestCase):
 
         req = base + '?' + qstring
         response = self.client.get(req)
-        json.loads(response.content) # Verify we don't get an exception when we load the data.
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-        # TODO: Assert image was created
+        # Assert image was created and is accesible via http
+        img_url = settings.MEDIA_URL + 'parameterparameter/' + data.get('parameterparameterpng')[0]
+        img_resp = self.client.get(img_url)
+        self.assertEqual(img_resp.status_code, 200, 'Status code for image should be 200 for %s' % img_url)
+
