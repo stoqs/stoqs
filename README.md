@@ -34,8 +34,8 @@ Visit your server's STOQS User Interface using your host computer's browser:
 
     http://localhost:8000
 
-More instructions are in the doc/instructions directory -- see [LOADING](doc/instructions/LOADING.md) for how to load your own data. 
-See [CONTRIBUTING](doc/instructions/CONTRIBUTING.md) for how you can share your work.
+More instructions are in the doc/instructions directory -- see [LOADING](doc/instructions/LOADING.md) for how to load your own data
+and [CONTRIBUTING](doc/instructions/CONTRIBUTING.md) for how to share your work.
 Visit the [STOQS Wiki pages](https://github.com/stoqs/stoqs/wiki) for updates and links to presentations.
 The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also 
 a good place to ask questions and engage in discussion with the STOQS user and developer communities.
