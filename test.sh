@@ -14,7 +14,7 @@ export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
 stoqs/manage.py syncdb --settings=config.local --noinput --database=default
 
 cd stoqs
-coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadTestData.py
+coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/CANON/loadCANON_may2015.py --dbAlias default -t
 
 # Run tests using the continuous integration setting and default Local class configuration
 # test_stoqs database created and dropped by role of the shell account using Test framework's DB names
