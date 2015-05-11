@@ -99,6 +99,7 @@ aStart = Activity.objects.using(dbAlias).filter(name__contains=aName).values_lis
 aEnd = Activity.objects.using(dbAlias).filter(name__contains=aName).values_list('enddate')[0][0]
 
 
+(This is a change for testing purposes)
 --
 Mike McCann
 MBARI 11 February 2014
