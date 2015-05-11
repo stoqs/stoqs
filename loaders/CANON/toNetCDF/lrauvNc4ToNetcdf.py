@@ -108,7 +108,7 @@ class InterpolatorWriter(BaseWriter):
 
  def createSeriesPydap(self, name):
      v = self.df[name]
-     v_t = self.df[name+'_time'] 
+     v_t = self.df[name+'_time']
      data = np.asarray(v_t)
      data[data/1e10 < -1.] = 'NaN'
      data[data/1e10 > 1.] ='NaN'
@@ -160,7 +160,7 @@ class InterpolatorWriter(BaseWriter):
      self.df = []
      self.parm_sub_ts = []
      self.chl_ts = None
-     self.parms =  ['latitude','longitude','depth'] + [parm]
+     self.parms =  ['latitude','longitude','depth'] + parm
      parm_ts = []
 
      try:
@@ -174,9 +174,10 @@ class InterpolatorWriter(BaseWriter):
             parm = self.parms[i]
             try:
                    p_ts = self.createSeriesPydap(parm)
-            except KeyError:
-                   p_ts = pd.Series()
-                   self.logger.info('Key error on ' + parm)
+            except KeyError, e:
+                  p_ts = pd.Series()
+                  self.logger.info('Key error on ' + parm)
+                  raise e
 
             parm_ts.append(p_ts)
 
@@ -224,15 +225,19 @@ class InterpolatorWriter(BaseWriter):
      except socket.error,e:
             self.logger.error('Failed in attempt to open_url(%s)', url)
             raise e
+     except ValueError,e: 
+            self.logger.error('Value error when opening open_url(%s)', url)
+            raise e 
     
     # Create pandas time series and get sampling metric for each
      for i in range(len(self.parms)):
             parm = self.parms[i]
             try:
                    p_ts = self.createSeriesPydap(parm)
-            except KeyError:
+            except KeyError, e:
                    p_ts = pd.Series()
                    self.logger.info('Key error on ' + parm)
+                   raise e
 
             parm_ts.append(p_ts)
             try:

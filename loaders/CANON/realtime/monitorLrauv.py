@@ -35,11 +35,16 @@ from datetime import datetime, timedelta
 import time
 import re
 import pydap
+import pytz
+import Contour
 
-from stoqs import models as mod 
+from Contour import Contour
+from collections import namedtuple
+from stoqs import models as mod
 from thredds_crawler.crawl import Crawl
 from coards import from_udunits
 from stoqs.models import InstantPoint
+
 from django.db.models import Max
 
 # Set up global variables for logging output to STDOUT
@@ -61,7 +66,23 @@ class NcFileMissing(Exception):
 
 class ServerError(Exception):
     pass
-  
+
+def abbreviate(parms):
+    '''Return the shortened string that represents the list of parameters. This is used in both activity and file naming conventions'''
+    dict = {'sea_water_temperature':'sst', 'sea_water_salinity':'salt', 'mass_concentration_of_chlorophyll_in_sea_water': 'chl'}
+    abbrev = ''
+    for p in parms:
+        found = False
+        for key,value in dict.iteritems():
+            if p.find(key) != -1:
+                abbrev = abbrev + '_' + value
+                found = True
+                break
+        if not found:
+            abbrev = abbrev + '_' + p[:2]
+
+    return abbrev
+
 def getNcStartEnd(urlNcDap, timeAxisName):
     '''Find the lines in the html with the .nc file, then open it and read the start/end times
     return url to the .nc  and start/end as datetime objects.
@@ -83,30 +104,25 @@ def getNcStartEnd(urlNcDap, timeAxisName):
     except pydap.exceptions.ServerError as e:
         logger.warn(e)
         raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap))
+    except ValueError as e:
+        logger.warn(e)
+        raise ServerError("Can't read start and end dates of %s from %s" % (timeAxisUnits, urlNcDap)) 
 
     return startDatetime, endDatetime
 
-def processDecimated(pw, url, lastDatetime, args):
+def processDecimated(pw, url, lastDatetime, outDir, resample_freq, interp_freq, parm, interp_key):
     '''
     Process decimated LRAUV data
     '''
     logger.debug('url = %s', url)
 
-    # If parameter names contains any group forward slash '/' delimiters
-    # replace them with underscores to make file name more readable
-    s = []
-    for p in args.parms:
-        s.append(p.replace('/','_')) 
-    sSmall = ''.join(i[:2] for i in s)
-    parms = '_' + '_'.join(sSmall)
-
-    if args.outDir.startswith('/tmp'):
-        outFile_i = os.path.join(args.outDir, url.split('/')[-1].split('.')[0] + parms + '_i.nc')
+    if outDir.startswith('/tmp'):
+        outFile_i = os.path.join(args.outDir, url.split('/')[-1].split('.')[0] + '_i.nc')
     else:
-        outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + parms + '_i.nc') 
+        outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + '_i.nc')
 
-    if len(args.parms) == 1 and len(args.interpFreq) == 0 or len(args.resampleFreq) == 0 :
-        startDatetime, endDatetime = getNcStartEnd(url, args.parms[0] + '_time')
+    if len(interp_freq) == 0 or len(resample_freq) == 0 :
+        startDatetime, endDatetime = getNcStartEnd(url, parm[-1] + '_time')
     else:
         startDatetime, endDatetime = getNcStartEnd(url, 'depth_time')
 
@@ -117,25 +133,33 @@ def processDecimated(pw, url, lastDatetime, args):
     if endDatetime > lastDatetime:
         logger.debug('Calling pw.process with outFile_i = %s', outFile_i)
         try:
-            if len(args.parms) == 1 and len(args.interpFreq) == 0 or len(args.resampleFreq) == 0 :
-                pw.processSingleParm(url, outFile_i, args.parms[0])
+            if len(interp_freq) == 0 or len(resample_freq) == 0 :
+                pw.process(url, outFile_i, parm, interp_key)
             else:
-                pw.process(url, outFile_i, args.parms, args.interpFreq, args.resampleFreq)
+                pw.processResample(url, outFile_i, parm, interp_freq, resample_freq)
 
         except TypeError as e:
             logger.warn('Problem reading data from %s', url)
-            logger.warn('Assumming data are invalid and skipping')
+            logger.warn('Assuming data are invalid and skipping')
         except IndexError as e:
             logger.warn('Problem interpolating data from %s', url)
+        except KeyError as e:
+            raise ServerError("Can't read all the parameters from %s" % (url))
+        except ValueError as e:
+            raise ServerError("Can't read all the parameters from %s" % (url))
+
         else:
+            import pdb;pdb.set_trace()
             if outFile_i.startswith('/tmp'):
                 # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
-                dir = '/'.join(url.split('/')[-7:-1])
-                cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/LRAUV/%s' % (outFile_i, dir)
-                print cmd
+                list = url.split('/') # get all strings delimited with /
+                indx = list.index('LRAUV') # find first LRAUV string in the list
+                dir = '/'.join(list[indx:-1]) # grab everything between LRAUV and the last string
+                cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/%s' % (outFile_i, dir)
+                logger.debug('%s', cmd)
                 os.system(cmd)
 
-            url_i = url.replace('.nc4', parms + '_i.nc')
+            url_i = url.replace('.nc4', '_i.nc')
     else:
         logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
 
@@ -150,24 +174,38 @@ def process_command_line():
 
         examples = 'Examples:' + '\n\n'
         examples += 'Run on test database:\n'
-        examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /mbari/LRAUV/daphne/realtime/hotspotlogs -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"    
+        examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /mbari/LRAUV/daphne/realtime/hotspotlogs -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs/*.shore.nc4' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
                                          epilog=examples)
                                              
-        parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot logs or other realtime processed data are.  If interpolating, must map to the same location as -o directory', default='.',required=True)   
-        parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='.',required=True)  
-        parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='.',required=True)    
-        parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1) 
-        parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file - must be the same location as -u URL', default='.',required=False)   
-        parser.add_argument('-d', '--description', action='store', help='Brief description of experiment')
-        parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity')
-        parser.add_argument('-i', '--interpFreq', action='store', help='Interpolation frequency string for interpolating e.g. 500L=500 millisecs, 1S=1 second, 1Min=1 minute,H=1 hour,D=daily', default='')
-        parser.add_argument('-r', '--resampleFreq', action='store', help='Resampling frequency string to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='')  
+        #parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are.
+        # If interpolating, must map to the same location as -o directory', default='.',required=True)
+        parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
+                                                                 ' If interpolating, must map to the same location as -o directory',
+                            default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/sbdlogs/2015/201503/.*shore.nc4$',required=False)
+        #parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='default',required=True)
+        parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='stoqs_lrauv',required=False)
+        #parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='.',required=True)
+        parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='April 2015 testing',required=False)
+        parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1)
+        #parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file or contour output - must map to the same location as -u URL', default='', required=False)
+        parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file or contour output '
+                                                                   '- must map to the same location as -u URL', default='/tmp/TestMonitorLrauv', required=False)
+        #parser.add_argument('-t', '--contourUrl', action='store', help='base url to store cross referenced contour plot resources', default='.',required=True)
+        parser.add_argument('-t', '--contourUrl', action='store', help='base url to store cross referenced contour plot resources',
+                            default='http://dods.mbari.org/opendap/data/lrauv/stoqs/',required=False)
+        #parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='.')
+        parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='Daphne Monterey data - April 2015')
+        parser.add_argument('-i', '--interpolate', action='store_true', help='interpolate - must be used with --outDir option')
+        #parser.add_argument('-a', '--append', action='store_false', help='Append data to existing Activity',required=False)
+        parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity',required=False)
+        parser.add_argument('-f', '--interpFreq', action='store', help='Optional interpolation frequency string to specify time base for interpolating e.g. 500L=500 millisecs, 1S=1 second, 1Min=1 minute,H=1 hour,D=daily', default='')
+        parser.add_argument('-r', '--resampleFreq', action='store', help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='')
         parser.add_argument('-p', '--parms', action='store', help='List of space separated parameters to load', nargs='*', default=
                                     ['sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water'])
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
-   
+
         args = parser.parse_args()    
         return args
 
@@ -177,15 +215,14 @@ if __name__ == '__main__':
                 'makai':        'feb2fc'}
   
     args = process_command_line() 
-    interpolate = False
 
-    # interpolating implied when specifying output directory
-    if len(args.outDir) > 1:
-        interpolate = True
+    if args.interpolate and len(args.outDir) < 1 :
+        logger.error('Need to specify output directory with -o or --outDir option when interpolating')
+        exit(-1)
 
-    platformName = None; 
+    platformName = None
 
-    # Base url for logs indicates what vehicle logs are being monitored 
+    # Url name for logs indicates what vehicle logs are being monitored; use this to determine the platform name
     d = re.match(r'.*tethys*',args.inUrl) 
     if d:
         platformName = 'tethys'
@@ -208,80 +245,110 @@ if __name__ == '__main__':
     cl.campaignName = args.campaign
    
     # Get directory list from sites
-    if interpolate:
-        logger.info("Crawling %s for shore.nc4 files" % (args.inUrl))
-        c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore_\d+_\d+.nc4$"], debug=False)
-    else:
-        logger.info("Crawling %s for shore.nc files" % (args.inUrl))
-        c = Crawl(os.path.join(args.inUrl, 'catalog.xml'), select=[".*shore_\d+_\d+.nc$"], debug=False)
+    s = args.inUrl.rsplit('/',1)
+    files = s[1]
+    url = s[0]
+    logger.info("Crawling %s for %s files" % (url, files))
+    c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=False)
+    print c.datasets
     
     urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-  
-    if interpolate:
-        pw = lrauvNc4ToNetcdf.InterpolatorWriter()
 
-    hasData = False
-    parms = []
+    pw = lrauvNc4ToNetcdf.InterpolatorWriter()
+
+    # If parameter names contains any group forward slash '/' delimiters
+    # replace them with underscores. This is because pydap automatically renames slashes as underscores
+    # and needs to reference the parameter correctly in the DAPloader
+    parm_list = []
+    parm_process = []
+    coord = {}
+
+    for p in args.parms:
+        parm_fix = p.replace('/','_')
+
+        parm_list.append(parm_fix + '_i')
+        parm_list.append(parm_fix)
+        coord[parm_fix + '_i'] = {'time': 'time_i', 'latitude': 'latitude_i', 'longitude': 'longitude_i', 'depth': 'depth_i'}
+        coord[parm_fix] = {'time': p + '_time', 'latitude':  p +'_latitude', 'longitude':  p +'_longitude', 'depth':  p +'_depth'}
+        parm_process.append(parm_fix)
+
+        # Last parameter is the one to interpolate to - TODO: pass this in as a argument
+        interp_key = parm_fix
 
     # Look in time order - oldest to newest
     for url in sorted(urls):
-        if interpolate:
-            try:
-                (url_i, startDatetime, endDatetime) = processDecimated(pw, url, lastDatetime, args)
-            except ServerError as e:
-                logger.warn(e)
-                continue
-            if url_i:
-                logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_i))
-                # Use Hyrax server to avoid the stupid caching that the TDS does
-                url_src = url_i.replace('http://elvis.shore.mbari.org/thredds/dodsC/LRAUV', 'http://dods.mbari.org/opendap/data/lrauv') 
-                hasData = True
+        hasUrl = False
 
-                # If parameter names contains any group forward slash '/' delimiters
-                # replace them with underscores. This is because pydap automatically renames slashes as underscores
-                # and need to reference the parameter correctly in the DAPloader
-                for p in args.parms:
-                    parms.append(p.replace('/','_'))
-        else:
-            try:
-                startDatetime, endDatetime = getNcStartEnd(url,'Time') 
-            except ServerError as e:
-                logger.warn(e)
-                continue
+        try:
 
-            url_src = url.replace('thredds/dodsC/LRAUV', 'opendap/data/lrauv') 
-            hasData = True
+            (url_i, startDatetime, endDatetime) = processDecimated(pw, url, lastDatetime, args.outDir,
+                                                                   args.resampleFreq, args.interpFreq,
+                                                                   parm_process, interp_key)
+        except ServerError as e:
+            logger.warn(e)
+            continue
 
         lastDatetime = endDatetime
 
-        if hasData:
-            logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_src))
-            # Activity name limited to 128 characters, so reduce this to the first two characters which should make it unique
-            parmsSmall = ''.join(i[:2] for i in parms)
-            aName = platformName + '_sbdlog_' + startDatetime.strftime('%Y%m%dT%H%M%S')  +  '_' + '_'.join(parmsSmall)
+        if url_i:
+            logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_i))
+            # Use Hyrax server to workaround the caching that TDS does
+            url_src = url_i.replace('http://elvis.shore.mbari.org/thredds/dodsC/LRAUV', 'http://dods.mbari.org/opendap/data/lrauv')
+            hasUrl = True
 
+        if hasUrl:
+            logger.info("Received new %s file ending at %s in %s" % (platformName, lastDatetime, url_src))
+            aName = startDatetime.strftime('%Y%m%dT%H%M%S') + '_' + url_src.split('/')[-1].split('.')[0]
             dataStartDatetime = None
 
             if args.append:
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(args.database).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
 
-            try: 
-                logger.debug("Instantiating Lrauv_Loader for url = %s", url_src) 
+            try:
+                logger.info("Instantiating Lrauv_Loader for url = %s  STRIDE %d<===============================", url_src, int(args.stride))
                 lrauvLoad = DAPloaders.runLrauvLoader(cName = args.campaign,
-                                                      cDesc = None,
-                                                      aName = aName,
-                                                      aTypeName = 'LRAUV mission',
-                                                      pName = platformName,
-                                                      pTypeName = 'auv',
-                                                      pColor = colors[platformName],
-                                                      url = url_src,
-                                                      parmList = parms,
-                                                      dbAlias = args.database,
-                                                      stride = args.stride,
-                                                      startDatetime = startDatetime,
-                                                      dataStartDatetime = dataStartDatetime,
-                                                      endDatetime = endDatetime)
+                                                  cDesc = None,
+                                                  aName = aName,
+                                                  aTypeName = 'LRAUV mission',
+                                                  pName = platformName,
+                                                  pTypeName = 'auv',
+                                                  pColor = colors[platformName],
+                                                  url = url_src,
+                                                  parmList = parm_fix,
+                                                  dbAlias = args.database,
+                                                  stride = int(args.stride),
+                                                  startDatetime = startDatetime,
+                                                  dataStartDatetime = dataStartDatetime,
+                                                  endDatetime = endDatetime,
+                                                  contourUrl = args.contourUrl,
+                                                  auxCoords = coord)
+
+                title = 'MBARI LRAUV Survey'
+                endDatetimeUTC = pytz.utc.localize(endDatetime)
+                endDatetimeLocal = endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+                startDatetimeUTC = pytz.utc.localize(startDatetime)
+                startDatetimeLocal = startDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+
+                # format contour output file name replacing file extension with .png
+                if args.outDir.startswith('/tmp'):
+                    outFile = os.path.join(args.outDir, url_src.split('/')[-1].split('.')[0] + '.png')
+                else:
+                    outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
+
+                logger.debug('===============%s===============', outFile)
+
+                c = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], parm_fix, title, outFile, False)
+                c.run()
+
+                if outFile.startswith('/tmp'):
+                    # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
+                    list = url.split('/') # get all strings delimited with /
+                    indx = list.index('LRAUV') # find first LRAUV string in the list
+                    dir = '/'.join(list[indx:-1]) # grab everything between LRAUV and the last string
+                    cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/%s' % (outFile, dir)
+                    logger.debug('%s', cmd)
+                    os.system(cmd)
 
             except DAPloaders.NoValidData:
                 logger.info("No measurements in this log set. Activity was not created as there was nothing to load.")
@@ -294,4 +361,3 @@ if __name__ == '__main__':
 
             except DAPloaders.InvalidSliceRequest as e:
                 logger.warn(e)
-
