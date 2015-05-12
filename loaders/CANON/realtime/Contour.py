@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.dates as dts
 import matplotlib.gridspec as gridspec
 import matplotlib.ticker as ticker
 import numpy as np
@@ -33,17 +34,16 @@ class Contour(object):
     '''
     Create plots for visualizing data from LRAUV vehicles
     '''
-    def __init__(self, startDatetime, endDatetime, database, platformName, parms, title, outFilename, animate):
+    def __init__(self, startDatetime, endDatetime, database, platformName, parmGroup, title, outFilename, animate):
         self.startDatetime = startDatetime
         self.endDatetime = endDatetime
         self.platformName = platformName
-        self.parms = parms
+        self.parmGroup = parmGroup
         self.title = title
         self.animate = animate
         self.outFilename = outFilename
         self.database = database
         self.platformName = platformName
-        self.parameterName = parms
 
 
     def getTimeSeriesData(self, startDatetime, endDatetime):
@@ -52,29 +52,31 @@ class Contour(object):
         '''
         data_dict = defaultdict(lambda: {'datetime': [], 'lon': [], 'lat': [], 'depth': [], 'datavalue':[]})
 
-        if not self.parameterName :
-            raise Exception('Must specify list parameterNames')
+        if not self.parmGroup :
+            raise Exception('Must specify list parmGroup')
 
         for pln in self.platformName:
-            for pname in self.parameterName :
-                qs = MeasuredParameter.objects.using(self.database)
+            for g in self.parmGroup:
+                parameters = [x.strip() for x in g.split(',')]
+                for pname in parameters:
+                    qs = MeasuredParameter.objects.using(self.database)
 
-                qs = qs.filter(measurement__instantpoint__timevalue__gte=startDatetime)
-                qs = qs.filter(measurement__instantpoint__timevalue__lte=endDatetime)
-                qs = qs.filter(parameter__name=pname)
-                qs = qs.filter(measurement__instantpoint__activity__platform__name=pln)
+                    qs = qs.filter(measurement__instantpoint__timevalue__gte=startDatetime)
+                    qs = qs.filter(measurement__instantpoint__timevalue__lte=endDatetime)
+                    qs = qs.filter(parameter__name=pname)
+                    qs = qs.filter(measurement__instantpoint__activity__platform__name=pln)
 
-                qs = qs.values('measurement__instantpoint__timevalue', 'measurement__depth', 'measurement__geom', 'datavalue').order_by('measurement__instantpoint__timevalue')
+                    qs = qs.values('measurement__instantpoint__timevalue', 'measurement__depth', 'measurement__geom', 'datavalue').order_by('measurement__instantpoint__timevalue')
 
-                for rs in qs:
-                    geom = rs['measurement__geom']
-                    lat = geom.y
-                    lon = geom.x
-                    data_dict[pln+pname]['lat'].insert(0, lat)
-                    data_dict[pln+pname]['lon'].insert(0, lon)
-                    data_dict[pln+pname]['datetime'].insert(0, rs['measurement__instantpoint__timevalue'])
-                    data_dict[pln+pname]['depth'].insert(0, rs['measurement__depth'])
-                    data_dict[pln+pname]['datavalue'].insert(0, rs['datavalue'])
+                    for rs in qs:
+                        geom = rs['measurement__geom']
+                        lat = geom.y
+                        lon = geom.x
+                        data_dict[pln+pname]['lat'].insert(0, lat)
+                        data_dict[pln+pname]['lon'].insert(0, lon)
+                        data_dict[pln+pname]['datetime'].insert(0, rs['measurement__instantpoint__timevalue'])
+                        data_dict[pln+pname]['depth'].insert(0, rs['measurement__depth'])
+                        data_dict[pln+pname]['datavalue'].insert(0, rs['datavalue'])
 
         return data_dict
 
@@ -86,14 +88,18 @@ class Contour(object):
             self.data = []
             print "WARNING:", e
 
-    def formatDate(self, x, pos=None):
-        d = time.gmtime(x*self.scale_factor)
-        utc = datetime(*d[:6])
-        local_tz = pytz.timezone('America/Los_Angeles')
-        utc_tz = pytz.timezone('UTC')
-        utc = utc.replace(tzinfo=utc_tz)
-        pst = utc.astimezone(local_tz)
-        return pst.strftime('%Y-%m-%d %H:%M')
+    class DateFormatter(mpl.ticker.Formatter):
+        def __init__(self, scale_factor=1):
+            self.scale_factor = scale_factor
+
+        def __call__(self, x, pos=None):
+            d = time.gmtime(x*self.scale_factor)
+            utc = datetime(*d[:6])
+            local_tz = pytz.timezone('America/Los_Angeles')
+            utc_tz = pytz.timezone('UTC')
+            utc = utc.replace(tzinfo=utc_tz)
+            pst = utc.astimezone(local_tz)
+            return pst.strftime('%Y-%m-%d %H:%M')
 
     def readCLT(self, fileName):
         '''
@@ -106,6 +112,49 @@ class Contour(object):
 
         return cltList
 
+    def plotNightDay(self,ax,xdates,startDatetime,endDatetime):
+
+        endDatetimeUTC = pytz.utc.localize(endDatetime)
+        endDatetimeLocal = endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+        startDatetimeUTC = pytz.utc.localize(startDatetime)
+        startDatetimeLocal = startDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+        sunriseLocal24hr = startDatetimeLocal.replace(hour=6,minute=0,second=0,microsecond=0)
+        sunsetLocal24hr = startDatetimeLocal.replace(hour=20,minute=0,second=0,microsecond=0)
+
+        secs = time.mktime(sunriseLocal24hr.timetuple())
+        sunrise = time.gmtime(secs)
+        secs = time.mktime(sunsetLocal24hr.timetuple())
+        sunset = time.gmtime(secs)
+        dark_end = []
+        dark_start = []
+        i = 0
+        delta = timedelta(minutes=10)
+
+        for dt in xdates:
+
+            # If at night
+            if dt >= sunset or dt <= sunrise:
+                # If within 10 minutes of sunset
+                if dt >= sunset - delta and dt <= sunset + delta :
+                    dark_start =  dt
+                # If within 10 minutes of sunrise or last time
+                elif dt >= sunrise - delta and dt <= sunrise + delta or dt == xdates[-1] :
+                    dark_end =  dt
+                else:
+                    dark_start = dt
+
+                # If have start and end time defined color using zoom effect
+                if dark_start and dark_end and (dark_start - dark_end) > timedelta(hours=1):
+                    if self.scale_factor:
+                        dark_end_scaled = time.mktime(dark_end.timetuple())/self.scale_factor
+                        dark_start_scaled = time.mktime(dark_start.timetuple())/self.scale_factor
+                    else:
+                        dark_end_scaled = time.mktime(dark_end.timetuple())
+                        dark_start_scaled = time.mktime(dark_start.timetuple())
+
+                    self.zoomEffect(ax, dark_start_scaled, dark_end_scaled)
+                    dark_start = []
+                    dark_end = []
 
     def createPlot(self, startDatetime, endDatetime):
 
@@ -114,7 +163,7 @@ class Contour(object):
             return
 
         # GridSpecs for contour subplots
-        outer_gs = gridspec.GridSpec(nrows=4, ncols=1)#, height_ratios=[1,3])
+        outer_gs = gridspec.GridSpec(nrows=1+len(self.parmGroup), ncols=1)#, height_ratios=[1,3])
         map_gs  = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=outer_gs[0])
 
         STATIC_ROOT = '/var/www/html/stoqs/static'      # Warning: Hard-coded
@@ -122,70 +171,94 @@ class Contour(object):
         self.cm_jetplus = mpl.colors.ListedColormap(np.array(clt))
 
         # fix depth range
-        rangey = [0.0,70.0]
+        rangey = [0.0,90.0]
 
         # start a new figure - size is in inches
         fig = plt.figure(figsize=(8, 10))
         fig.suptitle(self.title+'\n'+self.subtitle, fontsize=8)
 
-        # add contour plots for each parameter in each database
-        i = 1
-        parameters = self.parms
-        
-        for name in parameters:
-            title = name
-            if name.find('chlorophyll') != -1 :
-                rangez = [0.0, 5.0]
-                title += ' (ug/l)'
-            if name.find('salinity') != -1 :
-                rangez = [33.5, 33.9]
-            if name.find('temperature') != -1 :
-                rangez = [10, 15]
-                title += ' ($^\circ$C)'
-                
-            cblabel = False
-            lower_gs = gridspec.GridSpecFromSubplotSpec(nrows=2, ncols=1, subplot_spec=outer_gs[i])
-            j = 0
+        # add contour plots for each parameter group
+        i = 0
+
+        for group in self.parmGroup:
             i += 1
-            for pn in self.platformName:
+            parm = [x.strip() for x in group.split(',')]
+            lower_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm)*2, ncols=1, subplot_spec=outer_gs[i])
+            j = 0
+            for name in parm:
+                title = name
+                if name.find('chlorophyll') != -1 :
+                    rangez = [0.0, 5.0]
+                    units = ' (ug/l)'
+                if name.find('salinity') != -1 :
+                    rangez = [33.5, 33.9]
+                    units = ''
+                if name.find('temperature') != -1 :
+                    rangez = [10, 15]
+                    units = ' ($^\circ$C)'
+
+                pn = self.platformName[0]
+
                 x = [time.mktime(xe.timetuple()) for xe in self.data[pn+name]['datetime']]
                 y = self.data[pn+name]['depth']
                 z = self.data[pn+name]['datavalue']
-    
-                # Create the contour plot and label according to the database name
-                ax = plt.Subplot(fig, lower_gs[j])
-                fig.add_subplot(ax)
 
-                # Plot interpolated data with contour plot (if not possible, changes to the scatter plot)
-                if name.find('_i'):
-                    cs0 = self.createContourPlot(title + pn,ax,x,y,z,rangey,rangez,startDatetime,endDatetime)
-                else:
-                    cs0 = self.createScatterPlot(title + pn,ax,x,y,z,rangey,rangez,startDatetime,endDatetime)
+                ax0 = plt.Subplot(fig, lower_gs[j])
+                ax1 = plt.Subplot(fig, lower_gs[j+1])
+                fig.add_subplot(ax0)
+                fig.add_subplot(ax1)
 
-                ax.xaxis.set_ticks([])
-                ax.text(0.95,0.02, pn, verticalalignment='bottom',
-                         horizontalalignment='right',transform=ax.transAxes,color='blue',fontsize=12)
-                ax.xaxis.set_ticks([])
-                
-                if not cblabel and cs0:
-                    cblabel = True
-                    # For a colorbar create an axes on the top side of ax. The width of cax will be 3%
-                    # of ax and the padding between cax and ax will be fixed at 0.1 inch.
-                    divider = make_axes_locatable(ax)
-                    cax = divider.append_axes("top", size="10%", pad=0.1)
+                # if data found, plot with contour plot (if fails, falls back to the scatter plot)
+                if len(x) > 0:
+                    cs0 = self.createContourPlot(title + pn,ax0,x,y,z,rangey,rangez,startDatetime,endDatetime)
+                    cs1 = self.createScatterPlot(title + pn,ax1,x,y,z,rangey,rangez,startDatetime,endDatetime)
+                else: # otherwise add in some fake data and plot a placeholder time/depth plot
+                    tmin = time.mktime(startDatetime.timetuple())
+                    tmax = time.mktime(endDatetime.timetuple())
+                    x.append(tmin)
+                    x.append(tmax)
+                    y.append(np.NaN)
+                    y.append(np.NaN)
+                    z.append(np.NaN)
+                    z.append(np.NaN)
+                    cs0 = self.createScatterPlot(title + pn,ax0,x,y,z,rangey,rangez,startDatetime,endDatetime)
+                    cs1 = self.createScatterPlot(title + pn,ax1,x,y,z,rangey,rangez,startDatetime,endDatetime)
+
+                ax1.text(0.95,0.02, name, verticalalignment='bottom',
+                         horizontalalignment='right',transform=ax1.transAxes,color='black',fontsize=8)
+
+                # if have data, create a color bar and shade night/day
+                if len(z):
+                    # For a colorbar create an axes on the right side of ax. The width of cax will be 1%
+                    # of ax and the padding between cax and ax will be fixed at 0.2 inch.
+                    divider = make_axes_locatable(ax1)
+                    cax = divider.append_axes("right", size="1%", pad=0.1)
                     cbFormatter = FormatStrFormatter('%.2f')
-                    cb = plt.colorbar(cs0, cax=cax, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='horizontal')
-                    cb.set_label(title,fontsize=8,labelpad=-15)
+                    cb = plt.colorbar(cs0, cax=cax, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
+                    cb.set_label(units,fontsize=8)#,labelpad=5)
                     cb.ax.xaxis.set_ticks_position('top')
-                    for t in cb.ax.get_xticklabels():
+                    for t in cb.ax.yaxis.get_ticklabels():
                         t.set_fontsize(8)
-    
-                j += 1
-            
-        # Show the date in the last plot
-        ax.xaxis.set_major_formatter(ticker.FuncFormatter(self.formatDate))  
 
-        #self.plotNightDay(ax1,ax2,ax3,ax4,sti,eti)'''
+                    #self.plotNightDay(ax,x,startDatetime,endDatetime)
+                else:
+                    # clear the x axes if no data but not the last in the group
+                    if name is not parm[-1]:
+                        ax1.xaxis.set_ticks([])
+
+                # clear the xaxis in the contour plot always
+                ax0.xaxis.set_ticks([])
+
+                # Rotate and show the date with date formatter in the last plot
+                if name is parm[-1]:
+                    x_fmt = self.DateFormatter(self.scale_factor)
+                    ax1.xaxis.set_major_formatter(x_fmt)
+                    # Rotate date labels
+                    for label in ax1.xaxis.get_ticklabels():
+                        label.set_rotation(8)
+
+                j+=2
+
 
         # plot tracks
         ax = plt.Subplot(fig, map_gs[:])
@@ -233,8 +306,6 @@ class Contour(object):
         plt.close()
         self.frame += 1
         print "Done with createPlot"
-
-
 
 
     def createContourPlot(self,title,ax,x,y,z,rangey,rangez,startTime,endTime,hasCB=False):
@@ -309,14 +380,19 @@ class Contour(object):
                 ax.scatter(xg,y,marker='.',s=2,c='k',lw=0)
             else:
                 print 'Plotting the data'
-                cs = ax.scatter(x,y,c=z,s=20,vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
+                cs = ax.scatter(x,y,c=z,s=20,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
 
         except Exception,e:
             print 'Unexpected error: ' +  str(e)
+            try:
+                print 'Plotting the data'
+                cs = ax.scatter(x,y,c=z,s=20,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
+            except Exception,e:
+                print 'Unexpected error: ' +  str(e)
 
         return cs
 
-    def createScatterPlot(self,title,ax,x,y,z,rangey,rangez,startTime,endTime,hasCB=False):
+    def createScatterPlot(self,title,ax,x,y,z,rangey,rangez,startTime,endTime):
         tmin = time.mktime(startTime.timetuple())
         tmax = time.mktime(endTime.timetuple())
         nlevels = 255     # Number of color filled contour levels
@@ -337,7 +413,7 @@ class Contour(object):
             ax.tick_params(axis='both',which='minor',labelsize=8)
 
             print 'Plotting the data'
-            cs = ax.scatter(x,y,c=z,s=20,vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
+            cs = ax.scatter(x,y,c=z,s=20,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
 
         except Exception,e:
             print 'Unexpected error: ' +  str(e)
