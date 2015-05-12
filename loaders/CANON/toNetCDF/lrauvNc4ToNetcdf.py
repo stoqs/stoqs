@@ -29,10 +29,10 @@ class InterpolatorWriter(BaseWriter):
  logger.addHandler(fh)
  logger.setLevel(logging.DEBUG)
 
- def write_netcdf(self, outFile, inUrl):
+ def write_netcdf(self, out_file, inUrl):
     
         # Check parent directory and create if needed
-        dirName = os.path.dirname(outFile)
+        dirName = os.path.dirname(out_file)
         try:
                os.makedirs(dirName)
         except OSError, e:
@@ -40,59 +40,39 @@ class InterpolatorWriter(BaseWriter):
                       raise
 
         # Create the NetCDF file
-        self.ncFile = netcdf_file(outFile, 'w')
+        self.ncFile = netcdf_file(out_file, 'w')
 
         # If specified on command line override the default generic title with what is specified
         self.ncFile.title = 'LRAUV interpolated data'
 
-        # Combine any summary text specified on commamd line with the generic summary stating the original source file
+        # Combine any summary text specified on command line with the generic summary stating the original source file
         self.ncFile.summary = 'Observational oceanographic data translated with modification from original data file %s' % inUrl
-    
-        # If specified on command line override the default generic license with what is specified
-    
-        # Trajectory dataset, time is the only netCDF dimension
-        self.ncFile.createDimension('time', len(self.esec_list))
-        self.time = self.ncFile.createVariable('time', 'float64', ('time',))
-        self.time.standard_name = 'time'
-        self.time.units = 'seconds since 1970-01-01'
-        self.time[:] = self.esec_list
 
-        # Record Variables - coordinates for trajectory - save in the instance and use for metadata generation
-        self.latitude = self.ncFile.createVariable('latitude', 'float64', ('time',))
-        self.latitude.long_name = 'LATITUDE'
-        self.latitude.standard_name = 'latitude'
-        self.latitude.units = 'degree_north'
-        i = self.parms.index('latitude')
-        self.latitude[:] = self.parm_sub_ts[i]
+        # add in time dimensions first
+        ts_key = []
+        for key in self.all_sub_ts.keys():
+            if key.find('time') != -1:
+                ts = self.all_sub_ts[key]
 
-        self.longitude = self.ncFile.createVariable('longitude', 'float64', ('time',))
-        self.longitude.long_name = 'LONGITUDE'
-        self.longitude.standard_name = 'longitude'
-        self.longitude.units = 'degree_east'
-        i = self.parms.index('longitude')
-        self.longitude[:] = self.parm_sub_ts[i]
+                if not ts.empty:
+                       v = self.initRecordVariable(key)
+                       v[:] = self.all_sub_ts[key]
+            else:
+                ts_key.append(key)
 
-        self.depth = self.ncFile.createVariable('depth', 'float64', ('time',))
-        self.depth.long_name = 'DEPTH'
-        self.depth.standard_name = 'depth'
-        self.depth.units = 'm'
-        i = self.parms.index('depth')
-        self.depth[:] = self.parm_sub_ts[i]
-       
-        # add in parameters
-        for i in range(len(self.parms)):
-            ts = self.parm_sub_ts[i]
-            # done record empty variables
+        # add in other remaining time series
+        for key in ts_key:
+            ts = self.all_sub_ts[key]
+
             if not ts.empty:
-                   parm = self.parms[i]
-                   v = self.initRecordVariable(parm)
-                   v[:] = self.parm_sub_ts[i]
+                   v = self.initRecordVariable(key)
+                   v[:] = self.all_sub_ts[key]
 
         self.add_global_metadata()
 
         self.ncFile.close()
 
-        # End write_pctd()
+        # End write_netcdf()
 
 
  def interpolate(self, data, times):
@@ -106,9 +86,9 @@ class InterpolatorWriter(BaseWriter):
      return ts
      # End interpolate
 
- def createSeriesPydap(self, name):
+ def createSeriesPydap(self, name, tname):
      v = self.df[name]
-     v_t = self.df[name+'_time']
+     v_t = self.df[tname]
      data = np.asarray(v_t)
      data[data/1e10 < -1.] = 'NaN'
      data[data/1e10 > 1.] ='NaN'
@@ -118,21 +98,76 @@ class InterpolatorWriter(BaseWriter):
      return v_time_series
      # End createSeriesPydap
 
- def initRecordVariable(self, name, units=None):
+ def initRecordVariable(self, key, units=None):
      # Create record variable to store in nc file   
-     v = self.df[name]
-     rc = self.ncFile.createVariable(name, 'float64', ('time',))
-     if 'long_name' in v.attributes:
-        rc.long_name = v.attributes['long_name']
-     if 'standard_name' in v.attributes:
-        rc.standard_name = v.attributes['standard_name']
+     v = self.all_sub_ts[key]
 
-     rc.coordinates = 'time depth latitude longitude'
-     if units is None:
-            rc.unit = v.attributes['units']
+     if key.find('time') != -1:
+        # convert time to epoch seconds
+        esec_list = v.index.values.astype(float)/1E9
+        # Trajectory dataset, time is the only netCDF dimension
+        self.ncFile.createDimension(key, len(esec_list))
+        rc = self.ncFile.createVariable(key, 'float64', (key,))
+        rc.standard_name = key
+        rc.units = 'seconds since 1970-01-01'
+        # Used in global metadata
+        if key == 'time':
+            self.time = rc
+        return rc
+
+     elif key.find('latitude') != -1:
+        # Record Variables - coordinates for trajectory - save in the instance and use for metadata generation
+        c = self.all_coord[key]
+        rc = self.ncFile.createVariable(key, 'float64', (c['time'],))
+        rc.long_name = 'LATITUDE'
+        rc.standard_name = key
+        rc.units = 'degree_north'
+        rc[:] = self.all_sub_ts[key]
+        # Used in global metadata
+        if key == 'latitude':
+            self.latitude = rc
+        return rc
+
+     elif key.find('longitude') != -1:
+        c = self.all_coord[key]
+        rc = self.ncFile.createVariable(key, 'float64', (c['time'],))
+        rc.long_name = 'LONGITUDE'
+        rc.standard_name = 'longitude'
+        rc.units = 'degree_east'
+        rc[:] = self.all_sub_ts[key]
+        # Used in global metadata
+        if key == 'longitude':
+            self.longitude = rc
+        return rc
+
+     elif key.find('depth') != -1:
+        c = self.all_coord[key]
+        rc = self.ncFile.createVariable(key, 'float64', (c['time'],))
+        rc.long_name = 'DEPTH'
+        rc.standard_name = key
+        rc.units = 'm'
+        rc[:] = self.all_sub_ts[key]
+        # Used in global metadata
+        if key == 'depth':
+            self.depth = rc
+        return rc
+
      else:
+        a = self.all_attrib[key]
+        c = self.all_coord[key]
+        rc = self.ncFile.createVariable(key, 'float64', (c['time'],))
+        if 'long_name' in a:
+            rc.long_name = a['long_name']
+        if 'standard_name' in a:
+            rc.standard_name = a['standard_name']
+            rc.coordinates = ' '.join(c.values())
+
+        if units is None:
+            rc.unit = a['units']
+        else:
             rc.units = units
-     return rc
+
+        return rc
      # End initRecordVariable
 
  def getValidTimeRange(self, ts):
@@ -155,13 +190,14 @@ class InterpolatorWriter(BaseWriter):
      return(start, end)
      # End getValidTimeRange
 
- def processSingleParm(self, url, outFile, parm):
-     self.esec_list = []
+
+ def process(self, url, out_file, parm, interp_key):
      self.df = []
-     self.parm_sub_ts = []
-     self.chl_ts = None
-     self.parms =  ['latitude','longitude','depth'] + parm
-     parm_ts = []
+     self.all_sub_ts = {}
+     self.all_coord = {}
+     self.all_attrib = {}
+     coord =  ['latitude','longitude','depth']
+     all_ts = {}
 
      try:
             self.df = pydap.client.open_url(url)
@@ -169,54 +205,105 @@ class InterpolatorWriter(BaseWriter):
             self.logger.error('Failed in attempt to open_url(%s)', url)
             raise e
     
-    # Create pandas time series for each parameter
-     for i in range(len(self.parms)):
-            parm = self.parms[i]
-            try:
-                   p_ts = self.createSeriesPydap(parm)
-            except KeyError, e:
-                  p_ts = pd.Series()
-                  self.logger.info('Key error on ' + parm)
-                  raise e
+     # Create pandas time series for each parameter and store attributes
+     for key in parm:
+        try:
+            ts = self.createSeriesPydap(key, key + '_time')
+            self.all_attrib[key] = self.df[key].attributes
+            self.all_attrib[key + '_i'] = self.df[key].attributes
+            self.all_coord[key] = {'time':'time','depth':'depth','latitude':'latitude','longitude':'longitude'}
+        except KeyError, e:
+            ts = pd.Series()
+            self.logger.info('Key error on ' + key)
+            raise e
 
-            parm_ts.append(p_ts)
+        all_ts[key] = ts
 
-     # Last time series is the independent parameter to store
-     t = pd.Series(index = parm_ts[-1].index)
+     # Create another pandas time series for each coordinate and store coordinates
+     for key in coord:
+        try:
+            ts = self.createSeriesPydap(key, key + '_time')
+        except KeyError, e:
+            ts = pd.Series()
+            self.logger.info('Key error on ' + key)
+            raise e
 
-     # convert time to epoch seconds
-     self.esec_list = t.index.values.astype(float)/1E9
+        all_ts[key] = ts
 
-     j = 0
-     for p in parm_ts:
-            if not p.empty :
-                   # interpolate all time series onto independent parameter time scale
-                   i = self.interpolate(p, t.index)
-                   '''fig, axes = plt.subplots(2)
-                   plt.legend(loc='best')
-                   isub.plot(ax=axes[0],color='r')
-                   p.plot(ax=axes[0])
-                   isub.plot(ax=axes[1],color='g')
-                   i.plot(ax=axes[1])
-                   plt.show()'''
-                   self.parm_sub_ts.append(i)
-            else:
-                   self.parm_sub_ts.append(pd.Series())
-            j = j + 1
+     # create independent lat/lon/depth profiles for each parameter
+     for key in parm:
+        # TODO: add try catch block on this
+        # Get independent parameter to interpolate on
+        t = pd.Series(index = all_ts[key].index)
+
+        # Store the parameter as-is - this is the raw data
+        self.all_sub_ts[key] = pd.Series(all_ts[key])
+        self.all_coord[key] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+
+        # interpolate each coordinate to the time of the parameter
+        # key looks like sea_water_temperature_depth, sea_water_temperature_lat, sea_water_temperature_lon, etc.
+        for c in coord:
+
+            # get coordinate
+            ts = all_ts[c]
+
+            # and interpolate using parameter time
+            if not ts.empty:
+                i = self.interpolate(ts, t.index)
+                self.all_sub_ts[key + '_' + c] = i
+                self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+
+        # add in time coordinate separately
+        v_time = all_ts[key].index
+        esec_list = v_time.values.astype(float)/1E9
+        self.all_sub_ts[key + '_time'] = pd.Series(esec_list,index=v_time)
+
+     # TODO: add try catch block on this
+     # Get independent parameter to interpolate on
+     t = pd.Series(index = all_ts[interp_key].index)
+
+     # store time using interpolation parameter
+     v_time = all_ts[interp_key].index
+     esec_list = v_time.values.astype(float)/1E9
+     self.all_sub_ts['time'] = pd.Series(esec_list,index=v_time)
+
+     # interpolate all parameters and coordinates
+     for key in parm:
+        value = all_ts[key]
+        if not value.empty :
+           i = self.interpolate(value, t.index)
+           self.all_sub_ts[key + '_i'] = i
+        else:
+           self.all_sub_ts[key + '_i'] = value
+
+        self.all_coord[key + '_i'] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
+
+     for key in coord:
+        value = all_ts[key]
+        self.all_sub_ts[key] = value
+        if not value.empty :
+           i = self.interpolate(value, t.index)
+           self.all_sub_ts[key] = i
+        else:
+           self.all_sub_ts[key] = value
+
+        self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
+
+
+     self.logger.info("%s", self.all_sub_ts.keys())
 
      # Write data to the file
-     self.write_netcdf(outFile, url)
-     self.logger.info('Wrote ' + outFile)
+     self.write_netcdf(out_file, url)
+     self.logger.info('Wrote ' + out_file)
 
      # End processSingleParm
 
- def process(self, url, outFile, parms, interpFreq, resampleFreq):
-     self.esec_list = []
+ def processResample(self, url, out_file, parm, interpFreq, resampleFreq):
+     esec_list = []
      self.df = []
-     self.parm_sub_ts = []
-     self.chl_ts = None
-     self.parms =  ['latitude','longitude','depth'] + parms
-     parm_ts = []
+     self.all_sub_ts = {}
+     self.parm =  ['latitude','longitude','depth'] + parm
+     all_ts = {}
      start_times = []
      end_times = []
 
@@ -230,16 +317,15 @@ class InterpolatorWriter(BaseWriter):
             raise e 
     
     # Create pandas time series and get sampling metric for each
-     for i in range(len(self.parms)):
-            parm = self.parms[i]
+     for key, value in parm.items():
             try:
-                   p_ts = self.createSeriesPydap(parm)
+                   p_ts = self.createSeriesPydap(key)
             except KeyError, e:
                    p_ts = pd.Series()
-                   self.logger.info('Key error on ' + parm)
+                   self.logger.info('Key error on ' + key)
                    raise e
 
-            parm_ts.append(p_ts)
+            all_ts[key] = p_ts
             try:
                    (start,end) = self.getValidTimeRange(p_ts)   
                    start_times.append(start)
@@ -255,16 +341,15 @@ class InterpolatorWriter(BaseWriter):
      ts = t.index.values
 
      # convert time to epoch seconds
-     self.esec_list = t.resample(resampleFreq).index.values.astype(float)/1E9
+     esec_list = t.resample(resampleFreq).index.values.astype(float)/1E9
 
-     j = 0
-     for p in parm_ts:
-            if not p.empty :
+     for key, value in all_ts.items():
+            if not value.empty :
 
                    # swap byte order and create a new series
-                   values = p.values
+                   values = value
                    newvalues = values.byteswap().newbyteorder()
-                   pr = pd.Series(newvalues, index=p.index)
+                   pr = pd.Series(newvalues, index=value.index)
 
                    # reindex to the full range that covers all data
                    # forward fill
@@ -278,7 +363,7 @@ class InterpolatorWriter(BaseWriter):
                        # plotting for debugging
                        '''fig, axes = plt.subplots(4)
                        plt.legend(loc='best')
-                       axes[0].set_title('raw ' + self.parms[j] + ' data') 
+                       axes[0].set_title('raw ' + self.parm[j] + ' data') 
                        p.plot(ax=axes[0],color='r')
                        axes[1].set_title('reindexed') 
                        pr.plot(ax=axes[1],color='g')
@@ -290,14 +375,13 @@ class InterpolatorWriter(BaseWriter):
                    except IndexError as e:
                        self.logger.error(e)
                        raise e
-                   self.parm_sub_ts.append(isub)
+                   self.all_sub_ts[key] = isub
             else:
-                   self.parm_sub_ts.append(pd.Series())
-            j = j + 1
+                   self.all_sub_ts[key] = pd.Series()
 
      # Write data to the file
-     self.write_netcdf(outFile, url)
-     self.logger.info('Wrote ' + outFile)
+     self.write_netcdf(out_file, url)
+     self.logger.info('Wrote ' + out_file)
             
      # End process
 
@@ -312,7 +396,7 @@ if __name__ == '__main__':
     # Formulate new filename from the url. Should be the same name as the .nc4 specified in the url
     # with _i.nc appended to indicate it has interpolated data and is now in .nc format
     f = url.rsplit('/',1)[1]
-    outFile = outDir + '.'.join(f.split('.')[:-1]) + '_i.nc'
-    pw.process(url,outFile)
+    out_file = outDir + '.'.join(f.split('.')[:-1]) + '_i.nc'
+    pw.process(url,out_file)
 
     print 'Done.'
