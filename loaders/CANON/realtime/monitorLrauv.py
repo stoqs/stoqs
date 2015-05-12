@@ -149,7 +149,6 @@ def processDecimated(pw, url, lastDatetime, outDir, resample_freq, interp_freq, 
             raise ServerError("Can't read all the parameters from %s" % (url))
 
         else:
-            import pdb;pdb.set_trace()
             if outFile_i.startswith('/tmp'):
                 # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
                 list = url.split('/') # get all strings delimited with /
@@ -179,22 +178,30 @@ def process_command_line():
                                          description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
                                          epilog=examples)
                                              
-        #parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are.
-        # If interpolating, must map to the same location as -o directory', default='.',required=True)
+        '''parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
+                                                                  'If interpolating, must map to the same location as -o directory', default='.',required=True)'''
         parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
                                                                  ' If interpolating, must map to the same location as -o directory',
                             default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/sbdlogs/2015/201503/.*shore.nc4$',required=False)
+        '''parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
+                                                                 ' If interpolating, must map to the same location as -o directory',
+                            default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/cell-logs/.*Priority.nc4$',required=False)'''
+
         #parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='default',required=True)
         parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='stoqs_lrauv',required=False)
         #parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='.',required=True)
         parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='April 2015 testing',required=False)
         parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1)
         #parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file or contour output - must map to the same location as -u URL', default='', required=False)
-        parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file or contour output '
+        parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file or log contour output '
                                                                    '- must map to the same location as -u URL', default='/tmp/TestMonitorLrauv', required=False)
         #parser.add_argument('-t', '--contourUrl', action='store', help='base url to store cross referenced contour plot resources', default='.',required=True)
-        parser.add_argument('-t', '--contourUrl', action='store', help='base url to store cross referenced contour plot resources',
-                            default='http://dods.mbari.org/opendap/data/lrauv/stoqs/',required=False)
+        parser.add_argument('--contourUrl', action='store', help='base url to store cross referenced contour plot resources',
+                            default='http://dods.mbari.org/opendap/data/lrauv/',required=False)
+        #parser.add_argument('-u', '--contourDir', action='store', help='output directory to store 24 hour contour output',
+                            #default='/tmp/TestMonitorLrauv/',required=True)
+        parser.add_argument('--contourDir', action='store', help='output directory to store 24 hour contour output',
+                            default='/tmp/TestMonitorLrauv/',required=False)
         #parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='.')
         parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='Daphne Monterey data - April 2015')
         parser.add_argument('-i', '--interpolate', action='store_true', help='interpolate - must be used with --outDir option')
@@ -203,7 +210,10 @@ def process_command_line():
         parser.add_argument('-f', '--interpFreq', action='store', help='Optional interpolation frequency string to specify time base for interpolating e.g. 500L=500 millisecs, 1S=1 second, 1Min=1 minute,H=1 hour,D=daily', default='')
         parser.add_argument('-r', '--resampleFreq', action='store', help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='')
         parser.add_argument('-p', '--parms', action='store', help='List of space separated parameters to load', nargs='*', default=
-                                    ['sea_water_temperature', 'sea_water_salinity', 'mass_concentration_of_chlorophyll_in_sea_water'])
+                                    ['bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
+        parser.add_argument('-g', '--plotgroup', action='store', help='List of space separated parameters to plot', nargs='*', default=
+                                ['bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
+
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
 
         args = parser.parse_args()    
@@ -260,15 +270,17 @@ if __name__ == '__main__':
     # replace them with underscores. This is because pydap automatically renames slashes as underscores
     # and needs to reference the parameter correctly in the DAPloader
     parm_list = []
+    plot_group = []
     parm_process = []
     coord = {}
 
     for p in args.parms:
         parm_fix = p.replace('/','_')
-
-        parm_list.append(parm_fix + '_i')
+        #plot_group.append(parm_fix + '_i' + ',' + parm_fix)
+        plot_group.append(parm_fix)
+        #parm_list.append(parm_fix + '_i')
         parm_list.append(parm_fix)
-        coord[parm_fix + '_i'] = {'time': 'time_i', 'latitude': 'latitude_i', 'longitude': 'longitude_i', 'depth': 'depth_i'}
+        #coord[parm_fix + '_i'] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
         coord[parm_fix] = {'time': p + '_time', 'latitude':  p +'_latitude', 'longitude':  p +'_longitude', 'depth':  p +'_depth'}
         parm_process.append(parm_fix)
 
@@ -306,7 +318,7 @@ if __name__ == '__main__':
                 dataStartDatetime = InstantPoint.objects.using(args.database).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
 
             try:
-                logger.info("Instantiating Lrauv_Loader for url = %s  STRIDE %d<===============================", url_src, int(args.stride))
+                logger.info("Instantiating Lrauv_Loader for url = %s", url_src)
                 lrauvLoad = DAPloaders.runLrauvLoader(cName = args.campaign,
                                                   cDesc = None,
                                                   aName = aName,
@@ -315,7 +327,7 @@ if __name__ == '__main__':
                                                   pTypeName = 'auv',
                                                   pColor = colors[platformName],
                                                   url = url_src,
-                                                  parmList = parm_fix,
+                                                  parmList = parm_list,
                                                   dbAlias = args.database,
                                                   stride = int(args.stride),
                                                   startDatetime = startDatetime,
@@ -324,7 +336,7 @@ if __name__ == '__main__':
                                                   contourUrl = args.contourUrl,
                                                   auxCoords = coord)
 
-                title = 'MBARI LRAUV Survey'
+                title = 'MBARI LRAUV Survey - ' + platformName
                 endDatetimeUTC = pytz.utc.localize(endDatetime)
                 endDatetimeLocal = endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
                 startDatetimeUTC = pytz.utc.localize(startDatetime)
@@ -336,9 +348,10 @@ if __name__ == '__main__':
                 else:
                     outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
 
-                logger.debug('===============%s===============', outFile)
 
-                c = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], parm_fix, title, outFile, False)
+                logger.debug('out file %s', outFile)
+
+                c = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile, False)
                 c.run()
 
                 if outFile.startswith('/tmp'):
@@ -347,6 +360,27 @@ if __name__ == '__main__':
                     indx = list.index('LRAUV') # find first LRAUV string in the list
                     dir = '/'.join(list[indx:-1]) # grab everything between LRAUV and the last string
                     cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/%s' % (outFile, dir)
+                    logger.debug('%s', cmd)
+                    os.system(cmd)
+
+                # Round the UTC time to the local time and do the query for the 24 hour period
+                startDatetimeLocal24hr = startDatetimeLocal.replace(hour=0,minute=0,second=0,microsecond=0)
+                endDatetimeLocal24hr = startDatetimeLocal.replace(hour=24,minute=0,second=0,microsecond=0)
+                startDatetimeUTC24hr = startDatetimeLocal24hr.astimezone(pytz.utc)
+                endDatetimeUTC24hr = endDatetimeLocal24hr.astimezone(pytz.utc)
+                outFile = args.contourDir + '/' + platformName  + '_log_' + startDatetimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDatetimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
+                url = args.contourUrl + '/' + platformName  + '_log_' + startDatetimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDatetimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
+
+                logger.debug('out file %s', outFile)
+                c = Contour(startDatetimeUTC24hr, endDatetimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFile, False)
+                c.run()
+
+                if outFile.startswith('/tmp'):
+                    # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
+                    list = args.contourUrl.split('/') # get all strings delimited with /
+                    indx = list.index('lrauv') # find first LRAUV string in the list
+                    dir = '/'.join(list[indx+1:-1]) # grab everything after LRAUV and the last string
+                    cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/LRAUV/%s' % (outFile, dir)
                     logger.debug('%s', cmd)
                     os.system(cmd)
 
