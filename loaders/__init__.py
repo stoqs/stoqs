@@ -368,7 +368,7 @@ class STOQS_Loader(object):
         if created:
             self.logger.debug("Created platformType.name %s in database %s", platformType.name, self.dbAlias)
         else:
-            self.logger.debug("Retrived platformType.name %s from database %s", platformType.name, self.dbAlias)
+            self.logger.debug("Retrieved platformType.name %s from database %s", platformType.name, self.dbAlias)
 
 
         # Create Platform 
@@ -378,7 +378,7 @@ class STOQS_Loader(object):
         if created:
             self.logger.info("Created platform %s in database %s", platformName, self.dbAlias)
         else:
-            self.logger.info("Retrived platform %s from database %s", platformName, self.dbAlias)
+            self.logger.info("Retrieved platform %s from database %s", platformName, self.dbAlias)
 
         return platform
 
@@ -476,7 +476,7 @@ class STOQS_Loader(object):
         if created:
             self.logger.info("Created activity %s in database %s with startDate = %s and endDate = %s", self.activityName, self.dbAlias, self.startDatetime, self.endDatetime)
         else:
-            self.logger.info("Retrived activity %s from database %s", self.activityName, self.dbAlias)
+            self.logger.info("Retrieved activity %s from database %s", self.activityName, self.dbAlias)
 
         # Get or create activityType 
         if self.activitytypeName is not None:
@@ -714,7 +714,7 @@ class STOQS_Loader(object):
     def checkForValidData(self):
         '''
         Do a pre- check on the OPeNDAP url for the include_names variables. If there are non-NaN data in
-        any of the varibles return Ture, otherwise return False.
+        any of the variables return True, otherwise return False.
         '''
         allNaNFlag = {}
         anyValidData = False
