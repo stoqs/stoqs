@@ -180,6 +180,8 @@ class Contour(object):
         # add contour plots for each parameter group
         i = 0
 
+        latlon_series = ''
+
         for group in self.parmGroup:
             i += 1
             parm = [x.strip() for x in group.split(',')]
@@ -210,6 +212,7 @@ class Contour(object):
 
                 # if data found, plot with contour plot (if fails, falls back to the scatter plot)
                 if len(x) > 0:
+                    latlon_series = name
                     cs0 = self.createContourPlot(title + pn,ax0,x,y,z,rangey,rangez,startDatetime,endDatetime)
                     cs1 = self.createScatterPlot(title + pn,ax1,x,y,z,rangey,rangez,startDatetime,endDatetime)
                 else: # otherwise add in some fake data and plot a placeholder time/depth plot
@@ -227,26 +230,33 @@ class Contour(object):
                 ax1.text(0.95,0.02, name, verticalalignment='bottom',
                          horizontalalignment='right',transform=ax1.transAxes,color='black',fontsize=8)
 
-                # if have data, create a color bar and shade night/day
-                if len(z):
-                    # For a colorbar create an axes on the right side of ax. The width of cax will be 1%
-                    # of ax and the padding between cax and ax will be fixed at 0.2 inch.
-                    divider = make_axes_locatable(ax1)
-                    cax = divider.append_axes("right", size="1%", pad=0.1)
-                    cbFormatter = FormatStrFormatter('%.2f')
-                    cb = plt.colorbar(cs0, cax=cax, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
-                    cb.set_label(units,fontsize=8)#,labelpad=5)
-                    cb.ax.xaxis.set_ticks_position('top')
-                    for t in cb.ax.yaxis.get_ticklabels():
-                        t.set_fontsize(8)
+                # For a colorbar create an axes on the right side of ax. The width of cax will be 1%
+                # of ax and the padding between cax and ax will be fixed at 0.2 inch.
+                divider = make_axes_locatable(ax0)
+                cax = divider.append_axes("right", size="1%", pad=0.1)
+                cbFormatter = FormatStrFormatter('%.2f')
+                cb = plt.colorbar(cs0, cax=cax, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
+                cb.set_label(units,fontsize=8)#,labelpad=5)
+                cb.ax.xaxis.set_ticks_position('top')
+                for t in cb.ax.yaxis.get_ticklabels():
+                    t.set_fontsize(8)
 
-                    #self.plotNightDay(ax,x,startDatetime,endDatetime)
-                else:
-                    # clear the x axes if no data but not the last in the group
-                    if name is not parm[-1]:
-                        ax1.xaxis.set_ticks([])
+                divider = make_axes_locatable(ax1)
+                cax = divider.append_axes("right", size="1%", pad=0.1)
+                cbFormatter = FormatStrFormatter('%.2f')
+                cb = plt.colorbar(cs0, cax=cax, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
+                cb.set_label(units,fontsize=8)#,labelpad=5)
+                cb.ax.xaxis.set_ticks_position('top')
+                for t in cb.ax.yaxis.get_ticklabels():
+                    t.set_fontsize(8)
 
-                # clear the xaxis in the contour plot always
+
+                #self.plotNightDay(ax,x,startDatetime,endDatetime)
+                # clear the x axes in everything but the last name in the group
+                if name is not parm[-1]:
+                    ax1.xaxis.set_ticks([])
+
+                # always clear the x axes in the contour plot since this is placed above
                 ax0.xaxis.set_ticks([])
 
                 # Rotate and show the date with date formatter in the last plot
@@ -268,10 +278,10 @@ class Contour(object):
         lnmin = -122.21
         lnmax = -121.73
 
-        # arbitrarily pick lat/lon from first data series and convert geometry objects to lat/lon
+        #  pick lat/lon from last data series that had valid data and convert geometry objects to lat/lon
         # this should actually be the same for all
-        lat = self.data[self.platformName[0]+name]['lat']
-        lon = self.data[self.platformName[0]+name]['lon']
+        lat = self.data[self.platformName[0]+latlon_series]['lat']
+        lon = self.data[self.platformName[0]+latlon_series]['lon']
 
         # retry up to 5 times to get the basemap
         for i in range(0, 5):
@@ -305,7 +315,7 @@ class Contour(object):
         fig.savefig(fname,dpi=120)#,transparent=True)
         plt.close()
         self.frame += 1
-        print "Done with createPlot"
+        print "Done with contourPlot"
 
 
     def createContourPlot(self,title,ax,x,y,z,rangey,rangez,startTime,endTime,hasCB=False):
@@ -380,13 +390,18 @@ class Contour(object):
                 ax.scatter(xg,y,marker='.',s=2,c='k',lw=0)
             else:
                 print 'Plotting the data'
-                cs = ax.scatter(x,y,c=z,s=20,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
+                cs = ax.scatter(x,y,c=z,s=10,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
+
+            # limit the number of ticks
+            max_yticks = 5
+            yloc = plt.MaxNLocator(max_yticks)
+            ax.yaxis.set_major_locator(yloc)
 
         except Exception,e:
             print 'Unexpected error: ' +  str(e)
             try:
                 print 'Plotting the data'
-                cs = ax.scatter(x,y,c=z,s=20,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
+                cs = ax.scatter(x,y,c=z,s=10,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
             except Exception,e:
                 print 'Unexpected error: ' +  str(e)
 
@@ -413,7 +428,12 @@ class Contour(object):
             ax.tick_params(axis='both',which='minor',labelsize=8)
 
             print 'Plotting the data'
-            cs = ax.scatter(x,y,c=z,s=20,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
+            cs = ax.scatter(x,y,c=z,s=10,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
+
+            # limit the number of ticks
+            max_yticks = 5
+            yloc = plt.MaxNLocator(max_yticks)
+            ax.yaxis.set_major_locator(yloc)
 
         except Exception,e:
             print 'Unexpected error: ' +  str(e)
