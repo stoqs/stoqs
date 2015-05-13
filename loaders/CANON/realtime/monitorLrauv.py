@@ -364,15 +364,20 @@ if __name__ == '__main__':
                     os.system(cmd)
 
                 # Round the UTC time to the local time and do the query for the 24 hour period
-                startDatetimeLocal24hr = startDatetimeLocal.replace(hour=0,minute=0,second=0,microsecond=0)
-                endDatetimeLocal24hr = startDatetimeLocal.replace(hour=24,minute=0,second=0,microsecond=0)
-                startDatetimeUTC24hr = startDatetimeLocal24hr.astimezone(pytz.utc)
-                endDatetimeUTC24hr = endDatetimeLocal24hr.astimezone(pytz.utc)
-                outFile = args.contourDir + '/' + platformName  + '_log_' + startDatetimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDatetimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
-                url = args.contourUrl + '/' + platformName  + '_log_' + startDatetimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDatetimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
+                startDateTimeLocal = startDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+                startDateTimeLocal = startDateTimeLocal.replace(hour=0,minute=0,second=0,microsecond=0)
+                startDateTimeUTC24hr = startDateTimeLocal.astimezone(pytz.utc)
 
-                logger.debug('out file %s', outFile)
-                c = Contour(startDatetimeUTC24hr, endDatetimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFile, False)
+                endDateTimeUTC = startDatetimeUTC
+                endDateTimeLocal = endDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+                endDateTimeLocal = endDateTimeLocal.replace(hour=23,minute=59,second=0,microsecond=0)
+                endDateTimeUTC24hr = endDateTimeLocal.astimezone(pytz.utc)
+ 
+                outFile = args.contourDir + '/' + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
+                url = args.contourUrl + '/' + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
+
+                logger.debug('out file %s url: %s ', outFile, url)
+                c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFile, False)
                 c.run()
 
                 if outFile.startswith('/tmp'):

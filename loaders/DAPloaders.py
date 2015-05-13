@@ -1308,7 +1308,7 @@ class Lrauv_Loader(Trajectory_Loader):
 
         endDateTimeUTC = pytz.utc.localize(self.startDatetime)
         endDateTimeLocal = endDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
-        endDateTimeLocal = endDateTimeLocal.replace(hour=23,minute=0,second=0,microsecond=0)
+        endDateTimeLocal = endDateTimeLocal.replace(hour=23,minute=59,second=0,microsecond=0)
         endDateTimeUTC = endDateTimeLocal.astimezone(pytz.utc)
 
         outurl = self.contourUrl + self.platformName  + '_log_' + startDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '.png'
