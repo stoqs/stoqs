@@ -110,7 +110,7 @@ def getNcStartEnd(urlNcDap, timeAxisName):
 
     return startDatetime, endDatetime
 
-def processDecimated(pw, url, lastDatetime, outDir, resample_freq, interp_freq, parm, interp_key):
+def processDecimated(pw, url, lastDatetime, outDir, resample_freq, interp_freq, parm, interp_key, start, end):
     '''
     Process decimated LRAUV data
     '''
@@ -121,13 +121,16 @@ def processDecimated(pw, url, lastDatetime, outDir, resample_freq, interp_freq, 
     else:
         outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + '_i.nc')
 
-    if len(interp_freq) == 0 or len(resample_freq) == 0 :
-        startDatetime, endDatetime = getNcStartEnd(url, parm[-1] + '_time')
-    else:
-        startDatetime, endDatetime = getNcStartEnd(url, 'depth_time')
-
+    startDatetime, endDatetime = getNcStartEnd(url, 'depth_time')
     logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
     logger.debug('lastDatetime = %s', lastDatetime)
+
+    if start is not None and startDatetime < start :
+        raise ServerError('startDatetime = %s out of bounds with user-defined startDatetime = %s' % (startDatetime, start))
+
+    if end is not None and endDatetime > end :
+        raise ServerError('endDatetime = %s out of bounds with user-defined endDatetime = %s' % (endDatetime, end))
+
     url_i = None
 
     if endDatetime > lastDatetime:
@@ -182,7 +185,7 @@ def process_command_line():
                                                                   'If interpolating, must map to the same location as -o directory', default='.',required=True)'''
         parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
                                                                  ' If interpolating, must map to the same location as -o directory',
-                            default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/sbdlogs/2015/201503/.*shore.nc4$',required=False)
+                            default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/sbdlogs/2015/201505/.*shore.nc4$',required=False)
         '''parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
                                                                  ' If interpolating, must map to the same location as -o directory',
                             default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/cell-logs/.*Priority.nc4$',required=False)'''
@@ -197,7 +200,7 @@ def process_command_line():
                                                                    '- must map to the same location as -u URL', default='/tmp/TestMonitorLrauv', required=False)
         #parser.add_argument('-t', '--contourUrl', action='store', help='base url to store cross referenced contour plot resources', default='.',required=True)
         parser.add_argument('--contourUrl', action='store', help='base url to store cross referenced contour plot resources',
-                            default='http://dods.mbari.org/opendap/data/lrauv/',required=False)
+                            default='http://dods.mbari.org/opendap/data/lrauv/stoqs/',required=False)
         #parser.add_argument('-u', '--contourDir', action='store', help='output directory to store 24 hour contour output',
                             #default='/tmp/TestMonitorLrauv/',required=True)
         parser.add_argument('--contourDir', action='store', help='output directory to store 24 hour contour output',
@@ -215,6 +218,8 @@ def process_command_line():
                                 ['bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
 
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
+        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default=None, required=False)
+        parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default=None, required=False)
 
         args = parser.parse_args()    
         return args
@@ -248,7 +253,21 @@ if __name__ == '__main__':
 
     # Start back a week from now to load in old data
     lastDatetime = datetime.utcnow() - timedelta(days=7)
-    
+
+    # Unless start time defined, then start there
+    if args.start is not None:
+        dt = datetime.strptime(args.start, '%Y%m%dT%H%M%S')
+        lastDatetime = dt
+        start = dt
+    else:
+        start = None
+
+    if args.end is not None:
+        dt = datetime.strptime(args.end, '%Y%m%dT%H%M%S')
+        end = dt
+    else:
+        end = None
+
     # Assume that the database has already been created with description and terrain information, so use minimal arguments in constructor
     cl = CANONLoader(args.database, args.campaign)
     cl.dbAlias = args.database
@@ -295,7 +314,7 @@ if __name__ == '__main__':
 
             (url_i, startDatetime, endDatetime) = processDecimated(pw, url, lastDatetime, args.outDir,
                                                                    args.resampleFreq, args.interpFreq,
-                                                                   parm_process, interp_key)
+                                                                   parm_process, interp_key, start, end)
         except ServerError as e:
             logger.warn(e)
             continue

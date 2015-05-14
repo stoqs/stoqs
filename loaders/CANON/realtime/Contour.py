@@ -65,8 +65,9 @@ class Contour(object):
                     qs = qs.filter(measurement__instantpoint__timevalue__lte=endDatetime)
                     qs = qs.filter(parameter__name=pname)
                     qs = qs.filter(measurement__instantpoint__activity__platform__name=pln)
-
+                    sdt_count = qs.values_list('measurement__instantpoint__simpledepthtime__depth').count()
                     qs = qs.values('measurement__instantpoint__timevalue', 'measurement__depth', 'measurement__geom', 'datavalue').order_by('measurement__instantpoint__timevalue')
+                    data_dict[pln+pname]['sdt_count'] = sdt_count
 
                     for rs in qs:
                         geom = rs['measurement__geom']
@@ -193,7 +194,7 @@ class Contour(object):
                     rangez = [0.0, 5.0]
                     units = ' (ug/l)'
                 if name.find('salinity') != -1 :
-                    rangez = [33.5, 33.9]
+                    rangez = [33.9, 34.3]
                     units = ''
                 if name.find('temperature') != -1 :
                     rangez = [10, 15]
@@ -204,6 +205,7 @@ class Contour(object):
                 x = [time.mktime(xe.timetuple()) for xe in self.data[pn+name]['datetime']]
                 y = self.data[pn+name]['depth']
                 z = self.data[pn+name]['datavalue']
+                sdt_count = self.data[pn+name]['sdt_count']
 
                 ax0 = plt.Subplot(fig, lower_gs[j])
                 ax1 = plt.Subplot(fig, lower_gs[j+1])
@@ -213,7 +215,7 @@ class Contour(object):
                 # if data found, plot with contour plot (if fails, falls back to the scatter plot)
                 if len(x) > 0:
                     latlon_series = name
-                    cs0 = self.createContourPlot(title + pn,ax0,x,y,z,rangey,rangez,startDatetime,endDatetime)
+                    cs0 = self.createContourPlot(title + pn,ax0,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
                     cs1 = self.createScatterPlot(title + pn,ax1,x,y,z,rangey,rangez,startDatetime,endDatetime)
                 else: # otherwise add in some fake data and plot a placeholder time/depth plot
                     tmin = time.mktime(startDatetime.timetuple())
@@ -265,7 +267,7 @@ class Contour(object):
                     ax1.xaxis.set_major_formatter(x_fmt)
                     # Rotate date labels
                     for label in ax1.xaxis.get_ticklabels():
-                        label.set_rotation(8)
+                        label.set_rotation(5)
 
                 j+=2
 
@@ -318,12 +320,12 @@ class Contour(object):
         print "Done with contourPlot"
 
 
-    def createContourPlot(self,title,ax,x,y,z,rangey,rangez,startTime,endTime,hasCB=False):
+    def createContourPlot(self,title,ax,x,y,z,rangey,rangez,startTime,endTime,sdt_count):
         tmin = time.mktime(startTime.timetuple())
         tmax = time.mktime(endTime.timetuple())
         tgrid_max = 1000  # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
         dgrid_max = 100   # Height of time-depth-flot plot area is 335 pixels
-        dinc = 0.05       # Average vertical resolution of AUV Dorado
+        dinc = 0.5       # Average vertical resolution of AUV Dorado
         nlevels = 255     # Number of color filled contour levels
         sdt_count = int(len(x)/2)
         zmin = rangez[0]
@@ -331,6 +333,9 @@ class Contour(object):
         dmin = rangey[0]
         dmax = rangey[1]
         scale_factor = 1
+
+        # 2 points define a line, take half the number of simpledepthtime points
+        sdt_count = int(sdt_count / 2)
 
         if sdt_count > tgrid_max:
             sdt_count = tgrid_max
@@ -364,6 +369,8 @@ class Contour(object):
                 zi = griddata(xg, y, z, xi, yi, interp='nn')
             except KeyError, e:
                 print 'Got KeyError. Could not grid the data'
+                contour_flag = False
+                scale_factor = 1
             except Exception, e:
                 print 'Could not grid the data'
                 contour_flag = False
@@ -399,11 +406,6 @@ class Contour(object):
 
         except Exception,e:
             print 'Unexpected error: ' +  str(e)
-            try:
-                print 'Plotting the data'
-                cs = ax.scatter(x,y,c=z,s=10,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
-            except Exception,e:
-                print 'Unexpected error: ' +  str(e)
 
         return cs
 
