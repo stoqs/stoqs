@@ -26,7 +26,6 @@ from datetime import datetime, timedelta
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.dates import DateFormatter
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
-from matplotlib.mlab import griddata
 from scipy.interpolate import griddata
 from mpl_toolkits.basemap import Basemap
 from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter, Measurement, Parameter
@@ -90,6 +89,22 @@ class Contour(object):
                         data_dict[pln+pname]['datavalue'].insert(0, rs['datavalue'])
 
         return data_dict
+
+    def getActivityExtent(self, platform, startDatetime, endDatetime):
+        '''
+        Get details of the Activities that the platform(s) ha{s,ve}.  Set those details to member variables and
+        also return them as a tuple.  Polymorphic: if platform is a list or tuple return spatial temporal
+        extent for all of the platforms.
+        '''
+        # Get start and end datetimes, color and geographic extent of the activity
+        # If multiple platforms use them all to get overall start & end times and extent and se tcolor to black
+        qs = Activity.objects.using(self.database).filter(platform__name=platform)
+        qs = qs.filter(startdate__gte=startDatetime)
+        qs = qs.filter(enddate__lte=endDatetime)
+        data_extent = qs.extent(field_name='maptrack')
+        deg = 0.05
+        extent = (data_extent[0] - deg, data_extent[1] - deg, data_extent[2] + deg, data_extent[3] + deg)
+        return extent
 
     def loadData(self, startDatetime, endDatetime):
 
@@ -155,14 +170,9 @@ class Contour(object):
                     dark_start = dt
 
                 # If have start and end time defined color using zoom effect
-                if dark_start and dark_end and (dark_start - dark_end) > timedelta(hours=1):
-                    if self.scale_factor:
-                        dark_end_scaled = time.mktime(dark_end.timetuple())/self.scale_factor
-                        dark_start_scaled = time.mktime(dark_start.timetuple())/self.scale_factor
-                    else:
-                        dark_end_scaled = time.mktime(dark_end.timetuple())
-                        dark_start_scaled = time.mktime(dark_start.timetuple())
-
+                if dark_start and dark_end and (dark_start - dark_end) > timedelta(hours=1): 
+		    dark_end_scaled = time.mktime(dark_end.timetuple())
+                    dark_start_scaled = time.mktime(dark_start.timetuple())
                     self.zoomEffect(ax, dark_start_scaled, dark_end_scaled)
                     dark_start = []
                     dark_end = []
@@ -174,26 +184,37 @@ class Contour(object):
             return
 
         # GridSpecs for contour subplots
-        outer_gs = gridspec.GridSpec(nrows=1+len(self.parmGroup), ncols=1)#, height_ratios=[1,3])
+        outer_gs = gridspec.GridSpec(nrows=1+len(self.parmGroup), ncols=1)
+        # tighten up space between plots
+        outer_gs.update(left=0.10, right=0.90, hspace=0.05)
         map_gs  = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=outer_gs[0])
 
         STATIC_ROOT = '/var/www/html/stoqs/static'      # Warning: Hard-coded
         clt = self.readCLT(os.path.join(STATIC_ROOT, 'colormaps', 'jetplus.txt'))
         self.cm_jetplus = mpl.colors.ListedColormap(np.array(clt))
 
-        # fix depth range
-        rangey = [0.0,90.0]
-
         # start a new figure - size is in inches
         fig = plt.figure(figsize=(8, 10))
-        plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         fig.suptitle(self.title+'\n'+self.subtitle, fontsize=8)
 
-        # add contour plots for each parameter group
-        i = 0
+        pn = self.platformName[0]
+
+        # bound the depth to cover max of all parameter group depths
+        maxy = 0
+        for group in self.parmGroup:
+            parm = [x.strip() for x in group.split(',')]
+            for name in parm:
+                y = max(self.data[pn+name]['depth'])
+                if y > maxy:
+                    maxy = y
+
+        # pad the depth by 10 meters to make room for the name to be displayed at bottom
+        rangey = [0.0, int(maxy) + 10]
 
         latlon_series = ''
         chl_series = None
+        i = 0
+        # add contour plots for each parameter group
         for group in self.parmGroup:
             i += 1
             parm = [x.strip() for x in group.split(',')]
@@ -201,6 +222,18 @@ class Contour(object):
             j = 0
             for name in parm:
                 title = name
+                x = [time.mktime(xe.timetuple()) for xe in self.data[pn+name]['datetime']]
+                y = self.data[pn+name]['depth']
+                z = self.data[pn+name]['datavalue']
+                sdt_count = self.data[pn+name]['sdt_count']
+
+                units = ''
+
+                if len(z) > 0:
+                    rangez = [min(z), max(z)]
+                else:
+                    rangez = [0, 0]
+
                 if name.find('chlorophyll') != -1 :
                     rangez = [0.0, 5.0]
                     units = ' (ug/l)'
@@ -212,13 +245,6 @@ class Contour(object):
                 if name.find('temperature') != -1 :
                     rangez = [10, 15]
                     units = ' ($^\circ$C)'
-
-                pn = self.platformName[0]
-
-                x = [time.mktime(xe.timetuple()) for xe in self.data[pn+name]['datetime']]
-                y = self.data[pn+name]['depth']
-                z = self.data[pn+name]['datavalue']
-                sdt_count = self.data[pn+name]['sdt_count']
 
                 ax0 = plt.Subplot(fig, lower_gs[j])
                 ax1 = plt.Subplot(fig, lower_gs[j+1])
@@ -270,39 +296,41 @@ class Contour(object):
 
 
                 #self.plotNightDay(ax,x,startDatetime,endDatetime)
-                # clear the x axes in everything but the last name in the group
-                if name is not parm[-1]:
-                    ax1.xaxis.set_ticks([])
 
-                # always clear the x axes in the contour plot since this is placed above
-                ax0.xaxis.set_ticks([])
-
-                # Rotate and show the date with date formatter in the last plot
-                if name is parm[-1]:
-                    x_fmt = self.DateFormatter(self.scale_factor)
+                # Rotate and show the date with date formatter in the last plot of all the groups
+                if name is parm[-1] and group is self.parmGroup[-1]:
+                    x_fmt = self.DateFormatter(1)
                     ax1.xaxis.set_major_formatter(x_fmt)
                     # Rotate date labels
                     for label in ax1.xaxis.get_ticklabels():
-                        label.set_rotation(5)
-
+                        label.set_rotation(10)
+                    # Don't show on the upper contour plot
+                    ax0.xaxis.set_ticks([])
+                else:
+                    ax0.xaxis.set_ticks([])
+                    ax1.xaxis.set_ticks([])
                 j+=2
 
 
-        # plot tracks
+        # plot tracks; default map to Monterey Bay region
         ax = plt.Subplot(fig, map_gs[:])
-        fig.add_subplot(ax)#, aspect='equal')
+        fig.add_subplot(ax, aspect='equal')
         ltmin = 36.61
         ltmax = 36.97
         lnmin = -122.21
         lnmax = -121.73
+        e = (lnmin, lnmax, ltmin, ltmax)
 
         # pick lat/lon from last data series that had valid data and convert geometry objects to lat/lon
         lat = self.data[self.platformName[0]+latlon_series]['lat']
         lon = self.data[self.platformName[0]+latlon_series]['lon']
 
+        if len(lat) > 0 and len(lon) > 0:
+            e = self.getActivityExtent(self.platformName[0], startDatetime, endDatetime)
+
         # retry up to 5 times to get the basemap
         for i in range(0, 5):
-            mp = Basemap(llcrnrlon=lnmin, llcrnrlat=ltmin, urcrnrlon=lnmax, urcrnrlat=ltmax, projection='cyl', resolution='l', ax=ax)
+            mp = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution='l', ax=ax)
             try:
                 ##mp.wmsimage('http://www.gebco.net/data_and_products/gebco_web_services/web_map_service/mapserv?', layers=['GEBCO_08_Grid'])                            # Works, but coarse
                 mp.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
@@ -329,15 +357,15 @@ class Contour(object):
                 lat_stride = lat[0:len(lat):stride]
                 mp.scatter(lon_stride,lat_stride,c=z_stride,s=20,marker='.',vmin=rangez[0],vmax=rangez[1],lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
                 if stride > 1:
-                    ax.text(0.70,0.0, ('%s (every %d points)' % (chl_series, stride)), verticalalignment='bottom',
+                    ax.text(0.70,0.1, ('%s (every %d points)' % (chl_series, stride)), verticalalignment='bottom',
                          horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
                 else:
-                    ax.text(0.70,0.0, ('%s (every point)' % (chl_series)), verticalalignment='bottom',
+                    ax.text(0.70,0.1, ('%s (every point)' % (chl_series)), verticalalignment='bottom',
                          horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
 
             else:
                 mp.scatter(lon,lat,c=z,s=20,marker='.',vmin=rangez[0],vmax=rangez[1],lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
-                ax.text(0.70,0.0, ('%s (every point)' % (chl_series)), verticalalignment='bottom',
+                ax.text(0.70,0.1, ('%s (every point)' % (chl_series)), verticalalignment='bottom',
                          horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
         else:
             mp.plot(lon,lat,'-',c='k',alpha=0.5,linewidth=1,zorder=1)
@@ -370,13 +398,12 @@ class Contour(object):
         zmax = rangez[1]
         dmin = rangey[0]
         dmax = rangey[1]
-        self.scale_factor = 1
         contour_flag = True
 
         if contour_flag:
             try:
                 logger.debug('Gridding data')
-                xi, yi = np.mgrid[tmin:tmax:1000j, dmin:dmax:100j]
+		xi, yi = np.mgrid[tmin:tmax:1000j, dmin:dmax:100j]
                 zi = griddata((x,y), z, (xi, yi), method='cubic')
             except KeyError, e:
                 logger.warn('Got KeyError. Could not grid the data')
@@ -400,7 +427,7 @@ class Contour(object):
                 ax.scatter(x,y,marker='.',s=2,c='k',lw=0)
             else:
                 logger.debug('Plotting the data')
-                cs = ax.scatter(x,y,c=z,s=10,marker='.',vmin=zmin,vmax=zmax,lw=0,alpha=1.0,cmap=self.cm_jetplus)
+                cs = ax.scatter(x,y,c=z,s=20,marker='.',vmin=zmin,vmax=zmax,lw=0,alpha=1.0,cmap=self.cm_jetplus)
 
             # limit the number of ticks
             max_yticks = 5
@@ -431,7 +458,7 @@ class Contour(object):
             ax.tick_params(axis='both',which='minor',labelsize=8)
 
             logger.debug('Plotting the data')
-            cs = ax.scatter(x,y,c=z,s=10,marker='.',vmin=zmin,vmax=zmax,lw=0,alpha=1.0,cmap=self.cm_jetplus)
+            cs = ax.scatter(x,y,c=z,s=20,marker='.',vmin=zmin,vmax=zmax,lw=0,alpha=1.0,cmap=self.cm_jetplus)
 
             # limit the number of ticks
             max_yticks = 5
