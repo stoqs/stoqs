@@ -19,6 +19,7 @@ import pylab as pl
 import time
 import pytz
 import stoqs.models
+import logging
 
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -26,8 +27,17 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.dates import DateFormatter
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from matplotlib.mlab import griddata
+from scipy.interpolate import griddata
 from mpl_toolkits.basemap import Basemap
 from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter, Measurement, Parameter
+
+# Set up global variables for logging output to STDOUT
+logger = logging.getLogger('monitorTethysHotSpotLogger')
+fh = logging.StreamHandler()
+f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
+fh.setFormatter(f)
+logger.addHandler(fh)
+logger.setLevel(logging.DEBUG)
 
 class Contour(object):
 
@@ -87,7 +97,7 @@ class Contour(object):
             self.data = self.getTimeSeriesData(startDatetime, endDatetime)
         except Exception, e:
             self.data = []
-            print "WARNING:", e
+            logger.warn(e)
 
     class DateFormatter(mpl.ticker.Formatter):
         def __init__(self, scale_factor=1):
@@ -160,7 +170,7 @@ class Contour(object):
     def createPlot(self, startDatetime, endDatetime):
 
         if not self.data:
-            print 'no data found to plot'
+            logger.debug('no data found to plot')
             return
 
         # GridSpecs for contour subplots
@@ -176,13 +186,14 @@ class Contour(object):
 
         # start a new figure - size is in inches
         fig = plt.figure(figsize=(8, 10))
+        plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         fig.suptitle(self.title+'\n'+self.subtitle, fontsize=8)
 
         # add contour plots for each parameter group
         i = 0
 
         latlon_series = ''
-
+        chl_series = None
         for group in self.parmGroup:
             i += 1
             parm = [x.strip() for x in group.split(',')]
@@ -193,6 +204,8 @@ class Contour(object):
                 if name.find('chlorophyll') != -1 :
                     rangez = [0.0, 5.0]
                     units = ' (ug/l)'
+                    if chl_series is None:
+                        chl_series = name
                 if name.find('salinity') != -1 :
                     rangez = [33.9, 34.3]
                     units = ''
@@ -214,7 +227,10 @@ class Contour(object):
 
                 # if data found, plot with contour plot (if fails, falls back to the scatter plot)
                 if len(x) > 0:
-                    latlon_series = name
+                    if chl_series is None:
+                        latlon_series = name
+                    else:
+                        latlon_series = chl_series
                     cs0 = self.createContourPlot(title + pn,ax0,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
                     cs1 = self.createScatterPlot(title + pn,ax1,x,y,z,rangey,rangez,startDatetime,endDatetime)
                 else: # otherwise add in some fake data and plot a placeholder time/depth plot
@@ -280,8 +296,7 @@ class Contour(object):
         lnmin = -122.21
         lnmax = -121.73
 
-        #  pick lat/lon from last data series that had valid data and convert geometry objects to lat/lon
-        # this should actually be the same for all
+        # pick lat/lon from last data series that had valid data and convert geometry objects to lat/lon
         lat = self.data[self.platformName[0]+latlon_series]['lat']
         lon = self.data[self.platformName[0]+latlon_series]['lon']
 
@@ -292,17 +307,41 @@ class Contour(object):
                 ##mp.wmsimage('http://www.gebco.net/data_and_products/gebco_web_services/web_map_service/mapserv?', layers=['GEBCO_08_Grid'])                            # Works, but coarse
                 mp.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
             except Exception, e:
-                print 'Could not download ocean basemap '
+                logger.error('Could not download ocean basemap ')
                 mp = None
 
             if mp is not None :
                 break
 
         if mp is None :
-            print 'Error - cannot cannot fetch basemap' # TODO add logger message here
+            logger.debug('Error - cannot cannot fetch basemap') 
             return
 
-        mp.plot(lon, lat, '-',  linewidth=3)
+
+        if chl_series is not None:
+            mp.plot(lon,lat,'-',c='k',alpha=0.5,linewidth=1, zorder=1)
+            z = self.data[self.platformName[0]+chl_series]['datavalue']
+            if len(z) > 50:
+                sz = len(z)
+                stride = int(sz/50)
+                z_stride = z[0:sz:stride]
+                lon_stride = lon[0:len(lon):stride]
+                lat_stride = lat[0:len(lat):stride]
+                mp.scatter(lon_stride,lat_stride,c=z_stride,s=20,marker='.',vmin=rangez[0],vmax=rangez[1],lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
+                if stride > 1:
+                    ax.text(0.70,0.0, ('%s (every %d points)' % (chl_series, stride)), verticalalignment='bottom',
+                         horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
+                else:
+                    ax.text(0.70,0.0, ('%s (every point)' % (chl_series)), verticalalignment='bottom',
+                         horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
+
+            else:
+                mp.scatter(lon,lat,c=z,s=20,marker='.',vmin=rangez[0],vmax=rangez[1],lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
+                ax.text(0.70,0.0, ('%s (every point)' % (chl_series)), verticalalignment='bottom',
+                         horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
+        else:
+            mp.plot(lon,lat,'-',c='k',alpha=0.5,linewidth=1,zorder=1)
+
         #mp.fillcontinents()
         #mp.drawcoastlines()
 
@@ -313,11 +352,11 @@ class Contour(object):
         else:
             fname = self.outFilename
             
-        print 'Saving figure ' + fname
+        logger.debug('Saving figure %s ' % fname)
         fig.savefig(fname,dpi=120)#,transparent=True)
         plt.close()
         self.frame += 1
-        print "Done with contourPlot"
+        logger.debug('Done with contourPlot')
 
 
     def createContourPlot(self,title,ax,x,y,z,rangey,rangez,startTime,endTime,sdt_count):
@@ -327,63 +366,27 @@ class Contour(object):
         dgrid_max = 100   # Height of time-depth-flot plot area is 335 pixels
         dinc = 0.5       # Average vertical resolution of AUV Dorado
         nlevels = 255     # Number of color filled contour levels
-        sdt_count = int(len(x)/2)
         zmin = rangez[0]
         zmax = rangez[1]
         dmin = rangey[0]
         dmax = rangey[1]
-        scale_factor = 1
-
-        # 2 points define a line, take half the number of simpledepthtime points
-        sdt_count = int(sdt_count / 2)
-
-        if sdt_count > tgrid_max:
-            sdt_count = tgrid_max
-
-        xi = np.linspace(tmin, tmax, sdt_count)
-        #print 'xi = %s' % xi
-
-        # Make depth spacing dinc m, limit to time-depth-flot resolution (dgrid_max)
-        y_count = int((dmax - dmin) / dinc )
-        if y_count > dgrid_max:
-            y_count = dgrid_max
-
-        yi = np.linspace(dmin, dmax, y_count)
-        #print 'yi = %s' %yi
-
-        try:
-            scale_factor = float(tmax -tmin) / (dmax - dmin) / 3.0
-        except ZeroDivisionError, e:
-            print 'Not setting scale_factor.  Scatter plots will still work.'
-            contour_flag = False
-            scale_factor = 1
-        else:
-            print 'self.scale_factor = %f' % scale_factor
-            xi = xi / scale_factor
-            xg = [xe/scale_factor for xe in x]
-            contour_flag = True
+        self.scale_factor = 1
+        contour_flag = True
 
         if contour_flag:
             try:
-                print 'Gridding data with sdt_count = %d, and y_count = %d' %(sdt_count, y_count)
-                zi = griddata(xg, y, z, xi, yi, interp='nn')
+                logger.debug('Gridding data')
+                xi, yi = np.mgrid[tmin:tmax:1000j, dmin:dmax:100j]
+                zi = griddata((x,y), z, (xi, yi), method='cubic')
             except KeyError, e:
-                print 'Got KeyError. Could not grid the data'
+                logger.warn('Got KeyError. Could not grid the data')
                 contour_flag = False
-                scale_factor = 1
             except Exception, e:
-                print 'Could not grid the data'
+                logger.warn('Could not grid the data' +  str(e))
                 contour_flag = False
-                scale_factor = 1
 
         try:
-            if scale_factor > 1 and contour_flag:
-                ax.set_xlim(tmin / scale_factor, tmax / scale_factor)
-            else:
-                ax.set_xlim(tmin, tmax)
-
-            self.scale_factor = scale_factor
-
+            ax.set_xlim(tmin, tmax)
             ax.set_ylim([dmax,dmin])
             ax.set_ylabel('depth (m)',fontsize=8)
 
@@ -391,13 +394,13 @@ class Contour(object):
             ax.tick_params(axis='both',which='minor',labelsize=8)
 
             if contour_flag:
-                print 'Contouring the data'
+                logger.debug('Contouring the data')
                 cs = ax.contourf(xi, yi, zi, levels=np.linspace(zmin,zmax, nlevels), cmap=self.cm_jetplus, extend='both')
                 # this will show the points where the contouring occurs
-                ax.scatter(xg,y,marker='.',s=2,c='k',lw=0)
+                ax.scatter(x,y,marker='.',s=2,c='k',lw=0)
             else:
-                print 'Plotting the data'
-                cs = ax.scatter(x,y,c=z,s=10,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
+                logger.debug('Plotting the data')
+                cs = ax.scatter(x,y,c=z,s=10,marker='.',vmin=zmin,vmax=zmax,lw=0,alpha=1.0,cmap=self.cm_jetplus)
 
             # limit the number of ticks
             max_yticks = 5
@@ -405,7 +408,7 @@ class Contour(object):
             ax.yaxis.set_major_locator(yloc)
 
         except Exception,e:
-            print 'Unexpected error: ' +  str(e)
+            logger.error(e)
 
         return cs
 
@@ -413,7 +416,6 @@ class Contour(object):
         tmin = time.mktime(startTime.timetuple())
         tmax = time.mktime(endTime.timetuple())
         nlevels = 255     # Number of color filled contour levels
-        sdt_count = int(len(x)/2)
         zmin = rangez[0]
         zmax = rangez[1]
         dmin = rangey[0]
@@ -421,7 +423,6 @@ class Contour(object):
 
         try:
             ax.set_xlim(tmin, tmax)
-            self.scale_factor = 1
 
             ax.set_ylim([dmax,dmin])
             ax.set_ylabel('depth (m)',fontsize=8)
@@ -429,8 +430,8 @@ class Contour(object):
             ax.tick_params(axis='both',which='major',labelsize=8)
             ax.tick_params(axis='both',which='minor',labelsize=8)
 
-            print 'Plotting the data'
-            cs = ax.scatter(x,y,c=z,s=10,edgecolor='w',vmin=zmin,vmax=zmax,cmap=self.cm_jetplus)
+            logger.debug('Plotting the data')
+            cs = ax.scatter(x,y,c=z,s=10,marker='.',vmin=zmin,vmax=zmax,lw=0,alpha=1.0,cmap=self.cm_jetplus)
 
             # limit the number of ticks
             max_yticks = 5
@@ -438,7 +439,7 @@ class Contour(object):
             ax.yaxis.set_major_locator(yloc)
 
         except Exception,e:
-            print 'Unexpected error: ' +  str(e)
+            logger.error(e)
 
         return cs
 
@@ -479,11 +480,11 @@ class Contour(object):
                 os.system(cmd)'''
 
             except Exception, e:
-                print 'Unexpected error: ' +  str(e)
+                logger.error(e)
 
         else :
             try:
                 self.loadData(self.startDatetime, self.endDatetime)
                 self.createPlot(self.startDatetime, self.endDatetime)
             except Exception, e:
-                print 'Unexpected error: ' +  str(e)
+                logger.error(e)
