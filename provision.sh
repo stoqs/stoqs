@@ -70,7 +70,7 @@ then
     yum -y install graphviz-devel graphviz-python ImageMagick postgis2_93
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
     yum -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
-    yum -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel
+    yum -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel freetds-devel
     yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
 fi
 
