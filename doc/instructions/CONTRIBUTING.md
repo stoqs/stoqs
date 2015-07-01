@@ -21,11 +21,15 @@ The good news is that Unix system administration skills are no longer required a
 
    (If you built a development system from the Vagrantfile you may want to first remove the ~/dev/stoqsgit directory created during that process.)
 
-5. Set up remote upstream: `git remote add -f upstream git://github.com/stoqs/stoqs.git`
+5. Set up remote upstream:
+
+        git remote add -f upstream git://github.com/stoqs/stoqs.git
 
 #### Contributing follows a typical GitHub workflow:
 
-1. cd into your working directory: `cd stoqsgit`
+1. cd into your working directory, e.g.:
+
+        cd ~/dev/stoqsgit
 
 2. Create a branch for the new feature: 
 
@@ -36,7 +40,9 @@ The good news is that Unix system administration skills are no longer required a
 but it makes it easy to delete your branch when the feature has been merged into upstream, diff your branch 
 with the version that actually ended in upstream, and to submit pull requests for multiple features (branches)).
 
-4. Push the new branch to your fork on GitHub: `git push origin my_new_feature`
+4. Push the new branch to your fork on GitHub:
+
+        git push origin my_new_feature
 
 5. Share your contribution with others by issuing a [pull request](https://help.github.com/articles/using-pull-requests/): Click Pull Request button on GitHub
 
