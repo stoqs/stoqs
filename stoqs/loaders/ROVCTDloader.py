@@ -23,15 +23,26 @@ MBARI 24 October 2014
 @license: __license__
 '''
 
-# Force lookup of models to THE specific stoqs module.
 import os
 import sys
-from django.contrib.gis.geos import GEOSGeometry, LineString, Point
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-project_dir = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
-from django.conf import settings
 
+# Insert Django App directory (parent of config) into python path 
+sys.path.insert(0, os.path.abspath(os.path.join(
+                    os.path.dirname(__file__), "../")))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.local'
+os.environ['DJANGO_CONFIGURATION'] = 'Local'
+
+# Must install config and setup Django before importing models
+from configurations import importer
+importer.install()
+# django >=1.7
+try:
+    import django
+    django.setup()
+except AttributeError:
+    pass
+
+from django.contrib.gis.geos import GEOSGeometry, LineString, Point
 from django.db.utils import IntegrityError, DatabaseError
 from django.db import connection, transaction
 from stoqs import models as m
@@ -47,7 +58,7 @@ import csv
 import urllib2
 import logging
 import socket
-import seawater.csiro as sw
+import seawater.eos80 as sw
 from utils.utils import percentile, median, mode, simplify_points
 from loaders import STOQS_Loader, LoadScript, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
 from loaders.DAPloaders import Base_Loader
