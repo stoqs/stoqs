@@ -496,7 +496,10 @@ class Base_Loader(STOQS_Loader):
         numDerived = 0
         trajSingleParameterCount = 0
         for name in self.include_names:
-            tIndx = self.getTimeBegEndIndices(self.ds[self.getAuxCoordinates(name)['time']])
+            try:
+                tIndx = self.getTimeBegEndIndices(self.ds[self.getAuxCoordinates(name)['time']])
+            except ParameterNotFound:
+                logger.warn('Ignoring parameter: %s', name)
             try:
                 if self.getFeatureType() == 'trajectory':
                     trajSingleParameterCount = np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],))
@@ -1575,7 +1578,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             elif v in ['SW_FLUX_HR', 'AIR_TEMPERATURE_HR', 'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR']:
                 loader.auxCoords[v] = {'time': 'hr_time_met', 'latitude': 'Latitude', 'longitude': 'Longitude', 'depth': 'HR_DEPTH_met'}
             else:
-                logger.error('Do not have an auxCoords assignment for variable %s in include_names', v)
+                logger.warn('Do not have an auxCoords assignment for variable %s in url %s', v, url)
     elif url.find('_hs2_') != -1:
         # Special for fluorometer on M1 - the HS2
         for v in loader.include_names:

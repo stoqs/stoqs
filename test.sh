@@ -23,6 +23,6 @@ unset DATABASE_URL
 coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests --settings=config.ci
 test_status=$?
 tools/removeTmpFiles.sh
-coverage report 
+coverage report -m
 cd ..
 exit $test_status

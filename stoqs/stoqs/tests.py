@@ -297,3 +297,44 @@ class SummaryDataTestCase(TestCase):
         img_resp = self.client.get(img_url)
         self.assertEqual(img_resp.status_code, 200, 'Status code for image should be 200 for %s' % img_url)
 
+    def test_simpledepthtime_timeseries(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        qstring = ('only=parametertime&except=spsql&except=mpsql&'
+                   'xaxis_min=1288214585000&xaxis_max=1288309759000&'
+                   'yaxis_min=-200&yaxis_max=600&parametertab=1&'
+                   'secondsperpixel=216&parametertimeplotid=16&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_simpledepthtime_timeseriesprofile1(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        qstring = ('except=spsql&except=mpsql&xaxis_min=1288214585000&'
+                   'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&'
+                   'platforms=M1_Mooring&parameterplotid=12&'
+                   'platformplotname=M1_Mooring&showdataas=scatter&pplr=1&'
+                   'ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_simpledepthtime_timeseriesprofile2(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        qstring = ('only=parametertime&except=spsql&except=mpsql&',
+                   'xaxis_min=1288214585000&xaxis_max=1288309759000&',
+                   'yaxis_min=-200&yaxis_max=600&platforms=M1_Mooring&',
+                   'parametertab=1&secondsperpixel=216&',
+                   'parametertimeplotid=11&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
