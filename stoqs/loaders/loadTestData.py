@@ -58,22 +58,30 @@ cl.m1_parms = [ 'northward_sea_water_velocity_HR', 'SEA_WATER_SALINITY_HR',
 cl.m1_startDatetime = datetime.datetime(2010, 10, 27)
 cl.m1_endDatetime = datetime.datetime(2010, 10, 29)
 
+# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/GOC12/ copied to local GOC12 dir
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../stoqs/tests')
+cl.subsample_csv_files = ['Dorado_2010_300_Bogus_Samples.csv']
+
+
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
     cl.loadDorado(stride=100)
     cl.loadM1(stride=10)
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
     cl.loadM1(stride=1)
+    cl.loadSubSamples()
 
 else:
     if cl.args.stride:
         cl.logger.warn("Overriding Dorado load stride parameter with a value of 1000 for this test load script")
     cl.loadDorado(stride=1000)
     cl.loadM1(stride=2)
+    cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()

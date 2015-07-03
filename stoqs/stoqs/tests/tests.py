@@ -280,13 +280,50 @@ class SummaryDataTestCase(TestCase):
         img_resp = self.client.get(img_url)
         self.assertEqual(img_resp.status_code, 200, 'Status code for image should be 200 for %s' % img_url)
 
-    def test_parameterparameterplot(self):
+    def test_parameterparameterplot1(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d'
                    '&except=spsql&except=mpsql&xaxis_min=1288216319000'
                    '&xaxis_max=1288279374000&yaxis_min=-10&yaxis_max=50'
                    '&px=4&py=5&showstandardnameparametervalues=1&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+        # Assert image was created and is accesible via http
+        img_url = settings.MEDIA_URL + 'parameterparameter/' + data.get('parameterparameterpng')[0]
+        img_resp = self.client.get(img_url)
+        self.assertEqual(img_resp.status_code, 200, 'Status code for image should be 200 for %s' % img_url)
+
+    def test_parameterparameterplot2(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        # SampledParameter vs. MeasuredParameter
+        qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
+                   'except=spsql&except=mpsql&xaxis_min=1288214585000&'
+                   'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&px=6&'
+                   'py=16&parameterplotid=16&platformplotname=dorado&'
+                   'showdataas=scatter&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+        # Assert image was created and is accesible via http
+        img_url = settings.MEDIA_URL + 'parameterparameter/' + data.get('parameterparameterpng')[0]
+        img_resp = self.client.get(img_url)
+        self.assertEqual(img_resp.status_code, 200, 'Status code for image should be 200 for %s' % img_url)
+
+    def test_parameterparameterplot3(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        # SampledParameter vs. MeasuredParameter and 3D with color
+        qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
+                   'except=spsql&except=mpsql&xaxis_min=1288216319000&'
+                   'xaxis_max=1288279374000&yaxis_min=-10&yaxis_max=50&'
+                   'platforms=dorado&px=7&py=1&pz=6&pc=16&pplr=1&ppsl=1')
 
         req = base + '?' + qstring
         response = self.client.get(req)
@@ -327,10 +364,10 @@ class SummaryDataTestCase(TestCase):
     def test_simpledepthtime_timeseriesprofile2(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
-        qstring = ('only=parametertime&except=spsql&except=mpsql&',
-                   'xaxis_min=1288214585000&xaxis_max=1288309759000&',
-                   'yaxis_min=-200&yaxis_max=600&platforms=M1_Mooring&',
-                   'parametertab=1&secondsperpixel=216&',
+        qstring = ('only=parametertime&except=spsql&except=mpsql&'
+                   'xaxis_min=1288214585000&xaxis_max=1288309759000&'
+                   'yaxis_min=-200&yaxis_max=600&platforms=M1_Mooring&'
+                   'parametertab=1&secondsperpixel=216&'
                    'parametertimeplotid=11&pplr=1&ppsl=1')
 
         req = base + '?' + qstring
