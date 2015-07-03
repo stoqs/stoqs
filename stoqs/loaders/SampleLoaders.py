@@ -655,15 +655,15 @@ class SubSamplesLoader(STOQS_Loader):
 
             try:
                 # Try first with %.1f formatted bottle number for Gulper - TODO: Deprecate this!
-                parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
-                                                      ).filter( instantpoint__activity__name__icontains=aName, 
-                                                                name='%.1f' % float(r['Bottle Number']))[0]
+                parentSample = m.Sample.objects.using(self.dbAlias).filter( 
+                        instantpoint__activity__name__icontains=aName, 
+                        name='%.1f' % float(r['Bottle Number']))[0]
             except IndexError:
                 try:
                     # Try without formatted %.1 for bottle number
-                    parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
-                                                          ).filter( instantpoint__activity__name__icontains=aName, 
-                                                                    name=r['Bottle Number'])[0]
+                    parentSample = m.Sample.objects.using(self.dbAlias).filter(
+                            instantpoint__activity__name__icontains=aName, 
+                            name=r['Bottle Number'])[0]
                 except IndexError:
                     logger.error('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
                     continue

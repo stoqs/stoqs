@@ -20,9 +20,9 @@ coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadTe
 # test_stoqs database created and dropped by role of the shell account using Test framework's DB names
 ./manage.py dumpdata --settings=config.ci stoqs > fixtures/stoqs_test_data.json
 unset DATABASE_URL
-coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests --settings=config.ci
+coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.tests --settings=config.ci
 test_status=$?
 tools/removeTmpFiles.sh
-coverage report 
+coverage report -m
 cd ..
 exit $test_status
