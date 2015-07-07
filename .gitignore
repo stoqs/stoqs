@@ -10,5 +10,11 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 
+# Terrain data files
+*.grd
+
+# Test fixtures
+stoqs/fixtures/stoqs_test_data.json
+
 # Virtualenv
 venv-stoqs

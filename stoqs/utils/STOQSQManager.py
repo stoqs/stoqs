@@ -374,8 +374,6 @@ class STOQSQManager(object):
         '''
         Return query set of Samples given the current constraints. 
         '''
-        if not self.sample_qs:
-            logger.warn("self.sample_qs is None")
         return self.sample_qs
 
     def getActivities(self):

@@ -8,12 +8,12 @@ PD=$HOME/dev/stoqsgit
 rm -v $PD/stoqs/media/sections/*.png
 rm -v $PD/stoqs/media/parameterparameter/*.png
 
-# Unit test fixture data
-rm -v $PD/stoqs/fixtures/*.json
+# Unit test fixture data - Handy to have for being able to rerun tests
+#rm -v $PD/stoqs/fixtures/*.json
 
 # Mapserver .map files and log file
 rm -vf /dev/shm/*.map
-rm -vf /tmp/mapserver_stoqshg.log
+#rm -vf /tmp/mapserver_stoqshg.log       # Owned by apache, can't remove
 
 # HTML templates
 rm -v /tmp/*.html

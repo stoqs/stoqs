@@ -42,7 +42,7 @@ class UUIDField(models.CharField) :
         models.CharField.__init__(self, *args, **kwargs)
     
     def pre_save(self, model_instance, add):
-        if add :
+        if add:
             value=getattr(model_instance,self.attname)
             if not value:
                 value = unicode(uuid.uuid4()).replace('-','')

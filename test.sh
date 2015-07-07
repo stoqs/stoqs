@@ -14,6 +14,7 @@ export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
 stoqs/manage.py syncdb --settings=config.local --noinput --database=default
 
 cd stoqs
+wget -q -N -O loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
 coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadTestData.py
 
 # Run tests using the continuous integration setting and default Local class configuration
