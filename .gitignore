@@ -13,5 +13,8 @@ pip-log.txt
 # Terrain data files
 *.grd
 
+# Test fixtures
+stoqs/fixtures/stoqs_test_data.json
+
 # Virtualenv
 venv-stoqs

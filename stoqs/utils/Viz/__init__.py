@@ -949,9 +949,8 @@ class ParameterParameter(object):
                     if self.c:
                         try:
                             ax.scatter(self.sx, self.sy, marker='o', c=self.c, s=25, cmap=cm_jetplus, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
-                        except ValueError, e:
-                            # Likely because a Measured Parameter has been selected for color
-                            logger.warn(e)
+                        except ValueError as e:
+                            # Likely because a Measured Parameter has been selected for color and len(self.c) != len(self.sx)
                             ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False)
                     else:
                         ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False)

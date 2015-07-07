@@ -9,14 +9,14 @@ exclude_lines =
     raise NoValidData
     except KeyError
     conventions = self.ds.attributes['NC_GLOBAL']['conventions'].lower()
-    if len(set(lats.values())) != 1 or len(set(lons.values())) != 1:
+    if len(set(lats.values())) != 1 or len(set(lons.values())) != 1
     raise InvalidSliceRequest
     except ValueError
-    elif len(self.ds[pname].shape) == 2:
+    elif len(self.ds[pname].shape) == 2
     raise Exception
     logger
     except IndexError
-    def _genTrajectoryProfileGridType(self):
+    def _genTrajectoryProfileGridType
     continue
     except Exception
     except IntegrityError
@@ -24,7 +24,7 @@ exclude_lines =
     except SkipRecord
     except TypeError
     except AttributeError
-    elif self.getFeatureType().lower() == 'trajectoryprofile':
+    elif self.getFeatureType().lower() == 'trajectoryprofile'
     return super
     def runTrajectoryLoader
     except VariableMissingCoordinatesAttribute
@@ -51,7 +51,9 @@ exclude_lines =
     if self.plotTimeSeriesDepth.get(v, False):
     raise SkipRecord
     if trajectoryProfileDepths
-    if self.dataStartDatetime and len(simple_line) == 2:
+    if self.dataStartDatetime and len(simple_line) == 2
     except IOError
+    except ImportError
+    def __str__
 
     if __name__ == .__main__.:

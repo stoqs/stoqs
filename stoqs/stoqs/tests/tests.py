@@ -260,6 +260,10 @@ class BaseAndMeasurementViewsTestCase(TestCase):
 class SummaryDataTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
     multi_db = False
+
+    # Many of these tests use a shortcut of building a qstring from the AJAX 
+    # request. They use Parameter IDs that may change if a different fixture 
+    # with different IDs is used. 
     
     def test_parameterplot_scatter(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
@@ -300,12 +304,11 @@ class SummaryDataTestCase(TestCase):
     def test_parameterparameterplot2(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
-        # SampledParameter vs. MeasuredParameter
+        # SampledParameter (B1006_Barnacles) vs. MeasuredParameter (fl700_uncoor)
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
                    'except=spsql&except=mpsql&xaxis_min=1288214585000&'
                    'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&px=6&'
-                   'py=16&parameterplotid=16&platformplotname=dorado&'
-                   'showdataas=scatter&pplr=1&ppsl=1')
+                   'py=17&pplr=1&ppsl=1')
 
         req = base + '?' + qstring
         response = self.client.get(req)
@@ -323,7 +326,7 @@ class SummaryDataTestCase(TestCase):
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
                    'except=spsql&except=mpsql&xaxis_min=1288216319000&'
                    'xaxis_max=1288279374000&yaxis_min=-10&yaxis_max=50&'
-                   'platforms=dorado&px=7&py=1&pz=6&pc=16&pplr=1&ppsl=1')
+                   'platforms=dorado&px=6&py=1&pz=6&pc=17&pplr=1&ppsl=1')
 
         req = base + '?' + qstring
         response = self.client.get(req)
