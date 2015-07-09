@@ -366,8 +366,6 @@ class STOQSQManager(object):
         '''
         Return query set of ActivityParameterHistograms given the current constraints. 
         '''
-        if not self.activityparameterhistogram_qs:
-            logger.warn("self.activityparameterhistogram_qs is None")
         return self.activityparameterhistogram_qs
 
     def getSampleQS(self):
@@ -375,22 +373,6 @@ class STOQSQManager(object):
         Return query set of Samples given the current constraints. 
         '''
         return self.sample_qs
-
-    def getActivities(self):
-        '''
-        Get a list of the unique activities based on the current query criteria.  
-        return the UUID's of those, since we need to return those to perform the query later.
-        Lastly, we assume here that the uuid's and name's have a 1:1 relationship - this should be enforced
-        somewhere in the database hopefully.  If not, we'll return the duplicate name/uuid pairs as well.
-        '''
-        qs = self.qs.values('uuid', 'name').distinct()
-        results=[]
-        for row in qs:
-            name = row['name']
-            uuid = row['uuid']
-            if name is not None and uuid is not None:
-                results.append((name,uuid,))
-        return results
 
     def getParameters(self, groupName=''):
         '''

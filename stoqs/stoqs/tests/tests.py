@@ -265,6 +265,47 @@ class SummaryDataTestCase(TestCase):
     # request. They use Parameter IDs that may change if a different fixture 
     # with different IDs is used. 
     
+    def test_initial(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        # time and depth constraint with get_actual_count
+        qstring = ('except=spsql&except=mpsql&'
+                   'start_time=2010-10-27+22%3A13%3A33&'
+                   'end_time=2010-10-28+06%3A06%3A31&min_depth=-41.48&'
+                   'max_depth=100.32&pplr=1&ppsl=1&get_actual_count=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_measuredparameter_select(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        # Select temperature for data access
+        qstring = ('except=spsql&except=mpsql&'
+                   'measuredparametersgroup=temperature&'
+                   'xaxis_min=1288214585000&xaxis_max=1288309759000&'
+                   'yaxis_min=-100&yaxis_max=600&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_sampledparameter_select(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        # Select temperature for data access
+        qstring = ('except=spsql&except=mpsql&sampledparametersgroup=17&'
+                   'xaxis_min=1288214585000&xaxis_max=1288309759000&'
+                   'yaxis_min=-100&yaxis_max=600&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
     def test_parameterplot_scatter(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
@@ -372,6 +413,34 @@ class SummaryDataTestCase(TestCase):
                    'yaxis_min=-200&yaxis_max=600&platforms=M1_Mooring&'
                    'parametertab=1&secondsperpixel=216&'
                    'parametertimeplotid=11&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_histograms(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        qstring = ('only=activityparameterhistograms&except=spsql&except=mpsql&'
+                   'xaxis_min=1288214585000&xaxis_max=1288309759000&'
+                   'yaxis_min=-100&yaxis_max=600&'
+                   'showstandardnameparametervalues=1&showallparametervalues=1&'
+                   'pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_standardname_select(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        # Standardname sea_water_temperature selected for data access
+        qstring = ('except=spsql&except=mpsql&'
+                   'parameterstandardname=sea_water_temperature&'
+                   'xaxis_min=1288214585000&xaxis_max=1288309759000&'
+                   'yaxis_min=-100&yaxis_max=600&pplr=1&ppsl=1')
 
         req = base + '?' + qstring
         response = self.client.get(req)
