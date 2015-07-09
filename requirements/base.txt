@@ -1,7 +1,7 @@
 coards==1.0.5
 beautifulsoup4==4.4.0
 dj-database-url==0.3.0
-Django==1.7.8
+Django==1.7.9
 django-allauth==0.21.0
 django-appconf==1.0.1
 django-autoslug==1.8.0
