@@ -19,9 +19,19 @@ The good news is that Unix system administration skills are no longer required a
 
         git clone git@github.com:<your_github_id>/stoqs.git stoqsgit
 
-   (If you built a development system from the Vagrantfile you may want to first remove the ~/dev/stoqsgit directory created during that process.)
+   Replace <your_github_id> with your GitHub ID. If you built a development system from the Vagrantfile you may want to first remove the ~/dev/stoqsgit directory created during that process.
 
-5. Set up remote upstream:
+5. Configure your Python virtual environment and run the tests (these steps are done as part of the original Vagrant installation, they need to be executed because you re-cloned the repository - your working directory - in the previous step):
+
+        cd stoqsgit
+        git checkout django17upgrade
+        export PATH="/usr/local/bin:$PATH"
+        virtualenv venv-stoqs
+        source venv-stoqs/bin/activate
+        ./setup.sh
+        ./test.sh
+
+6. Set up remote upstream:
 
         git remote add -f upstream git://github.com/stoqs/stoqs.git
 
@@ -36,7 +46,7 @@ The good news is that Unix system administration skills are no longer required a
         git checkout master
         git checkout -b my_new_feature
 
-3. Work on your feature; add and commit as you write code and test it. (Creating a branch is not strictly necessary, 
+3. Work on your feature; add and commit as you write code and test it. (Creating a new branch is not strictly necessary, 
 but it makes it easy to delete your branch when the feature has been merged into upstream, diff your branch 
 with the version that actually ended in upstream, and to submit pull requests for multiple features (branches)).
 
