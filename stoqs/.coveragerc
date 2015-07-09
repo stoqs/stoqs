@@ -55,5 +55,7 @@ exclude_lines =
     except IOError
     except ImportError
     def __str__
+    # No coverage for defensive code in stoqs/utils/STOQSQManager.py
+    
 
     if __name__ == .__main__.:
