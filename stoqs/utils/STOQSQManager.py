@@ -146,41 +146,19 @@ class STOQSQManager(object):
             # Provide "base" querysets with depth and filters so that more efficient inner joins are generated
             if fromTable == 'Activity':
                 logger.debug('Making default activity based query')
-                if (not kwargs):
-                    qs = models.Activity.objects.using(self.dbname).filter( activityparameter__parameter__pk__isnull=False,
-                                                                                                    activityparameter__activity__pk__isnull=False,
-                                                                                                    simpledepthtime__pk__isnull=False,
-                                                                                                    platform__pk__isnull=False)
-                    qs_platform = qs
-                else:
-                    qs = models.Activity.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
-                    qs_platform = qs
+                qs = models.Activity.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
+                qs_platform = qs
             elif fromTable == 'Sample':
                 logger.debug('Making %s based query', fromTable)
-                if (not kwargs):
-                    qs = models.Sample.objects.using(self.dbname).filter( sampledparameter__parameter__pk__isnull=False,
-                                                                                                  instantpoint__activity__pk__isnull=False,
-                                                                                                  instantpoint__activity__platform__pk__isnull=False)
-                else:
-                    qs = models.Sample.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
+                qs = models.Sample.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
                 # Exclude sub (child) samples where name is not set.  Flot UI needs a name for its selector
                 qs = qs.exclude(name__isnull=True)
             elif fromTable == 'ActivityParameter':
                 logger.debug('Making %s based query', fromTable)
-                if (not kwargs):
-                    qs = models.ActivityParameter.objects.using(self.dbname).filter( parameter__pk__isnull=False,
-                                                                                                  activity__pk__isnull=False,
-                                                                                                  activity__platform__pk__isnull=False)
-                else:
-                    qs = models.ActivityParameter.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
+                qs = models.ActivityParameter.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
             elif fromTable == 'ActivityParameterHistogram':
                 logger.debug('Making %s based query', fromTable)
-                if (not kwargs):
-                    qs = models.ActivityParameterHistogram.objects.using(self.dbname).filter( activityparameter__parameter__pk__isnull=False,
-                                                                                                  activityparameter__activity__pk__isnull=False,
-                                                                                                  activityparameter__activity__platform__pk__isnull=False)
-                else:
-                    qs = models.ActivityParameterHistogram.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
+                qs = models.ActivityParameterHistogram.objects.using(self.dbname).all()   # To receive filters constructed below from kwargs
             else:
                 logger.exception('No handler for fromTable = %s', fromTable)
     
@@ -936,7 +914,7 @@ class STOQSQManager(object):
 
     def _parameterInSelection(self, p, is_standard_name, parameterType=MEASUREDINSITU):
         '''
-        Return True if parameter name is in the UI selection, either from contraints other than
+        Return True if parameter name is in the UI selection, either from constraints other than
         direct selection or if specifically selected in the UI.  
         '''
         isInSelection = False
@@ -1255,7 +1233,7 @@ class STOQSQManager(object):
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
                 try:
                     ppPngFile, infoText, sql = self.pp.make2DPlot()
-                except PPDatabaseException, e:
+                except PPDatabaseException as e:
                     return None, e.message, e.sql
 
                 plotResults = ppPngFile, infoText, sql

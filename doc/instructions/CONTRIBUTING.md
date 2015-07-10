@@ -19,7 +19,7 @@ The good news is that Unix system administration skills are no longer required a
 
         git clone git@github.com:<your_github_id>/stoqs.git stoqsgit
 
-   Replace <your_github_id> with your GitHub ID. If you built a development system from the Vagrantfile you may want to first remove the ~/dev/stoqsgit directory created during that process.
+   Replace \<your_github_id\> with your GitHub ID. If you built a development system from the Vagrantfile you may want to first remove the ~/dev/stoqsgit directory created during that process.
 
 5. Configure your Python virtual environment and run the tests (these steps are done as part of the original Vagrant installation, they need to be executed because you re-cloned the repository - your working directory - in the previous step):
 
