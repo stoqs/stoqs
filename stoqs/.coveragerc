@@ -56,6 +56,8 @@ exclude_lines =
     except ImportError
     def __str__
     # No coverage for defensive code in stoqs/utils/STOQSQManager.py
+    except PPDatabaseException
+    return q
     
 
     if __name__ == .__main__.:

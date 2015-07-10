@@ -265,7 +265,18 @@ class SummaryDataTestCase(TestCase):
     # request. They use Parameter IDs that may change if a different fixture 
     # with different IDs is used. 
     
-    def test_initial(self):
+    def test_empty(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        # Empty request with no kwargs
+        qstring = ''
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_timedepth(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # time and depth constraint with get_actual_count
