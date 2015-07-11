@@ -6,7 +6,7 @@ addons:
 services:
   - rabbitmq 
 before_install: 
-  - sudo apt-get install -q python-numpy python-scipy python-matplotlib 
+  - sudo apt-get install -q python-numpy python-scipy python-matplotlib scipy blas blas-devel lapack lapack-devel
 env:
   - DJANGO=1.7
 install:
