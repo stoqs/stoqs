@@ -33,7 +33,7 @@ coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.tests --settin
 test_status=$?
 
 # Run the development server in the background for the functional tests
-./manage.py runserver 0.0.0.0:8000 --settings=config.ci &
+coverage run -a --source=utils,stoqs ./manage.py runserver 0.0.0.0:8000 --settings=config.ci &
 coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.functional_tests --settings=config.ci
 kill %1
 
