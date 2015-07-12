@@ -34,8 +34,9 @@ test_status=$?
 
 # Run the development server in the background for the functional tests
 coverage run -a --source=utils,stoqs ./manage.py runserver 0.0.0.0:8000 --settings=config.ci &
+pid=$!
 coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.functional_tests --settings=config.ci
-kill %1
+pkill -TERM -P $pid
 
 tools/removeTmpFiles.sh
 coverage report -m
