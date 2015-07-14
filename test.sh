@@ -29,18 +29,17 @@ coverage run -a --include="contrib/analysis/classify.py" contrib/analysis/classi
 # test_stoqs database created and dropped by role of the shell account using Test framework's DB names
 ./manage.py dumpdata --settings=config.ci stoqs > fixtures/stoqs_test_data.json
 unset DATABASE_URL
-coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.tests --settings=config.ci
-test_status=$?
+coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.unit_tests --settings=config.ci
+unit_tests_status=$?
 
 # Run the development server in the background for the functional tests
 coverage run -a --source=utils,stoqs ./manage.py runserver 0.0.0.0:8000 --settings=config.ci &
 pid=$!
-coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.functional_tests --settings=config.ci
+./manage.py test stoqs.tests.functional_tests --settings=config.ci
 pkill -TERM -P $pid
-
 tools/removeTmpFiles.sh
+
+# Report results of unit and functional tests
 coverage report -m
 cd ..
-
-# Report results of the unit tests
-exit $test_status
+exit $unit_tests_status

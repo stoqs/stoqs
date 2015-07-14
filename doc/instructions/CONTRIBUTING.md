@@ -50,6 +50,9 @@ The good news is that Unix system administration skills are no longer required a
 but it makes it easy to delete your branch when the feature has been merged into upstream, diff your branch 
 with the version that actually ended in upstream, and to submit pull requests for multiple features (branches)).
 
+Before pushing the commits of your new feature please run ./test.sh to make sure the test coverage has not decreased.
+Another way to state this is: Be sure to write a test for your new feature in stoqs/stoqs/tests.
+
 4. Push the new branch to your fork on GitHub:
 
         git push origin my_new_feature
@@ -63,4 +66,7 @@ on top of these, this is done with `rebase`, e.g.:
 
     git fetch upstream
     git rebase upstream/master
+
+or 
+    git rebase upstream/<branch_name>, if a lot of upstream development is happening on another branch 
 
