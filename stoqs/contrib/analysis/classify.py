@@ -25,8 +25,22 @@ MBARI 16 June 2014
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
+
+# Insert Django App directory (parent of config) into python path 
+sys.path.insert(0, os.path.abspath(os.path.join(
+                        os.path.dirname(__file__), "../../")))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.local'
+os.environ['DJANGO_CONFIGURATION'] = 'Local'
+
+# Must install config and setup Django before importing models
+from configurations import importer
+importer.install()
+# django >=1.7
+try:
+    import django
+    django.setup()
+except AttributeError:
+    pass
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -139,7 +153,7 @@ class Classifier(BiPlot):
         '''
         # Remove MeasuredParameter associations with Resource (Labeled data)
         mprs = MeasuredParameterResource.objects.using(self.args.database).filter(resource__resourcetype__name=labeledGroupName
-                                ).select_related(depth=1)
+                                ).select_related('resource')
         if label:
             mprs = mprs.filter(resource__name=LABEL, resource__value=label)
 
@@ -348,8 +362,8 @@ class Classifier(BiPlot):
         parser.add_argument('--createClassifier', action='store_true', help='Fit a model to Labeled data with --classifier to labels in --labels and save in database as --modelBaseName')
         parser.add_argument('--doModelsScore', action='store_true', help='Print scores for fits of various models for --groupName')
         parser.add_argument('--inputs', action='store', help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
-        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format')
-        parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format')
+        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='19000101T000000')
+        parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format', default='22000101T000000')
         parser.add_argument('--discriminator', action='store', help='Parameter name to use to discriminate the data')
         parser.add_argument('--groupName', action='store', help='Name to follow "Labeled" in UI describing the group of --labels for --createLabels option')
         parser.add_argument('--labels', action='store', help='List of labels to create separated by spaces', nargs='*')

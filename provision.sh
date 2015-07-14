@@ -72,6 +72,7 @@ then
     yum -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
     yum -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel freetds-devel
     yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
+    yum -y install scipy blas blas-devel lapack lapack-devel
 fi
 
 # Commands that work on any *nix

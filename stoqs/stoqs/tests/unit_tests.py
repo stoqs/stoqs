@@ -26,26 +26,23 @@ import os
 import sys
 import time
 import json
+import time
+import logging
 
 from django.conf import settings
-from django.utils import unittest
 from django.test.client import Client
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-
 from stoqs.models import Activity
-import logging
-import time
 
 logger = logging.getLogger(__name__)
-
 
 class BaseAndMeasurementViewsTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
     format_types = ['.html', '.json', '.xml', '.csv']
     multi_db = False
     
-    def setup(self):
+    def setUp(self):
         ##call_setup_methods()
         pass
 
@@ -62,7 +59,12 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                                                    'dbAlias': 'default'})
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-    
+
+    def test_base_campaign(self):
+        req = reverse('stoqs:base-campaign', kwargs={'dbAlias': 'default'})
+        response = self.client.get(req)
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
     def test_parameter(self):
        for fmt in self.format_types:
            req = reverse('stoqs:show-parameter', kwargs={'format': fmt,
@@ -452,6 +454,20 @@ class SummaryDataTestCase(TestCase):
                    'parameterstandardname=sea_water_temperature&'
                    'xaxis_min=1288214585000&xaxis_max=1288309759000&'
                    'yaxis_min=-100&yaxis_max=600&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_labeled(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        qstring = ('except=spsql&except=mpsql&'
+                   'measuredparametersgroup=fl700_uncorr&'
+                   'xaxis_min=1288216319000&xaxis_max=1288279374000&'
+                   'yaxis_min=-10&yaxis_max=50&mplabels=171&mplabels=175&'
+                   'pplr=1&ppsl=1')
 
         req = base + '?' + qstring
         response = self.client.get(req)
