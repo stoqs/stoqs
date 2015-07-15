@@ -11,10 +11,6 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
-  - wget http://stoqs.mbari.org/terrain/bin/grdtrack -O /home/travis/miniconda/bin/grdtrack
-  - wget http://stoqs.mbari.org/terrain/bin/libgmt.so.4 -O /home/travis/miniconda/bin/libgmt.so.4
-  - chmod +x /home/travis/miniconda/bin/grdtrack
-  - export LD_LIBRARY_PATH=/home/travis/miniconda/bin
 env:
   - DJANGO=1.7
 install:
