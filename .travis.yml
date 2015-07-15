@@ -11,8 +11,8 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
-  - wget http://stoqs.mbari.org/terrain/bin/grdtrack -O grdtrack
-  - chmod +x grdtrack
+  - wget http://stoqs.mbari.org/terrain/bin/grdtrack -O /home/travis/miniconda/bin/grdtrack
+  - chmod +x /home/travis/miniconda/bin/grdtrack
 env:
   - DJANGO=1.7
 install:
