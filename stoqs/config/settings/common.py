@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Django settings for stoqs_permalink project.
+Django settings for stoqs project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/dev/topics/settings/
@@ -13,7 +13,7 @@ from __future__ import absolute_import, unicode_literals
 import environ
 
 ROOT_DIR = environ.Path(__file__) - 3  # (/a/b/myfile.py - 3 = /)
-APPS_DIR = ROOT_DIR.path('stoqs_permalink')
+APPS_DIR = ROOT_DIR.path('stoqs')
 
 env = environ.Env()
 
@@ -38,13 +38,22 @@ THIRD_PARTY_APPS = (
     'crispy_forms',  # Form layouts
     'allauth',  # registration
     'allauth.account',  # registration
-    'allauth.socialaccount',  # registration
+    # See: https://github.com/pennersr/django-allauth/blob/master/docs/installation.rst
+    # and https://github.com/pennersr/django-allauth/commit/b1bce45012a808aef233e7f7b60a956d8a2524ee
+    # Expect allauth.socialaccount to work when 0.22 is in pypi
+    ##'allauth.socialaccount',  # registration
+    ##'allauth.socialaccount.providers.dropbox',
+    ##'allauth.socialaccount.providers.facebook',
+    ##'allauth.socialaccount.providers.github',
+    ##'allauth.socialaccount.providers.google',
+    ##'allauth.socialaccount.providers.openid',
+    ##'allauth.socialaccount.providers.twitter',
 )
 
 # Apps specific for this project go here.
 LOCAL_APPS = (
-    'stoqs_permalink.users',  # custom users app
     # Your stuff: custom apps go here
+    'stoqs',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -60,12 +69,13 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'stoqs.db_router.RouterMiddleware',
 )
 
 # MIGRATIONS CONFIGURATION
 # ------------------------------------------------------------------------------
 MIGRATION_MODULES = {
-    'sites': 'stoqs_permalink.contrib.sites.migrations'
+    'sites': 'stoqs.contrib.sites.migrations'
 }
 
 # DEBUG
@@ -99,7 +109,7 @@ MANAGERS = ADMINS
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
     # Raises ImproperlyConfigured exception if DATABASE_URL not in os.environ
-    'default': env.db("DATABASE_URL", default="postgres:///stoqs_permalink"),
+    'default': env.db("DATABASE_URL", default="postgis:///stoqs"),
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
@@ -125,7 +135,9 @@ USE_I18N = True
 USE_L10N = True
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
-USE_TZ = True
+# STOQS assumes all times are GMT, which is the timezone of the database
+# It's OK to use naiive datetimes with this policy
+USE_TZ = False
 
 # TEMPLATE CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -136,7 +148,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         # See: https://docs.djangoproject.com/en/dev/ref/settings/#template-dirs
         'DIRS': [
-            str(APPS_DIR.path('templates')),
+            str(APPS_DIR.path('templates/stoqs')), '/tmp',
         ],
         'OPTIONS': {
             # See: https://docs.djangoproject.com/en/dev/ref/settings/#template-debug
@@ -171,14 +183,14 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 # STATIC FILE CONFIGURATION
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-root
-STATIC_ROOT = str(ROOT_DIR('staticfiles'))
+STATIC_ROOT = '/var/www/html/stoqsfiles/static/'
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-url
-STATIC_URL = '/static/'
+STATIC_URL = '/stoqsfiles/static/'
 
 # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
 STATICFILES_DIRS = (
-    str(APPS_DIR.path('static')),
+    str(ROOT_DIR.path('static')),
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
@@ -197,10 +209,12 @@ MEDIA_URL = '/media/'
 
 # URL Configuration
 # ------------------------------------------------------------------------------
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = 'urls'
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
-WSGI_APPLICATION = 'config.wsgi.application'
+# wsgi.py still imports from django-configurations, perhaps this will get
+# fixed with https://github.com/pydanny/cookiecutter-django/issues/160
+##WSGI_APPLICATION = 'wsgi.application'
 
 # AUTHENTICATION CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -216,9 +230,9 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
 # Custom user app defaults
 # Select the correct user model
-AUTH_USER_MODEL = 'users.User'
-LOGIN_REDIRECT_URL = 'users:redirect'
-LOGIN_URL = 'account_login'
+##AUTH_USER_MODEL = 'users.User'
+##LOGIN_REDIRECT_URL = 'users:redirect'
+##LOGIN_URL = 'account_login'
 
 # SLUGLIFIER
 AUTOSLUG_SLUGIFY_FUNCTION = 'slugify.slugify'
@@ -257,3 +271,64 @@ LOGGING = {
 }
 
 # Your common stuff: Below this line define 3rd party library settings
+
+# Google Analytics code - get for your web site, if you want to track usage
+# export DJANGO_GOOGLE_ANALYTICS_CODE='SET_YOUR_OWN_GA_CODE_TO_TRACK_USAGE'
+GOOGLE_ANALYTICS_CODE = 'testing'
+
+# For template generated .map files
+MAPFILE_DIR = '/dev/shm'
+
+
+# STOQS specific logging
+LOGGING['formatters'] = {
+    'veryverbose': {
+        'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(filename)s %(funcName)s():%(lineno)d %(message)s'
+    },
+    'verbose': {
+        'format': '%(levelname)s %(asctime)s %(module)s %(filename)s %(funcName)s():%(lineno)d %(message)s'
+    },
+    'simple': {
+        'format': '%(levelname)s %(message)s'
+    },
+}
+LOGGING['handlers']['console'] = {
+                            'level':'DEBUG',
+                            'class':'logging.StreamHandler',
+                            'formatter': 'verbose'
+}
+LOGGING['loggers']['stoqs'] = {
+                            'handlers':['console'],
+                            'level':'INFO',
+                            'formatter': 'verbose'
+}
+LOGGING['loggers']['stoqs.db_router'] = {
+                            'handlers':['console'],
+                            'propagate': True,
+                            'level':'INFO',
+                            'formatter': 'verbose'
+}
+LOGGING['loggers']['DAPloaders'] = {
+                            'handlers':['console'],
+                            'propagate': True,
+                            'level':'INFO',
+                            'formatter': 'verbose'
+}
+LOGGING['loggers']['SampleLoaders'] = {
+                            'handlers':['console'],
+                            'propagate': True,
+                            'level':'INFO',
+                            'formatter': 'verbose'
+}
+LOGGING['loggers']['utils'] = {
+                            'handlers':['console'],
+                            'propagate': True,
+                            'level':'INFO',
+                            'formatter': 'verbose'
+}
+LOGGING['loggers']['stoqs.tests'] = {
+                            'handlers':['console'],
+                            'level':'INFO',
+                            'formatter': 'verbose'
+}
+LOGGING['loggers']['stoqs']['level'] = 'INFO'

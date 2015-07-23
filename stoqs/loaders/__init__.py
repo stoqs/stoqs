@@ -47,8 +47,8 @@ import httplib
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
 # See http://stackoverflow.com/questions/7768027/turn-off-sql-logging-while-keeping-settings-debug
-from django.db.backends import BaseDatabaseWrapper
-from django.db.backends.util import CursorWrapper
+from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db.backends.utils import CursorWrapper
 
 # Constant for ParameterGroup name - for utils/STOQSQmanager.py to use
 MEASUREDINSITU = 'Measured in situ'

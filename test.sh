@@ -12,7 +12,7 @@ psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d s
 # Set environment variables and create initial default database that is used for testing
 export DJANGO_SECRET_KEY='SET_YOUR_OWN_IMPOSSIBLE_TO_GUESS_SECRET_KEY'
 export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
-stoqs/manage.py syncdb --settings=config.local --noinput --database=default
+stoqs/manage.py syncdb --settings=config.settings.local --noinput --database=default
 
 # Assume starting in project home (stoqsgit) directory, get bathymetry, and load data
 cd stoqs
@@ -27,15 +27,15 @@ coverage run -a --include="contrib/analysis/classify.py" contrib/analysis/classi
 
 # Run tests using the continuous integration setting and default Local class configuration
 # test_stoqs database created and dropped by role of the shell account using Test framework's DB names
-./manage.py dumpdata --settings=config.ci stoqs > fixtures/stoqs_test_data.json
+./manage.py dumpdata --settings=config.settings.ci stoqs > fixtures/stoqs_test_data.json
 unset DATABASE_URL
-coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.unit_tests --settings=config.ci
+coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
 
 # Run the development server in the background for the functional tests
-coverage run -a --source=utils,stoqs ./manage.py runserver 0.0.0.0:8000 --settings=config.ci &
+coverage run -a --source=utils,stoqs ./manage.py runserver 0.0.0.0:8000 --settings=config.settings.ci &
 pid=$!
-./manage.py test stoqs.tests.functional_tests --settings=config.ci
+./manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
 pkill -TERM -P $pid
 tools/removeTmpFiles.sh
 

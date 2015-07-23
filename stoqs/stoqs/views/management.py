@@ -25,7 +25,7 @@ MBARI Jan 9, 2012
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.conf import settings
-from django.db import DatabaseError, close_connection
+from django.db import DatabaseError
 from django.http import HttpResponse
 from utils import encoders
 import stoqs.models as mod

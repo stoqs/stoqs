@@ -28,5 +28,4 @@ selenium==2.46.0
 Shapely==1.5.9
 snowballstemmer==1.2.0
 thredds-crawler==1.0.0
-tornado==4.2
-
+tornado==4.2.1
