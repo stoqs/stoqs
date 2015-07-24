@@ -308,6 +308,12 @@ LOGGING['loggers']['stoqs.db_router'] = {
                             'level':'INFO',
                             'formatter': 'verbose'
 }
+LOGGING['loggers']['loaders'] = {
+                            'handlers':['console'],
+                            'propagate': True,
+                            'level':'INFO',
+                            'formatter': 'verbose'
+}
 LOGGING['loggers']['DAPloaders'] = {
                             'handlers':['console'],
                             'propagate': True,

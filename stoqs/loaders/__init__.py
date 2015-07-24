@@ -76,7 +76,7 @@ class LoadScript(object):
     as process_command_line()
     ''' 
 
-    logger = logging.getLogger('__main__')
+    logger = logging.getLogger('loaders')
     logger.setLevel(logging.INFO)
 
     def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains={}, grdTerrain=None):

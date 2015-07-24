@@ -30,8 +30,8 @@ MBARI Dec 29, 2011
 import os
 import sys
 from django.contrib.gis.geos import GEOSGeometry, LineString, Point
-project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # config is one dir up
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 from django.conf import settings
 
 from django.db.utils import IntegrityError, DatabaseError
