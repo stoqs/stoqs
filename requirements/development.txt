@@ -24,6 +24,7 @@ pygraphviz==1.2
 pymssql==2.1.1
 pyparsing==2.0.3
 scikit-learn==0.16.1
+scipy==0.16.0
 selenium==2.46.1
 Shapely==1.5.9
 snowballstemmer==1.2.0
