@@ -1778,8 +1778,15 @@ class STOQSQManager(object):
         logger.debug("Collected %d geometry extents from Activities and Samples", len(extentList))
         if extentList:
             logger.debug('extentList = %s', extentList)
-            geom_union = fromstr('LINESTRING (%s %s, %s %s)' % extentList[0], srid=srid)
-            for extent in extentList[1:]:
+
+            # Initialize geom_union with first not None extent 
+            for index, ext in enumerate(extentList):
+                if ext is not None:
+                    geom_union = fromstr('LINESTRING (%s %s, %s %s)' % ext, srid=srid)
+                    break
+
+            # Union additional extents
+            for extent in extentList[index:]:
                 if extent is not None:
                     if extent[0] == extent[2] and extent[1] == extent[3]:
                         logger.debug('Unioning extent = %s as a POINT', extent)
