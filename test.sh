@@ -26,10 +26,9 @@ coverage run -a --include="contrib/analysis/classify.py" contrib/analysis/classi
   --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment \
   --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 -v
 
-# Run tests using the continuous integration setting and default Local class configuration
+# Run tests using the continuous integration setting
 # test_stoqs database created and dropped by role of the shell account using Test framework's DB names
 ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_test_data.json
-unset DATABASE_URL
 coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
 

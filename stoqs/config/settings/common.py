@@ -107,9 +107,11 @@ MANAGERS = ADMINS
 # DATABASE CONFIGURATION
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
+# Need to set environment variable DATABASE_URL containing DB login/password
+# e.g.: export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
 DATABASES = {
     # Raises ImproperlyConfigured exception if DATABASE_URL not in os.environ
-    'default': env.db("DATABASE_URL", default="postgis:///stoqs"),
+    'default': env.db("DATABASE_URL", default="postgis://127.0.0.1:5432/stoqs"),
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
