@@ -13,6 +13,7 @@ before_install:
   - conda update --yes conda
 env:
   - DJANGO=1.8
+  - DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels
   # Coverage packages are on my binstar channel

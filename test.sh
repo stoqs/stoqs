@@ -1,7 +1,7 @@
 #!/bin/bash
-# Do database operations to create default database and load data for testing
+# Do database operations to create default database and create fixture for testing
 # Designed for re-running on development system - ignore errors in Vagrant and Travis-ci
-# (You may want a different password than CHANGEME on your system)
+# (You may want a different password than CHANGEME on your system; must match what's in DATABASE_URL)
 
 psql -c "CREATE USER stoqsadm WITH PASSWORD 'CHANGEME';" -U postgres
 psql -c "DROP DATABASE stoqs;" -U postgres
@@ -9,9 +9,7 @@ psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;" -U pos
 psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
 psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
-# Set environment variables and create initial default database that is used for testing
-export DJANGO_SECRET_KEY='SET_YOUR_OWN_IMPOSSIBLE_TO_GUESS_SECRET_KEY'
-export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
+# DATABASE_URL environment variable must be set outside of this script
 stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
 stoqs/manage.py migrate --settings=config.settings.local --noinput --database=default
 
