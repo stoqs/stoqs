@@ -21,7 +21,10 @@ Mike McCann
 '''
 
 from django.test import TestCase
+from django.conf import settings
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
+import selenium.webdriver.support.ui as ui
 
 import logging
 
@@ -36,6 +39,20 @@ class BrowserTestCase(TestCase):
     def tearDown(self):
         self.browser.quit()
 
+    def _mapserver_loading_panel_test(self):
+        '''Wait for ajax-loader GIF image to go away'''
+        seconds = 2
+        wait = ui.WebDriverWait(self.browser, seconds)
+        try:
+            wait.until(lambda display: self.browser.find_element_by_id('map').
+                            find_element_by_class_name('olControlLoadingPanel').
+                            value_of_css_property('display') == 'none')
+        except TimeoutException as e:
+            return ('Mapserver images did not load after waiting ' +
+                    str(seconds) + ' seconds')
+        else:
+            return ''
+
     def test_campaign_page(self):
         self.browser.get('http://localhost:8000/')
         self.assertIn('Campaign List', self.browser.title)
@@ -43,4 +60,19 @@ class BrowserTestCase(TestCase):
     def test_query_page(self):
         self.browser.get('http://localhost:8000/default/query/')
         self.assertIn('default', self.browser.title)
+        self.assertEquals('', self._mapserver_loading_panel_test())
+
+    def test_dorado_trajectory(self):
+        # Click on Platforms to expand
+        self.browser.get('http://localhost:8000/default/query/')
+        platforms_anchor = self.browser.find_element_by_id('platforms-anchor')
+        platforms_anchor.click()
+
+        # Finds <tr> for 'dorado' then gets the button for clicking
+        dorado_button = self.browser.find_element_by_id('dorado'
+                            ).find_element_by_tag_name('button')
+        dorado_button.click()
+
+        # Test that Mapserver returns images
+        self.assertEquals('', self._mapserver_loading_panel_test())
 

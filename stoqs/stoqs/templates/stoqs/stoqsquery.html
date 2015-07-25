@@ -1412,7 +1412,7 @@
         mp_param = getMPparms(group, params);
 
         var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
-        // Iterate over the formats and update the fields/buttonts to use the new URL's to get the data.
+        // Iterate over the formats and update the fields/buttons to use the new URL's to get the data.
         $.each(formats, function (index, value) {
             var url = query_url + value + param;
             if (value == 'sql') {
