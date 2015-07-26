@@ -1,6 +1,6 @@
 language: python
 python:
-  - "2.7.9"
+  - "2.7"
 addons:
   postgresql: "9.3"
 services:
@@ -14,7 +14,7 @@ before_install:
 env:
   - DJANGO=1.8
 install:
-  - conda install --yes python=2.7.9 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
+  - conda install --yes python=2.7 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
   # Coverage packages are on my binstar channel
   - conda install --yes -c dan_blanchard python-coveralls nose-cov
   - pip install -r requirements/travis-ci.txt
