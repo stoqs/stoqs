@@ -30,8 +30,8 @@ MBARI Dec 29, 2011
 import os
 import sys
 from django.contrib.gis.geos import GEOSGeometry, LineString, Point
-project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # config is one dir up
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 from django.conf import settings
 
 from django.db.utils import IntegrityError, DatabaseError
@@ -64,8 +64,8 @@ logger = logging.getLogger(__name__)
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
 # "Monkey patch" the CursorWrapper to prevent this.  Otherwise we can't load large amounts of data.
 # See http://stackoverflow.com/questions/7768027/turn-off-sql-logging-while-keeping-settings-debug
-from django.db.backends import BaseDatabaseWrapper
-from django.db.backends.util import CursorWrapper
+from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db.backends.utils import CursorWrapper
 
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)

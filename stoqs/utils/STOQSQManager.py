@@ -1778,14 +1778,22 @@ class STOQSQManager(object):
         logger.debug("Collected %d geometry extents from Activities and Samples", len(extentList))
         if extentList:
             logger.debug('extentList = %s', extentList)
-            geom_union = fromstr('LINESTRING (%s %s, %s %s)' % extentList[0], srid=srid)
-            for extent in extentList[1:]:
-                if extent[0] == extent[2] and extent[1] == extent[3]:
-                    logger.debug('Unioning extent = %s as a POINT', extent)
-                    geom_union = geom_union.union(fromstr('POINT (%s %s)' % extent[:2], srid=srid))
-                else:
-                    logger.debug('Unioning extent = %s as a LINESTRING', extent)
-                    geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
+
+            # Initialize geom_union with first not None extent 
+            for index, ext in enumerate(extentList):
+                if ext is not None:
+                    geom_union = fromstr('LINESTRING (%s %s, %s %s)' % ext, srid=srid)
+                    break
+
+            # Union additional extents
+            for extent in extentList[index:]:
+                if extent is not None:
+                    if extent[0] == extent[2] and extent[1] == extent[3]:
+                        logger.debug('Unioning extent = %s as a POINT', extent)
+                        geom_union = geom_union.union(fromstr('POINT (%s %s)' % extent[:2], srid=srid))
+                    else:
+                        logger.debug('Unioning extent = %s as a LINESTRING', extent)
+                        geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
 
             # Aggressive try/excepts done here for better reporting on the production servers
             logger.debug('Final geom_union = %s', geom_union)

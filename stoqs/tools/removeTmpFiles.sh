@@ -5,8 +5,8 @@
 PD=$HOME/dev/stoqsgit
 
 # Section and ParameterParameter plots
-rm -v $PD/stoqs/media/sections/*.png
-rm -v $PD/stoqs/media/parameterparameter/*.png
+rm -v $PD/stoqs/stoqs/media/sections/*.png
+rm -v $PD/stoqs/stoqs/media/parameterparameter/*.png
 
 # Unit test fixture data - Handy to have for being able to rerun tests
 #rm -v $PD/stoqs/fixtures/*.json

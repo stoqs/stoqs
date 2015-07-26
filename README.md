@@ -29,7 +29,7 @@ Start the development server:
     cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
     export DJANGO_SECRET_KEY='SET_YOUR_OWN_IMPOSSIBLE_TO_GUESS_SECRET_KEY'
     export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
-    stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.vagrant
+    stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.vagrant
 
 Visit your server's STOQS User Interface using your host computer's browser:
 

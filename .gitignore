@@ -14,7 +14,10 @@ pip-log.txt
 *.grd
 
 # Test fixtures
-stoqs/fixtures/stoqs_test_data.json
+stoqs/stoqs/fixtures/stoqs_test_data.json
+
+# Migrations
+stoqs/stoqs/migrations/
 
 # Virtualenv
 venv-stoqs

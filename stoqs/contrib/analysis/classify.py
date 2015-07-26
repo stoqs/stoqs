@@ -29,18 +29,14 @@ import sys
 # Insert Django App directory (parent of config) into python path 
 sys.path.insert(0, os.path.abspath(os.path.join(
                         os.path.dirname(__file__), "../../")))
-os.environ['DJANGO_SETTINGS_MODULE'] = 'config.local'
-os.environ['DJANGO_CONFIGURATION'] = 'Local'
-
-# Must install config and setup Django before importing models
-from configurations import importer
-importer.install()
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 # django >=1.7
 try:
     import django
     django.setup()
 except AttributeError:
     pass
+
 
 import matplotlib
 import matplotlib.pyplot as plt
