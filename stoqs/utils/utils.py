@@ -310,7 +310,7 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
         q = q.replace('stoqs_measurement.geom', 'ST_X(stoqs_measurement.geom) as longitude, ST_Y(stoqs_measurement.geom) as latitude')
     
     # Quotify simple things that need quotes
-    QUOTE_NAMEEQUALS = re.compile('name\s+=\s+(?P<argument>\S+)')
+    QUOTE_NAMEEQUALS = re.compile('name\s+=\s+(?P<argument>[^\)\s)]+)')
     QUOTE_DATES = re.compile('(?P<argument>\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)')
 
     q = QUOTE_NAMEEQUALS.sub(r"name = '\1'", q)
