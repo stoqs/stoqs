@@ -23,7 +23,7 @@ Mike McCann
 from django.test import TestCase
 from django.conf import settings
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import selenium.webdriver.support.ui as ui
 
 import logging
@@ -45,8 +45,8 @@ class BrowserTestCase(TestCase):
         wait = ui.WebDriverWait(self.browser, seconds)
         try:
             wait.until(lambda display: self.browser.find_element_by_id('map').
-                            find_element_by_class_name('olControlLoadingPanel').
-                            value_of_css_property('display') == 'none')
+                        find_element_by_class_name('olControlLoadingPanel').
+                        value_of_css_property('display') == 'none')
         except TimeoutException as e:
             return ('Mapserver images did not load after waiting ' +
                     str(seconds) + ' seconds')
@@ -65,8 +65,14 @@ class BrowserTestCase(TestCase):
     def test_dorado_trajectory(self):
         # Click on Platforms to expand
         self.browser.get('http://localhost:8000/default/query/')
-        platforms_anchor = self.browser.find_element_by_id('platforms-anchor')
-        platforms_anchor.click()
+        try:
+            platforms_anchor = self.browser.find_element_by_id(
+                                    'platforms-anchor')
+            platforms_anchor.click()
+        except NoSuchElementException as e:
+            print e
+            print "Is the development server running?"
+            return
 
         # Finds <tr> for 'dorado' then gets the button for clicking
         dorado_button = self.browser.find_element_by_id('dorado'
