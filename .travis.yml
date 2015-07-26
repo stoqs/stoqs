@@ -1,6 +1,6 @@
 language: python
 python:
-  - "2.7"
+  - "2.7.9"
 addons:
   postgresql: "9.3"
 services:
@@ -14,7 +14,7 @@ before_install:
 env:
   - DJANGO=1.8
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels
+  - conda install --yes python=2.7.9 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
   # Coverage packages are on my binstar channel
   - conda install --yes -c dan_blanchard python-coveralls nose-cov
   - pip install -r requirements/travis-ci.txt
@@ -24,8 +24,10 @@ before_script:
   - psql -c 'CREATE EXTENSION postgis_topology;' -U postgres -d template_postgis
   - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
   - psql -c '\du' -U postgres -d template_postgis
-script:  
   - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+script:  
   - ./test.sh
 after_script:
   - COVERALLS_REPO_TOKEN=B9qmcqI4Yq9CR0PkjYmy4eYQoJa3mdKDw coveralls --base_dir stoqs
