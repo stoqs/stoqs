@@ -7,11 +7,11 @@ psql -c "CREATE USER stoqsadm WITH PASSWORD 'CHANGEME';" -U postgres
 psql -c "DROP DATABASE stoqs;" -U postgres
 psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;" -U postgres
 psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
-psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
 # DATABASE_URL environment variable must be set outside of this script
 stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
 stoqs/manage.py migrate --settings=config.settings.local --noinput --database=default
+psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
 # Assume starting in project home (stoqsgit) directory, get bathymetry, and load data
 cd stoqs
