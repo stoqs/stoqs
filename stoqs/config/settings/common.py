@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 from __future__ import absolute_import, unicode_literals
 
 import environ
+import dj_database_url
 
 ROOT_DIR = environ.Path(__file__) - 3  # (/a/b/myfile.py - 3 = /)
 APPS_DIR = ROOT_DIR.path('stoqs')
@@ -115,6 +116,13 @@ DATABASES = {
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+# Example: export STOQS_CAMPAIGNS='stoqs_september2013, stoqs_os2015'
+for campaign in env.list('STOQS_CAMPAIGNS', default=[]):
+    DATABASES[campaign] = dj_database_url.parse('postgis://' +
+            env('STOQS_DB_LOGIN', default='stoqsadm') + ':' +
+            env('STOQS_DB_PASSWORD', default='password') + '@' +
+            env('STOQS_DB_HOST', default='127.0.0.1') + ':' +
+            env('STOQS_DB_PORT', default='5432') + '/' + campaign) 
 
 # GENERAL CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -169,7 +177,7 @@ TEMPLATES = [
                 ##'allauth.account.context_processors.account',
                 ##'allauth.socialaccount.context_processors.socialaccount',
                 ##'django.template.context_processors.i18n',
-                ##'django.template.context_processors.media',
+                'django.template.context_processors.media',
                 'django.template.context_processors.static',
                 ##'django.template.context_processors.tz',
                 ##'django.contrib.messages.context_processors.messages',
