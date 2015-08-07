@@ -1796,7 +1796,12 @@ class STOQSQManager(object):
                         geom_union = geom_union.union(fromstr('LINESTRING (%s %s, %s %s)' % extent, srid=srid))
 
             # Aggressive try/excepts done here for better reporting on the production servers
-            logger.debug('Final geom_union = %s', geom_union)
+            try:
+                logger.debug('Final geom_union = %s', geom_union)
+            except UnboundLocalError:
+                logger.exception('geom_union could not be set from extentList = %s', extentList)
+                return ([], None, None)
+
             try:
                 geomstr = 'LINESTRING (%s %s, %s %s)' % geom_union.extent
             except TypeError:

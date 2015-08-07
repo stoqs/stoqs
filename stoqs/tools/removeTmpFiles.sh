@@ -13,6 +13,7 @@ rm -v $PD/stoqs/stoqs/media/parameterparameter/*.png
 
 # Mapserver .map files and log file
 rm -vf /dev/shm/*.map
+rm -vf /tmp/functional_tests_server.log
 #rm -vf /tmp/mapserver_stoqshg.log       # Owned by apache, can't remove
 
 # HTML templates
