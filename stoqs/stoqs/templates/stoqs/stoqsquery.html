@@ -1254,7 +1254,8 @@
         if ( $('#showsensortracks').is(':checked') && $('input:radio[name=parameters_plot]').is(':checked') ) {
             if ( $('input:radio[name=parameters_plot]:checked').val() ) {
                 // Generate KML url for the parameters_plot radio button selection - this is separate from the filtered selection for Measurement Data Access
-                var base_url = '{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}';
+                var base_url_mp = '{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias format='.kml'%}';
+                var base_url_sp = '{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias format='.kml'%}';
                 var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
                 if (param != '') {
                     param = '?' + param;
@@ -1264,11 +1265,11 @@
                 var orig_kmlurl;
                 if ( $.inArray($('input:radio[name=parameters_plot]:checked').val(), $('#measuredparameters-anchor').data()['ids']) != -1 ) {
                     mp_param = getMPparms('mp', params);
-                    orig_kmlurl = base_url + 'measuredparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
+                    orig_kmlurl = base_url_mp + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
                 }
                 else if ( $.inArray($('input:radio[name=parameters_plot]:checked').val(), $('#sampledparameters-anchor').data()['ids']) != -1 ) {
                     mp_param = getMPparms('sp', params);
-                    orig_kmlurl = base_url + 'sampledparameter.kml' + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
+                    orig_kmlurl = base_url_sp + mp_param + '&parameter__id=' + $('input:radio[name=parameters_plot]:checked').val() + '&';
                 }
 
                 // strideVal is adjusted based on the current count of measured/sampled_parameters so as to prevent long waits for the KML transfer
@@ -1397,13 +1398,15 @@
     // Set the URL fields and buttons to use the current queried URL, group is either 'mp' or 'sp'
     function setDataAccess(group, data) {
         var group_name;
+        var base_url;
         if ( group == 'mp' ) {
             group_name = 'measured';
+            base_url = '{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias format='.'%}';
         }
         else if ( group == 'sp' ) {
             group_name = 'sampled';
+            base_url = '{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias format='.'%}';
         }
-        var base_url = '{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}';
         var query_url = '{{site_uri}}{% url 'stoqs:stoqs-query-ui' dbAlias=request.META.dbAlias %}';
         var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
         if (param != '') {
@@ -1419,7 +1422,7 @@
                 $('#'+group+'-'+value+'-field').text(data[group+'sql']);
             }
             else if (value == 'kml' && ! $.isEmptyObject(data['parameterminmax'])) {
-                var url = base_url + group_name + 'parameter.kml' + mp_param;
+                var url = base_url + 'kml' + mp_param;
                 $('#'+group+'-kml-parameter').html('Select a single ' + group_name + ' parameter <i>for data access</i> to view your selection in Google Earth');
                 $('#'+group+'-kml-parameter').css( { 'color': 'red' } );
                 if (typeof params[group_name + 'parametersgroup'] != 'undefined') {
@@ -1483,7 +1486,7 @@
                     };
                 }
                 if (hasParametervalues) {
-                    $('#'+group+'-'+value+'-field').text(st_text_comm + "data = stoqs_down('" + base_url + group_name + "parameter.json" + mp_param + "');\n");
+                    $('#'+group+'-'+value+'-field').text(st_text_comm + "data = stoqs_down('" + base_url + "json" + mp_param + "');\n");
                 }
                 else {
                     $('#'+group+'-'+value+'-field').text(st_text + "\ndata = stoqs_down(" + req_params.join() + ");\n");
@@ -1491,25 +1494,25 @@
             }
             // Queries made using measuredparameter or sampledparamter REST requests - use mp_parm for Django queries 
             else if (value == 'json') {
-                var url = base_url + group_name + 'parameter.json' + mp_param;
+                var url = base_url + 'json' + mp_param;
                 url = url.replace(/ /g, '%20');
                 $('#'+group+'-'+value+'-field').text(url);
                 $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else if (value == 'csv') {
-                var url = base_url + group_name + 'parameter.csv' + mp_param;
+                var url = base_url + 'csv' + mp_param;
                 url = url.replace(/ /g, '%20');
                 $('#'+group+'-'+value+'-field').text(url);
                 $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else if (value == 'tsv') {
-                var url = base_url + group_name + 'parameter.tsv' + mp_param;
+                var url = base_url + 'tsv' + mp_param;
                 url = url.replace(/ /g, '%20');
                 $('#'+group+'-'+value+'-field').text(url);
                 $('#'+group+'-'+value+'-link').attr('href',url);
             }
             else if (value == 'html') {
-                var url = base_url + group_name + 'parameter.html' + mp_param;
+                var url = base_url + 'html' + mp_param;
                 url = url.replace(/ /g, '%20');
                 $('#'+group+'-'+value+'-field').text(url);
                 $('#'+group+'-'+value+'-link').attr('href',url);
@@ -2194,14 +2197,17 @@
     $('#parameter-parameter-sql').click( function() { 
         SelectText('parameter-parameter-sql') 
     });
-    
-    $('#mp-sql-field').click( function() { 
-        SelectText('mp-sql-field') 
+
+    var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
+    $.each(formats, function (index, value) {
+        $('#mp-' + value + '-field').click( function() { 
+            SelectText('mp-' + value + '-field') 
+        });
+        $('#sp-' + value + '-field').click( function() { 
+            SelectText('sp-' + value + '-field') 
+        });
     });
     
-    $('#sp-sql-field').click( function() { 
-        SelectText('sp-sql-field') 
-    });
     
     $(".zoom-width-button").click(function(element) {
         if (widthZoomed) {

@@ -508,7 +508,8 @@ class MPQuery(object):
                 if self.kwargs['parameterplot'][0]:
                     self.parameterID = self.kwargs['parameterplot'][0]
                     logger.debug('self.parameterID = %s', self.parameterID)
-                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], Parameter.objects.get(id=self.parameterID))
+                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], 
+                            Parameter.objects.get(id=self.kwargs['parameterplot'][0]))
 
             if SAMPLED in parameterGroups:
                 self.qs_sp = self.getSampledParametersQS()
@@ -714,7 +715,6 @@ class MPQuery(object):
 
         return qs_spq
 
-
     def getMPCount(self):
         '''
         Get the actual count of measured parameters giving the exising query.  If private _count
@@ -764,7 +764,6 @@ class MPQuery(object):
                 logger.debug('sql = %s', sql)
 
         return sql
-
 
     def getSampledParametersPostgreSQL(self):
         '''
