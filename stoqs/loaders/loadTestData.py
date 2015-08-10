@@ -45,7 +45,8 @@ cl = CANONLoader('default', 'Initial Test Database',
 # - Trajectory
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
 cl.dorado_files = [ 'Dorado389_2010_300_00_300_00_decim.nc' ]
-cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 'fl700_uncorr', 'salinity', 'biolume' ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
+                    'fl700_uncorr', 'salinity', 'biolume', 'roll', 'pitch', 'yaw' ]
 
 # - TimeSeries and TimeSeriesProfile
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'

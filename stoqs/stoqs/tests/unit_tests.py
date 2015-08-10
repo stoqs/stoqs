@@ -234,8 +234,11 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         req = '/test_stoqs/activitiesMBARICustom'
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-        loadedText = '398 MeasuredParameters'
-        self.assertTrue(response.content.find(loadedText) != -1, 'Should find "%s" string at %s' % (loadedText, req))
+        # Number of Dorado MeasuredParameters will be on a line in the content
+        loadedText = '548 MeasuredParameters'
+        self.assertTrue(response.content.find(loadedText) != -1, 
+                'Should find "%s" in string at %s, instead got: %s' % (
+                    loadedText, req, response.content))
         
         req = '/test_stoqs/deleteActivity/1'
         response = self.client.get(req)
@@ -310,7 +313,7 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # Select temperature for data access
-        qstring = ('except=spsql&except=mpsql&sampledparametersgroup=17&'
+        qstring = ('except=spsql&except=mpsql&sampledparametersgroup=20&'
                    'xaxis_min=1288214585000&xaxis_max=1288309759000&'
                    'yaxis_min=-100&yaxis_max=600&pplr=1&ppsl=1')
 
@@ -362,7 +365,7 @@ class SummaryDataTestCase(TestCase):
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
                    'except=spsql&except=mpsql&xaxis_min=1288214585000&'
                    'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&px=6&'
-                   'py=17&pplr=1&ppsl=1')
+                   'py=20&pplr=1&ppsl=1')
 
         req = base + '?' + qstring
         response = self.client.get(req)
@@ -380,7 +383,7 @@ class SummaryDataTestCase(TestCase):
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
                    'except=spsql&except=mpsql&xaxis_min=1288216319000&'
                    'xaxis_max=1288279374000&yaxis_min=-10&yaxis_max=50&'
-                   'platforms=dorado&px=6&py=1&pz=6&pc=17&pplr=1&ppsl=1')
+                   'platforms=dorado&px=6&py=1&pz=6&pc=20&pplr=1&ppsl=1')
 
         req = base + '?' + qstring
         response = self.client.get(req)
@@ -407,9 +410,10 @@ class SummaryDataTestCase(TestCase):
     def test_simpledepthtime_timeseriesprofile1(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
+        # Plot SEA_WATER_SALINITY_HR from M1_Mooring 
         qstring = ('except=spsql&except=mpsql&xaxis_min=1288214585000&'
                    'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&'
-                   'platforms=M1_Mooring&parameterplotid=12&'
+                   'platforms=M1_Mooring&parameterplotid=16&'
                    'platformplotname=M1_Mooring&showdataas=scatter&pplr=1&'
                    'ppsl=1')
 
@@ -466,7 +470,7 @@ class SummaryDataTestCase(TestCase):
         qstring = ('except=spsql&except=mpsql&'
                    'measuredparametersgroup=fl700_uncorr&'
                    'xaxis_min=1288216319000&xaxis_max=1288279374000&'
-                   'yaxis_min=-10&yaxis_max=50&mplabels=171&mplabels=175&'
+                   'yaxis_min=-10&yaxis_max=50&mplabels=177&mplabels=183&'
                    'pplr=1&ppsl=1')
 
         req = base + '?' + qstring

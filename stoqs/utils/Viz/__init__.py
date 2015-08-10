@@ -614,7 +614,7 @@ class PlatformOrientation(object):
                 limits = (0, len(self.time_by_act[act]))
 
         except Exception as e:
-            self.logger.exception('Could not create platformorientation')
+            self.logger.exception(e)
             x3dResults = 'Could not create platformorientation'
 
         return {'x3d': x3dDict, 'limits': limits, 'translation': translations, 'time': times,

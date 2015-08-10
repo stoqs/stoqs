@@ -109,13 +109,15 @@ class CANONLoader(LoadScript):
         '''
         Dorado specific load functions
         '''
+        pName = 'dorado'
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
             url = self.dorado_base + file
-            DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, 'Dorado', self.colors['dorado'], 'auv', 'AUV mission', 
+            DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors['dorado'], 'auv', 'AUV mission', 
                                         self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
             load_gulps(aName, file, self.dbAlias)
 
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName)
 
     def loadTethys(self, stride=None):
         '''
