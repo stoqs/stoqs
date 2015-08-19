@@ -175,7 +175,7 @@
 
                             <ul id="spatialTabs" class="nav nav-tabs">
                                 <li class="active"><a href="#map2d" data-toggle="tab">Map</a></li>
-                                <li id="spatial-3d-li" style="display:none"><a href="#geo3d" data-toggle="tab">3D</a></li>
+                                <li id="spatial-3d-li" style="display:none"><a id="spatial-3d-anchor" href="#geo3d" data-toggle="tab">3D</a></li>
                             </ul>
 
                             <div class="tab-content">
@@ -249,7 +249,7 @@
                                                         <GeoOriginTransform containerField='children'>
                                                             <Inline id="mp-x3d-terrain1"></Inline>
                                                         </GeoOriginTransform>
-                                                        <Group id="platform-orientations"></Group>
+                                                        <Group id="platform-animations"></Group>
                                                         <Group id="platform-models"></Group>
                                                     </Group>
                                                 </Group>
@@ -1151,9 +1151,27 @@
     var hasTimeSeriesProfile;
     var hasTrajectoryProfile;
     var clearingTemporalFlag = false;
-    var platformTimer = null;
     var PIXELS_WIDE = 800;                              // Approximate width of $("#time-depth-flot")
-    
+    var timeAxis;
+    var sliderLimits;
+
+    // Callback from X3DOM TimeSensor aded to scene with 'showplatforms' checkbox 
+    function setSlider(eventObject) {
+        if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
+            return;
+        var fraction = eventObject.value;
+        $('#spatial-3d-x3d-controls').slider('value', fraction);
+        updateCrosshairs(fraction, timeAxis, sliderLimits);
+    }
+
+    function updateCrosshairs(fraction, timeAxis, limits) {
+        index = Math.floor(limits[0] + fraction * (limits[1] - limits[0]))
+        timedepthplot.lockCrosshair({x: timeAxis[index], y:0});
+        if ( ! $.isEmptyObject(timeparameterplot) ) {
+            timeparameterplot.lockCrosshair({x: timeAxis[index], y:0});
+        }
+    }
+
     // Called with an element that was selectable, should make that element non-selectable.
     function disableButton(element) {
         if (! $(element).is('.disabled')) {
@@ -2595,7 +2613,7 @@
                     $('input:checkbox[name=mp_all_parameters_plot_cb]').prop('checked',true).triggerHandler('click');
                 }
             }
-            rebuildFilters(['parametertime', 'platformorientation']);
+            rebuildFilters(['parametertime', 'platformanimation']);
         }
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
             $('.parameter-plot-radio').show();
@@ -3068,7 +3086,7 @@
         $('#temporal-anchor').html(tLabel);
 
         if ($('#showplatforms').is(':checked')) {
-            rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'platformorientation']);
+            rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'platformanimation']);
         }
         else {
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d']);
@@ -3529,8 +3547,8 @@
                     theData = getDepthDataset(data, initData.time[0], initData.time[1]);
                 }
                 var options = simpledepthtime_options_zoom;
-                if ( ! $.isEmptyObject(data.platformorientation) ) {
-                    if ( ! $.isEmptyObject(data.platformorientation.limits) ) {
+                if ( ! $.isEmptyObject(data.platformanimation) ) {
+                    if ( ! $.isEmptyObject(data.platformanimation.limits) ) {
                         options = $.extend(true, {}, simpledepthtime_options_zoom, { crosshair: { mode: "x" } });
                     }
                 }
@@ -3550,8 +3568,8 @@
                                                           yaxes: parmData.yaxesOptions
                                       });
                 var len = parmData.dataset.length;
-                if ( ! $.isEmptyObject(data.platformorientation) ) {
-                    if ( ! $.isEmptyObject(data.platformorientation.limits) ) {
+                if ( ! $.isEmptyObject(data.platformanimation) ) {
+                    if ( ! $.isEmptyObject(data.platformanimation.limits) ) {
                         options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
                     }
                 }
@@ -3907,13 +3925,13 @@
                     });
                 }
             }
-            else if (key == 'platformorientation') {
+            else if (key == 'platformanimation') {
                 if (data[key]['x3d']) {
                     var x3dText = '';
                     $.each(data[key]['x3d'], function (act, x3d) {
                         x3dText += x3d;
                     });
-                    $('#platform-orientations').html(x3dText);
+                    $('#platform-animations').html(data[key]['all'] + x3dText);
                 }
                 // Redraw the time series so that we have the crosshair option added and can call lockCrosshair()
                 if (data['simpledepthtime']) {
@@ -3923,31 +3941,26 @@
                     redrawParameterTime(data);
                 }
                 if (data[key]['limits']) {
-                    var limits = data[key]['limits']
-                    function updateTranslateRotate(index) {
-                        $('#TRANSLATE').attr('translation', data[key]['translation'][index]);
-                        $('#XROT').attr('rotation', data[key]['xRotation'][index]);
-                        $('#YROT').attr('rotation', data[key]['yRotation'][index]);
-                        $('#ZROT').attr('rotation', data[key]['zRotation'][index]);
-                        timedepthplot.lockCrosshair({x: data[key]['time'][index], y:0});
-                        if ( ! $.isEmptyObject(timeparameterplot) ) {
-                            timeparameterplot.lockCrosshair({x: data[key]['time'][index], y:0});
-                        }
-                    }
-                    $('#spatial-3d-x3d-controls').slider({min: limits[0], max: limits[limits.length - 1], step: 1, value: limits[0], slide: 
-                        $.throttle(function(e, ui) { 
-                            var index = $('#spatial-3d-x3d-controls').slider('option', 'value');
-                            updateTranslateRotate(index);
-                        }, 100)
-                    });
+                    timeAxis = data[key]['time'];
+                    sliderLimits = data[key]['limits'];
+                    function updateTranslateRotate(fraction) {
+                        var currentInterval = $('#PLATFORMS_TS').attr('cycleInterval');
+                        var timeElapsed = fraction * currentInterval;
+                        var currentTime = (new Date()).getTime()/1000;
+                        var newStartTime = currentTime - timeElapsed;
+                        
+                        $('#PLATFORMS_TS').attr('enabled','false');
+                        $('#PLATFORMS_TS').attr('startTime', String(newStartTime));
+                        $('#PLATFORMS_TS').attr('enabled', 'true');
 
-                    // Compute interval in milliseconds from first two points time array - assumes a regularly spaced time series
-                    var interval = data.platformorientation.time[1] - data.platformorientation.time[0];
-                    platformTimer = setInterval(function() {
-                        var index = $('#spatial-3d-x3d-controls').slider('option', 'value');
-                        updateTranslateRotate(index);
-                        $('#spatial-3d-x3d-controls').slider('value', index + 1);
-                    }, interval);
+                        updateCrosshairs(fraction, timeAxis, sliderLimits);
+                    }
+                    $('#spatial-3d-x3d-controls').slider({min: 0.0, max: 1.0, step: .0001, value: 0, slide: 
+                        function(e, ui) { 
+                            var fraction = $('#spatial-3d-x3d-controls').slider('option', 'value');
+                            updateTranslateRotate(fraction);
+                        }
+                    });
                 }
             }
 

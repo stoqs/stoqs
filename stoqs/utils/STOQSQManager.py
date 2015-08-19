@@ -20,7 +20,7 @@ from django.contrib.gis.geos import fromstr, MultiPoint
 from django.db.utils import DatabaseError
 from django.http import HttpResponse
 from stoqs import models
-from loaders import MEASUREDINSITU
+from loaders import MEASUREDINSITU, X3DPLATFORMMODEL
 from loaders.SampleLoaders import SAMPLED
 from utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
@@ -28,7 +28,7 @@ from utils import simplify_points, getParameterGroups
 from geo import GPS
 from MPQuery import MPQuery
 from PQuery import PQuery
-from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformOrientation
+from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformAnimation
 from coards import to_udunits
 from datetime import datetime
 from django.contrib.gis import gdal
@@ -91,7 +91,7 @@ class STOQSQManager(object):
             'parameterplatformdatavaluepng': self.getParameterPlatformDatavaluePNG,
             'parameterparameterx3d': self.getParameterParameterX3D,
             'measuredparameterx3d': self.getMeasuredParameterX3D,
-            'platformorientation': self.getPlatformOrientation,
+            'platformanimation': self.getPlatformAnimation,
             'parameterparameterpng': self.getParameterParameterPNG,
             'parameterplatforms': self.getParameterPlatforms,
             'x3dterrains': self.getX3DTerrains,
@@ -1310,10 +1310,12 @@ class STOQSQManager(object):
             
         return x3dDict
 
-    def getPlatformOrientation(self):
+    def getPlatformAnimation(self):
         '''
-        Based on the current selected query criteria for activities, return the associated PlatformOrientation time series
-        values as a dictionary of roll, pitch and yaw inside a 2 level hash of platform__name and activity__name.
+        Based on the current selected query criteria for activities, 
+        return the associated PlatformAnimation time series of X3D scene graph.
+        If roll, pitch and yaw exist as the platform standard names include
+        orienation angles, otherwise returns just the position animation scene.
         '''
         orientDict = {}
         if self.request.GET.get('showplatforms', False):
@@ -1322,13 +1324,18 @@ class STOQSQManager(object):
             except AttributeError:
                 self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
-            # Test for presence of platform_yaw_angle (which is same as heading for a ship) 
-            orientCount = self.mpq.qs_mp_no_order.filter(parameter__standard_name='platform_yaw_angle').count()
-            if orientCount != 0:
-                mppo = PlatformOrientation(self.kwargs, self.request, self.qs, self.mpq.qs_mp)
-                # Default vertical exaggeration is 10x and default geoorigin is and empty string
-                orientDict = mppo.platformOrientationDataValuesForX3D(float(self.request.GET.get('ve', 10)), self.request.GET.get('geoorigin', ''))
-                orientDict['count'] = orientCount
+            # Test if there are any X3D platform models in the selection
+            platformsHavingModels = [pr.platform for pr in models.PlatformResource.objects.using(
+                    self.dbname).filter(resource__resourcetype__name=X3DPLATFORMMODEL, 
+                    platform__in=[a.platform for a in self.qs])]
+            if platformsHavingModels:
+                mppa = PlatformAnimation(platformsHavingModels, self.kwargs, 
+                        self.request, self.qs, self.mpq.qs_mp)
+                # Default vertical exaggeration is 10x and default geoorigin is empty string
+                orientDict = mppa.platformAnimationDataValuesForX3D(
+                                float(self.request.GET.get('ve', 10)), 
+                                self.request.GET.get('geoorigin', ''), 
+                                scale=1000, speedup=1000)
             
         return orientDict
 

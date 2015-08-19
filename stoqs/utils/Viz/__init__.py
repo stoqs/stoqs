@@ -34,7 +34,7 @@ from utils.utils import postgresifySQL, pearsonr, round_to_n, EPOCH_STRING
 from utils.MPQuery import MPQuerySet
 from utils.geo import GPS
 from loaders.SampleLoaders import SAMPLED
-from loaders import MEASUREDINSITU
+from loaders import MEASUREDINSITU, X3DPLATFORMMODEL
 import seawater.eos80 as sw
 import numpy as np
 from numpy import polyfit
@@ -494,7 +494,7 @@ class MeasuredParameter(object):
                     index = index + 1
 
                 # End the IndexedLinestring with -1 so that end point does not connect to the beg point
-                indices = indices + '-1 ' 
+                indices = indices + '-1' 
 
             try:
                 makeColorBar(self.request, self.colorbarPngFileFullPath, self.parameterMinMax, self.cm_jetplus)
@@ -510,115 +510,165 @@ class MeasuredParameter(object):
 
         return x3dResults
 
-class PlatformOrientation(object):
-    '''
-    For Platforms that have Parameters with roll, pitch, and yaw Parameters.
+class PlatformAnimation(object):
+    '''Build X3D scene graph fragments for platforms that have X3D
+    models; for those that have roll, pitch, and yaw route in orientation
+    data, always route in position data.
     '''
     logger = logging.getLogger(__name__)
 
-    x3dEulerBaseScene = '''<Transform id="TRANSLATE" DEF="TRANSLATE" scale="1000 1000 1000">
-            <Transform id="XROT" DEF="XROT">
-                <Transform id="YROT" DEF="YROT">
-                    <Transform id="ZROT" DEF="ZROT">
-                        <Transform rotation='1 0 0 -1.57079632679489'>
-                            <Inline url="http://dods.mbari.org/data/beds/x3d/beds_housing_with_axes.x3d"></Inline>
+    position_template = '''
+        <GeoLocation id="{pName}_LOCATION" DEF="{pName}_LOCATION">
+            <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
+                <Inline url="{pURL}"></Inline>
+            </Transform>
+        </GeoLocation>
+        <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}"></GeoPositionInterpolator>       
+        <ROUTE fromField="geovalue_changed" fromNode="{pName}_POS_INTERP" toField="geoCoords" toNode="{pName}_LOCATION"></ROUTE>       
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_POS_INTERP"></ROUTE>      
+    '''
+    position_orientation_template = '''
+        <GeoLocation id="{pName}_LOCATION" DEF="{pName}_LOCATION">
+            <Transform id="{pName}_XROT" DEF="{pName}_XROT">
+                <Transform id="{pName}_YROT" DEF="{pName}_YROT">
+                    <Transform id="{pName}_ZROT" DEF="{pName}_ZROT">
+                        <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
+                            <Inline url="{pURL}"></Inline>
                         </Transform>
                     </Transform>
                 </Transform>
             </Transform>
-        </Transform>
-    '''
+        </GeoLocation>
 
-    def __init__(self, kwargs, request, qs, qs_mp):
+        <!-- 6 DOF data coded here as position and orientation interpolators -->
+        <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}"></GeoPositionInterpolator>
+        <OrientationInterpolator DEF="{pName}_X_OI" key="{oKeys}" keyValue="{xRotValues}"></OrientationInterpolator>
+        <OrientationInterpolator DEF="{pName}_Y_OI" key="{oKeys}" keyValue="{yRotValues}"></OrientationInterpolator>
+        <OrientationInterpolator DEF="{pName}_Z_OI" key="{oKeys}" keyValue="{zRotValues}"></OrientationInterpolator>
+        
+        <!-- Wire up the connections between the nodes to animate the motion of the Shape -->       
+        <ROUTE fromField="geovalue_changed" fromNode="{pName}_POS_INTERP" toField="geoCoords" toNode="{pName}_LOCATION"></ROUTE>
+
+        <ROUTE fromField="value_changed" fromNode="{pName}_X_OI" toField="rotation" toNode="{pName}_XROT"></ROUTE>
+        <ROUTE fromField="value_changed" fromNode="{pName}_Y_OI" toField="rotation" toNode="{pName}_YROT"></ROUTE>
+        <ROUTE fromField="value_changed" fromNode="{pName}_Z_OI" toField="rotation" toNode="{pName}_ZROT"></ROUTE>
+
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_POS_INTERP"></ROUTE>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_X_OI"></ROUTE>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Y_OI"></ROUTE>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Z_OI"></ROUTE>
+    '''
+    global_template = '<TimeSensor id="PLATFORMS_TS" DEF="TS" cycleInterval="{cycInt}" loop="true" onoutputchange="setSlider(event)"></TimeSensor>'
+
+    def __init__(self, platforms, kwargs, request, qs, qs_mp):
+        self.platforms = platforms
         self.kwargs = kwargs
         self.request = request
         self.qs = qs
         self.qs_mp = qs_mp      # Need the ordered version of the query set
 
-    def loadData(self):
+    def getX3DPlatformModel(self, pName):
+        # Expect only one X3DPLATFORMMODEL per platform (hence .get())
+        return models.PlatformResource.objects.using(self.request.META['dbAlias']
+                ).get(platform__name=pName, resource__resourcetype__name=X3DPLATFORMMODEL
+                ).resource.uristring
+
+    def loadData(self, platform):
+        '''Read the data from the database into member variables for construction 
+        of platform orientation time series.
         '''
-        Read the data from the database into member variables for construction of platform orientation time series
-        '''
-        # Save to '_by_act' dictionaries so that each time series can be separately controlled by ROUTEs or JavaScript controls to the orientation
-        self.lon_by_act = {}
-        self.lat_by_act = {}
-        self.depth_by_act = {}
-        self.time_by_act = {}
+        # Save to '_by_plat' dictionaries so that each platform can be 
+        # separately controlled by ROUTEs, interpolators, and JavaScript
+        self.lon_by_plat = {}
+        self.lat_by_plat = {}
+        self.depth_by_plat = {}
+        self.time_by_plat = {}
 
-        self.roll_by_act = {}
-        self.pitch_by_act = {}
-        self.yaw_by_act = {}
+        self.roll_by_plat = {}
+        self.pitch_by_plat = {}
+        self.yaw_by_plat = {}
 
-        # Platform must have at least yaw in order for orientation data to make sense; must filter on one Parameter, otherwise we get multiple values
-        # time_by_act is in Unix epoch milliseconds
-        for mp in self.qs_mp.filter(parameter__standard_name='platform_yaw_angle'):
-            self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
-            self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
-            self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
+        pqs = self.qs_mp.filter(measurement__instantpoint__activity__platform=platform)
 
-            # Need millisecond accuracy, add microseconds to what timetuple() provides (only to the second)
+        # Must filter on one Parameter, otherwise we get multiple measurement values
+        one_parameter_name = pqs[0]['parameter__name']
+        for mp in pqs.filter(parameter__name=one_parameter_name):
+            self.lon_by_plat.setdefault(platform.name, []).append(mp['measurement__geom'].x)
+            self.lat_by_plat.setdefault(platform.name, []).append(mp['measurement__geom'].y)
+            self.depth_by_plat.setdefault(platform.name, []).append(mp['measurement__depth'])
+
+            # Need millisecond accuracy, add microseconds to what timetuple() provides 
+            # (only to the second); time_by_plat is in Unix epoch milliseconds
             dt = mp['measurement__instantpoint__timevalue']
-            self.time_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(
-                                      int((time.mktime(dt.timetuple()) + dt.microsecond / 1.e6) * 1000.0))
+            self.time_by_plat.setdefault(platform.name, []).append(int((time.mktime(dt.timetuple()) 
+                                                        + dt.microsecond / 1.e6) * 1000.0))
 
-        for mp in self.qs_mp.filter(parameter__standard_name='platform_roll_angle'):
-            self.roll_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
-        for mp in self.qs_mp.filter(parameter__standard_name='platform_pitch_angle'):
-            self.pitch_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
-        for mp in self.qs_mp.filter(parameter__standard_name='platform_yaw_angle'):
-            self.yaw_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
+        for mp in pqs.filter(parameter__standard_name='platform_roll_angle'):
+            self.roll_by_plat.setdefault(platform.name, []).append(mp['datavalue'])
+        for mp in pqs.filter(parameter__standard_name='platform_pitch_angle'):
+            self.pitch_by_plat.setdefault(platform.name, []).append(mp['datavalue'])
+        for mp in pqs.filter(parameter__standard_name='platform_yaw_angle'):
+            self.yaw_by_plat.setdefault(platform.name, []).append(mp['datavalue'])
 
-    def platformOrientationDataValuesForX3D(self, vert_ex=10.0, geoOrigin=''):
-        '''
-        Return the associated PlatformOrientation time series values as a dictionary of roll, pitch and yaw inside 
-        a 2 level hash of platform__name and activity__name.  Results are in a format for easy update of an X3D scene graph.
-        '''
+    def platformAnimationDataValuesForX3D(self, vert_ex=10.0, geoOrigin='', scale=1, speedup=1):
         x3dDict = {}
-        self.loadData()
         try:
             points = ''
             indices = ''
             index = 0
             gps = GPS()
-            ##keys = ''
-            translations = []
-            for act in self.yaw_by_act.keys():
-                for lon,lat,depth,t in izip( self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.time_by_act[act]):
+            keys = ''
+            for platform in self.platforms:
+                self.loadData(platform)
+                pName = platform.name
+                for lon,lat,depth,t in izip(self.lon_by_plat[pName], self.lat_by_plat[pName], 
+                        self.depth_by_plat[pName], self.time_by_plat[pName]):
                     if geoOrigin:
                         logger.warn('geoOrigin use is deprecated as X3DOM (post v1.6) now supports its use')
                         depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
-                        # TEST send translations directly to Transform from JavaScript
-                        translations.append('%.1f,%.1f,%.1f' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin))
                     else:
                         points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
 
-                    # If using Interpolators will need keys
-                    ##keys += '%.4f' % ((t - self.time_by_act[act][0]) / (self.time_by_act[act][-1] - self.time_by_act[act][0]))
+                    keys += '%.4f ' % ((t - self.time_by_plat[pName][0]) / float(
+                            self.time_by_plat[pName][-1] - self.time_by_plat[pName][0]))
                     indices = indices + '%i ' % index
                     index = index + 1
 
-                # No attempt to earth reference an 'up' orientation here    
-                # TEST send rotations directly to Transforms from JavaScript
-                xRotations = ['1,0,0,%.6f' % (np.pi * x / 180.) for x in self.roll_by_act[act]]
-                yRotations = ['0,1,0,%.6f' % (np.pi * y / 180.) for y in self.pitch_by_act[act]]
-                zRotations = ['0,0,1,%.6f' % (np.pi * -z / 180.) for z in self.yaw_by_act[act]]
-                times = self.time_by_act[act]
+                xRotValues = ' '.join(['1 0 0 %.6f' % (np.pi * x / 180.) 
+                                        for x in self.pitch_by_plat.get(pName, [])])
+                yRotValues = ' '.join(['0 -1 0 %.6f' % (np.pi * z / 180.) 
+                                        for z in self.yaw_by_plat.get(pName, [])])
+                zRotValues = ' '.join(['0 0 1 %.6f' % (np.pi * -y / 180.) 
+                                        for y in self.roll_by_plat.get(pName, [])])
+
+                times = self.time_by_plat[pName]
 
                 # End with -1 so that end point does not connect to the beg point
-                indices = indices + '-1 ' 
-                cycInt = '%.4f' % (self.time_by_act[act][-1] - self.time_by_act[act][0])
+                indices = indices + '-1'
 
-                x3dDict[act] = self.x3dEulerBaseScene
+                # TimeSensor's cycleInterval is in Unix epoch seonds
+                cycInt = (self.time_by_plat[pName][-1] - self.time_by_plat[pName][0]
+                            ) / 1000.0 / speedup
+
+                if xRotValues and yRotValues and zRotValues:
+                    x3dDict[pName] = self.position_orientation_template.format(pName=pName, 
+                            pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
+                            posValues=points, oKeys=keys[:-1], xRotValues=xRotValues, 
+                            yRotValues=yRotValues, zRotValues=zRotValues, scale=scale)
+                else:
+                    x3dDict[pName] = self.position_template.format(pName=pName, 
+                            pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
+                            posValues=points, scale=scale)
 
             if x3dDict:
-                limits = (0, len(self.time_by_act[act]))
+                all = self.global_template.format(cycInt=cycInt)
+                limits = (0, len(self.time_by_plat[pName]))
 
         except Exception as e:
             self.logger.exception(e)
             x3dResults = 'Could not create platformorientation'
 
-        return {'x3d': x3dDict, 'limits': limits, 'translation': translations, 'time': times,
-                'xRotation': xRotations, 'yRotation': yRotations, 'zRotation': zRotations}
+        return {'x3d': x3dDict, 'all': all, 'limits': limits, 'time': times}
 
 
 class PPDatabaseException(Exception):

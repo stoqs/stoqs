@@ -63,9 +63,9 @@ class BrowserTestCase(TestCase):
         self.assertEquals('', self._mapserver_loading_panel_test())
 
     def test_dorado_trajectory(self):
-        # Click on Platforms to expand
         self.browser.get('http://localhost:8000/default/query/')
         try:
+            # Click on Platforms to expand
             platforms_anchor = self.browser.find_element_by_id(
                                     'platforms-anchor')
             platforms_anchor.click()
@@ -81,4 +81,10 @@ class BrowserTestCase(TestCase):
 
         # Test that Mapserver returns images
         self.assertEquals('', self._mapserver_loading_panel_test())
+
+        # Test Spatial 3D
+        spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
+        spatial_3d_anchor.click()
+        showplatforms = self.browser.find_element_by_id('showplatforms')
+        showplatforms.click()
 
