@@ -53,6 +53,10 @@ from django.db.backends.utils import CursorWrapper
 # Constant for ParameterGroup name - for utils/STOQSQmanager.py to use
 MEASUREDINSITU = 'Measured in situ'
 
+# Constants for a Resource and ResourceType names - to be also used in utils/Viz
+X3D_MODEL = 'X3D_model'
+X3DPLATFORMMODEL = 'x3dplatformmodel'
+
 if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
@@ -235,7 +239,7 @@ class LoadScript(object):
         activity = m.Activity.objects.using(self.dbAlias).get(name=aName)
         
         resource, created = m.Resource.objects.using(self.dbAlias).get_or_create(
-                            uristring=x3dmodelurl, name='X3D_model', value='Output from bed2x3d.py - uristring to be included in GeoLocation node', resourcetype=resourceType)
+                            uristring=x3dmodelurl, name='X3D_MODEL', value='Output from bed2x3d.py - uristring to be included in GeoLocation node', resourcetype=resourceType)
         cr, created = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                             activity=activity, resource=resource)
         self.logger.info('Resource uristring=%s', x3dmodelurl)
@@ -247,14 +251,14 @@ class LoadScript(object):
         '''
 
         resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
-                                name='x3dplatformmodel', description='X3D scene for model of a platform')
+                                name=X3DPLATFORMMODEL, description='X3D scene for model of a platform')
 
         self.logger.info('Adding to ResourceType: %s', resourceType)
         self.logger.debug('Looking in database %s for Platform name = %s', self.dbAlias, pName)
         platform = m.Platform.objects.using(self.dbAlias).get(name=pName)
         
         resource, created = m.Resource.objects.using(self.dbAlias).get_or_create(
-                            uristring=x3dmodelurl, name='X3D_model', value=value, resourcetype=resourceType)
+                            uristring=x3dmodelurl, name='X3D_MODEL', value=value, resourcetype=resourceType)
         cr, created = m.PlatformResource.objects.using(self.dbAlias).get_or_create(
                             platform=platform, resource=resource)
         self.logger.info('Resource uristring=%s', x3dmodelurl)
