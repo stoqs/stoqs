@@ -28,18 +28,21 @@ coverage run -a --include="contrib/analysis/classify.py" contrib/analysis/classi
 # test_stoqs database created and dropped by role of the shell account using Test framework's DB names
 ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_test_data.json
 echo "Unit tests..."
-coverage run -a --source=utils,stoqs ./manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
+coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
 
 # Run the development server in the background for the functional tests
-coverage run -a --source=utils,stoqs ./manage.py runserver 0.0.0.0:8000 \
+coverage run -a --source=utils,stoqs manage.py runserver --noreload \
     --settings=config.settings.ci > /tmp/functional_tests_server.log 2>&1 &
 pid=$!
-echo "Functional tests..."
+echo "Functional test with development server running as pid = $pid ..."
 ./manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
-pkill -TERM -P $pid
-cat /tmp/functional_tests_server.log
-tools/removeTmpFiles.sh
+ps -ef | grep $pid
+echo "Trying to kill with TERM signal..."
+/usr/bin/kill -s TERM $pid
+ps -ef | grep $pid
+##cat /tmp/functional_tests_server.log
+tools/removeTmpFiles.sh > /dev/null 2>&1
 
 # Report results of unit and functional tests
 coverage report -m

@@ -83,8 +83,12 @@ class BrowserTestCase(TestCase):
         self.assertEquals('', self._mapserver_loading_panel_test())
 
         # Test Spatial 3D
+        self.browser.implicitly_wait(10)
         spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
         spatial_3d_anchor.click()
         showplatforms = self.browser.find_element_by_id('showplatforms')
         showplatforms.click()
+        
+        dl = self.browser.find_element_by_id('dorado_LOCATION')
+        assert dl.tag_name == 'geolocation'
 
