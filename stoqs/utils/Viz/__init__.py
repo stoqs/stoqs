@@ -440,11 +440,9 @@ class MeasuredParameter(object):
             self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s, %s, %s ', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range'
 
-    def dataValuesX3D(self, vert_ex=10.0, geoOrigin=None):
+    def dataValuesX3D(self, vert_ex=10.0):
         '''
-        Return scatter-like data values as X3D geocoordinates and colors. A bit of a HACK until GeoOrigin is
-        implemented in X3DOM: if geoOrigin is specified then points will be GCC (ECEF) coordinates with the 
-        geoOrigin subtracted, GD input coordinates assumed.
+        Return scatter-like data values as X3D geocoordinates and colors.
         '''
         showGeoX3DDataFlag = False
         if self.kwargs.has_key('showgeox3ddata'):
@@ -470,12 +468,10 @@ class MeasuredParameter(object):
             for act in self.value_by_act.keys():
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in izip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
-                    if geoOrigin:
-                        logger.warn('geoOrigin use is deprecated as X3DOM (post v1.6) now supports its use')
+                    if act.upper().startswith('BED'):
                         depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
-                        points = points + '%f %f %f ' % gps.lla2gcc((lat, lon, -depth * vert_ex), geoOrigin)
-                    else:
-                        points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
+
+                    points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
 
                     try:
                         cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
@@ -519,16 +515,18 @@ class PlatformAnimation(object):
 
     position_template = '''
         <GeoLocation id="{pName}_LOCATION" DEF="{pName}_LOCATION">
+            {geoOriginStr}
             <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
                 <Inline url="{pURL}"></Inline>
             </Transform>
         </GeoLocation>
-        <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}"></GeoPositionInterpolator>       
+        <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}">{geoOriginStr}</GeoPositionInterpolator>       
         <ROUTE fromField="geovalue_changed" fromNode="{pName}_POS_INTERP" toField="geoCoords" toNode="{pName}_LOCATION"></ROUTE>       
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_POS_INTERP"></ROUTE>      
     '''
     position_orientation_template = '''
         <GeoLocation id="{pName}_LOCATION" DEF="{pName}_LOCATION">
+            {geoOriginStr}
             <Transform id="{pName}_XROT" DEF="{pName}_XROT">
                 <Transform id="{pName}_YROT" DEF="{pName}_YROT">
                     <Transform id="{pName}_ZROT" DEF="{pName}_ZROT">
@@ -541,7 +539,7 @@ class PlatformAnimation(object):
         </GeoLocation>
 
         <!-- 6 DOF data coded here as position and orientation interpolators -->
-        <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}"></GeoPositionInterpolator>
+        <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}">{geoOriginStr}</GeoPositionInterpolator>
         <OrientationInterpolator DEF="{pName}_X_OI" key="{oKeys}" keyValue="{xRotValues}"></OrientationInterpolator>
         <OrientationInterpolator DEF="{pName}_Y_OI" key="{oKeys}" keyValue="{yRotValues}"></OrientationInterpolator>
         <OrientationInterpolator DEF="{pName}_Z_OI" key="{oKeys}" keyValue="{zRotValues}"></OrientationInterpolator>
@@ -558,7 +556,7 @@ class PlatformAnimation(object):
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Y_OI"></ROUTE>
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Z_OI"></ROUTE>
     '''
-    global_template = '<TimeSensor id="PLATFORMS_TS" DEF="TS" cycleInterval="{cycInt}" loop="true" onoutputchange="setSlider(event)"></TimeSensor>'
+    global_template = '<TimeSensor id="PLATFORMS_TS" DEF="TS" cycleInterval="{cycInt}" loop="true" enabled="false" onoutputchange="setSlider(event)"></TimeSensor>'
 
     def __init__(self, platforms, kwargs, request, qs, qs_mp):
         self.platforms = platforms
@@ -612,6 +610,10 @@ class PlatformAnimation(object):
 
     def platformAnimationDataValuesForX3D(self, vert_ex=10.0, geoOrigin='', scale=1, speedup=1):
         x3dDict = {}
+        geoorigin_use = ''
+        if geoOrigin:
+            # Count on JavaScript code to add <GeoOrgin DEF="GO" ... > to the scene
+            geoorigin_use = '<GeoOrigin use="GO"></GeoOrigin>'
         try:
             points = ''
             indices = ''
@@ -622,12 +624,11 @@ class PlatformAnimation(object):
                 self.loadData(platform)
                 pName = platform.name
                 for lon,lat,depth,t in izip(self.lon_by_plat[pName], self.lat_by_plat[pName], 
-                        self.depth_by_plat[pName], self.time_by_plat[pName]):
-                    if geoOrigin:
-                        logger.warn('geoOrigin use is deprecated as X3DOM (post v1.6) now supports its use')
+                                        self.depth_by_plat[pName], self.time_by_plat[pName]):
+                    if pName.upper().startswith('BED'):
                         depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
-                    else:
-                        points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
+
+                    points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
 
                     keys += '%.4f ' % ((t - self.time_by_plat[pName][0]) / float(
                             self.time_by_plat[pName][-1] - self.time_by_plat[pName][0]))
@@ -654,11 +655,12 @@ class PlatformAnimation(object):
                     x3dDict[pName] = self.position_orientation_template.format(pName=pName, 
                             pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
                             posValues=points, oKeys=keys[:-1], xRotValues=xRotValues, 
-                            yRotValues=yRotValues, zRotValues=zRotValues, scale=scale)
+                            yRotValues=yRotValues, zRotValues=zRotValues, scale=scale,
+                            geoOriginStr=geoorigin_use)
                 else:
                     x3dDict[pName] = self.position_template.format(pName=pName, 
                             pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
-                            posValues=points, scale=scale)
+                            posValues=points, scale=scale, geoOriginStr=geoorigin_use)
 
             if x3dDict:
                 all = self.global_template.format(cycInt=cycInt)

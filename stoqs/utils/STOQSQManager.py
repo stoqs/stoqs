@@ -1305,8 +1305,8 @@ class STOQSQManager(object):
                     logger.debug('Getting data values in X3D for platformName = %s', platformName) 
                     mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
                                   self.getParameterMinMax()['plot'], self.getSampleQS(), platformName, parameterID, parameterGroups)
-                    # Default vertical exaggeration is 10x and default geoorigin is an empty string
-                    x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)), self.request.GET.get('geoorigin', ''))
+                    # Default vertical exaggeration is 10x
+                    x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)))
             
         return x3dDict
 
