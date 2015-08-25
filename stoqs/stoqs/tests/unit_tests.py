@@ -312,7 +312,7 @@ class SummaryDataTestCase(TestCase):
     def test_sampledparameter_select(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
-        # Select temperature for data access
+        # Select temperature for data access - uses id(s) which change with new fixture
         qstring = ('except=spsql&except=mpsql&sampledparametersgroup=20&'
                    'xaxis_min=1288214585000&xaxis_max=1288309759000&'
                    'yaxis_min=-100&yaxis_max=600&pplr=1&ppsl=1')
@@ -362,6 +362,7 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # SampledParameter (B1006_Barnacles) vs. MeasuredParameter (fl700_uncoor)
+        # Uses id(s) which may change with new fixture
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
                    'except=spsql&except=mpsql&xaxis_min=1288214585000&'
                    'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&px=6&'
@@ -380,6 +381,7 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # SampledParameter vs. MeasuredParameter and 3D with color
+        # Uses id(s) which may change with new fixture
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
                    'except=spsql&except=mpsql&xaxis_min=1288216319000&'
                    'xaxis_max=1288279374000&yaxis_min=-10&yaxis_max=50&'
@@ -411,6 +413,7 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # Plot SEA_WATER_SALINITY_HR from M1_Mooring 
+        # Uses id(s) which may change with new fixture
         qstring = ('except=spsql&except=mpsql&xaxis_min=1288214585000&'
                    'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&'
                    'platforms=M1_Mooring&parameterplotid=16&'
@@ -454,6 +457,7 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # Standardname sea_water_temperature selected for data access
+        # Uses id(s) which may change with new fixture
         qstring = ('except=spsql&except=mpsql&'
                    'parameterstandardname=sea_water_temperature&'
                    'xaxis_min=1288214585000&xaxis_max=1288309759000&'
@@ -467,11 +471,24 @@ class SummaryDataTestCase(TestCase):
     def test_labeled(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
+        # Uses id(s) which may change with new fixture
         qstring = ('except=spsql&except=mpsql&'
                    'measuredparametersgroup=fl700_uncorr&'
                    'xaxis_min=1288216319000&xaxis_max=1288279374000&'
                    'yaxis_min=-10&yaxis_max=50&mplabels=177&mplabels=183&'
                    'pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
+    def test_platform_animations(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        qstring = ('except=spsql&except=mpsql&xaxis_min=1288214585000&'
+                   'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&'
+                   'showplatforms=1&ve=10&pplr=1&ppsl=1')
 
         req = base + '?' + qstring
         response = self.client.get(req)
