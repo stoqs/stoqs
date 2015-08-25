@@ -49,17 +49,10 @@ prerequisites:
      \c stoqs_september2012_t
      grant all on all tables in schema public to stoqsadm;
 
-5. Edit the privateSettings file to add a entry for the database you created:
+5. Add the database name to the environment variable STOQS_CAMPAIGNS, e.g.:
 
-```python
-     'stoqs_september2012_t': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'stoqs_september2012_t',
-        'USER': DATABASE_USER,
-        'PASSWORD': DATABASE_PASSWORD,
-        'HOST': DATABASE_HOST,
-        'PORT': DATABASE_PORT
-     },
+``` export STOQS_DB_PASSWORD=CHANGEME
+    export STOQS_CAMPAIGNS='stoqs_september2012_t'
 ```
 
 6. Restart your server to force a re-read of the settings file.  On a development server
@@ -68,12 +61,14 @@ prerequisites:
    in its own shell window (see DEVELOPMENT).  On a production server restart apache with
    "sudo /sbin/service httpd restart" (see PRODUCTION). 
 
-7. Synchronize the new database with the stoqs data model.  At a shell prompt in your virtual
+7. Synchronize (migrate) the new database with the stoqs data model.  At a shell prompt in your virtual
    environment (see PREREQUISITES and INSTALL):
 
-```
-     source venv-stoqs/bin/activate
-     ./manage.py syncdb --noinput --database=stoqs_september2012_t
+``` source venv-stoqs/bin/activate
+    export STOQS_CAMPAIGNS='stoqs_september2012_t'
+    stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
+    stoqs/manage.py migrate --settings=config.settings.local --noinput --database=stoqs_september2012_t
+    psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 ```
 
 8. Make sure that your session does not have the PYTHONPATH environment set; you may need to do:
@@ -82,12 +77,12 @@ prerequisites:
 
    Then, execute your load script on the test database:
 
-     loaders/CANON/loadCANONseptember2012.py -t
+     stoqs/loaders/CANON/loadCANONseptember2012.py -t
 
    To populate a full-resolution database repeat steps 4-7 with database name without the 
    '_t' suffix (stoqs_september2012) and execute:
 
-     loaders/CANON/loadCANONseptember2012.py 
+     stoqs/loaders/CANON/loadCANONseptember2012.py 
 
 9. Notes:
 

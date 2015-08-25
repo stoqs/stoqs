@@ -395,8 +395,11 @@
                                         </div>
                                     </div>
                                 </div>
+                            <div class="row-fluid">
+                                <div class="span1"><i id="spatial-3d-x3d-pause-play" class="icon-play" style="display:none;"></i></div>
+                                <div id="spatial-3d-x3d-slider" class="slider slider-horizontal span10"></div>
+                            </div>
                             </div><!-- tab-content -->
-                            <div id="spatial-3d-x3d-controls" class="slider slider-horizontal"></div>
                         </div><!-- accordion-inner -->
                     </div>
                 </div><!-- accordian-group -->
@@ -1160,12 +1163,12 @@
         if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
             return;
         var fraction = eventObject.value;
-        $('#spatial-3d-x3d-controls').slider('value', fraction);
+        $('#spatial-3d-x3d-slider').slider('value', fraction);
         updateCrosshairs(fraction, timeAxis, sliderLimits);
     }
 
     function updateCrosshairs(fraction, timeAxis, limits) {
-        index = Math.floor(limits[0] + fraction * (limits[1] - limits[0]))
+        var index = Math.floor(limits[0] + fraction * (limits[1] - limits[0]))
         timedepthplot.lockCrosshair({x: timeAxis[index], y:0});
         if ( ! $.isEmptyObject(timeparameterplot) ) {
             timeparameterplot.lockCrosshair({x: timeAxis[index], y:0});
@@ -1956,6 +1959,19 @@
     $(document).on('click', ".stoqs-toggle", function (event) {
         toggleField(this);
         rebuildFilters();
+    });
+
+    $('#spatial-3d-x3d-pause-play').on('click', function (event) {
+        if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
+            $('#spatial-3d-x3d-pause-play').removeClass('icon-pause')
+            $('#spatial-3d-x3d-pause-play').addClass('icon-play')
+            $('#PLATFORMS_TS').attr('enabled','false');
+        }
+        else if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
+            $('#spatial-3d-x3d-pause-play').removeClass('icon-play')
+            $('#spatial-3d-x3d-pause-play').addClass('icon-pause')
+            $('#PLATFORMS_TS').attr('enabled','true');
+        }
     });
 
     $('#getactualcount').on('click', function (event) {
@@ -3145,6 +3161,9 @@
             if ($('body').data()['ve']) {
                 qstring += '&ve=' + $('body').data()['ve'];
             }
+            if ($('body').data()['geoorigin']) {
+                qstring += '&geoorigin=' + $('body').data()['geoorigin'];
+            }
         }
         if ($('#pp-linear-regression').is(':checked')) {
             qstring = qstring + '&pplr=1';
@@ -3458,11 +3477,11 @@
                         $('#mp-x3d-terrain1').attr('url', terrain);
 
                         if ( ! $.isEmptyObject(item.geoOrigin) ) { 
-                            var geoOrigin_def = '<GeoOrigin def="go" geoSystem=\'"GD" "WE"\' geoCoords="' + item.geoOrigin + '" ';
+                            var geoOrigin_def = '<GeoOrigin def="GO" geoSystem=\'"GD" "WE"\' geoCoords="' + item.geoOrigin + '" ';
                             geoOrigin_def += ' rotateYUp="true" elevationScaling="true"></GeoOrigin>' ;
                             $('#mp-x3d-geoviewpoint1').append(geoOrigin_def);
                             $('body').data()['geoorigin'] = item.geoOrigin;
-                            $('body').data()['geoorigin_use'] = '<GeoOrigin use="go"></GeoOrigin>';
+                            $('body').data()['geoorigin_use'] = '<GeoOrigin use="GO"></GeoOrigin>';
                             $('#spatial-3d-root > Group > GeoOriginTransform').append($('body').data()['geoorigin_use']);
                         }
                         else {
@@ -3949,18 +3968,23 @@
                         var currentTime = (new Date()).getTime()/1000;
                         var newStartTime = currentTime - timeElapsed;
                         
-                        $('#PLATFORMS_TS').attr('enabled','false');
+                        if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
+                            $('#PLATFORMS_TS').attr('enabled','false');
+                        }
                         $('#PLATFORMS_TS').attr('startTime', String(newStartTime));
-                        $('#PLATFORMS_TS').attr('enabled', 'true');
+                        if ($('#spatial-3d-x3d-pause-play').hasClass('icon-pause')) {
+                            $('#PLATFORMS_TS').attr('enabled', 'true');
+                        }
 
                         updateCrosshairs(fraction, timeAxis, sliderLimits);
                     }
-                    $('#spatial-3d-x3d-controls').slider({min: 0.0, max: 1.0, step: .0001, value: 0, slide: 
+                    $('#spatial-3d-x3d-slider').slider({min: 0.0, max: 1.0, step: .001, value: 0, slide: 
                         function(e, ui) { 
-                            var fraction = $('#spatial-3d-x3d-controls').slider('option', 'value');
+                            var fraction = $('#spatial-3d-x3d-slider').slider('option', 'value');
                             updateTranslateRotate(fraction);
                         }
                     });
+                    $('#spatial-3d-x3d-pause-play').show();
                 }
             }
 

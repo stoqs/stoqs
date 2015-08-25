@@ -30,32 +30,19 @@ from BEDS import BEDSLoader
 bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                                 description = 'Benthic Event Detector data for significant events in Monterey Canyon',
                                 x3dTerrains = { 
-                                    'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0_scene.x3d': {
-                                        'position': '-44571.54862 77379.85721 71401.38520',
-                                        'orientation': '0.92328 -0.26229 -0.28063 1.50408',
-                                        'centerOfRotation': '-39420.23433350699 85753.45910644953 70752.14499748436',
-                                        'geoOrigin': '-121 36 0',
-                                        'VerticalExaggeration': '1',
-                                        'speed': '0.1',
-                                        'zNear': '1.0',
-                                    },
                                     'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x/MontereyCanyonBeds_1m+5m_1x_scene.x3d': {
-                                        'position': '-44571.54862 77379.85721 71401.38520',
-                                        'orientation': '0.92328 -0.26229 -0.28063 1.50408',
-                                        'centerOfRotation': '-39420.23433350699 85753.45910644953 70752.14499748436',
+                                        'position': '2232.80938 10346.25515 3543.76722',
+                                        'orientation': '-0.98394 0.16804 -0.06017 1.25033',
+                                        'centerOfRotation': '0 0 0',
                                         'VerticalExaggeration': '1',
-                                        'speed': '0.1',
+                                        'geoOrigin': '36.80, -121.87, -400',
+                                        'speed': '1.0',
+                                        ##'zNear': '1.0',
+                                        ##'zFar': '30000.0',
                                     },
-                                    ##'/stoqs/static/x3d/Monterey25/Monterey25_10x-pop.x3d': {
-                                    ##    'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                                    ##    'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                    ##    'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
-                                    ##    'VerticalExaggeration': '10',
-                                    ##}
                                  },
                                  # Do not check in .grd files to the repository, keep them in the loaders directory
                                  grdTerrain=os.path.join(parentDir, 'MontereyCanyonBeds_1m+5m.grd'),
-
                )
 
 # Base OPeNDAP server

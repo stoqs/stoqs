@@ -116,13 +116,11 @@ DATABASES = {
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
-# Example: export STOQS_CAMPAIGNS='stoqs_september2013, stoqs_os2015'
+# For additional campaigns nherit default settings from DATABASE_URL setting
+# Example: export STOQS_CAMPAIGNS='stoqs_beds_canyon_events_t, stoqs_os2015'
 for campaign in env.list('STOQS_CAMPAIGNS', default=[]):
-    DATABASES[campaign] = dj_database_url.parse('postgis://' +
-            env('STOQS_DB_LOGIN', default='stoqsadm') + ':' +
-            env('STOQS_DB_PASSWORD', default='password') + '@' +
-            env('STOQS_DB_HOST', default='127.0.0.1') + ':' +
-            env('STOQS_DB_PORT', default='5432') + '/' + campaign) 
+    DATABASES[campaign] = DATABASES.get('default').copy()
+    DATABASES[campaign]['NAME'] = campaign
 
 # GENERAL CONFIGURATION
 # ------------------------------------------------------------------------------
