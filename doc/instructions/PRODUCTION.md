@@ -3,11 +3,22 @@ PRODUCTION
 
 Notes for installing STOQS on a production server
 
-You should already have completed the tasks described in PREREQUISITES and INSTALL.
+STOQS is configured to be installed on your own self-hosted web server or on a 
+Platform as a Service (PaaS) provider, such as Heroku. It follows
+[The Twelve-Factor App](http://12factor.net/) guidelines with deployment 
+settings placed in environment variables.
 
-STOQS can be installed on a standard Apache httpd web server employing the wsgi module.
-Here are the steps:
+Here are the suggested steps for self-hosting STOQS using the Nginx web server:
 
+1. Install nginx and configure to start:
+
+``` sudo yum install nginx
+    sudo chkconfig nginx on
+    sudo /sbin/service nginx start
+```
+
+
+    
 1. Add a stoqs.conf file to the server's /etc/httpd/conf.d/ directory.  With this 
    configuration the system administrator can assign sudo privileges to administrator
    of the STOQS application, and he/she can make changes without affecting the master
