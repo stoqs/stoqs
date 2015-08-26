@@ -9,8 +9,8 @@ conventions version 1.6 are supported for loading into STOQS.  Specific feature 
 supported are: trajectory, timeSeries, and timeSeriesProfile.  For more information
 please see:
 
-    [http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html]
-    [http://www.nodc.noaa.gov/data/formats/netcdf/]
+    (http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html)
+    (http://www.nodc.noaa.gov/data/formats/netcdf/)
 
 There are many ways to write data adhering to these standards - there are some examples
 using the Python pupynere library in the loaders/CANON/toNetCDF directory.
@@ -44,16 +44,15 @@ prerequisites:
 4. Create a PostgreSQL database for your campaign (full instructions are in the 
    INSTALL file), in this example a test database (with '_t' suffix) is created:
 
-     create database stoqs_september2012_t owner=stoqsadm template=template_postgis;
-     alter database stoqs_september2012_t set timezone='GMT';
-     \c stoqs_september2012_t
-     grant all on all tables in schema public to stoqsadm;
+         create database stoqs_september2012_t owner=stoqsadm template=template_postgis;
+         alter database stoqs_september2012_t set timezone='GMT';
+         \c stoqs_september2012_t
+         grant all on all tables in schema public to stoqsadm;
 
 5. Add the database name to the environment variable STOQS_CAMPAIGNS, e.g.:
 
-``` export STOQS_DB_PASSWORD=CHANGEME
-    export STOQS_CAMPAIGNS='stoqs_september2012_t'
-```
+        export STOQS_DB_PASSWORD=CHANGEME
+        export STOQS_CAMPAIGNS='stoqs_september2012_t'
 
 6. Restart your server to force a re-read of the settings file.  On a development server
    simply restart "python manage.py runserver 0.0.0.0:8000 --settings=stoqs.config.vagrant"
@@ -64,25 +63,24 @@ prerequisites:
 7. Synchronize (migrate) the new database with the stoqs data model.  At a shell prompt in your virtual
    environment (see PREREQUISITES and INSTALL):
 
-``` source venv-stoqs/bin/activate
-    export STOQS_CAMPAIGNS='stoqs_september2012_t'
-    stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
-    stoqs/manage.py migrate --settings=config.settings.local --noinput --database=stoqs_september2012_t
-    psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
-```
+        source venv-stoqs/bin/activate
+        export STOQS_CAMPAIGNS='stoqs_september2012_t'
+        stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
+        stoqs/manage.py migrate --settings=config.settings.local --noinput --database=stoqs_september2012_t
+        psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
 8. Make sure that your session does not have the PYTHONPATH environment set; you may need to do:
 
-     unset PYTHONPATH
+         unset PYTHONPATH
 
    Then, execute your load script on the test database:
 
-     stoqs/loaders/CANON/loadCANONseptember2012.py -t
+         stoqs/loaders/CANON/loadCANONseptember2012.py -t
 
    To populate a full-resolution database repeat steps 4-7 with database name without the 
    '_t' suffix (stoqs_september2012) and execute:
 
-     stoqs/loaders/CANON/loadCANONseptember2012.py 
+         stoqs/loaders/CANON/loadCANONseptember2012.py 
 
 9. Notes:
 
@@ -97,10 +95,10 @@ prerequisites:
       interaction with people and testing the data sources for valid parameter names as well
       as monitoring the script's output for warning and error messages.
     - To provide read-only access to your database  grant everyone select privileges:
-```
-        \c stoqs_september2012_t
-        grant select on all tables in schema public to everyone;
-```
+
+            \c stoqs_september2012_t
+            grant select on all tables in schema public to everyone;
+
 
     - The stoqs-discuss mail list (https://groups.google.com/forum/?fromgroups=#!forum/stoqs-discuss)
       is a good place to ask questions if any problems are encountered.

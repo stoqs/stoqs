@@ -8,14 +8,13 @@ Platform as a Service (PaaS) provider, such as Heroku. It follows
 [The Twelve-Factor App](http://12factor.net/) guidelines with deployment 
 settings placed in environment variables.
 
-Here are the suggested steps for self-hosting STOQS using the Nginx web server:
+### Here are the suggested steps for self-hosting STOQS using the Nginx web server:
 
 1. Install nginx and configure to start:
 
-``` sudo yum install nginx
+    sudo yum install nginx
     sudo chkconfig nginx on
     sudo /sbin/service nginx start
-```
 
 
     
