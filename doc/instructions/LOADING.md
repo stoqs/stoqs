@@ -7,10 +7,8 @@ These instructions cover the loading of in situ discrete sampling geometry featu
 data from OPeNDAP accessible data sources.  Data adhereing to the Climate and Forecast
 conventions version 1.6 are supported for loading into STOQS.  Specific feature types
 supported are: trajectory, timeSeries, and timeSeriesProfile.  For more information
-please see:
-
-    http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html
-    http://www.nodc.noaa.gov/data/formats/netcdf/
+please see http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html
+and http://www.nodc.noaa.gov/data/formats/netcdf/.
 
 There are many ways to write data adhering to these standards - there are some examples
 using the Python pupynere library in the loaders/CANON/toNetCDF directory.
