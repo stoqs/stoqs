@@ -9,8 +9,8 @@ conventions version 1.6 are supported for loading into STOQS.  Specific feature 
 supported are: trajectory, timeSeries, and timeSeriesProfile.  For more information
 please see:
 
-    (http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html)
-    (http://www.nodc.noaa.gov/data/formats/netcdf/)
+    http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html
+    http://www.nodc.noaa.gov/data/formats/netcdf/
 
 There are many ways to write data adhering to these standards - there are some examples
 using the Python pupynere library in the loaders/CANON/toNetCDF directory.
