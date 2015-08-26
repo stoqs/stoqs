@@ -670,7 +670,7 @@ class PlatformAnimation(object):
             self.logger.exception(e)
             x3dResults = 'Could not create platformorientation'
 
-        return {'x3d': x3dDict, 'all': all, 'limits': limits, 'time': times}
+        return {'x3d': x3dDict, 'all': all, 'limits': limits, 'time': times, 'speedup': speedup}
 
 
 class PPDatabaseException(Exception):
