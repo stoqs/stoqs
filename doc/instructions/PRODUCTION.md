@@ -31,12 +31,25 @@ settings placed in environment variables.
 4. Create a virtualenv, install the production requirements, and test:
    
     cd $STOQS_HOME 
-    virtualenv venv-stoqs-production
-    source venv-stoqs-production/bin/activate
+    virtualenv venv-stoqs
+    source venv-stoqs/bin/activate
     ./setup.sh production
     ./test.sh
-    
-    
+   
+5. Edit the file $STOQS_HOME/stoqs/stoqs_nginx.conf and change the server_name
+   and location settings for your server.
+
+6. Create a symlink to the above .conf file from the nginx config directory:
+
+    sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx.conf /etc/nginx/conf.d
+
+7. Copy static files to the production web server location off of it's document_root.
+   The STATIC_ROOT in settings.py must be writable by the user that executes this command:
+
+    stoqs/manage.py collectstatic
+
+
+ 
 1. Add a stoqs.conf file to the server's /etc/httpd/conf.d/ directory.  With this 
    configuration the system administrator can assign sudo privileges to administrator
    of the STOQS application, and he/she can make changes without affecting the master
