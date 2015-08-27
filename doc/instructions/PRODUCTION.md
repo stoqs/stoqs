@@ -8,15 +8,34 @@ Platform as a Service (PaaS) provider, such as Heroku. It follows
 [The Twelve-Factor App](http://12factor.net/) guidelines with deployment 
 settings placed in environment variables.
 
-### Here are the suggested steps for self-hosting STOQS using the Nginx web server:
+### Here are the suggested steps for hosting STOQS using your own Nginx web server:
 
-1. Install nginx and configure to start:
+1. On your server install nginx and configure to start:
 
     sudo yum install nginx
     sudo chkconfig nginx on
     sudo /sbin/service nginx start
 
+2. Clone STOQS to a local writable directory on your server. A good practice
+   is to not commit any changes from a production server back to the repository,
+   therefore our clone can be read only without any ssh keys configured, e.g.:
 
+    export STOQS_HOME=/opt/stoqsgit
+    cd ``dirname $STOQS_HOME``
+    git clone https://github.com/stoqs/stoqs.git stoqsgit
+
+3. Provision your server: 
+    * Start with a system provisioned with a `Vagrant up` command
+    * Install all the required software using provision.sh as a guide
+
+4. Create a virtualenv, install the production requirements, and test:
+   
+    cd $STOQS_HOME 
+    virtualenv venv-stoqs-production
+    source venv-stoqs-production/bin/activate
+    ./setup.sh production
+    ./test.sh
+    
     
 1. Add a stoqs.conf file to the server's /etc/httpd/conf.d/ directory.  With this 
    configuration the system administrator can assign sudo privileges to administrator
