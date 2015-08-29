@@ -5,7 +5,7 @@ pushd $(dirname $0)
 HOMEDIR=$(pwd)
 LOG_DIR="$HOMEDIR/log"
 if [ $1 ]; then
-    REQ="$HOMEDIR/$1"
+    REQ="$HOMEDIR/requirements/$1.txt"
 else
     REQ="$HOMEDIR/requirements/development.txt"
 fi

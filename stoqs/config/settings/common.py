@@ -191,10 +191,10 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 # STATIC FILE CONFIGURATION
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-root
-STATIC_ROOT = '/var/www/html/stoqsfiles/static/'
-
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-url
-STATIC_URL = '/stoqsfiles/static/'
+# Nginx example: export STATIC_ROOT=/usr/share/nginx/html/stoqsfiles/static/
+STATIC_ROOT = env('STATIC_ROOT', default=str(APPS_DIR('static')))
+STATIC_URL = env('STATIC_URL', default='/static/')
 
 # See: https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
 STATICFILES_DIRS = (
@@ -210,10 +210,10 @@ STATICFILES_FINDERS = (
 # MEDIA CONFIGURATION
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#media-root
-MEDIA_ROOT = str(APPS_DIR('media'))
-
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#media-url
-MEDIA_URL = '/media/'
+# Nginx example: export MEDIA_ROOT=/usr/share/nginx/html/stoqsfiles/media/
+MEDIA_ROOT = env('MEDIA_ROOT', default=str(APPS_DIR('media')))
+MEDIA_URL = env('MEDIA_URL', default='/media/')
 
 # URL Configuration
 # ------------------------------------------------------------------------------
