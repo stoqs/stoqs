@@ -44,10 +44,10 @@ then
     wget -q -N http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
     wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
     rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
-    curl -sS -O http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm > /dev/null
+    curl -sS -O http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
     rpm -ivh pgdg*
-    yum -y install postgresql93-server
-    yum -y groupinstall "PostgreSQL Database Server 9.3 PGDG"
+    yum -y install postgresql94-server
+    yum -y groupinstall "PostgreSQL Database Server 9.4 PGDG"
 
     echo Install Python 2.7 and its support tools pip and virtalenv
     yum groupinstall -y development
