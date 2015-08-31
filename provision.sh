@@ -67,7 +67,7 @@ then
     /usr/local/bin/pip install virtualenv
 
     yum -y install rabbitmq-server scipy mod_wsgi memcached python-memcached
-    yum -y install graphviz-devel graphviz-python ImageMagick postgis2_93
+    yum -y install graphviz-devel graphviz-python ImageMagick postgis2_94
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
     yum -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
     yum -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel freetds-devel
