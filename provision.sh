@@ -100,7 +100,7 @@ tar xzf mapserver-6.4.1.tar.gz
 cd mapserver-6.4.1
 mkdir build
 cd build
-/opt/cmake/bin/cmake .. -DWITH_FRIBIDI=0 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-9.3"
+/opt/cmake/bin/cmake .. -DWITH_FRIBIDI=0 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-9.4"
 make && make install
 cp /usr/local/bin/mapserv /var/www/cgi-bin
 echo "/etc/ld.so.conf.d/mapserver.conf" > /etc/ld.so.conf.d/mapserver.conf
@@ -117,10 +117,10 @@ echo Build database for locate command
 updatedb
 
 echo Configure and start services
-service postgresql-9.3 initdb
-chkconfig postgresql-9.3 on
-service postgresql-9.3 start
-chkconfig postgresql-9.3 on
+service postgresql-9.4 initdb
+chkconfig postgresql-9.4 on
+service postgresql-9.4 start
+chkconfig postgresql-9.4 on
 /sbin/chkconfig rabbitmq-server on
 /sbin/service rabbitmq-server start
 rabbitmqctl add_user stoqs stoqs
@@ -132,8 +132,8 @@ chkconfig memcached on
 /sbin/service memcached start
 
 echo Modify pg_hba.conf
-mv -f /var/lib/pgsql/9.3/data/pg_hba.conf /var/lib/pgsql/9.3/data/pg_hba.conf.bak
-cat <<EOT > /var/lib/pgsql/9.3/data/pg_hba.conf
+mv -f /var/lib/pgsql/9.4/data/pg_hba.conf /var/lib/pgsql/9.4/data/pg_hba.conf.bak
+cat <<EOT > /var/lib/pgsql/9.4/data/pg_hba.conf
 # Allow user/password login
 host    all     stoqsadm     127.0.0.1/32   md5
 host    all     stoqsadm     10.0.2.0/24    md5
@@ -143,27 +143,27 @@ local   all     all                         trust
 local   all     all                     peer map=root_as_others
 host    all     all     127.0.0.1/32    ident map=root_as_others
 EOT
-cat /var/lib/pgsql/9.3/data/pg_hba.conf.bak >> /var/lib/pgsql/9.3/data/pg_hba.conf
-cp /var/lib/pgsql/9.3/data/pg_ident.conf /var/lib/pgsql/9.3/data/pg_ident.conf.bak
-echo "root_as_others  root            postgres" >> /var/lib/pgsql/9.3/data/pg_ident.conf
+cat /var/lib/pgsql/9.4/data/pg_hba.conf.bak >> /var/lib/pgsql/9.4/data/pg_hba.conf
+cp /var/lib/pgsql/9.4/data/pg_ident.conf /var/lib/pgsql/9.4/data/pg_ident.conf.bak
+echo "root_as_others  root            postgres" >> /var/lib/pgsql/9.4/data/pg_ident.conf
 
 su - postgres -c 'createuser -s $USER'
-su - postgres -c "/usr/pgsql-9.3/bin/pg_ctl -D /var/lib/pgsql/9.3/data -l logfile start"
+su - postgres -c "/usr/pgsql-9.4/bin/pg_ctl -D /var/lib/pgsql/9.4/data -l logfile start"
 
-echo Create postgis database and restart postgresql-9.3
+echo Create postgis database and restart postgresql-9.4
 su - postgres -c "createdb postgis"
 su - postgres -c "createlang plpgsql postgis"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/postgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/spatial_ref_sys.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/postgis_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/rtpostgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/raster_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/topology.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.3/share/contrib/postgis-2.1/topology_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/postgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/spatial_ref_sys.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/postgis_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/rtpostgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/raster_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/topology.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/topology_comments.sql"
 su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\""
 su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
-service postgresql-9.3 restart
+service postgresql-9.4 restart
 
 echo Clone STOQS repo from https://github.com/stoqs/stoqs.git. See CONTRIBUTING for how to clone from your fork.
 cd ..
