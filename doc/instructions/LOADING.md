@@ -47,10 +47,11 @@ prerequisites:
          \c stoqs_september2012_t
          grant all on all tables in schema public to stoqsadm;
 
-5. Add the database name to the environment variable STOQS_CAMPAIGNS, e.g.:
+5. Assign DATABASE_URL (replacing <dbuser> <pw> <host> and <port> with your 
+   values) and add your new database/campaign to STOQS_CAMPAIGNS, e.g.:
 
-        export STOQS_DB_PASSWORD=CHANGEME
-        export STOQS_CAMPAIGNS='stoqs_september2012_t'
+        export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
+        export STOQS_CAMPAIGNS="stoqs_september2012_t,$STOQS_CAMPAIGNS"
 
 6. Restart your server to force a re-read of the settings file.  On a development server
    simply restart "python manage.py runserver 0.0.0.0:8000 --settings=stoqs.config.vagrant"

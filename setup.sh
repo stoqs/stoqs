@@ -9,7 +9,7 @@ if [ $1 ]; then
 else
     REQ="$HOMEDIR/requirements/development.txt"
 fi
-echo "Using pip requirements file $1"
+echo "Using pip requirements file: $REQ"
 
 if [ -z $VIRTUAL_ENV ]; then
     echo "Need to be in your virtual environment."
@@ -28,6 +28,9 @@ if [ $? -ne 0 ]; then
 fi
 
 PG_CONFIG=$(locate --regex "bin/pg_config$")
+# Pick last path if multiple versions of Postgresql installed
+PG_CONFIG=`echo $PG_CONFIG | grep -o '[^ ]*$'`
+echo "Using PG_CONFIG=$PG_CONFIG"
 PATH=$(dirname $PG_CONFIG):$PATH
 
 ln -s $CONFIG $VENV_DIR/bin/

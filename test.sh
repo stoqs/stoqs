@@ -1,9 +1,9 @@
 #!/bin/bash
 # Do database operations to create default database and create fixture for testing
 # Designed for re-running on development system - ignore errors in Vagrant and Travis-ci
-# (You may want a different password than CHANGEME on your system; must match what's in DATABASE_URL)
+# Pass the stoqsadm password as an argument; it must match what's in DATABASE_URL.
 
-psql -c "CREATE USER stoqsadm WITH PASSWORD 'CHANGEME';" -U postgres
+psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
 psql -c "DROP DATABASE stoqs;" -U postgres
 psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;" -U postgres
 psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
