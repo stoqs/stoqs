@@ -6,7 +6,9 @@ Notes for installing STOQS on a production server
 STOQS is configured to be installed on your own self-hosted web server or on a 
 Platform as a Service (PaaS) provider, such as Heroku. It follows
 [The Twelve-Factor App](http://12factor.net/) guidelines with deployment 
-settings placed in environment variables.
+settings placed in environment variables.  Unless otherwise noted all commands
+should be executed from a regular user account that you will use to manage
+the stoqs application, e.g. an account something like USER='stoqsadm'.
 
 ### Hosting STOQS on your own Nginx web server:
 
@@ -33,7 +35,8 @@ settings placed in environment variables.
     * There are many other ways, including Docker, for setting up the required services
 
 4. Create a virtualenv using the executable associated with Python 2.7, install 
-   the production requirements, and test using a stoqsadm password of your choice:
+   the production requirements, and setup environment for server with multiple
+   versions of Postgresql installed:
    
         cd $STOQS_HOME 
         /usr/local/bin/virtualenv venv-stoqs
@@ -41,43 +44,62 @@ settings placed in environment variables.
         ./setup.sh production
         export PATH=/usr/pgsql-9.4/bin:$PATH
         alias psql='psql -p 5433'   # For postgresql server running on port 5433
-        ./test.sh <stoqsadm_pw>
-   
-5. Edit the file $STOQS_HOME/stoqs/stoqs_nginx.conf and change the server_name
-   and location settings for your server.
 
-6. Create a symlink to the above .conf file from the nginx config directory:
+5. As privileged 'postgres' user create default stoqs database:
+
+        /bin/su postgres
+        export PATH=/usr/pgsql-9.4/bin:$PATH
+        alias psql='psql -p 5433'   # For postgresql server running on port 5433
+        psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;"
+        psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';"
+
+6. As regular 'stoqsadm' user initialize and load the default stoqs database:
+
+        export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
+        stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
+        stoqs/manage.py migrate --settings=config.settings.local --noinput --database=default
+        wget -q -N -O stoqs/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
+        stoqs/loaders/loadTestData.py
+
+7. Edit the file $STOQS_HOME/stoqs/stoqs_nginx.conf and change the server_name
+   and location settings for your server.  There are absolute directory paths in 
+   this file; make sure they refer to paths on your server.
+
+8. Create a symlink to the above .conf file from the nginx config directory:
 
         sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx.conf /etc/nginx/conf.d
 
-7. Copy static files to the production web server location.  The STATIC_ROOT in
+9. Copy static files to the production web server location.  The STATIC_ROOT in
    settings.py must be writable by the user that executes this command:
 
-        export STATIC_ROOT=/usr/share/nginx/html/stoqsfiles/static/
+        sudo mkdir /usr/share/nginx/html/static
+        sudo chown $USER /usr/share/nginx/html/static
+        export STATIC_ROOT=/usr/share/nginx/html/static
         stoqs/manage.py collectstatic
 
-8. Create the STATIC_ROOT/media/sections and STATIC_ROOT/media/parameterparameter
-   directories. (These are used by matplotlib for data visualization in the UI.)
-   They need to be writable by the owner of the web application, e.g.:
+10. Create the STATIC_ROOT/media/sections and STATIC_ROOT/media/parameterparameter
+    directories. (These are used by matplotlib for data visualization in the UI.)
+    They need to be writable by the owner of the web application, e.g.:
 
-        export MEDIA_ROOT=/usr/share/nginx/html/stoqsfiles/
-        mkdir -p $STATIC_ROOT/media/sections/
-        mkdir -p $STATIC_ROOT/media/parameterparameter/
-        chmod 733 $STATIC_ROOT/media/sections/
-        chmod 733 $STATIC_ROOT/media/parameterparameter/
+        export MEDIA_ROOT=/usr/share/nginx/html/media
+        mkdir -p $MEDIA_ROOT/sections
+        mkdir -p $MEDIA_ROOT/parameterparameter
+        chmod 733 $MEDIA_ROOT/sections
+        chmod 733 $MEDIA_ROOT/parameterparameter
 
-9. Start the stoqs application (replacing <dbuser> <pw> <host> and <port> with
-   your values, and with all your campaigns/databases separated by commas
-   assigned to STOQS_CAMPAIGNS), e.g.:
+11. Start the stoqs application (replacing <dbuser> <pw> <host> and <port> with
+    your values, and with all your campaigns/databases separated by commas
+    assigned to STOQS_CAMPAIGNS), e.g.:
 
-        export STATIC_ROOT=/usr/share/nginx/html/stoqsfiles/static/
-        export MEDIA_ROOT=/usr/share/nginx/html/stoqsfiles/media
+        export STATIC_ROOT=/usr/share/nginx/html/static
+        export MEDIA_ROOT=/usr/share/nginx/html/media
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
         export STOQS_CAMPAIGNS="stoqs_beds_canyon_events_t,stoqs_may2015"
+        export GDAL_DATA=/usr/share/gdal
         cd $STOQS_HOME/stoqs
         uwsgi --socket :8001 --module wsgi:application
 
-10. Test the STOQS user interface at:
+12. Test the STOQS user interface at:
 
         http://<server_name>/
 
