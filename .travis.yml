@@ -28,7 +28,7 @@ before_script:
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
 script:  
-  - ./test.sh
+  - ./test.sh CHANGEME
 after_script:
   - COVERALLS_REPO_TOKEN=B9qmcqI4Yq9CR0PkjYmy4eYQoJa3mdKDw coveralls --base_dir stoqs
 notifications:

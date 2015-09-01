@@ -29,7 +29,7 @@ The good news is that Unix system administration skills are no longer required a
         virtualenv venv-stoqs
         source venv-stoqs/bin/activate
         ./setup.sh
-        ./test.sh
+        ./test.sh <stoqsadm_pw>
 
 6. Set up remote upstream:
 
