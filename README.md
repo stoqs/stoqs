@@ -22,7 +22,7 @@ After your virtual machine has booted, log in, finish the Python setup, and test
     cd ~/dev/stoqsgit
     source venv-stoqs/bin/activate
     ./setup.sh
-    ./test.sh
+    ./test.sh CHANGEME
 
 Start the development server:
 

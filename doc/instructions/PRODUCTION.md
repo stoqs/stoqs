@@ -19,7 +19,7 @@ settings placed in environment variables.
 
 2. Clone STOQS to a local writable directory on your server. A good practice
    is to not push any changes from a production server back to the repository,
-   therefore our clone can be read only without any ssh keys configured, e.g.:
+   therefore our clone can be read-only without any ssh keys configured, e.g.:
 
         export STOQS_HOME=/opt/stoqsgit
         cd `dirname $STOQS_HOME`
@@ -27,17 +27,21 @@ settings placed in environment variables.
 
 3. Provision your server: 
 
-    * Start with a system provisioned with a `Vagrant up` command
+    * Start with a system provisioned with a `Vagrant up --provider virtualbox` command
     * Install all the required software using provision.sh as a guide
+    * Use a server that already has much of the required software installed
     * There are many other ways, including Docker, for setting up the required services
 
-4. Create a virtualenv, install the production requirements, and test:
+4. Create a virtualenv using the executable associated with Python 2.7, install 
+   the production requirements, and test using a stoqsadm password of your choice:
    
         cd $STOQS_HOME 
-        virtualenv venv-stoqs
+        /usr/local/bin/virtualenv venv-stoqs
         source venv-stoqs/bin/activate
         ./setup.sh production
-        ./test.sh
+        export PATH=/usr/pgsql-9.4/bin:$PATH
+        alias psql='psql -p 5433'   # For postgresql server running on port 5433
+        ./test.sh <stoqsadm_pw>
    
 5. Edit the file $STOQS_HOME/stoqs/stoqs_nginx.conf and change the server_name
    and location settings for your server.
@@ -47,7 +51,7 @@ settings placed in environment variables.
         sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx.conf /etc/nginx/conf.d
 
 7. Copy static files to the production web server location.  The STATIC_ROOT in
-    settings.py must be writable by the user that executes this command:
+   settings.py must be writable by the user that executes this command:
 
         export STATIC_ROOT=/usr/share/nginx/html/stoqsfiles/static/
         stoqs/manage.py collectstatic
