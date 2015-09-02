@@ -284,6 +284,11 @@ LOGGING = {
 # export DJANGO_GOOGLE_ANALYTICS_CODE='SET_YOUR_OWN_GA_CODE_TO_TRACK_USAGE'
 GOOGLE_ANALYTICS_CODE = 'testing'
 
+# Must be externally accessible if your STOQS server is to be externally accessible
+# The default of 'localhost:8080' is for a Vagrant install, set MAPSERVER_HOST for
+# other cases, e.g. export MAPSERVER_HOST='172.16.130.204'
+MAPSERVER_HOST = env('MAPSERVER_HOST', default='localhost:8080')
+
 # For template generated .map files
 MAPFILE_DIR = '/dev/shm'
 

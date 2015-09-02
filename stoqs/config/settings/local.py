@@ -60,6 +60,3 @@ INSTALLED_APPS += ('django_extensions', )
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 # Your local stuff: Below this line define 3rd party library settings
-
-# Must be externally accessible if your STOQS server is to be externally accessible
-MAPSERVER_HOST = '172.16.130.204'

@@ -61,39 +61,47 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         wget -q -N -O stoqs/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
         stoqs/loaders/loadTestData.py
 
-7. Edit the file $STOQS_HOME/stoqs/stoqs_nginx.conf and change the server_name
+7. Copy the file $STOQS_HOME/stoqs/stoqs_nginx.conf to a file that will be
+   specific for your system and edit it to and change the server_name
    and location settings for your server.  There are absolute directory paths in 
-   this file; make sure they refer to paths on your server.
+   this file; make sure they refer to paths on your server, e.g.:
 
-8. Create a symlink to the above .conf file from the nginx config directory:
+        cp $STOQS_HOME/stoqs/stoqs_nginx.conf $STOQS_HOME/stoqs/stoqs_nginx_kraken.conf
+        vi $STOQS_HOME/stoqs/stoqs_nginx_kraken.conf
 
-        sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx.conf /etc/nginx/conf.d
+8. Create a symlink to the above .conf file from the nginx config directory, e.g.:
 
-9. Copy static files to the production web server location.  The STATIC_ROOT in
-   settings.py must be writable by the user that executes this command:
+        sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx_kraken.conf /etc/nginx/conf.d
 
+9. Create the media and static web directories and copy the static files to the 
+   production web server location. The $STATIC_ROOT directory must be writable 
+   by the user that executes the `collectstatic` command:
+
+        sudo mkdir /usr/share/nginx/html/media
         sudo mkdir /usr/share/nginx/html/static
         sudo chown $USER /usr/share/nginx/html/static
         export STATIC_ROOT=/usr/share/nginx/html/static
         stoqs/manage.py collectstatic
 
-10. Create the STATIC_ROOT/media/sections and STATIC_ROOT/media/parameterparameter
-    directories. (These are used by matplotlib for data visualization in the UI.)
-    They need to be writable by the owner of the web application, e.g.:
+10. Create the $MEDIA_ROOT/sections and $MEDIA_ROOT/parameterparameter
+    directories and set permissions for writing by the web process. 
+    (They are are the location for graphics produced by the STOQS UI.):
 
         export MEDIA_ROOT=/usr/share/nginx/html/media
-        mkdir -p $MEDIA_ROOT/sections
-        mkdir -p $MEDIA_ROOT/parameterparameter
-        chmod 733 $MEDIA_ROOT/sections
-        chmod 733 $MEDIA_ROOT/parameterparameter
+        sudo mkdir $MEDIA_ROOT/sections
+        sudo mkdir $MEDIA_ROOT/parameterparameter
+        sudo chown -R $USER /usr/share/nginx/html/media
+        sudo chmod 733 $MEDIA_ROOT/sections
+        sudo chmod 733 $MEDIA_ROOT/parameterparameter
 
-11. Start the stoqs application (replacing <dbuser> <pw> <host> and <port> with
-    your values, and with all your campaigns/databases separated by commas
-    assigned to STOQS_CAMPAIGNS), e.g.:
+11. Start the stoqs application (replacing <dbuser> <pw> <host> <port> and
+    <mapserver_ip_address> with your values, and with all your 
+    campaigns/databases separated by commas assigned to STOQS_CAMPAIGNS), e.g.:
 
         export STATIC_ROOT=/usr/share/nginx/html/static
         export MEDIA_ROOT=/usr/share/nginx/html/media
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
+        export MAPSERVER_HOST="<mapserver_ip_address>"
         export STOQS_CAMPAIGNS="stoqs_beds_canyon_events_t,stoqs_may2015"
         export GDAL_DATA=/usr/share/gdal
         cd $STOQS_HOME/stoqs
