@@ -54,7 +54,7 @@ prerequisites:
         export STOQS_CAMPAIGNS="stoqs_september2012_t,$STOQS_CAMPAIGNS"
 
 6. Restart your server to force a re-read of the settings file.  On a development server
-   simply restart "python manage.py runserver 0.0.0.0:8000 --settings=stoqs.config.vagrant"
+   simply restart "cd stoqs && ./manage.py runserver 0.0.0.0:8000 --settings=config.settings.local"
    (or whichever config file you want to use)  which you normally have running
    in its own shell window (see DEVELOPMENT).  On a production server restart apache with
    "sudo /sbin/service httpd restart" (see PRODUCTION). 
