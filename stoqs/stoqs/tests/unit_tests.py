@@ -33,7 +33,7 @@ from django.conf import settings
 from django.test.client import Client
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from stoqs.models import Activity
+from stoqs.models import Activity, Parameter, Resource
 
 logger = logging.getLogger(__name__)
 
@@ -312,10 +312,11 @@ class SummaryDataTestCase(TestCase):
     def test_sampledparameter_select(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
-        # Select temperature for data access - uses id(s) which change with new fixture
-        qstring = ('except=spsql&except=mpsql&sampledparametersgroup=20&'
+        CAL1939_calanoida_id = Parameter.objects.get(name='CAL1939_calanoida').id
+        qstring = ('except=spsql&except=mpsql&sampledparametersgroup={:d}&'
                    'xaxis_min=1288214585000&xaxis_max=1288309759000&'
-                   'yaxis_min=-100&yaxis_max=600&pplr=1&ppsl=1')
+                   'yaxis_min=-100&yaxis_max=600&pplr=1&ppsl=1').format(
+                           CAL1939_calanoida_id)
 
         req = base + '?' + qstring
         response = self.client.get(req)
@@ -361,12 +362,13 @@ class SummaryDataTestCase(TestCase):
     def test_parameterparameterplot2(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
-        # SampledParameter (B1006_Barnacles) vs. MeasuredParameter (fl700_uncoor)
-        # Uses id(s) which may change with new fixture
+        # SampledParameter (B1006_barnacles) vs. MeasuredParameter (fl700_uncoor)
+        fl700_uncorr_id = Parameter.objects.get(name='fl700_uncorr').id
+        B1006_barnacles_id = Parameter.objects.get(name='B1006_barnacles').id
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
                    'except=spsql&except=mpsql&xaxis_min=1288214585000&'
-                   'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&px=6&'
-                   'py=20&pplr=1&ppsl=1')
+                   'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&px={:d}&'
+                   'py={:d}&pplr=1&ppsl=1').format(fl700_uncorr_id, B1006_barnacles_id)
 
         req = base + '?' + qstring
         response = self.client.get(req)
@@ -381,11 +383,13 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # SampledParameter vs. MeasuredParameter and 3D with color
-        # Uses id(s) which may change with new fixture
+        fl700_uncorr_id = Parameter.objects.get(name='fl700_uncorr').id
+        B1006_barnacles_id = Parameter.objects.get(name='B1006_barnacles').id
         qstring = ('only=parameterparameterpng&only=parameterparameterx3d&'
                    'except=spsql&except=mpsql&xaxis_min=1288216319000&'
                    'xaxis_max=1288279374000&yaxis_min=-10&yaxis_max=50&'
-                   'platforms=dorado&px=6&py=1&pz=6&pc=20&pplr=1&ppsl=1')
+                   'platforms=dorado&px=6&py=1&pz={:d}&pc={:d}&pplr=1&ppsl=1'
+                   ).format(fl700_uncorr_id, B1006_barnacles_id)
 
         req = base + '?' + qstring
         response = self.client.get(req)
@@ -399,10 +403,13 @@ class SummaryDataTestCase(TestCase):
     def test_simpledepthtime_timeseries(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
+        # Plot SEA_WATER_SALINITY_HR from M1_Mooring 
+        SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name='SEA_WATER_SALINITY_HR').id
         qstring = ('only=parametertime&except=spsql&except=mpsql&'
                    'xaxis_min=1288214585000&xaxis_max=1288309759000&'
                    'yaxis_min=-200&yaxis_max=600&parametertab=1&'
-                   'secondsperpixel=216&parametertimeplotid=16&pplr=1&ppsl=1')
+                   'secondsperpixel=216&parametertimeplotid={:d}&pplr=1&ppsl=1'
+                   ).format(SEA_WATER_SALINITY_HR_id)
 
         req = base + '?' + qstring
         response = self.client.get(req)
@@ -413,12 +420,12 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # Plot SEA_WATER_SALINITY_HR from M1_Mooring 
-        # Uses id(s) which may change with new fixture
+        SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name='SEA_WATER_SALINITY_HR').id
         qstring = ('except=spsql&except=mpsql&xaxis_min=1288214585000&'
                    'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&'
-                   'platforms=M1_Mooring&parameterplotid=16&'
+                   'platforms=M1_Mooring&parameterplotid={:d}&'
                    'platformplotname=M1_Mooring&showdataas=scatter&pplr=1&'
-                   'ppsl=1')
+                   'ppsl=1').format(SEA_WATER_SALINITY_HR_id)
 
         req = base + '?' + qstring
         response = self.client.get(req)
@@ -457,7 +464,6 @@ class SummaryDataTestCase(TestCase):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
         # Standardname sea_water_temperature selected for data access
-        # Uses id(s) which may change with new fixture
         qstring = ('except=spsql&except=mpsql&'
                    'parameterstandardname=sea_water_temperature&'
                    'xaxis_min=1288214585000&xaxis_max=1288309759000&'
@@ -471,12 +477,13 @@ class SummaryDataTestCase(TestCase):
     def test_labeled(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 
-        # Uses id(s) which may change with new fixture
+        diatom_id = Resource.objects.get(name='label', value='diatom').id
+        sediment_id = Resource.objects.get(name='label', value='sediment').id
         qstring = ('except=spsql&except=mpsql&'
                    'measuredparametersgroup=fl700_uncorr&'
                    'xaxis_min=1288216319000&xaxis_max=1288279374000&'
-                   'yaxis_min=-10&yaxis_max=50&mplabels=177&mplabels=183&'
-                   'pplr=1&ppsl=1')
+                   'yaxis_min=-10&yaxis_max=50&mplabels={:d}&mplabels={:d}&'
+                   'pplr=1&ppsl=1').format(diatom_id, sediment_id)
 
         req = base + '?' + qstring
         response = self.client.get(req)

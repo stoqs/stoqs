@@ -29,15 +29,16 @@ from CANON import CANONLoader
 cl = CANONLoader('default', 'Initial Test Database',
                     description = 'Post-setup load of a single AUV mission',
                     x3dTerrains = {
-                                    '/stoqsfiles/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
-                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
-                                        'VerticalExaggeration': '10',
-                                        'speed': '1',
-                                    }
+                            '/stoqsfiles/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                'centerOfRotation': '-2711557.94 -4331414.32 3801353.46',
+                                'VerticalExaggeration': '10',
+                                'speed': '.01',
+                            }
                     },
-                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
+                    # Terrain data file is expected to be in loaders directory
+                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')
                 )
 
 # Assign input data sets from OPeNDAP URLs pointing to Discrete Sampling Geometry CF-NetCDF sources
@@ -46,7 +47,8 @@ cl = CANONLoader('default', 'Initial Test Database',
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
 cl.dorado_files = [ 'Dorado389_2010_300_00_300_00_decim.nc' ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
-                    'fl700_uncorr', 'salinity', 'biolume', 'roll', 'pitch', 'yaw' ]
+                    'fl700_uncorr', 'salinity', 'biolume', 'roll', 'pitch', 'yaw',
+                    'sepCountList', 'mepCountList']
 
 # - TimeSeries and TimeSeriesProfile
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'

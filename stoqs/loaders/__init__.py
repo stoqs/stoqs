@@ -66,6 +66,10 @@ class SkipRecord(Exception):
     pass
 
 
+class HasMeasurement(Exception):
+    pass
+
+
 class ParameterNotFound(Exception):
     pass
 
@@ -697,6 +701,10 @@ class STOQS_Loader(object):
         @param row: A dictionary representing a single "row" of parameter data to be added to the database. 
         '''
         self.logger.debug(row)
+        if 'measurement' in row:
+            # Special for things like LOPC data 
+            raise HasMeasurement()
+               
         try:
             if (row['longitude'] == missing_value or row['latitude'] == missing_value or
                 #float(row['longitude']) == 0.0 or float(row['latitude']) == 0.0 or
