@@ -4,7 +4,7 @@ LOADING
 Instructions for loading your data in STOQS
 
 These instructions cover the loading of in situ discrete sampling geometry feature type 
-data from OPeNDAP accessible data sources.  Data adhereing to the Climate and Forecast
+data from OpenDAP accessible data sources.  Data adhereing to the Climate and Forecast
 conventions version 1.6 are supported for loading into STOQS.  Specific feature types
 supported are: trajectory, timeSeries, and timeSeriesProfile.  For more information
 please see http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html
@@ -29,18 +29,18 @@ prerequisites:
    
 2. In your new loadXXXX.py file instantiate a Loader object with the database alias name
    and a name for the Campaign.  Member names for the loader are defined in the class that
-   is imported.  For example, look in the loaders/CANON/__init__.py file for what platforms
+   is imported.  For example, look in the `loaders/CANON/__init__.py` file for what platforms
    are supported for the CANONLoader.  There are several examples of other load files in
    the loaders/ directory.  Feel free to use them as a basis for the data you wish to load.
 
 3. The CANON directory in loaders/ contains load scripts for all of the MBARI CANON
    campaigns.  Much of the commonly used loader code has been factored out into a 
-   CANONLoader class in loaders/CANON/__init__.py so that the load scripts (e.g. 
-   loadCANON_september2012.py) simply need to be constructed with the OPeNDAP URLs
+   CANONLoader class in `loaders/CANON/__init__.py` so that the load scripts (e.g. 
+   loadCANON_september2012.py) simply need to be constructed with the OpenDAP URLs
    and parameter names for each type of platform.
 
-4. Create a PostgreSQL database for your campaign (full instructions are in the 
-   INSTALL file), in this example a test database (with '_t' suffix) is created:
+4. Create a PostgreSQL database for your campaign, in this example a test database 
+  (with '_t' suffix) is created:
 
          create database stoqs_september2012_t owner=stoqsadm template=template_postgis;
          alter database stoqs_september2012_t set timezone='GMT';
@@ -53,42 +53,43 @@ prerequisites:
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
         export STOQS_CAMPAIGNS="stoqs_september2012_t,$STOQS_CAMPAIGNS"
 
-6. Restart your server to force a re-read of the settings file.  On a development server
-   simply restart "cd stoqs && ./manage.py runserver 0.0.0.0:8000 --settings=config.settings.local"
-   (or whichever config file you want to use)  which you normally have running
-   in its own shell window (see DEVELOPMENT).  On a production server restart apache with
-   "sudo /sbin/service httpd restart" (see PRODUCTION). 
-
-7. Synchronize (migrate) the new database with the stoqs data model.  At a shell prompt in your virtual
+6. Synchronize (migrate) the new database with the stoqs data model.  At a shell prompt in your virtual
    environment (see PREREQUISITES and INSTALL):
 
         source venv-stoqs/bin/activate
-        export STOQS_CAMPAIGNS='stoqs_september2012_t'
         stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
         stoqs/manage.py migrate --settings=config.settings.local --noinput --database=stoqs_september2012_t
-        psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
-8. Make sure that your session does not have the PYTHONPATH environment set; you may need to do:
+7. Make sure that your session does not have the PYTHONPATH environment set; you may need to do:
 
          unset PYTHONPATH
 
    Then, execute your load script on the test database:
 
-         stoqs/loaders/CANON/loadCANONseptember2012.py -t
+         stoqs/loaders/CANON/loadCANON_september2012.py -t
 
    To populate a full-resolution database repeat steps 4-7 with database name without the 
    '_t' suffix (stoqs_september2012) and execute:
 
-         stoqs/loaders/CANON/loadCANONseptember2012.py 
+         stoqs/loaders/CANON/loadCANON_september2012.py 
+
+8. Restart your server to force a re-read of the settings file and the modified 
+   STOQS_CAMPAIGNS environment variable.  On a development server simply restart 
+   "cd stoqs && ./manage.py runserver 0.0.0.0:8000 --settings=config.settings.local"
+   which you normally have running in its own shell window (see DEVELOPMENT).  On a 
+   production server running nginx with uWSGI in Emperor mode simply touch the wsgi
+   .ini file, e.g.:
+
+        touch stoqs/stoqs_uwsgi.ini
 
 9. Notes:
 
     - As a campaign produces data files those files may be added to the script.  To add
       data to an existing database simply comment out previously loaded files and re-execute
-      the script (step 8) with the new files.
+      the script (step 7) with the new files.
     - Some programs to create NetCDF files from various original data files (e.g. Seabird underway 
       and profile CTD) are in the loaders/CANON/toNetCDF directory.  See the README
-      there for instructions on running those scripts to put the data on an OPeNDAP server
+      there for instructions on running those scripts to put the data on an OpenDAP server
       so that your STOQS loader can load them.
     - Editing and running the load script during a campaign is an interactive process requiring
       interaction with people and testing the data sources for valid parameter names as well
