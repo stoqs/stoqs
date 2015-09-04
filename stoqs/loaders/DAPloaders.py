@@ -51,7 +51,8 @@ import logging
 import socket
 import seawater.eos80 as sw
 from utils.utils import percentile, median, mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord, missing_value, MEASUREDINSITU, FileNotFound
+from loaders import STOQS_Loader, SkipRecord, HasMeasurement, missing_value, MEASUREDINSITU, FileNotFound
+from loaders.SampleLoaders import get_closest_instantpoint, ClosestTimeNotFoundException
 import numpy as np
 from collections import defaultdict
 
@@ -205,6 +206,10 @@ class Base_Loader(STOQS_Loader):
                 logger.debug('Getting timeseries start time for v = %s', v)
                 minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
                 maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
+            else:
+                # Perhaps a strange file like LOPC size class data along a trajectory
+                minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
+                maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
 
         logger.debug('minDT = %s', minDT)
         logger.debug('maxDT = %s', maxDT)
@@ -480,7 +485,7 @@ class Base_Loader(STOQS_Loader):
             indices = (tIndx[0] + 1, tIndx[-1] + 1)
         except IndexError:
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
-        logger.info('Start and end indices are: %s', indices)
+        logger.debug('Start and end indices are: %s', indices)
 
         if tIndx[-1] <= tIndx[0]:
             raise InvalidSliceRequest('Cannot issue OPeNDAP temporal constraint expression with length 0 or less.')
@@ -631,6 +636,7 @@ class Base_Loader(STOQS_Loader):
         latitudes = {}
         longitudes = {}
         timeUnits = {}
+        measurements = {}
 
         # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
         # The reads here take advantage of OPeNDAP access mechanisms to effeciently transfer data across the network
@@ -716,8 +722,53 @@ class Base_Loader(STOQS_Loader):
                 longitudes[pname] = self.ds[ac[pname]['longitude']][ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
 
+            elif len(self.ds[pname].shape) == 2 and type(self.ds[pname]) is pydap.model.GridType:
+                # Customized for accepting LOPC data from Dorado - has only time coordinate
+                # LOPC data has only time therefore we look up the closest Instantpoint and 
+                # assign it's corresponding Measurement from other already loaded Dorado data.
+                ac[pname] = self.getAuxCoordinates(pname)
+                tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
+                try:
+                    # Subselect along the time axis
+                    logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
+                    v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
+                except ValueError, err:
+                    logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
+                    If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
+                    then the cache files must be removed and the tomcat hosting TDS restarted.''')
+                    sys.exit(1)
+                except pydap.exceptions.ServerError as e:
+                    logger.error('%s', e)
+                    continue
+    
+                # The STOQS MeasureParameter dataarray  - v is a list of Arrays
+                data[pname] = iter(v)      # Iterator on time axis delivering all arrays in an array with .next()
+
+                times[pname] = self.ds[ac[pname]['time']][tIndx[0]:tIndx[-1]:self.stride]
+                timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
+
+                # Add LOPC's bin array to the Parameter's domain
+                self.getParameterByName(pname).domain = list(self.ds['bin'][:])
+                self.getParameterByName(pname).save(using=self.dbAlias)
+
+                measurements[pname] = []
+                for udtime in times[pname]:
+                    tv = from_udunits(udtime, timeUnits[pname])
+                    try:
+                        ip, secs_diff = get_closest_instantpoint(self.associatedActivityName, tv, self.dbAlias)
+                        max_secs_diff = 2
+                        if secs_diff > max_secs_diff:
+                            logger.warn('LOPC data more than %s secs different from existing measurement: %s', max_secs_diff, secs_diff)
+                    except ClosestTimeNotFoundException as e:
+                        logger.error('Could not find corresponding measurment for LOPC data measured at %s', tv)
+                        continue
+                    else:
+                        measurements[pname].append(m.Measurement.objects.using(self.dbAlias).get(instantpoint=ip))
+
             else:
-                logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 1.  It is type %s with shape length = %d.', 
+                logger.warn('Variable %s is not of type pydap.model.GridType with a '
+                            'shape length of 1 or 2 (for LOPC/LISST-100 data).  It '
+                            'is type %s with shape length = %d.', 
                             pname, type(self.ds[pname]), len(self.ds[pname].shape))
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
@@ -726,12 +777,15 @@ class Base_Loader(STOQS_Loader):
             l = 0
             values = {}
             for dv in data[pname]:
-                values[pname] = float(dv)
+                values[pname] = dv
                 values['time'] = times[pname][l]
-                values['depth'] = depths[pname][l]
-                values['latitude'] = latitudes[pname][l]
-                values['longitude'] = longitudes[pname][l]
                 values['timeUnits'] = timeUnits[pname]
+                try:
+                    values['depth'] = depths[pname][l]
+                    values['latitude'] = latitudes[pname][l]
+                    values['longitude'] = longitudes[pname][l]
+                except KeyError:
+                    values['measurement'] = measurements[pname][l]
                 yield values
                 l = l + 1
 
@@ -856,7 +910,8 @@ class Base_Loader(STOQS_Loader):
         @transaction.atomic(using=self.dbAlias)
         def _innerInsertRow(self, parmCount, parameterCount, measurement, row):
 
-            for key, value in row.iteritems():
+            for key,value in row.iteritems():
+                # value may be single-valued or an array
                 try:
                     logger.debug('Checking for %s in self.include_names', key)
                     if len(self.include_names) and key not in self.include_names:
@@ -864,41 +919,42 @@ class Base_Loader(STOQS_Loader):
                     elif key in self.ignored_names:
                         continue
 
-                    # If the data have a Z dependence (e.g. mooring tstring/adcp) then value will be an array.
+                    # Mooring tstring/adcp and Dorado LOPC data: value will be an array.
                     logger.debug("value = %s ", value)
-                    
-                    if value > 1e34 and value != self.get_FillValue(key):
-                        # Workaround for IOOS glider data
-                        if abs(value - self.get_FillValue(key)) < 1e24:
-                            # Equal to 10 digits
-                            continue
-                        elif abs(value - self.getmissing_value(key)) < 1e24:
-                            # Equal to 10 digits
-                            continue
-                        else:
-                            logger.error('Invalid data value: > 1e34, but not close to _FillValue or missing_value. Entering debugger...')
-                            import pdb; pdb.set_trace()
-
-                    if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or numpy.isnan(value): # absence of a value
-                        ##logger.debug('Not loading value = %s', value)
-                        ##logger.debug("From: %s", self.url)
-                        ##tIndx = self.getTimeBegEndIndices(self.ds[self.ds[key].keys()[1]])
-                        ##logger.debug("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", key, key, tIndx[0], tIndx[-1], self.stride)
-                        continue
-                    try:
-                        if math.isnan(value): # not a number for a math type
-                            continue
-                    except Exception, e: 
-                        logger.debug('%s', e)
-                        pass
-
-                    logger.debug("measurement._state.db = %s", measurement._state.db)
-                    logger.debug("key = %s", key)
-                    logger.debug("parameter._state.db = %s", self.getParameterByName(key)._state.db)
+                   
                     parameter = self.getParameterByName(key)
-                    mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, datavalue=value)
-                    logger.debug('Saving parameter_id %s at measurement_id = %s', parameter.id, measurement.id)
                     try:
+                        value = float(value)
+                        if value > 1e34 and value != self.get_FillValue(key):
+                            # Workaround for IOOS glider data
+                            if abs(value - self.get_FillValue(key)) < 1e24:
+                                # Equal to 10 digits
+                                continue
+                            elif abs(value - self.getmissing_value(key)) < 1e24:
+                                # Equal to 10 digits
+                                continue
+                            else:
+                                logger.error('Invalid data value: > 1e34, but not close to _FillValue or missing_value. Entering debugger...')
+                                import pdb; pdb.set_trace()
+
+                        if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or numpy.isnan(value):
+                            # value is basically absent
+                            continue
+                        try:
+                            if math.isnan(value): # not a number for a math type
+                                continue
+                        except Exception, e: 
+                            logger.debug('%s', e)
+                            pass
+                        # Single-valued datavalue
+                        mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, datavalue=value)
+
+                    except TypeError:
+                        # Likely a numpy Array from LOPC, cast to list and save in dataarray field
+                        mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, dataarray=list(value))
+
+                    try:
+                        logger.debug('Saving parameter_id %s at measurement_id = %s', parameter.id, measurement.id)
                         mp.save(using=self.dbAlias)
                     except IntegrityError as e:
                         logger.warn(e)
@@ -920,18 +976,15 @@ class Base_Loader(STOQS_Loader):
                     if (self.loaded % 500) == 0:
                         logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
 
-            # End for key, value
+            # End for key,value in row.iteritems():
 
         return _innerInsertRow(self, parmCount, parameterCount, measurement, row)
 
-
     def process_data(self, generator=None, featureType=''): 
-      '''
-      Wrapper so as to apply self.dbAlias in the decorator
+      '''Wrapper so as to apply self.dbAlias in the decorator
       '''
       def innerProcess_data(self, generator=None, featureType=''):
-        '''
-        Iterate over the data source and load the data in by creating new objects
+        '''Iterate over the data source and load the data in by creating new objects
         for each measurement.
         
         Note that due to the use of large-precision numerics, we'll convert all numbers to
@@ -950,7 +1003,6 @@ class Base_Loader(STOQS_Loader):
         maxdepth = -8000.0
         for key in self.include_names:
             parmCount[key] = 0
-
 
         if generator:
             logger.info('Using data generator passed into process_data')
@@ -977,54 +1029,56 @@ class Base_Loader(STOQS_Loader):
             raise Exception("Global attribute 'featureType' is not one of 'trajectory', 'timeSeries', or 'timeSeriesProfile' - see http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
 
         for row in data_generator:
-            logger.debug(row)
             try:
                 row = self.preProcessParams(row)
-                logger.debug("After preProcessParams():")
-                logger.debug(row)
+            except HasMeasurement:
+                pass
             except SkipRecord as e:
                 logger.warn("Got SkipRecord Exception: %s" % e)
                 continue
-            except Exception, e:
+            except Exception as e:
                 logger.exception(e)
                 sys.exit(-1)
-            else:
-                params = {} 
-                try:
-                    if featureType == 'timeseriesprofile' or featureType == 'timeseries' or featureType == 'trajectoryprofile':
-                        longitude, latitude, time, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
-                                                            from_udunits(row.pop('time'), row.pop('timeUnits')),
-                                                            row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
-                        measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, long=longitude,
-                                                            nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
-                    elif featureType == 'trajectory':
+            
+            params = {} 
+            try:
+                if featureType == 'timeseriesprofile' or featureType == 'timeseries' or featureType == 'trajectoryprofile':
+                    longitude, latitude, time, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
+                                                        from_udunits(row.pop('time'), row.pop('timeUnits')),
+                                                        row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
+                    measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, long=longitude,
+                                                        nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
+                elif featureType == 'trajectory':
+                    if 'measurement' in row:
+                        # For data like LOPC which assigns a 'measurement' item
+                        measurement = row['measurement']
+                    else:
                         longitude, latitude, time, depth = (row.pop('longitude'), row.pop('latitude'),
                                                             from_udunits(row.pop('time'), row.pop('timeUnits')),
                                                             row.pop('depth'))
                         measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, long=longitude)
-                    else:
-                        raise Exception('No handler for featureType = %s' % featureType)
-
-                except ValueError:
-                    logger.info('Bad time value')
-                    continue
-                except SkipRecord, e:
-                    logger.debug("Skipping record: %s", e)
-                    continue
-                except Exception, e:
-                    logger.exception(e)
-                    sys.exit(-1)
                 else:
-                    logger.debug("longitude = %s, latitude = %s, time = %s, depth = %s", longitude, latitude, time, depth)
-                    if depth < mindepth:
-                        mindepth = depth
-                    if depth > maxdepth:
-                        maxdepth = depth
+                    raise Exception('No handler for featureType = %s' % featureType)
+
+            except ValueError:
+                logger.info('Bad time value')
+                continue
+            except SkipRecord as e:
+                logger.debug("Skipping record: %s", e)
+                continue
+            except Exception as e:
+                logger.exception(e)
+                sys.exit(-1)
+
+            # For Activity metadata
+            if measurement.depth < mindepth:
+                mindepth = measurement.depth
+            if measurement.depth > maxdepth:
+                maxdepth = measurement.depth
 
             self._insertRow(parmCount, parameterCount, measurement, row)
 
-
-        # End for row
+        # End for row in data_generator:
 
         #
         # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
@@ -1184,6 +1238,9 @@ class Dorado_Loader(Trajectory_Loader):
         '''
         In addition to the NC_GLOBAL attributes that are added in the base class also add the quick-look plots that are on the dods server.
         '''
+        if self.url.endswith('lopc.nc'):
+            return super(Dorado_Loader, self).addResources()
+
         baseUrl = 'http://dods.mbari.org/data/auvctd/surveys'
         survey = self.url.split('/')[-1].split('.nc')[0].split('_decim')[0] # Works for both .nc and _decim.nc files
         yyyy = int(survey.split('_')[1])
@@ -1394,6 +1451,46 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     else:
         logger.debug("Loaded Activity with name = %s", aName)
 
+    if 'sepCountList' in loader.include_names or 'mepCountList' in loader.include_names:
+        # Construct LOPC data url that looks like:
+        # http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/files/ssds.shore.mbari.org/auvctd/missionlogs/2010/2010300/2010.300.00/lopc.nc
+        # from url that looks like: http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
+        yr = url.split('/')[7]
+        yd = url.split('/')[8][4:]
+        yd = url.split('/')[9].split('_')[2]
+        mn = url.split('/')[9].split('_')[3]
+        lopc_url = ('http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/'
+                      'files/ssds.shore.mbari.org/auvctd/missionlogs/{}/{}/{}.{}.{}/'
+                      'lopc.nc').format(yr, yr + yd, yr, yd, mn)
+
+        lopc_aName = '{} (stride={})'.format(lopc_url, stride)
+
+        logger.debug("Instantiating Dorado_Loader for url = %s", lopc_url)
+        lopc_loader = Dorado_Loader(url = lopc_url, campaignName = cName,
+                                    campaignDescription = cDesc, dbAlias = dbAlias,
+                                    activityName = lopc_aName, activitytypeName = aTypeName,
+                                    platformName = pName, platformColor = pColor,
+                                    platformTypeName = pTypeName, stride = stride,
+                                    grdTerrain = grdTerrain)
+
+        lopc_loader.include_names = ['sepCountList', 'mepCountList']
+        lopc_loader.associatedActivityName = loader.activityName
+
+        # Auxillary coordinates are the same for all include_names
+        lopc_loader.auxCoords = {}
+        for v in lopc_loader.include_names:
+            lopc_loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
+        Dorado_Loader.getFeatureType = lambda self: 'trajectory'
+        try:
+            # Specify generator and featureType so that non-CF LOPC data can me loaded
+            (nMP, path, parmCountHash, mind, maxd) = lopc_loader.process_data(
+                    generator=lopc_loader._genTrajectory, featureType='trajectory')
+        except VariableMissingCoordinatesAttribute, e:
+            logger.exception(e)
+        else:
+            logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
+
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None,
                     dataStartDatetime=None):
     '''
@@ -1603,7 +1700,7 @@ if __name__ == '__main__':
     stride = 1000       # Make large for quicker runs, smaller for denser data
     dbAlias = 'default'
 
-    runDoradoLoader(baseUrl + file, 'Test Load', file, 'dorado', 'auv', 'AUV Mission', dbAlias, stride)
+    runDoradoLoader(baseUrl + file, 'Test Load', 'Run from test', file, 'dorado', 'auv', 'AUV Mission', dbAlias, stride)
 
     # See loaders/CANON/__init__.py for more examples of how these loaders are used
 
