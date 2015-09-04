@@ -1,0 +1,66 @@
+
+# Values are paths to load script for each campaign starting at stoqs/loaders
+campaigns = {
+    'stoqs_rovctd_mb':      ('ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mb '
+                            '--rov vnta --start 43 --end 4000 --campaignName "Monterey '
+                            'Bay ROVCTD data" --campaignDescription "All dives in '
+                            'Monterey Bay" --bbox -122.5 36 -121.75 37.0 && '
+                            'ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mb '
+                            '--rov tibr --start 42 --end 1163 --campaignName "Monterey '
+                            'Bay ROVCTD data" --campaignDescription "All dives in '
+                            'Monterey Bay" --bbox -122.5 36 -121.75 37.0 && '
+                            'ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mb '
+                            '--rov docr --start 1 --end 1000 --campaignName "Monterey '
+                            'Bay ROVCTD data" --campaignDescription "All dives in '
+                            'Monterey Bay" --bbox -122.5 36 -121.75 37.0'),
+    'stoqs_rovctd_mw93':    'ROVCTD/loadAllTransectDives.sh',
+    'stoqs_rovctd_mw97':    ('ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mw97 '
+                            '--dives V1236 V1247 V1321 V1575 V1610 V1668 T257 V1964 '
+                            'V2069 V2329 V2354 V2421 V2636 V2661 V2715 V2983 V3006 '
+                            'V3079 V3334 V3363 V3417 V3607 V3630 V3646 D449 D478 '
+                            'V3736 V3766 V3767 V3774 D646 '
+                            '--bbox -122.1 36.65 -122.0 36.75 '
+                            '--campaignName "Midwater Transect dives 1997 - 2014" '
+                            '--campaignDescription "Midwater Transect dives made with '
+                            'Ventana and Doc Ricketts from 1997 - 2014. Three to four '
+                            'dives/year selected, representing spring, summer and fall '
+                            '(~ beginning upwelling, upwelling and post-upwelling)"'),
+    'stoqs_oceansites_o':   'OceanSITES/load_moorings.py -o',
+    'stoqs_rovctd_goc':     ('ROVCTD/ROVCTDloader.py --database stoqs_rovctd_goc '
+                            '--rov vnta --start 43 --end 4000 --campaignName "Gulf of '
+                            'California ROVCTD data" --campaignDescription "All dives in '
+                            'Gulf of California" --bbox -120 18 -100 33 && '
+                            'ROVCTD/ROVCTDloader.py --database stoqs_rovctd_goc '
+                            '--rov tibr --start 42 --end 1163 --campaignName "Gulf of '
+                            'California ROVCTD data" --campaignDescription "All dives in '
+                            'Gulf of California" --bbox -120 18 -100 33 && '
+                            'ROVCTD/ROVCTDloader.py --database stoqs_rovctd_goc '
+                            '--rov docr --start 1 --end 1000 --campaignName "Gulf of '
+                            'California ROVCTD data" --campaignDescription "All dives in '
+                            'Gulf of California" --bbox -120 18 -100 33'),
+    'stoqs_september2010':  'CANON/loadCANON_september2010.py',
+    'stoqs_october2010':    'CANON/loadCANON_october2010.py',
+    'stoqs_dorado2010':     'MolecularEcology/load_dorado2011.py',
+    'stoqs_april2011':      'CANON/loadCANON_april2011.py',
+    'stoqs_june2011':       'CANON/loadCANON_june2011.py',
+    'stoqs_february2012':   'MolecularEcology/loadGOC_february2012.py',
+    'stoqs_may2012':        'CANON/loadCANON_may2012.py',
+    'stoqs_september2012':  'CANON/loadCANON_september2012.py',
+    'stoqs_ioos_gliders':   'IOOS/load_gliders.py',
+    'stoqs_march2013':      'CANON/loadCANON_march2013.py',
+    'stoqs_march2013_o':    'CANON/loadCANON_march2013.py -o',
+    'stoqs_beds2013':           'BEDS/loadBEDS_2013.py',
+    'stoqs_beds_canyon_events': 'BEDS/loadBEDS_CanyonEvents.py',
+    'stoqs_simz_aug2013':       'MolecularEcology/loadSIMZ_aug2013.py',
+    'stoqs_september2013':      'CANON/loadCANON_september2013.py',
+    'stoqs_september2013_o':    'CANON/loadCANON_september2013.py -o',
+    'stoqs_cn13id_oct2013':     'CANON/loadCN13ID_october2013.py',
+    'stoqs_simz_oct2013':       'MolecularEcology/loadSIMZ_oct2013.py',
+    'stoqs_simz_spring2014':    'MolecularEcology/loadSIMZ_spring2014.py',
+    'stoqs_canon_april2014':    'CANON/loadCANON_april2014.py',
+    'stoqs_simz_jul2014':       'MolecularEcology/loadSIMZ_jul2014.py',
+    'stoqs_september2014':      'CANON/loadCANON_september2014.py',
+    'stoqs_simz_oct2014':       '/MolecularEcology/loadSIMZ_oct2014.py',
+    'stoqs_canon_may2015':      'CANON/loadCANON_may2015.py',
+    'stoqs_os2015':             'CANON/loadCANON_os2015.py',
+}
