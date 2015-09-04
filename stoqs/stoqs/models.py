@@ -26,6 +26,7 @@ MBARI 17 March 2012
 '''
 
 from django.contrib.gis.db import models
+from django.contrib.postgres.fields import ArrayField
 
 try:
     import uuid
@@ -175,7 +176,7 @@ class Activity(models.Model):
     uuid = UUIDField(editable=False)
     campaign = models.ForeignKey(Campaign, blank=True, null=True) 
     platform = models.ForeignKey(Platform) 
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=256)
     comment = models.TextField(max_length=2048)
     startdate = models.DateTimeField()
     plannedstartdate = models.DateTimeField(null=True)
@@ -272,8 +273,11 @@ class PlannedDepthTime(models.Model):
 
 class Parameter(models.Model):
     '''
-    A Parameter is something that can be measured producing a numeric value.  Example names include: 
-    temperature, salinity, fluoresence.
+    A Parameter is something that can be measured producing a numeric value or
+    a array of numeric values. If a parameter is related to an array of values
+    then the domain field contains the domain values corresponding to the 
+    dataarray values in MeasuredParameter.  Example names include temperature, 
+    salinity, fluoresence, plankton counts by size class.
     '''
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, unique=True)
@@ -282,7 +286,8 @@ class Parameter(models.Model):
     standard_name = models.CharField(max_length=128, null=True)
     long_name = models.CharField(max_length=128, blank=True, null=True)
     units = models.CharField(max_length=128, blank=True, null=True)
-    origin = models.CharField(max_length=128, blank=True, null=True)
+    origin = models.CharField(max_length=256, blank=True, null=True)
+    domain = ArrayField(models.FloatField(), null=True)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Parameter'
@@ -548,7 +553,8 @@ class MeasuredParameter(models.Model):
     '''
     measurement = models.ForeignKey(Measurement) 
     parameter = models.ForeignKey(Parameter) 
-    datavalue = models.FloatField(db_index=True)
+    datavalue = models.FloatField(db_index=True, null=True)
+    dataarray = ArrayField(models.FloatField(), null=True)
     objects = models.GeoManager()
     class Meta:
         verbose_name = 'Measured Parameter'
