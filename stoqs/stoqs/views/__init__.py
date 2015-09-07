@@ -445,6 +445,14 @@ def showCampaign(request, format='html'):
     o = BaseOutputer(request, format, query_set, stoqs_object)
     return o.process_request()
 
+def showCampaignResource(request, format='html'):
+    stoqs_object = mod.CampaignResource
+    query_set = stoqs_object.objects.all().order_by('resource__name')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'uuid', 'campaign__name', 'resource__name', 'resource__value', 'resource__uristring']
+    return o.process_request()
+
 def showResource(request, format='html'):
     stoqs_object = mod.Resource
     query_set = stoqs_object.objects.all().order_by('name')
