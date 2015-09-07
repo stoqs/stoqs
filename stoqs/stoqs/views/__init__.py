@@ -71,15 +71,15 @@ class BaseOutputer(object):
         '''
         self.request = request
         self.format = format
-        self.query_set = query_set
+        self.query_set = query_set.using(self.request.META['dbAlias'])
         self.stoqs_object = stoqs_object
         self.stoqs_object_name = stoqs_object._meta.verbose_name.lower().replace(' ', '_')
-        if 'dbAlias' not in  self.request.META:
-            self.request.META['dbAlias'] = dbAlias
         self.html_template = '%s_tmpl.html' % self.stoqs_object_name
+
         # This file must be writable by the server running this Django app, wherever tempfile puts it should work.
         # /tmp should occasionally be scrubbed of old tempfiles by a cron(1) job.
         self.html_tmpl_path = tempfile.NamedTemporaryFile(dir='/tmp', prefix=self.stoqs_object_name+'_', suffix='.html').name
+
         # May be overridden by classes that provide other responses, such as '.png' in an overridden process_request() method
         self.responses = ['.help', '.html', '.json', '.csv', '.tsv', '.xml', '.count']
 
