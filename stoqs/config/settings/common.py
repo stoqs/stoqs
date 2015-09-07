@@ -116,17 +116,7 @@ DATABASES = {
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
-# For additional campaigns import a campaigns dictionary from stoqs/campaigns.py
-# which can be a symbolic link to a file configured for a specific installation.
-try:
-    from campaigns import campaigns
-    for campaign in campaigns.keys():
-        DATABASES[campaign] = DATABASES.get('default').copy()
-        DATABASES[campaign]['NAME'] = campaign
-except:
-    pass
-
-# For running test (_t) databases append entries from STOQS_CAMPAIGNS environment
+# For running additional databases append entries from STOQS_CAMPAIGNS environment
 # Example: export STOQS_CAMPAIGNS='stoqs_beds_canyon_events_t,stoqs_os2015_t'
 for campaign in env.list('STOQS_CAMPAIGNS', default=[]):
     DATABASES[campaign] = DATABASES.get('default').copy()
