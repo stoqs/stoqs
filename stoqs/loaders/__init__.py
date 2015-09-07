@@ -18,7 +18,11 @@ Base module for STOQS loaders
 import sys
 import os.path, os
 
-sys.path.insert(0, os.path.abspath('..'))
+app_dir = os.path.join(os.path.dirname(__file__), "../")
+sys.path.insert(0, app_dir)
+os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
+import django
+django.setup()
 
 from django.conf import settings
 from django.contrib.gis.geos import LineString, Point, Polygon
@@ -84,7 +88,7 @@ class LoadScript(object):
     as process_command_line()
     ''' 
 
-    logger = logging.getLogger('loaders')
+    logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 
     def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains={}, grdTerrain=None):
@@ -196,6 +200,9 @@ class LoadScript(object):
 
         if self.args.verbose:
             self.logger.setLevel(logging.DEBUG)
+
+        self.commandline = ' '.join(sys.argv)
+        self.logger.info('Executing command: %s', self.commandline)
 
     def addTerrainResources(self):
         '''
