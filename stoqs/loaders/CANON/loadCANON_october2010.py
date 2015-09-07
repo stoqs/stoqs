@@ -28,13 +28,13 @@ from CANON import CANONLoader
 cl = CANONLoader('stoqs_october2010', 'CANON - October 2010',
                     description = 'Bloomex observing campaign in Monterey Bay',
                     x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
-                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
-                                        'VerticalExaggeration': '10',
-                                        'speed': '1',
-                                    }
+                            'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                'VerticalExaggeration': '10',
+                                'speed': '.01',
+                            }
                     },
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
@@ -58,6 +58,11 @@ cl.dorado_files = [ 'Dorado389_2010_277_01_277_01_decim.nc',
                     'Dorado389_2010_300_00_300_00_decim.nc',
                     'Dorado389_2010_301_00_301_00_decim.nc',
                   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                    'fl700_uncorr', 'salinity', 'biolume',
+                    'sepCountList', 'mepCountList',
+                  ]
+
 # These are full resolution (_d_) data files with Chl only from the first Tethys data used for CANON
 # Offical long-term archive location is: http://dods.mbari.org/opendap/data/lrauv/tethys/missionlogs/2010/
 cl.tethys_base = 'http://dods.mbari.org/opendap/data/auvctd/tethys/2010/netcdf/'
