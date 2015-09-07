@@ -30,6 +30,7 @@ import datetime
 import importlib
 import platform
 from git import Repo
+from django.conf import settings
 from django.core.management import call_command
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource
 
@@ -40,6 +41,9 @@ def tail(f, n):
     stdout.close()
 
     return lines
+
+class DatabaseCreationError(Exception):
+    pass
 
 
 class Loader():
@@ -74,9 +78,12 @@ class Loader():
                 ret = os.system(createdb)
                 self.logger.debug('ret = %s', ret)
                 if ret != 0:
-                    raise Exception(('Failed to create {} even after trying without DROP command').format(db))
+                    raise DatabaseCreationError((
+                        'Failed to create {} even after trying without DROP command').format(db))
+                else:
+                    return
 
-            raise Exception(('Failed to create {}').format(db))
+            raise DatabaseCreationError(('Failed to create {}').format(db))
 
     def provenance_dict(self, load_command, log_file):
         '''Return a dictionary of provenance Resource items
@@ -87,10 +94,10 @@ class Loader():
                 'gitorigin': repo.remotes.origin.url,
                 'gitcommit': repo.head.commit.hexsha,
                 'environment': platform.platform() + " python " + sys.version.split('\n')[0],
-                'load_finished': datetime.datetime.utcnow(),
-                'real_exection_time': tail(log_file, 3)[0],
-                'user_exection_time': tail(log_file, 3)[1],
-                'sys_exection_time': tail(log_file, 3)[2],
+                'load_date_gmt': datetime.datetime.utcnow(),
+                'real_exection_time': tail(log_file, 3)[0].split()[1],
+                'user_exection_time': tail(log_file, 3)[1].split()[1],
+                'sys_exection_time': tail(log_file, 3)[2].split()[1],
                }
 
         return prov
@@ -98,6 +105,10 @@ class Loader():
     def record_provenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
         '''
+
+        # Reload settings to get database added to STOQS_CAMPAIGNS
+        django.setup()
+
         rt,created = ResourceType.objects.using(db).get_or_create(
                         name='provenance', description='Information about the source of data')
 
@@ -127,7 +138,7 @@ class Loader():
             ret = os.system(dropdb)
             self.logger.debug('ret = %s', ret)
             if ret != 0:
-                raise Exception(('Failed to drop {}').format(db))
+                self.logger.warn(('Failed to drop {}').format(db))
 
     def load(self):
         campaigns = importlib.import_module(self.args.campaigns)
@@ -145,12 +156,17 @@ class Loader():
                 else:
                     load_command += ' -t'
                     db += '_t'
+                    self.logger.debug(('Adding {} to STOQS_CAMPAIGNS').format(db))
                     os.environ['STOQS_CAMPAIGNS'] = db + ',' + os.environ.get('STOQS_CAMPAIGNS', '')
+                    self.logger.debug(('STOQS_CAMPAIGNS = {}').format(os.environ['STOQS_CAMPAIGNS']))
+
+                    # Django docs say not to do this, but I can't seem to force a settings reload
+                    settings.DATABASES[db] = settings.DATABASES.get('default').copy()
+                    settings.DATABASES[db]['NAME'] = db
 
             try:
                 self._create_db(db)
-                pass
-            except Exception as e:
+            except DatabaseCreationError as e:
                 self.logger.warn(str(e) + ' Perhaps you should use the --clobber option.')
                 continue
 
