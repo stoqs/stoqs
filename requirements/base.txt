@@ -19,6 +19,7 @@ django-picklefield==0.3.1
 django-secure==1.0.1
 djangorestframework==3.2.3
 django-environ==0.3.0
+GitPython==1.0.1
 httplib2==0.9.1
 importlib==1.0.3
 Jinja2==2.8
