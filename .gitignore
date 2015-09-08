@@ -21,3 +21,9 @@ stoqs/stoqs/migrations/
 
 # Virtualenv
 venv-stoqs
+
+# Let user make this symlink, which isn't tracked
+/stoqs/campaigns.py
+
+# Loader output log files
+stoqs/loaders/*/*.out
