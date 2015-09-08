@@ -32,6 +32,7 @@ import platform
 from git import Repo
 from django.conf import settings
 from django.core.management import call_command
+from django.core.exceptions import ObjectDoesNotExist
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource
 
 def tail(f, n):
@@ -106,16 +107,16 @@ class Loader():
     def record_provenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
         '''
-
-        # Reload settings to get database added to STOQS_CAMPAIGNS
-        django.setup()
-
         rt,created = ResourceType.objects.using(db).get_or_create(
                         name='provenance', description='Information about the source of data')
-
-        self.logger.info('Adding to ResourceType: %s', rt)
-        self.logger.debug('Looking in database %s for first Campaign record', db)
-        c = Campaign.objects.using(db).get(id=1)
+        c = None
+        while not c:
+            try:
+                self.logger.debug('Looking in database %s for first Campaign record', db)
+                c = Campaign.objects.using(db).get(id=1)
+            except ObjectDoesNotExist:
+                # Sleep a bit for jobs running with --background option
+                time.sleep(2)
 
         for name,value in self.provenance_dict(load_command, log_file).iteritems():
             r,created = Resource.objects.using(db).get_or_create(
