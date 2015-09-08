@@ -28,13 +28,13 @@ from CANON import CANONLoader
 cl = CANONLoader('stoqs_may2012', 'CANON - May 2012',
                     description = 'Front detection AUV and Glider surveys in Monterey Bay',
                     x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
-                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
-                                        'VerticalExaggeration': '10',
-                                        'speed': '1',
-                                    }
+                        'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                            'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                            'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                            'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                            'VerticalExaggeration': '10',
+                            'speed': '.1',
+                        }
                     },
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
@@ -55,6 +55,9 @@ cl.dorado_files = [
                     'Dorado389_2012_157_07_157_07_decim.nc',
                     'Dorado389_2012_158_00_158_00_decim.nc',
                   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
+                    'fl700_uncorr', 'salinity', 'biolume',
+                    'sepCountList', 'mepCountList']
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
 cl.daphne_base = 'http://elvis.shore.mbari.org/thredds/dodsC/LRAUV/daphne/realtime/sbdlogs/2012/'

@@ -26,7 +26,7 @@ cl = CANONLoader('stoqs_september2010', 'CANON - September 2010',
                             'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                             'centerOfRotation': '-2711557.94 -4331414.32 3801353.46',
                             'VerticalExaggeration': '10',
-                            'speed': '.01',
+                            'speed': '.1',
                         }
                     },
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')

@@ -35,7 +35,7 @@ cl = CANONLoader('stoqs_simz_jul2014', 'Sampling and Identification of Marine Zo
                                 'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                 'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                                 'VerticalExaggeration': '10',
-				'speed': '0.1',
+                                'speed': '0.1',
                             }
                         },
                         grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
