@@ -190,7 +190,7 @@ def queryData(request, format=None):
             except:
                 logger.exception('Could not get parameter values even though ' + key + ' ends with _MIN')
             params['parametervalues'].append(pminmax)
-            logger.info('Adding to parametervalues: %s', pprint.pformat(pminmax))
+            logger.debug('Adding to parametervalues: %s', pprint.pformat(pminmax))
 
     # To support unit testing and follow-on expectation that dbAlias is in request METAdata
     if 'dbAlias' not in request.META:

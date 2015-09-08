@@ -502,3 +502,16 @@ class SummaryDataTestCase(TestCase):
         data = json.loads(response.content) # Verify we don't get an exception when we load the data.
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
+    def test_parametervalue_min_max1(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        qstring = ('except=spsql&except=mpsql&xaxis_min=1288214585000&'
+                   'xaxis_max=1288309759000&yaxis_min=-100&yaxis_max=600&'
+                   'temperature_MIN=11.22&temperature_MAX=13.19&'
+                   'showstandardnameparametervalues=1&parameterplotid=1&'
+                   'platformplotname=dorado&showdataas=scatter&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)

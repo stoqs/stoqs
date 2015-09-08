@@ -1456,10 +1456,12 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         # Construct LOPC data url that looks like:
         # http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/files/ssds.shore.mbari.org/auvctd/missionlogs/2010/2010300/2010.300.00/lopc.nc
         # from url that looks like: http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/Dorado389_2010_300_00_300_00_decim.nc
-        yr = url.split('/')[7]
-        yd = url.split('/')[8][4:]
-        yd = url.split('/')[9].split('_')[2]
-        mn = url.split('/')[9].split('_')[3]
+        #                  or like: http://odss.mbari.org/thredds/dodsC/CANON_march2013/dorado/Dorado389_2013_074_02_074_02_decim.nc
+        # TODO: Handle multiple missions that compose a survey
+        survey = url[url.find('Dorado389'):]
+        yr = survey.split('_')[1]
+        yd = survey.split('_')[2]
+        mn = survey.split('_')[3]
         lopc_url = ('http://dods.mbari.org/opendap/data/ssdsdata/ssds/generated/netcdf/'
                       'files/ssds.shore.mbari.org/auvctd/missionlogs/{}/{}/{}.{}.{}/'
                       'lopc.nc').format(yr, yr + yd, yr, yd, mn)

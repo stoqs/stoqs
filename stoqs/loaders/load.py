@@ -212,7 +212,10 @@ class Loader():
 
             # Execute the load
             script = 'loaders/' + load_command
-            log_file = script.split()[0].replace('.py', '.out')
+            if self.args.test:
+                log_file = script.split()[0].replace('.py', '_t.out')
+            else:
+                log_file = script.split()[0].replace('.py', '.out')
             cmd = '(time ' + script + ') > ' + log_file + ' 2>&1'
             if self.args.background:
                 cmd += ' &'

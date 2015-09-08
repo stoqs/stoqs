@@ -453,8 +453,7 @@ class MPQuery(object):
     execute the self joins needed on the measuredparameter table.  The structure of RawQuerySet returned is harmonized
     with the normal GeoQuerySet returned through regular .filter() operations by using the MPQuerySet "adapter".
     '''
-    rest_select_items = '''id,
-                         stoqs_parameter.id as parameter__id,
+    rest_select_items = '''stoqs_parameter.id as parameter__id,
                          stoqs_parameter.name as parameter__name,
                          stoqs_parameter.standard_name as parameter__standard_name,
                          stoqs_measurement.depth as measurement__depth,
