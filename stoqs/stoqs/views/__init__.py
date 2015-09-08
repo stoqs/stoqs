@@ -71,15 +71,15 @@ class BaseOutputer(object):
         '''
         self.request = request
         self.format = format
-        self.query_set = query_set
+        self.query_set = query_set.using(self.request.META['dbAlias'])
         self.stoqs_object = stoqs_object
         self.stoqs_object_name = stoqs_object._meta.verbose_name.lower().replace(' ', '_')
-        if 'dbAlias' not in  self.request.META:
-            self.request.META['dbAlias'] = dbAlias
         self.html_template = '%s_tmpl.html' % self.stoqs_object_name
+
         # This file must be writable by the server running this Django app, wherever tempfile puts it should work.
         # /tmp should occasionally be scrubbed of old tempfiles by a cron(1) job.
         self.html_tmpl_path = tempfile.NamedTemporaryFile(dir='/tmp', prefix=self.stoqs_object_name+'_', suffix='.html').name
+
         # May be overridden by classes that provide other responses, such as '.png' in an overridden process_request() method
         self.responses = ['.help', '.html', '.json', '.csv', '.tsv', '.xml', '.count']
 
@@ -443,6 +443,14 @@ def showCampaign(request, format='html'):
     query_set = stoqs_object.objects.all().order_by('name')
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
+    return o.process_request()
+
+def showCampaignResource(request, format='html'):
+    stoqs_object = mod.CampaignResource
+    query_set = stoqs_object.objects.all().order_by('resource__name')
+
+    o = BaseOutputer(request, format, query_set, stoqs_object)
+    o.fields = ['id', 'uuid', 'campaign__name', 'resource__name', 'resource__value', 'resource__uristring']
     return o.process_request()
 
 def showResource(request, format='html'):

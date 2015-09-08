@@ -17,6 +17,7 @@ MBARI 24 October 2013
 @license: GPL
 '''
 
+import recipy
 import os
 import sys
 import datetime
@@ -60,7 +61,8 @@ cl.dorado_files = [
                     'Dorado389_2014_212_00_212_00_decim.nc', 
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
-                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
+                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
+                    'sepCountList', 'mepCountList' ]
 
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'SIMZ/2014_Jul/Platforms/Ships/Rachel_Carson/uctd/'

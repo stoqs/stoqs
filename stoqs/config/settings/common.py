@@ -116,8 +116,8 @@ DATABASES = {
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
-# For additional campaigns nherit default settings from DATABASE_URL setting
-# Example: export STOQS_CAMPAIGNS='stoqs_beds_canyon_events_t, stoqs_os2015'
+# For running additional databases append entries from STOQS_CAMPAIGNS environment
+# Example: export STOQS_CAMPAIGNS='stoqs_beds_canyon_events_t,stoqs_os2015_t'
 for campaign in env.list('STOQS_CAMPAIGNS', default=[]):
     DATABASES[campaign] = DATABASES.get('default').copy()
     DATABASES[campaign]['NAME'] = campaign
@@ -321,7 +321,7 @@ LOGGING['loggers']['stoqs.db_router'] = {
                             'level':'INFO',
                             'formatter': 'verbose'
 }
-LOGGING['loggers']['loaders'] = {
+LOGGING['loggers']['stoqs.loaders'] = {
                             'handlers':['console'],
                             'propagate': True,
                             'level':'INFO',
@@ -346,6 +346,11 @@ LOGGING['loggers']['utils'] = {
                             'formatter': 'verbose'
 }
 LOGGING['loggers']['stoqs.tests'] = {
+                            'handlers':['console'],
+                            'level':'INFO',
+                            'formatter': 'verbose'
+}
+LOGGING['loggers']['__main__'] = {
                             'handlers':['console'],
                             'level':'INFO',
                             'formatter': 'verbose'

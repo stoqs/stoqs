@@ -60,3 +60,13 @@ INSTALLED_APPS += ('django_extensions', )
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 # Your local stuff: Below this line define 3rd party library settings
+
+# For additional campaigns import a campaigns dictionary from stoqs/campaigns.py
+# which can be a symbolic link to a file configured for a specific installation.
+try:
+    from campaigns import campaigns
+    for campaign in campaigns.keys():
+        DATABASES[campaign] = DATABASES.get('default').copy()
+        DATABASES[campaign]['NAME'] = campaign
+except:
+    pass

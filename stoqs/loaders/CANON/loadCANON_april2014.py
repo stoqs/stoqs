@@ -16,7 +16,7 @@ edited by John Ryan, April 2014
 @status: production
 @license: GPL
 '''
-
+import recipy
 import os
 import sys
 import datetime
@@ -53,6 +53,10 @@ cl.dorado_files = [
                     'Dorado389_2014_108_02_108_02_decim.nc', 'Dorado389_2014_109_00_109_00_decim.nc', 
                     'Dorado389_2014_109_01_109_01_decim.nc',
                   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                    'fl700_uncorr', 'salinity', 'biolume',
+                    'sepCountList', 'mepCountList']
+
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Apr/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_files = [ 
