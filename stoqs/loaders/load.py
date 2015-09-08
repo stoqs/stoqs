@@ -57,13 +57,14 @@ class Loader():
         '''
 
         commands = ' && '.join((
-            'psql -c \"CREATE DATABASE {db} owner=stoqsadm template=template_postgis;\" -U postgres',
-            'psql -c \"ALTER DATABASE {db} set timezone=\'GMT\';\" -U postgres',
-            'psql -c \"GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;\" -d {db} -U postgres'))
+            'psql -p {port} -c \"CREATE DATABASE {db} owner=stoqsadm template=template_postgis;\" -U postgres',
+            'psql -p {port} -c \"ALTER DATABASE {db} set timezone=\'GMT\';\" -U postgres',
+            'psql -p {port} -c \"GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;\" -d {db} -U postgres'))
 
-        createdb = commands.format(**{'db': db})
+        createdb = commands.format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
         if self.args.clobber:
-            createdb = ('psql -c \"DROP DATABASE {};\" -U postgres && ').format(db) + createdb
+            createdb = ('psql -p {port} -c \"DROP DATABASE {db};\" -U postgres && '
+                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db}) + createdb
 
         self.logger.info('Creating database %s', db)
         self.logger.debug('createdb = %s', createdb)
@@ -73,7 +74,7 @@ class Loader():
         if ret != 0:
             # Try again without DROP command if --clobber is specified
             if self.args.clobber:
-                createdb = commands.format(**{'db': db})
+                createdb = commands.format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
                 self.logger.debug('createdb = %s', createdb)
                 ret = os.system(createdb)
                 self.logger.debug('ret = %s', ret)
@@ -140,6 +141,22 @@ class Loader():
             if ret != 0:
                 self.logger.warn(('Failed to drop {}').format(db))
 
+    def list(self):
+        campaigns = importlib.import_module(self.args.campaigns)
+        for db,load_command in campaigns.campaigns.iteritems():
+            if self.args.db:
+                if db not in self.args.db:
+                    continue
+
+            if self.args.test:
+                if ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
+                       or load_command.endswith('.sh') or '&&' in load_command):
+                    continue
+                else:
+                    db += '_t'
+
+            print db
+                
     def load(self):
         campaigns = importlib.import_module(self.args.campaigns)
         for db,load_command in campaigns.campaigns.iteritems():
@@ -158,7 +175,6 @@ class Loader():
                     db += '_t'
                     self.logger.debug(('Adding {} to STOQS_CAMPAIGNS').format(db))
                     os.environ['STOQS_CAMPAIGNS'] = db + ',' + os.environ.get('STOQS_CAMPAIGNS', '')
-                    self.logger.debug(('STOQS_CAMPAIGNS = {}').format(os.environ['STOQS_CAMPAIGNS']))
 
                     # Django docs say not to do this, but I can't seem to force a settings reload
                     settings.DATABASES[db] = settings.DATABASES.get('default').copy()
@@ -217,6 +233,7 @@ class Loader():
         parser.add_argument('--clobber', action='store_true', help='Drop databases before creating and loading them')
         parser.add_argument('--background', action='store_true', help='Execute each load in the background to parallel process multiple loads')
         parser.add_argument('--removetest', action='store_true', help='Drop all test databases; the --db option limits the dropping to those in the list')
+        parser.add_argument('--list', action='store_true', help='List the databases that are in --campaigns')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
@@ -234,6 +251,8 @@ if __name__ == '__main__':
     l.process_command_line()
     if l.args.removetest:
         l.remove_test()
+    elif l.args.list:
+        l.list()
     else:
         l.load()
 
