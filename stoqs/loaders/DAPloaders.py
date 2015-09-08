@@ -1489,6 +1489,8 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
                     generator=lopc_loader._genTrajectory, featureType='trajectory')
         except VariableMissingCoordinatesAttribute, e:
             logger.exception(e)
+        except NoValidData as e:
+            logger.warn(str(e))
         else:
             logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
 
