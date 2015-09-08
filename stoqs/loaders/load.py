@@ -47,6 +47,10 @@ class DatabaseCreationError(Exception):
     pass
 
 
+class DatabaseLoadError(Exception):
+    pass
+
+
 class Loader():
 
     logger = logging.getLogger(__name__)
@@ -109,6 +113,7 @@ class Loader():
         '''
         rt,created = ResourceType.objects.using(db).get_or_create(
                         name='provenance', description='Information about the source of data')
+        i = 0
         c = None
         while not c:
             try:
@@ -116,7 +121,13 @@ class Loader():
                 c = Campaign.objects.using(db).get(id=1)
             except ObjectDoesNotExist:
                 # Sleep a bit for jobs running with --background option
-                time.sleep(2)
+                sec_wait = 2
+                time.sleep(sec_wait)
+                i += 1
+                max_iter = 10
+                if i > max_iter:
+                    raise DatabaseLoadError(('No campaign created after {:d} seconds. '
+                            'Check log_file for errors: {}').format(sec_wait * max_iter, log_file))
 
         for name,value in self.provenance_dict(load_command, log_file).iteritems():
             r,created = Resource.objects.using(db).get_or_create(
@@ -143,6 +154,7 @@ class Loader():
                 self.logger.warn(('Failed to drop {}').format(db))
 
     def list(self):
+        stoqs_campaigns = []
         campaigns = importlib.import_module(self.args.campaigns)
         for db,load_command in campaigns.campaigns.iteritems():
             if self.args.db:
@@ -156,7 +168,10 @@ class Loader():
                 else:
                     db += '_t'
 
-            print db
+            stoqs_campaigns.append(db)
+
+        print '\n'.join(stoqs_campaigns)
+        print 'export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"'
                 
     def load(self):
         campaigns = importlib.import_module(self.args.campaigns)
@@ -204,7 +219,10 @@ class Loader():
             self.logger.info('Executing: %s', cmd)
             os.system(cmd)
 
-            self.record_provenance(db, load_command, log_file)
+            try:
+                self.record_provenance(db, load_command, log_file)
+            except DatabaseLoadError as e:
+                self.logger.warn(str(e))
 
     def process_command_line(self):
         import argparse
