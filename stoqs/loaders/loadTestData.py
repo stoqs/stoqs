@@ -29,12 +29,12 @@ from CANON import CANONLoader
 cl = CANONLoader('default', 'Initial Test Database',
                     description = 'Post-setup load of a single AUV mission',
                     x3dTerrains = {
-                            '/stoqsfiles/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                            '/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                 'position': '-2822317.31255 -4438600.53640 3786150.85474',
                                 'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                 'centerOfRotation': '-2711557.94 -4331414.32 3801353.46',
                                 'VerticalExaggeration': '10',
-                                'speed': '.01',
+                                'speed': '.1',
                             }
                     },
                     # Terrain data file is expected to be in loaders directory

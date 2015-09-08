@@ -28,13 +28,13 @@ from CANON import CANONLoader
 cl = CANONLoader('stoqs_april2011', 'CANON - April 2011',
                     description = 'Dorado and Tethys surveys in Monterey Bay',
                     x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
-                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
-                                        'VerticalExaggeration': '10',
-                                        'speed': '1',
-                                    }
+                        'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                            'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                            'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                            'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                            'VerticalExaggeration': '10',
+                            'speed': '.1',
+                        }
                     },
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
@@ -47,6 +47,10 @@ cl.dorado_files = [ 'Dorado389_2011_110_12_110_12_decim.nc',
                     'Dorado389_2011_117_01_117_01_decim.nc',
                     'Dorado389_2011_118_00_118_00_decim.nc'
                   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
+                    'fl700_uncorr', 'salinity', 'biolume', 
+                    'sepCountList', 'mepCountList']
+
 cl.tethys_base = 'http://elvis.shore.mbari.org:8080/thredds/dodsC/lrauv/tethys/2011/'
 cl.tethys_files = [ '20110415_20110418/20110415T163108/slate.nc',
                     '20110415_20110418/20110416T074851/slate.nc',

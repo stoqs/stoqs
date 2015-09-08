@@ -63,7 +63,8 @@ cl.dorado_files = [
                     'Dorado389_2014_295_00_295_00_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
-                    'fl700_uncorr', 'salinity', 'biolume' ]
+                    'fl700_uncorr', 'salinity', 'biolume',
+                    'sepCountList', 'mepCountList' ]
 
 # Rachel Carson Underway CTD
 cl.rcuctd_base = cl.dodsBase + 'SIMZ/2014_Oct/carson/uctd/'

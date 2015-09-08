@@ -54,6 +54,9 @@ cl.dorado_files = [
                     'Dorado389_2013_081_05_081_05_decim.nc',
                     'Dorado389_2013_081_06_081_06_decim.nc',
                   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
+                    'fl700_uncorr', 'salinity', 'biolume',
+                    'sepCountList', 'mepCountList']
 
 # Realtime telemetered (_r_) daphne data - insert '_r_' to not load the files
 ##cl.daphne_base = 'http://aosn.mbari.org/lrauvtds/dodsC/lrauv/daphne/2012/'

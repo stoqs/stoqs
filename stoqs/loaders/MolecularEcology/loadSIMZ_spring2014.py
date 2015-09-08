@@ -33,7 +33,7 @@ cl = CANONLoader('stoqs_simz_spring2014', 'Sampling and Identification of Marine
                                         'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                                         'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                                         'VerticalExaggeration': '10',
-                                        'speed': '1',
+                                        'speed': '.1',
                                     }
                                 },
                                 # Do not check in .grd files to the repository, keep them in the loaders directory
@@ -59,7 +59,9 @@ cl.dorado_files = [
                     'Dorado389_2014_072_00_072_00_decim.nc', 
                     'Dorado389_2014_072_01_072_01_decim.nc', 
                   ]
-cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 'fl700_uncorr', 'salinity', 'biolume' ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', i
+                    'fl700_uncorr', 'salinity', 'biolume',
+                    'sepCountList', 'mepCountList' ]
 
 # Spray glider - for just the duration of the campaign
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
