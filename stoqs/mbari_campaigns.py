@@ -30,7 +30,7 @@ campaigns = OrderedDict([
     ('stoqs_rovctd_goc',    'ROVCTD/loadGoC_Dives.sh'),
     ('stoqs_september2010',  'CANON/loadCANON_september2010.py'),
     ('stoqs_october2010',    'CANON/loadCANON_october2010.py'),
-    ('stoqs_dorado2010',     'MolecularEcology/load_dorado2011.py'),
+    ('stoqs_dorado2011',     'MolecularEcology/load_dorado2011.py'),
     ('stoqs_april2011',      'CANON/loadCANON_april2011.py'),
     ('stoqs_june2011',       'CANON/loadCANON_june2011.py'),
     ('stoqs_february2012',   'MolecularEcology/loadGOC_february2012.py'),
