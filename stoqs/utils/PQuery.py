@@ -592,6 +592,7 @@ class PQuery(object):
 
         add_to_from, from_sql, where_sql = self._pvSQLfragments(pvDict)
 
+        select_items = select_items.replace('stoqs_parameter', 'p1')
         if add_to_from or from_sql or where_sql:
             # Raw query must include the primary key
             if q.find('FROM stoqs_sampledparameter') != -1:
@@ -891,7 +892,7 @@ For sampledparameter to sampledparamter query an example is:
         '''
         q = query
         p = re.compile('SELECT (.+?) FROM')
-        m = p.match(q)
+        m = p.match(q.replace('\n',''))
         if 'id' not in [item.strip() for item in m.group(1).split(',')]:
             q = p.sub('SELECT ' + table + '.id, ' + m.group(1) + ' FROM', q, count=1)
 
