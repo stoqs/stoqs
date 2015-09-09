@@ -91,24 +91,31 @@ class Loader():
 
             raise DatabaseCreationError(('Failed to create {}').format(db))
 
-    def provenance_dict(self, load_command, log_file):
-        '''Return a dictionary of provenance Resource items
+    def _provenance_dict(self, load_command, log_file):
+        '''Return a dictionary of provenance Resource items. Special handling 
+        for --background operation: don't tail log file, instead add those
+        items when run with the --updateprovenance flag
         '''
         repo = Repo(app_dir, search_parent_directories=True)
 
-        prov = {'load_command': load_command,
-                'gitorigin': repo.remotes.origin.url,
-                'gitcommit': repo.head.commit.hexsha,
-                'environment': platform.platform() + " python " + sys.version.split('\n')[0],
-                'load_date_gmt': datetime.datetime.utcnow(),
-                'real_exection_time': tail(log_file, 3)[0].split()[1],
-                'user_exection_time': tail(log_file, 3)[1].split()[1],
-                'sys_exection_time': tail(log_file, 3)[2].split()[1],
-               }
+        prov = {}
+       
+        if not self.args.updateprovenance:
+            # Inserted when load executed with or without --background
+            prov['load_command'] = load_command
+            prov['gitorigin'] = repo.remotes.origin.url
+            prov['gitcommit'] = repo.head.commit.hexsha
+            prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
+            prov['load_date_gmt'] = datetime.datetime.utcnow()
+        if not self.args.background and self.args.updateprovenance:
+            # Inserted after the log_file has been written with --updateprovenance
+            prov['real_exection_time'] = tail(log_file, 3)[0].split()[1]
+            prov['user_exection_time'] = tail(log_file, 3)[1].split()[1]
+            prov['sys_exection_time'] = tail(log_file, 3)[2].split()[1]
 
         return prov
 
-    def record_provenance(self, db, load_command, log_file):
+    def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
         '''
         rt,created = ResourceType.objects.using(db).get_or_create(
@@ -129,13 +136,38 @@ class Loader():
                     raise DatabaseLoadError(('No campaign created after {:d} seconds. '
                             'Check log_file for errors: {}').format(sec_wait * max_iter, log_file))
 
-        for name,value in self.provenance_dict(load_command, log_file).iteritems():
+        for name,value in self._provenance_dict(load_command, log_file).iteritems():
             r,created = Resource.objects.using(db).get_or_create(
                             uristring='', name=name, value=value, resourcetype=rt)
             cr,created = CampaignResource.objects.using(db).get_or_create(
                             campaign=c, resource=r)
             self.logger.info('Resource uristring=%s, name=%s, value=%s', '', name, value)
 
+    def updateprovenance(self):
+        campaigns = importlib.import_module(self.args.campaigns)
+        for db,load_command in campaigns.campaigns.iteritems():
+            if self.args.db:
+                if db not in self.args.db:
+                    continue
+
+            if self.args.test:
+                if ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
+                       or load_command.endswith('.sh') or '&&' in load_command):
+                    continue
+                else:
+                    db += '_t'
+
+            script = 'loaders/' + load_command
+            if self.args.test:
+                log_file = script.split()[0].replace('.py', '_t.out')
+            else:
+                log_file = script.split()[0].replace('.py', '.out')
+
+            try:
+                self.recordprovenance(db, load_command, log_file)
+            except DatabaseLoadError as e:
+                self.logger.warn(str(e))
+                
     def remove_test(self):
         campaigns = importlib.import_module(self.args.campaigns)
         for db,load_command in campaigns.campaigns.iteritems():
@@ -172,7 +204,7 @@ class Loader():
 
         print '\n'.join(stoqs_campaigns)
         print 'export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"'
-                
+
     def load(self):
         campaigns = importlib.import_module(self.args.campaigns)
         for db,load_command in campaigns.campaigns.iteritems():
@@ -199,7 +231,7 @@ class Loader():
             try:
                 self._create_db(db)
             except DatabaseCreationError as e:
-                self.logger.warn(str(e) + ' Perhaps you should use the --clobber option.')
+                self.logger.warn(str(e) + '. Perhaps you should use the --clobber option.')
                 continue
 
             call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
@@ -220,8 +252,8 @@ class Loader():
             cmd = '(time ' + script + ') > ' + log_file + ' 2>&1'
 
             if self.args.email:
-                cmd += (' && tail {} | mail -s "{} load finished" {}').format(
-                        log_file, db, self.args.email)
+                cmd += (' && (echo {} && tail {}) | mail -s "{} load finished" {}'
+                        ).format(log_file, log_file, db, self.args.email)
 
             if self.args.background:
                 cmd += ' &'
@@ -231,7 +263,7 @@ class Loader():
 
             # Record details of the database load to the database
             try:
-                self.record_provenance(db, load_command, log_file)
+                self.recordprovenance(db, load_command, log_file)
             except DatabaseLoadError as e:
                 self.logger.warn(str(e))
 
@@ -256,8 +288,35 @@ class Loader():
         examples += '\nIf running from cde-package replace ".py" with ".py.cde".'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
-                                         description='Script to load or reload STOQS databases using the dictionary in stoqs/campaigns.py',
-                                         epilog=examples)
+                 description=('''
+Script to load or reload STOQS databases using the dictionary in stoqs/campaigns.py
+                              
+A typical workflow to build up a production server is:
+1. Construct a stoqs/campaigns.py file (use mbari_campaigns.py as model)
+2. Load test (_t) databases to test all your load scripts:
+    {load} --test --clobber --background --email {user} -v > load.out 2>&1
+    (Check your email for load finished messages)
+3. Get the STOQS_CAMPAIGNS setting for running your server:
+    {load} --test --list
+4. Set your environment variables and run your server:
+    export DATABASE_URL=postgis://<dbuser>:<pw>@<host>:<port>/stoqs
+    export STOQS_CAMPAIGNS=<output_from_previous_step>
+    export MAPSERVER_HOST=<mapserver_ip_address>
+    stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
+    - or, however you start your uWSGI app, e.g.:
+    uwsgi --socket :8001 --module wsgi:application
+5. Visit your server and see that your test databases are indeed loaded
+6. Fix any problems so that ALL the test database loads succeed
+7. Remove the test databases:
+    {load} --removetest -v
+8. Load your production databases:
+    {load} --background --email {user} -v > load.out 2>&1
+9. Check all your output files for ERROR and WARNING messages
+10. Announce to your customers that your server is serving all these databases
+
+To get any stdout/stderr output you must use -v, the default is no output.
+''').format(**{'load': sys.argv[0], 'user': os.environ['USER']}),
+                 epilog=examples)
                                              
         parser.add_argument('--campaigns', action='store', help='Module containing campaigns dictionary (must also be in campaigns.py)', default='campaigns')
 
@@ -268,6 +327,7 @@ class Loader():
         parser.add_argument('--removetest', action='store_true', help='Drop all test databases; the --db option limits the dropping to those in the list')
         parser.add_argument('--list', action='store_true', help='List the databases that are in --campaigns')
         parser.add_argument('--email', action='store', help='Address to send mail to when the load finishes')
+        parser.add_argument('--updateprovenance', action='store_true', help='Use after background jobs finish to update provenance information')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
@@ -287,5 +347,7 @@ if __name__ == '__main__':
         l.remove_test()
     elif l.args.list:
         l.list()
+    elif l.args.updateprovenance:
+        l.updateprovenance()
     else:
         l.load()
