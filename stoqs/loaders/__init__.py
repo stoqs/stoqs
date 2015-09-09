@@ -358,6 +358,7 @@ class STOQS_Loader(object):
         try:
             tpHandle = csv.DictReader(urllib2.urlopen(paURL))
         except urllib2.URLError, e:
+            self.logger.warn('Could not open %s', paURL)
             self.logger.warn(e)
         platformName = ''
         try:
