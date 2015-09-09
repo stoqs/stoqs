@@ -216,12 +216,20 @@ class Loader():
                 log_file = script.split()[0].replace('.py', '_t.out')
             else:
                 log_file = script.split()[0].replace('.py', '.out')
+
             cmd = '(time ' + script + ') > ' + log_file + ' 2>&1'
+
+            if self.args.email:
+                cmd += (' && tail {} | mail -s "{} load finished" {}').format(
+                        log_file, db, self.args.email)
+
             if self.args.background:
                 cmd += ' &'
+
             self.logger.info('Executing: %s', cmd)
             os.system(cmd)
 
+            # Record details of the database load to the database
             try:
                 self.record_provenance(db, load_command, log_file)
             except DatabaseLoadError as e:
@@ -233,13 +241,17 @@ class Loader():
 
         examples = 'Examples:' + '\n\n' 
         examples += "  Load all databases:\n"
-        examples += "    " + sys.argv[0] + " --all \n"
+        examples += "    " + sys.argv[0] + "\n"
         examples += "  Reload all databases (dropping all existing databases):\n"
-        examples += "    " + sys.argv[0] + " --all --clobber\n"
+        examples += "    " + sys.argv[0] + " --clobber\n"
         examples += "  Reload specific databases from as background jobs with verbose output:\n"
-        examples += "    " + sys.argv[0] + " --db stoqs_september2013 stoqs_may2015 --clobber --background -v 1\n"
+        examples += "    " + sys.argv[0] + " --db stoqs_september2013 stoqs_may2015 --clobber --background --email mccann@mbari.org -v 1\n"
         examples += "  Drop specific test databases:\n"
         examples += "    " + sys.argv[0] + " --db stoqs_september2010 stoqs_october2010 --removetest -v 1\n"
+        examples += "  Drop all test databases:\n"
+        examples += "    " + sys.argv[0] + "--removetest -v 1\n"
+        examples += "  List test databases to get STOQS_CAMPAIGNS string:\n"
+        examples += "    " + sys.argv[0] + " --list --test"
         examples += "\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde".'
     
@@ -250,12 +262,12 @@ class Loader():
         parser.add_argument('--campaigns', action='store', help='Module containing campaigns dictionary (must also be in campaigns.py)', default='campaigns')
 
         parser.add_argument('--db', action='store', help='Specify databases from CAMPAIGNS to load', nargs='*')
-        parser.add_argument('--all', action='store_true', help='Load all databases referenced in campaigns')
         parser.add_argument('--test', action='store_true', help='Load test databases using -t option of loaders.LoadScript')
         parser.add_argument('--clobber', action='store_true', help='Drop databases before creating and loading them')
         parser.add_argument('--background', action='store_true', help='Execute each load in the background to parallel process multiple loads')
         parser.add_argument('--removetest', action='store_true', help='Drop all test databases; the --db option limits the dropping to those in the list')
         parser.add_argument('--list', action='store_true', help='List the databases that are in --campaigns')
+        parser.add_argument('--email', action='store', help='Address to send mail to when the load finishes')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
@@ -277,5 +289,3 @@ if __name__ == '__main__':
         l.list()
     else:
         l.load()
-
-
