@@ -221,10 +221,9 @@ class Loader():
                 else:
                     load_command += ' -t'
                     db += '_t'
-                    self.logger.debug(('Adding {} to STOQS_CAMPAIGNS').format(db))
-                    os.environ['STOQS_CAMPAIGNS'] = db + ',' + os.environ.get('STOQS_CAMPAIGNS', '')
 
                     # Django docs say not to do this, but I can't seem to force a settings reload
+                    # Note that databases in campaigns.py are put in settings by settings.local
                     settings.DATABASES[db] = settings.DATABASES.get('default').copy()
                     settings.DATABASES[db]['NAME'] = db
 
@@ -235,12 +234,7 @@ class Loader():
                 continue
 
             call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
-
-            # Need to execute migrate using manage.py so that config.settings.local 
-            # loads the updated STOQS_CAMPAIGNS env variable for test databases
-            cmd = ('./manage.py migrate --settings=config.settings.local --noinput '
-                   ' --database={}').format(db)
-            os.system(cmd)
+            call_command('migrate', settings='config.settings.local', noinput=True, database=db)
 
             # Execute the load
             script = 'loaders/' + load_command
