@@ -18,7 +18,7 @@ MBARI 5 September 2015
 
 import os
 import sys
-app_dir = os.path.join(os.path.dirname(__file__), "../")
+app_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 sys.path.insert(0, app_dir)
 os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
 import django
@@ -157,7 +157,7 @@ class Loader():
                 else:
                     db += '_t'
 
-            script = 'loaders/' + load_command
+            script = os.path.join(app_dir, 'loaders', load_command)
             if self.args.test:
                 log_file = script.split()[0].replace('.py', '_t.out')
             else:
@@ -237,7 +237,7 @@ class Loader():
             call_command('migrate', settings='config.settings.local', noinput=True, database=db)
 
             # Execute the load
-            script = 'loaders/' + load_command
+            script = os.path.join(app_dir, 'loaders', load_command)
             if self.args.test:
                 log_file = script.split()[0].replace('.py', '_t.out')
             else:

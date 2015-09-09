@@ -88,7 +88,7 @@ DEBUG = env.bool("DJANGO_DEBUG", False)
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-FIXTURE_DIRS
 FIXTURE_DIRS = (
-    str(APPS_DIR.path('fixtures')),
+    # The app's fixtures directory is automatically included
 )
 
 # EMAIL CONFIGURATION
@@ -115,12 +115,6 @@ DATABASES = {
     'default': env.db("DATABASE_URL", default="postgis://127.0.0.1:5432/stoqs"),
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
-
-# For running additional databases append entries from STOQS_CAMPAIGNS environment
-# Example: export STOQS_CAMPAIGNS='stoqs_beds_canyon_events_t,stoqs_os2015_t'
-for campaign in env.list('STOQS_CAMPAIGNS', default=[]):
-    DATABASES[campaign] = DATABASES.get('default').copy()
-    DATABASES[campaign]['NAME'] = campaign
 
 # GENERAL CONFIGURATION
 # ------------------------------------------------------------------------------

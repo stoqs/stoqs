@@ -1,7 +1,9 @@
 #!/bin/bash
 # Do database operations to create default database and create fixture for testing
 # Designed for re-running on development system - ignore errors in Vagrant and Travis-ci
-# Pass the stoqsadm password as an argument; it must match what's in DATABASE_URL.
+# Pass the stoqsadm password as an argument on first execution in order to create the
+# stoqsadm user; it must match what's in DATABASE_URL.  Must also set MAPSERVER_HOST.
+# Make sure none of these are set: STATIC_FILES, STATIC_URL, MEDIA_FILES, MEDIA_URL.
 
 psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
 psql -c "DROP DATABASE stoqs;" -U postgres
@@ -9,8 +11,8 @@ psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;" -U pos
 psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
 
 # DATABASE_URL environment variable must be set outside of this script
-stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
-stoqs/manage.py migrate --settings=config.settings.local --noinput --database=default
+stoqs/manage.py makemigrations stoqs --settings=config.settings.ci --noinput
+stoqs/manage.py migrate --settings=config.settings.ci --noinput --database=default
 psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
 # Assume starting in project home (stoqsgit) directory, get bathymetry, and load data
