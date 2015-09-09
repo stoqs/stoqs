@@ -16,7 +16,6 @@ edited by John Ryan, April 2014
 @status: production
 @license: GPL
 '''
-import recipy
 import os
 import sys
 import datetime

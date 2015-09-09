@@ -17,7 +17,6 @@ MBARI 24 October 2013
 @license: GPL
 '''
 
-import recipy
 import os
 import sys
 import datetime
