@@ -57,8 +57,10 @@ class Loader():
     logger.setLevel(logging.INFO)
 
     def _create_db(self, db):
-        '''Create database. Invoking user should have priveleges to connect to 
-        the database server as user postgres. A password may be required.
+        '''Create database. Invoking user should have privileges to connect to 
+        the database server as user postgres. Only the port number from the 
+        DATABASE_URL is extracted to pass to the psql commands, we use the 
+        local Unix domain socket to connect to the database.
         '''
 
         commands = ' && '.join((
@@ -125,6 +127,35 @@ class Loader():
             log_file = os.path.join(os.path.dirname(script.split()[0]), db + '.out')
 
         return log_file
+
+    def checks(self):
+        if self.args.db:
+            campaigns = importlib.import_module(self.args.campaigns)
+            for d in self.args.db:
+                if d not in campaigns.campaigns.keys():
+                    self.logger.warn('%s not in %s', d, self.args.campaigns)
+
+        cmd = ('psql -p {} -c "\q" -U postgres').format(settings.DATABASES['default']['PORT'])
+        self.logger.debug('cmd = %s', cmd)
+        ret = os.system(cmd)
+        self.logger.debug('ret = %s', ret)
+        if ret != 0:
+            self.logger.warn('Cannot connect to the database server as user postgres. Either run as user postgres or alter your pg_hba.conf file.')
+            suggestion = '''
+
+To permit simpler loading of your databases you may want to temporarilry open
+up your server to allow any local acccount to connect as user postgres without
+a password. WARNING: this opens up your server to potential attack, you should
+undo this change when done with your loads.
+
+In the "local" section of your /var/lib/pgsql/<version>/data/pg_hba.conf file
+add a 'trust' entry for all local accounts above the other entries, e.g.:
+
+# "local" is for Unix domain socket connections only
+local   all             all                                     trust
+local   all             all                                     peer
+'''
+            self.logger.info(suggestion)
 
     def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
@@ -342,7 +373,10 @@ To get any stdout/stderr output you must use -v, the default is no output.
  
 if __name__ == '__main__':
     l = Loader()
+
     l.process_command_line()
+    l.checks()
+
     if l.args.removetest:
         l.remove_test()
     elif l.args.list:
