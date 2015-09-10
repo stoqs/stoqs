@@ -115,6 +115,17 @@ class Loader():
 
         return prov
 
+    def _log_file(self, script, db):
+        if script.split()[0].endswith('.py'):
+            if self.args.test:
+                log_file = script.split()[0].replace('.py', '_t.out')
+            else:
+                log_file = script.split()[0].replace('.py', '.out')
+        else:
+            log_file = os.path.join(os.path.dirname(script.split()[0]), db + '.out')
+
+        return log_file
+
     def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
         '''
@@ -158,10 +169,7 @@ class Loader():
                     db += '_t'
 
             script = os.path.join(app_dir, 'loaders', load_command)
-            if self.args.test:
-                log_file = script.split()[0].replace('.py', '_t.out')
-            else:
-                log_file = script.split()[0].replace('.py', '.out')
+            log_file = self._log_file(script, db)
 
             try:
                 self.recordprovenance(db, load_command, log_file)
@@ -213,8 +221,7 @@ class Loader():
                     continue
 
             if self.args.test:
-                # Do not load test database for optimal stride, ROVCTD or ones 
-                # loaded with bash scripts or multiple load executions
+                # Skip load_commands that don't accept the -t option
                 if ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
                        or load_command.endswith('.sh') or '&&' in load_command):
                     continue
@@ -238,10 +245,9 @@ class Loader():
 
             # Execute the load
             script = os.path.join(app_dir, 'loaders', load_command)
-            if self.args.test:
-                log_file = script.split()[0].replace('.py', '_t.out')
-            else:
-                log_file = script.split()[0].replace('.py', '.out')
+            log_file = self._log_file(script, db)
+            if script.endswith('.sh'):
+                script = ('cd {} && {}').format(os.path.dirname(script), script)
 
             cmd = ('(export STOQS_CAMPAIGNS={}; time {}) > {} 2>&1').format(db, script, log_file)
 
