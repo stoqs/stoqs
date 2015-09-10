@@ -116,6 +116,12 @@ DATABASES = {
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+# For running additional databases append entries from STOQS_CAMPAIGNS environment
+# Example: export STOQS_CAMPAIGNS='stoqs_beds_canyon_events_t,stoqs_os2015_t'
+for campaign in env.list('STOQS_CAMPAIGNS', default=[]):
+    DATABASES[campaign] = DATABASES.get('default').copy()
+    DATABASES[campaign]['NAME'] = campaign
+
 # GENERAL CONFIGURATION
 # ------------------------------------------------------------------------------
 # Local time zone for this installation. Choices can be found here:
