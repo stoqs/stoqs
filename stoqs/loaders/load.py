@@ -337,13 +337,15 @@ A typical workflow to build up a production server is:
     - or, however you start your uWSGI app, e.g.:
     uwsgi --socket :8001 --module wsgi:application
 5. Visit your server and see that your test databases are indeed loaded
-6. Fix any problems so that ALL the test database loads succeed
-7. Remove the test databases:
+6. Check all your output files for ERROR and WARNING messages
+7. Fix any problems so that ALL the test database loads succeed
+8. Remove the test databases:
     {load} --removetest -v
-8. Load your production databases:
+9. Load your production databases:
     {load} --background --email {user} -v > load.out 2>&1
-9. Check all your output files for ERROR and WARNING messages
-10. Announce to your customers that your server is serving all these databases
+10. Add provenance (time to load) information to the database:
+    {load} --updateprovenance -v 
+11. After a final check announce the availability of these databases
 
 To get any stdout/stderr output you must use -v, the default is no output.
 ''').format(**{'load': sys.argv[0], 'user': os.environ['USER']}),

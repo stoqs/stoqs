@@ -1,5 +1,6 @@
 -r base.txt
 
 coverage==3.7.1
+pymssql==2.1.1
 selenium==2.47.1
 uWSGI==2.0.11.1
