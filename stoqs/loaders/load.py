@@ -243,7 +243,7 @@ class Loader():
             else:
                 log_file = script.split()[0].replace('.py', '.out')
 
-            cmd = '(time ' + script + ') > ' + log_file + ' 2>&1'
+            cmd = ('(export STOQS_CAMPAIGNS={}; time {}) > {} 2>&1').format(db, script, log_file)
 
             if self.args.email:
                 cmd += (' && (echo {} && tail {}) | mail -s "{} load finished" {}'
