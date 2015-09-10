@@ -728,7 +728,7 @@ class MPQuery(object):
             else:
                 try:
                     self._count = self.qs_mp_no_order.count()
-                except AttributeError, e:
+                except AttributeError as e:
                     raise Exception('Could not get Measured Parameter count: %s' % e)
 
         logger.debug('self._count = %d', self._count)

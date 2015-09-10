@@ -326,7 +326,7 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
             new_items = ''
             try:
                 items = FIND_ITEMS.search(m).groups()[0]
-            except Exception, e:
+            except Exception as e:
                 logger.warn(e)
                 continue
             else:

@@ -155,7 +155,7 @@ def load_gulps(activityName, file, dbAlias):
         # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
         try:
             timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
-        except TypeError, e:
+        except TypeError as e:
             logger.error('%s.  Skipping this Sample - you may want to fix the input file', e)
             continue
         try:
@@ -432,7 +432,7 @@ class SeabirdLoader(STOQS_Loader):
                 logger.debug('name = %s, parmDict[name].attributes = %s', name, parmDict[name].attributes)
                 try:
                     parmNameValues.append((name, float(r[parmDict[name].attributes['colname']])))
-                except KeyError, e:
+                except KeyError as e:
                     # Accomodations for sub compact CTD
                     if parmDict[name].attributes['colname'] == 'T190C':
                         parmNameValues.append((name, float(r['Tv290C'])))
@@ -683,7 +683,7 @@ class SubSamplesLoader(STOQS_Loader):
                 try:
                     # Load subsample
                     p = self.load_subsample(parentSample, r)
-                except SubSampleLoadError, e:
+                except SubSampleLoadError as e:
                     logger.warn(e)
                     continue
                 else:

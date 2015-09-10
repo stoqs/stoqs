@@ -296,7 +296,7 @@ class STOQSQManager(object):
         try:
             sql = self.mpq.getMeasuredParametersPostgreSQL()
             self._actual_count = self.mpq.getMPCount()
-        except Exception, e:
+        except Exception as e:
             logger.warn('Could not get MeasuredParametersPostgreSQL: %s', e)
 
         return sql
@@ -421,7 +421,7 @@ class STOQSQManager(object):
                         plot_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                     except TypeError:
                         logger.exception('Failed to get plot_results for qs = %s', qs)
-            except ValueError, e:
+            except ValueError as e:
                 if pid in ('longitude', 'latitude'):
                     # Get limits from Activity maptrack for which we have our getExtent() method
                     extent = self.getExtent(outputSRID=4326)
@@ -453,7 +453,7 @@ class STOQSQManager(object):
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
                         plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
-                except TypeError, e:
+                except TypeError as e:
                     logger.exception(e)
 
         if self.kwargs.has_key('measuredparametersgroup'):
@@ -468,7 +468,7 @@ class STOQSQManager(object):
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
                         da_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
-                except TypeError, e:
+                except TypeError as e:
                     logger.exception(e)
 
         if self.kwargs.has_key('sampledparametersgroup'):
@@ -483,7 +483,7 @@ class STOQSQManager(object):
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'))
                         da_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
-                except TypeError, e:
+                except TypeError as e:
                     logger.exception(e)
 
         if self.kwargs.has_key('parameterstandardname'):
@@ -496,7 +496,7 @@ class STOQSQManager(object):
                     else:
                         qs = self.getActivityParametersQS().filter(parameter__standard_name=sname).aggregate(Avg('p025'), Avg('p975'))
                         da_results = [sname, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
-                except TypeError, e:
+                except TypeError as e:
                     logger.exception(e)
 
         return {'plot': plot_results, 'dataaccess': da_results}
@@ -1269,7 +1269,7 @@ class STOQSQManager(object):
                 self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
                 try:
                     x3dDict = self.pp.makeX3D()
-                except DatabaseError, e:
+                except DatabaseError as e:
                     return '', e
                 try:
                     x3dDict['sql'] += ';'
@@ -1298,7 +1298,7 @@ class STOQSQManager(object):
                         logger.debug('self.mpq.qs_mp = %s', self.mpq.qs_mp)
                     try:
                         platformName = self.kwargs['parameterplot'][1]
-                    except IndexError, e:
+                    except IndexError as e:
                         logger.warn(e)
                         platformName = None
 
@@ -1365,7 +1365,7 @@ class STOQSQManager(object):
                 except KeyError:
                     x3dtHash[r.uristring] = {}
                     x3dtHash[r.uristring][r.name] = r.value
-        except DatabaseError, e:
+        except DatabaseError as e:
             logger.warn('No resourcetype__name of x3dterrain in %s: %s', self.dbname, e)
 
         return x3dtHash
@@ -1386,7 +1386,7 @@ class STOQSQManager(object):
                     x3dpHash[r['uristring']] = {}
                     x3dpHash[r['uristring']][r['name']] = r['value']
                     x3dpHash[r['uristring']]['startGeoCoords'] = '%s %s %s' % (ms[0].geom.y, ms[0].geom.x, -ms[0].depth)
-        except DatabaseError, e:
+        except DatabaseError as e:
             logger.warn('No resourcetype__name of x3dplayback in %s: %s', self.dbname, e)
 
         return x3dpHash

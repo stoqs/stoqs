@@ -411,7 +411,7 @@ class HABLoader(STOQS_Loader):
                         if lat != lastlat or lon != lastlon:
                             logger.error("lat and lon are not the same for location = %s and lastlocation = %s.  The input data should have just one location." % (location, lastlocation))
                             sys.exit(-1)
-                    except NameError, e:
+                    except NameError as e:
                         # Expected first time through when lastlon & lastlat don't yet exist
                         pass
 
