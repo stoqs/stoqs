@@ -170,10 +170,10 @@ local   all             all                                     peer
                 c = Campaign.objects.using(db).get(id=1)
             except ObjectDoesNotExist:
                 # Sleep a bit for jobs running with --background option
-                sec_wait = 2
+                sec_wait = 5
                 time.sleep(sec_wait)
                 i += 1
-                max_iter = 10
+                max_iter = 24
                 if i > max_iter:
                     raise DatabaseLoadError(('No campaign created after {:d} seconds. '
                             'Check log_file for errors: {}').format(sec_wait * max_iter, log_file))
@@ -343,7 +343,7 @@ A typical workflow to build up a production server is:
     {load} --removetest -v
 9. Load your production databases:
     {load} --background --email {user} -v > load.out 2>&1
-10. Add provenance (time to load) information to the database:
+10. Add provenance (loading duration) information to the database:
     {load} --updateprovenance -v 
 11. After a final check announce the availability of these databases
 
