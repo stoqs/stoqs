@@ -1,7 +1,5 @@
-LOADING
-=======
-
 Instructions for loading your data in STOQS
++==========================================
 
 These instructions cover the loading of in situ discrete sampling geometry feature type 
 data from OpenDAP accessible data sources.  Data adhereing to the Climate and Forecast

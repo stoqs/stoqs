@@ -1,7 +1,5 @@
-DEVELOPMENT
-===========
-
-Notes for developing and extending the capabilities of STOQS.
+Instructions for extending the capabilities of STOQS
+====================================================
 
 You should have your own development system available at your disposal. 
 Follow the directions in [README.md](../../README.md) to build one using 
@@ -12,16 +10,16 @@ to engage with other developers, raise issues, get updated code, and to
 contribute any code changes. See [CONTRIBUTING.md](CONTRIBUTING.md) for
 instructions on how to contribute.
 
-1. With the major Django upgrade work done in 2015 the STOQS directory
-   follows the conventions put forth by the "Two Scoops of Django" books
-   and the [Django Cookiecutter](https://github.com/pydanny/cookiecutter-django)
-   project.  Depending on what you are working on here are the directories:
+With the major Django upgrade work done in 2015 the STOQS directory
+follows the conventions put forth by the "Two Scoops of Django" books
+and the [Django Cookiecutter](https://github.com/pydanny/cookiecutter-django)
+project.  Depending on what you are working on here are the directories:
 
-        Load scripts:   stoqs/loaders
-        Analysis programs:  stoqs/contrib/analysis
-        STOQS User Interface:   stoqs/utils and stoqs/stoqs
+    Load scripts:   stoqs/loaders
+    Analysis programs:  stoqs/contrib/analysis
+    STOQS User Interface:   stoqs/utils and stoqs/stoqs
 
-2. Testing:
+#### Testing
 
     At any time you should be able to execute the test.sh script in the project
     home directory to perform a set of unit and functional tests.  It is a good
@@ -41,7 +39,7 @@ instructions on how to contribute.
     it is imperative that the code coverage does not decrease, therefore you *must*
     write tests for any new feature that you add.
 
-3. Development:
+#### Development
 
     Enter your virtualenv, set environment variable(s), and launch your development
     server in a shell window:
@@ -57,6 +55,7 @@ instructions on how to contribute.
 
 
    
+#### Old instrctions...
 
     Note: The user that executes manage.py must have privileges to create and drop database
     for Django to run the tests.  You may need to do this at psql for your shell account
