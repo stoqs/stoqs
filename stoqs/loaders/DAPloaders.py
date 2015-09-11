@@ -171,6 +171,9 @@ class Base_Loader(STOQS_Loader):
         except pydap.exceptions.ServerError as e:
             logger.error('Failed in attempt to open_url(%s)', url)
             raise e
+        except Exception as e:
+            logger.error('Failed in attempt to open_url(%s)', url)
+            raise e
 
         self.ignored_names += self.global_ignored_names # add global ignored names to platform specific ignored names.
         self.build_standard_names()
