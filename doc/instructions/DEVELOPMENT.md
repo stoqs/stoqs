@@ -1,58 +1,62 @@
 DEVELOPMENT
 ===========
 
-Notes for developing, extending, and testing STOQS
+Notes for developing and extending the capabilities of STOQS.
 
-You should already have completed the tasks described in PREREQUISITES and INSTALL.
+You should have your own development system available at your disposal. 
+Follow the directions in [README.md](../../README.md) to build one using 
+Vagrant and VirtualBox.
 
-STOQS is meant to be customizable and easy to extend to handle data, perform queries,
-and deliver products that suit several particular needs.  A knowledge of Python, and
-the supporting Django, PyDAP, Numpy libraries is needed to take full advantage of these
-capabilities; but with the agile methodology described here you should feel confident
-in making changes that you 'think might work'.
+The GitHub web site (https://github.com/stoqs/stoqs) is the central place
+to engage with other developers, raise issues, get updated code, and to
+contribute any code changes. See [CONTRIBUTING.md](CONTRIBUTING.md) for
+instructions on how to contribute.
 
+1. With the major Django upgrade work done in 2015 the STOQS directory
+   follows the conventions put forth by the "Two Scoops of Django" books
+   and the [Django Cookiecutter](https://github.com/pydanny/cookiecutter-django)
+   project.  Depending on what you are working on here are the directories:
 
-1. Directory structure overview:
-    
-    stoqshg/
-        loaders/        - Data load scripts and class files (e.g. DAPloaders.py) for
-                          for loading data into STOQS from various sources
-        stoqs/          - Contains STOQS data model and other python support code
-            fixtures/   - JSON formatted database data used for tests
-            static/     - Directory of web sever static files: javascript, images, etc.
-            templates/  - HTML templates and javasctipt used by views
-            views/      - Contains Python code to render data in web responses
-        urls.py         - The routing of the urls
-        utils/          - Directory of utility modules
-        
-    Development of STOQS will occurs in the loaders, templates, views, and utils directories.
-    There may be times when models.py in stoqs/ will be modified, but this must be
-    done carefully as it needs to be coordinated with schema evolution of any existing
-    stoqs databases.  During development it's often easiest to drop existing databases, then
-    reload the data with the appropriate script from loaders.
-        
+        Load scripts:   stoqs/loaders
+        Analysis programs:  stoqs/contrib/analysis
+        STOQS User Interface:   stoqs/utils and stoqs/stoqs
 
-2. Edit, compile, deploy, test process:
+2. Testing:
 
-    First, start your development Django and Celery servers (in separate windows):
-   
-        python manage.py runserver 0.0.0.0:8000
-        python manage.py celeryd -l INFO    
+    At any time you should be able to execute the test.sh script in the project
+    home directory to perform a set of unit and functional tests.  It is a good
+    idea to run these tests before pushing anything up to your fork of the 
+    repository. If any of the tests fail you can run that specific test using a
+    dot notation for the test, e.g.:
 
-    (The celeryd daemon is used to manage long running tasks, such as deleting an activity
-    from the database.)
-    
+        cd stoqs
+        ./manage.py test stoqs.tests.unit_tests.SummaryDataTestCase.test_parameterparameterplot2 --settings=config.settings.ci
+
+    (Make sure that you are not running your development server when you execute 
+    the test.sh script as it starts and then kills a development server for the 
+    functional tests.)
+
+    If you send a pull request then automated testing is performed by Travis-CI
+    ensuring that the tested code does not break.  If you are adding a new feature
+    it is imperative that the code coverage does not decrease, therefore you *must*
+    write tests for any new feature that you add.
+
+3. Development:
+
+    Enter your virtualenv, set environment variable(s), and launch your development
+    server in a shell window:
+  
+        cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
+        export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs 
+        stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
+
+    (Note: make sure to stop the development server before running test.sh.)
+
     Second, save a change to code in the view package.  The change is immediately compiled
     and deployed by the running Django development server.  There is no need to restart anything.
-    (Note: in a production environment with Apache WSGI, the httpd server does need to be
-    restarted in order to deploy the changed code.)
-   
-    Third, run the Django unit tests
-      NOTE: Django patch #16778 must be installed (if using Django 1.3) and template_postgis
-            must exist on your server.
 
-            export LD_LIBRARY_PATH=/usr/local/lib/  # Needed if packages, such as gdal, were installed here 
-            python manage.py test stoqs -v 2
+
+   
 
     Note: The user that executes manage.py must have privileges to create and drop database
     for Django to run the tests.  You may need to do this at psql for your shell account
@@ -106,8 +110,4 @@ in making changes that you 'think might work'.
       and commit the requiremetns.txt file to the repository.
     
     - Additional information is in the file DEBUG_OPTIMIZE      
-
---
-Mike McCann
-MBARI 4 June 2012
 

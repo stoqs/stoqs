@@ -27,7 +27,7 @@ After your virtual machine has booted, log in, finish the Python setup, and test
 Start the development server:
 
     cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
-    export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
+    export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
     stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
 
 Visit your server's STOQS User Interface using your host computer's browser:
