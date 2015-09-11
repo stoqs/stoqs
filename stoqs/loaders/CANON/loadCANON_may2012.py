@@ -136,12 +136,12 @@ cl.fulmar_files = []
 cl.fulmar_parms = []
 
 # NPS glider 
-cl.nps_g29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps_g29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.nps_g29_files = ['OS_Glider_NPS_G29_20120524_TS.nc']
 cl.nps_g29_parms = ['TEMP', 'PSAL', 'OPBS']
 
 # Spray glider - for just the duration of the campaign
-cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20120424_TS.nc']
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
