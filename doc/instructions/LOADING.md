@@ -6,8 +6,8 @@ Instructions for loading your data in STOQS
 These instructions cover the loading of in situ discrete sampling geometry feature type 
 data from OpenDAP accessible data sources.  Data adhereing to the Climate and Forecast
 conventions version 1.6 are supported for loading into STOQS.  Specific feature types
-supported are: trajectory, timeSeries, and timeSeriesProfile.  For more information
-please see http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html
+supported are: trajectory, timeSeries, timeSeriesProfile, and trajectoryProfile.  
+For more information please see http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/cf-conventions.html
 and http://www.nodc.noaa.gov/data/formats/netcdf/.
 
 There are many ways to write data adhering to these standards - there are some examples
@@ -18,10 +18,10 @@ prerequisites:
 
 1. Add a new file to the loaders directory named to describe the campaign that is 
    the source of the data.  The campaign name may be a project name or a month_year
-   combination.  It can really be anything you want.  At MBARI for the CANON project
+   combination.  It can really be anything you want.  At MBARI for the CANON initiative
    we typically have field programs where intensive measurements are collected in
    an area of the ocean over a several week period, so we name our campaigns like
-   'september2010' and our stoqs databases like 'stoqs_september2010' and 'stoqs_june2011'.
+   like 'stoqs_september2010' and 'stoqs_june2011'.
    The point of using separate databases for campaigns is to constrain the size
    of the databases, which helps in managing them and in evolving stoqs applications
    while maintaining some level of consistent functionality of access for databases
@@ -31,7 +31,7 @@ prerequisites:
    and a name for the Campaign.  Member names for the loader are defined in the class that
    is imported.  For example, look in the `loaders/CANON/__init__.py` file for what platforms
    are supported for the CANONLoader.  There are several examples of other load files in
-   the loaders/ directory.  Feel free to use them as a basis for the data you wish to load.
+   the loaders/ directory.  You may use them as a basis for the data you wish to load.
 
 3. The CANON directory in loaders/ contains load scripts for all of the MBARI CANON
    campaigns.  Much of the commonly used loader code has been factored out into a 
@@ -53,8 +53,8 @@ prerequisites:
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
         export STOQS_CAMPAIGNS="stoqs_september2012_t,$STOQS_CAMPAIGNS"
 
-6. Synchronize (migrate) the new database with the stoqs data model.  At a shell prompt in your virtual
-   environment (see PREREQUISITES and INSTALL):
+6. Synchronize (migrate) the new database with the stoqs data model.  At a shell prompt 
+   in your virtual environment:
 
         source venv-stoqs/bin/activate
         stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
@@ -75,16 +75,16 @@ prerequisites:
 
 8. Restart your server to force a re-read of the settings file and the modified 
    STOQS_CAMPAIGNS environment variable.  On a development server simply restart 
-   "cd stoqs && ./manage.py runserver 0.0.0.0:8000 --settings=config.settings.local"
-   which you normally have running in its own shell window (see DEVELOPMENT).  On a 
-   production server running nginx with uWSGI in Emperor mode simply touch the wsgi
-   .ini file, e.g.:
+   `cd stoqs && ./manage.py runserver 0.0.0.0:8000 --settings=config.settings.local`
+   which you normally have running in its own shell window (see 
+   [DEVELOPMENT.md](DEVELOPMENT.md)).  On a production server running nginx with 
+   uWSGI in Emperor mode simply touch the wsgi .ini file, e.g.:
 
         touch stoqs/stoqs_uwsgi.ini
 
 9. Notes:
 
-    - As a campaign produces data files those files may be added to the script.  To add
+    - As a campaign produces data files additional URLs will need to be added to the script.  To add
       data to an existing database simply comment out previously loaded files and re-execute
       the script (step 7) with the new files.
     - Some programs to create NetCDF files from various original data files (e.g. Seabird underway 
@@ -99,7 +99,11 @@ prerequisites:
             \c stoqs_september2012_t
             grant select on all tables in schema public to everyone;
 
+    - You can use the stoqs/loaders/load.py script automate the creation and migration 
+      of databases on the Postgresql server.  You will need to configure a stoqs/campaigns.py 
+      file; see stoqs/mbari_campaigns.py for an example.  Execute `stoqs/loaders/load.py --help`
+      for more information.
 
     - The stoqs-discuss mail list (https://groups.google.com/forum/?fromgroups=#!forum/stoqs-discuss)
-      is a good place to ask questions if any problems are encountered.
+      is a good place to ask questions if you have any.
 
