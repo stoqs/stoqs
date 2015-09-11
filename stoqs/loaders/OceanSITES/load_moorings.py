@@ -15,6 +15,23 @@ MBARI 28 October 2014
 @undocumented: __doc__ parser
 @status: production
 @license: GPL
+
+
+Note that some of the OceanSITES NetCDF files have metadata cases that 
+cause the pypi coards to fail.  A fix like this allows the processing
+to happen:
+
+diff /home/mccann/VirtualEnvs/development/lib/python2.7/site-packages/coards/__init__.py.orig \
+        /home/mccann/VirtualEnvs/development/lib/python2.7/site-packages/coards/__init__.py
+194c194
+<         if units in valid:
+---
+>         if units.lower() in valid:
+241c241
+<     m = p.match(date)
+---
+>     m = p.match(date.upper())
+
 '''
 
 import os
