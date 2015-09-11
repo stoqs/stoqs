@@ -1,5 +1,5 @@
-Instructions for extending the capabilities of STOQS
-====================================================
+Instructions for doing STOQS development
+========================================
 
 You should have your own development system available at your disposal. 
 Follow the directions in [README.md](../../README.md) to build one using 
@@ -15,9 +15,9 @@ follows the conventions put forth by the "Two Scoops of Django" books
 and the [Django Cookiecutter](https://github.com/pydanny/cookiecutter-django)
 project.  Depending on what you are working on here are the directories:
 
-    Load scripts:   stoqs/loaders
-    Analysis programs:  stoqs/contrib/analysis
-    STOQS User Interface:   stoqs/utils and stoqs/stoqs
+* Load scripts:   stoqs/loaders
+* Analysis programs:  stoqs/contrib/analysis
+* STOQS User Interface:   stoqs/utils and stoqs/stoqs
 
 #### Testing
 
