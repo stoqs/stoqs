@@ -283,8 +283,9 @@ local   all             all                                     peer
             cmd = ('(export STOQS_CAMPAIGNS={}; time {}) > {} 2>&1').format(db, script, log_file)
 
             if self.args.email:
-                cmd += (' && (echo {} && tail {}) | mail -s "{} load finished" {}'
-                        ).format(log_file, log_file, db, self.args.email)
+                cmd += (' && (echo Any ERROR mesages and last 10 lines of: {log}; '
+                        'grep ERROR {log}; tail {log}) | mail -s "{db} load finished" {email}'
+                        ).format(**{'log':log_file, 'db': db, 'email': self.args.email})
 
             if self.args.background:
                 cmd += ' &'
