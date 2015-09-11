@@ -90,14 +90,14 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 ######################################################################
 # Glider data files from CeNCOOS thredds server
 # L_662
-cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = [ 'OS_Glider_L_662_20140923_TS.nc' ]
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
 # NPS_29
-cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
 cl.nps29_parms = ['TEMP', 'PSAL', 'RHOD']
 cl.nps29_startDatetime = startdate

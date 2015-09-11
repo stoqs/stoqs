@@ -53,7 +53,7 @@ cl.dorado_files = [  'Dorado389_2011_249_00_249_00_decim.nc',
 
 # special location for spray glider data
 # Spray glider - for just the duration of the campaign
-cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20110915_TS.nc',
                                                     ]
 
