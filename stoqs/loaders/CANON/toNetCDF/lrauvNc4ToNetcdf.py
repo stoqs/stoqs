@@ -35,7 +35,7 @@ class InterpolatorWriter(BaseWriter):
         dirName = os.path.dirname(outFile)
         try:
                os.makedirs(dirName)
-        except OSError, e:
+        except OSError as e:
                if e.errno != errno.EEXIST:
                       raise
 
@@ -165,7 +165,7 @@ class InterpolatorWriter(BaseWriter):
 
      try:
             self.df = pydap.client.open_url(url)
-     except socket.error,e:
+     except socket.error as e:
             self.logger.error('Failed in attempt to open_url(%s)', url)
             raise e
     
@@ -221,7 +221,7 @@ class InterpolatorWriter(BaseWriter):
 
      try:
             self.df = pydap.client.open_url(url)
-     except socket.error,e:
+     except socket.error as e:
             self.logger.error('Failed in attempt to open_url(%s)', url)
             raise e
     

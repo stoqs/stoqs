@@ -516,7 +516,7 @@ class PQuery(object):
                             containsMeasuredFlag = True
                         elif self.isParameterSampled(int(pDict[axis])):
                             containsSampleFlag = True
-                    except ValueError, e:
+                    except ValueError as e:
                         pass
    
         return containsMeasuredFlag, containsSampleFlag 
@@ -698,7 +698,7 @@ For sampledparameter to sampledparamter query an example is:
                         else:
                             # Default is to assume mp - supports legacy databases w/o the ParameterGroup assignment
                             xyzc_items = xyzc_items + 'mp_' + axis + '.datavalue as ' + axis + ', '
-                    except ValueError, e:
+                    except ValueError as e:
                         if pDict[axis] == 'longitude':
                             if containsSampleFlag and not containsMeasuredFlag:
                                 xyzc_items = xyzc_items + 'ST_X(stoqs_sample.geom) as ' + axis + ', '

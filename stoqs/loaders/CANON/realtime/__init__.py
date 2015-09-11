@@ -182,7 +182,7 @@ class Consumer():
                     datavalue = str(value))
         try:
             mp.save(using=self.dbAlias)
-        except IntegrityError, e:
+        except IntegrityError as e:
             logger.error("WARNING: Probably a duplicate measurement that could not be added to the DB.  Skipping it.\n", var)
             logger.error(e)
         else:

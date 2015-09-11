@@ -357,7 +357,7 @@ class STOQS_Loader(object):
         self.logger.debug("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
         try:
             tpHandle = csv.DictReader(urllib2.urlopen(paURL))
-        except urllib2.URLError, e:
+        except urllib2.URLError as e:
             self.logger.warn('Could not open %s', paURL)
             self.logger.warn(e)
         platformName = ''
@@ -683,7 +683,7 @@ class STOQS_Loader(object):
             ##else:
             ##    self.logger.debug('Re-using measurement.id = %d', measurement.id)
 
-        except DatabaseError, e:
+        except DatabaseError as e:
             self.logger.exception('''DatabaseError:
                 It is likely that you need https://code.djangoproject.com/attachment/ticket/16778/postgis-adapter.patch.
                 Check the STOQS INSTALL file for instructions on Django patch #16778.
@@ -718,7 +718,7 @@ class STOQS_Loader(object):
                 #float(row['longitude']) == 0.0 or float(row['latitude']) == 0.0 or
                 math.isnan(row['longitude'] ) or math.isnan(row['latitude'])):
                 raise SkipRecord('Invalid latitude or longitude coordinate')
-        except KeyError, e:
+        except KeyError as e:
             raise SkipRecord('KeyError: ' + str(e))
 
         # Additional sanity check on latitude and longitude
@@ -778,7 +778,7 @@ class STOQS_Loader(object):
                     self.standard_names[var]=self.ds[var].attributes['standard_name']
                 else:
                     self.standard_names[var]=None # Indicate those without a standard name
-        except AttributeError, e:
+        except AttributeError as e:
             self.logger.warn(e)
 
     def updateActivityParameterStats(self, parameterCounts, sampledFlag=False):
@@ -833,7 +833,7 @@ class STOQS_Loader(object):
                 else:
                     self.logger.info('Updated ActivityParameter for parameter.name = %s', p.name)
 
-            except IntegrityError, e:
+            except IntegrityError as e:
                 self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter for parameter.name = %s.', e, p.name)
 
             ##raw_input('paused')
@@ -1087,7 +1087,7 @@ class STOQS_Loader(object):
                 m.Campaign.objects.using(self.dbAlias).filter(id=self.campaign.id).update(
                                                                                 startdate = ip_qs['timevalue__min'],
                                                                                 enddate = ip_qs['timevalue__max'])
-        except AttributeError, e:
+        except AttributeError as e:
             self.logger.warn(e)
             pass
 
@@ -1163,7 +1163,7 @@ class STOQS_Loader(object):
             try:
                 mp_sigmat.save(using=self.dbAlias)
                 mp_spice.save(using=self.dbAlias)
-            except IntegrityError, e:
+            except IntegrityError as e:
                 self.logger.warn(e)
             except DatabaseError as e:
                 self.logger.warn(e)
@@ -1257,7 +1257,7 @@ class STOQS_Loader(object):
                     meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
                     mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
                     mp_alt.save(using=self.dbAlias)
-                except IntegrityError, e:
+                except IntegrityError as e:
                     self.logger.warn(e)
                 except DatabaseError as e:
                     self.logger.warn(e)

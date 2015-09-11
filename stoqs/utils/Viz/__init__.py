@@ -336,7 +336,7 @@ class MeasuredParameter(object):
             # which is assumed to be 3x wider than tall.  Approximate horizontal coverage by Dorado is 1 m/s.
             try:
                 self.scale_factor = float(tmax -tmin) / (dmax - dmin) / 3.0
-            except ZeroDivisionError, e:
+            except ZeroDivisionError as e:
                 self.logger.warn(e)
                 self.logger.debug('Not setting self.scale_factor.  Scatter plots will still work.')
                 contourFlag = False
@@ -371,7 +371,7 @@ class MeasuredParameter(object):
                 try:
                     self.logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
                     zi = griddata(self.x, self.y, self.z, xi, yi, interp='nn')
-                except KeyError, e:
+                except KeyError as e:
                     self.logger.exception('Got KeyError. Could not grid the data')
                     return None, None, 'Got KeyError. Could not grid the data'
                 except Exception, e:
@@ -773,7 +773,7 @@ class ParameterParameter(object):
         # Get count and set a stride value if more than a PP_MAX_POINTS which Matplotlib cannot plot, about 100,000 points
         try:
             cursor.execute(self._getCountSQL(sql))
-        except DatabaseError, e:
+        except DatabaseError as e:
             infoText = 'Parameter-Parameter: Cannot get count. Make sure you have no Parameters selected in the Filter.'
             self.logger.warn(e)
             raise PPDatabaseException(infoText, sql)
@@ -808,7 +808,7 @@ class ParameterParameter(object):
         try:
             self.logger.debug('Executing sql = %s', sql)
             cursor.execute(sql)
-        except DatabaseError, e:
+        except DatabaseError as e:
             infoText = 'Parameter-Parameter: Query failed. Make sure you have no Parameters selected in the Filter.'
             self.logger.warn('Cannot execute sql query for Parameter-Parameter plot: %s', e)
             raise PPDatabaseException(infoText, sql)
@@ -818,7 +818,7 @@ class ParameterParameter(object):
             try:
                 self.logger.debug('Executing sample_sql = %s', sample_sql)
                 sample_cursor.execute(sample_sql)
-            except DatabaseError, e:
+            except DatabaseError as e:
                 infoText = 'Parameter-Parameter: Sample Query failed.'
                 self.logger.warn('Cannot execute sample_sql query for Parameter-Parameter plot: %s', e)
                 raise PPDatabaseException(infoText, sample_sql)
@@ -1019,7 +1019,7 @@ class ParameterParameter(object):
                 plt.close()
                 return None, infoText, sql
 
-        except TypeError, e:
+        except TypeError as e:
             ##infoText = 'Parameter-Parameter: ' + str(type(e))
             infoText = 'Parameter-Parameter: ' + str(e)
             self.logger.exception('Cannot make 2D parameterparameter plot: %s', e)

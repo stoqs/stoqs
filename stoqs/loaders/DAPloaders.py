@@ -195,7 +195,7 @@ class Base_Loader(STOQS_Loader):
                 try:
                     minDT[v] = from_udunits(self.ds[ac['time']][0][0], self.ds[ac['time']].attributes['units'])
                     maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
-                except ParserError, e:
+                except ParserError as e:
                     logger.warn("%s. Trying to fix up time units", e)
                     # Tolerate units like 1970-01-01T00:00:00Z - which is found on the IOOS Glider DAC
                     if self.ds[ac['time']].attributes['units'] == 'seconds since 1970-01-01T00:00:00Z':
@@ -373,7 +373,7 @@ class Base_Loader(STOQS_Loader):
                     logger.debug(snCoord)
                     ##coordDict[coord] = coordSN[coord]
                     coordDict[coordSN[coord]] = coord
-                except KeyError, e:
+                except KeyError as e:
                     raise AuxCoordMissingStandardName(e)
         else:
             logger.warn('Variable %s is missing coordinates attribute', variable)
@@ -551,7 +551,7 @@ class Base_Loader(STOQS_Loader):
                     logger.info("From: %s", self.url)
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride,:,0,0]
-                except ValueError, err:
+                except ValueError as err:
                     logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
                     If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
                     then the cache files must be removed and the tomcat hosting TDS restarted.''')
@@ -662,7 +662,7 @@ class Base_Loader(STOQS_Loader):
                     # Subselect along the time axis
                     logger.info("Using constraints: ds['%s'][%d:%d:%d]", pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][tIndx[0]:tIndx[-1]:self.stride]
-                except ValueError, err:
+                except ValueError as err:
                     logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
                     If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
                     then the cache files must be removed and the tomcat hosting TDS restarted.''', err, self.url)
@@ -701,7 +701,7 @@ class Base_Loader(STOQS_Loader):
                     # Subselect along the time axis
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
-                except ValueError, err:
+                except ValueError as err:
                     logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
                     If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
                     then the cache files must be removed and the tomcat hosting TDS restarted.''')
@@ -732,7 +732,7 @@ class Base_Loader(STOQS_Loader):
                     # Subselect along the time axis
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
-                except ValueError, err:
+                except ValueError as err:
                     logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
                     If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
                     then the cache files must be removed and the tomcat hosting TDS restarted.''')
@@ -823,7 +823,7 @@ class Base_Loader(STOQS_Loader):
                     logger.info("From: %s", self.url)
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride,:,0,0]
-                except ValueError, err:
+                except ValueError as err:
                     logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
                     If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
                     then the cache files must be removed and the tomcat hosting TDS restarted.''')
@@ -1090,7 +1090,7 @@ class Base_Loader(STOQS_Loader):
                                                        ).order_by('instantpoint__timevalue').values_list('geom')
         try:
             path = LineString([p[0] for p in linestringPoints]).simplify(tolerance=.001)
-        except TypeError, e:
+        except TypeError as e:
             logger.warn("%s\nSetting path to None", e)
         except Exception as e:
             logger.error('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
@@ -1137,7 +1137,7 @@ class Base_Loader(STOQS_Loader):
         #
         try:
             self.addResources() 
-        except IntegrityError, e:
+        except IntegrityError as e:
             logger.error('Failed to properly addResources: %s', e)
 
         # 

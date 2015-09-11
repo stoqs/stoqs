@@ -200,7 +200,7 @@ def queryData(request, format=None):
     logger.debug('Calling buildQuerySets with params = %s', params)
     try:
         qm.buildQuerySets(**params)
-    except ValidationError, e:
+    except ValidationError as e:
         logger.error(e)
         return HttpResponseBadRequest('Bad request: ' + str(e))
     try:

@@ -65,7 +65,7 @@ class BiPlot():
         prQS = ParameterResource.objects.using(self.args.database).filter(resource__name='units').values_list('resource__value')
         try:
             units = prQS.filter(parameter__name=parm)[0][0]
-        except IndexError, e:
+        except IndexError as e:
             raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, platform))
             sys.exit(-1)
 
@@ -243,7 +243,7 @@ class BiPlot():
         except TypeError:
             try:
                 self.color = '#' + Platform.objects.using(self.args.database).filter(name=platform).values_list('color')[0][0]
-            except IndexError, e:
+            except IndexError as e:
                 raise Exception('Unable to get color of platform name %s' % platform)
 
         return self.color
