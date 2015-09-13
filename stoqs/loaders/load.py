@@ -297,7 +297,7 @@ else
 fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
 
             if self.args.background:
-                cmd += ' &'
+                cmd = '({}) &'.format(cmd)
 
             self.logger.info('Executing: %s', cmd)
             os.system(cmd)
