@@ -128,6 +128,10 @@ class Loader():
 
         return log_file
 
+    def _has_no_t_option(self, db, load_command):
+        return ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
+               or load_command.endswith('.sh') or '&&' in load_command)
+
     def checks(self):
         if self.args.db:
             campaigns = importlib.import_module(self.args.campaigns)
@@ -193,8 +197,7 @@ local   all             all                                     peer
                     continue
 
             if self.args.test:
-                if ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
-                       or load_command.endswith('.sh') or '&&' in load_command):
+                if self._has_no_t_option(db, load_command):
                     continue
                 else:
                     db += '_t'
@@ -233,8 +236,7 @@ local   all             all                                     peer
                     continue
 
             if self.args.test:
-                if ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
-                       or load_command.endswith('.sh') or '&&' in load_command):
+                if self._has_no_t_option(db, load_command):
                     continue
                 else:
                     db += '_t'
@@ -252,16 +254,14 @@ local   all             all                                     peer
                     continue
 
             if self.args.test:
-                # Skip load_commands that don't accept the -t option
-                if ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
-                       or load_command.endswith('.sh') or '&&' in load_command):
+                if self._has_no_t_option(db, load_command):
                     continue
                 else:
                     load_command += ' -t'
                     db += '_t'
 
-                    # Django docs say not to do this, but I can't seem to force a settings reload
-                    # Note that databases in campaigns.py are put in settings by settings.local
+                    # Django docs say not to do this, but I can't seem to force a settings reload.
+                    # Note that databases in campaigns.py are put in settings by settings.local.
                     settings.DATABASES[db] = settings.DATABASES.get('default').copy()
                     settings.DATABASES[db]['NAME'] = db
 
