@@ -166,13 +166,13 @@ class Base_Loader(STOQS_Loader):
         try:
             self.ds = open_url(url)
         except socket.error as e:
-            logger.error('Failed in attempt to open_url(%s)', url)
+            logger.error('Failed in attempt to open_url("%s")', url)
             raise e
         except pydap.exceptions.ServerError as e:
-            logger.error('Failed in attempt to open_url(%s)', url)
+            logger.error('Failed in attempt to open_url("%s")', url)
             raise e
         except Exception as e:
-            logger.error('Failed in attempt to open_url(%s)', url)
+            logger.error('Failed in attempt to open_url("%s")', url)
             raise e
 
         self.ignored_names += self.global_ignored_names # add global ignored names to platform specific ignored names.
@@ -1472,12 +1472,16 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         lopc_aName = '{} (stride={})'.format(lopc_url, stride)
 
         logger.debug("Instantiating Dorado_Loader for url = %s", lopc_url)
-        lopc_loader = Dorado_Loader(url = lopc_url, campaignName = cName,
-                                    campaignDescription = cDesc, dbAlias = dbAlias,
-                                    activityName = lopc_aName, activitytypeName = aTypeName,
-                                    platformName = pName, platformColor = pColor,
-                                    platformTypeName = pTypeName, stride = stride,
-                                    grdTerrain = grdTerrain)
+        try:
+            lopc_loader = Dorado_Loader(url = lopc_url, campaignName = cName,
+                                        campaignDescription = cDesc, dbAlias = dbAlias,
+                                        activityName = lopc_aName, activitytypeName = aTypeName,
+                                        platformName = pName, platformColor = pColor,
+                                        platformTypeName = pTypeName, stride = stride,
+                                        grdTerrain = grdTerrain)
+        except Exception:
+            logger.warn('No LOPC data to load at %s', lopc_url)
+            return
 
         lopc_loader.include_names = ['sepCountList', 'mepCountList']
         lopc_loader.associatedActivityName = loader.activityName
