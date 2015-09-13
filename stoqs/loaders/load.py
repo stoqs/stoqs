@@ -128,6 +128,10 @@ class Loader():
 
         return log_file
 
+    def _has_no_t_option(self, db, load_command):
+        return ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
+               or load_command.endswith('.sh') or '&&' in load_command)
+
     def checks(self):
         if self.args.db:
             campaigns = importlib.import_module(self.args.campaigns)
@@ -193,8 +197,7 @@ local   all             all                                     peer
                     continue
 
             if self.args.test:
-                if ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
-                       or load_command.endswith('.sh') or '&&' in load_command):
+                if self._has_no_t_option(db, load_command):
                     continue
                 else:
                     db += '_t'
@@ -233,8 +236,7 @@ local   all             all                                     peer
                     continue
 
             if self.args.test:
-                if ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
-                       or load_command.endswith('.sh') or '&&' in load_command):
+                if self._has_no_t_option(db, load_command):
                     continue
                 else:
                     db += '_t'
@@ -252,16 +254,14 @@ local   all             all                                     peer
                     continue
 
             if self.args.test:
-                # Skip load_commands that don't accept the -t option
-                if ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
-                       or load_command.endswith('.sh') or '&&' in load_command):
+                if self._has_no_t_option(db, load_command):
                     continue
                 else:
                     load_command += ' -t'
                     db += '_t'
 
-                    # Django docs say not to do this, but I can't seem to force a settings reload
-                    # Note that databases in campaigns.py are put in settings by settings.local
+                    # Django docs say not to do this, but I can't seem to force a settings reload.
+                    # Note that databases in campaigns.py are put in settings by settings.local.
                     settings.DATABASES[db] = settings.DATABASES.get('default').copy()
                     settings.DATABASES[db]['NAME'] = db
 
@@ -274,21 +274,30 @@ local   all             all                                     peer
             call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
             call_command('migrate', settings='config.settings.local', noinput=True, database=db)
 
-            # Execute the load
+            # === Execute the load
             script = os.path.join(app_dir, 'loaders', load_command)
             log_file = self._log_file(script, db)
             if script.endswith('.sh'):
                 script = ('cd {} && {}').format(os.path.dirname(script), script)
 
-            cmd = ('(export STOQS_CAMPAIGNS={}; time {}) > {} 2>&1').format(db, script, log_file)
+            cmd = ('(export STOQS_CAMPAIGNS={}; time {}) > {} 2>&1;').format(db, script, log_file)
 
             if self.args.email:
-                cmd += (' && (echo Any ERROR mesages and last 10 lines of: {log}; '
-                        'grep ERROR {log}; tail {log}) | mail -s "{db} load finished" {email}'
-                        ).format(**{'log':log_file, 'db': db, 'email': self.args.email})
+                # Send email on success or failure
+                cmd += ('''
+if [ $? -eq 0 ]
+then
+    (echo Any ERROR mesages and last 10 lines of: {log};
+    grep ERROR {log}; 
+    tail {log}) | mail -s "{db} load finished" {email}
+else
+    (echo Any ERROR mesages and last 20 lines of: {log};
+    grep ERROR {log}; 
+    tail -20 {log}) | mail -s "{db} load FAILED" {email}
+fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
 
             if self.args.background:
-                cmd += ' &'
+                cmd = '({}) &'.format(cmd)
 
             self.logger.info('Executing: %s', cmd)
             os.system(cmd)
