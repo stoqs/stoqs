@@ -64,7 +64,7 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'sepCountList', 'mepCountList' ]
 
 # Spray glider - for just the duration of the campaign
-cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20131125_TS.nc','OS_Glider_L_662_20140311_TS.nc']
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startDatetime
