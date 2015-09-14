@@ -507,8 +507,8 @@ class MPQuery(object):
                 if self.kwargs['parameterplot'][0]:
                     self.parameterID = self.kwargs['parameterplot'][0]
                     logger.debug('self.parameterID = %s', self.parameterID)
-                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], 
-                            Parameter.objects.get(id=self.kwargs['parameterplot'][0]))
+                    parameter = Parameter.objects.using(self.request.META['dbAlias']).get(id=self.parameterID)
+                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], parameter)
 
             if SAMPLED in parameterGroups:
                 self.qs_sp = self.getSampledParametersQS()
