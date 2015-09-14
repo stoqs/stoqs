@@ -112,23 +112,29 @@ class Loader():
             prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
             prov['load_date_gmt'] = datetime.datetime.utcnow()
         if not self.args.background and self.args.updateprovenance:
-            try:
-                # Inserted after the log_file has been written with --updateprovenance
-                prov['real_exection_time'] = tail(log_file, 3)[0].split()[1]
-                prov['user_exection_time'] = tail(log_file, 3)[1].split()[1]
-                prov['sys_exection_time'] = tail(log_file, 3)[2].split()[1]
-            except IndexError:
-                self.logger.warn('No execution time information in %s', log_file)
+            if not os.path.isfile(log_file):
+                self.logger.warn('Load log file not found: %s', log_file)
+            else:
+                try:
+                    # Inserted after the log_file has been written with --updateprovenance
+                    prov['real_exection_time'] = tail(log_file, 3)[0].split()[1]
+                    prov['user_exection_time'] = tail(log_file, 3)[1].split()[1]
+                    prov['sys_exection_time'] = tail(log_file, 3)[2].split()[1]
+                except IndexError:
+                    self.logger.warn('No execution time information in %s', log_file)
 
-            loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
-            try: 
-                os.makedirs(loadlogs_dir)
-            except OSError:
-                if not os.path.isdir(loadlogs_dir):
-                    raise
-            log_file_url = os.path.basename(log_file) + '.txt'
-            copyfile(log_file , os.path.join(loadlogs_dir, log_file_url))
-            prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
+                loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
+                try: 
+                    os.makedirs(loadlogs_dir)
+                except OSError:
+                    if not os.path.isdir(loadlogs_dir):
+                        raise
+                log_file_url = os.path.basename(log_file) + '.txt'
+                try:
+                    copyfile(log_file , os.path.join(loadlogs_dir, log_file_url))
+                    prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
+                except IOError as e:
+                    self.logger.warn(e)
 
         return prov
 
