@@ -73,6 +73,9 @@ def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientat
     If @orientation is 'vertical' create a vertically oriented image, otherwise horizontal.
     '''
 
+    if parm_info[1] == parm_info[2]:
+        raise Exception(('Parameter has same min and max value: {}').format(parm_info))
+
     if orientation == 'horizontal':
         cb_fig = plt.figure(figsize=(5, 0.8))
         cb_ax = cb_fig.add_axes([0.1, 0.8, 0.8, 0.2])
@@ -374,7 +377,7 @@ class MeasuredParameter(object):
                 except KeyError as e:
                     self.logger.exception('Got KeyError. Could not grid the data')
                     return None, None, 'Got KeyError. Could not grid the data'
-                except Exception, e:
+                except Exception as e:
                     self.logger.exception('Could not grid the data')
                     return None, None, 'Could not grid the data'
 
@@ -425,13 +428,13 @@ class MeasuredParameter(object):
 
                 fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
-            except Exception,e:
+            except Exception as e:
                 self.logger.exception('Could not plot the data')
                 return None, None, 'Could not plot the data'
 
             try:
                 makeColorBar(self.request, self.colorbarPngFileFullPath, parm_info, self.cm_jetplus)
-            except Exception,e:
+            except Exception as e:
                 self.logger.exception('%s', e)
                 return None, None, 'Could not plot the colormap'
 
@@ -494,7 +497,7 @@ class MeasuredParameter(object):
 
             try:
                 makeColorBar(self.request, self.colorbarPngFileFullPath, self.parameterMinMax, self.cm_jetplus)
-            except Exception,e:
+            except Exception as e:
                 self.logger.exception('Could not plot the colormap')
                 x3dResults = 'Could not plot the colormap'
             else:
@@ -903,7 +906,7 @@ class ParameterParameter(object):
             if not os.path.exists(os.path.dirname(ppPngFileFullPath)):
                 try:
                     os.makedirs(os.path.dirname(ppPngFileFullPath))
-                except Exception,e:
+                except Exception as e:
                     self.logger.exception('Failed to create path for ' +
                                      'parameterparameter (%s) file', ppPngFile)
                     return None, 'Failed to create path for parameterparameter (%s) file' % ppPngFile, sql
@@ -1128,7 +1131,7 @@ class ParameterParameter(object):
                     colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
                     makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus)
 
-                except Exception,e:
+                except Exception as e:
                     self.logger.exception('Could not plot the colormap')
                     return None, None, 'Could not plot the colormap'
 

@@ -1184,7 +1184,8 @@ class STOQSQManager(object):
         if 'parameterplot' in self.kwargs:
             if self.kwargs['parameterplot'][0]:
                 parameterID = self.kwargs['parameterplot'][0]
-                parameterGroups = getParameterGroups(self.request.META['dbAlias'], models.Parameter.objects.get(id=parameterID))
+                parameter = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=parameterID)
+                parameterGroups = getParameterGroups(self.request.META['dbAlias'], parameter)
             if self.kwargs['parameterplot'][1]:
                 platformName = self.kwargs['parameterplot'][1]
         if not parameterID or not platformName:
