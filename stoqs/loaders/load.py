@@ -30,9 +30,11 @@ import datetime
 import importlib
 import platform
 from git import Repo
+from shutil import copyfile
 from django.conf import settings
 from django.core.management import call_command
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import ConnectionDoesNotExist, OperationalError, ProgrammingError
 from stoqs.models import ResourceType, Resource, Campaign, CampaignResource
 
 def tail(f, n):
@@ -96,12 +98,12 @@ class Loader():
     def _provenance_dict(self, load_command, log_file):
         '''Return a dictionary of provenance Resource items. Special handling 
         for --background operation: don't tail log file, instead add those
-        items when run with the --updateprovenance flag
+        items when run with the --updateprovenance flag.
         '''
         repo = Repo(app_dir, search_parent_directories=True)
 
         prov = {}
-       
+
         if not self.args.updateprovenance:
             # Inserted when load executed with or without --background
             prov['load_command'] = load_command
@@ -110,10 +112,23 @@ class Loader():
             prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
             prov['load_date_gmt'] = datetime.datetime.utcnow()
         if not self.args.background and self.args.updateprovenance:
-            # Inserted after the log_file has been written with --updateprovenance
-            prov['real_exection_time'] = tail(log_file, 3)[0].split()[1]
-            prov['user_exection_time'] = tail(log_file, 3)[1].split()[1]
-            prov['sys_exection_time'] = tail(log_file, 3)[2].split()[1]
+            try:
+                # Inserted after the log_file has been written with --updateprovenance
+                prov['real_exection_time'] = tail(log_file, 3)[0].split()[1]
+                prov['user_exection_time'] = tail(log_file, 3)[1].split()[1]
+                prov['sys_exection_time'] = tail(log_file, 3)[2].split()[1]
+            except IndexError:
+                self.logger.warn('No execution time information in %s', log_file)
+
+            loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
+            try: 
+                os.makedirs(loadlogs_dir)
+            except OSError:
+                if not os.path.isdir(loadlogs_dir):
+                    raise
+            log_file_url = os.path.basename(log_file) + '.txt'
+            copyfile(log_file , os.path.join(loadlogs_dir, log_file_url))
+            prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
 
         return prov
 
@@ -164,8 +179,15 @@ local   all             all                                     peer
     def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
         '''
-        rt,created = ResourceType.objects.using(db).get_or_create(
-                        name='provenance', description='Information about the source of data')
+        self.logger.debug('Recording provenance for %s using log_file = %s', db, log_file)
+        try:
+            rt,created = ResourceType.objects.using(db).get_or_create( name='provenance', 
+                    description='Information about the source of data')
+        except (ConnectionDoesNotExist, OperationalError, ProgrammingError) as e:
+            self.logger.warn('Could not open database "%s" for updating provenance.', db)
+            self.logger.warn(e)
+            return
+
         i = 0
         c = None
         while not c:
