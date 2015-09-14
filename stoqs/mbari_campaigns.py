@@ -10,18 +10,18 @@ from collections import OrderedDict
 
 # Values are paths to load script for each campaign starting at stoqs/loaders
 campaigns = OrderedDict([
-    #('stoqs_rovctd_mb',     ('ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mb '
-    #                        '--rov vnta --start 43 --end 4000 --campaignName "Monterey '
-    #                        'Bay ROVCTD data" --campaignDescription "All dives in '
-    #                        'Monterey Bay" --bbox -122.5 36 -121.75 37.0 && '
-    #                        'ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mb '
-    #                        '--rov tibr --start 42 --end 1163 --campaignName "Monterey '
-    #                        'Bay ROVCTD data" --campaignDescription "All dives in '
-    #                        'Monterey Bay" --bbox -122.5 36 -121.75 37.0 && '
-    #                        'ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mb '
-    #                        '--rov docr --start 1 --end 1000 --campaignName "Monterey '
-    #                        'Bay ROVCTD data" --campaignDescription "All dives in '
-    #                        'Monterey Bay" --bbox -122.5 36 -121.75 37.0')),
+    ('stoqs_rovctd_mb',     ('ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mb '
+                            '--rov vnta --start 43 --end 4000 --campaignName "Monterey '
+                            'Bay ROVCTD data" --campaignDescription "All dives in '
+                            'Monterey Bay" --bbox -122.5 36 -121.75 37.0 && '
+                            'ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mb '
+                            '--rov tibr --start 42 --end 1163 --campaignName "Monterey '
+                            'Bay ROVCTD data" --campaignDescription "All dives in '
+                            'Monterey Bay" --bbox -122.5 36 -121.75 37.0 && '
+                            'ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mb '
+                            '--rov docr --start 1 --end 1000 --campaignName "Monterey '
+                            'Bay ROVCTD data" --campaignDescription "All dives in '
+                            'Monterey Bay" --bbox -122.5 36 -121.75 37.0')),
     ('stoqs_rovctd_mw93',   'ROVCTD/loadAllTransectDives.sh'),
     ('stoqs_rovctd_mw97',   ('ROVCTD/ROVCTDloader.py --database stoqs_rovctd_mw97 '
                             '--dives V1236 V1247 V1321 V1575 V1610 V1668 T257 V1964 '
