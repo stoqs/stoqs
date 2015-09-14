@@ -112,23 +112,29 @@ class Loader():
             prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
             prov['load_date_gmt'] = datetime.datetime.utcnow()
         if not self.args.background and self.args.updateprovenance:
-            try:
-                # Inserted after the log_file has been written with --updateprovenance
-                prov['real_exection_time'] = tail(log_file, 3)[0].split()[1]
-                prov['user_exection_time'] = tail(log_file, 3)[1].split()[1]
-                prov['sys_exection_time'] = tail(log_file, 3)[2].split()[1]
-            except IndexError:
-                self.logger.warn('No execution time information in %s', log_file)
+            if not os.path.isfile(log_file):
+                self.logger.warn('Load log file not found: %s', log_file)
+            else:
+                try:
+                    # Inserted after the log_file has been written with --updateprovenance
+                    prov['real_exection_time'] = tail(log_file, 3)[0].split()[1]
+                    prov['user_exection_time'] = tail(log_file, 3)[1].split()[1]
+                    prov['sys_exection_time'] = tail(log_file, 3)[2].split()[1]
+                except IndexError:
+                    self.logger.warn('No execution time information in %s', log_file)
 
-            loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
-            try: 
-                os.makedirs(loadlogs_dir)
-            except OSError:
-                if not os.path.isdir(loadlogs_dir):
-                    raise
-            log_file_url = os.path.basename(log_file) + '.txt'
-            copyfile(log_file , os.path.join(loadlogs_dir, log_file_url))
-            prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
+                loadlogs_dir = os.path.join(settings.MEDIA_ROOT, 'loadlogs')
+                try: 
+                    os.makedirs(loadlogs_dir)
+                except OSError:
+                    if not os.path.isdir(loadlogs_dir):
+                        raise
+                log_file_url = os.path.basename(log_file) + '.txt'
+                try:
+                    copyfile(log_file , os.path.join(loadlogs_dir, log_file_url))
+                    prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
+                except IOError as e:
+                    self.logger.warn(e)
 
         return prov
 
@@ -148,8 +154,8 @@ class Loader():
                or load_command.endswith('.sh') or '&&' in load_command)
 
     def checks(self):
+        campaigns = importlib.import_module(self.args.campaigns)
         if self.args.db:
-            campaigns = importlib.import_module(self.args.campaigns)
             for d in self.args.db:
                 if d not in campaigns.campaigns.keys():
                     self.logger.warn('%s not in %s', d, self.args.campaigns)
@@ -175,6 +181,28 @@ local   all             all                                     trust
 local   all             all                                     peer
 '''
             self.logger.info(suggestion)
+
+        if self.args.clobber and not self.args.test:
+            print "You are about to drop all database(s) in the list below and reload them:"
+            print ('{:30s} {:>15s}').format('Database', 'Last Load time')
+            print ('{:30s} {:>15s}').format('-'*25, '-'*15)
+            for db,load_command in campaigns.campaigns.iteritems():
+                if self.args.db:
+                    if db not in self.args.db:
+                        continue
+
+                script = os.path.join(app_dir, 'loaders', load_command)
+                try:
+                    print ('{:30s} {:>15s}').format(db, tail(self._log_file(script, db), 3)[0].split()[1])
+                except IndexError:
+                    pass
+
+            ans = raw_input('Are you sure you want to drop these database(s) and reload them? y/N ')
+            if ans.lower() != 'y':
+                print 'Exiting'
+                sys.exit()
+
+
 
     def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
