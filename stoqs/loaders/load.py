@@ -235,6 +235,7 @@ local   all             all                                     peer
                 else:
                     raise
 
+        self.logger.info('Database %s', db)
         for name,value in self._provenance_dict(load_command, log_file).iteritems():
             r,created = Resource.objects.using(db).get_or_create(
                             uristring='', name=name, value=value, resourcetype=rt)
