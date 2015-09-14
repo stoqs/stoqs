@@ -223,21 +223,24 @@ local   all             all                                     peer
                 self.logger.debug('Looking in database %s for first Campaign record', db)
                 c = Campaign.objects.using(db).get(id=1)
             except ObjectDoesNotExist:
-                # Sleep a bit for jobs running with --background option
-                sec_wait = 5
-                time.sleep(sec_wait)
-                i += 1
-                max_iter = 24
-                if i > max_iter:
-                    raise DatabaseLoadError(('No campaign created after {:d} seconds. '
+                if self.args.background:
+                    # Sleep a bit for background jobs to create the Campaign
+                    sec_wait = 5
+                    time.sleep(sec_wait)
+                    i += 1
+                    max_iter = 24
+                    if i > max_iter:
+                        raise DatabaseLoadError(('No campaign created after {:d} seconds. '
                             'Check log_file for errors: {}').format(sec_wait * max_iter, log_file))
+                else:
+                    raise
 
         for name,value in self._provenance_dict(load_command, log_file).iteritems():
             r,created = Resource.objects.using(db).get_or_create(
                             uristring='', name=name, value=value, resourcetype=rt)
             cr,created = CampaignResource.objects.using(db).get_or_create(
                             campaign=c, resource=r)
-            self.logger.info('Resource uristring=%s, name=%s, value=%s', '', name, value)
+            self.logger.info('Resource uristring="%s", name="%s", value="%s"', '', name, value)
 
     def updateprovenance(self):
         campaigns = importlib.import_module(self.args.campaigns)
@@ -257,8 +260,9 @@ local   all             all                                     peer
 
             try:
                 self.recordprovenance(db, load_command, log_file)
-            except DatabaseLoadError as e:
-                self.logger.warn(str(e))
+            except (ObjectDoesNotExist, DatabaseLoadError) as e:
+                self.logger.warn('Could not record provenance in database %s', db)
+                self.logger.warn(e)
                 
     def remove_test(self):
         campaigns = importlib.import_module(self.args.campaigns)
