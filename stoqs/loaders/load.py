@@ -183,6 +183,7 @@ local   all             all                                     peer
             self.logger.info(suggestion)
 
         if self.args.clobber and not self.args.test:
+            print "On the server running on port =", settings.DATABASES['default']['PORT']
             print "You are about to drop all database(s) in the list below and reload them:"
             print ('{:30s} {:>15s}').format('Database', 'Last Load time')
             print ('{:30s} {:>15s}').format('-'*25, '-'*15)
@@ -253,8 +254,8 @@ local   all             all                                     peer
             if self.args.test:
                 if self._has_no_t_option(db, load_command):
                     continue
-                else:
-                    db += '_t'
+                
+                db += '_t'
 
             script = os.path.join(app_dir, 'loaders', load_command)
             log_file = self._log_file(script, db)
@@ -265,15 +266,21 @@ local   all             all                                     peer
                 self.logger.warn('Could not record provenance in database %s', db)
                 self.logger.warn(e)
                 
-    def remove_test(self):
+    def removetest(self):
+        self.logger.info('Removing test databases from sever running on port %s', 
+                settings.DATABASES['default']['PORT'])
         campaigns = importlib.import_module(self.args.campaigns)
         for db,load_command in campaigns.campaigns.iteritems():
             if self.args.db:
                 if db not in self.args.db:
                     continue
 
+                if self._has_no_t_option(db, load_command):
+                    continue
+
             db += '_t'
-            dropdb = ('psql -c \"DROP DATABASE {};\" -U postgres').format(db)
+            dropdb = ('psql -p {port} -c \"DROP DATABASE {db};\" -U postgres').format(
+                    **{'port': settings.DATABASES['default']['PORT'], 'db': db})
 
             self.logger.info('Dropping database %s', db)
             self.logger.debug('dropdb = %s', dropdb)
@@ -293,8 +300,8 @@ local   all             all                                     peer
             if self.args.test:
                 if self._has_no_t_option(db, load_command):
                     continue
-                else:
-                    db += '_t'
+
+                db += '_t'
 
             stoqs_campaigns.append(db)
 
@@ -311,14 +318,14 @@ local   all             all                                     peer
             if self.args.test:
                 if self._has_no_t_option(db, load_command):
                     continue
-                else:
-                    load_command += ' -t'
-                    db += '_t'
 
-                    # Django docs say not to do this, but I can't seem to force a settings reload.
-                    # Note that databases in campaigns.py are put in settings by settings.local.
-                    settings.DATABASES[db] = settings.DATABASES.get('default').copy()
-                    settings.DATABASES[db]['NAME'] = db
+                load_command += ' -t'
+                db += '_t'
+
+                # Django docs say not to do this, but I can't seem to force a settings reload.
+                # Note that databases in campaigns.py are put in settings by settings.local.
+                settings.DATABASES[db] = settings.DATABASES.get('default').copy()
+                settings.DATABASES[db]['NAME'] = db
 
             try:
                 self._create_db(db)
@@ -418,9 +425,9 @@ To get any stdout/stderr output you must use -v, the default is no output.
                                              
         parser.add_argument('--campaigns', action='store', help='Module containing campaigns dictionary (must also be in campaigns.py)', default='campaigns')
 
-        parser.add_argument('--db', action='store', help='Specify databases from CAMPAIGNS to load', nargs='*')
+        parser.add_argument('--db', action='store', help='Specify databases from CAMPAIGNS to load (do not append "_t", instead use --test for test databases)', nargs='*')
         parser.add_argument('--test', action='store_true', help='Load test databases using -t option of loaders.LoadScript')
-        parser.add_argument('--clobber', action='store_true', help='Drop databases before creating and loading them')
+        parser.add_argument('--clobber', action='store_true', help='Drop databases before creating and loading them. Need to confirm dropping production databases.')
         parser.add_argument('--background', action='store_true', help='Execute each load in the background to parallel process multiple loads')
         parser.add_argument('--removetest', action='store_true', help='Drop all test databases; the --db option limits the dropping to those in the list')
         parser.add_argument('--list', action='store_true', help='List the databases that are in --campaigns')
@@ -445,7 +452,7 @@ if __name__ == '__main__':
     l.checks()
 
     if l.args.removetest:
-        l.remove_test()
+        l.removetest()
     elif l.args.list:
         l.list()
     elif l.args.updateprovenance:
