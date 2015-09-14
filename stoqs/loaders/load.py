@@ -154,8 +154,8 @@ class Loader():
                or load_command.endswith('.sh') or '&&' in load_command)
 
     def checks(self):
+        campaigns = importlib.import_module(self.args.campaigns)
         if self.args.db:
-            campaigns = importlib.import_module(self.args.campaigns)
             for d in self.args.db:
                 if d not in campaigns.campaigns.keys():
                     self.logger.warn('%s not in %s', d, self.args.campaigns)
@@ -181,6 +181,28 @@ local   all             all                                     trust
 local   all             all                                     peer
 '''
             self.logger.info(suggestion)
+
+        if self.args.clobber and not self.args.test:
+            print "You are about to drop all database(s) in the list below and reload them:"
+            print ('{:30s} {:>15s}').format('Database', 'Last Load time')
+            print ('{:30s} {:>15s}').format('-'*25, '-'*15)
+            for db,load_command in campaigns.campaigns.iteritems():
+                if self.args.db:
+                    if db not in self.args.db:
+                        continue
+
+                script = os.path.join(app_dir, 'loaders', load_command)
+                try:
+                    print ('{:30s} {:>15s}').format(db, tail(self._log_file(script, db), 3)[0].split()[1])
+                except IndexError:
+                    pass
+
+            ans = raw_input('Are you sure you want to drop these database(s) and reload them? y/N ')
+            if ans.lower() != 'y':
+                print 'Exiting'
+                sys.exit()
+
+
 
     def recordprovenance(self, db, load_command, log_file):
         '''Add Resources to the Campaign that describe what loaded it
