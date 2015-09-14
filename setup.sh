@@ -53,11 +53,11 @@ if [ $? -ne 0 ] ; then
 fi
 
 # Install Matplotlib from GIT
-pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
-if [ $? -ne 0 ] ; then
-    echo "*** pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib failed. ***"
-    exit 1
-fi
+#pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib
+#if [ $? -ne 0 ] ; then
+#    echo "*** pip install -e git+https://github.com/matplotlib/matplotlib.git#egg=matplotlib failed. ***"
+#    exit 1
+#fi
 
 # Install everything in $REQ
 if [ -f "$REQ" ]; then

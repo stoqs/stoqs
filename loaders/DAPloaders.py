@@ -108,7 +108,7 @@ class Base_Loader(STOQS_Loader):
 
     A third time parameter (dataStartDatetime) can be specified.  This is used for when
     data is to be appended to an existing activity, such as for the realtime tethys loads
-    as done by the monitorTethys.py script in the MBARItracking/sensortracks folder.  This
+    as done by the monitorLrauv.py script in the realtime folder.  This
     use has not been fully tested.
     '''
     parameter_dict={} # used to cache parameter objects 
@@ -227,10 +227,12 @@ class Base_Loader(STOQS_Loader):
                     endDatetime = dt
             except NameError:
                 endDatetime = dt
-    
-        logger.info('Activity startDatetime = %s, endDatetime = %s', startDatetime, endDatetime)            
 
-        return startDatetime, endDatetime 
+        if not maxDT or not minDT:
+            raise NoValidData('No valid dates')
+
+        logger.info('Activity startDatetime = %s, endDatetime = %s', startDatetime, endDatetime)
+        return startDatetime, endDatetime
 
 
     def initDB(self):
@@ -412,7 +414,7 @@ class Base_Loader(STOQS_Loader):
                 logger.debug('Initializing depths list for timeseries, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']][:][0]
             elif self.getFeatureType() == 'timeseriesprofile':
-                logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac)
+                logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac) 
                 depths[v] = self.ds[v][ac['depth']][:]
             elif self.getFeatureType() == 'trajectoryprofile':
                 logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
@@ -533,7 +535,7 @@ class Base_Loader(STOQS_Loader):
         depths = {}
         latitudes = {}
         longitudes = {}
-        timeUnits = {}
+        timeUnits = {} 
 
         # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
         # The reads here take advantage of OPeNDAP access mechanisms to efficiently transfer data across the network
@@ -888,7 +890,6 @@ class Base_Loader(STOQS_Loader):
                             continue
                         else:
                             logger.error('Invalid data value: > 1e34, but not close to _FillValue or missing_value. Entering debugger...')
-                            import pdb; pdb.set_trace()
 
                     if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or numpy.isnan(value): # absence of a value
                         ##logger.debug('Not loading value = %s', value)
@@ -1283,43 +1284,43 @@ class Lrauv_Loader(Trajectory_Loader):
         '''
         In addition to the NC_GLOBAL attributes that are added in the base class also add the quick-look plots that are on the dods server.
         '''
-        # Replace netCDF file with png extension
-        outurl = re.sub('\.nc$','.png', self.url)
 
-        # Contour plots
-        logger.debug("Getting or Creating ResourceType quick_look...")
-        (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
-                        name = 'quick_look', description='Quick Look plot of data from this AUV survey')
+        if self.contourUrl:
+            # Replace netCDF file with png extension
+            outurl = re.sub('\.nc$','.png', self.url)
 
-        logger.debug("Getting or Creating Resource with name = log, url = %s",  outurl )
-        (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
-                    name='log', uristring=outurl, resourcetype=resourceType)
-        (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
-                    activity=self.activity,
-                    resource=resource)
+            # Contour plots
+            logger.debug("Getting or Creating ResourceType quick_look...")
+            (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+                            name = 'quick_look', description='Quick Look plot of data from this AUV survey')
 
-        # Round URL to 24 hour period in local time for daily
+            logger.debug("Getting or Creating Resource with name = log, url = %s",  outurl )
+            (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                        name='log', uristring=outurl, resourcetype=resourceType)
+            (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+                        activity=self.activity,
+                        resource=resource)
 
-        # Get baseURL
-        l = self.url.split('/')[:-1]
-        baseUrl = '/'.join(l)
+            # Round URL to 24 hour period in local time for daily
+            # Get baseURL
+            l = self.url.split('/')[:-1]
+            baseUrl = '/'.join(l)
 
-        startDateTimeUTC = pytz.utc.localize(self.startDatetime)
-        startDateTimeLocal = startDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
-        startDateTimeLocal = startDateTimeLocal.replace(hour=0,minute=0,second=0,microsecond=0)
-        startDateTimeUTC = startDateTimeLocal.astimezone(pytz.utc)
+            startDateTimeUTC = pytz.utc.localize(self.startDatetime)
+            startDateTimeLocal = startDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+            startDateTimeLocal = startDateTimeLocal.replace(hour=0,minute=0,second=0,microsecond=0)
+            startDateTimeUTC = startDateTimeLocal.astimezone(pytz.utc)
 
-        endDateTimeUTC = pytz.utc.localize(self.startDatetime)
-        endDateTimeLocal = endDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
-        endDateTimeLocal = endDateTimeLocal.replace(hour=23,minute=59,second=0,microsecond=0)
-        endDateTimeUTC = endDateTimeLocal.astimezone(pytz.utc)
+            endDateTimeUTC = pytz.utc.localize(self.startDatetime)
+            endDateTimeLocal = endDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+            endDateTimeLocal = endDateTimeLocal.replace(hour=23,minute=59,second=0,microsecond=0)
+            endDateTimeUTC = endDateTimeLocal.astimezone(pytz.utc)
 
-        outurl = self.contourUrl + self.platformName  + '_log_' + startDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '.png'
-
-        logger.debug("Getting or Creating Resource with name = 24hr, url = %s",  outurl )
-        (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+            outurl = self.contourUrl + self.platformName  + '_log_' + startDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '.png'
+            logger.debug("Getting or Creating Resource with name = 24hr, url = %s",  outurl )
+            (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                     name='24hr', uristring=outurl, resourcetype=resourceType)
-        (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                     activity=self.activity,
                     resource=resource)
 
@@ -1493,9 +1494,8 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
     # Auxiliary coordinates are generally the same for all include_names
     if auxCoords is None:
         loader.auxCoords = {}
-        if aName.find('_Chl_') != -1:
-            for p in loader.include_names:
-                loader.auxCoords[p] = {'time': 'Time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+        for p in loader.include_names:
+          loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
@@ -1634,7 +1634,8 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
-    loader.auxCoords = {}
+    loader.auxCoords = {} 
+
     if url.endswith('_CMSTV.nc'):
         # Special for combined file which has different coordinates for different variables
         for v in loader.include_names:

@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 __author__    = 'Mike McCann,Duane Edgington,Reiko Michisaki'
-__copyright__ = '2014'
+__copyright__ = '2015'
 __license__   = 'GPL v3'
 __contact__   = 'duane at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON activities in September 2014
+Master loader for all CANON activities in May 2015
 
 Mike McCann and Duane Edgington
-MBARI 22 September 2014
+MBARI 11 May 2015
 
 @var __date__: Date of last svn commit
 @undocumented: __doc__ parser
@@ -28,7 +28,8 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
-       
+from thredds_crawler.crawl import Crawl
+
 cl = CANONLoader('stoqs_canon_may2015', 'CANON-ECOHAB - May 2015',
                     description = 'Spring 2015 Experiment in Monterey Bay',
                     x3dTerrains = {
@@ -43,10 +44,25 @@ cl = CANONLoader('stoqs_canon_may2015', 'CANON-ECOHAB - May 2015',
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
 
+
+cl_eng = CANONLoader('stoqs_canon_may2015_lrauv_eng', 'CANON-ECOHAB - May 2015',
+                    description = 'LRAUV Engingeering data from Spring 2015 Experiment in Monterey Bay',
+                    x3dTerrains = {
+                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                                        'VerticalExaggeration': '10',
+                                        'speed': '0.1',
+                                    }
+                    },
+                    grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
+                  )
+
 # Set start and end dates for all loads from sources that contain data 
 # beyond the temporal bounds of the campaign
-startdate = datetime.datetime(2014, 9, 21)                 # Fixed start
-enddate = datetime.datetime(2014, 10, 12)                  # Fixed end
+startdate = datetime.datetime(2015, 5, 6)                 # Fixed start
+enddate = datetime.datetime(2015, 6, 11)                  # Fixed end
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -58,8 +74,9 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2015/netcdf/'
 cl.dorado_files = [
-                   'Dorado389_2015_132_04_132_04_decim.nc',
-				   ]
+#                   'Dorado389_2015_132_04_132_04_decim.nc',
+                    'Dorado389_2015_148_01_148_01_decim.nc',
+                                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
 
@@ -74,7 +91,50 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 ##cl.daphne_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Daphne/NetCDF/'
 ##cl.daphne_files = ['Daphne_CANON_Fall2013.nc']
 ##cl.daphne_parms = ['temperature', 'chlorophyll', 'bb470', 'bb650']
+# special location for lrauv data
 
+# NetCDF files produced (binned, etc.) by Danelle Cline 
+# Get directory list from thredds server
+platforms = ['tethys', 'daphne', 'makai']
+
+for p in platforms:
+  base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/' 
+  dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2015/'
+  setattr(cl, p + '_files', []) 
+  setattr(cl, p + '_base', dods_base)
+  setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'])
+  c = Crawl(os.path.join(base, 'catalog.xml'), select=['.*.nc$'], debug=False) 
+  urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+  files = []
+  for url in sorted(urls):
+    file = '/'.join(url.split('/')[-3:])
+    files.append(file)
+  files.append(',')
+  setattr(cl, p + '_files', files)
+
+for p in platforms:
+  base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/'
+  dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2015/'
+  setattr(cl_eng, p + '_files', [])
+  setattr(cl_eng, p + '_base', dods_base)
+  setattr(cl_eng, p + '_parms' ,
+          ['control_inputs_elevator_angle','control_inputs_rudder_angle','control_inputs_mass_position',
+ 'control_inputs_buoyancy_position','control_inputs_propeller_rotation_rate',
+ 'health_platform_battery_charge','health_platform_average_voltage','health_platform_average_current',
+ 'pose_platform_orientation', 'pose_platform_pitch_angle', 'pose_platform_roll_angle','pose_longitude_DeadReckonUsingSpeedCalculator',
+ 'pose_latitude_DeadReckonUsingSpeedCalculator', 'pose_depth_DeadReckonUsingSpeedCalculator', 'pose_longitude_DeadReckonUsingMultipleVelocitySources',
+ 'pose_latitude_DeadReckonUsingMultipleVelocitySources', 'pose_depth_DeadReckonUsingMultipleVelocitySources',
+ 'fix_time', 'fix_latitude', 'fix_longitude', 'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
+ 'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources'
+  ])
+  c = Crawl(os.path.join(base, 'catalog.xml'), select=['.*.nc$'], debug=False)
+  urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+  files = []
+  for url in sorted(urls):
+    file = '/'.join(url.split('/')[-3:])
+    files.append(file)
+  files.append(',')
+  setattr(cl_eng, p + '_files', files)
 
 ######################################################################
 #  GLIDERS
@@ -88,11 +148,25 @@ cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
 # NPS_29
-cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
-cl.nps29_parms = ['TEMP', 'PSAL', 'RHOD']
+#cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+#cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
+cl.nps29_parms = ['TEMP', 'PSAL']
 cl.nps29_startDatetime = startdate
 cl.nps29_endDatetime = enddate
+
+# UCSC_294
+#cl.ucsc294_base = 'http://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/UCSC294-20150430T2218/'
+#cl.ucsc294_files = [ 'UCSC294-20150430T2218.nc3.nc' ]
+#cl.ucsc294_parms = ['TEMP', 'PSAL']
+#cl.ucsc294_startDatetime = startdate
+#cl.ucsc294_endDatetime = enddate
+
+# UCSC_260
+#cl.ucsc260_base = 'http://data.ioos.us/gliders//thredds/dodsC/deployments/mbari/UCSC260-20150520T0000/'
+#cl.ucsc260_files = [ 'UCSC260-20150520T0000.nc3.nc'  ]
+#cl.ucsc260_parms = ['TEMP', 'PSAL']
+#cl.ucsc260_startDatetime = startdate
+#cl.ucsc260_endDatetime = enddate
 
 
 ######################################################################
@@ -133,7 +207,7 @@ cl.wfpctd_files = [
   'CANON14C17.nc', 'CANON14C17x.nc', 'CANON14C18.nc',  'CANON14C19.nc',  'CANON14C20.nc',  'CANON14C21.nc',   'CANON14C22.nc',  'CANON14C23.nc',
   'CANON14C24.nc', 'CANON14C25.nc',  'CANON14C26.nc',  'CANON14C27.nc',  'CANON14C28.nc',
   'CANON14C29.nc',
-  'CANON14C30.nc', 'CANON14C31.nc', 'CANON14C32.nc', 'CANON14C33.nc', 'CANON14C34.nc', 'CANON14C35.nc', 'CANON14C36.nc',   
+  'CANON14C30.nc', 'CANON14C31.nc', 'CANON14C32.nc', 'CANON14C33.nc', 'CANON14C34.nc', 'CANON14C35.nc', 'CANON14C36.nc',
   'CANON14C37.nc',
   'CANON14C38.nc', 'CANON14C39.nc',
   'CANON14C40.nc', 'CANON14C41.nc', 'CANON14C42.nc', 'CANON14C43.nc', 'CANON14C44.nc', 'CANON14C45.nc', 'CANON14C46.nc', 'CANON14C47.nc',
@@ -143,32 +217,22 @@ cl.wfpctd_files = [
                   ]
 
 ######################################################################
-#  RACHEL CARSON: September 22-26 (265-xxx) Oct 6 - Oct 10
+#  RACHEL CARSON: May 2015 -- 
 ######################################################################
 # UCTD
-cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/uctd/'
+cl.rcuctd_base = cl.dodsBase + 'CANON/2015_May/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
-cl.rcuctd_files = [ 
-                   '26514RCplm01.nc', '26614RCplm01.nc', '26714RCplm01.nc', 
-                   '28114RCplm01.nc',
-                   '28214RCplm01.nc',
+cl.rcuctd_files = [
+                  '13115plm01.nc',
+                  '13215plm01.nc',
                   ]
 
 # PCTD
-# /thredds/dodsC/CANON/2014_Sep/Platforms/Ships/Rachel_Carson/pctd/26514RCc06.nc
-cl.rcpctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/pctd/'
+cl.rcpctd_base = cl.dodsBase + 'CANON/2015_May/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
-cl.rcpctd_files = [ 
-                    '26514RCc01.nc', '26514RCc03.nc', '26514RCc04.nc', '26514RCc05.nc', '26514RCc06.nc',
-                    '26614RCc01.nc', '26614RCc03.nc',  '26614RCc04.nc', '26614RCc05.nc',
-                    '26714RCc01.nc', '26714RCc02.nc',  '26714RCc03.nc', '26714RCc04.nc', '26714RCc05.nc',
-                    '26814RCc01.nc', '26814RCc02b.nc', '26814RCc02.nc', '26814RCc04.nc', 
-                    # '26814RCc05.nc', # something wrong with '26814RCc05.nc'
-                    '28014RCC01.nc', '28014RCC02.nc', '28014RCC03.nc', '28014RCC04.nc', '28014RCC05.nc',
-                    '28114RCC01.nc',
-                    # '28114RCC02.nc', something wrong with 28114RCC02.nc
-                    '28114RCC03.nc', '28114RCC04.nc', '28114RCC05.nc',
-                    '28214RCC01.nc', '28214RCC02.nc', '28214RCC03.nc', '28214RCC04.nc',
+cl.rcpctd_files = [
+                  '13115c01.nc', '13115c02.nc', '13115c03.nc',
+                  '13215c01.nc', '13215c02.nc', '13215c03.nc', '13215c04.nc', '13215c05.nc', 
                   ]
 
 #####################################################################
@@ -181,7 +245,7 @@ cl.rcpctd_files = [
 
 ##cl.JMpctd_base = cl.dodsBase + 'CANON_september2013/Platforms/Ships/Martin/pctd/' 
 ##cl.JMpctd_parms = ['TEMP', 'PSAL', 'xmiss', 'wetstar', 'oxygen' ]
-##cl.JMpctd_files = [ 
+##cl.JMpctd_files = [
 ##                    '25613JMC01.nc', '25613JMC02.nc', '25613JMC03.nc', '25613JMC04.nc', '25613JMC05.nc', 
 ##                    '26013JMC01.nc', '26013JMC02.nc', '26013JMC03.nc', '26013JMC04.nc', 
 ##                    '26213JMC01.nc', '26213JMC02.nc', '26213JMC03.nc', '26213JMC04.nc', '26213JMC05.nc', '26613JMC01.nc',
@@ -190,7 +254,7 @@ cl.rcpctd_files = [
 ##                  ]
 
 ######################################################################
-#  MOORINGS
+#  MOORINGS May 2015
 ######################################################################
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201407/'
@@ -199,12 +263,12 @@ cl.m1_files = [
               ]
 cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
                 'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR', 
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
               ]
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
 
- 
+
 #######################################################################################
 # ESP MOORINGS
 #######################################################################################
@@ -263,14 +327,17 @@ cl.process_command_line()
 
 if cl.args.test:
     #cl.loadL_662(stride=100) 
-    #cl.load_NPS29(stride=10) 
+    #cl.load_NPS29(stride=10)
+    #cl.load_UCSC294(stride=10) 
+    #cl.load_UCSC260(stride=10)
 
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10) 
 
-    cl.loadDorado(stride=100)
-    ##cl.loadDaphne(stride=100)
-    ##cl.loadTethys(stride=100)
+    #cl.loadDaphne(stride=100)
+    #cl.loadDorado(stride=100)
+    cl.loadDaphne(stride=100)
+    #cl.loadTethys(stride=100)
 
     #cl.loadRCuctd(stride=10)
     #cl.loadRCpctd(stride=10)
@@ -300,14 +367,19 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
 
-    #cl.loadL_662() 
-    #cl.load_NPS29() 
+    ##cl.loadL_662() 
+    #cl.load_NPS29()
+    #cl.load_UCSC294() 
+    #cl.load_UCSC260()
+ 
     #cl.loadM1()
-    cl.loadDorado()
+    #cl.loadDorado()
+    cl.loadDaphne()
+    ##cl.loadTethys(stride=100)    
     #cl.loadRCuctd()
     #cl.loadRCpctd() 
-    #cl.loadWFuctd()   
-    #cl.loadWFpctd()
+    ##cl.loadWFuctd()   
+    ##cl.loadWFpctd()
 
     ##cl.loadSubSamples()
 
@@ -316,3 +388,4 @@ cl.addTerrainResources()
 
 print "All Done."
 
+ 

@@ -123,8 +123,11 @@ class CANONLoader(LoadScript):
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
 
-            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Tethys', self.colors['tethys'], 'auv', 'AUV mission', 
+            try:
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Tethys', self.colors['tethys'], 'auv', 'AUV mission',
                                         self.tethys_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime)
+            except DAPloaders.NoValidData as e:
+                self.logger.info("No valid data in %s" % url)
 
     def loadDaphne(self, stride=None):
         '''
@@ -138,9 +141,13 @@ class CANONLoader(LoadScript):
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
 
-            # Set stride to 1 for telemetered data
-            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Daphne', self.colors['daphne'], 'auv', 'AUV mission', 
+            try:
+                # Set stride to 1 for telemetered data
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Daphne', self.colors['daphne'], 'auv', 'AUV mission',
                                         self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime)
+            except DAPloaders.NoValidData as e:
+                self.logger.info("No valid data in %s" % url)
+
 
     def loadMakai(self, stride=None):
         '''
@@ -154,9 +161,13 @@ class CANONLoader(LoadScript):
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
 
-            # Set stride to 1 for telemetered data
-            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Makai', self.colors['makai'], 'auv', 'AUV mission', 
+            try:
+                # Set stride to 1 for telemetered data
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Makai', self.colors['makai'], 'auv', 'AUV mission',
                                         self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime)
+            except DAPloaders.NoValidData as e:
+                self.logger.info("No valid data in %s" % url)
+
     def loadMartin(self, stride=None):
         '''
         Martin specific load functions
