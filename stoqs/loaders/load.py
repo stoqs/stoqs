@@ -35,7 +35,8 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import ConnectionDoesNotExist, OperationalError, ProgrammingError
-from stoqs.models import ResourceType, Resource, Campaign, CampaignResource
+from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, MeasuredParameter, \
+                         SampledParameter, Activity, Parameter, Platform
 
 def tail(f, n):
     stdin,stdout = os.popen2("tail -" + str(n) + " " + f)
@@ -95,7 +96,7 @@ class Loader():
 
             raise DatabaseCreationError(('Failed to create {}').format(db))
 
-    def _provenance_dict(self, load_command, log_file):
+    def _provenance_dict(self, db, load_command, log_file):
         '''Return a dictionary of provenance Resource items. Special handling 
         for --background operation: don't tail log file, instead add those
         items when run with the --updateprovenance flag.
@@ -111,6 +112,7 @@ class Loader():
             prov['gitcommit'] = repo.head.commit.hexsha
             prov['environment'] = platform.platform() + " python " + sys.version.split('\n')[0]
             prov['load_date_gmt'] = datetime.datetime.utcnow()
+
         if not self.args.background and self.args.updateprovenance:
             if not os.path.isfile(log_file):
                 self.logger.warn('Load log file not found: %s', log_file)
@@ -135,6 +137,13 @@ class Loader():
                     prov['load_logfile'] = os.path.join(settings.MEDIA_URL, 'loadlogs', log_file_url)
                 except IOError as e:
                     self.logger.warn(e)
+
+                # Counts
+                prov['MeasuredParameter_count'] = MeasuredParameter.objects.using(db).count()
+                prov['SampledParameter_count'] = SampledParameter.objects.using(db).count()
+                prov['Parameter_count'] = Parameter.objects.using(db).count()
+                prov['Activity_count'] = Activity.objects.using(db).count()
+                prov['Platform_count'] = Platform.objects.using(db).count()
 
         return prov
 
@@ -237,7 +246,7 @@ local   all             all                                     peer
                     raise
 
         self.logger.info('Database %s', db)
-        for name,value in self._provenance_dict(load_command, log_file).iteritems():
+        for name,value in self._provenance_dict(db, load_command, log_file).iteritems():
             r,created = Resource.objects.using(db).get_or_create(
                             uristring='', name=name, value=value, resourcetype=rt)
             cr,created = CampaignResource.objects.using(db).get_or_create(
