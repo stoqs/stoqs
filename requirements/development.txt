@@ -25,7 +25,7 @@ pymssql==2.1.1
 pyparsing==2.0.3
 scikit-learn==0.16.1
 scipy==0.16.0
-selenium==2.47.2
+selenium==2.47.3
 Shapely==1.5.12
 snowballstemmer==1.2.0
 thredds-crawler==1.0.0
