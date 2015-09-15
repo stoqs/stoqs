@@ -212,6 +212,7 @@ def process_command_line():
         parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='Daphne Monterey data - April 2015')
         parser.add_argument('-i', '--interpolate', action='store_true', help='interpolate - must be used with --outDir option')
         parser.add_argument('--latest24hr', action='store_true', help='create the latest 24 hour plot')
+        parser.add_argument('--autoscale', action='store_true', help='autoscale each plot to 1 and 99 percentile')
         #parser.add_argument('-a', '--append', action='store_false', help='Append data to existing Activity',required=False)
         parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity',required=False)
         parser.add_argument('--post', action='store_true', help='Post message to slack about new data. Disable this during initial database load or when debugging',required=False)
@@ -381,7 +382,7 @@ if __name__ == '__main__':
 
                 logger.debug('out file %s', outFile)
 
-                c = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile, False)
+                c = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile, False, args.autoscale)
                 c.run()
 
                 # Replace netCDF file with png extension and that is the URL of the log
@@ -410,7 +411,7 @@ if __name__ == '__main__':
                 url = args.contourUrl + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
 
                 logger.debug('out file %s url: %s ', outFile, url)
-                c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFile, False)
+                c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFile, False, args.autoscale)
                 c.run()
 
                 if outFile.startswith('/tmp'):
@@ -444,7 +445,7 @@ if __name__ == '__main__':
                 continue
 
 
-    # update last 24 hr plot when new data found and it is requested
+    # update last 24 hr plot when requested
     if args.latest24hr:
         try:
             # Plot the last 24 hours
@@ -456,7 +457,7 @@ if __name__ == '__main__':
             outFileLatest = args.contourDir + '/' + platformName  + '_24h_latest.png'
             outFileLatestProduct = args.productDir + '/' + platformName  + '_log_last24hr.png'
 
-            c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFileLatest, False)
+            c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFileLatest, False, args.autoscale)
             c.run()
 
             if outFileLatest.startswith('/tmp'):
