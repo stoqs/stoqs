@@ -64,14 +64,15 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
 7. Copy the file $STOQS_HOME/stoqs/stoqs_nginx.conf to a file that will be
    specific for your system and edit it to and change the server_name
    and location settings for your server.  There are absolute directory paths in 
-   this file; make sure they refer to paths on your server, e.g.:
+   this file; make sure they refer to paths on your servers.  Then create a
+   symlink of it to the nginx config directory, e.g.:
 
-        cp $STOQS_HOME/stoqs/stoqs_nginx.conf $STOQS_HOME/stoqs/stoqs_nginx_kraken.conf
-        vi $STOQS_HOME/stoqs/stoqs_nginx_kraken.conf
+        cp $STOQS_HOME/stoqs/stoqs_nginx.conf $STOQS_HOME/stoqs/stoqs_nginx_<host>.conf
+        vi $STOQS_HOME/stoqs/stoqs_nginx_<host>kraken.conf
+        sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx_<host>kraken.conf /etc/nginx/conf.d
 
-8. Create a symlink to the above .conf file from the nginx config directory, e.g.:
+8. Edit the $STOQS_HOME/stoqs/stoqs_uwsgi.ini file to make sure that 
 
-        sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx_kraken.conf /etc/nginx/conf.d
 
 9. Create the media and static web directories and copy the static files to the 
    production web server location. The $STATIC_ROOT directory must be writable 
@@ -94,6 +95,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         sudo chmod 733 $MEDIA_ROOT/sections
         sudo chmod 733 $MEDIA_ROOT/parameterparameter
 
+
 11. Start the stoqs application (replacing <dbuser> <pw> <host> <port> and
     <mapserver_ip_address> with your values, and with all your 
     campaigns/databases separated by commas assigned to STOQS_CAMPAIGNS), e.g.:
@@ -103,12 +105,25 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
         export MAPSERVER_HOST="<mapserver_ip_address>"
         export STOQS_CAMPAIGNS="stoqs_beds_canyon_events_t,stoqs_may2015"
+        export SECRET_KEY="<random_sequence_of_impossible_to_guess_characters>"
         export GDAL_DATA=/usr/share/gdal
         cd $STOQS_HOME/stoqs
-        uwsgi --socket :8001 --module wsgi:application
+        uwsgi --ini stoqs_uwsgi.conf
 
 12. Test the STOQS user interface at:
 
         http://<server_name>/
 
+13. Configure your server to run uWSGI in emperor mode (see: http://bit.ly/1KQH5Sv
+    for complete instructions):
+
+        deactivate virtualenv
+        sudo /usr/local/bin/pip install uwsgi
+        sudo mkdir -p /etc/uwsgi/vassals
+        sudo ln -s $STOQS_HOME/stoqs/stoqs_uwsgi.ini /etc/uwsgi/vassals/
+        uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
+
+14. Add the following to /etc/rc.d/rc.local on CentOS machines:
+
+        uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
 
