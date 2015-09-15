@@ -112,7 +112,7 @@ MANAGERS = ADMINS
 # e.g.: export DATABASE_URL="postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs"
 DATABASES = {
     # Raises ImproperlyConfigured exception if DATABASE_URL not in os.environ
-    'default': env.db("DATABASE_URL", default="postgis://127.0.0.1:5432/stoqs"),
+    'default': env.db("DATABASE_URL")
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
