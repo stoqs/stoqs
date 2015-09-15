@@ -203,7 +203,8 @@ def showCampaigns(request,format=None):
                             'Parameter_count': r.get('Parameter_count', ''),
                             'Platform_count': r.get('Platform_count', ''),
                             'Activity_count': r.get('Activity_count', ''),
-                            'real_exection_time': r.get('real_exection_time', '')})
+                            'real_exection_time': r.get('real_exection_time', ''),
+                            'loadlog': r.get('load_logfile', '')})
 
     logger.debug("camList = %s", camList)
     if format == 'json':

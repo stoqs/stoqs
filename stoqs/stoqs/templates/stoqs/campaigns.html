@@ -77,7 +77,8 @@
                             <td><a href="{{site_uri}}{% url 'stoqs:stoqs-query-ui' dbAlias=c.dbAlias %}">{{ c.name }}</a></td><td>{{ c.description }}</td>
                             <td>{{ c.startdate }}</td><td>{{ c.enddate }}</td>
                             <td>{{ c.Platform_count }}</td><td>{{ c.Parameter_count }}</td><td>{{ c.Activity_count }}</td>
-                            <td>{{ c.MeasuredParameter_count }}</td><td>{{ c.SampledParameter_count }}</td><td>{{ c.real_exection_time }}</td
+                            <td>{{ c.MeasuredParameter_count }}</td><td>{{ c.SampledParameter_count }}</td>
+                            <td><a href="{{ c.loadlog }}">{{ c.real_exection_time }}</a></td>
                             </tr>
                             {% endfor %}
                         </tbody>
