@@ -424,7 +424,8 @@ A typical workflow to build up a production server is:
     {load} --removetest -v
 9. Load your production databases:
     {load} --background --email {user} -v > load.out 2>&1
-10. Add provenance (loading duration) information to the database:
+10. Add provenance information to the database, with setting for non-default MEDIA_ROOT:
+    export MEDIA_ROOT=/usr/share/nginx/media
     {load} --updateprovenance -v 
 11. After a final check announce the availability of these databases
 
@@ -441,7 +442,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--removetest', action='store_true', help='Drop all test databases; the --db option limits the dropping to those in the list')
         parser.add_argument('--list', action='store_true', help='List the databases that are in --campaigns')
         parser.add_argument('--email', action='store', help='Address to send mail to when the load finishes')
-        parser.add_argument('--updateprovenance', action='store_true', help='Use after background jobs finish to update provenance information')
+        parser.add_argument('--updateprovenance', action='store_true', help='Use after background jobs finish to copy loadlogs and update provenance information')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
