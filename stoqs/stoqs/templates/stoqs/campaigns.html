@@ -65,7 +65,10 @@
                 <h2>Campaigns on this server (in reverse time order)</h2>
                     <table class="table table-condensed table-bordered">
                         <thead>
-                            <tr><th>Database Alias</th><th>Name</th><th>Description</th><th>Start</th><th>End</th></tr>
+                            <tr><th>Database Alias</th><th>Name</th><th>Description</th><th>Start (GMT)</th><th>End (GMT)</th>
+                                <th>Platform count</th><th>Parameter count</th><th>Activity count</th>
+                                <th>MP count</th><th>SP count</th><th>Loading Time</th>
+                            </tr>
                         </thead>
                         <tbody>
                             {% for c in cList %}
@@ -73,6 +76,8 @@
                             <td>{{ c.dbAlias }}</td>
                             <td><a href="{{site_uri}}{% url 'stoqs:stoqs-query-ui' dbAlias=c.dbAlias %}">{{ c.name }}</a></td><td>{{ c.description }}</td>
                             <td>{{ c.startdate }}</td><td>{{ c.enddate }}</td>
+                            <td>{{ c.Platform_count }}</td><td>{{ c.Parameter_count }}</td><td>{{ c.Activity_count }}</td>
+                            <td>{{ c.MeasuredParameter_count }}</td><td>{{ c.SampledParameter_count }}</td><td>{{ c.real_exection_time }}</td
                             </tr>
                             {% endfor %}
                         </tbody>

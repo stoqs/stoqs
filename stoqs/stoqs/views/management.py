@@ -131,9 +131,11 @@ def showCampaigns(request,format=None):
   
     # Data structure hash of lists.  Possible to have multiple campaigns in a database
     cHash = {}
+    rHash = {}
     for dbAlias in settings.DATABASES.keys():
-        # Initialize Campaign hash list
+        # Initialize Campaign and Resource hash lists
         cHash[dbAlias] = []
+        rHash[dbAlias] = []
 
     for dbAlias in settings.DATABASES.keys():
         try:
@@ -142,6 +144,10 @@ def showCampaigns(request,format=None):
             for c in cqs:
                 logger.debug("Appending campaign name = %s to cHash with key (dbAlias) = %s", c.name, dbAlias)
                 cHash[dbAlias].append(c)
+                r = {}
+                for cr in mod.CampaignResource.objects.using(dbAlias).filter(campaign=c):
+                    r[cr.resource.name] = cr.resource.value
+                rHash[dbAlias].append(r)
         except mod.Campaign.DoesNotExist:
             logger.warn("Database alias %s does not exist", dbAlias)
             continue
@@ -159,18 +165,18 @@ def showCampaigns(request,format=None):
     dummyTime = datetime(1970,1,1)
     for k in cHash.iterkeys():
         logger.debug('k = %s', k)
-        for c in cHash[k]:
+        for c,r in zip(cHash[k], rHash[k]):
             logger.debug('c.name = %s', c.name)
             # Use combination of dbAlias and startdate as different dbAlias's can have the same startdate
             if c.startdate:
                 key = str(c.startdate) + '_' + c.name
-                timeSortHash[key] = {k: c}
-                logger.debug("Set timeSortHash['%s'] = %s", key, {k: c})
+                timeSortHash[key] = {k: (c, r)}
+                logger.debug("Set timeSortHash['%s'] = %s", key, {k: (c, r)})
             else:
                 # Put in a dummy time, and increment it
                 key = str(dummyTime) + '_' + c.name
-                timeSortHash[key] = {k: c}
-                logger.debug("Set timeSortHash['%s'] = %s", key, {k: c})
+                timeSortHash[key] = {k: (c, r)}
+                logger.debug("Set timeSortHash['%s'] = %s", key, {k: (c, r)})
                 dummyTime += timedelta(seconds=1)
                 logger.debug('dummyTime = %s', dummyTime)
 
@@ -178,7 +184,7 @@ def showCampaigns(request,format=None):
     camList = []
     for d in sorted(timeSortHash.iterkeys(), reverse=True):
         logger.debug("d = %s, timeSortHash[d] = %s", d, timeSortHash[d])
-        for k,c in timeSortHash[d].iteritems():
+        for k,(c, r) in timeSortHash[d].iteritems():
             logger.debug(k)
             logger.debug(c)
             description = ''
@@ -187,11 +193,17 @@ def showCampaigns(request,format=None):
             if c.description:
                 description = c.description
             if c.startdate: 
-                startdate = c.startdate.strftime('%d %b %Y %H:%M:%S') + " GMT"
+                startdate = c.startdate.strftime('%d %b %Y %H:%M:%S')
             if c.enddate:
-                enddate = c.enddate.strftime('%d %b %Y %H:%M:%S') + " GMT"
+                enddate = c.enddate.strftime('%d %b %Y %H:%M:%S')
             camList.append({'name': c.name, 'dbAlias': k, 'description': description,
-                            'startdate': startdate, 'enddate': enddate})
+                            'startdate': startdate, 'enddate': enddate,
+                            'MeasuredParameter_count': r.get('MeasuredParameter_count', ''),
+                            'SampledParameter_count': r.get('SampledParameter_count', ''),
+                            'Parameter_count': r.get('Parameter_count', ''),
+                            'Platform_count': r.get('Platform_count', ''),
+                            'Activity_count': r.get('Activity_count', ''),
+                            'real_exection_time': r.get('real_exection_time', '')})
 
     logger.debug("camList = %s", camList)
     if format == 'json':
