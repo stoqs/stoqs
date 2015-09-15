@@ -1,0 +1,5 @@
+drop database stoqs_lrauv;
+create database stoqs_lrauv owner=dcline template=template_postgis;
+alter database stoqs_lrauv set timezone='GMT';
+\c stoqs_lrauv
+grant all on all tables in schema public to stoqsadm;
