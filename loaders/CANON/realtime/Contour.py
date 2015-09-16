@@ -33,6 +33,7 @@ from scipy.spatial import ckdtree
 from scipy.interpolate import Rbf
 from mpl_toolkits.basemap import Basemap
 from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter, Measurement, Parameter
+from utils.utils import percentile
 
 # Set up global variables for logging output to STDOUT
 logger = logging.getLogger('monitorTethysHotSpotLogger')
@@ -51,7 +52,7 @@ class Contour(object):
     '''
     Create plots for visualizing data from LRAUV vehicles
     '''
-    def __init__(self, startDatetime, endDatetime, database, platformName, plotGroup, title, outFilename, animate):
+    def __init__(self, startDatetime, endDatetime, database, platformName, plotGroup, title, outFilename, animate, autoscale):
         self.startDatetime = startDatetime
         self.endDatetime = endDatetime
         self.platformName = platformName
@@ -62,6 +63,7 @@ class Contour(object):
         self.outFilename = outFilename
         self.database = database
         self.platformName = platformName
+        self.autoscale = autoscale
 
 
     def getTimeSeriesData(self, startDatetime, endDatetime):
@@ -145,7 +147,7 @@ class Contour(object):
             qs = qs.filter(measurement__instantpoint__timevalue__lte=endDatetime)
             qs = qs.filter(parameter__name=parm)
             qs = qs.filter(measurement__instantpoint__activity__platform__name=platform)
-            qs = qs.values('measurement__instantpoint__timevalue', 'measurement__geom', 'datavalue', 'measurement__instantpoint__activity__maptrack',  'measurement__instantpoint__activity__name').order_by('measurement__instantpoint__timevalue')
+            qs = qs.values('measurement__instantpoint__timevalue', 'measurement__geom', 'parameter', 'datavalue', 'measurement__instantpoint__activity__maptrack',  'measurement__instantpoint__activity__name').order_by('measurement__instantpoint__timevalue')
 
             for rs in qs:
                 geom = rs['measurement__geom']
@@ -312,18 +314,29 @@ class Contour(object):
                 units = ''
 
                 if len(z):
-                    rangez = [min(z), max(z)]
+                    if self.autoscale:
+                        numpvar = np.array(z)
+                        numpvar.sort()
+                        listvar = list(numpvar)
+                        p010 = percentile(listvar, 0.010)
+                        p990 = percentile(listvar, 0.990)
+                        rangez = [p010,p990]
+                    else:
+                        rangez = [min(z), max(z)]
                 else:
                     rangez = [0, 0]
 
                 if name.find('chlorophyll') != -1 :
-                    rangez = [0.0, 10.0]
+                    if not self.autoscale:
+                        rangez = [0.0, 10.0]
                     units = ' (ug/l)'
                 if name.find('salinity') != -1 :
-                    rangez = [33.3, 34.9]
+                    if not self.autoscale:
+                        rangez = [33.3, 34.9]
                     units = ''
                 if name.find('temperature') != -1 :
-                    rangez = [10.0, 14.0]
+                    if not self.autoscale:
+                        rangez = [10.0, 14.0]
                     units = ' ($^\circ$C)'
   
                 gs  = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=contour_gs[j])
@@ -424,6 +437,7 @@ class Contour(object):
         else:
             z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], latlon_series)
 
+        # get the percentile ranges for this to autoscale
         pointsnp = np.array(points)
         lon = pointsnp[:,0]
         lat = pointsnp[:,1]
@@ -478,11 +492,10 @@ class Contour(object):
             for track in maptracks:
                 if track is not None:
                     ln,lt = zip(*track)
-                    mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=1, zorder=1)
+                    mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
 
             # if have a valid chl series, then plot the dots
             if chl_series is not None and len(z) > 0:
-                rangez=[0.0,10.0]
                 if len(z) > 2000:
                     sz = len(z)
                     stride = int(sz/200)
