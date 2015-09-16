@@ -44,21 +44,6 @@ cl = CANONLoader('stoqs_canon_may2015', 'CANON-ECOHAB - May 2015',
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
 
-
-cl_eng = CANONLoader('stoqs_canon_may2015_lrauv_eng', 'CANON-ECOHAB - May 2015',
-                    description = 'LRAUV Engingeering data from Spring 2015 Experiment in Monterey Bay',
-                    x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
-                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
-                                        'VerticalExaggeration': '10',
-                                        'speed': '0.1',
-                                    }
-                    },
-                    grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
-                  )
-
 # Set start and end dates for all loads from sources that contain data 
 # beyond the temporal bounds of the campaign
 startdate = datetime.datetime(2015, 5, 6)                 # Fixed start
@@ -74,8 +59,9 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2015/netcdf/'
 cl.dorado_files = [
-#                   'Dorado389_2015_132_04_132_04_decim.nc',
-                    'Dorado389_2015_148_01_148_01_decim.nc',
+                   'Dorado389_2015_132_04_132_04_decim.nc',
+                   'Dorado389_2015_148_01_148_01_decim.nc',
+                   'Dorado389_2015_156_00_156_00_decim.nc',
                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
@@ -93,56 +79,40 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 ##cl.daphne_parms = ['temperature', 'chlorophyll', 'bb470', 'bb650']
 # special location for lrauv data
 
-# NetCDF files produced (binned, etc.) by Danelle Cline 
+# NetCDF files produced (binned, etc.) by Danelle Cline
+# These binned files are created with the makeLRAUVNetCDFs.sh script in the
+# toNetCDF directory. You must run that script once to produce the binned
+# files before this will work
+  
 # Get directory list from thredds server
 platforms = ['tethys', 'daphne', 'makai']
 
-for p in platforms:
+'''for p in platforms:
   base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/' 
   dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2015/'
   setattr(cl, p + '_files', []) 
   setattr(cl, p + '_base', dods_base)
   setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'])
-  c = Crawl(os.path.join(base, 'catalog.xml'), select=['.*.nc$'], debug=False) 
+  c = Crawl(os.path.join(base, 'catalog.xml'), select=['.*10S_sci.nc$'], debug=False) 
   urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
   files = []
-  for url in sorted(urls):
-    file = '/'.join(url.split('/')[-3:])
-    files.append(file)
+
+  if len(urls) > 0 :
+    for url in sorted(urls):
+      file = '/'.join(url.split('/')[-3:])
+      files.append(file)
   files.append(',')
   setattr(cl, p + '_files', files)
-
-for p in platforms:
-  base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/'
-  dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2015/'
-  setattr(cl_eng, p + '_files', [])
-  setattr(cl_eng, p + '_base', dods_base)
-  setattr(cl_eng, p + '_parms' ,
-          ['control_inputs_elevator_angle','control_inputs_rudder_angle','control_inputs_mass_position',
- 'control_inputs_buoyancy_position','control_inputs_propeller_rotation_rate',
- 'health_platform_battery_charge','health_platform_average_voltage','health_platform_average_current',
- 'pose_platform_orientation', 'pose_platform_pitch_angle', 'pose_platform_roll_angle','pose_longitude_DeadReckonUsingSpeedCalculator',
- 'pose_latitude_DeadReckonUsingSpeedCalculator', 'pose_depth_DeadReckonUsingSpeedCalculator', 'pose_longitude_DeadReckonUsingMultipleVelocitySources',
- 'pose_latitude_DeadReckonUsingMultipleVelocitySources', 'pose_depth_DeadReckonUsingMultipleVelocitySources',
- 'fix_time', 'fix_latitude', 'fix_longitude', 'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
- 'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources'
-  ])
-  c = Crawl(os.path.join(base, 'catalog.xml'), select=['.*.nc$'], debug=False)
-  urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-  files = []
-  for url in sorted(urls):
-    file = '/'.join(url.split('/')[-3:])
-    files.append(file)
-  files.append(',')
-  setattr(cl_eng, p + '_files', files)
+'''
 
 ######################################################################
 #  GLIDERS
 ######################################################################
 # Glider data files from CeNCOOS thredds server
 # L_662
-cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.l_662_files = [ 'OS_Glider_L_662_20140923_TS.nc' ]
+# cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662_files = [ 'OS_Glider_L_662_20150427_TS.nc' ]
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
@@ -150,34 +120,46 @@ cl.l_662_endDatetime = enddate
 # NPS_29
 #cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 #cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
-cl.nps29_parms = ['TEMP', 'PSAL']
-cl.nps29_startDatetime = startdate
-cl.nps29_endDatetime = enddate
+#cl.nps29_parms = ['TEMP', 'PSAL']
+#cl.nps29_startDatetime = startdate
+#cl.nps29_endDatetime = enddate
 
-# UCSC_294
-#cl.ucsc294_base = 'http://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/UCSC294-20150430T2218/'
-#cl.ucsc294_files = [ 'UCSC294-20150430T2218.nc3.nc' ]
-#cl.ucsc294_parms = ['TEMP', 'PSAL']
-#cl.ucsc294_startDatetime = startdate
-#cl.ucsc294_endDatetime = enddate
+# slocum_294  also known as UCSC294
+cl.slocum_294_base = 'http://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/UCSC294-20150430T2218/'
+cl.slocum_294_files = [ 'UCSC294-20150430T2218.nc3.nc' ]
+cl.slocum_294_parms = ['temperature', 'salinity']
+cl.slocum_294_startDatetime = startdate
+cl.slocum_294_endDatetime = enddate
 
-# UCSC_260
-#cl.ucsc260_base = 'http://data.ioos.us/gliders//thredds/dodsC/deployments/mbari/UCSC260-20150520T0000/'
-#cl.ucsc260_files = [ 'UCSC260-20150520T0000.nc3.nc'  ]
-#cl.ucsc260_parms = ['TEMP', 'PSAL']
-#cl.ucsc260_startDatetime = startdate
-#cl.ucsc260_endDatetime = enddate
+# slocum_260 also known as UCSC160
+cl.slocum_260_base = 'http://data.ioos.us/gliders//thredds/dodsC/deployments/mbari/UCSC260-20150520T0000/'
+cl.slocum_260_files = [ 'UCSC260-20150520T0000.nc3.nc'  ]
+cl.slocum_260_parms = ['temperature', 'salinity']
+cl.slocum_260_startDatetime = startdate
+cl.slocum_260_endDatetime = enddate
+
+# slocum_nemesis
+
 
 
 ######################################################################
 # Wavegliders
 ######################################################################
 # WG Tex - All instruments combined into one file - one time coordinate
-##cl.wg_tex_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_Tex/final/'
-##cl.wg_tex_files = [ 'WG_Tex_all_final.nc' ]
-##cl.wg_tex_parms = [ 'wind_dir', 'wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'density', 'bb_470', 'bb_650', 'chl' ]
-##cl.wg_tex_startDatetime = startdate
-##cl.wg_tex_endDatetime = enddate
+#cl.wg_tex_base = cl.dodsBase + 'CANON/2015_May/Platforms/Waveglider/SV3_Tiny/'
+#cl.wg_tex_files = [ 'SV3_20150501_QC.nc' ]
+#cl.wg_tex_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
+#                    'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
+#cl.wg_tex_startDatetime = startdate
+#cl.wg_tex_endDatetime = enddate
+
+# WG Tiny - All instruments combined into one file - one time coordinate
+cl.wg_SV3_Tiny_base = cl.dodsBase + 'CANON/2015_May/Platforms/Waveglider/SV3_Tiny/'
+cl.wg_SV3_Tiny_files = [ 'SV3_20150501_QC.nc' ]
+cl.wg_SV3_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
+                    'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
+cl.wg_SV3_Tiny_startDatetime = startdate
+cl.wg_SV3_Tiny_endDatetime = enddate
 
 # WG OA - All instruments combined into one file - one time coordinate
 ##cl.wg_oa_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/final/'
@@ -188,32 +170,19 @@ cl.nps29_endDatetime = enddate
 ##cl.wg_oa_endDatetime = enddate
 
 ######################################################################
-#  WESTERN FLYER: September 27 - Oct 3
+#  WESTERN FLYER: not in this cruise
 ######################################################################
 # UCTD
-cl.wfuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Western_Flyer/uctd/'
+cl.wfuctd_base = cl.dodsBase + 'CANON/2015_May/Platforms/Ships/Western_Flyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
-  'CANON14M01.nc', 'CANON14M02.nc', 'CANON14M03.nc', 'CANON14M04.nc', 'CANON14M05.nc', 'CANON14M06.nc', 'CANON14M07.nc',
-  'CANON14M08.nc', 'CANON14M09.nc', 'CANON14M10.nc',
+ 
                   ]
 
 # PCTD
 cl.wfpctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [
-  'CANON14C01.nc', 'CANON14C02.nc',  'CANON14C03.nc',  'CANON14C04.nc',  'CANON14C05.nc',  'CANON14C06.nc',   'CANON14C07.nc',  'CANON14C08.nc',
-  'CANON14C09.nc', 'CANON14C10.nc',  'CANON14C11.nc',  'CANON14C12.nc',  'CANON14C13.nc',  'CANON14C14.nc',   'CANON14C15.nc',  'CANON14C16.nc',
-  'CANON14C17.nc', 'CANON14C17x.nc', 'CANON14C18.nc',  'CANON14C19.nc',  'CANON14C20.nc',  'CANON14C21.nc',   'CANON14C22.nc',  'CANON14C23.nc',
-  'CANON14C24.nc', 'CANON14C25.nc',  'CANON14C26.nc',  'CANON14C27.nc',  'CANON14C28.nc',
-  'CANON14C29.nc',
-  'CANON14C30.nc', 'CANON14C31.nc', 'CANON14C32.nc', 'CANON14C33.nc', 'CANON14C34.nc', 'CANON14C35.nc', 'CANON14C36.nc',
-  'CANON14C37.nc',
-  'CANON14C38.nc', 'CANON14C39.nc',
-  'CANON14C40.nc', 'CANON14C41.nc', 'CANON14C42.nc', 'CANON14C43.nc', 'CANON14C44.nc', 'CANON14C45.nc', 'CANON14C46.nc', 'CANON14C47.nc',
-  'CANON14C48.nc', 'CANON14C49.nc',
-  'CANON14C50.nc', 'CANON14C51.nc', 'CANON14C52.nc', 'CANON14C53.nc', 'CANON14C54.nc', 'CANON14C55.nc', 'CANON14C56.nc', 'CANON14C57.nc',
-  'CANON14C58.nc', 'CANON14C59.nc',
                   ]
 
 ######################################################################
@@ -225,6 +194,10 @@ cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [
                   '13115plm01.nc',
                   '13215plm01.nc',
+                  '14115plm01.nc',
+                  '14815plm01.nc',
+                  '15515plm01.nc',
+                  '15615plm01.nc',    
                   ]
 
 # PCTD
@@ -232,7 +205,11 @@ cl.rcpctd_base = cl.dodsBase + 'CANON/2015_May/Platforms/Ships/Rachel_Carson/pct
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [
                   '13115c01.nc', '13115c02.nc', '13115c03.nc',
-                  '13215c01.nc', '13215c02.nc', '13215c03.nc', '13215c04.nc', '13215c05.nc', 
+                  '13215c01.nc', '13215c02.nc', '13215c03.nc', '13215c04.nc', '13215c05.nc',
+                  '14115c01.nc', '14115c02.nc', '14115c03.nc', '14115c04.nc',
+                  '14815c01.nc', '14815c02.nc', '14815c03.nc', '14815c04.nc', '14815c05.nc', '14815c06.nc',
+                  '15515c01.nc', '15515c02.nc', '15515c03.nc',
+                  '15615c01.nc', '15615c02.nc', '15615c03.nc', '15615c04.nc', 
                   ]
 
 #####################################################################
@@ -288,56 +265,70 @@ cl.m1_endDatetime = enddate
 
 ###################################################################################################
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/ 
-#                                   CANON13 25913RC 25913RC 26113RC 27313RC 27413RC 27513RC 27613RC
-#   copied to local CANON2013 dir
+#                                   13115 13215 14115 14815 15515 15615
+#   copied to local BOG_Data/CANON_May2105 dir
 ###################################################################################################
-##cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON2013')
-##cl.subsample_csv_files = [
-##'STOQS_CANON13_CARBON_GFF.csv', 'STOQS_CANON13_CHL_1U.csv', 'STOQS_CANON13_CHL_5U.csv', 'STOQS_CANON13_CHLA.csv',
-##'STOQS_CANON13_CHL_GFF.csv', 'STOQS_CANON13_NO2.csv', 'STOQS_CANON13_NO3.csv', 'STOQS_CANON13_PHAEO_1U.csv',
-##'STOQS_CANON13_PHAEO_5U.csv', 'STOQS_CANON13_PHAEO_GFF.csv', 'STOQS_CANON13_PO4.csv', 'STOQS_CANON13_SIO4.csv',
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_May2015/')
+cl.subsample_csv_files = [
+## these are loaded OK:
 
-##'STOQS_25913RC_CHL_1U.csv', 'STOQS_25913RC_CHL_5U.csv', 'STOQS_25913RC_CHLA.csv', 'STOQS_25913RC_CHL_GFF.csv',
-##'STOQS_25913RC_NO2.csv', 'STOQS_25913RC_NO3.csv', 'STOQS_25913RC_PHAEO_1U.csv', 'STOQS_25913RC_PHAEO_5U.csv',
-##'STOQS_25913RC_PHAEO_GFF.csv', 'STOQS_25913RC_PO4.csv', 'STOQS_25913RC_SIO4.csv',
+ 'STOQS_13115_CARBON_GFF.csv', 'STOQS_13115_CHL_1U.csv', 'STOQS_13115_CHL_5U.csv', 'STOQS_13115_CHL_GFF.csv', 
+ 'STOQS_13115_CHLA.csv', 'STOQS_13115_NO2.csv', 'STOQS_13115_NO3.csv', 'STOQS_13115_PHAEO_1U.csv',
+ 'STOQS_13115_PHAEO_5U.csv', 'STOQS_13115_PHAEO_GFF.csv', 'STOQS_13115_PO4.csv', 'STOQS_13115_SIO4.csv',
 
-##'STOQS_26013RC_CHL_1U.csv', 'STOQS_26013RC_CHL_5U.csv', 'STOQS_26013RC_CHLA.csv', 'STOQS_26013RC_CHL_GFF.csv',
-##'STOQS_26013RC_NO2.csv', 'STOQS_26013RC_NO3.csv', 'STOQS_26013RC_PHAEO_1U.csv', 'STOQS_26013RC_PHAEO_5U.csv',
-##'STOQS_26013RC_PHAEO_GFF.csv', 'STOQS_26013RC_PO4.csv', 'STOQS_26013RC_SIO4.csv',
+ 'STOQS_13215_CARBON_GFF.csv',
 
-##'STOQS_26113RC_CHL_1U.csv', 'STOQS_26113RC_CHL_5U.csv', 'STOQS_26113RC_CHLA.csv', 'STOQS_26113RC_CHL_GFF.csv',
-##'STOQS_26113RC_NO2.csv', 'STOQS_26113RC_NO3.csv', 'STOQS_26113RC_PHAEO_1U.csv', 'STOQS_26113RC_PHAEO_5U.csv',
-##'STOQS_26113RC_PHAEO_GFF.csv', 'STOQS_26113RC_PO4.csv', 'STOQS_26113RC_SIO4.csv',
+## error  no data
+## 'STOQS_13215_CHL_1U.csv', ## error  no data
+## 'STOQS_13215_CHL_5U.csv', ## error  no data
 
-##'STOQS_27313RC_CHLA.csv',
+ 'STOQS_13215_CHL_GFF.csv','STOQS_13215_CHLA.csv', 'STOQS_13215_NO2.csv', 'STOQS_13215_NO3.csv',
 
-##'STOQS_27413RC_CHLA.csv',
+## error  no data
+## 'STOQS_13215_PHAEO_1U.csv', ## error no data
+## 'STOQS_13215_PHAEO_5U.csv', ## error no data
 
-##'STOQS_27513RC_CHLA.csv', 'STOQS_27513RC_CHL_GFF.csv', 'STOQS_27513RC_NO2.csv', 'STOQS_27513RC_NO3.csv',
-##'STOQS_27513RC_PHAEO_GFF.csv', 'STOQS_27513RC_PO4.csv', 'STOQS_27513RC_SIO4.csv',
+ 'STOQS_13215_PHAEO_GFF.csv', 'STOQS_13215_PO4.csv', 'STOQS_13215_SIO4.csv',
 
-##'STOQS_27613RC_CHLA.csv',
-##                         ]
+ 'STOQS_14115_CARBON_GFF.csv', 'STOQS_14115_CHL_1U.csv', 'STOQS_14115_CHL_5U.csv', 'STOQS_14115_CHL_GFF.csv', 
+ 'STOQS_14115_CHLA.csv', 'STOQS_14115_NO2.csv', 'STOQS_14115_NO3.csv', 'STOQS_14115_PHAEO_1U.csv',
+ 'STOQS_14115_PHAEO_5U.csv', 'STOQS_14115_PHAEO_GFF.csv', 'STOQS_14115_PO4.csv', 'STOQS_14115_SIO4.csv',
+ 
+ 'STOQS_14815_CARBON_GFF.csv', 'STOQS_14815_CHL_1U.csv', 'STOQS_14815_CHL_5U.csv', 'STOQS_14815_CHL_GFF.csv',
+ 'STOQS_14815_CHLA.csv', 'STOQS_14815_NO2.csv', 'STOQS_14815_NO3.csv', 'STOQS_14815_PHAEO_1U.csv',
+ 'STOQS_14815_PHAEO_5U.csv', 'STOQS_14815_PHAEO_GFF.csv', 'STOQS_14815_PO4.csv', 'STOQS_14815_SIO4.csv',
+ 
+ 'STOQS_15515_CARBON_GFF.csv', 'STOQS_15515_CHL_1U.csv', 'STOQS_15515_CHL_5U.csv', 'STOQS_15515_CHL_GFF.csv',
+ 'STOQS_15515_CHLA.csv', 'STOQS_15515_NO2.csv', 'STOQS_15515_NO3.csv', 'STOQS_15515_PHAEO_1U.csv',
+ 'STOQS_15515_PHAEO_5U.csv', 'STOQS_15515_PHAEO_GFF.csv', 'STOQS_15515_PO4.csv', 'STOQS_15515_SIO4.csv',                       
+
+ 'STOQS_15615_CARBON_GFF.csv', 'STOQS_15615_CHL_1U.csv', 'STOQS_15615_CHL_5U.csv', 'STOQS_15615_CHL_GFF.csv',
+ 'STOQS_15615_CHLA.csv', 'STOQS_15615_NO2.csv', 'STOQS_15615_NO3.csv', 'STOQS_15615_PHAEO_1U.csv',
+ 'STOQS_15615_PHAEO_5U.csv', 'STOQS_15615_PHAEO_GFF.csv', 'STOQS_15615_PO4.csv', 'STOQS_15615_SIO4.csv',
+
+                       ]
 
 
 ###################################################################################################################
 
-# Execute the load
+# Execute the load 
 cl.process_command_line()
 
 if cl.args.test:
+
     #cl.loadL_662(stride=100) 
-    #cl.load_NPS29(stride=10)
-    #cl.load_UCSC294(stride=10) 
-    #cl.load_UCSC260(stride=10)
+    ##cl.load_NPS29(stride=10)
+    cl.load_slocum_294(stride=10) 
+    cl.load_slocum_260(stride=10)
 
-    ##cl.load_wg_tex(stride=10)
-    ##cl.load_wg_oa(stride=10) 
+    #cl.load_wg_tex(stride=10)
+    #cl.load_wg_SV3_Tiny(stride=10)
+    ##cl.load_wg_oa(stride=10)
 
-    #cl.loadDaphne(stride=100)
     #cl.loadDorado(stride=100)
-    cl.loadDaphne(stride=100)
+    #cl.loadDaphne(stride=100)
     #cl.loadTethys(stride=100)
+    #cl.loadMakai(stride=100)
 
     #cl.loadRCuctd(stride=10)
     #cl.loadRCpctd(stride=10)
@@ -351,37 +342,42 @@ if cl.args.test:
     ##cl.loadBruceMoor(stride=10)
     ##cl.loadMackMoor(stride=10)
 
-    ##cl.loadSubSamples()
+    #cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
 
     cl.loadL_662(stride=2) 
-    cl.load_NPS29(stride=2) 
+    #cl.load_NPS29(stride=2)
+    cl.load_slocum_294(stride=2)
+    cl.load_slocum_260(stride=2) 
     cl.loadM1(stride=1)
-    cl.loadDorado(stride=2)
-    cl.loadRCuctd(stride=2)
-    cl.loadRCpctd(stride=2)
+    #cl.loadDorado(stride=2)
+    #cl.loadRCuctd(stride=2)
+    #cl.loadRCpctd(stride=2)
 
-    ##cl.loadSubSamples()
+    cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
 
-    ##cl.loadL_662() 
+    #cl.loadL_662() 
     #cl.load_NPS29()
-    #cl.load_UCSC294() 
-    #cl.load_UCSC260()
+    cl.load_slocum_294() 
+    cl.load_slocum_260()
  
+    #cl.load_wg_tex()
+    #cl.load_wg_SV3_Tiny()
     #cl.loadM1()
     #cl.loadDorado()
-    cl.loadDaphne()
-    ##cl.loadTethys(stride=100)    
+    #cl.loadDaphne()
+    #cl.loadTethys()    
+    #cl.loadMakai()    
     #cl.loadRCuctd()
     #cl.loadRCpctd() 
     ##cl.loadWFuctd()   
     ##cl.loadWFpctd()
 
-    ##cl.loadSubSamples()
+    #cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
