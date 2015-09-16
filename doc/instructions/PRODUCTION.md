@@ -100,6 +100,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
     <mapserver_ip_address> with your values, and with all your 
     campaigns/databases separated by commas assigned to STOQS_CAMPAIGNS), e.g.:
 
+        export STOQS_HOME=/opt/stoqsgit
         export STATIC_ROOT=/usr/share/nginx/html/static
         export MEDIA_ROOT=/usr/share/nginx/html/media
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
@@ -108,22 +109,22 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         export SECRET_KEY="<random_sequence_of_impossible_to_guess_characters>"
         export GDAL_DATA=/usr/share/gdal
         cd $STOQS_HOME/stoqs
-        uwsgi --ini stoqs_uwsgi.conf
+        /usr/local/bin/uwsgi --ini stoqs_uwsgi.ini
 
 12. Test the STOQS user interface at:
 
         http://<server_name>/
 
 13. Configure your server to run uWSGI in emperor mode (see: http://bit.ly/1KQH5Sv
-    for complete instructions):
+    for complete instructions) and test:
 
-        deactivate virtualenv
+        deactivate
         sudo /usr/local/bin/pip install uwsgi
         sudo mkdir -p /etc/uwsgi/vassals
         sudo ln -s $STOQS_HOME/stoqs/stoqs_uwsgi.ini /etc/uwsgi/vassals/
-        uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
+        /usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
 
-14. Add the following to /etc/rc.d/rc.local on CentOS machines:
-
-        uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
-
+14. To configure uWSGI to start on system boot put the commands from step 11 into 
+    a file named something like start_uwsgi.sh and put the full path to the file
+    in /etc/rc.d/rc.local.  To have it run in emperor mode replace the last line
+    in the script with the one from step 13.

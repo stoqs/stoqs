@@ -39,11 +39,13 @@ class BEDSLoader(LoadScript):
     Common routines for loading all BEDS data
     '''
 
-    brownish = {'bed01':       '8c510a',
+    brownish = {'bed00':       '8c010a',
+                'bed01':       '8c510a',
                 'bed02':       'bf812d',
                 'bed03':       '4f812d',
              }
-    colors = {  'bed01':       'ffeda0',
+    colors = {  'bed00':       'ff0da0',
+                'bed01':       'ffeda0',
                 'bed02':       'ffeda0',
                 'bed03':       '4feda0',
              }
