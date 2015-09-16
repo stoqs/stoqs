@@ -62,9 +62,9 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2015/netcdf/'
 cl.dorado_files = [
-#                   'Dorado389_2015_132_04_132_04_decim.nc',
-#                   'Dorado389_2015_148_01_148_01_decim.nc',
-#                   'Dorado389_2015_156_00_156_00_decim.nc',
+                   'Dorado389_2015_132_04_132_04_decim.nc',
+                   'Dorado389_2015_148_01_148_01_decim.nc',
+                   'Dorado389_2015_156_00_156_00_decim.nc',
                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
@@ -193,17 +193,17 @@ cl.wfpctd_files = [
 cl.rcuctd_base = cl.dodsBase + 'CANON/2015_OffSeason/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [
-#                 '18815plm01.nc',
-#                 '21515plm01.nc', ## already loaded
-                  '23715plm01.nc',
+                 '18815plm01.nc',
+                 '21515plm01.nc',
+                 '23715plm01.nc',
                   ]
 
 # PCTD
 cl.rcpctd_base = cl.dodsBase + 'CANON/2015_OffSeason/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [
-#                  '18815c01.nc', '18815c02.nc', '18815c03.nc',
-#                  '21515c01.nc', '21515c02.nc', '21515c03.nc', ## already loaded
+                  '18815c01.nc', '18815c02.nc', '18815c03.nc',
+                  '21515c01.nc', '21515c02.nc', '21515c03.nc', 
                   '23715c01.nc', '23715c02.nc', '23715c03.nc',
                   ]
 
@@ -269,15 +269,13 @@ cl.m1_endDatetime = enddate
 ###################################################################################################
 cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2015/')
 cl.subsample_csv_files = [
-## need .btl files associted with the original .pctd load for these to load...:
-  'STOQS_18815_CARBON_GFF.csv', 'STOQS_18815_CHLA.csv', 'STOQS_18815_CHL_1U.csv', 'STOQS_18815_CHL_5U.csv',
-  'STOQS_18815_CHL_GFF.csv', 'STOQS_18815_NO2.csv', 'STOQS_18815_NO3.csv', 'STOQS_18815_PHAEO_1U.csv',
-  'STOQS_18815_PHAEO_5U.csv', 'STOQS_18815_PHAEO_GFF.csv', 'STOQS_18815_PO4.csv', 'STOQS_18815_SIO4.csv',
+    'STOQS_18815_CARBON_GFF.csv', 'STOQS_18815_CHLA.csv', 'STOQS_18815_CHL_1U.csv', 'STOQS_18815_CHL_5U.csv',
+    'STOQS_18815_CHL_GFF.csv', 'STOQS_18815_NO2.csv', 'STOQS_18815_NO3.csv', 'STOQS_18815_PHAEO_1U.csv',
+    'STOQS_18815_PHAEO_5U.csv', 'STOQS_18815_PHAEO_GFF.csv', 'STOQS_18815_PO4.csv', 'STOQS_18815_SIO4.csv',
 
-## loaded fine:
- # 'STOQS_21515_CARBON_GFF.csv', 'STOQS_21515_CHLA.csv', 'STOQS_21515_CHL_1U.csv', 'STOQS_21515_CHL_5U.csv',
- # 'STOQS_21515_CHL_GFF.csv', 'STOQS_21515_NO2.csv', 'STOQS_21515_NO3.csv', 'STOQS_21515_PHAEO_1U.csv',
- # 'STOQS_21515_PHAEO_5U.csv', 'STOQS_21515_PHAEO_GFF.csv','STOQS_21515_PO4.csv', 'STOQS_21515_SIO4.csv',
+    'STOQS_21515_CARBON_GFF.csv', 'STOQS_21515_CHLA.csv', 'STOQS_21515_CHL_1U.csv', 'STOQS_21515_CHL_5U.csv',
+    'STOQS_21515_CHL_GFF.csv', 'STOQS_21515_NO2.csv', 'STOQS_21515_NO3.csv', 'STOQS_21515_PHAEO_1U.csv',
+    'STOQS_21515_PHAEO_5U.csv', 'STOQS_21515_PHAEO_GFF.csv','STOQS_21515_PO4.csv', 'STOQS_21515_SIO4.csv',
 
                           ]
 
@@ -295,58 +293,58 @@ if cl.args.test:
 
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10)
-    #cl.load_wg_Tiny(stride=10)
+    cl.load_wg_Tiny(stride=10)
 
-    #cl.loadDorado(stride=100)
+    ##cl.loadDorado(stride=100)
     #cl.loadDaphne(stride=100)
     #cl.loadTethys(stride=100)
     #cl.loadMakai(stride=100)
 
-    #cl.loadRCuctd(stride=10)
-    #cl.loadRCpctd(stride=10)
+    cl.loadRCuctd(stride=10)
+    cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10)
     ##cl.loadJMpctd(stride=10)
-    #cl.loadWFuctd(stride=10)   
-    #cl.loadWFpctd(stride=10)
+    ##cl.loadWFuctd(stride=10)   
+    ##cl.loadWFpctd(stride=10)
 
-    #cl.loadM1(stride=5)
+    cl.loadM1(stride=5)
 
     ##cl.loadBruceMoor(stride=10)
     ##cl.loadMackMoor(stride=10)
 
-    #cl.loadSubSamples()
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
 
     cl.loadL_662(stride=2) 
-    #cl.load_NPS29(stride=2) 
-    #cl.load_wg_Tiny(stride=2)
-    #cl.loadM1(stride=1)
-    #cl.loadDorado(stride=2)
-    #cl.loadRCuctd(stride=2)
-    #cl.loadRCpctd(stride=2)
+    ##cl.load_NPS29(stride=2) 
+    cl.load_wg_Tiny(stride=2)
+    cl.loadM1(stride=1)
+    ##cl.loadDorado(stride=2)
+    cl.loadRCuctd(stride=2)
+    cl.loadRCpctd(stride=2)
 
-    #cl.loadSubSamples()
+    cl.loadSubSamples()
 
 else:
     cl.stride = cl.args.stride
 
-    #cl.loadL_662() 
-    #cl.load_NPS29()
-    #cl.load_UCSC294() 
-    #cl.load_UCSC260()
-    #cl.load_wg_Tiny()
+    cl.loadL_662() 
+    ##cl.load_NPS29()
+    ##cl.load_UCSC294() 
+    ##cl.load_UCSC260()
+    cl.load_wg_Tiny()
     cl.loadM1()
-    #cl.loadDorado()
+    ##cl.loadDorado()
     #cl.loadDaphne()
     #cl.loadTethys()    
     #cl.loadMakai()    
-    #cl.loadRCuctd()
-    #cl.loadRCpctd() 
+    cl.loadRCuctd()
+    cl.loadRCpctd() 
     ##cl.loadWFuctd()   
     ##cl.loadWFpctd()
 
-    #cl.loadSubSamples()
+    cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()

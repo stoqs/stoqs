@@ -154,12 +154,12 @@ cl.slocum_260_endDatetime = enddate
 #cl.wg_tex_endDatetime = enddate
 
 # WG Tiny - All instruments combined into one file - one time coordinate
-cl.wg_SV3_Tiny_base = cl.dodsBase + 'CANON/2015_May/Platforms/Waveglider/SV3_Tiny/'
-cl.wg_SV3_Tiny_files = [ 'SV3_20150501_QC.nc' ]
-cl.wg_SV3_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
+cl.wg_Tiny_base = cl.dodsBase + 'CANON/2015_May/Platforms/Waveglider/SV3_Tiny/'
+cl.wg_Tiny_files = [ 'SV3_20150501_QC.nc' ]
+cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
                     'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
-cl.wg_SV3_Tiny_startDatetime = startdate
-cl.wg_SV3_Tiny_endDatetime = enddate
+cl.wg_Tiny_startDatetime = startdate
+cl.wg_Tiny_endDatetime = enddate
 
 # WG OA - All instruments combined into one file - one time coordinate
 ##cl.wg_oa_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_OA/final/'
@@ -272,39 +272,39 @@ cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__))
 cl.subsample_csv_files = [
 ## these are loaded OK:
 
- 'STOQS_13115_CARBON_GFF.csv', 'STOQS_13115_CHL_1U.csv', 'STOQS_13115_CHL_5U.csv', 'STOQS_13115_CHL_GFF.csv', 
- 'STOQS_13115_CHLA.csv', 'STOQS_13115_NO2.csv', 'STOQS_13115_NO3.csv', 'STOQS_13115_PHAEO_1U.csv',
- 'STOQS_13115_PHAEO_5U.csv', 'STOQS_13115_PHAEO_GFF.csv', 'STOQS_13115_PO4.csv', 'STOQS_13115_SIO4.csv',
+   'STOQS_13115_CARBON_GFF.csv', 'STOQS_13115_CHL_1U.csv', 'STOQS_13115_CHL_5U.csv', 'STOQS_13115_CHL_GFF.csv', 
+   'STOQS_13115_CHLA.csv', 'STOQS_13115_NO2.csv', 'STOQS_13115_NO3.csv', 'STOQS_13115_PHAEO_1U.csv',
+   'STOQS_13115_PHAEO_5U.csv', 'STOQS_13115_PHAEO_GFF.csv', 'STOQS_13115_PO4.csv', 'STOQS_13115_SIO4.csv',
 
- 'STOQS_13215_CARBON_GFF.csv',
+   'STOQS_13215_CARBON_GFF.csv',
 
 ## error  no data
 ## 'STOQS_13215_CHL_1U.csv', ## error  no data
 ## 'STOQS_13215_CHL_5U.csv', ## error  no data
 
- 'STOQS_13215_CHL_GFF.csv','STOQS_13215_CHLA.csv', 'STOQS_13215_NO2.csv', 'STOQS_13215_NO3.csv',
+   'STOQS_13215_CHL_GFF.csv','STOQS_13215_CHLA.csv', 'STOQS_13215_NO2.csv', 'STOQS_13215_NO3.csv',
 
 ## error  no data
 ## 'STOQS_13215_PHAEO_1U.csv', ## error no data
 ## 'STOQS_13215_PHAEO_5U.csv', ## error no data
 
- 'STOQS_13215_PHAEO_GFF.csv', 'STOQS_13215_PO4.csv', 'STOQS_13215_SIO4.csv',
+   'STOQS_13215_PHAEO_GFF.csv', 'STOQS_13215_PO4.csv', 'STOQS_13215_SIO4.csv',
 
- 'STOQS_14115_CARBON_GFF.csv', 'STOQS_14115_CHL_1U.csv', 'STOQS_14115_CHL_5U.csv', 'STOQS_14115_CHL_GFF.csv', 
- 'STOQS_14115_CHLA.csv', 'STOQS_14115_NO2.csv', 'STOQS_14115_NO3.csv', 'STOQS_14115_PHAEO_1U.csv',
- 'STOQS_14115_PHAEO_5U.csv', 'STOQS_14115_PHAEO_GFF.csv', 'STOQS_14115_PO4.csv', 'STOQS_14115_SIO4.csv',
+   'STOQS_14115_CARBON_GFF.csv', 'STOQS_14115_CHL_1U.csv', 'STOQS_14115_CHL_5U.csv', 'STOQS_14115_CHL_GFF.csv', 
+   'STOQS_14115_CHLA.csv', 'STOQS_14115_NO2.csv', 'STOQS_14115_NO3.csv', 'STOQS_14115_PHAEO_1U.csv',
+   'STOQS_14115_PHAEO_5U.csv', 'STOQS_14115_PHAEO_GFF.csv', 'STOQS_14115_PO4.csv', 'STOQS_14115_SIO4.csv',
  
- 'STOQS_14815_CARBON_GFF.csv', 'STOQS_14815_CHL_1U.csv', 'STOQS_14815_CHL_5U.csv', 'STOQS_14815_CHL_GFF.csv',
- 'STOQS_14815_CHLA.csv', 'STOQS_14815_NO2.csv', 'STOQS_14815_NO3.csv', 'STOQS_14815_PHAEO_1U.csv',
- 'STOQS_14815_PHAEO_5U.csv', 'STOQS_14815_PHAEO_GFF.csv', 'STOQS_14815_PO4.csv', 'STOQS_14815_SIO4.csv',
+   'STOQS_14815_CARBON_GFF.csv', 'STOQS_14815_CHL_1U.csv', 'STOQS_14815_CHL_5U.csv', 'STOQS_14815_CHL_GFF.csv',
+   'STOQS_14815_CHLA.csv', 'STOQS_14815_NO2.csv', 'STOQS_14815_NO3.csv', 'STOQS_14815_PHAEO_1U.csv',
+   'STOQS_14815_PHAEO_5U.csv', 'STOQS_14815_PHAEO_GFF.csv', 'STOQS_14815_PO4.csv', 'STOQS_14815_SIO4.csv',
  
- 'STOQS_15515_CARBON_GFF.csv', 'STOQS_15515_CHL_1U.csv', 'STOQS_15515_CHL_5U.csv', 'STOQS_15515_CHL_GFF.csv',
- 'STOQS_15515_CHLA.csv', 'STOQS_15515_NO2.csv', 'STOQS_15515_NO3.csv', 'STOQS_15515_PHAEO_1U.csv',
- 'STOQS_15515_PHAEO_5U.csv', 'STOQS_15515_PHAEO_GFF.csv', 'STOQS_15515_PO4.csv', 'STOQS_15515_SIO4.csv',                       
+   'STOQS_15515_CARBON_GFF.csv', 'STOQS_15515_CHL_1U.csv', 'STOQS_15515_CHL_5U.csv', 'STOQS_15515_CHL_GFF.csv',
+   'STOQS_15515_CHLA.csv', 'STOQS_15515_NO2.csv', 'STOQS_15515_NO3.csv', 'STOQS_15515_PHAEO_1U.csv',
+   'STOQS_15515_PHAEO_5U.csv', 'STOQS_15515_PHAEO_GFF.csv', 'STOQS_15515_PO4.csv', 'STOQS_15515_SIO4.csv',                       
 
- 'STOQS_15615_CARBON_GFF.csv', 'STOQS_15615_CHL_1U.csv', 'STOQS_15615_CHL_5U.csv', 'STOQS_15615_CHL_GFF.csv',
- 'STOQS_15615_CHLA.csv', 'STOQS_15615_NO2.csv', 'STOQS_15615_NO3.csv', 'STOQS_15615_PHAEO_1U.csv',
- 'STOQS_15615_PHAEO_5U.csv', 'STOQS_15615_PHAEO_GFF.csv', 'STOQS_15615_PO4.csv', 'STOQS_15615_SIO4.csv',
+   'STOQS_15615_CARBON_GFF.csv', 'STOQS_15615_CHL_1U.csv', 'STOQS_15615_CHL_5U.csv', 'STOQS_15615_CHL_GFF.csv',
+   'STOQS_15615_CHLA.csv', 'STOQS_15615_NO2.csv', 'STOQS_15615_NO3.csv', 'STOQS_15615_PHAEO_1U.csv',
+   'STOQS_15615_PHAEO_5U.csv', 'STOQS_15615_PHAEO_GFF.csv', 'STOQS_15615_PO4.csv', 'STOQS_15615_SIO4.csv',
 
                        ]
 
@@ -316,72 +316,98 @@ cl.process_command_line()
 
 if cl.args.test:
 
-    #cl.loadL_662(stride=100) 
-    ##cl.load_NPS29(stride=10)
-    cl.load_slocum_294(stride=10) 
-    cl.load_slocum_260(stride=10)
+    cl.loadL_662(stride=100) 
+    ##cl.load_NPS29(stride=10)  ## not in this campaign
+    ##cl.load_slocum_294(stride=10) ## waiting for STOQS enhancement to load slocum_294
+    ##cl.load_slocum_260(stride=10) ## waiting for STOQS enhancement to load slocum_294
 
-    #cl.load_wg_tex(stride=10)
-    #cl.load_wg_SV3_Tiny(stride=10)
-    ##cl.load_wg_oa(stride=10)
+    ##cl.load_wg_tex(stride=10) ## not in this campaign
+    cl.load_wg_Tiny(stride=10)
+    ##cl.load_wg_oa(stride=10)  ## waiting for data to be formated for loading
 
-    #cl.loadDorado(stride=100)
+    cl.loadDorado(stride=100)
     #cl.loadDaphne(stride=100)
     #cl.loadTethys(stride=100)
     #cl.loadMakai(stride=100)
 
-    #cl.loadRCuctd(stride=10)
-    #cl.loadRCpctd(stride=10)
-    ##cl.loadJMuctd(stride=10)
-    ##cl.loadJMpctd(stride=10)
-    #cl.loadWFuctd(stride=10)   
-    #cl.loadWFpctd(stride=10)
+    cl.loadRCuctd(stride=10)
+    cl.loadRCpctd(stride=10)
+    ##cl.loadJMuctd(stride=10) ## waiting for data to be formated for loading
+    ##cl.loadJMpctd(stride=10) ## waiting for data to be formated for loading
+    ##cl.loadWFuctd(stride=10) ## not in this campaign   
+    ##cl.loadWFpctd(stride=10) ## not in this campaign
 
-    #cl.loadM1(stride=10)
+    cl.loadM1(stride=10)
 
-    ##cl.loadBruceMoor(stride=10)
-    ##cl.loadMackMoor(stride=10)
+    ##cl.loadBruceMoor(stride=10) ## waiting for data to be formated for loading
+    ##cl.loadMackMoor(stride=10) ## waiting for data to be formated for loading
 
-    #cl.loadSubSamples()
+    #cl.loadSubSamples() ## need to populate local directory /loaders/CANON/BOG_Data/CANON_May2015/ with sample files 
 
 elif cl.args.optimal_stride:
 
-    cl.loadL_662(stride=2) 
-    #cl.load_NPS29(stride=2)
-    cl.load_slocum_294(stride=2)
-    cl.load_slocum_260(stride=2) 
-    cl.loadM1(stride=1)
-    #cl.loadDorado(stride=2)
-    #cl.loadRCuctd(stride=2)
-    #cl.loadRCpctd(stride=2)
+    cl.loadL_662(stride=2)
+    ##cl.load_NPS29(stride=2)  ## not in this campaign
+    ##cl.load_slocum_294(stride=2) ## waiting for STOQS enhancement to load slocum_294
+    ##cl.load_slocum_260(stride=2) ## waiting for STOQS enhancement to load slocum_294
 
-    cl.loadSubSamples()
+    ##cl.load_wg_tex(stride=2) ## not in this campaign
+    cl.load_wg_Tiny(stride=2)
+    ##cl.load_wg_oa(stride=2)  ## waiting for data to be formated for loading
+
+    cl.loadDorado(stride=2)
+    #cl.loadDaphne(stride=2)
+    #cl.loadTethys(stride=2)
+    #cl.loadMakai(stride=2)
+
+    cl.loadRCuctd(stride=2)
+    cl.loadRCpctd(stride=2)
+    ##cl.loadJMuctd(stride=2) ## waiting for data to be formated for loading
+    ##cl.loadJMpctd(stride=2) ## waiting for data to be formated for loading
+    ##cl.loadWFuctd(stride=2) ## not in this campaign   
+    ##cl.loadWFpctd(stride=2) ## not in this campaign
+
+    cl.loadM1(stride=1)
+
+    ##cl.loadBruceMoor(stride=2) ## waiting for data to be formated for loading
+    ##cl.loadMackMoor(stride=2) ## waiting for data to be formated for loading
+
+    #cl.loadSubSamples() ## need to populate local directory /loaders/CANON/BOG_Data/CANON_May2015/ with sample files 
 
 else:
     cl.stride = cl.args.stride
 
-    #cl.loadL_662() 
-    #cl.load_NPS29()
-    cl.load_slocum_294() 
-    cl.load_slocum_260()
- 
-    #cl.load_wg_tex()
-    #cl.load_wg_SV3_Tiny()
-    #cl.loadM1()
-    #cl.loadDorado()
-    #cl.loadDaphne()
-    #cl.loadTethys()    
-    #cl.loadMakai()    
-    #cl.loadRCuctd()
-    #cl.loadRCpctd() 
-    ##cl.loadWFuctd()   
-    ##cl.loadWFpctd()
+    cl.loadL_662()
+    ##cl.load_NPS29()  ## not in this campaign
+    ##cl.load_slocum_294() ## waiting for STOQS enhancement to load slocum_294
+    ##cl.load_slocum_260() ## waiting for STOQS enhancement to load slocum_294
 
-    #cl.loadSubSamples()
+    ##cl.load_wg_tex() ## not in this campaign
+    cl.load_wg_Tiny()
+    ##cl.load_wg_oa()  ## waiting for data to be formated for loading
+
+    cl.loadDorado()
+    #cl.loadDaphne()
+    #cl.loadTethys()
+    #cl.loadMakai()
+
+    cl.loadRCuctd()
+    cl.loadRCpctd()
+    ##cl.loadJMuctd() ## waiting for data to be formated for loading
+    ##cl.loadJMpctd() ## waiting for data to be formated for loading
+    ##cl.loadWFuctd() ## not in this campaign   
+    ##cl.loadWFpctd() ## not in this campaign
+
+    cl.loadM1()
+
+    ##cl.loadBruceMoor() ## waiting for data to be formated for loading
+    ##cl.loadMackMoor() ## waiting for data to be formated for loading
+
+    #cl.loadSubSamples() ## need to populate local directory /loaders/CANON/BOG_Data/CANON_May2015/ with sample files 
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
 print "All Done."
 
- 
+
