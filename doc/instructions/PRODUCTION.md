@@ -11,7 +11,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
 ### Steps for hosting on your own server
 
 1. On your server install nginx and configure to start (configure nginx
-   by editing the /etc/nginx/conf.d/default.conf file):
+   by editing the /etc/nginx/conf.d/default.conf file after you install it):
 
         sudo yum install nginx
         sudo chkconfig nginx on
@@ -53,7 +53,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';"
 
 6. As regular 'stoqsadm' user initialize and load the default stoqs database (again,
-   skip this step on a STOS Vagrantfile provisioned system):
+   skip this step on a STOQS Vagrantfile provisioned system):
 
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
         stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
@@ -61,7 +61,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         wget -q -N -O stoqs/loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
         stoqs/loaders/loadTestData.py
 
-7. Copy the file $STOQS_HOME/stoqs/stoqs_nginx.conf to a file that will be
+7. Copy the file `$STOQS_HOME/stoqs/stoqs_nginx.conf` to a file that will be
    specific for your system and edit it to and change the server_name
    and location settings for your server.  There are absolute directory paths in 
    this file; make sure they refer to paths on your servers.  Then create a
@@ -71,7 +71,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         vi $STOQS_HOME/stoqs/stoqs_nginx_<host>kraken.conf
         sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx_<host>kraken.conf /etc/nginx/conf.d
 
-8. Edit the $STOQS_HOME/stoqs/stoqs_uwsgi.ini file making sure that all the 
+8. Edit the `$STOQS_HOME/stoqs/stoqs_uwsgi.ini` file making sure that all the 
    absolute directory paths are correct.
 
 9. Create the media and static web directories and copy the static files to the 
@@ -84,7 +84,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         export STATIC_ROOT=/usr/share/nginx/html/static
         stoqs/manage.py collectstatic
 
-10. Create the $MEDIA_ROOT/sections and $MEDIA_ROOT/parameterparameter
+10. Create the `$MEDIA_ROOT/sections` and `$MEDIA_ROOT/parameterparameter`
     directories and set permissions for writing by the web process. 
 
         export MEDIA_ROOT=/usr/share/nginx/html/media
@@ -95,8 +95,8 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         sudo chmod 733 $MEDIA_ROOT/parameterparameter
 
 
-11. Start the stoqs uWSGI application, replacing <dbuser>, <pw>, <host>, <port>, 
-    <mapserver_ip_address>, and other values that are specific to your 
+11. Start the stoqs uWSGI application, replacing `<dbuser>, <pw>, <host>, <port>, 
+    <mapserver_ip_address>`, and other values that are specific to your 
     server, e.g.:
 
         export STOQS_HOME=/opt/stoqsgit
@@ -123,13 +123,13 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         /usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
 
 14. To configure uWSGI to start on system boot put the commands from step 11 into 
-    a script file named something like start_uwsgi.sh and put the full path of the file
-    in /etc/rc.d/rc.local.  To have it run in emperor mode replace the last line 
+    a script file named something like `start_uwsgi.sh` and put the full path of the file
+    `in /etc/rc.d/rc.local`.  To have it run in emperor mode replace the last line 
     in the script with the last line from step 13.  As this script contains keys 
     and database credentials take appropriate steps to protect it from prying eyes.
 
 15. To restart a production uWSGI server running in emperor mode simply `touch`
-    the file that is linked in the /etc/uwsgi/vassals/ directory, e.g.:
+    the file that is linked in the `/etc/uwsgi/vassals/ directory`, e.g.:
 
         touch $STOQS_HOME/stoqs/stoqs_uwsgi.ini
 
