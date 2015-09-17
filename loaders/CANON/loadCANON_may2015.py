@@ -342,7 +342,7 @@ if cl.args.test:
     ##cl.loadBruceMoor(stride=10) ## waiting for data to be formated for loading
     ##cl.loadMackMoor(stride=10) ## waiting for data to be formated for loading
 
-    #cl.loadSubSamples() ## need to populate local directory /loaders/CANON/BOG_Data/CANON_May2015/ with sample files 
+    cl.loadSubSamples() ## need to populate local directory /loaders/CANON/BOG_Data/CANON_May2015/ with sample files 
 
 elif cl.args.optimal_stride:
 
@@ -372,7 +372,7 @@ elif cl.args.optimal_stride:
     ##cl.loadBruceMoor(stride=2) ## waiting for data to be formated for loading
     ##cl.loadMackMoor(stride=2) ## waiting for data to be formated for loading
 
-    #cl.loadSubSamples() ## need to populate local directory /loaders/CANON/BOG_Data/CANON_May2015/ with sample files 
+    cl.loadSubSamples() ## need to populate local directory /loaders/CANON/BOG_Data/CANON_May2015/ with sample files 
 
 else:
     cl.stride = cl.args.stride
@@ -403,7 +403,7 @@ else:
     ##cl.loadBruceMoor() ## waiting for data to be formated for loading
     ##cl.loadMackMoor() ## waiting for data to be formated for loading
 
-    #cl.loadSubSamples() ## need to populate local directory /loaders/CANON/BOG_Data/CANON_May2015/ with sample files 
+    cl.loadSubSamples() ## need to populate local directory /loaders/CANON/BOG_Data/CANON_May2015/ with sample files 
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
