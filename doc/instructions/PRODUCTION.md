@@ -1,18 +1,16 @@
-PRODUCTION
-==========
-
-Notes for installing STOQS on a production server
+Serving STOQS with nginx and uWSGI
+==================================
 
 STOQS is configured to be installed on your own self-hosted web server or on a 
-Platform as a Service (PaaS) provider, such as Heroku. It follows
+Platform as a Service (PaaS) provider, such as Heroku.  It follows
 [The Twelve-Factor App](http://12factor.net/) guidelines with deployment 
 settings placed in environment variables.  Unless otherwise noted all commands
 should be executed from a regular user account that you will use to manage
 the stoqs application, e.g. an account something like USER='stoqsadm'.
 
-### Hosting STOQS on your own Nginx web server:
+### Steps for hosting on your own server
 
-1. On your server install nginx and configure to start (you may configure nginx
+1. On your server install nginx and configure to start (configure nginx
    by editing the /etc/nginx/conf.d/default.conf file):
 
         sudo yum install nginx
@@ -27,16 +25,15 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         cd `dirname $STOQS_HOME`
         git clone https://github.com/stoqs/stoqs.git stoqsgit
 
-3. Provision your server: 
+3. Provision your server, there are many options: 
 
     * Start with a system provisioned with a `Vagrant up --provider virtualbox` command
     * Install all the required software using provision.sh as a guide
     * Use a server that already has much of the required software installed
-    * There are many other ways, including Docker, for setting up the required services
+    * Other ways, including Docker, that are up-and-coming in the DevOps world
 
 4. Create a virtualenv using the executable associated with Python 2.7, install 
-   the production requirements, and setup environment for server with multiple
-   versions of Postgresql installed:
+   the production requirements, and setup the environment:
    
         cd $STOQS_HOME 
         /usr/local/bin/virtualenv venv-stoqs
@@ -45,7 +42,9 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         export PATH=/usr/pgsql-9.4/bin:$PATH
         alias psql='psql -p 5433'   # For postgresql server running on port 5433
 
-5. As privileged 'postgres' user create default stoqs database:
+5. As privileged 'postgres' user create default stoqs database (skip this step on
+   a system built with `Vagrant up --provider virtualbox` where the `./test.sh`
+   has been run, as test.sh creates the default database):
 
         /bin/su postgres
         export PATH=/usr/pgsql-9.4/bin:$PATH
@@ -53,7 +52,8 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;"
         psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';"
 
-6. As regular 'stoqsadm' user initialize and load the default stoqs database:
+6. As regular 'stoqsadm' user initialize and load the default stoqs database (again,
+   skip this step on a STOS Vagrantfile provisioned system):
 
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
         stoqs/manage.py makemigrations stoqs --settings=config.settings.local --noinput
@@ -71,8 +71,8 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         vi $STOQS_HOME/stoqs/stoqs_nginx_<host>kraken.conf
         sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx_<host>kraken.conf /etc/nginx/conf.d
 
-8. Edit the $STOQS_HOME/stoqs/stoqs_uwsgi.ini file to make sure that 
-
+8. Edit the $STOQS_HOME/stoqs/stoqs_uwsgi.ini file making sure that all the 
+   absolute directory paths are correct.
 
 9. Create the media and static web directories and copy the static files to the 
    production web server location. The $STATIC_ROOT directory must be writable 
@@ -86,7 +86,6 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
 
 10. Create the $MEDIA_ROOT/sections and $MEDIA_ROOT/parameterparameter
     directories and set permissions for writing by the web process. 
-    (They are are the location for graphics produced by the STOQS UI.):
 
         export MEDIA_ROOT=/usr/share/nginx/html/media
         sudo mkdir $MEDIA_ROOT/sections
@@ -96,24 +95,23 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         sudo chmod 733 $MEDIA_ROOT/parameterparameter
 
 
-11. Start the stoqs application (replacing <dbuser> <pw> <host> <port> and
-    <mapserver_ip_address> with your values, and with all your 
-    campaigns/databases separated by commas assigned to STOQS_CAMPAIGNS), e.g.:
+11. Start the stoqs uWSGI application, replacing <dbuser>, <pw>, <host>, <port>, 
+    <mapserver_ip_address>, and other values that are specific to your 
+    server, e.g.:
 
         export STOQS_HOME=/opt/stoqsgit
         export STATIC_ROOT=/usr/share/nginx/html/static
         export MEDIA_ROOT=/usr/share/nginx/html/media
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
         export MAPSERVER_HOST="<mapserver_ip_address>"
-        export STOQS_CAMPAIGNS="stoqs_beds_canyon_events_t,stoqs_may2015"
+        export STOQS_CAMPAIGNS="<comma_separated>,<databases>,<not_in_campaigns>"
         export SECRET_KEY="<random_sequence_of_impossible_to_guess_characters>"
         export GDAL_DATA=/usr/share/gdal
-        cd $STOQS_HOME/stoqs
         /usr/local/bin/uwsgi --ini stoqs_uwsgi.ini
 
-12. Test the STOQS user interface at:
+12. Test the STOQS user interface using the configuration of your nginx server:
 
-        http://<server_name>/
+        http://<server_name>:<port>/
 
 13. Configure your server to run uWSGI in emperor mode (see: http://bit.ly/1KQH5Sv
     for complete instructions) and test:
@@ -125,6 +123,16 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         /usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
 
 14. To configure uWSGI to start on system boot put the commands from step 11 into 
-    a file named something like start_uwsgi.sh and put the full path to the file
-    in /etc/rc.d/rc.local.  To have it run in emperor mode replace the last line
-    in the script with the one from step 13.
+    a script file named something like start_uwsgi.sh and put the full path of the file
+    in /etc/rc.d/rc.local.  To have it run in emperor mode replace the last line 
+    in the script with the last line from step 13.  As this script contains keys 
+    and database credentials take appropriate steps to protect it from prying eyes.
+
+15. To restart a production uWSGI server running in emperor mode simply `touch`
+    the file that is linked in the /etc/uwsgi/vassals/ directory, e.g.:
+
+        touch $STOQS_HOME/stoqs/stoqs_uwsgi.ini
+
+    A restart is needed to use updated software or configurations, for example
+    following a `git pull` command.
+
