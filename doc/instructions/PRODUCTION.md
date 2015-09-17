@@ -1,5 +1,5 @@
-Installing STOQS for production with nginx and uWSGI
-====================================================
+Serving STOQS with nginx and uWSGI
+==================================
 
 STOQS is configured to be installed on your own self-hosted web server or on a 
 Platform as a Service (PaaS) provider, such as Heroku.  It follows
@@ -8,7 +8,7 @@ settings placed in environment variables.  Unless otherwise noted all commands
 should be executed from a regular user account that you will use to manage
 the stoqs application, e.g. an account something like USER='stoqsadm'.
 
-### Steps for hosting on your on server
+### Steps for hosting on your own server
 
 1. On your server install nginx and configure to start (configure nginx
    by editing the /etc/nginx/conf.d/default.conf file):
