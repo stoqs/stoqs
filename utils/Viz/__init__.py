@@ -358,7 +358,7 @@ class MeasuredParameter(object):
         '''
         Return RGB color value for data_value given member's color lookup table and cmin, cmax lookup table limits
         '''
-        clt = self.cm_jetplus
+        clt = self.cm_jetplus2
         indx = int(round((float(datavalue) - cmin) * ((len(clt.colors) - 1) / float(cmax - cmin))))
         if indx < 0:
             indx=0
