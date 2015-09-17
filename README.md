@@ -5,8 +5,8 @@ Spatial Temporal Oceanographic Query System
 [![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=django17upgrade)](https://coveralls.io/r/stoqs/stoqs?branch=django17upgrade)
 [![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=django17upgrade)](https://requires.io/github/stoqs/stoqs/requirements/?branch=django17upgrade)
 
-STOQS is a geospatial database and web application designed for providing efficient 
-acccess to *in situ* oceanographic data across any dimension.
+STOQS is a geospatial database and web application designed to give oceanographers
+efficient acccess to *in situ* measurement and *ex situ* sample data.
 See http://www.stoqs.org for more information.
 
 Getting started with a STOQS development system with [Vagrant](https://www.vagrantup.com/)
