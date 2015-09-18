@@ -22,6 +22,7 @@ After your virtual machine has booted, log in, finish the Python setup, and test
     cd ~/dev/stoqsgit
     source venv-stoqs/bin/activate
     ./setup.sh
+    export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
     ./test.sh CHANGEME
 
 Start the development server:
