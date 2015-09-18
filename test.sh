@@ -3,16 +3,40 @@
 # Designed for re-running on development system - ignore errors in Vagrant and Travis-ci
 # Pass the stoqsadm password as an argument on first execution in order to create the
 # stoqsadm user; it must match what's in DATABASE_URL.  Must also set MAPSERVER_HOST.
-# Make sure none of these are set: STATIC_FILES, STATIC_URL, MEDIA_FILES, MEDIA_URL.
+# Make sure none of these are set: STATIC_FILES, STATIC_URL, MEDIA_FILES, MEDIA_URL 
+# and that nothing is connected to the default stoqs database.
 
+if [ -z $1 ]
+then
+    echo "Please provide the password for the local PostgreSQL stoqsadm account."
+    echo "Usage: $0 <stoqsadm_db_password>"
+    exit -1
+fi
+if [ -L stoqs/campaigns.py ]
+then
+    echo "Found stoqs/campaigns.py symbolic link.  For faster processing it's"
+    echo "suggested that you remove stoqs/campaigns.py and stoqs/campaigns.pyc so"
+    echo "that test_ databases don't get created for all the campaigns there."
+    exit -1
+fi
 psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
 psql -c "DROP DATABASE stoqs;" -U postgres
+if [ $? != 0 ]
+then
+    echo "Cannot drop database stoqs; refer to above message."
+    exit -1
+fi
 psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;" -U postgres
 psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
 
 # DATABASE_URL environment variable must be set outside of this script
 stoqs/manage.py makemigrations stoqs --settings=config.settings.ci --noinput
 stoqs/manage.py migrate --settings=config.settings.ci --noinput --database=default
+if [ $? != 0 ]
+then
+    echo "Cannot migrate default database; refer to above error message."
+    exit -1
+fi
 psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
 
 # Assume starting in project home (stoqsgit) directory, get bathymetry, and load data
@@ -26,19 +50,22 @@ coverage run -a --include="contrib/analysis/classify.py" contrib/analysis/classi
   --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment \
   --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 -v
 
-# Run tests using the continuous integration setting
-# test_stoqs database created and dropped by role of the shell account using Test framework's DB names
+# Create database fixture and run tests using the continuous integration (ci) setting
+# Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL
 ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_test_data.json
 echo "Unit tests..."
-coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
+DATABASE_URL=postgis://127.0.0.1:5432/stoqs bash -c "coverage run -a --source=utils,stoqs \
+    manage.py test stoqs.tests.unit_tests --settings=config.settings.ci"
 unit_tests_status=$?
 
-# Run the development server in the background for the functional tests
+# Run the development server in the background for the functional tests with full DATABASE_URL
+# so that mapserver can connect to the database
 coverage run -a --source=utils,stoqs manage.py runserver --noreload \
     --settings=config.settings.ci > /tmp/functional_tests_server.log 2>&1 &
 pid=$!
-echo "Functional test with development server running as pid = $pid ..."
-./manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
+echo "Functional tests with development server running as pid = $pid ..."
+DATABASE_URL=postgis://127.0.0.1:5432/stoqs bash -c "./manage.py test \
+    stoqs.tests.functional_tests --settings=config.settings.ci"
 ps -ef | grep $pid
 echo "Trying to kill with TERM signal..."
 /usr/bin/kill -s TERM $pid
@@ -50,3 +77,4 @@ tools/removeTmpFiles.sh > /dev/null 2>&1
 coverage report -m
 cd ..
 exit $unit_tests_status
+
