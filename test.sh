@@ -21,12 +21,12 @@ then
 fi
 psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
 psql -c "DROP DATABASE stoqs;" -U postgres
+psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;" -U postgres
 if [ $? != 0 ]
 then
-    echo "Cannot drop database stoqs; refer to above message."
+    echo "Cannot create default database stoqs; refer to above message."
     exit -1
 fi
-psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;" -U postgres
 psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
 
 # DATABASE_URL environment variable must be set outside of this script
