@@ -299,7 +299,7 @@ LOGGING['formatters'] = {
         'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(filename)s %(funcName)s():%(lineno)d %(message)s'
     },
     'verbose': {
-        'format': '%(levelname)s %(asctime)s %(module)s %(filename)s %(funcName)s():%(lineno)d %(message)s'
+        'format': '%(levelname)s %(asctime)s %(filename)s %(funcName)s():%(lineno)d %(message)s'
     },
     'simple': {
         'format': '%(levelname)s %(message)s'
