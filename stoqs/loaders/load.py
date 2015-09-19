@@ -163,12 +163,22 @@ class Loader():
                or load_command.endswith('.sh') or '&&' in load_command)
 
     def checks(self):
-        campaigns = importlib.import_module(self.args.campaigns)
+        # That stoqs/campaigns.py file can be loaded
+        try:
+            campaigns = importlib.import_module(self.args.campaigns)
+        except ImportError:
+            print('The stoqs/campaigns.py could not be loaded. '
+                              'Create a symbolic link named "campaigns.py" '
+                              'pointing to the file for your site.')
+            print('Use stoqs/mbari_campaigns.py as a model')
+            sys.exit()
+
         if self.args.db:
             for d in self.args.db:
                 if d not in campaigns.campaigns.keys():
                     self.logger.warn('%s not in %s', d, self.args.campaigns)
 
+        # That can connect as user postgres for creating and dropping databases
         cmd = ('psql -p {} -c "\q" -U postgres').format(settings.DATABASES['default']['PORT'])
         self.logger.debug('cmd = %s', cmd)
         ret = os.system(cmd)
@@ -191,6 +201,7 @@ local   all             all                                     peer
 '''
             self.logger.info(suggestion)
 
+        # That the user really wants to reload all production databases
         if self.args.clobber and not self.args.test:
             print "On the server running on port =", settings.DATABASES['default']['PORT']
             print "You are about to drop all database(s) in the list below and reload them:"
@@ -207,11 +218,20 @@ local   all             all                                     peer
                 except IndexError:
                     pass
 
-            ans = raw_input('Are you sure you want to drop these database(s) and reload them? y/N ')
+            ans = raw_input('\nAre you sure you want to drop these database(s) and reload them? y/N ')
             if ans.lower() != 'y':
                 print 'Exiting'
                 sys.exit()
 
+        # That user wants to load all the production databases (no command line arguments)
+        if not sys.argv[1:]:
+            print "On the server running on port =", settings.DATABASES['default']['PORT']
+            print "You are about to load all these databases:"
+            print ' '.join(campaigns.campaigns.keys())
+            ans = raw_input('\nAre you sure you want load all these databases? y/N ')
+            if ans.lower() != 'y':
+                print 'Exiting'
+                sys.exit()
 
 
     def recordprovenance(self, db, load_command, log_file):
