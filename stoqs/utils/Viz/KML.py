@@ -6,13 +6,10 @@ import logging
 from stoqs import models as m
 from django.conf import settings
 from django.db.models import Avg
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 import pprint
 
 logger = logging.getLogger(__name__)
-
-class NoDataForKML(Exception):
-    pass
 
 
 class InvalidLimits(Exception):
@@ -96,7 +93,6 @@ class KML(object):
     
         if not pName:
             raise NoDataForKML('parameter__name, parameter__standard_name, nor parameter__id specified')
-    
 
         logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
         logger.debug('self.stride = %d', self.stride)
@@ -151,7 +147,7 @@ class KML(object):
         logger.debug(descr)
         try:
             kml = self.makeKML(self.request.META['dbAlias'], dataHash, pName, folderName, descr, self.request.GET.get('cmin', None), self.request.GET.get('cmax', None))
-        except InvalidLimits, e:
+        except InvalidLimits as e:
             logger.exception(e)
             return response
 

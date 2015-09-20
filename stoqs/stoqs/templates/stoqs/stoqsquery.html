@@ -396,7 +396,6 @@
                     </transform>
                 </transform>
 
-
                                             </Scene>
                                         </X3D>
                                         </div>
@@ -1118,11 +1117,10 @@
     <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
-    <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.debug.js"></script>-->
+    <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.debug.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/zGeospatial.js"></script>-->
     <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom.js"></script>
-    <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/zGeospatial.js"></script>-->
     <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script>
-    <!--<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script> -->
     <script type="text/javascript" src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/GeoOriginTransform.js"></script>
 
@@ -1952,7 +1950,7 @@
                     // to get the flot axis limits resulting from the remaining selections so that the image for
                     // parameterplatformdatavaluepng can be properly generated with those axis limits.
                     clearingTemporalFlag = true;
-                    items = ['parameters', 'platforms', 'simpledepthtime', 'sampledepthtime'];
+                    items = ['parameters', 'platforms', 'simpledepthtime', 'sampledepthtime', 'nettowdepthtime'];
                 }
             }
             rebuildFilters(items);
@@ -2111,20 +2109,18 @@
 
     $('body').on('change', '.parameter-plot-radio', function (e) {
         if ( $('body').data()['parameterplatforms'][e.target.value] ) {
-            if ( $('body').data()['parameterplatforms'][e.target.value].length == 1 ) {
-                $('#contour-scatter-buttons').show();
-                $('#sensor-tracks-checkbox').show();
-                $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
-                                                             $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
-                $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
-                $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
-                $('#showsensortracks').removeAttr('disabled');
-                $('#showgeox3ddatatext').text($('#temporalparameterplotinfo').data()['info']);
-                rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
+            if ( $('body').data()['parameterplatforms'][e.target.value].length != 1 ) {
+                alert('WARNING: Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.');
             }
-            else {
-                alert('Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter. Select just one of them. (You may plot parameters from multiple platforms by adding platforms after you plot data from a single platform.)');
-            }
+            $('#contour-scatter-buttons').show();
+            $('#sensor-tracks-checkbox').show();
+            $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
+                                                         $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
+            $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
+            $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
+            $('#showsensortracks').removeAttr('disabled');
+            $('#showgeox3ddatatext').text($('#temporalparameterplotinfo').data()['info']);
+            rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
         }
         else {
             // Remove sensortracks and image from Flot plot
@@ -2137,7 +2133,7 @@
             $('#showgeox3ddatatext').text('');
             $('#sectioncolorbar > img').removeAttr('src');
             $('#temporalparameterstrideinfo').text('');
-            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime']);
+            rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'nettowdepthtime']);
         }
     });
 
@@ -2922,6 +2918,17 @@
             sample_points.setVisibility(true);         // Turn on sample view openlayers
         }
 
+        // Add the nettow lines, each with a label
+        $.each(data['nettowdepthtime'], function (index, nettow) {
+            nettow["color"] = "#000000";
+            nettow["fillColor"] = "#ffffff";
+            nettow["points"] = {show: true, fill: true, lineWidth: 1};
+            nettow["lines"] = {show: true, lineWidth: 4};
+            nettow["hoverable"] = true;
+            nettow["clickable"] = true;
+            dataset.push(nettow);
+        });
+
         return dataset;
 
     } // getDepthDataset()
@@ -3621,7 +3628,7 @@
             }
         } // redrawParameterTime()
 
-        function resetWaitIndicators(data, error) {
+        function resetWaitIndicators(data) {
             $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
             $('#time-parameter-flot').removeClass('stoqs-background-ajax-loader-pulse ');
             $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
@@ -3641,6 +3648,7 @@
                 }
             }
             else {
+                // No data implies error - this should not happen. Check server log for Exception and reload page.
                 $('#metadata-count').html(" <span class='fail-text'>AJAX request for summary data failed</span> - ");
             }
             $('#metadata-ajaxtime').css( { 'color': 'black' } );
@@ -3788,6 +3796,7 @@
                         else {
                             $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
                             $('#temporalparameterplotinfo').css( { 'color': 'red' } );
+                            $('#sectioncolorbar > img').removeAttr('src');
                         }
                     }
                     else {
@@ -4089,9 +4098,22 @@
         });
 
     } // updateSummaryData()
-    
+   
+    function setCrosshair(eventObject) {
+        // Handle events from PlatformOrientation TimeSensor to update crosshair on Temporal flot plot
+        // See: http://doc.x3dom.org/tutorials/animationInteraction/onoutputchange/example.html
+        if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
+            return;
+        
+        var t = $('body').data()['po_start_time'] + eventObject.value * ($('body').data()['po_end_time'] - $('body').data()['po_start_time']);
+
+        timedepthplot.lockCrosshair({x: t, y:0});
+        if ( ! $.isEmptyObject(timeparameterplot) ) {
+            timeparameterplot.lockCrosshair({x: t, y:0});
+        }
+    }
+
     // Collect all the parameters on the page so we can generate our permalink.
-    
     function collect_parameters() {
         params={'clicks': [],
                 'accordian': [],

@@ -56,7 +56,8 @@ bl.bed_base = bl.dodsBase + 'BEDS/'
 bl.bed_base = 'http://elvis.shore.mbari.org/opendap/hyrax/data/beds/CanyonEvents/20130601/BED1/netcdf/'
 ##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT', 'PRESS', 'BED_DEPTH']   # For timeSeries
 ##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT']
-bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT', 'ROTRATE']
+##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT', 'ROTRATE']
+bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT']
 
 bl.bed_files = ['BED01_1_June_2013.nc',
 ##                'bed03/30100046_partial_decimated10.nc',

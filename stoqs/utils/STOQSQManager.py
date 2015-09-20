@@ -21,7 +21,7 @@ from django.db.utils import DatabaseError
 from django.http import HttpResponse
 from stoqs import models
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL
-from loaders.SampleLoaders import SAMPLED
+from loaders.SampleLoaders import SAMPLED, NETTOW
 from utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
 from utils import simplify_points, getParameterGroups
@@ -83,6 +83,7 @@ class STOQSQManager(object):
             ##'simplebottomdepthtime': self.getSimpleBottomDepthTime,
             'parametertime': self.getParameterTime,
             'sampledepthtime': self.getSampleDepthTime,
+            'nettowdepthtime': self.getNetTowDepthTime,
             'counts': self.getCounts,
             'mpsql': self.getMeasuredParametersPostgreSQL,
             'spsql': self.getSampledParametersPostgreSQL,
@@ -419,12 +420,16 @@ class STOQSQManager(object):
                     qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
                     try:
                         plot_results = [pid, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
+                        if plot_results[1] == plot_results[2]:
+                            logger.debug('Standard min and max for for pid %s are the same. Getting the overall min and max values.', pid)
+                            qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'))
+                            plot_results = [pid, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     except TypeError:
                         logger.exception('Failed to get plot_results for qs = %s', qs)
             except ValueError as e:
                 if pid in ('longitude', 'latitude'):
                     # Get limits from Activity maptrack for which we have our getExtent() method
-                    extent = self.getExtent(outputSRID=4326)
+                    extent, lon_mid, lat_mid = self.getExtent(outputSRID=4326)
                     if pid == 'longitude':
                         plot_results = ['longitude', round_to_n(extent[0][0], 4), round_to_n(extent[1][0],4)]
                     if pid == 'latitude':
@@ -498,6 +503,11 @@ class STOQSQManager(object):
                         da_results = [sname, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError as e:
                     logger.exception(e)
+
+        # Sometimes da_results is empty, make it the same as plot_results if this happens
+        # TODO: simplify the logic implemented above...
+        if not da_results:
+            da_results = plot_results
 
         return {'plot': plot_results, 'dataaccess': da_results}
 
@@ -1084,6 +1094,44 @@ class STOQSQManager(object):
                 samples.append(rec)
 
         return(samples)
+
+    def getNetTowDepthTime(self):
+        '''
+        Based on the current selected query criteria for activities, return the associated NetTow time series
+        values as a 2 2-tuple list.  Theses are like SampleDepthTime, but have a start and end time/depth.
+        The UI uses a different glyph which is why these are delivered in a separate structure.
+        The convention for NetTows is for one Sample per activity, therefore we can examine the attributes
+        of the activity to get the start and end time and min and max depths. 
+        '''
+        nettows = []
+        nettow = models.SampleType.objects.filter(name__contains=NETTOW)
+        if self.getSampleQS() and nettow:
+            qs = self.getSampleQS().filter(sampletype=nettow).values_list(
+                                    'instantpoint__timevalue', 
+                                    'depth',
+                                    'instantpoint__activity__name',
+                                    'name',
+                                    'instantpoint__activity__startdate',
+                                    'instantpoint__activity__enddate',
+                                    'instantpoint__activity__mindepth',
+                                    'instantpoint__activity__maxdepth',
+                                ).order_by('instantpoint__timevalue')
+            for s in qs:
+                s_ems = int(1000 * to_udunits(s[4], 'seconds since 1970-01-01'))
+                e_ems = int(1000 * to_udunits(s[5], 'seconds since 1970-01-01'))
+                # Kludgy handling of activity names - flot needs 2 items separated by a space to handle sample event clicking
+                if (s[2].find('_decim') != -1):
+                    label = '%s %s' % (s[2].split('_decim')[0], s[3],)              # Lop off '_decim.nc (stride=xxx)' part of name
+                elif (s[2].find(' ') != -1):
+                    label = '%s %s' % (s[2].split(' ')[0], s[3],)                   # Lop off everything after a space in the activity name
+                else:
+                    label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
+
+                rec = {'label': label, 'data': [[s_ems, '%.2f' % s[7]], [e_ems, '%.2f' % s[6]]]}
+                nettows.append(rec)
+
+        return(nettows)
+
 
     def getActivityParameterHistograms(self):
         '''

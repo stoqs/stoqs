@@ -29,9 +29,10 @@ import sys
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
 
+from collections import defaultdict
 from django.db import connections
 from datetime import datetime, timedelta
-from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter, Parameter
+from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter, Measurement, Parameter
 from django.contrib.gis.geos import LineString, Point
 from django.db.models import Max, Min
 from django.http import HttpRequest
@@ -275,6 +276,51 @@ class BiPlot():
             hash[pl] = self._getSimpleDepthTime(pl)
 
         return hash
+
+    def _getTimeSeriesData2(self, startDatetime, endDatetime, platformName, parameterName):
+        '''
+        Return time series of a Parameter from a Platform
+        '''
+
+        data_dict = defaultdict(lambda: {'datetime': [], 'lon': [], 'lat': [], 'depth': [], 'datavalue':[]})
+
+        if not parameterName :
+            raise Exception('Must specify list parameterNames')
+
+        if not platformName :
+            raise Exception('Must specify platform name')
+
+        for pname in parameterName :
+            qs = MeasuredParameter.objects.using(self.args.database)
+
+            qs = qs.filter(measurement__instantpoint__timevalue__gte=startDatetime)
+            qs = qs.filter(measurement__instantpoint__timevalue__lte=endDatetime)
+            qs = qs.filter(parameter__name=pname)
+
+            if platformName:
+                qs = qs.filter(measurement__instantpoint__activity__platform__name=platformName)
+            else:
+                count = qs.values_list('measurement__instantpoint__activity__platform').distinct().count()
+                if count > 1:
+                    raise Exception('More that one platform in %s has time series data for parameterStandardName = %s, parameterName = %s' % (
+                                self.args.database, parameterStandardName, parameterName))
+                elif count == 0:
+                    raise NoTSDataException('No platform in %s has time series data for parameterStandardName = %s, parameterName = %s' % (
+                                self.args.database, parameterStandardName, parameterName))
+
+            qs = qs.values('measurement__instantpoint__timevalue', 'measurement__depth', 'measurement__geom', 'datavalue').order_by('measurement__instantpoint__timevalue')
+
+            for rs in qs:
+                geom = rs['measurement__geom']
+                lat = geom.y
+                lon = geom.x
+                data_dict[pname]['lat'].insert(0, lat)
+                data_dict[pname]['lon'].insert(0, lon)
+                data_dict[pname]['datetime'].insert(0, rs['measurement__instantpoint__timevalue'])
+                data_dict[pname]['depth'].insert(0, rs['measurement__depth'])
+                data_dict[pname]['datavalue'].insert(0, rs['datavalue'])
+
+        return data_dict
 
     def _getTimeSeriesData(self, startDatetime, endDatetime, parameterStandardName, platformName=None, parameterName=None):
         '''

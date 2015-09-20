@@ -37,6 +37,8 @@ from loaders import LoadScript
 from stoqs.models import InstantPoint
 from django.db.models import Max
 from datetime import timedelta
+from argparse import Namespace
+from nettow import NetTow
 import logging
 
 def getStrideText(stride):
@@ -103,6 +105,7 @@ class CANONLoader(LoadScript):
                 'slocum_260':   'FF8426',
                 'wg_oa':        '0f9cd4',
                 'wg_tex':       '9626ff',
+                'wg_Tiny':      '960000',
              }
 
     def loadDorado(self, stride=None):
@@ -127,12 +130,19 @@ class CANONLoader(LoadScript):
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + file
             dataStartDatetime = None
+            startDatetime = self.tethys_startDatetime 
+            endDatetime = self.tethys_endDatetime 
             if self.args.append:
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+                dataEndDatetime = None
 
-            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Tethys', self.colors['tethys'], 'auv', 'AUV mission', 
-                                        self.tethys_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime)
+            try:
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Tethys', self.colors['tethys'], 'auv', 'AUV mission',
+                                        self.tethys_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
+					endDatetime=endDatetime, startDatetime=startDatetime)
+            except DAPloaders.NoValidData as e:
+                self.logger.info("No valid data in %s" % url)
 
     def loadDaphne(self, stride=None):
         '''
@@ -141,30 +151,44 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
             url = self.daphne_base + file
-            dataStartDatetime = None
+            dataStartDatetime = self.daphne_startDatetime 
+            dataEndDatetime = self.daphne_endDatetime 
             if self.args.append:
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+                dataEndDatetime = None
 
-            # Set stride to 1 for telemetered data
-            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Daphne', self.colors['daphne'], 'auv', 'AUV mission', 
-                                        self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime)
+            try:
+                # Set stride to 1 for telemetered data
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Daphne', self.colors['daphne'], 'auv', 'AUV mission',
+                                        self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime, 
+					endDatetime=endDatetime, startDatetime=startDatetime)
+            except DAPloaders.NoValidData as e:
+                self.logger.info("No valid data in %s" % url)
+
 
     def loadMakai(self, stride=None):
         '''
         Makai specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
-            url = self.daphne_base + file
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.makai_files], self.makai_files):
+            url = self.makai_base + file
             dataStartDatetime = None
+            startDatetime = self.makai_startDatetime 
+            endDatetime = self.makai_endDatetime 
             if self.args.append:
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
 
-            # Set stride to 1 for telemetered data
-            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Makai', self.colors['makai'], 'auv', 'AUV mission', 
-                                        self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime)
+            try:
+                # Set stride to 1 for telemetered data
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Makai', self.colors['makai'], 'auv', 'AUV mission',
+                                        self.makai_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
+					endDatetime=endDatetime, startDatetime=startDatetime)
+            except DAPloaders.NoValidData as e:
+                self.logger.info("No valid data in %s" % url)
+
     def loadMartin(self, stride=None):
         '''
         Martin specific load functions
@@ -228,7 +252,8 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.l_662_files], self.l_662_files):
             url = self.l_662_base + file
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'SPRAY_Glider', self.colors['l_662'], 'glider', 'Glider Mission', 
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'SPRAY_L66_Glider', self.colors['l_662'], 'glider', 'Glider Mission', 
                                         self.l_662_parms, self.dbAlias, stride, self.l_662_startDatetime, self.l_662_endDatetime, grdTerrain=self.grdTerrain)
 
     def load_NPS29(self, stride=None):
@@ -326,7 +351,7 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_pco2_files], self.wg_oa_pco2_files):
             url = self.wg_oa_pco2_base + file
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_pco2_parms, self.dbAlias, stride, self.wg_oa_pco2_startDatetime, self.wg_oa_pco2_endDatetime,
                                         grdTerrain=self.grdTerrain)
 
@@ -337,7 +362,7 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_ctd_files], self.wg_oa_ctd_files):
             url = self.wg_oa_ctd_base + file
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_ctd_parms, self.dbAlias, stride, self.wg_oa_ctd_startDatetime, self.wg_oa_ctd_endDatetime,
                                         grdTerrain=self.grdTerrain)
 
@@ -348,7 +373,7 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_tex_ctd_files], self.wg_tex_ctd_files):
             url = self.wg_tex_ctd_base + file
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
                                         self.wg_tex_ctd_parms, self.dbAlias, stride, self.wg_tex_ctd_startDatetime, self.wg_tex_ctd_endDatetime,
                                         grdTerrain=self.grdTerrain)
 
@@ -359,7 +384,7 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_met_files], self.wg_oa_met_files):
             url = self.wg_oa_met_base + file
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_met_parms, self.dbAlias, stride, self.wg_oa_met_startDatetime, self.wg_oa_met_endDatetime,
                                         grdTerrain=self.grdTerrain)
 
@@ -370,7 +395,7 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_tex_met_files], self.wg_tex_met_files):
             url = self.wg_tex_met_base + file
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
                                         self.wg_tex_met_parms, self.dbAlias, stride, self.wg_tex_met_startDatetime, self.wg_tex_met_endDatetime,
                                         grdTerrain=self.grdTerrain)
 
@@ -381,10 +406,21 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_tex_files], self.wg_tex_files):
             url = self.wg_tex_base + file
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
                                         self.wg_tex_parms, self.dbAlias, stride, self.wg_tex_startDatetime, self.wg_tex_endDatetime,
                                         grdTerrain=self.grdTerrain)
 
+    def load_wg_Tiny(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_Tiny_files], self.wg_Tiny_files):
+            url = self.wg_Tiny_base + file
+            print "url = %s" % url
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_Tiny_Glider', self.colors['wg_Tiny'], 'waveglider', 'Glider Mission',
+                                        self.wg_Tiny_parms, self.dbAlias, stride, self.wg_Tiny_startDatetime, self.wg_Tiny_endDatetime,
+                                        grdTerrain=self.grdTerrain)
     def load_wg_oa(self, stride=None):
         '''
         Glider specific load functions
@@ -392,7 +428,7 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_files], self.wg_oa_files):
             url = self.wg_oa_base + file
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_parms, self.dbAlias, stride, self.wg_oa_startDatetime, self.wg_oa_endDatetime,
                                         grdTerrain=self.grdTerrain)
 
@@ -547,7 +583,8 @@ class CANONLoader(LoadScript):
         pName = 'ESP_Mack_Mooring'
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.mack_moor_files], self.mack_moor_files):
             url = os.path.join(self.mack_moor_base, file)
-            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors['espmack'], 'mooring', 'Mooring Deployment',                                       self.mack_moor_parms, self.dbAlias, stride, self.mack_moor_startDatetime, self.mack_moor_endDatetime)
+            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors['espmack'], 'mooring', 'Mooring Deployment',
+                                       self.mack_moor_parms, self.dbAlias, stride, self.mack_moor_startDatetime, self.mack_moor_endDatetime)
 
         # Let browser code use {{STATIC_URL}} to fill in the /stoqs/static path
         self.addPlatformResources('x3d/ESPMooring/esp_base_scene.x3d', pName)
@@ -742,6 +779,24 @@ class CANONLoader(LoadScript):
         for csvFile in [ os.path.join(self.subsample_csv_base, f) for f in self.subsample_csv_files ]:
             ssl.logger.info("Processing subsamples from file %s", csvFile)
             ssl.process_subsample_file(csvFile, False)
+
+    def loadParentNetTowSamples(self):
+        '''
+        Load Parent NetTow Samples. This must be done after CTD cast data are loaded and before subsamples are loaded.
+        '''
+        nt = NetTow()
+        ns = Namespace()
+
+        # Produce parent samples file, e.g.:
+        # cd loaders/MolecularEcology/SIMZOct2013
+        # ../../nettow.py --database stoqs_simz_oct2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
+        ns.database = self.dbAlias
+        ns.loadFile = os.path.join(self.subsample_csv_base, self.parent_nettow_file)
+        ns.purpose = ''
+        ns.laboratory = ''
+        ns.researcher = ''
+        nt.args = ns
+        nt.load_samples()
 
     def loadAll(self, stride=None):
         '''

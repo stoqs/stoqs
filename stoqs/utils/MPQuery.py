@@ -262,6 +262,10 @@ class SPQuerySet(object):
                      'sample__instantpoint__timevalue', 
                      'sample__instantpoint__activity__name',
                      'sample__instantpoint__activity__platform__name',
+                     'sample__instantpoint__activity__startdate',
+                     'sample__instantpoint__activity__enddate',
+                     'sample__instantpoint__activity__mindepth',
+                     'sample__instantpoint__activity__maxdepth',
                      'datavalue',
                      'parameter__units'
                    ]
@@ -277,6 +281,10 @@ class SPQuerySet(object):
                      'sample__depth',
                      'sample__instantpoint__timevalue', 
                      'sample__instantpoint__activity__name',
+                     'sample__instantpoint__activity__startdate',
+                     'sample__instantpoint__activity__enddate',
+                     'sample__instantpoint__activity__mindepth',
+                     'sample__instantpoint__activity__maxdepth',
                      'datavalue',
                    ]
 
@@ -486,6 +494,7 @@ class MPQuery(object):
         self.request = request
         self.qs_mp = None
         self.qs_mp_no_order = None
+        self.qs_mp_no_order_no_parm = None
         self.qs_sp = None
         self.qs_sp_no_order = None
         self.sql = None
@@ -536,7 +545,7 @@ class MPQuery(object):
         '''
         qparams = {}
 
-        logger.debug('self.kwargs = %s', pprint.pformat(self.kwargs))
+        ##logger.debug('self.kwargs = %s', pprint.pformat(self.kwargs))
         logger.debug('group = %s', group)
         if group == SAMPLED:
             if 'sampledparametersgroup' in self.kwargs:
@@ -620,6 +629,8 @@ class MPQuery(object):
             # May need select_related(...)
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*values_list)
 
+        # Save a queryset with no parameter in the filter
+        self.qs_mp_no_order_no_parm = qs_mp
         if self.parameterID:
             logger.debug('Adding parameter__id=%d filter to qs_mp', int(self.parameterID))
             qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
@@ -674,7 +685,8 @@ class MPQuery(object):
         logger.debug('Building qs_sp...')
         if values_list == []:
             # If no .values(...) added to QS then items returned by iteration on qs_sp are model objects, not out wanted dictionaries
-            qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*SPQuerySet.rest_columns)
+            values_list = SPQuerySet.rest_columns
+            qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*values_list)
         else:
             # May need select_related(...)
             qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*values_list)
