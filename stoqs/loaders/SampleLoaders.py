@@ -593,6 +593,8 @@ class SubSamplesLoader(STOQS_Loader):
         if pName.find(' ') != -1:
             spaceRemoveMsg = "row['Parameter Name'] = %s contains a space.  Replacing with '_' before adding to STOQS.", pName
             logger.debug(spaceRemoveMsg)
+            pName = pName.replace(' ', '_')
+
         if '(' in pName or ')' in pName:
             parenRemoveMsg = "row['Parameter Name'] = %s contains ( or ).  Removing them before adding to STOQS.", pName
             logger.debug(parenRemoveMsg)
