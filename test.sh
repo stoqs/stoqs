@@ -43,6 +43,11 @@ psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d s
 cd stoqs
 wget -q -N -O loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
 coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadTestData.py
+if [ $? != 0 ]
+then
+    echo "loaders/loadTestData.py failed to load initial database; exiting test.sh."
+    exit -1
+fi
 
 # Label some data in the test database
 coverage run -a --include="contrib/analysis/classify.py" contrib/analysis/classify.py \
