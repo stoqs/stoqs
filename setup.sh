@@ -38,7 +38,6 @@ ln -s $CONFIG $VENV_DIR/bin/
 # GDAL 1.9.2 pip install requires this environment variable
 export LD_PRELOAD=/usr/lib64/libgdal.so.1
 
-
 # Install everything in $REQ
 if [ -f "$REQ" ]; then
     pip install -r $REQ

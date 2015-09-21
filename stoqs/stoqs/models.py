@@ -201,6 +201,11 @@ class Activity(models.Model):
 class InstantPoint(models.Model):
     '''
     An instance in time for an Activity.  This InstantPoint may have a measurement or sample associated with it.
+    An InstantPoint may be used to record the start time for an integrative measurement or sample. An example
+    is a plankton net tow which integrates over space and time. As implemented in the STOQS UI, NetTow data have
+    exactly one InstantPoint per Activity, with the ActivityType name containing 'NetTow'. The start and end 
+    times and depths can then be retrieved from fields of the Activity record. If the integrative measurement 
+    or sample is from a non-linear longitude/latitude path then that can be stored in the maptrack field.
     '''
     activity = models.ForeignKey(Activity) 
     timevalue = models.DateTimeField(db_index=True)

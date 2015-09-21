@@ -28,6 +28,7 @@ MBARI Dec 29, 2011
 
 # Force lookup of models to THE specific stoqs module.
 import os
+import re
 import sys
 from django.contrib.gis.geos import GEOSGeometry, LineString, Point
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # config is one dir up
@@ -39,6 +40,7 @@ from django.db import connection, transaction
 from stoqs import models as m
 from datetime import datetime, timedelta
 from django.core.exceptions import ObjectDoesNotExist
+import pytz
 from pydap.client import open_url
 import pydap.model
 import time
@@ -107,7 +109,7 @@ class Base_Loader(STOQS_Loader):
 
     A third time parameter (dataStartDatetime) can be specified.  This is used for when
     data is to be appended to an existing activity, such as for the realtime tethys loads
-    as done by the monitorTethys.py script in the MBARItracking/sensortracks folder.  This
+    as done by the monitorLrauv.py script in the realtime folder.  This
     use has not been fully tested.
     '''
     parameter_dict={} # used to cache parameter objects 
@@ -160,7 +162,7 @@ class Base_Loader(STOQS_Loader):
         self.auxCoords = auxCoords
         self.stride = stride
         self.grdTerrain = grdTerrain
-        
+
         self.url = url
         self.varsLoaded = []
         try:
@@ -173,6 +175,9 @@ class Base_Loader(STOQS_Loader):
             raise e
         except Exception as e:
             logger.error('Failed in attempt to open_url("%s")', url)
+            raise e
+        except pydap.exceptions.ClientError as e:
+            logger.error('Failed in attempt to open_url(%s)', url)
             raise e
 
         self.ignored_names += self.global_ignored_names # add global ignored names to platform specific ignored names.
@@ -230,10 +235,12 @@ class Base_Loader(STOQS_Loader):
                     endDatetime = dt
             except NameError:
                 endDatetime = dt
-    
-        logger.info('Activity startDatetime = %s, endDatetime = %s', startDatetime, endDatetime)            
 
-        return startDatetime, endDatetime 
+        if not maxDT or not minDT:
+            raise NoValidData('No valid dates')
+
+        logger.info('Activity startDatetime = %s, endDatetime = %s', startDatetime, endDatetime)
+        return startDatetime, endDatetime
 
 
     def initDB(self):
@@ -415,7 +422,7 @@ class Base_Loader(STOQS_Loader):
                 logger.debug('Initializing depths list for timeseries, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']][:][0]
             elif self.getFeatureType() == 'timeseriesprofile':
-                logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac)
+                logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac) 
                 depths[v] = self.ds[v][ac['depth']][:]
             elif self.getFeatureType() == 'trajectoryprofile':
                 logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
@@ -451,11 +458,11 @@ class Base_Loader(STOQS_Loader):
 
     def getTimeBegEndIndices(self, timeAxis):
         '''
-        Return begining and ending indices for the corresponding time axis indices
+        Return beginning and ending indices for the corresponding time axis indices
         '''
         timeAxisUnits =  timeAxis.units.lower()
         timeAxisUnits = timeAxisUnits.replace('utc', 'UTC')        # coards requires UTC to be upper case 
-        if timeAxis.units == 'seconds since 1970-01-01T00:00:00Z':
+        if timeAxis.units == 'seconds since 1970-01-01T00:00:00Z'or timeAxis.units == 'seconds since 1970/01/01 00:00:00Z':
             timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards doesn't like ISO format
         if self.startDatetime: 
             logger.debug('self.startDatetime, timeAxis.units = %s, %s', self.startDatetime, timeAxis.units)
@@ -508,6 +515,9 @@ class Base_Loader(STOQS_Loader):
                 tIndx = self.getTimeBegEndIndices(self.ds[self.getAuxCoordinates(name)['time']])
             except ParameterNotFound:
                 logger.warn('Ignoring parameter: %s', name)
+            except KeyError as e:
+                logger.warn("%s: Skipping", e)
+                continue
             try:
                 if self.getFeatureType() == 'trajectory':
                     trajSingleParameterCount = np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],))
@@ -535,20 +545,25 @@ class Base_Loader(STOQS_Loader):
         depths = {}
         latitudes = {}
         longitudes = {}
-        timeUnits = {}
+        timeUnits = {} 
 
         # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
-        # The reads here take advantage of OPeNDAP access mechanisms to effeciently transfer data across the network
+        # The reads here take advantage of OPeNDAP access mechanisms to efficiently transfer data across the network
         for pname in self.include_names:
             if pname not in self.ds:
                 continue    # Quietly skip over parameters not in ds: allows combination of variables and files in same loader
             # Peek at the shape and pull apart the data from its grid coordinates 
-            logger.info('Reading data from %s: %s', self.url, pname)
+            logger.info('Reading data from %s: %s %s', self.url, pname,  type(self.ds[pname]))
             if type(self.ds[pname]) is pydap.model.GridType:
                 # On tzyx grid - default for all OS formatted station data COARDS coordinate ordering conventions
                 # E.g. for http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74040, 11, 1, 1) 
                 #       or http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74850, 1, 1, 1)
-                tIndx = self.getTimeBegEndIndices(self.ds[self.ds[pname].keys()[1]])
+                try:
+                    tIndx = self.getTimeBegEndIndices(self.ds[self.ds[pname].keys()[1]])
+                except KeyError as e:
+                    logger.warn("%s: Skipping", e)
+                    continue
+
                 try:
                     # Subselect along the time axis, get all z values
                     logger.info("From: %s", self.url)
@@ -642,14 +657,14 @@ class Base_Loader(STOQS_Loader):
         measurements = {}
 
         # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
-        # The reads here take advantage of OPeNDAP access mechanisms to effeciently transfer data across the network
+        # The reads here take advantage of OPeNDAP access mechanisms to efficiently transfer data across the network
         for pname in self.include_names:
             if pname not in self.ds.keys():
                 logger.warn('include_name %s not in dataset %s', pname, self.url)
                 continue
             # Peek at the shape and pull apart the data from its grid coordinates 
             # Only single trajectories are allowed
-            logger.info('Reading data from %s: %s', self.url, pname)
+            logger.info('Reading data from %s: %s %s %s', self.url, pname, self.ds[pname].shape, type(self.ds[pname]))
             if len(self.ds[pname].shape) == 1 and type(self.ds[pname]) is pydap.model.BaseType:
                 # Legacy Dorado data need to be processed as BaseType; Example data:
                 #   dsdorado = open_url('http://odss.mbari.org/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_256_00_256_00_decim.nc')
@@ -927,6 +942,7 @@ class Base_Loader(STOQS_Loader):
                     logger.debug("value = %s ", value)
                    
                     parameter = self.getParameterByName(key)
+
                     try:
                         value = float(value)
                         if value > 1e34 and value != self.get_FillValue(key):
@@ -1190,7 +1206,7 @@ class Trajectory_Loader(Base_Loader):
 
 class Dorado_Loader(Trajectory_Loader):
     '''
-    MBARI Dorado data as read from the production archive.  This class includes overridded methods
+    MBARI Dorado data as read from the production archive.  This class includes overriden methods
     to load quick-look plot and other Resources into the STOQS database.
     '''
     chl = pydap.model.BaseType()
@@ -1307,10 +1323,15 @@ class Lrauv_Loader(Trajectory_Loader):
                         'sea_water_temperature',
                     ]
 
+    def __init__(self, contourUrl, *args, **kwargs):
+        self.contourUrl = contourUrl
+        super(Trajectory_Loader, self).__init__(*args, **kwargs)
+
     def preProcessParams(self, row):
         '''
         Special fixups for 'shore' synchronized data
         '''
+        ''' following code is no longer needed but kept here for future reference
         if self.url.find('shore') == -1 and self.url.find('Tethys') == -1 and self.url.find('Daphne') == -1 and self.url.find('hotspot'):
             # Full-resolution data (whose name does not contain 'shore', 'Tethys', 'Daphne', 'hotspot') are in radians
             if row.has_key('latitude'):
@@ -1321,9 +1342,54 @@ class Lrauv_Loader(Trajectory_Loader):
             if row.has_key('sea_water_temperature'):
                 row['sea_water_temperature'] = row['sea_water_temperature'] - 272.15
                 self.ds['sea_water_temperature'].units = 'degC'
-
+        '''
         return super(Lrauv_Loader, self).preProcessParams(row)
 
+    def addResources(self):
+        '''
+        In addition to the NC_GLOBAL attributes that are added in the base class also add the quick-look plots that are on the dods server.
+        '''
+
+        if self.contourUrl:
+            # Replace netCDF file with png extension
+            outurl = re.sub('\.nc$','.png', self.url)
+
+            # Contour plots
+            logger.debug("Getting or Creating ResourceType quick_look...")
+            (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+                            name = 'quick_look', description='Quick Look plot of data from this AUV survey')
+
+            logger.debug("Getting or Creating Resource with name = log, url = %s",  outurl )
+            (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                        name='log', uristring=outurl, resourcetype=resourceType)
+            (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+                        activity=self.activity,
+                        resource=resource)
+
+            # Round URL to 24 hour period in local time for daily
+            # Get baseURL
+            l = self.url.split('/')[:-1]
+            baseUrl = '/'.join(l)
+
+            startDateTimeUTC = pytz.utc.localize(self.startDatetime)
+            startDateTimeLocal = startDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+            startDateTimeLocal = startDateTimeLocal.replace(hour=0,minute=0,second=0,microsecond=0)
+            startDateTimeUTC = startDateTimeLocal.astimezone(pytz.utc)
+
+            endDateTimeUTC = pytz.utc.localize(self.startDatetime)
+            endDateTimeLocal = endDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+            endDateTimeLocal = endDateTimeLocal.replace(hour=23,minute=59,second=0,microsecond=0)
+            endDateTimeUTC = endDateTimeLocal.astimezone(pytz.utc)
+
+            outurl = self.contourUrl + self.platformName  + '_log_' + startDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '.png'
+            logger.debug("Getting or Creating Resource with name = 24hr, url = %s",  outurl )
+            (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                    name='24hr', uristring=outurl, resourcetype=resourceType)
+            (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+                    activity=self.activity,
+                    resource=resource)
+
+        return super(Lrauv_Loader, self).addResources()
 
 class Glider_Loader(Trajectory_Loader):
     '''
@@ -1407,10 +1473,11 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
     loader.include_names = parmList
 
     # Fix up legacy data files
-    loader.auxCoords = {}
-    if aName.find('_jhmudas_v1') != -1:
-        for p in loader.include_names:
-            loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+    if loader.auxCoords is None:
+        loader.auxCoords = {}
+        if aName.find('_jhmudas_v1') != -1:
+            for p in loader.include_names:
+                loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     if plotTimeSeriesDepth:
         # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
@@ -1503,8 +1570,8 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         else:
             logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
 
-def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None,
-                    dataStartDatetime=None):
+def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
+                    dataStartDatetime=None, contourUrl=None, auxCoords=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1525,7 +1592,9 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
             startDatetime = startDatetime,
             endDatetime = endDatetime,
             dataStartDatetime = dataStartDatetime,
-            grdTerrain = grdTerrain)
+            grdTerrain = grdTerrain,
+            contourUrl = contourUrl,
+            auxCoords = auxCoords)
 
     if parmList:
         loader.include_names = []
@@ -1535,15 +1604,17 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
             else:
                 logger.warn('Parameter %s not included. CANNOT HAVE PARAMETER NAMES WITH PERIODS. Period.', p)
 
-    loader.auxCoords = {}
-    if aName.find('_Chl_') != -1:
+    # Auxiliary coordinates are generally the same for all include_names
+    if auxCoords is None:
+        loader.auxCoords = {}
         for p in loader.include_names:
-            loader.auxCoords[p] = {'time': 'Time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+          loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     except NoValidData as e:
         logger.warn(e)
+        raise e
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
@@ -1676,7 +1747,8 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
-    loader.auxCoords = {}
+    loader.auxCoords = {} 
+
     if url.endswith('_CMSTV.nc'):
         # Special for combined file which has different coordinates for different variables
         for v in loader.include_names:

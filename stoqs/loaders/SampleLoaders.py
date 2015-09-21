@@ -65,6 +65,13 @@ if settings.DEBUG:
 # Constant for ParameterGroup name - for utils/STOQSQmanager.py to use
 SAMPLED = 'Sampled'
 
+# SampleTypes
+GULPER = 'Gulper'
+NISKIN = 'Niskin'
+NETTOW = 'NetTow'
+VERTICALNETTOW = 'VerticalNetTow'       # Must contain NETTOW string so that a filter for
+HORIZONTALNETTOW = 'VerticalNetTow'     # name__contains=NETTOW returns both vertical and horizontal net tows
+
 class ClosestTimeNotFoundException(Exception):
     pass
 
@@ -149,7 +156,7 @@ def load_gulps(activityName, file, dbAlias):
         return
 
     # Get or create SampleType for Gulper
-    (gulper_type, created) = m.SampleType.objects.using(dbAlias).get_or_create(name = 'Gulper')
+    (gulper_type, created) = m.SampleType.objects.using(dbAlias).get_or_create(name=GULPER)
     logger.debug('sampletype %s, created = %s', gulper_type, created)
     for row in reader:
         # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
@@ -318,7 +325,7 @@ class SeabirdLoader(STOQS_Loader):
             activity = m.Activity.objects.using(self.dbAlias).filter(name__contains=self.activityName)[0]
         
         # Get or create SampleType for Niskin
-        (sample_type, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name = 'Niskin')
+        (sample_type, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name=NISKIN)
         logger.debug('sampletype %s, created = %s', sample_type, created)
         # Get or create SamplePurpose for Niskin
         (sample_purpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name = 'StandardDepth')
@@ -546,13 +553,23 @@ class SubSamplesLoader(STOQS_Loader):
             if row['Filter Pore Size [uM]']:
                 fps = float(row['Filter Pore Size [uM]'])
         except KeyError:
-            if row['Filter Pore Size [um]']:
-                fps = float(row['Filter Pore Size [um]'])
+            try:
+                if row['Filter Pore Size [um]']:
+                    fps = float(row['Filter Pore Size [um]'])
+            except ValueError as e:
+                # Likely a strange character present in a units string
+                if row.get('Filter Pore Size [um]'):
+                    fps = float(row.get('Filter Pore Size [um]').split()[0])
+        except ValueError as e:
+            # Likely a strange character present in a units string
+            if row.get('Filter Pore Size [uM]'):
+                fps = float(row.get('Filter Pore Size [uM]').split()[0])
             
-        if row['Sample Volume [mL]']:
-            vol = row['Sample Volume [mL]']
-        else:
-            logger.warn('Sample Volume [mL] is not specified.  Assigning default value of 280.  PLEASE SPECIFY THE VOLUME IN THE SPREADSHEET.')
+        vol = row.get('Sample Volume [mL]')
+        if not vol:
+            vol = float(row.get('Sample Volume [m^3]')) * 1.e6     # A million ml per cubic meter
+        if not vol:
+            logger.warn('Sample Volume [mL] nor Sample Volume [m^3] is not specified.  Assigning default value of 280.  PLEASE SPECIFY THE VOLUME IN THE SPREADSHEET.')
             vol = 280           # Default volume is 280 ml - this is a required field so display a warning
 
         sample = m.Sample(  instantpoint=parentSample.instantpoint,
@@ -577,6 +594,11 @@ class SubSamplesLoader(STOQS_Loader):
             spaceRemoveMsg = "row['Parameter Name'] = %s contains a space.  Replacing with '_' before adding to STOQS.", pName
             logger.debug(spaceRemoveMsg)
             pName = pName.replace(' ', '_')
+
+        if '(' in pName or ')' in pName:
+            parenRemoveMsg = "row['Parameter Name'] = %s contains ( or ).  Removing them before adding to STOQS.", pName
+            logger.debug(parenRemoveMsg)
+            pName = pName.replace('(', '').replace(')', '')
 
         (parameter, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name=pName, units=row['Parameter Units'])
         logger.debug('parameter, created = %s, %s', parameter, created)
@@ -668,6 +690,18 @@ class SubSamplesLoader(STOQS_Loader):
                     logger.error('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
                     continue
                     ##sys.exit(-1)
+
+            except ValueError as e:
+                # Likely a 'NetTow' string in the Bottle Number column
+                if r['Bottle Number'] == 'NetTow':
+                    try:
+                        parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
+                                                        ).filter(instantpoint__activity__name__icontains=aName + '_NetTow1', )[0]
+                    except IndexError as e:
+                        logger.warn('Parent Sample not found for Activity %s. Skipping.', aName)
+                        continue
+                else:
+                    raise e
 
             if unloadFlag:
                 # Unload subsample
