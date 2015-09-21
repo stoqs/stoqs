@@ -13,7 +13,7 @@ django-celery==3.1.16
 django-configurations==0.8
 django-crispy-forms==1.5.2
 django-debug-toolbar==1.3.2
-django-extensions==1.5.6
+django-extensions==1.5.7
 django-floppyforms==1.5.2
 django-model-utils==2.3.1
 django-picklefield==0.3.2
