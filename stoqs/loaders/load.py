@@ -147,14 +147,14 @@ class Loader():
 
         return prov
 
-    def _log_file(self, script, db):
-        if script.split()[0].endswith('.py'):
+    def _log_file(self, script, db, load_command):
+        if self._has_no_t_option(db, load_command):
+            log_file = os.path.join(os.path.dirname(script.split()[0]), db + '.out')
+        else:
             if self.args.test:
                 log_file = script.split()[0].replace('.py', '_t.out')
             else:
                 log_file = script.split()[0].replace('.py', '.out')
-        else:
-            log_file = os.path.join(os.path.dirname(script.split()[0]), db + '.out')
 
         return log_file
 
@@ -214,7 +214,8 @@ local   all             all                                     peer
 
                 script = os.path.join(app_dir, 'loaders', load_command)
                 try:
-                    print ('{:30s} {:>15s}').format(db, tail(self._log_file(script, db), 3)[0].split()[1])
+                    print ('{:30s} {:>15s}').format(db, 
+                            tail(self._log_file(script, db, load_command), 3)[0].split()[1])
                 except IndexError:
                     pass
 
@@ -287,7 +288,7 @@ local   all             all                                     peer
                 db += '_t'
 
             script = os.path.join(app_dir, 'loaders', load_command)
-            log_file = self._log_file(script, db)
+            log_file = self._log_file(script, db, load_command)
 
             try:
                 self.recordprovenance(db, load_command, log_file)
@@ -367,7 +368,7 @@ local   all             all                                     peer
 
             # === Execute the load
             script = os.path.join(app_dir, 'loaders', load_command)
-            log_file = self._log_file(script, db)
+            log_file = self._log_file(script, db, load_command)
             if script.endswith('.sh'):
                 script = ('cd {} && {}').format(os.path.dirname(script), script)
 
