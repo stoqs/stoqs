@@ -523,7 +523,7 @@ def processDiveList(args):
         try:
             (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
         except DiveInfoServletException as e:
-            logger.error(e)
+            logger.warn(e)
 
 def processDiveRange(args):
     '''Given an ROV Name and start and end dive number
@@ -550,7 +550,7 @@ def processDiveRange(args):
         try:
             (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
         except DiveInfoServletException as e:
-            logger.error(e)
+            logger.warn(e)
 
 def process_command_line():
     '''The argparse library is included in Python 2.7 and is an added package for STOQS.
