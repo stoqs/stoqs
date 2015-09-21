@@ -942,24 +942,6 @@ class Base_Loader(STOQS_Loader):
                     logger.debug("value = %s ", value)
                    
                     parameter = self.getParameterByName(key)
-                    
-                    if value > 1e34 and value != self.get_FillValue(key):
-                        # Workaround for IOOS glider data
-                        if abs(value - self.get_FillValue(key)) < 1e24:
-                            # Equal to 10 digits
-                            continue
-                        elif abs(value - self.getmissing_value(key)) < 1e24:
-                            # Equal to 10 digits
-                            continue
-                        else:
-                            logger.error('Invalid data value: > 1e34, but not close to _FillValue or missing_value. Entering debugger...')
-
-                    if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or numpy.isnan(value): # absence of a value
-                        ##logger.debug('Not loading value = %s', value)
-                        ##logger.debug("From: %s", self.url)
-                        ##tIndx = self.getTimeBegEndIndices(self.ds[self.ds[key].keys()[1]])
-                        ##logger.debug("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", key, key, tIndx[0], tIndx[-1], self.stride)
-                        continue
 
                     try:
                         value = float(value)
