@@ -252,7 +252,6 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.l_662_files], self.l_662_files):
             url = self.l_662_base + file
-            print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'SPRAY_L66_Glider', self.colors['l_662'], 'glider', 'Glider Mission', 
                                         self.l_662_parms, self.dbAlias, stride, self.l_662_startDatetime, self.l_662_endDatetime, grdTerrain=self.grdTerrain)
 
@@ -417,7 +416,6 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_Tiny_files], self.wg_Tiny_files):
             url = self.wg_Tiny_base + file
-            print "url = %s" % url
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_Tiny_Glider', self.colors['wg_Tiny'], 'waveglider', 'Glider Mission',
                                         self.wg_Tiny_parms, self.dbAlias, stride, self.wg_Tiny_startDatetime, self.wg_Tiny_endDatetime,
                                         grdTerrain=self.grdTerrain)
