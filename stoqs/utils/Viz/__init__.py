@@ -775,6 +775,7 @@ class PlatformAnimation(object):
             # Count on JavaScript code to add <GeoOrgin DEF="GO" ... > to the scene
             geoorigin_use = '<GeoOrigin use="GO"></GeoOrigin>'
         try:
+            points = ''
             indices = ''
             index = 0
             gps = GPS()
