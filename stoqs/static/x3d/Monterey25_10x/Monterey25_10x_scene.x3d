@@ -1,0 +1,256 @@
+      <scene DEF='scene'>
+        <shape DEF='_G_0'>
+          <appearance DEF='AOPT_Appearance_205208576'>
+            <material diffuseColor='0.5 0.5 0.5' specularColor='0.1 0.1 0.1' emissiveColor='0.2 0.2 0.2'></material>
+          </appearance>
+          <popGeometry DEF='PG_3' vertexCount='384444' primType='"TRIANGLES"' position='-2710264 -4350467 3776829' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.0314562675183 0.160795120012 0.872682865312' bbMaxModF='0.550736418856 0.817349601637 0.376970792283' bbMin='-2721138.75 -4363508.5 3767221.75' numAnchorVertices='3098' tightSize='21749.5 26082.5 19214.25'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level0.bin' numIndices='9471' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level1.bin' numIndices='156' vertexDataBufferOffset='5372'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level2.bin' numIndices='276' vertexDataBufferOffset='5430'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level3.bin' numIndices='1152' vertexDataBufferOffset='5564'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level4.bin' numIndices='3276' vertexDataBufferOffset='6178'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level5.bin' numIndices='11616' vertexDataBufferOffset='8121'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level6.bin' numIndices='38670' vertexDataBufferOffset='14940'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level7.bin' numIndices='108912' vertexDataBufferOffset='34276'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level8.bin' numIndices='145008' vertexDataBufferOffset='58347'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level9.bin' numIndices='48186' vertexDataBufferOffset='64703'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level10.bin' numIndices='2838' vertexDataBufferOffset='65510'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level11.bin' numIndices='1074' vertexDataBufferOffset='65523'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level12.bin' numIndices='1404' vertexDataBufferOffset='65525'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level13.bin' numIndices='1860' vertexDataBufferOffset='65527'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level14.bin' numIndices='2982' vertexDataBufferOffset='65530'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_3_level15.bin' numIndices='7563' vertexDataBufferOffset='65532'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_1'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_5' vertexCount='383010' primType='"TRIANGLES"' position='-2722849.75 -4343167 3772360.5' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.6662506759 0.318033405049 0.65510096716' bbMaxModF='0.314959903787 0.0276509307555 0.359996504097' bbMin='-2736435 -4357262 3758931.5' numAnchorVertices='3412' tightSize='27170.5 28190.5 26857.75'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level0.bin' numIndices='10488' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level1.bin' numIndices='114' vertexDataBufferOffset='6049'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level2.bin' numIndices='462' vertexDataBufferOffset='6088'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level3.bin' numIndices='1374' vertexDataBufferOffset='6325'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level4.bin' numIndices='3816' vertexDataBufferOffset='7088'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level5.bin' numIndices='13890' vertexDataBufferOffset='9295'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level6.bin' numIndices='45618' vertexDataBufferOffset='17439'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level7.bin' numIndices='124290' vertexDataBufferOffset='39395'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level8.bin' numIndices='134292' vertexDataBufferOffset='60528'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level9.bin' numIndices='31308' vertexDataBufferOffset='64776'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level10.bin' numIndices='2214' vertexDataBufferOffset='65510'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level11.bin' numIndices='1032' vertexDataBufferOffset='65519'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level12.bin' numIndices='1260' vertexDataBufferOffset='65525'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level13.bin' numIndices='1704' vertexDataBufferOffset='65528'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level14.bin' numIndices='3162' vertexDataBufferOffset='65531'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_5_level15.bin' numIndices='7986' vertexDataBufferOffset='65532'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_2'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_6' vertexCount='160716' primType='"TRIANGLES"' position='-2722023.5 -4345875 3772455.5' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='28427' indexedRendering='true' bbMinModF='0.515279930966 0.18078186432 0.644333743769' bbMaxModF='0.505378940867 0.0285571307493 0.375756937117' bbMin='-2742758.25 -4362714.5 3758521.25' numAnchorVertices='3074' tightSize='41469.25 33679 27868.5'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level0.bin' numIndices='9402' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level1.bin' numIndices='162' vertexDataBufferOffset='5392'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level2.bin' numIndices='336' vertexDataBufferOffset='5461'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level3.bin' numIndices='546' vertexDataBufferOffset='5584'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level4.bin' numIndices='1746' vertexDataBufferOffset='5819'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level5.bin' numIndices='6198' vertexDataBufferOffset='6666'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level6.bin' numIndices='18372' vertexDataBufferOffset='9910'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level7.bin' numIndices='48450' vertexDataBufferOffset='18048'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level8.bin' numIndices='51900' vertexDataBufferOffset='26011'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level9.bin' numIndices='13812' vertexDataBufferOffset='28045'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level10.bin' numIndices='1452' vertexDataBufferOffset='28411'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level11.bin' numIndices='558' vertexDataBufferOffset='28423'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level12.bin' numIndices='774' vertexDataBufferOffset='28425'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level13.bin' numIndices='1044' vertexDataBufferOffset='28427'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level14.bin' numIndices='1818' vertexDataBufferOffset='28427'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_6_level15.bin' numIndices='4146' vertexDataBufferOffset='28427'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_3'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_7' vertexCount='384552' primType='"TRIANGLES"' position='-2727708.25 -4313898 3773356' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.474387171169 0.022389936347 0.690867045591' bbMaxModF='0.274825191062 0.796800761611 0.376498372975' bbMin='-2744471 -4329280.5 3760294.25' numAnchorVertices='2951' tightSize='33525.5 30764.5 26123.75'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level0.bin' numIndices='8931' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level1.bin' numIndices='222' vertexDataBufferOffset='5162'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level2.bin' numIndices='498' vertexDataBufferOffset='5233'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level3.bin' numIndices='1314' vertexDataBufferOffset='5484'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level4.bin' numIndices='4242' vertexDataBufferOffset='6230'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level5.bin' numIndices='13938' vertexDataBufferOffset='8662'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level6.bin' numIndices='47352' vertexDataBufferOffset='17021'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level7.bin' numIndices='127962' vertexDataBufferOffset='39746'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level8.bin' numIndices='130014' vertexDataBufferOffset='60266'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level9.bin' numIndices='30528' vertexDataBufferOffset='64658'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level10.bin' numIndices='2382' vertexDataBufferOffset='65514'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level11.bin' numIndices='1188' vertexDataBufferOffset='65524'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level12.bin' numIndices='1530' vertexDataBufferOffset='65527'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level13.bin' numIndices='2148' vertexDataBufferOffset='65531'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level14.bin' numIndices='3312' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_7_level15.bin' numIndices='8991' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_4'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_4' vertexCount='381681' primType='"TRIANGLES"' position='-2727985.5 -4313939.5 3771259.5' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.42630788637 0.0215340807973 0.580143770318' bbMaxModF='0.309665512028 0.795579908841 0.377167633661' bbMin='-2746484.75 -4329314.5 3756075.5' numAnchorVertices='3847' tightSize='36998.5 30750 30368'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level0.bin' numIndices='11691' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level1.bin' numIndices='216' vertexDataBufferOffset='6751'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level2.bin' numIndices='576' vertexDataBufferOffset='6855'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level3.bin' numIndices='1296' vertexDataBufferOffset='7118'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level4.bin' numIndices='4668' vertexDataBufferOffset='7815'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level5.bin' numIndices='14484' vertexDataBufferOffset='10408'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level6.bin' numIndices='47334' vertexDataBufferOffset='18760'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level7.bin' numIndices='126876' vertexDataBufferOffset='40837'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level8.bin' numIndices='124770' vertexDataBufferOffset='60373'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level9.bin' numIndices='29664' vertexDataBufferOffset='64608'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level10.bin' numIndices='1998' vertexDataBufferOffset='65523'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level11.bin' numIndices='1098' vertexDataBufferOffset='65529'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level12.bin' numIndices='1362' vertexDataBufferOffset='65530'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level13.bin' numIndices='2274' vertexDataBufferOffset='65531'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level14.bin' numIndices='3702' vertexDataBufferOffset='65532'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_4_level15.bin' numIndices='9672' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_5'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_8' vertexCount='163881' primType='"TRIANGLES"' position='-2730299.5 -4314918 3768810.5' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='28448' indexedRendering='true' bbMinModF='0.356137796722 0.0240638891133 0.453240133752' bbMaxModF='0.269345764191 0.743775475862 0.375520727463' bbMin='-2749423.75 -4329214 3751240.25' numAnchorVertices='2163' tightSize='38248.75 28591.5 35140.5'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level0.bin' numIndices='6633' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level1.bin' numIndices='84' vertexDataBufferOffset='3919'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level2.bin' numIndices='252' vertexDataBufferOffset='3953'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level3.bin' numIndices='708' vertexDataBufferOffset='4058'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level4.bin' numIndices='2166' vertexDataBufferOffset='4440'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level5.bin' numIndices='6492' vertexDataBufferOffset='5590'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level6.bin' numIndices='20688' vertexDataBufferOffset='9156'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level7.bin' numIndices='54174' vertexDataBufferOffset='18459'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level8.bin' numIndices='49764' vertexDataBufferOffset='26059'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level9.bin' numIndices='13200' vertexDataBufferOffset='28017'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level10.bin' numIndices='948' vertexDataBufferOffset='28438'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level11.bin' numIndices='402' vertexDataBufferOffset='28444'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level12.bin' numIndices='606' vertexDataBufferOffset='28445'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level13.bin' numIndices='1104' vertexDataBufferOffset='28447'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level14.bin' numIndices='1824' vertexDataBufferOffset='28448'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_8_level15.bin' numIndices='4836' vertexDataBufferOffset='28448'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_6'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_9' vertexCount='382077' primType='"TRIANGLES"' position='-2727627.5 -4313713 3804755.5' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.576824996835 0.981057147741 0.369923870941' bbMaxModF='0.176249227255 0.847459858487 0.345633776091' bbMin='-2740180.5 -4330922.5 3786167.5' numAnchorVertices='3791' tightSize='25106.25 34419 37176.25'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level0.bin' numIndices='11532' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level1.bin' numIndices='216' vertexDataBufferOffset='6565'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level2.bin' numIndices='654' vertexDataBufferOffset='6644'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level3.bin' numIndices='1476' vertexDataBufferOffset='6909'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level4.bin' numIndices='4578' vertexDataBufferOffset='7651'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level5.bin' numIndices='15348' vertexDataBufferOffset='10222'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level6.bin' numIndices='48978' vertexDataBufferOffset='18888'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level7.bin' numIndices='125346' vertexDataBufferOffset='40750'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level8.bin' numIndices='118308' vertexDataBufferOffset='59494'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level9.bin' numIndices='31992' vertexDataBufferOffset='64449'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level10.bin' numIndices='2196' vertexDataBufferOffset='65518'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level11.bin' numIndices='1332' vertexDataBufferOffset='65528'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level12.bin' numIndices='1398' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level13.bin' numIndices='2430' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level14.bin' numIndices='4218' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_9_level15.bin' numIndices='12075' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_7'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_10' vertexCount='381261' primType='"TRIANGLES"' position='-2726427.5 -4312500.5 3805079.5' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.634890208819 0.0822494803824 0.371229585417' bbMaxModF='0.175479242433 0.807310164317 0.361328595318' bbMin='-2737748.5 -4326902.5 3786217.25' numAnchorVertices='4038' tightSize='22642 28804 37724.5'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level0.bin' numIndices='12393' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level1.bin' numIndices='282' vertexDataBufferOffset='7259'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level2.bin' numIndices='498' vertexDataBufferOffset='7362'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level3.bin' numIndices='1674' vertexDataBufferOffset='7569'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level4.bin' numIndices='4908' vertexDataBufferOffset='8363'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level5.bin' numIndices='14634' vertexDataBufferOffset='11111'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level6.bin' numIndices='47532' vertexDataBufferOffset='19219'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level7.bin' numIndices='119652' vertexDataBufferOffset='40072'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level8.bin' numIndices='118560' vertexDataBufferOffset='58897'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level9.bin' numIndices='33960' vertexDataBufferOffset='64383'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level10.bin' numIndices='2448' vertexDataBufferOffset='65519'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level11.bin' numIndices='1386' vertexDataBufferOffset='65529'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level12.bin' numIndices='1764' vertexDataBufferOffset='65530'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level13.bin' numIndices='2934' vertexDataBufferOffset='65531'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level14.bin' numIndices='5292' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_10_level15.bin' numIndices='13344' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_8'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_11' vertexCount='166611' primType='"TRIANGLES"' position='-2725595 -4312319 3804942.25' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='29469' indexedRendering='true' bbMinModF='0.674171372478 0.0883663303406 0.385664619823' bbMaxModF='0.175944814651 0.810343417074 0.339689166467' bbMin='-2736103.25 -4326659.5 3786767.25' numAnchorVertices='3194' tightSize='21016.25 28681.5 36350'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level0.bin' numIndices='9780' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level1.bin' numIndices='150' vertexDataBufferOffset='5786'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level2.bin' numIndices='288' vertexDataBufferOffset='5826'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level3.bin' numIndices='912' vertexDataBufferOffset='5933'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level4.bin' numIndices='2082' vertexDataBufferOffset='6304'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level5.bin' numIndices='6492' vertexDataBufferOffset='7345'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level6.bin' numIndices='20016' vertexDataBufferOffset='10744'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level7.bin' numIndices='50490' vertexDataBufferOffset='19306'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level8.bin' numIndices='50382' vertexDataBufferOffset='26819'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level9.bin' numIndices='13662' vertexDataBufferOffset='28932'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level10.bin' numIndices='1110' vertexDataBufferOffset='29465'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level11.bin' numIndices='624' vertexDataBufferOffset='29469'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level12.bin' numIndices='756' vertexDataBufferOffset='29469'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level13.bin' numIndices='1422' vertexDataBufferOffset='29469'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level14.bin' numIndices='2190' vertexDataBufferOffset='29469'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_11_level15.bin' numIndices='6255' vertexDataBufferOffset='29469'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_9'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_0' vertexCount='383493' primType='"TRIANGLES"' position='-2701571.25 -4331455 3803979' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.170883209001 0.599710569791 0.371465795071' bbMaxModF='0.826396953916 0.335582723096 0.303332563902' bbMin='-2715299 -4346072 3786226.25' numAnchorVertices='3348' tightSize='27455.5 29233.5 35505.75'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level0.bin' numIndices='10269' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level1.bin' numIndices='114' vertexDataBufferOffset='5751'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level2.bin' numIndices='318' vertexDataBufferOffset='5796'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level3.bin' numIndices='1098' vertexDataBufferOffset='5934'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level4.bin' numIndices='3396' vertexDataBufferOffset='6526'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level5.bin' numIndices='11118' vertexDataBufferOffset='8478'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level6.bin' numIndices='36630' vertexDataBufferOffset='14811'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level7.bin' numIndices='99252' vertexDataBufferOffset='32454'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level8.bin' numIndices='142032' vertexDataBufferOffset='56622'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level9.bin' numIndices='57900' vertexDataBufferOffset='64540'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level10.bin' numIndices='3282' vertexDataBufferOffset='65503'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level11.bin' numIndices='1038' vertexDataBufferOffset='65516'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level12.bin' numIndices='1248' vertexDataBufferOffset='65521'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level13.bin' numIndices='2184' vertexDataBufferOffset='65524'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level14.bin' numIndices='3609' vertexDataBufferOffset='65529'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_0_level15.bin' numIndices='10005' vertexDataBufferOffset='65530'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_10'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_1' vertexCount='379551' primType='"TRIANGLES"' position='-2701029 -4335694.5 3804064' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='65533' indexedRendering='true' bbMinModF='0.171492034209 0.365885799166 0.37092776197' bbMaxModF='0.851675137793 0.355984809067 0.30833233491' bbMin='-2715273.5 -4355361 3786205.75' numAnchorVertices='4584' tightSize='28488.75 39333 35716.75'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level0.bin' numIndices='14097' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level1.bin' numIndices='156' vertexDataBufferOffset='8073'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level2.bin' numIndices='666' vertexDataBufferOffset='8127'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level3.bin' numIndices='1500' vertexDataBufferOffset='8375'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level4.bin' numIndices='4644' vertexDataBufferOffset='9129'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level5.bin' numIndices='14304' vertexDataBufferOffset='11708'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level6.bin' numIndices='44352' vertexDataBufferOffset='19497'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level7.bin' numIndices='111324' vertexDataBufferOffset='38993'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level8.bin' numIndices='118578' vertexDataBufferOffset='57963'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level9.bin' numIndices='38118' vertexDataBufferOffset='64303'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level10.bin' numIndices='3378' vertexDataBufferOffset='65520'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level11.bin' numIndices='1602' vertexDataBufferOffset='65526'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level12.bin' numIndices='2454' vertexDataBufferOffset='65529'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level13.bin' numIndices='3732' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level14.bin' numIndices='5667' vertexDataBufferOffset='65533'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_1_level15.bin' numIndices='14979' vertexDataBufferOffset='65533'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+        <shape DEF='_G_11'>
+          <appearance USE='AOPT_Appearance_205208576'></appearance>
+          <popGeometry DEF='PG_2' vertexCount='168108' primType='"TRIANGLES"' position='-2701465.5 -4337676 3803498' size='41883.9425 39726.33 38101.745' attributeStride='12' normalOffset='8' vertexBufferSize='29656' indexedRendering='true' bbMinModF='0.171533816331 0.34923437428 0.370055098526' bbMaxModF='0.830801983362 0.272878717969 0.279495072995' bbMin='-2715271.75 -4356022.5 3786172.5' numAnchorVertices='3086' tightSize='27612.75 36693 34651.25'>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level0.bin' numIndices='9537' vertexDataBufferOffset='0'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level1.bin' numIndices='108' vertexDataBufferOffset='5526'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level2.bin' numIndices='336' vertexDataBufferOffset='5571'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level3.bin' numIndices='690' vertexDataBufferOffset='5655'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level4.bin' numIndices='2058' vertexDataBufferOffset='5964'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level5.bin' numIndices='6108' vertexDataBufferOffset='6952'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level6.bin' numIndices='18810' vertexDataBufferOffset='10152'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level7.bin' numIndices='48780' vertexDataBufferOffset='18475'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level8.bin' numIndices='54156' vertexDataBufferOffset='26909'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level9.bin' numIndices='14748' vertexDataBufferOffset='29176'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level10.bin' numIndices='1392' vertexDataBufferOffset='29639'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level11.bin' numIndices='720' vertexDataBufferOffset='29647'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level12.bin' numIndices='882' vertexDataBufferOffset='29651'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level13.bin' numIndices='1290' vertexDataBufferOffset='29653'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level14.bin' numIndices='2460' vertexDataBufferOffset='29654'></popGeometryLevel>
+            <popGeometryLevel src='/static/x3d/Monterey25_10x/binGeo/PG_2_level15.bin' numIndices='6033' vertexDataBufferOffset='29656'></popGeometryLevel>
+          </popGeometry>
+        </shape>
+      </scene>

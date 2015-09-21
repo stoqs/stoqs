@@ -1,0 +1,5 @@
+-r base.txt
+
+pymssql==2.1.1
+selenium==2.47.3
+uWSGI==2.0.11.1

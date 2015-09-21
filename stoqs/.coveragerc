@@ -1,0 +1,63 @@
+[report]
+exclude_lines =
+    pragma: no cover
+    # No coverage for defensive code in loaders/DAPloaders.py
+    except socket.error
+    except pydap.exceptions.ServerError
+    except ParameterNotFound
+    except ParserError
+    raise NoValidData
+    except KeyError
+    conventions = self.ds.attributes['NC_GLOBAL']['conventions'].lower()
+    if len(set(lats.values())) != 1 or len(set(lons.values())) != 1
+    raise InvalidSliceRequest
+    except ValueError
+    elif len(self.ds[pname].shape) == 2
+    raise Exception
+    logger
+    except IndexError
+    def _genTrajectoryProfileGridType
+    continue
+    except Exception
+    except IntegrityError
+    except DatabaseError
+    except SkipRecord
+    except TypeError
+    except AttributeError
+    elif self.getFeatureType().lower() == 'trajectoryprofile'
+    return super
+    def runTrajectoryLoader
+    except VariableMissingCoordinatesAttribute
+    def runLrauvLoader
+    def runGliderLoader
+    def runTimeSeriesLoader
+    # No coverage for SeaBird and defensive code in loaders/SampleLoaders.py
+    raise ClosestTimeNotFoundException
+    except ObjectDoesNotExist
+    except MultipleObjectsReturned
+    except urllib2.HTTPError
+    except ClosestTimeNotFoundException
+    class SeabirdLoader
+    raise SubSampleLoadError
+    def delete_subsample
+    except SubSampleLoadError
+    # No coverage for commands not entered in loaders/__init__.py
+    self.dbAlias = self.base_dbAlias
+    self.campaignName = self.base_campaignName
+    def addPlaybackResources
+    def addPlatformResources
+    except urllib2.URLError
+    except httplib.IncompleteRead
+    if self.plotTimeSeriesDepth.get(v, False):
+    raise SkipRecord
+    if trajectoryProfileDepths
+    if self.dataStartDatetime and len(simple_line) == 2
+    except IOError
+    except ImportError
+    def __str__
+    # No coverage for defensive code in stoqs/utils/STOQSQManager.py
+    except PPDatabaseException
+    return q
+    
+
+    if __name__ == .__main__.:
