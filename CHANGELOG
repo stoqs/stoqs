@@ -62,7 +62,7 @@ Version 1.3: 31 January 2014
     This is in addition to the already recognized featureType of "trajectory".
   - The User Interface now offers the 'Parameter' tab in the Temporal section.  Data 
     that are of featureType timeSeries or timeSeriesProfile can be plotted on Time/
-    Parameter axes.  A time range can be selected with the mouse to zoom into featuures
+    Parameter axes.  A time range can be selected with the mouse to zoom into features
     of interest; that filter is applied to all of the other presentations of data helping
     discovery of correlated spatial/temporal measurements.
   
@@ -86,4 +86,19 @@ Version 1.3: 31 January 2014
   - Added instructions for installing memcached and deployed memcached on internal
     and external MBARI stoqs servers.  This greatly improves UI response time, especially
     in the "going back" operation when filters are cleared.
+
+Version 1.4: 20 September 2015
+
+  Parameter-Parameter Plotting
+  ----------------------------
+  - The spatial/temporal coordinates may be selected for Parameter-Parameter 
+    plotting, see the Wiki posting named "Update_20140429". 
+  - Samples are indicated on the Parameter-Parameter plots, see the wiki posting
+    named "Update_20140501".
+
+  Net Tow Data
+  ------------
+  - The user interface now supports proper display of net tow data in the Temporal
+    depth panel, see the Wiki posting named "Update_20150223".
+
 
