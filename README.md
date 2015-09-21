@@ -1,54 +1,43 @@
-README
-======
+Spatial Temporal Oceanographic Query System
+-------------------------------------------
 
-Spatial Temporal Oceanographic Query System (STOQS)
----------------------------------------------------
+[![Travis-CI Status](https://travis-ci.org/stoqs/stoqs.svg?branch=master)](https://travis-ci.org/stoqs/stoqs)
+[![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=master)](https://coveralls.io/r/stoqs/stoqs?branch=master)
+[![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=master)](https://requires.io/github/stoqs/stoqs/requirements/?branch=master)
 
-STOQS is a geospatial database web application designed for providing efficient 
-acccess to *in situ* oceanographic data across any dimension - e.g., retrieving
-a common parameter from all measuring platforms in a specific area over a 
-specific span of time.  STOQS complements other data management technologies
-such as NetCDF and OPeNDAP by providing an ability to index data retrieval 
-across parameter and spatial dimensions in addition to the *a priori* indexed
-coordinate dimensions in NetCDF.  It also provides a functional bridge between 
-NetCDF and Geographic Information Systems technologies.
+STOQS is a geospatial database and web application designed to give oceanographers
+efficient acccess to *in situ* measurement and *ex situ* sample data.
+See http://www.stoqs.org for more information.
 
-Here's a short video giving the context in which STOQS is used:
+Getting started with a STOQS development system with [Vagrant](https://www.vagrantup.com/)
+and [VirtualBox](https://www.virtualbox.org):
 
-<a href='http://www.youtube.com/watch?feature=player_embedded&v=E8wO3qMevV8' target='_blank'><img src='http://img.youtube.com/vi/E8wO3qMevV8/0.jpg' width='425' height=344 /></a>
+    curl "https://raw.githubusercontent.com/stoqs/stoqs/master/Vagrantfile" -o Vagrantfile
+    curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
+    vagrant up --provider virtualbox
 
-After installation, data is loaded into STOQS from a variety of data sources, including 
-OPeNDAP data sets, other relational databases, and flat files. Products are delivered 
-within the STOQS User Interface and in a variety of formats, including KML, via REST-style web requests.
+After your virtual machine has booted, log in, finish the Python setup, and test the installation:
 
-Installing
-----------
-To install the software for your own use fork the project on GitHub, clone it to your Linux system (CentOS is preferred), e.g.:
+    vagrant ssh 
+    cd ~/dev/stoqsgit
+    source venv-stoqs/bin/activate
+    ./setup.sh
+    export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+    ./test.sh CHANGEME
 
-    git clone git@github.com:<your_github_id>/stoqs.git stoqsgit
-    
-and follow the instructions starting with the PREREQUISITES file.
+Start the development server:
 
-Operation
----------
-If you wish to load data into an already installed STOQS server you can start with
-reading  the LOADING file for the instructions for creating a database, setting data
-sources, and writing a loader script.
+    cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
+    export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+    stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
 
+Visit your server's STOQS User Interface using your host computer's browser:
 
-Further information is in these files:
+    http://localhost:8000
 
-    PREREQUISITES - System level requirements, e.g. Postgis, Django, Python modules
-    INSTALL       - Steps to install the Django stoqs application
-    DEVELOPMENT   - Instructions on running a development environment
-    PRODUCTION    - Instructions on setting up a production environment
-    LOADING       - Loading your data
-    TIDBITS       - Miscellaneous tips, fixes, and examples for using STOQS
-    LICENSE       - GNU General Public License text, how this software is licensed
-
-The stoqs project web site has a wiki with links to presentations and periodic feature
-updates.  The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also a good place to post questions
-or any sort of comments about STOQS.    
-
-
+More instructions are in the doc/instructions directory -- see [LOADING](doc/instructions/LOADING.md) for how to load your own data
+and [CONTRIBUTING](doc/instructions/CONTRIBUTING.md) for how to share your work.
+Visit the [STOQS Wiki pages](https://github.com/stoqs/stoqs/wiki) for updates and links to presentations.
+The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also 
+a good place to ask questions and engage in discussion with the STOQS user and developer communities.
 

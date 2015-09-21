@@ -7,12 +7,23 @@ __pycache__
 *.log
 pip-log.txt
 
-# VirtualEnv
-venv-stoqs
-venv-stoqs/
+# Unit test / coverage reports
+.coverage
 
-# Never ever to go into version control
-privateSettings
-
-# Local GMT .grd bathymetry files
+# Terrain data files
 *.grd
+
+# Test fixtures
+stoqs/stoqs/fixtures/stoqs_test_data.json
+
+# Migrations
+stoqs/stoqs/migrations/
+
+# Virtualenv
+venv-stoqs
+
+# Let user make this symlink, which isn't tracked
+/stoqs/campaigns.py
+
+# Loader output log files
+stoqs/loaders/*/*.out
