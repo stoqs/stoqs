@@ -24,7 +24,6 @@ The good news is that Unix system administration skills are no longer required a
 5. Configure your Python virtual environment and run the tests (these steps are done as part of the original Vagrant installation, they need to be executed because you re-cloned the repository - your working directory - in the previous step):
 
         cd stoqsgit
-        git checkout django17upgrade
         export PATH="/usr/local/bin:$PATH"
         virtualenv venv-stoqs
         source venv-stoqs/bin/activate

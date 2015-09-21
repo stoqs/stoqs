@@ -170,7 +170,6 @@ cd ..
 mkdir dev && cd dev
 git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
-git checkout django17upgrade
 export PATH="/usr/local/bin:$PATH"
 virtualenv venv-stoqs
 chown -R $USER ..

@@ -1,9 +1,9 @@
 Spatial Temporal Oceanographic Query System
 -------------------------------------------
 
-[![Travis-CI Status](https://travis-ci.org/stoqs/stoqs.svg?branch=django17upgrade)](https://travis-ci.org/stoqs/stoqs)
-[![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=django17upgrade)](https://coveralls.io/r/stoqs/stoqs?branch=django17upgrade)
-[![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=django17upgrade)](https://requires.io/github/stoqs/stoqs/requirements/?branch=django17upgrade)
+[![Travis-CI Status](https://travis-ci.org/stoqs/stoqs.svg?branch=master)](https://travis-ci.org/stoqs/stoqs)
+[![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=master)](https://coveralls.io/r/stoqs/stoqs?branch=master)
+[![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=master)](https://requires.io/github/stoqs/stoqs/requirements/?branch=master)
 
 STOQS is a geospatial database and web application designed to give oceanographers
 efficient acccess to *in situ* measurement and *ex situ* sample data.
@@ -12,8 +12,8 @@ See http://www.stoqs.org for more information.
 Getting started with a STOQS development system with [Vagrant](https://www.vagrantup.com/)
 and [VirtualBox](https://www.virtualbox.org):
 
-    curl "https://raw.githubusercontent.com/stoqs/stoqs/django17upgrade/Vagrantfile" -o Vagrantfile
-    curl "https://raw.githubusercontent.com/stoqs/stoqs/django17upgrade/provision.sh" -o provision.sh
+    curl "https://raw.githubusercontent.com/stoqs/stoqs/master/Vagrantfile" -o Vagrantfile
+    curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
     vagrant up --provider virtualbox
 
 After your virtual machine has booted, log in, finish the Python setup, and test the installation:
