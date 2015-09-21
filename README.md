@@ -1,7 +1,7 @@
 Spatial Temporal Oceanographic Query System
 -------------------------------------------
 
-[![Travis-CI Status](https://travis-ci.org/stoqs/stoqs.svg?branch=master)](https://travis-ci.org/stoqs/stoqs)
+[![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs)
 [![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=master)](https://coveralls.io/r/stoqs/stoqs?branch=master)
 [![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=master)](https://requires.io/github/stoqs/stoqs/requirements/?branch=master)
 
