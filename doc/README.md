@@ -1,7 +1,4 @@
-This doc/ directory contains files that provide information about the STOQS project.
-Initially, it contains diagrams an .pdf files of presentations made at scientific 
-meetings.
+See the instructions directory for help on getting a STOQS server up and running.
 
---
-Mike McCann
-19 July 2012
+See the papers, posters, and presentations folders for more information about STOQS.
+
