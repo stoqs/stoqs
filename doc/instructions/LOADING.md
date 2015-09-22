@@ -3,9 +3,9 @@ Instructions for loading your data in STOQS
 
 ### TL;DR; (Quick instructions for your Vagrant VM)
 
-Use the stoqs/loaders/load.py script to load data for an existing campaign. First
-use it to list exiting campaigns (after creating a campaigns.py symbolic link in
-the stoqs directory pointing to mbari_campaigns.py):
+Use the `stoqs/loaders/load.py` script to load data for an existing campaign. First
+use it to list exiting campaigns (after creating a `campaigns.py` symbolic link in
+the stoqs directory pointing to `mbari_campaigns.py`):
 
     export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
     cd stoqs
@@ -58,7 +58,7 @@ prerequisites:
    and parameter names for each type of platform.
 
 4. Create a PostgreSQL database for your campaign, in this example a test database 
-  (with '_t' suffix) is created:
+  (with '_t' suffix) is created, using psql as user with proper privileges:
 
          create database stoqs_september2012_t owner=stoqsadm template=template_postgis;
          alter database stoqs_september2012_t set timezone='GMT';
@@ -66,7 +66,8 @@ prerequisites:
          grant all on all tables in schema public to stoqsadm;
 
 5. Assign DATABASE_URL (replacing <dbuser> <pw> <host> and <port> with your 
-   values) and add your new database/campaign to STOQS_CAMPAIGNS, e.g.:
+   values) and add your new database/campaign to STOQS_CAMPAIGNS (databases
+   not in campaigns.py need to be added to this environment variable) , e.g.:
 
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
         export STOQS_CAMPAIGNS="stoqs_september2012_t,$STOQS_CAMPAIGNS"
