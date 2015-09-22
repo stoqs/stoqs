@@ -27,7 +27,7 @@ Jinja2==2.8
 kombu==3.0.26
 lxml==3.4.4
 mock==1.3.0
-numpy==1.9.3
+numpy==1.9.2
 matplotlib==1.4.3
 nose==1.3.7
 oauthlib==1.0.3
