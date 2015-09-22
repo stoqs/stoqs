@@ -13,7 +13,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
 1. On your server install nginx and configure to start (configure nginx
    by editing the /etc/nginx/conf.d/default.conf file after you install it):
 
-        sudo yum install nginx
+        sudo yum -y install nginx
         sudo chkconfig nginx on
         sudo /sbin/service nginx start
 
@@ -28,7 +28,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
 3. Provision your server, there are many options: 
 
     * Start with a system provisioned with a `Vagrant up --provider virtualbox` command
-    * Install all the required software using provision.sh as a guide
+    * Install all the required software using [provision.sh](../../provision.sh) as a guide
     * Use a server that already has much of the required software installed
     * Other ways, including Docker, that are up-and-coming in the DevOps world
 
@@ -68,8 +68,8 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
    symlink of it to the nginx config directory, e.g.:
 
         cp $STOQS_HOME/stoqs/stoqs_nginx.conf $STOQS_HOME/stoqs/stoqs_nginx_<host>.conf
-        vi $STOQS_HOME/stoqs/stoqs_nginx_<host>kraken.conf
-        sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx_<host>kraken.conf /etc/nginx/conf.d
+        vi $STOQS_HOME/stoqs/stoqs_nginx_<host>.conf
+        sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx_<host>.conf /etc/nginx/conf.d
 
 8. Edit the `$STOQS_HOME/stoqs/stoqs_uwsgi.ini` file making sure that all the 
    absolute directory paths are correct.
@@ -82,6 +82,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         sudo mkdir /usr/share/nginx/html/static
         sudo chown $USER /usr/share/nginx/html/static
         export STATIC_ROOT=/usr/share/nginx/html/static
+        export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
         stoqs/manage.py collectstatic
 
 10. Create the `$MEDIA_ROOT/sections` and `$MEDIA_ROOT/parameterparameter`
@@ -107,7 +108,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         export STOQS_CAMPAIGNS="<comma_separated>,<databases>,<not_in_campaigns>"
         export SECRET_KEY="<random_sequence_of_impossible_to_guess_characters>"
         export GDAL_DATA=/usr/share/gdal
-        /usr/local/bin/uwsgi --ini stoqs_uwsgi.ini
+        uwsgi --ini stoqs_uwsgi.ini
 
 12. Test the STOQS user interface using the configuration of your nginx server:
 
