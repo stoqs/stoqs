@@ -1,7 +1,27 @@
 Instructions for loading your data in STOQS
-+==========================================
+===========================================
 
-These instructions cover the loading of in situ discrete sampling geometry feature type 
+### TL;DR; (Quick instructions for your Vagrant VM)
+
+Use the stoqs/loaders/load.py script to load data for an existing campaign. First
+use it to list exiting campaigns (after creating a campaigns.py symbolic link in
+the stoqs directory pointing to mbari_campaigns.py):
+
+    export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+    cd stoqs
+    ln -s mbari_campaigns.py campaigns.py
+    loaders/load.py --list
+
+Pick a campaign of interest and load it, e.g.:
+
+    loaders/load.py --db stoqs_september2010
+
+Use the --help option for a suggested workflow to build up a production server.
+
+
+### Details
+ 
+These instructions cover the loading of *in situ* discrete sampling geometry feature type 
 data from OpenDAP accessible data sources.  Data adhereing to the Climate and Forecast
 conventions version 1.6 are supported for loading into STOQS.  Specific feature types
 supported are: trajectory, timeSeries, timeSeriesProfile, and trajectoryProfile.  
@@ -91,7 +111,11 @@ prerequisites:
       so that your STOQS loader can load them.
     - Editing and running the load script during a campaign is an interactive process requiring
       interaction with people and testing the data sources for valid parameter names as well
-      as monitoring the script's output for warning and error messages.
+      as monitoring the output for warning and error messages.
+    - *Ex situ* subsample data are loaded from .csv files local to the loading computer.  If
+      you get error messages that those files are not found you will need to copy them to
+      your computer.  (There is Issue #145 which suggests establishing a mechanism for 
+      loading these data via the web.)
     - To provide read-only access to your database  grant everyone select privileges:
 
             \c stoqs_september2012_t
