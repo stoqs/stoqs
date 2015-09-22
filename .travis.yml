@@ -30,7 +30,7 @@ before_script:
 script:  
   - ./test.sh CHANGEME
 after_script:
-  - COVERALLS_REPO_TOKEN=B9qmcqI4Yq9CR0PkjYmy4eYQoJa3mdKDw coveralls --base_dir stoqs
+  - COVERALLS_REPO_TOKEN=W1wSPd6A9HGyoPWXGlyZ6mxkGsZR7BybT coveralls --base_dir stoqs
 notifications:
   email:
     on_success: change
