@@ -43,6 +43,11 @@ fh.setFormatter(f)
 logger.addHandler(fh)
 logger.setLevel(logging.DEBUG)
 
+class PlotType(set):
+    def __getattr__(self, item):
+        if item in self:
+            return item
+        raise AttributeError
 
 class NoPPDataException(Exception):
     pass
@@ -52,7 +57,7 @@ class Contour(object):
     '''
     Create plots for visualizing data from LRAUV vehicles
     '''
-    def __init__(self, startDatetime, endDatetime, database, platformName, plotGroup, title, outFilename, animate, autoscale):
+    def __init__(self, startDatetime, endDatetime, database, platformName, plotGroup, title, outFilename, animate, autoscale, plotDotParmName, booleanPlotGroup):
         self.startDatetime = startDatetime
         self.endDatetime = endDatetime
         self.platformName = platformName
@@ -64,13 +69,15 @@ class Contour(object):
         self.database = database
         self.platformName = platformName
         self.autoscale = autoscale
+        self.plotDotParmName = plotDotParmName
+        self.booleanPlotGroup = booleanPlotGroup
 
 
     def getTimeSeriesData(self, startDatetime, endDatetime):
         '''
         Return time series of a list of Parameters from a Platform
         '''
-        data_dict = defaultdict(lambda: {'datetime': [], 'lon': [], 'lat': [], 'depth': [], 'datavalue':[]})
+        data_dict = defaultdict(lambda: {'datetime': [], 'lon': [], 'lat': [], 'depth': [], 'datavalue':[], 'units':''})
 
         start_dt= []
         end_dt = []
@@ -85,8 +92,13 @@ class Contour(object):
                 try:
                     for pname in parameters:
 
-                        qs = MeasuredParameter.objects.using(self.database)
+                        qsp = Parameter.objects.using(self.database)
+                        qsp = qsp.filter(name=pname)
+                        count = qsp.values_list().count()
+                        if count:
+                            data_dict[pln+pname]['units'] = qsp[count-1].units
 
+                        qs = MeasuredParameter.objects.using(self.database)
                         qs = qs.filter(measurement__instantpoint__timevalue__gte=startDatetime)
                         qs = qs.filter(measurement__instantpoint__timevalue__lte=endDatetime)
                         qs = qs.filter(parameter__name=pname)
@@ -272,7 +284,8 @@ class Contour(object):
         fig.suptitle(self.title+'\n'+self.subtitle1+'\n'+self.subtitle2, fontsize=8)
 
         pn = self.platformName[0]
-        plot_scatter = True 
+
+        plot_types = PlotType(['Scatter', 'Step'])
         # bound the depth to cover max of all parameter group depths
         # and flag removal of scatter plot if have more than 2000 points in any parameter
         maxy = 0
@@ -283,25 +296,25 @@ class Contour(object):
                 sz = len(self.data[pn+name]['datavalue'])
                 if y > maxy:
                     maxy = y
-                if sz > 2000:
-                    plot_scatter = False
-
-
-        plot_scatter = True
 
         # pad the depth by 20 meters to make room for parameter name to be displayed at bottom
         rangey = [0.0, int(maxy) + 20]
 
-        latlon_series = None
-        chl_series = None
         i = 0
         # add contour plots for each parameter group
         for group in self.plotGroupValid:
             parm = [x.strip() for x in group.split(',')]
+            plot_step =  sum([self.data[pn+p]['units'].count('bool') for p in parm]) # counter the number of boolean plots in the groups
+            plot_scatter = len(parm) - plot_step # otherwise all other plots are scatter plots
+            #plot_dense = sum([val for val  in len(self.data[pn+name]['datavalue']) > 2000]) #  if more than 2000 points, skip the scatter plot
+
+            # choose the right type of gridspec to display the data
             if plot_scatter:
-                contour_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm)*2, ncols=1, subplot_spec=lower_gs[i])
+                # one row for scatter and one for contour
+                plot_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm)*2, ncols=2, subplot_spec=lower_gs[i], width_ratios=[30,1], wspace=0.05)
             else:
-                contour_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm), ncols=1, subplot_spec=lower_gs[i])
+                # one row for step plots/or contour plots
+                plot_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm), ncols=2, subplot_spec=lower_gs[i], width_ratios=[30,1], wspace=0.05)
             j = 0
             i += 1
             for name in parm:
@@ -311,7 +324,7 @@ class Contour(object):
                 z = self.data[pn+name]['datavalue']
                 sdt_count = self.data[pn+name]['sdt_count']
 
-                units = ''
+                units = '(' + self.data[pn+p]['units'] + ')'
 
                 if len(z):
                     if self.autoscale:
@@ -329,7 +342,6 @@ class Contour(object):
                 if name.find('chlorophyll') != -1 :
                     if not self.autoscale:
                         rangez = [0.0, 10.0]
-                    units = ' (ug/l)'
                 if name.find('salinity') != -1 :
                     if not self.autoscale:
                         rangez = [33.3, 34.9]
@@ -338,26 +350,28 @@ class Contour(object):
                     if not self.autoscale:
                         rangez = [10.0, 14.0]
                     units = ' ($^\circ$C)'
-  
-                gs  = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=contour_gs[j])
-                ax0 = plt.Subplot(fig, gs[:])
-                fig.add_subplot(ax0)
-                if plot_scatter:  
-                    gs  = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=contour_gs[j+1])
-                    ax1 = plt.Subplot(fig, gs[:])
-                    fig.add_subplot(ax1)
 
-                # if data found, plot with contour plot (if fails, falls back to the scatter plot)
-                if len(x) > 0:
-                    cs0, zi = self.createContourPlot(title + pn,ax0,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
-                    if plot_scatter:
-                        cs1 = self.createScatterPlot(title + pn,ax1,x,y,z,rangey,rangez,startDatetime,endDatetime)
-                    if latlon_series is None:
-                        latlon_series = name
-                    if chl_series is None and name.find('chlorophyll') != -1:
-                        chl_series = name
+                logger.debug('getting subplot ax0')
+                gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=plot_gs[j])
+                ax0_plot = plt.Subplot(fig, gs[:])
+                fig.add_subplot(ax0_plot)
 
-                else: # otherwise add in some fake data and plot a placeholder time/depth plot
+                gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=plot_gs[j+1])
+                ax0_colorbar = plt.Subplot(fig, gs[:])
+                fig.add_subplot(ax0_colorbar)
+
+                if plot_scatter:
+                    logger.debug('getting subplot ax1')
+                    gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=plot_gs[j + 2])
+                    ax1_plot = plt.Subplot(fig, gs[:])
+                    fig.add_subplot(ax1_plot)
+
+                    gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=plot_gs[j + 3])
+                    ax1_colorbar = plt.Subplot(fig, gs[:])
+                    fig.add_subplot(ax1_colorbar)
+
+                # if no data found add in some fake data and plot a placeholder time/depth plot
+                if not x:
                     tmin = time.mktime(startDatetime.timetuple())
                     tmax = time.mktime(endDatetime.timetuple())
                     x.append(tmin)
@@ -366,62 +380,77 @@ class Contour(object):
                     y.append(np.NaN)
                     z.append(np.NaN)
                     z.append(np.NaN)
-                    cs0 = self.createScatterPlot(title + pn,ax0,x,y,z,rangey,rangez,startDatetime,endDatetime) 
-                    if plot_scatter: 
-                        cs1 = self.createScatterPlot(title + pn,ax1,x,y,z,rangey,rangez,startDatetime,endDatetime)
 
                 if plot_scatter:
-                    ax1.text(0.95,0.02, name, verticalalignment='bottom',
-                                horizontalalignment='right',transform=ax1.transAxes,color='black',fontsize=8)
+                    cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
+                    cs1 = self.createScatterPlot(title + pn,ax1_plot,x,y,z,rangey,rangez,startDatetime,endDatetime)
                 else:
-                    ax0.text(0.95,0.02, name, verticalalignment='bottom',
-                        horizontalalignment='right',transform=ax0.transAxes,color='black',fontsize=8)
-
-                # For a colorbar create an axes on the right side of ax. The width of cax will be 1%
-                # of ax and the padding between cax and ax will be fixed at 0.2 inch.
-                divider = make_axes_locatable(ax0)
-                cax = divider.append_axes("right", size="1%", pad=0.1)
-                cbFormatter = FormatStrFormatter('%.2f')
-                cb = plt.colorbar(cs0, cax=cax, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
-                cb.set_label(units,fontsize=8)#,labelpad=5)
-                cb.ax.xaxis.set_ticks_position('top')
-                for t in cb.ax.yaxis.get_ticklabels():
-                    t.set_fontsize(8)
+                    if plot_step:
+                        cs0 = self.createStepPlot(title + pn,title,ax0_plot,x,z,rangez,startDatetime,endDatetime)
+                    else:
+                        cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
 
                 if plot_scatter:
-                    divider = make_axes_locatable(ax1)
-                    cax = divider.append_axes("right", size="1%", pad=0.1)
+                    ax1_plot.text(0.95,0.02, name, verticalalignment='bottom',
+                                horizontalalignment='right',transform=ax1_plot.transAxes,color='black',fontsize=8)
+                else:
+                    ax0_plot.text(0.95,0.02, name, verticalalignment='bottom',
+                        horizontalalignment='right',transform=ax0_plot.transAxes,color='black',fontsize=8)
+
+                logger.debug('plotting colorbars')
+                if plot_scatter:
                     cbFormatter = FormatStrFormatter('%.2f')
-                    cb = plt.colorbar(cs0, cax=cax, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
+                    cb = plt.colorbar(cs0, cax=ax0_colorbar, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
                     cb.set_label(units,fontsize=8)#,labelpad=5)
                     cb.ax.xaxis.set_ticks_position('top')
                     for t in cb.ax.yaxis.get_ticklabels():
                         t.set_fontsize(8)
 
+                    cb = plt.colorbar(cs1, cax=ax1_colorbar, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
+                    cb.set_label(units,fontsize=8)#,labelpad=5)
+                    cb.ax.xaxis.set_ticks_position('top')
+                    for t in cb.ax.yaxis.get_ticklabels():
+                        t.set_fontsize(8)
+                else:
+                    if plot_step:
+                        xaxis = ax0_colorbar.xaxis
+                        ax0_colorbar.xaxis.set_major_locator(plt.NullLocator())
+                        ax0_colorbar.yaxis.set_ticks_position('right')
+                        for t in ax0_colorbar.yaxis.get_ticklabels():
+                            t.set_fontsize(8)
+                    else:
+                        cbFormatter = FormatStrFormatter('%.2f')
+                        cb = plt.colorbar(cs0, cax=ax0_colorbar, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
+                        cb.set_label(units,fontsize=8)#,labelpad=5)
+                        cb.ax.xaxis.set_ticks_position('top')
+                        for t in cb.ax.yaxis.get_ticklabels():
+                            t.set_fontsize(8)
+
                 #self.plotNightDay(ax,x,startDatetime,endDatetime)
 
                 # Rotate and show the date with date formatter in the last plot of all the groups
+                logger.debug('rotate and show date with date formatter')
                 if name is parm[-1] and group is self.plotGroupValid[-1]:
                     x_fmt = self.DateFormatter(self.scale_factor)
                     if plot_scatter: 
-                        ax = ax1
+                        ax = ax1_plot
                         # Don't show on the upper contour plot 
-                        ax0.xaxis.set_ticks([])  
+                        ax0_plot.xaxis.set_ticks([])
                     else: 
-                        ax = ax0  
+                        ax = ax0_plot
                     ax.xaxis.set_major_formatter(x_fmt)
                     # Rotate date labels
                     for label in ax.xaxis.get_ticklabels():
                         label.set_rotation(10)
                 else:
-                    ax0.xaxis.set_ticks([])
+                    ax0_plot.xaxis.set_ticks([])
                     if plot_scatter:  
-                        ax1.xaxis.set_ticks([])
+                        ax1_plot.xaxis.set_ticks([])
 
                 if plot_scatter:
-                    j+=2 
+                    j+=4
                 else: 
-                    j+=1 
+                    j+=2
 
 
         # plot tracks
@@ -432,10 +461,7 @@ class Contour(object):
         z = []
         maptracks = None
 
-        if chl_series is not None:
-            z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], chl_series)
-        else:
-            z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], latlon_series)
+        z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], self.plotDotParmName)
 
         # get the percentile ranges for this to autoscale
         pointsnp = np.array(points)
@@ -494,30 +520,47 @@ class Contour(object):
                     ln,lt = zip(*track)
                     mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
 
-            # if have a valid chl series, then plot the dots
-            if chl_series is not None and len(z) > 0:
+            # if have a valid series, then plot the dots
+            if self.plotDotParmName is not None and len(z) > 0:
                 if len(z) > 2000:
                     sz = len(z)
                     stride = int(sz/200)
                     z_stride = z[0:sz:stride]
                     lon_stride = lon[0:sz:stride]
                     lat_stride = lat[0:sz:stride]
-                    # scale the size of the point by chlorophyll value
-                    s = [10*chl for chl in z_stride]
+                    s = [10*val for val in z_stride]
                     mp.scatter(lon_stride,lat_stride,c=z_stride,s=s,marker='.',vmin=rangez[0],vmax=rangez[1],lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
                     if stride > 1:
-                        ax.text(0.70,0.1, ('%s (every %d points)' % (chl_series, stride)), verticalalignment='bottom',
+                        ax.text(0.70,0.1, ('%s (every %d points)' % (self.plotDotParmName, stride)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
                     else:
-                        ax.text(0.70,0.1, ('%s (every point)' % (chl_series)), verticalalignment='bottom',
+                        ax.text(0.70,0.1, ('%s (every point)' % (self.plotDotParmName)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
 
                 else:
-                    # scale the size of the point by chlorophyll value
-                    s = [10*chl for chl in z]
+                    # scale the size of the point by value
+                    s = [10*val for val in z]
                     mp.scatter(lon,lat,c=z,s=s,marker='.',vmin=rangez[0],vmax=rangez[1],lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
-                    ax.text(0.70,0.1, ('%s (every point)' % (chl_series)), verticalalignment='bottom',
+                    ax.text(0.70,0.1, ('%s (every point)' % (self.plotDotParmName)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
+
+            # plot the binary markers
+            markers = ['o','x','d','D','8','1','2','3','4']
+            i = 1;
+            for name in self.booleanPlotGroup:
+                z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], name)
+                pointsnp = np.array(points)
+                lon = pointsnp[:,0]
+                lat =  pointsnp[:,1]
+                i = i + 1
+                # scale up the size of point
+                s = [20*val for val in z]
+                if len(z) > 0:
+                    mp.scatter(lon,lat,s=s,marker=markers[i],c='black',label=name,zorder=3)
+
+            # plot the legend outside the plot in the upper left corner
+            l = ax.legend(loc='upper left', bbox_to_anchor=(1,1), prop={'size':8}, scatterpoints=1)# only plot legend symbol once
+            l.set_zorder(4) # put the legend on top
 
         except Exception, e:
             logger.warn(e)
@@ -717,6 +760,40 @@ class Contour(object):
 
         return cs
 
+    def createStepPlot(self,title,label,ax,x,y,rangey,startTime,endTime):
+        tmin = time.mktime(startTime.timetuple())
+        tmax = time.mktime(endTime.timetuple())
+        dmin = rangey[1]
+        dmax = rangey[0]
+
+        try:
+            ax.set_xlim(tmin, tmax)
+            self.scale_factor = 1
+
+            ax.set_ylim([dmax,dmin])
+            ax.set_ylabel('%s (bool)' % label,fontsize=8)
+
+            ax.tick_params(axis='both',which='major',labelsize=8)
+            ax.tick_params(axis='both',which='minor',labelsize=8)
+
+            logger.debug('Plotting the step data')
+            labels = []
+            for val in y:
+                if not val:
+                    labels.append('False')
+                else:
+                    labels.append('True')
+            cs = ax.step(x,y,lw=1,alpha=0.8,c='black',label=labels)
+
+            # limit the number of ticks
+            max_yticks = 5
+            yloc = plt.MaxNLocator(max_yticks)
+            ax.yaxis.set_major_locator(yloc)
+
+        except Exception,e:
+            logger.error(e)
+
+        return cs
 
     def run(self):
 
