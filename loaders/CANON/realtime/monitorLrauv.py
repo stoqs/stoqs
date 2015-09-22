@@ -184,7 +184,7 @@ def process_command_line():
                                                                   'If interpolating, must map to the same location as -o directory', default='.',required=True)'''
         parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
                                                                  ' If interpolating, must map to the same location as -o directory',
-                            default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/makai/realtime/sbdlogs/2015/201505/20150521T170042/.*shore.nc4$',required=False)
+                            default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/tethys/realtime/sbdlogs/2015/201509/20150911T155447/.*shore.nc4$',required=False)
         '''parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
                                                                  ' If interpolating, must map to the same location as -o directory',
                             default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/cell-logs/.*Normal*.nc4$',required=False)'''
@@ -204,6 +204,10 @@ def process_command_line():
                             #default='/tmp/TestMonitorLrauv/',required=True)
         parser.add_argument('--iparm', action='store', help='parameter to interpolate against; must exist in the -p/--parms list',
                             default='bin_mean_mass_concentration_of_chlorophyll_in_sea_water',required=False)
+        parser.add_argument('--plotDotParmName', action='store', help='parameter to plot as colored dot in map; must exist in the -p/--parms list',
+                            default='vertical_temperature_homogeneity_index',required=False)
+        parser.add_argument('--booleanPlotGroup', action='store', help='List of space separated boolean parameters to plot as symbols in the map against; must exist in the -p/--parms list',
+                            default=['front'],required=False)
         parser.add_argument('--contourDir', action='store', help='output directory to store 24 hour contour output',
                             default='/tmp/TestMonitorLrauv/',required=False)
         parser.add_argument('--productDir', action='store', help='output directory to store 24 hour contour output for catalog in ODSS',
@@ -212,20 +216,20 @@ def process_command_line():
         parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='Daphne Monterey data - April 2015')
         parser.add_argument('-i', '--interpolate', action='store_true', help='interpolate - must be used with --outDir option')
         parser.add_argument('--latest24hr', action='store_true', help='create the latest 24 hour plot')
-        parser.add_argument('--autoscale', action='store_true', help='autoscale each plot to 1 and 99 percentile')
+        parser.add_argument('--autoscale', action='store_true', help='autoscale each plot to 1 and 99 percentile',required=False,default=True)
         #parser.add_argument('-a', '--append', action='store_false', help='Append data to existing Activity',required=False)
         parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity',required=False)
         parser.add_argument('--post', action='store_true', help='Post message to slack about new data. Disable this during initial database load or when debugging',required=False)
-        parser.add_argument('--debug', action='store_true', help='Useful for debugging plots - does not allow data loading',required=False, default=False)
+        parser.add_argument('--debug', action='store_true', help='Useful for debugging plots - does not allow data loading',required=False, default=True)
         parser.add_argument('-f', '--interpFreq', action='store', help='Optional interpolation frequency string to specify time base for interpolating e.g. 500L=500 millisecs, 1S=1 second, 1Min=1 minute,H=1 hour,D=daily', default='')
         parser.add_argument('-r', '--resampleFreq', action='store', help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='')
         parser.add_argument('-p', '--parms', action='store', help='List of space separated parameters to load', nargs='*', default=
-                                    ['bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
+                                    ['front', 'vertical_temperature_homogeneity_index', 'bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
         parser.add_argument('-g', '--plotgroup', action='store', help='List of space separated parameters to plot', nargs='*', default=
-                                ['bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
+                                ['vertical_temperature_homogeneity_index', 'bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
 
         parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
-        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150518T000000', required=False)
+        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150911T150000', required=False)
         parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default=None, required=False)
 
         args = parser.parse_args()    
@@ -382,7 +386,7 @@ if __name__ == '__main__':
 
                 logger.debug('out file %s', outFile)
 
-                c = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile, False, args.autoscale)
+                c = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile, False, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
                 c.run()
 
                 # Replace netCDF file with png extension and that is the URL of the log
@@ -411,7 +415,7 @@ if __name__ == '__main__':
                 url = args.contourUrl + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
 
                 logger.debug('out file %s url: %s ', outFile, url)
-                c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFile, False, args.autoscale)
+                c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFile, False, args.autoscale, args.booleanPlotGroup)
                 c.run()
 
                 if outFile.startswith('/tmp'):
