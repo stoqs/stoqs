@@ -1,0 +1,37 @@
+language: python
+python:
+  - "2.7"
+addons:
+  postgresql: "9.4"
+services:
+  - rabbitmq 
+before_install: 
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes conda
+env:
+  - DJANGO=1.8
+install:
+  - conda install --yes python=2.7 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
+  # Coverage packages are on my binstar channel
+  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+  - pip install -r requirements/travis-ci.txt
+before_script:
+  - psql -c 'CREATE DATABASE template_postgis;' -U postgres
+  - psql -c 'CREATE EXTENSION postgis;' -U postgres -d template_postgis
+  - psql -c 'CREATE EXTENSION postgis_topology;' -U postgres -d template_postgis
+  - psql -c 'ALTER ROLE travis SUPERUSER;' -U postgres
+  - psql -c '\du' -U postgres -d template_postgis
+  - export DATABASE_URL="postgis://travis:@127.0.0.1:5432/stoqs"
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+script:  
+  - ./test.sh CHANGEME
+after_script:
+  - COVERALLS_REPO_TOKEN=W1wSPd6A9HGyoPWXGlyZ6mxkGsZR7BybT coveralls --base_dir stoqs
+notifications:
+  email:
+    on_success: change
+    on_failure: always

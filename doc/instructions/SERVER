@@ -1,0 +1,82 @@
+# SERVER 
+# ======
+
+# These instructions are for setting up a CentOS 6.5 server from scratch in order to have
+# everything in place for following the instructions in PREPREQUISITES.  It assumes that
+# you have a computer or virtualization software (e.g. VMware, VirtualBox) and can perform
+# an operating system installation from an ISO image.
+#
+# Download a CentOS 6.5 x86_64 image from http://www.centos.org/download/ and install it
+# following the instructions provided.
+#
+# Configuring your disk partitions:
+# ---------------------------------
+# A 60 GB disk provides plenty of space to host a STOQS development environment and several
+# full resolution campaign databases.  Guidance from the book "PostgreSQL 9.0 High Performance"
+# suggests creating separate partitions for portions of the database system.  Here is how 
+# I've partitioned a 60 GB drive in order to separate disk I/O and achieve optimal database
+# performance (if you don't want to partition then you can skip those steps):
+[mccann@localhost ~]$ df -h
+Filesystem                       Size  Used Avail Use% Mounted on
+/dev/mapper/vg_livedvd-lv_root    22G  5.4G   16G  26% /
+tmpfs                            497M  148K  497M   1% /dev/shm
+/dev/sda1                        485M   35M  425M   8% /boot
+/dev/mapper/vg_livedvd-lv_home    20G  193M   19G   2% /home
+/dev/mapper/vg_livedvd-LogVol03   15G  165M   14G   2% /pgdata
+/dev/mapper/vg_livedvd-LogVol04  985M   18M  918M   2% /pgtablespace
+/dev/mapper/vg_livedvd-LogVol05  485M   11M  449M   3% /pgxlog
+
+# (The /pgdata, /pgtablespace, and /pgxlog partitions will be symbolically linked in the
+# installed postgresql directories.)
+#
+# Note that you may forego this sort of partitioning if, for instance, you are setting up
+# a development server.
+#
+# Install RHEL EPEL repository so that yum(1) can find most everything you need to install
+# (See http://wiki.centos.org/AdditionalResources/Repositories for more information):
+wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+wget http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
+sudo rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
+
+# Install PostgreSQL 9.3 (see http://yum.postgresql.org/howtoyum.php)
+# Download appropriate .rpm file, e.g.: pgdg-centos93-9.3-1.noarch.rpm and install it:
+sudo rpm -ivh /tmp/pgdg-centos93-9.3-1.noarch.rpm
+sudo yum groupinstall "PostgreSQL Database Server 9.3 PGDG"
+
+# Make symlinks and set ownership/permissions to above partitions:
+sudo mkdir -m 700 /pgdata/data
+sudo chown postgres /pgdata/data
+sudo rmdir /var/lib/pgsql/9.3/data
+sudo ln -s /pgdata/data /var/lib/pgsql/9.3/data
+sudo chown -R postgres pgxlog pgtablespace pgdata
+sudo chmod go-rx pgxlog pgtablespace pgdata
+
+# Configure PostgreSQL to start on boot and initialize cluster
+sudo chkconfig postgresql-9.3 on
+sudo /sbin/service postgresql-9.3 initdb
+
+# Link pg_xlog and pg_tblspc to own partitions after initializing the cluster
+su -c "su - postgres"
+cd /var/lib/pgsql/9.3/data
+mv pg_xlog pg.xlog.orig
+ln -s /pgxlog pg_xlog
+rm -r pg.xlog.orig
+rmdir pg_tblspc
+ln -s /pgtablespace pg_tblspc
+
+# Start the postgresql-9.3 service
+sudo /sbin/service postgresql-9.3 start
+
+# Install the Mercurial source code revision control system
+sudo yum -y install mercurial
+
+# Install Python 2.7 and associated tools for it: easy_install, pip, and virtualenv. Good instructions can be found online. 
+# Here's one: https://www.digitalocean.com/community/tutorials/how-to-set-up-python-2-7-6-and-3-3-3-on-centos-6-4
+
+# Proceed to the instructions in the PREREQUISITES file.
+
+--
+Mike McCann
+MBARI 20 February 2015
+
+

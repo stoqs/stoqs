@@ -1,0 +1,4 @@
+-r base.txt
+coverage==3.7.1
+scikit-learn==0.16.1
+selenium==2.47.3

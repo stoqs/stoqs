@@ -1,0 +1,21 @@
+loaders directory
+=================
+
+This directory contains database loading software and load scripts for specific
+campaign data.  Here's a rough structure:
+
+    Software for loading data into STOQS:
+      - __init__.py         Contains STOQS_Loader class with common methods for loading STOQS
+      - DAPloaders.py:      Load Measurement data from OPeNDAP data sources
+      - SampleLoaders.py:   Code for loading parent Sample data from AUV gulpers, sippers, CTD rosettes and subsample Sample data
+
+    Project/Initiative directories:
+      - CANON:              Load scripts for MBARI CANON campaigns
+      - MarMenor:           Load scripts for Spanish Mar Menor lagoon data
+      - BEDS:               Load scripts for MBARI Benthic Event Detector deployment data
+      - MolecularEcology:   Load scripts and Sample data for MBARI Molecular Ecology project
+
+--
+Mike McCann
+8 August 2013
+    
