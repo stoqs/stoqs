@@ -1567,6 +1567,8 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             logger.exception(e)
         except NoValidData as e:
             logger.warn(str(e))
+        except KeyError as e:
+            logger.warn(str(e))
         else:
             logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
 
@@ -1607,14 +1609,18 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
     # Auxiliary coordinates are generally the same for all include_names
     if auxCoords is None:
         loader.auxCoords = {}
-        for p in loader.include_names:
-          loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+        if url.endswith('shore.nc'):
+            for p in loader.include_names:
+                loader.auxCoords[p] = {'time': 'Time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+        else:
+            for p in loader.include_names:
+                loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     try:
         (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
     except NoValidData as e:
         logger.warn(e)
-        raise e
+        raise
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 

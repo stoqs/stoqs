@@ -28,13 +28,13 @@ from CANON import CANONLoader
 cl = CANONLoader('stoqs_may2012', 'CANON - May 2012',
                     description = 'Front detection AUV and Glider surveys in Monterey Bay',
                     x3dTerrains = {
-                        'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
-                            'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                            'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                            'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
-                            'VerticalExaggeration': '10',
-                            'speed': '.1',
-                        }
+                            '/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                'centerOfRotation': '-2711557.94 -4331414.32 3801353.46',
+                                'VerticalExaggeration': '10',
+                                'speed': '.1',
+                            }
                     },
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
@@ -96,6 +96,8 @@ cl.daphne_d_files = [
 cl.daphne_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
+cl.daphne_startDatetime = startdate
+cl.daphne_endDatetime = enddate
 
 # Realtime telemetered (_r_) tethys data - insert '_r_' to not load the files
 cl.tethys_base = 'http://elvis.shore.mbari.org/thredds/dodsC/LRAUV/tethys/realtime/sbdlogs/2012/'
@@ -130,6 +132,8 @@ cl.tethys_d_files = [
 cl.tethys_d_parms = [ 'sea_water_temperature', 'sea_water_salinity', 'sea_water_density', 'volume_scattering_470_nm', 'volume_scattering_650_nm',
                     'volume_scattering_650_nm', 'mass_concentration_of_oxygen_in_sea_water', 'mole_concentration_of_nitrate_in_sea_water',
                     'mass_concentration_of_chlorophyll_in_sea_water']
+cl.tethys_startDatetime = startdate
+cl.tethys_endDatetime = enddate
 
 cl.fulmar_base = []
 cl.fulmar_files = []
