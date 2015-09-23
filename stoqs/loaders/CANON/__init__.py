@@ -151,8 +151,9 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
             url = self.daphne_base + file
-            dataStartDatetime = self.daphne_startDatetime 
-            dataEndDatetime = self.daphne_endDatetime 
+            dataStartDatetime = None
+            startDatetime = self.daphne_startDatetime 
+            endDatetime = self.daphne_endDatetime 
             if self.args.append:
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
