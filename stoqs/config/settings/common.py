@@ -321,7 +321,7 @@ LOGGING['loggers']['stoqs.db_router'] = {
                             'level':'INFO',
                             'formatter': 'verbose'
 }
-LOGGING['loggers']['stoqs.loaders'] = {
+LOGGING['loggers']['loaders'] = {
                             'handlers':['console'],
                             'propagate': True,
                             'level':'INFO',
