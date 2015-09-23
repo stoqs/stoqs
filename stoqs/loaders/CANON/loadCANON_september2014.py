@@ -32,13 +32,13 @@ from CANON import CANONLoader
 cl = CANONLoader('stoqs_september2014', 'CANON-ECOHAB - September 2014',
                     description = 'Fall 2014 Dye Release Experiment in Monterey Bay',
                     x3dTerrains = {
-                                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
-                                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
-                                        'VerticalExaggeration': '10',
-                                        'speed': '0.1',
-                                    }
+                            '/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
+                                'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                                'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                                'centerOfRotation': '-2711557.94 -4331414.32 3801353.46',
+                                'VerticalExaggeration': '10',
+                                'speed': '.1',
+                            }
                     },
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                   )
