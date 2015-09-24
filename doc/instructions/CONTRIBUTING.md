@@ -11,8 +11,8 @@ installing all the required software.
 
 ### Setting up your development system
  
-1. Build a development Linux system -- the Vagrantfile installation saves a lot of 
-   time and frustration in doing this
+1. Build a development Linux system -- the [Vagrantfile installation](../../README.md)
+   saves a lot of time and frustration in doing this
 
 2. Fork the repository after logging into GitHub by clicking on the Fork button at 
    https://github.com/stoqs/stoqs
