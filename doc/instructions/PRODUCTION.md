@@ -108,7 +108,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         export STOQS_CAMPAIGNS="<comma_separated>,<databases>,<not_in_campaigns>"
         export SECRET_KEY="<random_sequence_of_impossible_to_guess_characters>"
         export GDAL_DATA=/usr/share/gdal
-        uwsgi --ini stoqs_uwsgi.ini
+        uwsgi --ini stoqs/stoqs_uwsgi.ini
 
 12. Test the STOQS user interface using the configuration of your nginx server:
 
