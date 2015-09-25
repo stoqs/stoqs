@@ -6,10 +6,10 @@ __contact__   = 'duane at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON activities in September 2014
+Master loader for all CANON activities in September 2015
 
 Mike McCann and Duane Edgington
-MBARI 22 September 2014
+MBARI 25 September 2015
 
 @var __date__: Date of last svn commit
 @undocumented: __doc__ parser
@@ -29,8 +29,8 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
        
-cl = CANONLoader('stoqs_september2014', 'CANON-ECOHAB - September 2014',
-                    description = 'Fall 2014 Dye Release Experiment in Monterey Bay',
+cl = CANONLoader('stoqs_canon_september2015', 'CANON - September 2014',
+                    description = 'Fall 2014 Front Identification in northern Monterey Bay',
                     x3dTerrains = {
                             '/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                 'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -45,8 +45,8 @@ cl = CANONLoader('stoqs_september2014', 'CANON-ECOHAB - September 2014',
 
 # Set start and end dates for all loads from sources that contain data 
 # beyond the temporal bounds of the campaign
-startdate = datetime.datetime(2014, 9, 21)                 # Fixed start
-enddate = datetime.datetime(2014, 10, 12)                  # Fixed end
+startdate = datetime.datetime(2015, 9, 17)                 # Fixed start
+enddate = datetime.datetime(2015, 10, 12)                  # Fixed end
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -56,20 +56,14 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 #  DORADO 
 #####################################################################
 # special location for dorado data
-cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2014/netcdf/'
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2015/netcdf/'
 cl.dorado_files = [
-                   'Dorado389_2014_265_03_265_03_decim.nc', 
-                   'Dorado389_2014_266_04_266_04_decim.nc',  
-                   'Dorado389_2014_266_05_266_05_decim.nc',  
-                   'Dorado389_2014_267_07_267_07_decim.nc',  
-                   'Dorado389_2014_268_05_268_05_decim.nc',
-                   'Dorado389_2014_280_01_280_01_decim.nc',
-                   'Dorado389_2014_281_08_281_08_decim.nc',
-                   'Dorado389_2014_282_02_282_02_decim.nc',
-                   'Dorado389_2014_282_03_282_03_decim.nc',
+                    'Dorado389_2015_265_03_265_03_decim.nc',
+                    'Dorado389_2015_267_01_267_01_decim.nc',
 				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
+                    'roll', 'pitch', 'yaw',
                     'sepCountList', 'mepCountList' ]
 
 #####################################################################
@@ -91,17 +85,10 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 # Glider data files from CeNCOOS thredds server
 # L_662
 cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.l_662_files = [ 'OS_Glider_L_662_20140923_TS.nc' ]
+cl.l_662_files = [ 'OS_Glider_L_662_20150813_TS.nc' ]
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
-
-# NPS_29
-cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
-cl.nps29_parms = ['TEMP', 'PSAL', 'RHOD']
-cl.nps29_startDatetime = startdate
-cl.nps29_endDatetime = enddate
 
 
 ######################################################################
@@ -202,13 +189,15 @@ cl.rcpctd_files = [
 #  MOORINGS
 ######################################################################
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
-cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201407/'
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
 cl.m1_files = [
-                'OS_M1_20140716hourly_CMSTV.nc',
+                'OS_M1_20150729hourly_CMSTV.nc',
+                'm1_hs2_20150730.nc',
               ]
 cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
                 'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
                 'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR', 
+                'bb470', 'bb676', 'fl676',
               ]
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
@@ -272,7 +261,6 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.loadL_662(stride=100) 
-    cl.load_NPS29(stride=10) 
 
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10) 
@@ -281,12 +269,12 @@ if cl.args.test:
     ##cl.loadDaphne(stride=100)
     ##cl.loadTethys(stride=100)
 
-    cl.loadRCuctd(stride=10)
-    cl.loadRCpctd(stride=10)
+    ##cl.loadRCuctd(stride=10)
+    ##cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10)
     ##cl.loadJMpctd(stride=10)
-    cl.loadWFuctd(stride=10)   
-    cl.loadWFpctd(stride=10)
+    ##cl.loadWFuctd(stride=10)   
+    ##cl.loadWFpctd(stride=10)
 
     cl.loadM1(stride=10)
 
