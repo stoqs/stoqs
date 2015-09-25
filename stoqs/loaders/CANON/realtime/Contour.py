@@ -1,6 +1,23 @@
-__author__ = 'dcline'
+#!/usr/bin/env python
+__author__    = 'D.Cline'
+__version__ = '$Revision: $'.split()[1]
+__date__ = '$Date: $'.split()[1]
+__copyright__ = '2011'
+__license__   = 'GPL v3'
+__contact__   = 'dcline at mbari.org'
 
-import sys
+__doc__ = '''
+
+Creates still and animated contour and dot plots plots from MBARI LRAUV data
+
+D Cline
+MBARI 25 September 2015
+
+@var __date__: Date of last svn commit
+@undocumented: __doc__ parser
+@status: production
+@license: GPL
+'''
 
 import os
 import sys
@@ -18,22 +35,32 @@ import time
 import pytz
 import logging
 import signal
+import datetime
+import ephem
+import bisect
+import tempfile
+import shutil
 
 from django.contrib.gis.geos import fromstr, MultiPoint
+from django.db.models import Max, Min
 from collections import OrderedDict
 from collections import defaultdict
 from django.db import connections
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.dates import DateFormatter
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 #from matplotlib.mlab import griddata
+from numpy import arange
 from scipy.interpolate import griddata
 from scipy.spatial import ckdtree
 from scipy.interpolate import Rbf
 from mpl_toolkits.basemap import Basemap
 from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter, Measurement, Parameter
 from utils.utils import percentile
+from matplotlib.transforms import Bbox, TransformedBbox,  blended_transform_factory
+from matplotlib import dates
+from mpl_toolkits.axes_grid1.inset_locator import BboxPatch, BboxConnector, BboxConnectorPatch
 
 # Set up global variables for logging output to STDOUT
 logger = logging.getLogger('monitorTethysHotSpotLogger')
@@ -43,7 +70,6 @@ fh.setFormatter(f)
 logger.addHandler(fh)
 logger.setLevel(logging.DEBUG)
 
-
 class NoPPDataException(Exception):
     pass
 
@@ -52,7 +78,7 @@ class Contour(object):
     '''
     Create plots for visualizing data from LRAUV vehicles
     '''
-    def __init__(self, startDatetime, endDatetime, database, platformName, plotGroup, title, outFilename, animate, autoscale):
+    def __init__(self, startDatetime, endDatetime, database, platformName, plotGroup, title, outFilename, autoscale, plotDotParmName, booleanPlotGroup, animate=False, zoom=6, overlap=3):
         self.startDatetime = startDatetime
         self.endDatetime = endDatetime
         self.platformName = platformName
@@ -62,15 +88,50 @@ class Contour(object):
         self.animate = animate
         self.outFilename = outFilename
         self.database = database
-        self.platformName = platformName
         self.autoscale = autoscale
+        self.plotDotParmName = plotDotParmName
+        self.booleanPlotGroup = booleanPlotGroup
+        self.zoom = zoom
+        self.overlap = overlap
+        self.dirpath = []
 
+    def getActivityExtent(self,startDatetime, endDatetime):
+        '''
+        Get spatial temporal extent for a platform.
+        '''
+        qs = Activity.objects.using(self.database).filter(platform__name__in=self.platformName)
+        qs = qs.filter(startdate__gte=startDatetime)
+        qs = qs.filter(enddate__lte=endDatetime)
+        seaQS = qs.aggregate(Min('startdate'), Max('enddate'))
+        self.activityStartTime = seaQS['startdate__min']
+        self.activityEndTime = seaQS['enddate__max']
+        dataExtent = qs.extent(field_name='maptrack')
+        return dataExtent
+
+    def getAxisInfo(self, parm):
+        '''
+        Return appropriate min and max values and units for a parameter name
+        '''
+        # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
+        apQS = ActivityParameter.objects.using(self.database).filter(activity__platform__name=self.platformName)
+        pQS = apQS.filter(parameter__name=parm).aggregate(Min('p010'), Max('p990'))
+        min, max = (pQS['p010__min'], pQS['p990__max'])
+
+        # Get units for each parameter
+        prQS = ParameterResource.objects.using(self.database).filter(resource__name='units').values_list('resource__value')
+        try:
+            units = prQS.filter(parameter__name=parm)[0][0]
+        except IndexError as e:
+            raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, self.platformName))
+            sys.exit(-1)
+
+        return min, max, units
 
     def getTimeSeriesData(self, startDatetime, endDatetime):
         '''
         Return time series of a list of Parameters from a Platform
         '''
-        data_dict = defaultdict(lambda: {'datetime': [], 'lon': [], 'lat': [], 'depth': [], 'datavalue':[]})
+        data_dict = defaultdict(lambda: {'datetime': [], 'lon': [], 'lat': [], 'depth': [], 'datavalue':[], 'units':'', 'p010':'', 'p990':''})
 
         start_dt= []
         end_dt = []
@@ -85,8 +146,17 @@ class Contour(object):
                 try:
                     for pname in parameters:
 
-                        qs = MeasuredParameter.objects.using(self.database)
+                        apQS = ActivityParameter.objects.using(self.database)
+                        apQS = apQS.filter(activity__platform__name=pln)
+                        apQS = apQS.filter(parameter__name=pname)
+                        pQS = apQS.aggregate(Min('p010'), Max('p990'))
+                        min, max = (pQS['p010__min'], pQS['p990__max'])
+                        data_dict[pln+pname]['p010'] = pQS['p010__min']
+                        data_dict[pln+pname]['p990'] = pQS['p990__max']
+                        units=apQS.values('parameter__units')
+                        data_dict[pln+pname]['units'] = units[0]['parameter__units']
 
+                        qs = MeasuredParameter.objects.using(self.database)
                         qs = qs.filter(measurement__instantpoint__timevalue__gte=startDatetime)
                         qs = qs.filter(measurement__instantpoint__timevalue__lte=endDatetime)
                         qs = qs.filter(parameter__name=pname)
@@ -204,51 +274,44 @@ class Contour(object):
 
         return cltList
 
-    def plotNightDay(self,ax,xdates,startDatetime,endDatetime):
+    def shadeNight(self,ax,xdates,miny,maxy):
+        '''
+        Shades plots during local nighttime hours
+        '''
+        utc_zone = pytz.utc
 
-        endDatetimeUTC = pytz.utc.localize(endDatetime)
-        endDatetimeLocal = endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
-        startDatetimeUTC = pytz.utc.localize(startDatetime)
-        startDatetimeLocal = startDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
-        sunriseLocal24hr = startDatetimeLocal.replace(hour=6,minute=0,second=0,microsecond=0)
-        sunsetLocal24hr = startDatetimeLocal.replace(hour=20,minute=0,second=0,microsecond=0)
+        if len(xdates) < 50:
+            logger.debug("skipping day/night shading - too few points")
+            return
 
-        secs = time.mktime(sunriseLocal24hr.timetuple())
-        sunrise = time.gmtime(secs)
-        secs = time.mktime(sunsetLocal24hr.timetuple())
-        sunset = time.gmtime(secs)
-        dark_end = []
-        dark_start = []
-        i = 0
-        delta = timedelta(minutes=10)
+        datetimes = []
+        for xdt in xdates:
+            dt = datetime.fromtimestamp(xdt)
+            datetimes.append(dt.replace(tzinfo=utc_zone))
 
-        for dt in xdates:
+        loc = ephem.Observer()
+        loc.lat = '36.7087' # Monterey Bay region
+        loc.lon = '-121.0000'
+        loc.elev = 0
+        sun = ephem.Sun(loc)
+        mint=min(datetimes)
+        maxt=max(datetimes)
+        numdays = (maxt - mint).days
+        d = [mint + timedelta(days=dt) for dt in xrange(numdays+1)]
+        d.sort()
+        sunrise = map(lambda x:dates.date2num(loc.next_rising(sun,start=x).datetime()),d)
+        sunset = map(lambda x:dates.date2num(loc.next_setting(sun,start=x).datetime()),d)
 
-            # If at night
-            if dt >= sunset or dt <= sunrise:
-                # If within 10 minutes of sunset
-                if dt >= sunset - delta and dt <= sunset + delta :
-                    dark_start =  dt
-                # If within 10 minutes of sunrise or last time
-                elif dt >= sunrise - delta and dt <= sunrise + delta or dt == xdates[-1] :
-                    dark_end =  dt
-                else:
-                    dark_start = dt
+        result = []
+        for st in datetimes:
+              result.append(bisect.bisect(sunrise, dates.date2num(st)) != bisect.bisect(sunset, dates.date2num(st)))
 
-                # If have start and end time defined color using zoom effect
-                if dark_start and dark_end and (dark_start - dark_end) > timedelta(hours=1):
-                    if self.scale_factor:
-                        dark_end_scaled = time.mktime(dark_end.timetuple())/self.scale_factor
-                        dark_start_scaled = time.mktime(dark_start.timetuple())/self.scale_factor
-                    else:
+        if self.scale_factor:
+            scale_xdates = [x/self.scale_factor for x in xdates]
+        else:
+            scale_xdates = xdates
 
-
-                        dark_end_scaled = time.mktime(dark_end.timetuple())
-                        dark_start_scaled = time.mktime(dark_start.timetuple())
-
-                    self.zoomEffect(ax, dark_start_scaled, dark_end_scaled)
-                    dark_start = []
-                    dark_end = []
+        ax.fill_between(scale_xdates, miny, maxy, where=result, facecolor='#C8C8C8', edgecolor='none', alpha=0.3)
 
     def createPlot(self, startDatetime, endDatetime):
 
@@ -272,7 +335,7 @@ class Contour(object):
         fig.suptitle(self.title+'\n'+self.subtitle1+'\n'+self.subtitle2, fontsize=8)
 
         pn = self.platformName[0]
-        plot_scatter = True 
+
         # bound the depth to cover max of all parameter group depths
         # and flag removal of scatter plot if have more than 2000 points in any parameter
         maxy = 0
@@ -283,25 +346,25 @@ class Contour(object):
                 sz = len(self.data[pn+name]['datavalue'])
                 if y > maxy:
                     maxy = y
-                if sz > 2000:
-                    plot_scatter = False
-
-
-        plot_scatter = True
 
         # pad the depth by 20 meters to make room for parameter name to be displayed at bottom
         rangey = [0.0, int(maxy) + 20]
 
-        latlon_series = None
-        chl_series = None
         i = 0
         # add contour plots for each parameter group
         for group in self.plotGroupValid:
             parm = [x.strip() for x in group.split(',')]
+            plot_step =  sum([self.data[pn+p]['units'].count('bool') for p in parm]) # counter the number of boolean plots in the groups
+            plot_scatter = len(parm) - plot_step # otherwise all other plots are scatter plots
+            #plot_dense = sum([val for val  in len(self.data[pn+name]['datavalue']) > 2000]) #  if more than 2000 points, skip the scatter plot
+
+            # choose the right type of gridspec to display the data
             if plot_scatter:
-                contour_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm)*2, ncols=1, subplot_spec=lower_gs[i])
+                # one row for scatter and one for contour
+                plot_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm)*2, ncols=2, subplot_spec=lower_gs[i], width_ratios=[30,1], wspace=0.05)
             else:
-                contour_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm), ncols=1, subplot_spec=lower_gs[i])
+                # one row for step plots/or contour plots
+                plot_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm), ncols=2, subplot_spec=lower_gs[i], width_ratios=[30,1], wspace=0.05)
             j = 0
             i += 1
             for name in parm:
@@ -311,16 +374,11 @@ class Contour(object):
                 z = self.data[pn+name]['datavalue']
                 sdt_count = self.data[pn+name]['sdt_count']
 
-                units = ''
+                units = '(' + self.data[pn+p]['units'] + ')'
 
                 if len(z):
                     if self.autoscale:
-                        numpvar = np.array(z)
-                        numpvar.sort()
-                        listvar = list(numpvar)
-                        p010 = percentile(listvar, 0.010)
-                        p990 = percentile(listvar, 0.990)
-                        rangez = [p010,p990]
+                        rangez = [self.data[pn+p]['p010'],self.data[pn+p]['p990']]
                     else:
                         rangez = [min(z), max(z)]
                 else:
@@ -329,7 +387,6 @@ class Contour(object):
                 if name.find('chlorophyll') != -1 :
                     if not self.autoscale:
                         rangez = [0.0, 10.0]
-                    units = ' (ug/l)'
                 if name.find('salinity') != -1 :
                     if not self.autoscale:
                         rangez = [33.3, 34.9]
@@ -338,26 +395,28 @@ class Contour(object):
                     if not self.autoscale:
                         rangez = [10.0, 14.0]
                     units = ' ($^\circ$C)'
-  
-                gs  = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=contour_gs[j])
-                ax0 = plt.Subplot(fig, gs[:])
-                fig.add_subplot(ax0)
-                if plot_scatter:  
-                    gs  = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=contour_gs[j+1])
-                    ax1 = plt.Subplot(fig, gs[:])
-                    fig.add_subplot(ax1)
 
-                # if data found, plot with contour plot (if fails, falls back to the scatter plot)
-                if len(x) > 0:
-                    cs0, zi = self.createContourPlot(title + pn,ax0,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
-                    if plot_scatter:
-                        cs1 = self.createScatterPlot(title + pn,ax1,x,y,z,rangey,rangez,startDatetime,endDatetime)
-                    if latlon_series is None:
-                        latlon_series = name
-                    if chl_series is None and name.find('chlorophyll') != -1:
-                        chl_series = name
+                logger.debug('getting subplot ax0')
+                gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=plot_gs[j])
+                ax0_plot = plt.Subplot(fig, gs[:])
+                fig.add_subplot(ax0_plot)
 
-                else: # otherwise add in some fake data and plot a placeholder time/depth plot
+                gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=plot_gs[j+1])
+                ax0_colorbar = plt.Subplot(fig, gs[:])
+                fig.add_subplot(ax0_colorbar)
+
+                if plot_scatter:
+                    logger.debug('getting subplot ax1')
+                    gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=plot_gs[j + 2])
+                    ax1_plot = plt.Subplot(fig, gs[:])
+                    fig.add_subplot(ax1_plot)
+
+                    gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=plot_gs[j + 3])
+                    ax1_colorbar = plt.Subplot(fig, gs[:])
+                    fig.add_subplot(ax1_colorbar)
+
+                # if no data found add in some fake data and plot a placeholder time/depth plot
+                if not x:
                     tmin = time.mktime(startDatetime.timetuple())
                     tmax = time.mktime(endDatetime.timetuple())
                     x.append(tmin)
@@ -366,87 +425,102 @@ class Contour(object):
                     y.append(np.NaN)
                     z.append(np.NaN)
                     z.append(np.NaN)
-                    cs0 = self.createScatterPlot(title + pn,ax0,x,y,z,rangey,rangez,startDatetime,endDatetime) 
-                    if plot_scatter: 
-                        cs1 = self.createScatterPlot(title + pn,ax1,x,y,z,rangey,rangez,startDatetime,endDatetime)
 
                 if plot_scatter:
-                    ax1.text(0.95,0.02, name, verticalalignment='bottom',
-                                horizontalalignment='right',transform=ax1.transAxes,color='black',fontsize=8)
+                    cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
+                    cs1 = self.createScatterPlot(title + pn,ax1_plot,x,y,z,rangey,rangez,startDatetime,endDatetime)
                 else:
-                    ax0.text(0.95,0.02, name, verticalalignment='bottom',
-                        horizontalalignment='right',transform=ax0.transAxes,color='black',fontsize=8)
-
-                # For a colorbar create an axes on the right side of ax. The width of cax will be 1%
-                # of ax and the padding between cax and ax will be fixed at 0.2 inch.
-                divider = make_axes_locatable(ax0)
-                cax = divider.append_axes("right", size="1%", pad=0.1)
-                cbFormatter = FormatStrFormatter('%.2f')
-                cb = plt.colorbar(cs0, cax=cax, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
-                cb.set_label(units,fontsize=8)#,labelpad=5)
-                cb.ax.xaxis.set_ticks_position('top')
-                for t in cb.ax.yaxis.get_ticklabels():
-                    t.set_fontsize(8)
+                    if plot_step:
+                        cs0 = self.createStepPlot(title + pn,title,ax0_plot,x,z,rangez,startDatetime,endDatetime)
+                    else:
+                        cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
 
                 if plot_scatter:
-                    divider = make_axes_locatable(ax1)
-                    cax = divider.append_axes("right", size="1%", pad=0.1)
+                    ax1_plot.text(0.95,0.02, name, verticalalignment='bottom',
+                                horizontalalignment='right',transform=ax1_plot.transAxes,color='black',fontsize=8)
+                else:
+                    ax0_plot.text(0.95,0.02, name, verticalalignment='bottom',
+                        horizontalalignment='right',transform=ax0_plot.transAxes,color='black',fontsize=8)
+
+                self.shadeNight(ax0_plot,sorted(x),rangey[0], rangey[1])
+                if plot_scatter:
+                    self.shadeNight(ax1_plot,sorted(x),rangey[0], rangey[1])
+
+                logger.debug('plotting colorbars')
+                if plot_scatter:
                     cbFormatter = FormatStrFormatter('%.2f')
-                    cb = plt.colorbar(cs0, cax=cax, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
+                    cb = plt.colorbar(cs0, cax=ax0_colorbar, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
                     cb.set_label(units,fontsize=8)#,labelpad=5)
                     cb.ax.xaxis.set_ticks_position('top')
                     for t in cb.ax.yaxis.get_ticklabels():
                         t.set_fontsize(8)
 
-                #self.plotNightDay(ax,x,startDatetime,endDatetime)
+                    cb = plt.colorbar(cs1, cax=ax1_colorbar, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
+                    cb.set_label(units,fontsize=8)#,labelpad=5)
+                    cb.ax.xaxis.set_ticks_position('top')
+                    for t in cb.ax.yaxis.get_ticklabels():
+                        t.set_fontsize(8)
+                else:
+                    if plot_step:
+                        xaxis = ax0_colorbar.xaxis
+                        ax0_colorbar.xaxis.set_major_locator(plt.NullLocator())
+                        ax0_colorbar.yaxis.set_ticks_position('right')
+                        for t in ax0_colorbar.yaxis.get_ticklabels():
+                            t.set_fontsize(8)
+                    else:
+                        cbFormatter = FormatStrFormatter('%.2f')
+                        cb = plt.colorbar(cs0, cax=ax0_colorbar, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
+                        cb.set_label(units,fontsize=8)#,labelpad=5)
+                        cb.ax.xaxis.set_ticks_position('top')
+                        for t in cb.ax.yaxis.get_ticklabels():
+                            t.set_fontsize(8)
+
 
                 # Rotate and show the date with date formatter in the last plot of all the groups
+                logger.debug('rotate and show date with date formatter')
                 if name is parm[-1] and group is self.plotGroupValid[-1]:
                     x_fmt = self.DateFormatter(self.scale_factor)
-                    if plot_scatter: 
-                        ax = ax1
-                        # Don't show on the upper contour plot 
-                        ax0.xaxis.set_ticks([])  
-                    else: 
-                        ax = ax0  
+                    if plot_scatter:
+                        ax = ax1_plot
+                        # Don't show on the upper contour plot
+                        ax0_plot.xaxis.set_ticks([])
+                    else:
+                        ax = ax0_plot
                     ax.xaxis.set_major_formatter(x_fmt)
                     # Rotate date labels
                     for label in ax.xaxis.get_ticklabels():
                         label.set_rotation(10)
                 else:
-                    ax0.xaxis.set_ticks([])
+                    ax0_plot.xaxis.set_ticks([])
                     if plot_scatter:  
-                        ax1.xaxis.set_ticks([])
+                        ax1_plot.xaxis.set_ticks([])
 
                 if plot_scatter:
-                    j+=2 
+                    j+=4
                 else: 
-                    j+=1 
+                    j+=2
 
 
         # plot tracks
         ax = plt.Subplot(fig, map_gs[:])
         fig.add_subplot(ax, aspect='equal')
 
-        logger.debug('Getting activity extents')
+        logger.debug('computing activity extents')
         z = []
         maptracks = None
 
-        if chl_series is not None:
-            z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], chl_series)
-        else:
-            z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], latlon_series)
+        z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, pn, self.plotDotParmName)
 
         # get the percentile ranges for this to autoscale
         pointsnp = np.array(points)
         lon = pointsnp[:,0]
         lat = pointsnp[:,1]
 
-        if len(lat) > 0:
-            ltmin = min(lat)
-            ltmax = max(lat)
-            lnmin = min(lon)
-            lnmax = max(lon)
+        if self.extent:
+            ltmin = self.extent[1]
+            ltmax = self.extent[3]
+            lnmin = self.extent[0]
+            lnmax = self.extent[2]
             lndiff = abs(lnmax - lnmin)
             ltdiff = abs(ltmax - ltmin)
             logger.debug("lon diff %f lat diff %f" %(lndiff, ltdiff))
@@ -489,35 +563,60 @@ class Contour(object):
 
         try:
             logger.debug('plotting tracks')
-            for track in maptracks:
-                if track is not None:
-                    ln,lt = zip(*track)
-                    mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
+            if self.animate:
+                try:
+                    track = LineString(points).simplify(tolerance=.001)
+                    if track is not None:
+                        ln,lt = zip(*track)
+                        mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
+                except TypeError, e:
+                    logger.warn("%s\nCannot plot map track path to None", e)
+            else:
+                for track in maptracks:
+                    if track is not None:
+                        ln,lt = zip(*track)
+                        mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
 
-            # if have a valid chl series, then plot the dots
-            if chl_series is not None and len(z) > 0:
+            # if have a valid series, then plot the dots
+            if self.plotDotParmName is not None and len(z) > 0:
                 if len(z) > 2000:
                     sz = len(z)
                     stride = int(sz/200)
                     z_stride = z[0:sz:stride]
                     lon_stride = lon[0:sz:stride]
                     lat_stride = lat[0:sz:stride]
-                    # scale the size of the point by chlorophyll value
-                    s = [10*chl for chl in z_stride]
-                    mp.scatter(lon_stride,lat_stride,c=z_stride,s=s,marker='.',vmin=rangez[0],vmax=rangez[1],lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
+                    mp.scatter(lon_stride,lat_stride,c=z_stride,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
                     if stride > 1:
-                        ax.text(0.70,0.1, ('%s (every %d points)' % (chl_series, stride)), verticalalignment='bottom',
+                        ax.text(0.70,0.1, ('%s (every %d points)' % (self.plotDotParmName, stride)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
                     else:
-                        ax.text(0.70,0.1, ('%s (every point)' % (chl_series)), verticalalignment='bottom',
+                        ax.text(0.70,0.1, ('%s (every point)' % (self.plotDotParmName)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
 
                 else:
-                    # scale the size of the point by chlorophyll value
-                    s = [10*chl for chl in z]
-                    mp.scatter(lon,lat,c=z,s=s,marker='.',vmin=rangez[0],vmax=rangez[1],lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
-                    ax.text(0.70,0.1, ('%s (every point)' % (chl_series)), verticalalignment='bottom',
+                    mp.scatter(lon,lat,c=z,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
+                    ax.text(0.70,0.1, ('%s (every point)' % (self.plotDotParmName)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
+
+            # plot the binary markers
+            markers = ['o','x','d','D','8','1','2','3','4']
+            i = 1
+            parm = [x.strip() for x in self.booleanPlotGroup.split(',')]
+            for name in parm:
+                logger.debug('Plotting boolean plot group paramter %s' % name)
+                z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], name)
+                pointsnp = np.array(points)
+                lon = pointsnp[:,0]
+                lat =  pointsnp[:,1]
+                # scale up the size of point
+                s = [20*val for val in z]
+                if len(z) > 0:
+                    mp.scatter(lon,lat,s=s,marker=markers[i],c='black',label=name,zorder=3)
+                i = i + 1
+
+            # plot the legend outside the plot in the upper left corner
+            l = ax.legend(loc='upper left', bbox_to_anchor=(1,1), prop={'size':8}, scatterpoints=1)# only plot legend symbol once
+            l.set_zorder(4) # put the legend on top
 
         except Exception, e:
             logger.warn(e)
@@ -526,9 +625,8 @@ class Contour(object):
         #mp.drawcoastlines()
 
         if self.animate:
-            # Get rid of the file extension if it's a png and append with indexed frame number
-            fname = re.sub('\.png$','', self.outFilename)
-            fname = '%s_frame_%02d.png' % (fname, self.frame)
+            # append frames output as pngs with an indexed frame number before the gif extension
+            fname = '%s/frame_%02d.png' % (self.dirpath, self.frame)
         else:
             fname = self.outFilename
 
@@ -717,6 +815,40 @@ class Contour(object):
 
         return cs
 
+    def createStepPlot(self,title,label,ax,x,y,rangey,startTime,endTime):
+        tmin = time.mktime(startTime.timetuple())
+        tmax = time.mktime(endTime.timetuple())
+        dmin = rangey[1]
+        dmax = rangey[0]
+
+        try:
+            ax.set_xlim(tmin, tmax)
+            self.scale_factor = 1
+
+            ax.set_ylim([dmax,dmin])
+            ax.set_ylabel('%s (bool)' % label,fontsize=8)
+
+            ax.tick_params(axis='both',which='major',labelsize=8)
+            ax.tick_params(axis='both',which='minor',labelsize=8)
+
+            logger.debug('Plotting the step data')
+            labels = []
+            for val in y:
+                if not val:
+                    labels.append('False')
+                else:
+                    labels.append('True')
+            cs = ax.step(x,y,lw=1,alpha=0.8,c='black',label=labels)
+
+            # limit the number of ticks
+            max_yticks = 5
+            yloc = plt.MaxNLocator(max_yticks)
+            ax.yaxis.set_major_locator(yloc)
+
+        except Exception,e:
+            logger.error(e)
+
+        return cs
 
     def run(self):
 
@@ -725,44 +857,59 @@ class Contour(object):
         endDatetimeLocal = self.endDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
         startDatetimeLocal = self.startDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
 
+        self.extent = self.getActivityExtent(self.startDatetime, self.endDatetime)
+
+        logger.debug('Loading data')
+        dataStart, dataEnd = self.loadData(self.startDatetime, self.endDatetime)
+
+        if not self.data:
+            logger.debug('No valid data to plot')
+            return
+
+        # need to fix the scale over all the plots if animating
         if self.animate:
+            self.autoscale = True
+
+        if dataStart.tzinfo is None:
+            dataStart =  pytz.utc.localize(dataStart)
+        if dataEnd.tzinfo is None:
+            dataEnd = pytz.utc.localize(dataEnd)
+
+        if self.animate: 
+            self.dirpath = tempfile.mkdtemp()
+            zoomWindow = timedelta(hours=self.zoom) 
             zoomWindow = timedelta(hours=self.zoom)
             overlapWindow = timedelta(hours=self.overlap)
-            endDatetime = self.startDatetime + self.zoom
-            end = self.endDatetime
+            endDatetime = dataStart + zoomWindow
+            startDatetime = dataStart
+
             try:
-                # Loop through sections of the data with temporal query constraints based on the window and step command line parameters
-                while endDatetime <= end :
-                    self.loadData(startDatetime, endDatetime)
+                # Loop through sections of the data with temporal constraints based on the window and step command line parameters
+                while endDatetime <= dataEnd :
+                    dataEndDatetimeLocal = endDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
+                    dataStartDatetimeLocal = startDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
+                    logger.debug('Plotting data')
+
+                    self.subtitle1 = '%s  to  %s PDT' % (dataStartDatetimeLocal.strftime('%Y-%m-%d %H:%M'), dataEndDatetimeLocal.strftime('%Y-%m-%d %H:%M'))
+                    self.subtitle2 = '%s  to  %s UTC' % (startDatetime.strftime('%Y-%m-%d %H:%M'), endDatetime.strftime('%Y-%m-%d %H:%M'))
                     self.createPlot(startDatetime, endDatetime)
+
                     startDatetime = endDatetime - overlapWindow
                     endDatetime = startDatetime + zoomWindow
 
-                # Do a linear transition of transparency for a stronger indication of activity
-                '''i = 0
-                for a in hstack((arange(0, 1.0, 0.1), arange(1.0, 0, -0.1))):
-                    # Use background color of bootstrap's .well class
-                    cmd = "convert -size 1x1 xc:#f5f5f5 -fill 'rgba(192,211,228,%.2f)' -draw 'point 0,0' pulse_%03d.gif" % (a, i)
-                    print cmd
-                    os.system(cmd)
-                    i = i + 1
+                i = 0
 
-                cmd = "convert -loop 0 -delay 1 pulse*.gif ajax-loader-pulse.gif"
-                print cmd
-                os.system(cmd)'''
+                cmd = "convert -loop 1 -delay 250 %s/frame*.png %s" % (self.dirpath,self.outFilename)
+                logger.debug(cmd)
+                os.system(cmd)
+                shutil.rmtree(self.dirpath)
 
             except Exception, e:
                 logger.error(e)
 
         else :
             try:
-                logger.debug('Loading data')
-                dataStart, dataEnd = self.loadData(self.startDatetime, self.endDatetime)
                 if self.data is not None:
-                    if dataStart.tzinfo is None:
-                        dataStart =  pytz.utc.localize(dataStart)
-                    if dataEnd.tzinfo is None:
-                        dataEnd = pytz.utc.localize(dataEnd)
                     dataEndDatetimeLocal = dataEnd.astimezone(pytz.timezone('America/Los_Angeles'))
                     dataStartDatetimeLocal = dataStart.astimezone(pytz.timezone('America/Los_Angeles'))
                     logger.debug('Plotting data')
