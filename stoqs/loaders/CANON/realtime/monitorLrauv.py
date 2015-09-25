@@ -189,12 +189,12 @@ def process_command_line():
                                                                  ' If interpolating, must map to the same location as -o directory',
                             default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/cell-logs/.*Normal*.nc4$',required=False)'''
 
-        parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='stoqs_lrauv',required=False)
+        parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='default',required=False)
         parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='April 2015 testing',required=False)
         parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1)
         parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file or log contour output '
                                                                    '- must map to the same location as -u URL', default='/tmp/TestMonitorLrauv', required=False)
-         parser.add_argument('--zoom', action='store', help='time window in hours to zoom animation',default=6, required=False)
+        parser.add_argument('--zoom', action='store', help='time window in hours to zoom animation',default=6, required=False)
         parser.add_argument('--overlap', action='store', help='time window in hours to overlap animation',default=5, required=False)
         parser.add_argument('--contourUrl', action='store', help='base url to store cross referenced contour plot resources',
                             default='http://dods.mbari.org/opendap/data/lrauv/stoqs/',required=False)
@@ -216,7 +216,7 @@ def process_command_line():
         #parser.add_argument('-a', '--append', action='store_false', help='Append data to existing Activity',required=False)
         parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity',required=False)
         parser.add_argument('--post', action='store_true', help='Post message to slack about new data. Disable this during initial database load or when debugging',required=False)
-        parser.add_argument('--debug', action='store_true', help='Useful for debugging plots - does not allow data loading',required=False, default=True)
+        parser.add_argument('--debug', action='store_true', help='Useful for debugging plots - does not allow data loading',required=False, default=False)
         parser.add_argument('-f', '--interpFreq', action='store', help='Optional interpolation frequency string to specify time base for interpolating e.g. 500L=500 millisecs, 1S=1 second, 1Min=1 minute,H=1 hour,D=daily', default='')
         parser.add_argument('-r', '--resampleFreq', action='store', help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='')
         parser.add_argument('-p', '--parms', action='store', help='List of space separated parameters to load', nargs='*', default=
@@ -411,7 +411,7 @@ if __name__ == '__main__':
                 url = args.contourUrl + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
 
                 logger.debug('out file %s url: %s ', outFile, url)
-                c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFile, args.autoscale, args.booleanPlotGroup)
+                c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
                 c.run()
 
                 if outFile.startswith('/tmp'):
@@ -459,10 +459,10 @@ if __name__ == '__main__':
             outFileLatestAnim = args.contourDir + '/' + platformName  + '_24h_latest_anim.gif'
             outFileLatestProductAnim = args.productDir + '/' + platformName  + '_log_last24hr_anim.gif'
 
-            c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFileLatest, args.autoscale)
+            c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFileLatest, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
             c.run()
 
-            c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFileLatestAnim, args.autoscale, True, args.zoom, args.overlap)
+            c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFileLatestAnim, args.autoscale, args.plotDotParmName, args.booleanPlotGroup, True, args.zoom, args.overlap)
             c.run()
 
             if outFileLatest.startswith('/tmp'):

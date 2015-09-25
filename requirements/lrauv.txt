@@ -1,0 +1,6 @@
+-r base.txt
+
+ephem==3.7.6.0
+netCDF4==1.2.0
+pandas==0.16.2
+slacker==0.7.3

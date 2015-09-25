@@ -1,6 +1,23 @@
-__author__ = 'dcline'
+#!/usr/bin/env python
+__author__    = 'D.Cline'
+__version__ = '$Revision: $'.split()[1]
+__date__ = '$Date: $'.split()[1]
+__copyright__ = '2011'
+__license__   = 'GPL v3'
+__contact__   = 'dcline at mbari.org'
 
-import sys
+__doc__ = '''
+
+Creates still and animated contour and dot plots plots from MBARI LRAUV data
+
+D Cline
+MBARI 25 September 2015
+
+@var __date__: Date of last svn commit
+@undocumented: __doc__ parser
+@status: production
+@license: GPL
+'''
 
 import os
 import sys
@@ -21,6 +38,8 @@ import signal
 import datetime
 import ephem
 import bisect
+import tempfile
+import shutil
 
 from django.contrib.gis.geos import fromstr, MultiPoint
 from django.db.models import Max, Min
@@ -72,9 +91,9 @@ class Contour(object):
         self.autoscale = autoscale
         self.plotDotParmName = plotDotParmName
         self.booleanPlotGroup = booleanPlotGroup
-        self.animate = True
         self.zoom = zoom
         self.overlap = overlap
+        self.dirpath = []
 
     def getActivityExtent(self,startDatetime, endDatetime):
         '''
@@ -90,23 +109,23 @@ class Contour(object):
         return dataExtent
 
     def getAxisInfo(self, parm):
-            '''
-            Return appropriate min and max values and units for a parameter name
-            '''
-            # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
-            apQS = ActivityParameter.objects.using(self.database).filter(activity__platform__name=self.platformName)
-            pQS = apQS.filter(parameter__name=parm).aggregate(Min('p010'), Max('p990'))
-            min, max = (pQS['p010__min'], pQS['p990__max'])
+        '''
+        Return appropriate min and max values and units for a parameter name
+        '''
+        # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
+        apQS = ActivityParameter.objects.using(self.database).filter(activity__platform__name=self.platformName)
+        pQS = apQS.filter(parameter__name=parm).aggregate(Min('p010'), Max('p990'))
+        min, max = (pQS['p010__min'], pQS['p990__max'])
 
-            # Get units for each parameter
-            prQS = ParameterResource.objects.using(self.database).filter(resource__name='units').values_list('resource__value')
-            try:
-                units = prQS.filter(parameter__name=parm)[0][0]
-            except IndexError as e:
-                raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, self.platformName))
-                sys.exit(-1)
+        # Get units for each parameter
+        prQS = ParameterResource.objects.using(self.database).filter(resource__name='units').values_list('resource__value')
+        try:
+            units = prQS.filter(parameter__name=parm)[0][0]
+        except IndexError as e:
+            raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, self.platformName))
+            sys.exit(-1)
 
-            return min, max, units
+        return min, max, units
 
     def getTimeSeriesData(self, startDatetime, endDatetime):
         '''
@@ -261,8 +280,8 @@ class Contour(object):
         '''
         utc_zone = pytz.utc
 
-        if len(xdates) < 100:
-            logger.debug("skipping dahy/night plot - too few points")
+        if len(xdates) < 50:
+            logger.debug("skipping day/night shading - too few points")
             return
 
         datetimes = []
@@ -292,7 +311,7 @@ class Contour(object):
         else:
             scale_xdates = xdates
 
-        ax.fill_between(scale_xdates, miny, maxy, where=result, facecolor='#CCCCFF', edgecolor='none')
+        ax.fill_between(scale_xdates, miny, maxy, where=result, facecolor='#C8C8C8', edgecolor='none', alpha=0.3)
 
     def createPlot(self, startDatetime, endDatetime):
 
@@ -581,17 +600,19 @@ class Contour(object):
 
             # plot the binary markers
             markers = ['o','x','d','D','8','1','2','3','4']
-            i = 1;
-            for name in self.booleanPlotGroup:
+            i = 1
+            parm = [x.strip() for x in self.booleanPlotGroup.split(',')]
+            for name in parm:
+                logger.debug('Plotting boolean plot group paramter %s' % name)
                 z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], name)
                 pointsnp = np.array(points)
                 lon = pointsnp[:,0]
                 lat =  pointsnp[:,1]
-                i = i + 1
                 # scale up the size of point
                 s = [20*val for val in z]
                 if len(z) > 0:
                     mp.scatter(lon,lat,s=s,marker=markers[i],c='black',label=name,zorder=3)
+                i = i + 1
 
             # plot the legend outside the plot in the upper left corner
             l = ax.legend(loc='upper left', bbox_to_anchor=(1,1), prop={'size':8}, scatterpoints=1)# only plot legend symbol once
@@ -605,8 +626,7 @@ class Contour(object):
 
         if self.animate:
             # append frames output as pngs with an indexed frame number before the gif extension
-            fname = re.sub('\.gif','', self.outFilename)
-            fname = '%s_frame_%02d.png' % (fname, self.frame)
+            fname = '%s/frame_%02d.png' % (self.dirpath, self.frame)
         else:
             fname = self.outFilename
 
@@ -855,11 +875,14 @@ class Contour(object):
         if dataEnd.tzinfo is None:
             dataEnd = pytz.utc.localize(dataEnd)
 
-        if self.animate:
+        if self.animate: 
+            self.dirpath = tempfile.mkdtemp()
+            zoomWindow = timedelta(hours=self.zoom) 
             zoomWindow = timedelta(hours=self.zoom)
             overlapWindow = timedelta(hours=self.overlap)
             endDatetime = dataStart + zoomWindow
             startDatetime = dataStart
+
             try:
                 # Loop through sections of the data with temporal constraints based on the window and step command line parameters
                 while endDatetime <= dataEnd :
@@ -875,10 +898,11 @@ class Contour(object):
                     endDatetime = startDatetime + zoomWindow
 
                 i = 0
-                fbase = re.sub('\.gif$','', self.outFilename)
-                cmd = "convert -loop 1 -delay 50 %s_frame*.png %s" % (fbase, self.outFilename)
+
+                cmd = "convert -loop 1 -delay 250 %s/frame*.png %s" % (self.dirpath,self.outFilename)
                 logger.debug(cmd)
                 os.system(cmd)
+                shutil.rmtree(self.dirpath)
 
             except Exception, e:
                 logger.error(e)
