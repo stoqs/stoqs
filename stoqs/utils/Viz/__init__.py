@@ -621,8 +621,9 @@ class MeasuredParameter(object):
                     indices = indices + '%i ' % index
                     index = index + 1
 
-                # End the IndexedLinestring with -1 so that end point does not connect to the beg point
-                indices = indices + '-1' 
+                # End the IndexedLinestring with -1 so that end point does not 
+                # connect to the beg point, end with space for multiple activities
+                indices = indices + '-1 ' 
 
             # Make pairs of points for spanned NetTow-like data
             for act in self.value_by_act_span.keys():
