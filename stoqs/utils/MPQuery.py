@@ -102,25 +102,6 @@ class MPQuerySet(object):
         self.values_list = values_list
         self.ordering = ('id',)
 
-    def _model_row_generator(self):
-        '''
-        yield rows from model instances
-        '''
-        for mp in self.mp_query[:ITER_HARD_LIMIT]:
-            row = { 
-                    'measurement__depth': mp.measurement.depth,
-                    'parameter__id': mp.parameter__id,
-                    'parameter__name': mp.parameter__name,
-                    'datavalue': mp.datavalue,
-                    'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
-                    'parameter__standard_name': mp.parameter.standard_name,
-                    'measurement__instantpoint__activity__name': mp.measurement.instantpoint.activity.name,
-                    'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
-                    'measurement__geom': mp.measurement.geom,
-                    'parameter__units': mp.parameter.units,
-                  }
-            yield row
-
     def __iter__(self):
         '''
         Main way to access data that is used by interators in templates, etc.
@@ -179,11 +160,22 @@ class MPQuerySet(object):
                           }
                     yield row
 
-            except TypeError:
-                self._model_row_generator()
- 
-            except AttributeError:
-                self._model_row_generator()
+            except (TypeError, AttributeError):
+                # Model objects
+                for mp in self.mp_query[:ITER_HARD_LIMIT]:
+                    row = { 
+                            'measurement__depth': mp.measurement.depth,
+                            'parameter__id': mp.parameter__id,
+                            'parameter__name': mp.parameter__name,
+                            'datavalue': mp.datavalue,
+                            'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
+                            'parameter__standard_name': mp.parameter.standard_name,
+                            'measurement__instantpoint__activity__name': mp.measurement.instantpoint.activity.name,
+                            'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
+                            'measurement__geom': mp.measurement.geom,
+                            'parameter__units': mp.parameter.units,
+                          }
+                    yield row
  
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE + 1])
@@ -508,7 +500,9 @@ class MPQuery(object):
         '''
         Build the query set based on selections from the UI. For the first time through kwargs will be empty 
         and self.qs_mp will have no constraints and will be all of the MeasuredParameters in the database.
-        This is called by utils/STOQSQueryManagery.py.
+        This is called by utils/STOQSQueryManagery.py.  On successful completion one or more member query
+        sets will be available: qs_sp, qs_mp, qs_sp_no_order, qs_mp_no_order, with coresponding SQL
+        strings: sql_sp, sql_mp.
         '''
         if self.qs_mp is None:
             parameterGroups = [MEASUREDINSITU]
@@ -643,7 +637,7 @@ class MPQuery(object):
         # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
-                # A depth of 4 is needed in order to see Platform
+                # Start with fresh qs_mp without .values()
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(
                             'measurement__instantpoint__activity__platform').filter(**qparams)
 

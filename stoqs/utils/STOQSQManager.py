@@ -1328,8 +1328,7 @@ class STOQSQManager(object):
         return x3dDict
 
     def getMeasuredParameterX3D(self):
-        '''
-        If a single MeasuredParameter is selected then return the X3D coordinates and colors for those points
+        '''Returns dictionary of X3D elements for rendering by X3DOM
         '''
         x3dDict = None
         if getShow_Geo_X3D_Data(self.kwargs):
@@ -1352,8 +1351,9 @@ class STOQSQManager(object):
                         platformName = None
 
                     logger.debug('Getting data values in X3D for platformName = %s', platformName) 
-                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp,
-                                  self.getParameterMinMax()['plot'], self.getSampleQS(), platformName, parameterID, parameterGroups)
+                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, 
+                            self.getParameterMinMax()['plot'], self.getSampleQS(), 
+                            platformName, parameterID, parameterGroups)
                     # Default vertical exaggeration is 10x
                     x3dDict = mpdv.dataValuesX3D(float(self.request.GET.get('ve', 10)))
             
@@ -1378,6 +1378,7 @@ class STOQSQManager(object):
                     self.dbname).filter(resource__resourcetype__name=X3DPLATFORMMODEL, 
                     platform__in=[a.platform for a in self.qs])]
             if platformsHavingModels:
+                # Use qs_mp_no_parm QuerySet as it contains roll, pitch, and yaw values
                 mppa = PlatformAnimation(platformsHavingModels, self.kwargs, 
                         self.request, self.qs, self.mpq.qs_mp_no_parm)
                 # Default vertical exaggeration is 10x and default geoorigin is empty string
