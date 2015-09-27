@@ -76,7 +76,7 @@ class MPQuerySet(object):
                      'datavalue',
                    ]
 
-    def __init__(self, query, values_list, qs_mp=None):
+    def __init__(self, dbAlias, query, values_list, qs_mp=None):
         '''
         Initialize MPQuerySet with either raw SQL in @query or a QuerySet in @qs_mp.
         Use @values_list to request just the fields (columns) needed.  The class variables
@@ -93,11 +93,12 @@ class MPQuerySet(object):
             logger.debug('query is not None and qs_mp is None')
             self.query = query
             query = PQuery.addPrimaryKey(query)
-            self.mp_query = MeasuredParameter.objects.raw(query)
+            self.mp_query = MeasuredParameter.objects.using(dbAlias).raw(query)
             self.isRawQuerySet = True
         else:
             raise Exception('Either query or qs_mp must be not None and the other be None.')
 
+        self.dbAlias = dbAlias
         self.values_list = values_list
         self.ordering = ('id',)
 
@@ -239,7 +240,7 @@ class MPQuerySet(object):
         return qs.mp_query
  
     def _clone(self):
-        qs = MPQuerySet(self.query, self.values_list)
+        qs = MPQuerySet(self.dbAlias, self.query, self.values_list)
         qs.mp_query = self.mp_query._clone()
         return qs 
  
@@ -288,7 +289,7 @@ class SPQuerySet(object):
                      'datavalue',
                    ]
 
-    def __init__(self, query, values_list, qs_sp=None):
+    def __init__(self, dbAlias, query, values_list, qs_sp=None):
         '''
         Initialize SPQuerySet with either raw SQL in @query or a QuerySet in @qs_sp.
         Use @values_list to request just the fields (columns) needed.  The class variables
@@ -303,10 +304,11 @@ class SPQuerySet(object):
         elif query is not None and qs_sp is None:
             logger.debug('query is not None and qs_sp is None')
             self.query = query
-            self.sp_query = SampledParameter.objects.raw(query)
+            self.sp_query = SampledParameter.objects.using(dbAlias).raw(query)
         else:
             raise Exception('Either query or qs_sp must be not None and the other be None.')
 
+        self.dbAlias = dbAlias
         self.values_list = values_list
         self.ordering = ('id',)
  
@@ -448,7 +450,7 @@ class SPQuerySet(object):
         return qs.sp_query
  
     def _clone(self):
-        qs = SPQuerySet(self.query, self.values_list)
+        qs = SPQuerySet(self.dbAlias, self.query, self.values_list)
         qs.sp_query = self.sp_query._clone()
         return qs 
 
@@ -657,13 +659,13 @@ class MPQuery(object):
                 pq = PQuery(self.request)
                 sql = pq.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
-                qs_mpq = MPQuerySet(sql, values_list)
+                qs_mpq = MPQuerySet(self.request.META['dbAlias'], sql, values_list)
             else:
                 logger.debug('Building MPQuerySet with qs_mpquery = %s', str(qs_mp.query))
-                qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
+                qs_mpq = MPQuerySet(self.request.META['dbAlias'], None, values_list, qs_mp=qs_mp)
         else:
             logger.debug('Building MPQuerySet with qs_mpquery = %s', str(qs_mp.query))
-            qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
+            qs_mpq = MPQuerySet(self.request.META['dbAlias'], None, values_list, qs_mp=qs_mp)
 
         if qs_mpq is None:
             logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
@@ -711,13 +713,13 @@ class MPQuery(object):
                 pq = PQuery(self.request)
                 sql = pq.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.sampled_rest_select_items)
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
-                qs_spq = SPQuerySet(sql, values_list)
+                qs_spq = SPQuerySet(self.request.META['dbAlias'], sql, values_list)
             else:
                 logger.debug('Building SPQuerySet for SampledParameter...')
-                qs_spq = SPQuerySet(None, values_list, qs_sp=qs_sp)
+                qs_spq = SPQuerySet(self.request.META['dbAlias'], None, values_list, qs_sp=qs_sp)
         else:
             logger.debug('Building SPQuerySet for SampledParameter...')
-            qs_spq = SPQuerySet(None, values_list, qs_sp=qs_sp)
+            qs_spq = SPQuerySet(self.request.META['dbAlias'], None, values_list, qs_sp=qs_sp)
 
         if qs_spq is None:
             logger.debug('qs_spq.query = %s', str(qs_spq.query))
