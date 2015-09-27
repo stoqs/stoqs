@@ -1379,7 +1379,7 @@ class STOQSQManager(object):
                     platform__in=[a.platform for a in self.qs])]
             if platformsHavingModels:
                 mppa = PlatformAnimation(platformsHavingModels, self.kwargs, 
-                        self.request, self.qs, self.mpq.qs_mp)
+                        self.request, self.qs, self.mpq.qs_mp_no_parm)
                 # Default vertical exaggeration is 10x and default geoorigin is empty string
                 orientDict = mppa.platformAnimationDataValuesForX3D(
                                 float(self.request.GET.get('ve', 10)), 

@@ -142,7 +142,8 @@ class MeasuredParameter(object):
         self.kwargs = kwargs
         self.request = request
         self.qs = qs
-        self.qs_mp = qs_mp                      # Calling routine passes the _no_order version of the QuerySet
+        # Calling routine passes different qs_mp when order or no parameter in filter is needed
+        self.qs_mp = qs_mp
         self.parameterMinMax = parameterMinMax
         self.sampleQS = sampleQS
         self.platformName = platformName
