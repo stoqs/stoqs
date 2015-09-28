@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 __author__    = 'Mike McCann,Duane Edgington,Reiko Michisaki'
-__copyright__ = '2014'
+__copyright__ = '2015'
 __license__   = 'GPL v3'
 __contact__   = 'duane at mbari.org'
 
@@ -29,8 +29,8 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
        
-cl = CANONLoader('stoqs_canon_september2015', 'CANON - September 2014',
-                    description = 'Fall 2014 Front Identification in northern Monterey Bay',
+cl = CANONLoader('stoqs_canon_september2015', 'CANON - September-October 2015',
+                    description = 'Fall 2015 Front Identification in northern Monterey Bay',
                     x3dTerrains = {
                             '/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                 'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -113,7 +113,7 @@ cl.l_662_endDatetime = enddate
 #  WESTERN FLYER: September 27 - Oct 3
 ######################################################################
 # UCTD
-cl.wfuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Western_Flyer/uctd/'
+cl.wfuctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Western_Flyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
   'CANON14M01.nc', 'CANON14M02.nc', 'CANON14M03.nc', 'CANON14M04.nc', 'CANON14M05.nc', 'CANON14M06.nc', 'CANON14M07.nc',
@@ -121,7 +121,7 @@ cl.wfuctd_files = [
                   ]
 
 # PCTD
-cl.wfpctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Western_Flyer/pctd/'
+cl.wfpctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [
   'CANON14C01.nc', 'CANON14C02.nc',  'CANON14C03.nc',  'CANON14C04.nc',  'CANON14C05.nc',  'CANON14C06.nc',   'CANON14C07.nc',  'CANON14C08.nc',
@@ -142,7 +142,7 @@ cl.wfpctd_files = [
 #  RACHEL CARSON: September 22-26 (265-xxx) Oct 6 - Oct 10
 ######################################################################
 # UCTD
-cl.rcuctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/uctd/'
+cl.rcuctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [ 
                    '26514RCplm01.nc', '26614RCplm01.nc', '26714RCplm01.nc', 
@@ -151,8 +151,8 @@ cl.rcuctd_files = [
                   ]
 
 # PCTD
-# /thredds/dodsC/CANON/2014_Sep/Platforms/Ships/Rachel_Carson/pctd/26514RCc06.nc
-cl.rcpctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Rachel_Carson/pctd/'
+# /thredds/dodsC/CANON/2015_Sep/Platforms/Ships/Rachel_Carson/pctd/26514RCc06.nc
+cl.rcpctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [ 
                     '26514RCc01.nc', '26514RCc03.nc', '26514RCc04.nc', '26514RCc05.nc', '26514RCc06.nc',
@@ -286,7 +286,6 @@ if cl.args.test:
 elif cl.args.optimal_stride:
 
     cl.loadL_662(stride=2) 
-    cl.load_NPS29(stride=2) 
     cl.loadM1(stride=1)
     cl.loadDorado(stride=2)
     cl.loadRCuctd(stride=2)
@@ -298,13 +297,12 @@ else:
     cl.stride = cl.args.stride
 
     cl.loadL_662() 
-    cl.load_NPS29() 
     cl.loadM1()
     cl.loadDorado()
-    cl.loadRCuctd()
-    cl.loadRCpctd() 
-    cl.loadWFuctd()   
-    cl.loadWFpctd()
+    ##cl.loadRCuctd()
+    ##cl.loadRCpctd() 
+    ##cl.loadWFuctd()   
+    ##cl.loadWFpctd()
 
     ##cl.loadSubSamples()
 
