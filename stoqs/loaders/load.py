@@ -219,7 +219,7 @@ local   all             all                                     peer
                 except IndexError:
                     pass
 
-            ans = raw_input('\nAre you sure you want to drop these database(s) and reload them? y/N ')
+            ans = raw_input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
             if ans.lower() != 'y':
                 print 'Exiting'
                 sys.exit()
@@ -229,7 +229,7 @@ local   all             all                                     peer
             print "On the server running on port =", settings.DATABASES['default']['PORT']
             print "You are about to load all these databases:"
             print ' '.join(campaigns.campaigns.keys())
-            ans = raw_input('\nAre you sure you want load all these databases? y/N ')
+            ans = raw_input('\nAre you sure you want load all these databases? [y/N] ')
             if ans.lower() != 'y':
                 print 'Exiting'
                 sys.exit()
@@ -370,7 +370,7 @@ local   all             all                                     peer
             script = os.path.join(app_dir, 'loaders', load_command)
             log_file = self._log_file(script, db, load_command)
             if script.endswith('.sh'):
-                script = ('cd {} && {}').format(os.path.dirname(script), script)
+                script = ('(cd {} && {})').format(os.path.dirname(script), script)
 
             cmd = ('(export STOQS_CAMPAIGNS={}; time {}) > {} 2>&1;').format(db, script, log_file)
 
