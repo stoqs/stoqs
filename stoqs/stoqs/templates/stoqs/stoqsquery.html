@@ -245,7 +245,7 @@
                                             <Scene>
                                                 <Environment frustumCulling="false"></Environment>
                                                 <NavigationInfo></NavigationInfo>
-                                                <Viewpoint id="mp-x3d-viewpoint1" def="vp"></Viewpoint>
+                                                <Viewpoint id="mp-x3d-viewpoint1" def="vp" onviewpointChanged="setScale(event)"></Viewpoint>
                                                 <!-- Test GeoViewpoint for Monterey Bay area, user must page-down to bind to it -->
                                                 <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" geoSystem='"GD" "WE"' position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0">
                                                 </GeoViewpoint>
@@ -1166,6 +1166,22 @@
         var fraction = eventObject.value;
         $('#spatial-3d-x3d-slider').val(fraction);
         updateCrosshairs(fraction, timeAxis, sliderLimits);
+    }
+
+    function setScale(event) {
+        var viewpoint = $('#spatial-3d-x3d')[0].runtime.viewpoint();
+        // Approximate location of platform from set centerOfRotation for the scene
+        var pl = viewpoint._vf.centerOfRotation;
+        var vp = event.position;
+
+        // Compute distance from viewpoint to platform and set the scale
+        var f = 1/75.0;
+        var d = Math.sqrt(Math.pow((vp.x - pl.x), 2) + Math.pow((vp.y - pl.y), 2) + Math.pow((vp.z - pl.z), 2));
+        var scale = d*f + ',' + d*f + ',' + d*f;
+
+        $.each($('body').data()['platformAnimation'], function(index, plat) {
+            $('#' + plat + '_SCALE').attr('scale', scale);
+        });
     }
 
     function updateCrosshairs(fraction, timeAxis, limits) {
@@ -3959,7 +3975,9 @@
             else if (key == 'platformanimation') {
                 if (data[key]['x3d']) {
                     var x3dText = '';
-                    $.each(data[key]['x3d'], function (act, x3d) {
+                    $('body').data()['platformAnimation'] = [];
+                    $.each(data[key]['x3d'], function (plat, x3d) {
+                        $('body').data()['platformAnimation'].push(plat);
                         x3dText += x3d;
                     });
                     $('#platform-animations').html(data[key]['all'] + x3dText);

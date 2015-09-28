@@ -246,9 +246,9 @@ class BaseOutputer(object):
                 pq = PQuery(self.request)
                 sql = postgresifySQL(str(self.qs.query))
                 sql = pq.addParameterValuesSelfJoins(sql, pvConstraints, select_items=MPQuery.rest_select_items)
-                self.qs = MPQuerySet(sql, MPQuerySet.rest_columns)
+                self.qs = MPQuerySet(self.request.META['dbAlias'], sql, MPQuerySet.rest_columns)
             else:
-                self.qs = MPQuerySet(None, MPQuerySet.rest_columns, qs_mp=self.qs)
+                self.qs = MPQuerySet(self.request.META['dbAlias'], None, MPQuerySet.rest_columns, qs_mp=self.qs)
 
         # Process request based on format requested
         if self.format == 'csv' or self.format == 'tsv':

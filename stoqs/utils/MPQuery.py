@@ -76,7 +76,7 @@ class MPQuerySet(object):
                      'datavalue',
                    ]
 
-    def __init__(self, query, values_list, qs_mp=None):
+    def __init__(self, dbAlias, query, values_list, qs_mp=None):
         '''
         Initialize MPQuerySet with either raw SQL in @query or a QuerySet in @qs_mp.
         Use @values_list to request just the fields (columns) needed.  The class variables
@@ -93,32 +93,14 @@ class MPQuerySet(object):
             logger.debug('query is not None and qs_mp is None')
             self.query = query
             query = PQuery.addPrimaryKey(query)
-            self.mp_query = MeasuredParameter.objects.raw(query)
+            self.mp_query = MeasuredParameter.objects.using(dbAlias).raw(query)
             self.isRawQuerySet = True
         else:
             raise Exception('Either query or qs_mp must be not None and the other be None.')
 
+        self.dbAlias = dbAlias
         self.values_list = values_list
         self.ordering = ('id',)
-
-    def _model_row_generator(self):
-        '''
-        yield rows from model instances
-        '''
-        for mp in self.mp_query[:ITER_HARD_LIMIT]:
-            row = { 
-                    'measurement__depth': mp.measurement.depth,
-                    'parameter__id': mp.parameter__id,
-                    'parameter__name': mp.parameter__name,
-                    'datavalue': mp.datavalue,
-                    'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
-                    'parameter__standard_name': mp.parameter.standard_name,
-                    'measurement__instantpoint__activity__name': mp.measurement.instantpoint.activity.name,
-                    'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
-                    'measurement__geom': mp.measurement.geom,
-                    'parameter__units': mp.parameter.units,
-                  }
-            yield row
 
     def __iter__(self):
         '''
@@ -178,11 +160,22 @@ class MPQuerySet(object):
                           }
                     yield row
 
-            except TypeError:
-                self._model_row_generator()
- 
-            except AttributeError:
-                self._model_row_generator()
+            except (TypeError, AttributeError):
+                # Model objects
+                for mp in self.mp_query[:ITER_HARD_LIMIT]:
+                    row = { 
+                            'measurement__depth': mp.measurement.depth,
+                            'parameter__id': mp.parameter__id,
+                            'parameter__name': mp.parameter__name,
+                            'datavalue': mp.datavalue,
+                            'measurement__instantpoint__timevalue': mp.measurement.instantpoint.timevalue,
+                            'parameter__standard_name': mp.parameter.standard_name,
+                            'measurement__instantpoint__activity__name': mp.measurement.instantpoint.activity.name,
+                            'measurement__instantpoint__activity__platform__name': mp.measurement.instantpoint.activity.platform.name,
+                            'measurement__geom': mp.measurement.geom,
+                            'parameter__units': mp.parameter.units,
+                          }
+                    yield row
  
     def __repr__(self):
         data = list(self[:REPR_OUTPUT_SIZE + 1])
@@ -239,7 +232,7 @@ class MPQuerySet(object):
         return qs.mp_query
  
     def _clone(self):
-        qs = MPQuerySet(self.query, self.values_list)
+        qs = MPQuerySet(self.dbAlias, self.query, self.values_list)
         qs.mp_query = self.mp_query._clone()
         return qs 
  
@@ -288,7 +281,7 @@ class SPQuerySet(object):
                      'datavalue',
                    ]
 
-    def __init__(self, query, values_list, qs_sp=None):
+    def __init__(self, dbAlias, query, values_list, qs_sp=None):
         '''
         Initialize SPQuerySet with either raw SQL in @query or a QuerySet in @qs_sp.
         Use @values_list to request just the fields (columns) needed.  The class variables
@@ -303,10 +296,11 @@ class SPQuerySet(object):
         elif query is not None and qs_sp is None:
             logger.debug('query is not None and qs_sp is None')
             self.query = query
-            self.sp_query = SampledParameter.objects.raw(query)
+            self.sp_query = SampledParameter.objects.using(dbAlias).raw(query)
         else:
             raise Exception('Either query or qs_sp must be not None and the other be None.')
 
+        self.dbAlias = dbAlias
         self.values_list = values_list
         self.ordering = ('id',)
  
@@ -448,7 +442,7 @@ class SPQuerySet(object):
         return qs.sp_query
  
     def _clone(self):
-        qs = SPQuerySet(self.query, self.values_list)
+        qs = SPQuerySet(self.dbAlias, self.query, self.values_list)
         qs.sp_query = self.sp_query._clone()
         return qs 
 
@@ -494,7 +488,6 @@ class MPQuery(object):
         self.request = request
         self.qs_mp = None
         self.qs_mp_no_order = None
-        self.qs_mp_no_order_no_parm = None
         self.qs_sp = None
         self.qs_sp_no_order = None
         self.sql = None
@@ -507,7 +500,9 @@ class MPQuery(object):
         '''
         Build the query set based on selections from the UI. For the first time through kwargs will be empty 
         and self.qs_mp will have no constraints and will be all of the MeasuredParameters in the database.
-        This is called by utils/STOQSQueryManagery.py.
+        This is called by utils/STOQSQueryManagery.py.  On successful completion one or more member query
+        sets will be available: qs_sp, qs_mp, qs_sp_no_order, qs_mp_no_order, with coresponding SQL
+        strings: sql_sp, sql_mp.
         '''
         if self.qs_mp is None:
             parameterGroups = [MEASUREDINSITU]
@@ -629,19 +624,20 @@ class MPQuery(object):
             # May need select_related(...)
             qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*values_list)
 
-        # Save a queryset with no parameter in the filter
-        self.qs_mp_no_order_no_parm = qs_mp
+        if orderedFlag:
+            qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
+            # Save ordered queryset with no parameter in the filter for
+            # X3D display to get roll, pitch, and yaw
+            self.qs_mp_no_parm = qs_mp
+
         if self.parameterID:
             logger.debug('Adding parameter__id=%d filter to qs_mp', int(self.parameterID))
             qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
 
-        if orderedFlag:
-            qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
-
         # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         if self.kwargs.has_key('parametervalues'):
             if self.kwargs['parametervalues']:
-                # A depth of 4 is needed in order to see Platform
+                # Start with fresh qs_mp without .values()
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(
                             'measurement__instantpoint__activity__platform').filter(**qparams)
 
@@ -657,13 +653,13 @@ class MPQuery(object):
                 pq = PQuery(self.request)
                 sql = pq.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.rest_select_items)
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
-                qs_mpq = MPQuerySet(sql, values_list)
+                qs_mpq = MPQuerySet(self.request.META['dbAlias'], sql, values_list)
             else:
                 logger.debug('Building MPQuerySet with qs_mpquery = %s', str(qs_mp.query))
-                qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
+                qs_mpq = MPQuerySet(self.request.META['dbAlias'], None, values_list, qs_mp=qs_mp)
         else:
             logger.debug('Building MPQuerySet with qs_mpquery = %s', str(qs_mp.query))
-            qs_mpq = MPQuerySet(None, values_list, qs_mp=qs_mp)
+            qs_mpq = MPQuerySet(self.request.META['dbAlias'], None, values_list, qs_mp=qs_mp)
 
         if qs_mpq is None:
             logger.debug('qs_mpq.query = %s', str(qs_mpq.query))
@@ -711,13 +707,13 @@ class MPQuery(object):
                 pq = PQuery(self.request)
                 sql = pq.addParameterValuesSelfJoins(sql, self.kwargs['parametervalues'], select_items=self.sampled_rest_select_items)
                 logger.debug('\n\nsql after parametervalue query = %s\n\n', sql)
-                qs_spq = SPQuerySet(sql, values_list)
+                qs_spq = SPQuerySet(self.request.META['dbAlias'], sql, values_list)
             else:
                 logger.debug('Building SPQuerySet for SampledParameter...')
-                qs_spq = SPQuerySet(None, values_list, qs_sp=qs_sp)
+                qs_spq = SPQuerySet(self.request.META['dbAlias'], None, values_list, qs_sp=qs_sp)
         else:
             logger.debug('Building SPQuerySet for SampledParameter...')
-            qs_spq = SPQuerySet(None, values_list, qs_sp=qs_sp)
+            qs_spq = SPQuerySet(self.request.META['dbAlias'], None, values_list, qs_sp=qs_sp)
 
         if qs_spq is None:
             logger.debug('qs_spq.query = %s', str(qs_spq.query))
