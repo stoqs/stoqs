@@ -530,7 +530,7 @@ def processDiveList(args):
         # Load the data
         loader._buildValuesByParm()
         try:
-            (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
+            (nMP, path, parmCountHash) = loader.process_data(loader._genROVCTD, 'trajectory')
         except DiveInfoServletException as e:
             logger.warn(e)
 
@@ -557,7 +557,7 @@ def processDiveRange(args):
         # Load the data
         loader._buildValuesByParm()
         try:
-            (nMP, path, parmCountHash, mind, maxd) = loader.process_data(loader._genROVCTD, 'trajectory')
+            (nMP, path, parmCountHash) = loader.process_data(loader._genROVCTD, 'trajectory')
         except DiveInfoServletException as e:
             logger.warn(e)
 

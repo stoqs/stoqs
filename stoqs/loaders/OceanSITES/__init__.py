@@ -172,7 +172,7 @@ class OSLoader(LoadScript):
                 ml.include_names = ['TEMP', 'PSAL']
     
             try:
-                (nMP, path, parmCountHash, mind, maxd) = ml.process_data()
+                (nMP, path, parmCountHash) = ml.process_data()
                 logger.debug("Loaded Activity with name = %s", aName)
             except NoValidData, e:
                 logger.warning(e)

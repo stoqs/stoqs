@@ -294,6 +294,22 @@ class SummaryDataTestCase(TestCase):
         data = json.loads(response.content) # Verify we don't get an exception when we load the data.
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
+    def test_timedepth2(self):
+        base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
+
+        # time and depth constraint with get_actual_count
+        qstring = ('except=spsql&except=mpsql&start_time=2010-10-28+00%3A45%3A57&'
+                   'end_time=2010-10-28+12%3A17%3A20&min_depth=100.32&'
+                   'max_depth=395.18&pplr=1&ppsl=1')
+
+        req = base + '?' + qstring
+        response = self.client.get(req)
+        data = json.loads(response.content) # Verify we don't get an exception when we load the data.
+        # Perform the same check the UI does to confirm that data are in the selection
+        self.assertIsNotNone(data.get('counts').get('approximate_count'), 
+                'Should have a not None approximate_count')
+        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+
     def test_measuredparameter_select(self):
         base = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
 

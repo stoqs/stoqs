@@ -27,7 +27,7 @@ from CANON import CANONLoader
 
 # Assign input data sources - use locally served x3d terrain data
 cl = CANONLoader('default', 'Initial Test Database',
-                    description = 'Post-setup load of a single AUV mission',
+                    description = 'Post-setup load of a variety of data to use for testing',
                     x3dTerrains = {
                             '/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                 'position': '-2822317.31255 -4438600.53640 3786150.85474',
