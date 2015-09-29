@@ -36,7 +36,7 @@ import urllib2
 from datetime import datetime, timedelta
 import numpy as np
 from pupynere import netcdf_file
-from seawater import csiro
+from seawater import eos80
 
 from CANON.toNetCDF import BaseWriter
 from seabird import get_year_lat_lon, convert_up_to_down, PositionNotFound, HdrFileNotFound
@@ -214,7 +214,7 @@ class ParserWriter(BaseWriter):
         self.depth.long_name = 'DEPTH'
         self.depth.standard_name = 'depth'
         self.depth.units = 'm'
-        self.depth[:] = csiro.depth(self.pr_list, self.lat_list)      # Convert pressure to depth
+        self.depth[:] = eos80.dpth(self.pr_list, self.lat_list)      # Convert pressure to depth
 
         # Record Variables - Profile CTD Data
         temp = self.ncFile.createVariable('TEMP', 'float64', ('time',))

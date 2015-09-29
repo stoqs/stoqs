@@ -8,7 +8,8 @@ dir='/mbari/LRAUV'
 logdir='missionlogs/2015'
 search="${logdir}/.*nc4$"
 #declare -a platforms=("tethys" "makai" "daphne")
-declare -a platforms=("daphne")
+#declare -a platforms=("daphne")
+declare -a platforms=("tethys")
 parms_sci="{
             \"CTD_NeilBrown\": [
             { \"name\":\"sea_water_salinity\" , \"rename\":\"salinity\" },
