@@ -360,8 +360,9 @@ local   all             all                                     peer
             try:
                 self._create_db(db)
             except DatabaseCreationError as e:
-                self.logger.warn(str(e) + '. Perhaps you should use the --clobber option.')
-                continue
+                self.logger.warn(e)
+                self.logger.warn('Use the --clobber optioni, or fix the problem indicated.')
+                raise
 
             call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
             call_command('migrate', settings='config.settings.local', noinput=True, database=db)
