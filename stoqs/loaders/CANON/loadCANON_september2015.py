@@ -78,6 +78,32 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 ##cl.daphne_files = ['Daphne_CANON_Fall2013.nc']
 ##cl.daphne_parms = ['temperature', 'chlorophyll', 'bb470', 'bb650']
 
+# NetCDF files produced (binned, etc.) by Danelle Cline
+# These binned files are created with the makeLRAUVNetCDFs.sh script in the
+# toNetCDF directory. You must first edit and run that script once to produce 
+# the binned files before this will work
+  
+# Get directory list from thredds server
+platforms = ['tethys', 'daphne', 'makai']
+
+'''for p in platforms:
+    base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/' 
+    dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2015/'
+    setattr(cl, p + '_files', []) 
+    setattr(cl, p + '_base', dods_base)
+    setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'])
+    c = Crawl(os.path.join(base, 'catalog.xml'), select=['.*10S_sci.nc$'], debug=False) 
+    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+    files = []
+    if len(urls) > 0 :
+        for url in sorted(urls):
+            file = '/'.join(url.split('/')[-3:])
+            files.append(file)
+    files.append(',')
+    setattr(cl, p + '_files', files) 
+    setattr(cl, p  + '_startDatetime', startdate) 
+    setattr(cl, p + '_endDatetime', enddate)
+'''
 
 ######################################################################
 #  GLIDERS
@@ -111,7 +137,7 @@ cl.wg_Tiny_endDatetime = enddate
 ##cl.wg_oa_endDatetime = enddate
 
 ######################################################################
-#  WESTERN FLYER: September 27 - Oct 3
+#  WESTERN FLYER: September 29 - Oct 5 (7 days)
 ######################################################################
 # UCTD
 cl.wfuctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Western_Flyer/uctd/'
@@ -126,18 +152,22 @@ cl.wfpctd_files = [
                   ]
 
 ######################################################################
-#  RACHEL CARSON: September 22-26 (265-xxx) Oct 6 - Oct 10
+#  RACHEL CARSON: September 22-24 (265-xxx) Oct 12 - Oct 14
 ######################################################################
 # UCTD
 cl.rcuctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
-cl.rcuctd_files = [ 
+cl.rcuctd_files = [
+                  '26515plm01.nc', '26615plm01.nc', '26715plm01.nc', 
                   ]
 
 # PCTD
 cl.rcpctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
-cl.rcpctd_files = [ 
+cl.rcpctd_files = [
+                  '26515c01.nc', '26515c02.nc', '26515c03.nc',
+                  '26615c01.nc', '26615c02.nc',
+                  '26715c01.nc', '26715c02.nc', 
                   ]
 
 #####################################################################
@@ -180,26 +210,13 @@ cl.m1_endDatetime = enddate
 #######################################################################################
 # ESP MOORINGS
 #######################################################################################
-##cl.bruce_moor_base = cl.dodsBase + 'CANON_september2013/Platforms/Moorings/ESP_Bruce/NetCDF/'
-##cl.bruce_moor_files = ['Bruce_ctd.nc']
-##cl.bruce_moor_parms = [ 'TEMP','PSAL','chl','xmiss','oxygen','beamc',
-##                   ]
-##cl.bruce_moor_startDatetime = startdate
-##cl.bruce_moor_endDatetime = enddate
-
-##cl.mack_moor_base = cl.dodsBase + 'CANON_september2013/Platforms/Moorings/ESP_Mack/NetCDF/'
-##cl.mack_moor_files = ['Mack_ctd.nc']
-##cl.mack_moor_parms = [ 'TEMP','PSAL','chl','xmiss','oxygen','beamc',
-##                   ]
-##cl.mack_moor_startDatetime = startdate
-##cl.mack_moor_endDatetime = enddate
 
 ###################################################################################################
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/ 
-#                                   CANON13 25913RC 25913RC 26113RC 27313RC 27413RC 27513RC 27613RC
-#   copied to local CANON2013 dir
+#                                   
+#   copied to local CANONSep2015 dir
 ###################################################################################################
-##cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON2013')
+##cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANONSep2013')
 ##cl.subsample_csv_files = [
 ##'STOQS_CANON13_CARBON_GFF.csv', 'STOQS_CANON13_CHL_1U.csv', 'STOQS_CANON13_CHL_5U.csv', 'STOQS_CANON13_CHLA.csv',
 ##'STOQS_CANON13_CHL_GFF.csv', 'STOQS_CANON13_NO2.csv', 'STOQS_CANON13_NO3.csv', 'STOQS_CANON13_PHAEO_1U.csv',
@@ -252,16 +269,19 @@ if cl.args.test:
 
     cl.loadM1(stride=10)
 
-    ##cl.loadBruceMoor(stride=10)
-    ##cl.loadMackMoor(stride=10)
-
     ##cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
 
     cl.loadL_662(stride=2)
+
+    ##cl.load_wg_tex(stride=2)
+    ##cl.load_wg_oa(stride=2)
+
     cl.loadM1(stride=1)
     #cl.loadDorado(stride=2)
+    ##cl.loadDaphne(stride=100)
+    ##cl.loadTethys(stride=100)
     #cl.loadRCuctd(stride=2)
     #cl.loadRCpctd(stride=2)
 
@@ -270,11 +290,15 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
 
-    #cl.loadL_662() 
+    #cl.loadL_662()
+    ##cl.load_wg_tex(stride=2)
+    ##cl.load_wg_oa(stride=2) 
     #cl.loadM1()
-    cl.loadDorado()
-    #cl.loadRCuctd()
-    #cl.loadRCpctd() 
+    #cl.loadDorado()
+    ##cl.loadDaphne(stride=100)
+    ##cl.loadTethys(stride=100)
+    cl.loadRCuctd()
+    cl.loadRCpctd() 
     #cl.loadWFuctd()   
     #cl.loadWFpctd()
 
