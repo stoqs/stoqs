@@ -1,5 +1,5 @@
 coards==1.0.5
-beautifulsoup4==4.4.0
+beautifulsoup4==4.4.1
 datadiff==1.1.6
 dj-database-url==0.3.0
 Django==1.8.4
