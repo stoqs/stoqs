@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 __author__    = 'Mike McCann,Duane Edgington,Reiko Michisaki'
-__copyright__ = '2014'
+__copyright__ = '2015'
 __license__   = 'GPL v3'
 __contact__   = 'duane at mbari.org'
 
@@ -29,8 +29,8 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
        
-cl = CANONLoader('stoqs_september2015', 'CANON - September 2015',
-                    description = 'Fall 2015 Hot Spot Experiment in Monterey Bay',
+cl = CANONLoader('stoqs_canon_september2015', 'CANON - September-October 2015',
+                    description = 'Fall 2015 Front Identification in northern Monterey Bay',
                     x3dTerrains = {
                             '/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                 'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -58,11 +58,13 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2015/netcdf/'
 cl.dorado_files = [
-#                   'Dorado389_2014_282_03_282_03_decim.nc',
-				  ]
+                    'Dorado389_2015_265_03_265_03_decim.nc',
+                    'Dorado389_2015_267_01_267_01_decim.nc',
+				   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
-                    'fl700_uncorr', 'salinity', 'biolume', 
-                   ]
+                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
+                    'roll', 'pitch', 'yaw',
+                    'sepCountList', 'mepCountList' ]
 
 #####################################################################
 #  LRAUV 
@@ -88,37 +90,10 @@ cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
-# NPS_29
-##cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-##cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
-##cl.nps29_parms = ['TEMP', 'PSAL']
-##cl.nps29_startDatetime = startdate
-##cl.nps29_endDatetime = enddate
-
-# UCSC_294
-#cl.ucsc294_base = 'http://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/UCSC294-20150430T2218/'
-#cl.ucsc294_files = [ 'UCSC294-20150430T2218.nc3.nc' ]
-#cl.ucsc294_parms = ['TEMP', 'PSAL']
-#cl.ucsc294_startDatetime = startdate
-#cl.ucsc294_endDatetime = enddate
-
-# UCSC_260
-#cl.ucsc260_base = 'http://data.ioos.us/gliders//thredds/dodsC/deployments/mbari/UCSC260-20150520T0000/'
-#cl.ucsc260_files = [ 'UCSC260-20150520T0000.nc3.nc'  ]
-#cl.ucsc260_parms = ['TEMP', 'PSAL']
-#cl.ucsc260_startDatetime = startdate
-#cl.ucsc260_endDatetime = enddate
 
 ######################################################################
 # Wavegliders
 ######################################################################
-# WG Tex - All instruments combined into one file - one time coordinate
-##cl.wg_tex_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_Tex/final/'
-##cl.wg_tex_files = [ 'WG_Tex_all_final.nc' ]
-##cl.wg_tex_parms = [ 'wind_dir', 'wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'density', 'bb_470', 'bb_650', 'chl' ]
-##cl.wg_tex_startDatetime = startdate
-##cl.wg_tex_endDatetime = enddate
-
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Waveglider/wgTiny/'
 cl.wg_Tiny_files = [  ]
@@ -189,12 +164,14 @@ cl.rcpctd_files = [
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
 cl.m1_files = [
-                'OS_M1_20150729hourly_CMSTV.nc'
+                'OS_M1_20150729hourly_CMSTV.nc',
+                'm1_hs2_20150730.nc',
               ]
 cl.m1_parms = [
                 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
                 'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR', 
+                'bb470', 'bb676', 'fl676',
               ]
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
@@ -258,21 +235,20 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.loadL_662(stride=100) 
-    #cl.load_NPS29(stride=10) 
 
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10) 
 
-    #cl.loadDorado(stride=100)
+    cl.loadDorado(stride=100)
     ##cl.loadDaphne(stride=100)
     ##cl.loadTethys(stride=100)
 
-    #cl.loadRCuctd(stride=10)
-    #cl.loadRCpctd(stride=10)
+    ##cl.loadRCuctd(stride=10)
+    ##cl.loadRCpctd(stride=10)
     ##cl.loadJMuctd(stride=10)
     ##cl.loadJMpctd(stride=10)
-    #cl.loadWFuctd(stride=10)   
-    #cl.loadWFpctd(stride=10)
+    ##cl.loadWFuctd(stride=10)   
+    ##cl.loadWFpctd(stride=10)
 
     cl.loadM1(stride=10)
 
@@ -283,8 +259,7 @@ if cl.args.test:
 
 elif cl.args.optimal_stride:
 
-    cl.loadL_662(stride=2) 
-    #cl.load_NPS29(stride=2) 
+    cl.loadL_662(stride=2)
     cl.loadM1(stride=1)
     #cl.loadDorado(stride=2)
     #cl.loadRCuctd(stride=2)
@@ -295,10 +270,9 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
 
-    cl.loadL_662() 
-    #cl.load_NPS29() 
-    cl.loadM1()
-    #cl.loadDorado()
+    #cl.loadL_662() 
+    #cl.loadM1()
+    cl.loadDorado()
     #cl.loadRCuctd()
     #cl.loadRCpctd() 
     #cl.loadWFuctd()   
