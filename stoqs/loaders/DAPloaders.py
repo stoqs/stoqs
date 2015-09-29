@@ -1019,8 +1019,6 @@ class Base_Loader(STOQS_Loader):
         self.loaded = 0
         parmCount = {}
         parameterCount = {}
-        mindepth = 8000.0
-        maxdepth = -8000.0
         for key in self.include_names:
             parmCount[key] = 0
 
@@ -1090,12 +1088,6 @@ class Base_Loader(STOQS_Loader):
                 logger.exception(e)
                 sys.exit(-1)
 
-            # For Activity metadata
-            if measurement.depth < mindepth:
-                mindepth = measurement.depth
-            if measurement.depth > maxdepth:
-                maxdepth = measurement.depth
-
             self._insertRow(parmCount, parameterCount, measurement, row)
 
         # End for row in data_generator:
@@ -1145,8 +1137,6 @@ class Base_Loader(STOQS_Loader):
                         comment = newComment,
                         maptrack = path,
                         mappoint = stationPoint,
-                        mindepth = mindepth,
-                        maxdepth = maxdepth,
                         num_measuredparameters = self.loaded,
                         loaded_date = datetime.utcnow())
         logger.debug("%d activitie(s) updated with new attributes.", num_updated)
@@ -1162,6 +1152,7 @@ class Base_Loader(STOQS_Loader):
         # 
         # Update the stats and store simple line values
         #
+        self.updateActivityMinMaxDepth()
         self.updateActivityParameterStats(parameterCount)
         self.updateCampaignStartEnd()
         self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
@@ -1176,7 +1167,7 @@ class Base_Loader(STOQS_Loader):
         logger.info("Data load complete, %d records loaded.", self.loaded)
 
 
-        return self.loaded, path, parmCount, mindepth, maxdepth
+        return self.loaded, path, parmCount
 
       return innerProcess_data(self, generator, featureType)
 
@@ -1483,7 +1474,7 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
         # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
         loader.plotTimeSeriesDepth = dict.fromkeys(parmList, plotTimeSeriesDepth)
 
-    (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
+    (nMP, path, parmCountHash) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
 def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, grdTerrain=None):
@@ -1516,7 +1507,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     try:
-        (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
+        (nMP, path, parmCountHash) = loader.process_data()
     except VariableMissingCoordinatesAttribute, e:
         logger.exception(e)
     else:
@@ -1561,7 +1552,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         Dorado_Loader.getFeatureType = lambda self: 'trajectory'
         try:
             # Specify generator and featureType so that non-CF LOPC data can me loaded
-            (nMP, path, parmCountHash, mind, maxd) = lopc_loader.process_data(
+            (nMP, path, parmCountHash) = lopc_loader.process_data(
                     generator=lopc_loader._genTrajectory, featureType='trajectory')
         except VariableMissingCoordinatesAttribute, e:
             logger.exception(e)
@@ -1617,7 +1608,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
                 loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     try:
-        (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
+        (nMP, path, parmCountHash) = loader.process_data()
     except NoValidData as e:
         logger.warn(e)
         raise
@@ -1694,7 +1685,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications for future files
 
     try:
-        (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
+        (nMP, path, parmCountHash) = loader.process_data()
     except VariableMissingCoordinatesAttribute, e:
         logger.exception(e)
     else:    
@@ -1724,7 +1715,7 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
-    (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
+    (nMP, path, parmCountHash) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
 def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, dataStartDatetime=None):
@@ -1781,7 +1772,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
 
     try:
-        (nMP, path, parmCountHash, mind, maxd) = loader.process_data()
+        (nMP, path, parmCountHash) = loader.process_data()
         logger.debug("Loaded Activity with name = %s", aName)
     except NoValidData, e:
         logger.warning(e)

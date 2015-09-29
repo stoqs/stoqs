@@ -1077,6 +1077,14 @@ class STOQS_Loader(object):
 
             self.logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
+    def updateActivityMinMaxDepth(self):
+        '''
+        Pull the min & max depth from Measurement and set the Activity mindepth and maxdepth
+        '''
+        m_qs = m.Measurement.objects.using(self.dbAlias).aggregate(Max('depth'), Min('depth'))
+        m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
+                                                        mindepth = m_qs['depth__min'],
+                                                        maxdepth = m_qs['depth__max'])
     def updateCampaignStartEnd(self):
         '''
         Pull the min & max from InstantPoint and set the Campaign start and end from these
