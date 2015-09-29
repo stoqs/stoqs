@@ -12,7 +12,7 @@ celery==3.1.18
 certifi==2015.9.6.2
 cookiecutter==1.1.0
 coverage==4.0
-Cython==0.23.2
+Cython==0.23.3
 docutils==0.12
 GDAL==2.0.1
 Genshi==0.7

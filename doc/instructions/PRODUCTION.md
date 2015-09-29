@@ -130,7 +130,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
     and database credentials take appropriate steps to protect it from prying eyes.
 
 15. To restart a production uWSGI server running in emperor mode simply `touch`
-    the file that is linked in the `/etc/uwsgi/vassals/ directory`, e.g.:
+    the file that is linked in the `/etc/uwsgi/vassals/` directory, e.g.:
 
         touch $STOQS_HOME/stoqs/stoqs_uwsgi.ini
 
