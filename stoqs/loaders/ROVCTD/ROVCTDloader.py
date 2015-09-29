@@ -377,7 +377,7 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
             records = self._nodeServletLines()
         else:
             # Fudge a url string for the SQL query - string after '/' displayed in INFO when loading
-            self.url = 'SQL://solstice/rov=%s&dive=%d' % (self.args.rov, self.diveNumber)
+            self.url = 'SQL://solstice/rov=%s&dive=%d' % (self.platformName, self.diveNumber)
             records = self._pymssqlLines()
 
         try:
@@ -391,10 +391,10 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
                         continue
                 except ValueError:
                     # Some flag values are not set - assume that it would be the default value: 2
-                    logger.warn('latlonflag flag value not set in row %d for %s' % (i, self.activityName))
+                    logger.debug('latlonflag flag value not set in row %d for %s' % (i, self.activityName))
                 except TypeError:
                     # Some flag values are not set - assume that it would be the default value: 2
-                    logger.warn('latlonflag flag is NoneType value in row %d for %s' % (i, self.activityName))
+                    logger.debug('latlonflag flag is NoneType value in row %d for %s' % (i, self.activityName))
 
                 for v in self.vDict.keys():
                     values = {}
@@ -429,7 +429,7 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
     
                     try:
                         values['depth'] = float(r['d'])
-                    except ValueError:
+                    except (ValueError, TypeError):
                         continue
 
                     try:
@@ -459,14 +459,14 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
                     self.vSeen[v] += 1
 
         except KeyboardInterrupt as e:
-            logger.error('Interrupted while in DictReader() with r = %s', r)
+            logger.error('Interrupted while enumerating records from self.url = %s', self.url)
             import pdb
             pdb.set_trace()
             logger.info('lines = \n%s', self.lines)
             logger.exception(e)
             sys.exit(-1)
         except Exception as e:
-            logger.error('Failed on DictReader() from lines from %s', self.url)
+            logger.error('Failed while enumerating records from self.url = %s', self.url)
             if self.args.useNode:
                 logger.error('lines = \n%s', self.lines)
             logger.exception(e)
@@ -489,6 +489,15 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
         '''
         # For now just override the base class method which expects an OPeNDAP data source
         pass
+
+def get_grdTerrain(file='Monterey25.grd'):
+    '''GMT .grd file(s) are expected in the stoqs/loaders directory
+    '''
+    grdTerrain = os.path.abspath(os.path.join(os.path.dirname(__file__), '../', file))
+    if not os.path.isfile(grdTerrain):
+        logger.error('File %s does not exist. Cannot add altitude!', grdTerrain)
+
+    return grdTerrain
 
 def processDiveList(args):
     '''Given a list of dives to load
@@ -515,7 +524,7 @@ def processDiveList(args):
                     platformTypeName = 'rov',
                     stride = args.stride,
                     args = args,
-                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
+                    grdTerrain = get_grdTerrain()
                 )
 
         # Load the data
@@ -542,7 +551,7 @@ def processDiveRange(args):
                     platformTypeName = 'rov',
                     stride = args.stride,
                     args = args,
-                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
+                    grdTerrain = get_grdTerrain()
                 )
 
         # Load the data
@@ -620,7 +629,6 @@ if __name__ == '__main__':
     else:
         print 'Need a list of dives or a range of dives.'
 
-
     ls = LoadScript(args.database, args.campaignName, args.campaignDescription,
                     x3dTerrains = {
                             '/static/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
@@ -631,7 +639,7 @@ if __name__ == '__main__':
                                 'speed': '.1',
                             }
                     },
-                    grdTerrain = os.path.join(os.path.dirname(__file__), 'Monterey25.grd')  # File expected in loaders directory
+                    grdTerrain = get_grdTerrain()
             )
 
     # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
