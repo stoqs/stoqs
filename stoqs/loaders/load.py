@@ -361,7 +361,7 @@ local   all             all                                     peer
                 self._create_db(db)
             except DatabaseCreationError as e:
                 self.logger.warn(e)
-                self.logger.warn('Use the --clobber optioni, or fix the problem indicated.')
+                self.logger.warn('Use the --clobber option, or fix the problem indicated.')
                 raise
 
             call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)

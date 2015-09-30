@@ -954,8 +954,9 @@ class Base_Loader(STOQS_Loader):
                                 # Equal to 10 digits
                                 continue
                             else:
-                                logger.error('Invalid data value: > 1e34, but not close to _FillValue or missing_value. Entering debugger...')
-                                import pdb; pdb.set_trace()
+                                logger.warn('data value = %s: > 1e34, but not close '
+                                             'to _FillValue or missing_value.', value)
+                                continue
 
                         if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or numpy.isnan(value):
                             # value is basically absent
