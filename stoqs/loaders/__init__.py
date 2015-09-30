@@ -377,8 +377,8 @@ class STOQS_Loader(object):
             self.logger.debug("Platform name %s not found in tracking database.  Creating new platform anyway.", platformName)
 
         # Create PlatformType
-        self.logger.debug("calling db_manager('%s').get_or-create() on PlatformType for platformTypeName = %s", self.dbAlias, self.platformTypeName)
-        (platformType, created) = m.PlatformType.objects.db_manager(self.dbAlias).get_or_create(name = self.platformTypeName)
+        self.logger.debug("calling using('%s').get_or-create() on PlatformType for platformTypeName = %s", self.dbAlias, self.platformTypeName)
+        (platformType, created) = m.PlatformType.objects.using(self.dbAlias).get_or_create(name = self.platformTypeName)
         if created:
             self.logger.debug("Created platformType.name %s in database %s", platformType.name, self.dbAlias)
         else:
@@ -386,7 +386,7 @@ class STOQS_Loader(object):
 
 
         # Create Platform 
-        (platform, created) = m.Platform.objects.db_manager(self.dbAlias).get_or_create( name=platformName, 
+        (platform, created) = m.Platform.objects.using(self.dbAlias).get_or_create( name=platformName, 
                                                                                         color=self.platformColor, 
                                                                                         platformtype=platformType)
         if created:
@@ -469,54 +469,63 @@ class STOQS_Loader(object):
 
 
       return innerAddParameters(self, parmDict)
+
+    def createCampaign(self):
+        '''Create Campaign in the database ensuring that there is only one Campaign
+        in the database. If supplied Campaign name exists in database then that
+        campaign is used and supplied Campaign description is ignored.
+        '''
+
+        try:
+            self.campaign = m.Campaign.objects.using(self.dbAlias).get(id=1)
+            self.logger.info('Retrieved Campaign = %s', self.campaign)
+            if self.campaign.name != self.campaignName:
+                self.logger.warn('Supplied Campaign name of %s does not match name = %s '
+                    'in database %s', self.campaignName, self.campaign.name, self.dbAlias)
+                self.logger.warn('Using Campaign already existing in the database')
+        except ObjectDoesNotExist:
+            self.campaign = m.Campaign(name = self.campaignName,
+                                       description = self.campaignDescription)
+            self.campaign.save(using=self.dbAlias)
+            self.logger.info('Created campaign = %s', self.campaign)
  
     def createActivity(self):
         '''
         Use provided activity information to add the activity to the database.
         '''
         
-        self.logger.info("Creating Activity with startDate = %s and endDate = %s", self.startDatetime, self.endDatetime)
-        comment = 'Loaded on %s with these include_names: %s' % (datetime.now(), ' '.join(self.include_names))
+        self.logger.info("Creating Activity with startDate = %s and endDate = %s", 
+                self.startDatetime, self.endDatetime)
+        comment = 'Loaded on %s with these include_names: %s' % (datetime.now(), 
+                ' '.join(self.include_names))
         self.logger.info("comment = " + comment)
 
         # Create Platform 
-        (self.activity, created) = m.Activity.objects.db_manager(self.dbAlias).get_or_create(    
+        (self.activity, created) = m.Activity.objects.using(self.dbAlias).get_or_create(    
                                         name = self.activityName, 
-                                        ##comment = comment,
                                         platform = self.platform,
                                         startdate = self.startDatetime,
                                         enddate = self.endDatetime)
 
         if created:
-            self.logger.info("Created activity %s in database %s with startDate = %s and endDate = %s", self.activityName, self.dbAlias, self.startDatetime, self.endDatetime)
+            self.logger.info("Created activity %s in database %s with startDate=%s, endDate = %s",
+                    self.activityName, self.dbAlias, self.startDatetime, self.endDatetime)
         else:
             self.logger.info("Retrieved activity %s from database %s", self.activityName, self.dbAlias)
 
         # Get or create activityType 
         if self.activitytypeName is not None:
-            (activityType, created) = m.ActivityType.objects.db_manager(self.dbAlias).get_or_create(name = self.activitytypeName)
+            activityType,created = m.ActivityType.objects.using(self.dbAlias
+                    ).get_or_create(name = self.activitytypeName)
             self.activityType = activityType
     
             if self.activityType is not None:
                 self.activity.activitytype = self.activityType
     
-            self.activity.save(using=self.dbAlias)   # Resave with the activitytype
-        
-        # Get or create campaign by campaignName, update it with campaignDescription if provided
-        if self.campaignName is not None:
-            self.campaign, created = m.Campaign.objects.db_manager(self.dbAlias).get_or_create(name=self.campaignName)
-            if created:
-                self.logger.info('Created campaign = %s', self.campaign)
-            else:
-                self.logger.info('Retrieved campaign = %s', self.campaign)
+        self.createCampaign()
+        self.activity.campaign = self.campaign
     
-            if self.campaign is not None:
-                self.activity.campaign = self.campaign
-                if self.campaignDescription:
-                    self.campaign.description = self.campaignDescription
-                    self.campaign.save(using=self.dbAlias)
-    
-            self.activity.save(using=self.dbAlias)   # Resave with the campaign
+        self.activity.save(using=self.dbAlias)
 
     def addResources(self):
         '''
@@ -524,34 +533,34 @@ class STOQS_Loader(object):
         and all the attributes for each variable in include_names.
         '''
         # The source of the data - this OPeNDAP URL
-        (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name = 'opendap_url')
+        (resourceType, created) = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'opendap_url')
         self.logger.debug("Getting or Creating Resource with name = %s, value = %s", 'opendap_url', self.url )
-        (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+        (resource, created) = m.Resource.objects.using(self.dbAlias).get_or_create(
                             name='opendap_url', value=self.url, uristring=self.url, resourcetype=resourceType)
-        (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+        (ar, created) = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                     activity=self.activity, resource=resource)
 
         # The NC_GLOBAL attributes from the OPeNDAP URL.  Save them all.
         self.logger.debug("Getting or Creating ResourceType nc_global...")
         self.logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
         if self.ds.attributes.has_key('NC_GLOBAL'):
-            (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name = 'nc_global')
+            (resourceType, created) = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'nc_global')
             for rn, value in self.ds.attributes['NC_GLOBAL'].iteritems():
                 self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
-                (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                (resource, created) = m.Resource.objects.using(self.dbAlias).get_or_create(
                             name=rn, value=value, resourcetype=resourceType)
-                (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+                (ar, created) = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                             activity=self.activity, resource=resource)
 
             # Use potentially monkey-patched self.getFeatureType() method to write a correct value - as the UI depends on it
-            (mp_resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+            (mp_resource, created) = m.Resource.objects.using(self.dbAlias).get_or_create(
                         name='featureType', value=self.getFeatureType(), resourcetype=resourceType)
             ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
                             resource__resourcetype=resourceType, resource__name='featureType').select_related('resource')
 
             if not ars:
                 # There was no featureType NC_GLOBAL in the dataset - associate to the one from self.getFeatureType()
-                (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+                (ar, created) = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                             activity=self.activity, resource=mp_resource)
             for ar in ars:
                 if ar.resource.value != mp_resource.value:
@@ -569,16 +578,16 @@ class STOQS_Loader(object):
             try:
                 for rn, value in self.ds[v].attributes.iteritems():
                     self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
-                    (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                    (resource, created) = m.Resource.objects.using(self.dbAlias).get_or_create(
                                           name=rn, value=value, resourcetype=resourceType)
-                    (ar, created) = m.ParameterResource.objects.db_manager(self.dbAlias).get_or_create(
+                    (ar, created) = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                     parameter=self.getParameterByName(v), resource=resource)
                 try:
                     if self.plotTimeSeriesDepth.get(v, False):
-                        (uiResType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(name='ui_instruction')
-                        (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+                        (uiResType, created) = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
+                        (resource, created) = m.Resource.objects.using(self.dbAlias).get_or_create(
                                               name='plotTimeSeriesDepth', value=self.plotTimeSeriesDepth[v], resourcetype=uiResType)
-                        (ar, created) = m.ParameterResource.objects.db_manager(self.dbAlias).get_or_create(
+                        (ar, created) = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                         parameter=self.getParameterByName(v), resource=resource)
                 except AttributeError:
                     pass
@@ -607,7 +616,7 @@ class STOQS_Loader(object):
                     self.logger.debug("For name = %s ", name)
                     self.logger.debug("standard_names = %s", self.standard_names[name])
                     self.logger.debug("retrieving from database %s", self.dbAlias)
-                    self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbAlias).get(standard_name = self.standard_names[name][0])
+                    self.parameter_dict[name] = m.Parameter.objects.using(self.dbAlias).get(standard_name = self.standard_names[name][0])
                 except ObjectDoesNotExist:
                     pass
                 except IndexError:
@@ -618,7 +627,7 @@ class STOQS_Loader(object):
             try:
                 self.logger.debug("trying to get '%s' from database %s...", name, self.dbAlias)
                 ##(parameter, created) = m.Parameter.objects.get(name = name)
-                self.parameter_dict[name] = m.Parameter.objects.db_manager(self.dbAlias).get(name = name)
+                self.parameter_dict[name] = m.Parameter.objects.using(self.dbAlias).get(name = name)
                 self.logger.debug("self.parameter_dict[name].name = %s", self.parameter_dict[name].name)
             except ObjectDoesNotExist:
                 ##print >> sys.stderr, "Unable to locate parameter with name %s.  Adding to ignored_names list." % (name,)
