@@ -177,10 +177,10 @@ class Contour(object):
                                 data_dict[pln+pname]['depth'].insert(0, rs['measurement__depth'])
                                 data_dict[pln+pname]['datavalue'].insert(0, rs['datavalue'])
 
-                            # for salinity, throw out anything less than 30 and do the percentiles manually
+                            # for salinity, throw out anything less than 20 and do the percentiles manually
                             if pname.find('salinity') != -1 :
                                 numpvar = np.array(data_dict[pln+pname]['datavalue'])
-                                numpvar_filtered = numpvar[numpvar>30.0]
+                                numpvar_filtered = numpvar[numpvar>20.0]
                                 numpvar_filtered.sort()
                                 listvar = list(numpvar_filtered)
                                 p010 = percentile(listvar, 0.010)
