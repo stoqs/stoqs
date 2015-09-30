@@ -1,7 +1,12 @@
 #!/bin/bash
-cd /opt/stoqs-odssadm-git/venv-stoqs/bin
+if [ $1 ]; then
+    STOQS_HOME=$1
+else
+    STOQS_HOME=/opt/stoqsgit
+fi
+cd "$STOQS_HOME/venv-stoqs/bin"
 source activate
-cd /opt/stoqs-odssadm-git/loaders/CANON/toNetCDF
+cd "$STOQS_HOME/stoqs/loaders/CANON/toNetCDF"
 
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 dir='/mbari/LRAUV'
