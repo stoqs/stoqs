@@ -1,13 +1,18 @@
 #!/bin/bash
-cd /opt/stoqs-odssadm-git/venv-stoqs/bin
+if [ $1 ]; then
+    STOQS_HOME=$1
+else
+    STOQS_HOME=/opt/stoqsgit
+fi
+cd "$STOQS_HOME/venv-stoqs/bin"
 source activate
-cd /opt/stoqs-odssadm-git/loaders/CANON/realtime
+cd "$STOQS_HOME/stoqs/loaders/CANON/realtime"
 post='--post'
-#post=''
+##post=''
 debug=''
 #debug='--debug'
 export SLACKTOKEN='xoxp-4525206644-4646992431-5036039107-714865'
-database='stoqs_canon_sept2015_lrauv'
+database='stoqs_canon_september2015'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/sbdlogs/2015/201509/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
 #declare -a searchstr=("/realtime/sbdlogs/2015/201507/.*shore.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
