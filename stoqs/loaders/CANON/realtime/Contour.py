@@ -177,6 +177,17 @@ class Contour(object):
                                 data_dict[pln+pname]['depth'].insert(0, rs['measurement__depth'])
                                 data_dict[pln+pname]['datavalue'].insert(0, rs['datavalue'])
 
+                            # for salinity, throw out anything less than 30 and do the percentiles manually
+                            if pname.find('salinity') != -1 :
+                                numpvar = np.array(data_dict[pln+pname]['datavalue'])
+                                numpvar_filtered = numpvar[numpvar>30.0]
+                                numpvar_filtered.sort()
+                                listvar = list(numpvar_filtered)
+                                p010 = percentile(listvar, 0.010)
+                                p990 = percentile(listvar, 0.990)
+                                data_dict[pln+pname]['p010'] = p010
+                                data_dict[pln+pname]['p990'] = p990
+
                             # dates are in reverse order - newest first
                             start_dt.append(data_dict[pln+pname]['datetime'][-1])
                             end_dt.append(data_dict[pln+pname]['datetime'][0])
