@@ -19,6 +19,7 @@ import tempfile
 os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 import matplotlib as mpl
 mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
+import math
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
 from matplotlib import figure
@@ -797,7 +798,9 @@ class PlatformAnimation(object):
                     indices = indices + '%i ' % index
                     index = index + 1
 
-                xRotValues = ' '.join(['1 0 0 %.6f' % (np.pi * x / 180.) 
+                # Apply vertical exaggeration to pitch angle
+                xRotValues = ' '.join(['1 0 0 %.6f' % 
+                                        math.atan(math.tan(np.pi * x / 180.) * vert_ex) 
                                         for x in self.pitch_by_plat.get(pName, [])])
                 yRotValues = ' '.join(['0 -1 0 %.6f' % (np.pi * z / 180.) 
                                         for z in self.yaw_by_plat.get(pName, [])])
