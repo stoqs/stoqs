@@ -6,7 +6,7 @@ else
 fi
 cd "$STOQS_HOME/venv-stoqs/bin"
 source activate
-cd "$STOQS_HOME/loaders/CANON/realtime"
+cd "$STOQS_HOME/stoqs/loaders/CANON/realtime"
 post='--post'
 ##post=''
 debug=''
