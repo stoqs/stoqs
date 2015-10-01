@@ -424,7 +424,7 @@ if __name__ == '__main__':
                     os.system(cmd)'''
 
                 if args.post:
-                    message = 'LRAUV log data processed through STOQs workflow. Log <%s|%s plot> ' % (logUrl, aName)
+                    message = 'LRAUV log data processed through STOQS workflow. Log <%s|%s plot> ' % (logUrl, aName)
                     slack.chat.post_message("#lrauvs", message)
 
 
@@ -486,7 +486,7 @@ if __name__ == '__main__':
 
             '''if args.post:
                     urlLatest = args.productDir + platformName  +  '_24h_latest.png'
-                    message = 'LRAUV log data processed through STOQs workflow. last 24-hr <%s|%s plot> ' % (urlLatest, aName)
+                    message = 'LRAUV log data processed through STOQS workflow. last 24-hr <%s|%s plot> ' % (urlLatest, aName)
                     slack.chat.post_message("#lrauvs", message)'''
 
         except Exception as e:

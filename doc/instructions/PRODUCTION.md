@@ -120,7 +120,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         deactivate
         sudo /usr/local/bin/pip install uwsgi
         sudo mkdir -p /etc/uwsgi/vassals
-        sudo ln -s $STOQS_HOME/stoqs/stoqs_uwsgi.ini /etc/uwsgi/vassals/
+        sudo ln -s $STOQS_HOME/stoqs/stoqs_uwsgi.ini /etc/uwsgi/vassals
         /usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
 
 14. To configure uWSGI to start on system boot put the commands from step 11 into 
