@@ -143,6 +143,7 @@ cl.wg_Tiny_endDatetime = enddate
 cl.wfuctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Western_Flyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
+                  'Canon15m01.nc', 'Canon15m02.nc',
                   ]
 
 # PCTD
@@ -299,7 +300,7 @@ else:
     ##cl.loadTethys(stride=100)
     cl.loadRCuctd()
     cl.loadRCpctd() 
-    #cl.loadWFuctd()   
+    cl.loadWFuctd()   
     #cl.loadWFpctd()
 
     ##cl.loadSubSamples()
