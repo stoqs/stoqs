@@ -777,7 +777,10 @@ class CANONLoader(LoadScript):
             ssl.logger.setLevel(logging.DEBUG)
         for csvFile in [ os.path.join(self.subsample_csv_base, f) for f in self.subsample_csv_files ]:
             ssl.logger.info("Processing subsamples from file %s", csvFile)
-            ssl.process_subsample_file(csvFile, False)
+            try:
+                ssl.process_subsample_file(csvFile, False)
+            except IOError as e:
+                ssl.logger.error(e)
 
     def loadParentNetTowSamples(self):
         '''
@@ -795,7 +798,10 @@ class CANONLoader(LoadScript):
         ns.laboratory = ''
         ns.researcher = ''
         nt.args = ns
-        nt.load_samples()
+        try:
+            nt.load_samples()
+        except IOError as e:
+            self.logger.error(e)
 
     def loadAll(self, stride=None):
         '''
