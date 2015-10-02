@@ -1053,7 +1053,7 @@ class Base_Loader(STOQS_Loader):
             except HasMeasurement:
                 pass
             except SkipRecord as e:
-                logger.warn("Got SkipRecord Exception: %s" % e)
+                logger.warn("SkipRecord: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
                 continue
             except Exception as e:
                 logger.exception(e)
