@@ -695,8 +695,9 @@ class SubSamplesLoader(STOQS_Loader):
                 # Likely a 'NetTow' string in the Bottle Number column
                 if r['Bottle Number'] == 'NetTow':
                     try:
-                        parentSample = m.Sample.objects.using(self.dbAlias).select_related(depth=2
-                                                        ).filter(instantpoint__activity__name__icontains=aName + '_NetTow1', )[0]
+                        parentSample = m.Sample.objects.using(self.dbAlias).select_related(
+                                'instantpoint__activity').filter(
+                                instantpoint__activity__name__icontains=aName + '_NetTow1', )[0]
                     except IndexError as e:
                         logger.warn('Parent Sample not found for Activity %s. Skipping.', aName)
                         continue
