@@ -143,12 +143,21 @@ cl.wg_Tiny_endDatetime = enddate
 cl.wfuctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Western_Flyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
+                  'canon15m01.nc', 'canon15m02.nc',   ## loaded previously
+                  'canon15m03.nc', 'canon15m04.nc',  
                   ]
 
 # PCTD
 cl.wfpctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [
+                  'canon15c01.nc', 'canon15c02.nc', 'canon15c03.nc', 'canon15c04.nc',
+                  'canon15c05.nc', 'canon15c06.nc', 'canon15c07.nc', 'canon15c08.nc',
+                  'canon15c09.nc', 'canon15c10.nc', 'canon15c11.nc', 'canon15c12.nc',
+                  'canon15c13.nc', 'canon15c14.nc', 'canon15c15.nc', 'canon15c16.nc',
+                  'canon15c17.nc', 'canon15c18.nc', 'canon15c19.nc', 'canon15c20.nc',
+                  'canon15c21.nc', 'canon15c22.nc', 'canon15c23.nc', 'canon15c24.nc',
+                  'canon15c25.nc',
                   ]
 
 ######################################################################
@@ -297,10 +306,10 @@ else:
     #cl.loadDorado()
     ##cl.loadDaphne(stride=100)
     ##cl.loadTethys(stride=100)
-    cl.loadRCuctd()
-    cl.loadRCpctd() 
-    #cl.loadWFuctd()   
-    #cl.loadWFpctd()
+    #cl.loadRCuctd()
+    #cl.loadRCpctd() 
+    cl.loadWFuctd()   
+    cl.loadWFpctd()
 
     ##cl.loadSubSamples()
 
