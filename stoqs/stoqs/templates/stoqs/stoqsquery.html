@@ -77,8 +77,8 @@
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet">
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet">
-    <!--<link type="text/css" href="{{ STATIC_URL }}x3dom/css/x3dom.css" rel="stylesheet">-->
-    <link type="text/css" href="http://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet">
+    <link type="text/css" href="{{ STATIC_URL }}x3dom-1.7.0/x3dom.css" rel="stylesheet">
+    <!--<link type="text/css" href="http://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet">
     
 
     <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -109,7 +109,7 @@
     {% endif %}
   </head>
 
-  <body>
+  <body style="background-color:#f5f5f5;">
 
     <div class="navbar navbar-fixed-top">
       <div class="navbar-inner" style="height:34px;">
@@ -162,7 +162,7 @@
 
         <div id="left-column" class="span6 stoqs-zoom-width">
 
-            <div id="accordion1" class="accordion well">
+            <div id="accordion1" class="accordion well" style="border:none;">
 
                 <div id="spatial-group" class="accordian-group">
                     <div class="accordian-heading">
@@ -760,7 +760,7 @@
         </div><!-- span6 -->
         
         <div id="right-column" class="span6 stoqs-zoom-width">
-            <div class="accordion well" id="accordion2">
+            <div class="accordion well" id="accordion2" style="border:none;">
 
                 <div class="accordian-group">
                     <div class="accordian-heading">
@@ -1117,12 +1117,10 @@
     <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
-    <!--<script type="text/javascript" src="{{STATIC_URL}}x3dom/js/x3dom.debug.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/zGeospatial.js"></script>-->
-    <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom.js"></script>
-    <script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/components/Geospatial.js"></script>
-    <script type="text/javascript" src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.7.0/x3dom-full.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/GeoOriginTransform.js"></script>
+    <!--<script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom-full.js"></script>-->
+    <!--<script type="text/javascript" src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>-->
 
     <script type="text/javascript"><!--
     
