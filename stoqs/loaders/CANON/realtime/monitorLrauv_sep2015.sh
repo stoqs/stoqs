@@ -63,7 +63,7 @@ do
         bin_mean_mass_concentration_of_chlorophyll_in_sea_water \
         bin_mean_sea_water_temperature \
         bin_mean_sea_water_salinity \
-        $latest24plot $post $debug > /tmp/monitorLrauv${platform}.out
+        $latest24plot $post $debug > /tmp/monitorLrauv${platform}.out 2>&1
     done
 done
 
