@@ -828,14 +828,14 @@ class PlatformAnimation(object):
                             posValues=points, scale=scale, geoOriginStr=geoorigin_use)
 
             if x3dDict:
-                all = self.global_template.format(cycInt=cycInt)
+                all_x3d = self.global_template.format(cycInt=cycInt)
                 limits = (0, len(self.time_by_plat[pName]))
 
         except Exception as e:
             self.logger.exception(e)
             x3dResults = 'Could not create platformorientation'
 
-        return {'x3d': x3dDict, 'all': all, 'limits': limits, 'time': times, 'speedup': speedup}
+        return {'x3d': x3dDict, 'all': all_x3d, 'limits': limits, 'time': times, 'speedup': speedup}
 
 
 class PPDatabaseException(Exception):

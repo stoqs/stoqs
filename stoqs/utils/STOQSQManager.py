@@ -1335,7 +1335,9 @@ class STOQSQManager(object):
             if 'parameterplot' in self.kwargs:
                 if self.kwargs['parameterplot'][0]:
                     parameterID = self.kwargs['parameterplot'][0]
-                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], models.Parameter.objects.get(id=parameterID))
+                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], 
+                              models.Parameter.objects.using(self.request.META['dbAlias']
+                              ).get(id=parameterID))
                     try:
                         count = self.mpq.count()
                         logger.debug('count = %s', count)

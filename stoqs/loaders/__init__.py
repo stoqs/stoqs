@@ -35,7 +35,8 @@ from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 import time
 import re
-import math, numpy
+import math
+import numpy as np
 from coards import to_udunits, from_udunits
 import seawater.eos80 as sw
 import csv
@@ -752,7 +753,7 @@ class STOQS_Loader(object):
             try:
                 vVals = self.ds[v][:]           # Case sensitive
                 self.logger.debug(len(vVals))
-                allNaNFlag[v] = numpy.isnan(vVals).all()
+                allNaNFlag[v] = np.isnan(vVals).all()
                 if not allNaNFlag[v]:
                     anyValidData = True
             except KeyError as e:
@@ -790,6 +791,56 @@ class STOQS_Loader(object):
         except AttributeError as e:
             self.logger.warn(e)
 
+    @staticmethod
+    def update_ap_stats(dbAlias, activity, parameters, sampledFlag=False):
+        '''Update the database with descriptive statistics for parameters
+        belonging to the activity.
+        '''
+        for p in parameters:
+            ap,created = m.ActivityParameter.objects.using(dbAlias).get_or_create(
+                            parameter=p, activity=activity)
+
+            if sampledFlag:
+                data = m.SampledParameter.objects.using(dbAlias).filter(
+                                parameter=p, sample__instantpoint__activity=activity
+                                ).values_list('datavalue', flat=True)
+            else:
+                data = m.MeasuredParameter.objects.using(dbAlias).filter(
+                                parameter=p, measurement__instantpoint__activity=activity
+                                ).values_list('datavalue', flat=True)
+
+            np_data = np.array([float(d) for d in data])
+            np_data.sort()
+            ap.number = len(np_data)
+            ap.min = np_data.min()
+            ap.max = np_data.max()
+            ap.mean = np_data.mean()
+            ap.median = median(list(np_data))
+            ap.mode = mode(np_data)
+            ap.p025 = percentile(list(np_data), 0.025)
+            ap.p975 = percentile(list(np_data), 0.975)
+            ap.p010 = percentile(list(np_data), 0.010)
+            ap.p990 = percentile(list(np_data), 0.990)
+            ap.save(using=dbAlias)
+
+            # Compute and save histogram, use smaller number of bins 
+            # for Sampled Parameters
+            if sampledFlag:
+                (counts, bins) = np.histogram(np_data,10)
+            else:
+                (counts, bins) = np.histogram(np_data,100)
+            for i,count in enumerate(counts):
+                m.ActivityParameterHistogram.objects.using(dbAlias).get_or_create(
+                        activityparameter=ap, bincount=count, 
+                        binlo=bins[i], binhi=bins[i+1])
+
+    @classmethod
+    def update_activityparameter_stats(cls, dbAlias, activity, parameters, sampledFlag=False):
+        '''Class method for update_ap_stats() so that subclasses can call it via
+        updateActivityParameterStats()
+        '''
+        cls.update_ap_stats(dbAlias, activity, parameters, sampledFlag)
+
     def updateActivityParameterStats(self, parameterCounts, sampledFlag=False):
         ''' 
         Examine the data for the Activity, compute and update some statistics on the measuredparameters
@@ -800,72 +851,13 @@ class STOQS_Loader(object):
         else:
             raise Exception('Must have an activity defined in self.activity')
 
-        for p in parameterCounts:
-            if sampledFlag:
-                data = m.SampledParameter.objects.using(self.dbAlias).filter(parameter=p, sample__instantpoint__activity=a)
-            else:
-                data = m.MeasuredParameter.objects.using(self.dbAlias).filter(parameter=p, measurement__instantpoint__activity=a)
-            numpvar = numpy.array([float(v.datavalue) for v in data])
-            numpvar.sort()              
-            listvar = list(numpvar)
-            ##self.logger.debug('%s: listvar = %s', p.name, listvar)
-            if not listvar:
-                self.logger.warn('No datavalues for p.name = %s in activity %s', p.name, a.name)
-                continue
-
-            self.logger.debug('parameter: %s, min = %f, max = %f, mean = %f, median = %f, mode = %f, p025 = %f, p975 = %f, shape = %s',
-                            p, numpvar.min(), numpvar.max(), numpvar.mean(), median(listvar), mode(numpvar),
-                            percentile(listvar, 0.025), percentile(listvar, 0.975), numpvar.shape)
-            number = len(listvar)
-                                        
-            # Save statistics           
-            try:                        
-                ap, created = m.ActivityParameter.objects.using(self.dbAlias).get_or_create(activity = a, parameter = p)
-                    
-                if created: 
-                    self.logger.info('Created ActivityParameter for parameter.name = %s', p.name)
-
-                # Set attributes of this ap - if not created, an update will happen
-                ap.number = number
-                ap.min = numpvar.min()
-                ap.max = numpvar.max()
-                ap.mean = numpvar.mean()
-                ap.median = median(listvar)
-                ap.mode = mode(numpvar)
-                ap.p025 = percentile(listvar, 0.025)
-                ap.p975 = percentile(listvar, 0.975)
-                ap.p010 = percentile(listvar, 0.010)
-                ap.p990 = percentile(listvar, 0.990)
-                ap.save(using=self.dbAlias)
-                if created: 
-                    self.logger.info('Saved ActivityParameter for parameter.name = %s', p.name)
-                else:
-                    self.logger.info('Updated ActivityParameter for parameter.name = %s', p.name)
-
-            except IntegrityError as e:
-                self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter for parameter.name = %s.', e, p.name)
-
-            ##raw_input('paused')
-
-            # Compute and save histogram, use smaller number of bins for Sampled Parameters
-            if sampledFlag:
-                (counts, bins) = numpy.histogram(numpvar,10)
-            else:
-                (counts, bins) = numpy.histogram(numpvar,100)
-            self.logger.debug(counts)
-            self.logger.debug(bins)
-            i = 0
-            for count in counts:
-                try:
-                    self.logger.debug('Creating ActivityParameterHistogram...')
-                    self.logger.debug('count = %d, binlo = %f, binhi = %f', count, bins[i], bins[i+1])
-                    h, created = m.ActivityParameterHistogram.objects.using(self.dbAlias).get_or_create(
-                                                    activityparameter=ap, bincount=count, binlo=bins[i], binhi=bins[i+1])
-                    i = i + 1
-                    if created:
-                        self.logger.debug('Created ActivityParameterHistogram for parameter.name = %s, h = %s', p.name, h)
-                except IntegrityError:
-                    self.logger.warn('IntegrityError: Cannot create ActivityParameter for parameter.name = %s. Skipping.', p.name)
+        try:
+            self.update_activityparameter_stats(self.dbAlias, a, parameterCounts, sampledFlag)
+        except ValueError as e:
+            self.logger.warn('%s. Likely a dataarray as from LOPC data', e)
+        except IntegrityError as e:
+            self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter and '
+                             'updated statistics for parameter.name = %s.', e, p.name)
 
         self.logger.info('Updated statistics for activity.name = %s', a.name)
 
@@ -1084,7 +1076,7 @@ class STOQS_Loader(object):
                     except ObjectDoesNotExist:
                         self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
-            self.logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
+            self.logger.info('Inserted %d values into SimpleDepthTime for nomDepth = %f', len(simple_line), nomDepth)
 
     def updateActivityMinMaxDepth(self):
         '''
