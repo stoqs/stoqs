@@ -144,20 +144,29 @@ cl.wfuctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Western_Flyer/uct
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
                   'canon15m01.nc', 'canon15m02.nc',   ## loaded previously
-                  'canon15m03.nc', 'canon15m04.nc',  
+                  'canon15m03.nc', 'canon15m04.nc',   ## loaded previously
+                  'canon15m05.nc', 'canon15m06.nc', 'canon15m07.nc', 'canon15m08.nc', 'canon15m09.nc', 'canon15m10.nc',
+                  'canon15m11.nc', 'canon15m12.nc',  
                   ]
 
 # PCTD
 cl.wfpctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [
-                  'canon15c01.nc', 'canon15c02.nc', 'canon15c03.nc', 'canon15c04.nc',
-                  'canon15c05.nc', 'canon15c06.nc', 'canon15c07.nc', 'canon15c08.nc',
-                  'canon15c09.nc', 'canon15c10.nc', 'canon15c11.nc', 'canon15c12.nc',
-                  'canon15c13.nc', 'canon15c14.nc', 'canon15c15.nc', 'canon15c16.nc',
-                  'canon15c17.nc', 'canon15c18.nc', 'canon15c19.nc', 'canon15c20.nc',
-                  'canon15c21.nc', 'canon15c22.nc', 'canon15c23.nc', 'canon15c24.nc',
-                  'canon15c25.nc',
+                  'canon15c01.nc', 'canon15c02.nc', 'canon15c03.nc', 'canon15c04.nc',  ## loaded previously
+                  'canon15c05.nc', 'canon15c06.nc', 'canon15c07.nc', 'canon15c08.nc',  ## loaded previously
+                  'canon15c09.nc', 'canon15c10.nc', 'canon15c11.nc', 'canon15c12.nc',  ## loaded previously
+                  'canon15c13.nc', 'canon15c14.nc', 'canon15c15.nc', 'canon15c16.nc',  ## loaded previously
+                  'canon15c17.nc', 'canon15c18.nc', 'canon15c19.nc', 'canon15c20.nc',  ## loaded previously
+                  'canon15c21.nc', 'canon15c22.nc', 'canon15c23.nc', 'canon15c24.nc',  ## loaded previously
+                  'canon15c25.nc',  ## loaded previously
+                  'canon15c26.nc', 'canon15c27.nc', 'canon15c28.nc', 'canon15c29.nc', 'canon15c30.nc',
+                  'canon15c31.nc', 'canon15c32.nc', 'canon15c33.nc', 'canon15c34.nc', 'canon15c35.nc', 
+                  'canon15c36.nc', 'canon15c37.nc', 'canon15c38.nc', 'canon15c39.nc', 'canon15c40.nc', 
+                  'canon15c41.nc', 'canon15c42.nc', 'canon15c43.nc', 'canon15c44.nc', 'canon15c45.nc', 
+                  'canon15c46.nc', 'canon15c47.nc', 'canon15c48.nc', 'canon15c49.nc', 'canon15c50.nc', 
+                  'canon15c51.nc', 'canon15c52.nc', 'canon15c53.nc', 'canon15c54.nc', 'canon15c55.nc',
+                  'canon15c56.nc', 'canon15c57.nc',   
                   ]
 
 ######################################################################
