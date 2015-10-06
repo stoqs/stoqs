@@ -13,13 +13,13 @@ LOGIN=odssadm
 RH=odss.mbari.org
 
 
-DIR=/data/canon/2014_Sep/Platforms/Ships/Western_Flyer/uctd
+DIR=/data/canon/2015_Sep/Platforms/Ships/Western_Flyer/uctd
 LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
 rsync -rv $LOGIN@$RH:$DIR  .
 cd $LOCALDIR
 rm canon13*.* #only keep canon14 stuff
 cd ..
-./uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 2.0 --title "Underway CTD data from R/V Western Flyer during CANON - ECOHAB September 2014"
+./uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 2.0 --title "Underway CTD data from R/V Western Flyer during CANON - September 2015"
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 rm -r $LOCALDIR
 
