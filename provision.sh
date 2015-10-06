@@ -127,6 +127,7 @@ tar -xzf netcdf-4.3.3.tar.gz
 cd netcdf-4.3.3
 ./configure --enable-hl --enable-shared
 make; sudo make install
+cd ..
 
 # Required for plotting basemap in LRAUV plots
 wget 'http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz'
@@ -137,6 +138,7 @@ export GEOS_DIR=/usr/local
 make; sudo make install
 cd ..
 python setup.py install
+cd ..
 
 echo Build database for locate command
 updatedb
