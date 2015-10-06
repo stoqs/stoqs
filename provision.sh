@@ -113,6 +113,31 @@ export LD_LIBRARY_PATH
 EOT
 cd ../..
 
+# Required to install the netCDF4 python module
+echo "Need to sudo to install hdf5 packages..."
+sudo yum -y install hdf5 hdf5-devel
+if [ $? -ne 0 ] ; then
+    echo "Exiting $0"
+    exit 1
+fi
+
+# Required to install the netCDF4 python module
+wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.3.3.tar.gz
+tar -xzf netcdf-4.3.3.tar.gz
+cd netcdf-4.3.3
+./configure --enable-hl --enable-shared
+make; sudo make install
+
+# Required for plotting basemap in LRAUV plots
+wget 'http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz'
+tar -xzf basemap-1.0.7.tar.gz
+cd basemap-1.0.7/geos-3.3.3
+export GEOS_DIR=/usr/local
+./configure --prefix=/usr/local
+make; sudo make install
+cd ..
+python setup.py install
+
 echo Build database for locate command
 updatedb
 
