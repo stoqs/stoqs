@@ -29,7 +29,7 @@ sys.path.insert(0, project_dir)
 
 import csv
 import logging
-from biom.table import Table
+from biom import parse_table
 
 class BiomSTOQS():
     '''Data and methods to support data transfers
@@ -37,6 +37,14 @@ class BiomSTOQS():
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
+
+    def read_biom_file(self):
+
+        with open(self.args.biom_file) as f:
+            table = parse_table(f)
+
+        import pdb; pdb.set_trace()
+        pass
 
     def add_metadata_from_stoqs(self):
         '''Look for data matching samples from biomFile in the specified STOQS
@@ -47,15 +55,14 @@ class BiomSTOQS():
                                     
 
     def process_command_line(self):
-        '''The argparse library is included in Python 2.7 and is an added package for STOQS.
-        '''
+
         import argparse
         from argparse import RawTextHelpFormatter
 
         examples = 'Examples:' + '\n\n' 
         examples += "  Add metadata to Samples axis of biom-format file:\n"
         examples += "    " + sys.argv[0] + " --database stoqs_simz_aug2013_t"
-        examples += " --addMetadataFromSTOQS "
+        examples += " --add_metadata "
         examples += " --biomFile otu_table_newsier_90nounclass.biom\n"
         examples += "\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde".'
@@ -66,8 +73,8 @@ class BiomSTOQS():
                                              
         parser.add_argument('-d', '--database', action='store', help='Database alias', required=True)
 
-        parser.add_argument('--addMetadataFromSTOQS', action='store_true', help='Add relevant STOQS metadata attributes to biomFile')
-        parser.add_argument('--biolFile', action='store', help='Name of biom-format file')
+        parser.add_argument('--add_metadata', action='store_true', help='Add relevant STOQS metadata attributes to biomFile')
+        parser.add_argument('--biom_file', action='store', help='Name of biom-format file', required=True)
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
@@ -84,7 +91,9 @@ if __name__ == '__main__':
     bs = BiomSTOQS()
     bs.process_command_line()
 
-    if bs.args.addMetadataFromSTOQS:
+    bs.read_biom_file()
+
+    if bs.args.add_metadata:
         bs.add_metadata_from_stoqs()
 
 

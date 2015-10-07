@@ -11,7 +11,7 @@ if [ $1 ]
 then
     OS=$1
 else
-    OS='centos'
+    OS='centos7'
 fi      
 
 if [ $2 ] 
@@ -33,18 +33,20 @@ mkdir Downloads && cd Downloads
 
 # OS specific provisioning
 # TODO: Add stanza for other OSes, e.g. 'ubuntu'
-if [ $OS = 'centos' ]
+if [ $OS = 'centos7' ]
 then
     echo Disable SELinux
     sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
+    mkdir /selinux
     echo 0 > /selinux/enforce
 
     echo Add epel, remi, and postgres repositories
+    yum makecache fast
     yum -y install wget git
-    wget -q -N http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
-    wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
-    rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
-    curl -sS -O http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
+    wget -q -N http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+    wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+    rpm -Uvh remi-release-7*.rpm epel-release-7*.rpm
+    curl -sS -O http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
     rpm -ivh pgdg*
     yum -y install postgresql94-server
     yum -y groupinstall "PostgreSQL Database Server 9.4 PGDG"
@@ -73,6 +75,7 @@ then
     yum -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel freetds-devel postgresql-devel
     yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
     yum -y install scipy blas blas-devel lapack lapack-devel GMT
+    yum -y groups install "GNOME Desktop"
 fi
 
 # Commands that work on any *nix
@@ -113,23 +116,49 @@ export LD_LIBRARY_PATH
 EOT
 cd ../..
 
+# Required to install the netCDF4 python module
+echo "Need to sudo to install hdf5 packages..."
+sudo yum -y install hdf5 hdf5-devel
+if [ $? -ne 0 ] ; then
+    echo "Exiting $0"
+    exit 1
+fi
+
+# Required to install the netCDF4 python module
+wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.3.3.tar.gz
+tar -xzf netcdf-4.3.3.tar.gz
+cd netcdf-4.3.3
+./configure --enable-hl --enable-shared
+make; sudo make install
+cd ..
+
+# Required for plotting basemap in LRAUV plots
+wget 'http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz'
+tar -xzf basemap-1.0.7.tar.gz
+cd basemap-1.0.7/geos-3.3.3
+export GEOS_DIR=/usr/local
+./configure --prefix=/usr/local
+make; sudo make install
+cd ..
+python setup.py install
+cd ..
+
 echo Build database for locate command
 updatedb
 
 echo Configure and start services
-service postgresql-9.4 initdb
-chkconfig postgresql-9.4 on
-service postgresql-9.4 start
-chkconfig postgresql-9.4 on
+/usr/pgsql-9.4/bin/postgresql94-setup initdb
+/usr/bin/systemctl enable postgresql-9.4
+/usr/bin/systemctl start postgresql-9.4
 /sbin/chkconfig rabbitmq-server on
 /sbin/service rabbitmq-server start
 rabbitmqctl add_user stoqs stoqs
 rabbitmqctl add_vhost stoqs
 rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
-chkconfig httpd on
-/sbin/service httpd start
-chkconfig memcached on
-/sbin/service memcached start
+/usr/bin/systemctl enable httpd.service
+/usr/bin/systemctl start httpd.service
+/usr/bin/systemctl enable memcached.service
+/usr/bin/systemctl start memcached.service
 
 echo Modify pg_hba.conf
 mv -f /var/lib/pgsql/9.4/data/pg_hba.conf /var/lib/pgsql/9.4/data/pg_hba.conf.bak
@@ -163,22 +192,41 @@ su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/to
 su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\""
 su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
-service postgresql-9.4 restart
-
-echo Clone STOQS repo from https://github.com/stoqs/stoqs.git. See CONTRIBUTING for how to clone from your fork.
+/usr/bin/systemctl restart postgresql-9.4
 cd ..
+
+echo Modifying local firewall to allow incoming connections on ports 80 and 8000
+firewall-cmd --zone=public --add-port=8000/tcp --permanent
+firewall-cmd --zone=public --add-port=80/tcp --permanent
+firewall-cmd --reload
+
+echo Configuring vim edit environment
+cd /home/$USER
+cat <<EOT > .vimrc
+:set tabstop=4
+:set expandtab
+:set shiftwidth=4
+EOT
+
+echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git... 
+echo "(See CONTRIBUTING.md for how to clone from your fork so that you can share your contributions.)"
 mkdir dev && cd dev
 git clone https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
 export PATH="/usr/local/bin:$PATH"
 virtualenv venv-stoqs
-chown -R $USER ..
-chown -R $USER /home/$USER/Downloads
 
-echo Configuring vim edit environment
-cat <<EOT > /home/$USER/.vimrc
-:set tabstop=4
-:set expandtab
-:set shiftwidth=4
-EOT
+echo Installing Pyhton modules for a development system
+source venv-stoqs/bin/activate
+./setup.sh
+
+echo Giving user $USER ownership of everything in /home/$USER
+chown -R $USER /home/$USER
+
+echo Provisioning and setup have finished. You should now test this installation with:
+echo ---------------------------------------------------------------------------------
+echo vagrant ssh -- -X
+echo "cd ~/dev/stoqsgit && source venv-stoqs/bin/activate"
+echo export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+echo ./test.sh CHANGEME
 

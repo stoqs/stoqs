@@ -721,6 +721,8 @@ class CANONLoader(LoadScript):
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, platformName, self.colors['flyer'], 'ship', activitytypeName,
                                         self.wfuctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/flyer/flyer.x3d', platformName)
+
     def loadWFpctd(self, stride=None, platformName='WesternFlyer_PCTD', activitytypeName='Western Flyer Profile CTD Data'):
         '''
         WF pctd specific load functions. Override defaults for @platformName and activitytypeName if it's desired
