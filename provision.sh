@@ -11,7 +11,7 @@ if [ $1 ]
 then
     OS=$1
 else
-    OS='centos'
+    OS='centos7'
 fi      
 
 if [ $2 ] 
@@ -33,18 +33,20 @@ mkdir Downloads && cd Downloads
 
 # OS specific provisioning
 # TODO: Add stanza for other OSes, e.g. 'ubuntu'
-if [ $OS = 'centos' ]
+if [ $OS = 'centos7' ]
 then
     echo Disable SELinux
     sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
+    mkdir /selinux
     echo 0 > /selinux/enforce
 
     echo Add epel, remi, and postgres repositories
+    yum makecache fast
     yum -y install wget git
-    wget -q -N http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
-    wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
-    rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
-    curl -sS -O http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
+    wget -q -N http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+    wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+    rpm -Uvh remi-release-7*.rpm epel-release-7*.rpm
+    curl -sS -O http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
     rpm -ivh pgdg*
     yum -y install postgresql94-server
     yum -y groupinstall "PostgreSQL Database Server 9.4 PGDG"
@@ -73,6 +75,7 @@ then
     yum -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel freetds-devel postgresql-devel
     yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
     yum -y install scipy blas blas-devel lapack lapack-devel GMT
+    yum -y groups install "GNOME Desktop"
 fi
 
 # Commands that work on any *nix
@@ -144,19 +147,18 @@ echo Build database for locate command
 updatedb
 
 echo Configure and start services
-service postgresql-9.4 initdb
-chkconfig postgresql-9.4 on
-service postgresql-9.4 start
-chkconfig postgresql-9.4 on
+/usr/pgsql-9.4/bin/postgresql94-setup initdb
+/usr/bin/systemctl enable postgresql-9.4
+/usr/bin/systemctl start postgresql-9.4
 /sbin/chkconfig rabbitmq-server on
 /sbin/service rabbitmq-server start
 rabbitmqctl add_user stoqs stoqs
 rabbitmqctl add_vhost stoqs
 rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
-chkconfig httpd on
-/sbin/service httpd start
-chkconfig memcached on
-/sbin/service memcached start
+/usr/bin/systemctl enable httpd.service
+/usr/bin/systemctl start httpd.service
+/usr/bin/systemctl enable memcached.service
+/usr/bin/systemctl start memcached.service
 
 echo Modify pg_hba.conf
 mv -f /var/lib/pgsql/9.4/data/pg_hba.conf /var/lib/pgsql/9.4/data/pg_hba.conf.bak
@@ -190,7 +192,7 @@ su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/to
 su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\""
 su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
-service postgresql-9.4 restart
+/usr/bin/systemctl restart postgresql-9.4
 
 echo Clone STOQS repo from https://github.com/stoqs/stoqs.git. See CONTRIBUTING for how to clone from your fork.
 cd ..
