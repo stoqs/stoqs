@@ -193,16 +193,12 @@ su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postg
 su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
 /usr/bin/systemctl restart postgresql-9.4
-
-echo Clone STOQS repo from https://github.com/stoqs/stoqs.git. See CONTRIBUTING for how to clone from your fork.
 cd ..
-mkdir dev && cd dev
-git clone https://github.com/stoqs/stoqs.git stoqsgit
-cd stoqsgit
-export PATH="/usr/local/bin:$PATH"
-virtualenv venv-stoqs
 chown -R $USER ..
 chown -R $USER /home/$USER/Downloads
+
+echo Leaving superuser and operating as user $USER
+su - $USER
 
 echo Configuring vim edit environment
 cat <<EOT > /home/$USER/.vimrc
@@ -210,4 +206,21 @@ cat <<EOT > /home/$USER/.vimrc
 :set expandtab
 :set shiftwidth=4
 EOT
+
+echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git... 
+echo "(See CONTRIBUTING.md for how to clone from your fork so that you can share your contributions.)"
+mkdir dev && cd dev
+git clone https://github.com/stoqs/stoqs.git stoqsgit
+cd stoqsgit
+export PATH="/usr/local/bin:$PATH"
+virtualenv venv-stoqs
+
+echo Installing Pyhton modules for a development system
+source venv-stoqs/bin/activate
+./setup.sh
+
+echo Provisioning and setup have finished. You should now test this installation with:
+echo ---------------------------------------------------------------------------------
+echo export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+echo ./test.sh CHANGEME
 

@@ -16,16 +16,15 @@ and [VirtualBox](doc/instructions/VirtualBox.md):
     curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
     vagrant up
 
-After your virtual machine has booted, log in, finish the Python setup, and test the installation:
+After provisioning and setup has finished (`vagrant up` takes a few hours), log in and test the installation:
 
     vagrant ssh 
     cd ~/dev/stoqsgit
     source venv-stoqs/bin/activate
-    ./setup.sh
     export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
     ./test.sh CHANGEME
 
-Start the development server:
+In another login window start the development server:
 
     cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
     export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
