@@ -16,15 +16,15 @@ and [VirtualBox](doc/instructions/VirtualBox.md):
     curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
     vagrant up --provider virtualbox
 
-The `vagrant up` takes a few hours provision and setup a complete CentOS 7 virtual machine
-STOQS server.  After it finishes log in and test the installation:
+The `vagrant up` command takes a few hours to provision and setup a complete CentOS 7 
+STOQS server.  When it is done log in and test the installation:
 
     vagrant ssh -- -X
     cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
     export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
     ./test.sh CHANGEME
 
-In another login window start the development server:
+In another terminal window start the development server:
 
     vagrant ssh -- -X
     cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
