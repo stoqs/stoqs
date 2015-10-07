@@ -195,6 +195,11 @@ su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
 /usr/bin/systemctl restart postgresql-9.4
 cd ..
 
+echo Modifying local firewall to allow incoming connections on ports 80 and 8000
+firewall-cmd --zone=public --add-port=8000/tcp --permanent
+firewall-cmd --zone=public --add-port=80/tcp --permanent
+firewall-cmd --reload
+
 echo Configuring vim edit environment
 cd /home/$USER
 cat <<EOT > .vimrc
