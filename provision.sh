@@ -221,6 +221,8 @@ source venv-stoqs/bin/activate
 
 echo Provisioning and setup have finished. You should now test this installation with:
 echo ---------------------------------------------------------------------------------
+echo vagrant ssh -- -X
+echo "cd ~/dev/stoqsgit && source venv-stoqs/bin/activate"
 echo export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
 echo ./test.sh CHANGEME
 
