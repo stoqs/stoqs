@@ -194,14 +194,10 @@ su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
 /usr/bin/systemctl restart postgresql-9.4
 cd ..
-chown -R $USER ..
-chown -R $USER /home/$USER/Downloads
-
-echo Leaving superuser and operating as user $USER
-su - $USER
 
 echo Configuring vim edit environment
-cat <<EOT > /home/$USER/.vimrc
+cd /home/$USER
+cat <<EOT > .vimrc
 :set tabstop=4
 :set expandtab
 :set shiftwidth=4
@@ -218,6 +214,9 @@ virtualenv venv-stoqs
 echo Installing Pyhton modules for a development system
 source venv-stoqs/bin/activate
 ./setup.sh
+
+echo Giving user $USER ownership of everything in /home/$USER
+chown -R $USER /home/$USER
 
 echo Provisioning and setup have finished. You should now test this installation with:
 echo ---------------------------------------------------------------------------------
