@@ -46,14 +46,14 @@ if [ -f "$REQ" ]; then
         exit 1
     fi
 fi
+popd
 
 # NCAR's natgrid needed for contour plotting
-pushd ~/Downloads
+cd ~/Downloads
 wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
 tar -xzf natgrid-0.2.1.tar.gz
 cd natgrid-0.2.1
 python setup.py install
-popd
 
 echo "$0 finished."
 
