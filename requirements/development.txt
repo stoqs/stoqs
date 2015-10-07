@@ -19,6 +19,7 @@ GDAL==2.0.1
 Genshi==0.7
 #h5py==2.5.0
 ipython==4.0.0
+jupyter==1.0.0
 MarkupSafe==0.23
 netCDF4==1.2.0
 pandas==0.16.2
