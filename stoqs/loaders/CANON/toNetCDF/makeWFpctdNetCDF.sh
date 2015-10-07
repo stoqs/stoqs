@@ -14,10 +14,10 @@ LOGIN=odssadm
 RH=odss.mbari.org
 
 
-DIR=/data/canon/2014_Sep/Platforms/Ships/Western_Flyer/pctd
+DIR=/data/canon/2015_Sep/Platforms/Ships/Western_Flyer/pctd
 LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
 rsync -rv $LOGIN@$RH:$DIR  .
-./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Western Flyer during CANON - ECOHAB September 2014" -a V0:rhodamine:V
+./pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Western Flyer during CANON - September 2015" -a V0:rhodamine:V
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 rm -r $LOCALDIR
 
