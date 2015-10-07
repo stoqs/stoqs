@@ -766,6 +766,7 @@ class Base_Loader(STOQS_Loader):
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
 
                 # Add LOPC's bin array to the Parameter's domain
+                # TODO: save its attributes as Resources
                 self.getParameterByName(pname).domain = list(self.ds['bin'][:])
                 self.getParameterByName(pname).save(using=self.dbAlias)
 
