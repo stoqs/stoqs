@@ -10,11 +10,11 @@ efficient acccess to *in situ* measurement and *ex situ* sample data.
 See http://www.stoqs.org for more information.
 
 Getting started with a STOQS development system with [Vagrant](https://www.vagrantup.com/)
-and [VirtualBox](https://www.virtualbox.org):
+and [VirtualBox](doc/instructions/VirtualBox.md):
 
     curl "https://raw.githubusercontent.com/stoqs/stoqs/master/Vagrantfile" -o Vagrantfile
     curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
-    vagrant up --provider virtualbox
+    vagrant up
 
 After your virtual machine has booted, log in, finish the Python setup, and test the installation:
 
