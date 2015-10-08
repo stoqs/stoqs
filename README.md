@@ -13,7 +13,7 @@ See http://www.stoqs.org for more information.
 
 First, install [Vagrant](https://www.vagrantup.com/) and and [VirtualBox](doc/instructions/VirtualBox.md)
 &mdash; there are standard installers for Mac, Windows, and Linux. Then create an empty folder off your 
-home directory, e.g.: Vagrants/stoqsvm, open a command prompt window, cd to that folder, and enter these 
+home directory such as `Vagrants/stoqsvm`, open a command prompt window, cd to that folder, and enter these 
 commands:
 
     curl "https://raw.githubusercontent.com/stoqs/stoqs/master/Vagrantfile" -o Vagrantfile
@@ -22,7 +22,7 @@ commands:
 
 The `vagrant up` command takes a few hours to provision and setup a complete CentOS 7 
 STOQS server that also includes all the data science tools bundled in packages such as
-[Anaconda](https://www.continuum.io/).  After installation is completed log into your
+[Anaconda](https://www.continuum.io/).  After installation finishes log into your
 new virtual machine and test it:
 
     vagrant ssh -- -X
