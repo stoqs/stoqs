@@ -9,7 +9,7 @@ STOQS is a geospatial database and web application designed to give oceanographe
 efficient acccess to *in situ* measurement and *ex situ* sample data.
 See http://www.stoqs.org for more information.
 
-#### Getting started with a STOQS development system 
+##### Getting started with a STOQS development system 
 
 First, install [Vagrant](https://www.vagrantup.com/) and and [VirtualBox](doc/instructions/VirtualBox.md);
 there are standard installers for Mac, Windows, and Linux. Then create an empty folder off your home
