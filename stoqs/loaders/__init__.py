@@ -1212,7 +1212,7 @@ class STOQS_Loader(object):
                         self.logger.error('Cannot read range metadata from %s. Not able to load altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
                         return parameterCounts
             except Exception as e:
-                self.logger.error(e)
+                self.logger.exception(e)
                 return parameterCounts
             bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
             fh.close()
