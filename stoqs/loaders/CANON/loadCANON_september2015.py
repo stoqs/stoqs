@@ -122,19 +122,19 @@ cl.l_662_endDatetime = enddate
 ######################################################################
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Waveglider/wgTiny/'
-cl.wg_Tiny_files = [  ]
+cl.wg_Tiny_files = [ 'wgTiny_Canon2015_Sep.nc'  ]
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
                     'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
 cl.wg_Tiny_startDatetime = startdate
 cl.wg_Tiny_endDatetime = enddate
 
 # WG OA - All instruments combined into one file - one time coordinate
-##cl.wg_oa_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Waveglider/wgOA/'
-##cl.wg_oa_files = [  ]
-##cl.wg_oa_parms = [ 'distance', 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'O2_conc',
-##                   'O2_sat', 'beta_470', 'bb_470', 'beta_700', 'bb_700', 'chl', 'pCO2_water', 'pCO2_air', 'pH' ]
-##cl.wg_oa_startDatetime = startdate
-##cl.wg_oa_endDatetime = enddate
+cl.wg_oa_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Waveglider/wgOA/'
+cl.wg_oa_files = [ 'wgOA_Canon2015_Sep.nc'  ]
+cl.wg_oa_parms = [ 'distance', 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'O2_conc',
+                   'O2_sat', 'beta_470', 'bb_470', 'beta_700', 'bb_700', 'chl', 'pCO2_water', 'pCO2_air', 'pH' ]
+cl.wg_oa_startDatetime = startdate
+cl.wg_oa_endDatetime = enddate
 
 ######################################################################
 #  WESTERN FLYER: September 29 - Oct 5 (7 days)
@@ -224,9 +224,32 @@ cl.m1_parms = [
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
 
- 
-#######################################################################################
+# Mooring 0A1
+cl.oa1_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Moorings/OA1/'
+cl.oa1_files = [
+               'OA1_Canon2015_Sep.nc'
+               ]
+cl.oa1_parms = [
+               'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
+               'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
+              ]
+cl.oa1_startDatetime = startdate
+cl.oa1_endDatetime = enddate
+
+# Mooring 0A2
+cl.oa2_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Moorings/OA2/'
+cl.oa2_files = [
+               'OA2_Canon2015_Sep.nc'
+               ]
+cl.oa2_parms = [
+               'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
+               'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
+               ]
+cl.oa2_startDatetime = startdate
+cl.oa2_endDatetime = enddate
+
 # ESP MOORINGS
+
 #######################################################################################
 
 ###################################################################################################
@@ -308,15 +331,18 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
 
-    #cl.loadL_662()
-    ##cl.load_wg_tex(stride=2)
-    ##cl.load_wg_oa(stride=2) 
-    #cl.loadM1()
-    #cl.loadDorado()
-    ##cl.loadDaphne(stride=100)
-    ##cl.loadTethys(stride=100)
-    #cl.loadRCuctd()
-    #cl.loadRCpctd() 
+    cl.loadL_662()
+    cl.load_wg_Tiny()
+    ##cl.load_wg_tex()  ## no waveglider Tex in this campaign
+    cl.load_wg_oa() 
+    cl.loadM1()
+    #cl.load_oa1()   ## the code is in place, but do not load OA2 until the netCDF file is corrected
+    ##cl.load_oa2()  ## the code is in place, but do not load OA2 until the netCDF file is corrected
+    cl.loadDorado()
+    ##cl.loadDaphne()
+    ##cl.loadTethys()
+    cl.loadRCuctd()
+    cl.loadRCpctd() 
     cl.loadWFuctd()   
     cl.loadWFpctd()
 

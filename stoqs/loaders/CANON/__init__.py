@@ -344,6 +344,17 @@ class CANONLoader(LoadScript):
                                         self.slocum_nemesis_parms, self.dbAlias, stride, self.slocum_nemesis_startDatetime, self.slocum_nemesis_endDatetime,
                                         grdTerrain=self.grdTerrain)
 
+    def load_wg_oa(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_files], self.wg_oa_files):
+            url = self.wg_oa_base + file
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission',
+                                        self.wg_oa_parms, self.dbAlias, stride, self.wg_oa_startDatetime, self.wg_oa_endDatetime,
+                                        grdTerrain=self.grdTerrain)
+
     def load_wg_oa_pco2(self, stride=None):
         '''
         Glider specific load functions
@@ -430,6 +441,27 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_parms, self.dbAlias, stride, self.wg_oa_startDatetime, self.wg_oa_endDatetime,
                                         grdTerrain=self.grdTerrain)
+
+    def load_oa1(self, stride=None):
+        '''
+        Mooring OA1 specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.oa1_files], self.oa1_files):
+            url = os.path.join(self.oa1_base, file)
+            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment',
+                                        self.oa1_parms, self.dbAlias, stride, self.oa1_startDatetime, self.oa1_endDatetime)
+
+    def load_oa2(self, stride=None):
+        '''
+        Mooring OA2 specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, file) in zip([ a + getStrideText(stride) for a in self.oa2_files], self.oa2_files):
+            url = os.path.join(self.oa2_base, file)
+            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment',
+                                        self.oa2_parms, self.dbAlias, stride, self.oa2_startDatetime, self.oa2_endDatetime)
+
 
     def loadOA1pco2(self, stride=None):
         '''
