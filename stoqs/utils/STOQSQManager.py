@@ -40,6 +40,7 @@ import locale
 import time
 import os
 import tempfile
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -1168,6 +1169,8 @@ class STOQSQManager(object):
                                 'activityparameter__activity__platform__name', 'binlo', 'binhi', 'bincount').order_by(
                                 'activityparameter__activity__platform__name', 'activityparameter__activity__name', 'binlo'):
                 # Save histogram data by activity name
+                if np.isnan(aph['binlo']) or np.isnan(aph['binhi']):
+                    continue
                 try:
                     histList[aph['activityparameter__activity__name']].append([aph['binlo'], aph['bincount']])
                 except KeyError:
