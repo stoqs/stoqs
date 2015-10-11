@@ -6,7 +6,7 @@ addons:
 services:
   - rabbitmq 
 before_install: 
-  - sudo apt-get install -q python-numpy python-scipy python-matplotlib
+  - sudo apt-get install -q python-numpy python-scipy python-matplotlib libatlas-base-dev
   ##- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   ##- chmod +x miniconda.sh
   ##- ./miniconda.sh -b
