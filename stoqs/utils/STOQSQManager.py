@@ -1385,7 +1385,6 @@ class STOQSQManager(object):
             platforms_trajectories = {ar.activity.platform for ar in models.ActivityResource.objects.using(
                     self.dbname).filter(resource__name='featureType', resource__value='trajectory', 
                     activity__platform__in=[a.platform for a in self.qs])}
-            import pdb; pdb.set_trace()
             platforms_to_animate = platformsHavingModels & platforms_trajectories
             if platforms_to_animate:
                 # Use qs_mp_no_parm QuerySet as it contains roll, pitch, and yaw values
