@@ -6,7 +6,7 @@ addons:
 services:
   - rabbitmq 
 before_install travis_wait: 
-  - sudo apt-get install -q python-numpy python-scipy python-matplotlib gfortran python-dev libblas-dev liblapack-dev cython
+  - sudo apt-get install -q python-numpy python-scipy python-matplotlib libopenblas-base libatlas3-base gfortran python-dev libblas-dev liblapack-dev cython
   ##- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   ##- chmod +x miniconda.sh
   ##- ./miniconda.sh -b
