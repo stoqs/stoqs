@@ -6,7 +6,7 @@ Spatial Temporal Oceanographic Query System
 [![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=master)](https://requires.io/github/stoqs/stoqs/requirements/?branch=master)
 
 STOQS is a geospatial database and web application designed to give oceanographers
-efficient acccess to *in situ* measurement and *ex situ* sample data.
+efficient integrated acccess to *in situ* measurement and *ex situ* sample data.
 See http://www.stoqs.org for more information.
 
 ##### Getting started with a STOQS development system 
@@ -41,7 +41,7 @@ Visit your server's STOQS User Interface using your host computer's browser:
 
     http://localhost:8000
 
-More instructions are in the doc/instructions directory -- see [LOADING](doc/instructions/LOADING.md) 
+More instructions are in the doc/instructions directory &mdash; see [LOADING](doc/instructions/LOADING.md) 
 for how to load your own data and [CONTRIBUTING](doc/instructions/CONTRIBUTING.md) for how to share your work.
 Also, see interesting [Jupyter Notebooks](stoqs/contrib/notebooks) that you can execute against your own STOQS server.
 Visit the [STOQS Wiki pages](https://github.com/stoqs/stoqs/wiki) for updates and links to presentations.
