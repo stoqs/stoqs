@@ -22,15 +22,17 @@ commands:
 
 The `vagrant up` command takes a few hours to provision and setup a complete CentOS 7 
 STOQS server that also includes all the data science tools bundled in packages such as
-[Anaconda](https://www.continuum.io/).  After installation finishes log into your
-new virtual machine and test it:
+[Anaconda](https://www.continuum.io/).  All connections to this virtual machine are 
+performed from the the directory you installed it in; you must cd to it (e.g. `cd
+~/Vagrants/stoqsvm`) before logging in with the `vagrant ssh -- -X` command.  After 
+installation finishes log into your new virtual machine and test it:
 
     vagrant ssh -- -X
     cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
     export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
     ./test.sh CHANGEME
 
-In another terminal window start the development server:
+In another terminal window start the development server (after a `cd ~/Vagrants/stoqsvm`):
 
     vagrant ssh -- -X
     cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
