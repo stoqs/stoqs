@@ -1,5 +1,6 @@
 -r base.txt
 coverage==4.0
+python-coveralls==2.5.0
 scikit-learn==0.16.1
 scipy==0.16.0
 selenium==2.48.0
