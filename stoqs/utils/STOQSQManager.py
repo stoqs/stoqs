@@ -1379,12 +1379,16 @@ class STOQSQManager(object):
                 self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
 
             # Test if there are any X3D platform models in the selection
-            platformsHavingModels = [pr.platform for pr in models.PlatformResource.objects.using(
+            platformsHavingModels = {pr.platform for pr in models.PlatformResource.objects.using(
                     self.dbname).filter(resource__resourcetype__name=X3DPLATFORMMODEL, 
-                    platform__in=[a.platform for a in self.qs])]
-            if platformsHavingModels:
+                    platform__in=[a.platform for a in self.qs])}
+            platforms_trajectories = {ar.activity.platform for ar in models.ActivityResource.objects.using(
+                    self.dbname).filter(resource__name='featureType', resource__value='trajectory', 
+                    activity__platform__in=[a.platform for a in self.qs])}
+            platforms_to_animate = platformsHavingModels & platforms_trajectories
+            if platforms_to_animate:
                 # Use qs_mp_no_parm QuerySet as it contains roll, pitch, and yaw values
-                mppa = PlatformAnimation(platformsHavingModels, self.kwargs, 
+                mppa = PlatformAnimation(platforms_to_animate, self.kwargs, 
                         self.request, self.qs, self.mpq.qs_mp_no_parm)
                 # Default vertical exaggeration is 10x and default geoorigin is empty string
                 orientDict = mppa.platformAnimationDataValuesForX3D(
