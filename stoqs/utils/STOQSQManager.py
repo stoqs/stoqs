@@ -532,7 +532,10 @@ class STOQSQManager(object):
                 # unique horizontal position.
                 geom_list = self.qs.filter(platform__name=platformName).values_list(
                         'nominallocation__geom', flat=True).distinct()
-                geom = geom_list[0]
+                try:
+                    geom = geom_list[0]
+                except IndexError:
+                    return modelInfo
                 if len(geom_list) > 1:
                     logger.error('More than one location for %s returned.'
                                  'Using first one found: %s', platformName, geom)
