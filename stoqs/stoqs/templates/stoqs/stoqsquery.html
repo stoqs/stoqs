@@ -129,6 +129,9 @@
               <li><a id="permalink" data-toggle="modal" href="#permalink-popup" data-action="{% url 'stoqs:generate_permalink' dbAlias=request.META.dbAlias %}">
                 <i class="icon-eye-open icon-white"></i> Share this view</a></li>
             </ul>
+            <ul class="nav">
+              <li><a href="https://github.com/stoqs/stoqs" target="_new">STOQS Software</a></li>
+            </ul>
             <!--
             <form action="">
                 <input type="text" placeholder="Search" />
@@ -1173,12 +1176,13 @@
         var pl = viewpoint._vf.centerOfRotation;
         var vp = event.position;
 
-        // Compute distance from viewpoint to platform and set the scale
+        // Compute distance from viewpoint and set scales of models
         var f = 1/75.0;
         var d = Math.sqrt(Math.pow((vp.x - pl.x), 2) + Math.pow((vp.y - pl.y), 2) + Math.pow((vp.z - pl.z), 2));
         var scale = d*f + ',' + d*f + ',' + d*f;
 
-        $.each($('body').data()['platformAnimation'], function(index, plat) {
+        $.each($('body').data()['platformAnimation'].concat( 
+                $.map($('body').data()['platformModels'], function(v, k) {return k})), function(index, plat) {
             $('#' + plat + '_SCALE').attr('scale', scale);
         });
     }
@@ -1357,7 +1361,12 @@
         $.each($('body').data()['platformModels'], function(plat, m) {
             x3d += '<GeoLocation geoCoords="' + m[1] + ',' + m[2] + ',' + m[3] + '">';
             x3d += $('body').data()['geoorigin_use'];
-            x3d += '<Transform scale="200,200,200"><Inline url="{{STATIC_URL}}' + m[0] + '"</Inline></Transform>';
+            if (m[0].match("^http")) {
+                x3d += '<Transform id="' + plat + '_SCALE" def="' + plat + '_SCALE" scale="2000,2000,2000"><Inline url="' + m[0] + '"></Inline></Transform>';
+            }
+            else {
+                x3d += '<Transform id="' + plat + '_SCALE" def="' + plat + '_SCALE" scale="200,200,200"><Inline url="{{STATIC_URL}}' + m[0] + '"></Inline></Transform>';
+            }
             x3d += '</GeoLocation>';
         });
         $('#platform-models').html(x3d);
