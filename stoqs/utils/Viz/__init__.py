@@ -35,7 +35,7 @@ from utils.utils import postgresifySQL, pearsonr, round_to_n, EPOCH_STRING
 from utils.MPQuery import MPQuerySet
 from utils.geo import GPS
 from loaders.SampleLoaders import SAMPLED, NETTOW, VERTICALNETTOW
-from loaders import MEASUREDINSITU, X3DPLATFORMMODEL
+from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
 import seawater.eos80 as sw
 import numpy as np
 from numpy import polyfit
@@ -731,7 +731,8 @@ class PlatformAnimation(object):
     def getX3DPlatformModel(self, pName):
         # Expect only one X3DPLATFORMMODEL per platform (hence .get())
         return models.PlatformResource.objects.using(self.request.META['dbAlias']
-                ).get(platform__name=pName, resource__resourcetype__name=X3DPLATFORMMODEL
+                ).get(platform__name=pName, resource__name=X3D_MODEL,
+                        resource__resourcetype__name=X3DPLATFORMMODEL
                 ).resource.uristring
 
     def loadData(self, platform):
