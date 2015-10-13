@@ -592,6 +592,7 @@ class CANONLoader(LoadScript):
         '''
         Mooring M1 specific load functions
         '''
+        platformName = 'M1_Mooring'
         stride = stride or self.stride
         for (aName, file) in zip([ a + getStrideText(stride) for a in self.m1_files], self.m1_files):
             url = os.path.join(self.m1_base, file)
@@ -604,8 +605,17 @@ class CANONLoader(LoadScript):
                     # Subract an hour to fill in missing_values at end from previous load
                     dataStartDatetime = dataStartDatetime - timedelta(seconds=3600)
 
-            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'M1_Mooring', self.colors['m1'], 'mooring', 'Mooring Deployment', 
+            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, platformName, self.colors['m1'], 'mooring', 'Mooring Deployment', 
                                         self.m1_parms, self.dbAlias, stride, self.m1_startDatetime, self.m1_endDatetime, dataStartDatetime)
+    
+        # For timeseriesProfile data we need to pass the nominaldepth of the plaform
+        # so that the model is put at the correct depth in the Spatial -> 3D view.
+        try:
+            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+                                      platformName, nominaldepth=self.m1_nominaldepth)
+        except AttributeError:
+            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+                                      platformName)
 
     def loadM1ts(self, stride=None):
         '''
