@@ -18,9 +18,10 @@ from django.db.models import Q, Max, Min, Sum, Avg
 from django.db.models.sql import query
 from django.contrib.gis.geos import fromstr, MultiPoint
 from django.db.utils import DatabaseError
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from stoqs import models
-from loaders import MEASUREDINSITU, X3DPLATFORMMODEL
+from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
 from loaders.SampleLoaders import SAMPLED, NETTOW
 from utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
@@ -513,34 +514,56 @@ class STOQSQManager(object):
         return {'plot': plot_results, 'dataaccess': da_results}
 
     def _getPlatformModel(self, platformName):
+        '''Return Platform X3D model information. Designed for stationary
+        platforms from non-trajectory Activities.
+        '''
         @transaction.atomic(using=self.dbname)
         def _innerGetPlatformModel(self, platform):
             modelInfo = None, None, None, None
-            try:
-                # Add platform model for only timeSeries and timeSeriesProfile platforms, if there is a model
-                pModel = models.PlatformResource.objects.using(self.dbname).filter(resource__resourcetype__name='x3dplatformmodel',
-                           platform__name=platformName).values_list('resource__uristring', flat=True).distinct()
-                if pModel:
-                    gps = GPS()
-                    try:
-                        geom = self.qs.filter(platform__name=platformName).values_list('nominallocation__geom')[0][0]
-                        depth = self.qs.filter(platform__name=platformName).values_list('nominallocation__depth')[0][0]
-                    except IndexError as e:
-                        logger.warn(e)
-                    else:
-                        if self.request.GET.get('geoorigin', ''):
-                            logger.warn('Passing geoorigin as a request parameter is deprecated as X3DOM now supports GeoOrigin')
-                            x,y,z = gps.lla2gcc((geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10))), self.request.GET.get('geoorigin', ''))
-                        else:
-                            # Pass default geoCoords for GeoLocation to use
-                            x,y,z = (geom.y, geom.x, -depth * float(self.request.GET.get('ve', 10)), )
-                        modelInfo = pModel[0], x, y, z
 
-            except DatabaseError as e:
-                logger.warn(e)
-                return modelInfo
-            else:
-                return modelInfo
+            pModel = models.PlatformResource.objects.using(self.dbname).filter(
+                        resource__resourcetype__name=X3DPLATFORMMODEL,
+                        resource__name=X3D_MODEL,
+                        platform__name=platformName).values_list(
+                                'resource__uristring', flat=True).distinct()
+            if pModel:
+                # Timeseries and timeseriesProfile data for a single platform
+                # (even if composed of multiple Activities) must have single
+                # unique horizontal position.
+                geom_list = self.qs.filter(platform__name=platformName).values_list(
+                        'nominallocation__geom', flat=True).distinct()
+                try:
+                    geom = geom_list[0]
+                except IndexError:
+                    return modelInfo
+                if len(geom_list) > 1:
+                    logger.error('More than one location for %s returned.'
+                                 'Using first one found: %s', platformName, geom)
+
+                # TimeseriesProfile data has multiple nominaldepths - look to 
+                # Resource for nominaldepth of the Platform for these kind of data.
+                depth_list = self.qs.filter(platform__name=platformName).values_list(
+                        'nominallocation__depth', flat=True).distinct()
+                if len(depth_list) > 1:
+                    logger.debug('More than one depth for %s returned. Checking '
+                                 'Resource for nominaldepth', platformName)
+                    try:
+                        depth = float(models.PlatformResource.objects.using(self.dbname).filter( 
+                                resource__resourcetype__name=X3DPLATFORMMODEL, 
+                                platform__name=platformName, 
+                                resource__name='X3D_MODEL_nominaldepth'
+                                ).values_list('resource__value', flat=True)[0])
+                    except (IndexError, ObjectDoesNotExist):
+                        logger.warn('Resource name X3D_MODEL_nominaldepth not found for '
+                                    'for platform %s. Using a nominaldepth of 0.0', platformName)
+                        depth = 0.0
+                else:
+                    depth = depth_list[0]
+
+                modelInfo = (pModel[0], geom.y, geom.x, 
+                             -depth * float(self.request.GET.get('ve', 10)))
+
+            return modelInfo
 
         return _innerGetPlatformModel(self, platformName)       
     
@@ -571,7 +594,7 @@ class STOQSQManager(object):
                 if len(fts) > 1:
                     logger.warn('More than one featureType returned for platform %s: %s.  Using the first one.', name, fts)
 
-                if featureType == 'trajectory':
+                if 'trajectory' in featureType:
                     try:
                         platformTypeHash[platformType].append((name, id, color, featureType, ))
                     except KeyError:

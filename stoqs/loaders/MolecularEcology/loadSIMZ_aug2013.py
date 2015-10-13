@@ -98,6 +98,7 @@ cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_
                    ]
 cl.m1_startDatetime = datetime.datetime(2013, 8, 12)
 cl.m1_endDatetime = datetime.datetime(2013, 8, 19)
+cl.m1_nominaldepth = 0.0
 
 # SubSample data files received from Julio in email and copied to local directory
 cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SIMZAug2013')

@@ -397,7 +397,8 @@ def showPlatformResource(request, format='html'):
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, format, query_set, stoqs_object)
-    o.fields = ['id', 'uuid', 'platform_id', 'resource_id', 'platform__name', 'resource__name', 'resource__value', 'resource__uristring']
+    o.fields = ['id', 'uuid', 'platform_id', 'resource_id', 'platform__name', 'resource__name', 
+            'resource__value', 'resource__uristring', 'resource__resourcetype__name']
     return o.process_request()
 
 def showParameter(request, format='html'):
