@@ -85,43 +85,43 @@ def removeNonAscii(s):
     return "".join(i for i in s if ord(i)<128)
 
 def get_closest_instantpoint(aName, tv, dbAlias):
-        '''
-        Start with a tolerance of 1 second and double it until we get a non-zero count,
-        get the values and find the closest one by finding the one with minimum absolute difference.
-        '''
-        tol = 1
-        num_timevalues = 0
-        logger.debug('Looking for tv = %s', tv)
-        while tol < 86400:                                      # Fail if not found within 24 hours
-            qs = m.InstantPoint.objects.using(dbAlias).filter(  activity__name__contains = aName,
-                                                                timevalue__gte = (tv-timedelta(seconds=tol)),
-                                                                timevalue__lte = (tv+timedelta(seconds=tol))
-                                                             ).order_by('timevalue')
-            if qs.count():
-                num_timevalues = qs.count()
-                break
-            tol = tol * 2
+    '''
+    Start with a tolerance of 1 second and double it until we get a non-zero count,
+    get the values and find the closest one by finding the one with minimum absolute difference.
+    '''
+    tol = 1
+    num_timevalues = 0
+    logger.debug('Looking for tv = %s', tv)
+    while tol < 86400:                                      # Fail if not found within 24 hours
+        qs = m.InstantPoint.objects.using(dbAlias).filter(  activity__name__contains = aName,
+                                                            timevalue__gte = (tv-timedelta(seconds=tol)),
+                                                            timevalue__lte = (tv+timedelta(seconds=tol))
+                                                         ).order_by('timevalue')
+        if qs.count():
+            num_timevalues = qs.count()
+            break
+        tol = tol * 2
 
-        if not num_timevalues:
-            raise ClosestTimeNotFoundException
+    if not num_timevalues:
+        raise ClosestTimeNotFoundException
 
-        logger.debug('Found %d time values with tol = %d', num_timevalues, tol)
-        timevalues = [q.timevalue for q in qs]
-        logger.debug('timevalues = %s', timevalues)
-        i = 0
-        i_min = 0
-        secdiff = []
-        minsecdiff = tol
-        for t in timevalues:
-            secdiff.append(abs(t - tv).seconds)
-            if secdiff[i] < minsecdiff:
-                minsecdiff = secdiff[i]
-                i_min = i
-            logger.debug('i = %d, secdiff = %d', i, secdiff[i])
-            i = i + 1
+    logger.debug('Found %d time values with tol = %d', num_timevalues, tol)
+    timevalues = [q.timevalue for q in qs]
+    logger.debug('timevalues = %s', timevalues)
+    i = 0
+    i_min = 0
+    secdiff = []
+    minsecdiff = tol
+    for t in timevalues:
+        secdiff.append(abs(t - tv).seconds)
+        if secdiff[i] < minsecdiff:
+            minsecdiff = secdiff[i]
+            i_min = i
+        logger.debug('i = %d, secdiff = %d', i, secdiff[i])
+        i = i + 1
 
-        logger.debug('i_min = %d', i_min)
-        return qs[i_min], secdiff[i_min]
+    logger.debug('i_min = %d', i_min)
+    return qs[i_min], secdiff[i_min]
 
 def load_gulps(activityName, file, dbAlias):
     '''
