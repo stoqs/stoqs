@@ -48,6 +48,9 @@ import re
 
 logger = logging.getLogger(__name__)
 
+cm_w_to_b = mpl.colors.ListedColormap(np.array(readCLT(os.path.join(
+                       settings.STATICFILES_DIRS[0], 'colormaps', 'w_to_b.txt'))))
+
 def _getCoordUnits(name):
     '''
     Assign units given a standard coordinate name
@@ -154,6 +157,7 @@ class MeasuredParameter(object):
         self.scale_factor = None
         self.clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
         self.cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
+
         # - Use a new imageID for each new image
         self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
         if self.parameterID:
@@ -359,11 +363,12 @@ class MeasuredParameter(object):
 
         return xsamp, ysamp, sname
 
-    def _get_color(self, datavalue, cmin, cmax):
+    def _get_color(self, datavalue, cmin, cmax, clt=None):
         '''
         Return RGB color value for data_value given member's color lookup table and cmin, cmax lookup table limits
         '''
-        clt = self.cm_jetplus2
+        if not clt:
+            clt = self.cm_jetplus
         indx = int(round((float(datavalue) - cmin) * ((len(clt.colors) - 1) / float(cmax - cmin))))
         if indx < 0:
             indx=0

@@ -24,7 +24,7 @@ def readCLT(fileName):
     cltList = []
     for rgb in open(fileName, 'r'):
         ##logger.debug("rgb = %s", rgb)
-        (r, g, b) = rgb.split('  ')[1:]
+        (r, g, b) = rgb.strip().split()
         cltList.append([float(r), float(g), float(b)])
 
     return cltList
