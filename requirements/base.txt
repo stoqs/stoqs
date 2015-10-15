@@ -5,7 +5,7 @@ dj-database-url==0.3.0
 Django==1.8.5
 django-allauth==0.23.0
 django-appconf==1.0.1
-django-autoslug==1.8.0
+django-autoslug==1.9.3
 django-avatar==2.1.1
 django-braces==1.8.1
 django-cache-url==1.0.0
