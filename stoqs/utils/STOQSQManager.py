@@ -1128,7 +1128,7 @@ class STOQSQManager(object):
         of the activity to get the start and end time and min and max depths. 
         '''
         nettows = []
-        nettow = models.SampleType.objects.filter(name__contains=NETTOW)
+        nettow = models.SampleType.objects.using(self.dbname).filter(name__contains=NETTOW)
         if self.getSampleQS() and nettow:
             qs = self.getSampleQS().filter(sampletype=nettow).values_list(
                                     'instantpoint__timevalue', 
