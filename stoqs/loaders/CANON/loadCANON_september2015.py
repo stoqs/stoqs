@@ -61,7 +61,8 @@ cl.dorado_files = [
                     'Dorado389_2015_265_03_265_03_decim.nc',
                     'Dorado389_2015_267_01_267_01_decim.nc',
                     'Dorado389_2015_285_00_285_00_decim.nc',
-                    'Dorado389_2015_286_00_286_00_decim.nc', 
+                    'Dorado389_2015_286_00_286_00_decim.nc', ## loaded previously
+                    'Dorado389_2015_287_00_287_00_decim.nc',
                   ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
@@ -178,7 +179,8 @@ cl.wfpctd_files = [
 cl.rcuctd_base = cl.dodsBase + 'CANON/2015_Sep/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [
-                  '26515plm01.nc', '26615plm01.nc', '26715plm01.nc', 
+                  '26515plm01.nc', '26615plm01.nc', '26715plm01.nc', ## loaded previously
+                  '28215plm01.nc', '28515plm01.nc', '28615plm01.nc', '28715plm01.nc', 
                   ]
 
 # PCTD
@@ -187,7 +189,11 @@ cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [
                   '26515c01.nc', '26515c02.nc', '26515c03.nc',
                   '26615c01.nc', '26615c02.nc',
-                  '26715c01.nc', '26715c02.nc', 
+                  '26715c01.nc', '26715c02.nc', ## loaded previously
+                  '28215c01.nc', '28215c02.nc', '28215c03.nc',
+                  '28515c01.nc', '28515c02.nc',
+                  '28615c01.nc', '28615c02.nc',
+                  '28715c01.nc', '28715c02.nc', '28715c04.nc', ## note there is no 28715c03.nc
                   ]
 
 #####################################################################
