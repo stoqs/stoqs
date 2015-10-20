@@ -22,7 +22,7 @@ commands:
 
 The `vagrant up` command takes a few hours to provision and setup a complete CentOS 7 
 STOQS server that also includes all the data science tools bundled in packages such as
-[Anaconda](https://www.continuum.io/).  All connections to this virtual machine are 
+Anaconda.  All connections to this virtual machine are 
 performed from the the directory you installed it in; you must cd to it (e.g. `cd
 ~/Vagrants/stoqsvm`) before logging in with the `vagrant ssh -- -X` command.  After 
 installation finishes log into your new virtual machine and test it:
@@ -49,4 +49,11 @@ Also, see interesting [Jupyter Notebooks](stoqs/contrib/notebooks) that you can 
 Visit the [STOQS Wiki pages](https://github.com/stoqs/stoqs/wiki) for updates and links to presentations.
 The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also 
 a good place to ask questions and engage in discussion with the STOQS user and developer communities.
+
+Supported by the David and Lucile Packard Foundation, STOQS undergoes continual development
+to help support the mission of the Monterey Bay Aquarium Research Institue.  If you have your
+own server you will occaisionally want to get new features with:
+
+    git pull
+    ./setup.sh
 
