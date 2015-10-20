@@ -1128,22 +1128,24 @@ class STOQS_Loader(object):
       compute sigma-t and add it as a parameter
       '''                 
       @transaction.atomic(using=self.dbAlias)
-      def _innerAddSigmaT(self, parameterCounts):
+      def _innerAddSigmaT(self, parameterCounts, activity):
         
         # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
         ms = m.Measurement.objects.using(self.dbAlias)
-        ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
+        if activity:
+            ms = ms.filter(instantpoint__activity=activity)
         
+        ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
+
+        # Test whether our measurements use 'sea_water_salinity' or 'sea_water_practical_salinity'
         salinity_standard_name = 'sea_water_salinity'
-        if m.Measurement.objects.using(self.dbAlias).filter(measuredparameter__parameter__standard_name='sea_water_practical_salinity'):
+        if ms.filter(measuredparameter__parameter__standard_name='sea_water_practical_salinity'):
             salinity_standard_name = 'sea_water_practical_salinity'
-        elif m.Measurement.objects.using(self.dbAlias).filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
+        elif ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
             salinity_standard_name = 'sea_water_salinity'
 
         ms = ms.filter(measuredparameter__parameter__standard_name=salinity_standard_name)
 
-        if activity:
-            ms = ms.filter(instantpoint__activity=activity)
         if not ms:
             self.logger.info("No sea_water_temperature and sea_water_salinity; can't add SigmaT and Spice.")
             return parameterCounts
@@ -1186,7 +1188,7 @@ class STOQS_Loader(object):
 
         return parameterCounts
 
-      return _innerAddSigmaT(self, parameterCounts)
+      return _innerAddSigmaT(self, parameterCounts, activity)
 
     def addAltitude(self, parameterCounts, activity=None):
       ''' 
