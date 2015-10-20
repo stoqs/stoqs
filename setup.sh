@@ -3,7 +3,6 @@
 # prerequisite system software.
 pushd $(dirname $0)
 HOMEDIR=$(pwd)
-LOG_DIR="$HOMEDIR/log"
 if [ $1 ]; then
     REQ="$HOMEDIR/requirements/$1.txt"
 else
@@ -46,14 +45,14 @@ if [ -f "$REQ" ]; then
         exit 1
     fi
 fi
-popd
 
 # NCAR's natgrid needed for contour plotting
-cd ~/Downloads
+cd /tmp
 wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
 tar -xzf natgrid-0.2.1.tar.gz
 cd natgrid-0.2.1
 python setup.py install
+popd
 
 echo "$0 finished."
 
