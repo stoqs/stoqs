@@ -605,6 +605,13 @@ class Base_Loader(STOQS_Loader):
                     logger.info('%s has shape of 2, assuming no latitude and longitude singletime dimensions. Using nominal location read from auxially coordinates', pname)
                     longitudes[pname] = nomLons[pname]
                     latitudes[pname] = nomLats[pname]
+                elif len(self.ds[pname].shape) == 1:
+                    logger.info('%s has shape of 1, assuming no latitude, longitude, and'
+                                ' depth singletime dimensions. Using nominal location read'
+                                ' from auxially coordinates', pname)
+                    longitudes[pname] = nomLons[pname]
+                    latitudes[pname] = nomLats[pname]
+                    depths[pname] = nomDepths[pname]
                 else:
                     raise Exception('%s has shape of %d. Can handle only shapes of 2, and 4', pname, len(self.ds[pname].shape))
                     
