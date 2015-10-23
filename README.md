@@ -57,3 +57,9 @@ own server you will occaisionally want to get new features with:
     git pull
     ./setup.sh
 
+If you use STOQS for your research please cite this publication:
+
+> McCann, M.; Schramm, R.; Cline, D.; Michisaki, R.; Harvey, J.; Ryan, J., "Using STOQS (The spatial 
+> temporal oceanographic query system) to manage, visualize, and understand AUV, glider, and mooring data," 
+> in *Autonomous Underwater Vehicles (AUV), 2014 IEEE/OES*, pp.1-10, 6-9 Oct. 2014
+> doi: 10.1109/AUV.2014.7054414
