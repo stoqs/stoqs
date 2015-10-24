@@ -245,6 +245,30 @@ cl.m1_parms = [ 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
 
+# Mooring 0A1
+cl.oa1_base = cl.dodsBase + 'CANON/2015_May/Platforms/Moorings/OA1/'
+cl.oa1_files = [
+               'OA1_Canon2015_May.nc'
+               ]
+cl.oa1_parms = [
+               'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
+               'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
+              ]
+cl.oa1_startDatetime = startdate
+cl.oa1_endDatetime = enddate
+
+# Mooring 0A2
+cl.oa2_base = cl.dodsBase + 'CANON/2015_May/Platforms/Moorings/OA2/'
+cl.oa2_files = [
+               'OA2_Canon2015_May.nc'
+               ]
+cl.oa2_parms = [
+               'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
+               'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
+               ]
+cl.oa2_startDatetime = startdate
+cl.oa2_endDatetime = enddate
+
 
 #######################################################################################
 # ESP MOORINGS
@@ -399,6 +423,9 @@ else:
     ##cl.loadWFpctd() ## not in this campaign
 
     cl.loadM1()
+    cl.load_oa1()
+    cl.load_oa2()
+
 
     ##cl.loadBruceMoor() ## waiting for data to be formated for loading
     ##cl.loadMackMoor() ## waiting for data to be formated for loading
