@@ -169,16 +169,16 @@ class Base_Loader(STOQS_Loader):
             self.ds = open_url(url)
         except socket.error as e:
             logger.error('Failed in attempt to open_url("%s")', url)
-            raise e
+            raise
         except pydap.exceptions.ServerError as e:
             logger.error('Failed in attempt to open_url("%s")', url)
-            raise e
+            raise
         except Exception as e:
             logger.error('Failed in attempt to open_url("%s")', url)
-            raise e
+            raise
         except pydap.exceptions.ClientError as e:
             logger.error('Failed in attempt to open_url(%s)', url)
-            raise e
+            raise
 
         self.ignored_names += self.global_ignored_names # add global ignored names to platform specific ignored names.
         self.build_standard_names()
