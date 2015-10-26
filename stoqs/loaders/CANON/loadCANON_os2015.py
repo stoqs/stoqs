@@ -50,7 +50,8 @@ cl = CANONLoader('stoqs_os2015', 'CANON-ECOHAB - Off Season 2015',
 #startdate = datetime.datetime(2015, 7, 31)                 # Fixed start
 startdate = datetime.datetime(2015, 6, 6)                 # Fixed start
 
-enddate = datetime.datetime(2015, 9, 30)                  # Fixed end
+#enddate = datetime.datetime(2015, 9, 30)                  # Fixed end
+enddate = datetime.datetime(2015, 12, 31)                  # Fixed end. Extend "offseason" to end of year
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -156,7 +157,11 @@ cl.nps29_endDatetime = enddate
 
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = cl.dodsBase + 'CANON/2015_OffSeason/Platforms/Waveglider/wgTiny/'
-cl.wg_Tiny_files = [ 'SV3_20150611_QC.nc' ]
+cl.wg_Tiny_files = [ 
+                     'SV3_20150611_QC.nc',
+                     'SV3_20151019.nc',    # starts after end of Fall 2015 campaign
+                   ]
+
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
                     'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
 cl.wg_Tiny_startDatetime = startdate
