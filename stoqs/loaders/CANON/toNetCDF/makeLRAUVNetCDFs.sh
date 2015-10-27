@@ -2,7 +2,7 @@
 if [ $1 ]; then
     STOQS_HOME=$1
 else
-    STOQS_HOME=/opt/stoqsgit
+    STOQS_HOME=/opt/stoqsgit_dj1.8
 fi
 cd "$STOQS_HOME/venv-stoqs/bin"
 source activate
@@ -12,9 +12,7 @@ urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 dir='/mbari/LRAUV'
 logdir='missionlogs/2015'
 search="${logdir}/.*nc4$"
-#declare -a platforms=("tethys" "makai" "daphne")
-#declare -a platforms=("daphne")
-declare -a platforms=("tethys")
+declare -a platforms=("tethys" "makai" "daphne")
 parms_sci="{
             \"CTD_NeilBrown\": [
             { \"name\":\"sea_water_salinity\" , \"rename\":\"salinity\" },
@@ -86,7 +84,7 @@ parms_eng="{
 
 for platform in "${platforms[@]}"
 do
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start '20150526T000000'
-        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start '20150526T000000'
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_sci}" --resampleFreq '10S' -a 'sci' --start '20150917T000000' --end '20151016T000000'
+        python makeLRAUVNetCDFs.py -u ${urlbase}/${platform}/${search} -i ${dir}/${platform}/${logdir} -p "${parms_eng}" --resampleFreq '2S' -a 'eng' --start '20150917T000000' --end '20151016T000000'
 done
 
