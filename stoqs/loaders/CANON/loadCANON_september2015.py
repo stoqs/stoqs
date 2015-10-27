@@ -89,7 +89,7 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 # Get directory list from thredds server
 platforms = ['tethys', 'daphne', 'makai']
 
-'''for p in platforms:
+for p in platforms:
     base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/' 
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2015/'
     setattr(cl, p + '_files', []) 
@@ -106,7 +106,6 @@ platforms = ['tethys', 'daphne', 'makai']
     setattr(cl, p + '_files', files) 
     setattr(cl, p  + '_startDatetime', startdate) 
     setattr(cl, p + '_endDatetime', enddate)
-'''
 
 ######################################################################
 #  GLIDERS
@@ -347,8 +346,9 @@ else:
     cl.load_oa1()   
     cl.load_oa2()  
     cl.loadDorado()
-    ##cl.loadDaphne()
-    ##cl.loadTethys()
+    cl.loadDaphne()
+    cl.loadTethys()
+    cl.loadMakai()
     cl.loadRCuctd()
     cl.loadRCpctd() 
     cl.loadWFuctd()   
