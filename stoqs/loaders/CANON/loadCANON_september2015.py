@@ -23,12 +23,18 @@ import datetime  # needed for glider data
 import time      # for startdate, enddate args
 import csv
 import urllib2
+import urlparse
+import requests
+import thredds_crawler
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
-       
+
+from thredds_crawler.etree import etree
+from thredds_crawler.crawl import Crawl
+ 
 cl = CANONLoader('stoqs_canon_september2015', 'CANON - September-October 2015',
                     description = 'Fall 2015 Front Identification in northern Monterey Bay',
                     x3dTerrains = {
@@ -72,16 +78,47 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 #####################################################################
 #  LRAUV 
 #####################################################################
-# NetCDF files produced (binned, etc.) by John Ryan
-##cl.tethys_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Tethys/NetCDF/'
-##cl.tethys_files = ['Tethys_CANON_Fall2013.nc']
-##cl.tethys_parms = ['temperature', 'salinity', 'chlorophyll', 'bb470', 'bb650']
+def find_urls(base):
+    INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
+    url = os.path.join(base, 'catalog.xml')
+    print "Crawling: %s" % url
+    skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
+    u = urlparse.urlsplit(url)
+    name, ext = os.path.splitext(u.path)
+    if ext == ".html":
+        u = urlparse.urlsplit(url.replace(".html", ".xml"))
+    url = u.geturl()
+    # Get an etree object
+    try:
+        r = requests.get(url)
+        tree = etree.XML(r.text.encode('utf-8'))
 
-##cl.daphne_base = cl.dodsBase + 'CANON_september2013/Platforms/AUVs/Daphne/NetCDF/'
-##cl.daphne_files = ['Daphne_CANON_Fall2013.nc']
-##cl.daphne_parms = ['temperature', 'chlorophyll', 'bb470', 'bb650']
+        # Crawl the catalogRefs:
+        for ref in tree.findall('.//{%s}catalogRef' % INV_NS):
 
-# NetCDF files produced (binned, etc.) by Danelle Cline
+            try:
+                # get the mission directory name and extract the start and ending dates
+                mission_dir_name = ref.attrib['{http://www.w3.org/1999/xlink}title']
+                dts = mission_dir_name.split('_')
+                dir_start =  datetime.datetime.strptime(dts[0], '%Y%m%d')
+                dir_end =  datetime.datetime.strptime(dts[1], '%Y%m%d')
+
+                # if within a valid range, grab the valid urls
+                if dir_start >= startdate and dir_end <= enddate:
+                    catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
+                    c = Crawl(os.path.join(base, catalog), select=['.*10S_sci.nc$'], skip=skips)
+                    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                    return urls
+            except Exception as ex:
+                print "Error reading mission directory name %s" % ex
+
+    except BaseException:
+        print "Skipping %s (error parsing the XML XML)" % url
+
+    return []
+
+
+# Load netCDF files produced (binned, etc.) by Danelle Cline
 # These binned files are created with the makeLRAUVNetCDFs.sh script in the
 # toNetCDF directory. You must first edit and run that script once to produce 
 # the binned files before this will work
@@ -90,19 +127,18 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
 platforms = ['tethys', 'daphne', 'makai']
 
 for p in platforms:
-    base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/' 
+    base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/'
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2015/'
     setattr(cl, p + '_files', []) 
     setattr(cl, p + '_base', dods_base)
     setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'])
-    c = Crawl(os.path.join(base, 'catalog.xml'), select=['.*10S_sci.nc$'], debug=False) 
-    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+    urls = find_urls(base)
     files = []
     if len(urls) > 0 :
         for url in sorted(urls):
             file = '/'.join(url.split('/')[-3:])
             files.append(file)
-    files.append(',')
+    #files.append(',')
     setattr(cl, p + '_files', files) 
     setattr(cl, p  + '_startDatetime', startdate) 
     setattr(cl, p + '_endDatetime', enddate)
@@ -346,8 +382,8 @@ else:
     cl.load_oa1()   
     cl.load_oa2()  
     cl.loadDorado()
-    cl.loadDaphne()
     cl.loadTethys()
+    cl.loadDaphne()
     cl.loadMakai()
     cl.loadRCuctd()
     cl.loadRCpctd() 
