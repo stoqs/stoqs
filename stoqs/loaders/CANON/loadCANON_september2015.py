@@ -88,6 +88,7 @@ def find_urls(base):
     if ext == ".html":
         u = urlparse.urlsplit(url.replace(".html", ".xml"))
     url = u.geturl()
+    urls = []
     # Get an etree object
     try:
         r = requests.get(url)
@@ -107,15 +108,16 @@ def find_urls(base):
                 if dir_start >= startdate and dir_end <= enddate:
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=['.*10S_sci.nc$'], skip=skips)
-                    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-                    return urls
+                    d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                    for url in d:
+                        urls.append(url)
             except Exception as ex:
                 print "Error reading mission directory name %s" % ex
 
     except BaseException:
         print "Skipping %s (error parsing the XML XML)" % url
 
-    return []
+    return urls
 
 
 # Load netCDF files produced (binned, etc.) by Danelle Cline

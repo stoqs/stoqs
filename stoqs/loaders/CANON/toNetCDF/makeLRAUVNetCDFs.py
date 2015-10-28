@@ -80,6 +80,7 @@ def find_urls(base, select, startdate, enddate):
     if ext == ".html":
         u = urlparse.urlsplit(url.replace(".html", ".xml"))
     url = u.geturl()
+    urls = []
     # Get an etree object
     try:
         r = requests.get(url)
@@ -99,15 +100,16 @@ def find_urls(base, select, startdate, enddate):
                 if dir_start >= startdate and dir_end <= enddate:
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
-                    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
-                    return urls
+                    d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                    for url in d:
+                        urls.append(url)
             except Exception as ex:
                 print "Error reading mission directory name %s" % ex
 
     except BaseException:
         print "Skipping %s (error parsing the XML XML)" % url
 
-    return []
+    return urls
 
 def getNcStartEnd(urlNcDap, timeAxisName):
     '''Find the lines in the html with the .nc file, then open it and read the start/end times
