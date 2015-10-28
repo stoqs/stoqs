@@ -9,8 +9,12 @@ import re
 import pydap
 import json
 import lrauvNc4ToNetcdf
+import urlparse
+import requests
+
 from coards import to_udunits, from_udunits
 from thredds_crawler.crawl import Crawl
+from thredds_crawler.etree import etree
 from datetime import datetime, timedelta
 
 # Set up global variables for logging output to STDOUT
@@ -66,6 +70,44 @@ def process_command_line():
 
         return args
 
+def find_urls(base, select, startdate, enddate):
+    INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
+    url = os.path.join(base, 'catalog.xml')
+    print "Crawling: %s" % url
+    skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
+    u = urlparse.urlsplit(url)
+    name, ext = os.path.splitext(u.path)
+    if ext == ".html":
+        u = urlparse.urlsplit(url.replace(".html", ".xml"))
+    url = u.geturl()
+    # Get an etree object
+    try:
+        r = requests.get(url)
+        tree = etree.XML(r.text.encode('utf-8'))
+
+        # Crawl the catalogRefs:
+        for ref in tree.findall('.//{%s}catalogRef' % INV_NS):
+
+            try:
+                # get the mission directory name and extract the start and ending dates
+                mission_dir_name = ref.attrib['{http://www.w3.org/1999/xlink}title']
+                dts = mission_dir_name.split('_')
+                dir_start =  datetime.strptime(dts[0], '%Y%m%d')
+                dir_end =  datetime.strptime(dts[1], '%Y%m%d')
+
+                # if within a valid range, grab the valid urls
+                if dir_start >= startdate and dir_end <= enddate:
+                    catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
+                    c = Crawl(os.path.join(base, catalog), select=[select], skip=skips)
+                    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+                    return urls
+            except Exception as ex:
+                print "Error reading mission directory name %s" % ex
+
+    except BaseException:
+        print "Skipping %s (error parsing the XML XML)" % url
+
+    return []
 
 def getNcStartEnd(urlNcDap, timeAxisName):
     '''Find the lines in the html with the .nc file, then open it and read the start/end times
@@ -180,16 +222,9 @@ if __name__ == '__main__':
     files = s[1]
     url = s[0]
     logger.info("Crawling %s for %s files" % (url, files))
-
-    skips = Crawl.SKIPS + ['.*cfg.*', '.*mat.*', '.*slate.*', '.*state.*', '.*sbd.*']
-
-    #c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=True, skip=skips)
-    c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=True)
-
-    for d in c.datasets:
-        logger.debug('Found %s' % d.id)
-
-    all_urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+	
+    # Get possible urls with mission dates in the directory name that fall between the requested times
+    all_urls = find_urls(url, files, start, end)
     urls = []
 
     for u in all_urls:
