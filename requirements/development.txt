@@ -6,9 +6,9 @@ amqplib==1.0.2
 anyjson==0.3.3
 Babel==2.1.1
 backports.ssl-match-hostname==3.4.0.2
-billiard==3.3.0.20
+billiard==3.3.0.21
 binaryornot==0.4.0
-celery==3.1.18
+celery==3.1.19
 certifi==2015.9.6.2
 cookiecutter==1.2.1
 coverage==4.0.1
