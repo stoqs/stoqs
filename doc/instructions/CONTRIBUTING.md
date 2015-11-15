@@ -44,7 +44,7 @@ installing all the required software.
 
         git remote add -f upstream git://github.com/stoqs/stoqs.git
 
-### Contributing follows a typical GitHub workflow:
+### Contributing follows a [typical GitHub workflow](https://guides.github.com/introduction/flow/):
 
 1. cd into your working directory, e.g.:
 
