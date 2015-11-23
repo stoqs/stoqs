@@ -979,9 +979,13 @@ class Base_Loader(STOQS_Loader):
                         mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, datavalue=value)
 
                     except TypeError:
-                        # Likely a numpy Array from LOPC, cast to list and save in dataarray field
-                        mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, dataarray=list(value))
-
+                        # Likely a numpy Array from LOPC, cast to list and save in dataarray field, but if not catch
+                        # the error and continue
+                        try:
+                            mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, dataarray=list(value))
+                        except TypeError:
+                            logger.warn('%s', e)
+                            continue
                     try:
                         logger.debug('Saving parameter_id %s at measurement_id = %s', parameter.id, measurement.id)
                         mp.save(using=self.dbAlias)
