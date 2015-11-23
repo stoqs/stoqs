@@ -43,6 +43,7 @@ import shutil
 
 from django.contrib.gis.geos import fromstr, MultiPoint
 from django.db.models import Max, Min
+from django.conf import settings
 from collections import OrderedDict
 from collections import defaultdict
 from django.db import connections
@@ -214,6 +215,15 @@ class Contour(object):
             data_start_dt = startDatetime
             data_end_dt = endDatetime
 
+        if not self.plotDotParmName in self.plotGroupValid:
+            # if the dot plot parameter name is not in the valid list of parameters found, switch it to
+            # something else choosing chlorophyll over another
+            matching = [s for s in self.plotGroupValid if "chl" in s]
+            if len(matching) > 0:
+                self.plotDotParmName = matching[0]
+            else:
+                self.plotDotParmName = self.plotGroupValid[0]
+
         return data_dict, data_start_dt, data_end_dt
 
     def getMeasuredPPData(self, startDatetime, endDatetime, platform, parm):
@@ -332,13 +342,14 @@ class Contour(object):
 
         # GridSpecs for plots
         outer_gs = gridspec.GridSpec(nrows=2, ncols=1, height_ratios=[1,3])
+
         # tighten up space between plots
         outer_gs.update(left=0.10, right=0.90, hspace=0.05)
         map_gs = gridspec.GridSpecFromSubplotSpec(nrows=1, ncols=1, subplot_spec=outer_gs[0])
         lower_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(self.plotGroupValid), ncols=1, subplot_spec=outer_gs[1])
 
         STATIC_ROOT = '/var/www/html/stoqs/static'      # Warning: Hard-coded
-        clt = self.readCLT(os.path.join(STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+        clt = self.readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
         self.cm_jetplus = mpl.colors.ListedColormap(np.array(clt))
 
         # start a new figure - size is in inches
@@ -365,17 +376,24 @@ class Contour(object):
         # add contour plots for each parameter group
         for group in self.plotGroupValid:
             parm = [x.strip() for x in group.split(',')]
-            plot_step =  sum([self.data[pn+p]['units'].count('bool') for p in parm]) # counter the number of boolean plots in the groups
-            plot_scatter = len(parm) - plot_step # otherwise all other plots are scatter plots
+            plot_step =  sum([self.data[pn+p]['units'].count('bool') for p in parm]) # count the number of boolean plots in the groups
+            plot_scatter_contour = len(parm) - plot_step # otherwise all other plots are scatter plots
+            plot_scatter = 0
+
+            # this parameter only makes sense to plot as a scatter plot
+            if 'vertical_temperature_homogeneity_index' in self.plotGroupValid:
+                plot_scatter = 1
+                plot_scatter_contour -= 1
             #plot_dense = sum([val for val  in len(self.data[pn+name]['datavalue']) > 2000]) #  if more than 2000 points, skip the scatter plot
 
             # choose the right type of gridspec to display the data
-            if plot_scatter:
+            if plot_scatter_contour:
                 # one row for scatter and one for contour
                 plot_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm)*2, ncols=2, subplot_spec=lower_gs[i], width_ratios=[30,1], wspace=0.05)
             else:
-                # one row for step plots/or contour plots
+                # one row for single step/scatter/contour plots
                 plot_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(parm), ncols=2, subplot_spec=lower_gs[i], width_ratios=[30,1], wspace=0.05)
+
             j = 0
             i += 1
             for name in parm:
@@ -416,7 +434,7 @@ class Contour(object):
                 ax0_colorbar = plt.Subplot(fig, gs[:])
                 fig.add_subplot(ax0_colorbar)
 
-                if plot_scatter:
+                if plot_scatter_contour:
                     logger.debug('getting subplot ax1')
                     gs = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=plot_gs[j + 2])
                     ax1_plot = plt.Subplot(fig, gs[:])
@@ -437,16 +455,17 @@ class Contour(object):
                     z.append(np.NaN)
                     z.append(np.NaN)
 
-                if plot_scatter:
+                if plot_scatter_contour:
                     cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
                     cs1 = self.createScatterPlot(title + pn,ax1_plot,x,y,z,rangey,rangez,startDatetime,endDatetime)
+                elif plot_step:
+                    cs0 = self.createStepPlot(title + pn,title,ax0_plot,x,z,rangez,startDatetime,endDatetime)
+                elif plot_scatter:
+                    cs0 = self.createScatterPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime)
                 else:
-                    if plot_step:
-                        cs0 = self.createStepPlot(title + pn,title,ax0_plot,x,z,rangez,startDatetime,endDatetime)
-                    else:
-                        cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
+                    cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
 
-                if plot_scatter:
+                if plot_scatter_contour:
                     ax1_plot.text(0.95,0.02, name, verticalalignment='bottom',
                                 horizontalalignment='right',transform=ax1_plot.transAxes,color='black',fontsize=8)
                 else:
@@ -516,10 +535,8 @@ class Contour(object):
         ax = plt.Subplot(fig, map_gs[:])
         fig.add_subplot(ax, aspect='equal')
 
-        logger.debug('computing activity extents')
         z = []
-        maptracks = None
-
+        logger.debug('getting measured data')
         z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, pn, self.plotDotParmName)
 
         # get the percentile ranges for this to autoscale
@@ -589,7 +606,7 @@ class Contour(object):
                         mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
 
             # if have a valid series, then plot the dots
-            if self.plotDotParmName is not None and len(z) > 0:
+            if self.plotDotParmName and len(z) > 0:
                 if len(z) > 2000:
                     sz = len(z)
                     stride = int(sz/200)
@@ -609,21 +626,24 @@ class Contour(object):
                     ax.text(0.70,0.1, ('%s (every point)' % (self.plotDotParmName)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
 
-            # plot the binary markers
-            markers = ['o','x','d','D','8','1','2','3','4']
-            i = 1
-            parm = [x.strip() for x in self.booleanPlotGroup.split(',')]
-            for name in parm:
-                logger.debug('Plotting boolean plot group paramter %s' % name)
-                z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], name)
-                pointsnp = np.array(points)
-                lon = pointsnp[:,0]
-                lat =  pointsnp[:,1]
-                # scale up the size of point
-                s = [20*val for val in z]
-                if len(z) > 0:
-                    mp.scatter(lon,lat,s=s,marker=markers[i],c='black',label=name,zorder=3)
-                i = i + 1
+            if self.booleanPlotGroup:
+                # plot the binary markers
+                markers = ['o','x','d','D','8','1','2','3','4']
+                i = 1
+                for g in self.booleanPlotGroup:
+                    parm = [x.strip() for x in g.split(',')]
+                    for name in parm:
+                        if name in self.plotGroupValid:
+                            logger.debug('Plotting boolean plot group parameter %s' % name)
+                            z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], name)
+                            pointsnp = np.array(points)
+                            lon = pointsnp[:,0]
+                            lat =  pointsnp[:,1]
+                            # scale up the size of point
+                            s = [20*val for val in z]
+                            if len(z) > 0:
+                                mp.scatter(lon,lat,s=s,marker=markers[i],c='black',label=name,zorder=3)
+                            i = i + 1
 
             # plot the legend outside the plot in the upper left corner
             l = ax.legend(loc='upper left', bbox_to_anchor=(1,1), prop={'size':8}, scatterpoints=1)# only plot legend symbol once
@@ -631,9 +651,6 @@ class Contour(object):
 
         except Exception, e:
             logger.warn(e)
-
-        #mp.fillcontinents()
-        #mp.drawcoastlines()
 
         if self.animate:
             # append frames output as pngs with an indexed frame number before the gif extension
@@ -864,10 +881,7 @@ class Contour(object):
     def run(self):
 
         self.frame = 0
-
-        endDatetimeLocal = self.endDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
-        startDatetimeLocal = self.startDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
-
+        logger.debug("Getting activity extent")
         self.extent = self.getActivityExtent(self.startDatetime, self.endDatetime)
 
         logger.debug('Loading data')
@@ -882,13 +896,12 @@ class Contour(object):
             self.autoscale = True
 
         if dataStart.tzinfo is None:
-            dataStart =  pytz.utc.localize(dataStart)
+            dataStart =  dataStart.replace(tzinfo=pytz.UTC)
         if dataEnd.tzinfo is None:
-            dataEnd = pytz.utc.localize(dataEnd)
+            dataEnd = dataEnd.replace(tzinfo=pytz.UTC)
 
         if self.animate: 
             self.dirpath = tempfile.mkdtemp()
-            zoomWindow = timedelta(hours=self.zoom) 
             zoomWindow = timedelta(hours=self.zoom)
             overlapWindow = timedelta(hours=self.overlap)
             endDatetime = dataStart + zoomWindow
