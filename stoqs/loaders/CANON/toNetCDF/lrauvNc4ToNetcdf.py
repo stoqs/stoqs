@@ -24,7 +24,6 @@ import json
 
 class InterpolatorWriter(BaseWriter):
 
- logger = []
  logger = logging.getLogger('lrauvNc4ToNetcdf')
  fh = logging.StreamHandler()
  f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
@@ -36,8 +35,8 @@ class InterpolatorWriter(BaseWriter):
  all_coord = {}
  all_attrib = {}
 
- def write_netcdf(self, out_file, inUrl):
-    
+ def write_netcdf(self, out_file, in_url):
+
         # Check parent directory and create if needed
         dirName = os.path.dirname(out_file)
         try:
@@ -47,13 +46,14 @@ class InterpolatorWriter(BaseWriter):
                       raise
 
         # Create the NetCDF file
+        self.logger.debug("Creating netCDF file %s" % out_file)
         self.ncFile = netcdf_file(out_file, 'w')
 
         # If specified on command line override the default generic title with what is specified
         self.ncFile.title = 'LRAUV interpolated data'
 
         # Combine any summary text specified on command line with the generic summary stating the original source file
-        self.ncFile.summary = 'Observational oceanographic data translated with modification from original data file %s' % inUrl
+        self.ncFile.summary = 'Observational oceanographic data translated with modification from original data file %s' % in_url
 
         # add in time dimensions first
         ts_key = []
@@ -62,6 +62,7 @@ class InterpolatorWriter(BaseWriter):
                 ts = self.all_sub_ts[key]
 
                 if not ts.empty:
+                       self.logger.debug("Adding in record variable %s" % key)
                        v = self.initRecordVariable(key)
                        v[:] = self.all_sub_ts[key]
             else:
@@ -72,13 +73,18 @@ class InterpolatorWriter(BaseWriter):
             ts = self.all_sub_ts[key]
 
             if not ts.empty:
+                try:
+                   logging.debug("Adding in record variable %s" % key)
                    v = self.initRecordVariable(key)
                    v[:] = self.all_sub_ts[key]
+                except Exception, e:
+                    self.logger.error(e)
+                    continue
 
+        self.logger.debug("Adding in global metadata")
         self.add_global_metadata()
 
         self.ncFile.close()
-
         # End write_netcdf()
 
 
@@ -337,14 +343,14 @@ class InterpolatorWriter(BaseWriter):
     return all_ts
     # End createCoord
 
- def processNc4File(self, file, out_file, parm, resampleFreq):
+ def processNc4File(self, in_file, out_file, parm, resampleFreq):
 
     all_ts = {}
     start_times = []
     end_times = []
     coord = ["latitude", "longitude", "depth", "time"]
 
-    self.df = netCDF4.Dataset(file, mode='r')
+    self.df = netCDF4.Dataset(in_file, mode='r')
 
     all_ts = self.createCoord(coord)
 
@@ -429,7 +435,7 @@ class InterpolatorWriter(BaseWriter):
     self.logger.info("%s", self.all_sub_ts.keys())
 
     # Write data to the file
-    self.write_netcdf(out_file, file)
+    self.write_netcdf(out_file, in_file)
     self.logger.info('Wrote ' + out_file)
 
      # End processNc4
@@ -491,13 +497,13 @@ class InterpolatorWriter(BaseWriter):
                         continue
 
                     for name in subgroup.variables[var].ncattrs():
-                        attr[name]=getattr(subgroup.variables[var],name)
+                        attr[name] = getattr(subgroup.variables[var],name)
 
                     self.all_attrib[key] = attr
 
                     # resample using the mean then interpolate on to the time dimension
                     ts_resample = ts.resample(resampleFreq, how='mean')[:]
-                    i = self.interpolate(ts, t_resample.index)
+                    i = self.interpolate(ts_resample, t_resample.index)
 
                     # store for later processing into the netCDF
                     self.all_sub_ts[key] = i
@@ -514,7 +520,7 @@ class InterpolatorWriter(BaseWriter):
                     i.plot(ax=axes[2],color='b')
                     plt.show()'''
 
-                    self.logger.info('Found parameter ' + var +' renaming to ' + key)
+                    self.logger.info('Found parameter ' + var + ' renaming to ' + key)
                 except KeyError, e:
                     self.logger.error(e)
                     continue
@@ -539,7 +545,7 @@ class InterpolatorWriter(BaseWriter):
     self.logger.info("%s", self.all_sub_ts.keys())
 
     # Write data to the file
-    self.write_netcdf(out_file, file)
+    self.write_netcdf(out_file, in_file)
     self.logger.info('Wrote ' + out_file)
 
      # End processNc4
@@ -636,7 +642,9 @@ if __name__ == '__main__':
 
     pw = InterpolatorWriter()
     pw.process_command_line()
-    file='/media/DCLINETHUMB/201505122358_201505142139.nc4'
+    #file='/media/DCLINETHUMB/201505122358_201505142139.nc4'
+    #file='/home/vagrant/dev/stoqs-dcline/stoqs/201510061540_201510062013.nc4'
+    file='/home/vagrant/LRAUV/daphne/missionlogs/2015/20150930_20151008/20151006T201728/201510062017_201510062027.nc4'
     outDir = '/tmp/'
     resample_freq='10S'
     rad_to_deg = True
