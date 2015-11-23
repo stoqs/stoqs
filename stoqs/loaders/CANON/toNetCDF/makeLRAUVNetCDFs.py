@@ -18,7 +18,7 @@ from thredds_crawler.etree import etree
 from datetime import datetime, timedelta
 
 # Set up global variables for logging output to STDOUT
-logger = logging.getLogger('monitorTethysHotSpotLogger')
+logger = logging.getLogger('makeLRAUVNetCDFS')
 fh = logging.StreamHandler()
 f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
 fh.setFormatter(f)
@@ -40,9 +40,9 @@ def process_command_line():
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                          description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
                                          epilog=examples)
-        parser.add_argument('-u', '--inUrl',action='store', help='url where processed data logs are.', default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/missionlogs/2015/.*.nc4$',required=False)
-        parser.add_argument('-i', '--inDir',action='store', help='url where processed data logs are.', default='/mbari/LRAUV/daphne/missionlogs/2015/',required=False)
-        parser.add_argument('-a', '--appendString',action='store', help='string to append to the data file created; used to differentiate engineering and science data files', default='sci',required=True)
+        parser.add_argument('-u', '--inUrl',action='store', help='url where processed data logs are.', default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/missionlogs/2015/.*nc4$',required=False)
+        parser.add_argument('-i', '--inDir',action='store', help='url where processed data logs are.', default='/home/vagrant/LRAUV/daphne/missionlogs/2015/',required=False)
+        parser.add_argument('-a', '--appendString',action='store', help='string to append to the data file created; used to differentiate engineering and science data files', default='sci',required=False)
         parser.add_argument('-r', '--resampleFreq', action='store', help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='10S')
         parser.add_argument('-p', '--parms', action='store', help='List of JSON formatted parameter groups, variables and renaming of variables', default= '{' \
            '"CTD_NeilBrown": [ ' \
@@ -63,8 +63,8 @@ def process_command_line():
            '"Aanderaa_O2": [ ' \
            '{ "name":"mass_concentration_of_oxygen_in_sea_water", "rename":"oxygen" } ' \
            '] }')
-        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150518T000000', required=False)
-        parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default=None, required=False)
+        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150930T000000', required=False)
+        parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20151031T000000', required=False)
 
         args = parser.parse_args()
 
@@ -152,8 +152,8 @@ def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendS
     url_o = None
 
     logger.debug('url = %s', url_in)
-    url_out = url.replace('.nc4', '_' + resample_freq + '_' + appendString + '.nc')
-    base_in =  '/'.join(url.split('/')[-3:])
+    url_out = url_in.replace('.nc4', '_' + resample_freq + '_' + appendString + '.nc')
+    base_in =  '/'.join(url_in.split('/')[-3:])
     base_out = '/'.join(url_out.split('/')[-3:])
 
     out_file = os.path.join(inDir,  base_out)
@@ -164,17 +164,17 @@ def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendS
     try:
         pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg)
     except TypeError as e:
-        logger.warn('Problem reading data from %s', url)
+        logger.warn('Problem reading data from %s', url_in)
         logger.warn('Assuming data are invalid and skipping')
         logger.warn(e)
         raise e
     except IndexError as e:
-        logger.warn('Problem interpolating data from %s', url)
+        logger.warn('Problem interpolating data from %s', url_in)
         raise e
     except KeyError as e:
-        raise ServerError("Key error - can't read parameters from %s" % (url))
+        raise ServerError("Key error - can't read parameters from %s" % (url_in))
     except ValueError as e:
-        raise ServerError("Value error - can't read parameters from %s" % (url))
+        raise ServerError("Value error - can't read parameters from %s" % (url_in))
 
     url_o = url_out
     return url_o
