@@ -79,9 +79,9 @@ class Contour(object):
     '''
     Create plots for visualizing data from LRAUV vehicles
     '''
-    def __init__(self, startDatetime, endDatetime, database, platformName, plotGroup, title, outFilename, autoscale, plotDotParmName, booleanPlotGroup, animate=False, zoom=6, overlap=3):
-        self.startDatetime = startDatetime
-        self.endDatetime = endDatetime
+    def __init__(self, start_datetime, end_datetime, database, platformName, plotGroup, title, outFilename, autoscale, plotDotParmName, booleanPlotGroup, animate=False, zoom=6, overlap=3):
+        self.start_datetime = start_datetime
+        self.end_datetime = end_datetime
         self.platformName = platformName
         self.plotGroup = plotGroup
         self.plotGroupValid = []
@@ -96,13 +96,13 @@ class Contour(object):
         self.overlap = overlap
         self.dirpath = []
 
-    def getActivityExtent(self,startDatetime, endDatetime):
+    def getActivityExtent(self,start_datetime, end_datetime):
         '''
         Get spatial temporal extent for a platform.
         '''
         qs = Activity.objects.using(self.database).filter(platform__name__in=self.platformName)
-        qs = qs.filter(startdate__gte=startDatetime)
-        qs = qs.filter(enddate__lte=endDatetime)
+        qs = qs.filter(startdate__gte=start_datetime)
+        qs = qs.filter(enddate__lte=end_datetime)
         seaQS = qs.aggregate(Min('startdate'), Max('enddate'))
         self.activityStartTime = seaQS['startdate__min']
         self.activityEndTime = seaQS['enddate__max']
@@ -128,7 +128,7 @@ class Contour(object):
 
         return min, max, units
 
-    def getTimeSeriesData(self, startDatetime, endDatetime):
+    def getTimeSeriesData(self, start_datetime, end_datetime):
         '''
         Return time series of a list of Parameters from a Platform
         '''
@@ -158,8 +158,8 @@ class Contour(object):
                         data_dict[pln+pname]['units'] = units[0]['parameter__units']
 
                         qs = MeasuredParameter.objects.using(self.database)
-                        qs = qs.filter(measurement__instantpoint__timevalue__gte=startDatetime)
-                        qs = qs.filter(measurement__instantpoint__timevalue__lte=endDatetime)
+                        qs = qs.filter(measurement__instantpoint__timevalue__gte=start_datetime)
+                        qs = qs.filter(measurement__instantpoint__timevalue__lte=end_datetime)
                         qs = qs.filter(parameter__name=pname)
                         qs = qs.filter(measurement__instantpoint__activity__platform__name=pln)
                         sdt_count = qs.values_list('measurement__instantpoint__simpledepthtime__depth').count()
@@ -196,11 +196,11 @@ class Contour(object):
                             parameters_valid.append(pname)
 
                 except Exception, e:
-                    logger.error('%s not available in database for the dates %s %s' %(pname, startDatetime, endDatetime))
+                    logger.error('%s not available in database for the dates %s %s' %(pname, start_datetime, end_datetime))
                     continue
 
                 except Exception, e:
-                    logger.error('%s not available in database for the dates %s %s' %(pname, startDatetime, endDatetime))
+                    logger.error('%s not available in database for the dates %s %s' %(pname, start_datetime, end_datetime))
                     continue
 
                 if len(parameters_valid) > 0:
@@ -212,8 +212,8 @@ class Contour(object):
             data_end_dt = sorted(end_dt)[-1]
         else:
             #otherwise default to requested dates
-            data_start_dt = startDatetime
-            data_end_dt = endDatetime
+            data_start_dt = start_datetime
+            data_end_dt = end_datetime
 
         if not self.plotDotParmName in self.plotGroupValid:
             # if the dot plot parameter name is not in the valid list of parameters found, switch it to
@@ -226,7 +226,7 @@ class Contour(object):
 
         return data_dict, data_start_dt, data_end_dt
 
-    def getMeasuredPPData(self, startDatetime, endDatetime, platform, parm):
+    def getMeasuredPPData(self, start_datetime, end_datetime, platform, parm):
         points = []
         data = []
         activity_names = []
@@ -234,8 +234,8 @@ class Contour(object):
 
         try:
             qs = MeasuredParameter.objects.using(self.database)
-            qs = qs.filter(measurement__instantpoint__timevalue__gte=startDatetime)
-            qs = qs.filter(measurement__instantpoint__timevalue__lte=endDatetime)
+            qs = qs.filter(measurement__instantpoint__timevalue__gte=start_datetime)
+            qs = qs.filter(measurement__instantpoint__timevalue__lte=end_datetime)
             qs = qs.filter(parameter__name=parm)
             qs = qs.filter(measurement__instantpoint__activity__platform__name=platform)
             qs = qs.values('measurement__instantpoint__timevalue', 'measurement__geom', 'parameter', 'datavalue', 'measurement__instantpoint__activity__maptrack',  'measurement__instantpoint__activity__name').order_by('measurement__instantpoint__timevalue')
@@ -256,20 +256,20 @@ class Contour(object):
                     maptracks.append(geom)
 
         except Exception, e:
-            logger.error('%s not available in database for the dates %s %s' %(parm, startDatetime, endDatetime))
+            logger.error('%s not available in database for the dates %s %s' %(parm, start_datetime, end_datetime))
 
         return data, points, maptracks
 
-    def loadData(self, startDatetime, endDatetime):
+    def loadData(self, start_datetime, end_datetime):
         try:
-            self.data, dataStart, dataEnd = self.getTimeSeriesData(startDatetime, endDatetime)
-            return dataStart, dataEnd
+            self.data, data_start, data_end = self.getTimeSeriesData(start_datetime, end_datetime)
+            return data_start, data_end
 
         except Exception, e:
             logger.warn(e)
             raise e
 
-        return startDatetime, endDatetime
+        return start_datetime, end_datetime
 
     class DateFormatter(mpl.ticker.Formatter):
         def __init__(self, scale_factor=1):
@@ -334,7 +334,7 @@ class Contour(object):
 
         ax.fill_between(scale_xdates, miny, maxy, where=result, facecolor='#C8C8C8', edgecolor='none', alpha=0.3)
 
-    def createPlot(self, startDatetime, endDatetime):
+    def createPlot(self, start_datetime, end_datetime):
 
         if len(self.data) == 0:
             logger.debug('no data found to plot')
@@ -446,8 +446,8 @@ class Contour(object):
 
                 # if no data found add in some fake data and plot a placeholder time/depth plot
                 if not x:
-                    tmin = time.mktime(startDatetime.timetuple())
-                    tmax = time.mktime(endDatetime.timetuple())
+                    tmin = time.mktime(start_datetime.timetuple())
+                    tmax = time.mktime(end_datetime.timetuple())
                     x.append(tmin)
                     x.append(tmax)
                     y.append(np.NaN)
@@ -456,14 +456,14 @@ class Contour(object):
                     z.append(np.NaN)
 
                 if plot_scatter_contour:
-                    cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
-                    cs1 = self.createScatterPlot(title + pn,ax1_plot,x,y,z,rangey,rangez,startDatetime,endDatetime)
+                    cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime,sdt_count)
+                    cs1 = self.createScatterPlot(title + pn,ax1_plot,x,y,z,rangey,rangez,start_datetime,end_datetime)
                 elif plot_step:
-                    cs0 = self.createStepPlot(title + pn,title,ax0_plot,x,z,rangez,startDatetime,endDatetime)
+                    cs0 = self.createStepPlot(title + pn,title,ax0_plot,x,z,rangez,start_datetime,end_datetime)
                 elif plot_scatter:
-                    cs0 = self.createScatterPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime)
+                    cs0 = self.createScatterPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime)
                 else:
-                    cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,startDatetime,endDatetime,sdt_count)
+                    cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime,sdt_count)
 
                 if plot_scatter_contour:
                     ax1_plot.text(0.95,0.02, name, verticalalignment='bottom',
@@ -537,7 +537,7 @@ class Contour(object):
 
         z = []
         logger.debug('getting measured data')
-        z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, pn, self.plotDotParmName)
+        z, points, maptracks = self.getMeasuredPPData(start_datetime, end_datetime, pn, self.plotDotParmName)
 
         # get the percentile ranges for this to autoscale
         pointsnp = np.array(points)
@@ -631,11 +631,11 @@ class Contour(object):
                 markers = ['o','x','d','D','8','1','2','3','4']
                 i = 1
                 for g in self.booleanPlotGroup:
-                    parm = [x.strip() for x in g.split(',')]
+                    parm = [z.strip() for z in g.split(',')]
                     for name in parm:
                         if name in self.plotGroupValid:
-                            logger.debug('Plotting boolean plot group parameter %s' % name)
-                            z, points, maptracks = self.getMeasuredPPData(startDatetime, endDatetime, self.platformName[0], name)
+                            logger.debug('Plotting boolean plot group parameter %s', name)
+                            z, points, maptracks = self.getMeasuredPPData(start_datetime, end_datetime, self.platformName[0], name)
                             pointsnp = np.array(points)
                             lon = pointsnp[:,0]
                             lat =  pointsnp[:,1]
@@ -882,10 +882,10 @@ class Contour(object):
 
         self.frame = 0
         logger.debug("Getting activity extent")
-        self.extent = self.getActivityExtent(self.startDatetime, self.endDatetime)
+        self.extent = self.getActivityExtent(self.start_datetime, self.end_datetime)
 
         logger.debug('Loading data')
-        dataStart, dataEnd = self.loadData(self.startDatetime, self.endDatetime)
+        data_start, data_end = self.loadData(self.start_datetime, self.end_datetime)
 
         if not self.data:
             logger.debug('No valid data to plot')
@@ -895,31 +895,31 @@ class Contour(object):
         if self.animate:
             self.autoscale = True
 
-        if dataStart.tzinfo is None:
-            dataStart =  dataStart.replace(tzinfo=pytz.UTC)
-        if dataEnd.tzinfo is None:
-            dataEnd = dataEnd.replace(tzinfo=pytz.UTC)
+        if data_start.tzinfo is None:
+            data_start =  data_start.replace(tzinfo=pytz.UTC)
+        if data_end.tzinfo is None:
+            data_end = data_end.replace(tzinfo=pytz.UTC)
 
         if self.animate: 
             self.dirpath = tempfile.mkdtemp()
-            zoomWindow = timedelta(hours=self.zoom)
-            overlapWindow = timedelta(hours=self.overlap)
-            endDatetime = dataStart + zoomWindow
-            startDatetime = dataStart
+            zoom_window = timedelta(hours=self.zoom)
+            overlap_window = timedelta(hours=self.overlap)
+            end_datetime = data_start + zoom_window
+            start_datetime = data_start
 
             try:
                 # Loop through sections of the data with temporal constraints based on the window and step command line parameters
-                while endDatetime <= dataEnd :
-                    dataEndDatetimeLocal = endDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
-                    dataStartDatetimeLocal = startDatetime.astimezone(pytz.timezone('America/Los_Angeles'))
+                while end_datetime <= data_end :
+                    data_end_local = end_datetime.astimezone(pytz.timezone('America/Los_Angeles'))
+                    data_start_local = start_datetime.astimezone(pytz.timezone('America/Los_Angeles'))
                     logger.debug('Plotting data')
 
-                    self.subtitle1 = '%s  to  %s PDT' % (dataStartDatetimeLocal.strftime('%Y-%m-%d %H:%M'), dataEndDatetimeLocal.strftime('%Y-%m-%d %H:%M'))
-                    self.subtitle2 = '%s  to  %s UTC' % (startDatetime.strftime('%Y-%m-%d %H:%M'), endDatetime.strftime('%Y-%m-%d %H:%M'))
-                    self.createPlot(startDatetime, endDatetime)
+                    self.subtitle1 = '%s  to  %s PDT' % (data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
+                    self.subtitle2 = '%s  to  %s UTC' % (start_datetime.strftime('%Y-%m-%d %H:%M'), end_datetime.strftime('%Y-%m-%d %H:%M'))
+                    self.createPlot(start_datetime, end_datetime)
 
-                    startDatetime = endDatetime - overlapWindow
-                    endDatetime = startDatetime + zoomWindow
+                    start_datetime = end_datetime - overlap_window
+                    end_datetime = start_datetime + zoom_window
 
                 i = 0
 
@@ -934,11 +934,11 @@ class Contour(object):
         else :
             try:
                 if self.data is not None:
-                    dataEndDatetimeLocal = dataEnd.astimezone(pytz.timezone('America/Los_Angeles'))
-                    dataStartDatetimeLocal = dataStart.astimezone(pytz.timezone('America/Los_Angeles'))
+                    data_end_local = data_end.astimezone(pytz.timezone('America/Los_Angeles'))
+                    data_start_local = data_start.astimezone(pytz.timezone('America/Los_Angeles'))
                     logger.debug('Plotting data')
-                    self.subtitle1 = '%s  to  %s PDT' % (dataStartDatetimeLocal.strftime('%Y-%m-%d %H:%M'), dataEndDatetimeLocal.strftime('%Y-%m-%d %H:%M'))
-                    self.subtitle2 = '%s  to  %s UTC' % (dataStart.strftime('%Y-%m-%d %H:%M'), dataEnd.strftime('%Y-%m-%d %H:%M'))
-                    self.createPlot(dataStart, dataEnd)
+                    self.subtitle1 = '%s  to  %s PDT' % (data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
+                    self.subtitle2 = '%s  to  %s UTC' % (data_start.strftime('%Y-%m-%d %H:%M'), data_end.strftime('%Y-%m-%d %H:%M'))
+                    self.createPlot(data_start, data_end)
             except Exception, e:
                 logger.error(e)

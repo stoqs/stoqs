@@ -984,7 +984,7 @@ class Base_Loader(STOQS_Loader):
                         try:
                             mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, dataarray=list(value))
                         except TypeError:
-                            logger.warn('%s', e)
+                            logger.warn('Tried to interpret value as a list, but failed')
                             continue
                     try:
                         logger.debug('Saving parameter_id %s at measurement_id = %s', parameter.id, measurement.id)
