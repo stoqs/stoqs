@@ -1,5 +1,5 @@
 -r base.txt
-coverage==4.0.2
+coverage==4.0.3
 python-coveralls==2.5.0
 scikit-learn==0.17
 scipy==0.16.1
