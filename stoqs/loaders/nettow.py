@@ -243,7 +243,7 @@ class NetTow():
         from argparse import RawTextHelpFormatter
 
         examples = 'Example:' + '\n\n' 
-        examples += "  Step 1 - Create .cvs file of parent Sample information:\n"
+        examples += "  Step 1 - Create .csv file of parent Sample information:\n"
         examples += "    " + sys.argv[0] + " --database stoqs_simz_aug2013_t"
         examples += " --subsampleFile 2013_SIMZ_TowNets_STOQS.csv"
         examples += " --csvFile 2013_SIMZ_TowNet_ParentSamples.csv\n"
