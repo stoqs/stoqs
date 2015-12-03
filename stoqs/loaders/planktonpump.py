@@ -43,6 +43,7 @@ import csv
 import logging
 from datetime import timedelta, datetime
 from datadiff.tools import assert_equal
+from django.db.models import Avg
 from collections import defaultdict, OrderedDict
 from loaders.SampleLoaders import NETTOW, VERTICALNETTOW
 from stoqs.models import Activity, Sample, InstantPoint, ActivityType, Campaign, Platform, SampleType, SamplePurpose, PlatformType
@@ -55,13 +56,12 @@ class PlanktonPump():
     logger.setLevel(logging.INFO)
 
     def _collect_samples(self, file):
-        '''Read records into a hash keyed on 'Cruise', typically the CTD cast 
-        name. The values of the hash are a list of sample_metadata (sm) hashes
-        which are then checked for consistency. For SIMZ cruises the convention
-        has been to conduct one plankton pump per group of 4 Niskin bottle trips,
-        3 pumps per cast. 
+        '''Read records into a hash keyed on ('Cruise', 'Relative Depth').
+        The values of the hash are a list of sample_metadata (sm) hashes.
+        For SIMZ cruises the convention has been to conduct one plankton pump 
+        per group of 4 Niskin bottle trips, 3 pumps per cast. 
         '''
-        cast_hash = defaultdict(lambda: [])
+        sm_hash = OrderedDict()
         with open(self.args.subsampleFile) as f:
             for r in csv.DictReader(f):
                 sm = OrderedDict()
@@ -69,26 +69,49 @@ class PlanktonPump():
                 sm['depth'] = r.get('Depth [m]', '')
                 sm['sampletype'] = r.get('Sample Type', '')
                 sm[r.get('Comment Name')] = r.get('Comment Value', '')
+                key = (r.get('Cruise'), sm.get('Relative Depth'))
 
-                cast_hash[r.get('Cruise')].append(sm)
+                try:
+                    sm_hash[key].append(sm)
+                except KeyError:
+                    sm_hash[key] = []
+                    sm_hash[key].append(sm)
 
-        # Ensure consistency of sample metadata following SIMZ convention
-        cast_hash_consistent = OrderedDict()
-        for cast, sm_list in sorted(cast_hash.items()):
-            for sm_hash in sm_list[1:]:
-                self.logger.debug('Checking consistency of record %s', sm_hash)
-                assert_equal(sm_list[0], sm_hash)
+        return sm_hash
 
-            cast_hash_consistent[cast] = sm_list[0]
-                    
-        import pdb; pdb.set_trace()
-        return cast_hash_consistent
-
-    def _pumping_depth(self):
+    def _pumping_depth(self, a_name, v):
         '''Compare with cluster of Niskin bottles and return depth of the
-        Plankton Pump
+        Plankton Pump.
         '''
-        pass
+        bottles = dict(Bottom_Upper_Bottom = (1,2,3,4),
+                       Mid_Mid = (5,6,7,8),
+                       Surface_Below_Surface = (9,10,11,12),
+                       Bottom_Bottom = (1,2,3,4),
+                       Surface_Surface = (9,10,11,12),
+                       Mid_Upper_Bottom = (1,2,3,4),
+                       Surface_Mid = (9,10,11,12),
+                       )
+        samples = Sample.objects.using(self.args.database).filter(
+                       sampletype__name='Niskin',
+                       instantpoint__activity__name=a_name, 
+                       name__in=bottles[v['Relative Depth']])
+
+        self.logger.info('Bottle depths for cast %s, %s: %s', a_name, v['Relative Depth'], 
+                          [float(d) for d in samples.values_list('depth', flat=True)])
+        depth = samples.aggregate(Avg('depth')).values()[0]
+        self.logger.info('Average depth = %s', depth)
+
+        return depth
+
+    def _add_db_values(self, activity, sample):
+        '''Add information from the STOQS Activity object to the sample dictionary
+        '''
+        sample['longitude'] = activity.mappoint.x
+        sample['latitude'] = activity.mappoint.y
+        sample['datetime_gmt'] = (activity.startdate - timedelta(minutes=self.args.add_minutes)).isoformat()
+        sample['depth'] = self._pumping_depth(activity.name, sample)
+
+        return sample
 
     def _db_join(self, sm_hash):
         '''Join Sample data with data already in the database for the CTD cast.
@@ -98,36 +121,28 @@ class PlanktonPump():
         self.logger.info('Joining subsample information with cast data from the'
                          ' database using add_minutes = %d', self.args.add_minutes)
         new_hash = OrderedDict()
-        import pdb; pdb.set_trace()
-        for a_name, v in sm_hash.iteritems():
-            try:
-                import pdb; pdb.set_trace()
-                a = Activity.objects.using(self.args.database).get(name__contains=a_name)
-                import pdb; pdb.set_trace()
-                v['longitude'] = a.mappoint.x
-                v['latitude'] = a.mappoint.y
-                v['datetime_gmt'] = (a.startdate - timedelta(minutes=self.args.add_minutes)).isoformat()
-                v['depth'] = self._pumping_depth()
-                new_hash[a_name] = v
-            except Activity.DoesNotExist as e:
-                self.logger.warn('Activity matching "%s" does not exist in database %s', a_name, self.args.database)
-                continue
-            except Activity.MultipleObjectsReturned as e:
-                self.logger.warn(e)
-                acts = Activity.objects.using(self.args.database).filter(name__contains=a_name).order_by('name')
-                self.logger.warn('Names found:')
-                for a in acts:
-                    self.logger.warn(a.name)
-                self.logger.warn('Creating a load record for the first one, but make sure that this is what you want!')
-                v['longitude'] = acts[0].mappoint.x
-                v['latitude'] = acts[0].mappoint.y
-                v['datetime_gmt'] = (acts[0].startdate - timedelta(minutes=self.args.add_minutes)).isoformat()
-                new_hash[a_name] = v
-                continue
+        for (a_name, rdepth), samples in sm_hash.iteritems():
+            for sample in samples:
+                key = (a_name, rdepth)
+                try:
+                    a = Activity.objects.using(self.args.database).get(name__contains=a_name)
+                    sample = self._add_db_values(a, sample)
+                    new_hash[key] = sample
+                except Activity.DoesNotExist as e:
+                    self.logger.warn('Activity matching "%s" does not exist in database %s', a_name, self.args.database)
+                except Activity.MultipleObjectsReturned as e:
+                    self.logger.warn(e)
+                    acts = Activity.objects.using(self.args.database).filter(name__contains=a_name).order_by('name')
+                    self.logger.warn('Names found:')
+                    for a in acts:
+                        self.logger.warn(a.name)
+                    self.logger.warn('Creating a load record for the first one, but make sure that this is what you want!')
+                    sample = self._add_db_values(acts[0], sample)
+                    new_hash[key] = sample
 
         return new_hash
 
-    def make_csv(self):
+    def make_parent_csv(self):
         '''Construct and write parent Sample csv file
         '''
         s = self._collect_samples(self.args.subsampleFile)
@@ -137,6 +152,7 @@ class PlanktonPump():
 
         with open(self.args.csv_file, 'w') as f:
             f.write('Cast,')
+            import pdb; pdb.set_trace()
             f.write(','.join(s.itervalues().next().keys()))
             f.write('\n')
             for k,v in s.iteritems():
@@ -306,7 +322,7 @@ if __name__ == '__main__':
     pp.process_command_line()
 
     if pp.args.subsampleFile and pp.args.csv_file:
-        pp.make_csv()
+        pp.make_parent_csv()
 
     elif pp.args.loadFile:
         pp.load_samples()
