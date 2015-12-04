@@ -45,7 +45,7 @@ from datetime import timedelta, datetime
 from datadiff.tools import assert_equal
 from django.db.models import Avg
 from collections import defaultdict, OrderedDict
-from loaders.SampleLoaders import NETTOW, VERTICALNETTOW
+from loaders.SampleLoaders import PLANKTONPUMP
 from stoqs.models import Activity, Sample, InstantPoint, ActivityType, Campaign, Platform, SampleType, SamplePurpose, PlatformType
 
 class PlanktonPump():
@@ -65,11 +65,15 @@ class PlanktonPump():
         with open(self.args.subsampleFile) as f:
             for r in csv.DictReader(f):
                 sm = OrderedDict()
-                sm['name'] = r.get('Name', '')
-                sm['depth'] = r.get('Depth [m]', '')
                 sm['sampletype'] = r.get('Sample Type', '')
+                sm['organism'] = r.get('Organism', '')
+                sm['count'] = r.get('Count', '')
+                sm['laboratory'] = r.get('Laboratory', '')
+                sm['researcher'] = r.get('Researcher', '')
+                sm['analysismethod'] = r.get('Analysis Method', '')
                 sm[r.get('Comment Name')] = r.get('Comment Value', '')
-                key = (r.get('Cruise'), sm.get('Relative Depth'))
+                # Depends on a Comment Name of 'Relative Depth'
+                key = (r.get('Cruise'), sm.get('Relative Depth'))   
 
                 try:
                     sm_hash[key].append(sm)
@@ -155,7 +159,7 @@ class PlanktonPump():
             f.write(','.join(s.itervalues().next().keys()))
             f.write('\n')
             for k,v in s.iteritems():
-                f.write(','.join(k))
+                f.write(','.join(k) + ',')
                 f.write(','.join([str(dv) for dv in v.values()]))
                 f.write('\n')
 
@@ -174,20 +178,20 @@ class PlanktonPump():
                             )
         return platform
 
-    def _create_activity_instantpoint_platform(self, r, duration_minutes, nettow_number, point):
+    def _create_activity_instantpoint_platform(self, r, duration_minutes, planktonpump_name, point):
         '''Create an Activity and an InstantPoint from which to hang the Sample. Return the InstantPoint.
         '''
         campaign = Campaign.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
         cast_plt = Platform.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
         platform = self._get_plankton_pump_platform(cast_plt)
-        at, created = ActivityType.objects.using(self.args.database).get_or_create(name=VERTICALNETTOW)
+        at, created = ActivityType.objects.using(self.args.database).get_or_create(name=PLANKTONPUMP)
 
         timevalue = datetime.strptime(r.get('datetime_gmt'), '%Y-%m-%dT%H:%M:%S')
         act, created = Activity.objects.using(self.args.database).get_or_create(
                             campaign = campaign,
                             activitytype = at,
-                            name = r.get('Cast') + '_%s%d' % (NETTOW, nettow_number),
-                            comment = 'Plankton net tow done in conjunction with CTD cast %s' % r.get('Cast'),
+                            name = r.get('Cast') + '_%s_%s' % (PLANKTONPUMP, planktonpump_name),
+                            comment = 'Plankton pump done in conjunction with CTD cast %s' % r.get('Cast'),
                             platform = platform,
                             startdate = timevalue,
                             enddate = timevalue + timedelta(minutes=duration_minutes),
@@ -208,15 +212,17 @@ class PlanktonPump():
         '''
         # As of February 2015 the convention is one net tow per CTD cast, number the name of the
         # Samples in preparation in case we will have more than one. This will be over-ridden by name in the .csv file.
-        nettow_number = 1
-        with open(self.args.loadFile) as f:
+        with open(self.args.load_file) as f:
             for r in csv.DictReader(f):
                 point = 'POINT(%s %s)' % (r.get('longitude'), r.get('latitude'))
-                # TODO: If net tow numbers are in the .csv file then they will need to be paresed for nettow_number here
-                act, ip = self._create_activity_instantpoint_platform(r, duration_minutes=2, nettow_number=nettow_number, point=point)
 
-                if r.get('sampletype').lower().find('vertical') != -1:
-                    sampletype_name = VERTICALNETTOW
+                act, ip = self._create_activity_instantpoint_platform(r, 
+                        duration_minutes=self.args.duration, 
+                        planktonpump_name=r.get('RelativeDepth'), point=point)
+
+                if 'plankton pump' in r.get('sampletype').lower():
+                    sampletype_name = PLANKTONPUMP
+
                 sampletype, created = SampleType.objects.using(self.args.database).get_or_create(name=sampletype_name)
 
                 samplepurpose = None
@@ -232,22 +238,19 @@ class PlanktonPump():
                 fps = None
                 if r.get('filterporesize'):
                     fps = float(r.get('filterporesize'))
-                name = str(nettow_number)
-                if r.get('name'):
-                    name = r.get('name')
 
                 samp, created = Sample.objects.using(self.args.database).get_or_create( 
-                                    name = name,
-                                    depth = r.get('depth'),
-                                    geom = point,
-                                    instantpoint = ip,
-                                    sampletype = sampletype,
-                                    volume = v,
-                                    filterdiameter = fd,
-                                    filterporesize = fps,
-                                    laboratory = self.args.laboratory,
-                                    researcher = self.args.researcher,
-                                    samplepurpose = samplepurpose
+                                name = r.get('RelativeDepth'),
+                                depth = r.get('depth'),
+                                geom = point,
+                                instantpoint = ip,
+                                sampletype = sampletype,
+                                volume = v,
+                                filterdiameter = fd,
+                                filterporesize = fps,
+                                laboratory = r.get('laboratory', self.args.laboratory),
+                                researcher = r.get('researcher', self.args.researcher),
+                                samplepurpose = samplepurpose
                                 )
 
                 self.logger.info('Loaded Sample %s for Activity %s', samp, act)
@@ -261,13 +264,13 @@ class PlanktonPump():
 
         examples = 'Example:' + '\n\n' 
         examples += "  Step 1 - Create .csv file of parent Sample information:\n"
-        examples += "    " + sys.argv[0] + " --database stoqs_simz_aug2013_t"
-        examples += " --subsampleFile 2013_SIMZ_TowNets_STOQS.csv"
-        examples += " --csv_file 2013_SIMZ_TowNet_ParentSamples.csv\n"
+        examples += "    " + sys.argv[0] + " --database stoqs_simz_aug2013"
+        examples += " --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv"
+        examples += " --csv_file 2013_SIMZ_PlanktonPump_ParentSamples.csv\n"
         examples += "\n"
         examples += "  Step 2 - Load parent Sample information:\n"
-        examples += "    " + sys.argv[0] + " --database stoqs_simz_aug2013_t"
-        examples += " --loadFile 2013_SIMZ_TowNet_ParentSamples.csv\n"
+        examples += "    " + sys.argv[0] + " --database stoqs_simz_aug2013"
+        examples += " --load_file 2013_SIMZ_PlanktonPump_ParentSamples.csv\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde".'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
@@ -291,7 +294,7 @@ class PlanktonPump():
         parser.add_argument('--purpose', action='store', 
                             help='Purpose of the Sample')
 
-        parser.add_argument('-l', '--loadFile', action='store', 
+        parser.add_argument('-l', '--load_file', action='store', 
                             help='Load parent Sample data into database')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, 
@@ -304,11 +307,11 @@ class PlanktonPump():
             if not self.args.csv_file:
                 parser.error('Must include --csv_file argument with --subsampleFile option')
                 
-        elif self.args.loadFile:
+        elif self.args.load_file:
             pass
 
         else:
-            parser.error('Must provide either --subsampleFile or --loadFile option')
+            parser.error('Must provide either --subsampleFile or --load_file option')
 
         if self.args.verbose > 1:
             self.logger.setLevel(logging.DEBUG)
@@ -323,6 +326,6 @@ if __name__ == '__main__':
     if pp.args.subsampleFile and pp.args.csv_file:
         pp.make_parent_csv()
 
-    elif pp.args.loadFile:
+    elif pp.args.load_file:
         pp.load_samples()
 
