@@ -151,12 +151,11 @@ class PlanktonPump():
         s = self._db_join(s)
 
         with open(self.args.csv_file, 'w') as f:
-            f.write('Cast,')
-            import pdb; pdb.set_trace()
+            f.write('Cast,RelativeDepth,')
             f.write(','.join(s.itervalues().next().keys()))
             f.write('\n')
             for k,v in s.iteritems():
-                f.write('%s,' % k)
+                f.write(','.join(k))
                 f.write(','.join([str(dv) for dv in v.values()]))
                 f.write('\n')
 
