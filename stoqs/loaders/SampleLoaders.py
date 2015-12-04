@@ -71,6 +71,7 @@ NISKIN = 'Niskin'
 NETTOW = 'NetTow'
 VERTICALNETTOW = 'VerticalNetTow'       # Must contain NETTOW string so that a filter for
 HORIZONTALNETTOW = 'VerticalNetTow'     # name__contains=NETTOW returns both vertical and horizontal net tows
+PLANKTONPUMP = 'PlanktonPump'
 
 class ClosestTimeNotFoundException(Exception):
     pass
