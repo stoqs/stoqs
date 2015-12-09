@@ -43,7 +43,7 @@ import csv
 import logging
 from datetime import timedelta, datetime
 from datadiff.tools import assert_equal
-from django.db.models import Avg
+from django.db.models import Avg, Max
 from collections import defaultdict, OrderedDict
 from loaders.SampleLoaders import PLANKTONPUMP
 from stoqs.models import Activity, Sample, InstantPoint, ActivityType, Campaign, Platform, SampleType, SamplePurpose, PlatformType
@@ -54,6 +54,17 @@ class PlanktonPump():
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
+
+    # Lookup for spreadsheet names to bottle numbers and pump number per cast
+    pump_bottles = dict(Bottom_Upper_Bottom = ((1,2,3,4), 1),
+                        Mid_Mid = ((5,6,7,8), 2),
+                        Surface_Below_Surface = ((9,10,11,12), 3),
+                        Bottom_Bottom = ((1,2,3,4), 1),
+                        Surface_Surface = ((9,10,11,12), 3),
+                        Mid_Upper_Bottom = ((1,2,3,4), 1),
+                        Surface_Mid = ((9,10,11,12), 3),
+                        Bottom_Mid_ = ((1,2,3,4), 1),
+                       )
 
     def _collect_samples(self, file):
         '''Read records into a hash keyed on ('Cruise', 'Relative Depth').
@@ -87,18 +98,10 @@ class PlanktonPump():
         '''Compare with cluster of Niskin bottles and return depth of the
         Plankton Pump.
         '''
-        bottles = dict(Bottom_Upper_Bottom = (1,2,3,4),
-                       Mid_Mid = (5,6,7,8),
-                       Surface_Below_Surface = (9,10,11,12),
-                       Bottom_Bottom = (1,2,3,4),
-                       Surface_Surface = (9,10,11,12),
-                       Mid_Upper_Bottom = (1,2,3,4),
-                       Surface_Mid = (9,10,11,12),
-                       )
         samples = Sample.objects.using(self.args.database).filter(
                        sampletype__name='Niskin',
                        instantpoint__activity__name=a_name, 
-                       name__in=bottles[v['Relative Depth']])
+                       name__in=self.pump_bottles[v['Relative Depth']][0])
 
         self.logger.info('Bottle depths for cast %s, %s: %s', a_name, v['Relative Depth'], 
                           [float(d) for d in samples.values_list('depth', flat=True)])
@@ -107,12 +110,25 @@ class PlanktonPump():
 
         return depth
 
+    def _pumping_start_time(self, a_name, v):
+        '''Return ISO-8601 datetime string of last bottle trip at this pumping event
+        '''
+        samples = Sample.objects.using(self.args.database).filter(
+                       sampletype__name='Niskin',
+                       instantpoint__activity__name=a_name, 
+                       name__in=self.pump_bottles[v['Relative Depth']][0])
+
+        last_bottle_dt = samples.aggregate(Max('instantpoint__timevalue')).values()[0]
+        self.logger.info('Last bottle time = %s', last_bottle_dt)
+
+        return last_bottle_dt.strftime('%Y-%m-%dT%H:%M:%S')
+
     def _add_db_values(self, activity, sample):
         '''Add information from the STOQS Activity object to the sample dictionary
         '''
         sample['longitude'] = activity.mappoint.x
         sample['latitude'] = activity.mappoint.y
-        sample['datetime_gmt'] = (activity.startdate - timedelta(minutes=self.args.add_minutes)).isoformat()
+        sample['datetime_gmt'] = self._pumping_start_time(activity.name, sample)
         sample['depth'] = self._pumping_depth(activity.name, sample)
 
         return sample
@@ -218,7 +234,7 @@ class PlanktonPump():
 
                 act, ip = self._create_activity_instantpoint_platform(r, 
                         duration_minutes=self.args.duration, 
-                        planktonpump_name=r.get('RelativeDepth'), point=point)
+                        planktonpump_name=self.pump_bottles[r.get('RelativeDepth')][1], point=point)
 
                 if 'plankton pump' in r.get('sampletype').lower():
                     sampletype_name = PLANKTONPUMP
