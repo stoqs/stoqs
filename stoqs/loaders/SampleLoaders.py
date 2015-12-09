@@ -30,7 +30,7 @@ project_dir = os.path.dirname(__file__)
 # Add parent dir to pythonpath so that we can see the loaders and stoqs modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../") )
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 
 from stoqs import models as m
 from loaders.seabird import get_year_lat_lon
@@ -540,22 +540,23 @@ class SubSamplesLoader(STOQS_Loader):
         Populate the Sample, SampledParameter, SampleRelationship, and associated lookup tables 
         (SampleType, SamplePurpose, AnalysisMethod) with data in the row from the spreadsheet.
         '''
-        if row['Parameter Value'] == '':
+        parameter_value = row.get('Parameter Value')
+        if not parameter_value:
             raise SubSampleLoadError("Must have a row['Parameter Value'] to load subsample")
 
         (sampleType, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name='subsample')
         (samplePurpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name=row['Sample Type'])
 
         fd = None
-        if row['Filter Diameter [mm]']:
+        if row.get('Filter Diameter [mm]'):
             fd = float(row['Filter Diameter [mm]'])
         fps = None
         try:
-            if row['Filter Pore Size [uM]']:
+            if row.get('Filter Pore Size [uM]'):
                 fps = float(row['Filter Pore Size [uM]'])
         except KeyError:
             try:
-                if row['Filter Pore Size [um]']:
+                if row.get('Filter Pore Size [um]'):
                     fps = float(row['Filter Pore Size [um]'])
             except ValueError as e:
                 # Likely a strange character present in a units string
@@ -568,7 +569,8 @@ class SubSamplesLoader(STOQS_Loader):
             
         vol = row.get('Sample Volume [mL]')
         if not vol:
-            vol = float(row.get('Sample Volume [m^3]')) * 1.e6     # A million ml per cubic meter
+            if row.get('Sample Volume [m^3]'):
+                vol = float(row.get('Sample Volume [m^3]')) * 1.e6     # A million ml per cubic meter
         if not vol:
             logger.warn('Sample Volume [mL] nor Sample Volume [m^3] is not specified.  Assigning default value of 280.  PLEASE SPECIFY THE VOLUME IN THE SPREADSHEET.')
             vol = 280           # Default volume is 280 ml - this is a required field so display a warning
@@ -589,29 +591,35 @@ class SubSamplesLoader(STOQS_Loader):
         samplerelationship = m.SampleRelationship(child=sample, parent=parentSample)
         samplerelationship.save(using=self.dbAlias)
                   
-        pName = row['Parameter Name'] 
+        parameter_name = row.get('Parameter Name')
         spaceRemoveMsg = ''
-        if pName.find(' ') != -1:
-            spaceRemoveMsg = "row['Parameter Name'] = %s contains a space.  Replacing with '_' before adding to STOQS.", pName
+        if parameter_name.find(' ') != -1:
+            spaceRemoveMsg = "row['Parameter Name'] = %s contains a space.  Replacing with '_' before adding to STOQS.", parameter_name
             logger.debug(spaceRemoveMsg)
-            pName = pName.replace(' ', '_')
+            parameter_name = parameter_name.replace(' ', '_')
 
-        if '(' in pName or ')' in pName:
-            parenRemoveMsg = "row['Parameter Name'] = %s contains ( or ).  Removing them before adding to STOQS.", pName
+        if '(' in parameter_name or ')' in parameter_name:
+            parenRemoveMsg = "row['Parameter Name'] = %s contains ( or ).  Removing them before adding to STOQS.", parameter_name
             logger.debug(parenRemoveMsg)
-            pName = pName.replace('(', '').replace(')', '')
+            parameter_name = parameter_name.replace('(', '').replace(')', '')
 
-        (parameter, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name=pName, units=row['Parameter Units'])
+        parameter_units = row.get('Parameter Units')
+        (parameter, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name=parameter_name, units=parameter_units)
         logger.debug('parameter, created = %s, %s', parameter, created)
         if created and spaceRemoveMsg:
             logger.info(spaceRemoveMsg)
     
         analysisMethod = None
         if row['Analysis Method']:
-            (analysisMethod, created) = m.AnalysisMethod.objects.using(self.dbAlias).get_or_create(name=removeNonAscii(row['Analysis Method']))
+            (analysisMethod, created) = m.AnalysisMethod.objects.using(self.dbAlias
+                    ).get_or_create(name=removeNonAscii(row['Analysis Method']))
 
-        sp = m.SampledParameter(sample=sample, parameter=parameter, datavalue=row['Parameter Value'], analysismethod=analysisMethod)
-        sp.save(using=self.dbAlias)
+        sp = m.SampledParameter(sample=sample, parameter=parameter, 
+                datavalue=parameter_value, analysismethod=analysisMethod)
+        try:
+            sp.save(using=self.dbAlias)
+        except ValidationError as e:
+            logger.warn(str(e))
 
         return parameter
                                 
@@ -619,7 +627,8 @@ class SubSamplesLoader(STOQS_Loader):
         '''
         Delete the subsample represented by the data in @row from the database
         '''
-        if row['Parameter Value'] == '':        # Must have a value to proceed
+        parameter_value = row.get('Parameter Value')
+        if not parameter_value:                 # Must have a value to proceed
             return
 
         fd = None
@@ -678,19 +687,33 @@ class SubSamplesLoader(STOQS_Loader):
 
             try:
                 # Try first with %.1f formatted bottle number for Gulper - TODO: Deprecate this!
+                sample_name = '%.1f' % float(r['Bottle Number'])
                 parentSample = m.Sample.objects.using(self.dbAlias).filter( 
                         instantpoint__activity__name__icontains=aName, 
-                        name='%.1f' % float(r['Bottle Number']))[0]
+                        name=sample_name)[0]
             except IndexError:
                 try:
                     # Try without formatted %.1 for bottle number
+                    sample_name = r['Bottle Number']
                     parentSample = m.Sample.objects.using(self.dbAlias).filter(
                             instantpoint__activity__name__icontains=aName, 
-                            name=r['Bottle Number'])[0]
+                            name=sample_name)[0]
                 except IndexError:
                     logger.error('Parent Sample not found for Cruise (Activity Name) = %s, Bottle Number = %s', aName, r['Bottle Number'])
                     continue
                     ##sys.exit(-1)
+            except KeyError:
+                # Special for Plankton Pump, Comment Value is 'Relative Depth'
+                sample_name = r.get('Comment Value')
+                logger.debug('aName=%s, name=%s', aName, sample_name)
+                try:
+                    parentSample = m.Sample.objects.using(self.dbAlias).get(
+                        sampletype__name=PLANKTONPUMP,
+                        instantpoint__activity__name__icontains=aName, 
+                        name=sample_name)
+                except ObjectDoesNotExist:
+                    logger.warn('Parent Sample not found for Activity %s, name %s. Skipping.', 
+                            aName, sample_name)
 
             except ValueError as e:
                 # Likely a 'NetTow' string in the Bottle Number column
@@ -713,7 +736,7 @@ class SubSamplesLoader(STOQS_Loader):
                     # Useful logger output when parentSample changes - more useful when spreadsheet is sorted by parentSample
                     logger.info('%d subsamples loaded of %s from %s', subCount, p.name, os.path.basename(fileName))
 
-                    logger.info('Loading subsamples of parentSample (activity, bottle) = (%s, %s)', aName, r['Bottle Number'])
+                    logger.info('Loading subsamples of parentSample (activity, bottle/name) = (%s, %s)', aName, sample_name)
                     subCount = 0
 
                 try:
