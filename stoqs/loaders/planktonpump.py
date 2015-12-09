@@ -195,6 +195,8 @@ class PlanktonPump():
                             platform = platform,
                             startdate = timevalue,
                             enddate = timevalue + timedelta(minutes=duration_minutes),
+                            mindepth = r.get('depth'),
+                            maxdepth = r.get('depth'),
                        )
         # Update loaded_date after get_or_create() so that we can get the old record if script is re-executed
         act.loaded_date = datetime.utcnow()
@@ -210,8 +212,6 @@ class PlanktonPump():
     def load_samples(self):
         '''Load parent Samples into the database.
         '''
-        # As of February 2015 the convention is one net tow per CTD cast, number the name of the
-        # Samples in preparation in case we will have more than one. This will be over-ridden by name in the .csv file.
         with open(self.args.load_file) as f:
             for r in csv.DictReader(f):
                 point = 'POINT(%s %s)' % (r.get('longitude'), r.get('latitude'))
@@ -257,8 +257,6 @@ class PlanktonPump():
                                     
 
     def process_command_line(self):
-        '''The argparse library is included in Python 2.7 and is an added package for STOQS.
-        '''
         import argparse
         from argparse import RawTextHelpFormatter
 
@@ -271,6 +269,10 @@ class PlanktonPump():
         examples += "  Step 2 - Load parent Sample information:\n"
         examples += "    " + sys.argv[0] + " --database stoqs_simz_aug2013"
         examples += " --load_file 2013_SIMZ_PlanktonPump_ParentSamples.csv\n"
+        examples += "\n"
+        examples += "  Step 3 - Load subsample data in standard load script:\n"
+        examples += "  - cl.parent_nettow_file=2013_SIMZ_PlanktonPump_ParentSamples.csv\n"
+        examples += "  - Add 'SIMZ_2013_PPump_STOQS_tidy_v2.csv' to cl.subsample_csv_files\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde".'
     
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
