@@ -39,6 +39,7 @@ from django.db.models import Max
 from datetime import timedelta
 from argparse import Namespace
 from nettow import NetTow
+from planktonpump import PlanktonPump
 import logging
 
 def getStrideText(stride):
@@ -844,6 +845,27 @@ class CANONLoader(LoadScript):
         nt.args = ns
         try:
             nt.load_samples()
+        except IOError as e:
+            self.logger.error(e)
+
+    def loadParentPlanktonPumpSamples(self):
+        '''
+        Load Parent PlanktonPump Samples. This must be done after CTD cast data are loaded and before subsamples are loaded.
+        '''
+        pp = PlanktonPump()
+        ns = Namespace()
+
+        # Produce parent samples file, e.g.:
+        # cd loaders/MolecularEcology/SIMZOct2013
+        # ../../planktonpump.py --database stoqs_simz_oct2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv --csvFile 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
+        ns.database = self.dbAlias
+        ns.loadFile = os.path.join(self.subsample_csv_base, self.parent_planktonpump_file)
+        ns.purpose = ''
+        ns.laboratory = ''
+        ns.researcher = ''
+        pp.args = ns
+        try:
+            pp.load_samples()
         except IOError as e:
             self.logger.error(e)
 
