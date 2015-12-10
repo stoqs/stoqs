@@ -107,12 +107,15 @@ cl.subsample_csv_files = [
                             '2013_SIMZ_AUV_STOQS.csv',
                             '2013_SIMZ_Niskins_STOQS.csv',
                             '2013_SIMZ_TowNets_STOQS.csv',
+                            'SIMZ_2013_PPump_STOQS_tidy_v2.csv',
                          ]
 
 # Produce parent samples file with:
 # cd loaders/MolecularEcology/SIMZAug2013
 # ../../../nettow.py --database stoqs_simz_aug2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
 cl.parent_nettow_file = '2013_SIMZ_TowNet_ParentSamples.csv'
+# ../../../planktonpump.py --database stoqs_simz_aug2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv --csvFile 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
+cl.parent_planktonpump_file = '2013_SIMZ_PlanktonPump_ParentSamples.csv'
 
 
 # Execute the load
@@ -125,6 +128,7 @@ if cl.args.test:
     cl.loadRCpctd(stride=10)
     cl.loadM1(stride=1)
     cl.loadParentNetTowSamples()
+    cl.loadParentPlanktonPumpSamples(duration=10)
     cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
@@ -134,6 +138,7 @@ elif cl.args.optimal_stride:
     cl.loadRCpctd(stride=1)
     cl.loadM1(stride=1)
     cl.loadParentNetTowSamples()
+    cl.loadParentPlanktonPumpSamples(duration=10)
     cl.loadSubSamples()
 
 else:
@@ -144,6 +149,7 @@ else:
     cl.loadRCpctd()
     cl.loadM1()
     cl.loadParentNetTowSamples()
+    cl.loadParentPlanktonPumpSamples(duration=10)
     cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed

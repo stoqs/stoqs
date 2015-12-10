@@ -1974,7 +1974,7 @@
                     // to get the flot axis limits resulting from the remaining selections so that the image for
                     // parameterplatformdatavaluepng can be properly generated with those axis limits.
                     clearingTemporalFlag = true;
-                    items = ['parameters', 'platforms', 'simpledepthtime', 'sampledepthtime', 'nettowdepthtime'];
+                    items = ['parameters', 'platforms', 'simpledepthtime', 'sampledepthtime', 'sampledurationsdepthtime'];
                 }
             }
             rebuildFilters(items);
@@ -2157,7 +2157,7 @@
             $('#showgeox3ddatatext').text('');
             $('#sectioncolorbar > img').removeAttr('src');
             $('#temporalparameterstrideinfo').text('');
-            rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'nettowdepthtime']);
+            rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'sampledurationsdepthtime']);
         }
     });
 
@@ -2942,15 +2942,15 @@
             sample_points.setVisibility(true);         // Turn on sample view openlayers
         }
 
-        // Add the nettow lines, each with a label
-        $.each(data['nettowdepthtime'], function (index, nettow) {
-            nettow["color"] = "#000000";
-            nettow["fillColor"] = "#ffffff";
-            nettow["points"] = {show: true, fill: true, lineWidth: 1};
-            nettow["lines"] = {show: true, lineWidth: 4};
-            nettow["hoverable"] = true;
-            nettow["clickable"] = true;
-            dataset.push(nettow);
+        // Add the sampledurations lines, each with a label
+        $.each(data['sampledurationsdepthtime'], function (index, sampledurations) {
+            sampledurations["color"] = "#000000";
+            sampledurations["fillColor"] = "#ffffff";
+            sampledurations["points"] = {show: true, fill: true, lineWidth: 1};
+            sampledurations["lines"] = {show: true, lineWidth: 4};
+            sampledurations["hoverable"] = true;
+            sampledurations["clickable"] = true;
+            dataset.push(sampledurations);
         });
 
         return dataset;

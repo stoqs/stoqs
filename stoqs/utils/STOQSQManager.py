@@ -22,7 +22,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from stoqs import models
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
-from loaders.SampleLoaders import SAMPLED, NETTOW
+from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP
 from utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
 from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
 from utils import simplify_points, getParameterGroups
@@ -85,7 +85,7 @@ class STOQSQManager(object):
             ##'simplebottomdepthtime': self.getSimpleBottomDepthTime,
             'parametertime': self.getParameterTime,
             'sampledepthtime': self.getSampleDepthTime,
-            'nettowdepthtime': self.getNetTowDepthTime,
+            'sampledurationsdepthtime': self.getSampleDurationDepthTime,
             'counts': self.getCounts,
             'mpsql': self.getMeasuredParametersPostgreSQL,
             'spsql': self.getSampledParametersPostgreSQL,
@@ -1119,18 +1119,20 @@ class STOQSQManager(object):
 
         return(samples)
 
-    def getNetTowDepthTime(self):
+    def getSampleDurationDepthTime(self):
         '''
-        Based on the current selected query criteria for activities, return the associated NetTow time series
+        Based on the current selected query criteria for activities, return the associated SampleDuration time series
         values as a 2 2-tuple list.  Theses are like SampleDepthTime, but have a start and end time/depth.
         The UI uses a different glyph which is why these are delivered in a separate structure.
-        The convention for NetTows is for one Sample per activity, therefore we can examine the attributes
+        The convention for SampleDurations is for one Sample per activity, therefore we can examine the attributes
         of the activity to get the start and end time and min and max depths. 
         '''
-        nettows = []
+        sample_durations = []
         nettow = models.SampleType.objects.using(self.dbname).filter(name__contains=NETTOW)
-        if self.getSampleQS() and nettow:
-            qs = self.getSampleQS().filter(sampletype=nettow).values_list(
+        planktonpump = models.SampleType.objects.using(self.dbname).filter(name__contains=PLANKTONPUMP)
+        if self.getSampleQS() and (nettow or planktonpump):
+            qs = self.getSampleQS().filter(Q(sampletype=nettow) |
+                                           Q(sampletype=planktonpump)).values_list(
                                     'instantpoint__timevalue', 
                                     'depth',
                                     'instantpoint__activity__name',
@@ -1152,10 +1154,9 @@ class STOQSQManager(object):
                     label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
 
                 rec = {'label': label, 'data': [[s_ems, '%.2f' % s[7]], [e_ems, '%.2f' % s[6]]]}
-                nettows.append(rec)
+                sample_durations.append(rec)
 
-        return(nettows)
-
+        return(sample_durations)
 
     def getActivityParameterHistograms(self):
         '''
