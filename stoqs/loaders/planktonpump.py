@@ -100,7 +100,7 @@ class PlanktonPump():
         '''
         samples = Sample.objects.using(self.args.database).filter(
                        sampletype__name='Niskin',
-                       instantpoint__activity__name=a_name, 
+                       instantpoint__activity__name__contains=a_name, 
                        name__in=self.pump_bottles[v['Relative Depth']][0])
 
         return samples
