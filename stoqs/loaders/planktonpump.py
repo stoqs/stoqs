@@ -94,15 +94,22 @@ class PlanktonPump():
 
         return sm_hash
 
-    def _pumping_depth(self, a_name, v):
-        '''Compare with cluster of Niskin bottles and return depth of the
-        Plankton Pump.
+    def _niskin_samples(self, a_name, v):
+        '''Return Samples of type Niskin for bottles in the cluster of bottles
+        for the pump: self.pump_bottles[v['Relative Depth']][0]
         '''
         samples = Sample.objects.using(self.args.database).filter(
                        sampletype__name='Niskin',
                        instantpoint__activity__name=a_name, 
                        name__in=self.pump_bottles[v['Relative Depth']][0])
 
+        return samples
+
+    def _pumping_depth(self, a_name, v):
+        '''Compare with cluster of Niskin bottles and return depth of the
+        Plankton Pump.
+        '''
+        samples = self._niskin_samples( a_name, v)
         self.logger.info('Bottle depths for cast %s, %s: %s', a_name, v['Relative Depth'], 
                           [float(d) for d in samples.values_list('depth', flat=True)])
         depth = samples.aggregate(Avg('depth')).values()[0]
@@ -113,15 +120,19 @@ class PlanktonPump():
     def _pumping_start_time(self, a_name, v):
         '''Return ISO-8601 datetime string of last bottle trip at this pumping event
         '''
-        samples = Sample.objects.using(self.args.database).filter(
-                       sampletype__name='Niskin',
-                       instantpoint__activity__name=a_name, 
-                       name__in=self.pump_bottles[v['Relative Depth']][0])
-
+        samples = self._niskin_samples( a_name, v)
         last_bottle_dt = samples.aggregate(Max('instantpoint__timevalue')).values()[0]
         self.logger.info('Last bottle time = %s', last_bottle_dt)
 
         return last_bottle_dt.strftime('%Y-%m-%dT%H:%M:%S')
+
+    def _pumping_instantpoint(self, a_name, v):
+        '''Return InstantPoint of last bottle in self.pump_bottles[v['Relative Depth']][0]
+        '''
+        samples = self._niskin_samples(a_name, v)
+        ip = samples.get(name=max(self.pump_bottles[v['Relative Depth']][0])).instantpoint
+
+        return ip
 
     def _add_db_values(self, activity, sample):
         '''Add information from the STOQS Activity object to the sample dictionary
@@ -138,8 +149,8 @@ class PlanktonPump():
         Use Cruise/Cast/Activity name as the key to get time, geom, and 
         environmental information.
         '''
-        self.logger.info('Joining subsample information with cast data from the'
-                         ' database using add_minutes = %d', self.args.add_minutes)
+        self.logger.info('Joining subsample information with bottle data from the'
+                         ' database using duration = %d', self.args.duration)
         new_hash = OrderedDict()
         for (a_name, rdepth), samples in sm_hash.iteritems():
             for sample in samples:
@@ -194,8 +205,10 @@ class PlanktonPump():
                             )
         return platform
 
-    def _create_activity_instantpoint_platform(self, r, duration_minutes, planktonpump_name, point):
-        '''Create an Activity and an InstantPoint from which to hang the Sample. Return the InstantPoint.
+    def _create_activity_instantpoint_platform(self, r, duration_minutes, 
+                                               planktonpump_name, point):
+        '''Create an Activity and and use the InstantPoint of the nearest 
+        bottle and connect the Sample. Return the Activity and InstantPoint.
         '''
         campaign = Campaign.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
         cast_plt = Platform.objects.using(self.args.database).filter(activity__name__contains=r.get('Cast'))[0]
@@ -218,10 +231,7 @@ class PlanktonPump():
         act.loaded_date = datetime.utcnow()
         act.save(using=self.args.database)
 
-        ip, created = InstantPoint.objects.using(self.args.database).get_or_create(
-                            activity = act,
-                            timevalue = timevalue
-                      )
+        ip = self._pumping_instantpoint(r.get('Cast'), r)
 
         return act, ip
 
@@ -301,8 +311,6 @@ class PlanktonPump():
                             help='File name containing analysis data from net tows in STOQS subsample format')
         parser.add_argument('--csv_file', action='store', 
                             help='Output comma separated value file containing parent Sample data')
-        parser.add_argument('--add_minutes', action='store', type=int, default=1,
-                            help='Add these number of minutes to last Niskin bottle trip in cluster')
         parser.add_argument('--duration', action='store', type=int, default=10,
                             help='Duration in minutes of the pumping')
         parser.add_argument('--laboratory', action='store', 
