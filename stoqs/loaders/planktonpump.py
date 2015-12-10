@@ -231,7 +231,12 @@ class PlanktonPump():
         act.loaded_date = datetime.utcnow()
         act.save(using=self.args.database)
 
-        ip = self._pumping_instantpoint(r.get('Cast'), r)
+        # TODO: Do better connection for Measurement data, simply using the instantpoint
+        # of the last bottle makes the UI show the whole cast as a sampleduration
+        ##ip = self._pumping_instantpoint(r.get('Cast'), r)
+        ip, created = InstantPoint.objects.using(self.args.database
+                                    ).get_or_create(activity = act,
+                                                    timevalue = timevalue)
 
         return act, ip
 
