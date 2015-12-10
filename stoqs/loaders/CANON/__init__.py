@@ -848,9 +848,10 @@ class CANONLoader(LoadScript):
         except IOError as e:
             self.logger.error(e)
 
-    def loadParentPlanktonPumpSamples(self):
+    def loadParentPlanktonPumpSamples(self, duration=10):
         '''
         Load Parent PlanktonPump Samples. This must be done after CTD cast data are loaded and before subsamples are loaded.
+        duration is pumping time in minutes.
         '''
         pp = PlanktonPump()
         ns = Namespace()
@@ -859,7 +860,8 @@ class CANONLoader(LoadScript):
         # cd loaders/MolecularEcology/SIMZOct2013
         # ../../planktonpump.py --database stoqs_simz_oct2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv --csvFile 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
         ns.database = self.dbAlias
-        ns.loadFile = os.path.join(self.subsample_csv_base, self.parent_planktonpump_file)
+        ns.load_file = os.path.join(self.subsample_csv_base, self.parent_planktonpump_file)
+        ns.duration = duration
         ns.purpose = ''
         ns.laboratory = ''
         ns.researcher = ''
