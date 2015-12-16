@@ -719,6 +719,8 @@ class SubSamplesLoader(STOQS_Loader):
                 # Likely a 'NetTow' string in the Bottle Number column
                 if r['Bottle Number'] == 'NetTow':
                     try:
+                        # Convention is one NetTow per cast, given them all a name of '1'
+                        sample_name = '1'
                         parentSample = m.Sample.objects.using(self.dbAlias).select_related(
                                 'instantpoint__activity').filter(
                                 instantpoint__activity__name__icontains=aName + '_NetTow1', )[0]
