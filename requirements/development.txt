@@ -1,11 +1,11 @@
 -r base.txt
 
-alabaster==0.7.6
+alabaster==0.7.7
 amqp==1.4.8
 amqplib==1.0.2
 anyjson==0.3.3
 Babel==2.1.1
-backports.ssl-match-hostname==3.4.0.2
+backports.ssl-match-hostname==3.5.0.1
 billiard==3.3.0.22
 binaryornot==0.4.0
 celery==3.1.19
