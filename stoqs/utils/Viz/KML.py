@@ -5,6 +5,7 @@ import numpy
 import logging
 from stoqs import models as m
 from django.conf import settings
+from django.db import DataError
 from django.db.models import Avg
 from django.http import HttpResponse, HttpResponseBadRequest
 import pprint
@@ -168,8 +169,12 @@ class KML(object):
         climHash = {}
         for p in m.Parameter.objects.using(dbAlias).all().values_list('name'):
             pn = p[0]
-            qs = m.ActivityParameter.objects.using(dbAlias).filter(parameter__name=pn).aggregate(Avg('p025'), Avg('p975'))
-            climHash[pn] = (qs['p025__avg'], qs['p975__avg'],)
+            try:
+                qs = m.ActivityParameter.objects.using(dbAlias).filter(parameter__name=pn).aggregate(Avg('p025'), Avg('p975'))
+                climHash[pn] = (qs['p025__avg'], qs['p975__avg'],)
+            except DataError:
+                # Can have overflow, e.g. nitrate from tethys/daphne in September 2015
+                pass
         ##logger.debug('Color lookup min, max values:\n' + pprint.pformat(climHash))
 
 
