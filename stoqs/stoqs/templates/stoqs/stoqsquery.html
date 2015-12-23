@@ -1281,7 +1281,7 @@
         if ($('#' + group + '-cmin').val() && $('#' + group + '-cmax').val()) {
             cmincmax = 'cmin=' + $('#' + group + '-cmin').val() + '&cmax=' + $('#' + group + '-cmax').val();
         }
-        if ($('body').data()[group + '_kmlurl']) {
+        if ($('body').data()[group + '_kmlurl'] && typeof cmincmax != 'undefined') {
             $('#' + group + '-kml-field').text($('body').data()[group + '_kmlurl'] + cmincmax);
             $('#' + group + '-kml-link').attr('href', $('body').data()[group + '_kmlurl'] + cmincmax);
         }
