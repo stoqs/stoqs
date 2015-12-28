@@ -225,30 +225,6 @@ def showActivitiesWMS(request):
     av = ActivityView(request, addAttributeToListItems(list, 'geo_query', geo_query),'')
     return av.process_request(webPageTemplate = 'activitiesWMS.html')
 
-
-def showActivitiesWMSAnimate(request):
-    '''Render Activities as WMS via mapserver'''
-
-    list = mod.Activity.objects.all().order_by('startdate')  
-
-    for a in list:
-       a.isostartdate = a.startdate.strftime('%Y-%m-%dT%H:%M:%S')
-       a.isoenddate = a.enddate.strftime('%Y-%m-%dT%H:%M:%S')
-
-    geo_query = '''geom from (select m.geom as geom, ip.id as gid, ip.timevalue as timevalue 
-                from stoqs_instantpoint ip
-                inner join stoqs_measurement m on (m.instantpoint_id = ip.id) order by ip.timevalue )
-                as subquery using unique gid using srid=4326'''                
-
-    av = ActivityView(request, addAttributeToListItems(list, 'geo_query', geo_query), '', 'activitiesWMSAnimate.html')
-    return av.process_request(webPageTemplate='activitiesWMSAnimate.html', mapfile='activitypoint.map')
-
-def showActivitiesWMSAnimateCoastwatch(request):
-    return render_to_response('testAnimateCoastwatch.html',
-                    {'mapserver_host': settings.MAPSERVER_HOST,
-                    },context_instance=RequestContext(request))
-
-
 def showParametersWMS(request):
     '''Render Activities that have specified parameter as WMS via mapserver'''
 

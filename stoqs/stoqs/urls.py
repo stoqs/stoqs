@@ -82,19 +82,6 @@ urlpatterns = patterns('',
     ##    provider_name='MBARI',
     ##)),
 
-    # Animation  
-    url(pre + r'activitiesWMSAnimate$', 'stoqs.views.wms.showActivitiesWMSAnimate', {}, name='show-activities-wms-animate'),
-        
-    # format is either 'url' or 'image' 
-    # url will return a persistant url for the created animation;  image will return the animaged GIF
-    url(r'animatepoint/between/(?P<startDate>\w+)/(?P<endDate>\w+)/deltaminutes/(?P<deltaMinutes>\d+)/format/(?P<format>\w{3,5})/$', 
-            'stoqs.views.animation.createAnimation',  {'rangeFlag': True}, name='create-animation-point'),  
-    url(r'animatemap/between/(?P<startDate>\w+)/(?P<endDate>\w+)/deltaminutes/(?P<deltaMinutes>\d+)/format/(?P<format>\w{3,5})/$', 
-            'stoqs.views.animation.createAnimation',  {'rangeFlag': False}, name='create-animation-map'),  
-
-    # For testing only 
-    url(r'testAnimateCoastwatch$', 'stoqs.views.wms.showActivitiesWMSAnimateCoastwatch', {} , name='test-animate-wms-coastwatch'),
-
     # If nothing above matches show the quey interface is a dbalias is specified, otherwise show the campaigns
     url(pre + '$', 'stoqs.views.query.queryUI', {}, name='base-campaign'),
     
