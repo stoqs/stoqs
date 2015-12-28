@@ -182,7 +182,7 @@ class HABLoader(STOQS_Loader):
             mt = self.createMeasurement(time = time,
                                         depth = depth,
                                         lat = lat,
-                                        long = lon)
+                                        lon = lon)
             logger.info("measurement._state.db = %s", mt._state.db)
             
             if depth < self.mindepth:
