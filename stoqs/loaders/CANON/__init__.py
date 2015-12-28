@@ -116,8 +116,9 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
             url = self.dorado_base + f
-            DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors['dorado'], 'auv', 'AUV mission', 
-                                        self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
+            DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, 
+                                       pName, self.colors['dorado'], 'auv', 'AUV mission', 
+                                       self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
             load_gulps(aName, f, self.dbAlias)
 
         self.addPlatformResources('http://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName)
@@ -133,13 +134,18 @@ class CANONLoader(LoadScript):
             startDatetime = self.tethys_startDatetime 
             endDatetime = self.tethys_endDatetime 
             if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+                # Return datetime of last timevalue - if data are loaded from multiple 
+                # activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
+                                            activity__name=aName).aggregate(
+                                            Max('timevalue'))['timevalue__max']
 
             try:
-                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Tethys', self.colors['tethys'], 'auv', 'AUV mission',
-                                        self.tethys_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
-                                        endDatetime=endDatetime, startDatetime=startDatetime)
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
+                                          'Tethys', self.colors['tethys'], 'auv', 'AUV mission',
+                                          self.tethys_parms, self.dbAlias, stride, 
+                                          grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
+                                          endDatetime=endDatetime, startDatetime=startDatetime)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -154,14 +160,19 @@ class CANONLoader(LoadScript):
             startDatetime = self.daphne_startDatetime 
             endDatetime = self.daphne_endDatetime 
             if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+                # Return datetime of last timevalue - if data are loaded from multiple 
+                # activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
+                                            activity__name=aName).aggregate(
+                                            Max('timevalue'))['timevalue__max']
 
             try:
                 # Set stride to 1 for telemetered data
-                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Daphne', self.colors['daphne'], 'auv', 'AUV mission',
-                                        self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime, 
-                                        endDatetime=endDatetime, startDatetime=startDatetime)
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
+                                          'Daphne', self.colors['daphne'], 'auv', 'AUV mission',
+                                          self.daphne_parms, self.dbAlias, stride, 
+                                          grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime, 
+                                          endDatetime=endDatetime, startDatetime=startDatetime)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -177,14 +188,19 @@ class CANONLoader(LoadScript):
             startDatetime = self.makai_startDatetime 
             endDatetime = self.makai_endDatetime 
             if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+                # Return datetime of last timevalue - if data are loaded from multiple 
+                # activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
+                                            activity__name=aName).aggregate(
+                                            Max('timevalue'))['timevalue__max']
 
             try:
                 # Set stride to 1 for telemetered data
-                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Makai', self.colors['makai'], 'auv', 'AUV mission',
-                                        self.makai_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
-                                        endDatetime=endDatetime, startDatetime=startDatetime)
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
+                                          'Makai', self.colors['makai'], 'auv', 'AUV mission',
+                                          self.makai_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, 
+                                          dataStartDatetime=dataStartDatetime,
+                                          endDatetime=endDatetime, startDatetime=startDatetime)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -272,7 +288,8 @@ class CANONLoader(LoadScript):
 
             dataStartDatetime = None
             if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
+                # Return datetime of last timevalue - if data are loaded from multiple 
+                # activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
                                                     activity__name=aName).aggregate(
                                                     Max('timevalue'))['timevalue__max']
@@ -681,7 +698,8 @@ class CANONLoader(LoadScript):
             
             dataStartDatetime = None
             if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
+                # Return datetime of last timevalue - if data are loaded from multiple 
+                # activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
                                                 activity__name=aName).aggregate(
                                                 Max('timevalue'))['timevalue__max']
@@ -802,8 +820,9 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.espmack_files], self.espmack_files):
             url = self.espmack_base + f
-            DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, 'ESP_Mack_Drifter', self.colors['espmack'], 'espmack', 'ESP mack Mission', 
-                                        self.espmack_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
+            DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, 
+                                           'ESP_Mack_Drifter', self.colors['espmack'], 'espmack', 'ESP mack Mission', 
+                                           self.espmack_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
     def loadESPbruce(self, stride=None):
         '''
@@ -906,7 +925,8 @@ class CANONLoader(LoadScript):
 
         # Produce parent samples file, e.g.:
         # cd loaders/MolecularEcology/SIMZOct2013
-        # ../../nettow.py --database stoqs_simz_oct2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
+        # ../../nettow.py --database stoqs_simz_oct2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv \
+        #                 --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
         ns.database = self.dbAlias
         ns.loadFile = os.path.join(self.subsample_csv_base, self.parent_nettow_file)
         ns.purpose = ''
@@ -928,7 +948,8 @@ class CANONLoader(LoadScript):
 
         # Produce parent samples file, e.g.:
         # cd loaders/MolecularEcology/SIMZOct2013
-        # ../../planktonpump.py --database stoqs_simz_oct2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv --csvFile 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
+        # ../../planktonpump.py --database stoqs_simz_oct2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv \
+        #                       --csvFile 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
         ns.database = self.dbAlias
         ns.load_file = os.path.join(self.subsample_csv_base, self.parent_planktonpump_file)
         ns.duration = duration
