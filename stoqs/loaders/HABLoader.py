@@ -168,18 +168,18 @@ class HABLoader(STOQS_Loader):
         self.addParameters(self.ds)     
         #self.addResources()
 
-    def load_measurement(self, lat, lon, depth, time, parmNameValues):
+    def load_measurement(self, lat, lon, depth, mtime, parmNameValues):
         '''
         Load the data values recorded for each loaction
         @parmNameValues is a list of 2-tuples of (ParameterName, Value) measured at the time and location specified by
         @lat decimal degrees
         @lon decimal degrees
-        @time Python datetime.datetime object
+        @mtime Python datetime.datetime object
         @depth in meters
         '''
         mt = None
         try:
-            mt = self.createMeasurement(time = time,
+            mt = self.createMeasurement(mtime = mtime,
                                         depth = depth,
                                         lat = lat,
                                         lon = lon)
@@ -195,7 +195,7 @@ class HABLoader(STOQS_Loader):
             logger.error(e)
             sys.exit(-1)
         else:
-            logger.info("longitude = %s, latitude = %s, time = %s, depth = %s", lon, lat, time, depth)
+            logger.info("longitude = %s, latitude = %s, mtime = %s, depth = %s", lon, lat, mtime, depth)
             
         for pn,value in parmNameValues:
             logger.info("pn = %s", pn)

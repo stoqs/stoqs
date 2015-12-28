@@ -621,7 +621,6 @@ class STOQS_Loader(object):
             except AttributeError as e:
                 # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
                 self.logger.warn('%s for include_name %s in %s. Skipping', e, v, self.url)
-
         
     def getParameterByName(self, name):
         '''
@@ -669,14 +668,14 @@ class STOQS_Loader(object):
 
         return self.parameter_dict[name]
 
-    def createMeasurement(self, featureType, time, depth, lat, lon, nomDepth=None, nomLat=None, nomLong=None):
+    def createMeasurement(self, featureType, mtime, depth, lat, lon, nomDepth=None, nomLat=None, nomLong=None):
         '''
         Create and return a measurement object in the database.  The measurement object
         is created by first creating an instance of stoqs.models.Instantpoint using the activity, 
         then by creating an instance of Measurement using the Instantpoint.  A reference to 
         an instance of a stoqs.models.Measurement object is then returned.
         @param featureType: A CF-1.6 Discrete Sampling Geometry type: 'trajectory'. 'timeseriesprofile', 'timeseries'
-        @param time: A valid datetime instance of a datetime object used to create the Instantpoint
+        @param mtime: A valid datetime instance of a datetime object used to create the Instantpoint
         @param depth: The depth for the measurement
         @param lat: The latitude (degrees, assumed WGS84) for the measurement
         @param lon: The longitude (degrees, assumed WGS84) for the measurement
@@ -697,7 +696,7 @@ class STOQS_Loader(object):
         if lon < -720 or lon > 720:
             raise SkipRecord('Bad lon: %s (longitude must be between %s and %s)' % (long, -720, 720))
 
-        ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
+        ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=mtime)
 
         nl = None
         point = 'POINT(%s %s)' % (repr(lon), repr(lat))
@@ -727,7 +726,8 @@ class STOQS_Loader(object):
             sys.exit(-1)
         except Exception, e:
             self.logger.error('Exception %s', e)
-            self.logger.error("Cannot save measurement time = %s, long = %s, lat = %s, depth = %s", time, repr(long), repr(lat), repr(depth))
+            self.logger.error("Cannot save measurement mtime = %s, long = %s, lat = %s,"
+                              " depth = %s", mtime, repr(long), repr(lat), repr(depth))
             raise SkipRecord
 
         return measurement

@@ -266,7 +266,7 @@ class SeabirdLoader(STOQS_Loader):
 
         return parmDict
 
-    def load_data(self, lat, lon, depth, time, parmNameValues):
+    def load_data(self, lat, lon, depth, mtime, parmNameValues):
         '''
         Load the data values recorded at the bottle trips so that we have some InstantPoints to 
         hang off for our Samples.  This is necessary as typically data are continuously acquired on the 
@@ -274,7 +274,7 @@ class SeabirdLoader(STOQS_Loader):
         @parmNameValues is a list of 2-tuples of (ParameterName, Value) measured at the time and location specified by
         @lat decimal degrees
         @lon decimal degrees
-        @time Python datetime.datetime object
+        @mtime Python datetime.datetime object
         @depth in meters
         '''
 
@@ -284,7 +284,7 @@ class SeabirdLoader(STOQS_Loader):
             sys.exit(-1)
 
         try:
-            measurement = self.createMeasurement(featureType='trajectory', time=time,
+            measurement = self.createMeasurement(featureType='trajectory', mtime=mtime,
                                                     depth=depth, lat=lat, lon=lon)
         except SkipRecord, e:
             logger.info(e)
@@ -292,7 +292,7 @@ class SeabirdLoader(STOQS_Loader):
             logger.error(e)
             sys.exit(-1)
         else:
-            logger.debug("longitude = %s, latitude = %s, time = %s, depth = %s", lon, lat, time, depth)
+            logger.debug("longitude = %s, latitude = %s, mtime = %s, depth = %s", lon, lat, mtime, depth)
 
         logger.debug("measurement._state.db = %s", measurement._state.db)
         loaded = 0

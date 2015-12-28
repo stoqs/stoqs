@@ -1082,20 +1082,20 @@ class Base_Loader(STOQS_Loader):
                 params = {} 
                 try:
                     if featureType == 'timeseriesprofile' or featureType == 'timeseries' or featureType == 'trajectoryprofile':
-                        longitude, latitude, time, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
+                        longitude, latitude, mtime, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
                                                             from_udunits(row.pop('time'), row.pop('timeUnits')),
                                                             row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
-                        measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, lon=longitude,
+                        measurement = self.createMeasurement(featureType, mtime=mtime, depth=depth, lat=latitude, lon=longitude,
                                                             nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
                     elif featureType == 'trajectory':
                         if 'measurement' in row:
                             # For data like LOPC which assigns a 'measurement' item
                             measurement = row['measurement']
                         else:
-                            longitude, latitude, time, depth = (row.pop('longitude'), row.pop('latitude'),
+                            longitude, latitude, mtime, depth = (row.pop('longitude'), row.pop('latitude'),
                                                                 from_udunits(row.pop('time'), row.pop('timeUnits')),
                                                                 row.pop('depth'))
-                            measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, lon=longitude)
+                            measurement = self.createMeasurement(featureType, mtime=mtime, depth=depth, lat=latitude, lon=longitude)
                     else:
                         raise Exception('No handler for featureType = %s' % featureType)
 
