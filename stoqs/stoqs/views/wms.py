@@ -3,8 +3,7 @@ __copyright__ = '2011'
 __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
 
-__doc__ = '''
-
+'''
 Support Classes and methods for mapserver mapfile generation for stoqs views.
 
 
@@ -16,23 +15,14 @@ Support Classes and methods for mapserver mapfile generation for stoqs views.
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.conf import settings 
-from django.shortcuts import render_to_response
-from django.template import RequestContext
 from django.http import HttpResponse
-from django.conf import settings
-from django.db import connection
-from django.core import serializers
 
-from datetime import datetime, timedelta
-import time
+from datetime import datetime
 import stoqs.models as mod
-import csv
-import sys
 import logging 
 import os
 from random import randint
 import tempfile
-import pprint
 from tempfile import NamedTemporaryFile
 from utils.utils import addAttributeToListItems
 
@@ -47,6 +37,7 @@ class Color(object):
 
     def __str__(self):
         return "%i %i %i" % (self.r, self.g, self.b,)
+
 
 class ActivityView(object):
 
@@ -85,19 +76,17 @@ class ActivityView(object):
         else:
             self.map_debug_level = 0 
             self.layer_debug_level = 0
-            
-
 
     def generateActivityMapFile(self, template = 'activity.map'):
         '''Build mapfile for activity from template.  Write it to a location that mapserver can see it.
             The mapfile performs direct SQL queries, so we must pass all of the connection parameters for the dbAlias. 
         '''
         filename, ext = os.path.splitext(template)
-        if self.request.session.has_key('mappath'):
+        if 'mappath' in self.request.session:
             logger.info("Reusing request.session['mappath'] = %s", self.request.session['mappath'])
         else:
             self.request.session['mappath'] =  tempfile.NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=filename + '_' , suffix=ext).name
-            logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
+            logger.info("Setting new request.session['mappath'] = %s", self.request.session['mappath'])
 
         # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
         # With Apache RewriteBase rule this pattern also works for cleaner URLs:
@@ -110,6 +99,7 @@ class ActivityView(object):
         #    RewriteRule .*/(.*) /cgi-bin/mapserv?map=/dev/shm/$1.map [QSA]
         # </location>
 
+        ##import pprint
         ##logger.debug(pprint.pformat(settings.DATABASES[self.request.META['dbAlias']]))
         response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,
@@ -142,7 +132,7 @@ class ActivityView(object):
         Check to see it item (could be Activity, Parameter, Platform, ...)
         '''
             
-        if not self.itemColor_dict.has_key(item.id):
+        if item.id not in self.itemColor_dict:
             logger.debug("Creating a random color for item with id = %d", item.id)
             c = Color()
             c.r = randint(100, 255)
@@ -152,14 +142,13 @@ class ActivityView(object):
         else:
             logger.debug("Returing saved color for item with id = %d", item.id)
 
-
         return self.itemColor_dict[item.id]
 
-    def assignColors(self, list):
-        '''For each item in list create a unique rgb color and add it as an attribute to the list'''
+    def assignColors(self, items):
+        '''For each item in items create a unique rgb color and add it as an attribute to the list'''
 
         newList = []
-        for item in list:
+        for item in items:
             # If item has a color attribute, use it; otherwise get a color (perhaps already saved in a hash) and add it to the item
             try:
                 getattr(item, 'color')
@@ -188,6 +177,8 @@ class ActivityView(object):
                                     'mappath': self.mappath},
                             context_instance=RequestContext(self.request))
 
+# Addressed pylint issues in December 2015, but realized that the functions
+# below never got fully implemented and are candidates for removal.
 
 def showActivityWMS(request):
     '''
@@ -197,38 +188,53 @@ def showActivityWMS(request):
     '''
     logger.debug("inside showActivityWMS")
 
-    # This list could result from a collection of Q objects constructed similar to what STOQSQManager does
+    # This queryset could result from a collection of Q objects constructed similar to what STOQSQManager does
+    # TODO: Implement this
     qs = mod.Activity.objects.all().order_by('startdate')  
     geo_query = '''geom from (select a.maptrack as geom, a.id as gid, 
         a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
         from stoqs_activity a)
         as subquery using unique gid using srid=4326'''
-    av = ActivityView(request, list, geo_query)
+
     platform_string = ''
     for p in qs:
         platform_string += p.name + ','
     platform_string = platform_string[:-1]
-   
-    av = ActivityView(request, addAttributeToListItems(qs, 'geo_query', geo_query), platform_string)
-    return av.process_request(webPageTemplate = 'activityWMS.html')
 
+    station_union_layer_string = ''
+    # TODO: populate station_union_layer_string and make activityWMS.html
+   
+    av = ActivityView(request, addAttributeToListItems(qs, 'geo_query', geo_query), 
+                      platform_string, station_union_layer_string)
+
+    return av.process_request(webPageTemplate = 'activityWMS.html')
 
 def showActivitiesWMS(request):
     '''Render Activities as WMS via mapserver'''
 
-    list = mod.Activity.objects.all().order_by('startdate')  
+    # This queryset could result from a collection of Q objects constructed similar to what STOQSQManager does
+    # TODO: Implement this
+    qs = mod.Activity.objects.all().order_by('startdate')  
     geo_query = '''geom from (select a.maptrack as geom, a.id as gid, 
         a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
         from stoqs_activity a)
         as subquery using unique gid using srid=4326'''
 
-    av = ActivityView(request, addAttributeToListItems(list, 'geo_query', geo_query),'')
+    platform_string = ','.join([p.name for p in qs])
+    station_union_layer_string = ''
+    # TODO: populate station_union_layer_string and make activityWMS.html
+
+    av = ActivityView(request, addAttributeToListItems(qs, 'geo_query', geo_query),
+                      platform_string, station_union_layer_string)
+
     return av.process_request(webPageTemplate = 'activitiesWMS.html')
 
 def showParametersWMS(request):
     '''Render Activities that have specified parameter as WMS via mapserver'''
 
-    list = mod.Parameter.objects.all().order_by('name')  
+    # This queryset could result from a collection of Q objects constructed similar to what STOQSQManager does
+    # TODO: Implement this
+    qs = mod.Parameter.objects.all().order_by('name')  
     geo_query = '''geom from (select a.maptrack as geom, a.id as aid, p.id as gid,
         a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
         from stoqs_activity a
@@ -237,14 +243,21 @@ def showParametersWMS(request):
         order by p.name)
         as subquery using unique gid using srid=4326'''
 
-    av = ActivityView(request, list, geo_query)
-    return av.process_request()
+    platform_string = ','.join([p.name for p in qs])
+    station_union_layer_string = ''
+    # TODO: populate station_union_layer_string and make activityWMS.html
 
+    av = ActivityView(request, addAttributeToListItems(qs, 'geo_query', geo_query),
+                      platform_string, station_union_layer_string)
+
+    return av.process_request()
 
 def showPlatformsWMS(request):
     '''Render Activities that have specified platform as WMS via mapserver'''
 
-    list = mod.Platform.objects.all().order_by('name')  
+    # This queryset could result from a collection of Q objects constructed similar to what STOQSQManager does
+    # TODO: Implement this
+    qs = mod.Platform.objects.all().order_by('name')  
     geo_query = '''geom from (select a.maptrack as geom, a.id as aid, p.id as gid,
         a.name as name, a.comment as comment, a.startdate as startdate, a.enddate as enddate
         from stoqs_activity a
@@ -252,6 +265,11 @@ def showPlatformsWMS(request):
         order by p.name)
         as subquery using unique gid using srid=4326'''
 
-    av = ActivityView(request, list, geo_query)
-    return av.process_request()
+    platform_string = ','.join([p.name for p in qs])
+    station_union_layer_string = ''
+    # TODO: populate station_union_layer_string and make activityWMS.html
 
+    av = ActivityView(request, addAttributeToListItems(qs, 'geo_query', geo_query),
+                      platform_string, station_union_layer_string)
+
+    return av.process_request()
