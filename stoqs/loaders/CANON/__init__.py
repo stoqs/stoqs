@@ -5,8 +5,7 @@ __copyright__ = '2011'
 __license__   = 'GPL v3'
 __contact__   = 'mccann at mbari.org'
 
-__doc__ = '''
-
+'''
 Contains class for common routines for loading all CANON data
 
 Mike McCann
@@ -115,11 +114,11 @@ class CANONLoader(LoadScript):
         '''
         pName = 'dorado'
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
-            url = self.dorado_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.dorado_files], self.dorado_files):
+            url = self.dorado_base + f
             DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors['dorado'], 'auv', 'AUV mission', 
                                         self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
-            load_gulps(aName, file, self.dbAlias)
+            load_gulps(aName, f, self.dbAlias)
 
         self.addPlatformResources('http://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName)
 
@@ -128,8 +127,8 @@ class CANONLoader(LoadScript):
         Tethys specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
-            url = self.tethys_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
+            url = self.tethys_base + f
             dataStartDatetime = None
             startDatetime = self.tethys_startDatetime 
             endDatetime = self.tethys_endDatetime 
@@ -141,7 +140,7 @@ class CANONLoader(LoadScript):
             try:
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Tethys', self.colors['tethys'], 'auv', 'AUV mission',
                                         self.tethys_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
-					endDatetime=endDatetime, startDatetime=startDatetime)
+                                        endDatetime=endDatetime, startDatetime=startDatetime)
             except DAPloaders.NoValidData as e:
                 self.logger.info("No valid data in %s" % url)
 
@@ -150,8 +149,8 @@ class CANONLoader(LoadScript):
         Daphne specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
-            url = self.daphne_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
+            url = self.daphne_base + f
             dataStartDatetime = None
             startDatetime = self.daphne_startDatetime 
             endDatetime = self.daphne_endDatetime 
@@ -164,7 +163,7 @@ class CANONLoader(LoadScript):
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Daphne', self.colors['daphne'], 'auv', 'AUV mission',
                                         self.daphne_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime, 
-					endDatetime=endDatetime, startDatetime=startDatetime)
+                                        endDatetime=endDatetime, startDatetime=startDatetime)
             except DAPloaders.NoValidData as e:
                 self.logger.info("No valid data in %s" % url)
 
@@ -174,8 +173,8 @@ class CANONLoader(LoadScript):
         Makai specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.makai_files], self.makai_files):
-            url = self.makai_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.makai_files], self.makai_files):
+            url = self.makai_base + f
             dataStartDatetime = None
             startDatetime = self.makai_startDatetime 
             endDatetime = self.makai_endDatetime 
@@ -187,7 +186,7 @@ class CANONLoader(LoadScript):
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 'Makai', self.colors['makai'], 'auv', 'AUV mission',
                                         self.makai_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
-					endDatetime=endDatetime, startDatetime=startDatetime)
+                                        endDatetime=endDatetime, startDatetime=startDatetime)
             except DAPloaders.NoValidData as e:
                 self.logger.info("No valid data in %s" % url)
 
@@ -196,8 +195,8 @@ class CANONLoader(LoadScript):
         Martin specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.martin_files], self.martin_files):
-            url = self.martin_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.martin_files], self.martin_files):
+            url = self.martin_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, 'Martin', self.colors['martin'], 'ship', 'cruise', 
                                         self.martin_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -206,8 +205,8 @@ class CANONLoader(LoadScript):
         Martin specific underway load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.JMuctd_files], self.JMuctd_files):
-            url = self.JMuctd_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.JMuctd_files], self.JMuctd_files):
+            url = self.JMuctd_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, 'John_Martin_UCTD', self.colors['martin'], 'ship', 'cruise', 
                                         self.JMuctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -216,8 +215,8 @@ class CANONLoader(LoadScript):
         Martin specific underway load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.JMpctd_files], self.JMpctd_files):
-            url = self.JMpctd_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.JMpctd_files], self.JMpctd_files):
+            url = self.JMpctd_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, platformName, self.colors['martin'], 'ship', activitytypeName,
                                         self.JMpctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
         # load all the bottles           
@@ -232,8 +231,8 @@ class CANONLoader(LoadScript):
         Fulmar specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.fulmar_files], self.fulmar_files):
-            url = self.fulmar_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.fulmar_files], self.fulmar_files):
+            url = self.fulmar_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, 'fulmar', self.colors['fulmar'], 'ship', 'cruise', 
                                         self.fulmar_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -242,8 +241,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.nps_g29_files], self.nps_g29_files):
-            url = self.nps_g29_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.nps_g29_files], self.nps_g29_files):
+            url = self.nps_g29_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'nps_g29', self.colors['nps_g29'], 'glider', 'Glider Mission', 
                                         self.nps_g29_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -252,8 +251,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.l_662_files], self.l_662_files):
-            url = self.l_662_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.l_662_files], self.l_662_files):
+            url = self.l_662_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'SPRAY_L66_Glider', self.colors['l_662'], 'glider', 'Glider Mission', 
                                         self.l_662_parms, self.dbAlias, stride, self.l_662_startDatetime, self.l_662_endDatetime, grdTerrain=self.grdTerrain)
 
@@ -262,8 +261,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.nps29_files], self.nps29_files):
-            url = self.nps29_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.nps29_files], self.nps29_files):
+            url = self.nps29_base + f
 
             dataStartDatetime = None
             if self.args.append:
@@ -279,8 +278,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.nps34_files], self.nps34_files):
-            url = self.nps34_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.nps34_files], self.nps34_files):
+            url = self.nps34_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'NPS_Glider_34', self.colors['nps34'], 'glider', 'Glider Mission', 
                                         self.nps34_parms, self.dbAlias, stride, self.nps34_startDatetime, self.nps34_endDatetime, grdTerrain=self.grdTerrain)
 
@@ -291,8 +290,8 @@ class CANONLoader(LoadScript):
         and that load the exact same parameters, i.e. TEMP, PSAL or TEMP, PSAL, FLU2 or TEMP, FLU2, OPBS etc
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.glider_ctd_files], self.glider_ctd_files):
-            url = self.glider_ctd_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.glider_ctd_files], self.glider_ctd_files):
+            url = self.glider_ctd_base + f
             gplatform=aName.split('_')[0].upper() + '_Glider'
             gname=aName.split('_')[0].lower()
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, gplatform, self.colors[gname], 'glider', 'Glider Mission', 
@@ -305,8 +304,8 @@ class CANONLoader(LoadScript):
         and that load the exact same parameters, i.e. meanu,meanv or windspeed, winddirection etc.
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.glider_met_files], self.glider_met_files):
-            url = self.glider_met_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.glider_met_files], self.glider_met_files):
+            url = self.glider_met_base + f
             gplatform=aName.split('_')[0].upper() + '_Glider'
             gname=aName.split('_')[0].lower()
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, gplatform, self.colors[gname], 'glider', 'Glider Mission', 
@@ -318,8 +317,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.slocum_260_files], self.slocum_260_files):
-            url = self.slocum_260_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.slocum_260_files], self.slocum_260_files):
+            url = self.slocum_260_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'Slocum_260', self.colors['slocum_260'], 'glider', 'Glider Mission', 
                                         self.slocum_260_parms, self.dbAlias, stride, self.slocum_260_startDatetime, self.slocum_260_endDatetime, grdTerrain=self.grdTerrain)
 
@@ -328,8 +327,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.slocum_294_files], self.slocum_294_files):
-            url = self.slocum_294_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.slocum_294_files], self.slocum_294_files):
+            url = self.slocum_294_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'Slocum_294', self.colors['slocum_294'], 'glider', 'Glider Mission', 
                                         self.slocum_294_parms, self.dbAlias, stride, self.slocum_294_startDatetime, self.slocum_294_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -339,8 +338,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.slocum_nemesis_files], self.slocum_nemesis_files):
-            url = self.slocum_nemesis_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.slocum_nemesis_files], self.slocum_nemesis_files):
+            url = self.slocum_nemesis_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'Slocum_nemesis', self.colors['slocum_nemesis'], 'glider', 'Glider Mission', 
                                         self.slocum_nemesis_parms, self.dbAlias, stride, self.slocum_nemesis_startDatetime, self.slocum_nemesis_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -350,8 +349,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_files], self.wg_oa_files):
-            url = self.wg_oa_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_oa_files], self.wg_oa_files):
+            url = self.wg_oa_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission',
                                         self.wg_oa_parms, self.dbAlias, stride, self.wg_oa_startDatetime, self.wg_oa_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -361,8 +360,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_pco2_files], self.wg_oa_pco2_files):
-            url = self.wg_oa_pco2_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_oa_pco2_files], self.wg_oa_pco2_files):
+            url = self.wg_oa_pco2_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_pco2_parms, self.dbAlias, stride, self.wg_oa_pco2_startDatetime, self.wg_oa_pco2_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -372,8 +371,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_ctd_files], self.wg_oa_ctd_files):
-            url = self.wg_oa_ctd_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_oa_ctd_files], self.wg_oa_ctd_files):
+            url = self.wg_oa_ctd_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_ctd_parms, self.dbAlias, stride, self.wg_oa_ctd_startDatetime, self.wg_oa_ctd_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -383,8 +382,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_tex_ctd_files], self.wg_tex_ctd_files):
-            url = self.wg_tex_ctd_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_tex_ctd_files], self.wg_tex_ctd_files):
+            url = self.wg_tex_ctd_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
                                         self.wg_tex_ctd_parms, self.dbAlias, stride, self.wg_tex_ctd_startDatetime, self.wg_tex_ctd_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -394,8 +393,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_met_files], self.wg_oa_met_files):
-            url = self.wg_oa_met_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_oa_met_files], self.wg_oa_met_files):
+            url = self.wg_oa_met_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_met_parms, self.dbAlias, stride, self.wg_oa_met_startDatetime, self.wg_oa_met_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -405,8 +404,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_tex_met_files], self.wg_tex_met_files):
-            url = self.wg_tex_met_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_tex_met_files], self.wg_tex_met_files):
+            url = self.wg_tex_met_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
                                         self.wg_tex_met_parms, self.dbAlias, stride, self.wg_tex_met_startDatetime, self.wg_tex_met_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -416,8 +415,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_tex_files], self.wg_tex_files):
-            url = self.wg_tex_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_tex_files], self.wg_tex_files):
+            url = self.wg_tex_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_Tex_Glider', self.colors['wg_tex'], 'waveglider', 'Glider Mission', 
                                         self.wg_tex_parms, self.dbAlias, stride, self.wg_tex_startDatetime, self.wg_tex_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -427,8 +426,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_Tiny_files], self.wg_Tiny_files):
-            url = self.wg_Tiny_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_Tiny_files], self.wg_Tiny_files):
+            url = self.wg_Tiny_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_Tiny_Glider', self.colors['wg_Tiny'], 'waveglider', 'Glider Mission',
                                         self.wg_Tiny_parms, self.dbAlias, stride, self.wg_Tiny_startDatetime, self.wg_Tiny_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -437,8 +436,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wg_oa_files], self.wg_oa_files):
-            url = self.wg_oa_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_oa_files], self.wg_oa_files):
+            url = self.wg_oa_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'wg_OA_Glider', self.colors['wg_oa'], 'waveglider', 'Glider Mission', 
                                         self.wg_oa_parms, self.dbAlias, stride, self.wg_oa_startDatetime, self.wg_oa_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -448,8 +447,8 @@ class CANONLoader(LoadScript):
         Mooring OA1 specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.oa1_files], self.oa1_files):
-            url = os.path.join(self.oa1_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.oa1_files], self.oa1_files):
+            url = os.path.join(self.oa1_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment',
                                         self.oa1_parms, self.dbAlias, stride, self.oa1_startDatetime, self.oa1_endDatetime)
 
@@ -458,8 +457,8 @@ class CANONLoader(LoadScript):
         Mooring OA2 specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.oa2_files], self.oa2_files):
-            url = os.path.join(self.oa2_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.oa2_files], self.oa2_files):
+            url = os.path.join(self.oa2_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment',
                                         self.oa2_parms, self.dbAlias, stride, self.oa2_startDatetime, self.oa2_endDatetime)
 
@@ -469,8 +468,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA1pco2_files], self.OA1pco2_files):
-            url = os.path.join(self.OA1pco2_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA1pco2_files], self.OA1pco2_files):
+            url = os.path.join(self.OA1pco2_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment', 
                                         self.OA1pco2_parms, self.dbAlias, stride, self.OA1pco2_startDatetime, self.OA1pco2_endDatetime)
 
@@ -480,8 +479,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA1fl_files], self.OA1fl_files):
-            url = os.path.join(self.OA1fl_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA1fl_files], self.OA1fl_files):
+            url = os.path.join(self.OA1fl_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment', 
                                         self.OA1fl_parms, self.dbAlias, stride, self.OA1fl_startDatetime, self.OA1fl_endDatetime)
 
@@ -491,8 +490,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA1o2_files], self.OA1o2_files):
-            url = os.path.join(self.OA1o2_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA1o2_files], self.OA1o2_files):
+            url = os.path.join(self.OA1o2_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment', 
                                         self.OA1o2_parms, self.dbAlias, stride, self.OA1o2_startDatetime, self.OA1o2_endDatetime)
 
@@ -501,8 +500,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA1ctd_files], self.OA1ctd_files):
-            url = os.path.join(self.OA1ctd_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA1ctd_files], self.OA1ctd_files):
+            url = os.path.join(self.OA1ctd_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment', 
                                         self.OA1ctd_parms, self.dbAlias, stride, self.OA1ctd_startDatetime, self.OA1ctd_endDatetime)
 
@@ -512,8 +511,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA1pH_files], self.OA1pH_files):
-            url = os.path.join(self.OA1pH_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA1pH_files], self.OA1pH_files):
+            url = os.path.join(self.OA1pH_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment', 
                                         self.OA1pH_parms, self.dbAlias, stride, self.OA1pH_startDatetime, self.OA1pH_endDatetime)
 
@@ -523,8 +522,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA1met_files], self.OA1met_files):
-            url = os.path.join(self.OA1met_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA1met_files], self.OA1met_files):
+            url = os.path.join(self.OA1met_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment', 
                                         self.OA1met_parms, self.dbAlias, stride, self.OA1met_startDatetime, self.OA1met_endDatetime)
 
@@ -534,8 +533,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA2pco2_files], self.OA2pco2_files):
-            url = os.path.join(self.OA2pco2_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA2pco2_files], self.OA2pco2_files):
+            url = os.path.join(self.OA2pco2_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2pco2_parms, self.dbAlias, stride, self.OA2pco2_startDatetime, self.OA2pco2_endDatetime)
 
@@ -545,8 +544,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA2fl_files], self.OA2fl_files):
-            url = os.path.join(self.OA2fl_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA2fl_files], self.OA2fl_files):
+            url = os.path.join(self.OA2fl_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2fl_parms, self.dbAlias, stride, self.OA2fl_startDatetime, self.OA2fl_endDatetime)
 
@@ -556,8 +555,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA2o2_files], self.OA2o2_files):
-            url = os.path.join(self.OA2o2_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA2o2_files], self.OA2o2_files):
+            url = os.path.join(self.OA2o2_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2o2_parms, self.dbAlias, stride, self.OA2o2_startDatetime, self.OA2o2_endDatetime)
 
@@ -566,8 +565,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA2ctd_files], self.OA2ctd_files):
-            url = os.path.join(self.OA2ctd_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA2ctd_files], self.OA2ctd_files):
+            url = os.path.join(self.OA2ctd_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2ctd_parms, self.dbAlias, stride, self.OA2ctd_startDatetime, self.OA2ctd_endDatetime)
 
@@ -577,8 +576,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA2pH_files], self.OA2pH_files):
-            url = os.path.join(self.OA2pH_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA2pH_files], self.OA2pH_files):
+            url = os.path.join(self.OA2pH_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2pH_parms, self.dbAlias, stride, self.OA2pH_startDatetime, self.OA2pH_endDatetime)
 
@@ -588,8 +587,8 @@ class CANONLoader(LoadScript):
         Mooring OA specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.OA2met_files], self.OA2met_files):
-            url = os.path.join(self.OA2met_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.OA2met_files], self.OA2met_files):
+            url = os.path.join(self.OA2met_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment', 
                                         self.OA2met_parms, self.dbAlias, stride, self.OA2met_startDatetime, self.OA2met_endDatetime)
 
@@ -599,8 +598,8 @@ class CANONLoader(LoadScript):
         '''
         stride = stride or self.stride
         pName = 'ESP_Bruce_Mooring'
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.bruce_moor_files], self.bruce_moor_files):
-            url = os.path.join(self.bruce_moor_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.bruce_moor_files], self.bruce_moor_files):
+            url = os.path.join(self.bruce_moor_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors['espbruce'], 'mooring', 
                     'Mooring Deployment', self.bruce_moor_parms, self.dbAlias, stride, self.bruce_moor_startDatetime, self.bruce_moor_endDatetime)
 
@@ -613,8 +612,8 @@ class CANONLoader(LoadScript):
         '''
         stride = stride or self.stride
         pName = 'ESP_Mack_Mooring'
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.mack_moor_files], self.mack_moor_files):
-            url = os.path.join(self.mack_moor_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.mack_moor_files], self.mack_moor_files):
+            url = os.path.join(self.mack_moor_base, f)
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors['espmack'], 'mooring', 'Mooring Deployment',
                                        self.mack_moor_parms, self.dbAlias, stride, self.mack_moor_startDatetime, self.mack_moor_endDatetime)
 
@@ -627,8 +626,8 @@ class CANONLoader(LoadScript):
         '''
         platformName = 'M1_Mooring'
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.m1_files], self.m1_files):
-            url = os.path.join(self.m1_base, file)
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.m1_files], self.m1_files):
+            url = os.path.join(self.m1_base, f)
             
             dataStartDatetime = None
             if self.args.append:
@@ -655,8 +654,8 @@ class CANONLoader(LoadScript):
         Mooring M1ts specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.m1ts_files], self.m1ts_files):
-            url = self.m1ts_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.m1ts_files], self.m1ts_files):
+            url = self.m1ts_base + f
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'M1_Mooring', self.colors['m1'], 'mooring', 'Mooring Deployment', 
                                         self.m1ts_parms, self.dbAlias, stride, self.m1ts_startDatetime, self.m1ts_endDatetime)
 
@@ -665,8 +664,8 @@ class CANONLoader(LoadScript):
         Mooring M1met specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.m1met_files], self.m1met_files):
-            url = self.m1met_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.m1met_files], self.m1met_files):
+            url = self.m1met_base + f
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 'M1_Mooring', self.colors['m1'], 'mooring', 'Mooring Deployment', 
                                         self.m1met_parms, self.dbAlias, stride, self.m1met_startDatetime, self.m1met_endDatetime)
 
@@ -675,8 +674,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.hehape_files], self.hehape_files):
-            url = self.hehape_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.hehape_files], self.hehape_files):
+            url = self.hehape_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'hehape', self.colors['hehape'], 'glider', 'Glider Mission', 
                                         self.hehape_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -685,8 +684,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.rusalka_files], self.rusalka_files):
-            url = self.rusalka_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.rusalka_files], self.rusalka_files):
+            url = self.rusalka_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'rusalka', self.colors['rusalka'], 'glider', 'Glider Mission', 
                                         self.rusalka_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -695,8 +694,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.carmen_files], self.carmen_files):
-            url = self.carmen_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.carmen_files], self.carmen_files):
+            url = self.carmen_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'carmen', self.colors['carmen'], 'glider', 'Glider Mission', 
                                         self.carmen_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -705,8 +704,8 @@ class CANONLoader(LoadScript):
         Glider specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.waveglider_files], self.waveglider_files):
-            url = self.waveglider_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.waveglider_files], self.waveglider_files):
+            url = self.waveglider_base + f
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 'waveglider', self.colors['waveglider'], 'glider', 'Glider Mission', 
                                         self.waveglider_parms, self.dbAlias, stride, self.waveglider_startDatetime, self.waveglider_endDatetime,
                                         grdTerrain=self.grdTerrain)
@@ -716,8 +715,8 @@ class CANONLoader(LoadScript):
         Stella drift specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.stella_files], self.stella_files):
-            url = self.stella_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.stella_files], self.stella_files):
+            url = self.stella_base + f
             dname='Stella' + aName[6:9]
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, dname, self.colors[dname], 'drifter', 'Stella drifter Mission', 
                                         self.stella_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
@@ -727,8 +726,8 @@ class CANONLoader(LoadScript):
         ESPdrift specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.espdrift_files], self.espdrift_files):
-            url = self.espdrift_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.espdrift_files], self.espdrift_files):
+            url = self.espdrift_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, 'espdrift', self.colors['espdrift'], 'drifter', 'ESP drift Mission', 
                                         self.espdrift_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -737,8 +736,8 @@ class CANONLoader(LoadScript):
         ESPmack specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.espmack_files], self.espmack_files):
-            url = self.espmack_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.espmack_files], self.espmack_files):
+            url = self.espmack_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, 'ESP_Mack_Drifter', self.colors['espmack'], 'espmack', 'ESP mack Mission', 
                                         self.espmack_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -747,8 +746,8 @@ class CANONLoader(LoadScript):
         ESPbruce specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.espbruce_files], self.espbruce_files):
-            url = self.espbruce_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.espbruce_files], self.espbruce_files):
+            url = self.espbruce_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, 'espbruce', self.colors['espbruce'], 'espbruce', 'ESP bruce Mission', 
                                         self.espbruce_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -759,8 +758,8 @@ class CANONLoader(LoadScript):
         visualization capabilities in STOQS.
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.wfuctd_files], self.wfuctd_files):
-            url = self.wfuctd_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.wfuctd_files], self.wfuctd_files):
+            url = self.wfuctd_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, platformName, self.colors['flyer'], 'ship', activitytypeName,
                                         self.wfuctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -773,8 +772,8 @@ class CANONLoader(LoadScript):
         visualization capabilities in STOQS.
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a.split('.')[0] + getStrideText(stride) for a in self.wfpctd_files], self.wfpctd_files):
-            url = self.wfpctd_base + file
+        for (aName, f) in zip([ a.split('.')[0] + getStrideText(stride) for a in self.wfpctd_files], self.wfpctd_files):
+            url = self.wfpctd_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, platformName, self.colors['flyer'], 'ship', activitytypeName, 
                                         self.wfpctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
         # Now load all the bottles           
@@ -789,8 +788,8 @@ class CANONLoader(LoadScript):
         RC uctd specific load functions
         '''
         stride = stride or self.stride
-        for (aName, file) in zip([ a + getStrideText(stride) for a in self.rcuctd_files], self.rcuctd_files):
-            url = self.rcuctd_base + file
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.rcuctd_files], self.rcuctd_files):
+            url = self.rcuctd_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, platformName, self.colors['carson'], 'ship', activitytypeName, 
                                         self.rcuctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
 
@@ -800,8 +799,8 @@ class CANONLoader(LoadScript):
         '''
         stride = stride or self.stride
         #platformName = 'rc_pctd'
-        for (aName, file) in zip([ a.split('.')[0] + getStrideText(stride) for a in self.rcpctd_files], self.rcpctd_files):
-            url = self.rcpctd_base + file
+        for (aName, f) in zip([ a.split('.')[0] + getStrideText(stride) for a in self.rcpctd_files], self.rcpctd_files):
+            url = self.rcpctd_base + f
             DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, platformName, self.colors['carson'], 'ship', activitytypeName, 
                                         self.rcpctd_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
         # load all the bottles           
