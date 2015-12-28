@@ -6,8 +6,8 @@ __credits__ = ["Chander Ganesan, Open Technology Group"]
 __license__ = "GPL"
 __maintainer__ = "Mike McCann"
 __email__ = "mccann at mbari.org"
-__doc__ = '''
 
+'''
 Base module for STOQS loaders
 
 @author: __author__
@@ -25,11 +25,10 @@ import django
 django.setup()
 
 from django.conf import settings
-from django.contrib.gis.geos import LineString, Point, Polygon
+from django.contrib.gis.geos import LineString, Polygon
 from django.db.utils import IntegrityError
-from django.db import connection, transaction, DatabaseError
-from django.db.models import Max, Min, Q
-from django.http import HttpRequest
+from django.db import transaction, DatabaseError
+from django.db.models import Max, Min
 from stoqs import models as m
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -37,7 +36,7 @@ import time
 import re
 import math
 import numpy as np
-from coards import to_udunits, from_udunits
+from coards import to_udunits
 import seawater.eos80 as sw
 import csv
 import urllib2
@@ -92,7 +91,7 @@ class LoadScript(object):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 
-    def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains={}, grdTerrain=None):
+    def __init__(self, base_dbAlias, base_campaignName, description=None, stride=1, x3dTerrains=None, grdTerrain=None):
         self.base_dbAlias = base_dbAlias
         self.base_campaignName = base_campaignName
         self.campaignDescription = description
@@ -130,7 +129,7 @@ class LoadScript(object):
                 cl.loadM1met()
 
         Optional arguments for associating X3D Terrains and Viewpoints with this Campaign: 
-            - x3dTerrains: List of absolute URL hashes to X3D GeoElevationGrids with hashes of 
+            - x3dTerrains: Dict of absolute URL hashes to X3D GeoElevationGrids with hashes of 
                            viewpoint position, orientation, and centerOfRotation
 
         '''
@@ -218,8 +217,8 @@ class LoadScript(object):
         if not hasattr(self, 'campaignName'):
             self.campaignName = self.base_campaignName
         
-        resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
-                                name='x3dterrain', description='X3D Terrain information for Spatial 3D visualization')
+        resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+                          name='x3dterrain', description='X3D Terrain information for Spatial 3D visualization')
             
         self.logger.info('Adding to ResourceType: %s', resourceType)
         self.logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
@@ -228,10 +227,10 @@ class LoadScript(object):
         for url, viewpoint in self.x3dTerrains.iteritems():
             self.logger.debug('url = %s, viewpoint = %s', url, viewpoint)
             for name, value in viewpoint.iteritems():
-                resource, created = m.Resource.objects.using(self.dbAlias).get_or_create(
-                            uristring=url, name=name, value=value, resourcetype=resourceType)
-                cr, created = m.CampaignResource.objects.using(self.dbAlias).get_or_create(
-                            campaign=campaign, resource=resource)
+                resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                              uristring=url, name=name, value=value, resourcetype=resourceType)
+                m.CampaignResource.objects.using(self.dbAlias).get_or_create(
+                              campaign=campaign, resource=resource)
                 self.logger.info('Resource uristring=%s, name=%s, value=%s', url, name, value)
 
 
@@ -241,8 +240,8 @@ class LoadScript(object):
         To be called with each file (Activity) load.
         '''
 
-        resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
-                                name='x3dplayback', description='X3D scene graph for Activity playback')
+        resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+                          name='x3dplayback', description='X3D scene graph for Activity playback')
         ##resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
         ##                        name='x3dplaybackhtml', description='X3D DOM control HTML stubs for Activity playback')
 
@@ -250,10 +249,12 @@ class LoadScript(object):
         self.logger.debug('Looking in database %s for Activity name = %s', self.dbAlias, aName)
         activity = m.Activity.objects.using(self.dbAlias).get(name=aName)
         
-        resource, created = m.Resource.objects.using(self.dbAlias).get_or_create(
-                            uristring=x3dmodelurl, name=X3D_MODEL, value='Output from bed2x3d.py - uristring to be included in GeoLocation node', resourcetype=resourceType)
-        cr, created = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
-                            activity=activity, resource=resource)
+        resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                      uristring=x3dmodelurl, name=X3D_MODEL, value=
+                      'Output from bed2x3d.py - uristring to be included in GeoLocation node',
+                      resourcetype=resourceType)
+        m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                      activity=activity, resource=resource)
         self.logger.info('Resource uristring=%s', x3dmodelurl)
 
     def addPlatformResources(self, x3dmodelurl, pName, value='X3D model', nominaldepth=0.0):
@@ -262,23 +263,22 @@ class LoadScript(object):
         derived from SolidWorks model of ESP and processed through aopt"
         '''
 
-        resourceType, created = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+        resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(
                 name=X3DPLATFORMMODEL, description='X3D scene for model of a platform')
 
         self.logger.info('Adding to ResourceType: %s', resourceType)
         self.logger.debug('Looking in database %s for Platform name = %s', self.dbAlias, pName)
         platform = m.Platform.objects.using(self.dbAlias).get(name=pName)
         
-        r_url, created = m.Resource.objects.using(self.dbAlias).get_or_create(
+        r_url, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                 uristring=x3dmodelurl, name=X3D_MODEL, value=value, resourcetype=resourceType)
         m.PlatformResource.objects.using(self.dbAlias).get_or_create(
                 platform=platform, resource=r_url)
-        r_nd, created = m.Resource.objects.using(self.dbAlias).get_or_create(
+        r_nd, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                 uristring=x3dmodelurl, 
                 name='X3D_MODEL_nominaldepth', value=nominaldepth, resourcetype=resourceType)
         m.PlatformResource.objects.using(self.dbAlias).get_or_create(
                 platform=platform, resource=r_nd)
-
 
         self.logger.info('Resource uristring=%s', x3dmodelurl)
 
@@ -306,19 +306,27 @@ class STOQS_Loader(object):
     logger = logging.getLogger('__main__')
     logger.setLevel(logging.INFO)
 
-    def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, campaignDescription=None,
-                activitytypeName=None, platformColor=None, platformTypeName=None, stride=1):
+    def __init__(self, activityName, platformName, dbAlias='default', campaignName=None, 
+                 campaignDescription=None, activitytypeName=None, platformColor=None, 
+                 platformTypeName=None, stride=1):
         '''
         Intialize with settings that are common for any load of data into STOQS.
         
         @param activityName: A string describing this activity
-        @param platformName: A string that is the name of the platform. If that name for a Platform exists in the DB, it will be used.
+        @param platformName: A string that is the name of the platform. If that name 
+                             for a Platform exists in the DB, it will be used.
         @param platformColor: An RGB hex string represnting the color of the platform. 
         @param dbAlias: The name of the database alias as defined in settings.py
-        @param campaignName: A string describing the Campaign in which this activity belongs, If that name for a Campaign exists in the DB, it will be used.
-        @param campaignDescription: A string expanding on the campaignName. It should be a short phrase expressing the where and why of a campaign.
-        @param activitytypeName: A string such as 'mooring deployment' or 'AUV mission' describing type of activity, If that name for a ActivityType exists in the DB, it will be used.
-        @param platformTypeName: A string describing the type of platform, e.g.: 'mooring', 'auv'.  If that name for a PlatformType exists in the DB, it will be used.
+        @param campaignName: A string describing the Campaign in which this activity belongs, 
+                             If that name for a Campaign exists in the DB, it will be used.
+        @param campaignDescription: A string expanding on the campaignName. It should be a 
+                                    short phrase expressing the where and why of a campaign.
+        @param activitytypeName: A string such as 'mooring deployment' or 'AUV mission' 
+                                 describing type of activity, If that name for a ActivityType 
+                                 exists in the DB, it will be used.
+        @param platformTypeName: A string describing the type of platform, e.g.: 'mooring', 
+                                 'auv'.  If that name for a PlatformType exists in the DB, 
+                                 it will be used.
         
         '''
         self.campaignName = campaignName
@@ -334,7 +342,7 @@ class STOQS_Loader(object):
         self.build_standard_names()
 
     
-    def getPlatform(self, name, type):
+    def getPlatform(self, name, type_name):
         '''
         Given just a platform name get a platform object from the STOQS database.  If no such object is in the
         database then create a new one.  Makes use of the MBARI tracking database to keep the names and types
@@ -362,7 +370,7 @@ class STOQS_Loader(object):
             raise Exception('Platform name = "%s" is not allowed.  Name can contain only letters, numbers, "_", and "-"' % name)
 
         tpHandle = []
-        self.logger.debug("Opening %s to read platform names for matching to the MBARI tracking database" % paURL)
+        self.logger.debug("Opening %s to read platform names for matching to the MBARI tracking database", paURL)
         try:
             tpHandle = csv.DictReader(urllib2.urlopen(paURL))
         except urllib2.URLError as e:
@@ -374,19 +382,27 @@ class STOQS_Loader(object):
                 ##print "rec = %s" % rec
                 if rec['PlatformName'].lower() == name.lower():
                     platformName = rec['PlatformName']
-                    platformTypeName = rec['PlatformType']
+                    tdb_platformTypeName = rec['PlatformType']
                     break
         except httplib.IncompleteRead as e:
             self.logger.warn(e)
 
         if not platformName:
             platformName = name
-            platformTypeName = type
             self.logger.debug("Platform name %s not found in tracking database.  Creating new platform anyway.", platformName)
+
+        # Preference: 1. __init__(), 2. this function arg, 3. tracking DB
+        if not self.platformTypeName:
+            if type_name:
+                self.platformTypeName = type_name
+            elif tdb_platformTypeName:
+                self.platformTypeName = tdb_platformTypeName
+            else:
+                self.logger.warn('self.platformTypeName has not been assigned')
 
         # Create PlatformType
         self.logger.debug("calling using('%s').get_or-create() on PlatformType for platformTypeName = %s", self.dbAlias, self.platformTypeName)
-        (platformType, created) = m.PlatformType.objects.using(self.dbAlias).get_or_create(name = self.platformTypeName)
+        platformType, created = m.PlatformType.objects.using(self.dbAlias).get_or_create(name = self.platformTypeName)
         if created:
             self.logger.debug("Created platformType.name %s in database %s", platformType.name, self.dbAlias)
         else:
@@ -394,7 +410,7 @@ class STOQS_Loader(object):
 
 
         # Create Platform 
-        (platform, created) = m.Platform.objects.using(self.dbAlias).get_or_create( name=platformName, 
+        platform, created = m.Platform.objects.using(self.dbAlias).get_or_create( name=platformName, 
                                                                                         color=self.platformColor, 
                                                                                         platformtype=platformType)
         if created:
@@ -405,78 +421,77 @@ class STOQS_Loader(object):
         return platform
 
     def addParameters(self, parmDict):
-      '''
-      Wrapper so as to apply self.dbAlias in the decorator
-      '''
-      def innerAddParameters(self, parmDict):
         '''
-        This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
-        parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
-        checks to see if it's in the database.  If it's not in the database it will then add it
-        populating the fields from the attributes of the parameter dictionary that is passed.  The
-        dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
+        Wrapper so as to apply self.dbAlias in the decorator
         '''
+        def innerAddParameters(self, parmDict):
+            '''
+            This method is a get_or_create() equivalent, but on steroids.  It first tries to find the
+            parameter in a local cache (a python hash), first by standard_name, then by name.  Then it
+            checks to see if it's in the database.  If it's not in the database it will then add it
+            populating the fields from the attributes of the parameter dictionary that is passed.  The
+            dictionary is patterned after the pydap.model.BaseType variable from the NetCDF file (OPeNDAP URL).
+            '''
 
-        # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
-        for key in parmDict.keys():
-            self.logger.debug("key = %s", key)
-            if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
-                continue
-            v = parmDict[key].attributes
-            self.logger.debug("v = %s", v)
-            try:
-                self.getParameterByName(key)
-            except ParameterNotFound as e:
-                self.logger.debug("Parameter not found. Assigning parms from ds variable.")
-                # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
-                # set.  Check for this on units and override what pydap returns.
-                if type(v.get('units')) == list:
-                    unitStr = ''
-                else:
-                    unitStr = v.get('units')
-                
-                parms = {'units': unitStr,
-                    'standard_name': v.get('standard_name'),
-                    'long_name': v.get('long_name'),
-                    'type': v.get('type'),
-                    'description': v.get('description'),
-                    'origin': self.activityName,
-                    'name': key}
-
-                self.parameter_dict[key] = m.Parameter(**parms)
+            # Go through the keys of the OPeNDAP URL for the dataset and add the parameters as needed to the database
+            for key in parmDict.keys():
+                self.logger.debug("key = %s", key)
+                if (key in self.ignored_names) or (key not in self.include_names): # skip adding parameters that are ignored
+                    continue
+                v = parmDict[key].attributes
+                self.logger.debug("v = %s", v)
                 try:
-                    sid = transaction.savepoint(using=self.dbAlias)
-                    self.parameter_dict[key].save(using=self.dbAlias)
-                    self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                except IntegrityError as e:
-                    self.logger.warn('%s', e)
-                    transaction.savepoint_rollback(sid)
-                    if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
-                        self.resetParameterAutoSequenceId()
-                        try:
-                            sid2 = transaction.savepoint(using=self.dbAlias)
-                            self.parameter_dict[key].save(using=self.dbAlias)
-                            self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
-                        except Exception as e:
-                            self.logger.error('%s', e)
-                            transaction.savepoint_rollback(sid2,using=self.dbAlias)
-                            raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
+                    self.getParameterByName(key)
+                except ParameterNotFound as e:
+                    self.logger.debug("Parameter not found. Assigning parms from ds variable.")
+                    # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
+                    # set.  Check for this on units and override what pydap returns.
+                    if type(v.get('units')) == list:
+                        unitStr = ''
                     else:
-                        self.logger.error('Exception %s', e)
+                        unitStr = v.get('units')
+                    
+                    parms = {'units': unitStr,
+                        'standard_name': v.get('standard_name'),
+                        'long_name': v.get('long_name'),
+                        'type': v.get('type'),
+                        'description': v.get('description'),
+                        'origin': self.activityName,
+                        'name': key}
+
+                    self.parameter_dict[key] = m.Parameter(**parms)
+                    try:
+                        sid = transaction.savepoint(using=self.dbAlias)
+                        self.parameter_dict[key].save(using=self.dbAlias)
+                        self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
+                    except IntegrityError as e:
+                        self.logger.warn('%s', e)
+                        transaction.savepoint_rollback(sid)
+                        if str(e).startswith('duplicate key value violates unique constraint "stoqs_parameter_pkey"'):
+                            self.resetParameterAutoSequenceId()
+                            try:
+                                sid2 = transaction.savepoint(using=self.dbAlias)
+                                self.parameter_dict[key].save(using=self.dbAlias)
+                                self.ignored_names.remove(key)  # unignore, since a failed lookup will add it to the ignore list.
+                            except Exception as e:
+                                self.logger.error('%s', e)
+                                transaction.savepoint_rollback(sid2,using=self.dbAlias)
+                                raise Exception('''Failed reset auto sequence id on the stoqs_parameter table''')
+                        else:
+                            self.logger.error('Exception %s', e)
+                            raise Exception('''Failed to add parameter for %s
+                                %s\nEither add parameter manually, or add to ignored_names''' % (key,
+                                '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
+                        
+                    except Exception as e:
+                        self.logger.error('%s', e)
+                        transaction.savepoint_rollback(sid,using=self.dbAlias)
                         raise Exception('''Failed to add parameter for %s
                             %s\nEither add parameter manually, or add to ignored_names''' % (key,
                             '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
-                    
-                except Exception as e:
-                    self.logger.error('%s', e)
-                    transaction.savepoint_rollback(sid,using=self.dbAlias)
-                    raise Exception('''Failed to add parameter for %s
-                        %s\nEither add parameter manually, or add to ignored_names''' % (key,
-                        '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
-                self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
+                    self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
 
-
-      return innerAddParameters(self, parmDict)
+        return innerAddParameters(self, parmDict)
 
     def createCampaign(self):
         '''Create Campaign in the database ensuring that there is only one Campaign
@@ -509,7 +524,7 @@ class STOQS_Loader(object):
         self.logger.info("comment = " + comment)
 
         # Create Platform 
-        (self.activity, created) = m.Activity.objects.using(self.dbAlias).get_or_create(    
+        self.activity, created = m.Activity.objects.using(self.dbAlias).get_or_create(    
                                         name = self.activityName, 
                                         platform = self.platform,
                                         startdate = self.startDatetime,
@@ -541,34 +556,34 @@ class STOQS_Loader(object):
         and all the attributes for each variable in include_names.
         '''
         # The source of the data - this OPeNDAP URL
-        (resourceType, created) = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'opendap_url')
+        resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'opendap_url')
         self.logger.debug("Getting or Creating Resource with name = %s, value = %s", 'opendap_url', self.url )
-        (resource, created) = m.Resource.objects.using(self.dbAlias).get_or_create(
+        resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                             name='opendap_url', value=self.url, uristring=self.url, resourcetype=resourceType)
-        (ar, created) = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+        ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                     activity=self.activity, resource=resource)
 
         # The NC_GLOBAL attributes from the OPeNDAP URL.  Save them all.
         self.logger.debug("Getting or Creating ResourceType nc_global...")
         self.logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
-        if self.ds.attributes.has_key('NC_GLOBAL'):
-            (resourceType, created) = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'nc_global')
+        if 'NC_GLOBAL' in self.ds.attributes:
+            resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'nc_global')
             for rn, value in self.ds.attributes['NC_GLOBAL'].iteritems():
                 self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
-                (resource, created) = m.Resource.objects.using(self.dbAlias).get_or_create(
+                resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                             name=rn, value=value, resourcetype=resourceType)
-                (ar, created) = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                             activity=self.activity, resource=resource)
 
             # Use potentially monkey-patched self.getFeatureType() method to write a correct value - as the UI depends on it
-            (mp_resource, created) = m.Resource.objects.using(self.dbAlias).get_or_create(
+            mp_resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                         name='featureType', value=self.getFeatureType(), resourcetype=resourceType)
             ars = m.ActivityResource.objects.using(self.dbAlias).filter(activity=self.activity,
                             resource__resourcetype=resourceType, resource__name='featureType').select_related('resource')
 
             if not ars:
                 # There was no featureType NC_GLOBAL in the dataset - associate to the one from self.getFeatureType()
-                (ar, created) = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                ar, _ = m.ActivityResource.objects.using(self.dbAlias).get_or_create(
                             activity=self.activity, resource=mp_resource)
             for ar in ars:
                 if ar.resource.value != mp_resource.value:
@@ -586,16 +601,16 @@ class STOQS_Loader(object):
             try:
                 for rn, value in self.ds[v].attributes.iteritems():
                     self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
-                    (resource, created) = m.Resource.objects.using(self.dbAlias).get_or_create(
+                    resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                                           name=rn, value=value, resourcetype=resourceType)
-                    (ar, created) = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
+                    ar, _ = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                     parameter=self.getParameterByName(v), resource=resource)
                 try:
                     if self.plotTimeSeriesDepth.get(v, False):
-                        (uiResType, created) = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
-                        (resource, created) = m.Resource.objects.using(self.dbAlias).get_or_create(
+                        uiResType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
+                        resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                                               name='plotTimeSeriesDepth', value=self.plotTimeSeriesDepth[v], resourcetype=uiResType)
-                        (ar, created) = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
+                        ar, _ = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                         parameter=self.getParameterByName(v), resource=resource)
                 except AttributeError:
                     pass
@@ -616,7 +631,7 @@ class STOQS_Loader(object):
         @param name: Name of parameter object to lookup/locate 
         '''
         # First try to locate the parameter using the standard name (if we have one)
-        if not self.parameter_dict.has_key(name):
+        if name not in self.parameter_dict:
             self.logger.debug("'%s' is not in self.parameter_dict", name)
             if self.standard_names.get(name) is not None:
                 self.logger.debug("self.standard_names.get('%s') is not None", name)
@@ -630,7 +645,7 @@ class STOQS_Loader(object):
                 except IndexError:
                     pass
         # If we still haven't found the parameter using the standard_name, start looking using the name
-        if not self.parameter_dict.has_key(name):
+        if name not in self.parameter_dict:
             self.logger.debug("Again '%s' is not in self.parameter_dict", name)
             try:
                 self.logger.debug("trying to get '%s' from database %s...", name, self.dbAlias)
@@ -654,7 +669,7 @@ class STOQS_Loader(object):
 
         return self.parameter_dict[name]
 
-    def createMeasurement(self, featureType, time, depth, lat, long, nomDepth=None, nomLat=None, nomLong=None):
+    def createMeasurement(self, featureType, time, depth, lat, lon, nomDepth=None, nomLat=None, nomLong=None):
         '''
         Create and return a measurement object in the database.  The measurement object
         is created by first creating an instance of stoqs.models.Instantpoint using the activity, 
@@ -664,7 +679,7 @@ class STOQS_Loader(object):
         @param time: A valid datetime instance of a datetime object used to create the Instantpoint
         @param depth: The depth for the measurement
         @param lat: The latitude (degrees, assumed WGS84) for the measurement
-        @param long: The longitude (degrees, assumed WGS84) for the measurement
+        @param lon: The longitude (degrees, assumed WGS84) for the measurement
         @param nomDepth: The nominal depth (e.g. for a timeSeriesProfile featureType) measurement
         @param nomLat: The nominal latitude (e.g. for a timeSeriesProfile featureType) measurement
         @param nomLong: The nominal longitude (e.g. for a timeSeriesProfile featureType) measurement
@@ -679,13 +694,13 @@ class STOQS_Loader(object):
         # Brute force QC check on latitude and longitude to remove egregous outliers
         if lat < -90 or lat > 90:
             raise SkipRecord('Bad lat: %s (latitude must be between %s and %s)' % (lat, -90, 90))
-        if long < -720 or long > 720:
-            raise SkipRecord('Bad long: %s (longitude must be between %s and %s)' % (long, -720, 720))
+        if lon < -720 or lon > 720:
+            raise SkipRecord('Bad lon: %s (longitude must be between %s and %s)' % (long, -720, 720))
 
         ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=time)
 
         nl = None
-        point = 'POINT(%s %s)' % (repr(long), repr(lat))
+        point = 'POINT(%s %s)' % (repr(lon), repr(lat))
         if not (nomDepth == None and nomLat == None and nomLong == None):
             self.logger.debug('nomDepth = %s nomLat = %s nomLong = %s', nomDepth, nomLat, nomLong)
             nom_point = 'POINT(%s %s)' % (repr(nomLong), repr(nomLat))
@@ -790,8 +805,9 @@ class STOQS_Loader(object):
             return
         try:
             for var in self.ds.keys():
-                if self.standard_names.has_key(var): continue # don't override pre-specified names
-                if self.ds[var].attributes.has_key('standard_name'):
+                if var in self.standard_names: 
+                    continue # don't override pre-specified names
+                if 'standard_name' in self.ds[var].attributes:
                     self.standard_names[var]=self.ds[var].attributes['standard_name']
                 else:
                     self.standard_names[var]=None # Indicate those without a standard name
