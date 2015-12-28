@@ -8,8 +8,7 @@ __version__ = "$Revision: 1.1 $".split()[1]
 __maintainer__ = "Mike McCann"
 __email__ = "mccann at mbari.org"
 __status__ = "Development"
-__doc__ = '''
-
+'''
 The DAPloaders module contains classes for reading data from OPeNDAP servers and
 loading into the STOQS database.  It assumes that all data are on the 4 spatial-
 temporal dimensions as defined in the COARDS/CF convention.  There are custom
@@ -30,30 +29,25 @@ MBARI Dec 29, 2011
 import os
 import re
 import sys
-from django.contrib.gis.geos import GEOSGeometry, LineString, Point
+from django.contrib.gis.geos import LineString, Point
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # config is one dir up
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 from django.conf import settings
 
 from django.db.utils import IntegrityError, DatabaseError
-from django.db import connection, transaction
+from django.db import transaction
 from stoqs import models as m
-from datetime import datetime, timedelta
-from django.core.exceptions import ObjectDoesNotExist
+from datetime import datetime
 import pytz
 from pydap.client import open_url
 import pydap.model
-import time
-from decimal import Decimal
-import math, numpy
+import math
 from coards import to_udunits, from_udunits, ParserError
-import csv
-import urllib2
 import logging
 import socket
 import seawater.eos80 as sw
-from utils.utils import percentile, median, mode, simplify_points
-from loaders import STOQS_Loader, SkipRecord, HasMeasurement, missing_value, MEASUREDINSITU, FileNotFound
+from utils.utils import percentile, mode, simplify_points
+from loaders import STOQS_Loader, SkipRecord, HasMeasurement, MEASUREDINSITU, FileNotFound
 from loaders.SampleLoaders import get_closest_instantpoint, ClosestTimeNotFoundException
 import numpy as np
 from collections import defaultdict
@@ -120,7 +114,6 @@ class Base_Loader(STOQS_Loader):
     global_ignored_names = ['longitude','latitude', 'time', 'Time',
                 'LONGITUDE','LATITUDE','TIME', 'NominalDepth', 'esecs', 'Longitude', 'Latitude',
                 'DEPTH','depth'] # A list of parameters that should not be imported as parameters
-    global_dbAlias = ''
     def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
@@ -133,18 +126,26 @@ class Base_Loader(STOQS_Loader):
         stride is used to speed up loads by skipping data.
         
         @param activityName: A string describing this activity
-        @param platformName: A string that is the name of the platform. If that name for a Platform exists in the DB, it will be used.
+        @param platformName: A string that is the name of the platform. 
+                             If that name for a Platform exists in the DB, it will be used.
         @param platformColor: An RGB hex string represnting the color of the platform. 
         @param url: The OPeNDAP URL for the data source
         @param dbAlias: The name of the database alias as defined in settings.py
-        @param campaignName: A string describing the Campaign in which this activity belongs, If that name for a Campaign exists in the DB, it will be used.
-        @param campaignDescription: A string expanding on the campaignName. It should be a short phrase expressing the where and why of a campaign.
-        @param activitytypeName: A string such as 'mooring deployment' or 'AUV mission' describing type of activity, If that name for a ActivityType exists in the DB, it will be used.
-        @param platformTypeName: A string describing the type of platform, e.g.: 'mooring', 'auv'.  If that name for a PlatformType exists in the DB, it will be used.
+        @param campaignName: A string describing the Campaign in which this activity belongs. 
+                             If that name for a Campaign exists in the DB, it will be used.
+        @param campaignDescription: A string expanding on the campaignName. 
+                                    It should be a short phrase expressing the where and why of a campaign.
+        @param activitytypeName: A string such as 'mooring deployment' or 'AUV mission' describing type of 
+                                 activity, If that name for a ActivityType exists in the DB, it will be used.
+        @param platformTypeName: A string describing the type of platform, e.g.: 'mooring', 'auv'.  
+                                 If that name for a PlatformType exists in the DB, it will be used.
         @param startDatetime: A Python datetime.dateime object specifying the start date time of data to load
         @param endDatetime: A Python datetime.dateime object specifying the end date time of data to load
-        @param dataStartDatetime: A Python datetime.dateime object specifying the start date time of data to append to an existing Activity
-        @param auxCoords: a dictionary of coordinate standard_names (time, latitude, longitude, depth) pointing to exact names of those coordinates. Used for variables missing the coordinates attribute.
+        @param dataStartDatetime: A Python datetime.dateime object specifying the start date time of data 
+                                  to append to an existing Activity
+        @param auxCoords: a dictionary of coordinate standard_names (time, latitude, longitude, depth) 
+                          pointing to exact names of those coordinates. Used for variables missing the 
+                          coordinates attribute.
         @param stride: The stride/step size used to retrieve data from the url.
         '''
         self.campaignName = campaignName
@@ -153,7 +154,6 @@ class Base_Loader(STOQS_Loader):
         self.platformName = platformName
         self.platformColor = platformColor
         self.dbAlias = dbAlias
-        global_dbAlias = dbAlias
         self.platformTypeName = platformTypeName
         self.activityName = activityName
         self.startDatetime = startDatetime
@@ -167,17 +167,11 @@ class Base_Loader(STOQS_Loader):
         self.varsLoaded = []
         try:
             self.ds = open_url(url)
-        except socket.error as e:
+        except (socket.error, pydap.exceptions.ServerError, pydap.exceptions.ClientError):
             logger.error('Failed in attempt to open_url("%s")', url)
             raise
-        except pydap.exceptions.ServerError as e:
+        except Exception:
             logger.error('Failed in attempt to open_url("%s")', url)
-            raise
-        except Exception as e:
-            logger.error('Failed in attempt to open_url("%s")', url)
-            raise
-        except pydap.exceptions.ClientError as e:
-            logger.error('Failed in attempt to open_url(%s)', url)
             raise
 
         self.ignored_names += self.global_ignored_names # add global ignored names to platform specific ignored names.
@@ -188,6 +182,7 @@ class Base_Loader(STOQS_Loader):
         Examine all possible time coordinates for include_names and set the overall min and max time for the dataset.
         To be used for setting Activity startDatetime and endDatetime.
         '''
+        # TODO: Refactor to simplify. McCabe MC0001 pylint complexity warning issued.
         minDT = {}
         maxDT = {}
         for v in self.include_names:
@@ -222,6 +217,10 @@ class Base_Loader(STOQS_Loader):
         logger.debug('minDT = %s', minDT)
         logger.debug('maxDT = %s', maxDT)
 
+        # STOQS does not deal with data in the future and in B.C.
+        startDatetime = datetime.utcnow()
+        endDatetime = datetime(1,1,1)
+
         for v, dt in minDT.iteritems():
             try:
                 if dt < startDatetime:
@@ -241,7 +240,6 @@ class Base_Loader(STOQS_Loader):
 
         logger.info('Activity startDatetime = %s, endDatetime = %s', startDatetime, endDatetime)
         return startDatetime, endDatetime
-
 
     def initDB(self):
         '''
@@ -283,7 +281,7 @@ class Base_Loader(STOQS_Loader):
             try:
                 # Fred's L_662 and other glider data files have the 'FillValue' attribute, not '_FillValue'
                 fv = self.ds[var].attributes['FillValue']
-            except:
+            except Exception:
                 logger.debug('Cannot get attribute FillValue for variable %s from url %s', var, self.url)
             return None
         except AttributeError as e:
@@ -393,7 +391,9 @@ class Base_Loader(STOQS_Loader):
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
         logger.debug('coordDict = %s', coordDict)
         if set(coordDict.keys()) != reqCoords:
-            logger.warn('Required coordinate(s) %s missing.  Consider overriding by setting an auxCoords dictionary in your Loader.', list(reqCoords - set(coordDict.keys())))
+            logger.warn('Required coordinate(s) %s missing. Consider overriding by setting an'
+                        ' auxCoords dictionary in your Loader.', 
+                        list(reqCoords - set(coordDict.keys())))
             raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
 
         logger.debug('coordDict = %s', coordDict)
@@ -434,7 +434,8 @@ class Base_Loader(STOQS_Loader):
                 if len(self.ds[ac['longitude']][:]) == 1:
                     lons[v] = self.ds[ac['longitude']][:][0]
                 else:
-                    logger.warn('Variable %s has longitude auxillary coordinate of length %d, expecting it to be 1.', pname, len(self.ds[ac['longitude']][:]))
+                    logger.warn('Variable %s has longitude auxillary coordinate of length %d, expecting it to be 1.',
+                                v, len(self.ds[ac['longitude']][:]))
 
             try:
                 lats[v] = self.ds[v][ac['latitude']][:][0]
@@ -442,17 +443,13 @@ class Base_Loader(STOQS_Loader):
                 if len(self.ds[ac['latitude']][:]) == 1:
                     lats[v] = self.ds[ac['latitude']][:][0]
                 else:
-                    logger.warn('Variable %s has latitude auxillary coordidate of length %d, expecting it to be 1.', pname, len(self.ds[ac['latitude']][:]))
+                    logger.warn('Variable %s has latitude auxillary coordidate of length %d, expecting it to be 1.', 
+                                v, len(self.ds[ac['latitude']][:]))
 
         # All variables must have the same nominal location 
         if len(set(lats.values())) != 1 or len(set(lons.values())) != 1:
-            raise Exception('Invalid file coordinates structure.  All variables must have identical nominal lat & lon, lats = %s, lons = %s', lats, lons)
-        else:
-            lat = lats.values()[0]
-            lon = lons.values()[0]
-
-        if len(set(lats.values())) != 1 or len(set(lons.values())) != 1:
-            raise Exception('Invalid file coordinates structure.  All variables must have identical nominal latitude and longitude. lats = %s, lons = %s' % (lats, lons))
+            raise Exception('Invalid file coordinates structure.  All variables must have'
+                            ' identical nominal lat & lon, lats = %s, lons = %s' % lats, lons)
 
         return depths, lats, lons
 
@@ -476,7 +473,7 @@ class Base_Loader(STOQS_Loader):
             logger.debug("For dataStartDatetime = %s, the udnits value is %f", self.dataStartDatetime, s)
 
         if self.endDatetime:
-            'endDatetime may be None, in which case just read until the end'
+            # endDatetime may be None, in which case just read until the end
             e = to_udunits(self.endDatetime, timeAxisUnits)
             logger.debug("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
         else:
@@ -485,7 +482,7 @@ class Base_Loader(STOQS_Loader):
 
         tf = (s <= timeAxis) & (timeAxis <= e)
         logger.debug('tf = %s', tf)
-        tIndx = numpy.nonzero(tf == True)[0]
+        tIndx = np.nonzero(tf == True)[0]
         if tIndx.size == 0:
             raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, s, e))
 
@@ -547,6 +544,8 @@ class Base_Loader(STOQS_Loader):
         longitudes = {}
         timeUnits = {} 
 
+        # TODO: Refactor to simplify. McCabe MC0001 pylint complexity warning issued.
+
         # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
         # The reads here take advantage of OPeNDAP access mechanisms to efficiently transfer data across the network
         for pname in self.include_names:
@@ -570,9 +569,10 @@ class Base_Loader(STOQS_Loader):
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride,:,0,0]
                 except ValueError as err:
-                    logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
-                    If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
-                    then the cache files must be removed and the tomcat hosting TDS restarted.''')
+                    logger.error('\nGot error '%s' reading data from URL: %s.\n'
+                                 'If it is: "string size must be a multiple of element size"'
+                                 ' and the URL is a TDS aggregation then the cache files must'
+                                 ' be removed and the tomcat hosting TDS restarted.',  err, self.url)
                     sys.exit(1)
                 except pydap.exceptions.ServerError as e:
                     if self.stride > 1:
@@ -602,7 +602,8 @@ class Base_Loader(STOQS_Loader):
                     latitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                     longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                 elif len(self.ds[pname].shape) == 2:
-                    logger.info('%s has shape of 2, assuming no latitude and longitude singletime dimensions. Using nominal location read from auxially coordinates', pname)
+                    logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
+                                ' dimensions. Using nominal location read from auxially coordinates', pname)
                     longitudes[pname] = nomLons[pname]
                     latitudes[pname] = nomLats[pname]
                 elif len(self.ds[pname].shape) == 1:
@@ -617,7 +618,8 @@ class Base_Loader(STOQS_Loader):
                     
             else:
                 logger.warn('Variable %s is not of type pydap.model.GridType', pname)
-                logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.  It has a shape length of %d.', pname, len(self.ds[pname].shape))
+                logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.'
+                            ' It has a shape length of %d.', pname, len(self.ds[pname].shape))
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
         for pname in data.keys():
@@ -663,6 +665,8 @@ class Base_Loader(STOQS_Loader):
         timeUnits = {}
         measurements = {}
 
+        # TODO: Refactor to simplify. McCabe MC0001 pylint complexity warning issued. Too many local variables.
+
         # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
         # The reads here take advantage of OPeNDAP access mechanisms to efficiently transfer data across the network
         for pname in self.include_names:
@@ -681,16 +685,17 @@ class Base_Loader(STOQS_Loader):
                     logger.debug("ac[pname]['time'] = %s", ac[pname]['time'])
                     tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
                 except NoValidData, e:
-                    logger.warn('Skipping this parameter. %s' % e)
+                    logger.warn('Skipping this parameter. %s', e)
                     continue
                 try:
                     # Subselect along the time axis
                     logger.info("Using constraints: ds['%s'][%d:%d:%d]", pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][tIndx[0]:tIndx[-1]:self.stride]
                 except ValueError as err:
-                    logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
-                    If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
-                    then the cache files must be removed and the tomcat hosting TDS restarted.''', err, self.url)
+                    logger.error('\nGot error '%s' reading data from URL: %s.\n'
+                                 'If it is: "string size must be a multiple of element size"'
+                                 ' and the URL is a TDS aggregation then the cache files must'
+                                 ' be removed and the tomcat hosting TDS restarted.',  err, self.url)
                     sys.exit(1)
                 except pydap.exceptions.ServerError as e:
                     logger.exception('%s', e)
@@ -709,7 +714,7 @@ class Base_Loader(STOQS_Loader):
                 except KeyError:
                     # Allow for variables with no depth coordinate to be loaded at the depth specified in auxCoords
                     if isinstance(ac[pname]['depth'], float):
-                        depths[pname] =  ac[pname]['depth'] * numpy.ones(len(times[pname]))
+                        depths[pname] =  ac[pname]['depth'] * np.ones(len(times[pname]))
 
                 latitudes[pname] = self.ds[ac[pname]['latitude']][tIndx[0]:tIndx[-1]:self.stride]
                 longitudes[pname] = self.ds[ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
@@ -874,7 +879,7 @@ class Base_Loader(STOQS_Loader):
                 if self.ds[self.ds[pname].keys()[1]].units == 'seconds since 1970-01-01T00:00:00Z':
                     timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards 1.0.4 and earlier doesn't like ISO format
 
-                nomD, nomLats, nomLons = self.getNominalLocation()                  # Possible to have both precise and nominal locations with this approach
+                _, nomLats, nomLons = self.getNominalLocation()                  # Possible to have both precise and nominal locations with this approach
 
                 # TODO: Handle real CF-1.6 trajectoryProfile data
                 if len(self.ds[pname].shape) == 5:
@@ -898,7 +903,8 @@ class Base_Loader(STOQS_Loader):
                     
             else:
                 logger.warn('Variable %s is not of type pydap.model.GridType', pname)
-                logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.  It has a shape length of %d.', pname, len(self.ds[pname].shape))
+                logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.'
+                            ' It has a shape length of %d.', pname, len(self.ds[pname].shape))
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
         for pname in data.keys():
@@ -936,7 +942,7 @@ class Base_Loader(STOQS_Loader):
         '''
         @transaction.atomic(using=self.dbAlias)
         def _innerInsertRow(self, parmCount, parameterCount, measurement, row):
-
+            # TODO: Refactor to simplify. McCabe MC0001 pylint complexity warning issued.
             for key,value in row.iteritems():
                 # value may be single-valued or an array
                 try:
@@ -966,7 +972,7 @@ class Base_Loader(STOQS_Loader):
                                              'to _FillValue or missing_value.', value)
                                 continue
 
-                        if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or numpy.isnan(value):
+                        if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or np.isnan(value):
                             # value is basically absent
                             continue
                         try:
@@ -974,7 +980,7 @@ class Base_Loader(STOQS_Loader):
                                 continue
                         except Exception, e: 
                             logger.debug('%s', e)
-                            pass
+
                         # Single-valued datavalue
                         mp = m.MeasuredParameter(measurement=measurement, parameter=parameter, datavalue=value)
 
@@ -997,7 +1003,7 @@ class Base_Loader(STOQS_Loader):
                         self.loaded += 1
                         logger.debug("Inserted value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
                         parmCount[key] += 1
-                        if parameterCount.has_key(self.getParameterByName(key)):
+                        if self.getParameterByName(key) in parameterCount:
                             parameterCount[self.getParameterByName(key)] += 1
                         else:
                             parameterCount[self.getParameterByName(key)] = 0
@@ -1249,11 +1255,11 @@ class Dorado_Loader(Trajectory_Loader):
         Compute on-the-fly any additional Dorado parameters for loading into the database
         '''
         # Magic formula for October 2010 CANON "experiment"
-        if row.has_key('fl700_uncorr'):
+        if 'fl700_uncorr' in row:
             row['mass_concentration_of_chlorophyll_in_sea_water'] = 3.4431e+03 * row['fl700_uncorr']
 
         # Compute sigma-t
-        if row.has_key('salinity') and row.has_key('temperature') and row.has_key('depth') and row.has_key('latitude'):
+        if 'salinity' in row and 'temperature' in row and 'depth' in row and 'latitude' in row:
             row['sea_water_sigma_t'] = sw.pden(row['salinity'], row['temperature'], sw.pres(row['depth'], row['latitude'])) - 1000.0
 
         return super(Dorado_Loader, self).preProcessParams(row)
@@ -1339,9 +1345,9 @@ class Lrauv_Loader(Trajectory_Loader):
         if self.url.find('shore') == -1 and self.url.find('Tethys') == -1 and self.url.find('Daphne') == -1 and self.url.find('hotspot'):
             # Full-resolution data (whose name does not contain 'shore', 'Tethys', 'Daphne', 'hotspot') are in radians
             if row.has_key('latitude'):
-                row['latitude'] = row['latitude'] * 180.0 / numpy.pi
+                row['latitude'] = row['latitude'] * 180.0 / np.pi
             if row.has_key('longitude'):
-                row['longitude'] = row['longitude'] * 180.0 / numpy.pi
+                row['longitude'] = row['longitude'] * 180.0 / np.pi
             # Can't read CTD_NeilBrown.sea_water_temperature because of the '.'.  Use 'sea_water_temperature', but convert to C and assign units
             if row.has_key('sea_water_temperature'):
                 row['sea_water_temperature'] = row['sea_water_temperature'] - 272.15
