@@ -569,7 +569,7 @@ class Base_Loader(STOQS_Loader):
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride,:,0,0]
                 except ValueError as err:
-                    logger.error('\nGot error '%s' reading data from URL: %s.\n'
+                    logger.error('\nGot error "%s" reading data from URL: %s.\n'
                                  'If it is: "string size must be a multiple of element size"'
                                  ' and the URL is a TDS aggregation then the cache files must'
                                  ' be removed and the tomcat hosting TDS restarted.',  err, self.url)
@@ -692,7 +692,7 @@ class Base_Loader(STOQS_Loader):
                     logger.info("Using constraints: ds['%s'][%d:%d:%d]", pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][tIndx[0]:tIndx[-1]:self.stride]
                 except ValueError as err:
-                    logger.error('\nGot error '%s' reading data from URL: %s.\n'
+                    logger.error('\nGot error "%s" reading data from URL: %s.\n'
                                  'If it is: "string size must be a multiple of element size"'
                                  ' and the URL is a TDS aggregation then the cache files must'
                                  ' be removed and the tomcat hosting TDS restarted.',  err, self.url)
@@ -1020,175 +1020,177 @@ class Base_Loader(STOQS_Loader):
         return _innerInsertRow(self, parmCount, parameterCount, measurement, row)
 
     def process_data(self, generator=None, featureType=''): 
-      '''Wrapper so as to apply self.dbAlias in the decorator
-      '''
-      def innerProcess_data(self, generator=None, featureType=''):
-        '''Iterate over the data source and load the data in by creating new objects
-        for each measurement.
-        
-        Note that due to the use of large-precision numerics, we'll convert all numbers to
-        strings prior to performing the import.  Django uses the Decimal type (arbitrary precision
-        numeric type), so we won't lose any precision.
-
-        Return the number of MeasuredParameters loaded.
+        '''Wrapper so as to apply self.dbAlias in the decorator
         '''
+        def innerProcess_data(self, generator=None, featureType=''):
+            '''Iterate over the data source and load the data in by creating new objects
+            for each measurement.
 
-        self.initDB()
+            Note that due to the use of large-precision numerics, we'll convert all numbers to
+            strings prior to performing the import.  Django uses the Decimal type (arbitrary precision
+            numeric type), so we won't lose any precision.
 
-        self.loaded = 0
-        parmCount = {}
-        parameterCount = {}
-        for key in self.include_names:
-            parmCount[key] = 0
+            Return the number of MeasuredParameters loaded.
+            '''
 
-        if generator:
-            logger.info('Using data generator passed into process_data')
-            data_generator = generator()
-            featureType = 'trajectory'
-        else:
-            logger.info('self.getFeatureType() = %s', self.getFeatureType())
-            if self.getFeatureType() == 'timeseriesprofile':
-                data_generator = self._genTimeSeriesGridType()
-                featureType = 'timeseriesprofile'
-            elif self.getFeatureType() == 'trajectoryprofile':
-                data_generator = self._genTrajectoryProfileGridType()
-                featureType = 'trajectoryprofile'
-            elif self.getFeatureType() == 'timeseries':
-                data_generator = self._genTimeSeriesGridType()
-                featureType = 'timeseries'
-            elif self.getFeatureType() == 'trajectory':
-                data_generator = self._genTrajectory()
+            self.initDB()
+
+            self.loaded = 0
+            parmCount = {}
+            parameterCount = {}
+            for key in self.include_names:
+                parmCount[key] = 0
+
+            if generator:
+                logger.info('Using data generator passed into process_data')
+                data_generator = generator()
                 featureType = 'trajectory'
+            else:
+                logger.info('self.getFeatureType() = %s', self.getFeatureType())
+                if self.getFeatureType() == 'timeseriesprofile':
+                    data_generator = self._genTimeSeriesGridType()
+                    featureType = 'timeseriesprofile'
+                elif self.getFeatureType() == 'trajectoryprofile':
+                    data_generator = self._genTrajectoryProfileGridType()
+                    featureType = 'trajectoryprofile'
+                elif self.getFeatureType() == 'timeseries':
+                    data_generator = self._genTimeSeriesGridType()
+                    featureType = 'timeseries'
+                elif self.getFeatureType() == 'trajectory':
+                    data_generator = self._genTrajectory()
+                    featureType = 'trajectory'
 
-        self.totalRecords = self.getTotalRecords()
+            self.totalRecords = self.getTotalRecords()
 
-        if not featureType:
-            raise Exception("Global attribute 'featureType' is not one of 'trajectory', 'timeSeries', or 'timeSeriesProfile' - see http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
+            if not featureType:
+                raise Exception("Global attribute 'featureType' is not one of 'trajectory',"
+                        " 'timeSeries', or 'timeSeriesProfile' - see:"
+                        " http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html")
 
-        for row in data_generator:
-            try:
-                row = self.preProcessParams(row)
-            except HasMeasurement:
-                pass
-            except SkipRecord as e:
-                logger.warn("SkipRecord: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
-                continue
-            except Exception as e:
-                logger.exception(e)
-                sys.exit(-1)
-            
-            params = {} 
-            try:
-                if featureType == 'timeseriesprofile' or featureType == 'timeseries' or featureType == 'trajectoryprofile':
-                    longitude, latitude, time, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
-                                                        from_udunits(row.pop('time'), row.pop('timeUnits')),
-                                                        row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
-                    measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, lon=longitude,
-                                                        nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
-                elif featureType == 'trajectory':
-                    if 'measurement' in row:
-                        # For data like LOPC which assigns a 'measurement' item
-                        measurement = row['measurement']
-                    else:
-                        longitude, latitude, time, depth = (row.pop('longitude'), row.pop('latitude'),
+            for row in data_generator:
+                try:
+                    row = self.preProcessParams(row)
+                except HasMeasurement:
+                    pass
+                except SkipRecord as e:
+                    logger.warn("SkipRecord: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
+                    continue
+                except Exception as e:
+                    logger.exception(e)
+                    sys.exit(-1)
+                
+                params = {} 
+                try:
+                    if featureType == 'timeseriesprofile' or featureType == 'timeseries' or featureType == 'trajectoryprofile':
+                        longitude, latitude, time, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
                                                             from_udunits(row.pop('time'), row.pop('timeUnits')),
-                                                            row.pop('depth'))
-                        measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, lon=longitude)
-                else:
-                    raise Exception('No handler for featureType = %s' % featureType)
+                                                            row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
+                        measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, lon=longitude,
+                                                            nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
+                    elif featureType == 'trajectory':
+                        if 'measurement' in row:
+                            # For data like LOPC which assigns a 'measurement' item
+                            measurement = row['measurement']
+                        else:
+                            longitude, latitude, time, depth = (row.pop('longitude'), row.pop('latitude'),
+                                                                from_udunits(row.pop('time'), row.pop('timeUnits')),
+                                                                row.pop('depth'))
+                            measurement = self.createMeasurement(featureType, time=time, depth=depth, lat=latitude, lon=longitude)
+                    else:
+                        raise Exception('No handler for featureType = %s' % featureType)
 
-            except ValueError:
-                logger.info('Bad time value')
-                continue
-            except SkipRecord as e:
-                logger.debug("Skipping record: %s", e)
-                continue
-            except Exception as e:
-                logger.exception(e)
-                sys.exit(-1)
+                except ValueError:
+                    logger.info('Bad time value')
+                    continue
+                except SkipRecord as e:
+                    logger.debug("Skipping record: %s", e)
+                    continue
+                except Exception as e:
+                    logger.exception(e)
+                    sys.exit(-1)
 
-            self._insertRow(parmCount, parameterCount, measurement, row)
+                self._insertRow(parmCount, parameterCount, measurement, row)
 
-        # End for row in data_generator:
+            # End for row in data_generator:
 
-        #
-        # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
-        #
-        path = None
-        stationPoint = None
-        linestringPoints = m.Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
-                                                       ).order_by('instantpoint__timevalue').values_list('geom')
-        try:
-            path = LineString([p[0] for p in linestringPoints]).simplify(tolerance=.001)
-        except TypeError as e:
-            logger.warn("%s\nSetting path to None", e)
-        except Exception as e:
-            logger.error('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
-        else:
-            if len(path) == 2:
-                logger.info("Length of path = 2: path = %s", path)
-                if path[0][0] == path[1][0] and path[0][1] == path[1][1]:
-                    logger.info("And the 2 points are identical. Saving the first point of this path as a point as the featureType is also %s.", featureType)
-                    stationPoint = Point(path[0][0], path[0][1])
-                    path = None
-
-        # Add additional Parameters for all appropriate Measurements
-        logger.info("Adding SigmaT and Spiciness to the Measurements...")
-        self.addSigmaTandSpice(parameterCount, self.activity)
-        if self.grdTerrain:
-            logger.info("Adding altitude to the Measurements...")
+            #
+            # Query database to a path for trajectory or stationPoint for timeSeriesProfile and timeSeries
+            #
+            path = None
+            stationPoint = None
+            linestringPoints = m.Measurement.objects.using(self.dbAlias).filter(instantpoint__activity=self.activity
+                                                           ).order_by('instantpoint__timevalue').values_list('geom')
             try:
-                self.addAltitude(parameterCount, self.activity)
-            except FileNotFound as e:
-                logger.warn(e)
+                path = LineString([p[0] for p in linestringPoints]).simplify(tolerance=.001)
+            except TypeError as e:
+                logger.warn("%s\nSetting path to None", e)
+            except Exception as e:
+                logger.error('%s', e)    # Likely "GEOS_ERROR: IllegalArgumentException: point array must contain 0 or >1 elements"
+            else:
+                if len(path) == 2:
+                    logger.info("Length of path = 2: path = %s", path)
+                    if path[0][0] == path[1][0] and path[0][1] == path[1][1]:
+                        logger.info("And the 2 points are identical. Saving the first point of this path as a point as the featureType is also %s.", featureType)
+                        stationPoint = Point(path[0][0], path[0][1])
+                        path = None
 
-        # Update the Activity with information we now have following the load
-        try:
-            varList = ' '.join(self.varsLoaded)
-        except AttributeError:
-            # ROVCTDloader creates self.vSeen dictionary with counts of each parameter
-            varList = ' '.join(self.vSeen.keys())
+            # Add additional Parameters for all appropriate Measurements
+            logger.info("Adding SigmaT and Spiciness to the Measurements...")
+            self.addSigmaTandSpice(parameterCount, self.activity)
+            if self.grdTerrain:
+                logger.info("Adding altitude to the Measurements...")
+                try:
+                    self.addAltitude(parameterCount, self.activity)
+                except FileNotFound as e:
+                    logger.warn(e)
 
-        newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, varList, datetime.utcnow())
-        logger.debug("Updating its comment with newComment = %s", newComment)
+            # Update the Activity with information we now have following the load
+            try:
+                varList = ' '.join(self.varsLoaded)
+            except AttributeError:
+                # ROVCTDloader creates self.vSeen dictionary with counts of each parameter
+                varList = ' '.join(self.vSeen.keys())
 
-        num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
-                        comment = newComment,
-                        maptrack = path,
-                        mappoint = stationPoint,
-                        num_measuredparameters = self.loaded,
-                        loaded_date = datetime.utcnow())
-        logger.debug("%d activitie(s) updated with new attributes.", num_updated)
+            newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, varList, datetime.utcnow())
+            logger.debug("Updating its comment with newComment = %s", newComment)
 
-        #
-        # Add resources after loading data to capture additional metadata that may be added
-        #
-        try:
-            self.addResources() 
-        except IntegrityError as e:
-            logger.error('Failed to properly addResources: %s', e)
+            num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
+                            comment = newComment,
+                            maptrack = path,
+                            mappoint = stationPoint,
+                            num_measuredparameters = self.loaded,
+                            loaded_date = datetime.utcnow())
+            logger.debug("%d activitie(s) updated with new attributes.", num_updated)
 
-        # 
-        # Update the stats and store simple line values
-        #
-        self.updateActivityMinMaxDepth()
-        self.updateActivityParameterStats(parameterCount)
-        self.updateCampaignStartEnd()
-        self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
-        if featureType.lower() == 'trajectory':
-            self.insertSimpleDepthTimeSeries()
-            self.saveBottomDepth()
-            self.insertSimpleBottomDepthTimeSeries()
-        elif self.getFeatureType().lower() == 'timeseries' or self.getFeatureType().lower() == 'timeseriesprofile':
-            self.insertSimpleDepthTimeSeriesByNominalDepth()
-        elif self.getFeatureType().lower() == 'trajectoryprofile':
-            self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
-        logger.info("Data load complete, %d records loaded.", self.loaded)
+            #
+            # Add resources after loading data to capture additional metadata that may be added
+            #
+            try:
+                self.addResources() 
+            except IntegrityError as e:
+                logger.error('Failed to properly addResources: %s', e)
+
+            # 
+            # Update the stats and store simple line values
+            #
+            self.updateActivityMinMaxDepth()
+            self.updateActivityParameterStats(parameterCount)
+            self.updateCampaignStartEnd()
+            self.assignParameterGroup(parameterCount, groupName=MEASUREDINSITU)
+            if featureType.lower() == 'trajectory':
+                self.insertSimpleDepthTimeSeries()
+                self.saveBottomDepth()
+                self.insertSimpleBottomDepthTimeSeries()
+            elif self.getFeatureType().lower() == 'timeseries' or self.getFeatureType().lower() == 'timeseriesprofile':
+                self.insertSimpleDepthTimeSeriesByNominalDepth()
+            elif self.getFeatureType().lower() == 'trajectoryprofile':
+                self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
+            logger.info("Data load complete, %d records loaded.", self.loaded)
 
 
-        return self.loaded, path, parmCount
+            return self.loaded, path, parmCount
 
-      return innerProcess_data(self, generator, featureType)
+        return innerProcess_data(self, generator, featureType)
 
 
 class Trajectory_Loader(Base_Loader):
