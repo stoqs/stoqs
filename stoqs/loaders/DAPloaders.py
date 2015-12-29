@@ -46,7 +46,7 @@ from coards import to_udunits, from_udunits, ParserError
 import logging
 import socket
 import seawater.eos80 as sw
-from utils.utils import percentile, mode, simplify_points
+from utils.utils import mode, simplify_points
 from loaders import STOQS_Loader, SkipRecord, HasMeasurement, MEASUREDINSITU, FileNotFound
 from loaders.SampleLoaders import get_closest_instantpoint, ClosestTimeNotFoundException
 import numpy as np
@@ -188,8 +188,8 @@ class Base_Loader(STOQS_Loader):
         for v in self.include_names:
             try:
                 ac = self.getAuxCoordinates(v)
-            except ParameterNotFound, e:
-                logger.warn(e)
+            except ParameterNotFound as e:
+                logger.warn(str(e))
                 continue
 
             if self.getFeatureType() == 'trajectory' or self.getFeatureType() == 'trajectoryprofile': 
@@ -266,7 +266,7 @@ class Base_Loader(STOQS_Loader):
         except KeyError:
             logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
         except AttributeError as e:
-            logger.debug(e)
+            logger.debug(str(e))
         else:
             return mv
 
@@ -285,7 +285,7 @@ class Base_Loader(STOQS_Loader):
                 logger.debug('Cannot get attribute FillValue for variable %s from url %s', var, self.url)
             return None
         except AttributeError as e:
-            logger.debug(e)
+            logger.debug(str(e))
         else:
             return fv
 
@@ -413,7 +413,7 @@ class Base_Loader(STOQS_Loader):
             logger.debug('Calling self.getAuxCoordinates() for v = %s', v)
             try:
                 ac = self.getAuxCoordinates(v)
-            except ParameterNotFound, e:
+            except ParameterNotFound as e:
                 logger.warn('Skipping include_name = %s: %s', v, e)
                 continue
      
@@ -553,7 +553,7 @@ class Base_Loader(STOQS_Loader):
                 continue    # Quietly skip over parameters not in ds: allows combination of variables and files in same loader
             # Peek at the shape and pull apart the data from its grid coordinates 
             logger.info('Reading data from %s: %s %s', self.url, pname, type(self.ds[pname]))
-            if type(self.ds[pname]) is pydap.model.GridType:
+            if isinstance(self.ds[pname], pydap.model.GridType):
                 # On tzyx grid - default for all OS formatted station data COARDS coordinate ordering conventions
                 # E.g. for http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74040, 11, 1, 1) 
                 #       or http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74850, 1, 1, 1)
@@ -676,7 +676,7 @@ class Base_Loader(STOQS_Loader):
             # Peek at the shape and pull apart the data from its grid coordinates 
             # Only single trajectories are allowed
             logger.info('Reading data from %s: %s %s %s', self.url, pname, self.ds[pname].shape, type(self.ds[pname]))
-            if len(self.ds[pname].shape) == 1 and type(self.ds[pname]) is pydap.model.BaseType:
+            if len(self.ds[pname].shape) == 1 and isinstance(self.ds[pname], pydap.model.BaseType):
                 # Legacy Dorado data need to be processed as BaseType; Example data:
                 #   dsdorado = open_url('http://odss.mbari.org/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_256_00_256_00_decim.nc')
                 #   dsdorado['temperature'].shape = (12288,)
@@ -684,7 +684,7 @@ class Base_Loader(STOQS_Loader):
                 try:
                     logger.debug("ac[pname]['time'] = %s", ac[pname]['time'])
                     tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
-                except NoValidData, e:
+                except NoValidData as e:
                     logger.warn('Skipping this parameter. %s', e)
                     continue
                 try:
@@ -723,7 +723,7 @@ class Base_Loader(STOQS_Loader):
                 if self.ds[ac[pname]['time']].units == 'seconds since 1970-01-01T00:00:00Z':
                     timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
 
-            elif len(self.ds[pname].shape) == 1 and type(self.ds[pname]) is pydap.model.GridType:
+            elif len(self.ds[pname].shape) == 1 and isinstance(self.ds[pname], pydap.model.GridType):
                 # LRAUV data need to be processed as GridType
                 ac[pname] = self.getAuxCoordinates(pname)
                 tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
@@ -752,7 +752,7 @@ class Base_Loader(STOQS_Loader):
                 longitudes[pname] = self.ds[ac[pname]['longitude']][ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
 
-            elif len(self.ds[pname].shape) == 2 and type(self.ds[pname]) is pydap.model.GridType:
+            elif len(self.ds[pname].shape) == 2 and isinstance(self.ds[pname], pydap.model.GridType):
                 # Customized for accepting LOPC data from Dorado - has only time coordinate
                 # LOPC data has only time therefore we look up the closest Instantpoint and 
                 # assign it's corresponding Measurement from other already loaded Dorado data.
@@ -763,9 +763,10 @@ class Base_Loader(STOQS_Loader):
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
                 except ValueError as err:
-                    logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
-                    If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
-                    then the cache files must be removed and the tomcat hosting TDS restarted.''')
+                    logger.error('\nGot error "%s" reading data from URL: %s.\n'
+                                 'If it is: "string size must be a multiple of element size"'
+                                 ' and the URL is a TDS aggregation then the cache files must'
+                                 ' be removed and the tomcat hosting TDS restarted.', err, self.url)
                     sys.exit(1)
                 except pydap.exceptions.ServerError as e:
                     logger.error('%s', e)
@@ -844,7 +845,7 @@ class Base_Loader(STOQS_Loader):
                 continue    # Quietly skip over parameters not in ds: allows combination of variables and files in same loader
             # Peek at the shape and pull apart the data from its grid coordinates 
             logger.info('Reading data from %s: %s', self.url, pname)
-            if type(self.ds[pname]) is pydap.model.GridType:
+            if isinstance(self.ds[pname], pydap.model.GridType):
                 # On tzyx grid - default for all OS formatted station data COARDS coordinate ordering conventions
                 # E.g. for http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74040, 11, 1, 1) 
                 #       or http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74850, 1, 1, 1)
@@ -855,9 +856,10 @@ class Base_Loader(STOQS_Loader):
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride,:,0,0]
                 except ValueError as err:
-                    logger.error('''\nGot error '%s' reading data from URL: %s.", err, self.url
-                    If it is: 'string size must be a multiple of element size' and the URL is a TDS aggregation
-                    then the cache files must be removed and the tomcat hosting TDS restarted.''')
+                    logger.error('\nGot error "%s" reading data from URL: %s.\n'
+                                 'If it is: "string size must be a multiple of element size"'
+                                 ' and the URL is a TDS aggregation then the cache files must'
+                                 ' be removed and the tomcat hosting TDS restarted.', err, self.url)
                     sys.exit(1)
                 except pydap.exceptions.ServerError as e:
                     if self.stride > 1:
@@ -978,7 +980,7 @@ class Base_Loader(STOQS_Loader):
                         try:
                             if math.isnan(value): # not a number for a math type
                                 continue
-                        except Exception, e: 
+                        except Exception as e: 
                             logger.debug('%s', e)
 
                         # Single-valued datavalue
@@ -996,9 +998,9 @@ class Base_Loader(STOQS_Loader):
                         logger.debug('Saving parameter_id %s at measurement_id = %s', parameter.id, measurement.id)
                         mp.save(using=self.dbAlias)
                     except IntegrityError as e:
-                        logger.warn(e)
+                        logger.warn(str(e))
                     except DatabaseError as e:
-                        logger.warn(e)
+                        logger.warn(str(e))
                     else:
                         self.loaded += 1
                         logger.debug("Inserted value (id=%(id)s) for %(key)s = %(value)s", {'key': key, 'value': value, 'id': mp.pk})
@@ -1076,10 +1078,9 @@ class Base_Loader(STOQS_Loader):
                     logger.warn("SkipRecord: %s at time %s", e, from_udunits(row.get('time'), row.get('timeUnits')))
                     continue
                 except Exception as e:
-                    logger.exception(e)
+                    logger.exception(str(e))
                     sys.exit(-1)
                 
-                params = {} 
                 try:
                     if featureType == 'timeseriesprofile' or featureType == 'timeseries' or featureType == 'trajectoryprofile':
                         longitude, latitude, mtime, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
@@ -1106,7 +1107,7 @@ class Base_Loader(STOQS_Loader):
                     logger.debug("Skipping record: %s", e)
                     continue
                 except Exception as e:
-                    logger.exception(e)
+                    logger.exception(str(e))
                     sys.exit(-1)
 
                 self._insertRow(parmCount, parameterCount, measurement, row)
@@ -1130,7 +1131,8 @@ class Base_Loader(STOQS_Loader):
                 if len(path) == 2:
                     logger.info("Length of path = 2: path = %s", path)
                     if path[0][0] == path[1][0] and path[0][1] == path[1][1]:
-                        logger.info("And the 2 points are identical. Saving the first point of this path as a point as the featureType is also %s.", featureType)
+                        logger.info("And the 2 points are identical. Saving the first point of this"
+                                    " path as a point as the featureType is also %s.", featureType)
                         stationPoint = Point(path[0][0], path[0][1])
                         path = None
 
@@ -1142,7 +1144,7 @@ class Base_Loader(STOQS_Loader):
                 try:
                     self.addAltitude(parameterCount, self.activity)
                 except FileNotFound as e:
-                    logger.warn(e)
+                    logger.warn(str(e))
 
             # Update the Activity with information we now have following the load
             try:
@@ -1290,7 +1292,7 @@ class Dorado_Loader(Trajectory_Loader):
             logger.debug("Getting or Creating Resource with name = %s, url = %s", ql, url )
             resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name=ql, uristring=url, resourcetype=resourceType)
-            ar, _ = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity,
                         resource=resource)
 
@@ -1323,7 +1325,7 @@ class Dorado_Loader(Trajectory_Loader):
             logger.debug("Getting or Creating Resource with name = %s, url = %s", res, url )
             resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name=res, uristring=url, resourcetype=rt)
-            ar, _ = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity, resource=resource)
 
         return super(Dorado_Loader, self).addResources()
@@ -1343,25 +1345,7 @@ class Lrauv_Loader(Trajectory_Loader):
 
     def __init__(self, contourUrl, *args, **kwargs):
         self.contourUrl = contourUrl
-        super(Trajectory_Loader, self).__init__(*args, **kwargs)
-
-    def preProcessParams(self, row):
-        '''
-        Special fixups for 'shore' synchronized data
-        '''
-        ''' following code is no longer needed but kept here for future reference
-        if self.url.find('shore') == -1 and self.url.find('Tethys') == -1 and self.url.find('Daphne') == -1 and self.url.find('hotspot'):
-            # Full-resolution data (whose name does not contain 'shore', 'Tethys', 'Daphne', 'hotspot') are in radians
-            if row.has_key('latitude'):
-                row['latitude'] = row['latitude'] * 180.0 / np.pi
-            if row.has_key('longitude'):
-                row['longitude'] = row['longitude'] * 180.0 / np.pi
-            # Can't read CTD_NeilBrown.sea_water_temperature because of the '.'.  Use 'sea_water_temperature', but convert to C and assign units
-            if row.has_key('sea_water_temperature'):
-                row['sea_water_temperature'] = row['sea_water_temperature'] - 272.15
-                self.ds['sea_water_temperature'].units = 'degC'
-        '''
-        return super(Lrauv_Loader, self).preProcessParams(row)
+        super(Lrauv_Loader, self).__init__(*args, **kwargs)
 
     def addResources(self):
         '''
@@ -1380,14 +1364,9 @@ class Lrauv_Loader(Trajectory_Loader):
             logger.debug("Getting or Creating Resource with name = log, url = %s", outurl)
             resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name='log', uristring=outurl, resourcetype=resourceType)
-            ar, _ = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity,
                         resource=resource)
-
-            # Round URL to 24 hour period in local time for daily
-            # Get baseURL
-            l = self.url.split('/')[:-1]
-            baseUrl = '/'.join(l)
 
             startDateTimeUTC = pytz.utc.localize(self.startDatetime)
             startDateTimeLocal = startDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
@@ -1404,7 +1383,7 @@ class Lrauv_Loader(Trajectory_Loader):
             logger.debug("Getting or Creating Resource with name = 24hr, url = %s", outurl)
             resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                     name='24hr', uristring=outurl, resourcetype=resourceType)
-            ar, _ = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                     activity=self.activity,
                     resource=resource)
 
@@ -1504,7 +1483,7 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
         # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
         loader.plotTimeSeriesDepth = dict.fromkeys(parmList, plotTimeSeriesDepth)
 
-    (nMP, path, parmCountHash) = loader.process_data()
+    loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
 
@@ -1538,9 +1517,9 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     try:
-        (nMP, path, parmCountHash) = loader.process_data()
-    except VariableMissingCoordinatesAttribute, e:
-        logger.exception(e)
+        loader.process_data()
+    except VariableMissingCoordinatesAttribute as e:
+        logger.exception(str(e))
     else:
         logger.debug("Loaded Activity with name = %s", aName)
 
@@ -1583,10 +1562,10 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         Dorado_Loader.getFeatureType = lambda self: 'trajectory'
         try:
             # Specify generator and featureType so that non-CF LOPC data can me loaded
-            (nMP, path, parmCountHash) = lopc_loader.process_data(
-                    generator=lopc_loader._genTrajectory, featureType='trajectory')
-        except VariableMissingCoordinatesAttribute, e:
-            logger.exception(e)
+            lopc_loader.process_data(generator=lopc_loader._genTrajectory, 
+                    featureType='trajectory')
+        except VariableMissingCoordinatesAttribute as e:
+            logger.exception(str(e))
         except NoValidData as e:
             logger.warn(str(e))
         except KeyError as e:
@@ -1595,8 +1574,9 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
 
 
-def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
-                    dataStartDatetime=None, contourUrl=None, auxCoords=None):
+def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
+                   stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
+                   dataStartDatetime=None, contourUrl=None, auxCoords=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1640,15 +1620,16 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
                 loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
     try:
-        (nMP, path, parmCountHash) = loader.process_data()
+        loader.process_data()
     except NoValidData as e:
-        logger.warn(e)
+        logger.warn(str(e))
         raise
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
 
-def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None, 
+def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
+                    dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None, 
                     dataStartDatetime=None):
     '''
     Run the DAPloader for Spray Glider trajectory data and update the Activity with 
@@ -1718,9 +1699,9 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications for future files
 
     try:
-        (nMP, path, parmCountHash) = loader.process_data()
-    except VariableMissingCoordinatesAttribute, e:
-        logger.exception(e)
+        loader.process_data()
+    except VariableMissingCoordinatesAttribute as e:
+        logger.exception(str(e))
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
@@ -1749,11 +1730,12 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
         logger.debug("Setting include_names to %s", parmList)
         loader.include_names = parmList
 
-    (nMP, path, parmCountHash) = loader.process_data()
+    loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
 
-def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, dataStartDatetime=None):
+def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
+                     dbAlias, stride, startDatetime=None, endDatetime=None, dataStartDatetime=None):
     '''
     Run the DAPloader for OceanSites formatted Mooring Station data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1807,20 +1789,26 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
 
     try:
-        (nMP, path, parmCountHash) = loader.process_data()
+        loader.process_data()
         logger.debug("Loaded Activity with name = %s", aName)
-    except NoValidData, e:
-        logger.warning(e)
+    except NoValidData as e:
+        logger.warning(str(e))
 
 
 if __name__ == '__main__':
     # A nice test data load for a northern Monterey Bay survey  
-    baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'             # NCML to make salinity.units = "1"
-    file = 'Dorado389_2010_300_00_300_00_decim.nc'
+    # See loaders/CANON/__init__.py for more examples of how these loaders are used
+    baseUrl = 'http://odss.mbari.org/thredds/dodsC/dorado/'
+    auv_file = 'Dorado389_2010_300_00_300_00_decim.nc'
+    parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+              'fl700_uncorr', 'salinity', 'biolume', 'roll', 'pitch', 'yaw',
+              'sepCountList', 'mepCountList'
+    ]
     stride = 1000       # Make large for quicker runs, smaller for denser data
     dbAlias = 'default'
 
-    runDoradoLoader(baseUrl + file, 'Test Load', 'Run from test', file, 'dorado', 'auv', 'AUV Mission', dbAlias, stride)
+    runDoradoLoader(baseUrl + auv_file, 'Campaign Name', 'Campaign Description',
+                    'Activity Name', 'Platform Name - Dorado', 'ffeda0', 'auv', 
+                    'AUV Mission', parms, dbAlias, stride)
 
-    # See loaders/CANON/__init__.py for more examples of how these loaders are used
 
