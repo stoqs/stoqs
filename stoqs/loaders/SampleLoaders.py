@@ -571,14 +571,14 @@ class SubSamplesLoader(STOQS_Loader):
         parameter_name = row.get('Parameter Name')
         spaceRemoveMsg = ''
         if parameter_name.find(' ') != -1:
-            spaceRemoveMsg = "row['Parameter Name'] = %s contains a space. Replacing"
-                             " with '_' before adding to STOQS." % parameter_name
+            spaceRemoveMsg = ("row['Parameter Name'] = %s contains a space. Replacing"
+                              " with '_' before adding to STOQS." % parameter_name)
             logger.debug(spaceRemoveMsg)
             parameter_name = parameter_name.replace(' ', '_')
 
         if '(' in parameter_name or ')' in parameter_name:
-            parenRemoveMsg = "row['Parameter Name'] = %s contains ( or ). Removing"
-                             " them before adding to STOQS." % parameter_name
+            parenRemoveMsg = ("row['Parameter Name'] = %s contains ( or ). Removing"
+                              " them before adding to STOQS." % parameter_name)
             logger.debug(parenRemoveMsg)
             parameter_name = parameter_name.replace('(', '').replace(')', '')
 
