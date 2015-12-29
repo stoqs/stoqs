@@ -552,7 +552,7 @@ class Base_Loader(STOQS_Loader):
             if pname not in self.ds:
                 continue    # Quietly skip over parameters not in ds: allows combination of variables and files in same loader
             # Peek at the shape and pull apart the data from its grid coordinates 
-            logger.info('Reading data from %s: %s %s', self.url, pname,  type(self.ds[pname]))
+            logger.info('Reading data from %s: %s %s', self.url, pname, type(self.ds[pname]))
             if type(self.ds[pname]) is pydap.model.GridType:
                 # On tzyx grid - default for all OS formatted station data COARDS coordinate ordering conventions
                 # E.g. for http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74040, 11, 1, 1) 
@@ -572,7 +572,7 @@ class Base_Loader(STOQS_Loader):
                     logger.error('\nGot error "%s" reading data from URL: %s.\n'
                                  'If it is: "string size must be a multiple of element size"'
                                  ' and the URL is a TDS aggregation then the cache files must'
-                                 ' be removed and the tomcat hosting TDS restarted.',  err, self.url)
+                                 ' be removed and the tomcat hosting TDS restarted.', err, self.url)
                     sys.exit(1)
                 except pydap.exceptions.ServerError as e:
                     if self.stride > 1:
@@ -695,7 +695,7 @@ class Base_Loader(STOQS_Loader):
                     logger.error('\nGot error "%s" reading data from URL: %s.\n'
                                  'If it is: "string size must be a multiple of element size"'
                                  ' and the URL is a TDS aggregation then the cache files must'
-                                 ' be removed and the tomcat hosting TDS restarted.',  err, self.url)
+                                 ' be removed and the tomcat hosting TDS restarted.', err, self.url)
                     sys.exit(1)
                 except pydap.exceptions.ServerError as e:
                     logger.exception('%s', e)
@@ -1155,11 +1155,11 @@ class Base_Loader(STOQS_Loader):
             logger.debug("Updating its comment with newComment = %s", newComment)
 
             num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
-                            comment = newComment,
-                            maptrack = path,
-                            mappoint = stationPoint,
-                            num_measuredparameters = self.loaded,
-                            loaded_date = datetime.utcnow())
+                            comment=newComment,
+                            maptrack=path,
+                            mappoint=stationPoint,
+                            num_measuredparameters=self.loaded,
+                            loaded_date=datetime.utcnow())
             logger.debug("%d activitie(s) updated with new attributes.", num_updated)
 
             #
@@ -1222,24 +1222,29 @@ class Dorado_Loader(Trajectory_Loader):
     to load quick-look plot and other Resources into the STOQS database.
     '''
     chl = pydap.model.BaseType()
-    chl.attributes = {  'standard_name':    'mass_concentration_of_chlorophyll_in_sea_water',
-                        'long_name':        'Chlorophyll',
-                        'units':            'ug/l',
-                        'name':             'mass_concentration_of_chlorophyll_in_sea_water',
-                     }
+    chl.attributes = {
+            'standard_name': 'mass_concentration_of_chlorophyll_in_sea_water',
+            'long_name': 'Chlorophyll',
+            'units': 'ug/l',
+            'name': 'mass_concentration_of_chlorophyll_in_sea_water',
+    }
     dens = pydap.model.BaseType()
-    dens.attributes = { 'standard_name':    'sea_water_sigma_t',
-                        'long_name':        'Sigma-T',
-                        'units':            'kg m-3',
-                        'name':             'sea_water_sigma_t',
-                      }
-    parmDict = {    'mass_concentration_of_chlorophyll_in_sea_water': chl,
-                    'sea_water_sigma_t': dens
-               }
-    include_names = [   'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
-                        'fl700_uncorr', 'salinity', 'biolume',
-                        'mass_concentration_of_chlorophyll_in_sea_water',
-                        'sea_water_sigma_t' ]
+    dens.attributes = {
+            'standard_name': 'sea_water_sigma_t',
+            'long_name': 'Sigma-T',
+            'units': 'kg m-3',
+            'name': 'sea_water_sigma_t',
+    }
+    parmDict = {
+            'mass_concentration_of_chlorophyll_in_sea_water': chl,
+            'sea_water_sigma_t': dens
+    }
+    include_names = [
+            'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700', 
+            'fl700_uncorr', 'salinity', 'biolume',
+            'mass_concentration_of_chlorophyll_in_sea_water',
+            'sea_water_sigma_t'
+    ]
 
     def initDB(self):
         '''
@@ -1278,23 +1283,23 @@ class Dorado_Loader(Trajectory_Loader):
         yyyy = int(survey.split('_')[1])
         # Quick-look plots
         logger.debug("Getting or Creating ResourceType quick_look...")
-        (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
-                        name = 'quick_look', description='Quick Look plot of data from this AUV survey')
+        resourceType, _ = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+                        name='quick_look', description='Quick Look plot of data from this AUV survey')
         for ql in ['2column', 'biolume', 'hist_stats', 'lopc', 'nav_adjust', 'prof_stats']:
             url = '%s/%4d/images/%s_%s.png' % (baseUrl, yyyy, survey, ql)
             logger.debug("Getting or Creating Resource with name = %s, url = %s", ql, url )
-            (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+            resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name=ql, uristring=url, resourcetype=resourceType)
-            (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            ar, _ = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity,
                         resource=resource)
 
         # kml, odv, mat
-        (kmlResourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+        kmlResourceType, _ = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name = 'kml', description='Keyhole Markup Language file of data from this AUV survey')
-        (odvResourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+        odvResourceType, _ = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name = 'odv', description='Ocean Data View spreadsheet text file')
-        (matResourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+        matResourceType, _ = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                         name = 'mat', description='Matlab data file')
         for res in ['kml', 'odv', 'odvGulper', 'mat', 'mat_gridded']:
             if res == 'kml':
@@ -1316,9 +1321,9 @@ class Dorado_Loader(Trajectory_Loader):
                 logger.warn('No handler for res = %s', res)
 
             logger.debug("Getting or Creating Resource with name = %s, url = %s", res, url )
-            (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+            resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name=res, uristring=url, resourcetype=rt)
-            (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            ar, _ = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity, resource=resource)
 
         return super(Dorado_Loader, self).addResources()
@@ -1328,12 +1333,13 @@ class Lrauv_Loader(Trajectory_Loader):
     '''
     MBARI Long Range AUV data loader.
     '''
-    include_names = [   'mass_concentration_of_oxygen_in_sea_water',
-                        'mole_concentration_of_nitrate_in_sea_water',
-                        'mass_concentration_of_chlorophyll_in_sea_water',
-                        'sea_water_salinity',
-                        'sea_water_temperature',
-                    ]
+    include_names = [
+            'mass_concentration_of_oxygen_in_sea_water',
+            'mole_concentration_of_nitrate_in_sea_water',
+            'mass_concentration_of_chlorophyll_in_sea_water',
+            'sea_water_salinity',
+            'sea_water_temperature',
+    ]
 
     def __init__(self, contourUrl, *args, **kwargs):
         self.contourUrl = contourUrl
@@ -1368,13 +1374,13 @@ class Lrauv_Loader(Trajectory_Loader):
 
             # Contour plots
             logger.debug("Getting or Creating ResourceType quick_look...")
-            (resourceType, created) = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
+            resourceType, _ = m.ResourceType.objects.db_manager(self.dbAlias).get_or_create(
                             name = 'quick_look', description='Quick Look plot of data from this AUV survey')
 
-            logger.debug("Getting or Creating Resource with name = log, url = %s",  outurl )
-            (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+            logger.debug("Getting or Creating Resource with name = log, url = %s", outurl)
+            resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                         name='log', uristring=outurl, resourcetype=resourceType)
-            (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            ar, _ = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                         activity=self.activity,
                         resource=resource)
 
@@ -1393,15 +1399,17 @@ class Lrauv_Loader(Trajectory_Loader):
             endDateTimeLocal = endDateTimeLocal.replace(hour=23,minute=59,second=0,microsecond=0)
             endDateTimeUTC = endDateTimeLocal.astimezone(pytz.utc)
 
-            outurl = self.contourUrl + self.platformName  + '_log_' + startDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '.png'
-            logger.debug("Getting or Creating Resource with name = 24hr, url = %s",  outurl )
-            (resource, created) = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
+            outurl = self.contourUrl + self.platformName  + '_log_' + startDateTimeUTC.strftime(
+                    '%Y%m%dT%H%M%S') + '_' + endDateTimeUTC.strftime('%Y%m%dT%H%M%S') + '.png'
+            logger.debug("Getting or Creating Resource with name = 24hr, url = %s", outurl)
+            resource, _ = m.Resource.objects.db_manager(self.dbAlias).get_or_create(
                     name='24hr', uristring=outurl, resourcetype=resourceType)
-            (ar, created) = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
+            ar, _ = m.ActivityResource.objects.db_manager(self.dbAlias).get_or_create(
                     activity=self.activity,
                     resource=resource)
 
         return super(Lrauv_Loader, self).addResources()
+
 
 class Glider_Loader(Trajectory_Loader):
     '''
@@ -1455,6 +1463,7 @@ class BEDS_TS_Loader(TimeSeries_Loader):
         '''
         return super(BEDS_TS_Loader,self).preProcessParams(row)
 
+
 #
 # Helper methods that expose a common interface for executing the loaders for specific platforms
 #
@@ -1497,6 +1506,7 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
     (nMP, path, parmCountHash) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
+
 
 def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, grdTerrain=None):
     '''
@@ -1584,6 +1594,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         else:
             logger.debug("Loaded Activity with name = %s", lopc_loader.activityName)
 
+
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
                     dataStartDatetime=None, contourUrl=None, auxCoords=None):
     '''
@@ -1636,6 +1647,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
+
 def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None, 
                     dataStartDatetime=None):
     '''
@@ -1667,8 +1679,8 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     # Auxillary coordinates are the same for all include_names
     loader.auxCoords = {}
     if pTypeName == 'waveglider':
-        #for v in loader.include_names:
-        #    loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+        # for v in loader.include_names:
+        #     loader.auxCoords[v] = {'time': 'TIME', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
         pass
     elif pName.startswith('Slocum'):
         # Set depth to 0.0 for u and v as no depth coord is in the dataset's metadata 
@@ -1712,6 +1724,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
+
 def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None):
     '''
     Run the DAPloader for Generic CF Metadata timeSeries featureType data. 
@@ -1738,6 +1751,7 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
     (nMP, path, parmCountHash) = loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
+
 
 def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, startDatetime=None, endDatetime=None, dataStartDatetime=None):
     '''
