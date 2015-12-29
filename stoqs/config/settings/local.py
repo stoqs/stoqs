@@ -68,5 +68,5 @@ try:
     for campaign in campaigns.keys():
         DATABASES[campaign] = DATABASES.get('default').copy()
         DATABASES[campaign]['NAME'] = campaign
-except:
+except Exception:
     pass
