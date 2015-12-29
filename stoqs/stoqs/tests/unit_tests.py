@@ -54,7 +54,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
     # Base class view tests
     def test_campaign(self):
         for fmt in self.format_types:
-            req = reverse('stoqs:show-campaign', kwargs={'format': fmt,
+            req = reverse('stoqs:show-campaign', kwargs={'fmt': fmt,
                                                    'dbAlias': 'default'})
             response = self.client.get(req)
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
@@ -66,98 +66,98 @@ class BaseAndMeasurementViewsTestCase(TestCase):
 
     def test_parameter(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-parameter', kwargs={'format': fmt,
+           req = reverse('stoqs:show-parameter', kwargs={'fmt': fmt,
                                                    'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_platform(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-platform', kwargs={'format': fmt,
+           req = reverse('stoqs:show-platform', kwargs={'fmt': fmt,
                                                   'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_platformType(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-platformtype', kwargs={'format': fmt,
+           req = reverse('stoqs:show-platformtype', kwargs={'fmt': fmt,
                                                       'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_activity(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-activity', kwargs={'format': fmt,
+           req = reverse('stoqs:show-activity', kwargs={'fmt': fmt,
                                                   'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_activityType(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-activitytype', kwargs={'format': fmt,
+           req = reverse('stoqs:show-activitytype', kwargs={'fmt': fmt,
                                                       'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_activity_parameter(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-activityparameter', kwargs={'format': fmt,
+           req = reverse('stoqs:show-activityparameter', kwargs={'fmt': fmt,
                                                            'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_resource(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-resource', kwargs={'format': fmt,
+           req = reverse('stoqs:show-resource', kwargs={'fmt': fmt,
                                                   'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
     
     def test_resourceType(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-resourcetype', kwargs={'format': fmt,
+           req = reverse('stoqs:show-resourcetype', kwargs={'fmt': fmt,
                                                       'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
    
     def test_activity_resource(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-activityresource', kwargs={'format': fmt,
+           req = reverse('stoqs:show-activityresource', kwargs={'fmt': fmt,
                                                           'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_parameter_resource(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-parameterresource', kwargs={'format': fmt,
+           req = reverse('stoqs:show-parameterresource', kwargs={'fmt': fmt,
                                                           'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_platform_resource(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-platformresource', kwargs={'format': fmt,
+           req = reverse('stoqs:show-platformresource', kwargs={'fmt': fmt,
                                                           'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_sample(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-sample', kwargs={'format': fmt,
+           req = reverse('stoqs:show-sample', kwargs={'fmt': fmt,
                                                           'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_sample_type(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-sampletype', kwargs={'format': fmt,
+           req = reverse('stoqs:show-sampletype', kwargs={'fmt': fmt,
                                                           'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
     def test_analysis_method(self):
        for fmt in self.format_types:
-           req = reverse('stoqs:show-analysismethod', kwargs={'format': fmt,
+           req = reverse('stoqs:show-analysismethod', kwargs={'fmt': fmt,
                                                           'dbAlias': 'default'})
            response = self.client.get(req)
            self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
@@ -165,7 +165,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
     def test_measuredparameter(self):
         for fmt in  ['.html', '.json', '.csv', '.tsv', '.kml', '.count']:
             logger.debug('fmt = %s', fmt)
-            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'format': fmt,
+            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'fmt': fmt,
                                                             'dbAlias': 'default'})
             params = {  'parameter__name': 'temperature',
                         'cmin': 11.5,
@@ -186,7 +186,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
     def test_measuredparameter_with_parametervalues(self):
         for fmt in  ['.html', '.json', '.csv', '.tsv', '.kml', '.count']:
             logger.debug('fmt = %s', fmt)
-            base = reverse('stoqs:show-measuredparmeter', kwargs={ 'format': fmt,
+            base = reverse('stoqs:show-measuredparmeter', kwargs={'fmt': fmt,
                                                             'dbAlias': 'default'})
             params = {  'parameter__name': 'temperature',
                         'cmin': 11.5,
@@ -206,7 +206,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                 self.assertEqual(response.content, '50', 'Response should be "50" for %s' % req)
 
     def test_query_jsonencoded(self):
-        req = reverse('stoqs:stoqs-query-results', kwargs={'format': 'json',
+        req = reverse('stoqs:stoqs-query-results', kwargs={'fmt': 'json',
                                                      'dbAlias': 'default'})
         response = self.client.get(req)
         json.loads(response.content) # Verify we don't get an exception when we load the data.

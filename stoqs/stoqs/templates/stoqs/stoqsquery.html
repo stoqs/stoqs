@@ -1295,8 +1295,8 @@
         if ( $('#showsensortracks').is(':checked') && $('input:radio[name=parameters_plot]').is(':checked') ) {
             if ( $('input:radio[name=parameters_plot]:checked').val() ) {
                 // Generate KML url for the parameters_plot radio button selection - this is separate from the filtered selection for Measurement Data Access
-                var base_url_mp = '{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias format='.kml'%}';
-                var base_url_sp = '{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias format='.kml'%}';
+                var base_url_mp = '{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias fmt='.kml'%}';
+                var base_url_sp = '{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias fmt='.kml'%}';
                 var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
                 if (param != '') {
                     param = '?' + param;
@@ -1447,11 +1447,11 @@
         var base_url;
         if ( group == 'mp' ) {
             group_name = 'measured';
-            base_url = '{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias format='.'%}';
+            base_url = '{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias fmt='.'%}';
         }
         else if ( group == 'sp' ) {
             group_name = 'sampled';
-            base_url = '{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias format='.'%}';
+            base_url = '{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias fmt='.'%}';
         }
         var query_url = '{{site_uri}}{% url 'stoqs:stoqs-query-ui' dbAlias=request.META.dbAlias %}';
         var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
@@ -2827,7 +2827,7 @@
 
     function showSampleData(label) {
             //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
-            var sample_url = '{{site_uri}}{% url 'stoqs:show-sample-datatable' dbAlias=request.META.dbAlias format=".json" %}';
+            var sample_url = '{{site_uri}}{% url 'stoqs:show-sample-datatable' dbAlias=request.META.dbAlias fmt=".json" %}';
             sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
             console.log('sample_url = ' + sample_url);
 
@@ -2853,7 +2853,7 @@
 
     function showQuickLooks(label) {
             // http://172.16.130.135:8000/stoqs_may2012/resourceactivity.json?resourcetype__name=quick_look&activityresource__activity__name__contains=Dorado389_2012_150_00_150_00_decim
-            //var quicklook_url = '{{site_uri}}{% url 'stoqs:show-resourceactivity' dbAlias=request.META.dbAlias format=".json" %}?resourcetype__name=quick_look&';
+            //var quicklook_url = '{{site_uri}}{% url 'stoqs:show-resourceactivity' dbAlias=request.META.dbAlias fmt=".json" %}?resourcetype__name=quick_look&';
             var quicklook_url = '{{site_uri}}{% url 'stoqs:show-quicklookplots' dbAlias=request.META.dbAlias %}?';
             quicklook_url = quicklook_url + 'activityresource__activity__name__contains=' + label.split(' ')[0];
             //var nwin = window.open(quicklook_url, '', 'height=800,width=1000');

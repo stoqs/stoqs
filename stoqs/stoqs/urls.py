@@ -9,7 +9,7 @@ from django.conf.urls.static import static
 pre = r'^(?P<dbAlias>[^/]+)/'  
 
 # format is one of: 'html', 'csv', 'kml', 'json'
-formatPat = r'(?P<format>[^/]{0,5})'
+formatPat = r'(?P<fmt>[^/]{0,5})'
 
 urlpatterns = patterns('',
             
@@ -61,11 +61,11 @@ urlpatterns = patterns('',
     # URL For Chander's STOQQManager related views
     url(pre + r'query/summary/$', 'stoqs.views.query.queryData', {}, name='stoqs-query-summary'),
     url(pre + r'query/map/$', 'stoqs.views.query.queryMap', {}, name='stoqs-query-map'),
-    url(pre + r'query/(?P<format>[^/]+)/?$', 'stoqs.views.query.queryData', {}, name='stoqs-query-results'),
+    url(pre + r'query/(?P<fmt>[^/]+)/?$', 'stoqs.views.query.queryData', {}, name='stoqs-query-results'),
     url(pre + r'query/', 'stoqs.views.query.queryUI', {}, name='stoqs-query-ui'),
 
     # Management, base of campaign, etc.
-    url(r'campaigns.(?P<format>[^/]{3,5})$', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
+    url(r'campaigns.(?P<fmt>[^/]{3,5})$', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
     url(pre + r'mgmt$', 'stoqs.views.management.showDatabase', {}, name='show-database'),
     url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'stoqs.views.management.deleteActivity', {}, name='delete-activity'),
     url(pre + r'activitiesMBARICustom$', 'stoqs.views.management.showActivitiesMBARICustom', {}, name='show-activities'),
