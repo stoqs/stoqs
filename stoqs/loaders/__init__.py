@@ -732,8 +732,8 @@ class STOQS_Loader(object):
                
         try:
             if (row['longitude'] == missing_value or row['latitude'] == missing_value or
-                #float(row['longitude']) == 0.0 or float(row['latitude']) == 0.0 or
-                math.isnan(row['longitude'] ) or math.isnan(row['latitude'])):
+                    #float(row['longitude']) == 0.0 or float(row['latitude']) == 0.0 or
+                    math.isnan(row['longitude'] ) or math.isnan(row['latitude'])):
                 raise SkipRecord('Invalid latitude or longitude coordinate')
         except KeyError as e:
             raise SkipRecord('KeyError: ' + str(e))
@@ -763,7 +763,7 @@ class STOQS_Loader(object):
                 allNaNFlag[v] = np.isnan(vVals).all()
                 if not allNaNFlag[v]:
                     anyValidData = True
-            except KeyError as e:
+            except KeyError:
                 self.logger.debug('Parameter %s not in %s. Skipping.', v, self.ds.keys())
                 if v.find('.') != -1:
                     raise Exception('Parameter names must not contain periods - cannot load data. Paramater %s violates CF conventions.' % v)
@@ -1061,7 +1061,8 @@ class STOQS_Loader(object):
                 # Update last point's time value by first deleting all times at depth for the activity > first time point
                 t1,d1,k1 = simple_line[1]
                 self.logger.debug('Last point t1,d1,k1 = %s, %s, %s', t1,d1,k1)
-                lastPoints = m.SimpleDepthTime.objects.using(self.dbAlias).filter(activity=self.activity, nominallocation=nl, depth=d1, epochmilliseconds__gt=t0)
+                lastPoints = m.SimpleDepthTime.objects.using(self.dbAlias).filter(
+                        activity=self.activity, nominallocation=nl, depth=d1, epochmilliseconds__gt=t0)
                 for lp in lastPoints:
                     self.logger.debug('Deleting SimpleDepthTime point with epochmilliseconds=%s', lp.epochmilliseconds)
                     lp.delete(using=self.dbAlias)
@@ -1161,7 +1162,7 @@ class STOQS_Loader(object):
                 units='kg m-3',
                 name='sigmat'
         )
-        p_spice, created = m.Parameter.objects.using(self.dbAlias).get_or_create( 
+        p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
                 long_name='Spiciness',
                 name='spice'
         )
