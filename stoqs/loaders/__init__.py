@@ -907,94 +907,94 @@ class STOQS_Loader(object):
         self.logger.info('Inserted %d values into SimpleDepthTime', len(simple_line))
 
     def saveBottomDepth(self):
-      @transaction.atomic(using=self.dbAlias)
-      def _innerSaveBottomDepth(self):
-        '''
-        Read the time series of Parameter altitude and add to depth values to compute BottomDepth
-        and add it to the Measurement so that our Matplotlib plots can also ieasily include the depth profile.  
-        This procedure is suitable for only trajectory data.
-        '''
-        mpQS = m.MeasuredParameter.objects.using(self.dbAlias).select_related('measurement'
-                                      ).filter( datavalue__isnull=False,
-                                                measurement__instantpoint__activity=self.activity, 
-                                                parameter__standard_name='height_above_sea_floor')
-        count =  mpQS.count()
-        self.logger.info('mpQS.count() = %s', count)
+        @transaction.atomic(using=self.dbAlias)
+        def _innerSaveBottomDepth(self):
+            '''
+            Read the time series of Parameter altitude and add to depth values to compute BottomDepth
+            and add it to the Measurement so that our Matplotlib plots can also ieasily include the depth profile.  
+            This procedure is suitable for only trajectory data.
+            '''
+            mpQS = m.MeasuredParameter.objects.using(self.dbAlias).select_related('measurement'
+                                          ).filter( datavalue__isnull=False,
+                                                    measurement__instantpoint__activity=self.activity, 
+                                                    parameter__standard_name='height_above_sea_floor')
+            count =  mpQS.count()
+            self.logger.info('mpQS.count() = %s', count)
 
-        counter = 0
-        for mp in mpQS:
-            counter += 1
-            try:
-                mp.measurement.bottomdepth = mp.measurement.depth + mp.datavalue
-                mp.measurement.save(using=self.dbAlias)
-            except DatabaseError as e:
-                self.logger.warn(e)
+            counter = 0
+            for mp in mpQS:
+                counter += 1
+                try:
+                    mp.measurement.bottomdepth = mp.measurement.depth + mp.datavalue
+                    mp.measurement.save(using=self.dbAlias)
+                except DatabaseError as e:
+                    self.logger.warn(e)
 
-            if counter % 10000 == 0:
-                self.logger.info('%d of %d mp.measurement.bottomdepth records saved', counter, count)
+                if counter % 10000 == 0:
+                    self.logger.info('%d of %d mp.measurement.bottomdepth records saved', counter, count)
 
-      return _innerSaveBottomDepth(self)
+            return _innerSaveBottomDepth(self)
 
     def insertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
-      @transaction.atomic(using=self.dbAlias)
-      def _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
-        '''
-        Read the bottomdepth from Measurement for the Activity, simplify it 
-        and insert the values in the SimpleBottomDepthTime table that is related to the Activity.  
-        This procedure is suitable for only trajectory data.
-        @param critSimpleBottomDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
-        '''
-        tbdQS = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement__instantpoint__activity=self.activity
-                                      ).values('measurement__instantpoint__timevalue', 'measurement__bottomdepth',
-                                      'measurement__instantpoint__id')
-        count =  tbdQS.count()
+        @transaction.atomic(using=self.dbAlias)
+        def _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime=10):
+            '''
+            Read the bottomdepth from Measurement for the Activity, simplify it 
+            and insert the values in the SimpleBottomDepthTime table that is related to the Activity.  
+            This procedure is suitable for only trajectory data.
+            @param critSimpleBottomDepthTime: An integer for the simplification factor, 10 is course, .0001 is fine
+            '''
+            tbdQS = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement__instantpoint__activity=self.activity
+                                          ).values('measurement__instantpoint__timevalue', 'measurement__bottomdepth',
+                                          'measurement__instantpoint__id')
+            count =  tbdQS.count()
 
-        # simplify_points() has a limit of how many points it can handle
-        maxRecords = .1e6
-        stride = 1
-        if count > maxRecords:
-            stride = int((count + maxRecords / 2)/ maxRecords)
-            self.logger.info('Striding tbdQS by %d to be kind to simplify_points()', stride)
+            # simplify_points() has a limit of how many points it can handle
+            maxRecords = .1e6
+            stride = 1
+            if count > maxRecords:
+                stride = int((count + maxRecords / 2)/ maxRecords)
+                self.logger.info('Striding tbdQS by %d to be kind to simplify_points()', stride)
 
-        # Now, get time and bottomdepth that we just saved for building the SimpleBottomDepth time series
-        line = []
-        pklookup = []
-        i = 0
-        counter = 0
-        for tbd in tbdQS:
-            i += 1
-            if i % stride == 0:
-                counter += 1
-                ems = 1000 * to_udunits(tbd['measurement__instantpoint__timevalue'], 'seconds since 1970-01-01')
-                if tbd['measurement__bottomdepth']:
-                    line.append( (ems, tbd['measurement__bottomdepth']) )
-                    pklookup.append(tbd['measurement__instantpoint__id'])
-                    if counter % 10000 == 0:
-                        self.logger.info('%d of %d points read', counter, int(count / stride))
+            # Now, get time and bottomdepth that we just saved for building the SimpleBottomDepth time series
+            line = []
+            pklookup = []
+            i = 0
+            counter = 0
+            for tbd in tbdQS:
+                i += 1
+                if i % stride == 0:
+                    counter += 1
+                    ems = 1000 * to_udunits(tbd['measurement__instantpoint__timevalue'], 'seconds since 1970-01-01')
+                    if tbd['measurement__bottomdepth']:
+                        line.append( (ems, tbd['measurement__bottomdepth']) )
+                        pklookup.append(tbd['measurement__instantpoint__id'])
+                        if counter % 10000 == 0:
+                            self.logger.info('%d of %d points read', counter, int(count / stride))
 
-        if line:
-            try:
-                # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
-                self.logger.info('Calling simplify_points with len(line) = %d', len(line))
-                simple_line = simplify_points(line, critSimpleBottomDepthTime)
-            except IndexError:
-                simple_line = []        # Likely "list index out of range" from a stride that's too big
-        else:
-            simple_line = []
+            if line:
+                try:
+                    # Original simplify_points code modified: the index from the original line is added as 3rd item in the return
+                    self.logger.info('Calling simplify_points with len(line) = %d', len(line))
+                    simple_line = simplify_points(line, critSimpleBottomDepthTime)
+                except IndexError:
+                    simple_line = []        # Likely "list index out of range" from a stride that's too big
+            else:
+                simple_line = []
 
-        self.logger.info('Number of points in simplified depth time series = %d', len(simple_line))
-        self.logger.debug('simple_line = %s', simple_line)
+            self.logger.info('Number of points in simplified depth time series = %d', len(simple_line))
+            self.logger.debug('simple_line = %s', simple_line)
 
-        for t,d,k in simple_line:
-            try:
-                ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
-                m.SimpleBottomDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = ip, bottomdepth = d, epochmilliseconds = t)
-            except ObjectDoesNotExist:
-                self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
+            for t,d,k in simple_line:
+                try:
+                    ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
+                    m.SimpleBottomDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = ip, bottomdepth = d, epochmilliseconds = t)
+                except ObjectDoesNotExist:
+                    self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
-        self.logger.info('Inserted %d values into SimpleBottomDepthTime', len(simple_line))
+            self.logger.info('Inserted %d values into SimpleBottomDepthTime', len(simple_line))
 
-      return _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime)
+        return _innerInsertSimpleBottomDepthTimeSeries(self, critSimpleBottomDepthTime)
 
     def insertSimpleDepthTimeSeriesByNominalDepth(self, critSimpleDepthTime=10, trajectoryProfileDepths=None):
         '''
@@ -1125,183 +1125,183 @@ class STOQS_Loader(object):
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
     def addSigmaTandSpice(self, parameterCounts, activity=None):
-      ''' 
-      For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
-      compute sigma-t and add it as a parameter
-      '''                 
-      @transaction.atomic(using=self.dbAlias)
-      def _innerAddSigmaT(self, parameterCounts, activity):
-        
-        # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
-        ms = m.Measurement.objects.using(self.dbAlias)
-        if activity:
-            ms = ms.filter(instantpoint__activity=activity)
-        
-        ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
+        ''' 
+        For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
+        compute sigma-t and add it as a parameter
+        '''                 
+        @transaction.atomic(using=self.dbAlias)
+        def _innerAddSigmaT(self, parameterCounts, activity):
+            # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
+            ms = m.Measurement.objects.using(self.dbAlias)
+            if activity:
+                ms = ms.filter(instantpoint__activity=activity)
 
-        # Test whether our measurements use 'sea_water_salinity' or 'sea_water_practical_salinity'
-        salinity_standard_name = 'sea_water_salinity'
-        if ms.filter(measuredparameter__parameter__standard_name='sea_water_practical_salinity'):
-            salinity_standard_name = 'sea_water_practical_salinity'
-        elif ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
+            ms = ms.filter(measuredparameter__parameter__standard_name='sea_water_temperature')
+
+            # Test whether our measurements use 'sea_water_salinity' or 'sea_water_practical_salinity'
             salinity_standard_name = 'sea_water_salinity'
+            if ms.filter(measuredparameter__parameter__standard_name='sea_water_practical_salinity'):
+                salinity_standard_name = 'sea_water_practical_salinity'
+            elif ms.filter(measuredparameter__parameter__standard_name='sea_water_salinity'):
+                salinity_standard_name = 'sea_water_salinity'
 
-        ms = ms.filter(measuredparameter__parameter__standard_name=salinity_standard_name)
+            ms = ms.filter(measuredparameter__parameter__standard_name=salinity_standard_name)
 
-        if not ms:
-            self.logger.info("No sea_water_temperature and sea_water_salinity; can't add SigmaT and Spice.")
-            return parameterCounts
-
-        if self.dataStartDatetime:
-            ms = ms.filter(instantpoint__timevalue__gt=self.dataStartDatetime)
-
-        # Create our new Parameters
-        p_sigmat, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
-                standard_name='sea_water_sigma_t',
-                long_name='Sigma-T',
-                units='kg m-3',
-                name='sigmat'
-        )
-        p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                long_name='Spiciness',
-                name='spice'
-        )
-        parameterCounts[p_sigmat] = ms.count()
-        parameterCounts[p_spice] = ms.count()
-        self.assignParameterGroup({p_sigmat: ms.count()}, groupName=MEASUREDINSITU)
-        self.assignParameterGroup({p_spice: ms.count()}, groupName=MEASUREDINSITU)
-
-        # Loop through all Measurements, compute Sigma-T, and add to the Measurement
-        for me in ms:
-            try:
-                t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                        parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
-                s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                        parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
-            except DatabaseError as e:
-                self.logger.warn(e)
-
-            sigmat = sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0
-            spice = spiciness(t, s)
-
-            mp_sigmat = m.MeasuredParameter(datavalue=sigmat, measurement=me, parameter=p_sigmat)
-            mp_spice = m.MeasuredParameter(datavalue=spice, measurement=me, parameter=p_spice)
-            try:
-                mp_sigmat.save(using=self.dbAlias)
-                mp_spice.save(using=self.dbAlias)
-            except IntegrityError as e:
-                self.logger.warn(e)
-            except DatabaseError as e:
-                self.logger.warn(e)
-
-        return parameterCounts
-
-      return _innerAddSigmaT(self, parameterCounts, activity)
-
-    def addAltitude(self, parameterCounts, activity=None):
-      ''' 
-      For all measurements lookup the water depth from a GMT grd file using grdtrack(1), 
-      subtract the depth and add altitude as a new Parameter to the Measurement
-      To be called from load script after process_command_line().
-      '''
-      @transaction.atomic(using=self.dbAlias)
-      def _innerAddAltitude(self, parameterCounts, activity=None):
-        # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
-        if self.grdTerrain:
-            try:
-                fh = Dataset(self.grdTerrain)
-                # Old GMT format
-                xmin, xmax = fh.variables['x_range'][:]
-                ymin, ymax = fh.variables['y_range'][:]
-            except IOError as e:
-                self.logger.warn(e)
-                raise FileNotFound('Unable to apply bathymetry to the data. Make sure file %s is present.', self.grdTerrain)
-            except KeyError as e:
-                try:
-                    # New GMT format
-                    xmin, xmax = fh.variables['lon'].actual_range
-                    ymin, ymax = fh.variables['lat'].actual_range
-                except Exception as e:
-                    try:
-                        # Yet another format (seen in SanPedroBasin50.grd)
-                        xmin, xmax = fh.variables['x'].actual_range
-                        ymin, ymax = fh.variables['y'].actual_range
-                    except Exception as e:
-                        self.logger.error('Cannot read range metadata from %s. Not able to load'
-                                          ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
-                        return parameterCounts
-            except Exception as e:
-                self.logger.exception(e)
+            if not ms:
+                self.logger.info("No sea_water_temperature and sea_water_salinity; can't add SigmaT and Spice.")
                 return parameterCounts
-            finally:
-                fh.close()
 
-            bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
+            if self.dataStartDatetime:
+                ms = ms.filter(instantpoint__timevalue__gt=self.dataStartDatetime)
 
-        # Build file of Measurement lon & lat for grdtrack to process
-        xyFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_LatLon_', suffix='.txt').name
-        xyFH = open(xyFileName, 'w')
-        ms = m.Measurement.objects.using(self.dbAlias).filter(geom__within=bbox)
-        if activity:
-            ms = ms.filter(instantpoint__activity=activity)
-        ms = ms.order_by('instantpoint__activity__id', 'instantpoint__timevalue').values('id', 'geom', 'depth').distinct()
-        mList = []
-        depthList = []
-        for me in ms:
-            mList.append(me['id'])
-            depthList.append(me['depth'])
-            xyFH.write("%f %f\n" % (me['geom'].x, me['geom'].y))
+            # Create our new Parameters
+            p_sigmat, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
+                    standard_name='sea_water_sigma_t',
+                    long_name='Sigma-T',
+                    units='kg m-3',
+                    name='sigmat'
+            )
+            p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
+                    long_name='Spiciness',
+                    name='spice'
+            )
+            parameterCounts[p_sigmat] = ms.count()
+            parameterCounts[p_spice] = ms.count()
+            self.assignParameterGroup({p_sigmat: ms.count()}, groupName=MEASUREDINSITU)
+            self.assignParameterGroup({p_spice: ms.count()}, groupName=MEASUREDINSITU)
 
-        xyFH.close()
-        inputFileCount = len(mList)
-        self.logger.debug('Wrote file %s with %d records', xyFileName, inputFileCount)
-
-        # Requires GMT (yum install GMT)
-        bdepthFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_BDepth', suffix='.txt').name
-        cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
-        self.logger.info('Executing %s' % cmd)
-        os.system(cmd)
-        if self.totalRecords > 1e6:
-            self.logger.info('Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
-            time.sleep(60)
-        if self.totalRecords > 1e7:
-            self.logger.info('Sleeping another 300 seconds to give time for system call to'
-                             ' finish writing to %s for more than 10 million records', bdepthFileName)
-            time.sleep(300)
-
-        # Create our new Parameter
-        self.logger.info('Getting or creating new altitude Parameter')
-        p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
-                standard_name='height_above_sea_floor',
-                long_name='Altitude',
-                units='m',
-                name='altitude'
-        )
-        parameterCounts[p_alt] = ms.count()
-        self.assignParameterGroup({p_alt: ms.count()}, groupName=MEASUREDINSITU)
-
-        # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
-        count = 0
-        with open(bdepthFileName) as altFH:
-            for line in altFH:
-                bdepth = line.split()[2]
-                alt = -float(bdepth)-depthList.pop(0)
+            # Loop through all Measurements, compute Sigma-T, and add to the Measurement
+            for me in ms:
                 try:
-                    meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
-                    mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
-                    mp_alt.save(using=self.dbAlias)
+                    t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                            parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
+                    s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                            parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
+                except DatabaseError as e:
+                    self.logger.warn(e)
+
+                sigmat = sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0
+                spice = spiciness(t, s)
+
+                mp_sigmat = m.MeasuredParameter(datavalue=sigmat, measurement=me, parameter=p_sigmat)
+                mp_spice = m.MeasuredParameter(datavalue=spice, measurement=me, parameter=p_spice)
+                try:
+                    mp_sigmat.save(using=self.dbAlias)
+                    mp_spice.save(using=self.dbAlias)
                 except IntegrityError as e:
                     self.logger.warn(e)
                 except DatabaseError as e:
                     self.logger.warn(e)
-                count += 1
 
-        # Cleanup and sanity check
-        os.remove(xyFileName)
-        os.remove(bdepthFileName)
-        if inputFileCount != count:
-            self.logger.warn('Counts are not equal! inputFileCount = %s, count from grdtrack output = %s', inputFileCount, count)
+            return parameterCounts
 
-        return parameterCounts
+        return _innerAddSigmaT(self, parameterCounts, activity)
 
-      return _innerAddAltitude(self, parameterCounts, activity)
+    def addAltitude(self, parameterCounts, activity=None):
+        ''' 
+        For all measurements lookup the water depth from a GMT grd file using grdtrack(1), 
+        subtract the depth and add altitude as a new Parameter to the Measurement
+        To be called from load script after process_command_line().
+        '''
+        @transaction.atomic(using=self.dbAlias)
+        def _innerAddAltitude(self, parameterCounts, activity=None):
+            # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
+            if self.grdTerrain:
+                try:
+                    fh = Dataset(self.grdTerrain)
+                    # Old GMT format
+                    xmin, xmax = fh.variables['x_range'][:]
+                    ymin, ymax = fh.variables['y_range'][:]
+                except IOError as e:
+                    self.logger.warn(e)
+                    raise FileNotFound('Unable to apply bathymetry to the data. Make sure file %s is present.', self.grdTerrain)
+                except KeyError as e:
+                    try:
+                        # New GMT format
+                        xmin, xmax = fh.variables['lon'].actual_range
+                        ymin, ymax = fh.variables['lat'].actual_range
+                    except Exception as e:
+                        try:
+                            # Yet another format (seen in SanPedroBasin50.grd)
+                            xmin, xmax = fh.variables['x'].actual_range
+                            ymin, ymax = fh.variables['y'].actual_range
+                        except Exception as e:
+                            self.logger.error('Cannot read range metadata from %s. Not able to load'
+                                              ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
+                            return parameterCounts
+                except Exception as e:
+                    self.logger.exception(e)
+                    return parameterCounts
+                finally:
+                    fh.close()
+
+                bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
+
+            # Build file of Measurement lon & lat for grdtrack to process
+            xyFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_LatLon_', suffix='.txt').name
+            xyFH = open(xyFileName, 'w')
+            ms = m.Measurement.objects.using(self.dbAlias).filter(geom__within=bbox)
+            if activity:
+                ms = ms.filter(instantpoint__activity=activity)
+            ms = ms.order_by('instantpoint__activity__id', 'instantpoint__timevalue').values('id', 'geom', 'depth').distinct()
+            mList = []
+            depthList = []
+            for me in ms:
+                mList.append(me['id'])
+                depthList.append(me['depth'])
+                xyFH.write("%f %f\n" % (me['geom'].x, me['geom'].y))
+
+            xyFH.close()
+            inputFileCount = len(mList)
+            self.logger.debug('Wrote file %s with %d records', xyFileName, inputFileCount)
+
+            # Requires GMT (yum install GMT)
+            bdepthFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_BDepth', suffix='.txt').name
+            cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+            self.logger.info('Executing %s' % cmd)
+            os.system(cmd)
+            if self.totalRecords > 1e6:
+                self.logger.info('Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
+                time.sleep(60)
+            if self.totalRecords > 1e7:
+                self.logger.info('Sleeping another 300 seconds to give time for system call to'
+                                 ' finish writing to %s for more than 10 million records', bdepthFileName)
+                time.sleep(300)
+
+            # Create our new Parameter
+            self.logger.info('Getting or creating new altitude Parameter')
+            p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
+                    standard_name='height_above_sea_floor',
+                    long_name='Altitude',
+                    units='m',
+                    name='altitude'
+            )
+            parameterCounts[p_alt] = ms.count()
+            self.assignParameterGroup({p_alt: ms.count()}, groupName=MEASUREDINSITU)
+
+            # Read values from the grid sampling (bottom depths) and add datavalues to the altitude parameter using the save Measurements
+            count = 0
+            with open(bdepthFileName) as altFH:
+                for line in altFH:
+                    bdepth = line.split()[2]
+                    alt = -float(bdepth)-depthList.pop(0)
+                    try:
+                        meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
+                        mp_alt = m.MeasuredParameter(datavalue=alt, measurement=meas, parameter=p_alt)
+                        mp_alt.save(using=self.dbAlias)
+                    except IntegrityError as e:
+                        self.logger.warn(e)
+                    except DatabaseError as e:
+                        self.logger.warn(e)
+                    count += 1
+
+            # Cleanup and sanity check
+            os.remove(xyFileName)
+            os.remove(bdepthFileName)
+            if inputFileCount != count:
+                self.logger.warn('Counts are not equal! inputFileCount = %s, count from grdtrack output = %s', inputFileCount, count)
+
+            return parameterCounts
+
+        return _innerAddAltitude(self, parameterCounts, activity)
+
