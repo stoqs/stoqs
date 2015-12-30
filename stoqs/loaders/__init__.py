@@ -360,13 +360,13 @@ class STOQS_Loader(object):
         if re.search('[^a-zA-Z0-9_-]', name):
             raise Exception('Platform name = "%s" is not allowed.  Name can contain only letters, numbers, "_", and "-"' % name)
 
-        tpHandle = []
         self.logger.debug("Opening %s to read platform names for matching to the MBARI tracking database", paURL)
         try:
             tpHandle = csv.DictReader(urllib2.urlopen(paURL))
         except urllib2.URLError as e:
             self.logger.warn('Could not open %s', paURL)
             self.logger.warn(e)
+
         platformName = ''
         try:
             for rec in tpHandle:
@@ -437,7 +437,7 @@ class STOQS_Loader(object):
                     self.logger.debug("Parameter not found. Assigning parms from ds variable.")
                     # Bug in pydap returns a gobbledegook list of things if the attribute value has not been
                     # set.  Check for this on units and override what pydap returns.
-                    if type(v.get('units')) == list:
+                    if isinstance(v.get('units'), list):
                         unitStr = ''
                     else:
                         unitStr = v.get('units')
@@ -690,7 +690,7 @@ class STOQS_Loader(object):
 
         nl = None
         point = 'POINT(%s %s)' % (repr(lon), repr(lat))
-        if not (nomDepth == None and nomLat == None and nomLong == None):
+        if not (nomDepth is None and nomLat is None and nomLong is None):
             self.logger.debug('nomDepth = %s nomLat = %s nomLong = %s', nomDepth, nomLat, nomLong)
             nom_point = 'POINT(%s %s)' % (repr(nomLong), repr(nomLat))
             nl, _ = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), 
@@ -767,7 +767,7 @@ class STOQS_Loader(object):
                 self.logger.debug('Parameter %s not in %s. Skipping.', v, self.ds.keys())
                 if v.find('.') != -1:
                     raise Exception('Parameter names must not contain periods - cannot load data. Paramater %s violates CF conventions.' % v)
-            except ValueError as e:
+            except ValueError:
                 pass
 
         self.logger.debug("allNaNFlag = %s", allNaNFlag)
@@ -805,7 +805,7 @@ class STOQS_Loader(object):
         belonging to the activity.
         '''
         for p in parameters:
-            ap,created = m.ActivityParameter.objects.using(dbAlias).get_or_create(
+            ap, _ = m.ActivityParameter.objects.using(dbAlias).get_or_create(
                             parameter=p, activity=activity)
 
             if sampledFlag:
@@ -865,7 +865,7 @@ class STOQS_Loader(object):
             self.logger.warn('%s. Likely a dataarray as from LOPC data', e)
         except IntegrityError as e:
             self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter and '
-                             'updated statistics for parameter.name = %s.', e, p.name)
+                             'updated statistics for Activity %s.', e, a)
 
         self.logger.info('Updated statistics for activity.name = %s', a.name)
 
@@ -1112,7 +1112,7 @@ class STOQS_Loader(object):
         ''' 
         For all the parameters in @parameterCounts create a many-to-many association with the Group named @groupName
         '''                 
-        g, created = m.ParameterGroup.objects.using(self.dbAlias).get_or_create(name=groupName)
+        g, _ = m.ParameterGroup.objects.using(self.dbAlias).get_or_create(name=groupName)
         for p in parameterCounts:
             pgps = m.ParameterGroupParameter.objects.using(self.dbAlias).filter(parameter=p, parametergroup=g)
             if not pgps:
@@ -1155,12 +1155,16 @@ class STOQS_Loader(object):
             ms = ms.filter(instantpoint__timevalue__gt=self.dataStartDatetime)
 
         # Create our new Parameters
-        p_sigmat, created = m.Parameter.objects.using(self.dbAlias).get_or_create( standard_name='sea_water_sigma_t',
-                                                                                   long_name='Sigma-T',
-                                                                                   units='kg m-3',
-                                                                                   name='sigmat' )
-        p_spice, created = m.Parameter.objects.using(self.dbAlias).get_or_create( long_name='Spiciness',
-                                                                                   name='spice' )
+        p_sigmat, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
+                standard_name='sea_water_sigma_t',
+                long_name='Sigma-T',
+                units='kg m-3',
+                name='sigmat'
+        )
+        p_spice, created = m.Parameter.objects.using(self.dbAlias).get_or_create( 
+                long_name='Spiciness',
+                name='spice'
+        )
         parameterCounts[p_sigmat] = ms.count()
         parameterCounts[p_spice] = ms.count()
         self.assignParameterGroup({p_sigmat: ms.count()}, groupName=MEASUREDINSITU)
@@ -1169,8 +1173,10 @@ class STOQS_Loader(object):
         # Loop through all Measurements, compute Sigma-T, and add to the Measurement
         for me in ms:
             try:
-                t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
-                s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
+                t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                        parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
+                s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                        parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
             except DatabaseError as e:
                 self.logger.warn(e)
 
@@ -1193,7 +1199,8 @@ class STOQS_Loader(object):
 
     def addAltitude(self, parameterCounts, activity=None):
       ''' 
-      For all measurements lookup the water depth from a GMT grd file using grdtrack(1), subtract the depth and add altitude as a new Parameter to the Measurement
+      For all measurements lookup the water depth from a GMT grd file using grdtrack(1), 
+      subtract the depth and add altitude as a new Parameter to the Measurement
       To be called from load script after process_command_line().
       '''
       @transaction.atomic(using=self.dbAlias)
@@ -1219,7 +1226,8 @@ class STOQS_Loader(object):
                         xmin, xmax = fh.variables['x'].actual_range
                         ymin, ymax = fh.variables['y'].actual_range
                     except Exception as e:
-                        self.logger.error('Cannot read range metadata from %s. Not able to load altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
+                        self.logger.error('Cannot read range metadata from %s. Not able to load'
+                                          ' altitude, bottomdepth or simplebottomdepthtime', self.grdTerrain)
                         return parameterCounts
             except Exception as e:
                 self.logger.exception(e)
@@ -1256,15 +1264,18 @@ class STOQS_Loader(object):
             self.logger.info('Sleeping 60 seconds to give time for system call to finish writing to %s', bdepthFileName)
             time.sleep(60)
         if self.totalRecords > 1e7:
-            self.logger.info('Sleeping another 300 seconds to give time for system call to finish writing to %s for more than 10 million records', bdepthFileName)
+            self.logger.info('Sleeping another 300 seconds to give time for system call to'
+                             ' finish writing to %s for more than 10 million records', bdepthFileName)
             time.sleep(300)
 
         # Create our new Parameter
         self.logger.info('Getting or creating new altitude Parameter')
-        p_alt, created = m.Parameter.objects.using(self.dbAlias).get_or_create( standard_name='height_above_sea_floor',
-                                                                                long_name='Altitude',
-                                                                                units='m',
-                                                                                name='altitude' )
+        p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
+                standard_name='height_above_sea_floor',
+                long_name='Altitude',
+                units='m',
+                name='altitude'
+        )
         parameterCounts[p_alt] = ms.count()
         self.assignParameterGroup({p_alt: ms.count()}, groupName=MEASUREDINSITU)
 
@@ -1272,7 +1283,7 @@ class STOQS_Loader(object):
         count = 0
         with open(bdepthFileName) as altFH:
             for line in altFH:
-                lon, lat, bdepth = line.split()
+                bdepth = line.split()[2]
                 alt = -float(bdepth)-depthList.pop(0)
                 try:
                     meas = m.Measurement.objects.using(self.dbAlias).get(id=mList.pop(0))
@@ -1293,12 +1304,3 @@ class STOQS_Loader(object):
         return parameterCounts
 
       return _innerAddAltitude(self, parameterCounts, activity)
-            
-
-if __name__ == '__main__':
-    '''
-    Simple test of methods in STOQS_loader()
-    '''
-
-    pass
-
