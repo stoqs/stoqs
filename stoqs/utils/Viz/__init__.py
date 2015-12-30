@@ -619,8 +619,12 @@ class MeasuredParameter(object):
             # Make pairs of points for spanned NetTow-like data
             for act in self.value_by_act_span.keys():
                 self.logger.debug('Reading data from act = %s', act)
-                for lons,lats,depths,value in izip(self.lon_by_act_span[act], self.lat_by_act_span[act], self.depth_by_act_span[act], self.value_by_act_span[act]):
-                    points = points + '%.5f %.5f %.1f %.5f %.5f %.1f ' % (lats[0], lons[0], -depths[0] * vert_ex, lats[1], lons[1], -depths[1] * vert_ex)
+                for lons, lats, depths, value in izip(self.lon_by_act_span[act], 
+                                                      self.lat_by_act_span[act], 
+                                                      self.depth_by_act_span[act], 
+                                                      self.value_by_act_span[act]):
+                    points = points + '%.5f %.5f %.1f %.5f %.5f %.1f ' % (lats[0], lons[0],
+                            -depths[0] * vert_ex, lats[1], lons[1], -depths[1] * vert_ex)
                     try:
                         cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
                                         (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))
@@ -751,8 +755,8 @@ class PlatformAnimation(object):
             # Need millisecond accuracy, add microseconds to what timetuple() provides 
             # (only to the second); time_by_plat is in Unix epoch milliseconds
             dt = mp['measurement__instantpoint__timevalue']
-            self.time_by_plat.setdefault(platform.name, []).append(int((time.mktime(dt.timetuple()) 
-                                                        + dt.microsecond / 1.e6) * 1000.0))
+            self.time_by_plat.setdefault(platform.name, []).append(
+                    int((time.mktime(dt.timetuple()) + dt.microsecond / 1.e6) * 1000.0))
 
         for mp in pqs.filter(parameter__standard_name='platform_roll_angle'):
             self.roll_by_plat.setdefault(platform.name, []).append(mp['datavalue'])
@@ -821,8 +825,7 @@ class PlatformAnimation(object):
                 limits = (0, len(self.time_by_plat[pName]))
 
         except Exception as e:
-            self.logger.exception(e)
-            x3dResults = 'Could not create platformorientation'
+            self.logger.exception(str(e))
 
         return {'x3d': x3dDict, 'all': all_x3d, 'limits': limits, 'time': times, 'speedup': speedup}
 
@@ -909,121 +912,121 @@ class ParameterParameter(object):
         return csql
 
     def _getXYCData(self, strideFlag=True, latlonFlag=False, returnIDs=False, sampleFlag=True):
-      @transaction.atomic(using=self.request.META['dbAlias'])
-      def inner_getXYCData(self, strideFlag, latlonFlag):
-        '''
-        Construct SQL and iterate through cursor to get X, Y, and possibly C Parameter Parameter data
-        '''
-        # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
-        sql = str(self.pq.qs_mp.query)
-        sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
-        if sampleFlag:
-            sample_sql = self.pq.addSampleConstraint(sql)
+        @transaction.atomic(using=self.request.META['dbAlias'])
+        def inner_getXYCData(self, strideFlag, latlonFlag):
+            '''
+            Construct SQL and iterate through cursor to get X, Y, and possibly C Parameter Parameter data
+            '''
+            # Construct special SQL for P-P plot that returns up to 3 data values for the up to 3 Parameters requested for a 2D plot
+            sql = str(self.pq.qs_mp.query)
+            sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
+            if sampleFlag:
+                sample_sql = self.pq.addSampleConstraint(sql)
 
-        # Use cursors so that we can specify the database alias to use.
-        cursor = connections[self.request.META['dbAlias']].cursor()
-        sample_cursor = connections[self.request.META['dbAlias']].cursor()
+            # Use cursors so that we can specify the database alias to use.
+            cursor = connections[self.request.META['dbAlias']].cursor()
+            sample_cursor = connections[self.request.META['dbAlias']].cursor()
 
-        # Get count and set a stride value if more than a PP_MAX_POINTS which Matplotlib cannot plot, about 100,000 points
-        try:
-            cursor.execute(self._getCountSQL(sql))
-        except DatabaseError as e:
-            infoText = 'Parameter-Parameter: Cannot get count. Make sure you have no Parameters selected in the Filter.'
-            self.logger.warn(e)
-            raise PPDatabaseException(infoText, sql)
+            # Get count and set a stride value if more than a PP_MAX_POINTS which Matplotlib cannot plot, about 100,000 points
+            try:
+                cursor.execute(self._getCountSQL(sql))
+            except DatabaseError as e:
+                infoText = 'Parameter-Parameter: Cannot get count. Make sure you have no Parameters selected in the Filter.'
+                self.logger.warn(e)
+                raise PPDatabaseException(infoText, sql)
 
-        pp_count = cursor.fetchone()[0]
-        self.logger.debug('pp_count = %d', pp_count)
-        stride_val = 1
-        if strideFlag:
-            PP_MAX_POINTS = 50000
-            stride_val = int(pp_count / PP_MAX_POINTS)
-            if stride_val < 1:
-                stride_val = 1
-            self.logger.debug('stride_val = %d', stride_val)
+            pp_count = cursor.fetchone()[0]
+            self.logger.debug('pp_count = %d', pp_count)
+            stride_val = 1
+            if strideFlag:
+                PP_MAX_POINTS = 50000
+                stride_val = int(pp_count / PP_MAX_POINTS)
+                if stride_val < 1:
+                    stride_val = 1
+                self.logger.debug('stride_val = %d', stride_val)
 
-        if latlonFlag:
-            if sql.find('stoqs_measurement') != -1:
-                self.logger.debug('Adding lon lat to SELECT')
-                sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_measurement.geom) AS lon, ST_Y(stoqs_measurement.geom) AS lat,\n')
-            elif sql.find('stoqs_sample') != -1:
-                self.logger.debug('Adding lon lat to SELECT')
-                sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
+            if latlonFlag:
+                if sql.find('stoqs_measurement') != -1:
+                    self.logger.debug('Adding lon lat to SELECT')
+                    sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_measurement.geom) AS lon, ST_Y(stoqs_measurement.geom) AS lat,\n')
+                elif sql.find('stoqs_sample') != -1:
+                    self.logger.debug('Adding lon lat to SELECT')
+                    sql = sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
+
+                if sampleFlag:
+                    sample_sql = sample_sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
+
+            if returnIDs:
+                if sql.find('stoqs_measurement') != -1:
+                    self.logger.debug('Adding ids to SELECT for stoqs_measurement')
+                    sql = sql.replace('DISTINCT', 'DISTINCT mp_x.id, mp_y.id,\n')
+
+            # Get the Parameter-Parameter points
+            try:
+                self.logger.debug('Executing sql = %s', sql)
+                cursor.execute(sql)
+            except DatabaseError as e:
+                infoText = 'Parameter-Parameter: Query failed. Make sure you have no Parameters selected in the Filter.'
+                self.logger.warn('Cannot execute sql query for Parameter-Parameter plot: %s', e)
+                raise PPDatabaseException(infoText, sql)
+
+            if sampleFlag: 
+                # Get the Sample points
+                try:
+                    self.logger.debug('Executing sample_sql = %s', sample_sql)
+                    sample_cursor.execute(sample_sql)
+                except DatabaseError as e:
+                    infoText = 'Parameter-Parameter: Sample Query failed.'
+                    self.logger.warn('Cannot execute sample_sql query for Parameter-Parameter plot: %s', e)
+                    raise PPDatabaseException(infoText, sample_sql)
+
+            # Populate MeasuredParameter x,y,c member variables
+            counter = 0
+            self.logger.debug('Looping through rows in cursor with a stride of %d...', stride_val)
+            for row in cursor:
+                if counter % stride_val == 0:
+                    # SampledParameter datavalues are Decimal, convert everything to a float for numpy
+                    lrow = list(row)
+                    if returnIDs:
+                        self.x_id.append(int(lrow.pop(0)))
+                        self.y_id.append(int(lrow.pop(0)))
+
+                    if latlonFlag:
+                        self.lon.append(float(lrow.pop(0)))
+                        self.lat.append(float(lrow.pop(0)))
+                        
+                    self.depth.append(float(lrow.pop(0)))
+                    self.x.append(float(lrow.pop(0)))
+                    self.y.append(float(lrow.pop(0)))
+                    try:
+                        self.c.append(float(lrow.pop(0)))
+                    except IndexError:
+                        pass
+                counter = counter + 1
+                if counter % 1000 == 0:
+                    self.logger.debug('Made it through %d of %d points', counter, pp_count)
+
+            if self.x == [] or self.y == []:
+                raise PPDatabaseException('No data returned from query', sql)
 
             if sampleFlag:
-                sample_sql = sample_sql.replace('DISTINCT', 'DISTINCT ST_X(stoqs_sample.geom) AS lon, ST_Y(stoqs_sample.geom) AS lat,\n')
+                # Populate SampledParameter x,y,c member variables
+                self.logger.debug('Looping through rows in sample_cursor')
+                for row in sample_cursor:
+                    lrow = list(row)
+                    if latlonFlag:
+                        self.lon.append(float(lrow.pop(0)))
+                        self.lat.append(float(lrow.pop(0)))
 
-        if returnIDs:
-            if sql.find('stoqs_measurement') != -1:
-                self.logger.debug('Adding ids to SELECT for stoqs_measurement')
-                sql = sql.replace('DISTINCT', 'DISTINCT mp_x.id, mp_y.id,\n')
+                    # Need only the x and y values for sample points                
+                    self.sdepth.append(float(lrow.pop(0)))
+                    self.sx.append(float(lrow.pop(0)))
+                    self.sy.append(float(lrow.pop(0)))
+                    self.sample_names.append(lrow.pop(0))
 
-        # Get the Parameter-Parameter points
-        try:
-            self.logger.debug('Executing sql = %s', sql)
-            cursor.execute(sql)
-        except DatabaseError as e:
-            infoText = 'Parameter-Parameter: Query failed. Make sure you have no Parameters selected in the Filter.'
-            self.logger.warn('Cannot execute sql query for Parameter-Parameter plot: %s', e)
-            raise PPDatabaseException(infoText, sql)
-       
-        if sampleFlag: 
-            # Get the Sample points
-            try:
-                self.logger.debug('Executing sample_sql = %s', sample_sql)
-                sample_cursor.execute(sample_sql)
-            except DatabaseError as e:
-                infoText = 'Parameter-Parameter: Sample Query failed.'
-                self.logger.warn('Cannot execute sample_sql query for Parameter-Parameter plot: %s', e)
-                raise PPDatabaseException(infoText, sample_sql)
+            return stride_val, sql, pp_count
 
-        # Populate MeasuredParameter x,y,c member variables
-        counter = 0
-        self.logger.debug('Looping through rows in cursor with a stride of %d...', stride_val)
-        for row in cursor:
-            if counter % stride_val == 0:
-                # SampledParameter datavalues are Decimal, convert everything to a float for numpy
-                lrow = list(row)
-                if returnIDs:
-                    self.x_id.append(int(lrow.pop(0)))
-                    self.y_id.append(int(lrow.pop(0)))
-
-                if latlonFlag:
-                    self.lon.append(float(lrow.pop(0)))
-                    self.lat.append(float(lrow.pop(0)))
-                    
-                self.depth.append(float(lrow.pop(0)))
-                self.x.append(float(lrow.pop(0)))
-                self.y.append(float(lrow.pop(0)))
-                try:
-                    self.c.append(float(lrow.pop(0)))
-                except IndexError:
-                    pass
-            counter = counter + 1
-            if counter % 1000 == 0:
-                self.logger.debug('Made it through %d of %d points', counter, pp_count)
-
-        if self.x == [] or self.y == []:
-            raise PPDatabaseException('No data returned from query', sql)
-
-        if sampleFlag:
-            # Populate SampledParameter x,y,c member variables
-            self.logger.debug('Looping through rows in sample_cursor')
-            for row in sample_cursor:
-                lrow = list(row)
-                if latlonFlag:
-                    self.lon.append(float(lrow.pop(0)))
-                    self.lat.append(float(lrow.pop(0)))
-    
-                # Need only the x and y values for sample points                
-                self.sdepth.append(float(lrow.pop(0)))
-                self.sx.append(float(lrow.pop(0)))
-                self.sy.append(float(lrow.pop(0)))
-                self.sample_names.append(lrow.pop(0))
-
-        return stride_val, sql, pp_count
-
-      return inner_getXYCData(self, strideFlag, latlonFlag)
+        return inner_getXYCData(self, strideFlag, latlonFlag)
 
     def make2DPlot(self):
         '''
@@ -1154,7 +1157,8 @@ class ParameterParameter(object):
                 if self.sx and self.sy:
                     if self.c:
                         try:
-                            ax.scatter(self.sx, self.sy, marker='o', c=self.c, s=25, cmap=cm_jetplus, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
+                            ax.scatter(self.sx, self.sy, marker='o', c=self.c, s=25, cmap=cm_jetplus, 
+                                       vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
                         except ValueError as e:
                             # Likely because a Measured Parameter has been selected for color and len(self.c) != len(self.sx)
                             ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False)
@@ -1185,115 +1189,115 @@ class ParameterParameter(object):
             return ppPngFile, infoText, sql
 
     def makeX3D(self):
-      @transaction.atomic(using=self.request.META['dbAlias'])
-      def inner_makeX3D(self):
-        '''
-        Produce X3D XML text and return it
-        '''
-        x3dResults = {}
-        try:
-            # Construct special SQL for P-P plot that returns up to 4 data values for the up to 4 Parameters requested for a 3D plot
-            sql = str(self.pq.qs_mp.query)
-            self.logger.debug('self.pDict = %s', self.pDict)
-            sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
+        @transaction.atomic(using=self.request.META['dbAlias'])
+        def inner_makeX3D(self):
+            '''
+            Produce X3D XML text and return it
+            '''
+            x3dResults = {}
+            try:
+                # Construct special SQL for P-P plot that returns up to 4 data values for the up to 4 Parameters requested for a 3D plot
+                sql = str(self.pq.qs_mp.query)
+                self.logger.debug('self.pDict = %s', self.pDict)
+                sql = self.pq.addParameterParameterSelfJoins(sql, self.pDict)
 
-            # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
-            cursor = connections[self.request.META['dbAlias']].cursor()
-            cursor.execute(sql)
-            for row in cursor:
-                # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
-                self.depth.append(float(row[0]))
-                self.x.append(float(row[1]))
-                self.y.append(float(row[2]))
-                self.z.append(float(row[3]))
-                try:
-                    self.c.append(float(row[4]))
-                except IndexError:
-                    pass
+                # Use cursor so that we can specify the database alias to use. Columns are always 0:x, 1:y, 2:c (optional)
+                cursor = connections[self.request.META['dbAlias']].cursor()
+                cursor.execute(sql)
+                for row in cursor:
+                    # SampledParameter datavalues are Decimal, convert everything to a float for numpy, row[0] is depth
+                    self.depth.append(float(row[0]))
+                    self.x.append(float(row[1]))
+                    self.y.append(float(row[2]))
+                    self.z.append(float(row[3]))
+                    try:
+                        self.c.append(float(row[4]))
+                    except IndexError:
+                        pass
 
-            if self.c:
-                self.c.reverse()    # Modifies self.c in place - needed for popping values off in loop below
-
-            points = ''
-            colors = ''
-            for x,y,z in izip(self.x, self.y, self.z):
-                # Scale to 10000 on each axis, bounded by min/max values - must be 10000 as X3D in stoqs/templates/stoqsquery.html is hard-coded with 10000
-                # This gives us enough resolution for modern displays and eliminates decimal point characters
-                xs = 10000 * (x - float(self.pMinMax['x'][1])) / (float(self.pMinMax['x'][2]) - float(self.pMinMax['x'][1])) 
-                ys = 10000 * (y - float(self.pMinMax['y'][1])) / (float(self.pMinMax['y'][2]) - float(self.pMinMax['y'][1])) 
-                zs = 10000 * (z - float(self.pMinMax['z'][1])) / (float(self.pMinMax['z'][2]) - float(self.pMinMax['z'][1])) 
-                points = points + '%d %d %d ' % (int(xs), int(ys), int(zs))
                 if self.c:
-                    cindx = int(round((self.c.pop() - float(self.pMinMax['c'][1])) * (len(self.clt) - 1) / 
-                                    (float(self.pMinMax['c'][2]) - float(self.pMinMax['c'][1]))))
-                    if cindx < 0:
-                        cindx = 0
-                    if cindx > len(self.clt) - 1:
-                        cindx = len(self.clt) - 1
-                    colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
-                else:
-                    colors = colors + '0 0 0 '
+                    self.c.reverse()    # Modifies self.c in place - needed for popping values off in loop below
 
-            # Label the axes
-            try:
-                xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
-            except ValueError:
-                # Likely a coordinate variable
-                xp = models.Parameter
-                xp.name = self.pDict['x']
-                xp.standard_name = self.pDict['x']
-                xp.units = _getCoordUnits(self.pDict['x'])
-            self.pMinMax['x'].append(('%s (%s)' % (xp.name, xp.units)))
+                points = ''
+                colors = ''
+                for x,y,z in izip(self.x, self.y, self.z):
+                    # Scale to 10000 on each axis, bounded by min/max values - must be 10000 as X3D in stoqs/templates/stoqsquery.html is hard-coded with 10000
+                    # This gives us enough resolution for modern displays and eliminates decimal point characters
+                    xs = 10000 * (x - float(self.pMinMax['x'][1])) / (float(self.pMinMax['x'][2]) - float(self.pMinMax['x'][1])) 
+                    ys = 10000 * (y - float(self.pMinMax['y'][1])) / (float(self.pMinMax['y'][2]) - float(self.pMinMax['y'][1])) 
+                    zs = 10000 * (z - float(self.pMinMax['z'][1])) / (float(self.pMinMax['z'][2]) - float(self.pMinMax['z'][1])) 
+                    points = points + '%d %d %d ' % (int(xs), int(ys), int(zs))
+                    if self.c:
+                        cindx = int(round((self.c.pop() - float(self.pMinMax['c'][1])) * (len(self.clt) - 1) / 
+                                        (float(self.pMinMax['c'][2]) - float(self.pMinMax['c'][1]))))
+                        if cindx < 0:
+                            cindx = 0
+                        if cindx > len(self.clt) - 1:
+                            cindx = len(self.clt) - 1
+                        colors = colors + '%.3f %.3f %.3f ' % (self.clt[cindx][0], self.clt[cindx][1], self.clt[cindx][2])
+                    else:
+                        colors = colors + '0 0 0 '
 
-            try:
-                yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
-            except ValueError:
-                # Likely a coordinate variable
-                yp = models.Parameter
-                yp.name = self.pDict['y']
-                yp.standard_name = self.pDict['y']
-                yp.units = _getCoordUnits(self.pDict['y'])
-            self.pMinMax['y'].append(('%s (%s)' % (yp.name, yp.units)))
-
-            try:
-                zp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z']))
-            except ValueError:
-                # Likely a coordinate variable
-                zp = models.Parameter
-                zp.name = self.pDict['z']
-                zp.standard_name = self.pDict['z']
-                zp.units = _getCoordUnits(self.pDict['z'])
-            self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
-
-            colorbarPngFile = ''
-            if self.pDict['c']:
+                # Label the axes
                 try:
-                    cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
+                    xp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['x']))
                 except ValueError:
                     # Likely a coordinate variable
-                    cp = models.Parameter
-                    cp.name = self.pDict['c']
-                    cp.standard_name = self.pDict['c']
-                    cp.units = _getCoordUnits(self.pDict['c'])
+                    xp = models.Parameter
+                    xp.name = self.pDict['x']
+                    xp.standard_name = self.pDict['x']
+                    xp.units = _getCoordUnits(self.pDict['x'])
+                self.pMinMax['x'].append(('%s (%s)' % (xp.name, xp.units)))
+
                 try:
-                    cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
-                    imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-                    colorbarPngFile = '%s_%s_%s_%s_3dcolorbar_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['z'], self.pDict['c'], imageID )
-                    colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
-                    makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus)
+                    yp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['y']))
+                except ValueError:
+                    # Likely a coordinate variable
+                    yp = models.Parameter
+                    yp.name = self.pDict['y']
+                    yp.standard_name = self.pDict['y']
+                    yp.units = _getCoordUnits(self.pDict['y'])
+                self.pMinMax['y'].append(('%s (%s)' % (yp.name, yp.units)))
 
-                except Exception as e:
-                    self.logger.exception('Could not plot the colormap')
-                    return None, None, 'Could not plot the colormap'
+                try:
+                    zp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['z']))
+                except ValueError:
+                    # Likely a coordinate variable
+                    zp = models.Parameter
+                    zp.name = self.pDict['z']
+                    zp.standard_name = self.pDict['z']
+                    zp.units = _getCoordUnits(self.pDict['z'])
+                self.pMinMax['z'].append(('%s (%s)' % (zp.name, zp.units)))
 
-            x3dResults = {'colors': colors, 'points': points, 'info': '', 'x': self.pMinMax['x'], 'y': self.pMinMax['y'], 'z': self.pMinMax['z'], 
-                          'colorbar': colorbarPngFile, 'sql': sql}
+                colorbarPngFile = ''
+                if self.pDict['c']:
+                    try:
+                        cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
+                    except ValueError:
+                        # Likely a coordinate variable
+                        cp = models.Parameter
+                        cp.name = self.pDict['c']
+                        cp.standard_name = self.pDict['c']
+                        cp.units = _getCoordUnits(self.pDict['c'])
+                    try:
+                        cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
+                        imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
+                        colorbarPngFile = '%s_%s_%s_%s_3dcolorbar_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['z'], self.pDict['c'], imageID )
+                        colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
+                        makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus)
 
-        except DatabaseError:
-            self.logger.exception('Cannot make parameterparameter X3D')
-            raise DatabaseError('Cannot make parameterparameter X3D')
+                    except Exception:
+                        self.logger.exception('Could not plot the colormap')
+                        return None, None, 'Could not plot the colormap'
 
-        return x3dResults
+                x3dResults = {'colors': colors, 'points': points, 'info': '', 'x': self.pMinMax['x'], 'y': self.pMinMax['y'], 'z': self.pMinMax['z'], 
+                              'colorbar': colorbarPngFile, 'sql': sql}
 
-      return inner_makeX3D(self)
+            except DatabaseError:
+                self.logger.exception('Cannot make parameterparameter X3D')
+                raise DatabaseError('Cannot make parameterparameter X3D')
+
+            return x3dResults
+
+        return inner_makeX3D(self)
 
