@@ -44,7 +44,7 @@ import logging
 from utils.utils import percentile, median, mode, simplify_points, spiciness
 from tempfile import NamedTemporaryFile
 import pprint
-from pupynere import netcdf_file
+from netCDF4 import Dataset
 import httplib
 
 
@@ -1216,7 +1216,7 @@ class STOQS_Loader(object):
         # Read the bounding box of the terrain file. The grdtrack command quietly does not write any lines for points outside of the grid.
         if self.grdTerrain:
             try:
-                fh = netcdf_file(self.grdTerrain)
+                fh = Dataset(self.grdTerrain)
                 # Old GMT format
                 xmin, xmax = fh.variables['x_range'][:]
                 ymin, ymax = fh.variables['y_range'][:]
@@ -1239,8 +1239,10 @@ class STOQS_Loader(object):
             except Exception as e:
                 self.logger.exception(e)
                 return parameterCounts
+            finally:
+                fh.close()
+
             bbox = Polygon.from_bbox( (xmin, ymin, xmax, ymax) )
-            fh.close()
 
         # Build file of Measurement lon & lat for grdtrack to process
         xyFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_LatLon_', suffix='.txt').name
