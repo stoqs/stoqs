@@ -1,16 +1,6 @@
-__author__    = 'Mike McCann'
-__copyright__ = '2012'
-__license__   = 'GPL v3'
-__contact__   = 'mccann at mbari.org'
-
-__doc__ = '''
-
+'''
 Module with various functions to supprt data visualization.  These can be quite verbose
 with all of the Matplotlib customization required for nice looking graphics.
-
-@undocumented: __doc__ parser
-@status: production
-@license: GPL
 '''
 
 import os
@@ -22,18 +12,13 @@ mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import math
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
-from matplotlib import figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from pylab import polyval
 from django.conf import settings
-from django.db.models.query import RawQuerySet
 from django.db import connections, DatabaseError, transaction
 from datetime import datetime
 from KML import readCLT
 from stoqs import models
-from utils.utils import postgresifySQL, pearsonr, round_to_n, EPOCH_STRING
-from utils.MPQuery import MPQuerySet
-from utils.geo import GPS
+from utils.utils import pearsonr, round_to_n, EPOCH_STRING
 from loaders.SampleLoaders import SAMPLED, NETTOW, VERTICALNETTOW
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
 import seawater.eos80 as sw
@@ -138,7 +123,7 @@ class MeasuredParameter(object):
     Use matploptib to create nice looking contour plots
     '''
     logger = logging.getLogger(__name__)
-    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName, parameterID=None, parameterGroups=[MEASUREDINSITU]):
+    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName, parameterID=None, parameterGroups=(MEASUREDINSITU)):
         '''
         Save parameters that can be used by the different product generation methods here
         parameterMinMax is like: (pName, pMin, pMax)
@@ -391,7 +376,7 @@ class MeasuredParameter(object):
 
         # Use session ID so that different users don't stomp on each other with their section plots
         # - This does not work for Firefox which just reads the previous image from its cache
-        if self.request.session.has_key('sessionID'):
+        if 'sessionID' in self.request.session:
             sessionID = self.request.session['sessionID']
         else:
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
@@ -411,7 +396,7 @@ class MeasuredParameter(object):
         tmin = None
         tmax = None
         xi = None
-        if self.kwargs.has_key('time'):
+        if 'time' in self.kwargs:
             if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
                 dstart = datetime.strptime(self.kwargs['time'][0], '%Y-%m-%d %H:%M:%S') 
                 dend = datetime.strptime(self.kwargs['time'][1], '%Y-%m-%d %H:%M:%S') 
@@ -438,7 +423,7 @@ class MeasuredParameter(object):
         dmin = None
         dmax = None
         yi = None
-        if self.kwargs.has_key('depth'):
+        if 'depth' in self.kwargs:
             if self.kwargs['depth'][0] is not None and self.kwargs['depth'][1] is not None:
                 dmin = float(self.kwargs['depth'][0])
                 dmax = float(self.kwargs['depth'][1])
@@ -481,11 +466,11 @@ class MeasuredParameter(object):
                 self.loadData()
 
             self.logger.debug('self.kwargs = %s', self.kwargs)
-            if self.kwargs.has_key('parametervalues'):
+            if 'parametervalues' in self.kwargs:
                 if self.kwargs['parametervalues']:
                     contourFlag = False
           
-            if self.kwargs.has_key('showdataas'):
+            if 'showdataas' in self.kwargs:
                 if self.kwargs['showdataas']:
                     if self.kwargs['showdataas'][0] == 'scatter':
                         contourFlag = False
@@ -573,7 +558,7 @@ class MeasuredParameter(object):
 
             return sectionPngFile, self.colorbarPngFile, self.strideInfo
         else:
-            self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s, %s, %s ', tmin, tmax, dmin, dmax)
+            self.logger.warn('xi and yi are None.  tmin, tmax, dmin, dmax = %s, %s, %s, %s', tmin, tmax, dmin, dmax)
             return None, None, 'Select a time-depth range'
 
     def dataValuesX3D(self, vert_ex=10.0):
@@ -581,7 +566,7 @@ class MeasuredParameter(object):
         Return scatter-like data values as X3D geocoordinates and colors.
         '''
         showGeoX3DDataFlag = False
-        if self.kwargs.has_key('showgeox3ddata'):
+        if 'showgeox3ddata' in self.kwargs:
             if self.kwargs['showgeox3ddata']:
                 if self.kwargs['showgeox3ddata']:
                     showGeoX3DDataFlag = True
@@ -600,7 +585,6 @@ class MeasuredParameter(object):
             colors = ''
             indices = ''
             index = 0
-            gps = GPS()
             for act in self.value_by_act.keys():
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in izip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
@@ -787,7 +771,6 @@ class PlatformAnimation(object):
             points = ''
             indices = ''
             index = 0
-            gps = GPS()
             keys = ''
             for platform in self.platforms:
                 self.loadData(platform)
@@ -1062,7 +1045,7 @@ class ParameterParameter(object):
             
             # Use session ID so that different users don't stomp on each other with their parameterparameter plots
             # - This does not work for Firefox which just reads the previous image from its cache
-            if self.request.session.has_key('sessionID'):
+            if 'sessionID' in self.request.session:
                 sessionID = self.request.session['sessionID']
             else:
                 sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
