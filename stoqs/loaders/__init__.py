@@ -659,13 +659,12 @@ class STOQS_Loader(object):
 
         return self.parameter_dict[name]
 
-    def createMeasurement(self, featureType, mtime, depth, lat, lon, nomDepth=None, nomLat=None, nomLong=None):
+    def createMeasurement(self, mtime, depth, lat, lon, nomDepth=None, nomLat=None, nomLong=None):
         '''
         Create and return a measurement object in the database.  The measurement object
         is created by first creating an instance of stoqs.models.Instantpoint using the activity, 
         then by creating an instance of Measurement using the Instantpoint.  A reference to 
         an instance of a stoqs.models.Measurement object is then returned.
-        @param featureType: A CF-1.6 Discrete Sampling Geometry type: 'trajectory'. 'timeseriesprofile', 'timeseries'
         @param mtime: A valid datetime instance of a datetime object used to create the Instantpoint
         @param depth: The depth for the measurement
         @param lat: The latitude (degrees, assumed WGS84) for the measurement

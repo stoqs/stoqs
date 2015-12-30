@@ -265,11 +265,10 @@ class SeabirdLoader(STOQS_Loader):
             sys.exit(-1)
 
         try:
-            measurement = self.createMeasurement(featureType='trajectory', mtime=mtime,
-                                                    depth=depth, lat=lat, lon=lon)
-        except SkipRecord, e:
+            measurement = self.createMeasurement(mtime=mtime, depth=depth, lat=lat, lon=lon)
+        except SkipRecord as e:
             logger.info(e)
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             sys.exit(-1)
         else:
@@ -281,7 +280,7 @@ class SeabirdLoader(STOQS_Loader):
             try:
                 mp, _ = m.MeasuredParameter.objects.using(self.dbAlias).get_or_create(measurement = measurement,
                                                   parameter = self.getParameterByName(pn), datavalue = value)
-            except Exception, e:
+            except Exception as e:
                 logger.error(e)
                 logger.exception("Bad value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
             else:

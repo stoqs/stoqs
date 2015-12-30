@@ -1086,7 +1086,7 @@ class Base_Loader(STOQS_Loader):
                         longitude, latitude, mtime, depth, nomLon, nomLat, nomDepth = (row.pop('longitude'), row.pop('latitude'),
                                                             from_udunits(row.pop('time'), row.pop('timeUnits')),
                                                             row.pop('depth'), row.pop('nomLon'), row.pop('nomLat'),row.pop('nomDepth'))
-                        measurement = self.createMeasurement(featureType, mtime=mtime, depth=depth, lat=latitude, lon=longitude,
+                        measurement = self.createMeasurement(mtime=mtime, depth=depth, lat=latitude, lon=longitude,
                                                             nomDepth=nomDepth, nomLat=nomLat, nomLong=nomLon)
                     elif featureType == 'trajectory':
                         if 'measurement' in row:
@@ -1096,7 +1096,7 @@ class Base_Loader(STOQS_Loader):
                             longitude, latitude, mtime, depth = (row.pop('longitude'), row.pop('latitude'),
                                                                 from_udunits(row.pop('time'), row.pop('timeUnits')),
                                                                 row.pop('depth'))
-                            measurement = self.createMeasurement(featureType, mtime=mtime, depth=depth, lat=latitude, lon=longitude)
+                            measurement = self.createMeasurement(mtime=mtime, depth=depth, lat=latitude, lon=longitude)
                     else:
                         raise Exception('No handler for featureType = %s' % featureType)
 
