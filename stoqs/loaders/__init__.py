@@ -1,12 +1,3 @@
-#!/usr/bin/env python
-
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2011, MBARI"
-__credits__ = ["Chander Ganesan, Open Technology Group"]
-__license__ = "GPL"
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-
 '''
 Base module for STOQS loaders
 
@@ -15,8 +6,8 @@ Base module for STOQS loaders
 @license: __license__
 '''
 
+import os
 import sys
-import os.path, os
 
 app_dir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, app_dir)
@@ -660,7 +651,7 @@ class STOQS_Loader(object):
         self.logger.debug("Returning self.parameter_dict[name].units = %s", self.parameter_dict[name].units)
         try:
             self.parameter_dict[name].save(using=self.dbAlias)
-        except Exception, e:
+        except Exception as e:
             print e
             print name
             pprint.pprint( self.parameter_dict[name])
@@ -696,25 +687,20 @@ class STOQS_Loader(object):
         if lon < -720 or lon > 720:
             raise SkipRecord('Bad lon: %s (longitude must be between %s and %s)' % (long, -720, 720))
 
-        ip, created = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=mtime)
+        ip, _ = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=mtime)
 
         nl = None
         point = 'POINT(%s %s)' % (repr(lon), repr(lat))
         if not (nomDepth == None and nomLat == None and nomLong == None):
             self.logger.debug('nomDepth = %s nomLat = %s nomLong = %s', nomDepth, nomLat, nomLong)
             nom_point = 'POINT(%s %s)' % (repr(nomLong), repr(nomLat))
-            nl, created = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), 
+            nl, _ = m.NominalLocation.objects.using(self.dbAlias).get_or_create(depth=repr(nomDepth), 
                                     geom=nom_point, activity=self.activity)
 
         try:
-            measurement, created = m.Measurement.objects.using(self.dbAlias).get_or_create(instantpoint=ip, 
+            measurement, _ = m.Measurement.objects.using(self.dbAlias).get_or_create(instantpoint=ip, 
                                     nominallocation=nl, depth=repr(depth), geom=point)
-            ##if created:
-            ##    self.logger.debug('Created measurement.id = %d with geom = %s', measurement.id, point)
-            ##else:
-            ##    self.logger.debug('Re-using measurement.id = %d', measurement.id)
-
-        except DatabaseError as e:
+        except DatabaseError:
             self.logger.exception('''DatabaseError:
                 It is likely that you need https://code.djangoproject.com/attachment/ticket/16778/postgis-adapter.patch.
                 Check the STOQS INSTALL file for instructions on Django patch #16778.
@@ -724,7 +710,7 @@ class STOQS_Loader(object):
                 drop the database, recreate it, resync, and reload. 
                 ''')
             sys.exit(-1)
-        except Exception, e:
+        except Exception as e:
             self.logger.error('Exception %s', e)
             self.logger.error("Cannot save measurement mtime = %s, long = %s, lat = %s,"
                               " depth = %s", mtime, repr(long), repr(lat), repr(depth))
@@ -1135,7 +1121,7 @@ class STOQS_Loader(object):
                 pgp = m.ParameterGroupParameter(parameter=p, parametergroup=g)
                 try:
                     pgp.save(using=self.dbAlias)
-                except Exception, e:
+                except Exception as e:
                     self.logger.warn('%s: Cannot create ParameterGroupParameter name = %s for parameter.name = %s. Skipping.', e, groupName, p.name)
 
     def addSigmaTandSpice(self, parameterCounts, activity=None):
