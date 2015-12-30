@@ -16,7 +16,7 @@ import django
 django.setup()
 
 from django.conf import settings
-from django.contrib.gis.geos import LineString, Polygon
+from django.contrib.gis.geos import Polygon
 from django.db.utils import IntegrityError
 from django.db import transaction, DatabaseError
 from django.db.models import Max, Min
@@ -988,7 +988,8 @@ class STOQS_Loader(object):
             for t,d,k in simple_line:
                 try:
                     ip = m.InstantPoint.objects.using(self.dbAlias).get(id = pklookup[k])
-                    m.SimpleBottomDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = ip, bottomdepth = d, epochmilliseconds = t)
+                    m.SimpleBottomDepthTime.objects.using(self.dbAlias).create(
+                            activity=self.activity, instantpoint=ip, bottomdepth=d, epochmilliseconds=t)
                 except ObjectDoesNotExist:
                     self.logger.warn('InstantPoint with id = %d does not exist; from point at index k = %d', pklookup[k], k)
 
@@ -1107,7 +1108,6 @@ class STOQS_Loader(object):
                                                                                 enddate = ip_qs['timevalue__max'])
         except AttributeError as e:
             self.logger.warn(e)
-            pass
 
     def assignParameterGroup(self, parameterCounts, groupName=MEASUREDINSITU):
         ''' 
