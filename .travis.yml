@@ -10,7 +10,7 @@ before_install:
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda2/bin:$PATH
-  - export HDF5_DIR=/home/travis/miniconda/
+  - export HDF5_DIR=/home/travis/miniconda2/
   - conda update --yes conda
 env:
   - DJANGO=1.8
