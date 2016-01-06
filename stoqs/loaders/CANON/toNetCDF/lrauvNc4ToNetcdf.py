@@ -234,54 +234,54 @@ class InterpolatorWriter(BaseWriter):
 
         # Create pandas time series for each parameter and store attributes
         for key in parm:
-        try:
-            ts = self.createSeriesPydap(key, key + '_time')
-            self.all_attrib[key] = self.df[key].attributes
-            self.all_attrib[key + '_i'] = self.df[key].attributes
-            self.all_coord[key] = {'time':'time','depth':'depth','latitude':'latitude','longitude':'longitude'}
-            parm_valid.append(key)
-            all_ts[key] = ts
-            self.logger.info('Found parameter ' + key)
-        except KeyError, e:
-            self.logger.info('Key error on parameter ' + key)
-            continue
+            try:
+                ts = self.createSeriesPydap(key, key + '_time')
+                self.all_attrib[key] = self.df[key].attributes
+                self.all_attrib[key + '_i'] = self.df[key].attributes
+                self.all_coord[key] = {'time':'time','depth':'depth','latitude':'latitude','longitude':'longitude'}
+                parm_valid.append(key)
+                all_ts[key] = ts
+                self.logger.info('Found parameter ' + key)
+            except KeyError, e:
+                self.logger.info('Key error on parameter ' + key)
+                continue
 
         # Create another pandas time series for each coordinate
         for key in coord:
-        try:
-            ts = self.createSeriesPydap(key, key + '_time')
-            all_ts[key] = ts
-        except KeyError, e:
-            self.logger.info('Key error on coordinate ' + key)
-            raise e
+            try:
+                ts = self.createSeriesPydap(key, key + '_time')
+                all_ts[key] = ts
+            except KeyError, e:
+                self.logger.info('Key error on coordinate ' + key)
+                raise e
 
         # create independent lat/lon/depth profiles for each parameter
         for key in parm_valid:
-        # TODO: add try catch block on this
-        # Get independent parameter to interpolate on
-        t = pd.Series(index = all_ts[key].index)
+            # TODO: add try catch block on this
+            # Get independent parameter to interpolate on
+            t = pd.Series(index = all_ts[key].index)
 
-        # Store the parameter as-is - this is the raw data
-        self.all_sub_ts[key] = pd.Series(all_ts[key])
-        self.all_coord[key] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+            # Store the parameter as-is - this is the raw data
+            self.all_sub_ts[key] = pd.Series(all_ts[key])
+            self.all_coord[key] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
 
-        # interpolate each coordinate to the time of the parameter
-        # key looks like sea_water_temperature_depth, sea_water_temperature_lat, sea_water_temperature_lon, etc.
-        for c in coord:
+            # interpolate each coordinate to the time of the parameter
+            # key looks like sea_water_temperature_depth, sea_water_temperature_lat, sea_water_temperature_lon, etc.
+            for c in coord:
 
-            # get coordinate
-            ts = all_ts[c]
+                # get coordinate
+                ts = all_ts[c]
 
-            # and interpolate using parameter time
-            if not ts.empty:
-                i = self.interpolate(ts, t.index)
-                self.all_sub_ts[key + '_' + c] = i
-                self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+                # and interpolate using parameter time
+                if not ts.empty:
+                    i = self.interpolate(ts, t.index)
+                    self.all_sub_ts[key + '_' + c] = i
+                    self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
 
-        # add in time coordinate separately
-        v_time = all_ts[key].index
-        esec_list = v_time.values.astype(float)/1E9
-        self.all_sub_ts[key + '_time'] = pd.Series(esec_list,index=v_time)
+            # add in time coordinate separately
+            v_time = all_ts[key].index
+            esec_list = v_time.values.astype(float)/1E9
+            self.all_sub_ts[key + '_time'] = pd.Series(esec_list,index=v_time)
 
         # TODO: add try catch block on this
         # Get independent parameter to interpolate on
@@ -294,25 +294,25 @@ class InterpolatorWriter(BaseWriter):
 
         # interpolate all parameters and coordinates
         for key in parm_valid:
-        value = all_ts[key]
-        if not value.empty :
-           i = self.interpolate(value, t.index)
-           self.all_sub_ts[key + '_i'] = i
-        else:
-           self.all_sub_ts[key + '_i'] = value
+            value = all_ts[key]
+            if not value.empty :
+               i = self.interpolate(value, t.index)
+               self.all_sub_ts[key + '_i'] = i
+            else:
+               self.all_sub_ts[key + '_i'] = value
 
-        self.all_coord[key + '_i'] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
+            self.all_coord[key + '_i'] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
         for key in coord:
-        value = all_ts[key]
-        self.all_sub_ts[key] = value
-        if not value.empty :
-           i = self.interpolate(value, t.index)
-           self.all_sub_ts[key] = i
-        else:
-           self.all_sub_ts[key] = value
+            value = all_ts[key]
+            self.all_sub_ts[key] = value
+            if not value.empty :
+               i = self.interpolate(value, t.index)
+               self.all_sub_ts[key] = i
+            else:
+               self.all_sub_ts[key] = value
 
-        self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
+            self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
 
         self.logger.info("%s", self.all_sub_ts.keys())
