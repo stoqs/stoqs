@@ -167,7 +167,7 @@ def _buildMapFile(request, qm, options):
 
 # Cache responses from this view for 15 minutes
 @cache_page(60 * 15)
-def queryData(request, format=None):
+def queryData(request, fmt=None):
     '''
     Process data requests from the main query web page.  Returns both summary Activity and actual MeasuredParameter data
     as retreived from STOQSQManager.
@@ -214,13 +214,13 @@ def queryData(request, format=None):
     ##logger.debug('options = %s', pprint.pformat(options))
     ##logger.debug('len(simpledepthtime) = %d', len(json.loads(options)['simpledepthtime']))
 
-    if not format: # here we export in a given format, or just provide summary data if no format is given.
+    if not fmt: # here we export in a given format, or just provide summary data if no format is given.
         response['Content-Type'] = 'text/json'
         response.write(options)
-    elif format == 'json':
+    elif fmt == 'json':
         response['Content-Type'] = 'text/json'
         response.write(serializers.serialize('json', qm.qs))
-    elif format == 'dap':
+    elif fmt == 'dap':
         logger.info('dap output')
 
     return response

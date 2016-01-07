@@ -162,44 +162,44 @@ class ActivityParameterHistogram(BaseOutputer):
         return super(ActivityParameterHistogram, self).process_request()
 
 
-def showActivityParameterHistogram(request, format='png'):
+def showActivityParameterHistogram(request, fmt='png'):
     '''
     By default return a png image of the histogram for the parameter
     '''
     stoqs_object = mod.ActivityParameterHistogram
     query_set = stoqs_object.objects.all().order_by('binlo')
 
-    aph = ActivityParameterHistogram(request, format, query_set, stoqs_object)
+    aph = ActivityParameterHistogram(request, fmt, query_set, stoqs_object)
     return aph.process_request()
 
 # Cache responses from this view for 15 minutes
 @cache_page(60 * 15)
-def showMeasuredParameter(request, format='json'):
+def showMeasuredParameter(request, fmt='json'):
     stoqs_object = mod.MeasuredParameter
     query_set = stoqs_object.objects.all().order_by('measurement__instantpoint__timevalue')
 
-    mp = MeasuredParameter(request, format, query_set, stoqs_object)
+    mp = MeasuredParameter(request, fmt, query_set, stoqs_object)
     return mp.process_request()
 
-def showSampledParameter(request, format='json'):
+def showSampledParameter(request, fmt='json'):
     stoqs_object = mod.SampledParameter
     query_set = stoqs_object.objects.all().order_by('sample__instantpoint__timevalue')
 
-    sp = SampledParameter(request, format, query_set, stoqs_object)
+    sp = SampledParameter(request, fmt, query_set, stoqs_object)
     return sp.process_request()
 
-def showResourceActivity(request, format='json'):
+def showResourceActivity(request, fmt='json'):
     stoqs_object = mod.Resource
     query_set = stoqs_object.objects.all().order_by('activityresource__activity__startdate')
 
-    ra = ResourceActivity(request, format, query_set, stoqs_object)
+    ra = ResourceActivity(request, fmt, query_set, stoqs_object)
     return ra.process_request()
 
 def showQuickLookPlots(request):
     stoqs_object = mod.Resource
     query_set = stoqs_object.objects.filter(resourcetype__name='quick_look').order_by('name')
 
-    ra = ResourceActivity(request, format, query_set, stoqs_object)
+    ra = ResourceActivity(request, fmt, query_set, stoqs_object)
     ra.assign_qs()
 
     activityName = ''
@@ -210,11 +210,11 @@ def showQuickLookPlots(request):
 
     return render_to_response('quicklookplots.html', {'activity': activityName, 'images': ra.qs}, context_instance=RequestContext(request))
 
-def showSampleDT(request, format='json'):
+def showSampleDT(request, fmt='json'):
     stoqs_object = mod.Sample
     query_set = stoqs_object.objects.all().order_by('name')
 
-    s = SampleDataTable(request, format, query_set, stoqs_object)
+    s = SampleDataTable(request, fmt, query_set, stoqs_object)
     return s.process_request()
 
 

@@ -9,7 +9,7 @@ from django.conf.urls.static import static
 pre = r'^(?P<dbAlias>[^/]+)/'  
 
 # format is one of: 'html', 'csv', 'kml', 'json'
-formatPat = r'(?P<format>[^/]{0,5})'
+formatPat = r'(?P<fmt>[^/]{0,5})'
 
 urlpatterns = patterns('',
             
@@ -61,11 +61,11 @@ urlpatterns = patterns('',
     # URL For Chander's STOQQManager related views
     url(pre + r'query/summary/$', 'stoqs.views.query.queryData', {}, name='stoqs-query-summary'),
     url(pre + r'query/map/$', 'stoqs.views.query.queryMap', {}, name='stoqs-query-map'),
-    url(pre + r'query/(?P<format>[^/]+)/?$', 'stoqs.views.query.queryData', {}, name='stoqs-query-results'),
+    url(pre + r'query/(?P<fmt>[^/]+)/?$', 'stoqs.views.query.queryData', {}, name='stoqs-query-results'),
     url(pre + r'query/', 'stoqs.views.query.queryUI', {}, name='stoqs-query-ui'),
 
     # Management, base of campaign, etc.
-    url(r'campaigns.(?P<format>[^/]{3,5})$', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
+    url(r'campaigns.(?P<fmt>[^/]{3,5})$', 'stoqs.views.management.showCampaigns', {}, name='show-campaigns'),
     url(pre + r'mgmt$', 'stoqs.views.management.showDatabase', {}, name='show-database'),
     url(pre + r'deleteActivity/(?P<activityId>[0-9]+)$', 'stoqs.views.management.deleteActivity', {}, name='delete-activity'),
     url(pre + r'activitiesMBARICustom$', 'stoqs.views.management.showActivitiesMBARICustom', {}, name='show-activities'),
@@ -81,19 +81,6 @@ urlpatterns = patterns('',
     ##    title='STOQS Sample WFS',
     ##    provider_name='MBARI',
     ##)),
-
-    # Animation  
-    url(pre + r'activitiesWMSAnimate$', 'stoqs.views.wms.showActivitiesWMSAnimate', {}, name='show-activities-wms-animate'),
-        
-    # format is either 'url' or 'image' 
-    # url will return a persistant url for the created animation;  image will return the animaged GIF
-    url(r'animatepoint/between/(?P<startDate>\w+)/(?P<endDate>\w+)/deltaminutes/(?P<deltaMinutes>\d+)/format/(?P<format>\w{3,5})/$', 
-            'stoqs.views.animation.createAnimation',  {'rangeFlag': True}, name='create-animation-point'),  
-    url(r'animatemap/between/(?P<startDate>\w+)/(?P<endDate>\w+)/deltaminutes/(?P<deltaMinutes>\d+)/format/(?P<format>\w{3,5})/$', 
-            'stoqs.views.animation.createAnimation',  {'rangeFlag': False}, name='create-animation-map'),  
-
-    # For testing only 
-    url(r'testAnimateCoastwatch$', 'stoqs.views.wms.showActivitiesWMSAnimateCoastwatch', {} , name='test-animate-wms-coastwatch'),
 
     # If nothing above matches show the quey interface is a dbalias is specified, otherwise show the campaigns
     url(pre + '$', 'stoqs.views.query.queryUI', {}, name='base-campaign'),

@@ -6,8 +6,7 @@ __license__ = "GPL"
 __maintainer__ = "Mike McCann"
 __email__ = "mccann at mbari.org"
 __status__ = "Development"
-__doc__ = '''
-
+'''
 Base class for querying the database for measured parameters from the same instantpoint and to
 make scatter plots of temporal segments of the data from platforms.
 
@@ -31,8 +30,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # setting
 
 from collections import defaultdict
 from django.db import connections
-from datetime import datetime, timedelta
-from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter, Measurement, Parameter
+from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, MeasuredParameter, Measurement, Parameter
 from django.contrib.gis.geos import LineString, Point
 from django.db.models import Max, Min
 from django.http import HttpRequest
@@ -49,7 +47,7 @@ class NoTSDataException(Exception):
     pass
 
 
-class BiPlot():
+class BiPlot(object):
     '''
     Make customized BiPlots (Parameter Parameter plots) from STOQS.
     '''
@@ -60,7 +58,7 @@ class BiPlot():
         # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
         apQS = ActivityParameter.objects.using(self.args.database).filter(activity__platform__name=platform)
         pQS = apQS.filter(parameter__name=parm).aggregate(Min('p010'), Max('p990'))
-        min, max = (pQS['p010__min'], pQS['p990__max'])
+        pmin, pmax = (pQS['p010__min'], pQS['p990__max'])
 
         # Get units for each parameter
         prQS = ParameterResource.objects.using(self.args.database).filter(resource__name='units').values_list('resource__value')
@@ -68,9 +66,8 @@ class BiPlot():
             units = prQS.filter(parameter__name=parm)[0][0]
         except IndexError as e:
             raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, platform))
-            sys.exit(-1)
 
-        return min, max, units
+        return pmin, pmax, units
 
     def _getMeasuredPPData(self, startDatetime, endDatetime, platform, xParm, yParm):
         '''
@@ -151,7 +148,7 @@ class BiPlot():
         return x, y, points
 
 
-    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm, pvDict={}, returnIDs=False, sampleFlag=True):
+    def _getPPData(self, startDatetime, endDatetime, platform, xParm, yParm, pvDict, returnIDs=False, sampleFlag=True):
         '''
         Get Parameter-Parameter data regardless if Parameters are 'Sampled' or 'Measured in situ'
         '''

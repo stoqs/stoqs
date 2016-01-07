@@ -1,13 +1,4 @@
-#!/usr/bin/env python
-
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2012, MBARI"
-__license__ = "GPL"
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-__status__ = "Development"
-__doc__ = '''
-
+'''
 The SampleLoaders module contains classes and functions for loading Sample data into STOQS.
 
 The btlLoader module has a load_btl() method that reads data from a Seabird
@@ -15,20 +6,13 @@ btl*.asc file and saves the bottle trip events as parent Samples in the STOQS da
 
 Mike McCann
 MBARI 19 Setember 2012
-
-@undocumented: __doc__ parser
-@author: __author__
-@status: __status__
-@license: __license__
 '''
 
-# Force lookup of models to THE specific stoqs module.
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-project_dir = os.path.dirname(__file__)
 # Add parent dir to pythonpath so that we can see the loaders and stoqs modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../") )
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 
@@ -37,15 +21,12 @@ from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
 from datetime import datetime, timedelta
 from pydap.model import BaseType
-import time
-import numpy
 import csv
 import urllib2
 import logging
 from glob import glob
 from tempfile import NamedTemporaryFile
 import re
-import pprint
 from bs4 import BeautifulSoup
 
 # Set up logging for module functions
@@ -124,9 +105,9 @@ def get_closest_instantpoint(aName, tv, dbAlias):
     logger.debug('i_min = %d', i_min)
     return qs[i_min], secdiff[i_min]
 
-def load_gulps(activityName, file, dbAlias):
+def load_gulps(activityName, auv_file, dbAlias):
     '''
-    file looks like 'Dorado389_2011_111_00_111_00_decim.nc'.  From hard-coded knowledge of MBARI's filesystem
+    auv_file looks like 'Dorado389_2011_111_00_111_00_decim.nc'.  From hard-coded knowledge of MBARI's filesystem
     read the associated _gulper.txt file for the survey and load the gulps as samples in the dbAlias database.
     '''
 
@@ -144,8 +125,8 @@ def load_gulps(activityName, file, dbAlias):
 
     # Use the dods server to read over http - works from outside of MABRI's Intranet
     baseUrl = 'http://dods.mbari.org/data/auvctd/surveys/'
-    yyyy = file.split('_')[1].split('_')[0]
-    survey = file.split(r'_decim')[0]
+    yyyy = auv_file.split('_')[1].split('_')[0]
+    survey = auv_file.split(r'_decim')[0]
     # E.g.: http://dods.mbari.org/data/auvctd/surveys/2010/odv/Dorado389_2010_300_00_300_00_Gulper.txt
     gulperUrl = baseUrl + yyyy + '/odv/' + survey + '_Gulper.txt'
 
@@ -266,7 +247,7 @@ class SeabirdLoader(STOQS_Loader):
 
         return parmDict
 
-    def load_data(self, lat, lon, depth, time, parmNameValues):
+    def load_data(self, lat, lon, depth, mtime, parmNameValues):
         '''
         Load the data values recorded at the bottle trips so that we have some InstantPoints to 
         hang off for our Samples.  This is necessary as typically data are continuously acquired on the 
@@ -274,7 +255,7 @@ class SeabirdLoader(STOQS_Loader):
         @parmNameValues is a list of 2-tuples of (ParameterName, Value) measured at the time and location specified by
         @lat decimal degrees
         @lon decimal degrees
-        @time Python datetime.datetime object
+        @mtime Python datetime.datetime object
         @depth in meters
         '''
 
@@ -284,25 +265,22 @@ class SeabirdLoader(STOQS_Loader):
             sys.exit(-1)
 
         try:
-            measurement = self.createMeasurement(featureType='trajectory', time=time,
-                                                    depth=depth, lat=lat, long=lon)
-        except SkipRecord, e:
+            measurement = self.createMeasurement(mtime=mtime, depth=depth, lat=lat, lon=lon)
+        except SkipRecord as e:
             logger.info(e)
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             sys.exit(-1)
         else:
-            logger.debug("longitude = %s, latitude = %s, time = %s, depth = %s", lon, lat, time, depth)
+            logger.debug("longitude = %s, latitude = %s, mtime = %s, depth = %s", lon, lat, mtime, depth)
 
-        logger.debug("measurement._state.db = %s", measurement._state.db)
         loaded = 0
         for pn,value in parmNameValues:
             logger.debug("pn = %s", pn)
-            logger.debug("parameter._state.db = %s", self.getParameterByName(pn)._state.db)
             try:
-                mp, created = m.MeasuredParameter.objects.using(self.dbAlias).get_or_create(measurement = measurement,
+                mp, _ = m.MeasuredParameter.objects.using(self.dbAlias).get_or_create(measurement = measurement,
                                                   parameter = self.getParameterByName(pn), datavalue = value)
-            except Exception, e:
+            except Exception as e:
                 logger.error(e)
                 logger.exception("Bad value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
             else:
@@ -332,9 +310,9 @@ class SeabirdLoader(STOQS_Loader):
         (sample_purpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name = 'StandardDepth')
         logger.debug('samplepurpose %s, created = %s', sample_purpose, created)
         try:
-            ip, seconds_diff = get_closest_instantpoint(self.activityName, timevalue, self.dbAlias)
+            ip, _ = get_closest_instantpoint(self.activityName, timevalue, self.dbAlias)
             point = 'POINT(%s %s)' % (lon, lat)
-            stuple = m.Sample.objects.using(self.dbAlias).get_or_create( name = bottleName,
+            m.Sample.objects.using(self.dbAlias).get_or_create( name = bottleName,
                                                                     depth = str(depth),     # Must be str to convert to Decimal
                                                                     geom = point,
                                                                     instantpoint = ip,
@@ -342,12 +320,6 @@ class SeabirdLoader(STOQS_Loader):
                                                                     samplepurpose = sample_purpose,
                                                                     volume = 20000.0
                                                                 )
-            ##rtuple = m.Resource.objects.using(self.dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
-            ##                                                        value = seconds_diff
-            ##                                                        )
-
-            # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
-            ##logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
         except ClosestTimeNotFoundException:
             logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
         else:
@@ -361,6 +333,7 @@ class SeabirdLoader(STOQS_Loader):
         tmpFile = NamedTemporaryFile(dir='/dev/shm', suffix='.btl').name
         logger.debug('tmpFile = %s', tmpFile)
         tmpFH = open(tmpFile, 'w')
+        lastLine = ''
         for line in fh:
             # Write to tempfile all lines that don't begin with '*' nor '#' then open that with csv.DictReader
             # Concatenate broken lines that begin with 'Position...' and with HH:MM:SS, remove (avg|sdev)
@@ -408,7 +381,6 @@ class SeabirdLoader(STOQS_Loader):
         self.activitytypeName = 'CTD upcast'
 
         # Bottle samples are to be loaded after downcast data are loaded so that we can use the same activity
-        from stoqs import models as m
         try:
             activity = m.Activity.objects.using(self.dbAlias).get(name__contains=self.activityName)
             logger.debug('Got activity = %s', activity)
@@ -419,7 +391,9 @@ class SeabirdLoader(STOQS_Loader):
             self.createActivity()
             ##raise SingleActivityNotFound('Failed to find Activity with name like %s' % self.activityName)
         except MultipleObjectsReturned:
-            logger.error('Multiple objects returned for name__contains = %s.  This should not happen.  Fix the database and the reason for this.', self.activityName)
+            logger.error('Multiple objects returned for name__contains = %s.'
+                         'This should not happen.  Fix the database and the reason for this.',
+                         self.activityName)
             raise SingleActivityNotFound('Multiple objects returned for name__contains = %s' % self.activityName)
 
         parmDict = self.buildParmDict()
@@ -429,8 +403,8 @@ class SeabirdLoader(STOQS_Loader):
 
         for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
             dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
-            esDiff = dt - datetime(1970, 1, 1, 0, 0, 0)
-            es = 86400 * esDiff.days + esDiff.seconds
+            ##esDiff = dt - datetime(1970, 1, 1, 0, 0, 0)
+            ##es = 86400 * esDiff.days + esDiff.seconds
             bName = r['Bottle']
 
             logger.debug('r = %s', r)
@@ -462,7 +436,7 @@ class SeabirdLoader(STOQS_Loader):
 
         os.remove(tmpFile)
 
-    def process_btl_files(self, seabirdFileList=[]):
+    def process_btl_files(self, seabirdFileList=()):
         '''
         Loop through all .btl files and insert a Sample record to the database for each bottle trip.  Assumes that c*.btl files 
         are available in a local pctd directory, if not then they are read from a THREDDS server.
@@ -486,10 +460,10 @@ class SeabirdLoader(STOQS_Loader):
         if fileList:
             # Read files from local pctd directory
             fileList.sort()
-            for file in fileList:
-                self.activityName = file.split('/')[-1].split('.')[-2] 
-                year, lat, lon = get_year_lat_lon(file)
-                fh = open(file)
+            for bfile in fileList:
+                self.activityName = bfile.split('/')[-1].split('.')[-2] 
+                year, lat, lon = get_year_lat_lon(bfile)
+                fh = open(bfile)
                 try:
                     self.process_btl_file(fh, year, lat, lon)
                 except SingleActivityNotFound:
@@ -503,19 +477,19 @@ class SeabirdLoader(STOQS_Loader):
             linkList = soup.find_all('a')
             linkList.sort(reverse=True)
             for link in linkList:
-                file = link.get('href')
-                if file.endswith('.btl'):
-                    logger.debug("file = %s", file)
-                    if file.split('/')[-1].split('.')[0] + '.nc' not in seabirdFileList:
-                        logger.warn('Skipping %s as it is in not in seabirdFileList = %s', file, seabirdFileList)
+                bfile = link.get('href')
+                if bfile.endswith('.btl'):
+                    logger.debug("bfile = %s", bfile)
+                    if bfile.split('/')[-1].split('.')[0] + '.nc' not in seabirdFileList:
+                        logger.warn('Skipping %s as it is in not in seabirdFileList = %s', bfile, seabirdFileList)
                         continue
 
                     # btlUrl looks something like: http://odss.mbari.org/thredds/fileServer/CANON_september2012/wf/pctd/c0912c53.btl
-                    btlUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + file.split('/')[-1]
-                    hdrUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + ''.join(file.split('/')[-1].split('.')[:-1]) + '.hdr'
+                    btlUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + bfile.split('/')[-1]
+                    hdrUrl = self.tdsBase + 'fileServer/' +  self.pctdDir + ''.join(bfile.split('/')[-1].split('.')[:-1]) + '.hdr'
                     logger.info('btlUrl = %s', btlUrl)
     
-                    self.activityName = file.split('/')[-1].split('.')[-2] 
+                    self.activityName = bfile.split('/')[-1].split('.')[-2] 
                     year, lat, lon = get_year_lat_lon(hdrUrl = hdrUrl)
                     btlFH = urllib2.urlopen(btlUrl).read().splitlines()
                     try:
@@ -572,7 +546,9 @@ class SubSamplesLoader(STOQS_Loader):
             if row.get('Sample Volume [m^3]'):
                 vol = float(row.get('Sample Volume [m^3]')) * 1.e6     # A million ml per cubic meter
         if not vol:
-            logger.warn('Sample Volume [mL] nor Sample Volume [m^3] is not specified.  Assigning default value of 280.  PLEASE SPECIFY THE VOLUME IN THE SPREADSHEET.')
+            logger.warn('Sample Volume [mL] or Sample Volume [m^3] is not specified.'
+                        ' Assigning default value of 280.'
+                        ' PLEASE SPECIFY THE VOLUME IN THE SPREADSHEET.')
             vol = 280           # Default volume is 280 ml - this is a required field so display a warning
 
         sample = m.Sample(  instantpoint=parentSample.instantpoint,
@@ -594,12 +570,14 @@ class SubSamplesLoader(STOQS_Loader):
         parameter_name = row.get('Parameter Name')
         spaceRemoveMsg = ''
         if parameter_name.find(' ') != -1:
-            spaceRemoveMsg = "row['Parameter Name'] = %s contains a space.  Replacing with '_' before adding to STOQS.", parameter_name
+            spaceRemoveMsg = ("row['Parameter Name'] = %s contains a space. Replacing"
+                              " with '_' before adding to STOQS." % parameter_name)
             logger.debug(spaceRemoveMsg)
             parameter_name = parameter_name.replace(' ', '_')
 
         if '(' in parameter_name or ')' in parameter_name:
-            parenRemoveMsg = "row['Parameter Name'] = %s contains ( or ).  Removing them before adding to STOQS.", parameter_name
+            parenRemoveMsg = ("row['Parameter Name'] = %s contains ( or ). Removing"
+                              " them before adding to STOQS." % parameter_name)
             logger.debug(parenRemoveMsg)
             parameter_name = parameter_name.replace('(', '').replace(')', '')
 
@@ -814,13 +792,10 @@ if __name__ == '__main__':
     # Test load_gulps: A nice test data load for a northern Monterey Bay survey  
     ##file = 'Dorado389_2010_300_00_300_00_decim.nc'
     ##dbAlias = 'default'
-    file = 'Dorado389_2010_277_01_277_01_decim.nc'
+    auv_file = 'Dorado389_2010_277_01_277_01_decim.nc'
     dbAlias = 'stoqs_oct2010'
 
     aName = file
 
-    load_gulps(aName, file, dbAlias)
-
-
-
+    load_gulps(aName, auv_file, dbAlias)
 

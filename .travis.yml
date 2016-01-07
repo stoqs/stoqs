@@ -10,11 +10,13 @@ before_install:
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda2/bin:$PATH
+  - export HDF5_DIR=/home/travis/miniconda2/
+  - export NETCDF4_DIR=/home/travis/miniconda2/
   - conda update --yes conda
 env:
   - DJANGO=1.8
 install:
-  - conda install --yes python=2.7 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
+  - conda install --yes python=2.7 hdf5 netcdf4 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
   # Coverage packages are on my binstar channel
   - conda install --yes -c dan_blanchard python-coveralls nose-cov
   - pip install -r requirements/travis-ci.txt

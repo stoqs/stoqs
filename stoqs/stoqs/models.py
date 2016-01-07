@@ -1,14 +1,4 @@
-#!/usr/bin/env python
-
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2012, MBARI"
-__credits__ = ["Chander Ganesan, Open Technology Group"]
-__license__ = "GPL"
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-__status__ = "Development"
-__doc__ = '''
-
+'''
 This is the STOQS database model. The database schema derives from this module.
 To evolve the schema you may make changes here then run syncdb and the unit tests.
 To preserve data in existing databases you will need to make corresponding changes
@@ -17,16 +7,12 @@ may simply drop your databases and reload the data.
 
 Mike McCann
 MBARI 17 March 2012
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@author: __author__
-@status: __status__
-@license: __license__
 '''
 
+from __future__ import unicode_literals
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.utils.encoding import python_2_unicode_compatible
 
 try:
     import uuid
@@ -50,8 +36,10 @@ class UUIDField(models.CharField) :
             setattr(model_instance, self.attname, value)
             return value
         else:
-            return super(models.CharField, self).pre_save(model_instance, add)
+            return super(UUIDField, self).pre_save(model_instance, add)
 
+
+@python_2_unicode_compatible
 class ResourceType(models.Model):
     '''
     Type of Resource. Example names: nc_global, quick-look-plot.
@@ -65,6 +53,8 @@ class ResourceType(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
+@python_2_unicode_compatible
 class Resource(models.Model):
     '''
     A catchall class for saving any bit of information that may be associated with an Activity, or other STOQS model class.
@@ -84,6 +74,8 @@ class Resource(models.Model):
     def __str__(self):
         return "(%s=%s)" % (self.name, self.value,)
 
+
+@python_2_unicode_compatible
 class Campaign(models.Model):
     '''
     A Campaign holds a collection of Activities and can have a name, description and start and end time.  
@@ -102,6 +94,8 @@ class Campaign(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
         
+
+@python_2_unicode_compatible
 class CampaignLog(models.Model):
     '''
     Placeholder for potential integration of various logging systems into STOQS.  The
@@ -124,6 +118,8 @@ class CampaignLog(models.Model):
     def __str__(self):
         return "%s at %s" % (self.message, self.timevalue)
 
+
+@python_2_unicode_compatible
 class ActivityType(models.Model):
     '''
     Type of Activity.  Example names: AUV Survey, Mooring Deployment, Ship Cruse, GLider Mission.
@@ -138,6 +134,8 @@ class ActivityType(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
+@python_2_unicode_compatible
 class PlatformType(models.Model):
     '''
     Type of platform. Example names: auv, mooring, drifter, ship.  The color field is RGB(A) in hex.
@@ -151,6 +149,8 @@ class PlatformType(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
+@python_2_unicode_compatible
 class Platform(models.Model):
     '''
     Platform.  Example names (use lower case): dorado, tethys, martin.  The color field is RGB(A) in hex.
@@ -167,6 +167,8 @@ class Platform(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
+@python_2_unicode_compatible
 class Activity(models.Model):
     '''
     An Activity is anything that may produce data.  Example Activity names include:  
@@ -198,6 +200,8 @@ class Activity(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
+@python_2_unicode_compatible
 class InstantPoint(models.Model):
     '''
     An instance in time for an Activity.  This InstantPoint may have a measurement or sample associated with it.
@@ -215,6 +219,8 @@ class InstantPoint(models.Model):
     def __str__(self):
         return "%s" % (self.timevalue,)
 
+
+@python_2_unicode_compatible
 class NominalLocation(models.Model):
     '''
     A NominalLocation has depth and geom fields for storing a Nominal horizontal position and depth of a
@@ -233,6 +239,7 @@ class NominalLocation(models.Model):
     def __str__(self):
         return "Nominal Location at %s %s %s" % (self.geom.x, self.geom.y, self.depth)
 
+
 class SimpleDepthTime(models.Model):
     '''
     A simplified time series of depth values for an Activity useful for plotting in the UI
@@ -247,6 +254,7 @@ class SimpleDepthTime(models.Model):
         verbose_name='Simple depth time series'
         verbose_name_plural='Simple depth time series'
         app_label = 'stoqs'
+
 
 class SimpleBottomDepthTime(models.Model):
     '''
@@ -263,6 +271,7 @@ class SimpleBottomDepthTime(models.Model):
         verbose_name_plural='Simple bottom depth time series'
         app_label = 'stoqs'
 
+
 class PlannedDepthTime(models.Model):
     '''
     A simplified time series of depth values for an Activity useful for plotting in the UI
@@ -276,6 +285,8 @@ class PlannedDepthTime(models.Model):
         verbose_name_plural='Planned depth time series'
         app_label = 'stoqs'
 
+
+@python_2_unicode_compatible
 class Parameter(models.Model):
     '''
     A Parameter is something that can be measured producing a numeric value or
@@ -301,6 +312,8 @@ class Parameter(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
+@python_2_unicode_compatible
 class ParameterGroup(models.Model):
     '''
     A grouping of parameters with a many-to-many relationship to the Paramter table.  Useful for showing checkboxes
@@ -318,6 +331,7 @@ class ParameterGroup(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
 class ParameterGroupParameter(models.Model):
     '''
     Association table pairing ParamterGroup and Parameter
@@ -330,6 +344,7 @@ class ParameterGroupParameter(models.Model):
         verbose_name_plural = 'ParameterGroup Parameter'
         app_label = 'stoqs'
         unique_together = ['parametergroup', 'parameter']
+
 
 class CampaignResource(models.Model):
     '''
@@ -344,6 +359,7 @@ class CampaignResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['campaign', 'resource']
 
+
 class ActivityResource(models.Model):
     '''
     Association class pairing Activities and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
@@ -356,6 +372,7 @@ class ActivityResource(models.Model):
         verbose_name_plural = 'Activity Resource'
         app_label = 'stoqs'
         unique_together = ['activity', 'resource']
+
 
 class ParameterResource(models.Model):
     '''
@@ -370,6 +387,8 @@ class ParameterResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['parameter', 'resource']
 
+
+@python_2_unicode_compatible
 class Measurement(models.Model):
     '''
     A Measurement may have a @depth value (this is an Oceanographic Query System) and a horizontal location 
@@ -389,6 +408,8 @@ class Measurement(models.Model):
     def __str__(self):
         return "Measurement at %s" % (self.geom,)
 
+
+@python_2_unicode_compatible
 class SampleType(models.Model):
     '''
     Type of Sample.  Example names: Gulper, Niskin, Bucket
@@ -403,6 +424,8 @@ class SampleType(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
+@python_2_unicode_compatible
 class SamplePurpose(models.Model):
     '''
     Purpose of Sample.  Example names: random, control, peak
@@ -418,6 +441,8 @@ class SamplePurpose(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
+@python_2_unicode_compatible
 class AnalysisMethod(models.Model):
     '''
     The method used for producing a ParamaterSample.datavlue from a Sample
@@ -433,6 +458,8 @@ class AnalysisMethod(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
+@python_2_unicode_compatible
 class Sample(models.Model):
     '''
     A Sample may have a depth value (this is an Oceanographic Query System) and a location (represented by the geom field), 
@@ -464,6 +491,7 @@ class Sample(models.Model):
     def __str__(self):
         return "%s" % (self.name,)
 
+
 class SampleRelationship(models.Model):
     '''
     Association class pairing Samples and Samples for many-to-many parent/child relationships.
@@ -476,6 +504,7 @@ class SampleRelationship(models.Model):
         verbose_name_plural = 'Sample Relationships'
         app_label = 'stoqs'
         unique_together = ['parent', 'child']
+
 
 class SampleResource(models.Model):
     '''
@@ -490,6 +519,7 @@ class SampleResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['sample', 'resource']
 
+
 class PlatformResource(models.Model):
     '''
     Association class pairing Platforms and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
@@ -503,6 +533,7 @@ class PlatformResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['platform', 'resource']
 
+
 class ResourceResource(models.Model):
     '''
     Association class pairing Resources and Resources for many-to-many from/to relationships.
@@ -515,6 +546,7 @@ class ResourceResource(models.Model):
         verbose_name_plural = 'Resource Resource'
         app_label = 'stoqs'
         unique_together = ['fromresource', 'toresource']
+
 
 class ActivityParameter(models.Model):
     '''
@@ -542,6 +574,7 @@ class ActivityParameter(models.Model):
         app_label = 'stoqs'
         unique_together = ['activity', 'parameter']
         
+
 class ActivityParameterHistogram(models.Model):
     '''
     Association class pairing Parameters that have been loaded for an Activity
@@ -551,6 +584,7 @@ class ActivityParameterHistogram(models.Model):
     binlo = models.FloatField()
     binhi = models.FloatField()
     bincount = models.IntegerField()
+
 
 class MeasuredParameter(models.Model):
     '''
@@ -566,6 +600,7 @@ class MeasuredParameter(models.Model):
         verbose_name_plural = 'Measured Parameter'
         app_label = 'stoqs'
         unique_together = ['measurement','parameter']
+
 
 class SampledParameter(models.Model):
     '''
@@ -583,6 +618,7 @@ class SampledParameter(models.Model):
         app_label = 'stoqs'
         unique_together = ['sample','parameter']
 
+
 class MeasuredParameterResource(models.Model):
     '''
     Association class pairing MeasuredParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
@@ -598,6 +634,7 @@ class MeasuredParameterResource(models.Model):
         app_label = 'stoqs'
         unique_together = ['measuredparameter', 'resource']
 
+
 class SampledParameterResource(models.Model):
     '''
     Association class pairing SampledParameters and Resources.  Must use explicit many-to-many and GeoManager does not support .add().
@@ -612,6 +649,7 @@ class SampledParameterResource(models.Model):
         verbose_name_plural = 'SampledParameter Resource'
         app_label = 'stoqs'
         unique_together = ['sampledparameter', 'resource']
+
 
 class PermaLink(models.Model):
     '''
