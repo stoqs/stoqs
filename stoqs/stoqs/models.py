@@ -48,7 +48,7 @@ class ResourceType(models.Model):
     name = models.CharField(max_length=128, db_index=True, unique=True)
     description = models.CharField(max_length=256, blank=True, null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         app_label = 'stoqs'
     def __str__(self):
         return "%s" % (self.name,)
@@ -67,7 +67,7 @@ class Resource(models.Model):
     uristring = models.CharField(max_length=256, null=True)
     resourcetype = models.ForeignKey(ResourceType, blank=True, null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name = 'Resource'
         verbose_name_plural = 'Resources'
         app_label = 'stoqs'
@@ -87,7 +87,7 @@ class Campaign(models.Model):
     enddate = models.DateTimeField(null=True)
     description = models.CharField(max_length=4096, blank=True, null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         app_label = 'stoqs'
         verbose_name='Campaign'
         verbose_name_plural='Campaigns'
@@ -111,7 +111,7 @@ class CampaignLog(models.Model):
     depth = models.FloatField(blank=True, null=True)
     username = models.CharField(max_length=128, blank=True, null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         app_label = 'stoqs'
         verbose_name='Campaign Log'
         verbose_name_plural='Campaign Logs'
@@ -127,7 +127,7 @@ class ActivityType(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name='Activity Type'
         verbose_name_plural='Activity Types'
         app_label = 'stoqs'
@@ -144,7 +144,7 @@ class PlatformType(models.Model):
     name = models.CharField(max_length=128, db_index=True, unique=True)
     color = models.CharField(max_length=8, blank=True, null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         app_label = 'stoqs'
     def __str__(self):
         return "%s" % (self.name,)
@@ -160,7 +160,7 @@ class Platform(models.Model):
     platformtype = models.ForeignKey(PlatformType) 
     color = models.CharField(max_length=8, blank=True, null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name = 'Platform'
         verbose_name_plural = 'Platforms'
         app_label = 'stoqs'
@@ -193,7 +193,7 @@ class Activity(models.Model):
     maxdepth = models.FloatField(null=True)
     activitytype = models.ForeignKey(ActivityType, blank=True, null=True, default=None) 
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name='Activity'
         verbose_name_plural='Activities'
         app_label = 'stoqs'
@@ -214,7 +214,7 @@ class InstantPoint(models.Model):
     activity = models.ForeignKey(Activity) 
     timevalue = models.DateTimeField(db_index=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         app_label = 'stoqs'
     def __str__(self):
         return "%s" % (self.timevalue,)
@@ -232,7 +232,7 @@ class NominalLocation(models.Model):
     depth= models.FloatField(db_index=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name = 'NominalLocation'
         verbose_name_plural = 'NominalLocations'
         app_label = 'stoqs'
@@ -250,7 +250,7 @@ class SimpleDepthTime(models.Model):
     epochmilliseconds = models.FloatField()
     depth= models.FloatField()
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name='Simple depth time series'
         verbose_name_plural='Simple depth time series'
         app_label = 'stoqs'
@@ -266,7 +266,7 @@ class SimpleBottomDepthTime(models.Model):
     epochmilliseconds = models.FloatField()
     bottomdepth= models.FloatField()
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name='Simple bottom depth time series'
         verbose_name_plural='Simple bottom depth time series'
         app_label = 'stoqs'
@@ -280,7 +280,7 @@ class PlannedDepthTime(models.Model):
     epochmilliseconds = models.FloatField()
     depth= models.FloatField()
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name='Planned depth time series'
         verbose_name_plural='Planned depth time series'
         app_label = 'stoqs'
@@ -305,7 +305,7 @@ class Parameter(models.Model):
     origin = models.CharField(max_length=256, blank=True, null=True)
     domain = ArrayField(models.FloatField(), null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name = 'Parameter'
         verbose_name_plural = 'Parameters'
         app_label = 'stoqs'
@@ -324,7 +324,7 @@ class ParameterGroup(models.Model):
     name = models.CharField(max_length=128, unique=True)
     description= models.CharField(max_length=128, blank=True, null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name = 'ParameterGroup'
         verbose_name_plural = 'ParameterGroups'
         app_label = 'stoqs'
@@ -339,7 +339,7 @@ class ParameterGroupParameter(models.Model):
     uuid = UUIDField(editable=False)
     parametergroup = models.ForeignKey(ParameterGroup)
     parameter = models.ForeignKey(Parameter)
-    class Meta:
+    class Meta(object):
         verbose_name = 'ParameterGroup Parameter'
         verbose_name_plural = 'ParameterGroup Parameter'
         app_label = 'stoqs'
@@ -353,7 +353,7 @@ class CampaignResource(models.Model):
     uuid = UUIDField(editable=False)
     campaign = models.ForeignKey(Campaign)
     resource = models.ForeignKey(Resource)
-    class Meta:
+    class Meta(object):
         verbose_name = 'Campaign Resource'
         verbose_name_plural = 'Campaign Resource'
         app_label = 'stoqs'
@@ -367,7 +367,7 @@ class ActivityResource(models.Model):
     uuid = UUIDField(editable=False)
     activity = models.ForeignKey(Activity)
     resource = models.ForeignKey(Resource)
-    class Meta:
+    class Meta(object):
         verbose_name = 'Activity Resource'
         verbose_name_plural = 'Activity Resource'
         app_label = 'stoqs'
@@ -381,7 +381,7 @@ class ParameterResource(models.Model):
     uuid = UUIDField(editable=False)
     parameter = models.ForeignKey(Parameter)
     resource = models.ForeignKey(Resource)
-    class Meta:
+    class Meta(object):
         verbose_name = 'Parameter Resource'
         verbose_name_plural = 'Parameter Resource'
         app_label = 'stoqs'
@@ -401,7 +401,7 @@ class Measurement(models.Model):
     bottomdepth= models.FloatField(db_index=True, null=True)
     geom = models.PointField(srid=4326, spatial_index=True, dim=2)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name = 'Measurement'
         verbose_name_plural = 'Measurements'
         app_label = 'stoqs'
@@ -417,7 +417,7 @@ class SampleType(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, db_index=True, unique=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name='Sample Type'
         verbose_name_plural='Sample Types'
         app_label = 'stoqs'
@@ -434,7 +434,7 @@ class SamplePurpose(models.Model):
     name = models.CharField(max_length=128, unique=True)
     description = models.CharField(max_length=1024)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name='Sample Purpose'
         verbose_name_plural='Sample Purposes'
         app_label = 'stoqs'
@@ -451,7 +451,7 @@ class AnalysisMethod(models.Model):
     name = models.CharField(max_length=256, db_index=True, unique=True)
     uristring = models.CharField(max_length=256, null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name='Analysis Method'
         verbose_name_plural='Analysis Methods'
         app_label = 'stoqs'
@@ -484,7 +484,7 @@ class Sample(models.Model):
     laboratory = models.CharField(max_length=128, blank=True, null=True)
     researcher = models.CharField(max_length=128, blank=True, null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name = 'Sample'
         verbose_name_plural = 'Samples'
         app_label = 'stoqs'
@@ -499,7 +499,7 @@ class SampleRelationship(models.Model):
     uuid = UUIDField(editable=False)
     parent = models.ForeignKey(Sample, related_name='child')
     child = models.ForeignKey(Sample, related_name='parent')
-    class Meta:
+    class Meta(object):
         verbose_name = 'Sample Relationship'
         verbose_name_plural = 'Sample Relationships'
         app_label = 'stoqs'
@@ -513,7 +513,7 @@ class SampleResource(models.Model):
     uuid = UUIDField(editable=False)
     sample = models.ForeignKey(Sample)
     resource = models.ForeignKey(Resource)
-    class Meta:
+    class Meta(object):
         verbose_name = 'Sample Resource'
         verbose_name_plural = 'Sample Resource'
         app_label = 'stoqs'
@@ -527,7 +527,7 @@ class PlatformResource(models.Model):
     uuid = UUIDField(editable=False)
     platform = models.ForeignKey(Platform)
     resource = models.ForeignKey(Resource)
-    class Meta:
+    class Meta(object):
         verbose_name = 'Platform Resource'
         verbose_name_plural = 'Platform Resource'
         app_label = 'stoqs'
@@ -541,7 +541,7 @@ class ResourceResource(models.Model):
     uuid = UUIDField(editable=False)
     fromresource = models.ForeignKey(Resource, related_name='toresource')
     toresource = models.ForeignKey(Resource, related_name='fromresource')
-    class Meta:
+    class Meta(object):
         verbose_name = 'Resource Resource'
         verbose_name_plural = 'Resource Resource'
         app_label = 'stoqs'
@@ -568,7 +568,7 @@ class ActivityParameter(models.Model):
     # Useful for visualiztion, ignoring fewer min & max outliers - 1% & 99% percentiles of the parameter
     p010 = models.FloatField(null=True)
     p990 = models.FloatField(null=True)
-    class Meta:
+    class Meta(object):
         verbose_name = 'Activity Parameter'
         verbose_name_plural = 'Activity Parameter'
         app_label = 'stoqs'
@@ -595,7 +595,7 @@ class MeasuredParameter(models.Model):
     datavalue = models.FloatField(db_index=True, null=True)
     dataarray = ArrayField(models.FloatField(), null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name = 'Measured Parameter'
         verbose_name_plural = 'Measured Parameter'
         app_label = 'stoqs'
@@ -612,7 +612,7 @@ class SampledParameter(models.Model):
     datavalue = models.DecimalField(max_digits=100, db_index=True, decimal_places=30)
     analysismethod = models.ForeignKey(AnalysisMethod, null=True)
     objects = models.GeoManager()
-    class Meta:
+    class Meta(object):
         verbose_name = 'Sampled Parameter'
         verbose_name_plural = 'Sampled Parameter'
         app_label = 'stoqs'
@@ -628,7 +628,7 @@ class MeasuredParameterResource(models.Model):
     measuredparameter = models.ForeignKey(MeasuredParameter)
     resource = models.ForeignKey(Resource)
     activity = models.ForeignKey(Activity)
-    class Meta:
+    class Meta(object):
         verbose_name = 'MeasuredParameter Resource'
         verbose_name_plural = 'MeasuredParameter Resource'
         app_label = 'stoqs'
@@ -644,7 +644,7 @@ class SampledParameterResource(models.Model):
     sampledparameter = models.ForeignKey(SampledParameter)
     resource = models.ForeignKey(Resource)
     activity = models.ForeignKey(Activity)
-    class Meta:
+    class Meta(object):
         verbose_name = 'SampledParameter Resource'
         verbose_name_plural = 'SampledParameter Resource'
         app_label = 'stoqs'
