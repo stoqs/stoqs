@@ -1,13 +1,5 @@
 #!/usr/bin/env python
-
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2013, MBARI"
-__license__ = "GPL"
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-__status__ = "Development"
-__doc__ = '''
-
+'''
 Script to query the database for measured parameters from the same instantpoint and to
 make scatter plots of temporal segments of the data.  A simplified trackline of the
 trajectory data and the start time of the temporal segment are added to each plot.
@@ -17,18 +9,11 @@ different platforms, parameters, and campaigns.
 
 Mike McCann
 MBARI Dec 6, 2013
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@author: __author__
-@status: __status__
-@license: __license__
 '''
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))
 
 import re
 import matplotlib
@@ -36,7 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.dates import DAILY
 from datetime import datetime, timedelta
-from django.contrib.gis.geos import LineString, Point
+from django.contrib.gis.geos import LineString
 from utils.utils import round_to_n
 from textwrap import wrap
 from mpl_toolkits.basemap import Basemap
@@ -49,7 +34,7 @@ class PlatformsBiPlot(BiPlot):
     '''
     Make customized BiPlots (Parameter Parameter plots) for platforms from STOQS.
     '''
-    def ppSubPlot(self, x, y, platform, color, xParm, yParm, ax, startTime):
+    def ppSubPlot(self, x, y, platform, color, xParm, yParm, ax):
         '''
         Given names of platform, x & y paramters add a subplot to figure fig.
         '''
@@ -79,13 +64,13 @@ class PlatformsBiPlot(BiPlot):
 
         return ax
 
-    def timeSubPlot(self, platformDTHash, ax1, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS):
+    def timeSubPlot(self, platformDTHash, ax1, startTime, endTime, swrTS):
         '''
         Make subplot of depth time series for all the platforms and highlight the time range
         '''
         for pl, ats in platformDTHash.iteritems():
             color = self._getColor(pl)
-            for a, ts in ats.iteritems():
+            for _, ts in ats.iteritems():
                 datetimeList = []
                 depths = []
                 for ems, d in ts:
@@ -220,7 +205,7 @@ class PlatformsBiPlot(BiPlot):
         endTime = startTime + timeWindow
 
         # Get overall temporal data for placement in the temporal subplot
-        platformDTHash = self._getplatformDTHash(self.args.platform)
+        platformDTHash = self._getplatformDTHash()
         try:
             swrTS = self._getTimeSeriesData(allActivityStartTime, allActivityEndTime, parameterStandardName='surface_downwelling_shortwave_flux_in_air')
         except NoTSDataException, e:
@@ -238,7 +223,7 @@ class PlatformsBiPlot(BiPlot):
             fig.add_subplot(ax)
             if self.args.title:
                 ax.set_title(self.args.title)
-            self.timeSubPlot(platformDTHash, ax, allActivityStartTime, allActivityEndTime, startTime, endTime, swrTS)
+            self.timeSubPlot(platformDTHash, ax, startTime, endTime, swrTS)
 
             # Make scatter plots of data from the platforms 
             platformLineStringHash = {}
@@ -259,7 +244,7 @@ class PlatformsBiPlot(BiPlot):
                     raise Exception('Cannot handle more than 4 platform Parameter-Parameter plots')
 
                 fig.add_subplot(ax)
-                self.ppSubPlot(x, y, pl, self._getColor(pl), xP, yP, ax, startTime)
+                self.ppSubPlot(x, y, pl, self._getColor(pl), xP, yP, ax)
 
             # Plot spatial
             ax = plt.Subplot(fig, map_gs[:])
@@ -282,7 +267,8 @@ class PlatformsBiPlot(BiPlot):
 
         print 'Done.'
         print 'Make an animated gif with: convert -delay 10 {wcName}.png {baseName}.gif'.format(wcName=wcName, baseName='_'.join(fileName.split('_')[:-1]))
-        print 'Make an MPEG 4 with: ffmpeg -r 10 -i {baseName}.gif -vcodec mpeg4 -qscale 1 -y {baseName}.mp4'.format(baseName='_'.join(fileName.split('_')[:-1]))
+        print 'Make an MPEG 4 with: ffmpeg -r 10 -i {baseName}.gif -vcodec mpeg4 -qscale 1 -y {baseName}.mp4'.format(
+                baseName='_'.join(fileName.split('_')[:-1]))
         print 'On a Mac open the .mp4 file in QuickTime Player and export the file for "iPad, iPhone & Apple TV" (.m4v format) for best portability.'
 
     def process_command_line(self):
@@ -303,11 +289,15 @@ class PlatformsBiPlot(BiPlot):
                                          description='Read Parameter-Parameter data from a STOQS database and make bi-plots',
                                          epilog=examples)
                                              
-        parser.add_argument('-x', '--xParm', action='store', help='One or more Parameter names for the X axis', nargs='*', default='bb470', required=True)
-        parser.add_argument('-y', '--yParm', action='store', help='One or more Parameter names for the Y axis', nargs='*', default='chlorophyll', required=True)
-        parser.add_argument('-p', '--platform', action='store', help='One or more platform names separated by spaces', nargs='*', default='tethys', required=True)
+        parser.add_argument('-x', '--xParm', action='store', help='One or more Parameter names for the X axis', 
+                nargs='*', default='bb470', required=True)
+        parser.add_argument('-y', '--yParm', action='store', help='One or more Parameter names for the Y axis', 
+                nargs='*', default='chlorophyll', required=True)
+        parser.add_argument('-p', '--platform', action='store', help='One or more platform names separated by spaces', 
+                nargs='*', default='tethys', required=True)
         parser.add_argument('-d', '--database', action='store', help='Database alias', default='stoqs_september2013_o', required=True)
-        parser.add_argument('--hourWindow', action='store', help='Window in hours for interval plot. If not specified it will be the same as hourStep.', type=int)
+        parser.add_argument('--hourWindow', action='store', help='Window in hours for interval plot. If not specified it will be the same as hourStep.', 
+                type=int)
         parser.add_argument('--hourStep', action='store', help='Step though the time series and make plots at this hour interval', type=int)
         parser.add_argument('--daytime', action='store_true', help='Select only daytime hours: 10 am to 2 pm local time')
         parser.add_argument('--nighttime', action='store_true', help='Select only nighttime hours: 10 pm to 2 am local time')
@@ -321,7 +311,8 @@ class PlatformsBiPlot(BiPlot):
         parser.add_argument('--platformColors', action='store', help='Override database platform colors - put in quotes, e.g. "#ff0000"', nargs='*')
         parser.add_argument('--title', action='store', help='Title to appear on top of plot')
         parser.add_argument('--extend', action='store', help='Extend the data extent for the map boundaries by this value in degrees', type=float)
-        parser.add_argument('--extent', action='store', help='Space separated specific map boundary in degrees: ll_lon ll_lat ur_lon ur_lat', nargs=4, default=[])
+        parser.add_argument('--extent', action='store', help='Space separated specific map boundary in degrees: ll_lon ll_lat ur_lon ur_lat', 
+                nargs=4, default=[])
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
         self.args = parser.parse_args()

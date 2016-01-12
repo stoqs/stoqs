@@ -1,11 +1,3 @@
-#!/usr/bin/env python
-
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2013, MBARI"
-__license__ = "GPL"
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-__status__ = "Development"
 '''
 Base class for querying the database for measured parameters from the same instantpoint and to
 make scatter plots of temporal segments of the data from platforms.
@@ -15,23 +7,19 @@ different platforms, parameters, and campaigns.
 
 Mike McCann
 MBARI January 28, 2014
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@author: __author__
-@status: __status__
-@license: __license__
 '''
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+import django
+django.setup()
 
 from collections import defaultdict
 from django.db import connections
-from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, MeasuredParameter, Measurement, Parameter
-from django.contrib.gis.geos import LineString, Point
+from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, MeasuredParameter, Parameter
+from django.contrib.gis.geos import Point
 from django.db.models import Max, Min
 from django.http import HttpRequest
 from utils.PQuery import PQuery
@@ -64,7 +52,7 @@ class BiPlot(object):
         prQS = ParameterResource.objects.using(self.args.database).filter(resource__name='units').values_list('resource__value')
         try:
             units = prQS.filter(parameter__name=parm)[0][0]
-        except IndexError as e:
+        except IndexError:
             raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, platform))
 
         return pmin, pmax, units
@@ -180,7 +168,7 @@ class BiPlot(object):
         points = []
         try:
             pp._getXYCData(strideFlag=False, latlonFlag=True, returnIDs=returnIDs, sampleFlag=sampleFlag)
-        except PPDatabaseException, e:
+        except PPDatabaseException:
             if platform or startDatetime or endDatetime:
                 raise NoPPDataException("No (%s, %s) data from (%s) between %s and %s" % (xParm, yParm, platform, startDatetime, endDatetime))
             else:
@@ -204,7 +192,7 @@ class BiPlot(object):
         # Get start and end datetimes, color and geographic extent of the activity
         # If multiple platforms use them all to get overall start & end times and extent and se tcolor to black
         if platform:
-            if type(platform) in (list, tuple):
+            if isinstance(platform, list) or isinstance(platform, tuple):
                 aQS = Activity.objects.using(self.args.database).filter(platform__name__in=platform)
             else:
                 aQS = Activity.objects.using(self.args.database).filter(platform__name=platform)
@@ -241,7 +229,7 @@ class BiPlot(object):
         except TypeError:
             try:
                 self.color = '#' + Platform.objects.using(self.args.database).filter(name=platform).values_list('color')[0][0]
-            except IndexError as e:
+            except IndexError:
                 raise Exception('Unable to get color of platform name %s' % platform)
 
         return self.color
@@ -254,25 +242,25 @@ class BiPlot(object):
         qsDNTS = Activity.objects.using(self.args.database).filter(platform__name=platform).values_list( 
                                 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name').order_by('simpledepthtime__epochmilliseconds')
 
-        hash = {}
+        dhash = {}
         for ems, depth, name in qsDNTS:
             try:
-                hash[name].append((ems, depth))
+                dhash[name].append((ems, depth))
             except KeyError:
-                hash[name] = []
-                hash[name].append((ems, depth))
+                dhash[name] = []
+                dhash[name].append((ems, depth))
 
-        return hash
+        return dhash
 
-    def _getplatformDTHash(self, platforms):
+    def _getplatformDTHash(self):
         '''
         Build hash of depth time series for all the platforms specified.  Useful for making overview plot.
         '''
-        hash = {}
+        phash = {}
         for pl in self.args.platform:
-            hash[pl] = self._getSimpleDepthTime(pl)
+            phash[pl] = self._getSimpleDepthTime(pl)
 
-        return hash
+        return phash
 
     def _getTimeSeriesData2(self, startDatetime, endDatetime, platformName, parameterName):
         '''
@@ -299,13 +287,14 @@ class BiPlot(object):
             else:
                 count = qs.values_list('measurement__instantpoint__activity__platform').distinct().count()
                 if count > 1:
-                    raise Exception('More that one platform in %s has time series data for parameterStandardName = %s, parameterName = %s' % (
-                                self.args.database, parameterStandardName, parameterName))
+                    raise Exception('More that one platform in %s has time series data for parameterName = %s, parameterName = %s' % (
+                                self.args.database, parameterName, parameterName))
                 elif count == 0:
-                    raise NoTSDataException('No platform in %s has time series data for parameterStandardName = %s, parameterName = %s' % (
-                                self.args.database, parameterStandardName, parameterName))
+                    raise NoTSDataException('No platform in %s has time series data for parameterName = %s, parameterName = %s' % (
+                                self.args.database, parameterName, parameterName))
 
-            qs = qs.values('measurement__instantpoint__timevalue', 'measurement__depth', 'measurement__geom', 'datavalue').order_by('measurement__instantpoint__timevalue')
+            qs = qs.values('measurement__instantpoint__timevalue', 'measurement__depth', 'measurement__geom', 
+                           'datavalue').order_by('measurement__instantpoint__timevalue')
 
             for rs in qs:
                 geom = rs['measurement__geom']
@@ -353,11 +342,11 @@ class BiPlot(object):
 
         return tList, dataList
 
-    def _getParametersPlatformHash(self, groupNames=[], ignoreNames=[]):
+    def _getParametersPlatformHash(self, groupNames=None, ignoreNames=None):
         '''
         Return a hash of Parameter objects keyed with a set of Platform objects as the values
         '''
-        hash = {}
+        phash = {}
         qs = Parameter.objects.using(self.args.database).all()
         if groupNames:
             qs = qs.filter(parametergroupparameter__parametergroup__name__in=groupNames)
@@ -367,7 +356,7 @@ class BiPlot(object):
             qs = qs.filter(activityparameter__activity__platform__name__in=self.args.platform)
 
         for p in qs:
-            hash[p] = set(Platform.objects.using(self.args.database).filter(activity__activityparameter__parameter=p).distinct())
+            phash[p] = set(Platform.objects.using(self.args.database).filter(activity__activityparameter__parameter=p).distinct())
 
-        return hash
+        return phash
 
