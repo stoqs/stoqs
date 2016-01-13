@@ -1,12 +1,5 @@
 #!/usr/bin/env python
-
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2012, MBARI"
-__license__ = "GPL"
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-__doc__ = '''
-
+'''
 Script to read data from underway ctd files and write them to netCDF files.  
 
 Use the conventions for Trajectory feature type and write as much metadata as possible.
@@ -15,11 +8,6 @@ This script is meant to preserve the data identically as it is reported in the o
 
 Mike McCann
 MBARI 11 January 2014
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@author: __author__
-@license: __license__
 '''
 
 import os
@@ -28,10 +16,7 @@ import csv
 import time
 import pytz
 from glob import glob
-import coards
-import urllib2
 from datetime import datetime, timedelta
-import numpy as np
 from pupynere import netcdf_file
 
 # Add grandparent dir to pythonpath so that we can see the CANON and toNetCDF modules
@@ -93,19 +78,19 @@ class ParserWriter(BaseWriter):
         # Fill up the object's member data item lists from all the files - read only the processed .asc files that match the specified pattern, 
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
         fileList.sort()
-        for file in fileList:
-            print "file = %s" % file
+        for sb_file in fileList:
+            print "sb_file = %s" % sb_file
             self.initialize_lists()
 
             # Open .hdr file to get the year, parse year from a line like this:
             # * System UTC = Sep 15 2012 06:49:50
-            for line in open('.'.join(file.split('.')[:-1]) + '.hdr'):
+            for line in open('.'.join(sb_file.split('.')[:-1]) + '.hdr'):
                 if line.find('NMEA UTC (Time)') != -1:
                     year = int(line.split(' ')[7])
                     ##print "year = %d" % year
                     break
 
-            for r in csv.DictReader(open(file), delimiter=' ', skipinitialspace=True):
+            for r in csv.DictReader(open(sb_file), delimiter=' ', skipinitialspace=True):
                 # A TimeJ value of 1.0 is 0000 hours 1 January, so subtract 1 day
                 dt = datetime(year, 1, 1, 0, 0, 0) + timedelta(days=float(r['TimeJ'])) - timedelta(days=1)
                 ##print 'dt = ', dt
@@ -125,7 +110,7 @@ class ParserWriter(BaseWriter):
                 self.xmiss_list.append(r['Xmiss'])
                 self.wetstar_list.append(r['WetStar'])
 
-            self.write_ctd(file)
+            self.write_ctd(sb_file)
 
     def process_martinudas_files(self):
         '''
@@ -151,16 +136,15 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
         # Fill up the object's member data item lists from all the files - read only the processed .asc files that match the specified pattern, 
         fileList = glob(os.path.join(self.args.inDir, self.args.pattern))
         fileList.sort()
-        for file in fileList:
-            print "file = %s" % file
+        for udas_file in fileList:
+            print "udas_file = %s" % udas_file
             self.initialize_lists()
 
             # Need to skip over first line in the data file, assume that the times are in Moss Landing Time zone
-            fh = open(file)
+            fh = open(udas_file)
             fh.seek(0)
             next(fh)
             localtz = pytz.timezone ("America/Los_Angeles")
-            utc = pytz.timezone ("UTC")
 
             for r in csv.DictReader(fh, delimiter=' ', skipinitialspace=True):
                 if self.args.verbose:
@@ -210,9 +194,9 @@ YYYYMMDD HHMMSS_Local GMT Decimal_Julian_Day Decimal_Hour Latitude Longitude Dep
                         self.fl_scufa_val = r['Raw_Fluorescence_Volts_Scufa']
                 self.fl_scufa_list.append(self.fl_scufa_val)
 
-            self.write_ctd(file, ranges)
+            self.write_ctd(udas_file, ranges)
 
-    def write_ctd(self, inFile, ranges={}):
+    def write_ctd(self, inFile, ranges=None):
         '''
         Write lists out as NetCDF.
         '''
