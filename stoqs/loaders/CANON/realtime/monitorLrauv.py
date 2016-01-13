@@ -1,27 +1,16 @@
 #!/usr/bin/env python
 __author__    = 'Mike McCann, Danelle Cline'
-__version__ = '$Revision: $'.split()[1]
-__date__ = '$Date: $'.split()[1]
-__copyright__ = '2011'
-__license__   = 'GPL v3'
-__contact__   = 'mccann at mbari.org'
-__doc__ = '''
-
+'''
 Monitor the dods web site for new realtime hotspot or sbdlog data from LRAUVs and use
 DAPloaders.py to load new data into the stoqs database.
 
 Mike McCann
 MBARI 12 March 2014
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@status: production
-@license: GPL
 '''
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../toNetCDF"))      # lrauvNc4ToNetcdf.py is in sister toNetCDF dir
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))           # settings.py is two dirs up
 
@@ -31,11 +20,9 @@ from CANON import CANONLoader
 import logging
 import lrauvNc4ToNetcdf
 from datetime import datetime, timedelta
-import time
 import re
 import pydap
 import pytz
-import Contour
 
 from Contour import Contour
 from thredds_crawler.crawl import Crawl
@@ -67,11 +54,11 @@ class ServerError(Exception):
 
 def abbreviate(parms):
     '''Return the shortened string that represents the list of parameters. This is used in both activity and file naming conventions'''
-    dict = {'sea_water_temperature':'sst', 'sea_water_salinity':'salt', 'mass_concentration_of_chlorophyll_in_sea_water': 'chl'}
+    pdict = {'sea_water_temperature':'sst', 'sea_water_salinity':'salt', 'mass_concentration_of_chlorophyll_in_sea_water': 'chl'}
     abbrev = ''
     for p in parms:
         found = False
-        for key,value in dict.iteritems():
+        for key,value in pdict.iteritems():
             if p.find(key) != -1:
                 abbrev = abbrev + '_' + value
                 found = True
@@ -140,14 +127,14 @@ def processDecimated(pw, url, lastDatetime, outDir, resample_freq, interp_freq, 
                 else:
                     pw.processResample(url, outFile_i, parm, interp_freq, resample_freq)
 
-        except TypeError as e:
+        except TypeError:
             logger.warn('Problem reading data from %s', url)
             logger.warn('Assuming data are invalid and skipping')
-        except IndexError as e:
+        except IndexError:
             logger.warn('Problem interpolating data from %s', url)
-        except KeyError as e:
+        except KeyError:
             raise ServerError("Key error - can't read parameters from %s" % (url))
-        except ValueError as e:
+        except ValueError:
             raise ServerError("Value error - can't read parameters from %s" % (url))
 
         else:
@@ -167,69 +154,69 @@ def processDecimated(pw, url, lastDatetime, outDir, resample_freq, interp_freq, 
     return url_i, startDatetime, endDatetime
     
 def process_command_line():
-        '''
-        The argparse library is included in Python 2.7 and is an added package for STOQS.
-        '''
-        import argparse
-        from argparse import RawTextHelpFormatter
+    '''
+    The argparse library is included in Python 2.7 and is an added package for STOQS.
+    '''
+    import argparse
+    from argparse import RawTextHelpFormatter
 
-        examples = 'Examples:' + '\n\n'
-        examples += 'Run on test database:\n'
-        examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /mbari/LRAUV/daphne/realtime/hotspotlogs -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs/*.shore.nc4' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"
-        parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
-                                         description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
-                                         epilog=examples)
-                                             
-        '''parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
-                                                                  'If interpolating, must map to the same location as -o directory', default='.',required=True)'''
-        parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
-                                                                 ' If interpolating, must map to the same location as -o directory',
-                            default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/tethys/realtime/sbdlogs/2015/201509/20150911T155447/.*shore.nc4$',required=False)
-        '''parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
-                                                                 ' If interpolating, must map to the same location as -o directory',
-                            default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/cell-logs/.*Normal*.nc4$',required=False)'''
+    examples = 'Examples:' + '\n\n'
+    examples += 'Run on test database:\n'
+    examples += sys.argv[0] + " -d  'Test Daphne hotspot data' -o /mbari/LRAUV/daphne/realtime/hotspotlogs -u 'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/hotspotlogs/*.shore.nc4' -b 'stoqs_canon_apr2014_t' -c 'CANON-ECOHAB - March 2014 Test'\n"
+    parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
+                                     description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
+                                     epilog=examples)
+                                         
+    '''parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
+                                                              'If interpolating, must map to the same location as -o directory', default='.',required=True)'''
+    parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
+                                                             ' If interpolating, must map to the same location as -o directory',
+                        default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/tethys/realtime/sbdlogs/2015/201509/20150911T155447/.*shore.nc4$',required=False)
+    '''parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
+                                                             ' If interpolating, must map to the same location as -o directory',
+                        default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/cell-logs/.*Normal*.nc4$',required=False)'''
 
-        parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='default',required=False)
-        parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='April 2015 testing',required=False)
-        parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1)
-        parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file or log contour output '
-                                                                   '- must map to the same location as -u URL', default='/tmp/TestMonitorLrauv', required=False)
-        parser.add_argument('--zoom', action='store', help='time window in hours to zoom animation',default=6, required=False)
-        parser.add_argument('--overlap', action='store', help='time window in hours to overlap animation',default=5, required=False)
-        parser.add_argument('--contourUrl', action='store', help='base url to store cross referenced contour plot resources',
-                            default='http://dods.mbari.org/opendap/data/lrauv/stoqs/',required=False)
-        parser.add_argument('--iparm', action='store', help='parameter to interpolate against; must exist in the -p/--parms list',
-                            default='bin_mean_mass_concentration_of_chlorophyll_in_sea_water',required=False)
-        parser.add_argument('--plotDotParmName', action='store', help='parameter to plot as colored dot in map; must exist in the -p/--parms list',
-                            default='vertical_temperature_homogeneity_index',required=False)
-        parser.add_argument('--booleanPlotGroup', action='store', help='List of space separated boolean parameters to plot as symbols in the map against; must exist in the -p/--parms list',
-                            default=['front'],required=False)
-        parser.add_argument('--contourDir', action='store', help='output directory to store 24 hour contour output',
-                            default='/tmp/TestMonitorLrauv/',required=False)
-        parser.add_argument('--productDir', action='store', help='output directory to store 24 hour contour output for catalog in ODSS',
-                            default='/tmp/TestMonitorLrauv/',required=False)
-        #parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='.')
-        parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='Daphne Monterey data - April 2015')
-        parser.add_argument('-i', '--interpolate', action='store_true', help='interpolate - must be used with --outDir option')
-        parser.add_argument('--latest24hr', action='store_true', help='create the latest 24 hour plot')
-        parser.add_argument('--autoscale', action='store_true', help='autoscale each plot to 1 and 99 percentile',required=False,default=True)
-        #parser.add_argument('-a', '--append', action='store_false', help='Append data to existing Activity',required=False)
-        parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity',required=False)
-        parser.add_argument('--post', action='store_true', help='Post message to slack about new data. Disable this during initial database load or when debugging',required=False)
-        parser.add_argument('--debug', action='store_true', help='Useful for debugging plots - does not allow data loading',required=False, default=False)
-        parser.add_argument('-f', '--interpFreq', action='store', help='Optional interpolation frequency string to specify time base for interpolating e.g. 500L=500 millisecs, 1S=1 second, 1Min=1 minute,H=1 hour,D=daily', default='')
-        parser.add_argument('-r', '--resampleFreq', action='store', help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='')
-        parser.add_argument('-p', '--parms', action='store', help='List of space separated parameters to load', nargs='*', default=
-                                    ['front', 'vertical_temperature_homogeneity_index', 'bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
-        parser.add_argument('-g', '--plotgroup', action='store', help='List of space separated parameters to plot', nargs='*', default=
-                                ['vertical_temperature_homogeneity_index', 'bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
+    parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='default',required=False)
+    parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='April 2015 testing',required=False)
+    parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1)
+    parser.add_argument('-o', '--outDir', action='store', help='output directory to store interpolated .nc file or log contour output '
+                                                               '- must map to the same location as -u URL', default='/tmp/TestMonitorLrauv', required=False)
+    parser.add_argument('--zoom', action='store', help='time window in hours to zoom animation',default=6, required=False)
+    parser.add_argument('--overlap', action='store', help='time window in hours to overlap animation',default=5, required=False)
+    parser.add_argument('--contourUrl', action='store', help='base url to store cross referenced contour plot resources',
+                        default='http://dods.mbari.org/opendap/data/lrauv/stoqs/',required=False)
+    parser.add_argument('--iparm', action='store', help='parameter to interpolate against; must exist in the -p/--parms list',
+                        default='bin_mean_mass_concentration_of_chlorophyll_in_sea_water',required=False)
+    parser.add_argument('--plotDotParmName', action='store', help='parameter to plot as colored dot in map; must exist in the -p/--parms list',
+                        default='vertical_temperature_homogeneity_index',required=False)
+    parser.add_argument('--booleanPlotGroup', action='store', help='List of space separated boolean parameters to plot as symbols in the map against; must exist in the -p/--parms list',
+                        default=['front'],required=False)
+    parser.add_argument('--contourDir', action='store', help='output directory to store 24 hour contour output',
+                        default='/tmp/TestMonitorLrauv/',required=False)
+    parser.add_argument('--productDir', action='store', help='output directory to store 24 hour contour output for catalog in ODSS',
+                        default='/tmp/TestMonitorLrauv/',required=False)
+    #parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='.')
+    parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='Daphne Monterey data - April 2015')
+    parser.add_argument('-i', '--interpolate', action='store_true', help='interpolate - must be used with --outDir option')
+    parser.add_argument('--latest24hr', action='store_true', help='create the latest 24 hour plot')
+    parser.add_argument('--autoscale', action='store_true', help='autoscale each plot to 1 and 99 percentile',required=False,default=True)
+    #parser.add_argument('-a', '--append', action='store_false', help='Append data to existing Activity',required=False)
+    parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity',required=False)
+    parser.add_argument('--post', action='store_true', help='Post message to slack about new data. Disable this during initial database load or when debugging',required=False)
+    parser.add_argument('--debug', action='store_true', help='Useful for debugging plots - does not allow data loading',required=False, default=False)
+    parser.add_argument('-f', '--interpFreq', action='store', help='Optional interpolation frequency string to specify time base for interpolating e.g. 500L=500 millisecs, 1S=1 second, 1Min=1 minute,H=1 hour,D=daily', default='')
+    parser.add_argument('-r', '--resampleFreq', action='store', help='Optional resampling frequency string to specify how to resample interpolated results e.g. 2S=2 seconds, 5Min=5 minutes,H=1 hour,D=daily', default='')
+    parser.add_argument('-p', '--parms', action='store', help='List of space separated parameters to load', nargs='*', default=
+                                ['front', 'vertical_temperature_homogeneity_index', 'bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
+    parser.add_argument('-g', '--plotgroup', action='store', help='List of space separated parameters to plot', nargs='*', default=
+                            ['vertical_temperature_homogeneity_index', 'bin_mean_sea_water_temperature', 'bin_mean_sea_water_salinity', 'sea_water_salinity', 'bin_mean_mass_concentration_of_chlorophyll_in_sea_water'])
 
-        parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
-        parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150911T150000', required=False)
-        parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default=None, required=False)
+    parser.add_argument('-v', '--verbose', action='store_true', help='Turn on verbose output')
+    parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format', default='20150911T150000', required=False)
+    parser.add_argument('--end', action='store', help='Start time in YYYYMMDDTHHMMSS format', default=None, required=False)
 
-        args = parser.parse_args()    
-        return args
+    args = parser.parse_args()    
+    return args
 
 if __name__ == '__main__':
     colors = {  'tethys':       'fed976',
@@ -288,13 +275,13 @@ if __name__ == '__main__':
     s = args.inUrl.rsplit('/',1)
     files = s[1]
     url = s[0]
-    logger.info("Crawling %s for %s files" % (url, files))
+    logger.info("Crawling %s for %s files", url, files)
     c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=False)
 
     for d in c.datasets:
-        logger.debug('Found %s' % d.id)
+        logger.debug('Found %s', d.id)
     
-    urls = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
+    urls = [s2.get("url") for d in c.datasets for s2 in d.services if s2.get("service").lower() == "opendap"]
 
     pw = lrauvNc4ToNetcdf.InterpolatorWriter()
 
@@ -337,11 +324,11 @@ if __name__ == '__main__':
         lastDatetime = endDatetime
 
         if url_i:
-            logger.info("Received new %s data ending at %s in %s" % (platformName, endDatetime, url_i))
+            logger.info("Received new %s data ending at %s in %s", platformName, endDatetime, url_i)
             # Use Hyrax server to workaround the caching that TDS does
             url_src = url_i.replace('http://elvis.shore.mbari.org/thredds/dodsC/LRAUV', 'http://dods.mbari.org/opendap/data/lrauv')
 
-            logger.info("Received new %s file ending at %s in %s" % (platformName, lastDatetime, url_src))
+            logger.info("Received new %s file ending at %s in %s", platformName, lastDatetime, url_src)
             aName = url_src.split('/')[-2] + '_' + url_src.split('/')[-1].split('.')[0]
             dataStartDatetime = None
 
@@ -382,8 +369,9 @@ if __name__ == '__main__':
 
                 logger.debug('out file %s', outFile)
 
-                c = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
-                c.run()
+                contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile, 
+                            args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
+                contour.run()
 
                 # Replace netCDF file with png extension and that is the URL of the log
                 logUrl = re.sub('\.nc$','.png', url_src)
@@ -407,11 +395,14 @@ if __name__ == '__main__':
                 endDateTimeLocal = endDatetime.replace(hour=23,minute=59,second=0,microsecond=0)
                 endDateTimeUTC24hr = endDateTimeLocal.astimezone(pytz.utc)
 
-                outFile = args.contourDir + '/' + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
-                url = args.contourUrl + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png'
+                outFile = (args.contourDir + '/' + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + 
+                           '_' + endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
+                url = (args.contourUrl + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + 
+                       endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
 
                 logger.debug('out file %s url: %s ', outFile, url)
-                c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
+                c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, 
+                            outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
                 c.run()
 
                 if outFile.startswith('/tmp'):
@@ -459,10 +450,12 @@ if __name__ == '__main__':
             outFileLatestAnim = args.contourDir + '/' + platformName  + '_24h_latest_anim.gif'
             outFileLatestProductAnim = args.productDir + '/' + platformName  + '_log_last24hr_anim.gif'
 
-            c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFileLatest, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
+            c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, 
+                        title, outFileLatest, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
             c.run()
 
-            c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, outFileLatestAnim, args.autoscale, args.plotDotParmName, args.booleanPlotGroup, True, args.zoom, args.overlap)
+            c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, 
+                        title, outFileLatestAnim, args.autoscale, args.plotDotParmName, args.booleanPlotGroup, True, args.zoom, args.overlap)
             c.run()
 
             if outFileLatest.startswith('/tmp'):
