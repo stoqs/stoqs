@@ -264,23 +264,23 @@ class InterpolatorWriter(BaseWriter):
             self.all_sub_ts[key] = pd.Series(all_ts[key])
             self.all_coord[key] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
 
-        # interpolate each coordinate to the time of the parameter
-        # key looks like sea_water_temperature_depth, sea_water_temperature_lat, sea_water_temperature_lon, etc.
-        for c in coord:
+            # interpolate each coordinate to the time of the parameter
+            # key looks like sea_water_temperature_depth, sea_water_temperature_lat, sea_water_temperature_lon, etc.
+            for c in coord:
 
-            # get coordinate
-            ts = all_ts[c]
+                # get coordinate
+                ts = all_ts[c]
 
-            # and interpolate using parameter time
-            if not ts.empty:
-                i = self.interpolate(ts, t.index)
-                self.all_sub_ts[key + '_' + c] = i
-                self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+                # and interpolate using parameter time
+                if not ts.empty:
+                    i = self.interpolate(ts, t.index)
+                    self.all_sub_ts[key + '_' + c] = i
+                    self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
 
-        # add in time coordinate separately
-        v_time = all_ts[key].index
-        esec_list = v_time.values.astype(float)/1E9
-        self.all_sub_ts[key + '_time'] = pd.Series(esec_list,index=v_time)
+            # add in time coordinate separately
+            v_time = all_ts[key].index
+            esec_list = v_time.values.astype(float)/1E9
+            self.all_sub_ts[key + '_time'] = pd.Series(esec_list,index=v_time)
 
         # TODO: add try catch block on this
         # Get independent parameter to interpolate on
@@ -295,21 +295,21 @@ class InterpolatorWriter(BaseWriter):
         for key in parm_valid:
             value = all_ts[key]
             if not value.empty :
-                i = self.interpolate(value, t.index)
-                self.all_sub_ts[key + '_i'] = i
+               i = self.interpolate(value, t.index)
+               self.all_sub_ts[key + '_i'] = i
             else:
-                self.all_sub_ts[key + '_i'] = value
+               self.all_sub_ts[key + '_i'] = value
 
-        self.all_coord[key + '_i'] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
+            self.all_coord[key + '_i'] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
         for key in coord:
             value = all_ts[key]
             self.all_sub_ts[key] = value
             if not value.empty :
-                i = self.interpolate(value, t.index)
-                self.all_sub_ts[key] = i
+               i = self.interpolate(value, t.index)
+               self.all_sub_ts[key] = i
             else:
-                self.all_sub_ts[key] = value
+               self.all_sub_ts[key] = value
 
             self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
 
