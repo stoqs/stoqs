@@ -51,14 +51,14 @@ urlpatterns = patterns('',
     # Requests that override BaseOutputer
     url(pre + r'api/measuredparameter.?' + formatPat, 'stoqs.views.app.showMeasuredParameter',  {}, name='show-measuredparmeter'),
     url(pre + r'api/sampledparameter.?' + formatPat, 'stoqs.views.app.showSampledParameter',  {}, name='show-sampledparmeter'),
-    url(pre + r'api/activityparameterhistogram.?'      
-                                     + formatPat, 'stoqs.views.app.showActivityParameterHistogram',  {}, name='show-aph'),
+    url(pre + r'api/activityparameterhistogram.?' + formatPat, 
+                                                        'stoqs.views.app.showActivityParameterHistogram',  {}, name='show-aph'),
     url(pre + r'api/resourceactivity.?' + formatPat, 'stoqs.views.app.showResourceActivity',  {}, name='show-resourceactivity'),
 
     url(pre + r'sampledatatable.?'   + formatPat, 'stoqs.views.app.showSampleDT',      {}, name='show-sample-datatable'),
     url(pre + r'quicklookplots', 'stoqs.views.app.showQuickLookPlots',  {}, name='show-quicklookplots'),
 
-    # URL For Chander's STOQQManager related views
+    # URL For Chander's STOQSQManager related views
     url(pre + r'query/summary/$', 'stoqs.views.query.queryData', {}, name='stoqs-query-summary'),
     url(pre + r'query/map/$', 'stoqs.views.query.queryMap', {}, name='stoqs-query-map'),
     url(pre + r'query/(?P<fmt>[^/]+)/?$', 'stoqs.views.query.queryData', {}, name='stoqs-query-results'),
@@ -87,7 +87,7 @@ urlpatterns = patterns('',
     
     # Views related to generating permalinks for later use.
     url(pre + 'generate_permalink/', 'stoqs.views.permalinks.generate_permalink', {}, name='generate_permalink'),
-    url(pre + 'permalink/(?P<id>[^/]*)/', 'stoqs.views.permalinks.load_permalink', {}, name='load_permalink'),
+    url(pre + 'permalink/(?P<pid>[^/]*)/', 'stoqs.views.permalinks.load_permalink', {}, name='load_permalink'),
 
     url('^$', 'stoqs.views.management.showCampaigns', {}, name='show-default'),
 

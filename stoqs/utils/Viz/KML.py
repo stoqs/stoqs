@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import numpy
 import logging
@@ -7,8 +6,7 @@ from stoqs import models as m
 from django.conf import settings
 from django.db import DataError
 from django.db.models import Avg
-from django.http import HttpResponse, HttpResponseBadRequest
-import pprint
+from django.http import HttpResponse
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +91,7 @@ class KML(object):
             logger.debug('pName = %s', pName)
     
         if not pName:
-            raise NoDataForKML('parameter__name, parameter__standard_name, nor parameter__id specified')
+            raise ValueError('parameter__name, parameter__standard_name, or parameter__id is not specified')
 
         logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
         logger.debug('self.stride = %d', self.stride)
@@ -147,7 +145,8 @@ class KML(object):
         descr = self.request.get_full_path().replace('&', '&amp;')
         logger.debug(descr)
         try:
-            kml = self.makeKML(self.request.META['dbAlias'], dataHash, pName, folderName, descr, self.request.GET.get('cmin', None), self.request.GET.get('cmax', None))
+            kml = self.makeKML(self.request.META['dbAlias'], dataHash, pName, folderName, descr, 
+                    self.request.GET.get('cmin', None), self.request.GET.get('cmax', None))
         except InvalidLimits as e:
             logger.exception(e)
             return response
@@ -188,16 +187,16 @@ class KML(object):
         else:
             try:
                 clim = climHash[pName]
-            except KeyError as e:
-                logger.warn('Parameter "%s" not in Parameter table in database %s' % (pName, dbAlias))
+            except KeyError:
+                logger.warn('Parameter "%s" not in Parameter table in database %s', pName, dbAlias)
                 logger.warn('Setting clim to (-1, 1)')
                 clim = (-1, 1)
         ##logger.debug('clim = %s', clim)
     
         for k in dataHash.keys():
-            (pointStyleKML, pointKMLHash[k]) = self._buildKMLpoints(k, dataHash[k], clt, clim)
+            (pointStyleKML, pointKMLHash[k]) = self._buildKMLpoints(dataHash[k], clt, clim)
             if self.withLineStringsFlag:
-                (lineStyleKML, lineKMLHash[k]) = self._buildKMLlines(k, dataHash[k], clt, clim)
+                (lineStyleKML, lineKMLHash[k]) = self._buildKMLlines(dataHash[k])
             else:
                 logger.debug('Not drawing LineStrings for platform = %s', k)
 
@@ -243,7 +242,7 @@ class KML(object):
 
         return kml
 
-    def _buildKMLlines(self, plat, data, clt, clim):
+    def _buildKMLlines(self, data):
         '''
         Build KML placemark LineStrings of all the point data in `list`
         Use distinctive line colors for each platform.
@@ -282,13 +281,13 @@ class KML(object):
         lineKml = ''
         lastCoordStr = ''
         for row in data:
-            (dt, lon, lat, depth, parm, datavalue, platform) = row
+            dt, lon, lat, depth, _, _, _ = row
 
             if lat < -90 or lat > 90:
                 # HACK warning: Fix any accidentally swapped lat & lons
-                foo = lon
+                lon2 = lon
                 lon = lat
-                lat = foo
+                lat = lon2
 
             coordStr = "%.6f,%.6f,-%.1f" % (lon, lat, depth)
     
@@ -323,7 +322,7 @@ class KML(object):
 
         return (styleKml, lineKml)
 
-    def _buildKMLpoints(self, plat, data, clt, clim):
+    def _buildKMLpoints(self, data, clt, clim):
         '''
         Build KML Placemarks of all the point data in `list` and use colored styles 
         the same way as is done in the auvctd dorado science data processing.
@@ -373,13 +372,13 @@ class KML(object):
         #
         pointKml = ''
         for row in data:
-            (dt, lon, lat, depth, parm, datavalue, platform) = row
+            dt, lon, lat, depth, _, datavalue, _ = row
     
             if lat < -90 or lat > 90:
                 # HACK Warning: Fix any accidentally swapped lat & lons
-                foo = lon
+                lon2 = lon
                 lon = lat
-                lat = foo
+                lat = lon2
 
             coordStr = "%.6f, %.6f,-%.1f" % (lon, lat, depth)
 
@@ -391,7 +390,7 @@ class KML(object):
                 clt_index = int(round((float(datavalue) - clim[0]) * ((len(clt) - 1) / float(numpy.diff(clim)))))
             except ZeroDivisionError:
                 raise InvalidLimits('cmin and cmax are the same value')
-            except ValueError as e:
+            except ValueError:
                 # Likely: 'cannot convert float NaN to integer' e.g. for altitude outside of terrain coverage
                 continue
 

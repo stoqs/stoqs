@@ -40,10 +40,10 @@ class InterpolatorWriter(BaseWriter):
         # Check parent directory and create if needed
         dirName = os.path.dirname(out_file)
         try:
-               os.makedirs(dirName)
+            os.makedirs(dirName)
         except OSError as e:
-               if e.errno != errno.EEXIST:
-                      raise
+            if e.errno != errno.EEXIST:
+                raise
 
         # Create the NetCDF file
         self.logger.debug("Creating netCDF file %s", out_file)
@@ -112,13 +112,13 @@ class InterpolatorWriter(BaseWriter):
         # End createSeriesPydap
 
     def createSeries(self, subgroup, name, tname):
-         v = subgroup[name]
-         v_t = subgroup[tname]
-         v_time_epoch = v_t
-         v_time = pd.to_datetime(v_time_epoch[:],unit='s')
-         v_time_series = pd.Series(v[:],index=v_time)
-         return v_time_series
-         # End createSeries
+        v = subgroup[name]
+        v_t = subgroup[tname]
+        v_time_epoch = v_t
+        v_time = pd.to_datetime(v_time_epoch[:],unit='s')
+        v_time_series = pd.Series(v[:],index=v_time)
+        return v_time_series
+        # End createSeries
 
     def initRecordVariable(self, key, units=None):
         # Create record variable to store in nc file
@@ -205,17 +205,16 @@ class InterpolatorWriter(BaseWriter):
             selector = np.where(~pd.isnull(ts.index))
 
             if len(selector) > 2:
-                   start = ts[selector[0]]
-                   end = ts[selector[-1]]
+                start = ts[selector[0]]
+                end = ts[selector[-1]]
 
             # If still can't find a valid time, then raise exception here
             if pd.isnull(start) or pd.isnull(end):
-                   raise Exception('Cannot find a valid time range')
+                raise Exception('Cannot find a valid time range')
             return (start, end)
 
         return(start, end)
-    # End getValidTimeRange
-
+        # End getValidTimeRange
 
     def process(self, url, out_file, parm, interp_key):
         self.df = []
@@ -321,7 +320,7 @@ class InterpolatorWriter(BaseWriter):
         self.write_netcdf(out_file, url)
         self.logger.info('Wrote ' + out_file)
 
-     # End processSingleParm
+        # End processSingleParm
 
     def createCoord(self, coord):
 
@@ -409,7 +408,8 @@ class InterpolatorWriter(BaseWriter):
                         for c in coord:
                             i = self.interpolate(ts, ts_resample.index)
                             self.all_sub_ts[key + '_' + c] = i
-                            self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+                            self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+
+                                                              '_latitude', 'longitude':key+'_longitude'}
 
                         self.logger.info('Found parameter ' + key)
                     except KeyError, e:
@@ -439,7 +439,7 @@ class InterpolatorWriter(BaseWriter):
         self.write_netcdf(out_file, in_file)
         self.logger.info('Wrote ' + out_file)
 
-         # End processNc4
+        # End processNc4
 
 
     def processResampleNc4File(self, in_file, out_file, parm, resampleFreq, rad_to_deg):
@@ -549,8 +549,7 @@ class InterpolatorWriter(BaseWriter):
         self.write_netcdf(out_file, in_file)
         self.logger.info('Wrote ' + out_file)
 
-     # End processNc4
-
+        # End processResampleNc4File
 
     def processResample(self, url, out_file, parm, interpFreq, resampleFreq):
         esec_list = []
@@ -573,19 +572,19 @@ class InterpolatorWriter(BaseWriter):
         # Create pandas time series and get sampling metric for each
         for key, value in parm.items():
             try:
-                   p_ts = self.createSeriesPydap(key)
+                p_ts = self.createSeriesPydap(key)
             except KeyError, e:
-                   p_ts = pd.Series()
-                   self.logger.info('Key error on ' + key)
-                   raise e
+                p_ts = pd.Series()
+                self.logger.info('Key error on ' + key)
+                raise e
 
             all_ts[key] = p_ts
             try:
-                   (start,end) = self.getValidTimeRange(p_ts)
-                   start_times.append(start)
-                   end_times.append(end)
-            except:
-                   self.logger.info('Start/end ' + parm + ' time range invalid')
+                (start,end) = self.getValidTimeRange(p_ts)
+                start_times.append(start)
+                end_times.append(end)
+            except Exception:
+                self.logger.info('Start/end ' + parm + ' time range invalid')
 
         # the full range should span all the time series data to store
         start_time = min(start_times)
@@ -600,44 +599,44 @@ class InterpolatorWriter(BaseWriter):
         for key, value in all_ts.items():
             if not value.empty :
 
-                   # swap byte order and create a new series
-                   values = value
-                   newvalues = values.byteswap().newbyteorder()
-                   pr = pd.Series(newvalues, index=value.index)
+                # swap byte order and create a new series
+                values = value
+                newvalues = values.byteswap().newbyteorder()
+                pr = pd.Series(newvalues, index=value.index)
 
-                   # reindex to the full range that covers all data
-                   # forward fill
-                   pr.reindex(index = full_range, method='ffill')
+                # reindex to the full range that covers all data
+                # forward fill
+                pr.reindex(index = full_range, method='ffill')
 
-                   # interpolate onto regular time scale
-                   i = self.interpolate(pr, ts)
-                   try:
-                       isub = i.resample(resampleFreq)[:]
+                # interpolate onto regular time scale
+                i = self.interpolate(pr, ts)
+                try:
+                    isub = i.resample(resampleFreq)[:]
 
-                       # plotting for debugging
-                       '''fig, axes = plt.subplots(4)
-                       plt.legend(loc='best')
-                       axes[0].set_title('raw ' + self.parm[j] + ' data')
-                       p.plot(ax=axes[0],color='r')
-                       axes[1].set_title('reindexed')
-                       pr.plot(ax=axes[1],color='g')
-                       axes[2].set_title('interpolated')
-                       i.plot(ax=axes[2],color='b')
-                       axes[3].set_title('resampled')
-                       isub.plot(ax=axes[3],color='y')
-                       plt.show()'''
-                   except IndexError as e:
-                       self.logger.error(e)
-                       raise e
-                   self.all_sub_ts[key] = isub
+                    # plotting for debugging
+                    '''fig, axes = plt.subplots(4)
+                    plt.legend(loc='best')
+                    axes[0].set_title('raw ' + self.parm[j] + ' data')
+                    p.plot(ax=axes[0],color='r')
+                    axes[1].set_title('reindexed')
+                    pr.plot(ax=axes[1],color='g')
+                    axes[2].set_title('interpolated')
+                    i.plot(ax=axes[2],color='b')
+                    axes[3].set_title('resampled')
+                    isub.plot(ax=axes[3],color='y')
+                    plt.show()'''
+                except IndexError as e:
+                    self.logger.error(e)
+                    raise e
+                self.all_sub_ts[key] = isub
             else:
-                   self.all_sub_ts[key] = pd.Series()
+                self.all_sub_ts[key] = pd.Series()
 
         # Write data to the file
         self.write_netcdf(out_file, url)
         self.logger.info('Wrote ' + out_file)
 
-     # End processResample
+        # End processResample
 
 if __name__ == '__main__':
 
@@ -672,7 +671,7 @@ if __name__ == '__main__':
 
     # Formulate new filename from the url. Should be the same name as the .nc4 specified in the url
     # with resample appended to indicate it has resampled data and is now in .nc format
-    f = file.rsplit('/',1)[1]
+    f = nc4_file.rsplit('/',1)[1]
     out_file = outDir + '.'.join(f.split('.')[:-1]) + '_' + resample_freq + '.nc'
     pw.processResampleNc4File(nc4_file, out_file, json.loads(parm),resample_freq, rad_to_deg)
 

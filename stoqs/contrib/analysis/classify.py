@@ -1,13 +1,5 @@
 #!/usr/bin/env python
-
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2013, MBARI"
-__license__ = "GPL"
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-__status__ = "Development"
-__doc__ = '''
-
+'''
 Script to execute steps in the classification of measurements including:
 
 1. Labeling specific MeasuredParameters
@@ -15,12 +7,6 @@ Script to execute steps in the classification of measurements including:
 
 Mike McCann
 MBARI 16 June 2014
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@author: __author__
-@status: __status__
-@license: __license__
 '''
 
 import os
@@ -38,16 +24,13 @@ except AttributeError:
     pass
 
 
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 from django.db.models import Q
 from django.db.utils import IntegrityError
-from utils.utils import round_to_n, pearsonr
+from utils.utils import round_to_n
 from textwrap import wrap
-from numpy import polyfit
-from pylab import polyval
 from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource, ResourceResource
 from utils.STOQSQManager import LABEL, DESCRIPTION, COMMANDLINE
 
@@ -87,7 +70,6 @@ class Classifier(BiPlot):
         '''
         Return activity object which MeasuredParameters mpx and mpy belong to
         '''
-        meas = Measurement.objects.using(self.args.database).filter(measuredparameter__id__in=(mpx,mpy)).distinct()
         acts = Activity.objects.using(self.args.database).filter(instantpoint__measurement__measuredparameter__id__in=(mpx,mpy)).distinct()
         if not acts:
             print "acts = %s" % acts
@@ -95,13 +77,13 @@ class Classifier(BiPlot):
         else:
             return acts[0]
 
-    def saveCommand(self, doOption):
+    def saveCommand(self):
         '''
         Save the command executed to a Resource and return it for the doXxxx() method to associate it with the resources it creates
         '''
 
-        rt, created = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
-        r, created = Resource.objects.using(self.args.database).get_or_create(name=COMMANDLINE, value=self.commandline, resourcetype=rt)
+        rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
+        r, _ = Resource.objects.using(self.args.database).get_or_create(name=COMMANDLINE, value=self.commandline, resourcetype=rt)
 
         return r
         
@@ -113,11 +95,11 @@ class Classifier(BiPlot):
         '''
         try:
             # Label
-            rt, created = ResourceType.objects.using(self.args.database).get_or_create(name=typeName, description=typeDescription)
-            r, created = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
+            rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=typeName, description=typeDescription)
+            r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
             # Label's description
-            rdt, created = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
-            rd, created = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=description, resourcetype=rdt)
+            rdt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
+            rd, _ = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=description, resourcetype=rdt)
             rr = ResourceResource(fromresource=r, toresource=rd)
             rr.save(using=self.args.database)
             # Associate with commandlineResource
@@ -134,9 +116,9 @@ class Classifier(BiPlot):
             a = self.getActivity(x_id, y_id)
             mp_x = MeasuredParameter.objects.using(self.args.database).get(pk=x_id)
             mp_y = MeasuredParameter.objects.using(self.args.database).get(pk=y_id)
-            mpr_x, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
+            MeasuredParameterResource.objects.using(self.args.database).get_or_create(
                                 activity=a, measuredparameter=mp_x, resource=r)
-            mpr_y, created = MeasuredParameterResource.objects.using(self.args.database).get_or_create(
+            MeasuredParameterResource.objects.using(self.args.database).get_or_create(
                                 activity=a, measuredparameter=mp_y, resource=r)
 
     def removeLabels(self, labeledGroupName, label=None, description=None, commandline=None):
@@ -164,9 +146,9 @@ class Classifier(BiPlot):
         # Remove Resource associations with Resource (label metadata), make rs list distinct with set() before iterating on the delete()
         if label and description and commandline:
             rrs = ResourceResource.objects.using(self.args.database).filter(
-                                                (Q(fromresource__name=LABEL) & Q(fromresource__value=label))
-                                              & (  (Q(toresource__name=DESCRIPTION) & Q(toresource__value=description))
-                                                 | (Q(toresource__name=COMMANDLINE) & Q(toresource__value=commandline)) ) )
+                                                (Q(fromresource__name=LABEL) & Q(fromresource__value=label)) &
+                                                ((Q(toresource__name=DESCRIPTION) & Q(toresource__value=description)) |
+                                                 (Q(toresource__name=COMMANDLINE) & Q(toresource__value=commandline)) ) )
                                         
             if self.args.verbose > 1:
                 print "  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description)
@@ -188,17 +170,17 @@ class Classifier(BiPlot):
         sdt = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
         edt = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
 
-        commandlineResource = self.saveCommand('createLabels')
+        commandlineResource = self.saveCommand()
 
-        for label, min, max in zip(self.args.labels, self.args.mins, self.args.maxes):
+        for label, dmin, dmax in zip(self.args.labels, self.args.mins, self.args.maxes):
             # Multiple discriminators are possible...
-            pvDict = {self.args.discriminator: (min, max)}
+            pvDict = {self.args.discriminator: (dmin, dmax)}
             if self.args.verbose:
                 print "Making label '%s' with discriminator %s" % (label, pvDict)
 
             try:
-                x_ids, y_ids, xx, yy, points = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0], 
-                                                               self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
+                x_ids, y_ids, _, _, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0], 
+                                                        self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
             except NoPPDataException, e:
                 print e
 
@@ -285,7 +267,7 @@ class Classifier(BiPlot):
         '''
         # Save pickled mode to the database and relate it to the LABELED data resource
         if self.args.modelBaseName:
-            rt, created = ResourceType.objects.using(self.args.database).get_or_create(name='FittedModel', description='SVC(gamma=2, C=1)')
+            rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name='FittedModel', description='SVC(gamma=2, C=1)')
             labeledResource = Resource.objects.using(self.args.database).filter(resourcetype__name=labeledGroupName)[0]
             modelValue = pickle.dumps(clf).encode("zip").encode("base64").strip()
             modelResource = Resource(name=self.args.modelBaseName, value=modelValue, resourcetype=rt)

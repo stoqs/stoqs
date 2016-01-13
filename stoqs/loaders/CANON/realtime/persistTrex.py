@@ -10,6 +10,7 @@ import traceback
 import trex_sensor_pb2
 import pyproj
 import logging
+#TODO: Rework if needed for django >= 1.8
 os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))  # settings.py is three dirs up
@@ -17,16 +18,16 @@ from django.conf import settings
 from stoqs import models as m
 from django.db.utils import IntegrityError
 from django.contrib.gis.geos import LineString
-from coards import to_udunits, from_udunits
+from coards import to_udunits
 
 logger = logging.getLogger('__main__')
 logger.setLevel(logging.DEBUG)
 
 
-class InterruptedBySignal:
+class InterruptedBySignal(Exception):
     pass
 
-class Consumer():
+class Consumer(object):
     '''A Consumer "knows" how to connect to a RabbitMQ Virtual host and create a connection to an exchange of
     a specified type, and set up a queue with a specified name and routing key.  Optional flags may be specified
     to persist the messages to a database and to treat the messages as Google Protocol Buffers.
@@ -138,7 +139,7 @@ class Consumer():
         '''Call all of the create_ methods to properly persist this measurement in STOQS'''
 
         try:
-            (parm, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name = var)
+            parm, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(name = var)
         except Exception, e:
             print "ERROR: *** Could not get_or_create name = '%s'.  See details below. ***\n" % var
             print e
@@ -153,7 +154,7 @@ class Consumer():
         try:
             mp.save(using=self.dbAlias)
         except IntegrityError as e:
-            logger.error("WARNING: Probably a duplicate measurement that could not be added to the DB.  Skipping it.\n", var)
+            logger.error("WARNING: Probably a duplicate measurement that could not be added to the DB.  Skipping it.\n")
             logger.error(e)
         else:
             print "saved %s = %f at %s, %f, %f, %f" % (parm, value, dt, depth, lat, lon)
@@ -166,7 +167,7 @@ class Consumer():
         sample = self.createSample(dt, depth, lat, lon, value)
 
         if sample:
-            print "saved sample = %s" % (sample,)
+            print "saved sample = %s of var = %s" % (sample, var)
 
         return 
 
@@ -176,15 +177,15 @@ class Consumer():
         Before creating the Activity we also need to get_or_create a Platform and PlatformType.
         '''
 
-        (platformType, created) = m.PlatformType.objects.using(self.dbAlias).get_or_create(name = platformType)
+        platformType, _ = m.PlatformType.objects.using(self.dbAlias).get_or_create(name = platformType)
         self.platformType = platformType
 
-        (platform, created) = m.Platform.objects.using(self.dbAlias).get_or_create(name = platformName, platformtype = platformType, color = 'ffff00')
+        platform, _ = m.Platform.objects.using(self.dbAlias).get_or_create(name = platformName, platformtype = platformType, color = 'ffff00')
         self.platform = platform
 
-        (activityType, created) = m.ActivityType.objects.using(self.dbAlias).get_or_create(name = activityType)
+        activityType, _ = m.ActivityType.objects.using(self.dbAlias).get_or_create(name = activityType)
         self.activityType = activityType
-        (activity, created) = m.Activity.objects.using(self.dbAlias).get_or_create(name = activityName,
+        activity, _ = m.Activity.objects.using(self.dbAlias).get_or_create(name = activityName,
                     platform = self.platform,
                     startdate = datetime.datetime(2011,4,20,0,0,0),     # Hard-coded start & end times
                     enddate = datetime.datetime(2011,4,28,0,0,0))       # For April 2011 CANON activities
@@ -195,7 +196,7 @@ class Consumer():
 
         self.activity.save(using=self.dbAlias)
 
-    def createMeasurement(self, time, depth, lat, long):
+    def createMeasurement(self, time, depth, lat, lon):
         '''
         Create and return a measurement object in the database.  The measurement object
         is created by first creating an instance of stoqs.models.Instantpoint using the activity, 
@@ -204,17 +205,17 @@ class Consumer():
         @param time: A valid datetime instance of a datetime object used to create the Instantpoint
         @param depth: The depth for the measurement
         @param lat: The latitude (degrees, assumed WGS84) for the measurement
-        @param long: The longitude (degrees, assumed WGS84) for the measurement
+        @param lon: The longitude (degrees, assumed WGS84) for the measurement
         @return: An instance of stoqs.models.Measurement
         '''
         (ip, created) = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity = self.activity, timevalue = time)
 
-        point = 'POINT(%s %s)' % (repr(long), repr(lat))
+        point = 'POINT(%s %s)' % (repr(lon), repr(lat))
         (measurement, created) = m.Measurement.objects.using(self.dbAlias).get_or_create(instantpoint = ip, depth = repr(depth), geom = point)
 
         return measurement
 
-    def createSample(self, time, depth, lat, long, value):
+    def createSample(self, time, depth, lat, lon, value):
         '''
         Create and return a sample object in the database.  The sample object
         is created by first creating an instance of stoqs.models.Instantpoint using the activity, 
@@ -223,13 +224,13 @@ class Consumer():
         @param time: A valid datetime instance of a datetime object used to create the Instantpoint
         @param depth: The depth for the sample
         @param lat: The latitude (degrees, assumed WGS84) for the sample
-        @param long: The longitude (degrees, assumed WGS84) for the sample
+        @param lon: The longitude (degrees, assumed WGS84) for the sample
         @return: An instance of stoqs.models.Sample
         '''
-        (ip, created) = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity = self.activity, timevalue = time)
+        ip, _ = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity = self.activity, timevalue = time)
 
-        point = 'POINT(%s %s)' % (repr(long), repr(lat))
-        (sample, created) = m.Sample.objects.using(self.dbAlias).get_or_create(instantpoint = ip, depth = repr(depth), geom = point, name = value)
+        point = 'POINT(%s %s)' % (repr(lon), repr(lat))
+        sample, _ = m.Sample.objects.using(self.dbAlias).get_or_create(instantpoint = ip, depth = repr(depth), geom = point, name = value)
 
         return sample
 
@@ -261,14 +262,16 @@ class Consumer():
         for meas in measurements:
             ems = 1000 * to_udunits(meas.instantpoint.timevalue, 'seconds since 1970-01-01')
             d = float(meas.depth)
-            m.SimpleDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = meas.instantpoint, depth = d, epochmilliseconds = ems)
+            m.SimpleDepthTime.objects.using(self.dbAlias).create(activity = self.activity, instantpoint = meas.instantpoint, 
+                    depth = d, epochmilliseconds = ems)
 
         logger.info('Inserted %d values into SimpleDepthTime', len(measurements))
 
     def signalHandler(self, signum, frame):
         '''Throw exceptoin so as to gracefully close the channel if the process is killed.'''
-        print "Signal %d received while at %s in %s line %s" % (signum, frame.f_code.co_name, frame.f_code.co_filename, frame.f_lineno,)
-        raise InterruptedBySignal
+        error = "Signal %d received while at %s in %s line %s" % (signum, frame.f_code.co_name, frame.f_code.co_filename, frame.f_lineno,)
+        print error
+        raise InterruptedBySignal(error)
 
 
     def setupQueue(self):
@@ -335,7 +338,7 @@ class Consumer():
         print "RabbitMQ connection closed."
 
 
-def deleteTestMessages(platformName, platformType, activityName, activityType, dbAlias):
+def deleteTestMessages(activityName, activityType, dbAlias):
     '''For testing query stoqs for Measurements that match the activity and delete them from the data base.
     '''
 
@@ -405,14 +408,14 @@ Examples:
             parser.error("Fanout exchange type needs --en and --qn.\n")
     elif opts.testPersist:
         # Test parsing a saved Google Protobuf message
-        class Message:
+        class Message(object):
             def __init__(self, body):
                 self.body = body
 
         ##file = 'test_trex_pb_msg_300025010809770_002294.sbd'
-        file = 'test_gulper_msg_300025010809770_002324.sbd'
-        fh = open(file)
-        deleteTestMessages('trex', 'auv', 'test_unassigned', 'test_AUV_mission', opts.testPersist)
+        test_file = 'test_gulper_msg_300025010809770_002324.sbd'
+        fh = open(test_file)
+        deleteTestMessages('test_unassigned', 'test_AUV_mission', opts.testPersist)
         c = Consumer(dbAlias = opts.testPersist)
         c.createActivity('trex', 'auv', 'test_unassigned', 'test_AUV_mission')
         c.persistMessage(Message(fh.read()))

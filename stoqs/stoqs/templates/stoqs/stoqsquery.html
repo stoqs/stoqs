@@ -4334,8 +4334,8 @@
                     alert('Permalink loading failed: ' + err + ' (Perhaps the permalink_id value is invalid?)');
                 }
             } else {
-                var url='{% url 'stoqs:load_permalink' dbAlias=request.META.dbAlias id='#REPLACE#' %}';
-                url=url.replace('#REPLACE#', permalink_id);
+                var url='{% url 'stoqs:load_permalink' dbAlias=request.META.dbAlias pid='REPLACE' %}';
+                url=url.replace('REPLACE', permalink_id);
                 console.log(url);
                 $.get(url).
                 done(function (parameters, response, jqXHR) {

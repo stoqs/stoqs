@@ -1,67 +1,49 @@
 #!/usr/bin/env python
 __author__    = 'D.Cline'
-__version__ = '$Revision: $'.split()[1]
-__date__ = '$Date: $'.split()[1]
-__copyright__ = '2011'
 __license__   = 'GPL v3'
 __contact__   = 'dcline at mbari.org'
 
-__doc__ = '''
-
+'''
 Creates still and animated contour and dot plots plots from MBARI LRAUV data
 
 D Cline
 MBARI 25 September 2015
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@status: production
-@license: GPL
 '''
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
+os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))  # settings.py is one dir up
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from django.contrib.gis.geos import LineString, MultiLineString, Point
+from django.contrib.gis.geos import LineString, Point
 import numpy as np
-import re
 import time
 import pytz
 import logging
 import signal
-import datetime
 import ephem
 import bisect
 import tempfile
 import shutil
 
-from django.contrib.gis.geos import fromstr, MultiPoint
+from django.contrib.gis.geos import MultiPoint
 from django.db.models import Max, Min
 from django.conf import settings
-from collections import OrderedDict
 from collections import defaultdict
-from django.db import connections
 from datetime import datetime, timedelta, tzinfo
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from matplotlib.dates import DateFormatter
-from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+from matplotlib.ticker import FormatStrFormatter
 #from matplotlib.mlab import griddata
-from numpy import arange
 from scipy.interpolate import griddata
-from scipy.spatial import ckdtree
-from scipy.interpolate import Rbf
 from mpl_toolkits.basemap import Basemap
-from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, SimpleDepthTime, MeasuredParameter, Measurement, Parameter
+from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, MeasuredParameter, Measurement, Parameter
 from utils.utils import percentile
-from matplotlib.transforms import Bbox, TransformedBbox,  blended_transform_factory
+from matplotlib.transforms import Bbox, TransformedBbox
 from matplotlib import dates
-from mpl_toolkits.axes_grid1.inset_locator import BboxPatch, BboxConnector, BboxConnectorPatch
+from mpl_toolkits.axes_grid1.inset_locator import BboxPatch, BboxConnectorPatch
 
 # Set up global variables for logging output to STDOUT
 logger = logging.getLogger('monitorTethysHotSpotLogger')
@@ -116,17 +98,16 @@ class Contour(object):
         # Get the 1 & 99 percentiles of the data for setting limits on the scatter plot
         apQS = ActivityParameter.objects.using(self.database).filter(activity__platform__name=self.platformName)
         pQS = apQS.filter(parameter__name=parm).aggregate(Min('p010'), Max('p990'))
-        min, max = (pQS['p010__min'], pQS['p990__max'])
+        pmin, pmax = (pQS['p010__min'], pQS['p990__max'])
 
         # Get units for each parameter
         prQS = ParameterResource.objects.using(self.database).filter(resource__name='units').values_list('resource__value')
         try:
             units = prQS.filter(parameter__name=parm)[0][0]
-        except IndexError as e:
+        except IndexError:
             raise Exception("Unable to get units for parameter name %s from platform %s" % (parm, self.platformName))
-            sys.exit(-1)
 
-        return min, max, units
+        return pmin, pmax, units
 
     def getTimeSeriesData(self, start_datetime, end_datetime):
         '''
@@ -151,7 +132,6 @@ class Contour(object):
                         apQS = apQS.filter(activity__platform__name=pln)
                         apQS = apQS.filter(parameter__name=pname)
                         pQS = apQS.aggregate(Min('p010'), Max('p990'))
-                        min, max = (pQS['p010__min'], pQS['p990__max'])
                         data_dict[pln+pname]['p010'] = pQS['p010__min']
                         data_dict[pln+pname]['p990'] = pQS['p990__max']
                         units=apQS.values('parameter__units')
@@ -163,7 +143,8 @@ class Contour(object):
                         qs = qs.filter(parameter__name=pname)
                         qs = qs.filter(measurement__instantpoint__activity__platform__name=pln)
                         sdt_count = qs.values_list('measurement__instantpoint__simpledepthtime__depth').count()
-                        qs = qs.values('measurement__instantpoint__timevalue', 'measurement__depth', 'measurement__geom', 'datavalue').order_by('measurement__instantpoint__timevalue')
+                        qs = qs.values('measurement__instantpoint__timevalue', 'measurement__depth', 'measurement__geom', 'datavalue'
+                                       ).order_by('measurement__instantpoint__timevalue')
                         data_dict[pln+pname]['sdt_count'] = sdt_count
 
                         # only plot data with more than one point
@@ -192,15 +173,11 @@ class Contour(object):
                             # dates are in reverse order - newest first
                             start_dt.append(data_dict[pln+pname]['datetime'][-1])
                             end_dt.append(data_dict[pln+pname]['datetime'][0])
-                            logger.debug('Loaded data for parameter %s' % pname)
+                            logger.debug('Loaded data for parameter %s', pname)
                             parameters_valid.append(pname)
 
-                except Exception, e:
-                    logger.error('%s not available in database for the dates %s %s' %(pname, start_datetime, end_datetime))
-                    continue
-
-                except Exception, e:
-                    logger.error('%s not available in database for the dates %s %s' %(pname, start_datetime, end_datetime))
+                except Exception:
+                    logger.error('%s not available in database for the dates %s %s', pname, start_datetime, end_datetime)
                     continue
 
                 if len(parameters_valid) > 0:
@@ -215,7 +192,7 @@ class Contour(object):
             data_start_dt = start_datetime
             data_end_dt = end_datetime
 
-        if not self.plotDotParmName in self.plotGroupValid:
+        if self.plotDotParmName not in self.plotGroupValid:
             # if the dot plot parameter name is not in the valid list of parameters found, switch it to
             # something else choosing chlorophyll over another
             matching = [s for s in self.plotGroupValid if "chl" in s]
@@ -238,7 +215,9 @@ class Contour(object):
             qs = qs.filter(measurement__instantpoint__timevalue__lte=end_datetime)
             qs = qs.filter(parameter__name=parm)
             qs = qs.filter(measurement__instantpoint__activity__platform__name=platform)
-            qs = qs.values('measurement__instantpoint__timevalue', 'measurement__geom', 'parameter', 'datavalue', 'measurement__instantpoint__activity__maptrack',  'measurement__instantpoint__activity__name').order_by('measurement__instantpoint__timevalue')
+            qs = qs.values('measurement__instantpoint__timevalue', 'measurement__geom', 'parameter', 'datavalue', 
+                           'measurement__instantpoint__activity__maptrack',  'measurement__instantpoint__activity__name'
+                           ).order_by('measurement__instantpoint__timevalue')
 
             for rs in qs:
                 geom = rs['measurement__geom']
@@ -255,8 +234,8 @@ class Contour(object):
                     activity_names.append(activity_name)
                     maptracks.append(geom)
 
-        except Exception, e:
-            logger.error('%s not available in database for the dates %s %s' %(parm, start_datetime, end_datetime))
+        except Exception:
+            logger.error('%s not available in database for the dates %s %s', parm, start_datetime, end_datetime)
 
         return data, points, maptracks
 
@@ -318,14 +297,14 @@ class Contour(object):
         mint=min(datetimes)
         maxt=max(datetimes)
         numdays = (maxt - mint).days
-        d = [mint + timedelta(days=dt) for dt in xrange(numdays+1)]
+        d = [mint + timedelta(days=dt2) for dt2 in xrange(numdays+1)]
         d.sort()
         sunrise = map(lambda x:dates.date2num(loc.next_rising(sun,start=x).datetime()),d)
         sunset = map(lambda x:dates.date2num(loc.next_setting(sun,start=x).datetime()),d)
 
         result = []
         for st in datetimes:
-              result.append(bisect.bisect(sunrise, dates.date2num(st)) != bisect.bisect(sunset, dates.date2num(st)))
+            result.append(bisect.bisect(sunrise, dates.date2num(st)) != bisect.bisect(sunset, dates.date2num(st)))
 
         if self.scale_factor:
             scale_xdates = [x/self.scale_factor for x in xdates]
@@ -348,7 +327,6 @@ class Contour(object):
         map_gs = gridspec.GridSpecFromSubplotSpec(nrows=1, ncols=1, subplot_spec=outer_gs[0])
         lower_gs = gridspec.GridSpecFromSubplotSpec(nrows=len(self.plotGroupValid), ncols=1, subplot_spec=outer_gs[1])
 
-        STATIC_ROOT = '/var/www/html/stoqs/static'      # Warning: Hard-coded
         clt = self.readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
         self.cm_jetplus = mpl.colors.ListedColormap(np.array(clt))
 
@@ -456,14 +434,14 @@ class Contour(object):
                     z.append(np.NaN)
 
                 if plot_scatter_contour:
-                    cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime,sdt_count)
+                    cs0, _ = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime,sdt_count)
                     cs1 = self.createScatterPlot(title + pn,ax1_plot,x,y,z,rangey,rangez,start_datetime,end_datetime)
                 elif plot_step:
                     cs0 = self.createStepPlot(title + pn,title,ax0_plot,x,z,rangez,start_datetime,end_datetime)
                 elif plot_scatter:
                     cs0 = self.createScatterPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime)
                 else:
-                    cs0, zi = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime,sdt_count)
+                    cs0, _ = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime,sdt_count)
 
                 if plot_scatter_contour:
                     ax1_plot.text(0.95,0.02, name, verticalalignment='bottom',
@@ -492,7 +470,6 @@ class Contour(object):
                         t.set_fontsize(8)
                 else:
                     if plot_step:
-                        xaxis = ax0_colorbar.xaxis
                         ax0_colorbar.xaxis.set_major_locator(plt.NullLocator())
                         ax0_colorbar.yaxis.set_ticks_position('right')
                         for t in ax0_colorbar.yaxis.get_ticklabels():
@@ -551,7 +528,7 @@ class Contour(object):
             lnmax = self.extent[2]
             lndiff = abs(lnmax - lnmin)
             ltdiff = abs(ltmax - ltmin)
-            logger.debug("lon diff %f lat diff %f" %(lndiff, ltdiff))
+            logger.debug("lon diff %f lat diff %f", lndiff, ltdiff)
             mindeg = .02
             paddeg = .01
             if lndiff < mindeg :
@@ -569,12 +546,13 @@ class Contour(object):
             lnmax = -121.73
             e = (lnmin, ltmin, lnmax, ltmax)
 
-        logger.debug('Extent found %f,%f,%f,%f)' % (e[0], e[1],e[2],e[3]))
+        logger.debug('Extent found %f,%f,%f,%f)', e[0], e[1],e[2],e[3])
         # retry up to 5 times to get the basemap
         for i in range(0, 5):
             mp = Basemap(llcrnrlon=e[0], llcrnrlat=e[1], urcrnrlon=e[2], urcrnrlat=e[3], projection='cyl', resolution='l', ax=ax)
             try:
-                ##mp.wmsimage('http://www.gebco.net/data_and_products/gebco_web_services/web_map_service/mapserv?', layers=['GEBCO_08_Grid'])                            # Works, but coarse
+                # Works, but coarse resolution
+                ##mp.wmsimage('http://www.gebco.net/data_and_products/gebco_web_services/web_map_service/mapserv?', layers=['GEBCO_08_Grid'])
                 mp.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
                 mp.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], fontsize=8, linewidth=0)
                 mp.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True], fontsize=8, linewidth=0)
@@ -631,7 +609,7 @@ class Contour(object):
                 markers = ['o','x','d','D','8','1','2','3','4']
                 i = 1
                 for g in self.booleanPlotGroup:
-                    parm = [z.strip() for z in g.split(',')]
+                    parm = [z2.strip() for z2 in g.split(',')]
                     for name in parm:
                         if name in self.plotGroupValid:
                             logger.debug('Plotting boolean plot group parameter %s', name)
@@ -658,7 +636,7 @@ class Contour(object):
         else:
             fname = self.outFilename
 
-        logger.debug('Saving figure %s ' % fname)
+        logger.debug('Saving figure %s', fname)
         fig.savefig(fname,dpi=120)#,transparent=True)
         plt.close()
         self.frame += 1
@@ -666,7 +644,7 @@ class Contour(object):
         logger.debug('Done with contourPlot')
 
     # Register an handler for the timeout
-    def handler(self,signum, frame):
+    def handler(self, signum, frame):
         logger.debug("Exceeded maximum time allowed for gridding!")
         raise Exception("end of time")
 
@@ -732,7 +710,7 @@ class Contour(object):
             contour_flag = False
             scale_factor = 1
         else:
-            logger.warn('self.scale_factor = %f' % scale_factor)
+            logger.warn('self.scale_factor = %f', scale_factor)
             xi = xi / scale_factor
             xg = [xe/scale_factor for xe in x]
             contour_flag = True
@@ -751,10 +729,10 @@ class Contour(object):
             raise Exception('no data')
         if contour_flag:
             try:
-                logger.warn('Gridding data with sdt_count = %d, and y_count = %d' %(sdt_count, y_count))
+                logger.warn('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
                 zi = self.gridData(xg, y, z, xi, yi)
                 signal.alarm(0)
-            except KeyError, e:
+            except KeyError:
                 logger.warn('Got KeyError. Could not grid the data')
                 contour_flag = False
                 scale_factor = 1
@@ -764,10 +742,10 @@ class Contour(object):
                     xi,yi,zi = self.gridDataRbf(tmin, tmax, dmin, dmax, xg, y, z)
                     contour_flag = True
                     signal.alarm(0)
-                except Exception, e:
-                    logger.warn('Could not grid the data' +  str(e))
-            except Exception, e:
-                logger.warn('Could not grid the data' +  str(e))
+                except Exception as e:
+                    logger.warn('Could not grid the data' + str(e))
+            except Exception as e:
+                logger.warn('Could not grid the data' + str(e))
                 contour_flag = False
                 try:
                     # use RBF
@@ -775,8 +753,8 @@ class Contour(object):
                     xi,yi,zi  = self.gridDataRbf(tmin, tmax, dmin, dmax, xg, y, z)
                     contour_flag = True
                     signal.alarm(0)
-                except Exception, e:
-                    logger.warn('Could not grid the data' +  str(e))
+                except Exception as e:
+                    logger.warn('Could not grid the data' + str(e))
 
         try:
             if scale_factor > 1 and contour_flag:
@@ -814,7 +792,6 @@ class Contour(object):
     def createScatterPlot(self,title,ax,x,y,z,rangey,rangez,startTime,endTime):
         tmin = time.mktime(startTime.timetuple())
         tmax = time.mktime(endTime.timetuple())
-        nlevels = 255     # Number of color filled contour levels
         zmin = rangez[0]
         zmax = rangez[1]
         dmin = rangey[0]
@@ -921,8 +898,6 @@ class Contour(object):
                     start_datetime = end_datetime - overlap_window
                     end_datetime = start_datetime + zoom_window
 
-                i = 0
-
                 cmd = "convert -loop 1 -delay 250 %s/frame*.png %s" % (self.dirpath,self.outFilename)
                 logger.debug(cmd)
                 os.system(cmd)
@@ -942,3 +917,4 @@ class Contour(object):
                     self.createPlot(data_start, data_end)
             except Exception, e:
                 logger.error(e)
+
