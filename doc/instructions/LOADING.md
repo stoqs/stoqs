@@ -117,10 +117,15 @@ prerequisites:
       you get error messages that those files are not found you will need to copy them to
       your computer.  (There is Issue #145 which suggests establishing a mechanism for 
       loading these data via the web.)
-    - To provide read-only access to your database  grant everyone select privileges:
+    - To provide read-only access to your database create an 'everyone' role and grant everyone
+      select privileges on specific databases:
 
+            CREATE ROLE everyone login password 'guest';
             \c stoqs_september2012_t
             grant select on all tables in schema public to everyone;
+
+      You may also use the --grant_everyone_select option of the load.py script to grant this
+      permission to all of your databases.
 
     - You can use the stoqs/loaders/load.py script automate the creation and migration 
       of databases on the Postgresql server.  You will need to configure a stoqs/campaigns.py 

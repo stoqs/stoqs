@@ -465,7 +465,9 @@ A typical workflow to build up a production server is:
 10. Add provenance information to the database, with setting for non-default MEDIA_ROOT:
     export MEDIA_ROOT=/usr/share/nginx/media
     {load} --updateprovenance -v 
-11. After a final check announce the availability of these databases
+11. Give the 'everyone' role SELECT privileges on all databases:
+    {load} --grant_everyone_select -v 
+12. After a final check announce the availability of these databases
 
 To get any stdout/stderr output you must use -v, the default is no output.
 ''').format(**{'load': sys.argv[0], 'user': os.environ['USER']}),
