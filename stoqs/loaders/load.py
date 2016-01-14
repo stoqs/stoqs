@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2015, MBARI"
-__license__ = "GPL"
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-__status__ = "Development"
-__doc__ = '''
-
+'''
 Master load script that is driven by a dictionary of campaigns and the 
 commands that load them. This dictionary also drives the campaigns
 served by a deployment of stoqs via the stoqs/campaigns.py file.
@@ -29,6 +22,7 @@ import logging
 import datetime
 import importlib
 import platform
+import subprocess
 from git import Repo
 from shutil import copyfile
 from django.conf import settings
@@ -39,12 +33,11 @@ from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, Mea
                          SampledParameter, Activity, Parameter, Platform
 
 def tail(f, n):
-    stdin,stdout = os.popen2("tail -" + str(n) + " " + f)
-    stdin.close()
-    lines = stdout.readlines()
-    stdout.close()
-
+    process = subprocess.Popen(['tail', '-' + str(n), f], stdout=subprocess.PIPE)
+    lines, _ = process.communicate()
+    
     return lines
+
 
 class DatabaseCreationError(Exception):
     pass
@@ -54,7 +47,7 @@ class DatabaseLoadError(Exception):
     pass
 
 
-class Loader():
+class Loader(object):
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -119,9 +112,9 @@ class Loader():
             else:
                 try:
                     # Inserted after the log_file has been written with --updateprovenance
-                    prov['real_exection_time'] = tail(log_file, 3)[0].split()[1]
-                    prov['user_exection_time'] = tail(log_file, 3)[1].split()[1]
-                    prov['sys_exection_time'] = tail(log_file, 3)[2].split()[1]
+                    prov['real_exection_time'] = tail(log_file, 3).split('\n')[0].split('\t')[1]
+                    prov['user_exection_time'] = tail(log_file, 3).split('\n')[1].split('\t')[1]
+                    prov['sys_exection_time'] = tail(log_file, 3).split('\n')[2].split('\t')[1]
                 except IndexError:
                     self.logger.warn('No execution time information in %s', log_file)
 
@@ -159,8 +152,10 @@ class Loader():
         return log_file
 
     def _has_no_t_option(self, db, load_command):
-        return ((db.endswith('_o') and '-o' in load_command) or 'ROVCTD' in load_command
-               or load_command.endswith('.sh') or '&&' in load_command)
+        return ((db.endswith('_o') and '-o' in load_command) or 
+                'ROVCTD' in load_command or
+                load_command.endswith('.sh') or 
+                '&&' in load_command)
 
     def checks(self):
         # That stoqs/campaigns.py file can be loaded
@@ -240,7 +235,7 @@ local   all             all                                     peer
         '''
         self.logger.debug('Recording provenance for %s using log_file = %s', db, log_file)
         try:
-            rt,created = ResourceType.objects.using(db).get_or_create( name='provenance', 
+            rt, _ = ResourceType.objects.using(db).get_or_create( name='provenance', 
                     description='Information about the source of data')
         except (ConnectionDoesNotExist, OperationalError, ProgrammingError) as e:
             self.logger.warn('Could not open database "%s" for updating provenance.', db)
@@ -268,9 +263,9 @@ local   all             all                                     peer
 
         self.logger.info('Database %s', db)
         for name,value in self._provenance_dict(db, load_command, log_file).iteritems():
-            r,created = Resource.objects.using(db).get_or_create(
+            r, _ = Resource.objects.using(db).get_or_create(
                             uristring='', name=name, value=value, resourcetype=rt)
-            cr,created = CampaignResource.objects.using(db).get_or_create(
+            CampaignResource.objects.using(db).get_or_create(
                             campaign=c, resource=r)
             self.logger.info('Resource uristring="%s", name="%s", value="%s"', '', name, value)
 
@@ -295,6 +290,27 @@ local   all             all                                     peer
             except (ObjectDoesNotExist, DatabaseLoadError) as e:
                 self.logger.warn('Could not record provenance in database %s', db)
                 self.logger.warn(e)
+
+    def grant_everyone_select(self):
+        campaigns = importlib.import_module(self.args.campaigns)
+        for db,load_command in campaigns.campaigns.iteritems():
+            if self.args.db:
+                if db not in self.args.db:
+                    continue
+
+            if self.args.test:
+                if self._has_no_t_option(db, load_command):
+                    continue
+                
+                db += '_t'
+
+            command = 'psql -p {port} -c \"GRANT SELECT ON ALL TABLES IN SCHEMA public TO everyone;\" -d {db} -U postgres'
+            grant = command.format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
+
+            self.logger.info('Granting SELECT to everyone on database %s', db)
+            self.logger.debug('grant = %s', grant)
+            ret = os.system(grant)
+            self.logger.debug('ret = %s', ret)
                 
     def removetest(self):
         self.logger.info('Removing test databases from sever running on port %s', 
@@ -317,7 +333,7 @@ local   all             all                                     peer
             ret = os.system(dropdb)
             self.logger.debug('ret = %s', ret)
             if ret != 0:
-                self.logger.warn(('Failed to drop {}').format(db))
+                self.logger.warn('Failed to drop %s', db)
 
     def list(self):
         stoqs_campaigns = []
@@ -449,7 +465,9 @@ A typical workflow to build up a production server is:
 10. Add provenance information to the database, with setting for non-default MEDIA_ROOT:
     export MEDIA_ROOT=/usr/share/nginx/media
     {load} --updateprovenance -v 
-11. After a final check announce the availability of these databases
+11. Give the 'everyone' role SELECT privileges on all databases:
+    {load} --grant_everyone_select -v 
+12. After a final check announce the availability of these databases
 
 To get any stdout/stderr output you must use -v, the default is no output.
 ''').format(**{'load': sys.argv[0], 'user': os.environ['USER']}),
@@ -457,14 +475,19 @@ To get any stdout/stderr output you must use -v, the default is no output.
                                              
         parser.add_argument('--campaigns', action='store', help='Module containing campaigns dictionary (must also be in campaigns.py)', default='campaigns')
 
-        parser.add_argument('--db', action='store', help='Specify databases from CAMPAIGNS to load (do not append "_t", instead use --test for test databases)', nargs='*')
+        parser.add_argument('--db', action='store', help=('Specify databases from CAMPAIGNS to load'
+                                                          ' (do not append "_t", instead use --test'
+                                                          ' for test databases)'), nargs='*')
         parser.add_argument('--test', action='store_true', help='Load test databases using -t option of loaders.LoadScript')
-        parser.add_argument('--clobber', action='store_true', help='Drop databases before creating and loading them. Need to confirm dropping production databases.')
+        parser.add_argument('--clobber', action='store_true', help=('Drop databases before creating and loading them.'
+                                                                   ' Need to confirm dropping production databases.'))
         parser.add_argument('--background', action='store_true', help='Execute each load in the background to parallel process multiple loads')
         parser.add_argument('--removetest', action='store_true', help='Drop all test databases; the --db option limits the dropping to those in the list')
         parser.add_argument('--list', action='store_true', help='List the databases that are in --campaigns')
         parser.add_argument('--email', action='store', help='Address to send mail to when the load finishes')
-        parser.add_argument('--updateprovenance', action='store_true', help='Use after background jobs finish to copy loadlogs and update provenance information')
+        parser.add_argument('--updateprovenance', action='store_true', help=('Use after background jobs finish to copy'
+                                                                            ' loadlogs and update provenance information'))
+        parser.add_argument('--grant_everyone_select', action='store_true', help='Grant everyone role select privileges on all relations')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
@@ -489,5 +512,7 @@ if __name__ == '__main__':
         l.list()
     elif l.args.updateprovenance:
         l.updateprovenance()
+    elif l.args.grant_everyone_select:
+        l.grant_everyone_select()
     else:
         l.load()
