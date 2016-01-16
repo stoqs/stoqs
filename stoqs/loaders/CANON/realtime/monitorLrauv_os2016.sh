@@ -6,11 +6,11 @@ post='--post'
 #post=''
 debug=''
 #debug='--debug'
-export SLACKTOKEN='xoxp-4525206644-4646992431-5036039107-714865'
+export SLACKTOKEN=${SLACKTOCKEN}
 database='stoqs_os2016'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
-#declare -a searchstr=("/realtime/sbdlogs/2016/201601/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
-declare -a searchstr=("/realtime/cell-logs/.*Normal.nc4$")
+declare -a searchstr=("/realtime/sbdlogs/2016/201601/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
+#declare -a searchstr=("/realtime/cell-logs/.*Normal.nc4$")
 #declare -a platforms=("tethys" "makai" "daphne")
 declare -a platforms=("tethys") 
 
