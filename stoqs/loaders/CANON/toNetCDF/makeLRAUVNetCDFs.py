@@ -16,6 +16,7 @@ from coards import to_udunits, from_udunits
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
 from datetime import datetime, timedelta
+from pydap.client import open_url
 
 # Set up global variables for logging output to STDOUT
 logger = logging.getLogger('makeLRAUVNetCDFS')
@@ -129,8 +130,7 @@ def getNcStartEnd(urlNcDap, timeAxisName):
         logger.warn(e)
         raise ServerError("Can't read %s time axis from %s" % (timeAxisName, urlNcDap))
 
-    if timeAxisUnits == 'seconds since 1970-01-01T00:00:00Z' or timeAxisUnits == 'seconds since 1970/01/01 00:00:00Z':
-        timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
+    timeAxisUnits = 'seconds since 1970-01-01 00:00:00'    # coards is picky
 
     try:
         startDatetime = from_udunits(df[timeAxisName][0][0], timeAxisUnits)
@@ -231,7 +231,7 @@ if __name__ == '__main__':
 
     for u in all_urls:
         try:
-            startDatetime, endDatetime = getNcStartEnd(u, 'depth_time')
+            startDatetime, endDatetime = getNcStartEnd(u, 'time')
         except Exception as e:
             continue
 
