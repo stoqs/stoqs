@@ -358,6 +358,8 @@ class CampaignResource(models.Model):
         verbose_name_plural = 'Campaign Resource'
         app_label = 'stoqs'
         unique_together = ['campaign', 'resource']
+    def __repr__(self):
+        return "CampaignResource(%s=%s)" % (self.resource.name, self.resource.value)
 
 
 class ActivityResource(models.Model):
