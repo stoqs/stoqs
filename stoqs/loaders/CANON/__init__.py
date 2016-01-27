@@ -127,6 +127,7 @@ class CANONLoader(LoadScript):
         '''
         Tethys specific load functions
         '''
+        pName = 'Tethys'
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + f
@@ -142,12 +143,14 @@ class CANONLoader(LoadScript):
 
             try:
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                          'Tethys', self.colors['tethys'], 'auv', 'AUV mission',
+                                          pName, self.colors['tethys'], 'auv', 'AUV mission',
                                           self.tethys_parms, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
                                           endDatetime=endDatetime, startDatetime=startDatetime)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
+
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName)
 
     def loadDaphne(self, stride=None):
         '''
