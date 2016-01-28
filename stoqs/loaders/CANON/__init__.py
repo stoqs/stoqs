@@ -127,7 +127,7 @@ class CANONLoader(LoadScript):
         '''
         Tethys specific load functions
         '''
-        pName = 'Tethys'
+        pName = 'tethys'
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + f
