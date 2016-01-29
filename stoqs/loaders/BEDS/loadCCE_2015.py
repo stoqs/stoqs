@@ -46,9 +46,9 @@ bl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/beds/CanyonEvents/BED
 bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P', 'PRESS', 'BED_DEPTH']
 
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
-bl.bed_files = [('{}.nc').format(n) for n in range(30200179, 30200297)]
+bl.bed_files = [('{}.nc').format(n) for n in range(30200001, 30200297)]
 
-bl.bed_platforms = ['BED03'] * len(bl.bed_files)
+bl.bed_platforms = ['BED02'] * len(bl.bed_files)
 
 bl.bed_depths = [390] * len(bl.bed_files)
 
