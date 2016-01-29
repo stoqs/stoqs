@@ -160,8 +160,10 @@ for p in platforms:
 # L_662
 # cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.l_662_files = [ 'OS_Glider_L_662_20150813_TS.nc' ]
-# OS_Glider_L_662_20150813_TS.nc most recent deployment
+# cl.l_662_files = [ 'OS_Glider_L_662_20150813_TS.nc' ]
+# OS_Glider_L_662_20150813_TS.nc was previous deployment
+cl.l_662_files = [ 'OS_Glider_L_662_20151124_TS.nc' ]
+#  OS_Glider_L_662_20151124_TS.nc most recent deployment
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
