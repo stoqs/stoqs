@@ -88,6 +88,10 @@ class InvalidSliceRequest(Exception):
     pass
 
 
+class OpendapError(Exception):
+    pass
+
+
 class Base_Loader(STOQS_Loader):
     '''
     A base class for data load operations.  This shouldn't be instantiated directly,
@@ -168,8 +172,10 @@ class Base_Loader(STOQS_Loader):
         try:
             self.ds = open_url(url)
         except (socket.error, pydap.exceptions.ServerError, pydap.exceptions.ClientError):
-            logger.error('Failed in attempt to open_url("%s")', url)
-            raise
+            message = 'Failed in attempt to open_url("%s")', url
+            logger.warn(message)
+            # Give calling routing option of catching and ignoring
+            raise OpendapError(message)
         except Exception:
             logger.error('Failed in attempt to open_url("%s")', url)
             raise
@@ -569,11 +575,12 @@ class Base_Loader(STOQS_Loader):
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d,:,0,0]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride,:,0,0]
                 except ValueError as err:
-                    logger.error('\nGot error "%s" reading data from URL: %s.\n'
+                    message = ('\nGot error "%s" reading data from URL: %s.\n'
                                  'If it is: "string size must be a multiple of element size"'
                                  ' and the URL is a TDS aggregation then the cache files must'
                                  ' be removed and the tomcat hosting TDS restarted.', err, self.url)
-                    sys.exit(1)
+                    logger.error(message)
+                    raise OpendapError(message)
                 except pydap.exceptions.ServerError as e:
                     if self.stride > 1:
                         logger.warn('%s and stride > 1.  Skipping dataset %s', e, self.url)
