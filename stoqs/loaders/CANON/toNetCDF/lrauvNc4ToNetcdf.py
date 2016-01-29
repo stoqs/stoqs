@@ -193,6 +193,12 @@ class InterpolatorWriter(BaseWriter):
             else:
                 rc.units = units
 
+            if key.find('pitch') != -1 or key.find('roll') != -1 or key.find('yaw') != -1 or key.find('angle') != -1 or key.find('rate') != -1:
+                if rc.units.find('rad/s'):
+                    rc.units = 'degree/s'
+                else:
+                    rc.units = 'degree'
+
             return rc
         # End initRecordVariable
 
@@ -506,6 +512,9 @@ class InterpolatorWriter(BaseWriter):
                         ts_resample = ts.resample(resampleFreq, how='mean')[:]
                         i = self.interpolate(ts_resample, t_resample.index)
 
+                        if key.find('pitch') != -1 or key.find('roll') != -1 or key.find('yaw') != -1 or key.find('angle') != -1 or key.find('rate') != -1:
+                            i = i * 180.0 / numpy.pi
+
                         # store for later processing into the netCDF
                         self.all_sub_ts[key] = i
                         self.all_coord[key] = { 'time':'time', 'depth':'depth', 'latitude':'latitude', 'longitude':'longitude'}
@@ -521,7 +530,7 @@ class InterpolatorWriter(BaseWriter):
                         i.plot(ax=axes[2],color='b')
                         plt.show()'''
 
-                        self.logger.info('Found parameter ' + var + ' renaming to ' + key)
+                        self.logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
                     except KeyError, e:
                         self.logger.error(e)
                         continue
