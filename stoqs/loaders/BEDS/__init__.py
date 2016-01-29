@@ -60,13 +60,17 @@ class BEDSLoader(LoadScript):
                             [ a + ' (stride=%d)' % stride for a in self.bed_files], 
                             self.bed_platforms, self.bed_files, self.bed_depths):
             url = self.bed_base + file
-            if featureType == 'trajectory':
-                # To get timeSeries plotting for trajectories (in the Parameter tab of the UI) assign a plotTimeSeriesDepth value of the starting depth in meters.
-                DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
-                                        self.bed_parms, self.dbAlias, stride, plotTimeSeriesDepth=plotTimeSeriesDepth, grdTerrain=self.grdTerrain)
-            elif featureType == 'timeSeries':
-                DAPloaders.runTimeSeriesLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
-                                        self.bed_parms, self.dbAlias, stride)
+            try:
+                if featureType.lower() == 'trajectory':
+                    # To get timeSeries plotting for trajectories (in the Parameter tab of the UI) assign a plotTimeSeriesDepth value of the starting depth in meters.
+                    DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
+                                            self.bed_parms, self.dbAlias, stride, plotTimeSeriesDepth=plotTimeSeriesDepth, grdTerrain=self.grdTerrain)
+                elif featureType.lower() == 'timeseries':
+                    print 'pName = %s' % pName
+                    DAPloaders.runTimeSeriesLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
+                                            self.bed_parms, self.dbAlias, stride)
+            except (DAPloaders.OpendapError, DAPloaders.InvalidSliceRequest):
+                pass
 
             # Leave commented out to indicate how this would be used (X3DOM can't handle old style timestamp routing that we used to do in VRML)
             ##self.addPlaybackResources(x3dplaybackurl, aName)
