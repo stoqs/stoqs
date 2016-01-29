@@ -58,9 +58,9 @@ parms_eng="{
             { \"name\": \"platform_average_current\" , \"rename\":\"health_platform_average_current\" }
             ],
             \"AHRS_sp3003D\": [
-            { \"name\": \"platform_orientation\", \"rename\":\"pose_platform_orientation\" },
-            { \"name\": \"platform_pitch_angle\", \"rename\":\"pose_platform_pitch_angle\" },
-            { \"name\": \"platform_roll_angle\", \"rename\":\"pose_platform_roll_angle\" }
+            { \"name\": \"platform_orientation\", \"rename\":\"yaw\" },
+            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\" },
+            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\" }
             ],
             \"NAL9602\": [
             { \"name\": \"time_fix\" , \"rename\":\"fix_time\" },
