@@ -243,18 +243,14 @@ cl.wfpctd_files = [
 cl.rcuctd_base = cl.dodsBase + 'CANON/2015_OffSeason/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [
-                 '18815plm01.nc',
-                 '21515plm01.nc',
-                 '23715plm01.nc',
+                 '01316plm01.nc',
                   ]
 
 # PCTD
 cl.rcpctd_base = cl.dodsBase + 'CANON/2015_OffSeason/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [
-                  '18815c01.nc', '18815c02.nc', '18815c03.nc',
-                  '21515c01.nc', '21515c02.nc', '21515c03.nc', 
-                  '23715c01.nc', '23715c02.nc', '23715c03.nc',
+                  '01316c01.nc', '01316c02.nc',
                   ]
 
 #####################################################################
