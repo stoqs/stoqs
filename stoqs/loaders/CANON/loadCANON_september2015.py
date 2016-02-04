@@ -51,8 +51,8 @@ cl = CANONLoader('stoqs_canon_september2015', 'CANON - September-October 2015',
 
 # Set start and end dates for all loads from sources that contain data 
 # beyond the temporal bounds of the campaign
-startdate = datetime.datetime(2015, 9, 8)                 # Fixed start Thursday Sep 17 2015 per F. Chavez
-enddate = datetime.datetime(2015, 9, 17)                  # Fixed end two days after end of CANON cruises
+startdate = datetime.datetime(2015, 9, 8)                 # Changed to 8th to include pre CANON LRAUV test data
+enddate = datetime.datetime(2015, 10, 16)                 # Fixed end two days after end of CANON cruises
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -115,7 +115,7 @@ def find_urls(base, search_str):
                 print "Error reading mission directory name %s" % ex
 
     except BaseException:
-        print "Skipping %s (error parsing the XML XML)" % url
+        print "Skipping %s (error parsing the XML )" % url
 
     return urls
 
