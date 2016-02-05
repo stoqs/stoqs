@@ -65,7 +65,7 @@ then
     cd setuptools-1.4.2
     /usr/local/bin/python2.7 setup.py install
     cd ..
-    curl -sS https://raw.githubusercontent.com/pypa/pip/master/contrib/get-pip.py | sudo /usr/local/bin/python2.7 - > /dev/null
+    curl -sS https://bootstrap.pypa.io/get-pip.py | sudo /usr/local/bin/python2.7 - > /dev/null
     /usr/local/bin/pip install virtualenv
 
     yum -y install rabbitmq-server scipy mod_wsgi memcached python-memcached
