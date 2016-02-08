@@ -2,4 +2,4 @@
 ##coverage==3.7.1
 ##python-coveralls==2.4.1
 scikit-learn==0.17
-selenium==2.49.0
+selenium==2.51.1
