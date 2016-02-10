@@ -50,6 +50,8 @@ MEASUREDINSITU = 'Measured in situ'
 
 # Constants for a Resource and ResourceType names - to be also used in utils/Viz
 X3D_MODEL = 'X3D_MODEL'
+X3D_MODEL_NOMINALDEPTH = 'X3D_MODEL_nominaldepth'
+X3D_MODEL_SCALEFACTOR = 'X3D_MODEL_scalefactor'
 X3DPLATFORMMODEL = 'x3dplatformmodel'
 
 if settings.DEBUG:
@@ -248,7 +250,7 @@ class LoadScript(object):
                       activity=activity, resource=resource)
         self.logger.info('Resource uristring=%s', x3dmodelurl)
 
-    def addPlatformResources(self, x3dmodelurl, pName, value='X3D model', nominaldepth=0.0):
+    def addPlatformResources(self, x3dmodelurl, pName, value='X3D model', nominaldepth=0.0, scalefactor=1.0):
         '''Add Resources to Platform.  Used initially for adding X3D model of a platform.
         Can put additional descriptive information in value option, e.g.: "X3D model 
         derived from SolidWorks model of ESP and processed through aopt"
@@ -261,15 +263,22 @@ class LoadScript(object):
         self.logger.debug('Looking in database %s for Platform name = %s', self.dbAlias, pName)
         platform = m.Platform.objects.using(self.dbAlias).get(name=pName)
         
-        r_url, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+        r, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                 uristring=x3dmodelurl, name=X3D_MODEL, value=value, resourcetype=resourceType)
         m.PlatformResource.objects.using(self.dbAlias).get_or_create(
-                platform=platform, resource=r_url)
-        r_nd, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                platform=platform, resource=r)
+
+        r, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                 uristring=x3dmodelurl, 
-                name='X3D_MODEL_nominaldepth', value=nominaldepth, resourcetype=resourceType)
+                name=X3D_MODEL_NOMINALDEPTH, value=nominaldepth, resourcetype=resourceType)
         m.PlatformResource.objects.using(self.dbAlias).get_or_create(
-                platform=platform, resource=r_nd)
+                platform=platform, resource=r)
+
+        r, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                uristring=x3dmodelurl, 
+                name=X3D_MODEL_SCALEFACTOR, value=scalefactor, resourcetype=resourceType)
+        m.PlatformResource.objects.using(self.dbAlias).get_or_create(
+                platform=platform, resource=r)
 
         self.logger.info('Resource uristring=%s', x3dmodelurl)
 

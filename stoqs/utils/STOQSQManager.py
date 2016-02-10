@@ -1418,7 +1418,7 @@ class STOQSQManager(object):
                 orientDict = mppa.platformAnimationDataValuesForX3D(
                                 float(self.request.GET.get('ve', 10)), 
                                 self.request.GET.get('geoorigin', ''), 
-                                scale=1000, speedup=10)
+                                scale=1, speedup=10)
             
         return orientDict
 
