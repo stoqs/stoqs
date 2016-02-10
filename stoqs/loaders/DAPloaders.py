@@ -172,7 +172,7 @@ class Base_Loader(STOQS_Loader):
         try:
             self.ds = open_url(url)
         except (socket.error, pydap.exceptions.ServerError, pydap.exceptions.ClientError):
-            message = 'Failed in attempt to open_url("%s")', url
+            message = 'Failed in attempt to open_url("%s")' % url
             logger.warn(message)
             # Give calling routing option of catching and ignoring
             raise OpendapError(message)
@@ -578,7 +578,7 @@ class Base_Loader(STOQS_Loader):
                     message = ('\nGot error "%s" reading data from URL: %s.\n'
                                  'If it is: "string size must be a multiple of element size"'
                                  ' and the URL is a TDS aggregation then the cache files must'
-                                 ' be removed and the tomcat hosting TDS restarted.', err, self.url)
+                                 ' be removed and the tomcat hosting TDS restarted.' % (err, self.url))
                     logger.error(message)
                     raise OpendapError(message)
                 except pydap.exceptions.ServerError as e:
