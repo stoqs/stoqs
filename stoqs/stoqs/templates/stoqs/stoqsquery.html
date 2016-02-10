@@ -1176,15 +1176,22 @@
 
     function setScale(event) {
         var viewpoint = $('#spatial-3d-x3d')[0].runtime.viewpoint();
-        // Approximate location of platform from set centerOfRotation for the scene
+        // Proxy location of platform - set centerOfRotation for the scene
         var pl = viewpoint._vf.centerOfRotation;
-        var vp = event.position;
+        if ( $.isEmptyObject(event.position) ) {
+            var vp = viewpoint._vf.position;
+        }
+        else {
+            var vp = event.position;
+        }
 
         // Compute distance from viewpoint and set scales of models
-        var f = 1/75.0;
+        // The f factor properly adjusts models to a suitable proportion of the screen
+        var f = 1 / 75.0;
         var d = Math.sqrt(Math.pow((vp.x - pl.x), 2) + Math.pow((vp.y - pl.y), 2) + Math.pow((vp.z - pl.z), 2));
         var scale = d*f + ',' + d*f + ',' + d*f;
 
+        // Set scale attribute for all platforms in the scene
         $.each($('body').data()['platformAnimation'].concat( 
                 $.map($('body').data()['platformModels'], function(v, k) {return k})), function(index, plat) {
             $('#' + plat + '_SCALE').attr('scale', scale);
@@ -2000,6 +2007,7 @@
             $('#spatial-3d-x3d-pause-play').removeClass('icon-play')
             $('#spatial-3d-x3d-pause-play').addClass('icon-pause')
             $('#PLATFORMS_TS').attr('enabled','true');
+            setScale(event);
         }
     });
 
