@@ -33,22 +33,25 @@ except AttributeError:
 
 import DAPloaders
 from loaders import LoadScript
+import matplotlib.pyplot as plt
+from matplotlib.colors import rgb2hex
+import numpy as np
 
 class BEDSLoader(LoadScript):
     '''
     Common routines for loading all BEDS data
     '''
+    num_beds = 5
+    beds_names = [('bed{:02d}').format(n) for n in range(num_beds+1)]
 
-    brownish = {'bed00':       '8c010a',
-                'bed01':       '8c510a',
-                'bed02':       'bf812d',
-                'bed03':       '4f812d',
-             }
-    colors = {  'bed00':       'ff0da0',
-                'bed01':       'ffeda0',
-                'bed02':       'ffeda0',
-                'bed03':       '4feda0',
-             }
+    # See http://matplotlib.org/examples/color/colormaps_reference.html
+    colors = {}
+    reds = plt.cm.Reds
+    for b, c in zip(beds_names, reds(np.arange(0, reds.N, reds.N/num_beds))):
+        colors[b] = rgb2hex(c)[1:]
+        # Duplicate color  for Trajectory 't' version
+        colors[b + 't'] = rgb2hex(c)[1:]
+
 
     def loadBEDS(self, stride=None, featureType='trajectory'):
         '''
@@ -66,16 +69,12 @@ class BEDSLoader(LoadScript):
                     DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
                                             self.bed_parms, self.dbAlias, stride, plotTimeSeriesDepth=plotTimeSeriesDepth, grdTerrain=self.grdTerrain)
                 elif featureType.lower() == 'timeseries':
-                    print 'pName = %s' % pName
                     DAPloaders.runTimeSeriesLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
                                             self.bed_parms, self.dbAlias, stride)
+                self.addPlatformResources('http://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d', pName, scalefactor=10)
             except (DAPloaders.OpendapError, DAPloaders.InvalidSliceRequest):
                 pass
 
-            # Leave commented out to indicate how this would be used (X3DOM can't handle old style timestamp routing that we used to do in VRML)
-            ##self.addPlaybackResources(x3dplaybackurl, aName)
-
-            self.addPlatformResources('http://dods.mbari.org/data/beds/x3d/beds_housing_with_axes.x3d', pName)
 
 if __name__ == '__main__':
     '''
