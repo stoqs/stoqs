@@ -20,7 +20,7 @@ from KML import readCLT
 from stoqs import models
 from utils.utils import pearsonr, round_to_n, EPOCH_STRING
 from loaders.SampleLoaders import SAMPLED, NETTOW, VERTICALNETTOW
-from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
+from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL, X3D_MODEL_SCALEFACTOR
 import seawater.eos80 as sw
 import numpy as np
 from numpy import polyfit
@@ -673,7 +673,9 @@ class PlatformAnimation(object):
         <GeoLocation id="{pName}_LOCATION" DEF="{pName}_LOCATION">
             {geoOriginStr}
             <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
-                <Inline url="{pURL}"></Inline>
+                <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
+                    <Inline url="{pURL}"></Inline>
+                </Transform>
             </Transform>
         </GeoLocation>
         <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}">{geoOriginStr}</GeoPositionInterpolator>       
@@ -687,7 +689,9 @@ class PlatformAnimation(object):
                 <Transform id="{pName}_YROT" DEF="{pName}_YROT">
                     <Transform id="{pName}_ZROT" DEF="{pName}_ZROT">
                         <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
-                            <Inline url="{pURL}"></Inline>
+                            <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
+                                <Inline url="{pURL}"></Inline>
+                            </Transform>
                         </Transform>
                     </Transform>
                 </Transform>
@@ -727,6 +731,18 @@ class PlatformAnimation(object):
                 ).get(platform__name=pName, resource__name=X3D_MODEL,
                         resource__resourcetype__name=X3DPLATFORMMODEL
                 ).resource.uristring
+
+    def getX3DPlatformModelScale(self, pName):
+        # Expect only one X3DPLATFORMMODEL per platform (hence .get())
+        try:
+            factor = float(models.PlatformResource.objects.using(self.request.META['dbAlias']
+                ).get(platform__name=pName, resource__name=X3D_MODEL_SCALEFACTOR,
+                        resource__resourcetype__name=X3DPLATFORMMODEL
+                ).resource.value)
+        except models.PlatformResource.DoesNotExist:
+            factor = 1.0
+
+        return factor
 
     def loadData(self, platform):
         '''Read the data from the database into member variables for construction 
@@ -810,13 +826,15 @@ class PlatformAnimation(object):
                             ) / 1000.0 / speedup
 
                 if xRotValues and yRotValues and zRotValues:
-                    x3dDict[pName] = self.position_orientation_template.format(pName=pName, 
+                    x3dDict[pName] = self.position_orientation_template.format(pName=pName,
+                            plat_scale=self.getX3DPlatformModelScale(pName),
                             pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
                             posValues=points, oKeys=keys[:-1], xRotValues=xRotValues, 
                             yRotValues=yRotValues, zRotValues=zRotValues, scale=scale,
                             geoOriginStr=geoorigin_use)
                 else:
                     x3dDict[pName] = self.position_template.format(pName=pName, 
+                            plat_scale=self.getX3DPlatformModelScale(pName),
                             pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
                             posValues=points, scale=scale, geoOriginStr=geoorigin_use)
 
@@ -827,7 +845,8 @@ class PlatformAnimation(object):
         except Exception as e:
             self.logger.exception(str(e))
 
-        return {'x3d': x3dDict, 'all': all_x3d, 'limits': limits, 'time': times, 'speedup': speedup}
+        return {'x3d': x3dDict, 'all': all_x3d, 'limits': limits, 'time': times, 
+                'speedup': speedup, 'scale': scale}
 
 
 class PPDatabaseException(Exception):
