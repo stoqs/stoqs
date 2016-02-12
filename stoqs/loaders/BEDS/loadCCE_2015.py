@@ -35,35 +35,40 @@ bl = BEDSLoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                )
 
 # Base OPeNDAP server
-bl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/beds/CanyonEvents/BED3/20151001_20160115/'
+bl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/beds/'
 
 # Copied from ProjectLibrary to BEDs SVN working dir for netCDF conversion, and then copied to elvis.
 # See BEDs/BEDs/Visualization/py/makeBEDNetCDF_CCE.sh
 
-##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT', 'PRESS', 'BED_DEPTH']   # For timeSeries
-##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT']
-##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT', 'ROTRATE']
 bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P', 'PRESS', 'BED_DEPTH']
 
+# Several BED files: 30200078 to 3020080
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
-bl.bed_files = [('{}.nc').format(n) for n in range(30200001, 30200297)]
+##bl.bed_files = [('CanyonEvents/BED3/20151001_20160115/{}.nc').format(n) for n in range(30200078, 30200081)]
+##bl.bed_platforms = ['BED03'] * len(bl.bed_files)
+##bl.bed_depths = [201] * len(bl.bed_files)
 
-bl.bed_platforms = ['BED02'] * len(bl.bed_files)
 
-bl.bed_depths = [390] * len(bl.bed_files)
+# The 1 December decimated data event and
+# Just the one BED file as a trajectory going up to the surface, different Platform name
+bl.bed_files = ['CanyonEvents/BED5/20151201/50200024_decimated_trajectory.nc',
+                'CanyonEvents/BED3/20151001_20160115/30200078_trajectory.nc']
+bl.bed_platforms = ['BED05', 'BED03']
+bl.bed_depths = [388, 201]
 
-# Execute the load
+
+# Execute the load for trajectory representation
 bl.process_command_line()
 
 if bl.args.test:
-    bl.loadBEDS(stride=10, featureType='timeseries')
+    bl.loadBEDS(stride=1, featureType='trajectory')
 
 elif bl.args.optimal_stride:
-    bl.loadBEDS(stride=1, featureType='timeseries')
+    bl.loadBEDS(stride=1, featureType='trajectory')
 
 else:
     bl.stride = bl.args.stride
-    bl.loadBEDS(featureType='timeseries')
+    bl.loadBEDS(featureType='trajectory')
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 bl.addTerrainResources()
