@@ -60,9 +60,9 @@ class BEDSLoader(LoadScript):
         '''
         stride = stride or self.stride
         for (aName, pName, file, plotTimeSeriesDepth) in zip(
-                            [ a + ' (stride=%d)' % stride for a in self.bed_files], 
+                            [ a.split('/')[-1] + ' (stride=%d)' % stride for a in self.bed_files], 
                             self.bed_platforms, self.bed_files, self.bed_depths):
-            url = self.bed_base + file
+            url = os.path.join(self.bed_base, file)
             try:
                 if featureType.lower() == 'trajectory':
                     # To get timeSeries plotting for trajectories (in the Parameter tab of the UI) assign a plotTimeSeriesDepth value of the starting depth in meters.
