@@ -1414,11 +1414,16 @@ class STOQSQManager(object):
                 # Use qs_mp_no_parm QuerySet as it contains roll, pitch, and yaw values
                 mppa = PlatformAnimation(platforms_to_animate, self.kwargs, 
                         self.request, self.qs, self.mpq.qs_mp_no_parm)
+                # Hard-code appropriate speedup for different platforms
+                speedup = 10
+                for platform in platforms_to_animate:
+                    if 'BED' in platform.name.upper():
+                        speedup = 1
                 # Default vertical exaggeration is 10x and default geoorigin is empty string
                 orientDict = mppa.platformAnimationDataValuesForX3D(
                                 float(self.request.GET.get('ve', 10)), 
                                 self.request.GET.get('geoorigin', ''), 
-                                scale=1, speedup=10)
+                                scale=1, speedup=speedup)
             
         return orientDict
 
