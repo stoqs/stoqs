@@ -245,6 +245,7 @@
                                                     <div class="span1"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
                                                     <div class="span4"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
                                                     <div class="span3"><span id="spatial-3d-x3d-speedup"></span></div>
+                                                    <div class="span6"><span id="spatial-3d-x3d-message"></span></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -4031,6 +4032,11 @@
                     });
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').html('Speedup: ' + data[key].speedup + 'x');
+                }
+                if (data[key]['platforms_not_shown']) {
+                    if ( ! $.isEmptyObject(data[key]['platforms_not_shown']) ) {
+                        $('#spatial-3d-x3d-message').html('Platform(s) not shown: ' + data[key]['platforms_not_shown']);
+                    }
                 }
             }
 
