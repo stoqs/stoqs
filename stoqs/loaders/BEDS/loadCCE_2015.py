@@ -51,10 +51,13 @@ bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 
 
 # The 1 December decimated data event and
 # Just the one BED file as a trajectory going up to the surface, different Platform name
-bl.bed_files = ['CanyonEvents/BED5/20151201/50200024_decimated_trajectory.nc',
-                'CanyonEvents/BED3/20151001_20160115/30200078_trajectory.nc']
-bl.bed_platforms = ['BED05', 'BED03']
-bl.bed_depths = [388, 201]
+bl.bed_files = [
+                'CanyonEvents/BED5/20151201/50200024_decimated_trajectory.nc',
+                'CanyonEvents/BED3/20151001_20160115/30200078_trajectory.nc',
+                'CanyonEvents/BED6/20151001_20160115/60100068_trajectory.nc',
+               ]
+bl.bed_platforms = ['BED05', 'BED03', 'BED06']
+bl.bed_depths = [388, 201, 521]
 
 
 # Execute the load for trajectory representation
