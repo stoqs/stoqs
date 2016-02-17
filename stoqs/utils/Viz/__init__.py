@@ -13,6 +13,7 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
 from pylab import polyval
+from collections import namedtuple
 from django.conf import settings
 from django.db import connections, DatabaseError, transaction
 from datetime import datetime
@@ -717,6 +718,7 @@ class PlatformAnimation(object):
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Z_OI"></ROUTE>
     '''
     global_template = '<TimeSensor id="PLATFORMS_TS" DEF="TS" cycleInterval="{cycInt}" loop="true" enabled="false" onoutputchange="setSlider(event)"></TimeSensor>'
+    x3d_info = namedtuple('x3d_info', ['x3d', 'all_x3d', 'platforms', 'times', 'limits', 'platforms_not_shown'])
 
     def __init__(self, platforms, kwargs, request, qs, qs_mp):
         self.platforms = platforms
@@ -724,6 +726,15 @@ class PlatformAnimation(object):
         self.request = request
         self.qs = qs
         self.qs_mp = qs_mp      # Need the ordered version of the query set
+
+        self.lon_by_plat = {}
+        self.lat_by_plat = {}
+        self.depth_by_plat = {}
+        self.time_by_plat = {}
+
+        self.roll_by_plat = {}
+        self.pitch_by_plat = {}
+        self.yaw_by_plat = {}
 
     def getX3DPlatformModel(self, pName):
         # Expect only one X3DPLATFORMMODEL per platform (hence .get())
@@ -750,15 +761,6 @@ class PlatformAnimation(object):
         '''
         # Save to '_by_plat' dictionaries so that each platform can be 
         # separately controlled by ROUTEs, interpolators, and JavaScript
-        self.lon_by_plat = {}
-        self.lat_by_plat = {}
-        self.depth_by_plat = {}
-        self.time_by_plat = {}
-
-        self.roll_by_plat = {}
-        self.pitch_by_plat = {}
-        self.yaw_by_plat = {}
-
         pqs = self.qs_mp.filter(measurement__instantpoint__activity__platform=platform)
 
         # Must filter on one Parameter, otherwise we get multiple measurement values
@@ -781,72 +783,118 @@ class PlatformAnimation(object):
         for mp in pqs.filter(parameter__standard_name='platform_yaw_angle'):
             self.yaw_by_plat.setdefault(platform.name, []).append(mp['datavalue'])
 
-    def platformAnimationDataValuesForX3D(self, vert_ex=10.0, geoOrigin='', scale=1, speedup=1):
-        x3dDict = {}
+    def overlap_time(self, r1, r2):
+        '''Return timedelta of overlap between the arguments. Positive return value
+        has time overlap, negative value means there is no overlap.
+        '''
+        # See http://stackoverflow.com/questions/9044084/efficient-date-range-overlap-calculation-in-python
+        latest_start = max(r1.start, r2.start)
+        earliest_end = min(r1.end, r2.end)
+        overlap = (earliest_end - latest_start).total_seconds()
+
+        return overlap
+
+    def assemble_overlapping_platforms(self, platforms, vert_ex, geoOrigin, scale, speedup):
+        '''Starting with earliest animation check other platform animations; if they
+        overlap then build and include them in the returned information.
+        '''
+        x3d_dict = {}
+        time_ranges = {}
+        assembled_times = []
+        assembled_platforms = []
+
+        Range = namedtuple('Range', ['start', 'end'])
+        for p in platforms:
+            self.loadData(p)
+            time_ranges[p] = Range(
+                        start=datetime.utcfromtimestamp(self.time_by_plat[p.name][0]/1000.0),
+                        end=datetime.utcfromtimestamp(self.time_by_plat[p.name][-1]/1000.0)
+            )
+        # Find earliest platform animation
+        min_start_time = datetime.utcnow()
+        for p, r in time_ranges.iteritems():
+            if r.start < min_start_time:
+                min_start_time = r.start
+                earliest_platform = p
+
+        # Compare earliest platform animation with all the rest, build x3d for only overlapping
+        for p, r in time_ranges.iteritems():
+            if self.overlap_time(time_ranges[earliest_platform], r) > 0:
+                x3d_dict[p.name] = self.animationX3D_for_platform(p, vert_ex, geoOrigin, scale)
+                assembled_times.extend(self.time_by_plat[p.name])
+                assembled_platforms.append(p)
+
+        # Find the latest time from the overlapping platform animations
+        max_end_time = datetime.utcfromtimestamp(0)
+        for p, r in time_ranges.iteritems():
+            if p.name in x3d_dict.keys():
+                if r.end > max_end_time:
+                    max_end_time = r.end
+
+        cycInt = (max_end_time -  min_start_time).total_seconds() / speedup
+        all_x3d = self.global_template.format(cycInt=cycInt)
+        platforms_not_shown = (set(p.name for p in platforms) -
+                               set(p.name for p in assembled_platforms))
+
+        return self.x3d_info(x3d=x3d_dict, all_x3d=all_x3d, platforms=assembled_platforms,
+                             times=sorted(assembled_times), limits=(0, len(assembled_times)),
+                             platforms_not_shown=platforms_not_shown)
+
+    def animationX3D_for_platform(self, platform, vert_ex, geoOrigin, scale):
+        '''Build X3D text for a platform's animation
+        '''
+        points = ''
+        indices = ''
+        index = 0
+        keys = ''
         geoorigin_use = ''
         if geoOrigin:
             # Count on JavaScript code to add <GeoOrgin DEF="GO" ... > to the scene
             geoorigin_use = '<GeoOrigin use="GO"></GeoOrigin>'
+
+        pName = platform.name
+        for lon, lat, depth, t in izip(self.lon_by_plat[pName], self.lat_by_plat[pName], 
+                                       self.depth_by_plat[pName], self.time_by_plat[pName]):
+            points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
+            keys += '%.4f ' % ((t - self.time_by_plat[pName][0]) / float(
+                    self.time_by_plat[pName][-1] - self.time_by_plat[pName][0]))
+            indices = indices + '%i ' % index
+            index = index + 1
+
+        # Apply vertical exaggeration to pitch angle
+        xRotValues = ' '.join(['1 0 0 %.6f' % 
+                                math.atan(math.tan(np.pi * x / 180.) * vert_ex) 
+                                for x in self.pitch_by_plat.get(pName, [])])
+        yRotValues = ' '.join(['0 -1 0 %.6f' % (np.pi * z / 180.) 
+                                for z in self.yaw_by_plat.get(pName, [])])
+        zRotValues = ' '.join(['0 0 1 %.6f' % (np.pi * -y / 180.) 
+                                for y in self.roll_by_plat.get(pName, [])])
+
+        if xRotValues and yRotValues and zRotValues:
+            x3d = self.position_orientation_template.format(pName=pName,
+                    plat_scale=self.getX3DPlatformModelScale(pName),
+                    pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
+                    posValues=points, oKeys=keys[:-1], xRotValues=xRotValues, 
+                    yRotValues=yRotValues, zRotValues=zRotValues, scale=scale,
+                    geoOriginStr=geoorigin_use)
+        else:
+            x3d = self.position_template.format(pName=pName, 
+                    plat_scale=self.getX3DPlatformModelScale(pName),
+                    pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
+                    posValues=points, scale=scale, geoOriginStr=geoorigin_use)
+
+        return x3d
+
+    def platformAnimationDataValuesForX3D(self, vert_ex=10.0, geoOrigin='', scale=1, speedup=1):
+        info = self.x3d_info(x3d='', all_x3d='', times=(), platforms=(), limits=(), 
+                             platforms_not_shown=())
         try:
-            points = ''
-            indices = ''
-            index = 0
-            keys = ''
-            for platform in self.platforms:
-                self.loadData(platform)
-                pName = platform.name
-                for lon,lat,depth,t in izip(self.lon_by_plat[pName], self.lat_by_plat[pName], 
-                                        self.depth_by_plat[pName], self.time_by_plat[pName]):
-                    if pName.upper().startswith('BED'):
-                        depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
-
-                    points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
-
-                    keys += '%.4f ' % ((t - self.time_by_plat[pName][0]) / float(
-                            self.time_by_plat[pName][-1] - self.time_by_plat[pName][0]))
-                    indices = indices + '%i ' % index
-                    index = index + 1
-
-                # Apply vertical exaggeration to pitch angle
-                xRotValues = ' '.join(['1 0 0 %.6f' % 
-                                        math.atan(math.tan(np.pi * x / 180.) * vert_ex) 
-                                        for x in self.pitch_by_plat.get(pName, [])])
-                yRotValues = ' '.join(['0 -1 0 %.6f' % (np.pi * z / 180.) 
-                                        for z in self.yaw_by_plat.get(pName, [])])
-                zRotValues = ' '.join(['0 0 1 %.6f' % (np.pi * -y / 180.) 
-                                        for y in self.roll_by_plat.get(pName, [])])
-
-                times = self.time_by_plat[pName]
-
-                # End with -1 so that end point does not connect to the beg point
-                indices = indices + '-1'
-
-                # TimeSensor's cycleInterval is in Unix epoch seonds
-                cycInt = (self.time_by_plat[pName][-1] - self.time_by_plat[pName][0]
-                            ) / 1000.0 / speedup
-
-                if xRotValues and yRotValues and zRotValues:
-                    x3dDict[pName] = self.position_orientation_template.format(pName=pName,
-                            plat_scale=self.getX3DPlatformModelScale(pName),
-                            pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
-                            posValues=points, oKeys=keys[:-1], xRotValues=xRotValues, 
-                            yRotValues=yRotValues, zRotValues=zRotValues, scale=scale,
-                            geoOriginStr=geoorigin_use)
-                else:
-                    x3dDict[pName] = self.position_template.format(pName=pName, 
-                            plat_scale=self.getX3DPlatformModelScale(pName),
-                            pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
-                            posValues=points, scale=scale, geoOriginStr=geoorigin_use)
-
-            if x3dDict:
-                all_x3d = self.global_template.format(cycInt=cycInt)
-                limits = (0, len(self.time_by_plat[pName]))
-
+            info = self.assemble_overlapping_platforms(self.platforms, vert_ex, geoOrigin, scale, speedup)
         except Exception as e:
             self.logger.exception(str(e))
 
-        return {'x3d': x3dDict, 'all': all_x3d, 'limits': limits, 'time': times, 
-                'speedup': speedup, 'scale': scale}
+        return {'x3d': info.x3d, 'all': info.all_x3d, 'limits': info.limits, 'time': info.times, 
+                'platforms_not_shown': info.platforms_not_shown, 'speedup': speedup, 'scale': scale}
 
 
 class PPDatabaseException(Exception):
