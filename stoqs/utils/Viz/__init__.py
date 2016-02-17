@@ -794,9 +794,11 @@ class PlatformAnimation(object):
 
         return overlap
 
-    def assemble_overlapping_platforms(self, platforms, vert_ex, geoOrigin, scale, speedup):
-        '''Starting with earliest animation check other platform animations; if they
-        overlap then build and include them in the returned information.
+    def _assemble_platforms(self, platforms, vert_ex, geoOrigin, scale, speedup,
+                            force_overlap):
+        '''Assemble X3D text for platforms in the selection. If force_overlap is
+        True then start with earliest animation and check other platform animations; 
+        if they overlap then build and include them in the returned information.
         '''
         x3d_dict = {}
         time_ranges = {}
@@ -817,14 +819,20 @@ class PlatformAnimation(object):
                 min_start_time = r.start
                 earliest_platform = p
 
-        # Compare earliest platform animation with all the rest, build x3d for only overlapping
+        # Build X3D and assemble
         for p, r in time_ranges.iteritems():
-            if self.overlap_time(time_ranges[earliest_platform], r) > 0:
-                x3d_dict[p.name] = self.animationX3D_for_platform(p, vert_ex, geoOrigin, scale)
+            if force_overlap:
+                # Compare earliest platform animation with all the rest, build x3d for only overlapping
+                if self.overlap_time(time_ranges[earliest_platform], r) > 0:
+                    x3d_dict[p.name] = self._animationX3D_for_platform(p, vert_ex, geoOrigin, scale)
+                    assembled_times.extend(self.time_by_plat[p.name])
+                    assembled_platforms.append(p)
+            else:
+                x3d_dict[p.name] = self._animationX3D_for_platform(p, vert_ex, geoOrigin, scale)
                 assembled_times.extend(self.time_by_plat[p.name])
                 assembled_platforms.append(p)
 
-        # Find the latest time from the overlapping platform animations
+        # Find the latest time from the assembled platform animations
         max_end_time = datetime.utcfromtimestamp(0)
         for p, r in time_ranges.iteritems():
             if p.name in x3d_dict.keys():
@@ -840,7 +848,7 @@ class PlatformAnimation(object):
                              times=sorted(assembled_times), limits=(0, len(assembled_times)),
                              platforms_not_shown=platforms_not_shown)
 
-    def animationX3D_for_platform(self, platform, vert_ex, geoOrigin, scale):
+    def _animationX3D_for_platform(self, platform, vert_ex, geoOrigin, scale):
         '''Build X3D text for a platform's animation
         '''
         points = ''
@@ -885,11 +893,15 @@ class PlatformAnimation(object):
 
         return x3d
 
-    def platformAnimationDataValuesForX3D(self, vert_ex=10.0, geoOrigin='', scale=1, speedup=1):
+    def platformAnimationDataValuesForX3D(self, vert_ex=10.0, geoOrigin='', scale=1,
+                                          speedup=1, force_overlap=False):
+        '''Public method called by STOQSQManager.py
+        '''
         info = self.x3d_info(x3d='', all_x3d='', times=(), platforms=(), limits=(), 
                              platforms_not_shown=())
         try:
-            info = self.assemble_overlapping_platforms(self.platforms, vert_ex, geoOrigin, scale, speedup)
+            info = self._assemble_platforms(self.platforms, vert_ex, geoOrigin, scale,
+                                           speedup, force_overlap)
         except Exception as e:
             self.logger.exception(str(e))
 
