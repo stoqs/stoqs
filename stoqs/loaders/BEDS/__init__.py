@@ -41,7 +41,7 @@ class BEDSLoader(LoadScript):
     '''
     Common routines for loading all BEDS data
     '''
-    num_beds = 5
+    num_beds = 9
     beds_names = [('bed{:02d}').format(n) for n in range(num_beds+1)]
 
     # See http://matplotlib.org/examples/color/colormaps_reference.html
