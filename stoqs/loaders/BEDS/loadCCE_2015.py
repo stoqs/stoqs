@@ -19,15 +19,15 @@ from BEDS import BEDSLoader
 bl = BEDSLoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                                 description = 'Coordinated Canyon Experiment - Measuring turbidity flows in Monterey Submarine Canyon',
                                 x3dTerrains = { 
-                                    'http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x/MontereyCanyonBeds_1m+5m_1x_scene.x3d': {
+                                    'http://stoqs.mbari.org/terrain/MontereyCanyonBeds_1m+5m_1x_src/MontereyCanyonBeds_1m+5m_1x_src_scene.x3d': {
                                         'position': '2232.80938 10346.25515 3543.76722',
                                         'orientation': '-0.98394 0.16804 -0.06017 1.25033',
                                         'centerOfRotation': '0 0 0',
                                         'VerticalExaggeration': '1',
                                         'geoOrigin': '36.80, -121.87, -400',
                                         'speed': '1.0',
-                                        ##'zNear': '1.0',
-                                        ##'zFar': '30000.0',
+                                        'zNear': '100.0',
+                                        'zFar': '30000.0',
                                     },
                                  },
                                  # Do not check in .grd files to the repository, keep them in the loaders directory
