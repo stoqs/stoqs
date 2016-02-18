@@ -21,8 +21,8 @@ GeoElevationGrid:
 </scene>
 
 
-X3DOM popGeometry from a GMT .grd file:
----------------------------------------
+X3DOM popGeometry or SRC from a GMT .grd file:
+----------------------------------------------
 
 0. Start with a GMT .grd bathymetry file such as that produced by an mbgrid(1) execution
 
@@ -86,6 +86,27 @@ X3DOM popGeometry from a GMT .grd file:
     :%s#/Users/mccann/Downloads/binGeo#/stoqs/static/x3d/Monterey25/binGeo#g
 
 5. Test that the STOQS UI displays the new mesh in the Spatial -> 3D tab.
+
+6. With X3DOM 1.6 and later and at least aopt V2.6.0 we can generate more efficient SRC instead of popGeometry, so instead of the last step in 3 do:
+
+    cd /Users/mccann/Downloads/
+    aopt -i Monterey25_10x-opt.x3db -f PrimitiveSet:creaseAngle:4 -V -Y "nodeType(Geometry)" -N Monterey25_10x_src.html
+
+
+    Edit Monterey25_10x_src.html:
+
+      - Add 'SRC/' to the url path for the .src files.
+
+      - Change aopt's <material> node from:
+            <material diffuseColor='0.6 0.6 0.6' specularColor='0.6 0.6 0.6'></material>
+        to:
+            <material diffuseColor='0.7 0.7 0.7' specularColor='0.1 0.1 0.1'></material>
+
+    Copy Monterey25_10x_src.html to Monterey25_10x_src_scene.x3d and edit:
+
+      - Remove surrounding elements from the <scene> tags
+      - Edit in the FQDN for the urls so that Django will load it.
+      - Remove <viewpoint> node that aopt added
 
 
 --
