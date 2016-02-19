@@ -12,6 +12,7 @@ mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import math
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
+from matplotlib.colors import hex2color
 from pylab import polyval
 from collections import namedtuple
 from django.conf import settings
@@ -686,13 +687,25 @@ class PlatformAnimation(object):
     position_orientation_template = '''
         <GeoLocation id="{pName}_LOCATION" DEF="{pName}_LOCATION">
             {geoOriginStr}
-            <Transform id="{pName}_XROT" DEF="{pName}_XROT">
-                <Transform id="{pName}_YROT" DEF="{pName}_YROT">
-                    <Transform id="{pName}_ZROT" DEF="{pName}_ZROT">
-                        <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
-                            <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
-                                <Inline url="{pURL}"></Inline>
-                            </Transform>
+            <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
+                <Transform scale="3 3 3" translation="0 1 0">
+                    <Billboard axisOfRotation="0,0,0">
+                        <Shape>
+                            <Appearance>
+                                <Material ambientIntensity="1" diffuseColor="{pColor}"></Material>
+                            </Appearance>
+                            <Text string="{pName}">
+                                <FontStyle family="'Orbitron'"></FontStyle>
+                            </Text>
+                        </Shape>
+                    </Billboard>
+                </Transform>
+                <Transform id="{pName}_XROT" DEF="{pName}_XROT">
+                    <Transform id="{pName}_YROT" DEF="{pName}_YROT">
+                        <Transform id="{pName}_ZROT" DEF="{pName}_ZROT">
+                                <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
+                                    <Inline url="{pURL}"></Inline>
+                                </Transform>
                         </Transform>
                     </Transform>
                 </Transform>
@@ -861,6 +874,7 @@ class PlatformAnimation(object):
             geoorigin_use = '<GeoOrigin use="GO"></GeoOrigin>'
 
         pName = platform.name
+        pColor = ' '.join(str(c) for c in hex2color('#' + platform.color))
         for lon, lat, depth, t in izip(self.lon_by_plat[pName], self.lat_by_plat[pName], 
                                        self.depth_by_plat[pName], self.time_by_plat[pName]):
             points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
@@ -884,7 +898,7 @@ class PlatformAnimation(object):
                     pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
                     posValues=points, oKeys=keys[:-1], xRotValues=xRotValues, 
                     yRotValues=yRotValues, zRotValues=zRotValues, scale=scale,
-                    geoOriginStr=geoorigin_use)
+                    geoOriginStr=geoorigin_use, pColor=pColor)
         else:
             x3d = self.position_template.format(pName=pName, 
                     plat_scale=self.getX3DPlatformModelScale(pName),
