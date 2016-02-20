@@ -1,2 +1,1 @@
-stoqs/static/* linguist-vendored
-jquery.js linguist-vendored=false
+stoqs/static/** linguist-vendored
