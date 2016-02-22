@@ -3649,13 +3649,24 @@
                     series.color;
                 });
                 if ( ! $.isEmptyObject(data.parametertime.strides) ) {
-                    $('#stride-info').html('')
+                    $('#stride-info').html('');
+                    var i = 0;
+                    var not_listed = 0;
                     $.each(data.parametertime.strides, function(p, act_value) {
                         $.each(act_value, function(act, value) {
-                            ordinal = getValueOrdinal(value);
-                            $('#stride-info').append(p + ': every ' + ordinal + ' point from ' + act + '<br>');
+                            i = i + 1;
+                            if (i <= 3) {
+                                ordinal = getValueOrdinal(value);
+                                $('#stride-info').append('<b>' + p + '</b>: every ' + ordinal + ' point from ' + act + '<br>');
+                            }
+                            else {
+                                not_listed = not_listed + 1;
+                            }
                         });
                     });
+                    if (not_listed > 0) {
+                        $('#stride-info').append('...<b>' + not_listed + '</b> more parameters not listed...<br>');
+                    }
                 }
                 // Event data shown in plot may be inside original start-ems and end-ems bounds requested, update display with actual
                 var sd = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamin));
@@ -4034,6 +4045,10 @@
                     });
                     $('#spatial-3d-x3d-pp-slider').show();
                     $('#spatial-3d-x3d-speedup').html('Speedup: ' + data[key].speedup + 'x');
+                    $('#spatial-3d-x3d-pause-play').click();
+                    if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
+                        $('#spatial-3d-x3d-pause-play').click();
+                    }
                 }
                 if (data[key]['platforms_not_shown']) {
                     if ( ! $.isEmptyObject(data[key]['platforms_not_shown']) ) {

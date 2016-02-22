@@ -938,9 +938,12 @@ class STOQSQManager(object):
         '''
 
         aps = models.ActivityParameter.objects.using(self.dbname).filter(activity=a, parameter__name=p).values('min', 'max')
+        if not aps:
+            aps = models.ActivityParameter.objects.using(self.dbname).filter(activity=a, 
+                                        parameter__standard_name=p).values('min', 'max')
 
         start_ems = int(1000 * to_udunits(a.startdate, 'seconds since 1970-01-01'))
-        end_ems = int(1000 * to_udunits(a.startdate, 'seconds since 1970-01-01'))
+        end_ems = int(1000 * to_udunits(a.enddate, 'seconds since 1970-01-01'))
 
         pt[pa_units[p]][a.name] = [[start_ems, aps[0]['min']], [end_ems, aps[0]['max']]]
 
@@ -1014,8 +1017,9 @@ class STOQSQManager(object):
                 qs_mp_a = qs_mp.filter(measurement__instantpoint__activity__name=a.name)
                 ad = (a.enddate-a.startdate)
                 aseconds = ad.days * 86400 + ad.seconds
-                logger.debug('a.name = %s, a.startdate = %s, a.enddate %s, aseconds = %s, secondsperpixel = %s', a.name, a.startdate, a.enddate, aseconds, secondsperpixel)
-                if float(aseconds) > float(secondsperpixel):
+                logger.debug('a.name = %s, a.startdate = %s, a.enddate %s, aseconds = %s, secondsperpixel = %s', 
+                             a.name, a.startdate, a.enddate, aseconds, secondsperpixel)
+                if float(aseconds) > float(secondsperpixel) or len(self.kwargs.get('platforms')) == 1:
                     # Multiple points of this activity can be displayed in the flot, get an appropriate stride
                     logger.debug('PIXELS_WIDE = %s, ndCounts[p] = %s', PIXELS_WIDE, ndCounts[p])
                     stride = qs_mp_a.count() / PIXELS_WIDE / ndCounts[p]        # Integer factors -> integer result
