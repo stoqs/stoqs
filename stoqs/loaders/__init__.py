@@ -615,15 +615,18 @@ class STOQS_Loader(object):
 
         self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
         for v in self.include_names + ['altitude']:
-            if self.plotTimeSeriesDepth.get(v, False):
-                self.logger.info('v = %s', v)
-                try:
-                    uiResType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
-                    resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
-                                          name='plotTimeSeriesDepth', value=self.plotTimeSeriesDepth[v], resourcetype=uiResType)
-                    ar, _ = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
-                                    parameter=self.getParameterByName(v), resource=resource)
-                except (ParameterNotFound, AttributeError) as e:
+            try:
+                if self.plotTimeSeriesDepth.get(v, False):
+                    self.logger.info('v = %s', v)
+                    try:
+                        uiResType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
+                        resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                                              name='plotTimeSeriesDepth', value=self.plotTimeSeriesDepth[v], resourcetype=uiResType)
+                        ar, _ = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
+                                        parameter=self.getParameterByName(v), resource=resource)
+                    except ParameterNotFound as e:
+                        self.logger.warn('Could not add plotTimeSeriesDepth Resource for v = %s: %s', v, e)
+            except AttributeError as e:
                     self.logger.warn('Could not add plotTimeSeriesDepth Resource for v = %s: %s', v, e)
         
     def getParameterByName(self, name):
