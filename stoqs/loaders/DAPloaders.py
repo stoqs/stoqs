@@ -1488,7 +1488,7 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
     if plotTimeSeriesDepth:
         # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
-        loader.plotTimeSeriesDepth = dict.fromkeys(parmList, plotTimeSeriesDepth)
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
 
     loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
