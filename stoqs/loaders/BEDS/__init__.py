@@ -55,8 +55,10 @@ class BEDSLoader(LoadScript):
 
     def loadBEDS(self, stride=None, featureType='trajectory'):
         '''
-        BEDS specific load functions; featureType can be 'trajectory' or 'timeSeries'.  Use 'trajectory' for events that we've fudged
-        into a trajectory netCDF file using the canyon's thalweg.  Use 'timeSeries' for events for which the BED does not significantly translate.
+        BEDS specific load functions; featureType can be 'trajectory' or 'timeSeries'.
+        Use 'trajectory' for events that we've fudged into a trajectory netCDF file
+        using the canyon's thalweg.  Use 'timeSeries' for events for which the BED
+        does not significantly translate.
         '''
         stride = stride or self.stride
         for (aName, pName, file, plotTimeSeriesDepth) in zip(
@@ -65,13 +67,19 @@ class BEDSLoader(LoadScript):
             url = os.path.join(self.bed_base, file)
             try:
                 if featureType.lower() == 'trajectory':
-                    # To get timeSeries plotting for trajectories (in the Parameter tab of the UI) assign a plotTimeSeriesDepth value of the starting depth in meters.
-                    DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
-                                            self.bed_parms, self.dbAlias, stride, plotTimeSeriesDepth=plotTimeSeriesDepth, grdTerrain=self.grdTerrain)
+                    # To get timeSeries plotting for trajectories (in the Parameter tab of the UI) 
+                    # assign a plotTimeSeriesDepth value of the starting depth in meters.
+                    DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription,
+                                                   aName, pName, self.colors[pName.lower()], 'bed',
+                                                   'deployment', self.bed_parms, self.dbAlias, stride,
+                                                   plotTimeSeriesDepth=plotTimeSeriesDepth,
+                                                   grdTerrain=self.grdTerrain)
                 elif featureType.lower() == 'timeseries':
-                    DAPloaders.runTimeSeriesLoader(url, self.campaignName, self.campaignDescription, aName, pName, self.colors[pName.lower()], 'bed', 'deployment', 
-                                            self.bed_parms, self.dbAlias, stride)
-                self.addPlatformResources('http://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d', pName, scalefactor=10)
+                    DAPloaders.runTimeSeriesLoader(url, self.campaignName, self.campaignDescription,
+                                                   aName, pName, self.colors[pName.lower()], 'bed', 
+                                                   'deployment', self.bed_parms, self.dbAlias, stride)
+                self.addPlatformResources('http://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d',
+                                          pName, scalefactor=10)
             except (DAPloaders.OpendapError, DAPloaders.InvalidSliceRequest):
                 pass
 

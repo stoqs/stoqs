@@ -303,9 +303,10 @@ cl.oa1_startDatetime = startdate
 cl.oa1_endDatetime = enddate
 
 # Mooring 0A2
-cl.oa2_base = cl.dodsBase + 'CANON/2015_OffSeason/Platforms/Moorings/OA2/'
+# note the new location. location and data by deployment, instead of by campaign
+cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/'
 cl.oa2_files = [
-               'OA2_Canon2015_OffSeason.nc'
+               'OA2_201505.nc'
                ]
 cl.oa2_parms = [
                'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',

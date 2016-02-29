@@ -595,8 +595,8 @@ class STOQS_Loader(object):
         else:
             self.logger.warn("No NC_GLOBAL attribute in %s", self.url)
 
-        # Attributes of all the variables in include_names
-        for v in self.include_names:
+        self.logger.info('Adding attributes of all the variables from the original NetCDF file')
+        for v in self.include_names + ['altitude']:
             self.logger.info('v = %s', v)
             try:
                 for rn, value in self.ds[v].attributes.iteritems():
@@ -605,15 +605,6 @@ class STOQS_Loader(object):
                                           name=rn, value=value, resourcetype=resourceType)
                     ar, _ = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                     parameter=self.getParameterByName(v), resource=resource)
-                try:
-                    if self.plotTimeSeriesDepth.get(v, False):
-                        uiResType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
-                        resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
-                                              name='plotTimeSeriesDepth', value=self.plotTimeSeriesDepth[v], resourcetype=uiResType)
-                        ar, _ = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
-                                        parameter=self.getParameterByName(v), resource=resource)
-                except AttributeError:
-                    pass
                     
             except KeyError as e:
                 # Just skip derived parameters that may have been added for a sub-classed Loader
@@ -621,6 +612,22 @@ class STOQS_Loader(object):
             except AttributeError as e:
                 # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
                 self.logger.warn('%s for include_name %s in %s. Skipping', e, v, self.url)
+
+        self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
+        for v in self.include_names + ['altitude']:
+            try:
+                if self.plotTimeSeriesDepth.get(v, False):
+                    self.logger.info('v = %s', v)
+                    try:
+                        uiResType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
+                        resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                                              name='plotTimeSeriesDepth', value=self.plotTimeSeriesDepth[v], resourcetype=uiResType)
+                        ar, _ = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
+                                        parameter=self.getParameterByName(v), resource=resource)
+                    except ParameterNotFound as e:
+                        self.logger.warn('Could not add plotTimeSeriesDepth Resource for v = %s: %s', v, e)
+            except AttributeError as e:
+                    self.logger.warn('Could not add plotTimeSeriesDepth Resource for v = %s: %s', v, e)
         
     def getParameterByName(self, name):
         '''
