@@ -1437,7 +1437,7 @@ class Mooring_Loader(TimeSeries_Loader):
         return super(Mooring_Loader,self).preProcessParams(row)
 
 
-class BEDS_TS_Loader(TimeSeries_Loader):
+class BED_TS_Loader(TimeSeries_Loader):
     '''
     Benthic Event Detector timeSeries data.  Expects CF-1.6 timeSeries discrete sampling geometry type.
     '''
@@ -1447,7 +1447,34 @@ class BEDS_TS_Loader(TimeSeries_Loader):
         '''
         Placeholder for any special preprocessing for Mooring data
         '''
-        return super(BEDS_TS_Loader,self).preProcessParams(row)
+        return super(BED_TS_Loader, self).preProcessParams(row)
+
+
+class BED_Trajectory_Loader(Trajectory_Loader):
+    '''
+    Benthic Event Detector trajectory data.  Expects CF-1.6 timeSeries discrete sampling geometry type.
+    '''
+    include_names = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P', 'P_ADJUSTED', 'DEPTH']
+
+    def __init__(self, framegrab, *args, **kwargs):
+        self.framegrab = framegrab
+        super(BED_Trajectory_Loader, self).__init__(*args, **kwargs)
+
+    def addResources(self):
+        '''
+        In addition to the NC_GLOBAL attributes that are added in the base class also add the frame grab URL
+        '''
+        logger.debug("Getting or Creating ResourceType framegrab...")
+        resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(
+                        name='quick_look', description='Video framegrab of BED located on sea floor')
+
+        logger.debug("Getting or Creating Resource with framegrab = self.framegrab")
+        resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
+                    name='framegrab', uristring=self.framegrab, resourcetype=resourceType)
+        m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                    activity=self.activity, resource=resource)
+
+        return super(BED_Trajectory_Loader, self).addResources()
 
 
 #
@@ -1493,6 +1520,41 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
     loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
+def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName,
+                           parmList, dbAlias, stride, plotTimeSeriesDepth=None,
+                           grdTerrain=None, framegrab=None):
+    '''
+    Run the DAPloader for Benthic Event Detector trajectory data and update the Activity with 
+    attributes resulting from the load into dbAlias. Designed to be called from script
+    that loads the data.  Following the load important updates are made to the database.
+    If a number vaue is given to plotTimeSeriesDepth then that Resource is added for each
+    Parameter loaded; this gives instruction to the STOQS UI to also plot timeSries data
+    in the Parameter tab.
+    '''
+    logger.debug("Instantiating BED_Trajectory_Loader for url = %s", url)
+    loader = BED_Trajectory_Loader(
+            url = url,
+            campaignName = cName,
+            campaignDescription = cDesc,
+            dbAlias = dbAlias,
+            activityName = aName,
+            activitytypeName = aTypeName,
+            platformName = pName,
+            platformColor = pColor,
+            platformTypeName = pTypeName,
+            stride = stride,
+            grdTerrain = grdTerrain,
+            framegrab = framegrab)
+
+    logger.debug("Setting include_names to %s", parmList)
+    loader.include_names = parmList
+
+    if plotTimeSeriesDepth:
+        # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
+
+    loader.process_data()
+    logger.debug("Loaded Activity with name = %s", aName)
 
 def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, grdTerrain=None):
     '''
