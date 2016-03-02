@@ -89,6 +89,9 @@ urlpatterns = patterns('',
     url(pre + 'generate_permalink/', 'stoqs.views.permalinks.generate_permalink', {}, name='generate_permalink'),
     url(pre + 'permalink/(?P<pid>[^/]*)/', 'stoqs.views.permalinks.load_permalink', {}, name='load_permalink'),
 
+    # Feed data for parameterinfo-popup
+    url(pre + 'parameterinfo/(?P<pid>[^/]*)/', 'stoqs.views.parameterinfo.parameterinfo', {}, name='parameterinfo'),
+
     url('^$', 'stoqs.views.management.showCampaigns', {}, name='show-default'),
 
 ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
