@@ -48,16 +48,21 @@ bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 
 ##bl.bed_platforms = ['BED03'] * len(bl.bed_files)
 ##bl.bed_depths = [201] * len(bl.bed_files)
 
-
-# The 1 December decimated data event and
-# Just the one BED file as a trajectory going up to the surface, different Platform name
+# Just the event files for the CCE
 bl.bed_files = [
                 'BED5/MBCCE_BED5_20151027_Event20151201/netcdf/50200024_decimated_trajectory.nc',
                 'BED3/20151001_20160115/netcdf/30200078_trajectory.nc',
                 'BED6/20151001_20160115/netcdf/60100068_trajectory.nc',
+                'BED3/MBCCE_BED3_20160212_Event20170217/netcdf/30300004_trajectory.nc',
                ]
-bl.bed_platforms = ['BED05', 'BED03', 'BED06']
-bl.bed_depths = [388, 201, 521]
+bl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03']
+bl.bed_depths = [388, 201, 521, 289.3]
+bl.bed_framegrabs = [
+                'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html',
+                'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3874/00_21_23_28.html',
+                'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3870/00_15_38_23.html',
+                '',
+                    ]
 
 
 # Execute the load for trajectory representation
