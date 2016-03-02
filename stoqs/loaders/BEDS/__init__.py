@@ -61,19 +61,19 @@ class BEDSLoader(LoadScript):
         does not significantly translate.
         '''
         stride = stride or self.stride
-        for (aName, pName, file, plotTimeSeriesDepth) in zip(
+        for (aName, pName, file, plotTimeSeriesDepth, fg) in zip(
                             [ a.split('/')[-1] + ' (stride=%d)' % stride for a in self.bed_files], 
-                            self.bed_platforms, self.bed_files, self.bed_depths):
+                            self.bed_platforms, self.bed_files, self.bed_depths, self.bed_framegrabs):
             url = os.path.join(self.bed_base, file)
             try:
                 if featureType.lower() == 'trajectory':
                     # To get timeSeries plotting for trajectories (in the Parameter tab of the UI) 
                     # assign a plotTimeSeriesDepth value of the starting depth in meters.
-                    DAPloaders.runTrajectoryLoader(url, self.campaignName, self.campaignDescription,
-                                                   aName, pName, self.colors[pName.lower()], 'bed',
-                                                   'deployment', self.bed_parms, self.dbAlias, stride,
-                                                   plotTimeSeriesDepth=plotTimeSeriesDepth,
-                                                   grdTerrain=self.grdTerrain)
+                    DAPloaders.runBEDTrajectoryLoader(url, self.campaignName, self.campaignDescription,
+                                                      aName, pName, self.colors[pName.lower()], 'bed',
+                                                      'deployment', self.bed_parms, self.dbAlias, stride,
+                                                      plotTimeSeriesDepth=plotTimeSeriesDepth,
+                                                      grdTerrain=self.grdTerrain, framegrab=fg)
                 elif featureType.lower() == 'timeseries':
                     DAPloaders.runTimeSeriesLoader(url, self.campaignName, self.campaignDescription,
                                                    aName, pName, self.colors[pName.lower()], 'bed', 
