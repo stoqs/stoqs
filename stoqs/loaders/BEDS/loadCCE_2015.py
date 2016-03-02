@@ -35,12 +35,12 @@ bl = BEDSLoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                )
 
 # Base OPeNDAP server
-bl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/beds/'
+bl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
 
 # Copied from ProjectLibrary to BEDs SVN working dir for netCDF conversion, and then copied to elvis.
 # See BEDs/BEDs/Visualization/py/makeBEDNetCDF_CCE.sh
 
-bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P', 'PRESS', 'BED_DEPTH']
+bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P', 'P_ADJUSTED', 'DEPTH']
 
 # Several BED files: 30200078 to 3020080
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
@@ -52,9 +52,9 @@ bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 
 # The 1 December decimated data event and
 # Just the one BED file as a trajectory going up to the surface, different Platform name
 bl.bed_files = [
-                'CanyonEvents/BED5/20151201/50200024_decimated_trajectory.nc',
-                'CanyonEvents/BED3/20151001_20160115/30200078_trajectory.nc',
-                'CanyonEvents/BED6/20151001_20160115/60100068_trajectory.nc',
+                'BED5/MBCCE_BED5_20151027_Event20151201/netcdf/50200024_decimated_trajectory.nc',
+                'BED3/20151001_20160115/netcdf/30200078_trajectory.nc',
+                'BED6/20151001_20160115/netcdf/60100068_trajectory.nc',
                ]
 bl.bed_platforms = ['BED05', 'BED03', 'BED06']
 bl.bed_depths = [388, 201, 521]
