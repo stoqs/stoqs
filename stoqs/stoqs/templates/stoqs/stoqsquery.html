@@ -122,7 +122,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="http://www.mbari.org" style="padding-top:4px;"><img src="{{STATIC_URL}}images/mbari_bw_logo.gif" alt="MBARI"></a>
+          <a class="brand" href="http://www.mbari.org" style="padding-top:4px;"><img src="{{STATIC_URL}}images/new_mbari_logo.png" alt="MBARI"></a>
           <a class="brand" href="#">{{request.META.dbAlias}}</a>
           <div class="nav-collapse">
             <ul class="nav">
@@ -1192,12 +1192,18 @@
         // The f factor properly adjusts models to a suitable proportion of the screen
         var f = 1 / 75.0;
         var d = Math.sqrt(Math.pow((vp.x - pl.x), 2) + Math.pow((vp.y - pl.y), 2) + Math.pow((vp.z - pl.z), 2));
-        var scale = d*f + ',' + d*f + ',' + d*f;
+        var sc = f * d;
+        var scale = sc + ',' + sc + ',' + sc;
 
-        // Set scale attribute for all platforms in the scene
+        // Set scale attribute and distance text for all platforms in the scene
         $.each($('body').data()['platformAnimation'].concat( 
                 $.map($('body').data()['platformModels'], function(v, k) {return k})), function(index, plat) {
             $('#' + plat + '_SCALE').attr('scale', scale);
+            // Axes are 10m long in the axes_enu.x3d inlined file
+            up_text = Math.round(sc  * 10 * $('body').data()['ve'])  + ' m';
+            e_text = Math.round(sc * 10) + ' m';
+            $('#' + plat + '_axesENU__upString').attr('string', up_text);
+            $('#' + plat + '_axesENU__eString').attr('string', e_text);
         });
     }
 
@@ -3229,7 +3235,10 @@
         }
         if (! init) {
             if (request.readyState < 3) {
+                // Happens when response not received
                 request.abort();
+                $('#time-depth-flot').addClass('stoqs-background-ajax-loader-pulse ');
+                $('#time-parameter-flot').addClass('stoqs-background-ajax-loader-pulse ');
             }
         }
         var me = this;
@@ -3390,9 +3399,12 @@
                 }
                 var parameterButtonText = '';
                 var sp_ids = [];
+                var pi_url;
+                var pi_url_base = "{% url 'stoqs:parameterinfo' dbAlias=request.META.dbAlias pid='REPLACE' %}";
                 $.each(data[key], function (index, value) {
                     // Save ids in list for assigning as a data item on Sampled Parameters for easy lookup
                     sp_ids.push(value[2].toString()); 
+                    pi_url = pi_url_base.replace('REPLACE', value[2]);
                     // Use [2], the id for sampledparameters to allow wierd characters in [0], the name
                     parameterButtonText = parameterButtonText + '<tr>' +
                             '<td style="text-align:center;display:none;">' +
@@ -3413,6 +3425,11 @@
                             '</td>' +
                             '<td id="' + value[2] +'" style="text-align:center;">' +
                                 '<button class="btn btn-mini stoqs-toggle sampledparametersgroup">'+ value[0] +'</button>' + 
+                            '</td>' +
+                            '<td style="width:1%">' +
+                                '<a href="' + pi_url + '" target="_pi">' +
+                                    '<i class="icon-info-sign"></i>' +
+                                '</a>' +
                             '</td>' +
                             '<td style="width:1%">' +
                                 '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
@@ -3439,9 +3456,12 @@
             else if (key == 'measuredparametersgroup') {
                 var parameterButtonText = '';
                 var mp_ids = [];
+                var pi_url;
+                var pi_url_base = "{% url 'stoqs:parameterinfo' dbAlias=request.META.dbAlias pid='REPLACE' %}";
                 $.each(data[key], function (index, value) {
                     // Save ids in list for assigning as a data item on Sampled Parameters for easy lookup
                     mp_ids.push(value[2].toString()); 
+                    pi_url = pi_url_base.replace('REPLACE', value[2]);
                     parameterButtonText = parameterButtonText + '<tr>' +
                             '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_x" value="' + value[2] + '" class="parameter-radio" />' +
@@ -3462,6 +3482,11 @@
                             '<td id="' + value[0] +'">' +
                                 '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' + 
                             '</td>' + 
+                            '<td style="width:1%">' +
+                                '<a href="' + pi_url + '" target="_pi">' +
+                                    '<i class="icon-info-sign"></i>' +
+                                '</a>' +
+                            '</td>' +
                             '<td style="width:1%">' +
                                 '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
                             '</td>';
@@ -4214,8 +4239,7 @@
                 }
             });
 
-            // Grab the state of all the accordians on the page and store
-            // them
+            // Grab the state of all the accordians on the page and store them
             $('.accordion-body.in', divcol).each(function (key, item) {
                 params['accordian'].push(item.id);
             });
@@ -4328,7 +4352,7 @@
                 case 'tabs': 
                     $.each(value, function (pos, item) {
                         if ( item[0] != '#parameterParameterTabs' ) {
-                            // ParamaeterParameter tab clicks happen on ajax success - don't do them here
+                            // ParameterParameter tab clicks happen on ajax success - don't do them here
                             var $elem=$('li', item[0]);
                             $elem.removeClass('active');
                             $($elem[item[1]]).addClass('active');
