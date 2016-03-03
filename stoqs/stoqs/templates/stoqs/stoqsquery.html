@@ -1192,12 +1192,18 @@
         // The f factor properly adjusts models to a suitable proportion of the screen
         var f = 1 / 75.0;
         var d = Math.sqrt(Math.pow((vp.x - pl.x), 2) + Math.pow((vp.y - pl.y), 2) + Math.pow((vp.z - pl.z), 2));
-        var scale = d*f + ',' + d*f + ',' + d*f;
+        var sc = f * d;
+        var scale = sc + ',' + sc + ',' + sc;
 
-        // Set scale attribute for all platforms in the scene
+        // Set scale attribute and distance text for all platforms in the scene
         $.each($('body').data()['platformAnimation'].concat( 
                 $.map($('body').data()['platformModels'], function(v, k) {return k})), function(index, plat) {
             $('#' + plat + '_SCALE').attr('scale', scale);
+            // Axes are 10m long in the axes_enu.x3d inlined file
+            up_text = Math.round(sc  * 10 * $('body').data()['ve'])  + ' m';
+            e_text = Math.round(sc * 10) + ' m';
+            $('#' + plat + '_axesENU__upString').attr('string', up_text);
+            $('#' + plat + '_axesENU__eString').attr('string', e_text);
         });
     }
 
