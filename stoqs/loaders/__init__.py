@@ -1289,8 +1289,12 @@ class STOQS_Loader(object):
             p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
                     standard_name='height_above_sea_floor',
                     long_name='Altitude',
+                    description=("Calculated in STOQS loader by using GMT's grdtrack(1) program on the Platform's"
+                                 " latitude, longitude values and differencing the Platform's depth with the"
+                                 " bottom depth data in file %s." % self.grdTerrain),
                     units='m',
-                    name='altitude'
+                    name='altitude',
+                    origin='https://github.com/stoqs/stoqs/blob/45f53d134d336fdbdb38f73959a2ce3be4148227/stoqs/loaders/__init__.py#L1216-L1322'
             )
             parameterCounts[p_alt] = ms.count()
             self.assignParameterGroup({p_alt: ms.count()}, groupName=MEASUREDINSITU)
