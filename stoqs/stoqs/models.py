@@ -298,7 +298,7 @@ class Parameter(models.Model):
     uuid = UUIDField(editable=False)
     name = models.CharField(max_length=128, unique=True)
     type = models.CharField(max_length=128, blank=True, null=True)
-    description= models.CharField(max_length=128, blank=True, null=True)
+    description= models.CharField(max_length=512, blank=True, null=True)
     standard_name = models.CharField(max_length=128, null=True)
     long_name = models.CharField(max_length=128, blank=True, null=True)
     units = models.CharField(max_length=128, blank=True, null=True)
