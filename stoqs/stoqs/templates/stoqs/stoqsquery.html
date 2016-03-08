@@ -1200,7 +1200,7 @@
                 $.map($('body').data()['platformModels'], function(v, k) {return k})), function(index, plat) {
             $('#' + plat + '_SCALE').attr('scale', scale);
             // Axes are 10m long in the axes_enu.x3d inlined file
-            up_text = Math.round(sc  * 10 * $('body').data()['ve'])  + ' m';
+            up_text = Math.round(sc  * 10 / $('body').data()['ve'])  + ' m';
             e_text = Math.round(sc * 10) + ' m';
             $('#' + plat + '_axesENU__upString').attr('string', up_text);
             $('#' + plat + '_axesENU__eString').attr('string', e_text);
