@@ -121,7 +121,8 @@ class CANONLoader(LoadScript):
                                        self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain)
             load_gulps(aName, f, self.dbAlias)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName)
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,
+                                  scalefactor=2)
 
     def loadTethys(self, stride=None):
         '''
