@@ -20,5 +20,5 @@ def parameterinfo(request, pid):
     db_alias = request.META.get('dbAlias')
     p = Parameter.objects.using(db_alias).get(pk=pid)
     pr = ParameterResource.objects.using(db_alias).filter(parameter=p).values('resource__name', 'resource__value')
-    response = HttpResponse(pr, content_type="application/json")
+    response = HttpResponse(p.description, content_type="application/json")
     return response

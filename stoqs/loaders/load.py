@@ -209,8 +209,10 @@ local   all             all                                     peer
 
                 script = os.path.join(app_dir, 'loaders', load_command)
                 try:
-                    print ('{:30s} {:>15s}').format(db, 
-                            tail(self._log_file(script, db, load_command), 3)[0].split()[1])
+                    print ('{:30s} {:>15s}').format(db, (
+                            tail(self._log_file(script, db, load_command), 3)
+                            .split('\n')[0]
+                            .split('\t')[1]))
                 except IndexError:
                     pass
 

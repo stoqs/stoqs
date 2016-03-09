@@ -688,7 +688,7 @@ class PlatformAnimation(object):
         <GeoLocation id="{pName}_LOCATION" DEF="{pName}_LOCATION">
             {geoOriginStr}
             <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
-                <!-- Cylinder height = 0.410 in axes_enu.x3d, scale to make length = 10m -->
+                <!-- Cylinder height = 0.410 in axes_enu.x3d, scale to make length = 10 m -->
                 <Transform scale="24.390244 24.390244 24.390244">
                     <Inline url="http://stoqs.mbari.org/x3d/beds/axes_enu.x3d" nameSpaceName="{pName}_axesENU"></Inline>
                 </Transform>
@@ -707,9 +707,9 @@ class PlatformAnimation(object):
                 <Transform id="{pName}_XROT" DEF="{pName}_XROT">
                     <Transform id="{pName}_YROT" DEF="{pName}_YROT">
                         <Transform id="{pName}_ZROT" DEF="{pName}_ZROT">
-                                <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
-                                    <Inline url="{pURL}"></Inline>
-                                </Transform>
+                            <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
+                                <Inline url="{pURL}"></Inline>
+                            </Transform>
                         </Transform>
                     </Transform>
                 </Transform>
@@ -865,6 +865,18 @@ class PlatformAnimation(object):
                              times=sorted(assembled_times), limits=(0, len(assembled_times)),
                              platforms_not_shown=platforms_not_shown)
 
+    def _pitch_with_ve(self, angle, ve):
+        '''Given an angle in degrees return pitch angle in radians properly
+        adjusted for vertical exaggeration'''
+        if ve == 1:
+            return np.pi * angle / 180.0
+        else:
+            # Account for all 4 quadrants by using atan2()
+            x = math.cos(np.pi * angle / 180.0)
+            y = math.sin(np.pi * angle / 180.0)
+
+            return math.atan2(y * ve, x)
+
     def _animationX3D_for_platform(self, platform, vert_ex, geoOrigin, scale):
         '''Build X3D text for a platform's animation
         '''
@@ -887,14 +899,19 @@ class PlatformAnimation(object):
             indices = indices + '%i ' % index
             index = index + 1
 
+        # Platform model must be oriented with nose to -Z (north) and up to +Y
+        # Conventions for pitch & yaw from non-BEDs platforms requires opposite rotations
+        xRotFmt = '-1 0 0 {:.6f}'   # pitch
+        yRotFmt = '0 -1 0 {:.6f}'   # yaw
+        zRotFmt = '0 0 -1 {:.6f}'   # roll
+
         # Apply vertical exaggeration to pitch angle
-        xRotValues = ' '.join(['1 0 0 %.6f' % 
-                                math.atan(math.tan(np.pi * x / 180.) * vert_ex) 
-                                for x in self.pitch_by_plat.get(pName, [])])
-        yRotValues = ' '.join(['0 -1 0 %.6f' % (np.pi * z / 180.) 
-                                for z in self.yaw_by_plat.get(pName, [])])
-        zRotValues = ' '.join(['0 0 1 %.6f' % (np.pi * -y / 180.) 
-                                for y in self.roll_by_plat.get(pName, [])])
+        xRotValues = ' '.join([xRotFmt.format(self._pitch_with_ve(p, vert_ex))
+                                for p in self.pitch_by_plat.get(pName, [])])
+        yRotValues = ' '.join([yRotFmt.format(np.pi * y / 180.)
+                                for y in self.yaw_by_plat.get(pName, [])])
+        zRotValues = ' '.join([zRotFmt.format(np.pi * r / 180.)
+                                for r in self.roll_by_plat.get(pName, [])])
 
         if xRotValues and yRotValues and zRotValues:
             x3d = self.position_orientation_template.format(pName=pName,
