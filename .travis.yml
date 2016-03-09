@@ -12,6 +12,7 @@ before_install:
   - export PATH=/home/travis/miniconda2/bin:$PATH
   - export HDF5_DIR=/home/travis/miniconda2/
   - export NETCDF4_DIR=/home/travis/miniconda2/
+  - export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgfortran.so.3
   - conda update --yes conda
 env:
   - DJANGO=1.8
