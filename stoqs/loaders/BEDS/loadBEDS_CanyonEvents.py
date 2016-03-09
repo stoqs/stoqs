@@ -71,7 +71,7 @@ bl.bed_framegrabs = [ 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills
 bl.process_command_line()
 
 if bl.args.test:
-    bl.loadBEDS(stride=100, featureType='trajectory')
+    bl.loadBEDS(stride=10, featureType='trajectory')
 
 elif bl.args.optimal_stride:
     bl.loadBEDS(stride=1, featureType='trajectory')
