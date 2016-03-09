@@ -12,10 +12,10 @@ before_install:
   - export PATH=/home/travis/miniconda2/bin:$PATH
   - export HDF5_DIR=/home/travis/miniconda2/
   - export NETCDF4_DIR=/home/travis/miniconda2/
+  - export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgfortran.so.3
   - conda update --yes conda
 env:
   - DJANGO=1.8
-  - LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgfortran.so.3
 install:
   - conda install --yes python=2.7 hdf5 netcdf4 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
   # Coverage packages are on my binstar channel
