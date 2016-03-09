@@ -590,11 +590,7 @@ class MeasuredParameter(object):
             for act in self.value_by_act.keys():
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in izip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
-                    if act.upper().startswith('BED'):
-                        depth -= 45     # Temporary adjustment to make BED01 1-June-2013 event appear above terrain 
-
                     points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
-
                     try:
                         cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
                                         (float(self.parameterMinMax[2]) - float(self.parameterMinMax[1]))))
