@@ -470,6 +470,8 @@ def showActivityParameter(request, fmt='html'):
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, fmt, query_set, stoqs_object)
+    o.fields = ['id', 'activity__name', 'parameter__name', 'number', 'min', 'max', 'mean', 
+                'median', 'mode', 'p025', 'p975', 'p010', 'p990']
     return o.process_request()
 
 def showSimpleDepthTime(request, fmt='html'):

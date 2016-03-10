@@ -42,7 +42,7 @@ installing all the required software.
 
 6. Set up remote upstream:
 
-        git remote add -f upstream git://github.com/stoqs/stoqs.git
+        git remote add -f upstream https://github.com/stoqs/stoqs.git
 
 ### Contributing follows a [typical GitHub workflow](https://guides.github.com/introduction/flow/):
 
