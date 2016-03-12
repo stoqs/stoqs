@@ -3203,10 +3203,11 @@
                 $('input:checked[name=parameters_plot_cb]').each(function (index, elem) {
                     qstring = qstring + '&parametertimeplotid=' + elem.value;
                 });
-                //if ( $('input:radio[name=parameters_plot]:checked').val() ) {
-                // Send parameterplotid if on Parameter tab so that Spatial pane updates
-                qstring = qstring + '&parameterplotid=' + $('input:radio[name=parameters_plot]:checked').val();
-                qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
+                if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                    // Send parameterplotid if on Parameter tab so that Spatial pane updates
+                    qstring = qstring + '&parameterplotid=' + $('input:radio[name=parameters_plot]:checked').val();
+                    qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
+                }
             }
         }
 
