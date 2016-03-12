@@ -119,12 +119,17 @@ def getShow_Geo_X3D_Data(kwargs):
 # General utility methods called by STOQSQueryManager, MPQuery, etc.
 #
 
-def getParameterGroups(dbAlias, parameter):
+def getParameterGroups(dbAlias, parameter=None):
     '''
     Return list of ParameterGroups that parameter belongs to
     '''
     from stoqs.models import ParameterGroupParameter
-    return ParameterGroupParameter.objects.using(dbAlias).filter(parameter=parameter).values_list('parametergroup__name')[0]
+
+    qs = ParameterGroupParameter.objects.using(dbAlias).values_list('parametergroup__name', flat=True)
+    if parameter:
+        qs = qs.filter(parameter=parameter)
+
+    return qs
 
 
 ## {{{ http://code.activestate.com/recipes/511478/ (r1)
