@@ -217,8 +217,11 @@ class MPQuerySet(object):
  
     def filter(self, *args, **kwargs):
         qs = self._clone()
-        logger.debug('type(qs) = %s', type(qs))
-        qs.mp_query = qs.mp_query.filter(*args, **kwargs)
+        try:
+            qs.mp_query = qs.mp_query.filter(*args, **kwargs)
+        except AttributeError as e:
+            logger.warn(str(e))
+
         return qs.mp_query
  
     def exclude(self, *args, **kwargs):
@@ -233,7 +236,11 @@ class MPQuerySet(object):
  
     def _clone(self):
         qs = MPQuerySet(self.dbAlias, self.query, self.values_list)
-        qs.mp_query = self.mp_query._clone()
+        try:
+            qs.mp_query = self.mp_query._clone()
+        except AttributeError as e:
+            logger.warn(str(e))
+
         return qs 
  
 
@@ -626,10 +633,13 @@ class MPQuery(object):
 
         if orderedFlag:
             qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
-            # Save ordered queryset with no parameter in the filter for
-            # X3D display to get roll, pitch, and yaw
-            self.qs_mp_no_parm = qs_mp
 
+        # Save ordered queryset with no parameter in the filter for X3D display to get roll, pitch, and yaw
+        self.qs_mp_no_parm = qs_mp
+
+        # If the parametertimeplotid is selected from the UI then we need to have that filter in the QuerySet
+        # before doing any raw SQL construction.  Use the qs_mp_no_parm member for QuerySets that shouldn't
+        # be filtered by the parametertimeplotid, e.g. parametertime, 3D animation, etc.
         if self.parameterID:
             logger.debug('Adding parameter__id=%d filter to qs_mp', int(self.parameterID))
             qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
@@ -640,10 +650,6 @@ class MPQuery(object):
                 # Start with fresh qs_mp without .values()
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(
                             'measurement__instantpoint__activity__platform').filter(**qparams)
-
-                if self.parameterID:
-                    logger.debug('Adding parameter__id=%d filter to qs_mp', int(self.parameterID))
-                    qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
 
                 if orderedFlag:
                     qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
@@ -668,7 +674,6 @@ class MPQuery(object):
 
         return qs_mpq
 
-
     def getSampledParametersQS(self, values_list=[], orderedFlag=True):
         '''
         Return query set of SampledParameters given the current constraints.  If no parameter is selected return None.
@@ -687,6 +692,12 @@ class MPQuery(object):
             # May need select_related(...)
             qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).filter(**qparams).values(*values_list)
 
+        # Save ordered queryset with no parameter in the filter for X3D display to get roll, pitch, and yaw
+        self.qs_sp_no_parm = qs_sp
+
+        # If the parametertimeplotid is selected from the UI then we need to have that filter in the QuerySet
+        # before doing the raw SQL construction.  Use the qs_mp_no_parm member for QuerySets that shouldn't
+        # be filtered by the parametertimeplotid, e.g. parametertime, 3D animation, etc
         if self.parameterID:
             logger.debug('Adding parameter__id=%d filter to qs_sp', int(self.parameterID))
             qs_sp = qs_sp.filter(parameter__id=int(self.parameterID))
@@ -724,7 +735,7 @@ class MPQuery(object):
 
     def getMPCount(self):
         '''
-        Get the actual count of measured parameters giving the exising query.  If private _count
+        Get the actual count of measured parameters giving the existing query.  If private _count
         member variable exist return that, otherwise expand the query set as necessary to get and
         return the count.
         '''
