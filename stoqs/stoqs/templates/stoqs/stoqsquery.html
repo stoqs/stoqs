@@ -1168,7 +1168,7 @@
     var timeAxis;
     var sliderLimits;
 
-    // Callback from X3DOM TimeSensor aded to scene with 'showplatforms' checkbox 
+    // Callback from X3DOM TimeSensor added to scene with 'showplatforms' checkbox 
     function setSlider(eventObject) {
         if(eventObject.type != "outputchange" || eventObject.fieldName != "fraction_changed")
             return;
@@ -2673,7 +2673,7 @@
                     $('input:checkbox[name=mp_all_parameters_plot_cb]').prop('checked',true).triggerHandler('click');
                 }
             }
-            rebuildFilters(['parametertime', 'platformanimation']);
+            rebuildFilters(['parametertime', 'platformanimation', 'measuredparameterx3d']);
         }
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
             $('.parameter-plot-radio').show();
@@ -3157,10 +3157,10 @@
         $('#temporal-anchor').html(tLabel);
 
         if ($('#showplatforms').is(':checked')) {
-            rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'platformanimation']);
+            rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d', 'platformanimation']);
         }
         else {
-            rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d']);
+            rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d']);
         }
     });
 
@@ -3203,6 +3203,10 @@
                 $('input:checked[name=parameters_plot_cb]').each(function (index, elem) {
                     qstring = qstring + '&parametertimeplotid=' + elem.value;
                 });
+                //if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                // Send parameterplotid if on Parameter tab so that Spatial pane updates
+                qstring = qstring + '&parameterplotid=' + $('input:radio[name=parameters_plot]:checked').val();
+                qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
             }
         }
 
