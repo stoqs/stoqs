@@ -913,10 +913,6 @@ class STOQSQManager(object):
             ems = int(1000 * to_udunits(tv, 'seconds since 1970-01-01'))
             nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
                                                 # mooring microcat actual depths are put into mp['measurement__depth']
-            ##if p == 'BED_DEPTH':
-            ##    logger.debug('nd = %s, tv = %s', nd, tv)
-            ##    raise Exception('DEBUG')        # Useful for examining queries in the postgresql log
-
             if plotTimeSeriesDepth:
                 an_nd = "%s - %s starting @ %s m" % (p, a.name, plotTimeSeriesDepth[0][0],)
             else:
@@ -1085,8 +1081,8 @@ class STOQSQManager(object):
                 self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
                 self.mpq.initialQuery = self.initialQuery
 
-            # Perform more expensive query: start with no_order version of the MeasuredParameter query set
-            pt_qs_mp = self.mpq.qs_mp_no_order
+            # Perform more expensive query: start with qs_mp_no_parm version of the MeasuredParameter query set
+            pt_qs_mp = self.mpq.qs_mp_no_parm
             
             logger.debug('Before self._buildParameterTime: pt = %s', pt.keys()) 
             pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
