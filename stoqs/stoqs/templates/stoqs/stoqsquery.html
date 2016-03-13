@@ -258,7 +258,7 @@
                                                 <NavigationInfo></NavigationInfo>
                                                 <Viewpoint id="mp-x3d-viewpoint1" def="vp" onviewpointChanged="setScale(event)"></Viewpoint>
                                                 <!-- Test GeoViewpoint for Monterey Bay area, user must page-down to bind to it -->
-                                                <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" geoSystem='"GD" "WE"' position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0">
+                                                <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0">
                                                 </GeoViewpoint>
                                                 <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
                                                 <Group id='spatial-3d-root' render='true'>
@@ -2362,8 +2362,6 @@
         widthZoomed = ! widthZoomed;
     });
 
-
-
     function enable_vr() {
         // Follows example from http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-webvr-2.html
 
@@ -2529,9 +2527,9 @@
             $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', newSpeed);
             $('#mp-x3d-viewpoint1').attr('zNear', '10');
             $('#mp-x3d-viewpoint1').attr('zFar', '300000');
-            $('#mp-x3d-geoviewpoint1').attr('zNear', '10');
+            $('#mp-x3d-geoviewpoint1').attr('zNear', '100');
             $('#mp-x3d-geoviewpoint1').attr('zFar', '300000');
-            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 10000');
+            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 1000');
             $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
             $('#left-column').parent().parent().css( { 'padding-left': '20px' } );
             $('#collapseSpatial > div').css( { 'padding-top': '9px' } );
@@ -2550,9 +2548,10 @@
             $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', newSpeed);
             $('#mp-x3d-viewpoint1').attr('zNear', '10');
             $('#mp-x3d-viewpoint1').attr('zFar', '300000');
-            $('#mp-x3d-geoviewpoint1').attr('zNear', '10');
-            $('#mp-x3d-geoviewpoint1').attr('zFar', '300000');
-            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 0');
+            $('#mp-x3d-geoviewpoint1').attr('zNear', '100');
+            $('#mp-x3d-geoviewpoint1').attr('zFar', '30000');
+            // put this viewpoint in the center of the horizontal extent and 100 units above sea level 
+            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 100');
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             $('#left-column').parent().parent().css( { 'padding-left': '0px' } );
             $('#collapseSpatial > div').css( { 'padding-top': '0px' } );
@@ -3928,6 +3927,7 @@
                     if (data[key]['points']) {
                         if ( ! $.isEmptyObject(data.measuredparameterx3d.points) ) {
                             $('#mp-x3d-track').html([
+                                '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>',
                                 '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
                                     '<color color="' + data.measuredparameterx3d.colors + '"></color>',
                                     '<geocoordinate point="' + data.measuredparameterx3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>',
