@@ -229,8 +229,8 @@
                                                     <div id="x3d-ve"></div><br>
                                                 </div>
                                                 <div class="span2">
-                                                    <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
-                                                    <p><a id="geo-rift-button" class="btn btn-mini rift-button"><i class="icon-eye-open"></i> Rift it!</a></p>
+                                                    <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom view</a></p>
+                                                    <p><a id="geo-rift-button" class="btn btn-mini rift-button"><i class="icon-eye-open"></i> Enter VR</a></p>
                                                     <p><a id="geo-x3d-reset-view" class="btn btn-mini" onClick="$('#spatial-3d-x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                                     <form class="form-inline">
                                                         <label class="checkbox disabled">
@@ -485,7 +485,7 @@
                                                 <em> Rotate: Left mouse<br>Translate: Ctrl + left mouse<br>Zoom: Alt + left mouse </em>
                                             </div>
                                             <div class="span2">
-                                                <p><a id="pp-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom display</a></p>
+                                                <p><a id="pp-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom view</a></p>
                                                 <p><a id="pp_x3d-reset-view" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                             </div>
                                             <div class="span7">
@@ -1171,6 +1171,7 @@
     var lastW, lastH;
 
     var vrHMD = null, vrSensor = null;
+    var pyr = new x3dom.fields.SFVec3f(0, 0, 0);        // For the Leap Motion
 
     // Callback from X3DOM TimeSensor added to scene with 'showplatforms' checkbox 
     function setSlider(eventObject) {
@@ -2324,7 +2325,7 @@
                                         'position': ''
                                       } );
             }
-            $(this).html('<i class="icon-resize-full"></i> Zoom display');
+            $(this).html('<i class="icon-resize-full"></i> Zoom view');
         } else {
             if ($('.stoqs-zoom-width').hasClass('span6')) {
                 $('.stoqs-zoom-width').removeClass('span6');
@@ -2357,7 +2358,7 @@
                                         'position': 'fixed'
                                       });
             }
-            $(this).html('<i class="icon-remove-sign"></i> Unzoom display');
+            $(this).html('<i class="icon-remove-sign"></i> Unzoom view');
         }
         widthZoomed = ! widthZoomed;
     });
@@ -2380,6 +2381,11 @@
         var viewpoint = document.getElementById('mp-x3d-geoviewpoint1');
         var initDone = false;
 
+        var old_vp = runtime.getActiveBindable('geoviewpoint');
+        var vp_ori_matrix = viewpoint.getFieldValue('orientation').toMatrix(); // as matrix
+        var vp_pos = viewpoint.getFieldValue('position');
+        
+
         runtime.enterFrame = function () {
             if (!vrSensor)
                 return;
@@ -2390,24 +2396,30 @@
             }
 
             if (state.orientation !== null) {
-            
                 var h = state.orientation;
                 var q = new x3dom.fields.Quaternion(h.x, h.y, h.z, h.w);
 
                 var aa = q.toAxisAngle();
                 //console.log(aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
-
-                viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
-                
+                viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]); // triggers viewpointchanged event
             }
 
-            //if (state.position !== null) {
-            //    var posi = viewpoint.requestFieldRef('position');
-            //    posi.x = 4.17102 + state.position.x;
-            //    posi.y = 1.00905 + state.position.y;
-            //    posi.z = -6.97228 + state.position.z;
-            //    viewpoint.releaseFieldRef('position');
-            //}
+            if (state.position !== null) {
+                pos = old_vp.requestFieldRef('position');
+
+                //multiply head position with initial viewpoint orientation to align
+
+                aHdPos = new x3dom.fields.SFVec3f(state.position.x, state.position.y, state.position.z);
+                giant_factor = 100;
+                aHdPos = vp_ori_matrix.multMatrixVec(aHdPos.multiply(giant_factor)).add(pyr);
+
+                //pos.x = vp_pos.x + aHdPos.x;
+                //pos.y = vp_pos.y + aHdPos.y;
+                //pos.z = vp_pos.z + aHdPos.z;
+
+                //old_vp.releaseFieldRef('position'); // triggers viewpointchanged event
+            }
+
         };
 
         runtime.exitFrame = function () {
@@ -2506,10 +2518,155 @@
         }
         /* ----------------------------------------------------------- */
 
+
+        // Modeled after Andreas's LeapFistThumb.txt sent to me from Mike Aratow and 
+        // http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-leap-webvr-2.html
+
+        var hand = document.getElementById("hand");
+
+        function init()
+        {
+            // TODO create hand here
+
+            // bones
+            for (var i = 0; i < 5; i++)
+            {
+                finger = document.createElement("transform");
+
+                for (var j = 0; j < 4; ++j)
+                {
+                    mtransform = document.createElement("MatrixTransform");
+                    finger.appendChild(mtransform);
+
+                    transform = document.createElement("transform");
+                    mtransform.appendChild(transform);
+
+                    transform.setAttribute("scale", "10 10 10");
+                    shape = document.createElement("shape");
+                    transform.appendChild(shape);
+
+                    app = document.createElement("appearance");
+                    mat = document.createElement("material");
+                    mat.setAttribute("diffuseColor", "0.603 0.894 0.909");
+                    app.appendChild(mat);
+                    shape.appendChild(app);
+
+                    geometry = document.createElement("box");
+                    shape.appendChild(geometry);
+                }
+
+                document.getElementById("bones").appendChild(finger);
+            }
+        }
+
+        Leap.loop ( function(frame) {
+            var state, hand_frame, vpOrientation, m, d, dy, speed ;
+            var pyrYSpeed = 2;
+            if (!vrSensor)
+                return;
+            state = vrSensor.getState();
+            if (frame.hands.length && state.position !== null)
+            {
+                hand_frame = frame.hands[0];
+                
+                var hand = document.getElementById("hand");
+
+                var yaw = hand.children[0];
+                var pitch = yaw.children[0];
+                var roll = pitch.children[0];
+
+                yaw.setAttribute("translation", hand_frame.palmPosition[0] + " " + hand_frame.palmPosition[1] + " " + hand_frame.palmPosition[2]);
+
+                yaw.setAttribute("rotation", "0 1 0 " + -hand_frame.yaw());
+                pitch.setAttribute("rotation", "1 0 0 " + hand_frame.pitch());
+                roll.setAttribute("rotation", "0 0 1 " + hand_frame.roll());
+               
+                //var viewpoint = document.getElementById("viewpoint"); //old_vp
+                vpOrientation = old_vp.getAttribute("orientation");
+                //relative to current orientaton
+                //var m = x3dom.fields.Quaternion.parseAxisAngle( vpOrientation ).toMatrix();
+                //relative to initial viewpoint
+                m = vp_ori_matrix;
+                //y from fist
+                dy = 0;
+                if (isFist(hand_frame)) {dy = pyrYSpeed;}
+                if (isThumb(hand_frame)) {dy = -pyrYSpeed;}
+                d = new x3dom.fields.SFVec3f(-hand_frame.roll(), dy, hand_frame.pitch());
+                //d = new x3dom.fields.SFVec3f(-hand_frame.roll(), hand_frame.yaw(), hand_frame.pitch());
+                //d = vp_ori_matrix.multMatrixVec(d);
+
+                if(d.z < 0)
+                {
+                    d.z *= 3.0;
+                }
+
+                speed = 400; // runtime.speed()/100; scale speed by absolute elevation
+
+                pyr = pyr.addScaled(m.multMatrixVec(d), speed);
+
+                pyr_changed = true;
+
+                console.log("ll", d);
+            }
+        
+        for (var i = 0; i < Math.min(frame.fingers.length, 5); i++)
+        {
+            for (var j = 0; j < Math.min(frame.fingers[j].bones.length, 4); ++j)
+            {
+                finger = document.getElementById("bones").children[i];
+                bone = finger.children[j];
+                finger_frame = frame.fingers[i];
+
+                m = finger_frame.bones[j].matrix();
+                arr = new Array;
+
+                for (var x = 0; x < 4; ++x)
+                    for (var y = 0; y < 4; ++y)
+                        arr.push(m[y*4+x]);
+
+                bone.setAttribute("matrix", arr.join(" "));
+            }
+        }
+       
+
+        });
+
+        function isFist(hand) {
+            return  !(hand.thumb.extended ||
+                    hand.indexFinger.extended ||
+                    hand.middleFinger.extended ||
+                    hand.ringFinger.extended ||
+                    hand.pinky.extended) ;
+
+            //return hand.fingers.every(function(f){return f.extended == false;});
+        };
+
+        function isThumb(hand) {
+            /*
+            console.log(hand.thumb.extended,
+            hand.indexFinger.extended,
+                    hand.middleFinger.extended,
+                    hand.ringFinger.extended,
+                    hand.pinky.extended
+            );
+            */
+            return  hand.thumb.extended &&
+                    !(hand.indexFinger.extended ||
+                    hand.middleFinger.extended ||
+                    hand.ringFinger.extended ||
+                    hand.pinky.extended) ;
+
+            //hand.fingers.every(function(f){return f.type == 0 || f.extended == false;})
+        };
+        // End of Modeled after Andreas's LeapFistThumb.txt sent to me from Mike Aratow
+
+
         if (navigator.getVRDevices)
             navigator.getVRDevices().then(vrDeviceCallback);
 
-        // End of using template from http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-webvr-2.html
+       init(); 
+
+        // End of using template from http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-leap-webvr-2.html
     }
 
 
@@ -2535,7 +2692,7 @@
             $('#collapseSpatial > div').css( { 'padding-top': '9px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '15px' } );
             $('#geo-3dplot').css( { 'background-color': '' } );
-            $(this).html('<i class="icon-eye-open"></i> Rift it!');
+            $(this).html('<i class="icon-eye-open"></i> Enter VR');
             runtime.exitFrame = function() {}
         }
         else {
@@ -2557,15 +2714,15 @@
             $('#collapseSpatial > div').css( { 'padding-top': '0px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '0px' } );
             $('#geo-3dplot').css( { 'background-color': '#2f2f2f' } );
-            $(this).html('<i class="icon-eye-open"></i> Un Rift');
+            $(this).html('<i class="icon-eye-open"></i> Leave VR');
             enable_vr();
             if(vrHMD) {
                 var canvas = document.getElementsByTagName("canvas")[0];
-                //if (canvas.webkitRequestFullscreen) {
-                //    canvas.webkitRequestFullscreen({ vrDisplay: vrHMD });
-                //} else if (canvas.mozRequestFullScreen) {
-                //    canvas.mozRequestFullScreen({ vrDisplay: vrHMD });
-                //}
+                if (canvas.webkitRequestFullscreen) {
+                    canvas.webkitRequestFullscreen({ vrDisplay: vrHMD });
+                } else if (canvas.mozRequestFullScreen) {
+                    canvas.mozRequestFullScreen({ vrDisplay: vrHMD });
+                }
             }
 
         }
