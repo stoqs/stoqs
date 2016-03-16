@@ -896,8 +896,10 @@ class PlatformAnimation(object):
             index = index + 1
 
         # Platform model must be oriented with nose to -Z (north) and up to +Y
-        # Conventions for pitch & yaw from non-BEDs platforms requires opposite rotations
-        xRotFmt = '-1 0 0 {:.6f}'   # pitch
+        if 'BED' in pName.upper():
+            xRotFmt = '-1 0 0 {:.6f}'   # pitch - appears more reasonable for CCE event
+        else:
+            xRotFmt = '1 0 0 {:.6f}'    # pitch
         yRotFmt = '0 -1 0 {:.6f}'   # yaw
         zRotFmt = '0 0 -1 {:.6f}'   # roll
 
