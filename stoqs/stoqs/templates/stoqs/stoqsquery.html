@@ -1149,8 +1149,9 @@
     var polyLayer = new OpenLayers.Layer.Vector( " Selection polygon", {visibility: false} );
     var timedepthplot;
     var timeparameterplot;
-    var options_stack = [];
+    var zoom_options_stack = [];
     var zoom_xy_stack = [];
+    var zoom_times_stack = [];
     var stack_depth = 0;
     var simpledepthtime_options;
     var simpledepthtime_options_zoom;
@@ -1981,8 +1982,9 @@
                 $('#temporal-depth-label').html('Depth');
             }
 
-            options_stack = [];
+            zoom_options_stack = [];
             zoom_xy_stack = [];
+            zoom_times_stack = [];
             stack_depth = 0;
             simpledepthtime_options_zoom = simpledepthtime_options;
             parametertime_options_zoom = parametertime_options;
@@ -3149,6 +3151,12 @@
         $("#" + parameter_idsafe + "-histogram-flot").trigger('plotloaded');
     }
 
+    function updateTemporal() {
+        var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
+        var dLabel = 'Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
+        $('#temporal-anchor').html(tLabel);
+        $('#temporal-depth-label').html(dLabel);
+    }
 
     function ZoomIn(event, ranges) {
         // clamp the zooming to prevent eternal zoom
@@ -3156,14 +3164,6 @@
             ranges.xaxis.to = ranges.xaxis.from + 0.00001;
         if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
             ranges.yaxis.to = ranges.yaxis.from + 0.00001;
-
-        // Save this zoom level
-        stack_depth++;
-        options_stack.push(simpledepthtime_options_zoom);
-        zoom_xy_stack.push([ $('#start-ems').val(), $('#end-ems').val(), $('#start-depth').val(), $('#end-depth').val() ]);
-        console.log('stack_depth = ' + stack_depth);
-        console.log('options_stack = ' + options_stack);
-        console.log('zoom_xy_stack = ' + zoom_xy_stack);
 
         // Save the zoomed values
         $('#start-depth').val(Math.round(ranges.yaxis.from*100)/100);
@@ -3177,10 +3177,19 @@
         var de = new Date(ranges.xaxis.to);
         $('#end-time').val(getUTCDateString(de))
 
+        // Save this zoom level
         simpledepthtime_options_zoom = $.extend(true, {}, simpledepthtime_options, {
                                                               xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
                                                               yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to } 
                                                           });
+
+        stack_depth++;
+        zoom_options_stack.push(simpledepthtime_options_zoom);
+        zoom_xy_stack.push([ $('#start-ems').val(), $('#end-ems').val(), $('#start-depth').val(), $('#end-depth').val() ]);
+        zoom_times_stack.push([ $('#start-time').val(), $('#end-time').val() ]);
+        console.log('stack_depth = ' + stack_depth);
+        console.log('zoom_options_stack = ' + zoom_options_stack);
+        console.log('zoom_xy_stack = ' + zoom_xy_stack);
 
         // Apply new depth & time ranges to the query and redraw the plot in rebuildFilters()
         $('#zoomed-button').removeClass('disabled'); 
@@ -3188,28 +3197,40 @@
         //$('#zoomed-button').attr('title', 'Click to unzoom to original extent. Right-click on plot to unzoom to last zoom level.').tooltip('fixTitle').tooltip('hide');
 
         rebuildFilters();
+        updateTemporal();
 
-        var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
-        var dLabel = 'Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
-        $('#temporal-anchor').html(tLabel);
-        $('#temporal-depth-label').html(dLabel);
     }
 
     function ZoomOut() {
         if (stack_depth > 0 ) {
             // Pop options from options stack to restore previous zoom level 
             stack_depth--;
-            simpledepthtime_options_zoom = options_stack.pop();
+            simpledepthtime_options_zoom = zoom_options_stack.pop();
             var zoom_xy = zoom_xy_stack.pop();
+            var zoom_times = zoom_times_stack.pop();
             console.log('stack_depth = ' + stack_depth);
+            if (zoom_xy[0] == $('#start-ems').val() && zoom_xy[1] == $('#end-ems').val() && 
+                zoom_xy[2] == $('#start-depth').val() && zoom_xy[3] == $('#end-depth').val()) {
+                stack_depth--;
+                simpledepthtime_options_zoom = zoom_options_stack.pop();
+                zoom_xy = zoom_xy_stack.pop();
+                zoom_times = zoom_times_stack.pop();
+                console.log('stack_depth = ' + stack_depth);
+            }
             console.log('zoom_xy = ' + zoom_xy);
             $('#start-ems').val(zoom_xy[0]);
             $('#end-ems').val(zoom_xy[1]);
             $('#start-depth').val(zoom_xy[2]);
             $('#end-depth').val(zoom_xy[3]);
+            $('#start-time').val(zoom_times[0]);
+            $('#end-time').val(zoom_times[1]);
         
             rebuildFilters();
+            updateTemporal();
         } 
+        else {
+            $('#zoomed-button').click();
+        }
         // return false to suppress the right-mouse context menu from appearing 
         return false
     }
@@ -3218,6 +3239,7 @@
     $("#time-depth-flot").bind("contextmenu",  ZoomOut);
 
     $("#time-parameter-flot").bind("plotselected", function (event, ranges) {
+        // ZoomIn for parameter-time plots
         $('#start-ems').val(ranges.xaxis.from);
         var ds = new Date(ranges.xaxis.from);
         $('#start-time').val(getUTCDateString(ds));
@@ -3242,6 +3264,7 @@
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d']);
         }
     });
+    $("#time-parameter-flot").bind("contextmenu",  ZoomOut);
 
 
     /*
