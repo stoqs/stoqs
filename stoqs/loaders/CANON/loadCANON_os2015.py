@@ -80,7 +80,6 @@ def find_urls(base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
     print "Crawling: %s" % url
-    import pdb;pdb.set_trace()
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
     u = urlparse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
@@ -154,7 +153,7 @@ for p in platforms:
             files.append(file)
     setattr(cl, p + '_files', files)
     setattr(cl, p  + '_startDatetime', startdate)
-    setattr(cl, p + '_endDatetime', enddate))
+    setattr(cl, p + '_endDatetime', enddate)
 
 ######################################################################
 #  GLIDERS
