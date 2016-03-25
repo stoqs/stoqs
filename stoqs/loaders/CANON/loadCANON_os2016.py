@@ -77,7 +77,6 @@ def find_urls(base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
     print "Crawling: %s" % url
-    import pdb;pdb.set_trace()
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
     u = urlparse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
@@ -124,8 +123,8 @@ def find_urls(base, search_str):
 platforms = ['tethys', 'daphne', 'makai']
 
 for p in platforms:
-    base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2015/'
-    dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2015/'
+    base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
+    dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
     setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'
@@ -419,7 +418,7 @@ else:
     #cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
-#cl.addTerrainResources()
+cl.addTerrainResources()
 
 print "All Done."
 
