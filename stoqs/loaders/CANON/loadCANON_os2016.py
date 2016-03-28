@@ -30,6 +30,7 @@ parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 
 from CANON import CANONLoader
+from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
 
@@ -112,6 +113,9 @@ def find_urls(base, search_str):
     except BaseException:
         print "Skipping %s (error parsing the XML)" % url
 
+    if not urls:
+        raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))
+
     return urls
 
 # Load netCDF files produced (binned, etc.) by Danelle Cline
@@ -123,7 +127,7 @@ def find_urls(base, search_str):
 platforms = ['tethys', 'daphne', 'makai']
 
 for p in platforms:
-    base =  'http://elvis.shore.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
+    base =  'http://elvis64.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
@@ -364,7 +368,7 @@ if cl.args.test:
 
     ##cl.loadDorado(stride=100)
     #cl.loadDaphne(stride=100)
-    #cl.loadTethys(stride=100)
+    cl.loadTethys(stride=100)
     #cl.loadMakai(stride=100)
 
     #cl.loadRCuctd(stride=10)
