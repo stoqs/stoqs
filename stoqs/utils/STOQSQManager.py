@@ -553,6 +553,8 @@ class STOQSQManager(object):
                                 platform__name=platformName, 
                                 resource__name='X3D_MODEL_nominaldepth'
                                 ).values_list('resource__value', flat=True)[0])
+                        logger.debug('Got depth = %s from X3D_MODEL_nominaldepth in '
+                                     'PlatformResource', depth)
                     except (IndexError, ObjectDoesNotExist):
                         logger.warn('Resource name X3D_MODEL_nominaldepth not found for '
                                     'for platform %s. Using a nominaldepth of 0.0', platformName)
