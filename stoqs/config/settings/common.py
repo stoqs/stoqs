@@ -281,7 +281,6 @@ LOGGING = {
 
 # Google Analytics code - get for your web site, if you want to track usage
 # export DJANGO_GOOGLE_ANALYTICS_CODE='SET_YOUR_OWN_GA_CODE_TO_TRACK_USAGE'
-GOOGLE_ANALYTICS_CODE = 'testing'
 
 # Must be externally accessible if your STOQS server is to be externally accessible
 # The default of 'localhost:8080' is for a Vagrant install, set MAPSERVER_HOST for
