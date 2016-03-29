@@ -280,8 +280,13 @@ class BaseOutputer(object):
 
         else:
             self.build_html_template()
-            response = render_to_response(self.html_tmpl_file, {'cols': fields, 'google_analytics_code': settings.GOOGLE_ANALYTICS_CODE },
-                                          context_instance = RequestContext(self.request))
+            try:
+                response = render_to_response(self.html_tmpl_file, {'cols': fields, 
+                                                'google_analytics_code': settings.GOOGLE_ANALYTICS_CODE },
+                                                context_instance = RequestContext(self.request))
+            except AttributeError:
+                response = render_to_response(self.html_tmpl_file, {'cols': fields}, 
+                                                context_instance = RequestContext(self.request))
             fh = open(self.html_tmpl_path, 'w')
             for line in response:
                 fh.write(line)

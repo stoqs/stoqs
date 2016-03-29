@@ -277,12 +277,16 @@ def queryUI(request):
              ('tsv', 'Tabbed Separated Values', ),
              ('html', 'Hyper Text Markup Language table', ),
             ]
+    config_settings = {'site_uri': request.build_absolute_uri('/')[:-1],
+                       'http_site_uri': get_http_site_uri(request),
+                       'formats': formats,
+                       'mapserver_host': settings.MAPSERVER_HOST,
+                       'mappath': request.session['mappath'],
+                      }
+    try:
+        config_settings['google_analytics_code'] = settings.GOOGLE_ANALYTICS_CODE
+    except AttributeError:
+        pass
 
-    return render_to_response('stoqsquery.html', {'site_uri': request.build_absolute_uri('/')[:-1],
-                                                  'http_site_uri': get_http_site_uri(request),
-                                                  'formats': formats,
-                                                  'mapserver_host': settings.MAPSERVER_HOST,
-                                                  'mappath': request.session['mappath'],
-                                                  'google_analytics_code': settings.GOOGLE_ANALYTICS_CODE,
-                                                 }, 
-                            context_instance=RequestContext(request))
+    return render_to_response('stoqsquery.html', config_settings,
+                              context_instance=RequestContext(request))
