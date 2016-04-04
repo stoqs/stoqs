@@ -1513,7 +1513,7 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
             for p in loader.include_names:
                 loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
 
-    if plotTimeSeriesDepth:
+    if plotTimeSeriesDepth is not None:
         # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
         loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
 
@@ -1699,7 +1699,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
 
 def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
                     dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None, 
-                    dataStartDatetime=None):
+                    dataStartDatetime=None, plotTimeSeriesDepth=None):
     '''
     Run the DAPloader for Spray Glider trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1766,6 +1766,10 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             loader.auxCoords[p] = {'time': 'TIME', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
 
     # Fred is now writing according to CF-1.6 and we can expect compliance with auxillary coordinate attribute specifications for future files
+
+    if plotTimeSeriesDepth is not None:
+        # WaveGliders essentially stay at the surface it's handy to have the Parameter tab for their data
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
 
     try:
         loader.process_data()
