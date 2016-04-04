@@ -62,14 +62,13 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 #  DORADO 
 #####################################################################
 # special location for dorado data
-cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2015/netcdf/'
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2016/netcdf/'
 cl.dorado_files = [
-                   'Dorado389_2015_132_04_132_04_decim.nc',
-                   'Dorado389_2015_148_01_148_01_decim.nc',
-                   'Dorado389_2015_156_00_156_00_decim.nc',
+                   'Dorado389_2016_090_01_090_01_decim.nc',
                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
-                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine' ]
+                    'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
+                    'roll', 'pitch', 'yaw']
 
 #####################################################################
 #  LRAUV
@@ -124,7 +123,8 @@ def find_urls(base, search_str):
 # the binned files before this will work
 
 # Get directory list from thredds server
-platforms = ['tethys', 'daphne', 'makai']
+##platforms = ['tethys', 'daphne', 'makai']
+platforms = []
 
 for p in platforms:
     base =  'http://elvis64.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
@@ -201,14 +201,14 @@ cl.nps29_endDatetime = enddate
 ##cl.wg_tex_endDatetime = enddate
 
 # WG Tiny - All instruments combined into one file - one time coordinate
-cl.wg_Tiny_base = cl.dodsBase + 'CANON/2015_OffSeason/Platforms/Waveglider/wgTiny/'
+cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [ 
-                     'SV3_20150611_QC.nc',
-                     'SV3_20151019.nc',    # starts after end of Fall 2015 campaign
+                     'SV3/20160315/SV3_20160315.nc',
                    ]
 
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
                     'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
+cl.wg_Tiny_depths = [ 0 ]
 cl.wg_Tiny_startDatetime = startdate
 cl.wg_Tiny_endDatetime = enddate
 
@@ -357,18 +357,18 @@ cl.process_command_line()
 
 if cl.args.test:
 
-    #cl.loadL_662(stride=100) 
+    cl.loadL_662(stride=100) 
     ##cl.load_NPS29(stride=10)
     #cl.load_UCSC294(stride=10) 
     #cl.load_UCSC260(stride=10)
 
     ##cl.load_wg_tex(stride=10)
     ##cl.load_wg_oa(stride=10)
-    #cl.load_wg_Tiny(stride=10)
+    cl.load_wg_Tiny(stride=10)
 
-    ##cl.loadDorado(stride=100)
+    cl.loadDorado(stride=10)
     #cl.loadDaphne(stride=100)
-    cl.loadTethys(stride=100)
+    #cl.loadTethys(stride=100)
     #cl.loadMakai(stride=100)
 
     #cl.loadRCuctd(stride=10)
@@ -378,14 +378,12 @@ if cl.args.test:
     ##cl.loadWFuctd(stride=10)   
     ##cl.loadWFpctd(stride=10)
 
-    #cl.loadM1(stride=5)
-
-    ##cl.loadBruceMoor(stride=10)
-    ##cl.loadMackMoor(stride=10)
+    cl.loadM1(stride=5)
+    cl.load_oa1(stride=10)
+    cl.load_oa2(stride=10)
 
     #cl.loadSubSamples()
 
-    print 'Nothing to load'
 elif cl.args.optimal_stride:
 
     #cl.loadL_662(stride=2) 
