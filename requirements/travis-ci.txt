@@ -1,5 +1,4 @@
 -r base.txt
-##coverage==3.7.1
-##python-coveralls==2.4.1
+
 scikit-learn==0.17.1
-selenium==2.52.0
+selenium==2.53.1
