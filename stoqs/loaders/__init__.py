@@ -616,7 +616,7 @@ class STOQS_Loader(object):
         self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
         for v in self.include_names + ['altitude']:
             try:
-                if self.plotTimeSeriesDepth.get(v, False):
+                if self.plotTimeSeriesDepth.get(v, None) is not None:
                     self.logger.info('v = %s', v)
                     try:
                         uiResType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')

@@ -474,7 +474,7 @@ class CANONLoader(LoadScript):
 
     def load_wg_Tiny(self, stride=None):
         '''
-        Glider specific load functions
+        Glider specific load functions, sets plotTimeSeriesDepth=0 to get Parameter tab in UI
         '''
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.wg_Tiny_files], self.wg_Tiny_files):
@@ -482,7 +482,7 @@ class CANONLoader(LoadScript):
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'wg_Tiny_Glider', self.colors['wg_Tiny'], 'waveglider', 'Glider Mission',
                                        self.wg_Tiny_parms, self.dbAlias, stride, self.wg_Tiny_startDatetime, 
-                                       self.wg_Tiny_endDatetime, grdTerrain=self.grdTerrain)
+                                       self.wg_Tiny_endDatetime, grdTerrain=self.grdTerrain, plotTimeSeriesDepth=0)
     def load_wg_oa(self, stride=None):
         '''
         Glider specific load functions
