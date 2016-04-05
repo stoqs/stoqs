@@ -192,6 +192,7 @@ class STOQSQManager(object):
                 q = getattr(self,'_%sQ' % (k,))(v, fromTable)
                 logger.debug('fromTable = %s, k = %s, v = %s, q = %s', fromTable, k, v, q)
                 qs = qs.filter(q)
+                # Build qs_platform for Platform UI buttons to work
                 if k != 'platforms' and fromTable == 'Activity':
                     qs_platform = qs_platform.filter(q)
 
@@ -575,8 +576,9 @@ class STOQSQManager(object):
         We assume here that the name is unique and is also used for the id - this is enforced on 
         data load.  Organize the platforms into a dictionary keyed by platformType.
         '''
-        qs = self.qs_platform.values('platform__uuid', 'platform__name', 'platform__color', 'platform__platformtype__name'
-                            ).distinct().order_by('platform__name')
+        # Use queryset that does not filter out platforms - so that Platform buttons work in the UI
+        qs = self.qs_platform.values('platform__uuid', 'platform__name', 'platform__color', 
+                                     'platform__platformtype__name').distinct().order_by('platform__name')
         results = []
         platformTypeHash = {}
         for row in qs:
@@ -1058,6 +1060,10 @@ class STOQSQManager(object):
         # Look for platforms that have featureTypes ammenable for Parameter time series visualization
         for plats in self.getPlatforms().values():
             for platform in plats:
+                if self.kwargs.get('platforms'):
+                    # getPlatforms() includes all Platforms, skip over ones not in the selection
+                    if platform[0] not in self.kwargs.get('platforms'):
+                        continue
                 timeSeriesParmCount = 0
                 trajectoryParmCount = 0
                 if platform[3].lower() == 'timeseriesprofile' or platform[3].lower() == 'timeseries':
