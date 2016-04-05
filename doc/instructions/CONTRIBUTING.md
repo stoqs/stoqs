@@ -20,29 +20,15 @@ installing all the required software.
 3. Generate SSH keys on your development system following the instructions at 
    https://help.github.com/articles/generating-ssh-keys/
 
-4. Clone your fork to a working directory on your development system using the SSH 
-   version of the clone URL:
+4. Rename the existing `origin` remote to `upstream`:
 
-        git clone git@github.com:<your_github_id>/stoqs.git stoqsgit
+        git remote rename origin upstream
 
-   Replace \<your_github_id\> with your GitHub ID. If you built a development system 
-   from the Vagrantfile you may want to first remove the ~/dev/stoqsgit directory 
-   created during that process.
+5. Assign `origin` remote to your forked repository:
 
-5. Configure your Python virtual environment and run the tests (these steps are done 
-   as part of the original Vagrant installation, they need to be executed because you 
-   re-cloned the repository - your working directory - in the previous step):
+        git remote -f origin git@github.com:<your_github_id>/stoqs.git
 
-        cd stoqsgit
-        export PATH="/usr/local/bin:$PATH"
-        virtualenv venv-stoqs
-        source venv-stoqs/bin/activate
-        ./setup.sh
-        ./test.sh <stoqsadm_pw>
-
-6. Set up remote upstream:
-
-        git remote add -f upstream https://github.com/stoqs/stoqs.git
+   Replace \<your_github_id\> with your GitHub ID.
 
 ### Contributing follows a [typical GitHub workflow](https://guides.github.com/introduction/flow/):
 
