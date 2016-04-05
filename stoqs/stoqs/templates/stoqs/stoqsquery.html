@@ -791,7 +791,7 @@
                             <div class="tab-content">
                                 <div class="tab-pane active" id="temporal-depth">
                                     <div class="row-fluid">
-                                        <div class="span6"><em>Click and drag to select a time-depth range</em></div>
+                                        <div class="span6"><em id="time-depth-instr">Click and drag to zoom</em></div>
                                         <div id="temporalparameterstrideinfo" class="span6" style="text-align:right;"></div>
                                     </div>
                                     <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
@@ -806,17 +806,11 @@
                                             <div class="span7" id="sectioncolorbar" style="float:right;"><img src="" /></div>
                                         </div>
                                     </div>
-                                    <input type="hidden" id="start-ems" name="start-ems" />
-                                    <input type="hidden" id="start-time" name="start-time" />
-                                    <input type="hidden" id="end-ems" name="end-ems" /> 
-                                    <input type="hidden" id="end-time" name="end-time"> 
-                                    <input type="hidden" id="start-depth" name="start-depth" />
-                                    <input type="hidden" id="end-depth" name="end-depth" /> 
                                 </div>
                                 <div class="tab-pane" id="temporal-parameter">
                                     <div class="row-fluid">
                                         <div class="span6">
-                                            <em>Click and drag to select a time range</em>
+                                            <em id="time-parameter-instr">Click and drag to zoom</em>
                                         </div>
                                         <div id="stride-info" class="span6"></div>
                                     </div>
@@ -1150,9 +1144,7 @@
     var timedepthplot;
     var timeparameterplot;
     var zoom_simpledepthtime_stack = [];
-    var zoom_simpledepthtime_stack_depth = 0;
     var zoom_parametertime_stack = [];
-    var zoom_parametertime_stack_depth = 0;
     var simpledepthtime_options;
     var simpledepthtime_options_zoom;
     var parametertime_options;
@@ -1812,10 +1804,10 @@
         }
 
         if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
-            params['start_time']=$('#start-time').val();
-            params['end_time']=$('#end-time').val();
-            params['min_depth']=$('#start-depth').val();
-            params['max_depth']=$('#end-depth').val();
+            params['start_time'] = $('body').data()['start-time'];
+            params['end_time'] = $('body').data()['end-time'];
+            params['min_depth'] = $('body').data()['start-depth'];
+            params['max_depth'] = $('body').data()['end-depth'];
         }
         else {
             // Not Zoomed in - set params from the current flot axis limits
@@ -1908,7 +1900,7 @@
         }
         if ($('#temporal-parameter-li').hasClass('active')) {
             params['parametertab'] = 1;
-            params['secondsperpixel'] = ($('#end-ems').val() - $('#start-ems').val()) / PIXELS_WIDE / 1000.0;
+            params['secondsperpixel'] = ($('body').data()['end-ems'] - $('body').data()['start-ems']) / PIXELS_WIDE / 1000.0;
         }
 
         // Since the old link (if there was one) for the permalink is no longer valid, hide it
@@ -1953,46 +1945,24 @@
         }
     }
 
-    function resetZoomedValues(resetData) {
-            // Reset zoom to saved resetData values
-            $('#start-depth').val(resetData['depth'][0]);
-            $('#end-depth').val(resetData['depth'][1]);
-
-            var start=new Date(resetData['time'][0]);
-            $('#start-ems').val(start.getTime());
-            $('#start-time').val(getUTCDateString(start));
-            var end=new Date(resetData['time'][1]);
-            $('#end-ems').val(end.getTime());
-            $('#end-time').val(getUTCDateString(end));
-    }
-
-    // Special handling for unzooming the time-depth-plot and time-parameter-plot
+    // Special handling for unzooming (Clear Selection) the time-depth-plot and time-parameter-plot
     $("#zoomed-button").click(function() {
         if ( $('.btn-primary', $('#time-depth-plot').length) ) {
-            if ( $('#temporal-parameter-li').hasClass('active') ) {
-                var start=new Date(initData['time'][0]);
-                $('#start-ems').val(start.getTime());
-                $('#start-time').val(getUTCDateString(start));
-                var end=new Date(initData['time'][1]);
-                $('#end-ems').val(end.getTime());
-                $('#end-time').val(getUTCDateString(end));
-            }
-            else {
-                resetZoomedValues(initData);
-                $('#temporal-depth-label').html('Depth');
-            }
+            var zoom_sdt = zoom_simpledepthtime_stack[0];
+            $('body').data()['start-ems'] = zoom_sdt[0];
+            $('body').data()['end-ems'] = zoom_sdt[1];
+            $('body').data()['start-depth'] = zoom_sdt[2];
+            $('body').data()['end-depth'] = zoom_sdt[3];
+            simpledepthtime_options_zoom = zoom_sdt[4];
 
-            zoom_simpledepthtime_stack = [];
-            zoom_simpledepthtime_stack_depth = 0;
+            // Clear zoom_parametertime_stack but not zoom_simpledepthtime_stack
+            // as the former starts empty on init and the latter is pushed on init
             zoom_parametertime_stack = [];
-            zoom_parametertime_stack_depth = 0;
-
-            simpledepthtime_options_zoom = simpledepthtime_options;
             parametertime_options_zoom = parametertime_options;
+
             $("#zoomed-button").removeClass('btn-primary');
             $("#zoomed-button").addClass('disabled');
             $('#zoomed-button').attr('title', ' ').tooltip('fixTitle').tooltip('hide');
-            $('#temporal-anchor').html('Temporal');
 
             var items = []
             var plotDataSelection = $('input:radio[class=parameter-plot-radio]:checked').val();
@@ -2005,6 +1975,7 @@
                     items = ['parameters', 'platforms', 'simpledepthtime', 'sampledepthtime', 'sampledurationsdepthtime'];
                 }
             }
+            updateTemporal();
             rebuildFilters(items);
         }
     });
@@ -2761,10 +2732,10 @@
             $('.parameter-plot-radio').show();
             $('.parameter-plot-checkbox').hide();
             $('.all-plot-instruction').text('Clear Selection');
-            var ranges={xaxis: {  to: parseFloat($('#end-ems').val()),
-                                from: parseFloat($('#start-ems').val())},
-                        yaxis: {  to: parseFloat($('#end-depth').val()),
-                                from: parseFloat($('#start-depth').val())}
+            var ranges={xaxis: {  to: $('body').data()['end-ems'],
+                                from: $('body').data()['start-ems']},
+                        yaxis: {  to: $('body').data()['end-depth'],
+                                from: $('body').data()['start-depth']}
                         };
             ZoomIn(event, ranges);    // Calls rebuildFilters() for everything
         }
@@ -2969,7 +2940,7 @@
         // This method of providing quick look plots is annoying as click-n-drag operations will sometimes trigger a plotclick
         if (item) {
             // Crude test whether sample or activity click, activities 2nd element may be '(stride=..'
-            console.log(item.series.label)
+            //console.log(item.series.label)
             if (item.series.label.split(' ').length == 2) {
                 if (item.series.label.split(' ')[1].indexOf('(') == -1) {
                     showSampleData(item.series.label)
@@ -3005,13 +2976,14 @@
                                 bottomdepth_time_series = data.simplebottomdepthtime.sbdt[platform_value[0]][label];
                             }
                         }
-                        $.each(depth_time_series, function (index, td) {
-                            // From each activity push only the times between x1 & x2, inclusive
-                            if (td[0] >= x1 && td[0] <= x2) {
-                                subset_dts.push(td);
+                        if ( ! $.isEmptyObject(depth_time_series) ) {
+                            // Test for overlap of zoom window with data; push an item to mark this dts being in zoom window
+                            d1 = depth_time_series[0][0];
+                            d2 = depth_time_series[depth_time_series.length-1][0];
+                            if ((x1 <= d2) && (d1 <= x2)){
+                                subset_dts.push(depth_time_series[0]);
                             }
-                        });
-    
+                        }
                         if (subset_dts.length > 0) {
                             if (subset_dts.length > maxLength) {
                                 maxLength = subset_dts.length;
@@ -3019,9 +2991,10 @@
                             if (! platform_seen[platform_value[0]]) {
                                 //rec["label"] = platform_value[0];
                                 platform_seen[platform_value[0]] = true;
-                             }
-                             dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
-                             dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
+                            }
+                            //console.log('>>> ' + platform_value[0]);
+                            dataset.push({'label': label, 'data': depth_time_series, 'color': "#" + data['simpledepthtime']['colors'][platform_value[0]]});
+                            dataset.push({'data': bottomdepth_time_series, 'color': "#lightgrey", 'lines': {lineWidth: 0, fill: true}});
                          }
                     });
                 }
@@ -3153,8 +3126,13 @@
     }
 
     function updateTemporal() {
-        var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
-        var dLabel = 'Depth: ' + $('#start-depth').val() + ' to ' + $('#end-depth').val();
+        var ds = new Date($('body').data()['start-ems']);
+        var de = new Date($('body').data()['end-ems']);
+        $('body').data()['start-time'] = getUTCDateString(ds); 
+        $('body').data()['end-time'] = getUTCDateString(de);
+
+        var tLabel = 'Temporal: ' + $('body').data()['start-time'] + ' to ' + $('body').data()['end-time'];
+        var dLabel = 'Depth: ' + $('body').data()['start-depth'] + ' to ' + $('body').data()['end-depth'];
         $('#temporal-anchor').html(tLabel);
         $('#temporal-depth-label').html(dLabel);
     }
@@ -3167,92 +3145,89 @@
         if (ranges.yaxis.to - ranges.yaxis.from < 0.00001)
             ranges.yaxis.to = ranges.yaxis.from + 0.00001;
 
-        $('#start-depth').val(Math.round(ranges.yaxis.from*100)/100);
-        $('#end-depth').val(Math.round(ranges.yaxis.to*100)/100);
-
-        $('#start-ems').val(ranges.xaxis.from);
-        var ds = new Date(ranges.xaxis.from);
-        $('#start-time').val(getUTCDateString(ds));
-
-        $('#end-ems').val(ranges.xaxis.to);
-        var de = new Date(ranges.xaxis.to);
-        $('#end-time').val(getUTCDateString(de))
+        $('body').data()['start-ems'] = ranges.xaxis.from;
+        $('body').data()['end-ems'] = ranges.xaxis.to;
+        $('body').data()['start-depth'] = Math.round(ranges.yaxis.from*100)/100;
+        $('body').data()['end-depth'] = Math.round(ranges.yaxis.to*100)/100;
 
         simpledepthtime_options_zoom = $.extend(true, {}, simpledepthtime_options, {
                                                               xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
                                                               yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to } 
                                                           });
 
-        zoom_simpledepthtime_stack_depth++;
-        zoom_simpledepthtime_stack.push([ $('#start-ems').val(), $('#end-ems').val(), $('#start-depth').val(), $('#end-depth').val(),
-                                           simpledepthtime_options_zoom, $('#start-time').val(), $('#end-time').val() ]);
+        zoom_simpledepthtime_stack.push([ $('body').data()['start-ems'], $('body').data()['end-ems'],
+                                          $('body').data()['start-depth'], $('body').data()['end-depth'],
+                                          simpledepthtime_options_zoom ]);
 
         // Apply new depth & time ranges to the query and redraw the plot in rebuildFilters()
         $('#zoomed-button').removeClass('disabled'); 
         $('#zoomed-button').addClass('btn-primary');
         //$('#zoomed-button').attr('title', 'Click to unzoom to original extent. Right-click on plot to unzoom to last zoom level.').tooltip('fixTitle').tooltip('hide');
 
-        rebuildFilters();
         updateTemporal();
+        rebuildFilters();
+        $('#time-depth-instr').html('Click and drag to zoom, right-click to un-zoom');
 
     }
 
     function ZoomOut(event) {
         // Coordinate temporal zoom level between Depth and Parameter tabs
         if (event.delegateTarget.id == 'time-depth-flot') {
-            if (zoom_simpledepthtime_stack_depth > 0 ) {
-                zoom_simpledepthtime_stack_depth--;
+            // Leave inital values on the stack for unzoom button (clear selection) click
+            if (zoom_simpledepthtime_stack.length > 1 ) {
                 var zoom_sdt = zoom_simpledepthtime_stack.pop();
                 // Test for first ZoomOut by comparing existing zoom parameters
-                if ( zoom_sdt[0] == $('#start-ems').val() && zoom_sdt[1] == $('#end-ems').val() && 
-                     zoom_sdt[2] == $('#start-depth').val() && zoom_sdt[3] == $('#end-depth').val() ) {
-                    zoom_simpledepthtime_stack_depth--;
-                    zoom_sdt = zoom_simpledepthtime_stack.pop();
+                if ( zoom_sdt[0] == $('body').data()['start-ems'] && zoom_sdt[1] == $('body').data()['end-ems'] && 
+                     zoom_sdt[2] == $('body').data()['start-depth'] && zoom_sdt[3] == $('body').data()['end-depth'] ){
+                    if (zoom_simpledepthtime_stack.length == 1) {
+                        zoom_sdt = zoom_simpledepthtime_stack[0];
+                    }
+                    else {
+                        zoom_sdt = zoom_simpledepthtime_stack.pop();
+                    }
                 }
-                $('#start-ems').val(zoom_sdt[0]);
-                $('#end-ems').val(zoom_sdt[1]);
-                $('#start-depth').val(zoom_sdt[2]);
-                $('#end-depth').val(zoom_sdt[3]);
+                $('body').data()['start-ems'] = zoom_sdt[0];
+                $('body').data()['end-ems'] = zoom_sdt[1];
+                $('body').data()['start-depth'] = zoom_sdt[2];
+                $('body').data()['end-depth'] = zoom_sdt[3];
                 simpledepthtime_options_zoom = zoom_sdt[4];
-                $('#start-time').val(zoom_sdt[5]);
-                $('#end-time').val(zoom_sdt[6]);
             
-                rebuildFilters();
                 updateTemporal();
+                rebuildFilters();
             } 
-            else {
-                if (!$('#zoomed-button').hasClass('disabled')) {
+            if (zoom_simpledepthtime_stack.length == 1 ) {
+                $('#time-depth-instr').html('Click and drag to zoom');
+                // zoom_parametertime_stack gets a push on a tab click, unzoom if length is 0 or 1
+                if (!$('#zoomed-button').hasClass('disabled') && zoom_parametertime_stack.length <= 1) {
                     $('#zoomed-button').click();
                 }
             }
         }
         else if (event.delegateTarget.id == 'time-parameter-flot') {
-            if (zoom_parametertime_stack_depth > 0 ) {
-                zoom_parametertime_stack_depth--;
-                var zoom_sdt = zoom_parametertime_stack.pop();
+            if (zoom_parametertime_stack.length > 1 ) {
+                var zoom_pt = zoom_parametertime_stack.pop();
                 // Test for first ZoomOut by comparing existing zoom parameters
-                if ( zoom_sdt[0] == $('#start-ems').val() && zoom_sdt[1] == $('#end-ems').val() && 
-                     zoom_sdt[2] == $('#start-depth').val() && zoom_sdt[3] == $('#end-depth').val() ) {
-                    zoom_parametertime_stack_depth--;
-                    zoom_sdt = zoom_parametertime_stack.pop();
+                if ( zoom_pt[0] == $('body').data()['start-ems'] && zoom_pt[1] == $('body').data()['end-ems'] ) {
+                    if (zoom_parametertime_stack.length == 1 ) {
+                        zoom_pt = zoom_parametertime_stack[0];
+                    }
+                    else {
+                        zoom_pt = zoom_parametertime_stack.pop();
+                    }
                 }
-                $('#start-ems').val(zoom_sdt[0]);
-                $('#end-ems').val(zoom_sdt[1]);
-                //$('#start-depth').val(zoom_sdt[2]);
-                //$('#end-depth').val(zoom_sdt[3]);
-                parametertime_options_zoom = zoom_sdt[4];
-                $('#start-time').val(zoom_sdt[5]);
-                $('#end-time').val(zoom_sdt[6]);
-            
-                rebuildFilters();
+                $('body').data()['start-ems'] = zoom_pt[0];
+                $('body').data()['end-ems'] = zoom_pt[1];
+                parametertime_options_zoom = zoom_pt[4];
+
                 updateTemporal();
+                rebuildFilters();
             }
-            else {
-                if (!$('#zoomed-button').hasClass('disabled')) {
+            if (zoom_parametertime_stack.length == 1 ) {
+                $('#time-parameter-instr').html('Click and drag to zoom');
+                if (!$('#zoomed-button').hasClass('disabled') && zoom_simpledepthtime_stack.length == 1) {
                     $('#zoomed-button').click();
                 }
             }
-
         }
 
         // return false to suppress the right-mouse context menu from appearing 
@@ -3263,14 +3238,8 @@
     $("#time-depth-flot").bind("contextmenu",  ZoomOut);
 
     $("#time-parameter-flot").bind("plotselected", function (event, ranges) {
-        // ZoomIn for Temporal-Parameter (parametertime) plots
-        $('#start-ems').val(ranges.xaxis.from);
-        var ds = new Date(ranges.xaxis.from);
-        $('#start-time').val(getUTCDateString(ds));
-
-        $('#end-ems').val(ranges.xaxis.to);
-        var de = new Date(ranges.xaxis.to);
-        $('#end-time').val(getUTCDateString(de))
+        $('body').data()['start-ems'] = ranges.xaxis.from;
+        $('body').data()['end-ems'] = ranges.xaxis.to;
 
         $('#zoomed-button').removeClass('disabled'); 
         $('#zoomed-button').addClass('btn-primary');
@@ -3279,19 +3248,18 @@
                                               xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
                                               });
 
-        zoom_parametertime_stack_depth++;
-        zoom_parametertime_stack.push([ $('#start-ems').val(), $('#end-ems').val(), $('#start-depth').val(), $('#end-depth').val(),
-                                        parametertime_options_zoom, $('#start-time').val(), $('#end-time').val() ]);
+        zoom_parametertime_stack.push([ $('body').data()['start-ems'], $('body').data()['end-ems'],
+                                        $('body').data()['start-depth'], $('body').data()['end-depth'],
+                                        parametertime_options_zoom ]);
 
-        var tLabel = 'Temporal: ' + $('#start-time').val() + ' to ' + $('#end-time').val();
-        $('#temporal-anchor').html(tLabel);
-
+        updateTemporal();
         if ($('#showplatforms').is(':checked')) {
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d', 'platformanimation']);
         }
         else {
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d']);
         }
+        $('#time-parameter-instr').html('Click and drag zoom, right-click to un-zoom');
     });
     $("#time-parameter-flot").bind("contextmenu",  ZoomOut);
 
@@ -3647,18 +3615,6 @@
                     addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
                 });
             }
-            else if (key == 'time') { 
-                var start = new Date(data[key][0]);
-                $('#start-ems').val(start.getTime());
-                $('#start-time').val(getUTCDateString(start));
-                var end = new Date(data[key][1]);
-                $('#end-ems').val(end.getTime());
-                $('#end-time').val(getUTCDateString(end));
-            }
-            else if (key == 'depth') {
-                $('#start-' + key).val(Math.round(data[key][0]*10)/10);
-                $('#end-' + key ).val(Math.round(data[key][1]*10)/10);
-            }
             else if (key == 'simpledepthtime') {
                 //flotPlot(data)
                 var start = new Date(data['time'][0]);
@@ -3757,6 +3713,7 @@
         } // onInit()
 
         function redrawSimpleDepthTime(data) {
+                var theData;
                 // Redraw the plot given the saved values
                 if ( $.isEmptyObject(data.simpledepthtime.sdt) ) {
                     if (! $.isEmptyObject(data.parametertime.pt) ) {
@@ -3770,10 +3727,12 @@
                     return;
                 }
                 if ( $('#zoomed-button').hasClass('btn-primary') ) {
-                    theData = getDepthDataset(data, $('#start-ems').val(), $('#end-ems').val());
+                    theData = getDepthDataset(data, $('body').data()['start-ems'], $('body').data()['end-ems']);
                 }
                 else {
-                    theData = getDepthDataset(data, initData.time[0], initData.time[1]);
+                    //theData = getDepthDataset(data, initData.time[0], initData.time[1]);
+                    var zoom_sdt = zoom_simpledepthtime_stack[0];
+                    theData = getDepthDataset(data, zoom_sdt[0], zoom_sdt[1]);
                 }
                 var options = simpledepthtime_options_zoom;
                 if ( ! $.isEmptyObject(data.platformanimation) ) {
@@ -3789,7 +3748,7 @@
         function redrawParameterTime(data) {
             if ( data.parametertime.counts != 0 ) {
                 $("#temporal-parameter-li").show();
-                parmData = getParameterDataset(data, $('#start-ems').val(), $('#end-ems').val());
+                parmData = getParameterDataset(data, $('body').data()['start-ems'], $('body').data()['end-ems']);
                 if ( $.isEmptyObject(parmData) ) {
                     return;
                 }
@@ -3833,6 +3792,17 @@
                 var sd = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamin));
                 var ed = getUTCDateString(new Date(timeparameterplot.getXAxes()[0].datamax));
                 $('#temporal-anchor').html('Temporal: ' + sd + ' to ' + ed);
+                
+                // Add initial view to zoom stack
+                if (zoom_parametertime_stack.length == 0) {
+                    parametertime_options_zoom = $.extend(true, {}, parametertime_options, {
+                                                            xaxis: { min: timeparameterplot.getXAxes()[0].datamin, 
+                                                                     max: timeparameterplot.getXAxes()[0].datamax }
+                                                          });
+                    zoom_parametertime_stack.push([ timeparameterplot.getXAxes()[0].datamin, timeparameterplot.getXAxes()[0].datamax, 
+                                                    $('body').data()['start-depth'], $('body').data()['end-depth'],
+                                                    parametertime_options_zoom ]);
+                }
             }
             else {
                 $("#temporal-parameter-li").hide();
@@ -3978,7 +3948,7 @@
                             if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
                                 // Zoomed
                                 var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
-                                    $('#start-ems').val(), $('#start-depth').val(), $('#end-ems').val(), $('#end-depth').val()] ] ];
+                                    $('body').data()['start-ems'], $('body').data()['start-depth'], $('body').data()['end-ems'], $('body').data()['end-depth'] ] ] ];
                                 var options = $.extend(true, {}, simpledepthtime_options_zoom, {
                                     series: { images: { show: true } }
                                 });
@@ -4303,7 +4273,7 @@
             // Perform mapQuery separate from summary query so that it is not cached by memcached
             var qstring=($.param($.map(map_params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
             $.ajax({
-                //onInit() must finish before map can be drawn
+                //onInit(), onUpdate() must finish before map can be drawn
                 type : 'GET',
                 beforeSend: function() {
                     if ( $('#zoomtoextentonupdate').is(':checked') ) {
@@ -4315,6 +4285,17 @@
                 success: function (data) {
                     $('body').data()['extent'] = data['extent'];
                     me.refreshMap($('body').data()['extent'][0]);
+                    if (init) {
+                        // Set start and end time with actual axis values
+                        $('body').data()['start-ems'] = timedepthplot.getXAxes()[0].datamin;
+                        $('body').data()['end-ems'] = timedepthplot.getXAxes()[0].datamax;
+                        $('body').data()['start-depth'] = timedepthplot.getYAxes()[0].datamin;
+                        $('body').data()['end-depth'] = timedepthplot.getYAxes()[0].datamax;
+                        zoom_simpledepthtime_stack.push([ $('body').data()['start-ems'], $('body').data()['end-ems'], 
+                                                          $('body').data()['start-depth'], $('body').data()['end-depth'],
+                                                          simpledepthtime_options_zoom ]);
+                        updateTemporal();
+                    }
                 },
                 dataType: "json"
             })
@@ -4391,10 +4372,10 @@
             });
         });
         // Grab the data so we can reset the time/depth plot and temporal values.
-        params['start-ems'] = $('#start-ems').val();
-        params['end-ems'] = $('#end-ems').val();
-        params['start-depth'] = $('#start-depth').val();
-        params['end-depth'] = $('#end-depth').val();
+        params['start-ems'] = $('body').data()['start-ems'];
+        params['end-ems'] = $('body').data()['end-ems'];
+        params['start-depth'] = $('body').data()['start-depth'];
+        params['end-depth'] = $('body').data()['end-depth'];
 
         // Grab the center of the map so we can restore the center and lon/lat data.
         params['map-center']={ 'lonlat': map.getCenter(), 
@@ -4423,10 +4404,10 @@
     
     function reset_parameters(parameters) {
         permalink_bypass=true;
-        var ranges={xaxis: {to: $('#end-ems').val(),
-                            from: $('#start-ems').val()},
-                    yaxis: {to: $('#end-depth').val(),
-                            from: $('#start-depth').val()}
+        var ranges={xaxis: {to: $('body').data()['end-ems'],
+                            from: $('body').data()['start-ems']},
+                    yaxis: {to: $('body').data()['end-depth'],
+                            from: $('body').data()['start-depth']}
                     };
         // Uncheck the zoom update, since that'll mess up our resetting the 
         // map.
