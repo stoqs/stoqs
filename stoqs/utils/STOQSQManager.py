@@ -864,14 +864,11 @@ class STOQSQManager(object):
                                               measurement__measuredparameter__parameter=parameter
                                     ).values('depth').distinct().count()
             # Check if timeSeries plotting is requested for trajectory data
-            try:
-                plotTimeSeriesDepth = models.ParameterResource.objects.using(self.dbname).get(
-                                            parameter__name=parameter, resource__name='plotTimeSeriesDepth'
-                                            ).resource.value
-            except ObjectDoesNotExist:
-                plotTimeSeriesDepth = None
+            plotTimeSeriesDepths = models.ParameterResource.objects.using(self.dbname).filter(
+                                        parameter__name=parameter, resource__name='plotTimeSeriesDepth'
+                                        ).values_list('resource__value')
            
-            if nds == 0 and plotTimeSeriesDepth is None:
+            if nds == 0 and plotTimeSeriesDepths == []:
                 continue
 
             if parameter.standard_name == 'sea_water_salinity':
