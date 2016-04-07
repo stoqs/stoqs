@@ -1286,16 +1286,22 @@ class STOQS_Loader(object):
 
             # Create our new Parameter
             self.logger.info('Getting or creating new altitude Parameter')
-            p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
-                    standard_name='height_above_sea_floor',
-                    long_name='Altitude',
-                    description=("Calculated in STOQS loader by using GMT's grdtrack(1) program on the Platform's"
-                                 " latitude, longitude values and differencing the Platform's depth with the"
-                                 " bottom depth data in file %s." % self.grdTerrain),
-                    units='m',
-                    name='altitude',
-                    origin='https://github.com/stoqs/stoqs/blob/45f53d134d336fdbdb38f73959a2ce3be4148227/stoqs/loaders/__init__.py#L1216-L1322'
-            )
+            try:
+                p_alt, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(
+                        standard_name='height_above_sea_floor',
+                        long_name='Altitude',
+                        description=("Calculated in STOQS loader by using GMT's grdtrack(1) program on the Platform's"
+                                     " latitude, longitude values and differencing the Platform's depth with the"
+                                     " bottom depth data in file %s." % self.grdTerrain),
+                        units='m',
+                        name='altitude',
+                        origin='https://github.com/stoqs/stoqs/blob/45f53d134d336fdbdb38f73959a2ce3be4148227/stoqs/loaders/__init__.py#L1216-L1322'
+                )
+            except IntegrityError:
+                # A bit of a mystery why sometimes this Exception happens (simply get p_alt if it happens):
+                # IntegrityError: duplicate key value violates unique constraint "stoqs_parameter_name_key"
+                p_alt = m.Parameter.objects.using(self.dbAlias).get(name='altitude')
+
             parameterCounts[p_alt] = ms.count()
             self.assignParameterGroup({p_alt: ms.count()}, groupName=MEASUREDINSITU)
 
