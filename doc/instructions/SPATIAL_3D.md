@@ -53,7 +53,7 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
 
    There are several good Meshlab video tutorials online that will help you understand how to use the UI.
 
-   Here's another Meshlab set of operations that rendered a high quality mesh for 1m+5m bathymetry data for Monterey Canyon:
+   Here is another Meshlab set of operations that rendered a high quality mesh for 1m+5m bathymetry data for Monterey Canyon:
 
         Load .asc file
         Sampling -> Poisson-disk Sampling (to reduce number of vertices from 49,879,075 to 20,000,000)
@@ -75,7 +75,7 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
         ./aopt -i /Users/mccann/Downloads/Monterey25_10x-clean.ply -F Scene -b /Users/mccann/Downloads/Monterey25_10x-opt.x3db
         ./aopt -i /Users/mccann/Downloads/Monterey25_10x-opt.x3db -f PrimitiveSet:creaseAngle:4 -V -K "/Users/mccann/Downloads/binGeo/:ib" -N /Users/mccann/Downloads/Monterey25_10x.html
 
-5. Copy the X3D <scene> element and its contents from the generated .html file into a .x3d file and put it along with the the associated files 
+5. Copy the X3D `<scene>` element and its contents from the generated .html file into a .x3d file and put it along with the the associated files 
    in binGeo to the stoqs/static/x3d directory.  Replace the paths to the binGeo files with what works on the stoqs server, e.g.:
 
         :%s#/Users/mccann/Downloads/binGeo#/stoqs/static/x3d/Monterey25/binGeo#g
@@ -87,9 +87,9 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
         cd /Users/mccann/Downloads/
         aopt -i Monterey25_10x-opt.x3db -f PrimitiveSet:creaseAngle:4 -V -Y "nodeType(Geometry)" -N Monterey25_10x_src.html
 
-    Edit Monterey25_10x_src.html:
+    Edit `Monterey25_10x_src.html`:
 
-    - Add 'SRC/' to the url path for the .src files.
+    - Add `'SRC/'` to the url path for the `.src` files.
 
     - Change aopt's <material> node from:
         ```
@@ -100,7 +100,7 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
         <material diffuseColor='0.7 0.7 0.7' specularColor='0.1 0.1 0.1'></material>
         ```
 
-    Copy Monterey25_10x_src.html to Monterey25_10x_src_scene.x3d and edit:
+    Copy `Monterey25_10x_src.html` to `Monterey25_10x_src_scene.x3d` and edit:
 
     - Remove surrounding elements from the <scene> tags
     - Edit in the FQDN for the urls so that Django will load it.
