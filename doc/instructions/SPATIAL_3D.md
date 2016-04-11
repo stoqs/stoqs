@@ -3,7 +3,7 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
 
 ### GeoElevationGrid
 
-1. Execute script in mapping@elvis:/mbari/TerrainData/scripts to create .wrl or .x3dv file
+1. Execute script in `mapping@elvis:/mbari/TerrainData/scripts` to create .wrl or .x3dv file
 2. Edit resulting file keeping heights and making it X3D:
 
 ```
@@ -19,9 +19,9 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
 ```
 
 
-### X3DOM popGeometry or SRC from a GMT .grd file:
+### X3DOM popGeometry or SRC from a GMT .grd file
 
-1. Start with a GMT .grd bathymetry file such as that produced by an mbgrid(1) execution
+1. Start with a GMT .grd bathymetry file such as that produced by an `mbgrid(1)` execution
 
 2. Convert to an xyz .asc "point cloud", apply 10x vertical exaggeration, convert to Earth Centered Earth Fixed coordinate system, e.g.:
 
