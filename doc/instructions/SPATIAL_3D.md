@@ -21,9 +21,9 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
 
 ### X3DOM popGeometry or SRC from a GMT .grd file:
 
-0. Start with a GMT .grd bathymetry file such as that produced by an mbgrid(1) execution
+1. Start with a GMT .grd bathymetry file such as that produced by an mbgrid(1) execution
 
-1. Convert to an xyz .asc "point cloud", apply 10x vertical exaggeration, convert to Earth Centered Earth Fixed coordinate system, e.g.:
+2. Convert to an xyz .asc "point cloud", apply 10x vertical exaggeration, convert to Earth Centered Earth Fixed coordinate system, e.g.:
 
    a. Geocentric - no GeoOrigin:
 
@@ -35,7 +35,7 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
         grd2xyz MontereyCanyonBeds_1m+5m.grd --D_FORMAT=%f | sed '/NaN/d' | awk '{print $1, $2, 10 * $3}' | mapproject -E --D_FORMAT=%f | \
           awk '{print $1 - -2660686.065357, $2 - -4428125.227549, $3 - 3728191.675831}' > MontereyCanyonBeds_1m+5m_10x_GeoOrigin_-121_36_0.asc
 
-2. Use Meshlab to construct a surface from the .asc file and save it as a Stanford .ply file.  You need to use Meshlab interactively
+3. Use Meshlab to construct a surface from the .asc file and save it as a Stanford .ply file.  You need to use Meshlab interactively
    to load the .asc mesh, construct Normals and a surface, and clean it up before saving as a .ply or .x3d file.  Here are the
    suggested steps relevent to Meshlab_64bit v1.3.3 on a Mac:
 
@@ -69,22 +69,20 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
         Smoothing ... -> Laplacian smooth (surface preserve)
         Export mesh to .ply
 
-    (See http://dods.mbari.org/terrain/x3d/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0/MontereyCanyonBeds_1m+5m_1x_GeoOrigin_-121_36_0.html)
-
-3. Use InstantReality aopt tool to "flatten" the Scene and create popGeometry, e.g.:
+4. Use InstantReality aopt tool to "flatten" the Scene and create popGeometry, e.g.:
 
         mkdir /Users/mccann/Downloads/binGeo -or- remove files in /Users/mccann/Downloads/binGeo
         ./aopt -i /Users/mccann/Downloads/Monterey25_10x-clean.ply -F Scene -b /Users/mccann/Downloads/Monterey25_10x-opt.x3db
         ./aopt -i /Users/mccann/Downloads/Monterey25_10x-opt.x3db -f PrimitiveSet:creaseAngle:4 -V -K "/Users/mccann/Downloads/binGeo/:ib" -N /Users/mccann/Downloads/Monterey25_10x.html
 
-4. Copy the X3D <scene> element and its contents from the generated .html file into a .x3d file and put it along with the the associated files 
+5. Copy the X3D <scene> element and its contents from the generated .html file into a .x3d file and put it along with the the associated files 
    in binGeo to the stoqs/static/x3d directory.  Replace the paths to the binGeo files with what works on the stoqs server, e.g.:
 
         :%s#/Users/mccann/Downloads/binGeo#/stoqs/static/x3d/Monterey25/binGeo#g
 
-5. Test that the STOQS UI displays the new mesh in the Spatial -> 3D tab.
+6. Test that the STOQS UI displays the new mesh in the Spatial -> 3D tab.
 
-6. With X3DOM 1.6 and later and at least aopt V2.6.0 we can generate more efficient SRC instead of popGeometry, so instead of the last step in 3 do:
+7. With X3DOM 1.6 and later and at least aopt V2.6.0 we can generate more efficient SRC instead of popGeometry, so instead of the last step in 3 do:
 
         cd /Users/mccann/Downloads/
         aopt -i Monterey25_10x-opt.x3db -f PrimitiveSet:creaseAngle:4 -V -Y "nodeType(Geometry)" -N Monterey25_10x_src.html
@@ -94,9 +92,13 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
     - Add 'SRC/' to the url path for the .src files.
 
     - Change aopt's <material> node from:
+        ```
         <material diffuseColor='0.6 0.6 0.6' specularColor='0.6 0.6 0.6'></material>
+        ```
       to:
+        ```
         <material diffuseColor='0.7 0.7 0.7' specularColor='0.1 0.1 0.1'></material>
+        ```
 
     Copy Monterey25_10x_src.html to Monterey25_10x_src_scene.x3d and edit:
 
