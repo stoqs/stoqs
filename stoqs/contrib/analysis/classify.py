@@ -208,9 +208,10 @@ class Classifier(BiPlot):
                 print 'Skipping over label = %s' % label
                 continue
 
-            mprs = MeasuredParameterResource.objects.using(self.args.database).filter(resource__name=LABEL, 
-                                                resource__resourcetype__name=labeledGroupName, resource__value=label
-                                                ).values_list('measuredparameter__datavalue', flat=True)
+            mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
+                            resource__name=LABEL, resource__resourcetype__name=labeledGroupName, 
+                            resource__value=label
+                            ).values_list('measuredparameter__datavalue', flat=True)
             count = mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]).count()
             f0 = np.append(f0, mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]))
             f1 = np.append(f1, mprs.filter(measuredparameter__parameter__name=self.args.inputs[1]))
