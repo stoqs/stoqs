@@ -218,7 +218,7 @@ class Classifier(BiPlot):
             y = np.append(y, np.ones(count) * target)
             target += 1
 
-        # Form the feature vectors into the X matrix that sklearn wanta
+        # Form the feature vectors into the X matrix that sklearn wants
         X = np.concatenate((f0.reshape(-1,1), f1.reshape(-1,1)), axis=1)
 
         return X, y
@@ -228,6 +228,7 @@ class Classifier(BiPlot):
         Print scores for several different classifiers
         '''
         X, y = self.loadLabeledData(labeledGroupName)
+        X = StandardScaler().fit_transform(X)
 
         if X.any() and y.any():
             for name, clf in self.classifiers.iteritems():
@@ -247,14 +248,13 @@ class Classifier(BiPlot):
         clf = self.classifiers[self.args.classifier]
 
         X, y = self.loadLabeledData(labeledGroupName)
+        X = StandardScaler().fit_transform(X)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size, train_size=self.args.train_size)
 
         import pdb
         pdb.set_trace()
         # TODO: Implement graphical evaluation as in http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html
-
-        X_train = StandardScaler().fit_transform(X_train)
 
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
