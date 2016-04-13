@@ -195,7 +195,7 @@ class Classifier(BiPlot):
             self.saveLabelSet(commandlineResource, label, x_ids, y_ids, description, labeledGroupName, 
                                     'Labeled with %s as discriminator' % self.args.discriminator)
 
-    def _loadLabeledData(self, labeledGroupName):
+    def loadLabeledData(self, labeledGroupName):
         '''
         Retrieve from the database to set of Labeled data and return the standard X, and y arrays that the scikit-learn package uses
         '''
@@ -227,7 +227,7 @@ class Classifier(BiPlot):
         '''
         Print scores for several different classifiers
         '''
-        X, y = self._loadLabeledData(labeledGroupName)
+        X, y = self.loadLabeledData(labeledGroupName)
 
         if X.any() and y.any():
             for name, clf in self.classifiers.iteritems():
@@ -245,7 +245,7 @@ class Classifier(BiPlot):
         '''
         clf = self.classifiers[self.args.classifier]
 
-        X, y = self._loadLabeledData(labeledGroupName)
+        X, y = self.loadLabeledData(labeledGroupName)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size, train_size=self.args.train_size)
 
