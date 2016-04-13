@@ -238,10 +238,11 @@ class Classifier(BiPlot):
 
     def createClassifier(self, labeledGroupName):
         '''
-        Query the database for labeled training data, fit a model to it, and save the pickled model back to the database.
-        Follow the pattern in the example at http://scikit-learn.org/stable/auto_examples/plot_classifier_comparison.html
-        and learn about Learning at https://www.youtube.com/watch?v=4ONBVNm3isI (see at time 2:33 and following - though
-        the whole tutorial is worth watching).
+        Query the database for labeled training data, fit a model to it, and save the pickled 
+        model back to the database.  Follow the pattern in the example at 
+        http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html
+        and learn about Learning at https://www.youtube.com/watch?v=4ONBVNm3isI (see at time 2:33 and 
+        following - though the whole tutorial is worth watching).
         '''
         clf = self.classifiers[self.args.classifier]
 
@@ -251,7 +252,7 @@ class Classifier(BiPlot):
 
         import pdb
         pdb.set_trace()
-        # TODO: Implement graphical evaluation as in http://scikit-learn.org/stable/auto_examples/plot_classifier_comparison.html
+        # TODO: Implement graphical evaluation as in http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html
 
         X_train = StandardScaler().fit_transform(X_train)
 
