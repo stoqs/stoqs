@@ -29,12 +29,12 @@ For more information please see http://cfconventions.org/
 and http://www.nodc.noaa.gov/data/formats/netcdf/.
 
 There are many ways to write data adhering to these standards - there are some examples
-using the Python pupynere library in the loaders/CANON/toNetCDF directory.
+using Python in the stoqs/loaders/CANON/toNetCDF directory.
 
 Here are the step-by-step instuctions for getting your data into STOQS given the above
 prerequisites:
 
-1. Add a new file to the loaders directory named to describe the campaign that is 
+1. Add a new file to the stoqs/loaders directory named to describe the campaign that is 
    the source of the data.  The campaign name may be a project name or a month_year
    combination.  It can really be anything you want.  At MBARI for the CANON initiative
    we typically have field programs where intensive measurements are collected in
@@ -47,13 +47,13 @@ prerequisites:
    
 2. In your new loadXXXX.py file instantiate a Loader object with the database alias name
    and a name for the Campaign.  Member names for the loader are defined in the class that
-   is imported.  For example, look in the `loaders/CANON/__init__.py` file for what platforms
+   is imported.  For example, look in the `stoqs/loaders/CANON/__init__.py` file for what platforms
    are supported for the CANONLoader.  There are several examples of other load files in
-   the loaders/ directory.  You may use them as a basis for the data you wish to load.
+   the stoqs/loaders/ directory.  You may use them as a basis for the data you wish to load.
 
-3. The CANON directory in loaders/ contains load scripts for all of the MBARI CANON
+3. The CANON directory in stoqs/loaders/ contains load scripts for all of the MBARI CANON
    campaigns.  Much of the commonly used loader code has been factored out into a 
-   CANONLoader class in `loaders/CANON/__init__.py` so that the load scripts (e.g. 
+   CANONLoader class in `stoqs/loaders/CANON/__init__.py` so that the load scripts (e.g. 
    loadCANON_september2012.py) simply need to be constructed with the OpenDAP URLs
    and parameter names for each type of platform.
 
@@ -107,7 +107,7 @@ prerequisites:
       data to an existing database simply comment out previously loaded files and re-execute
       the script (step 7) with the new files.
     - Some programs to create NetCDF files from various original data files (e.g. Seabird underway 
-      and profile CTD) are in the loaders/CANON/toNetCDF directory.  See the README
+      and profile CTD) are in the stoqs/loaders/CANON/toNetCDF directory.  See the README
       there for instructions on running those scripts to put the data on an OpenDAP server
       so that your STOQS loader can load them.
     - Editing and running the load script during a campaign is an interactive process requiring
