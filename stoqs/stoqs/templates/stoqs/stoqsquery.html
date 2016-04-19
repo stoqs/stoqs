@@ -4472,7 +4472,7 @@
                             // ParameterParameter tab clicks happen on ajax success - don't do them here
                             var $elem=$('li', item[0]);
                             $elem.removeClass('active');
-                            $($elem[item[1]]).addClass('active');
+                            $($elem[item[1]]).click();
                         }
                     });
                     break;
