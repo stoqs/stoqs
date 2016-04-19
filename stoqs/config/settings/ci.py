@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 '''
-Local settings
+Continuous Integration settings
 
 - Run in Debug mode
 - Use console backend for emails
-- Add Django Debug Toolbar
 - Add django-extensions as app
 '''
 
@@ -37,19 +36,7 @@ CACHES = {
     }
 }
 
-# django-debug-toolbar
-# ------------------------------------------------------------------------------
-MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
-INSTALLED_APPS += ('debug_toolbar', )
-
 INTERNAL_IPS = ('127.0.0.1', '10.0.2.2',)
-
-DEBUG_TOOLBAR_CONFIG = {
-    'DISABLE_PANELS': [
-        'debug_toolbar.panels.redirects.RedirectsPanel',
-    ],
-    'SHOW_TEMPLATE_CONTEXT': True,
-}
 
 # django-extensions
 # ------------------------------------------------------------------------------
