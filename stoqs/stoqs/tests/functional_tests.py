@@ -133,5 +133,6 @@ class BrowserTestCase(TestCase):
 
     def test_share_view_timeseries(self):
         self._test_share_view('test_m1_timeseries')
+        self.browser.implicitly_wait(10)
         assert 'bb470' in self.browser.find_element_by_id('stride-info').text
 
