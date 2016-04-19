@@ -4230,16 +4230,15 @@
                     }
                 }
                 if (init == true) {
+                    if ( !$('#collapseTemporal').hasClass('in') ) {
+                        $('#temporal-anchor').click();
+                    }
+                    if ( !$('#collapseSpatial').hasClass('in') ) {
+                        $('#spatial-anchor').click();
+                    }
                     load_permalink();
                 }
-
                 resetWaitIndicators(data);
-
-                if (init == true) {
-                    // Open Spatial and Temporal Accordions upon load
-                    $('#spatial-anchor').click();
-                    $('#temporal-anchor').click();
-                }
 
                 // For Development - turn on Platform plot controls
                 //$('.platform-plot-instruction').show()
@@ -4523,7 +4522,6 @@
                 });
             }
         }
-        
     }
     
     
