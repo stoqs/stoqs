@@ -26,7 +26,6 @@ from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 
 import logging
 
@@ -39,8 +38,7 @@ class BrowserTestCase(TestCase):
         self.browser = webdriver.Firefox()
         self.browser.set_window_size(1200, 768)
         self.browser.set_window_position(300, 0)
-        ##dj_toolbar = self.browser.find_element_by_id('djHideToolBarButton')
-        ##self._wait_until_visible_then_click(dj_toolbar)
+        self.browser.implicitly_wait(10)
 
     def tearDown(self):
         self.browser.quit()
@@ -67,6 +65,23 @@ class BrowserTestCase(TestCase):
             self.browser.execute_script("window.scrollTo(0, 0)")
 
         element.click()
+
+    def _test_share_view(self, func_name):
+        # Generic for any func_name that creates a view to share
+        getattr(self, func_name)()
+
+        share_view = self.browser.find_element_by_id('permalink')
+        share_view.click()
+        permalink = self.browser.find_element_by_id('permalink-box'
+                             ).find_element_by_name('permalink')
+        self._wait_until_visible_then_click(permalink)
+        permalink_url = permalink.get_attribute('value')
+
+        # Restart browser and load permalink
+        self.tearDown()
+        self.setUp()
+        self.browser.get(permalink_url)
+        self.assertEquals('', self._mapserver_loading_panel_test())
 
     def test_campaign_page(self):
         self.browser.get('http://localhost:8000/')
@@ -102,21 +117,21 @@ class BrowserTestCase(TestCase):
         self._wait_until_visible_then_click(spatial_3d_anchor)
         showplatforms = self.browser.find_element_by_id('showplatforms')
         self._wait_until_visible_then_click(showplatforms)
-        
-        dl = self.browser.find_element_by_id('dorado_LOCATION')
-        assert dl.tag_name == 'geolocation'
+        assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
 
-    def test_share_view(self):
-        self.test_dorado_trajectory()
-        share_view = self.browser.find_element_by_id('permalink')
-        share_view.click()
+    def test_m1_timeseries(self):
+        self.browser.get('http://localhost:8000/default/query/')
+        # Test Temporal->Parameter for timeseries plots
+        parameter_tab = self.browser.find_element_by_id('temporal-parameter-li')
+        self._wait_until_visible_then_click(parameter_tab)
         self.browser.implicitly_wait(10)
-        permalink = self.browser.find_element_by_id('permalink-box').find_element_by_name('permalink')
-        self._wait_until_visible_then_click(permalink)
-        permalink_url = permalink.get_attribute('value')
+        assert 'bb470' in self.browser.find_element_by_id('stride-info').text
 
-        # Restart browser and load permalink
-        self.tearDown()
-        self.setUp()
-        self.browser.get(permalink_url)
-        self.assertEquals('', self._mapserver_loading_panel_test())
+    def test_share_view_trajectory(self):
+        self._test_share_view('test_dorado_trajectory')
+        assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
+
+    def test_share_view_timeseries(self):
+        self._test_share_view('test_m1_timeseries')
+        assert 'bb470' in self.browser.find_element_by_id('stride-info').text
+
