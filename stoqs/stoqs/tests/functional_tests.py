@@ -24,7 +24,8 @@ from django.test import TestCase
 from django.conf import settings
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-import selenium.webdriver.support.ui as ui
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 import logging
 
@@ -35,6 +36,9 @@ class BrowserTestCase(TestCase):
 
     def setUp(self):
         self.browser = webdriver.Firefox()
+        self.browser.set_window_size(1200, 768)
+        self.browser.set_window_position(300, 0)
+        self.browser.implicitly_wait(10)
 
     def tearDown(self):
         self.browser.quit()
@@ -42,7 +46,7 @@ class BrowserTestCase(TestCase):
     def _mapserver_loading_panel_test(self):
         '''Wait for ajax-loader GIF image to go away'''
         seconds = 2
-        wait = ui.WebDriverWait(self.browser, seconds)
+        wait = WebDriverWait(self.browser, seconds)
         try:
             wait.until(lambda display: self.browser.find_element_by_id('map').
                         find_element_by_class_name('olControlLoadingPanel').
@@ -52,6 +56,32 @@ class BrowserTestCase(TestCase):
                     str(seconds) + ' seconds')
         else:
             return ''
+
+    def _wait_until_visible_then_click(self, element, scroll_up=True):
+        # See: http://stackoverflow.com/questions/23857145/selenium-python-element-not-clickable
+        element = WebDriverWait(self.browser, 5, poll_frequency=.2).until(
+                        EC.visibility_of(element))
+        if scroll_up:
+            self.browser.execute_script("window.scrollTo(0, 0)")
+
+        element.click()
+
+    def _test_share_view(self, func_name):
+        # Generic for any func_name that creates a view to share
+        getattr(self, func_name)()
+
+        share_view = self.browser.find_element_by_id('permalink')
+        share_view.click()
+        permalink = self.browser.find_element_by_id('permalink-box'
+                             ).find_element_by_name('permalink')
+        self._wait_until_visible_then_click(permalink)
+        permalink_url = permalink.get_attribute('value')
+
+        # Restart browser and load permalink
+        self.tearDown()
+        self.setUp()
+        self.browser.get(permalink_url)
+        self.assertEquals('', self._mapserver_loading_panel_test())
 
     def test_campaign_page(self):
         self.browser.get('http://localhost:8000/')
@@ -68,7 +98,7 @@ class BrowserTestCase(TestCase):
             # Click on Platforms to expand
             platforms_anchor = self.browser.find_element_by_id(
                                     'platforms-anchor')
-            platforms_anchor.click()
+            self._wait_until_visible_then_click(platforms_anchor)
         except NoSuchElementException as e:
             print e
             print "Is the development server running?"
@@ -77,18 +107,35 @@ class BrowserTestCase(TestCase):
         # Finds <tr> for 'dorado' then gets the button for clicking
         dorado_button = self.browser.find_element_by_id('dorado'
                             ).find_element_by_tag_name('button')
-        dorado_button.click()
+        self._wait_until_visible_then_click(dorado_button)
 
         # Test that Mapserver returns images
         self.assertEquals('', self._mapserver_loading_panel_test())
 
         # Test Spatial 3D
-        self.browser.implicitly_wait(10)
         spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
-        spatial_3d_anchor.click()
+        self._wait_until_visible_then_click(spatial_3d_anchor)
         showplatforms = self.browser.find_element_by_id('showplatforms')
-        showplatforms.click()
-        
-        dl = self.browser.find_element_by_id('dorado_LOCATION')
-        assert dl.tag_name == 'geolocation'
+        self._wait_until_visible_then_click(showplatforms)
+        assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
+
+    def test_m1_timeseries(self):
+        self.browser.get('http://localhost:8000/default/query/')
+        # Test Temporal->Parameter for timeseries plots
+        parameter_tab = self.browser.find_element_by_id('temporal-parameter-li')
+        self._wait_until_visible_then_click(parameter_tab)
+        si = self.browser.find_element_by_id('stride-info')
+        self._wait_until_visible_then_click(si)
+        assert 'bb470' in si.text
+
+    def test_share_view_trajectory(self):
+        self._test_share_view('test_dorado_trajectory')
+        self.browser.implicitly_wait(10)
+        assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
+
+    def test_share_view_timeseries(self):
+        self._test_share_view('test_m1_timeseries')
+        si = self.browser.find_element_by_id('stride-info')
+        self._wait_until_visible_then_click(si)
+        assert 'bb470' in si.text
 

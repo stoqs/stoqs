@@ -1,6 +1,6 @@
 #!/bin/bash
-# Do database operations to create default database and create fixture for testing
-# Designed for re-running on development system - ignore errors in Vagrant and Travis-ci
+# Do database operations to create default database and create fixture for testing.
+# Designed for re-running on development system - ignore errors in Vagrant and Travis-ci.
 # Pass the stoqsadm password as an argument on first execution in order to create the
 # stoqsadm user; it must match what's in DATABASE_URL.  Must also set MAPSERVER_HOST.
 # Make sure none of these are set: STATIC_FILES, STATIC_URL, MEDIA_FILES, MEDIA_URL 

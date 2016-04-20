@@ -135,7 +135,7 @@
             <ul class="nav">
               <li>
                 <a href="https://github.com/stoqs/stoqs" target="_new">
-                <i class="icon-github icon-large nav" style="margin-right:0px;"></i>STOQS Software</a>
+                <i class="icon-edit icon-white"></i> STOQS Software</a>
               </li>
             </ul>
             <!--
@@ -4230,16 +4230,15 @@
                     }
                 }
                 if (init == true) {
+                    if ( !$('#collapseTemporal').hasClass('in') ) {
+                        $('#temporal-anchor').click();
+                    }
+                    if ( !$('#collapseSpatial').hasClass('in') ) {
+                        $('#spatial-anchor').click();
+                    }
                     load_permalink();
                 }
-
                 resetWaitIndicators(data);
-
-                if (init == true) {
-                    // Open Spatial and Temporal Accordions upon load
-                    $('#spatial-anchor').click();
-                    $('#temporal-anchor').click();
-                }
 
                 // For Development - turn on Platform plot controls
                 //$('.platform-plot-instruction').show()
@@ -4330,6 +4329,11 @@
             // Grab all the checked radio buttons on the page and save their information.
             $('input:checked[type="radio"]', divcol).each(function(key, item) {
                 var data='input[type="radio"][name="'+ item.name +'"][value="'+ item.value +'"]';
+                params['clicks'].push(data);
+            });
+            // Grab all the checked checkboxes from Temporal->Parameter 
+            $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
+                var data='input[type="checkbox"][name="'+ item.name +'"][value="'+ item.value +'"]';
                 params['clicks'].push(data);
             });
             // Grab all the buttons that are selected, using their values.
@@ -4473,7 +4477,7 @@
                             // ParameterParameter tab clicks happen on ajax success - don't do them here
                             var $elem=$('li', item[0]);
                             $elem.removeClass('active');
-                            $($elem[item[1]]).addClass('active');
+                            $($elem[item[1]]).click();
                         }
                     });
                     break;
@@ -4523,7 +4527,6 @@
                 });
             }
         }
-        
     }
     
     

@@ -1,0 +1,38 @@
+<html>
+
+<head>
+<title>Activities in {{ dbAlias }}</title>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}stoqs.css">
+</head>
+
+<body>
+<h1>Activities in {{ dbAlias }}</h1>
+This page provides an overview of the data that has been loaded into the {{ dbAlias }} database. There are sample links in the
+third column that demonstrate how to get data out of the database.  The way to use them is as follows:
+<ul>
+<li>Click the 'count' link for a parameter</li>
+<li>Adjust the start/end times and start/end depths in the url to get data you want and re-issue the count request</li>
+<li>See that the count is about a 1,000 points (if it's more than this then the .kml request will take more than 30 seconds)</li>
+<li>You can add a stride/10 after the depth criteria to take every 10th point so that the count is reduced</li>
+<li>Change 'count' to 'data.html' or 'data.kml' to see the data.  You can use 'data.csv' to load the data into other software</li>
+<li>The perf.kml request is used to understand where the server is spending time in order to serve a request</li>
+</ul>
+<table border="1">
+{% for a in aList %}
+<tr><th align="left" colspan="3">{{ a.name }}</th></tr>
+<tr>
+<td valign="top">
+<b>id:</b> {{ a.id }}<br>
+<b>Type:</b> {{ a.activityTypeName }}<br>
+<b>Start:</b> {{ a.startdate }} GMT<br>
+<b>End:</b> {{ a.enddate }} GMT<br>
+<b>Platform:</b> {{ a.platformName }}
+</td>
+<td valign="top">{% autoescape off %} {{ a.links }} {% endautoescape %}</td>
+<td valign="top"><p class="smallerText">{% autoescape off %}{{ a.comment }}{% endautoescape %}</p></td>
+</tr>
+{% endfor %}
+</table>
+</body>
+
+</html>
