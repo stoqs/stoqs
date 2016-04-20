@@ -124,15 +124,18 @@ class BrowserTestCase(TestCase):
         # Test Temporal->Parameter for timeseries plots
         parameter_tab = self.browser.find_element_by_id('temporal-parameter-li')
         self._wait_until_visible_then_click(parameter_tab)
-        self.browser.implicitly_wait(10)
-        assert 'bb470' in self.browser.find_element_by_id('stride-info').text
+        si = self.browser.find_element_by_id('stride-info')
+        self._wait_until_visible_then_click(si)
+        assert 'bb470' in si.text
 
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
+        self.browser.implicitly_wait(10)
         assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
 
     def test_share_view_timeseries(self):
         self._test_share_view('test_m1_timeseries')
-        self.browser.implicitly_wait(10)
-        assert 'bb470' in self.browser.find_element_by_id('stride-info').text
+        si = self.browser.find_element_by_id('stride-info')
+        self._wait_until_visible_then_click(si)
+        assert 'bb470' in si.text
 
