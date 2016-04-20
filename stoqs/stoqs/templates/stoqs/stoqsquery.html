@@ -4331,6 +4331,11 @@
                 var data='input[type="radio"][name="'+ item.name +'"][value="'+ item.value +'"]';
                 params['clicks'].push(data);
             });
+            // Grab all the checked checkboxes from Temporal->Parameter 
+            $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
+                var data='input[type="checkbox"][name="'+ item.name +'"][value="'+ item.value +'"]';
+                params['clicks'].push(data);
+            });
             // Grab all the buttons that are selected, using their values.
             $('button.btn-primary.stoqs-toggle', divcol).each(function(key, item) {
                 var id=$(item).closest('[id]')[0].id
