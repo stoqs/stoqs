@@ -533,7 +533,7 @@ class MPQuery(object):
                 # The default is to consider the Parameter MEASUREDINSITU if it's not SAMPLED
                 self.qs_mp = self.getMeasuredParametersQS()
                 if self.kwargs['showparameterplatformdata']:
-                    logger.debug('Building qs_mp_no_order with values_list = %s', SPQuerySet.ui_timedepth_columns)
+                    logger.debug('Building qs_mp_no_order with values_list = %s', MPQuerySet.ui_timedepth_columns)
                     self.qs_mp_no_order = self.getMeasuredParametersQS(MPQuerySet.ui_timedepth_columns, orderedFlag=False)
                 else:
                     self.qs_mp_no_order = self.getMeasuredParametersQS(orderedFlag=False)
@@ -614,7 +614,7 @@ class MPQuery(object):
 
     def getMeasuredParametersQS(self, values_list=[], orderedFlag=True):
         '''
-        Return query set of MeasuremedParameters given the current constraints.  If no parameter is selected return None.
+        Return query set of MeasureedParameters given the current constraints.  If no parameter is selected return None.
         @values_list can be assigned with additional columns that are supported by MPQuerySet(). Note that specificiation
         of a values_list will break the JSON serialization of geometry types. @orderedFlag may be set to False to reduce
         memory and time taken for queries that don't need ordered values.  If parameterID is not none then that parameter
@@ -650,6 +650,8 @@ class MPQuery(object):
                 # Start with fresh qs_mp without .values()
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(
                             'measurement__instantpoint__activity__platform').filter(**qparams)
+                if self.parameterID:
+                    qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
 
                 if orderedFlag:
                     qs_mp = qs_mp.order_by('measurement__instantpoint__activity__name', 'measurement__instantpoint__timevalue')
