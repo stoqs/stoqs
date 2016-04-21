@@ -105,7 +105,7 @@ def _buildMapFile(request, qm, options):
         request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
         logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
-    # A rudumentary class of items for passing a list of them to the activity.map template
+    # A rudimentary class of items for passing a list of them to the activity.map template
     class Item(object):
         def __repr__(self):
             return '%s %s %s %s' % (self.id, self.name, self.color, self.geo_query,)

@@ -161,7 +161,7 @@ class BaseOutputer(object):
 
         pvDicts = []
         for name in set(pmin.keys() + pmax.keys()):         # set() uniquifies the keys from each dictionary
-            if name in mod.Parameter.objects.values_list('name', flat=True):
+            if name in mod.Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
                 try:
                     pn = pmin[name]
                 except KeyError:
