@@ -10,13 +10,13 @@ MBARI 26 January March 2016
 
 import os
 import sys
-import datetime
+from datetime import datetime
 parent_dir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parent_dir)  # settings.py is one dir up
 
-from BEDS import BEDSLoader
+from CCE import CCELoader
 
-bl = BEDSLoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
+cl = CCELoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                                 description = 'Coordinated Canyon Experiment - Measuring turbidity flows in Monterey Submarine Canyon',
                                 x3dTerrains = { 
                                     'http://stoqs.mbari.org/terrain/MontereyCanyonBeds_1m+5m_1x_src/MontereyCanyonBeds_1m+5m_1x_src_scene.x3d': {
@@ -35,51 +35,86 @@ bl = BEDSLoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                )
 
 # Base OPeNDAP server
-bl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
+cl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
 
 # Copied from ProjectLibrary to BEDs SVN working dir for netCDF conversion, and then copied to elvis.
 # See BEDs/BEDs/Visualization/py/makeBEDNetCDF_CCE.sh
 
-bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P', 'P_ADJUSTED', 'DEPTH']
+cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P', 'P_ADJUSTED', 'DEPTH']
 
 # Several BED files: 30200078 to 3020080
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
-##bl.bed_files = [('CanyonEvents/BED3/20151001_20160115/{}.nc').format(n) for n in range(30200078, 30200081)]
-##bl.bed_platforms = ['BED03'] * len(bl.bed_files)
-##bl.bed_depths = [201] * len(bl.bed_files)
+##cl.bed_files = [('CanyonEvents/BED3/20151001_20160115/{}.nc').format(n) for n in range(30200078, 30200081)]
+##cl.bed_platforms = ['BED03'] * len(cl.bed_files)
+##cl.bed_depths = [201] * len(cl.bed_files)
 
 # Just the event files for the CCE
-bl.bed_files = [
+cl.bed_files = [
                 'BED5/MBCCE_BED5_20151027_Event20151201/netcdf/50200024_decimated_trajectory.nc',
                 'BED3/20151001_20160115/netcdf/30200078_trajectory.nc',
                 'BED6/20151001_20160115/netcdf/60100068_trajectory.nc',
                 'BED3/MBCCE_BED3_20160212_Event20170217/netcdf/30300004_trajectory.nc',
                ]
-bl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03']
-bl.bed_depths = [388, 201, 521, 289.3]
-bl.bed_framegrabs = [
+cl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03']
+cl.bed_depths = [388, 201, 521, 289.3]
+cl.bed_framegrabs = [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3874/00_21_23_28.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3870/00_15_38_23.html',
                 '',
                     ]
 
+# CCE BIN data
+cl.ccebin_startDatetime = datetime(2016, 1, 15)
+cl.ccebin_endDatetime = datetime(2016, 1, 18)
+cl.ccebin_nominaldepth = 1840
+cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin2015/201510/'
+cl.ccebin_files = [
+                'ccebin2015_aanderaaoxy_20151013.nc',
+                'ccebin2015_adcp1825_20151013.nc',
+                'ccebin2015_adcp1827_20151013.nc',
+                'ccebin2015_adcp1828_20151013.nc',
+                'ccebin2015_ecotriplet_20151013.nc',
+                'ccebin2015_sbe16_20151013.nc',
+               ]
+##cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin20160115/201601/'
+##cl.ccebin_files = [
+##                'ccebin20160115_aanderaaoxy_20160115.nc',
+##                'ccebin20160115_adcp1825_20160115.nc',
+##                'ccebin20160115_adcp1827_20160115.nc',
+##                'ccebin20160115_adcp1828_20160115.nc',
+##                'ccebin20160115_ecotriplet_20160115.nc',
+##                'ccebin20160115_sbe16_20160115.nc',
+##               ]
+cl.ccebin_parms = [
+                'u_component_uncorrected', 'v_component_uncorrected',
+                'echo_intensity_beam1', 
+                #'echo_intensity_beam2', 'echo_intensity_beam3', 'echo_intensity_beam4',
+                #'std_head', 'std_pitch', 'std_roll', 'xdcr_temperature',
+                #'pressure', 'salinity', 'temperature',
+                #'airsaturation', 'oxygen',
+                #'chlor', 'ntu1', 'ntu2',
+                  ] 
+
 
 # Execute the load for trajectory representation
-bl.process_command_line()
+cl.process_command_line()
 
-if bl.args.test:
-    bl.loadBEDS(stride=1, featureType='trajectory')
+if cl.args.test:
+    cl.loadCCEBIN(stride=5)
+    cl.loadBEDS(stride=1, featureType='trajectory')
 
-elif bl.args.optimal_stride:
-    bl.loadBEDS(stride=1, featureType='trajectory')
+elif cl.args.optimal_stride:
+    cl.loadBEDS(stride=1, featureType='trajectory')
+    cl.loadCCEBIN(stride=1)
 
 else:
-    bl.stride = bl.args.stride
-    bl.loadBEDS(featureType='trajectory')
+    cl.stride = cl.args.stride
+    cl.loadBEDS(featureType='trajectory')
+    cl.loadCCEBIN()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
-bl.addTerrainResources()
+cl.addTerrainResources()
 
 print "All Done."
 
