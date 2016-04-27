@@ -24,9 +24,20 @@ except AttributeError:
 
 import DAPloaders
 from loaders import LoadScript
+from DAPloaders import Mooring_Loader
 import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 import numpy as np
+
+def getStrideText(stride):
+    '''
+    Format stride into a string to be appended to the Activity name, if stride==1 return empty string
+    '''
+    if stride == 1:
+        return ''
+    else:
+        return ' (stride=%d)' % stride
+
 
 class CCELoader(LoadScript):
     '''
@@ -43,6 +54,7 @@ class CCELoader(LoadScript):
         # Duplicate color  for Trajectory 't' version
         colors[b + 't'] = rgb2hex(c)[1:]
 
+    colors['ccebin'] = 'ff0000'
 
     def loadBEDS(self, stride=None, featureType='trajectory'):
         '''
@@ -73,6 +85,45 @@ class CCELoader(LoadScript):
                                           pName, scalefactor=10)
             except (DAPloaders.OpendapError, DAPloaders.InvalidSliceRequest):
                 pass
+
+    def loadCCEBIN(self, stride=None):
+        '''
+        Mooring CCEBIN specific load functions
+        '''
+        platformName = 'CCEBIN'
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.ccebin_files], self.ccebin_files):
+            url = os.path.join(self.ccebin_base, f)
+
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue - if data are loaded from multiple 
+                # activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
+                                                activity__name=aName).aggregate(
+                                                Max('timevalue'))['timevalue__max']
+                if dataStartDatetime:
+                    # Subract an hour to fill in missing_values at end from previous load
+                    dataStartDatetime = dataStartDatetime - timedelta(seconds=3600)
+
+            if 'adcp' in f:
+                Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
+            else:
+                Mooring_Loader.getFeatureType = lambda self: 'timeseries'
+
+            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName,
+                                        platformName, self.colors['ccebin'], 'mooring', 'Mooring Deployment',
+                                        self.ccebin_parms, self.dbAlias, stride, self.ccebin_startDatetime,
+                                        self.ccebin_endDatetime, dataStartDatetime)
+
+        # For timeseriesProfile data we need to pass the nominaldepth of the plaform
+        # so that the model is put at the correct depth in the Spatial -> 3D view.
+        try:
+            self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src.x3d',
+                                      platformName, nominaldepth=self.ccebin_nominaldepth)
+        except AttributeError:
+            self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src.x3d',
+                                      platformName)
 
 
 if __name__ == '__main__':
