@@ -43,7 +43,7 @@ then
     echo Add epel, remi, and postgres repositories
     yum makecache fast
     yum -y install wget git
-    wget -q -N http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+    wget -q -N http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-6.noarch.rpm
     wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
     rpm -Uvh remi-release-7*.rpm epel-release-7*.rpm
     curl -sS -O http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
