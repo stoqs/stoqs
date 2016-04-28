@@ -1,41 +1,16 @@
 #!/usr/bin/env python
-__author__    = 'Mike McCann'
-__copyright__ = '2013'
-__license__   = 'GPL v3'
-__contact__   = 'mccann at mbari.org'
-
-__doc__ = '''
-
+'''
 Loader for data from OceanSITES GDAC
 
 Mike McCann
 MBARI 28 October 2014
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@status: production
-@license: GPL
-
-
-Note that some of the OceanSITES NetCDF files have metadata cases that 
-cause the pypi coards to fail.  A fix like this allows the processing
-to happen:
-
-diff /home/mccann/VirtualEnvs/development/lib/python2.7/site-packages/coards/__init__.py.orig \
-        /home/mccann/VirtualEnvs/development/lib/python2.7/site-packages/coards/__init__.py
-194c194
-<         if units in valid:
----
->         if units.lower() in valid:
-241c241
-<     m = p.match(date)
----
->     m = p.match(date.upper())
-
 '''
 
 import os
 import sys
+
+# Use local thredds-crawler, see: https://github.com/asascience-open/thredds_crawler/issues/16
+sys.path.insert(0, '/home/vagrant/dev/thredds_crawler')
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that OS and DAPloaders are found
@@ -43,6 +18,13 @@ sys.path.insert(0, parentDir)  # So that OS and DAPloaders are found
 from OceanSITES import OSLoader
 from thredds_crawler.crawl import Crawl
 
+# Monkey-patch coards functions to accept non-standard time units
+import coards
+from coards import parse_units, parse_date
+coards.parse_units = lambda units: parse_units(units.lower())
+coards.parse_date = lambda date: parse_date(date.upper())
+
+# Create loader with mesh globe for Spatial->3D view
 osl = OSLoader('stoqs_oceansites', 'OS Moorings',
                         description = 'Mooring data from the OceanSITES GDAC',
                         x3dTerrains = {
