@@ -1859,7 +1859,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
     elif url.find('ccebin') != -1:
         # Special for CCEBIN mooring
         for v in loader.include_names:
-            loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+            loader.auxCoords[v] = {'time': 'esecs', 'latitude': 'Latitude', 'longitude': 'Longitude', 'depth': 'NominalDepth'}
     else:
         # Auxillary coordinates are the same for all include_names for _TS and _M files
         for v in loader.include_names:
