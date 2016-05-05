@@ -68,32 +68,33 @@ cl.bed_framegrabs = [
 cl.ccebin_startDatetime = datetime(2016, 1, 15)
 cl.ccebin_endDatetime = datetime(2016, 1, 18)
 cl.ccebin_nominaldepth = 1840
-cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin2015/201510/'
-cl.ccebin_files = [
-                'ccebin2015_aanderaaoxy_20151013.nc',
-                'ccebin2015_adcp1825_20151013.nc',
-                'ccebin2015_adcp1827_20151013.nc',
-                'ccebin2015_adcp1828_20151013.nc',
-                'ccebin2015_ecotriplet_20151013.nc',
-                'ccebin2015_sbe16_20151013.nc',
-               ]
-##cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin20160115/201601/'
+# Full-deployment files, exatracted from SSDS with stride of 60
+##cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin2015/201510/'
 ##cl.ccebin_files = [
-##                'ccebin20160115_aanderaaoxy_20160115.nc',
-##                'ccebin20160115_adcp1825_20160115.nc',
-##                'ccebin20160115_adcp1827_20160115.nc',
-##                'ccebin20160115_adcp1828_20160115.nc',
-##                'ccebin20160115_ecotriplet_20160115.nc',
-##                'ccebin20160115_sbe16_20160115.nc',
+##                'ccebin2015_aanderaaoxy_20151013.nc',
+##                'ccebin2015_adcp1825_20151013.nc',
+##                'ccebin2015_adcp1827_20151013.nc',
+##                'ccebin2015_adcp1828_20151013.nc',
+##                'ccebin2015_ecotriplet_20151013.nc',
+##                'ccebin2015_sbe16_20151013.nc',
 ##               ]
+cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin20160115/201601/'
+cl.ccebin_files = [
+                ##'ccebin20160115_aanderaaoxy_20160115.nc',
+                'ccebin20160115_adcp1825_20160115.nc',
+                'ccebin20160115_adcp1827_20160115.nc',
+                'ccebin20160115_adcp1828_20160115.nc',
+                ##'ccebin20160115_ecotriplet_20160115.nc',
+                ##'ccebin20160115_sbe16_20160115.nc',
+               ]
 cl.ccebin_parms = [
                 'u_component_uncorrected', 'v_component_uncorrected',
                 'echo_intensity_beam1', 
                 #'echo_intensity_beam2', 'echo_intensity_beam3', 'echo_intensity_beam4',
                 #'std_head', 'std_pitch', 'std_roll', 'xdcr_temperature',
-                'Pressure', 'Salinity', 'Temperature',
-                'AirSaturation', 'Oxygen',
-                'Chlor', 'NTU1', 'NTU2',
+                ##'Pressure', 'Salinity', 'Temperature',
+                ##'AirSaturation', 'Oxygen',
+                ##'Chlor', 'NTU1', 'NTU2',
                   ] 
 
 
@@ -110,7 +111,7 @@ elif cl.args.optimal_stride:
 
 else:
     cl.stride = cl.args.stride
-    cl.loadBEDS(featureType='trajectory')
+    ##cl.loadBEDS(featureType='trajectory')
     cl.loadCCEBIN()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
