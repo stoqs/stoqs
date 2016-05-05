@@ -17,7 +17,7 @@ installing all the required software.
 2. Fork the repository after logging into GitHub by clicking on the Fork button at 
    https://github.com/stoqs/stoqs
 
-3. Generate SSH keys on your development system following the instructions at 
+3. Recommended: Generate SSH keys on your development system following the instructions at 
    https://help.github.com/articles/generating-ssh-keys/
 
 4. Rename the existing `origin` remote to `upstream`:
@@ -26,9 +26,9 @@ installing all the required software.
 
 5. Assign `origin` remote to your forked repository:
 
-        git remote -f origin git@github.com:<your_github_id>/stoqs.git
+        git remote add -f origin <your_github_clone_url>
 
-   Replace \<your_github_id\> with your GitHub ID.
+   Replace \<your_github_clone_url\> with "Copy to clipboard" from GitHub web site
 
 ### Contributing follows a [typical GitHub workflow](https://guides.github.com/introduction/flow/):
 

@@ -29,14 +29,14 @@ performed from the the directory you installed it in; you must cd to it (e.g. `c
 ~/Vagrants/stoqsvm`) before logging in with the `vagrant ssh -- -X` command.  After 
 installation finishes log into your new virtual machine and test it:
 
-    vagrant ssh -- -X
+    vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
     cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
     export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
     ./test.sh CHANGEME
 
 In another terminal window start the development server (after a `cd ~/Vagrants/stoqsvm`):
 
-    vagrant ssh -- -X
+    vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
     cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
     export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
     stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
@@ -47,7 +47,8 @@ Visit your server's STOQS User Interface using your host computer's browser:
 
 More instructions are in the doc/instructions directory &mdash; see [LOADING](doc/instructions/LOADING.md) 
 for how to load your own data and [CONTRIBUTING](doc/instructions/CONTRIBUTING.md) for how to share your work.
-See example [Jupyter Notebooks](stoqs/contrib/notebooks) that demonstrate specific analyses and 
+See example [Jupyter Notebooks](http://nbviewer.jupyter.org/github/stoqs/stoqs/blob/master/stoqs/contrib/notebooks)
+ that demonstrate specific analyses and 
 visualizations that cannot be accomplished in the STOQS User Interface.
 Visit the [STOQS Wiki pages](https://github.com/stoqs/stoqs/wiki) for updates and links to presentations.
 The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also 
@@ -66,3 +67,4 @@ If you use STOQS for your research please cite this publication:
 > temporal oceanographic query system) to manage, visualize, and understand AUV, glider, and mooring data," 
 > in *Autonomous Underwater Vehicles (AUV), 2014 IEEE/OES*, pp.1-10, 6-9 Oct. 2014
 > doi: 10.1109/AUV.2014.7054414
+

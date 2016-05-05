@@ -564,7 +564,7 @@ class STOQSQManager(object):
                     depth = depth_list[0]
 
                 modelInfo = (pModel[0], geom.y, geom.x, 
-                             -depth * float(self.request.GET.get('ve', 10)))
+                             -depth * float(self.request.GET.get('ve', 1)))
 
             return modelInfo
 

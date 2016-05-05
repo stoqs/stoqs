@@ -91,9 +91,9 @@ cl.ccebin_parms = [
                 'echo_intensity_beam1', 
                 #'echo_intensity_beam2', 'echo_intensity_beam3', 'echo_intensity_beam4',
                 #'std_head', 'std_pitch', 'std_roll', 'xdcr_temperature',
-                #'pressure', 'salinity', 'temperature',
-                #'airsaturation', 'oxygen',
-                #'chlor', 'ntu1', 'ntu2',
+                'Pressure', 'Salinity', 'Temperature',
+                'AirSaturation', 'Oxygen',
+                'Chlor', 'NTU1', 'NTU2',
                   ] 
 
 
@@ -102,7 +102,7 @@ cl.process_command_line()
 
 if cl.args.test:
     cl.loadCCEBIN(stride=5)
-    cl.loadBEDS(stride=1, featureType='trajectory')
+    cl.loadBEDS(stride=5, featureType='trajectory')
 
 elif cl.args.optimal_stride:
     cl.loadBEDS(stride=1, featureType='trajectory')
