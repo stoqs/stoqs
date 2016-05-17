@@ -2021,9 +2021,14 @@
     });
 
     $('#showplatforms').on('click', function (event) {
-        // Need time series data to redraw with crosshairs, so get everything
-        rebuildFilters();
-        addStationaryPlatformModels();
+        if ( $('#showplatforms').is(':checked') ) {
+            // Need time series data to redraw with crosshairs, so get everything
+            rebuildFilters();
+            addStationaryPlatformModels();
+        }
+        else {
+            $('body').data()['platformAnimation'] = [];
+        }
     });
 
     $('#showsensortracks').on('click', function (event) {
@@ -3735,10 +3740,8 @@
                     theData = getDepthDataset(data, zoom_sdt[0], zoom_sdt[1]);
                 }
                 var options = simpledepthtime_options_zoom;
-                if ( ! $.isEmptyObject(data.platformanimation) ) {
-                    if ( ! $.isEmptyObject(data.platformanimation.limits) ) {
-                        options = $.extend(true, {}, simpledepthtime_options_zoom, { crosshair: { mode: "x" } });
-                    }
+                if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+                    options = $.extend(true, {}, simpledepthtime_options_zoom, { crosshair: { mode: "x" } });
                 }
                 timedepthplot = $.plot($("#time-depth-flot"), theData, options);
 
@@ -3756,10 +3759,8 @@
                                                           yaxes: parmData.yaxesOptions
                                       });
                 var len = parmData.dataset.length;
-                if ( ! $.isEmptyObject(data.platformanimation) ) {
-                    if ( ! $.isEmptyObject(data.platformanimation.limits) ) {
-                        options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
-                    }
+                if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+                    options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
                 }
                 timeparameterplot = $.plot($("#time-parameter-flot"), parmData.dataset, options);
 
@@ -3964,6 +3965,9 @@
                                 });
                             }
 
+                            if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+                                options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
+                            }
                             $.plot.image.loadDataImages(flotdata, options, function () {
                                 $.plot($("#time-depth-flot"), flotdata, options);
                             });
