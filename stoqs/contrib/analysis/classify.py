@@ -331,7 +331,7 @@ class Classifier(BiPlot):
                                   " --maxes 33.65 33.70 33.75 33.93 --clobber -v\n\n")
         examples += "Step 2: Evaluate classifiers using the labels created in Step 1\n"
         examples += sys.argv[0] + (" --doModelsScore --groupName Plankton --database stoqs_september2013_t"
-                                   " --classes diatom sediment\n\n")
+                                   " --classes diatom sediment --inputs bbp700 fl700_uncorr\n\n")
         examples += "Step 3: Create a prediction model using the labels created in Step 1\n"
         examples += sys.argv[0] + (" --createClassifier --groupName Plankton --database stoqs_september2013_t"
                                   " --classifier Nearest_Neighbors --classes diatom sediment"
@@ -371,6 +371,13 @@ class Classifier(BiPlot):
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
+
+        # Conditional tests
+        if self.args.doModelsScore:
+            if not c.args.classes:
+                parser.error('--doModelsScore requires --classes')
+            if not c.args.inputs:
+                parser.error('--doModelsScore requires --inputs')
     
     
 if __name__ == '__main__':
