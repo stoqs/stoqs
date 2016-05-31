@@ -26,6 +26,7 @@ except AttributeError:
 
 import matplotlib.pyplot as plt
 import numpy as np
+import warnings
 from datetime import datetime
 from django.db.models import Q
 from django.db.utils import IntegrityError
@@ -195,29 +196,33 @@ class Classifier(BiPlot):
             self.saveLabelSet(commandlineResource, label, x_ids, y_ids, description, labeledGroupName, 
                                     'Labeled with %s as discriminator' % self.args.discriminator)
 
-    def _loadLabeledData(self, labeledGroupName):
+    def loadLabeledData(self, labeledGroupName, classes):
         '''
         Retrieve from the database to set of Labeled data and return the standard X, and y arrays that the scikit-learn package uses
         '''
+        if len(classes) > 2:
+            raise Exception('Maximum classes length is 2')
+
         f0 = np.array(0)
         f1 = np.array(0)
         y = np.array(0, dtype=int)
         target = 0
-        for label in self.args.labels:
-            if label.startswith('dino'):
-                print 'Skipping over label = %s' % label
-                continue
-
-            mprs = MeasuredParameterResource.objects.using(self.args.database).filter(resource__name=LABEL, 
-                                                resource__resourcetype__name=labeledGroupName, resource__value=label
-                                                ).values_list('measuredparameter__datavalue', flat=True)
+        for label in classes:
+            mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
+                        resource__name=LABEL, resource__resourcetype__name=labeledGroupName, 
+                        resource__value=label
+                        ).values_list('measuredparameter__datavalue', flat=True)
             count = mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]).count()
+            if self.args.verbose:
+                print 'count = {} for label = {}'.format(count, label)
+            if count == 0:
+                warnings.warn('count = 0 for label = {}'.format(label))
             f0 = np.append(f0, mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]))
             f1 = np.append(f1, mprs.filter(measuredparameter__parameter__name=self.args.inputs[1]))
             y = np.append(y, np.ones(count) * target)
             target += 1
 
-        # Form the feature vectors into the X matrix that sklearn wanta
+        # Form the feature vectors into the X matrix that sklearn wants
         X = np.concatenate((f0.reshape(-1,1), f1.reshape(-1,1)), axis=1)
 
         return X, y
@@ -226,7 +231,8 @@ class Classifier(BiPlot):
         '''
         Print scores for several different classifiers
         '''
-        X, y = self._loadLabeledData(labeledGroupName)
+        X, y = self.loadLabeledData(labeledGroupName, classes=self.args.classes)
+        X = StandardScaler().fit_transform(X)
 
         if X.any() and y.any():
             for name, clf in self.classifiers.iteritems():
@@ -237,22 +243,22 @@ class Classifier(BiPlot):
 
     def createClassifier(self, labeledGroupName):
         '''
-        Query the database for labeled training data, fit a model to it, and save the pickled model back to the database.
-        Follow the pattern in the example at http://scikit-learn.org/stable/auto_examples/plot_classifier_comparison.html
-        and learn about Learning at https://www.youtube.com/watch?v=4ONBVNm3isI (see at time 2:33 and following - though
-        the whole tutorial is worth watching).
+        Query the database for labeled training data, fit a model to it, and save the pickled 
+        model back to the database.  Follow the pattern in the example at 
+        http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html
+        and learn about Learning at https://www.youtube.com/watch?v=4ONBVNm3isI (see at time 2:33 and 
+        following - though the whole tutorial is worth watching).
         '''
         clf = self.classifiers[self.args.classifier]
 
-        X, y = self._loadLabeledData(labeledGroupName)
+        X, y = self.loadLabeledData(labeledGroupName, classes=self.args.classes)
+        X = StandardScaler().fit_transform(X)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size, train_size=self.args.train_size)
 
         import pdb
         pdb.set_trace()
-        # TODO: Implement graphical evaluation as in http://scikit-learn.org/stable/auto_examples/plot_classifier_comparison.html
-
-        X_train = StandardScaler().fit_transform(X_train)
+        # TODO: Implement graphical evaluation as in http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html
 
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
@@ -318,11 +324,18 @@ class Classifier(BiPlot):
 
         examples = 'Example machine learning workflow:' + '\n\n' 
         examples += "Step 1: Create Labeled features in the database using salinity as a discriminator:\n"
-        examples += sys.argv[0] + " --createLabels --groupName Plankton --database stoqs_september2013_t --platform dorado --start 20130916T124035 --end 20130919T233905 --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 --clobber -v\n\n"
+        examples += sys.argv[0] + (" --createLabels --groupName Plankton --database stoqs_september2013_t"
+                                  " --platform dorado --start 20130916T124035 --end 20130919T233905"
+                                  " --inputs bbp700 fl700_uncorr --discriminator salinity"
+                                  " --labels diatom dino1 dino2 sediment --mins 33.33 33.65 33.70 33.75"
+                                  " --maxes 33.65 33.70 33.75 33.93 --clobber -v\n\n")
         examples += "Step 2: Evaluate classifiers using the labels created in Step 1\n"
-        examples += sys.argv[0] + " --doModelsScore --groupName Plankton --database stoqs_september2013_t --inputs bbp700 fl700_uncorr --labels diatom dino1 dino2 sediment\n\n"
+        examples += sys.argv[0] + (" --doModelsScore --groupName Plankton --database stoqs_september2013_t"
+                                   " --classes diatom sediment --inputs bbp700 fl700_uncorr\n\n")
         examples += "Step 3: Create a prediction model using the labels created in Step 1\n"
-        examples += sys.argv[0] + " --createClassifier --groupName Plankton --database stoqs_september2013_t --classifier Nearest_Neighbors --labels diatom dino1 dino2 sediment --inputs bbp700 fl700_uncorr --discriminator salinity --modelBaseName Nearest_Neighbors_1\n\n"
+        examples += sys.argv[0] + (" --createClassifier --groupName Plankton --database stoqs_september2013_t"
+                                  " --classifier Nearest_Neighbors --classes diatom sediment"
+                                  " --modelBaseName Nearest_Neighbors_1\n\n")
         examples += "Step 4: Use a model to classify new measurements\n"
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
     
@@ -351,12 +364,20 @@ class Classifier(BiPlot):
         parser.add_argument('--train_size', action='store', help='Proportion of discriminated sample to save as Train set', default=0.4, type=float)
         parser.add_argument('--classifier', choices=self.classifiers.keys(), help='Specify classifier to use with --createClassifier option')
         parser.add_argument('--modelBaseName', action='store', help='Base name of the model to store in the database')
+        parser.add_argument('--classes', action='store', help='Labels to load from the database for --doModelsScore and --createClassifier', nargs='*')
 
         parser.add_argument('--clobber', action='store_true', help='Remove existing MeasuredParameterResource records before adding new classification')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
+
+        # Conditional tests
+        if self.args.doModelsScore:
+            if not c.args.classes:
+                parser.error('--doModelsScore requires --classes')
+            if not c.args.inputs:
+                parser.error('--doModelsScore requires --inputs')
     
     
 if __name__ == '__main__':
