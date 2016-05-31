@@ -220,11 +220,21 @@
                                             </div>
                                             -->
                                             <div class="accordion-heading">
-                                                <h1 id="controls-3d" class="accordion-toggle" data-toggle="collapse" href="#collapseContols3D" title="3D Controls">≡</h1>
+                                                <div class="row-fluid">
+                                                    <h1 id="controls-3d" class="accordion-toggle" data-toggle="collapse" href="#collapseContols3D" style="padding:0px;">
+                                                        <span title="3D Controls">≡</span>
+                                                        <a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button">
+                                                            <i class="icon-resize-full" title="Full Screen"></i>
+                                                        </a>
+                                                    </h1>
+                                                </div>
                                             </div>
                                             <div id="collapseContols3D" class="accordion-body collapse in">
                                                 <div class="row-fluid">
-                                                    <div class="span4">
+                                                    <h5 id="nav-instr-3d" class="accordion-toggle" data-toggle="collapse" href="#navInstr3D" style="padding:0px;">
+                                                        <span title="Show cheat sheet">Instructions</span>
+                                                    </h5>
+                                                    <div id="navInstr3D" class="accordion-body collapse in">
                                                         <em>Rotate: Left mouse</em><br>
                                                         <em>Translate: Ctrl + left mouse</em><br>
                                                         <em>Zoom: Alt + left mouse</em><br>
@@ -232,8 +242,7 @@
                                                         <em>Navigation speed: +/-</em><br>
                                                         <div id="x3d-ve"></div><br>
                                                     </div>
-                                                    <div class="span2">
-                                                        <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom view</a></p>
+                                                    <div>
                                                         <p><a id="geo-rift-button" class="btn btn-mini rift-button"><i class="icon-eye-open"></i> Enter VR</a></p>
                                                         <p><a id="geo-x3d-reset-view" class="btn btn-mini" onClick="$('#spatial-3d-x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                                         <form class="form-inline">
@@ -2309,7 +2318,7 @@
                                         'position': ''
                                       } );
             }
-            $(this).html('<i class="icon-resize-full"></i> Zoom view');
+            $(this).html('<i class="icon-resize-full" title="Full Screen"></i>');
         } else {
             if ($('.stoqs-zoom-width').hasClass('span6')) {
                 $('.stoqs-zoom-width').removeClass('span6');
@@ -2342,7 +2351,7 @@
                                         'position': 'fixed'
                                       });
             }
-            $(this).html('<i class="icon-remove-sign"></i> Unzoom view');
+            $(this).html('<i class="icon-resize-small" title="Not Full Screen"></i>');
         }
         widthZoomed = ! widthZoomed;
     });
