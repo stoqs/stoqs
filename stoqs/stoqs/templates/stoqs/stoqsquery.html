@@ -219,38 +219,43 @@
                                                 <img src="{{STATIC_URL}}images/X3dSpecificationLogo.png"/>
                                             </div>
                                             -->
-                                            <div class="row-fluid">
-                                                <div class="span4">
-                                                    <em>Rotate: Left mouse</em><br>
-                                                    <em>Translate: Ctrl + left mouse</em><br>
-                                                    <em>Zoom: Alt + left mouse</em><br>
-                                                    <em>Recenter rotation: double click</em><br>
-                                                    <em>Navigation speed: +/-</em><br>
-                                                    <div id="x3d-ve"></div><br>
-                                                </div>
-                                                <div class="span2">
-                                                    <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom view</a></p>
-                                                    <p><a id="geo-rift-button" class="btn btn-mini rift-button"><i class="icon-eye-open"></i> Enter VR</a></p>
-                                                    <p><a id="geo-x3d-reset-view" class="btn btn-mini" onClick="$('#spatial-3d-x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
-                                                    <form class="form-inline">
-                                                        <label class="checkbox disabled">
-                                                            <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Data</span>
-                                                        </label>
-                                                        <label class="checkbox disabled">
-                                                            <input type="checkbox" id="showplatforms" />
-                                                            <span id="showplatforms">platforms</span>
-                                                        </label>
-                                                    </form>
-                                                </div>
-                                                <div id="geo3d-colorbar" class="span6"></div>
-                                                <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
-                                                    <div class="span1"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
-                                                    <div class="span4"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
-                                                    <div class="span3"><span id="spatial-3d-x3d-speedup"></span></div>
-                                                    <div class="span6"><span id="spatial-3d-x3d-message"></span></div>
-                                                </div>
+                                            <div class="accordion-heading">
+                                                <h1 id="controls-3d" class="accordion-toggle" data-toggle="collapse" href="#collapseContols3D" title="3D Controls">≡</h1>
                                             </div>
-                                        </div>
+                                            <div id="collapseContols3D" class="accordion-body collapse in">
+                                                <div class="row-fluid">
+                                                    <div class="span4">
+                                                        <em>Rotate: Left mouse</em><br>
+                                                        <em>Translate: Ctrl + left mouse</em><br>
+                                                        <em>Zoom: Alt + left mouse</em><br>
+                                                        <em>Recenter rotation: double click</em><br>
+                                                        <em>Navigation speed: +/-</em><br>
+                                                        <div id="x3d-ve"></div><br>
+                                                    </div>
+                                                    <div class="span2">
+                                                        <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom view</a></p>
+                                                        <p><a id="geo-rift-button" class="btn btn-mini rift-button"><i class="icon-eye-open"></i> Enter VR</a></p>
+                                                        <p><a id="geo-x3d-reset-view" class="btn btn-mini" onClick="$('#spatial-3d-x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
+                                                        <form class="form-inline">
+                                                            <label class="checkbox disabled">
+                                                                <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Data</span>
+                                                            </label>
+                                                            <label class="checkbox disabled">
+                                                                <input type="checkbox" id="showplatforms" />
+                                                                <span id="showplatforms">platforms</span>
+                                                            </label>
+                                                        </form>
+                                                    </div>
+                                                    <div id="geo3d-colorbar" class="span6"></div>
+                                                    <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
+                                                        <div class="span1"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
+                                                        <div class="span4"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
+                                                        <div class="span3"><span id="spatial-3d-x3d-speedup"></span></div>
+                                                        <div class="span6"><span id="spatial-3d-x3d-message"></span></div>
+                                                    </div>
+                                                </div> <!-- row-fluid -->
+                                            </div> <!-- collapseContols3D -->
+                                        </div> <! -- geo-3dplot-control -->
                                         <div style="height:100%;">
                                         <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;"> 
                                             <Scene>
