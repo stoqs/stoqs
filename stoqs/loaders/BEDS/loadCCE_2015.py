@@ -59,10 +59,10 @@ cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 
 
 # Just the event files for the CCE
 cl.bed_files = [
-                'BED5/MBCCE_BED5_20151027_Event20151201/netcdf/50200024_decimated_trajectory.nc',
-                'BED3/20151001_20160115/netcdf/30200078_trajectory.nc',
-                'BED6/20151001_20160115/netcdf/60100068_trajectory.nc',
-                'BED3/MBCCE_BED3_20160212_Event20170217/netcdf/30300004_trajectory.nc',
+                'BED05/MBCCE_BED05_20151027_Event20151201/netcdf/50200024_decimated_trajectory.nc',
+                'BED03/20151001_20160115/netcdf/30200078_trajectory.nc',
+                'BED06/20151001_20160115/netcdf/60100068_trajectory.nc',
+                'BED03/MBCCE_BED03_20160212_Event20170217/netcdf/30300004_trajectory.nc',
                ]
 cl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03']
 cl.bed_depths = [388, 201, 521, 289.3]
@@ -120,7 +120,7 @@ elif cl.args.optimal_stride:
 
 else:
     cl.stride = cl.args.stride
-    ##cl.loadBEDS(featureType='trajectory')
+    cl.loadBEDS(featureType='trajectory')
     cl.loadCCEBIN()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
