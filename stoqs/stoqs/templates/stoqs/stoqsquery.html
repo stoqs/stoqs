@@ -231,20 +231,11 @@
                                             </div>
                                             <div id="collapseContols3D" class="accordion-body collapse in">
                                                 <div class="row-fluid">
-                                                    <h5 id="nav-instr-3d" class="accordion-toggle" data-toggle="collapse" href="#navInstr3D" style="padding:0px;">
-                                                        <span title="Show cheat sheet">Instructions</span>
+                                                    <h5 id="data-3d" class="accordion-toggle" data-toggle="collapse" href="#data3D" style="padding:0px;">
+                                                        <span title="Data Options">Data</span>
                                                     </h5>
-                                                    <div id="navInstr3D" class="accordion-body collapse in">
-                                                        <em>Rotate: Left mouse</em><br>
-                                                        <em>Translate: Ctrl + left mouse</em><br>
-                                                        <em>Zoom: Alt + left mouse</em><br>
-                                                        <em>Recenter rotation: double click</em><br>
-                                                        <em>Navigation speed: +/-</em><br>
-                                                        <div id="x3d-ve"></div><br>
-                                                    </div>
-                                                    <div>
+                                                    <div id="data3D" class="accordion-body collapse">
                                                         <p><a id="geo-rift-button" class="btn btn-mini rift-button"><i class="icon-eye-open"></i> Enter VR</a></p>
-                                                        <p><a id="geo-x3d-reset-view" class="btn btn-mini" onClick="$('#spatial-3d-x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                                         <form class="form-inline">
                                                             <label class="checkbox disabled">
                                                                 <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Data</span>
@@ -254,13 +245,35 @@
                                                                 <span id="showplatforms">platforms</span>
                                                             </label>
                                                         </form>
+                                                        <div id="geo3d-colorbar" class="span6"></div>
+                                                        <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
+                                                            <div class="span1"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
+                                                            <div class="span4"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
+                                                            <div class=""><span id="spatial-3d-x3d-speedup"></span></div>
+                                                            <div class="span6"><span id="spatial-3d-x3d-message"></span></div>
+                                                        </div>
                                                     </div>
-                                                    <div id="geo3d-colorbar" class="span6"></div>
-                                                    <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
-                                                        <div class="span1"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
-                                                        <div class="span4"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
-                                                        <div class="span3"><span id="spatial-3d-x3d-speedup"></span></div>
-                                                        <div class="span6"><span id="spatial-3d-x3d-message"></span></div>
+                                                    <h5 id="terrain-3d" class="accordion-toggle" data-toggle="collapse" href="#terrain3D" style="padding:0px;">
+                                                        <span title="Show Terrain Options">Terrain</span>
+                                                    </h5>
+                                                    <div id="terrain3D" class="accordion-body collapse in">
+                                                        <ul>
+                                                            <li>Base
+                                                        </ul>
+                                                    </div>
+                                                    <h5 id="nav-instr-3d" class="accordion-toggle" data-toggle="collapse" href="#navInstr3D" style="padding:0px;">
+                                                        <span title="Show cheat sheet">Instructions</span>
+                                                    </h5>
+                                                    <div id="navInstr3D" class="accordion-body collapse in">
+                                                        <ul>
+                                                        <em>Rotate: Left mouse</em><br>
+                                                        <em>Translate: Ctrl + left mouse</em><br>
+                                                        <em>Zoom: Alt + left mouse</em><br>
+                                                        <em>Recenter rotation: double click</em><br>
+                                                        <em>Navigation speed: +/-</em><br>
+                                                        <em>Reset viewpoint: R</em><br>
+                                                        <div id="x3d-ve"></div><br>
+                                                        </ul>
                                                     </div>
                                                 </div> <!-- row-fluid -->
                                             </div> <!-- collapseContols3D -->
@@ -3649,9 +3662,13 @@
                 }
             }
             else if (key == 'x3dterrains') {
+                // Save all the terrains for selection in terrain-3d
+                $('body').data()['terrains'] = data['x3dterrains'];
                 if ( ! $.isEmptyObject(data[key]) ) {
                     // Only a single terrain is supported for now
                     $.each(data[key], function (terrain, item) {
+
+                        // Set X3D navigation details specific for this terrain
                         $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', item.speed);
                         $('#mp-x3d-viewpoint1').attr('centerOfRotation', item.centerOfRotation);
                         $('#mp-x3d-viewpoint1').attr('position', item.position);
