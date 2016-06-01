@@ -19,7 +19,7 @@ from CCE import CCELoader
 cl = CCELoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                 description = 'Coordinated Canyon Experiment - Measuring turbidity flows in Monterey Submarine Canyon',
                 x3dTerrains = { 
-                    'http://stoqs.mbari.org/terrain/MontereyCanyonBeds_1m+5m_1x_src/MontereyCanyonBeds_1m+5m_1x_src_scene.x3d': {
+                    'http://stoqs.mbari.org/x3d/MontereyCanyonBeds_1m+5m_1x_src/MontereyCanyonBeds_1m+5m_1x_src_scene.x3d': {
                         'position': '2232.80938 10346.25515 3543.76722',
                         'orientation': '-0.98394 0.16804 -0.06017 1.25033',
                         'centerOfRotation': '0 0 0',
@@ -28,6 +28,15 @@ cl = CCELoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                         'speed': '1.0',
                         'zNear': '100.0',
                         'zFar': '30000.0',
+                    },
+                    'http://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
+                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                        'VerticalExaggeration': '1',
+                        'speed': '0.1',
+                        ##'zNear': '100.0',
+                        ##'zFar': '30000.0',
                     },
                  },
                  # Do not check in .grd files to the repository, keep them in the loaders directory
