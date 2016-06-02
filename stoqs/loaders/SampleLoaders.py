@@ -16,7 +16,9 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
 
-from stoqs import models as m
+from stoqs.models import (Activity, InstantPoint, Sample, SampleType, Resource,
+                          SamplePurpose, SampleRelationship, Parameter, SampledParameter,
+                          MeasuredParameter, AnalysisMethod)
 from loaders.seabird import get_year_lat_lon
 from loaders import STOQS_Loader, SkipRecord
 from datetime import datetime, timedelta
@@ -75,7 +77,7 @@ def get_closest_instantpoint(aName, tv, dbAlias):
     num_timevalues = 0
     logger.debug('Looking for tv = %s', tv)
     while tol < 86400:                                      # Fail if not found within 24 hours
-        qs = m.InstantPoint.objects.using(dbAlias).filter(  activity__name__contains = aName,
+        qs = InstantPoint.objects.using(dbAlias).filter(  activity__name__contains = aName,
                                                             timevalue__gte = (tv-timedelta(seconds=tol)),
                                                             timevalue__lte = (tv+timedelta(seconds=tol))
                                                          ).order_by('timevalue')
@@ -113,14 +115,14 @@ def load_gulps(activityName, auv_file, dbAlias):
 
     # Get the Activity from the Database
     try:
-        activity = m.Activity.objects.using(dbAlias).get(name__contains=activityName)
+        activity = Activity.objects.using(dbAlias).get(name__contains=activityName)
         logger.debug('Got activity = %s', activity)
     except ObjectDoesNotExist:
         logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', activityName)
         return
     except MultipleObjectsReturned:
         logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', activityName)
-        activity = m.Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
+        activity = Activity.objects.using(dbAlias).filter(name__contains=activityName)[0]
         
 
     # Use the dods server to read over http - works from outside of MABRI's Intranet
@@ -138,7 +140,7 @@ def load_gulps(activityName, auv_file, dbAlias):
         return
 
     # Get or create SampleType for Gulper
-    (gulper_type, created) = m.SampleType.objects.using(dbAlias).get_or_create(name=GULPER)
+    (gulper_type, created) = SampleType.objects.using(dbAlias).get_or_create(name=GULPER)
     logger.debug('sampletype %s, created = %s', gulper_type, created)
     for row in reader:
         # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
@@ -150,14 +152,14 @@ def load_gulps(activityName, auv_file, dbAlias):
         try:
             ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
             point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
-            stuple = m.Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
+            stuple = Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
                                                                 depth = row[r'DEPTH [m]'],
                                                                 geom = point,
                                                                 instantpoint = ip,
                                                                 sampletype = gulper_type,
                                                                 volume = 1800
                                                               )
-            rtuple = m.Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
+            rtuple = Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
                                                                   value = seconds_diff
                                                                 )
 
@@ -278,7 +280,7 @@ class SeabirdLoader(STOQS_Loader):
         for pn,value in parmNameValues:
             logger.debug("pn = %s", pn)
             try:
-                mp, _ = m.MeasuredParameter.objects.using(self.dbAlias).get_or_create(measurement = measurement,
+                mp, _ = MeasuredParameter.objects.using(self.dbAlias).get_or_create(measurement = measurement,
                                                   parameter = self.getParameterByName(pn), datavalue = value)
             except Exception as e:
                 logger.error(e)
@@ -294,25 +296,25 @@ class SeabirdLoader(STOQS_Loader):
 
         # Get the Activity from the Database
         try:
-            activity = m.Activity.objects.using(self.dbAlias).get(name__contains=self.activityName)
+            activity = Activity.objects.using(self.dbAlias).get(name__contains=self.activityName)
             logger.debug('Got activity = %s', activity)
         except ObjectDoesNotExist:
             logger.warn('Failed to find Activity with name like %s.  Skipping GulperLoad.', self.activityName)
             return
         except MultipleObjectsReturned:
             logger.warn('Multiple objects returned for name__contains = %s.  Selecting one by random and continuing...', self.activityName)
-            activity = m.Activity.objects.using(self.dbAlias).filter(name__contains=self.activityName)[0]
+            activity = Activity.objects.using(self.dbAlias).filter(name__contains=self.activityName)[0]
         
         # Get or create SampleType for Niskin
-        (sample_type, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name=NISKIN)
+        (sample_type, created) = SampleType.objects.using(self.dbAlias).get_or_create(name=NISKIN)
         logger.debug('sampletype %s, created = %s', sample_type, created)
         # Get or create SamplePurpose for Niskin
-        (sample_purpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name = 'StandardDepth')
+        (sample_purpose, created) = SamplePurpose.objects.using(self.dbAlias).get_or_create(name = 'StandardDepth')
         logger.debug('samplepurpose %s, created = %s', sample_purpose, created)
         try:
             ip, _ = get_closest_instantpoint(self.activityName, timevalue, self.dbAlias)
             point = 'POINT(%s %s)' % (lon, lat)
-            m.Sample.objects.using(self.dbAlias).get_or_create( name = bottleName,
+            Sample.objects.using(self.dbAlias).get_or_create( name = bottleName,
                                                                     depth = str(depth),     # Must be str to convert to Decimal
                                                                     geom = point,
                                                                     instantpoint = ip,
@@ -382,7 +384,7 @@ class SeabirdLoader(STOQS_Loader):
 
         # Bottle samples are to be loaded after downcast data are loaded so that we can use the same activity
         try:
-            activity = m.Activity.objects.using(self.dbAlias).get(name__contains=self.activityName)
+            activity = Activity.objects.using(self.dbAlias).get(name__contains=self.activityName)
             logger.debug('Got activity = %s', activity)
             self.activity = activity
         except ObjectDoesNotExist:
@@ -518,8 +520,8 @@ class SubSamplesLoader(STOQS_Loader):
         if not parameter_value:
             raise SubSampleLoadError("Must have a row['Parameter Value'] to load subsample")
 
-        (sampleType, created) = m.SampleType.objects.using(self.dbAlias).get_or_create(name='subsample')
-        (samplePurpose, created) = m.SamplePurpose.objects.using(self.dbAlias).get_or_create(name=row['Sample Type'])
+        (sampleType, created) = SampleType.objects.using(self.dbAlias).get_or_create(name='subsample')
+        (samplePurpose, created) = SamplePurpose.objects.using(self.dbAlias).get_or_create(name=row['Sample Type'])
 
         fd = None
         if row.get('Filter Diameter [mm]'):
@@ -551,7 +553,7 @@ class SubSamplesLoader(STOQS_Loader):
                         ' PLEASE SPECIFY THE VOLUME IN THE SPREADSHEET.')
             vol = 280           # Default volume is 280 ml - this is a required field so display a warning
 
-        sample = m.Sample(  instantpoint=parentSample.instantpoint,
+        sample = Sample(  instantpoint=parentSample.instantpoint,
                             depth=parentSample.depth,
                             geom=parentSample.geom,
                             name=parentSample.name,
@@ -564,7 +566,7 @@ class SubSamplesLoader(STOQS_Loader):
                             samplepurpose=samplePurpose)
         sample.save(using=self.dbAlias)
 
-        samplerelationship = m.SampleRelationship(child=sample, parent=parentSample)
+        samplerelationship = SampleRelationship(child=sample, parent=parentSample)
         samplerelationship.save(using=self.dbAlias)
                   
         parameter_name = row.get('Parameter Name')
@@ -582,17 +584,17 @@ class SubSamplesLoader(STOQS_Loader):
             parameter_name = parameter_name.replace('(', '').replace(')', '')
 
         parameter_units = row.get('Parameter Units')
-        (parameter, created) = m.Parameter.objects.using(self.dbAlias).get_or_create(name=parameter_name, units=parameter_units)
+        (parameter, created) = Parameter.objects.using(self.dbAlias).get_or_create(name=parameter_name, units=parameter_units)
         logger.debug('parameter, created = %s, %s', parameter, created)
         if created and spaceRemoveMsg:
             logger.info(spaceRemoveMsg)
     
         analysisMethod = None
         if row['Analysis Method']:
-            (analysisMethod, created) = m.AnalysisMethod.objects.using(self.dbAlias
+            (analysisMethod, created) = AnalysisMethod.objects.using(self.dbAlias
                     ).get_or_create(name=removeNonAscii(row['Analysis Method']))
 
-        sp = m.SampledParameter(sample=sample, parameter=parameter, 
+        sp = SampledParameter(sample=sample, parameter=parameter, 
                 datavalue=parameter_value, analysismethod=analysisMethod)
         try:
             sp.save(using=self.dbAlias)
@@ -616,7 +618,7 @@ class SubSamplesLoader(STOQS_Loader):
         if row['Filter Pore Size [uM]']:
             fps = float(row['Filter Pore Size [uM]'])
 
-        samples = m.Sample.objects.using(self.dbAlias).filter(
+        samples = Sample.objects.using(self.dbAlias).filter(
                             instantpoint=parentSample.instantpoint,
                             depth=parentSample.depth,
                             geom=parentSample.geom,
@@ -666,14 +668,14 @@ class SubSamplesLoader(STOQS_Loader):
             try:
                 # Try first with %.1f formatted bottle number for Gulper - TODO: Deprecate this!
                 sample_name = '%.1f' % float(r['Bottle Number'])
-                parentSample = m.Sample.objects.using(self.dbAlias).filter( 
+                parentSample = Sample.objects.using(self.dbAlias).filter( 
                         instantpoint__activity__name__icontains=aName, 
                         name=sample_name)[0]
             except IndexError:
                 try:
                     # Try without formatted %.1 for bottle number
                     sample_name = r['Bottle Number']
-                    parentSample = m.Sample.objects.using(self.dbAlias).filter(
+                    parentSample = Sample.objects.using(self.dbAlias).filter(
                             instantpoint__activity__name__icontains=aName, 
                             name=sample_name)[0]
                 except IndexError:
@@ -685,7 +687,7 @@ class SubSamplesLoader(STOQS_Loader):
                 sample_name = r.get('Comment Value')
                 logger.debug('aName=%s, name=%s', aName, sample_name)
                 try:
-                    parentSample = m.Sample.objects.using(self.dbAlias).get(
+                    parentSample = Sample.objects.using(self.dbAlias).get(
                         sampletype__name=PLANKTONPUMP,
                         instantpoint__activity__name__icontains=aName, 
                         name=sample_name)
@@ -699,7 +701,7 @@ class SubSamplesLoader(STOQS_Loader):
                     try:
                         # Convention is one NetTow per cast, given them all a name of '1'
                         sample_name = '1'
-                        parentSample = m.Sample.objects.using(self.dbAlias).select_related(
+                        parentSample = Sample.objects.using(self.dbAlias).select_related(
                                 'instantpoint__activity').filter(
                                 instantpoint__activity__name__icontains=aName + '_NetTow1', )[0]
                     except IndexError as e:
@@ -747,10 +749,10 @@ class SubSamplesLoader(STOQS_Loader):
         table.  The updateActivityParameterStats() method in STOQS_Loader expects a hash of parameters
         that are unique to an activity that is an attribute of self.
         '''
-        for row in m.SampledParameter.objects.using(self.dbAlias).values('sample__instantpoint__activity__pk').distinct():
+        for row in SampledParameter.objects.using(self.dbAlias).values('sample__instantpoint__activity__pk').distinct():
             a_id = row['sample__instantpoint__activity__pk']
             logger.debug('a_id = %d', a_id)
-            self.activity = m.Activity.objects.using(self.dbAlias).get(pk=a_id)
+            self.activity = Activity.objects.using(self.dbAlias).get(pk=a_id)
             self.updateActivityParameterStats(parameterCount, sampledFlag=True)
 
 
