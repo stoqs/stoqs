@@ -224,7 +224,7 @@ class SeabirdLoader(STOQS_Loader):
         parmDict = {}
 
         pr = BaseType()
-        pr.attributes = {'colname': 'PrDM', 'units': m , 'long_name': 'DEPTH', 'standard_name': 'depth'}
+        pr.attributes = {'colname': 'PrDM', 'units': 'm' , 'long_name': 'DEPTH', 'standard_name': 'depth'}
 
         temp = BaseType()
         temp.attributes = {'colname': 'T190C', 'units': 'ITS-90, deg C', 'long_name': 'temperature', 'standard_name': 'sea_water_temperature'}
