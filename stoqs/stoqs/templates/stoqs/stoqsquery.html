@@ -266,9 +266,7 @@
                                                         <form id="terrain3D-choices" class="form-inline">
                                                         </form>
                                                     </div>
-                                                    <!--<h5><a id="nav-instr-3d" class="accordion-toggle" data-toggle="collapse" href="#navInstr3D" title="Show cheat sheet" style="padding:0px;color:black;">
-                                                        Info
-                                                    </a></h5>-->
+
                                                     <div id="navInstr3D" class="accordion-body collapse in">
                                                         <ul>
                                                         <em>Rotate: Left mouse</em><br>
@@ -299,7 +297,9 @@
                                                     <Group def="theScene">
                                                         <Shape id="mp-x3d-track"></Shape>
                                                         <GeoOriginTransform containerField='children'>
-                                                            <Inline id="mp-x3d-terrain1"></Inline>
+                                                            <Group id="mp-x3d-terrain">
+                                                                <Inline id="mp-x3d-terrain1"></Inline>
+                                                            </Group>
                                                         </GeoOriginTransform>
                                                         <Group id="platform-animations"></Group>
                                                         <Group id="platform-models"></Group>
@@ -2797,11 +2797,6 @@
         rebuildFilters(['parameterparameterpng']);
     });
 
-    $('.terrain3D-options').on('click', function (event) {
-        
-        rebuildFilters(['parameterparameterpng']);
-    });
-
 
     simpledepthtime_options = { grid: { 
                                         backgroundColor: "rgb(192, 211, 228)",      // c0d3e4
@@ -3679,9 +3674,17 @@
                 if ( ! $.isEmptyObject(data[key]) ) {
                     // Only a single terrain is supported for now
                     $.each(data[key], function (terrain, item) {
-                        $('#terrain3D-choices').append('<input type="radio" name="terrain-view" style="margin:3px;" value="' + item.name + '"/>' +
-                                                       '<label class="checkbox" style="padding:0px;"><input type="checkbox" style="margin:3px;" class="terrain-choice"/>' + 
-                                                       item.name + '</label><br>');
+                        if ( $.isEmptyObject(item.name) ) {
+                            // Support legacy DBs w/o short name assigned
+                            tname = terrain.substr(terrain.lastIndexOf('/') + 1);
+                        }
+                        else {
+                            tname = item.name
+                        }
+                        $('#terrain3D-choices').append('<input type="radio" name="terrain-view" style="margin:3px;" value="' + tname + '"/>' +
+                                            '<label class="checkbox" style="padding:0px;">' +
+                                            '<input type="checkbox" style="margin:3px;" name="terrain_choice" class="terrain-choice"' + 
+                                            ' value="' + terrain + '"/>' + tname + '</label><br>');
 
                         // Set X3D navigation details specific for this terrain
                         $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', item.speed);
@@ -3708,10 +3711,20 @@
                             $('#x3d-ve').text('Vertical Exaggeration: ' + item.VerticalExaggeration + 'x');
                             $('body').data()['ve'] = item.VerticalExaggeration;
                         }
-                        //return false;       // Do just the first terrain
+                        return false;       // Do just the first terrain
                     });
                     $('#terrain3D-choices').append(' * radio button selects viewpoint for the terrain');
                     $('#spatial-3d-li').show();
+
+                    // Register listeners for terrain selections
+                    $('.terrain-choice').on('click', function (event) {
+                        var terrain_html = '';
+                        $('input:checked[name=terrain_choice]').each(function (index, elem) {
+                            terrain_html += '<Inline url="' + elem.value + '"></Inline>';
+                        });
+                        $('#mp-x3d-terrain').html(terrain_html);
+                    });
+
                 }
             }
             else if (key == 'x3dplaybacks') {
