@@ -567,17 +567,12 @@ class MeasuredParameter(object):
         '''
         Return scatter-like data values as X3D geocoordinates and colors.
         '''
-        showGeoX3DDataFlag = False
-        if 'showgeox3ddata' in self.kwargs:
-            if self.kwargs['showgeox3ddata']:
-                if self.kwargs['showgeox3ddata']:
-                    showGeoX3DDataFlag = True
+        x3dResults = {}
+        # Hack warning: too much coupling with UI code
+        if not self.kwargs.get('showgeox3dmeasurement'):
+            return x3dResults
 
         logger.debug("Building X3D data values with vert_ex = %f", vert_ex)
-
-        x3dResults = {}
-        if not showGeoX3DDataFlag:
-            return x3dResults
 
         if not self.lon and not self.lat and not self.depth and not self.value:
             self.logger.debug('Calling self.loadData()...')
