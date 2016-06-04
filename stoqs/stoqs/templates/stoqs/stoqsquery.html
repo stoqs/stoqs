@@ -222,13 +222,13 @@
                                             -->
                                             <div class="accordion-heading">
                                                 <div class="row-fluid">
-                                                    <h1>
+                                                    <h2>
                                                         <a id="controls-3d" class="accordion-toggle" data-toggle="collapse" href="#collapseContols3D" title="Show/Hide Controls" style="padding:0px;color:black;display:inline;">≡</a>
                                                         <a id="nav-instr-3d" class="accordion-toggle btn" data-toggle="collapse" href="#navInstr3D" title="Show cheat sheet" style="padding:0px;color:black;display:inline;"><i class="icon-info-sign"></i></a>
                                                         <a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button">
                                                             <i class="icon-resize-full" title="Full Screen"></i>
                                                         </a>
-                                                    </h1>
+                                                    </h2>
                                                     </div>
                                             </div>
                                             <div id="collapseContols3D" class="accordion-body in">
@@ -237,7 +237,7 @@
                                                         Data
                                                     </a></h5>
                                                     <div id="data3D" class="accordion-body in">
-                                                        <form class="form-inline">
+                                                        <form class="form-inline" style="margin:0px;">
                                                             <label class="checkbox disabled">
                                                                 <input type="checkbox" id="showgeox3dmeasurement" />
                                                                 <span id="showgeox3dmeasurementtext">Measurements</span>
@@ -262,7 +262,7 @@
                                                     <h5><a id="terrain-3d" class="accordion-toggle" data-toggle="collapse" href="#terrain3D" title="Show Terrain Options" style="padding:0px;color:black;">
                                                         Terrain
                                                     </a></h5>
-                                                    <div id="terrain3D" class="accordion-body in" style="float:none;display:inline-block;overflow-x:auto;white-space:nowrap;" >
+                                                    <div id="terrain3D" class="accordion-body collapse in" style="float:none;display:inline-block;overflow-x:auto;white-space:nowrap;" >
                                                         <form id="terrain3D-choices" class="form-inline" style="margin:0px;">
                                                         </form>
                                                         <div id="x3d-ve"></div><br>
@@ -1249,7 +1249,9 @@
     function downloadsFinished(event) {
         // Trigger the viewpoint parameters setting, probably not needed
         // to be in this event handler, but it's nice feedback.
-        $('input[name=terrain_view][value="' + $('body').data()['terrain_view'] + '"]').prop('checked', true).trigger("click");
+        if ($('body').data()['init']) {
+            $('input[name=terrain_view][value="' + $('body').data()['terrain_view'] + '"]').prop('checked', true).trigger("click");
+        }
     }
 
     // Called with an element that was selectable, should make that element non-selectable.
@@ -3315,6 +3317,7 @@
      */
     function updateSummaryData(init) {
         var init = typeof init !== 'undefined' ? init : false;
+        $('body').data()['init'] = init;
         var qstring=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
         if ($('#getactualcount').is(':checked')) {
             qstring = qstring + '&get_actual_count=1';
@@ -3683,7 +3686,8 @@
                     else {
                         tname = item.name
                     }
-                    tname = tname.replace(/\+/g, '');
+                    // Could use a more rigourous regex for legal id names...
+                    tname = tname.replace(/[\+\.]+/g, '');
                     return tname;
                 }
                 // Save all the terrains for selection in terrain-3d
@@ -3741,13 +3745,24 @@
                     });
 
                     // Activate the selected terrain(s) and view
+                    var terrain_selected = false;
                     $.each(data[key], function (terrain, item) {
                         if ( ! $.isEmptyObject(item.selected) ) {
                             // Last selection will have radio button checked after ondownloadsfinished
                             $('input[name=terrain_choice][value="' + terrain + '"]').prop('checked', true);
                             $('body').data()['terrain_view'] = terrain;
+                            terrain_selected = true;
                         }
                     });
+                    if ( ! terrain_selected ) {
+                        $.each(data[key], function (terrain, item) {
+                            // Select first terrain in the list if selected not specified (legacy support)
+                            $('input[name=terrain_choice][value="' + terrain + '"]').prop('checked', true);
+                            $('body').data()['terrain_view'] = terrain;
+                            return false;
+                        });
+
+                    }
 
                 }
             }
