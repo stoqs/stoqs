@@ -20,6 +20,7 @@ cl = CCELoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                 description = 'Coordinated Canyon Experiment - Measuring turbidity flows in Monterey Submarine Canyon',
                 x3dTerrains = { 
                     'http://stoqs.mbari.org/x3d/MontereyCanyonBeds_1m+5m_1x_src/MontereyCanyonBeds_1m+5m_1x_src_scene.x3d': {
+                        'name': 'MontereyCanyonBeds_1m+5m_1x',
                         'position': '2232.80938 10346.25515 3543.76722',
                         'orientation': '-0.98394 0.16804 -0.06017 1.25033',
                         'centerOfRotation': '0 0 0',
@@ -28,15 +29,18 @@ cl = CCELoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                         'speed': '1.0',
                         'zNear': '100.0',
                         'zFar': '30000.0',
+                        'selected': '1'
                     },
                     'http://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
-                        'position': '-2822317.31255 -4438600.53640 3786150.85474',
-                        'orientation': '0.89575 -0.31076 -0.31791 1.63772',
-                        'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                        'name': 'Monterey25_1x',
+                        'position': '-32985.28634 88026.90417 22334.02600',
+                        'orientation': '-0.99875 -0.04772 0.01482 1.31683',
+                        'centerOfRotation': '-20564.015827789044 -1956.065669754069 14112.954469753739',
                         'VerticalExaggeration': '1',
-                        'speed': '0.1',
-                        ##'zNear': '100.0',
-                        ##'zFar': '30000.0',
+                        'geoOrigin': '36.80, -121.87, -400',
+                        'speed': '1.0',
+                        'zNear': '-1',
+                        'zFar': '-1',
                     },
                  },
                  # Do not check in .grd files to the repository, keep them in the loaders directory
@@ -111,7 +115,7 @@ cl.ccebin_parms = [
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadCCEBIN(stride=5)
+    ##cl.loadCCEBIN(stride=5)
     cl.loadBEDS(stride=5, featureType='trajectory')
 
 elif cl.args.optimal_stride:
