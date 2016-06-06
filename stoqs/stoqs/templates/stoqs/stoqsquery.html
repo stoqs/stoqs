@@ -223,16 +223,32 @@
                                             <div class="accordion-heading">
                                                 <div class="row-fluid">
                                                     <h2>
-                                                        <a id="controls-3d" class="accordion-toggle" data-toggle="collapse" href="#collapseContols3D" title="Show/Hide Controls" style="padding:0px;color:black;display:inline;">≡</a>
-                                                        <a id="nav-instr-3d" class="accordion-toggle btn" data-toggle="collapse" href="#navInstr3D" title="Show cheat sheet" style="padding:0px;color:black;display:inline;"><i class="icon-info-sign"></i></a>
-                                                        <a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button">
-                                                            <i class="icon-resize-full" title="Full Screen"></i>
-                                                        </a>
+                                                        <a id="controls-3d" class="accordion-toggle btn-mini" data-toggle="collapse" href="#collapseContols3D" title="Show/Hide Controls" style="padding:0px;color:black;display:inline;"><i class="icon-th-list"></i></a>
+                                                        <a id="nav-instr-3d" class="accordion-toggle btn-mini" data-toggle="collapse" href="#navInstr3D" title="Show cheat sheet" style="padding:0px;color:black;display:inline;"><i class="icon-info-sign"></i></a>
+                                                        <a id="geo-zoom-width-button" class="btn-mini zoom-width-button" style="padding:0px;"><i class="icon-resize-full" title="Full Screen"></i></a>
                                                     </h2>
+                                                    </div>
+                                                    <div id="navInstr3D" class="accordion-body collapse in" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
+                                                        Select a Measured Parameter for plotting (radio button) to see it in 3D.
+                                                        <br>
+                                                        Check Platforms to animate their positions.
+                                                        <br>
+                                                        Open the Terrain section for terrain visualization options.
+                                                        <br>
+                                                        Navigation hints for <a href="http://doc.x3dom.org/tutorials/animationInteraction/navigation/index.html" target="_new">X3DOM</a>'s Examine mode:
+                                                        <ul>
+                                                        <em>Rotate: Left mouse</em><br>
+                                                        <em>Translate: Ctrl + left mouse</em><br>
+                                                        <em>Zoom: Alt + left mouse</em><br>
+                                                        <em>Recenter rotation: double click</em><br>
+                                                        <em>Navigation speed: +/-</em><br>
+                                                        <em>Reset viewpoint: R</em><br>
+                                                        </ul>
+                                                        Experimental: <a id="geo-rift-button" class="btn btn-mini rift-button">Enter VR</a>
                                                     </div>
                                             </div>
                                             <div id="collapseContols3D" class="accordion-body in">
-                                                <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.10);">
+                                                <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
                                                     <h5><a id="data-3d" class="accordion-toggle" data-toggle="collapse" href="#data3D" title="Data Options" style="padding:0px;color:black;">
                                                         Data
                                                     </a></h5>
@@ -266,18 +282,6 @@
                                                         <form id="terrain3D-choices" class="form-inline" style="margin:0px;">
                                                         </form>
                                                         <div id="x3d-ve"></div><br>
-                                                    </div>
-
-                                                    <div id="navInstr3D" class="accordion-body collapse in">
-                                                        <ul>
-                                                        <em>Rotate: Left mouse</em><br>
-                                                        <em>Translate: Ctrl + left mouse</em><br>
-                                                        <em>Zoom: Alt + left mouse</em><br>
-                                                        <em>Recenter rotation: double click</em><br>
-                                                        <em>Navigation speed: +/-</em><br>
-                                                        <em>Reset viewpoint: R</em><br>
-                                                        </ul>
-                                                        <button id="geo-rift-button">Enter VR</button>
                                                     </div>
                                                 </div> <!-- row-fluid -->
                                             </div> <!-- collapseContols3D -->
@@ -2713,7 +2717,7 @@
             $('#collapseSpatial > div').css( { 'padding-top': '9px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '15px' } );
             $('#geo-3dplot').css( { 'background-color': '' } );
-            $(this).html('<i class="icon-eye-open"></i> Enter VR');
+            $(this).html('Enter VR');
             runtime.exitFrame = function() {}
         }
         else {
@@ -2735,7 +2739,7 @@
             $('#collapseSpatial > div').css( { 'padding-top': '0px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '0px' } );
             $('#geo-3dplot').css( { 'background-color': '#2f2f2f' } );
-            $(this).html('<i class="icon-eye-open"></i> Leave VR');
+            $(this).html('Leave VR');
             enable_vr();
             if(vrHMD) {
                 var canvas = document.getElementsByTagName("canvas")[0];
@@ -3726,7 +3730,6 @@
                         $('#mp-x3d-viewpoint1').attr('orientation', item.orientation);
                         $('#mp-x3d-viewpoint1').attr('zNear', item.zNear);
                         $('#mp-x3d-viewpoint1').attr('zFar', item.zFar);
-
                         if ( ! $.isEmptyObject(item.geoOrigin) ) { 
                             var geoOrigin_def = '<GeoOrigin def="GO" geoSystem=\'"GD" "WE"\' geoCoords="' + item.geoOrigin + '" ';
                             geoOrigin_def += ' rotateYUp="true" elevationScaling="true"></GeoOrigin>' ;
@@ -3753,17 +3756,21 @@
                             $('body').data()['terrain_view'] = terrain;
                             terrain_selected = true;
                         }
+                        else {
+                            $('#terrain-' + tname).attr('render', 'false');
+                        }
                     });
                     if ( ! terrain_selected ) {
                         $.each(data[key], function (terrain, item) {
                             // Select first terrain in the list if selected not specified (legacy support)
                             $('input[name=terrain_choice][value="' + terrain + '"]').prop('checked', true);
                             $('body').data()['terrain_view'] = terrain;
+                            tname = get_tname(terrain, $('body').data()['terrains'][terrain]);
+                            $('#terrain-' + tname).attr('render', 'true');
                             return false;
                         });
 
                     }
-
                 }
             }
             else if (key == 'x3dplaybacks') {
