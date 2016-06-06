@@ -17,21 +17,34 @@ sys.path.insert(0, parent_dir)  # settings.py is one dir up
 from CCE import CCELoader
 
 cl = CCELoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
-                                description = 'Coordinated Canyon Experiment - Measuring turbidity flows in Monterey Submarine Canyon',
-                                x3dTerrains = { 
-                                    'http://stoqs.mbari.org/terrain/MontereyCanyonBeds_1m+5m_1x_src/MontereyCanyonBeds_1m+5m_1x_src_scene.x3d': {
-                                        'position': '2232.80938 10346.25515 3543.76722',
-                                        'orientation': '-0.98394 0.16804 -0.06017 1.25033',
-                                        'centerOfRotation': '0 0 0',
-                                        'VerticalExaggeration': '1',
-                                        'geoOrigin': '36.80, -121.87, -400',
-                                        'speed': '1.0',
-                                        'zNear': '100.0',
-                                        'zFar': '30000.0',
-                                    },
-                                 },
-                                 # Do not check in .grd files to the repository, keep them in the loaders directory
-                                 grdTerrain=os.path.join(parent_dir, 'MontereyCanyonBeds_1m+5m.grd'),
+                description = 'Coordinated Canyon Experiment - Measuring turbidity flows in Monterey Submarine Canyon',
+                x3dTerrains = { 
+                    'http://stoqs.mbari.org/x3d/MontereyCanyonBeds_1m+5m_1x_src/MontereyCanyonBeds_1m+5m_1x_src_scene.x3d': {
+                        'name': 'MontereyCanyonBeds_1m+5m_1x',
+                        'position': '2232.80938 10346.25515 3543.76722',
+                        'orientation': '-0.98394 0.16804 -0.06017 1.25033',
+                        'centerOfRotation': '0 0 0',
+                        'VerticalExaggeration': '1',
+                        'geoOrigin': '36.80, -121.87, -400',
+                        'speed': '1.0',
+                        'zNear': '100.0',
+                        'zFar': '30000.0',
+                        'selected': '1'
+                    },
+                    'http://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
+                        'name': 'Monterey25_1x',
+                        'position': '-32985.28634 88026.90417 22334.02600',
+                        'orientation': '-0.99875 -0.04772 0.01482 1.31683',
+                        'centerOfRotation': '-20564.015827789044 -1956.065669754069 14112.954469753739',
+                        'VerticalExaggeration': '1',
+                        'geoOrigin': '36.80, -121.87, -400',
+                        'speed': '1.0',
+                        'zNear': '-1',
+                        'zFar': '-1',
+                    },
+                 },
+                 # Do not check in .grd files to the repository, keep them in the loaders directory
+                 grdTerrain=os.path.join(parent_dir, 'MontereyCanyonBeds_1m+5m.grd'),
                )
 
 # Base OPeNDAP server
@@ -50,10 +63,10 @@ cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 
 
 # Just the event files for the CCE
 cl.bed_files = [
-                'BED5/MBCCE_BED5_20151027_Event20151201/netcdf/50200024_decimated_trajectory.nc',
-                'BED3/20151001_20160115/netcdf/30200078_trajectory.nc',
-                'BED6/20151001_20160115/netcdf/60100068_trajectory.nc',
-                'BED3/MBCCE_BED3_20160212_Event20170217/netcdf/30300004_trajectory.nc',
+                'BED05/MBCCE_BED05_20151027_Event20151201/netcdf/50200024_decimated_trajectory.nc',
+                'BED03/20151001_20160115/netcdf/30200078_trajectory.nc',
+                'BED06/20151001_20160115/netcdf/60100068_trajectory.nc',
+                'BED03/MBCCE_BED03_20160212_Event20170217/netcdf/30300004_trajectory.nc',
                ]
 cl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03']
 cl.bed_depths = [388, 201, 521, 289.3]
@@ -102,7 +115,7 @@ cl.ccebin_parms = [
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadCCEBIN(stride=5)
+    ##cl.loadCCEBIN(stride=5)
     cl.loadBEDS(stride=5, featureType='trajectory')
 
 elif cl.args.optimal_stride:
@@ -111,7 +124,7 @@ elif cl.args.optimal_stride:
 
 else:
     cl.stride = cl.args.stride
-    ##cl.loadBEDS(featureType='trajectory')
+    cl.loadBEDS(featureType='trajectory')
     cl.loadCCEBIN()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed

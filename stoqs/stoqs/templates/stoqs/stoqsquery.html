@@ -80,7 +80,7 @@
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.icon-large.min.css" rel="stylesheet">
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/custom-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet">
     <link type="text/css" href="{{ STATIC_URL }}jquery/css/jquery.dataTables.css" rel="stylesheet">
-    <link type="text/css" href="{{ STATIC_URL }}x3dom-1.7.0/x3dom.css" rel="stylesheet">
+    <link type="text/css" href="{{ STATIC_URL }}x3dom-1.7.1/x3dom.css" rel="stylesheet">
     <!--<link type="text/css" href="http://www.x3dom.org/x3dom/dist/x3dom.css" rel="stylesheet">
     
 
@@ -210,6 +210,7 @@
                                 <div class="tab-pane" id="geo3d" style="height:100%;">
                                     <div id="geo-3dplot" style="height:500px;">
                                         <div id="geo-3dplot-control" class="row-fluid" style='position:absolute;z-index:1000;'>
+                                        <div id="limit-div-width" class="span6">
                                             <!-- Uncomment and comment out next div for video capture -->
                                             <!--
                                             <div class="span2">
@@ -219,40 +220,75 @@
                                                 <img src="{{STATIC_URL}}images/X3dSpecificationLogo.png"/>
                                             </div>
                                             -->
-                                            <div class="row-fluid">
-                                                <div class="span4">
-                                                    <em>Rotate: Left mouse</em><br>
-                                                    <em>Translate: Ctrl + left mouse</em><br>
-                                                    <em>Zoom: Alt + left mouse</em><br>
-                                                    <em>Recenter rotation: double click</em><br>
-                                                    <em>Navigation speed: +/-</em><br>
-                                                    <div id="x3d-ve"></div><br>
-                                                </div>
-                                                <div class="span2">
-                                                    <p><a id="geo-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom view</a></p>
-                                                    <p><a id="geo-rift-button" class="btn btn-mini rift-button"><i class="icon-eye-open"></i> Enter VR</a></p>
-                                                    <p><a id="geo-x3d-reset-view" class="btn btn-mini" onClick="$('#spatial-3d-x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
-                                                    <form class="form-inline">
-                                                        <label class="checkbox disabled">
-                                                            <input type="checkbox" id="showgeox3ddata" /><span id="showgeox3ddatatext">Data</span>
-                                                        </label>
-                                                        <label class="checkbox disabled">
-                                                            <input type="checkbox" id="showplatforms" />
-                                                            <span id="showplatforms">platforms</span>
-                                                        </label>
-                                                    </form>
-                                                </div>
-                                                <div id="geo3d-colorbar" class="span6"></div>
-                                                <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
-                                                    <div class="span1"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
-                                                    <div class="span4"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
-                                                    <div class="span3"><span id="spatial-3d-x3d-speedup"></span></div>
-                                                    <div class="span6"><span id="spatial-3d-x3d-message"></span></div>
-                                                </div>
+                                            <div class="accordion-heading">
+                                                <div class="row-fluid">
+                                                    <h2>
+                                                        <a id="controls-3d" class="accordion-toggle btn-mini" data-toggle="collapse" href="#collapseContols3D" title="Show/Hide Controls" style="padding:0px;color:black;display:inline;"><i class="icon-th-list"></i></a>
+                                                        <a id="nav-instr-3d" class="accordion-toggle btn-mini" data-toggle="collapse" href="#navInstr3D" title="Show cheat sheet" style="padding:0px;color:black;display:inline;"><i class="icon-info-sign"></i></a>
+                                                        <a id="geo-zoom-width-button" class="btn-mini zoom-width-button" style="padding:0px;"><i class="icon-resize-full" title="Full Screen"></i></a>
+                                                    </h2>
+                                                    </div>
+                                                    <div id="navInstr3D" class="accordion-body collapse in" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
+                                                        Select a Measured Parameter for plotting (radio button) to see it in 3D.
+                                                        <br>
+                                                        Check Platforms to animate their positions.
+                                                        <br>
+                                                        Open the Terrain section for terrain visualization options.
+                                                        <br>
+                                                        Navigation hints for <a href="http://doc.x3dom.org/tutorials/animationInteraction/navigation/index.html" target="_new">X3DOM</a>'s Examine mode:
+                                                        <ul>
+                                                        <em>Rotate: Left mouse</em><br>
+                                                        <em>Translate: Ctrl + left mouse</em><br>
+                                                        <em>Zoom: Alt + left mouse</em><br>
+                                                        <em>Recenter rotation: double click</em><br>
+                                                        <em>Navigation speed: +/-</em><br>
+                                                        <em>Reset viewpoint: R</em><br>
+                                                        </ul>
+                                                        Experimental: <a id="geo-rift-button" class="btn btn-mini rift-button">Enter VR</a>
+                                                    </div>
                                             </div>
-                                        </div>
+                                            <div id="collapseContols3D" class="accordion-body in">
+                                                <div class="row-fluid" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
+                                                    <h5><a id="data-3d" class="accordion-toggle" data-toggle="collapse" href="#data3D" title="Data Options" style="padding:0px;color:black;">
+                                                        Data
+                                                    </a></h5>
+                                                    <div id="data3D" class="accordion-body in">
+                                                        <form class="form-inline" style="margin:0px;">
+                                                            <label class="checkbox disabled">
+                                                                <input type="checkbox" id="showgeox3dmeasurement" />
+                                                                <span id="showgeox3dmeasurementtext">Measurements</span>
+                                                            </label>
+                                                            <label class="checkbox disabled">
+                                                                <input type="checkbox" id="showgeox3dsample" />
+                                                                <span id="showgeox3dsampletext">Samples</span>
+                                                            </label>
+                                                            <label class="checkbox disabled">
+                                                                <input type="checkbox" id="showplatforms" />
+                                                                <span id="showplatformstext">Platforms</span>
+                                                            </label>
+                                                        </form>
+                                                        <div id="geo3d-colorbar"></div>
+                                                        <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
+                                                            <div class="span1"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
+                                                            <div class="span9"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
+                                                            <div class="span2"><span id="spatial-3d-x3d-speedup"></span></div>
+                                                        </div>
+                                                        <div><span id="spatial-3d-x3d-message"></span></div>
+                                                    </div>
+                                                    <h5><a id="terrain-3d" class="accordion-toggle" data-toggle="collapse" href="#terrain3D" title="Show Terrain Options" style="padding:0px;color:black;">
+                                                        Terrain
+                                                    </a></h5>
+                                                    <div id="terrain3D" class="accordion-body collapse in" style="float:none;display:inline-block;overflow-x:auto;white-space:nowrap;" >
+                                                        <form id="terrain3D-choices" class="form-inline" style="margin:0px;">
+                                                        </form>
+                                                        <div id="x3d-ve"></div><br>
+                                                    </div>
+                                                </div> <!-- row-fluid -->
+                                            </div> <!-- collapseContols3D -->
+                                        </div> <!-- limit-div-width -->
+                                        </div> <!-- geo-3dplot-control -->
                                         <div style="height:100%;">
-                                        <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;"> 
+                                        <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)"> 
                                             <Scene>
                                                 <Environment frustumCulling="false"></Environment>
                                                 <NavigationInfo></NavigationInfo>
@@ -265,7 +301,8 @@
                                                     <Group def="theScene">
                                                         <Shape id="mp-x3d-track"></Shape>
                                                         <GeoOriginTransform containerField='children'>
-                                                            <Inline id="mp-x3d-terrain1"></Inline>
+                                                            <Group id="mp-x3d-terrain">
+                                                            </Group>
                                                         </GeoOriginTransform>
                                                         <Group id="platform-animations"></Group>
                                                         <Group id="platform-models"></Group>
@@ -1122,7 +1159,7 @@
     <script type="text/javascript" src="{{STATIC_URL}}permalink/json2.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/purl.js"></script> 
     <script type="text/javascript" src="{{STATIC_URL}}permalink/lz-string.js"></script> 
-    <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.7.0/x3dom-full.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}x3dom-1.7.1/x3dom-full.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}x3dom/js/components/GeoOriginTransform.js"></script>
     <!--<script type="text/javascript" src="http://www.x3dom.org/x3dom/dist/x3dom-full.js"></script>-->
     <script type="text/javascript" src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>
@@ -1210,6 +1247,14 @@
         timedepthplot.lockCrosshair({x: timeAxis[index], y:0});
         if ( ! $.isEmptyObject(timeparameterplot) ) {
             timeparameterplot.lockCrosshair({x: timeAxis[index], y:0});
+        }
+    }
+
+    function downloadsFinished(event) {
+        // Trigger the viewpoint parameters setting, probably not needed
+        // to be in this event handler, but it's nice feedback.
+        if ($('body').data()['init']) {
+            $('input[name=terrain_view][value="' + $('body').data()['terrain_view'] + '"]').prop('checked', true).trigger("click");
         }
     }
 
@@ -2015,7 +2060,7 @@
         rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
     });
 
-    $('#showgeox3ddata').on('click', function (event) {
+    $('#showgeox3dmeasurement').on('click', function (event) {
         // Don't need to get everything from queryData, only the response with the X3D data
         rebuildFilters(['measuredparameterx3d']);
     });
@@ -2030,6 +2075,7 @@
             $('body').data()['platformAnimation'] = [];
         }
     });
+
 
     $('#showsensortracks').on('click', function (event) {
         update_sensortrackskml();
@@ -2148,7 +2194,7 @@
             $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
             $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
             $('#showsensortracks').removeAttr('disabled');
-            $('#showgeox3ddatatext').text($('#temporalparameterplotinfo').data()['info']);
+            $('#showgeox3dmeasurementtext').text($('#temporalparameterplotinfo').data()['info']);
             rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
         }
         else {
@@ -2159,7 +2205,7 @@
             $('#temporalparameterplotinfo').text('');
             $('#showsensortrackstext').text('');
             $('#showsensortracks').attr('disabled', true);
-            $('#showgeox3ddatatext').text('');
+            $('#showgeox3dmeasurementtext').text('');
             $('#sectioncolorbar > img').removeAttr('src');
             $('#temporalparameterstrideinfo').text('');
             rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'sampledurationsdepthtime']);
@@ -2304,7 +2350,7 @@
                                         'position': ''
                                       } );
             }
-            $(this).html('<i class="icon-resize-full"></i> Zoom view');
+            $(this).html('<i class="icon-resize-full" title="Full Screen"></i>');
         } else {
             if ($('.stoqs-zoom-width').hasClass('span6')) {
                 $('.stoqs-zoom-width').removeClass('span6');
@@ -2337,7 +2383,7 @@
                                         'position': 'fixed'
                                       });
             }
-            $(this).html('<i class="icon-remove-sign"></i> Unzoom view');
+            $(this).html('<i class="icon-resize-small" title="Not Full Screen"></i>');
         }
         widthZoomed = ! widthZoomed;
     });
@@ -2671,7 +2717,7 @@
             $('#collapseSpatial > div').css( { 'padding-top': '9px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '15px' } );
             $('#geo-3dplot').css( { 'background-color': '' } );
-            $(this).html('<i class="icon-eye-open"></i> Enter VR');
+            $(this).html('Enter VR');
             runtime.exitFrame = function() {}
         }
         else {
@@ -2693,7 +2739,7 @@
             $('#collapseSpatial > div').css( { 'padding-top': '0px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '0px' } );
             $('#geo-3dplot').css( { 'background-color': '#2f2f2f' } );
-            $(this).html('<i class="icon-eye-open"></i> Leave VR');
+            $(this).html('Leave VR');
             enable_vr();
             if(vrHMD) {
                 var canvas = document.getElementsByTagName("canvas")[0];
@@ -3275,6 +3321,7 @@
      */
     function updateSummaryData(init) {
         var init = typeof init !== 'undefined' ? init : false;
+        $('body').data()['init'] = init;
         var qstring=($.param($.map(params, function(v, k) { return ($.type(v) === "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })));
         if ($('#getactualcount').is(':checked')) {
             qstring = qstring + '&get_actual_count=1';
@@ -3315,9 +3362,9 @@
             }
         }
 
-        if ($('#showgeox3ddata').is(':checked') || $('#showplatforms').is(':checked')) {
-            if ($('#showgeox3ddata').is(':checked')) {
-                qstring += '&showgeox3ddata=1';
+        if ($('#showgeox3dmeasurement').is(':checked') || $('#showplatforms').is(':checked')) {
+            if ($('#showgeox3dmeasurement').is(':checked')) {
+                qstring += '&showgeox3dmeasurement=1';
             }
             if ($('#showplatforms').is(':checked')) {
                 qstring += '&showplatforms=1';
@@ -3635,18 +3682,54 @@
                 }
             }
             else if (key == 'x3dterrains') {
+                function get_tname(terrain, item) {
+                    if ( $.isEmptyObject(item.name) ) {
+                        // Support legacy DBs w/o short name assigned
+                        tname = terrain.substr(terrain.lastIndexOf('/') + 1);
+                    }
+                    else {
+                        tname = item.name
+                    }
+                    // Could use a more rigourous regex for legal id names...
+                    tname = tname.replace(/[\+\.]+/g, '');
+                    return tname;
+                }
+                // Save all the terrains for selection in terrain-3d
+                $('body').data()['terrains'] = data['x3dterrains'];
                 if ( ! $.isEmptyObject(data[key]) ) {
                     // Only a single terrain is supported for now
                     $.each(data[key], function (terrain, item) {
+                        var tname = get_tname(terrain, item);
+                        $('#terrain3D-choices').append('<input type="radio" name="terrain_view" class="terrain-view" style="margin:3px;" value="' + terrain + '"/>' +
+                                            '<label class="checkbox" style="padding:0px;">' +
+                                            '<input type="checkbox" style="margin:3px;" name="terrain_choice" class="terrain-choice"' + 
+                                            ' value="' + terrain + '"/>' + tname + '</label><br>');
+                        $('#mp-x3d-terrain').append('<Inline id="terrain-' + tname + '"></Inline>');
+                        $('#terrain-' + tname).attr('url', terrain);
+                    });
+                    $('#terrain3D-choices').append(' * radio button selects viewpoint for the terrain');
+                    $('#spatial-3d-li').show();
+
+                    // Register listeners for terrain selections
+                    $('.terrain-choice').on('click', function (event) {
+                        $('input[name=terrain_choice]').each(function (index, elem) {
+                            tname = get_tname(elem.value, $('body').data()['terrains'][elem.value]);
+                            if (elem.checked) {
+                                $('#terrain-' + tname).attr('render', 'true');
+                            }
+                            else {
+                                $('#terrain-' + tname).attr('render', 'false');
+                            }
+                        });
+                    });
+                    $('input[name="terrain_view"]').on('click', function (event) {
+                        var item = $('body').data()['terrains'][event.delegateTarget.value];
                         $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', item.speed);
                         $('#mp-x3d-viewpoint1').attr('centerOfRotation', item.centerOfRotation);
                         $('#mp-x3d-viewpoint1').attr('position', item.position);
                         $('#mp-x3d-viewpoint1').attr('orientation', item.orientation);
                         $('#mp-x3d-viewpoint1').attr('zNear', item.zNear);
                         $('#mp-x3d-viewpoint1').attr('zFar', item.zFar);
-
-                        $('#mp-x3d-terrain1').attr('url', terrain);
-
                         if ( ! $.isEmptyObject(item.geoOrigin) ) { 
                             var geoOrigin_def = '<GeoOrigin def="GO" geoSystem=\'"GD" "WE"\' geoCoords="' + item.geoOrigin + '" ';
                             geoOrigin_def += ' rotateYUp="true" elevationScaling="true"></GeoOrigin>' ;
@@ -3662,9 +3745,32 @@
                             $('#x3d-ve').text('Vertical Exaggeration: ' + item.VerticalExaggeration + 'x');
                             $('body').data()['ve'] = item.VerticalExaggeration;
                         }
-                        return false;       // Do just the first terrain
                     });
-                    $('#spatial-3d-li').show();
+
+                    // Activate the selected terrain(s) and view
+                    var terrain_selected = false;
+                    $.each(data[key], function (terrain, item) {
+                        if ( ! $.isEmptyObject(item.selected) ) {
+                            // Last selection will have radio button checked after ondownloadsfinished
+                            $('input[name=terrain_choice][value="' + terrain + '"]').prop('checked', true);
+                            $('body').data()['terrain_view'] = terrain;
+                            terrain_selected = true;
+                        }
+                        else {
+                            $('#terrain-' + tname).attr('render', 'false');
+                        }
+                    });
+                    if ( ! terrain_selected ) {
+                        $.each(data[key], function (terrain, item) {
+                            // Select first terrain in the list if selected not specified (legacy support)
+                            $('input[name=terrain_choice][value="' + terrain + '"]').prop('checked', true);
+                            $('body').data()['terrain_view'] = terrain;
+                            tname = get_tname(terrain, $('body').data()['terrains'][terrain]);
+                            $('#terrain-' + tname).attr('render', 'true');
+                            return false;
+                        });
+
+                    }
                 }
             }
             else if (key == 'x3dplaybacks') {
@@ -4819,7 +4925,7 @@
 
         // Tootips that are disabled after first use - don't want to annoy users too much
         //$('#showsensortracks').parent().tooltip({title: 'Select a Measured Parameter to enable'});
-        //$('#showgeox3ddata').parent().tooltip({title: 'Select a Measured Parameter to enable'});
+        //$('#showgeox3dmeasurement').parent().tooltip({title: 'Select a Measured Parameter to enable'});
 
         $('#permalink').on('click', function(ev){
             ev.preventDefault();

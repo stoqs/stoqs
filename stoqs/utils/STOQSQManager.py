@@ -24,7 +24,8 @@ from stoqs import models
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
 from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP
 from utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
-from utils import getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, getShow_All_Parameter_Values, getShow_Parameter_Platform_Data, getShow_Geo_X3D_Data
+from utils import (getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, 
+                   getShow_All_Parameter_Values, getShow_Parameter_Platform_Data)
 from utils import simplify_points, getParameterGroups
 from geo import GPS
 from MPQuery import MPQuery
@@ -1367,7 +1368,7 @@ class STOQSQManager(object):
         '''Returns dictionary of X3D elements for rendering by X3DOM
         '''
         x3dDict = None
-        if getShow_Geo_X3D_Data(self.kwargs):
+        if self.kwargs.get('showgeox3dmeasurement'):
             if 'parameterplot' in self.kwargs:
                 if self.kwargs['parameterplot'][0]:
                     parameterID = self.kwargs['parameterplot'][0]

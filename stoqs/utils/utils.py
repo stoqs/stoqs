@@ -103,18 +103,6 @@ def getShow_Parameter_Platform_Data(kwargs):
 
     return show_parameter_platform_data_state
 
-def getShow_Geo_X3D_Data(kwargs):
-    '''
-    return state of Show data checkbox from query UI
-    '''
-    show_geo_x3d_data_state = False
-    logger.debug('kwargs = %s', kwargs)
-    if kwargs.has_key('showgeox3ddata'):
-        if kwargs['showgeox3ddata']:
-            show_geo_x3d_data_state = True
-
-    return show_geo_x3d_data_state
-
 #
 # General utility methods called by STOQSQueryManager, MPQuery, etc.
 #
