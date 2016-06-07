@@ -379,7 +379,7 @@ class STOQSQManager(object):
         if groupName:
             p_qs = p_qs.filter(parametergroupparameter__parametergroup__name=groupName)
 
-        p_qs = p_qs.values('name','standard_name','id','units').distinct().order_by('name')
+        p_qs = p_qs.values('name','standard_name','id','units','description').distinct().order_by('name')
         # Odd: Trying to print the query gives "Can't do subqueries with queries on different DBs."
         ##logger.debug('----------- p_qs.query (%s) = %s', groupName, str(p_qs.query))
 
@@ -389,10 +389,27 @@ class STOQSQManager(object):
             standard_name = row['standard_name']
             id = row['id']
             units = row['units']
+
+            # Get additional Parameter information from NetCDF variable attributes
+            long_name_q = models.ParameterResource.objects.using(self.dbname).filter(
+                                parameter__id=id, resource__name='long_name').values(
+                                'resource__value')
+            long_name = ''
+            if long_name_q:
+                long_name = long_name_q[0].get('resource__value', '')
+
+            comment_q = models.ParameterResource.objects.using(self.dbname).filter(
+                                parameter__id=id, resource__name='comment').values(
+                                'resource__value')
+            comment = ''
+            if comment_q:
+                comment = comment_q[0].get('resource__value', '')
+
             if not standard_name:
                 standard_name = ''
             if name is not None:
-                results.append((name,standard_name,id,units))
+                results.append((name, standard_name, id, units, long_name, 
+                                comment, row.get('description')))
 
         return results
 
