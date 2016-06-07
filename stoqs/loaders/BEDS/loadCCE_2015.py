@@ -71,13 +71,16 @@ cl.bed_files = [
                 'BED05/MBCCE_BED05_20151027_Event20160115/netcdf/50200055_trajectory.nc',
                 'BED05/MBCCE_BED05_20151027_Event20160115/netcdf/50200056_trajectory.nc',
                 'BED05/MBCCE_BED05_20151027_Event20160115/netcdf/50200057_trajectory.nc',
+                'BED03/MBCCE_BED03_20160212_Event20160306/netcdf/30300016_trajectory.nc',
                ]
-cl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05',]
-cl.bed_depths = [388, 201, 521, 289.3, 413, 420, 430, 433]
+cl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05',
+                    'BED03']
+cl.bed_depths = [388, 201, 521, 289.3, 413, 420, 430, 433, 308]
 cl.bed_framegrabs = [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3874/00_21_23_28.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3870/00_15_38_23.html',
+                '',
                 '',
                 '',
                 '',
@@ -127,13 +130,13 @@ if cl.args.test:
     cl.loadBEDS(stride=5, featureType='trajectory')
 
 elif cl.args.optimal_stride:
+    ##cl.loadCCEBIN(stride=1)
     cl.loadBEDS(stride=1, featureType='trajectory')
-    cl.loadCCEBIN(stride=1)
 
 else:
     cl.stride = cl.args.stride
+    ##cl.loadCCEBIN()
     cl.loadBEDS(featureType='trajectory')
-    cl.loadCCEBIN()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
