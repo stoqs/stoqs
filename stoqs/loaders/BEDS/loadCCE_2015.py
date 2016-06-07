@@ -53,7 +53,7 @@ cl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
 # Copied from ProjectLibrary to BEDs SVN working dir for netCDF conversion, and then copied to elvis.
 # See BEDs/BEDs/Visualization/py/makeBEDNetCDF_CCE.sh
 
-cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P', 'P_ADJUSTED', 'DEPTH']
+cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P', 'P_ADJUSTED', 'P_RATE']
 
 # Several BED files: 30200078 to 3020080
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
@@ -66,14 +66,22 @@ cl.bed_files = [
                 'BED05/MBCCE_BED05_20151027_Event20151201/netcdf/50200024_decimated_trajectory.nc',
                 'BED03/20151001_20160115/netcdf/30200078_trajectory.nc',
                 'BED06/20151001_20160115/netcdf/60100068_trajectory.nc',
-                'BED03/MBCCE_BED03_20160212_Event20170217/netcdf/30300004_trajectory.nc',
+                'BED03/MBCCE_BED03_20160212_Event20160217/netcdf/30300004_trajectory.nc',
+                'BED05/MBCCE_BED05_20151027_Event20160115/netcdf/50200054_trajectory.nc',
+                'BED05/MBCCE_BED05_20151027_Event20160115/netcdf/50200055_trajectory.nc',
+                'BED05/MBCCE_BED05_20151027_Event20160115/netcdf/50200056_trajectory.nc',
+                'BED05/MBCCE_BED05_20151027_Event20160115/netcdf/50200057_trajectory.nc',
                ]
-cl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03']
-cl.bed_depths = [388, 201, 521, 289.3]
+cl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05',]
+cl.bed_depths = [388, 201, 521, 289.3, 413, 420, 430, 433]
 cl.bed_framegrabs = [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3874/00_21_23_28.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3870/00_15_38_23.html',
+                '',
+                '',
+                '',
+                '',
                 '',
                     ]
 
