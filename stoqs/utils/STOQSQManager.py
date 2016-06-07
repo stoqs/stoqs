@@ -405,11 +405,14 @@ class STOQSQManager(object):
             if comment_q:
                 comment = comment_q[0].get('resource__value', '')
 
+            description = row.get('description', '')
+            if not description:
+                description = ''
+
             if not standard_name:
                 standard_name = ''
             if name is not None:
-                results.append((name, standard_name, id, units, long_name, 
-                                comment, row.get('description')))
+                results.append((name, standard_name, id, units, long_name, comment, description))
 
         return results
 
