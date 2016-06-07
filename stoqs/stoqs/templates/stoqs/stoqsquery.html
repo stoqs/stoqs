@@ -269,8 +269,8 @@
                                                         </form>
                                                         <div id="geo3d-colorbar"></div>
                                                         <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
-                                                            <div class="span1"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
-                                                            <div class="span9"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
+                                                            <div class="span1" style="padding:0px;margin-left:5px;"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
+                                                            <div class="span9" style="margin:0px;margin-top:3px;"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
                                                             <div class="span2"><span id="spatial-3d-x3d-speedup"></span></div>
                                                         </div>
                                                         <div><span id="spatial-3d-x3d-message"></span></div>
@@ -2900,14 +2900,6 @@
     }
 
     $("#time-depth-flot").bind("plothover", function (event, pos, item) {
-        if (pos.x && pos.y) {
-            $("#x").text(pos.x.toFixed(2));
-            $("#y").text(pos.y.toFixed(2));
-        }
-        else {
-            return;
-        }
-
         if (item) {
             if (typeof previousPoint != 'undefined') {
                 if (previousPoint != item.dataIndex) {
@@ -2929,7 +2921,6 @@
     });
 
     $("#time-parameter-flot").bind("plothover", function (event, pos, item) {
-
         if (item) {
             if (typeof previousPoint != 'undefined') {
                 if (previousPoint != item.dataIndex) {
@@ -4052,25 +4043,26 @@
                 if ( $('input:radio[name=parameters_plot]').is(':checked') ) {
                     if ( $('input:radio[name=parameters_plot]:checked').val() ) {
                         if (data['parameterplatformdatavaluepng'][0]) {
+                            var flotdata;
+                            var options = simpledepthtime_options_zoom;
                             if ($('.btn-primary', $('#temporal-anchor').parent()).length) {
                                 // Zoomed
-                                var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
                                     $('body').data()['start-ems'], $('body').data()['start-depth'], $('body').data()['end-ems'], $('body').data()['end-depth'] ] ] ];
-                                var options = $.extend(true, {}, simpledepthtime_options_zoom, {
+                                options = $.extend(true, {}, options, {
                                     series: { images: { show: true } }
                                 });
                             }
                             else {
                                 // Not Zooomed
-                                var flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
+                                flotdata = [ [ ["{{MEDIA_URL}}sections/" + data['parameterplatformdatavaluepng'][0], 
                                     timedepthplot.getAxes().xaxis.min, timedepthplot.getAxes().yaxis.min, timedepthplot.getAxes().xaxis.max, timedepthplot.getAxes().yaxis.max] ] ];
-                                var options = $.extend(true, {}, simpledepthtime_options_zoom, {
+                                options = $.extend(true, {}, options, {
                                     series: { images: { show: true } },
                                     xaxis: { min: timedepthplot.getAxes().xaxis.min, max: timedepthplot.getAxes().xaxis.max },
                                     yaxis: { min: timedepthplot.getAxes().yaxis.min, max: timedepthplot.getAxes().yaxis.max } 
                                 });
                             }
-
                             if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
                                 options = $.extend(true, {}, options, { crosshair: { mode: "x" } });
                             }
