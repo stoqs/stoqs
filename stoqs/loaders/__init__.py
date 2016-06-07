@@ -608,7 +608,8 @@ class STOQS_Loader(object):
                     
             except KeyError as e:
                 # Just skip derived parameters that may have been added for a sub-classed Loader
-                self.logger.warn('include_name %s is not in %s; assuming it is derived and skipping', v, self.url)
+                if v != 'altitude':
+                    self.logger.warn('include_name %s is not in %s; assuming it is derived and skipping', v, self.url)
             except AttributeError as e:
                 # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
                 self.logger.warn('%s for include_name %s in %s. Skipping', e, v, self.url)
