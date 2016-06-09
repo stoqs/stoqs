@@ -116,7 +116,7 @@
 
     <div class="navbar navbar-fixed-top">
       <div class="navbar-inner" style="height:34px;">
-        <div class="container">
+        <div class="container" style="margin-left:20px;">
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
@@ -298,8 +298,7 @@
                                                 </GeoViewpoint>
                                                 <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
                                                 <Group id='spatial-3d-root' render='true'>
-                                                    <Group def="theScene">
-                                                        <Shape id="mp-x3d-track"></Shape>
+                                                    <Group id='spatial-3d-scene' def="spatial-3d-scene">
                                                         <GeoOriginTransform containerField='children'>
                                                             <Group id="mp-x3d-terrain">
                                                             </Group>
@@ -319,7 +318,7 @@
                         <geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>
                         <background USE='bgnd' containerField='background'></background>
                         <!--group USE='left' containerField="excludeNodes"></group-->
-                        <group USE='theScene' containerField="scene"></group>
+                        <group USE='spatial-3d-scene' containerField="scene"></group>
                     </renderedTexture>
 
                     <composedShader>
@@ -392,7 +391,7 @@
                         <!--<viewpoint USE='vp' containerField='viewpoint'></viewpoint>-->
                         <geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>
                         <background USE='bgnd' containerField='background'></background>
-                        <group USE='theScene' containerField="scene"></group>
+                        <group USE='spatial-3d-scene' containerField="scene"></group>
                     </renderedTexture>
                     <composedShader>
                         <field name='tex' type='SFInt32' value='0'></field>
@@ -532,7 +531,7 @@
                                         <div style="height:100%;">
                                         <!-- This X3D is hard coded with axis size of 10000 - scaling of data on the backend must use this same value -->
                                         <X3D id='pp_x3d' style="width:100%;height:100%;margin:0px auto;display:block;border:none;"> 
-                                            <scene>
+                                            <scene id='pp-3d-scene'>
                                                 <Viewpoint id='x3d-viewpoint' position="-4907.13027 2788.82661 19473.28714" orientation="0.23484 -0.97195 0.01297 0.42414" centerofrotation='5000 5000 5000'></viewpoint>
 
                                                 <Group DEF='Axis'>
@@ -655,8 +654,6 @@
                                                         </Shape>
                                                     </Transform>
                                                 </Transform>
-                                                <Shape id="pp-3d-pointset">
-                                                </Shape>
                                             </scene>
                                         </X3D>
                                         </div>
@@ -4169,6 +4166,10 @@
             else if (key == 'parameterparameterx3d') {
                 if (data[key]) {
                     if (data[key]['points']) {
+                        if ( ! $('#pp-3d-pointset').length ) {
+                            // Add Shape here to reduce X3DOM error/warnings of missing geometry in shape node
+                            $('#pp-3d-scene').append('<Shape id="pp-3d-pointset"></Shape>');
+                        }
                         $('#pp-3d-pointset').html(['<pointset>',
                                                    '   <color color="' + data[key]['colors'] + '"></color>',
                                                    '   <coordinate point="' + data[key]['points'] + '"></coordinate>',
@@ -4207,12 +4208,16 @@
                 if (data[key]) {
                     if (data[key]['points']) {
                         if ( ! $.isEmptyObject(data.measuredparameterx3d.points) ) {
+                            if ( ! $('#mp-x3d-track').length ) {
+                                // Add Shape here to reduce X3DOM error/warnings of missing geometry in shape node
+                                $('#spatial-3d-scene').append('<Shape id="mp-x3d-track"></Shape>');
+                            }
                             $('#mp-x3d-track').html([
                                 '<Appearance><LineProperties linewidthScaleFactor="5"></LineProperties></Appearance>',
                                 '<indexedlineset coordIndex="' + data.measuredparameterx3d.index + '">',
                                     '<color color="' + data.measuredparameterx3d.colors + '"></color>',
                                     '<geocoordinate point="' + data.measuredparameterx3d.points  + '">' + $('body').data()['geoorigin_use'] + '</geocoordinate>',
-                                '</indexedlineset>'
+                                '</indexedlineset>',
                             ].join(''));
                         }
                         $('#geo3d-colorbar').html('<img src="{{MEDIA_URL}}sections/' + data.measuredparameterx3d.colorbar + '" />');
