@@ -852,8 +852,13 @@ class PlatformAnimation(object):
         platforms_not_shown = (set(p.name for p in platforms) -
                                set(p.name for p in assembled_platforms))
 
+        # Create equal interval times that fill in gaps in assembled_times, setting time step from earliest_platform
+        equal_times = np.arange(int((time.mktime(min_start_time.timetuple()) + min_start_time.microsecond / 1.e6) * 1000.0),
+                                int((time.mktime(max_end_time.timetuple()) + max_end_time.microsecond / 1.e6) * 1000.0),
+                                self.time_by_plat[earliest_platform.name][2] - self.time_by_plat[earliest_platform.name][1])
+
         return self.x3d_info(x3d=x3d_dict, all_x3d=all_x3d, platforms=assembled_platforms,
-                             times=sorted(assembled_times), limits=(0, len(assembled_times)),
+                             times=equal_times, limits=(0, len(equal_times)),
                              platforms_not_shown=platforms_not_shown)
 
     def _pitch_with_ve(self, angle, ve):
