@@ -225,7 +225,7 @@
                                                     <h2>
                                                         <a id="controls-3d" class="accordion-toggle btn-mini" data-toggle="collapse" href="#collapseContols3D" title="Show/Hide Controls" style="padding:0px;color:black;display:inline;"><i class="icon-th-list"></i></a>
                                                         <a id="nav-instr-3d" class="accordion-toggle btn-mini" data-toggle="collapse" href="#navInstr3D" title="Show cheat sheet" style="padding:0px;color:black;display:inline;"><i class="icon-info-sign"></i></a>
-                                                        <a id="geo-zoom-width-button" class="btn-mini zoom-width-button" style="padding:0px;"><i class="icon-resize-full" title="Full Screen"></i></a>
+                                                        <a id="geo-zoom-lc-button" class="btn-mini zoom-lc-button" style="padding:0px;"><i class="icon-resize-full" title="Full Screen"></i></a>
                                                     </h2>
                                                     </div>
                                                     <div id="navInstr3D" class="accordion-body collapse in" style="margin:0px;background-color:rgba(128, 128, 128, 0.20);">
@@ -521,7 +521,7 @@
                                                 <em> Rotate: Left mouse<br>Translate: Ctrl + left mouse<br>Zoom: Alt + left mouse </em>
                                             </div>
                                             <div class="span2">
-                                                <p><a id="pp-zoom-width-button" class="btn btn-mini zoom-width-button"><i class="icon-resize-full"></i> Zoom view</a></p>
+                                                <p><a id="pp-zoom-lc-button" class="btn btn-mini zoom-lc-button"><i class="icon-resize-full"></i> Zoom view</a></p>
                                                 <p><a id="pp_x3d-reset-view" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                             </div>
                                             <div class="span7">
@@ -825,7 +825,10 @@
                             <div class="tab-content">
                                 <div class="tab-pane active" id="temporal-depth">
                                     <div class="row-fluid">
-                                        <div class="span6"><em id="time-depth-instr">Click and drag to zoom</em></div>
+                                        <div class="span6">
+                                            <em id="time-depth-instr">Click and drag to zoom</em>
+                                            <a id="td-zoom-rc-button" class="btn-mini zoom-rc-button"><i class="icon-resize-full" title="Full Screen"></i></a>
+                                        </div>
                                         <div id="temporalparameterstrideinfo" class="span6" style="text-align:right;"></div>
                                     </div>
                                     <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
@@ -845,6 +848,7 @@
                                     <div class="row-fluid">
                                         <div class="span6">
                                             <em id="time-parameter-instr">Click and drag to zoom</em>
+                                            <a id="tp-zoom-rc-button" class="btn-mini zoom-rc-button"><i class="icon-resize-full" title="Full Screen"></i></a>
                                         </div>
                                         <div id="stride-info" class="span6"></div>
                                     </div>
@@ -1167,7 +1171,8 @@
     var mapQuery='{{site_uri}}{% url 'stoqs:stoqs-query-map' dbAlias=request.META.dbAlias %}';
     var params={}
     var initData;
-    var widthZoomed = false;
+    var lcZoomed = false;
+    var rcZoomed = false;
     var rifted = false;
     var request=''
     var map = null; 
@@ -2314,8 +2319,8 @@
     });
     
     
-    $(".zoom-width-button").click(function(element) {
-        if (widthZoomed) {
+    $(".zoom-lc-button").click(function(element) {
+        if (lcZoomed) {
             if ($('.stoqs-zoom-width').hasClass('span12')) {
                 $('.stoqs-zoom-width').removeClass('span12');
             }
@@ -2329,7 +2334,7 @@
             $('#sp-data-access-group').show();
             $('#mp-data-access-group').show();
             $('#right-column').show();
-            if (this.id == 'pp-zoom-width-button') {
+            if (this.id == 'pp-zoom-lc-button') {
                 $('#spatial-group').children().show();
                 $('#parameter-parameter-anchor').parent().show();
                 $('#parameterParameterTabs').show();
@@ -2338,7 +2343,7 @@
                                                         'position': ''
                                                       } );
             }
-            if (this.id == 'geo-zoom-width-button') {
+            if (this.id == 'geo-zoom-lc-button') {
                 $('#parameter-parameter-group').children().show();
                 $('#spatial-anchor').parent().show();
                 $('#spatialTabs').show();
@@ -2362,7 +2367,7 @@
             $('#sp-data-access-group').hide();
             $('#mp-data-access-group').hide();
             $('#right-column').hide();
-            if (this.id == 'pp-zoom-width-button') {
+            if (this.id == 'pp-zoom-lc-button') {
                 $('#spatial-group').children().hide();
                 $('#parameter-parameter-anchor').parent().hide();
                 $('#parameterParameterTabs').hide();
@@ -2371,7 +2376,7 @@
                                                         'position': 'fixed'
                                                       });
             }
-            if (this.id == 'geo-zoom-width-button') {
+            if (this.id == 'geo-zoom-lc-button') {
                 $('#parameter-parameter-group').children().hide();
                 $('#spatial-anchor').parent().hide();
                 $('#spatialTabs').hide();
@@ -2382,7 +2387,46 @@
             }
             $(this).html('<i class="icon-resize-small" title="Not Full Screen"></i>');
         }
-        widthZoomed = ! widthZoomed;
+        lcZoomed = ! lcZoomed;
+    });
+
+    $(".zoom-rc-button").click(function(element) {
+        if (rcZoomed) {
+            if ($('.stoqs-zoom-width').hasClass('span12')) {
+                $('.stoqs-zoom-width').removeClass('span12');
+            }
+            if (! $('.stoqs-zoom-width').hasClass('span6')) {
+                $('.stoqs-zoom-width').addClass('span6');
+            }
+            $('#left-column').show()
+            $('#accordion2').css( { 'margin-right': '' } );
+            $('#right-column').css( { 'margin-left': '' } );
+            if (this.id == 'td-zoom-rc-button') {
+                $('#time-depth-plot').css( { 'height': '400px' } );
+            }
+            if (this.id == 'tp-zoom-rc-button') {
+                $('#time-parameter-plot').css( { 'height': '400px' } );
+            }
+            $(this).html('<i class="icon-resize-full" title="Full Screen"></i>');
+        } else {
+            if ($('.stoqs-zoom-width').hasClass('span6')) {
+                $('.stoqs-zoom-width').removeClass('span6');
+            }
+            if (! $('.stoqs-zoom-width').hasClass('span12')) {
+                $('.stoqs-zoom-width').addClass('span12');
+            }
+            $('#left-column').hide()
+            $('#accordion2').css( { 'margin-right': '18px' } );
+            $('#right-column').css( { 'margin-left': '0px' } );
+            if (this.id == 'td-zoom-rc-button') {
+                $('#time-depth-plot').css( { 'height': '1000px' } );
+            }
+            if (this.id == 'tp-zoom-rc-button') {
+                $('#time-parameter-plot').css( { 'height': '1000px' } );
+            }
+            $(this).html('<i class="icon-resize-small" title="Not Full Screen"></i>');
+        }
+        rcZoomed = ! rcZoomed;
     });
 
     function enable_vr() {
