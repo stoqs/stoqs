@@ -3485,7 +3485,9 @@
                         platformActivitiesHtml += '<tr id="' + activity +'">' +
                                 '<td>' + activity + '</td>';
                         $.each(plots, function (type, url) {
-                            platformActivitiesHtml += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
+                            if ( ! url == '' ) {
+                                platformActivitiesHtml += '<td><a target="_blank" href="' + url + '">' + type + '</a></td>';
+                            }
                         });
                         platformActivitiesHtml += '</tr>';
                     }
