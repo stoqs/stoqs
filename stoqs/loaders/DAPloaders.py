@@ -1864,6 +1864,9 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
         else:
             for v in loader.include_names:
                 loader.auxCoords[v] = {'time': 'esecs', 'latitude': 'Latitude', 'longitude': 'Longitude', 'depth': 'NominalDepth'}
+    elif url.find('CCE_BIN') != -1:
+        # CCE_BIN file variables have coordinate attributes, no need to override
+        loader.auxCoords = []
     else:
         # Auxillary coordinates are the same for all include_names for _TS and _M files
         for v in loader.include_names:
