@@ -89,9 +89,9 @@ gmake && gmake install
 cd ..
 
 echo Build and install gdal
-wget -q -N http://download.osgeo.org/gdal/2.0.0/gdal-2.0.0.tar.gz        
-tar xzf gdal-2.0.0.tar.gz
-cd gdal-2.0.0
+wget -q -N http://download.osgeo.org/gdal/2.1.0/gdal-2.1.0.tar.gz        
+tar xzf gdal-2.1.0.tar.gz
+cd gdal-2.1.0
 export PATH=$(pwd):$PATH
 ./configure --with-python
 gmake && gmake install
