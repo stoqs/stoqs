@@ -570,6 +570,9 @@ class MPQuery(object):
                     qparams['sample__depth__gte'] = self.kwargs['depth'][0]
                 if self.kwargs['depth'][1] is not None:
                     qparams['sample__depth__lte'] = self.kwargs['depth'][1]
+            if 'activitynames' in self.kwargs:
+                if self.kwargs['activitynames']:
+                    qparams['sample__instantpoint__activity__name__in'] = self.kwargs['activitynames']
     
             if getGet_Actual_Count(self.kwargs):
                 # Make sure that we have at least time so that the instantpoint table is included
@@ -597,6 +600,9 @@ class MPQuery(object):
                     qparams['measurement__depth__gte'] = self.kwargs['depth'][0]
                 if self.kwargs['depth'][1] is not None:
                     qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
+            if self.kwargs.has_key('activitynames'):
+                if self.kwargs['activitynames']:
+                    qparams['measurement__instantpoint__activity__name__in'] = self.kwargs['activitynames']
 
             if 'mplabels'  in self.kwargs:
                 if self.kwargs['mplabels' ]:
