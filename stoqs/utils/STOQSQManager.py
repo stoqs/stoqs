@@ -57,13 +57,14 @@ class STOQSQManager(object):
     This class is designed to handle building and managing queries against the STOQS database.
     Chander Ganesan <chander@otg-nc.com>
     '''
-    def __init__(self, request, response, dbname):
+    def __init__(self, request, response, dbname, *args, **kwargs):
         '''
         This object should be created by passing in an HTTPRequest Object, an HTTPResponse object
         and the name of the database to be used.
         '''
         self.request = request
         self.dbname = dbname
+        self.kwargs = kwargs
         self.response = response
         self.mpq = MPQuery(request)
         self.pq = PQuery(request)
@@ -76,6 +77,7 @@ class STOQSQManager(object):
 
         # Dictionary of items that get returned via AJAX as the JSON response.  Make available as member variable.
         self.options_functions = {
+            'activitynames': self.getActivityNames,
             'sampledparametersgroup': self.getParameters,
             'measuredparametersgroup': self.getParameters,
             'parameterminmax': self.getParameterMinMax,
@@ -104,23 +106,23 @@ class STOQSQManager(object):
             'attributes': self.getAttributes,
         }
         
-    def buildQuerySets(self, *args, **kwargs):
+    def buildQuerySets(self, *args):
         '''
         Build the query sets based on any selections from the UI.  We need one for Activities and one for Samples
         '''
-        kwargs['fromTable'] = 'Activity'
-        self._buildQuerySet(**kwargs)
+        self.kwargs['fromTable'] = 'Activity'
+        self._buildQuerySet()
 
-        kwargs['fromTable'] = 'Sample'
-        self._buildQuerySet(**kwargs)
+        self.kwargs['fromTable'] = 'Sample'
+        self._buildQuerySet()
 
-        kwargs['fromTable'] = 'ActivityParameter'
-        self._buildQuerySet(**kwargs)
+        self.kwargs['fromTable'] = 'ActivityParameter'
+        self._buildQuerySet()
 
-        kwargs['fromTable'] = 'ActivityParameterHistogram'
-        self._buildQuerySet(**kwargs)
+        self.kwargs['fromTable'] = 'ActivityParameterHistogram'
+        self._buildQuerySet()
 
-    def _buildQuerySet(self, *args, **kwargs):
+    def _buildQuerySet(self, *args):
         '''
         Build the query set based on any selections from the UI. For the first time through  kwargs will be empty 
         and self.qs will be built of a join of activities, parameters, and platforms with no constraints.
@@ -140,8 +142,8 @@ class STOQSQManager(object):
         and the calls to this method meet the requirements stated above.
         '''
         fromTable = 'Activity'              # Default is Activity
-        if kwargs.has_key('fromTable'):
-            fromTable = kwargs['fromTable']
+        if self.kwargs.has_key('fromTable'):
+            fromTable = self.kwargs['fromTable']
 
         if 'qs' in args:
             logger.debug('Using query string passed in to make a non-activity based query')
@@ -167,10 +169,9 @@ class STOQSQManager(object):
                 logger.exception('No handler for fromTable = %s', fromTable)
     
         self.args = args
-        self.kwargs = kwargs
 
         # Determine if this is the intial query and set a flag
-        for k, v in kwargs.iteritems():
+        for k, v in self.kwargs.iteritems():
             # Test keys that can affect the MeasuredParameter count
             if  k == 'depth' or k == 'time':
                 if v[0] is not None or v[1] is not None:
@@ -183,7 +184,7 @@ class STOQSQManager(object):
         logger.debug('self.initialQuery = %s', self.initialQuery)
 
         # Check to see if there is a "builder" for a Q object using the given parameters and build up the filter from the Q objects
-        for k, v in kwargs.iteritems():
+        for k, v in self.kwargs.iteritems():
             if not v:
                 continue
             if k == 'fromTable':
@@ -247,6 +248,15 @@ class STOQSQManager(object):
     #
     # Methods that generate summary data, based on the current query criteria
     #
+    def getActivityNames(self):
+        '''Return list of activities that have been selected in UI's Metadata -> NetCDF section
+        '''
+        activity_names = None
+        if 'activitynames' in self.kwargs:
+            activity_names = self.kwargs.get('activitynames')
+
+        return activity_names
+
     def getCounts(self):
         '''
         Collect all of the various counts into a dictionary
@@ -730,6 +740,8 @@ class STOQSQManager(object):
         for plats in self.getPlatforms().values():
             for p in plats:
                 plq = Q(platform__name = p[0])
+                if self.kwargs.get('activitynames'):
+                    plq = plq & Q(name__in=self.kwargs.get('activitynames'))
                 sdt[p[0]] = {}
                 colors[p[0]] = p[2]
 
@@ -1024,6 +1036,9 @@ class STOQSQManager(object):
                 qs_mp = pt_qs_mp.filter(parameter__name=p)
                 qs_awp = self.qs.filter(activityparameter__parameter__name=p)
 
+            if self.kwargs.get('activitynames'):
+                qs_awp = qs_awp.filter(name__in=self.kwargs.get('activitynames'))
+
             qs_awp = qs_awp.filter(Q(activityresource__resource__value__icontains='timeseries') |
                                    Q(activityparameter__parameter__parameterresource__resource__name__icontains='plotTimeSeriesDepth')).distinct()
 
@@ -1137,6 +1152,10 @@ class STOQSQManager(object):
                                     'instantpoint__activity__name',
                                     'name'
                                 ).order_by('instantpoint__timevalue')
+
+            if self.kwargs.get('activitynames'):
+                qs = qs.filter(instantpoint__activity__name__in=self.kwargs.get('activitynames'))
+
             for s in qs:
                 ems = int(1000 * to_udunits(s[0], 'seconds since 1970-01-01'))
                 # Kludgy handling of activity names - flot needs 2 items separated by a space to handle sample event clicking
@@ -1791,7 +1810,7 @@ class STOQSQManager(object):
 
     def _trajectoryProfileQ(self):
         '''
-        Return Q object that is True if the activity is of featureType timeSeries
+        Return Q object that is True if the activity is of featureType trajectoryProfile
         '''
         # Restrict selection to Activities that are trajectoryProfiles - a featureType new in CF-1.6
         cf16_q = Q(activityresource__resource__name__iexact='featureType') & Q(activityresource__resource__value__iexact='trajectoryProfile')
@@ -1827,6 +1846,8 @@ class STOQSQManager(object):
         # Add any more filters (Q objects) if specified
         if Q_object:
             qs = qs.filter(Q_object)
+        if self.kwargs.get('activitynames'):
+            qs = qs.filter(name__in=self.kwargs.get('activitynames'))
 
         # Query for mapserver
         geo_query = 'geom from (%s) as subquery using unique gid using srid=4326' % postgresifySQL(qs.query, pointFlag).rstrip()
@@ -1845,6 +1866,8 @@ class STOQSQManager(object):
         # Add any more filters (Q objects) if specified
         if Q_object:
             qs = self.sample_qs.using(self.dbname).filter(Q_object)
+        if self.kwargs.get('activitynames'):
+            qs = qs.filter(instantpoint__activity__name__in=self.kwargs.get('activitynames'))
 
         # Query for mapserver
         geo_query = 'geom from (%s) as subquery using unique gid using srid=4326' % postgresifySQL(qs.query, sampleFlag=True)
