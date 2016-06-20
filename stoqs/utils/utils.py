@@ -272,6 +272,24 @@ def pearsonr(x, y):
     if den == 0: return 0
     return num / den
 
+def find_matching_char(s, c1, c2):
+    '''To use to find for example matching c1='(' and c2=')' in string s
+    '''
+    pos = 0
+    if c1 not in s:
+        return 
+
+    start_checking = False
+    for i, c in enumerate(s):
+        if c == c1:
+            pos += 1
+            start_checking = True
+        if c == c2:
+            pos -= 1
+        if start_checking:
+            if pos == 0:
+                return i + 1
+
 def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False):
     '''
     Given a generic database agnostic Django query string modify it using regular expressions to work
@@ -310,15 +328,17 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
     q = QUOTE_DATES.sub(r"'\1'", q)
 
     # The IN ( ... ) clauses require special treatment: an IN SELECT subquery needs no quoting, only string values need quotes, and numbers need no quotes
-    FIND_INS = re.compile('\sIN\s[^\)]+\)')
+    FIND_INS = re.compile('\sIN\s\([^\)]+\)')
     items = ''
     for m in FIND_INS.findall(q):
         if m.find('SELECT') == -1:
-            ##logger.debug('line = %s', m)
-            FIND_ITEMS = re.compile('\((?P<argument>[^\'\)]+)\)')
+            logger.info('line = %s', m)
+            beg_in = q.find(m)
+            end_in = find_matching_char(q[beg_in:], '(', ')')
+            FIND_ITEMS = re.compile('\((?P<argument>[^\']+)\)')
             new_items = ''
             try:
-                items = FIND_ITEMS.search(m).groups()[0]
+                items = FIND_ITEMS.search(q[beg_in:][:end_in]).groups()[0]
             except Exception as e:
                 logger.warn(e)
                 continue

@@ -85,6 +85,7 @@ query_parms = {
                    'pplr': 'pplr',                          # Parameter-Parameter linear regression flag
                    'ppsl': 'ppsl',                          # Parameter-Parameter sample locations flag
                    'mplabels': 'mplabels',                  # MeasuredParameter labels from Attributes selections
+                   'activitynames': 'activitynames',        # Activities (NetCDF files) selected for plotting
 }
 
 def get_http_site_uri(request):
@@ -197,10 +198,10 @@ def queryData(request, fmt=None):
     if 'dbAlias' not in request.META:
         request.META['dbAlias'] = dbAlias
 
-    qm = STOQSQManager(request, response, request.META['dbAlias'])
-    logger.debug('Calling buildQuerySets with params = %s', params)
+    logger.debug('Instantiating STOQSQManager with params = %s', params)
+    qm = STOQSQManager(request, response, request.META['dbAlias'], **params)
     try:
-        qm.buildQuerySets(**params)
+        qm.buildQuerySets()
     except ValidationError as e:
         logger.error(e)
         return HttpResponseBadRequest('Bad request: ' + str(e))
@@ -243,9 +244,9 @@ def queryMap(request):
     # server busy with requests that have nothing to do with making a map; for example, removing
     # 'parameterparameterpng' and 'parameterparameterx3d' removed from 'only' helps speed things up.
 
-    qm = STOQSQManager(request, response, request.META['dbAlias'])
-    logger.debug('Calling buildQuerySets with params = %s', params)
-    qm.buildQuerySets(**params)
+    logger.debug('Instantiating STOQSQManager with params = %s', params)
+    qm = STOQSQManager(request, response, request.META['dbAlias'], **params)
+    qm.buildQuerySets()
     options = json.dumps(qm.generateOptions(),
                                cls=encoders.STOQSJSONEncoder)
     ##logger.debug('options = %s', pprint.pformat(options))
