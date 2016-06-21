@@ -91,7 +91,13 @@ cl.bed_framegrabs = [
 # CCE BIN data
 cl.ccebin_startDatetime = datetime(2016, 1, 15)
 cl.ccebin_endDatetime = datetime(2016, 1, 18)
-cl.ccebin_nominaldepth = 1840
+cl.ccebin_nominaldepth = 1836
+cl.ccebin_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BIN/20151013/netcdf/'
+cl.ccebin_files = [
+                    'MBCCE_BIN_CTD_20151013_processed.nc',
+                  ]
+cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter', ]
+
 # Full-deployment files, exatracted from SSDS with stride of 60
 ##cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin2015/201510/'
 ##cl.ccebin_files = [
@@ -102,31 +108,40 @@ cl.ccebin_nominaldepth = 1840
 ##                'ccebin2015_ecotriplet_20151013.nc',
 ##                'ccebin2015_sbe16_20151013.nc',
 ##               ]
-cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin20160115/201601/'
-cl.ccebin_files = [
-                ##'ccebin20160115_aanderaaoxy_20160115.nc',
-                'ccebin20160115_adcp1825_20160115.nc',
-                'ccebin20160115_adcp1827_20160115.nc',
-                'ccebin20160115_adcp1828_20160115.nc',
-                ##'ccebin20160115_ecotriplet_20160115.nc',
-                ##'ccebin20160115_sbe16_20160115.nc',
-               ]
-cl.ccebin_parms = [
-                'u_component_uncorrected', 'v_component_uncorrected',
-                'echo_intensity_beam1', 
-                #'echo_intensity_beam2', 'echo_intensity_beam3', 'echo_intensity_beam4',
-                #'std_head', 'std_pitch', 'std_roll', 'xdcr_temperature',
-                ##'Pressure', 'Salinity', 'Temperature',
-                ##'AirSaturation', 'Oxygen',
-                ##'Chlor', 'NTU1', 'NTU2',
-                  ] 
+##cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin20160115/201601/'
+##cl.ccebin_files = [
+##                ##'ccebin20160115_aanderaaoxy_20160115.nc',
+##                'ccebin20160115_adcp1825_20160115.nc',
+##                'ccebin20160115_adcp1827_20160115.nc',
+##                'ccebin20160115_adcp1828_20160115.nc',
+##                ##'ccebin20160115_ecotriplet_20160115.nc',
+##                ##'ccebin20160115_sbe16_20160115.nc',
+##               ]
+##cl.ccebin_parms = [
+##                'u_component_uncorrected', 'v_component_uncorrected',
+##                'echo_intensity_beam1', 
+##                #'echo_intensity_beam2', 'echo_intensity_beam3', 'echo_intensity_beam4',
+##                #'std_head', 'std_pitch', 'std_roll', 'xdcr_temperature',
+##                ##'Pressure', 'Salinity', 'Temperature',
+##                ##'AirSaturation', 'Oxygen',
+##                ##'Chlor', 'NTU1', 'NTU2',
+##                  ] 
 
 
 # Execute the load for trajectory representation
 cl.process_command_line()
 
 if cl.args.test:
-    ##cl.loadCCEBIN(stride=5)
+    # Low-res (10 minute) five day period
+    cl.ccebin_startDatetime = datetime(2016, 1, 13)
+    cl.ccebin_endDatetime = datetime(2016, 1, 18)
+    cl.loadCCEBIN(stride=300)
+
+    # High-res (2 second) 1-hour period
+    cl.ccebin_startDatetime = datetime(2016, 1, 15, 23, 30)
+    cl.ccebin_endDatetime = datetime(2016, 1, 16, 0, 30)
+    cl.loadCCEBIN(stride=1)
+
     cl.loadBEDS(stride=5, featureType='trajectory')
 
 elif cl.args.optimal_stride:
@@ -135,7 +150,17 @@ elif cl.args.optimal_stride:
 
 else:
     cl.stride = cl.args.stride
-    ##cl.loadCCEBIN()
+
+    # Low-res (10 minute) five day period
+    cl.ccebin_startDatetime = datetime(2016, 1, 13)
+    cl.ccebin_endDatetime = datetime(2016, 1, 18)
+    cl.loadCCEBIN(stride=300)
+
+    # High-res (2 second) 1-hour period
+    cl.ccebin_startDatetime = datetime(2016, 1, 15, 23, 30)
+    cl.ccebin_endDatetime = datetime(2016, 1, 16, 0, 30)
+    cl.loadCCEBIN()
+
     cl.loadBEDS(featureType='trajectory')
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
