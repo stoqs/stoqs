@@ -3591,6 +3591,7 @@
         function onInit(data, key) {
             // Called from ajax on initial request
             initData = data;
+            $('.p-info').tooltip('fixTitle').tooltip('hide');
             if (key == 'platforms') {
                 hasTrajectory = false;
                 hasTimeSeries = false;
@@ -3687,9 +3688,9 @@
                                 '<button class="btn btn-mini stoqs-toggle sampledparametersgroup">'+ value[0] +'</button>' + 
                             '</td>' +
                             '<td style="width:1%">' +
-                                '<a href="' + pi_url + '" target="_pi" title="' + value[4] + '. ' + value[1] + '. ' + value[5] + '. ' + value[6] + '">' +
+                                '<span title="' + value[4] + '. ' + value[1] + '. ' + value[5] + '. ' + value[6] + '" class="p-info">' +
                                     '<i class="icon-info-sign"></i>' +
-                                '</a>' +
+                                '</span>' +
                             '</td>' +
                             '<td style="width:1%">' +
                                 '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
@@ -3743,9 +3744,9 @@
                                 '<button class="btn btn-mini stoqs-toggle measuredparametersgroup">'+ value[0] +'</button>' + 
                             '</td>' + 
                             '<td style="width:1%">' +
-                                '<a href="' + pi_url + '" target="_pi" title="' + value[4] + '. ' + value[1] + '. ' + value[5] + '. ' + value[6] + '">' +
+                                '<span title="' + value[4] + '. ' + value[1] + '. ' + value[5] + '. ' + value[6] + '" class="p-info">' +
                                     '<i class="icon-info-sign"></i>' +
-                                '</a>' +
+                                '</span>' +
                             '</td>' +
                             '<td style="width:1%">' +
                                 '<span id="' + value[0] + '_plats" style="background-color:rgb(192, 211, 228);"></span>' + 
