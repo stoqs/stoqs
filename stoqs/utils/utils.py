@@ -332,7 +332,7 @@ def postgresifySQL(query, pointFlag=False, translateGeom=False, sampleFlag=False
     items = ''
     for m in FIND_INS.findall(q):
         if m.find('SELECT') == -1:
-            logger.info('line = %s', m)
+            logger.debug('line = %s', m)
             beg_in = q.find(m)
             end_in = find_matching_char(q[beg_in:], '(', ')')
             FIND_ITEMS = re.compile('\((?P<argument>[^\']+)\)')
