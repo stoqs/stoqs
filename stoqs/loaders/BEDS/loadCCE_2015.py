@@ -44,7 +44,8 @@ cl = CCELoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                     },
                  },
                  # Do not check in .grd files to the repository, keep them in the loaders directory
-                 grdTerrain=os.path.join(parent_dir, 'MontereyCanyonBeds_1m+5m.grd'),
+                 ##grdTerrain=os.path.join(parent_dir, 'MontereyCanyonBeds_1m+5m.grd'),
+                 grdTerrain=os.path.join(parent_dir, 'Monterey25.grd'),
                )
 
 # Base OPeNDAP server
@@ -54,7 +55,7 @@ cl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
 # See BEDs/BEDs/Visualization/py/makeBEDNetCDF_CCE.sh
 
 cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT', 'P', 'P_ADJUSTED',
-                'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY']
+                'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY', 'BED_DEPTH']
 
 # Several BED files: 30200078 to 3020080
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
@@ -73,9 +74,10 @@ cl.bed_files = [
                 'BED05/MBCCE_BED05_20151027_Event20160115/netcdf/50200056_trajectory.nc',
                 'BED05/MBCCE_BED05_20151027_Event20160115/netcdf/50200057_trajectory.nc',
                 'BED03/MBCCE_BED03_20160212_Event20160306/netcdf/30300016_trajectory.nc',
+                'BED04/MBCCE_BED04_20151004_Event20151201/netcdf/40100037_trajectory.nc',
                ]
-cl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05', 'BED03']
-cl.bed_depths = [388, 201, 521, 289.3, 413, 420, 430, 433, 308]
+cl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05', 'BED03', 'BED04']
+cl.bed_depths = [388, 201, 521, 289.3, 413, 420, 430, 433, 308, 294]
 cl.bed_framegrabs = [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3874/00_21_23_28.html',
@@ -86,6 +88,7 @@ cl.bed_framegrabs = [
                 '',
                 '',
                 '',
+                'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3872/00_17_50_24.html',
                     ]
 
 # CCE BIN data
