@@ -2210,7 +2210,7 @@
             }
             $('#contour-scatter-buttons').show();
             $('#sensor-tracks-checkbox').show();
-            $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
+            $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                          $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
             $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
             $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
@@ -4193,7 +4193,7 @@
                             });
                             // Show colorbar
                             $('#sectioncolorbar > img').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
-                            $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[4]).text() + ' from ' + 
+                            $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
                             $('#temporalparameterstrideinfo').text(data['parameterplatformdatavaluepng'][2]);
