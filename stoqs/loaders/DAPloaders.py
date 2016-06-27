@@ -160,7 +160,9 @@ class Base_Loader(STOQS_Loader):
         self.dbAlias = dbAlias
         self.platformTypeName = platformTypeName
         self.activityName = activityName
+        self.requested_startDatetime = startDatetime
         self.startDatetime = startDatetime
+        self.requested_endDatetime = endDatetime
         self.endDatetime = endDatetime
         self.dataStartDatetime = dataStartDatetime  # For when we append data to an existing Activity
         self.auxCoords = auxCoords
@@ -1162,10 +1164,10 @@ class Base_Loader(STOQS_Loader):
 
             fmt_comment = 'Loaded variables {} from {}'
             comment_vars = [varList, self.url.split('/')[-1]]
-            if self.startDatetime and self.endDatetime:
+            if self.requested_startDatetime and self.requested_endDatetime:
                 fmt_comment += ' between {} and {}'
-                comment_vars.extend([self.startDatetime, self.endDatetime])
-            fmt_comment += ' with a stride of {} on {}'
+                comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
+            fmt_comment += ' with a stride of {} on {}Z'
             comment_vars.extend([self.stride, str(datetime.utcnow()).split('.')[0]])
             newComment = fmt_comment.format(*comment_vars)
 
