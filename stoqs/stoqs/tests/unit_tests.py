@@ -234,7 +234,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         response = self.client.get(req)
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
         # Number of Dorado MeasuredParameters will be on a line in the content
-        loadedText = '548 MeasuredParameters'
+        loadedText = 'Loaded variables'
         self.assertTrue(response.content.find(loadedText) != -1, 
                 'Should find "%s" in string at %s, instead got: %s' % (
                     loadedText, req, response.content))

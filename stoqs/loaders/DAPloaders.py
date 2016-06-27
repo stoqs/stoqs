@@ -160,7 +160,9 @@ class Base_Loader(STOQS_Loader):
         self.dbAlias = dbAlias
         self.platformTypeName = platformTypeName
         self.activityName = activityName
+        self.requested_startDatetime = startDatetime
         self.startDatetime = startDatetime
+        self.requested_endDatetime = endDatetime
         self.endDatetime = endDatetime
         self.dataStartDatetime = dataStartDatetime  # For when we append data to an existing Activity
         self.auxCoords = auxCoords
@@ -1155,12 +1157,20 @@ class Base_Loader(STOQS_Loader):
 
             # Update the Activity with information we now have following the load
             try:
-                varList = ' '.join(self.varsLoaded)
+                varList = ', '.join(self.varsLoaded)
             except AttributeError:
                 # ROVCTDloader creates self.vSeen dictionary with counts of each parameter
-                varList = ' '.join(self.vSeen.keys())
+                varList = ', '.join(self.vSeen.keys())
 
-            newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, varList, datetime.utcnow())
+            fmt_comment = 'Loaded variables {} from {}'
+            comment_vars = [varList, self.url.split('/')[-1]]
+            if self.requested_startDatetime and self.requested_endDatetime:
+                fmt_comment += ' between {} and {}'
+                comment_vars.extend([self.requested_startDatetime, self.requested_endDatetime])
+            fmt_comment += ' with a stride of {} on {}Z'
+            comment_vars.extend([self.stride, str(datetime.utcnow()).split('.')[0]])
+            newComment = fmt_comment.format(*comment_vars)
+
             logger.debug("Updating its comment with newComment = %s", newComment)
 
             num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
