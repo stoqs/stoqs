@@ -1155,12 +1155,20 @@ class Base_Loader(STOQS_Loader):
 
             # Update the Activity with information we now have following the load
             try:
-                varList = ' '.join(self.varsLoaded)
+                varList = ', '.join(self.varsLoaded)
             except AttributeError:
                 # ROVCTDloader creates self.vSeen dictionary with counts of each parameter
-                varList = ' '.join(self.vSeen.keys())
+                varList = ', '.join(self.vSeen.keys())
 
-            newComment = "%d MeasuredParameters loaded: %s. Loaded on %sZ" % (self.loaded, varList, datetime.utcnow())
+            fmt_comment = 'Loaded variables {} from {}'
+            comment_vars = [varList, self.url.split('/')[-1]]
+            if self.startDatetime and self.endDatetime:
+                fmt_comment += ' between {} and {}'
+                comment_vars.extend([self.startDatetime, self.endDatetime])
+            fmt_comment += ' with a stride of {} on {}'
+            comment_vars.extend([self.stride, str(datetime.utcnow()).split('.')[0]])
+            newComment = fmt_comment.format(*comment_vars)
+
             logger.debug("Updating its comment with newComment = %s", newComment)
 
             num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
