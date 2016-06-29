@@ -97,7 +97,7 @@ cl.ccebin_endDatetime = datetime(2016, 1, 18)
 cl.ccebin_nominaldepth = 1836
 cl.ccebin_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BIN/20151013/netcdf/'
 cl.ccebin_files = [
-                    'MBCCE_BIN_CTD_20151013_processed.nc',
+                    'MBCCE_BIN_CTD_20151013_timecorrected.nc',
                   ]
 cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter', ]
 

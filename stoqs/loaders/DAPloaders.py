@@ -1162,6 +1162,7 @@ class Base_Loader(STOQS_Loader):
                 # ROVCTDloader creates self.vSeen dictionary with counts of each parameter
                 varList = ', '.join(self.vSeen.keys())
 
+            # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
             fmt_comment = 'Loaded variables {} from {}'
             comment_vars = [varList, self.url.split('/')[-1]]
             if self.requested_startDatetime and self.requested_endDatetime:
@@ -1173,7 +1174,19 @@ class Base_Loader(STOQS_Loader):
 
             logger.debug("Updating its comment with newComment = %s", newComment)
 
+            # Modify Activity name if temporal subset extracted from NetCDF file
+            newName = self.activityName
+            if self.requested_startDatetime and self.requested_endDatetime:
+                if '(stride' in self.activityName:
+                    first_part = self.activityName[:self.activityName.find('(stride')]
+                    last_part = self.activityName[self.activityName.find('(stride'):]
+                else:
+                    first_part = self.activityName
+                    last_part = ''
+                newName = '{}starting at {} {}'.format(first_part, self.requested_startDatetime, last_part)
+
             num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
+                            name=newName,
                             comment=newComment,
                             maptrack=path,
                             mappoint=stationPoint,
