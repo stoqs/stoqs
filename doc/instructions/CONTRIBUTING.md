@@ -64,9 +64,8 @@ You should periodically pull changes to your workspace from the upstream remote.
 commands will synchronize your fork with upstream, including any local changes you have
 committed:
 
-    git fetch upstream
-    git merge master
-    git push 
+    git pull upstream master
+    git push origin
 
 After this you can use the GitHub web interface to visualize differences between your 
 fork and upstream and submit a Pull Request (Note: A `git pull upstream master` is the 
