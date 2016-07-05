@@ -38,6 +38,9 @@ logger = logging.getLogger(__name__)
 cm_w_to_b = mpl.colors.ListedColormap(np.array(readCLT(os.path.join(
                        settings.STATICFILES_DIRS[0], 'colormaps', 'w_to_b.txt'))))
 
+MP_MAX_POINTS = 10000          # Set by visually examing high-res Tethys data for what looks good
+PA_MAX_POINTS = 10000000       # Set to avoid memory error on development system
+
 def _getCoordUnits(name):
     '''
     Assign units given a standard coordinate name
@@ -257,7 +260,6 @@ class MeasuredParameter(object):
         self.lon_by_act_span = {}
         self.lat_by_act_span = {}
 
-        MP_MAX_POINTS = 10000          # Set by visually examing high-res Tethys data for what looks good
         stride = int(self.qs_mp.count() / MP_MAX_POINTS)
         if stride < 1:
             stride = 1
@@ -690,7 +692,6 @@ class PlatformAnimation(object):
                                 <Material ambientIntensity="1" diffuseColor="{pColor}"></Material>
                             </Appearance>
                             <Text string="{pName}">
-                                <FontStyle family="'Orbitron'"></FontStyle>
                             </Text>
                         </Shape>
                     </Billboard>
@@ -935,8 +936,13 @@ class PlatformAnimation(object):
         except Exception as e:
             self.logger.exception(str(e))
 
-        return {'x3d': info.x3d, 'all': info.all_x3d, 'limits': info.limits, 'time': info.times, 
-                'platforms_not_shown': info.platforms_not_shown, 'speedup': speedup, 'scale': scale}
+        if len(info.times) > PA_MAX_POINTS:
+            self.logger.warn('time array to large for rendering: %s', len(info.times))
+            return {'x3d': '', 'message': '{} are too many values to animate. Filter to get below {}.'.format(
+                                           len(info.times), PA_MAX_POINTS)}
+        else:
+            return {'x3d': info.x3d, 'all': info.all_x3d, 'limits': info.limits, 'time': info.times, 
+                    'platforms_not_shown': info.platforms_not_shown, 'speedup': speedup, 'scale': scale}
 
 
 class PPDatabaseException(Exception):
