@@ -262,10 +262,20 @@
                                                                 <input type="checkbox" id="showgeox3dsample" />
                                                                 <span id="showgeox3dsampletext">Samples</span>
                                                             </label>
-                                                            <label class="checkbox disabled">
-                                                                <input type="checkbox" id="showplatforms" />
-                                                                <span id="showplatformstext">Platforms</span>
-                                                            </label>
+                                                            <span>
+                                                                <label class="checkbox disabled">
+                                                                    <input type="checkbox" id="showplatforms" />
+                                                                    <span id="showplatformstext">Platforms</span>
+                                                                </label>
+                                                                <label class="checkbox" style="display:none;">
+                                                                    <input type="checkbox" id="showgeox3dlabels" checked />
+                                                                    <span id="showplatformstext">Labels</span>
+                                                                </label>
+                                                                <label class="checkbox" style="display:none;">
+                                                                    <input type="checkbox" id="showgeox3denuaxes" checked />
+                                                                    <span id="showplatformstext">ENU Axes</span>
+                                                                </label>
+                                                            </span>
                                                         </form>
                                                         <div id="geo3d-colorbar"></div>
                                                         <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
@@ -2091,9 +2101,19 @@
             // Need time series data to redraw with crosshairs, so get everything
             rebuildFilters();
             addStationaryPlatformModels();
+            $('#showgeox3dlabels').parent().show();
+            $('#showgeox3denuaxes').parent().show();
+            $('#showplatforms').parent().parent().css( {'padding': '3px',
+                                                        'background-color': 'lightgray'});
         }
         else {
+            $.each($('body').data()['platformAnimation'], function (index, platform) {
+                $('#' + platform + '_LOCATION')[0].setAttribute('render', false);
+            });
             $('body').data()['platformAnimation'] = [];
+            $('#showgeox3dlabels').parent().hide();
+            $('#showgeox3denuaxes').parent().hide();
+            $('#showplatforms').parent().parent().removeAttr('style');
         }
     });
 
@@ -2178,6 +2198,41 @@
             $('.mp-pp-coordinates').hide();
         }
     });
+
+    $('#showgeox3dlabels').on('click', function (e) {
+        // Turn off and on all text labels to make BEDs animation less 'busy'
+        if ( $('#showgeox3dlabels').is(':checked') ) {
+            $.each($('body').data()['platformAnimation'], function (index, platform) {
+                $('#' + platform + '_SCALE > transform > billboard')[0].setAttribute('render', true);
+                $.each($('#' + platform + '_SCALE > transform > inline > transform > billboard'), function (index, axislabel) {
+                    axislabel.setAttribute('render', true);
+                });
+            });
+        }
+        else {
+            $.each($('body').data()['platformAnimation'], function (index, platform) {
+                $('#' + platform + '_SCALE > transform > billboard')[0].setAttribute('render', false);
+                $.each($('#' + platform + '_SCALE > transform > inline > transform > billboard'), function (index, axislabel) {
+                    axislabel.setAttribute('render', false);
+                });
+            });
+        }
+    });
+
+    $('#showgeox3denuaxes').on('click', function (e) {
+        // turn off and on all East North Up orientation axes
+        if ( $('#showgeox3denuaxes').is(':checked') ) {
+            $.each($('body').data()['platformAnimation'], function (index, platform) {
+                $('#' + platform + '_SCALE > transform > inline')[0].setAttribute('render', true);
+            });
+        }
+        else {
+            $.each($('body').data()['platformAnimation'], function (index, platform) {
+                $('#' + platform + '_SCALE > transform > inline')[0].setAttribute('render', false);
+            });
+        }
+    });
+
 
     $('#mp-cmin').on('keypress', function (event, previousText) {
         setTimeout(updateKMLcmincmax('mp'));
@@ -4379,6 +4434,11 @@
                         x3dText += x3d;
                     });
                     $('#platform-animations').html(data[key]['all'] + x3dText);
+                }
+                else {
+                    if ( ! $.isEmptyObject(data[key]['message']) ) {
+                        alert(data[key]['message']);
+                    }
                 }
                 // Redraw the time series so that we have the crosshair option added and can call lockCrosshair()
                 if (data['simpledepthtime']) {

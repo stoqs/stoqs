@@ -227,7 +227,8 @@ class STOQSQManager(object):
         '''
         
         results = {}
-        for k,v in self.options_functions.iteritems():
+        for k, v in self.options_functions.iteritems():
+            logger.debug('k, v = %s, %s', k, v)
             if self.kwargs['only'] != []:
                 if k not in self.kwargs['only']:
                     continue
@@ -1582,6 +1583,7 @@ class STOQSQManager(object):
                                 ).values_list('fromresource__resourcetype__name', 'toresource__value').distinct()
 
         if sources:
+            logger.debug('Building commandlines element in measurementHash...')
             measurementHash['commandlines'] = dict((s[0], s[1]) for s in sources)
 
         for mpr in models.MeasuredParameterResource.objects.using(self.dbname).filter(activity__in=self.qs
@@ -1596,6 +1598,8 @@ class STOQSQManager(object):
             except KeyError:
                 measurementHash[mpr['resource__resourcetype__name']] = []
                 measurementHash[mpr['resource__resourcetype__name']].append((mpr['resource__id'], mpr['resource__value'], descriptions))
+
+        logger.debug('Returning from getAttributes with  measurementHash = %s', measurementHash)
 
         return {'measurement': measurementHash}
 
@@ -1977,5 +1981,7 @@ class STOQSQManager(object):
             except:
                 logger.exception('Cannot get transorm to %s for geomstr = %s, srid = %d', outputSRID, geomstr, srid)
         
+            logger.debug('Returning from getExtent() with extent = %s', extent)
+
         return (extent, lon_midpoint, lat_midpoint)
 

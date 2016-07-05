@@ -209,7 +209,7 @@ def queryData(request, fmt=None):
         options = json.dumps(qm.generateOptions(),
                                    cls=encoders.STOQSJSONEncoder)
                                    # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
-    except ConnectionDoesNotExist, e:
+    except ConnectionDoesNotExist as e:
         logger.warn(e)
         return HttpResponseNotFound('The database alias <b>%s</b> does not exist on this server.' % dbAlias)
 
