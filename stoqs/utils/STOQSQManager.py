@@ -573,6 +573,10 @@ class STOQSQManager(object):
                     geom = geom_list[0]
                 except IndexError:
                     return modelInfo
+
+                if not geom:
+                    return modelInfo
+
                 if len(geom_list) > 1:
                     logger.error('More than one location for %s returned.'
                                  'Using first one found: %s', platformName, geom)
