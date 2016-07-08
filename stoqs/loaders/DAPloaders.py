@@ -1183,7 +1183,7 @@ class Base_Loader(STOQS_Loader):
                 else:
                     first_part = self.activityName
                     last_part = ''
-                newName = '{}starting at {} {}'.format(first_part, self.requested_startDatetime, last_part)
+                newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
 
             num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
                             name=newName,
