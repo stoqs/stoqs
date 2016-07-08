@@ -98,8 +98,12 @@ cl.ccebin_nominaldepth = 1836
 cl.ccebin_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BIN/20151013/netcdf/'
 cl.ccebin_files = [
                     'MBCCE_BIN_CTD_20151013_timecorrected.nc',
+                    'MBCCE_BIN_OXY_20151013_timecorrected.nc',
+                    'MBCCE_BIN_ECO_20151013_timecorrected.nc',
                   ]
-cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter', ]
+cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter',
+                    'oxygen', 'saturation', 'optode_temperature',
+                    'chlor', 'ntu1', 'ntu2' ]
 
 # Full-deployment files, exatracted from SSDS with stride of 60
 ##cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin2015/201510/'
