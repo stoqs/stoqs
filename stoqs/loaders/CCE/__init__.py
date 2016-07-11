@@ -43,18 +43,28 @@ class CCELoader(LoadScript):
     '''
     Common routines for loading all CCE data
     '''
-    num_beds = 9
-    beds_names = [('bed{:02d}').format(n) for n in range(num_beds+1)]
-
     # See http://matplotlib.org/examples/color/colormaps_reference.html
     colors = {}
+
+    # Colors for BEDs 
+    num_beds = 9
+    beds_names = [('bed{:02d}').format(n) for n in range(num_beds+1)]
     reds = plt.cm.Reds
     for b, c in zip(beds_names, reds(np.arange(0, reds.N, reds.N/num_beds))):
         colors[b] = rgb2hex(c)[1:]
         # Duplicate color  for Trajectory 't' version
         colors[b + 't'] = rgb2hex(c)[1:]
 
+    # color for BIN
     colors['ccebin'] = 'ff0000'
+
+    # Colors for MS* moorings
+    num_ms = 8
+    ms_names = [('ccems{:1d}').format(n) for n in range(num_ms+1)]
+    oranges = plt.cm.Oranges
+    for b, c in zip(ms_names, oranges(np.arange(0, oranges.N, oranges.N/num_ms))):
+        colors[b] = rgb2hex(c)[1:]
+
 
     def loadBEDS(self, stride=None, featureType='trajectory'):
         '''
@@ -125,6 +135,42 @@ class CCELoader(LoadScript):
             self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
                                       platformName)
 
+
+    def load_ccems1(self, stride=None):
+        '''
+        Mooring MS1 specific load functions
+        '''
+        # Generalize attribute value lookup to enable easier cut-n-paste re-use
+        plt_name = getattr(self.load_ccems1, '__name__').split('_')[1]
+        platformName = plt_name[-3:].upper()
+        base = getattr(self, plt_name + '_base')
+        files = getattr(self, plt_name + '_files')
+        parms = getattr(self, plt_name + '_parms')
+        nominal_depth = getattr(self, plt_name + '_nominal_depth')
+        start_datetime = getattr(self, plt_name + '_start_datetime')
+        end_datetime = getattr(self, plt_name + '_end_datetime')
+
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in files], files):
+            url = os.path.join(base, f)
+
+            if 'adcp' in f.lower():
+                Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
+            else:
+                Mooring_Loader.getFeatureType = lambda self: 'timeseries'
+
+            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName,
+                                        platformName, self.colors[plt_name], 'mooring', 'Mooring Deployment',
+                                        parms, self.dbAlias, stride, start_datetime, end_datetime)
+
+        # For timeseriesProfile data we need to pass the nominaldepth of the plaform
+        # so that the model is put at the correct depth in the Spatial -> 3D view.
+        try:
+            self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
+                                      platformName, nominaldepth=nominaldepth)
+        except AttributeError:
+            self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
+                                      platformName)
 
 if __name__ == '__main__':
     '''
