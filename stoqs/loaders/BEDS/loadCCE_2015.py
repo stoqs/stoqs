@@ -105,6 +105,14 @@ cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'opt
                     'oxygen', 'saturation', 'optode_temperature',
                     'chlor', 'ntu1', 'ntu2' ]
 
+# MS1 ADCP data
+cl.ccems1_start_datetime = datetime(2016, 1, 15)
+cl.ccems1_end_datetime = datetime(2016, 1, 18)
+cl.ccems1_nominal_depth = 1836
+cl.ccems1_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS1/20151006/ADCP300/'
+cl.ccems1_files = [ 'MBCCE_MS1_ADCP300_20151006.nc' ]
+cl.ccems1_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+
 # Full-deployment files, exatracted from SSDS with stride of 60
 ##cl.ccebin_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/ccebin2015/201510/'
 ##cl.ccebin_files = [
@@ -139,6 +147,8 @@ cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'opt
 cl.process_command_line()
 
 if cl.args.test:
+    cl.load_ccems1(stride=300)
+
     # Low-res (10 minute) five day period
     cl.ccebin_startDatetime = datetime(2016, 1, 13)
     cl.ccebin_endDatetime = datetime(2016, 1, 18)
