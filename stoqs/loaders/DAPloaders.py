@@ -36,6 +36,7 @@ from django.conf import settings
 
 from django.db.utils import IntegrityError, DatabaseError
 from django.db import transaction
+from jdcal import gcal2jd, jd2gcal
 from stoqs import models as m
 from datetime import datetime
 import pytz
@@ -319,7 +320,7 @@ class Base_Loader(STOQS_Loader):
         else:
             conventions = ''
 
-        if conventions == 'cf-1.6':
+        if 'cf-1.6' in conventions.lower():
             featureType = self.ds.attributes['NC_GLOBAL']['featureType']
         else:
             # Accept earlier versions of the concept of this attribute that may be in legacy data sets
@@ -465,6 +466,47 @@ class Base_Loader(STOQS_Loader):
         '''
         Return beginning and ending indices for the corresponding time axis indices
         '''
+        try:
+            if 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper():
+                # True Julian dates are at noon, so take int() to match EPIC's time axis values and to satisfy:
+                #   datum: Time (UTC) in True Julian Days: 2440000 = 0000 h on May 23, 1968
+                #   NOTE: Decimal Julian day [days] = time [days] + ( time2 [msec] / 86400000 [msec/day] )
+                jbd = int(sum(gcal2jd(self.startDatetime.year, self.startDatetime.month, self.startDatetime.day)) + 0.5)
+                jed = int(sum(gcal2jd(self.endDatetime.year, self.endDatetime.month, self.endDatetime.day)) + 0.5)
+
+                t_indx = np.where((jbd <= timeAxis) & (timeAxis <= jed))[0]
+                if not t_indx.any():
+                    raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, 
+                                      self.startDatetime, self.endDatetime))
+
+                # Refine indicies with fractional portion of the day (ms since midnight) as represented in the time2 variable
+                bms = 0
+                if self.startDatetime.hour or self.startDatetime.minute or self.startDatetime.second:
+                    bms = self.startDatetime.hour * 3600000 + self.startDatetime.minute * 60000 + self.startDatetime.second * 1000
+                ems = 86400000
+                if self.endDatetime.hour or self.endDatetime.minute or self.endDatetime.second:
+                    ems = self.endDatetime.hour * 3600000 + self.endDatetime.minute * 60000 + self.endDatetime.second * 1000
+
+                # Tolerate datasets that begin or end inside the limits of self.startDatetime and self.endDatetime
+                beg_day_indices = np.where(jbd == timeAxis)[0]
+                t2_indx_beg = 0
+                if beg_day_indices.any():
+                    time2_axis_beg = self.ds['time2']['time2'][beg_day_indices[0]:beg_day_indices[-1]]
+                    t2_indx_beg = np.where(bms <= time2_axis_beg)[0][0]
+
+                end_day_indices = np.where(jed == timeAxis)[0]
+                t2_indx_end = 0
+                if end_day_indices.any():
+                    time2_axis_end = self.ds['time2']['time2'][end_day_indices[0]:end_day_indices[-1]]
+                    t2_indx_end = len(time2_axis_end) - np.where(ems >= time2_axis_end)[0][-1]
+
+                indices = t_indx[0] + t2_indx_beg, t_indx[-1] - t2_indx_end
+                return indices
+
+        except KeyError:
+            # Likely no 'Conventions' key on 'NC_GLOBAL', assume not EPIC and continue
+            pass
+
         timeAxisUnits =  timeAxis.units.lower()
         timeAxisUnits = timeAxisUnits.replace('utc', 'UTC')        # coards requires UTC to be upper case 
         if timeAxis.units == 'seconds since 1970-01-01T00:00:00Z'or timeAxis.units == 'seconds since 1970/01/01 00:00:00Z':
