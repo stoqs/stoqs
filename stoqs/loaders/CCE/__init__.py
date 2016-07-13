@@ -135,7 +135,7 @@ class CCELoader(LoadScript):
             self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
                                       platformName)
 
-
+    # TODO: Dynamic method creation for a number of 'ms' moorings
     def load_ccems1(self, stride=None):
         '''
         Mooring MS1 specific load functions
@@ -154,23 +154,32 @@ class CCELoader(LoadScript):
         for (aName, f) in zip([ a + getStrideText(stride) for a in files], files):
             url = os.path.join(base, f)
 
+            # Monkeypatch featureType depending on file name (or parms...)
             if 'adcp' in f.lower():
                 Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
             else:
                 Mooring_Loader.getFeatureType = lambda self: 'timeseries'
 
-            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName,
-                                        platformName, self.colors[plt_name], 'mooring', 'Mooring Deployment',
-                                        parms, self.dbAlias, stride, start_datetime, end_datetime)
+            loader = Mooring_Loader(url = url, 
+                                    campaignName = self.campaignName,
+                                    campaignDescription = self.campaignDescription,
+                                    dbAlias = self.dbAlias,
+                                    activityName = aName,
+                                    activitytypeName = 'mooring',
+                                    platformName = platformName,
+                                    platformColor = self.colors[plt_name],
+                                    platformTypeName = 'Mooring Deployment',
+                                    stride = stride,
+                                    startDatetime = start_datetime,
+                                    endDatetime = end_datetime,
+                                    dataStartDatetime = None)
 
-        # For timeseriesProfile data we need to pass the nominaldepth of the plaform
-        # so that the model is put at the correct depth in the Spatial -> 3D view.
-        try:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
-                                      platformName, nominaldepth=nominaldepth)
-        except AttributeError:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
-                                      platformName)
+            loader.include_names = parms
+            loader.auxCoords = {}
+            for p in parms:
+                loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat',
+                                       'longitude': 'lon', 'depth': 'depth'}
+            loader.process_data()
 
 if __name__ == '__main__':
     '''
