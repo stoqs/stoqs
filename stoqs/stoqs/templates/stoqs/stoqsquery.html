@@ -850,7 +850,9 @@
                                                 <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
-                                            <div class="span7" id="sectioncolorbar" style="float:right;"><img src="" /></div>
+                                            <div class="span7" id="sectioncolorbar">
+                                                <span style="float:right;"><img src="" /></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2282,7 +2284,7 @@
             $('#showsensortrackstext').text('');
             $('#showsensortracks').attr('disabled', true);
             $('#showgeox3dmeasurementtext').text('');
-            $('#sectioncolorbar > img').removeAttr('src');
+            $('#sectioncolorbar > span > img').removeAttr('src');
             $('#temporalparameterstrideinfo').text('');
             rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'sampledurationsdepthtime']);
         }
@@ -4247,7 +4249,7 @@
                                 $.plot($("#time-depth-flot"), flotdata, options);
                             });
                             // Show colorbar
-                            $('#sectioncolorbar > img').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
+                            $('#sectioncolorbar > span > img').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
                             $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
@@ -4256,7 +4258,7 @@
                         else {
                             $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
                             $('#temporalparameterplotinfo').css( { 'color': 'red' } );
-                            $('#sectioncolorbar > img').removeAttr('src');
+                            $('#sectioncolorbar > span > img').removeAttr('src');
                         }
                     }
                     else {
