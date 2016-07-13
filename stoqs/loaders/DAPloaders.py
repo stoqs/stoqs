@@ -38,7 +38,7 @@ from django.db.utils import IntegrityError, DatabaseError
 from django.db import transaction
 from jdcal import gcal2jd, jd2gcal
 from stoqs import models as m
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 from pydap.client import open_url
 import pydap.model
@@ -192,6 +192,7 @@ class Base_Loader(STOQS_Loader):
         To be used for setting Activity startDatetime and endDatetime.
         '''
         # TODO: Refactor to simplify. McCabe MC0001 pylint complexity warning issued.
+        # TODO: Parse EPIC time and time2 variables
         minDT = {}
         maxDT = {}
         for v in self.include_names:
@@ -636,11 +637,23 @@ class Base_Loader(STOQS_Loader):
                 # The STOQS datavalue 
                 data[pname] = iter(v)      # Iterator on time axis delivering all z values in an array with .next()
 
-                # CF (nee COARDS) has tzyx coordinate ordering
+                # CF (nee COARDS) has tzyx coordinate ordering, time is at index [1] and depth is at [2]
                 times[pname] = self.ds[self.ds[pname].keys()[1]][tIndx[0]:tIndx[-1]:self.stride]
                 depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
 
                 timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
+                if timeUnits[pname] == 'true julian day':
+                    # Create COARDS time from EPIC data
+                    time2s = self.ds['time2']['time2'][tIndx[0]:tIndx[-1]:self.stride]
+                    timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'
+                    epoch_secs = []
+                    for jd, ms in zip(times[pname], time2s):
+                        gcal = jd2gcal(jd - 0.5, ms / 86400000.0)
+                        gcal_datetime = datetime(*gcal[:3]) + timedelta(days=gcal[3])
+                        epoch_secs.append(to_udunits(gcal_datetime, timeUnits[pname]))
+
+                    times[pname] = epoch_secs
+
                 timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
                 if self.ds[self.ds[pname].keys()[1]].units == 'seconds since 1970-01-01T00:00:00Z':
                     timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards 1.0.4 and earlier doesn't like ISO format
