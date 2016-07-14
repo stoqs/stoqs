@@ -135,13 +135,11 @@ class CCELoader(LoadScript):
             self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
                                       platformName)
 
-    # TODO: Dynamic method creation for a number of 'ms' moorings
-    def load_ccems1(self, stride=None):
-        '''
-        Mooring MS1 specific load functions
-        '''
-        # Generalize attribute value lookup to enable easier cut-n-paste re-use
-        plt_name = getattr(self.load_ccems1, '__name__').split('_')[1]
+# Dynamic method creation for any number of 'ccems' moorings
+def make_load_ccems_method(name):
+    def _generic_load_ccems(self, stride=None):
+        # Generalize attribute value lookup
+        plt_name = name.split('_')[1]
         platformName = plt_name[-3:].upper()
         base = getattr(self, plt_name + '_base')
         files = getattr(self, plt_name + '_files')
@@ -165,10 +163,10 @@ class CCELoader(LoadScript):
                                     campaignDescription = self.campaignDescription,
                                     dbAlias = self.dbAlias,
                                     activityName = aName,
-                                    activitytypeName = 'mooring',
+                                    activitytypeName = 'Mooring Deployment',
                                     platformName = platformName,
                                     platformColor = self.colors[plt_name],
-                                    platformTypeName = 'Mooring Deployment',
+                                    platformTypeName = 'mooring',
                                     stride = stride,
                                     startDatetime = start_datetime,
                                     endDatetime = end_datetime,
@@ -180,6 +178,14 @@ class CCELoader(LoadScript):
                 loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat',
                                        'longitude': 'lon', 'depth': 'depth'}
             loader.process_data()
+
+    return _generic_load_ccems
+
+# Add the dynamically created methods to the class
+for name in ['load_ccems{:d}'.format(n) for n in range(7)]:
+    _method = make_load_ccems_method(name)
+    setattr(CCELoader, name, _method)
+
 
 if __name__ == '__main__':
     '''
