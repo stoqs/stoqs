@@ -182,7 +182,7 @@ def make_load_ccems_method(name):
     return _generic_load_ccems
 
 # Add the dynamically created methods to the class
-for name in ['load_ccems{:d}'.format(n) for n in range(7)]:
+for name in ['load_ccems{:d}'.format(n) for n in range(8)]:
     _method = make_load_ccems_method(name)
     setattr(CCELoader, name, _method)
 
