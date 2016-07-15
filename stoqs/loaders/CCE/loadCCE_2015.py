@@ -109,22 +109,19 @@ cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'opt
 cl.ccems1_nominal_depth = 225
 cl.ccems1_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS1/20151006/ADCP300/'
 cl.ccems1_files = [ 'MBCCE_MS1_ADCP300_20151006.nc' ]
-cl.ccems1_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', ]
-##cl.ccems1_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+cl.ccems1_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
 # MS2 ADCP data
 cl.ccems2_nominal_depth = 462
 cl.ccems2_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS2/20151005/ADCP300/'
 cl.ccems2_files = [ 'MBCCE_MS2_ADCP300_20151005.nc' ]
-cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', ]
-##cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
 # MS3 ADCP data
-cl.ccems3_nominal_depth = 462
+cl.ccems3_nominal_depth = 764
 cl.ccems3_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS3/20151005/ADCP300/'
 cl.ccems3_files = [ 'MBCCE_MS3_ADCP300_20151005.nc' ]
-cl.ccems3_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', ]
-##cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
 # MS4-7 ADCP data - No NetCDF files seen in http://elvis64.shore.mbari.org/opendap/hyrax/data/CCE_Archive/
 ##cl.ccems4_nominal_depth = 462
@@ -168,45 +165,45 @@ cl.ccems3_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', ]
 cl.process_command_line()
 
 if cl.args.test:
-    # MS1: Low-res (10 minute) three day period
+    # MS1: Low-res
     cl.ccems1_start_datetime = datetime(2016, 1, 15)
     cl.ccems1_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems1(stride=20)
+    cl.load_ccems1(stride=200)
 
-    # High-res (30 second) ~1-hour period - until data end when MS1 broke loose
+    # High-res
     cl.ccems1_start_datetime = datetime(2016, 1, 15, 19, 0)
     cl.ccems1_end_datetime = datetime(2016, 1, 16, 0, 30)
-    cl.load_ccems1(stride=1)
+    cl.load_ccems1(stride=10)
 
-    # MS2: Low-res (10 minute) three day period
+    # MS2: Low-res
     cl.ccems2_start_datetime = datetime(2016, 1, 15)
     cl.ccems2_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems2(stride=20)
+    cl.load_ccems2(stride=200)
 
-    # High-res (30 second) 5-hour period
+    # High-res
     cl.ccems2_start_datetime = datetime(2016, 1, 15, 21, 0)
     cl.ccems2_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems2(stride=1)
+    cl.load_ccems2(stride=10)
 
-    # MS3: Low-res (10 minute) three day period
+    # MS3: Low-res
     cl.ccems3_start_datetime = datetime(2016, 1, 15)
     cl.ccems3_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems3(stride=20)
+    cl.load_ccems3(stride=200)
 
-    # High-res (30 second) 5-hour period
+    # High-res
     cl.ccems3_start_datetime = datetime(2016, 1, 15, 21, 0)
     cl.ccems3_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems3(stride=1)
+    cl.load_ccems3(stride=10)
 
-    # MS4: Low-res (10 minute) three day period
+    # MS4: Low-res
     ##cl.ccems4_start_datetime = datetime(2016, 1, 15)
     ##cl.ccems4_end_datetime = datetime(2016, 1, 18)
-    ##cl.load_ccems4(stride=20)
+    ##cl.load_ccems4(stride=200)
 
-    # High-res (30 second) 5-hour period
+    # High-res
     ##cl.ccems4_start_datetime = datetime(2016, 1, 15, 21, 0)
     ##cl.ccems4_end_datetime = datetime(2016, 1, 16, 2, 0)
-    ##cl.load_ccems4(stride=1)
+    ##cl.load_ccems4(stride=10)
 
 
     # BIN: Low-res (10 minute) five day period
