@@ -23,6 +23,7 @@ django-environ==0.4.0
 GitPython==2.0.2
 httplib2==0.9.2
 importlib==1.0.3
+jdcal==1.2
 Jinja2==2.8
 kombu==3.0.35
 lxml==3.6.0

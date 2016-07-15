@@ -43,18 +43,28 @@ class CCELoader(LoadScript):
     '''
     Common routines for loading all CCE data
     '''
-    num_beds = 9
-    beds_names = [('bed{:02d}').format(n) for n in range(num_beds+1)]
-
     # See http://matplotlib.org/examples/color/colormaps_reference.html
     colors = {}
+
+    # Colors for BEDs 
+    num_beds = 9
+    beds_names = [('bed{:02d}').format(n) for n in range(num_beds+1)]
     reds = plt.cm.Reds
     for b, c in zip(beds_names, reds(np.arange(0, reds.N, reds.N/num_beds))):
         colors[b] = rgb2hex(c)[1:]
         # Duplicate color  for Trajectory 't' version
         colors[b + 't'] = rgb2hex(c)[1:]
 
+    # color for BIN
     colors['ccebin'] = 'ff0000'
+
+    # Colors for MS* moorings
+    num_ms = 8
+    ms_names = [('ccems{:1d}').format(n) for n in range(num_ms+1)]
+    oranges = plt.cm.Oranges
+    for b, c in zip(ms_names, oranges(np.arange(0, oranges.N, oranges.N/num_ms))):
+        colors[b] = rgb2hex(c)[1:]
+
 
     def loadBEDS(self, stride=None, featureType='trajectory'):
         '''
@@ -124,6 +134,57 @@ class CCELoader(LoadScript):
         except AttributeError:
             self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
                                       platformName)
+
+# Dynamic method creation for any number of 'ccems' moorings
+def make_load_ccems_method(name):
+    def _generic_load_ccems(self, stride=None):
+        # Generalize attribute value lookup
+        plt_name = name.split('_')[1]
+        platformName = plt_name[-3:].upper()
+        base = getattr(self, plt_name + '_base')
+        files = getattr(self, plt_name + '_files')
+        parms = getattr(self, plt_name + '_parms')
+        nominal_depth = getattr(self, plt_name + '_nominal_depth')
+        start_datetime = getattr(self, plt_name + '_start_datetime')
+        end_datetime = getattr(self, plt_name + '_end_datetime')
+
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in files], files):
+            url = os.path.join(base, f)
+
+            # Monkeypatch featureType depending on file name (or parms...)
+            if 'adcp' in f.lower():
+                Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
+            else:
+                Mooring_Loader.getFeatureType = lambda self: 'timeseries'
+
+            loader = Mooring_Loader(url = url, 
+                                    campaignName = self.campaignName,
+                                    campaignDescription = self.campaignDescription,
+                                    dbAlias = self.dbAlias,
+                                    activityName = aName,
+                                    activitytypeName = 'Mooring Deployment',
+                                    platformName = platformName,
+                                    platformColor = self.colors[plt_name],
+                                    platformTypeName = 'mooring',
+                                    stride = stride,
+                                    startDatetime = start_datetime,
+                                    endDatetime = end_datetime,
+                                    dataStartDatetime = None)
+
+            loader.include_names = parms
+            loader.auxCoords = {}
+            for p in parms:
+                loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat',
+                                       'longitude': 'lon', 'depth': 'depth'}
+            loader.process_data()
+
+    return _generic_load_ccems
+
+# Add the dynamically created methods to the class
+for name in ['load_ccems{:d}'.format(n) for n in range(8)]:
+    _method = make_load_ccems_method(name)
+    setattr(CCELoader, name, _method)
 
 
 if __name__ == '__main__':
