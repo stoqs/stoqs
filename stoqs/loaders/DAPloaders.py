@@ -433,7 +433,12 @@ class Base_Loader(STOQS_Loader):
                 depths[v] = self.ds[v][ac['depth']][:][0]
             elif self.getFeatureType() == 'timeseriesprofile':
                 logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac) 
-                depths[v] = self.ds[v][ac['depth']][:]
+                try:
+                    depths[v] = self.ds[v][ac['depth']][:]
+                except KeyError:
+                    # Likely a 'timeseries' variable in a 'timeseriesprofile' file (e.g. heading in ADCP file)
+                    # look elsewhere for a nominal depth
+                    depths[v] = [float(self.ds.attributes['NC_GLOBAL']['nominal_sensor_depth'])]
             elif self.getFeatureType() == 'trajectoryprofile':
                 logger.debug('Initializing depths list for trajectoryprofile, ac = %s', ac)
                 depths[v] = self.ds[v][ac['depth']][:]
@@ -665,6 +670,11 @@ class Base_Loader(STOQS_Loader):
                     # Assumes COARDS coordinate ordering
                     latitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                     longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                elif len(self.ds[pname].shape) == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper():
+                    # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
+                    latitudes[pname] = float(self.ds[self.ds[pname].keys()[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                    longitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                    depths[pname] = nomDepths[pname]
                 elif len(self.ds[pname].shape) == 2:
                     logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
                                 ' dimensions. Using nominal location read from auxially coordinates', pname)
@@ -678,7 +688,7 @@ class Base_Loader(STOQS_Loader):
                     latitudes[pname] = nomLats[pname]
                     depths[pname] = nomDepths[pname]
                 else:
-                    raise Exception('%s has shape of %d. Can handle only shapes of 2, and 4', pname, len(self.ds[pname].shape))
+                    raise Exception('{} has shape of {}. Can handle only shapes of 2, and 4'.format(pname, len(self.ds[pname].shape)))
                     
             else:
                 logger.warn('Variable %s is not of type pydap.model.GridType', pname)
