@@ -123,7 +123,14 @@ cl.ccems3_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS3/20
 cl.ccems3_files = [ 'MBCCE_MS3_ADCP300_20151005.nc' ]
 cl.ccems3_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
-# MS4-7 ADCP data - No NetCDF files seen in http://elvis64.shore.mbari.org/opendap/hyrax/data/CCE_Archive/
+# MS4 ADCP - data files are corrupted
+
+# MS5 ADCP data
+cl.ccems5_nominal_depth = 1315
+cl.ccems5_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS5/20151020/ADCP300/'
+cl.ccems5_files = [ 'MBCCE_MS5_ADCP300_20151020.nc' ]
+cl.ccems5_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+
 ##cl.ccems4_nominal_depth = 462
 ##cl.ccems4_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS4...'
 ##cl.ccems4_files = [ '' ]
@@ -195,16 +202,15 @@ if cl.args.test:
     cl.ccems3_end_datetime = datetime(2016, 1, 16, 2, 0)
     cl.load_ccems3(stride=10)
 
-    # MS4: Low-res
-    ##cl.ccems4_start_datetime = datetime(2016, 1, 15)
-    ##cl.ccems4_end_datetime = datetime(2016, 1, 18)
-    ##cl.load_ccems4(stride=200)
+    # MS5: Low-res
+    cl.ccems5_start_datetime = datetime(2016, 1, 15)
+    cl.ccems5_end_datetime = datetime(2016, 1, 18)
+    cl.load_ccems5(stride=200)
 
     # High-res
-    ##cl.ccems4_start_datetime = datetime(2016, 1, 15, 21, 0)
-    ##cl.ccems4_end_datetime = datetime(2016, 1, 16, 2, 0)
-    ##cl.load_ccems4(stride=10)
-
+    cl.ccems5_start_datetime = datetime(2016, 1, 15, 21, 0)
+    cl.ccems5_end_datetime = datetime(2016, 1, 16, 2, 0)
+    cl.load_ccems5(stride=10)
 
     # BIN: Low-res (10 minute) five day period
     cl.ccebin_startDatetime = datetime(2016, 1, 13)
@@ -255,15 +261,15 @@ else:
     cl.ccems3_end_datetime = datetime(2016, 1, 16, 2, 0)
     cl.load_ccems3(stride=1)
 
-    # MS4: Low-res (10 minute) three day period
-    ##cl.ccems4_start_datetime = datetime(2016, 1, 15)
-    ##cl.ccems4_end_datetime = datetime(2016, 1, 18)
-    ##cl.load_ccems4(stride=20)
+    # MS5: Low-res
+    cl.ccems5_start_datetime = datetime(2016, 1, 15)
+    cl.ccems5_end_datetime = datetime(2016, 1, 18)
+    cl.load_ccems5(stride=20)
 
-    # High-res (30 second) 5-hour period
-    ##cl.ccems4_start_datetime = datetime(2016, 1, 15, 21, 0)
-    ##cl.ccems4_end_datetime = datetime(2016, 1, 16, 2, 0)
-    ##cl.load_ccems4(stride=1)
+    # High-res
+    cl.ccems5_start_datetime = datetime(2016, 1, 15, 21, 0)
+    cl.ccems5_end_datetime = datetime(2016, 1, 16, 2, 0)
+    cl.load_ccems5(stride=1)
 
     # Low-res (10 minute) three day period
     cl.ccebin_startDatetime = datetime(2016, 1, 13)
