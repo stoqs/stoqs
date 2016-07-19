@@ -479,8 +479,8 @@
                             </label>
 
                             <ul id="resourceTabs" class="nav nav-tabs">
-                                <li id="metadata-netcdf-li" class="active"><a href="#metadatanetcdf" data-toggle="tab">NetCDF</a></li>
-                                <li><a href="#metadataquicklookplots" data-toggle="tab">Quick look plots</a></li>
+                                <li id="metadata-netcdf-li" class="active"><a href="#metadatanetcdf" data-toggle="tab">NetCDF sources</a></li>
+                                <li id="metadata-qlp-li"><a href="#metadataquicklookplots" data-toggle="tab">Quick look plots</a></li>
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane active" id="metadatanetcdf">
@@ -3529,7 +3529,7 @@
                 platformActivitiesHtml += '<input type="checkbox" name="all_activity_select_cb" value="" class="activity-select-checkbox checkall_activity" />' +
                                           ' Check/Uncheck all for Spatial Temporal plotting (leave this section open for selections to apply)'; 
                 $.each(platforms, function (index, plat) {
-                    activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
+                    var activities = $.map(data.resources.netcdf[plat], function(activities, a) {return a}).sort();
                     platformActivitiesHtml += '<div id="' + plat + '-group" class="accordian-group">' +
                     '<div class="accordian-heading">' + 
                        '<h5><a id="' + plat + '-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#platform-anchor" href="#collapse-' + plat + '">' + 
@@ -3540,18 +3540,26 @@
                         '<div class="accordion-inner" style="padding:0;">';
 
                     for (var i = 0; i < activities.length; i++) {
-                        activity = activities[i];
-                        attributes = data.resources.netcdf[plat][activity];
+                        var activity = activities[i];
+                        var attributes = data.resources.netcdf[plat][activity];
                         var dsLink = activity;
                         if (attributes.opendap_url) {
                             dsLink = '<input type="checkbox" name="activity_select_cb" value="' + activity + '" class="activity-select-checkbox" style="margin:0px;"/> ';
                             dsLink += '<a target="_blank" href="' + attributes.opendap_url + '.html">';
                             dsLink += '<span style="overflow:hidden;text-overflow:ellipsis;display:block;">' + activity + '</span></a>';
                         }
+                        var title = attributes.title;
+                        var summary = attributes.summary;
+                        if ( $.isEmptyObject(title) ) {
+                            title = '(No title in NetCDF file)';
+                        }
+                        if ( $.isEmptyObject(summary) ) {
+                            summary = '(No summary in NetCDF file)';
+                        }
                         platformActivitiesHtml += '<div class="row-fluid">' +
                             '<div class="span3">' + dsLink + '</div>' +
-                            '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + attributes.title + '</span></div>' +
-                            '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + attributes.summary + '</span></div>' +
+                            '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + title + '</span></div>' +
+                            '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + summary + '</span></div>' +
                             '<div class="span3"><br><span style="overflow:hidden;text-overflow:ellipsis;display:block;white-space:normal;">' + attributes.comment + '</span></div>' +
                             '</div>';
                     }
@@ -3611,7 +3619,13 @@
                     }
                     platformActivitiesHtml += '</tbody></table></div></div></div>';
                 });
-                $('#metadataquicklookplots > div').html(platformActivitiesHtml);
+                if ( platformActivitiesHtml == '' ) {
+                    $('#metadata-qlp-li').hide()
+                }
+                else {
+                    $('#metadata-qlp-li').show()
+                    $('#metadataquicklookplots > div').html(platformActivitiesHtml);
+                }
 
                 // Register event handler here as it is not recognized where the others are located in this file
                 $('.checkall_activity').on('click', function () {

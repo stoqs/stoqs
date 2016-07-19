@@ -121,7 +121,7 @@ cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_
 cl.ccems3_nominal_depth = 764
 cl.ccems3_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS3/20151005/ADCP300/'
 cl.ccems3_files = [ 'MBCCE_MS3_ADCP300_20151005.nc' ]
-cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+cl.ccems3_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
 # MS4-7 ADCP data - No NetCDF files seen in http://elvis64.shore.mbari.org/opendap/hyrax/data/CCE_Archive/
 ##cl.ccems4_nominal_depth = 462
