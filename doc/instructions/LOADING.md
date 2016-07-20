@@ -22,7 +22,7 @@ Use the --help option for a suggested workflow to build up a production server.
 ### Details
  
 These instructions cover the loading of *in situ* discrete sampling geometry feature type 
-data from OpenDAP accessible data sources.  Data adhereing to the Climate and Forecast
+data from OPeNDAP accessible data sources.  Data adhereing to the Climate and Forecast
 conventions version 1.6 are supported for loading into STOQS.  Specific feature types
 supported are: trajectory, timeSeries, timeSeriesProfile, and trajectoryProfile.  
 For more information please see http://cfconventions.org/
@@ -54,7 +54,7 @@ prerequisites:
 3. The CANON directory in stoqs/loaders/ contains load scripts for all of the MBARI CANON
    campaigns.  Much of the commonly used loader code has been factored out into a 
    CANONLoader class in `stoqs/loaders/CANON/__init__.py` so that the load scripts (e.g. 
-   loadCANON_september2012.py) simply need to be constructed with the OpenDAP URLs
+   loadCANON_september2012.py) simply need to be constructed with the OPeNDAP URLs
    and parameter names for each type of platform.
 
 4. Create a PostgreSQL database for your campaign, in this example a test database 
@@ -108,7 +108,7 @@ prerequisites:
       the script (step 7) with the new files.
     - Some programs to create NetCDF files from various original data files (e.g. Seabird underway 
       and profile CTD) are in the stoqs/loaders/CANON/toNetCDF directory.  See the README
-      there for instructions on running those scripts to put the data on an OpenDAP server
+      there for instructions on running those scripts to put the data on an OPeNDAP server
       so that your STOQS loader can load them.
     - Editing and running the load script during a campaign is an interactive process requiring
       interaction with people and testing the data sources for valid parameter names as well
