@@ -56,9 +56,11 @@ prerequisites:
    CANONLoader class in `stoqs/loaders/CANON/__init__.py` so that the load scripts (e.g. 
    loadCANON_september2012.py) simply need to be constructed with the OPeNDAP URLs
    and parameter names for each type of platform.
-
-4. Create a PostgreSQL database for your campaign, in this example a test database 
-  (with '_t' suffix) is created, using psql as user with proper privileges:
+   
+4. (Note: Steps 4-7 are performed by the `loaders/load.py` script. You may find it easier to 
+   use it to create and load your database.) Create a PostgreSQL database for your campaign, 
+   in this example a test database (with '_t' suffix) is created, using psql as user with proper 
+   privileges:
 
          create database stoqs_september2012_t owner=stoqsadm template=template_postgis;
          alter database stoqs_september2012_t set timezone='GMT';
