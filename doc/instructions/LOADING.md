@@ -4,7 +4,7 @@ Instructions for loading your data in STOQS
 ### TL;DR; (Quick instructions for your Vagrant VM)
 
 Use the `stoqs/loaders/load.py` script to load data for an existing campaign. First
-use it to list exiting campaigns (after creating a `campaigns.py` symbolic link in
+use it to list existing campaigns (after creating a `campaigns.py` symbolic link in
 the stoqs directory pointing to `mbari_campaigns.py`):
 
     export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
