@@ -65,6 +65,9 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2016/netcdf/'
 cl.dorado_files = [
                    'Dorado389_2016_090_01_090_01_decim.nc',
+                   'Dorado389_2016_161_00_161_00_decim.nc', 
+                   'Dorado389_2016_179_01_179_01_decim.nc',
+                   'Dorado389_2016_181_00_181_00_decim.nc',
                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
@@ -163,17 +166,25 @@ for p in platforms:
 # L_662
 cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 # cl.l_662_files = [ 'OS_Glider_L_662_20151124_TS.nc' ]  ## this file was current Jan 1 2016 to about March 3 2016.
-cl.l_662_files = [ 'OS_Glider_L_662_20160310_TS.nc' ]  ## changed to this file about March 3, 2016
+# cl.l_662_files = [ 'OS_Glider_L_662_20160310_TS.nc' ]  ## changed to this file about March 3, 2016
+cl.l_662_files = [ 'OS_Glider_L_662_20160628_TS.nc' ]  ## changed to this file about June 28, 2016
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
 # NPS_29
-#cl.nps29_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
+#cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 #cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
 cl.nps29_parms = ['TEMP', 'PSAL']
 cl.nps29_startDatetime = startdate
 cl.nps29_endDatetime = enddate
+
+# NPS_34
+#cl.nps34_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+#cl.nps34_files = [ 'OS_Glider_NPS_G34_20160720_TS.nc' ] ## deployed July 19 2016
+cl.nps34_parms = ['TEMP', 'PSAL']
+cl.nps34_startDatetime = startdate
+cl.nps34_endDatetime = enddate
 
 # UCSC_294
 #cl.ucsc294_base = 'http://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/UCSC294-20150430T2218/'
@@ -359,6 +370,7 @@ if cl.args.test:
 
     cl.loadL_662(stride=100) 
     ##cl.load_NPS29(stride=10)
+    ##cl.load_NPS34(stride=10)
     #cl.load_UCSC294(stride=10) 
     #cl.load_UCSC260(stride=10)
 
@@ -387,7 +399,8 @@ if cl.args.test:
 elif cl.args.optimal_stride:
 
     #cl.loadL_662(stride=2) 
-    ##cl.load_NPS29(stride=2) 
+    ##cl.load_NPS29(stride=2)
+    #cl.load_NPS34(stride=2) 
     #cl.load_wg_Tiny(stride=2)
     #cl.loadM1(stride=1)
     ##cl.loadDorado(stride=2)
@@ -400,20 +413,21 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride
 
-    #cl.loadL_662() 
+    cl.loadL_662() 
     ##cl.load_NPS29()
+    cl.load_NPS34()
     ##cl.load_UCSC294() 
     ##cl.load_UCSC260()
-    #cl.load_wg_Tiny()
-    #cl.loadM1()
-    #cl.load_oa1()
-    #cl.load_oa2()
-    ##cl.loadDorado()
+    cl.load_wg_Tiny()
+    cl.loadM1()
+    cl.load_oa1()
+    cl.load_oa2()
+    cl.loadDorado()
     #cl.loadDaphne()
     cl.loadTethys()
     cl.loadMakai()
-    #cl.loadRCuctd()
-    #cl.loadRCpctd() 
+    cl.loadRCuctd()
+    cl.loadRCpctd() 
     ##cl.loadWFuctd()   
     ##cl.loadWFpctd()
 
