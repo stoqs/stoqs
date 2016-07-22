@@ -123,7 +123,7 @@ def find_urls(base, search_str):
 # the binned files before this will work
 
 # Get directory list from thredds server
-platforms = ['tethys', 'daphne', 'makai']
+platforms = ['daphne', 'makai']
 
 for p in platforms:
     base =  'http://elvis64.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
