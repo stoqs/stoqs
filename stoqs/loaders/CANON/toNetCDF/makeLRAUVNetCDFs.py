@@ -174,7 +174,8 @@ def processResample(pw, url_in, inDir, resample_freq, parms, rad_to_deg, appendS
     logger.debug('Calling pw.process with file = %s', in_file)
 
     try:
-        pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg)
+        if not os.path.exists(out_file):
+            pw.processResampleNc4File(in_file, out_file, parms, resample_freq, rad_to_deg)
     except TypeError as e:
         logger.warn('Problem reading data from %s', url_in)
         logger.warn('Assuming data are invalid and skipping')

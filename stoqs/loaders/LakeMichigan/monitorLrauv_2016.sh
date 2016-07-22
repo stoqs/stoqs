@@ -1,16 +1,16 @@
 #!/bin/bash
 cd /opt/stoqsgit_dj1.8/venv-stoqs/bin
 source activate
-cd /opt/stoqsgit_dj1.8/stoqs/loaders/CANON/realtime
+cd /opt/stoqsgit_dj1.8/stoqs/loaders/LakeMichigan
 post='--post'
-#post=''
 debug=''
-#debug='--debug'
+start_datetime='20160724T000000'
+end_datetime='20160824T000000'
 export SLACKTOKEN=${SLACKTOCKEN}
-database='stoqs_os2016'
+database='stoqs_michigan2016'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/sbdlogs/2016/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
-declare -a platforms=("makai" "daphne")
+declare -a platforms=("tethys")
 
 pos=$(( ${#searchstr[*]} - 1 ))
 last=${searchstr[$pos]}
@@ -21,9 +21,9 @@ do
     do
         # get everything before the last /  - this is used as the directory base for saving the interpolated .nc files
         directory=`echo ${search} | sed 's:/[^/]*$::'`
-        python monitorLrauv.py --start '20160101T000000' -d  'LRAUV Monterey data - Off Season 2016' --productDir '/mbari/ODSS/data/canon/2016_OffSeason/Products/LRAUV' \
- 	--contourDir '/mbari/LRAUV/stoqs' --contourUrl 'http://dods.mbari.org/opendap/data/lrauv/stoqs/' -o /mbari/LRAUV/${platform}/${directory}/ \
-        -u ${urlbase}/${platform}/${search} -b ${database} -c 'LRAUV Monterey data - Off Season 2016'  --append --autoscale \
+        python monitorLrauv.py --start '${start_datetime}' --end '${end_datetime}' -d  'CANON - Lake Michigan LRAUV Experiment 2016' --productDir '/mbari/ODSS/data/canon/2016_OffSeason/Products/LRAUV' \
+ 	--contourDir '/tmp/LRAUV/stoqs' --contourUrl 'http://dods.mbari.org/opendap/data/lrauv/stoqs/' -o /tmp/LRAUV/${platform}/${directory}/ \
+        -u ${urlbase}/${platform}/${search} -b ${database} -c 'CANON - Lake Michigan LRAUV Experiment 2016'  --append --autoscale \
         --iparm bin_mean_mass_concentration_of_chlorophyll_in_sea_water \
 	--booleanPlotGroup front \
  	--plotDotParmName vertical_temperature_homogeneity_index \

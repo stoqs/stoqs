@@ -1,4 +1,22 @@
 #!/usr/bin/env python
+__author__    = 'Danelle Cline'
+__copyright__ = '2016'
+__license__   = 'GPL v3'
+__contact__   = 'dcline at mbari.org'
+
+__doc__ = '''
+
+Utility class to convert netCDF4 to netCDFs in a format compatible with STOQs loading.
+This basically captures the independently sampled variables captured in the LRAUV and
+(that have their own time base) and interpolates them onto a common lat/lon/depth/time
+trajectory.
+
+@var __date__: Date of last svn commit
+@undocumented: __doc__ parser
+@status: production
+@license: GPL
+'''
+
 import matplotlib
 import matplotlib.pyplot as plt
 import sys
@@ -651,8 +669,6 @@ if __name__ == '__main__':
 
     pw = InterpolatorWriter()
     pw.process_command_line()
-    #file='/media/DCLINETHUMB/201505122358_201505142139.nc4'
-    #file='/home/vagrant/dev/stoqs-dcline/stoqs/201510061540_201510062013.nc4'
     nc4_file='/home/vagrant/LRAUV/daphne/missionlogs/2015/20150930_20151008/20151006T201728/201510062017_201510062027.nc4'
     outDir = '/tmp/'
     resample_freq='10S'
@@ -685,5 +701,3 @@ if __name__ == '__main__':
     pw.processResampleNc4File(nc4_file, out_file, json.loads(parm),resample_freq, rad_to_deg)
 
     print 'Done.'
-
-    #scp /tmp/201505122358_201505142139_10S.nc stoqsadm@kraken.shore.mbari.org:/mbari/ODSS/data/canon/2015_May/Platforms/AUVs/Daphne/NetCDF/
