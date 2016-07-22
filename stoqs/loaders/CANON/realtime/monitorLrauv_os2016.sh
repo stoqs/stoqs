@@ -10,7 +10,7 @@ export SLACKTOKEN=${SLACKTOCKEN}
 database='stoqs_os2016'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/sbdlogs/2016/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
-declare -a platforms=("tethys" "makai" "daphne")
+declare -a platforms=("makai" "daphne")
 
 pos=$(( ${#searchstr[*]} - 1 ))
 last=${searchstr[$pos]}
