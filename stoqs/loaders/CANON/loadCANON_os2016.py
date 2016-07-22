@@ -123,8 +123,7 @@ def find_urls(base, search_str):
 # the binned files before this will work
 
 # Get directory list from thredds server
-##platforms = ['tethys', 'daphne', 'makai']
-platforms = []
+platforms = ['tethys', 'daphne', 'makai']
 
 for p in platforms:
     base =  'http://elvis64.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
@@ -144,17 +143,22 @@ for p in platforms:
                                 'pose_longitude_DeadReckonUsingMultipleVelocitySources',
                                 'pose_latitude_DeadReckonUsingMultipleVelocitySources',
                                 'pose_depth_DeadReckonUsingMultipleVelocitySources'])
-    urls_eng = find_urls(base, '.*2S_eng.nc$')
-    urls_sci = find_urls(base, '.*10S_sci.nc$')
-    urls = urls_eng + urls_sci
-    files = []
-    if len(urls) > 0 :
-        for url in sorted(urls):
-            file = '/'.join(url.split('/')[-3:])
-            files.append(file)
-    setattr(cl, p + '_files', files)
-    setattr(cl, p  + '_startDatetime', startdate)
-    setattr(cl, p + '_endDatetime', enddate)
+    try:
+        #urls_eng = find_urls(base, '.*2S_eng.nc$')
+        urls_sci = find_urls(base, '.*10S_sci.nc$')
+        urls = urls_sci # + urls_eng
+        files = []
+        if len(urls) > 0 :
+            for url in sorted(urls):
+                file = '/'.join(url.split('/')[-3:])
+                files.append(file)
+            setattr(cl, p + '_files', files)
+
+        setattr(cl, p  + '_startDatetime', startdate)
+        setattr(cl, p + '_endDatetime', enddate)
+
+    except FileNotFound:
+        continue
 
 ######################################################################
 #  GLIDERS
