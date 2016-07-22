@@ -138,15 +138,6 @@ def processDecimated(pw, url, lastDatetime, outDir, resample_freq, interp_freq, 
             raise ServerError("Value error - can't read parameters from %s" % (url))
 
         else:
-            '''if outFile_i.startswith('/tmp'):
-                # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
-                list = url.split('/') # get all strings delimited with /
-                indx = list.index('LRAUV') # find first LRAUV string in the list
-                dir = '/'.join(list[indx:-1]) # grab everything between LRAUV and the last string
-                cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/%s' % (outFile_i, dir)
-                logger.debug('%s', cmd)
-                os.system(cmd)'''
-
             url_i = url.replace('.nc4', '_i.nc')
     else:
         logger.debug('endDatetime <= lastDatetime. Assume that data from %s have already been loaded', url)
@@ -166,16 +157,9 @@ def process_command_line():
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                      description='Read lRAUV data transferred over hotstpot and .nc file in compatible CF1-6 Discrete Sampling Geometry for for loading into STOQS',
                                      epilog=examples)
-                                         
-    '''parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
-                                                              'If interpolating, must map to the same location as -o directory', default='.',required=True)'''
     parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
                                                              ' If interpolating, must map to the same location as -o directory',
                         default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/tethys/realtime/sbdlogs/2015/201509/20150911T155447/.*shore.nc4$',required=False)
-    '''parser.add_argument('-u', '--inUrl',action='store', help='url where hotspot/cell or other realtime processed data logs are. '
-                                                             ' If interpolating, must map to the same location as -o directory',
-                        default='http://elvis.shore.mbari.org/thredds/catalog/LRAUV/daphne/realtime/cell-logs/.*Normal*.nc4$',required=False)'''
-
     parser.add_argument('-b', '--database',action='store', help='name of database to load hotspot data to', default='default',required=False)
     parser.add_argument('-c', '--campaign',action='store', help='name of campaign', default='April 2015 testing',required=False)
     parser.add_argument('-s', '--stride',action='store', help='amount to stride data before loading e.g. 10=every 10th point', default=1)
@@ -195,12 +179,10 @@ def process_command_line():
                         default='/tmp/TestMonitorLrauv/',required=False)
     parser.add_argument('--productDir', action='store', help='output directory to store 24 hour contour output for catalog in ODSS',
                         default='/tmp/TestMonitorLrauv/',required=False)
-    #parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='.')
     parser.add_argument('-d', '--description', action='store', help='Brief description of experiment', default='Daphne Monterey data - April 2015')
     parser.add_argument('-i', '--interpolate', action='store_true', help='interpolate - must be used with --outDir option')
     parser.add_argument('--latest24hr', action='store_true', help='create the latest 24 hour plot')
     parser.add_argument('--autoscale', action='store_true', help='autoscale each plot to 1 and 99 percentile',required=False,default=True)
-    #parser.add_argument('-a', '--append', action='store_false', help='Append data to existing Activity',required=False)
     parser.add_argument('-a', '--append', action='store_true', help='Append data to existing Activity',required=False)
     parser.add_argument('--post', action='store_true', help='Post message to slack about new data. Disable this during initial database load or when debugging',required=False)
     parser.add_argument('--debug', action='store_true', help='Useful for debugging plots - does not allow data loading',required=False, default=False)
@@ -295,11 +277,8 @@ if __name__ == '__main__':
 
     for p in args.parms:
         parm_fix = p.replace('/','_')
-        #plot_group.append(parm_fix + '_i' + ',' + parm_fix)
         plot_group.append(parm_fix)
-        #parm_list.append(parm_fix + '_i')
         parm_list.append(parm_fix)
-        #coord[parm_fix + '_i'] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
         coord[parm_fix] = {'time': p + '_time', 'latitude':  p +'_latitude', 'longitude':  p +'_longitude', 'depth':  p +'_depth'}
         parm_process.append(parm_fix)
 
@@ -333,8 +312,14 @@ if __name__ == '__main__':
             dataStartDatetime = None
 
             if args.append:
+                core_aName = aName.split('_')[0]
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(args.database).filter(activity__name=aName).aggregate(Max('timevalue'))['timevalue__max']
+                dataStartDatetime = InstantPoint.objects.using(args.database).filter(activity__name__contains=core_aName).aggregate(Max('timevalue'))['timevalue__max']
+
+            if dataStartDatetime:
+                # Override the activity name with what's in the database. Arbitrarily pick the first one.
+                ip = InstantPoint.objects.using(args.database).filter(activity__name__contains=core_aName)
+                aName = ip[0].activity.name
 
             try:
                 if not args.debug:
@@ -367,23 +352,15 @@ if __name__ == '__main__':
                 else:
                     outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
 
-                logger.debug('out file %s', outFile)
+                if not os.path.exists(outFile):
+                    logger.debug('out file %s', outFile)
 
-                contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile, 
-                            args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
-                contour.run()
+                    contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile,
+                                args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
+                    contour.run()
 
                 # Replace netCDF file with png extension and that is the URL of the log
                 logUrl = re.sub('\.nc$','.png', url_src)
-
-                '''if outFile.startswith('/tmp'):
-                    # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
-                    list = url.split('/') # get all strings delimited with /
-                    indx = list.index('LRAUV') # find first LRAUV string in the list
-                    dir = '/'.join(list[indx:-1]) # grab everything between LRAUV and the last string
-                    cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/%s' % (outFile, dir)
-                    logger.debug('%s', cmd)
-                    os.system(cmd)'''
 
                 # Round the UTC time to the local time and do the query for the 24 hour period the log file falls into
                 startDatetime = startDatetimeUTC
@@ -400,19 +377,12 @@ if __name__ == '__main__':
                 url = (args.contourUrl + platformName  + '_log_' + startDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '_' + 
                        endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
 
-                logger.debug('out file %s url: %s ', outFile, url)
-                c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title, 
-                            outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
-                c.run()
 
-                if outFile.startswith('/tmp'):
-                    # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
-                    '''list = args.contourUrl.split('/') # get all strings delimited with /
-                    indx = list.index('lrauv') # find first LRAUV string in the list
-                    dir = '/'.join(list[indx+1:-1]) # grab everything after LRAUV and the last string
-                    cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/LRAUV/%s' % (outFile, dir)
-                    logger.debug('%s', cmd)
-                    os.system(cmd)'''
+                if not os.path.exists(outFile):
+                    logger.debug('out file %s url: %s ', outFile, url)
+                    c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title,
+                                outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
+                    c.run()
 
                 if args.post:
                     message = 'LRAUV log data processed through STOQS workflow. Log <%s|%s plot> ' % (logUrl, aName)
@@ -458,15 +428,7 @@ if __name__ == '__main__':
                         title, outFileLatestAnim, args.autoscale, args.plotDotParmName, args.booleanPlotGroup, True, args.zoom, args.overlap)
             c.run()
 
-            if outFileLatest.startswith('/tmp'):
-                # scp outFile_i to elvis, if unable to mount from elvis. Requires user to enter password.
-                '''list = args.contourUrl.split('/') # get all strings delimited with /
-                indx = list.index('lrauv') # find first LRAUV string in the list
-                dir = '/'.join(list[indx+1:-1]) # grab everything after LRAUV and the last string
-                cmd = r'scp %s stoqsadm@elvis.shore.mbari.org:/mbari/LRAUV/%s' % (outFileLatest, args.productDir)
-                logger.debug('%s', cmd)
-                os.system(cmd)'''
-            else:
+            if not outFileLatest.startswith('/tmp'):
                 # copy to the atlas share that will get cataloged in ODSS
                 cmd = r'cp %s %s' %(outFileLatest, outFileLatestProduct)
                 logger.debug('%s', cmd)
@@ -476,11 +438,6 @@ if __name__ == '__main__':
                 cmd = r'cp %s %s' %(outFileLatestAnim, outFileLatestProductAnim)
                 logger.debug('%s', cmd)
                 os.system(cmd)
-
-            '''if args.post:
-                    urlLatest = args.productDir + platformName  +  '_24h_latest.png'
-                    message = 'LRAUV log data processed through STOQS workflow. last 24-hr <%s|%s plot> ' % (urlLatest, aName)
-                    slack.chat.post_message("#lrauvs", message)'''
 
         except Exception as e:
             logger.warn(e)
