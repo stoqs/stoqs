@@ -9,8 +9,7 @@ debug=''
 export SLACKTOKEN=${SLACKTOCKEN}
 database='stoqs_os2016'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
-declare -a searchstr=("/realtime/sbdlogs/2016/201603/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
-#declare -a searchstr=("/realtime/cell-logs/.*Normal.nc4$")
+declare -a searchstr=("/realtime/sbdlogs/2016/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
 declare -a platforms=("tethys" "makai" "daphne")
 
 pos=$(( ${#searchstr[*]} - 1 ))
@@ -19,15 +18,7 @@ last=${searchstr[$pos]}
 for platform in "${platforms[@]}"
 do
     for search in "${searchstr[@]}"
-    do 
-	# only plot the 24 hour plot in the last search group, otherwise this updates the timestamp on the files stored in the odss-data-repo per every search string
-	#if [[ $search == $last ]]
-	#then
-	latest24plot='--latest24hr'
-	#else
-	#latest24plot=''
-	#fi
-
+    do
         # get everything before the last /  - this is used as the directory base for saving the interpolated .nc files
         directory=`echo ${search} | sed 's:/[^/]*$::'`
         python monitorLrauv.py --start '20160101T000000' -d  'LRAUV Monterey data - Off Season 2016' --productDir '/mbari/ODSS/data/canon/2016_OffSeason/Products/LRAUV' \
@@ -57,7 +48,7 @@ do
         bin_mean_mass_concentration_of_chlorophyll_in_sea_water \
         bin_mean_sea_water_temperature \
         bin_mean_sea_water_salinity \
-        $latest24plot $post $debug > /tmp/monitorLrauv${platform}.out 2>&1
+        --latest24hr $post $debug > /tmp/monitorLrauv${platform}.out 2>&1
     done
 done
 

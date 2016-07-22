@@ -1,6 +1,18 @@
 #!/usr/bin/env python
-__author__ = 'dcline'
+__author__    = 'Danelel Cline'
+__copyright__ = '2016'
+__license__   = 'GPL v3'
+__contact__   = 'dcline at mbari.org'
 
+__doc__ = '''
+
+Creates interpolated netCDF files for all LRAUV data; engineering and science data
+
+@var __date__: Date of last svn commit
+@undocumented: __doc__ parser
+@status: production
+@license: GPL
+'''
 
 import os
 import sys
