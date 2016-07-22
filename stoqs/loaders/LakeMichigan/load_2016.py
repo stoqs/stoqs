@@ -34,14 +34,14 @@ from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
 
-cl = LakeMILoader('stoqs_michigan2016', 'CANON - Lake Michigan LRAUV Experiment 2016',
+cl = LakeMILoader('stoqs_michigan2016', 'Lake Michigan LRAUV Experiment 2016',
                     description = 'LRAUV 2016 Experiment in Lake Michigan',
                   )
 
 # Set start and end dates for all loads from sources that contain data
 # beyond the temporal bounds of the campaign
 #
-startdate = datetime.datetime(2016, 7, 24)        # Fixed start
+startdate = datetime.datetime(2016, 7, 24)      # Fixed start
 enddate = datetime.datetime(2016, 8, 24)        # Fixed end
 
 
