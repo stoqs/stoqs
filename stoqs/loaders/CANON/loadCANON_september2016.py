@@ -6,7 +6,7 @@ __contact__   = 'duane at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON off season activities in 2016
+Master loader for all CANON September  activities in 2016
 
 Mike McCann, Duane Edgington, Danelle Cline
 MBARI 5 January 2016
@@ -34,8 +34,8 @@ from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
 
-cl = CANONLoader('stoqs_os2016', 'CANON - Off Season 2016',
-                    description = 'CANON Off Season 2016 Experiment in Monterey Bay',
+cl = CANONLoader('stoqs_canon_september2016', 'CANON - September 2016',
+                    description = 'CANON September 2016 Experiment in Monterey Bay',
                     x3dTerrains = {
                                     'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -51,8 +51,8 @@ cl = CANONLoader('stoqs_os2016', 'CANON - Off Season 2016',
 # Set start and end dates for all loads from sources that contain data 
 # beyond the temporal bounds of the campaign
 #
-startdate = datetime.datetime(2016, 1, 1)                 # Fixed start
-enddate = datetime.datetime(2016, 12, 31)                  # Fixed end. Extend "offseason" to end of year
+startdate = datetime.datetime(2016, 7, 11)                # Fixed start  July 11 2016, deployment of nps34
+enddate = datetime.datetime(2016, 10, 7)                  # Fixed end. October 7 2016, a few days after end of CANON cruise
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -430,10 +430,10 @@ else:
     #cl.loadDaphne()
     cl.loadTethys()
     cl.loadMakai()
-    cl.loadRCuctd()
-    cl.loadRCpctd() 
-    ##cl.loadWFuctd()   
-    ##cl.loadWFpctd()
+    #cl.loadRCuctd()
+    #cl.loadRCpctd() 
+    #cl.loadWFuctd()   
+    #cl.loadWFpctd()
 
     #cl.loadSubSamples()
 
