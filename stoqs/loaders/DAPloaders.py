@@ -360,13 +360,6 @@ class Base_Loader(STOQS_Loader):
         coordinates, the coordinate variables have standard_names of 'time', 'latitude', 'longitude', 'depth'.
         Example return value: {'time': 'esecs', 'depth': 'DEPTH', 'latitude': 'lat', 'longitude': 'lon'}
         '''
-        if self.auxCoords:
-            if variable in self.auxCoords:
-                # Simply return self.auxCoords if specified in the constructor
-                logger.debug('Returning auxCoords for variable %s that were specified in the constructor: %s', variable, self.auxCoords[variable])
-                return self.auxCoords[variable]
-            else:
-                raise ParameterNotFound('auxCoords is specified, but variable requested (%s) is not in %s' % (variable, self.auxCoords))
 
         # Scan variable standard_name attributes for ('time', 'latitude', 'longitude', 'depth') standard_name's
         # There is no check here for multiple multiple time, latitude, longitude, or depth coordinates.  Should
@@ -389,13 +382,20 @@ class Base_Loader(STOQS_Loader):
                 logger.debug(coord)
                 try:
                     logger.debug(snCoord)
-                    ##coordDict[coord] = coordSN[coord]
                     coordDict[coordSN[coord]] = coord
                 except KeyError as e:
                     raise AuxCoordMissingStandardName(e)
         else:
             logger.warn('Variable %s is missing coordinates attribute', variable)
-            raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
+            if self.auxCoords[variable]:
+                # Try getting it from overridden values provided
+                for coord in self.auxCoords[variable].values():
+                    try:
+                        coordDict[coordSN[coord]] = coord
+                    except KeyError as e:
+                        raise AuxCoordMissingStandardName(e)
+            else:
+                raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
 
         # Check for all 4 coordinates needed for spatial-temporal location - if any are missing raise exception with suggestion
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
@@ -404,11 +404,21 @@ class Base_Loader(STOQS_Loader):
             logger.warn('Required coordinate(s) %s missing. Consider overriding by setting an'
                         ' auxCoords dictionary in your Loader.', 
                         list(reqCoords - set(coordDict.keys())))
-            raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
+            if not self.auxCoords:
+                raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
 
         logger.debug('coordDict = %s', coordDict)
 
-        return coordDict
+        if not coordDict:
+            if self.auxCoords:
+                if variable in self.auxCoords:
+                    # Simply return self.auxCoords if specified in the constructor
+                    logger.debug('Returning auxCoords for variable %s that were specified in the constructor: %s', variable, self.auxCoords[variable])
+                    return self.auxCoords[variable]
+                else:
+                    raise ParameterNotFound('auxCoords is specified, but variable requested (%s) is not in %s' % (variable, self.auxCoords))
+        else:
+            return coordDict
 
     def getNominalLocation(self):
         '''
@@ -1815,6 +1825,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         loader.include_names = parmList
 
     # Auxillary coordinates are the same for all include_names
+    # NOTE: Presence of coordinates variable attribute will override these assignments
     loader.auxCoords = {}
     if pTypeName == 'waveglider':
         # for v in loader.include_names:
