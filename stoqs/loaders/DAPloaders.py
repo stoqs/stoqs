@@ -389,9 +389,9 @@ class Base_Loader(STOQS_Loader):
             logger.warn('Variable %s is missing coordinates attribute', variable)
             if self.auxCoords[variable]:
                 # Try getting it from overridden values provided
-                for coord in self.auxCoords[variable].values():
+                for coordSN, coord in self.auxCoords[variable].iteritems():
                     try:
-                        coordDict[coordSN[coord]] = coord
+                        coordDict[coordSN] = coord
                     except KeyError as e:
                         raise AuxCoordMissingStandardName(e)
             else:
