@@ -89,7 +89,7 @@ class LakeMILoader(LoadScript):
                                           pName, self.colors['tethys'], 'auv', 'AUV mission',
                                           self.tethys_parms, self.dbAlias, stride,
                                           grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
-                                          endDatetime=endDatetime, startDatetime=startDatetime)
+                                          endDatetime=endDatetime, startDatetime=startDatetime, timezone='America/New_York')
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
