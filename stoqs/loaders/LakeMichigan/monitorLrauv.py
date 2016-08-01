@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))           
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))           # DAPLoaders
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../CANON/toNetCDF/"))  # for lrauvNc4ToNetcdf
 
+
 import DAPloaders
 import logging
 import lrauvNc4ToNetcdf
@@ -23,6 +24,7 @@ import re
 import pydap
 import pytz
 
+from LakeMichigan import LakeMILoader
 from Contour import Contour
 from thredds_crawler.crawl import Crawl
 from coards import from_udunits
@@ -248,9 +250,9 @@ if __name__ == '__main__':
         slack = Slacker(token)
 
     # Assume that the database has already been created with description and terrain information, so use minimal arguments in constructor
-    cl = LakeMILoader(args.database, args.campaign)
-    cl.dbAlias = args.database
-    cl.campaignName = args.campaign
+    lm = LakeMILoader(args.database, args.campaign)
+    lm.dbAlias = args.database
+    lm.campaignName = args.campaign
    
     # Get directory list from sites
     s = args.inUrl.rsplit('/',1)
@@ -338,7 +340,8 @@ if __name__ == '__main__':
                                                       dataStartDatetime = dataStartDatetime,
                                                       endDatetime = endDatetime,
                                                       contourUrl = args.contourUrl,
-                                                      auxCoords = coord)
+                                                      auxCoords = coord,
+                                                      timezone = 'America/New_York')
 
                 endDatetimeUTC = pytz.utc.localize(endDatetime)
                 endDatetimeLocal = endDatetimeUTC.astimezone(pytz.timezone('America/New_York'))
@@ -351,7 +354,7 @@ if __name__ == '__main__':
                 else:
                     outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
 
-                if not os.path.exists(outFile):
+                if not os.path.exists(outFile) or args.debug:
                     logger.debug('out file %s', outFile)
 
                     contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile,
@@ -377,7 +380,7 @@ if __name__ == '__main__':
                        endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
 
 
-                if not os.path.exists(outFile):
+                if not os.path.exists(outFile) or args.debug:
                     logger.debug('out file %s url: %s ', outFile, url)
                     c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title,
                                 outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)

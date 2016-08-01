@@ -244,7 +244,7 @@ class Contour(object):
             self.data, data_start, data_end = self.getTimeSeriesData(start_datetime, end_datetime)
             return data_start, data_end
 
-        except Exception, e:
+        except Exception as e:
             logger.warn(e)
             raise e
 
@@ -290,8 +290,8 @@ class Contour(object):
             datetimes.append(dt.replace(tzinfo=utc_zone))
 
         loc = ephem.Observer()
-        loc.lat = '43.4501' # Lake Michigan region
-        loc.lon = '-87.2220'
+        loc.lat = '43.30634' # Lake Michigan region
+        loc.lon = '-85.23443'
         loc.elev = 175.87
         sun = ephem.Sun(loc)
         mint=min(datetimes)
@@ -482,25 +482,23 @@ class Contour(object):
                         for t in cb.ax.yaxis.get_ticklabels():
                             t.set_fontsize(8)
 
+                        ax1_colorbar.xaxis.set_major_locator(plt.NullLocator())
+                        ax1_colorbar.yaxis.set_ticks_position('right')
+                        for t in ax1_colorbar.yaxis.get_ticklabels():
+                            t.set_fontsize(8)
 
                 # Rotate and show the date with date formatter in the last plot of all the groups
                 logger.debug('rotate and show date with date formatter')
-                if name is parm[-1] and group is self.plotGroupValid[-1]:
-                    x_fmt = self.DateFormatter(self.scale_factor)
-                    if plot_scatter:
-                        ax = ax1_plot
-                        # Don't show on the upper contour plot
-                        ax0_plot.xaxis.set_ticks([])
-                    else:
-                        ax = ax0_plot
-                    ax.xaxis.set_major_formatter(x_fmt)
+                if name is parm[-1]  and group is self.plotGroupValid[-1]:
+                    x_fmt = self.DateFormatter(self.scale_factor) 
+                    ax0_plot.xaxis.set_ticks([])
+                    ax1_plot.xaxis.set_major_formatter(x_fmt)
                     # Rotate date labels
-                    for label in ax.xaxis.get_ticklabels():
+                    for label in ax1_plot.xaxis.get_ticklabels():
                         label.set_rotation(10)
                 else:
                     ax0_plot.xaxis.set_ticks([])
-                    if plot_scatter:  
-                        ax1_plot.xaxis.set_ticks([])
+                    ax1_plot.xaxis.set_ticks([])
 
                 if plot_scatter:
                     j+=4
@@ -521,21 +519,31 @@ class Contour(object):
         lon = pointsnp[:,0]
         lat = pointsnp[:,1]
 
-        ltmin = self.extent[1]
-        ltmax = self.extent[3]
-        lnmin = self.extent[0]
-        lnmax = self.extent[2]
-        lndiff = abs(lnmax - lnmin)
-        ltdiff = abs(ltmax - ltmin)
-        logger.debug("lon diff %f lat diff %f", lndiff, ltdiff)
-        mindeg = .02
-        paddeg = .01
-        if lndiff < mindeg :
-            lnmin -= mindeg
-            lnmax += mindeg
-        if ltdiff < mindeg:
-            ltmin -= mindeg
-            ltmax += mindeg
+        if self.extent:
+            ltmin = self.extent[1]
+            ltmax = self.extent[3]
+            lnmin = self.extent[0]
+            lnmax = self.extent[2]
+            lndiff = abs(lnmax - lnmin)
+            ltdiff = abs(ltmax - ltmin)
+            logger.debug("lon diff %f lat diff %f", lndiff, ltdiff)
+            mindeg = .02
+            paddeg = .01
+            if lndiff < mindeg :
+                lnmin -= mindeg
+                lnmax += mindeg
+            if ltdiff < mindeg:
+                ltmin -= mindeg
+                ltmax += mindeg
+            e = (lnmin - paddeg, ltmin - paddeg, lnmax + paddeg, ltmax + paddeg)
+        else:
+            # default map to Lake Michigan region - this may be wrong
+            paddeg = .01
+            ltmin = 45.27386
+            ltmax = 45.33386
+            lnmin = -85.28610
+            lnmax = -85.18345
+            e = (lnmin, ltmin, lnmax, ltmax)
         e = (lnmin - paddeg, ltmin - paddeg, lnmax + paddeg, ltmax + paddeg)
 
         logger.debug('Extent found %f,%f,%f,%f)', e[0], e[1],e[2],e[3])
@@ -548,7 +556,7 @@ class Contour(object):
                 mp.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
                 mp.drawparallels(np.linspace(e[1],e[3],num=3), labels=[True,False,False,False], fontsize=8, linewidth=0)
                 mp.drawmeridians(np.linspace(e[0],e[2],num=3), labels=[False,False,False,True], fontsize=8, linewidth=0)
-            except Exception, e:
+            except Exception as e:
                 logger.error('Could not download ocean basemap ')
                 mp = None
 
@@ -575,6 +583,7 @@ class Contour(object):
                         ln,lt = zip(*track)
                         mp.plot(ln,lt,'-',c='k',alpha=0.5,linewidth=2, zorder=1)
 
+            logger.debug('done plotting tracks')
             # if have a valid series, then plot the dots
             if self.plotDotParmName and len(z) > 0:
                 if len(z) > 2000:
@@ -617,9 +626,10 @@ class Contour(object):
 
             # plot the legend outside the plot in the upper left corner
             l = ax.legend(loc='upper left', bbox_to_anchor=(1,1), prop={'size':8}, scatterpoints=1)# only plot legend symbol once
-            l.set_zorder(4) # put the legend on top
+            if l is not None:
+                l.set_zorder(4)
 
-        except Exception, e:
+        except Exception as e:
             logger.warn(e)
 
         if self.animate:
@@ -660,7 +670,7 @@ class Contour(object):
             # use RBF
             rbf = Rbf(x, y, z, epsilon=2)
             zi = rbf(xi, yi)
-        except Exception, e:
+        except Exception as e:
             logger.warn('Could not grid the data' +  str(e))
             zi = None
         return xi,yi,zi
@@ -776,8 +786,9 @@ class Contour(object):
             yloc = plt.MaxNLocator(max_yticks)
             ax.yaxis.set_major_locator(yloc)
 
-        except Exception,e:
-            logger.error(e)
+        except Exception as e: 
+            logger.debug('Error - trying to plot the data')
+            cs = ax.scatter(x,y,c=z,s=20,marker='.',vmin=zmin,vmax=zmax,lw=0,alpha=1.0,cmap=self.cm_jetplus)
 
         return cs, zi
 
@@ -807,7 +818,7 @@ class Contour(object):
             yloc = plt.MaxNLocator(max_yticks)
             ax.yaxis.set_major_locator(yloc)
 
-        except Exception,e:
+        except Exception as e:
             logger.error(e)
 
         return cs
@@ -842,7 +853,7 @@ class Contour(object):
             yloc = plt.MaxNLocator(max_yticks)
             ax.yaxis.set_major_locator(yloc)
 
-        except Exception,e:
+        except Exception as e:
             logger.error(e)
 
         return cs
@@ -895,7 +906,7 @@ class Contour(object):
                 os.system(cmd)
                 shutil.rmtree(self.dirpath)
 
-            except Exception, e:
+            except Exception as e:
                 logger.error(e)
 
         else :
@@ -907,6 +918,6 @@ class Contour(object):
                     self.subtitle1 = '%s  to  %s EDT' % (data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
                     self.subtitle2 = '%s  to  %s UTC' % (data_start.strftime('%Y-%m-%d %H:%M'), data_end.strftime('%Y-%m-%d %H:%M'))
                     self.createPlot(data_start, data_end)
-            except Exception, e:
+            except Exception as e:
                 logger.error(e)
 
