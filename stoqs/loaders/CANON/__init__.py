@@ -78,6 +78,7 @@ class CANONLoader(LoadScript):
                 'l_662':        'bd0026',
                 'nps29':        '0b9131',
                 'nps34':        '36d40f',
+                'sg621':        '5b9131',
                 'm1':           'bd2026',
                 'oa':           '0f9cd4',
                 'oa2':          '2d2426',
@@ -302,6 +303,28 @@ class CANONLoader(LoadScript):
                                        'NPS_Glider_29', self.colors['nps29'], 'glider', 'Glider Mission', 
                                         self.nps29_parms, self.dbAlias, stride, self.nps29_startDatetime, 
                                         self.nps29_endDatetime, grdTerrain=self.grdTerrain, 
+                                        dataStartDatetime=dataStartDatetime)
+
+    def load_SG621(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.sg621_files], self.sg621_files):
+            url = self.sg621_base + f
+
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue - if data are loaded from multiple
+                # activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
+                                                    activity__name=aName).aggregate(
+                                                    Max('timevalue'))['timevalue__max']
+
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'SG_Glider_621', self.colors['sg621'], 'glider', 'Glider Mission',
+                                        self.sg621_parms, self.dbAlias, stride, self.sg621_startDatetime,
+                                        self.sg621_endDatetime, grdTerrain=self.grdTerrain,
                                         dataStartDatetime=dataStartDatetime)
 
     def load_NPS34(self, stride=None):
