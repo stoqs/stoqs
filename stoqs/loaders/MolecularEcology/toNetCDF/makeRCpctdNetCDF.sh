@@ -9,7 +9,7 @@
 # Mike McCann
 # 15 January 2014
 
-LOGIN=stoqsadm
+LOGIN=mccann
 RH=odss.mbari.org
 
 ##LOGIN=odssadm
@@ -61,11 +61,22 @@ RH=odss.mbari.org
 ##scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 ##rm -r $LOCALDIR
 
-# -------------------------------------------------------------------------------------------------------------------------------------------------------
-DIR=/data/simz/2014_Oct/carson/pctd
-LOCALDIR=`echo $DIR | cut -d/ -f6`  # -f must match last directory
-rsync -rv $LOGIN@$RH:$DIR  .
-../../CANON/toNetCDF/pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during SIMZ October 2014" 
+# Original files copied to odss.mbari.org from /mbari/DMO/MDUC_CORE_CTD_200103/DATA/2014_210_212_SIMZ_RC/
+# cp /mbari/DMO/MDUC_CORE_CTD_200103/DATA/2014_210_212_SIMZ_RC/simz2014c2[5-9]* /mbari/ODSS/data/simz/2014_Jul/Platforms/Ships/Rachel_Carson/pctd/
+# cp /mbari/DMO/MDUC_CORE_CTD_200103/DATA/2014_210_212_SIMZ_RC/simz2014c3[0-9]* /mbari/ODSS/data/simz/2014_Jul/Platforms/Ships/Rachel_Carson/pctd/
+
+DIR=/data/simz/2014_Jul/Platforms/Ships/Rachel_Carson/pctd
+LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
+##rsync -rv $LOGIN@$RH:$DIR .
+../../CANON/toNetCDF/pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during SIMZ July 2014" 
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
-rm -r $LOCALDIR
+##rm -r $LOCALDIR
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------
+##DIR=/data/simz/2014_Oct/carson/pctd
+##LOCALDIR=`echo $DIR | cut -d/ -f6`  # -f must match last directory
+##rsync -rv $LOGIN@$RH:$DIR  .
+##../../CANON/toNetCDF/pctdToNetcdf.py -i $LOCALDIR -t "Profile CTD data from R/V Rachel Carson during SIMZ October 2014" 
+##scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
+##rm -r $LOCALDIR
 
