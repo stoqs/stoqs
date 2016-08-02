@@ -1438,8 +1438,9 @@ class Lrauv_Loader(Trajectory_Loader):
             'sea_water_temperature',
     ]
 
-    def __init__(self, contourUrl, *args, **kwargs):
+    def __init__(self, contourUrl, timezone, *args, **kwargs):
         self.contourUrl = contourUrl
+        self.timezone = timezone 
         super(Lrauv_Loader, self).__init__(*args, **kwargs)
 
     def addResources(self):
@@ -1447,7 +1448,7 @@ class Lrauv_Loader(Trajectory_Loader):
         In addition to the NC_GLOBAL attributes that are added in the base class also add the quick-look plots that are on the dods server.
         '''
 
-        if self.contourUrl:
+        if self.contourUrl and self.timezone:
             # Replace netCDF file with png extension
             outurl = re.sub('\.nc$','.png', self.url)
 
@@ -1464,12 +1465,12 @@ class Lrauv_Loader(Trajectory_Loader):
                         resource=resource)
 
             startDateTimeUTC = pytz.utc.localize(self.startDatetime)
-            startDateTimeLocal = startDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+            startDateTimeLocal = startDateTimeUTC.astimezone(pytz.timezone(self.timezone))
             startDateTimeLocal = startDateTimeLocal.replace(hour=0,minute=0,second=0,microsecond=0)
             startDateTimeUTC = startDateTimeLocal.astimezone(pytz.utc)
 
             endDateTimeUTC = pytz.utc.localize(self.startDatetime)
-            endDateTimeLocal = endDateTimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
+            endDateTimeLocal = endDateTimeUTC.astimezone(pytz.timezone(self.timezone))
             endDateTimeLocal = endDateTimeLocal.replace(hour=23,minute=59,second=0,microsecond=0)
             endDateTimeUTC = endDateTimeLocal.astimezone(pytz.utc)
 
@@ -1733,7 +1734,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
                    stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
-                   dataStartDatetime=None, contourUrl=None, auxCoords=None):
+                   dataStartDatetime=None, contourUrl=None, auxCoords=None, timezone='America/Los_Angeles'):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1756,7 +1757,8 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
             dataStartDatetime = dataStartDatetime,
             grdTerrain = grdTerrain,
             contourUrl = contourUrl,
-            auxCoords = auxCoords)
+            auxCoords = auxCoords,
+            timezone = timezone)
 
     if parmList:
         loader.include_names = []
