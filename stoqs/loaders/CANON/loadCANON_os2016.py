@@ -128,7 +128,7 @@ def find_urls(base, search_str):
 # Get directory list from thredds server
 platforms = ['daphne', 'makai']
 
-for p in platforms:
+'''for p in platforms:
     base =  'http://elvis64.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
     setattr(cl, p + '_files', [])
@@ -162,7 +162,7 @@ for p in platforms:
 
     except FileNotFound:
         continue
-
+'''
 ######################################################################
 #  GLIDERS
 ######################################################################
@@ -218,7 +218,7 @@ cl.nps34_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [ 
-                     'SV3/20160315/SV3_20160315.nc',
+                     'wgTiny/20160315/SV3_20160315.nc',
                    ]
 
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
@@ -307,9 +307,9 @@ cl.m1_endDatetime = enddate
 
 # Mooring 0A1
 # note the new location. Location and data by deployment, instead of by campaign
-cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/201401/'
+cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/'
 cl.oa1_files = [
-               'OA1_201401.nc'
+               '201607/realTime/OA1_201607.nc'
                ]
 cl.oa1_parms = [
                'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
@@ -320,10 +320,14 @@ cl.oa1_endDatetime = enddate
 
 # Mooring 0A2
 # note the new location. Location and data by deployment, instead of by campaign
-cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/'
+cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/'  ## May 2015 to end of May 2016
 cl.oa2_files = [
                'OA2_201505.nc'
                ]
+#cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201606/realTime/' # new deployment about June 1 2016
+#cl.oa2_files = [
+#               'OA2_201606.nc'  ## note: this is actually deployed at OA1 site! do not check this in until resolved!!
+#               ]
 cl.oa2_parms = [
                'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
                'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',

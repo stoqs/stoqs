@@ -176,12 +176,72 @@ cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
-# NPS_29
-#cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-#cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
+# NPS_29 ## not in this campaign
+cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps29_files = [ 'OS_Glider_NPS_Glider_29_20120524_TS.nc' ]
 cl.nps29_parms = ['TEMP', 'PSAL']
 cl.nps29_startDatetime = startdate
 cl.nps29_endDatetime = enddate
+
+# SG_621 ## KISS glider from Caltech/JPL
+cl.sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Gliders/Seaglider/'
+cl.sg621_files = [ 
+                 'p6210048.nc',
+                 'p6210049.nc',
+                 'p6210050.nc',
+                 'p6210051.nc',
+                 'p6210052.nc',
+                 'p6210053.nc',
+                 'p6210054.nc',
+                 'p6210055.nc',
+                 'p6210056.nc',
+                 'p6210057.nc',
+                 'p6210058.nc',
+                 'p6210059.nc',
+                 'p6210060.nc',
+                 'p6210061.nc',
+                 'p6210062.nc',
+                 'p6210063.nc',
+                 'p6210064.nc',
+                 'p6210065.nc',
+                 'p6210066.nc',
+                 'p6210067.nc',
+                 'p6210068.nc',
+                 'p6210069.nc',
+                 'p6210070.nc',
+                 'p6210071.nc',
+                 'p6210072.nc',
+                 'p6210073.nc',
+                 'p6210074.nc',
+                 'p6210075.nc',
+                 'p6210076.nc',
+                 'p6210077.nc',
+                 'p6210078.nc',
+                 'p6210079.nc',
+                 'p6210080.nc',
+                 'p6210081.nc',
+                 'p6210082.nc',
+                 'p6210083.nc',
+                 'p6210084.nc',
+                 'p6210085.nc',
+                 'p6210086.nc',
+                 'p6210087.nc',
+                 'p6210088.nc',
+                 'p6210089.nc',
+                 'p6210090.nc',
+                 'p6210091.nc',
+                 'p6210092.nc',
+                 'p6210093.nc',
+                 'p6210094.nc',
+                 'p6210095.nc',
+                 'p6210096.nc',
+                 'p6210097.nc',
+                 'p6210098.nc',
+                  ]
+cl.sg621_parms = ['temperature', 'salinity']
+cl.sg621_startDatetime = startdate
+cl.sg621_endDatetime = enddate
+
 
 # NPS_34
 cl.nps34_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
@@ -218,7 +278,7 @@ cl.nps34_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [ 
-                     'SV3/20160315/SV3_20160315.nc',
+                     'wgTiny/20160315/SV3_20160315.nc' ## no data in this file for the time period of this campaign,
                    ]
 
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
@@ -307,20 +367,24 @@ cl.m1_endDatetime = enddate
 
 # Mooring 0A1
 # note the new location. Location and data by deployment, instead of by campaign
-cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/201401/'
+#cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/201401/'
+#cl.oa1_files = [
+#               'OA1_201401.nc'
+#               ]
+cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/201607/realTime/'
 cl.oa1_files = [
-               'OA1_201401.nc'
+               'OA1_201607.nc'  ## new deployment
                ]
 cl.oa1_parms = [
                'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
                'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
-              ]
+               ]
 cl.oa1_startDatetime = startdate
 cl.oa1_endDatetime = enddate
 
 # Mooring 0A2
 # note the new location. Location and data by deployment, instead of by campaign
-cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/'
+cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/' ## ended at end of May 2016
 cl.oa2_files = [
                'OA2_201505.nc'
                ]
@@ -374,7 +438,7 @@ if cl.args.test:
 
     cl.loadL_662(stride=100) 
     ##cl.load_NPS29(stride=10)
-    ##cl.load_NPS34(stride=10)
+    cl.load_NPS34(stride=10)
     #cl.load_UCSC294(stride=10) 
     #cl.load_UCSC260(stride=10)
 
@@ -402,12 +466,14 @@ if cl.args.test:
 
 elif cl.args.optimal_stride:
 
-    #cl.loadL_662(stride=2) 
+    cl.loadL_662(stride=2) 
     ##cl.load_NPS29(stride=2)
-    #cl.load_NPS34(stride=2) 
+    cl.load_NPS34(stride=2) 
     #cl.load_wg_Tiny(stride=2)
     #cl.loadM1(stride=1)
-    ##cl.loadDorado(stride=2)
+    cl.load_oa1(stride=2)
+    cl.load_oa2(stride=2)
+    cl.loadDorado(stride=2)
     #cl.loadRCuctd(stride=2)
     #cl.loadRCpctd(stride=2)
 
@@ -418,18 +484,19 @@ else:
     cl.stride = cl.args.stride
 
     cl.loadL_662() 
-    ##cl.load_NPS29()
+    ##cl.load_NPS29()  ##not in this campaign
+    cl.load_SG621() ## KISS glider
     cl.load_NPS34()
     ##cl.load_UCSC294() 
     ##cl.load_UCSC260()
-    cl.load_wg_Tiny()
+    #cl.load_wg_Tiny()
     cl.loadM1()
     cl.load_oa1()
-    cl.load_oa2()
-    cl.loadDorado()
+    #cl.load_oa2()
+    #cl.loadDorado()
     #cl.loadDaphne()
-    cl.loadTethys()
-    cl.loadMakai()
+    #cl.loadTethys()
+    #cl.loadMakai()
     #cl.loadRCuctd()
     #cl.loadRCpctd() 
     #cl.loadWFuctd()   
