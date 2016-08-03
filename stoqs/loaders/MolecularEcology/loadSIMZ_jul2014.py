@@ -68,6 +68,7 @@ cl.rcuctd_base = cl.dodsBase + 'SIMZ/2014_Jul/Platforms/Ships/Rachel_Carson/uctd
 cl.rcuctd_files = [ 
                     '2014simzplm05.nc', 
                     '2014simzplm06.nc', 
+                    '2014simzplm07.nc', 
                   ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
