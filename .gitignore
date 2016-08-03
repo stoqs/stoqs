@@ -27,3 +27,6 @@ venv-stoqs
 
 # Loader output log files
 stoqs/loaders/*/*.out
+
+# Ex-situ Sample data files
+stoqs/loaders/MolecularEcology/BOG_Data/*.csv
