@@ -321,11 +321,14 @@ class CANONLoader(LoadScript):
                                                     activity__name=aName).aggregate(
                                                     Max('timevalue'))['timevalue__max']
 
-            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+            try:
+                DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
                                        'SG_Glider_621', self.colors['sg621'], 'glider', 'Glider Mission',
                                         self.sg621_parms, self.dbAlias, stride, self.sg621_startDatetime,
                                         self.sg621_endDatetime, grdTerrain=self.grdTerrain,
                                         dataStartDatetime=dataStartDatetime)
+            except DAPloaders.OpendapError as e:
+                self.logger.warn(str(e))
 
     def load_NPS34(self, stride=None):
         '''
