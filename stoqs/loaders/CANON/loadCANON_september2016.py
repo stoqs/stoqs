@@ -185,59 +185,7 @@ cl.nps29_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
 cl.sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Gliders/Seaglider/'
-cl.sg621_files = [ 
-                 'p6210048.nc',
-                 'p6210049.nc',
-                 'p6210050.nc',
-                 'p6210051.nc',
-                 'p6210052.nc',
-                 'p6210053.nc',
-                 'p6210054.nc',
-                 'p6210055.nc',
-                 'p6210056.nc',
-                 'p6210057.nc',
-                 'p6210058.nc',
-                 'p6210059.nc',
-                 'p6210060.nc',
-                 'p6210061.nc',
-                 'p6210062.nc',
-                 'p6210063.nc',
-                 'p6210064.nc',
-                 'p6210065.nc',
-                 'p6210066.nc',
-                 'p6210067.nc',
-                 'p6210068.nc',
-                 'p6210069.nc',
-                 'p6210070.nc',
-                 'p6210071.nc',
-                 'p6210072.nc',
-                 'p6210073.nc',
-                 'p6210074.nc',
-                 'p6210075.nc',
-                 'p6210076.nc',
-                 'p6210077.nc',
-                 'p6210078.nc',
-                 'p6210079.nc',
-                 'p6210080.nc',
-                 'p6210081.nc',
-                 'p6210082.nc',
-                 'p6210083.nc',
-                 'p6210084.nc',
-                 'p6210085.nc',
-                 'p6210086.nc',
-                 'p6210087.nc',
-                 'p6210088.nc',
-                 'p6210089.nc',
-                 'p6210090.nc',
-                 'p6210091.nc',
-                 'p6210092.nc',
-                 'p6210093.nc',
-                 'p6210094.nc',
-                 'p6210095.nc',
-                 'p6210096.nc',
-                 'p6210097.nc',
-                 'p6210098.nc',
-                  ]
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,113)] 
 cl.sg621_parms = ['temperature', 'salinity']
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
@@ -481,17 +429,17 @@ elif cl.args.optimal_stride:
 
     print 'Nothing to load'
 else:
-    cl.stride = cl.args.stride
+    cl.stride = cl.args.stride    
 
-    cl.loadL_662() 
+   # cl.loadL_662() 
     ##cl.load_NPS29()  ##not in this campaign
     cl.load_SG621() ## KISS glider
-    cl.load_NPS34()
+  #  cl.load_NPS34()
     ##cl.load_UCSC294() 
     ##cl.load_UCSC260()
     #cl.load_wg_Tiny()
-    cl.loadM1()
-    cl.load_oa1()
+  #  cl.loadM1()
+  #  cl.load_oa1()
     #cl.load_oa2()
     #cl.loadDorado()
     #cl.loadDaphne()
