@@ -112,19 +112,10 @@ for p in platforms:
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
-    setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
-                                'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
-                                'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
+    setattr(cl, p + '_parms' , ['oxygen', 'PAR', 'salinity', 'sigmat', 'spice', 'temperature', 'vertical_temperature_homogeneity_index',
+                                'chlorophyll', 'health_platform_average_voltage',
                                 'health_platform_battery_charge', 'health_platform_average_voltage',
-                                'health_platform_average_current','fix_latitude', 'fix_longitude',
-                                'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
-                                'pose_longitude_DeadReckonUsingSpeedCalculator',
-                                'pose_latitude_DeadReckonUsingSpeedCalculator',
-                                'pose_depth_DeadReckonUsingSpeedCalculator',
-                                'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
-                                'pose_longitude_DeadReckonUsingMultipleVelocitySources',
-                                'pose_latitude_DeadReckonUsingMultipleVelocitySources',
-                                'pose_depth_DeadReckonUsingMultipleVelocitySources'])
+                                'health_platform_average_current','fix_latitude', 'fix_longitude'])
     try:
         urls_eng = find_urls(base, '.*2S_eng.nc$')
         urls_sci = find_urls(base, '.*10S_sci.nc$')
