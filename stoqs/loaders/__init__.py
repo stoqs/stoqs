@@ -1176,11 +1176,17 @@ class STOQS_Loader(object):
                     standard_name='sea_water_sigma_t',
                     long_name='Sigma-T',
                     units='kg m-3',
-                    name='sigmat'
+                    name='sigmat',
+                    description=("Calculated in STOQS loader from Measured Parameters having standard_names"
+                                 " sea_water_temperature and sea_water_salinity, and pressure converted from depth"
+                                 " using seawater.eos80 module: sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0.")
             )
             p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
                     long_name='Spiciness',
-                    name='spice'
+                    name='spice',
+                    description=("Calculated in STOQS loader from Measured Parameters having standard_names"
+                                 " sea_water_temperature and sea_water_salinity using algorithm from Flament (2002):"
+                                 " http://www.satlab.hawaii.edu/spice.")
             )
             parameterCounts[p_sigmat] = ms.count()
             parameterCounts[p_spice] = ms.count()
