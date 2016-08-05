@@ -8,7 +8,6 @@ export SLACKTOKEN=${SLACKTOCKEN}
 database='stoqs_michigan2016'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/sbdlogs/2016/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
-declare -a searchstr=("/realtime/cell-logs/.*Normal.nc4$")
 declare -a platforms=("tethys")
 
 pos=$(( ${#searchstr[*]} - 1 ))
@@ -37,7 +36,7 @@ do
         bin_mean_mass_concentration_of_chlorophyll_in_sea_water \
         bin_mean_sea_water_temperature \
         bin_mean_sea_water_salinity \
-        --latest24hr $post $debug #> /tmp/monitorLrauv${platform}.out 2>&1
+        --latest24hr $post $debug > /tmp/monitorLrauv${platform}.out 2>&1
     done
 done
 
