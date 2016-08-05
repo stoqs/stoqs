@@ -148,7 +148,7 @@ class InterpolatorWriter(BaseWriter):
             # trajectory dataset, time is the only netCDF dimension
             self.ncFile.createDimension(key, len(esec_list))
             rc = self.ncFile.createVariable(key, 'float64', (key,))
-            rc.standard_name = key
+            rc.standard_name = 'time' 
             rc.units = 'seconds since 1970-01-01'
             # Used in global metadata
             if key == 'time':
@@ -160,7 +160,7 @@ class InterpolatorWriter(BaseWriter):
             c = self.all_coord[key]
             rc = self.ncFile.createVariable(key, 'float64', (c['time'],))
             rc.long_name = 'LATITUDE'
-            rc.standard_name = key
+            rc.standard_name = 'latitude' 
             rc.units = 'degree_north'
             rc[:] = self.all_sub_ts[key]
             # Used in global metadata
@@ -184,7 +184,7 @@ class InterpolatorWriter(BaseWriter):
             c = self.all_coord[key]
             rc = self.ncFile.createVariable(key, 'float64', (c['time'],))
             rc.long_name = 'DEPTH'
-            rc.standard_name = key
+            rc.standard_name = 'depth' 
             rc.units = 'm'
             rc[:] = self.all_sub_ts[key]
             # Used in global metadata
@@ -200,7 +200,9 @@ class InterpolatorWriter(BaseWriter):
                 rc.long_name = a['long_name']
             if 'standard_name' in a:
                 rc.standard_name = a['standard_name']
+            else:
 
+                rc.standard_name = key
             rc.coordinates = ' '.join(c.values())
 
             if units is None:
@@ -286,7 +288,7 @@ class InterpolatorWriter(BaseWriter):
 
             # Store the parameter as-is - this is the raw data
             self.all_sub_ts[key] = pd.Series(all_ts[key])
-            self.all_coord[key] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+            self.all_coord[key] = { 'time': key+'_time', 'depth': key+'_depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
 
             # interpolate each coordinate to the time of the parameter
             # key looks like sea_water_temperature_depth, sea_water_temperature_lat, sea_water_temperature_lon, etc.

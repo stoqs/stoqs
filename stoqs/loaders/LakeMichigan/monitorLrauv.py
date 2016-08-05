@@ -283,9 +283,6 @@ if __name__ == '__main__':
         coord[parm_fix] = {'time': p + '_time', 'latitude':  p +'_latitude', 'longitude':  p +'_longitude', 'depth':  p +'_depth'}
         parm_process.append(parm_fix)
 
-        # Last parameter is the one to interpolate to - TODO: pass this in as a argument
-        interp_key = parm_fix
-
     title = 'MBARI LRAUV Survey - ' + platformName
 
     # Look in time order - oldest to newest
