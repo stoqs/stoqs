@@ -251,9 +251,9 @@ if __name__ == '__main__':
         slack = Slacker(token)
 
     # Assume that the database has already been created with description and terrain information, so use minimal arguments in constructor
-    lm = LakeMILoader(args.database, args.campaign)
-    lm.dbAlias = args.database
-    lm.campaignName = args.campaign
+    cl = CANONLoader(args.database, args.campaign)
+    cl.dbAlias = args.database
+    cl.campaignName = args.campaign
    
     # Get directory list from sites
     s = args.inUrl.rsplit('/',1)
