@@ -6,7 +6,7 @@ __contact__   = 'duane at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON off season activities in 2016
+Master loader for all CANON September  activities in 2016
 
 Mike McCann, Duane Edgington, Danelle Cline
 MBARI 5 January 2016
@@ -34,8 +34,8 @@ from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
 
-cl = CANONLoader('stoqs_os2016', 'CANON - Off Season 2016',
-                    description = 'CANON Off Season 2016 Experiment in Monterey Bay',
+cl = CANONLoader('stoqs_canon_september2016', 'CANON - September 2016',
+                    description = 'CANON September 2016 Experiment in Monterey Bay',
                     x3dTerrains = {
                                     'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                                         'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -51,8 +51,8 @@ cl = CANONLoader('stoqs_os2016', 'CANON - Off Season 2016',
 # Set start and end dates for all loads from sources that contain data 
 # beyond the temporal bounds of the campaign
 #
-startdate = datetime.datetime(2016, 1, 1)                 # Fixed start
-enddate = datetime.datetime(2016, 12, 31)                  # Fixed end. Extend "offseason" to end of year
+startdate = datetime.datetime(2016, 7, 11)                # Fixed start  July 11 2016, deployment of nps34
+enddate = datetime.datetime(2016, 10, 7)                  # Fixed end. October 7 2016, a few days after end of CANON cruise
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -128,7 +128,7 @@ def find_urls(base, search_str):
 # Get directory list from thredds server
 platforms = ['daphne', 'makai']
 
-'''for p in platforms:
+for p in platforms:
     base =  'http://elvis64.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
     setattr(cl, p + '_files', [])
@@ -162,7 +162,7 @@ platforms = ['daphne', 'makai']
 
     except FileNotFound:
         continue
-'''
+
 ######################################################################
 #  GLIDERS
 ######################################################################
@@ -176,12 +176,20 @@ cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
-# NPS_29
-#cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-#cl.nps29_files = [ 'OS_Glider_NPS_G29_20140930_TS.nc' ]
+# NPS_29 ## not in this campaign
+cl.nps29_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps29_files = [ 'OS_Glider_NPS_Glider_29_20120524_TS.nc' ]
 cl.nps29_parms = ['TEMP', 'PSAL']
 cl.nps29_startDatetime = startdate
 cl.nps29_endDatetime = enddate
+
+# SG_621 ## KISS glider from Caltech/JPL
+cl.sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Gliders/Seaglider/'
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,113)] 
+cl.sg621_parms = ['temperature', 'salinity']
+cl.sg621_startDatetime = startdate
+cl.sg621_endDatetime = enddate
+
 
 # NPS_34
 cl.nps34_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
@@ -218,7 +226,7 @@ cl.nps34_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [ 
-                     'wgTiny/20160315/SV3_20160315.nc',
+                     'wgTiny/20160315/SV3_20160315.nc' ## no data in this file for the time period of this campaign,
                    ]
 
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
@@ -307,27 +315,27 @@ cl.m1_endDatetime = enddate
 
 # Mooring 0A1
 # note the new location. Location and data by deployment, instead of by campaign
-cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/'
+#cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/201401/'
+#cl.oa1_files = [
+#               'OA1_201401.nc'
+#               ]
+cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/201607/realTime/'
 cl.oa1_files = [
-               '201607/realTime/OA1_201607.nc'
+               'OA1_201607.nc'  ## new deployment
                ]
 cl.oa1_parms = [
                'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
                'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
-              ]
+               ]
 cl.oa1_startDatetime = startdate
 cl.oa1_endDatetime = enddate
 
 # Mooring 0A2
 # note the new location. Location and data by deployment, instead of by campaign
-cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/'  ## May 2015 to end of May 2016
+cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/' ## ended at end of May 2016
 cl.oa2_files = [
                'OA2_201505.nc'
                ]
-#cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201606/realTime/' # new deployment about June 1 2016
-#cl.oa2_files = [
-#               'OA2_201606.nc'  ## note: this is actually deployed at OA1 site! do not check this in until resolved!!
-#               ]
 cl.oa2_parms = [
                'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
                'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
@@ -378,7 +386,7 @@ if cl.args.test:
 
     cl.loadL_662(stride=100) 
     ##cl.load_NPS29(stride=10)
-    ##cl.load_NPS34(stride=10)
+    cl.load_NPS34(stride=10)
     #cl.load_UCSC294(stride=10) 
     #cl.load_UCSC260(stride=10)
 
@@ -406,12 +414,14 @@ if cl.args.test:
 
 elif cl.args.optimal_stride:
 
-    #cl.loadL_662(stride=2) 
+    cl.loadL_662(stride=2) 
     ##cl.load_NPS29(stride=2)
-    #cl.load_NPS34(stride=2) 
+    cl.load_NPS34(stride=2) 
     #cl.load_wg_Tiny(stride=2)
     #cl.loadM1(stride=1)
-    ##cl.loadDorado(stride=2)
+    cl.load_oa1(stride=2)
+    cl.load_oa2(stride=2)
+    cl.loadDorado(stride=2)
     #cl.loadRCuctd(stride=2)
     #cl.loadRCpctd(stride=2)
 
@@ -419,25 +429,26 @@ elif cl.args.optimal_stride:
 
     print 'Nothing to load'
 else:
-    cl.stride = cl.args.stride
+    cl.stride = cl.args.stride    
 
-    cl.loadL_662() 
-    ##cl.load_NPS29()
-    cl.load_NPS34()
+   # cl.loadL_662() 
+    ##cl.load_NPS29()  ##not in this campaign
+    cl.load_SG621() ## KISS glider
+  #  cl.load_NPS34()
     ##cl.load_UCSC294() 
     ##cl.load_UCSC260()
-    cl.load_wg_Tiny()
-    cl.loadM1()
-    cl.load_oa1()
-    cl.load_oa2()
-    cl.loadDorado()
+    #cl.load_wg_Tiny()
+  #  cl.loadM1()
+  #  cl.load_oa1()
+    #cl.load_oa2()
+    #cl.loadDorado()
     #cl.loadDaphne()
-    cl.loadTethys()
-    cl.loadMakai()
-    cl.loadRCuctd()
-    cl.loadRCpctd() 
-    ##cl.loadWFuctd()   
-    ##cl.loadWFpctd()
+    #cl.loadTethys()
+    #cl.loadMakai()
+    #cl.loadRCuctd()
+    #cl.loadRCpctd() 
+    #cl.loadWFuctd()   
+    #cl.loadWFpctd()
 
     #cl.loadSubSamples()
 

@@ -44,9 +44,9 @@ startDatetime = datetime.datetime(2014, 7, 28)
 endDatetime = datetime.datetime(2014, 7, 31)
 
 # Aboard the Carson use zuma:
-cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
+##cl.tdsBase = 'http://zuma.rc.mbari.org/thredds/'       
 # On shore, use the odss server:
-##cl.tdsBase = 'http://odss.mbari.org/thredds/'
+cl.tdsBase = 'http://odss.mbari.org/thredds/'
 cl.dodsBase = cl.tdsBase + 'dodsC/'       
 
 # 2-second decimated dorado data
@@ -68,6 +68,7 @@ cl.rcuctd_base = cl.dodsBase + 'SIMZ/2014_Jul/Platforms/Ships/Rachel_Carson/uctd
 cl.rcuctd_files = [ 
                     '2014simzplm05.nc', 
                     '2014simzplm06.nc', 
+                    '2014simzplm07.nc', 
                   ]
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 
@@ -78,6 +79,7 @@ cl.rcpctd_files = [
                      'simz2014c25.nc', 'simz2014c26.nc', 'simz2014c27.nc', 'simz2014c28.nc', 'simz2014c29.nc', 'simz2014c30.nc',
                      'simz2014c31.nc', 'simz2014c32.nc', 'simz2014c33.nc',
                      'simz2014c34.nc', 'simz2014c35.nc', 'simz2014c36.nc',
+                     'simz2014c37.nc', 'simz2014c38.nc', 'simz2014c39.nc',
                       ]
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 

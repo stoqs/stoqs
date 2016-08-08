@@ -9,11 +9,11 @@
 # Mike McCann
 # 15 January 2014
 
-##LOGIN=stoqsadm
-##RH=odss.mbari.org
+LOGIN=mccann
+RH=odss.mbari.org
 
-LOGIN=odssadm
-RH=zuma.rc.mbari.org
+##LOGIN=odssadm
+##RH=zuma.rc.mbari.org
 
 
 ##DIR=/data/canon/2013_Mar/carson/uctd
@@ -37,12 +37,20 @@ RH=zuma.rc.mbari.org
 ##scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
 ##rm -r $LOCALDIR
 
-LOGIN=stoqsadm
-RH=normandy.mbari.org
-DIR=/data/simz/2014_Oct/carson/uctd
-LOCALDIR=`echo $DIR | cut -d/ -f6`  # -f must match last directory
+# mkdir /mbari/ODSS/data/simz/2014_Jul/Platforms/Ships/Rachel_Carson/uctd/
+# cp /mbari/DMO/MDUC_CORE_CTD_200103/DATA/2014_210_212_SIMZ_RC/2014simzplm0[5-7].* /mbari/ODSS/data/simz/2014_Jul/Platforms/Ships/Rachel_Carson/uctd/
+
+DIR=/data/simz/2014_Jul/Platforms/Ships/Rachel_Carson/uctd
+LOCALDIR=`echo $DIR | cut -d/ -f8`  # -f must match last directory
 rsync -rv $LOGIN@$RH:$DIR  .
-../../CANON/toNetCDF/uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 1.5 --title "Underway CTD data from R/V Rachel Carson CANON - SIMZ October 2014"
+../../CANON/toNetCDF/uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 1.5 --title "Underway CTD data from R/V Rachel Carson CANON - SIMZ July 2014"
 scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
-rm -r $LOCALDIR
+##rm -r $LOCALDIR
+
+##DIR=/data/simz/2014_Oct/carson/uctd
+##LOCALDIR=`echo $DIR | cut -d/ -f6`  # -f must match last directory
+##rsync -rv $LOGIN@$RH:$DIR  .
+##../../CANON/toNetCDF/uctdToNetcdf.py --inDir $LOCALDIR --pattern "*.asc" --depth 1.5 --title "Underway CTD data from R/V Rachel Carson CANON - SIMZ October 2014"
+##scp $LOCALDIR/*.nc $LOGIN@$RH:$DIR
+##rm -r $LOCALDIR
 
