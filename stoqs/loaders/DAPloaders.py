@@ -350,35 +350,41 @@ class Base_Loader(STOQS_Loader):
 
         return featureType.lower()
 
-    def getAuxCoordinates(self, variable):
+    def _getCoordinates(self, from_variables):
+        '''Return tuple of (Dictionary of geospatial/temporal standard_names keyed by variable name,
+        Dictionary of variable names keyed by geospatial/temporal standard_names).
         '''
-        Return a dictionary of a variable's auxilary coordinates mapped to the standard_names of 'time', 'latitude',
-        'longitude', and 'depth'.  Accomodate previous ways of associating these variables and convert to the new 
-        CF-1.6 conventions as outlined in Chapter 5 of the document.  If an auxCoord dictionary is passed to the
-        Loader then that dictionary will be returned.  This is handy for datasets that are not yet compliant.  
-        Requirements for compliance: variables have a coordinates attribute listing the 4 geospatial/temporal 
-        coordinates, the coordinate variables have standard_names of 'time', 'latitude', 'longitude', 'depth'.
-        Example return value: {'time': 'esecs', 'depth': 'DEPTH', 'latitude': 'lat', 'longitude': 'lon'}
-        '''
-
-        # Scan variable standard_name attributes for ('time', 'latitude', 'longitude', 'depth') standard_name's
-        # There is no check here for multiple multiple time, latitude, longitude, or depth coordinates.  Should
-        # CF say something about multiple coordinate axes in a file, i.e. should there just be one?
         coordSN = {}
         snCoord = {}
-        for k in self.ds.keys():
+        for k in from_variables:
             if 'standard_name' in self.ds[k].attributes:
                 if self.ds[k].attributes['standard_name'] in ('time', 'latitude', 'longitude', 'depth'):
                     coordSN[k] = self.ds[k].attributes['standard_name']
                     snCoord[self.ds[k].attributes['standard_name']] = k
 
+        return coordSN, snCoord
+
+    def getAuxCoordinates(self, variable):
+        '''
+        Return a dictionary of a variable's auxilary coordinates mapped to the standard_names of 'time', 'latitude',
+        'longitude', and 'depth'.  Accomodate previous ways of associating these variables and convert to the new 
+        CF-1.6 conventions as outlined in Chapter 5 of the document.  If an auxCoord dictionary is passed to the
+        Loader then that dictionary will be returned for variables that do not have a valid coordinates attribute;
+        this is handy for datasets that are not yet compliant. 
+
+        Requirements for compliance: variables have a coordinates attribute listing the 4 geospatial/temporal 
+        coordinates, the coordinate variables have standard_names of 'time', 'latitude', 'longitude', 'depth'.
+        Example return value: {'time': 'esecs', 'depth': 'DEPTH', 'latitude': 'lat', 'longitude': 'lon'}
+        '''
         # Match items in coordinate attribute, via coordinate standard_name to coordinate name
         if variable not in self.ds:
             raise ParameterNotFound('Variable %s is not in dataset %s' % (variable, self.url))
 
         coordDict = {}
         if 'coordinates' in self.ds[variable].attributes:
-            for coord in self.ds[variable].attributes['coordinates'].split():
+            coords = self.ds[variable].attributes['coordinates'].split()
+            coordSN, snCoord = self._getCoordinates(coords)
+            for coord in coords:
                 logger.debug(coord)
                 try:
                     logger.debug(snCoord)
