@@ -4309,7 +4309,6 @@
                     histdata = [];
                     $("#" + parameter_idsafe + "-histogram-flot").bind("plotselected", function (event, ranges) {
                         parametervalues[parameter] = {'xmin': ranges.xaxis.from, 'xmax': ranges.xaxis.to, 'ymin':0, 'ymax': ranges.yaxis.to };
-                        console.log(parametervalues[parameter]);
 						rebuildFilters();
                     });
                     $.each(histbyplatformandactivity, function (platform, histbyplatform) {
