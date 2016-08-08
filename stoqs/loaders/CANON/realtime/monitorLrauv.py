@@ -11,7 +11,6 @@ MBARI 12 March 2014
 import os
 import sys
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../toNetCDF"))      # lrauvNc4ToNetcdf.py is in sister toNetCDF dir
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))           # settings.py is two dirs up
 
 
@@ -104,7 +103,10 @@ def processDecimated(pw, url, lastDatetime, outDir, resample_freq, interp_freq, 
     if outDir.startswith('/tmp'):
         outFile_i = os.path.join(args.outDir, url.split('/')[-1].split('.')[0] + '_i.nc')
     else:
-        outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + '_i.nc')
+        if "sbd" in url:
+            outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-3:]).split('.')[0] + '_i.nc')
+        else:
+            outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + '_i.nc')
 
     startDatetime, endDatetime = getNcStartEnd(url, 'depth_time')
     logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
@@ -282,9 +284,6 @@ if __name__ == '__main__':
         coord[parm_fix] = {'time': p + '_time', 'latitude':  p +'_latitude', 'longitude':  p +'_longitude', 'depth':  p +'_depth'}
         parm_process.append(parm_fix)
 
-        # Last parameter is the one to interpolate to - TODO: pass this in as a argument
-        interp_key = parm_fix
-
     title = 'MBARI LRAUV Survey - ' + platformName
 
     # Look in time order - oldest to newest
@@ -339,7 +338,8 @@ if __name__ == '__main__':
                                                       dataStartDatetime = dataStartDatetime,
                                                       endDatetime = endDatetime,
                                                       contourUrl = args.contourUrl,
-                                                      auxCoords = coord)
+                                                      auxCoords = coord,
+                                                      timezone = 'America/Los_Angeles')
 
                 endDatetimeUTC = pytz.utc.localize(endDatetime)
                 endDatetimeLocal = endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))
@@ -350,9 +350,12 @@ if __name__ == '__main__':
                 if args.outDir.startswith('/tmp'):
                     outFile = os.path.join(args.outDir, url_src.split('/')[-1].split('.')[0] + '.png')
                 else:
-                    outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
+                    if "sbd" in url_src: 
+                        outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-3:]).split('.')[0]  + '.png')
+                    else:
+                        outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
 
-                if not os.path.exists(outFile):
+                if not os.path.exists(outFile) or args.debug:
                     logger.debug('out file %s', outFile)
 
                     contour = Contour(startDatetimeUTC, endDatetimeUTC, args.database, [platformName], plot_group, title, outFile,
@@ -378,7 +381,7 @@ if __name__ == '__main__':
                        endDateTimeUTC24hr.strftime('%Y%m%dT%H%M%S') + '.png')
 
 
-                if not os.path.exists(outFile):
+                if not os.path.exists(outFile) or args.debug:
                     logger.debug('out file %s url: %s ', outFile, url)
                     c = Contour(startDateTimeUTC24hr, endDateTimeUTC24hr, args.database, [platformName], args.plotgroup, title,
                                 outFile, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)

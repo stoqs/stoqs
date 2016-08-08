@@ -367,10 +367,10 @@ class Base_Loader(STOQS_Loader):
     def getAuxCoordinates(self, variable):
         '''
         Return a dictionary of a variable's auxilary coordinates mapped to the standard_names of 'time', 'latitude',
-        'longitude', and 'depth'.  Accomodate previous ways of associating these variables and convert to the new 
+        'longitude', and 'depth'.  Accomodate previous ways of associating these variables and convert to the new
         CF-1.6 conventions as outlined in Chapter 5 of the document.  If an auxCoord dictionary is passed to the
         Loader then that dictionary will be returned for variables that do not have a valid coordinates attribute;
-        this is handy for datasets that are not yet compliant. 
+        this is handy for datasets that are not yet compliant.
 
         Requirements for compliance: variables have a coordinates attribute listing the 4 geospatial/temporal 
         coordinates, the coordinate variables have standard_names of 'time', 'latitude', 'longitude', 'depth'.

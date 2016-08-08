@@ -105,7 +105,10 @@ def processDecimated(pw, url, lastDatetime, outDir, resample_freq, interp_freq, 
     if outDir.startswith('/tmp'):
         outFile_i = os.path.join(args.outDir, url.split('/')[-1].split('.')[0] + '_i.nc')
     else:
-        outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + '_i.nc')
+        if "sbd" in url:
+            outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-3:]).split('.')[0] + '_i.nc')
+        else:
+            outFile_i = os.path.join(args.outDir, '/'.join(url.split('/')[-2:]).split('.')[0] + '_i.nc')
 
     startDatetime, endDatetime = getNcStartEnd(url, 'depth_time')
     logger.debug('startDatetime, endDatetime = %s, %s', startDatetime, endDatetime)
@@ -283,9 +286,6 @@ if __name__ == '__main__':
         coord[parm_fix] = {'time': p + '_time', 'latitude':  p +'_latitude', 'longitude':  p +'_longitude', 'depth':  p +'_depth'}
         parm_process.append(parm_fix)
 
-        # Last parameter is the one to interpolate to - TODO: pass this in as a argument
-        interp_key = parm_fix
-
     title = 'MBARI LRAUV Survey - ' + platformName
 
     # Look in time order - oldest to newest
@@ -352,7 +352,10 @@ if __name__ == '__main__':
                 if args.outDir.startswith('/tmp'):
                     outFile = os.path.join(args.outDir, url_src.split('/')[-1].split('.')[0] + '.png')
                 else:
-                    outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
+                    if "sbd" in url_src: 
+                        outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-3:]).split('.')[0]  + '.png')
+                    else:
+                        outFile = os.path.join(args.outDir, '/'.join(url_src.split('/')[-2:]).split('.')[0]  + '.png')
 
                 if not os.path.exists(outFile) or args.debug:
                     logger.debug('out file %s', outFile)
