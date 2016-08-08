@@ -2109,9 +2109,11 @@
                                                         'background-color': 'lightgray'});
         }
         else {
-            $.each($('body').data()['platformAnimation'], function (index, platform) {
-                $('#' + platform + '_LOCATION')[0].setAttribute('render', false);
-            });
+            if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+                $.each($('body').data()['platformAnimation'], function (index, platform) {
+                    $('#' + platform + '_LOCATION')[0].setAttribute('render', false);
+                });
+            }
             $('body').data()['platformAnimation'] = [];
             $('#showgeox3dlabels').parent().hide();
             $('#showgeox3denuaxes').parent().hide();
@@ -4656,7 +4658,8 @@
             
             $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
                 var data=''
-                if (typeof item.id !== 'undefined') {
+                if (typeof item.id !== 'undefined' &&
+                    $(item).parent().css('display') != 'none') {
                     data='input[type="checkbox"][id="' + item.id + '"]'; 
                 } else if ((typeof item.name !== 'undefined') && 
                            (typeof item.value !== 'undefined')) {
@@ -4748,6 +4751,7 @@
         ZoomIn('', ranges);
         permalink_bypass=true;
 
+        // Click checkboxes, radio buttons, etc.
         $.each(parameters['clicks'], function (pos, item) {
             $(item).click();
         });
@@ -4783,7 +4787,7 @@
                     $.each(value, function (pos, item) {
                         if ( item[0] != '#parameterParameterTabs' ) {
                             // ParameterParameter tab clicks happen on ajax success - don't do them here
-                            var $elem=$('li', item[0]);
+                            var $elem=$('li > a', item[0]);
                             $elem.removeClass('active');
                             $($elem[item[1]]).click();
                         }
