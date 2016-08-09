@@ -2109,9 +2109,11 @@
                                                         'background-color': 'lightgray'});
         }
         else {
-            $.each($('body').data()['platformAnimation'], function (index, platform) {
-                $('#' + platform + '_LOCATION')[0].setAttribute('render', false);
-            });
+            if ( ! $.isEmptyObject($('body').data()['platformAnimation']) ) {
+                $.each($('body').data()['platformAnimation'], function (index, platform) {
+                    $('#' + platform + '_LOCATION')[0].setAttribute('render', false);
+                });
+            }
             $('body').data()['platformAnimation'] = [];
             $('#showgeox3dlabels').parent().hide();
             $('#showgeox3denuaxes').parent().hide();
@@ -2262,7 +2264,7 @@
 
     $('body').on('change', '.parameter-plot-radio', function (e) {
         if ( $('body').data()['parameterplatforms'][e.target.value] ) {
-            if ( $('body').data()['parameterplatforms'][e.target.value].length != 1 ) {
+            if ( $('button.btn-primary.stoqs-toggle.platform').length != 1 ) {
                 alert('WARNING: Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.');
             }
             $('#contour-scatter-buttons').show();
@@ -4307,7 +4309,6 @@
                     histdata = [];
                     $("#" + parameter_idsafe + "-histogram-flot").bind("plotselected", function (event, ranges) {
                         parametervalues[parameter] = {'xmin': ranges.xaxis.from, 'xmax': ranges.xaxis.to, 'ymin':0, 'ymax': ranges.yaxis.to };
-                        console.log(parametervalues[parameter]);
 						rebuildFilters();
                     });
                     $.each(histbyplatformandactivity, function (platform, histbyplatform) {
@@ -4626,7 +4627,8 @@
 
     // Collect all the parameters on the page so we can generate our permalink.
     function collect_parameters() {
-        params={'clicks': [],
+        params={'platform_clicks': [],
+                'clicks': [],
                 'accordian': [],
                 'tabs': []}
         // Need to do the right column stuff before the left column stuff, since
@@ -4648,7 +4650,12 @@
             $('button.btn-primary.stoqs-toggle', divcol).each(function(key, item) {
                 var id=$(item).closest('[id]')[0].id
                 var data='#' +id +' button.stoqs-toggle:contains("'+$(item).text()+'")'
-                params['clicks'].push(data);
+                if ( $(item).hasClass('platform') ) {
+                    params['platform_clicks'].push(data);
+                }
+                else {
+                    params['clicks'].push(data);
+                }
             });
             // Grab all the checkboxes, note that openlayers seems to have ID's with
             // spaces in them, so we cannot use the '#' to locate those, need to use the
@@ -4656,7 +4663,8 @@
             
             $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
                 var data=''
-                if (typeof item.id !== 'undefined') {
+                if (typeof item.id !== 'undefined' &&
+                    $(item).parent().css('display') != 'none') {
                     data='input[type="checkbox"][id="' + item.id + '"]'; 
                 } else if ((typeof item.name !== 'undefined') && 
                            (typeof item.value !== 'undefined')) {
@@ -4748,6 +4756,10 @@
         ZoomIn('', ranges);
         permalink_bypass=true;
 
+        // Click platform buttons first, then the rest of them
+        $.each(parameters['platform_clicks'], function (pos, item) {
+            $(item).click();
+        });
         $.each(parameters['clicks'], function (pos, item) {
             $(item).click();
         });
@@ -4783,7 +4795,7 @@
                     $.each(value, function (pos, item) {
                         if ( item[0] != '#parameterParameterTabs' ) {
                             // ParameterParameter tab clicks happen on ajax success - don't do them here
-                            var $elem=$('li', item[0]);
+                            var $elem=$('li > a', item[0]);
                             $elem.removeClass('active');
                             $($elem[item[1]]).click();
                         }
