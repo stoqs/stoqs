@@ -284,6 +284,9 @@ def queryUI(request):
                        'formats': formats,
                        'mapserver_host': settings.MAPSERVER_HOST,
                        'mappath': request.session['mappath'],
+                       'home_page_link': settings.HOME_PAGE_LINK,
+                       'home_page_logo': settings.HOME_PAGE_LOGO,
+                       'home_page_alt': settings.HOME_PAGE_ALT,
                       }
     try:
         config_settings['google_analytics_code'] = settings.GOOGLE_ANALYTICS_CODE

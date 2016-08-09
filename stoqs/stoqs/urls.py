@@ -82,7 +82,7 @@ urlpatterns = patterns('',
     ##    provider_name='MBARI',
     ##)),
 
-    # If nothing above matches show the quey interface is a dbalias is specified, otherwise show the campaigns
+    # If nothing above matches show the query interface if a dbalias is specified, otherwise show the campaigns
     url(pre + '$', 'stoqs.views.query.queryUI', {}, name='base-campaign'),
     
     # Views related to generating permalinks for later use.
