@@ -2265,7 +2265,7 @@
     $('body').on('change', '.parameter-plot-radio', function (e) {
         if ( $('body').data()['parameterplatforms'][e.target.value] ) {
             if ( $('button.btn-primary.stoqs-toggle.platform').length != 1 ) {
-                alert('WARNING: Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.');
+                //alert('WARNING: Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.');
             }
             $('#contour-scatter-buttons').show();
             $('#sensor-tracks-checkbox').show();
