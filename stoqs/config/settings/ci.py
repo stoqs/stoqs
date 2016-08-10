@@ -63,3 +63,9 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 # Must be address externally accessible if your STOQS server is to be externally accessible
 MAPSERVER_HOST = 'localhost'
+
+# Home page link, logo and alt text - HOME_PAGE_LOGO must be in STATIC_URL/images
+HOME_PAGE_LINK = env('HOME_PAGE_LINK', default='http://www.mbari.org')
+HOME_PAGE_LOGO = env('HOME_PAGE_LOGO', default='new_mbari_logo.png')
+HOME_PAGE_ALT = env('HOME_PAGE_LOGO', default='MBARI')
+
