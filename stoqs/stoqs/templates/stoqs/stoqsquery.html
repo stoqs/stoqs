@@ -2479,12 +2479,12 @@
             $('#left-column').show()
             $('#accordion2').css( { 'margin-right': '' } );
             $('#right-column').css( { 'margin-left': '' } );
-            if (this.id == 'td-zoom-rc-button') {
-                $('#time-depth-plot').css( { 'height': '400px' } );
-            }
-            if (this.id == 'tp-zoom-rc-button') {
-                $('#time-parameter-plot').css( { 'height': '400px' } );
-            }
+            $('#time-depth-plot').css( { 'height': '400px',
+                                         'resize': '',
+                                         'overflow': '' } );
+            $('#time-parameter-plot').css( { 'height': '400px',
+                                             'resize': '',
+                                             'overflow': '' } );
             $(this).html('<i class="icon-resize-full" title="Full Screen"></i>');
         } else {
             if ($('.stoqs-zoom-width').hasClass('span6')) {
@@ -2496,12 +2496,10 @@
             $('#left-column').hide()
             $('#accordion2').css( { 'margin-right': '18px' } );
             $('#right-column').css( { 'margin-left': '0px' } );
-            if (this.id == 'td-zoom-rc-button') {
-                $('#time-depth-plot').css( { 'height': '800px' } );
-            }
-            if (this.id == 'tp-zoom-rc-button') {
-                $('#time-parameter-plot').css( { 'height': '800px' } );
-            }
+            $('#time-depth-plot').css( { 'resize': 'vertical',
+                                         'overflow': 'auto' } );
+            $('#time-parameter-plot').css( { 'resize': 'vertical',
+                                             'overflow': 'auto' } );
             $(this).html('<i class="icon-resize-small" title="Not Full Screen"></i>');
         }
         rcZoomed = ! rcZoomed;
