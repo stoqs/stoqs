@@ -6,6 +6,7 @@ Local settings
 - Use console backend for emails
 - Add Django Debug Toolbar
 - Add django-extensions as app
+- Set home page logo and link to address
 '''
 
 from .common import *  # noqa
@@ -61,6 +62,11 @@ TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 # Your local stuff: Below this line define 3rd party library settings
 
+# Home page link, logo and alt text - HOME_PAGE_LOGO must be in STATIC_URL/images
+HOME_PAGE_LINK = env('HOME_PAGE_LINK', default='http://www.mbari.org')
+HOME_PAGE_LOGO = env('HOME_PAGE_LOGO', default='new_mbari_logo.png')
+HOME_PAGE_ALT = env('HOME_PAGE_LOGO', default='MBARI')
+
 # For additional campaigns import a campaigns dictionary from stoqs/campaigns.py
 # which can be a symbolic link to a file configured for a specific installation.
 try:
@@ -70,3 +76,4 @@ try:
         DATABASES[campaign]['NAME'] = campaign
 except Exception:
     pass
+
