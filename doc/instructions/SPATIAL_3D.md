@@ -39,17 +39,22 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
    to load the .asc mesh, construct Normals and a surface, and clean it up before saving as a .ply or .x3d file.  Here are the
    suggested steps relevent to Meshlab_64bit v1.3.3 on a Mac:
 
-        File -> Import Mesh...                                      (Select .asc file produced in step 1 using defaults on the dialog)
-        Filters -> Point Set -> Compute normals for point set       (Use defaults on dialog)
-        Filters -> Point Set -> Surface Reconstruction Poisson      (Set Octree Depth to 11 and Solver Divide to 10)
-        Wait a serveral minutes (There is no progress bar displayed)
-        Filters -> Sampling -> Mesh Element Subsampling             (Subsampling by about a factor of 2 maintains fidelity and helps reduce
-                                                                 spurious faces. Subsample more to reduce the number of triangles.)
-        Select the Sampled Mesh layer
-        Filters -> Point Set -> Surface Reconstruction Poisson      (Set Octree Depth to 11 and Solver Divide to 10)
-        Clean the new mesh by selecting face outside of the original point cloud and deleting them. (The Poisson reconstruction
-        expects to create a closed surface and the extrapolated faces need to be removed.)
-        File -> Export Mesh As...                                   (Pick an appropriate .ply name and have only Face Normal selected in the dialog)
+        Copy Monterey25_1x.asc (e.g.) file locally to machine that has Meshlab
+    	File -> Import Mesh...
+        Filters -> Point Sets -> Compute normals for point sets (defaults)
+        Filters -> Remeshing, Simplification and Reconstruction -> 
+                   Surface Reconstruction: Poisson (Octree Depth: 12, Solver Divide: 10)
+	    Filters -> Remeshing, Simplification and Reconstruction -> Quadric Edge Collapse Decimation:
+		    - Target number of faces: 1,500,000
+		    - Preserve Normal
+		    - Preseve Topology
+		    - Optimal Position of Simplified Vertices
+		    - Planar Simplification
+		    - Post-simplification cleaning
+	    Filters -> Normals, Curvatures and Orientation -> Invert Faces Orientation (if needed)
+        * Cleanup - use editing tools (with plenty of intermediate saves)
+        Filters -> Smoothing, Fairing and Deformation -> Laplacian smooth (surface preserve)
+        File -> Export Mesh As... (save as file Monterey25_1x-smooth.ply)
 
    There are several good Meshlab video tutorials online that will help you understand how to use the UI.
 
