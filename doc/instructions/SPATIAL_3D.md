@@ -39,7 +39,7 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
    to load the .asc mesh, construct Normals and a surface, and clean it up before saving as a .ply or .x3d file.  Here are the
    suggested steps relevent to Meshlab_64bit v1.3.3 on a Mac:
 
-        Copy Monterey25_1x.asc (e.g.) file locally to machine that has Meshlab
+        Copy Monterey25_10x.asc (e.g.) file locally to machine that has Meshlab
     	File -> Import Mesh...
         Filters -> Point Sets -> Compute normals for point sets (defaults)
         Filters -> Remeshing, Simplification and Reconstruction -> 
@@ -54,7 +54,7 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
 	    Filters -> Normals, Curvatures and Orientation -> Invert Faces Orientation (if needed)
         * Cleanup - use editing tools (with plenty of intermediate saves)
         Filters -> Smoothing, Fairing and Deformation -> Laplacian smooth (surface preserve)
-        File -> Export Mesh As... (save as file Monterey25_1x-smooth.ply)
+        File -> Export Mesh As... (save as file Monterey25_10x-clean.ply)
 
    There are several good Meshlab video tutorials online that will help you understand how to use the UI.
 
