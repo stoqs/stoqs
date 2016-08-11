@@ -87,9 +87,10 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
 
 6. Test that the STOQS UI displays the new mesh in the Spatial -> 3D tab.
 
-7. With X3DOM 1.6 and later and at least aopt V2.6.0 we can generate more efficient SRC instead of popGeometry, so instead of the last step in 3 do:
+7. With X3DOM 1.6 and later and at least aopt V2.6.0 we can generate more efficient SRC instead of popGeometry:
 
         cd /Users/mccann/Downloads/
+        aopt -i Monterey25_10x-clean.ply -F Scene -b Monterey25_10x-opt.x3db
         aopt -i Monterey25_10x-opt.x3db -f PrimitiveSet:creaseAngle:4 -V -Y "nodeType(Geometry)" -N Monterey25_10x_src.html
 
     Edit `Monterey25_10x_src.html`:
