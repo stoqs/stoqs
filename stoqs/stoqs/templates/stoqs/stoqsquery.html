@@ -3579,15 +3579,16 @@
                     });
                 }
                 else {
-                    //$.each(data.activitynames, function (index, activityname) {
-                    $.each($('body').data()['activitynames'], function (activityname, checked) {
-                        if (checked) {
-                            $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', true);
-                        }
-                        else {
-                            $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', false);
-                        }
-                    });
+                    if ( ! $.isEmptyObject($('body').data()['activitynames']) ) {
+                        $.each($('body').data()['activitynames'], function (activityname, checked) {
+                            if (checked) {
+                                $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', true);
+                            }
+                            else {
+                                $('input[name=activity_select_cb][value="' + activityname + '"]').prop('checked', false);
+                            }
+                        });
+                    }
                 }
 
                 // Sort the QuickLook plot URLs by platform and build HTML for Quick look plots tab
@@ -4529,6 +4530,9 @@
                 setDataAccess('mp', data);
                 setDataAccess('sp', data);
                 saveBodyData(data);
+                if (init == true) {
+                    save_zoom_from_permalink();
+                }
                 for (var key in data) {
                     if (init == true) {
                         onInit(data, key)
@@ -4543,6 +4547,11 @@
                     if ( !$('#collapseSpatial').hasClass('in') ) {
                         $('#spatial-anchor').click();
                     }
+                    // Push initial temporal/depth bounds to the stack
+                    zoom_simpledepthtime_stack.push([ timedepthplot.getXAxes()[0].datamin, timedepthplot.getXAxes()[0].datamax, 
+                                                      timedepthplot.getYAxes()[0].datamin, timedepthplot.getYAxes()[0].datamax,
+                                                      simpledepthtime_options_zoom ]);
+                    // Perform saved clicks embedded in $.url().param('permalink_id')
                     load_permalink();
                 }
                 resetWaitIndicators(data);
@@ -4592,14 +4601,6 @@
                     $('body').data()['extent'] = data['extent'];
                     me.refreshMap($('body').data()['extent'][0]);
                     if (init) {
-                        // Set start and end time with actual axis values
-                        $('body').data()['start-ems'] = timedepthplot.getXAxes()[0].datamin;
-                        $('body').data()['end-ems'] = timedepthplot.getXAxes()[0].datamax;
-                        $('body').data()['start-depth'] = timedepthplot.getYAxes()[0].datamin;
-                        $('body').data()['end-depth'] = timedepthplot.getYAxes()[0].datamax;
-                        zoom_simpledepthtime_stack.push([ $('body').data()['start-ems'], $('body').data()['end-ems'], 
-                                                          $('body').data()['start-depth'], $('body').data()['end-depth'],
-                                                          simpledepthtime_options_zoom ]);
                         updateTemporal();
                     }
                 },
@@ -4719,40 +4720,34 @@
         return JSON.stringify(params);
         
     }
-    
+
+    function save_zoom_from_permalink() {
+        // Set Temporal/Depth zoom for handler that calls ZoomIn() on Temporal tab click event
+        var permalink_id=$.url().param('permalink_id');
+        if (typeof permalink_id !== 'undefined') {
+            // If it's longer than 32 characters, it is a client-side permalink
+            if (permalink_id.length > 32) {
+                try {
+                    var parameters=JSON.parse(LZString.decompressFromBase64(permalink_id));
+                    $('body').data()['end-ems'] = parameters['end-ems'];
+                    $('body').data()['start-ems'] = parameters['start-ems'];
+                    $('body').data()['end-depth'] = parameters['end-depth'];
+                    $('body').data()['start-depth'] = parameters['start-depth'];
+                } catch (err) {
+                    alert('Permalink loading failed: ' + err + ' (Perhaps the permalink_id value is invalid?)');
+                }
+            }
+        }
+    }
+
     function reset_parameters(parameters) {
-        permalink_bypass=true;
-        var ranges={xaxis: {to: $('body').data()['end-ems'],
-                            from: $('body').data()['start-ems']},
-                    yaxis: {to: $('body').data()['end-depth'],
-                            from: $('body').data()['start-depth']}
-                    };
-        // Uncheck the zoom update, since that'll mess up our resetting the 
-        // map.
+        permalink_bypass = true;
+
+        // Uncheck the zoom update, since that'll mess up our resetting the map
         var $update=$('input[type=\"checkbox\"][id=\"zoomtoextentonupdate\"]')
         if ($update.is(':checked')) { $update.click(); } // uncheck it
 
-        // Set the time axis first
-        $.each(parameters, function (key, value) {
-            switch(key) {
-                case 'end-ems':
-                    ranges.xaxis.to=parseFloat(value);
-                    break;
-                case 'start-ems':
-                    ranges.xaxis.from=parseFloat(value);
-                    break;
-                case 'end-depth':
-                    ranges.yaxis.to=parseFloat(value);
-                    break;
-                case 'start-depth': 
-                    ranges.yaxis.from=parseFloat(value);
-                    break;
-            }
-        });
-        // Zoom into Temporal/Depth before "clicking" anything else
-        permalink_bypass=false;
-        ZoomIn('', ranges);
-        permalink_bypass=true;
+        save_zoom_from_permalink(parameters)
 
         // Click platform buttons first, then the rest of them
         $.each(parameters['platform_clicks'], function (pos, item) {
