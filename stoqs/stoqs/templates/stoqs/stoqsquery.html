@@ -4530,17 +4530,17 @@
                 setDataAccess('mp', data);
                 setDataAccess('sp', data);
                 saveBodyData(data);
-                if (init == true) {
+                if (init) {
                     save_zoom_from_permalink();
                 }
                 for (var key in data) {
-                    if (init == true) {
+                    if (init) {
                         onInit(data, key)
                     } else {
                         onUpdate(data, key)
                     }
                 }
-                if (init == true) {
+                if (init) {
                     if ( !$('#collapseTemporal').hasClass('in') ) {
                         $('#temporal-anchor').click();
                     }
@@ -4601,6 +4601,13 @@
                     $('body').data()['extent'] = data['extent'];
                     me.refreshMap($('body').data()['extent'][0]);
                     if (init) {
+                        if ( $.isEmptyObject($.url().param('permalink_id')) ) {
+                            // Set start and end time with actual axis values
+                            $('body').data()['start-ems'] = timedepthplot.getXAxes()[0].datamin;
+                            $('body').data()['end-ems'] = timedepthplot.getXAxes()[0].datamax;
+                            $('body').data()['start-depth'] = timedepthplot.getYAxes()[0].datamin;
+                            $('body').data()['end-depth'] = timedepthplot.getYAxes()[0].datamax;
+                        }
                         updateTemporal();
                     }
                 },
