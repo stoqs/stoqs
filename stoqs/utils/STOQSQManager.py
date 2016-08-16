@@ -1059,7 +1059,7 @@ class STOQSQManager(object):
             # Select each time series by Activity and test against secondsperpixel for deciding on min & max or stride selection
             if not ndCounts[p]:
                 ndCounts[p] = 1         # Trajectories with plotTimeSeriesDepth will not have a nominal depth, set to 1 for calculation below
-            for a in qs_awp:
+            for a in qs_awp.distinct('name'):
                 qs_mp_a = qs_mp.filter(measurement__instantpoint__activity__name=a.name)
                 ad = (a.enddate-a.startdate)
                 aseconds = ad.days * 86400 + ad.seconds
