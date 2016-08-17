@@ -130,7 +130,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
 
            /usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data --daemonize /var/log/uwsgi/uwsgi-emperor.log --pidfile /var/run/uwsgi.pid
    
-   As this script contains keys and database credentials take appropriate steps to protect it from prying eyes.
+   As this script contains keys and database credentials take appropriate steps to protect it from prying eyes. On a CentOS 6 system you may use this [sample_uwsgi_startstop.sh](sample_uwsgi_startstop.sh) script to have uWSGI start on boot.
 
 15. To restart a production uWSGI server running in emperor mode simply `touch`
     the file that is linked in the `/etc/uwsgi/vassals/` directory, e.g.:
