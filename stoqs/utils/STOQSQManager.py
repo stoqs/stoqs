@@ -201,7 +201,7 @@ class STOQSQManager(object):
         # Assign query sets for the current UI selections
         if fromTable == 'Activity':
             self.qs = qs.using(self.dbname)
-            self.qs_platform = qs_platform.using(self.dbname)
+            self.qs_platform = qs_platform
             ##logger.debug('Activity query = %s', str(self.qs.query))
         elif fromTable == 'Sample':
             self.sample_qs = qs.using(self.dbname)
