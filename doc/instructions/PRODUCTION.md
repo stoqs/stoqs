@@ -126,8 +126,11 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
 14. To configure uWSGI to start on system boot put the commands from step 11 into 
     a script file named something like `start_uwsgi.sh` and put the full path of the file
     `in /etc/rc.d/rc.local`.  To have it run in emperor mode replace the last line 
-    in the script with the last line from step 13.  As this script contains keys 
-    and database credentials take appropriate steps to protect it from prying eyes.
+    in the script with:
+
+           /usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data --daemonize /var/log/uwsgi/uwsgi-emperor.log --pidfile /var/run/uwsgi.pid
+   
+   As this script contains keys and database credentials take appropriate steps to protect it from prying eyes.
 
 15. To restart a production uWSGI server running in emperor mode simply `touch`
     the file that is linked in the `/etc/uwsgi/vassals/` directory, e.g.:
