@@ -3648,7 +3648,7 @@
 
         function saveBodyData(data) {
             // Save the dictionary in the body so that asynchronous event handlers can get at it
-            $.each(['parameterplatforms', 'parameterminmax', 'platformColors', 'platformFeatureTypes'], function(index, key) {
+            $.each(['parameterplatforms', 'parameterminmax', 'platformColors', 'platformFeatureTypes', 'counts'], function(index, key) {
                 if ( ! $.isEmptyObject(data[key]) ) {
                     $('body').data(key, data[key]);
                 }
@@ -4101,7 +4101,17 @@
             }
         } // redrawParameterTime()
 
-        function resetWaitIndicators(data) {
+        function startWaitIndicators() {
+            $('#time-depth-flot').addClass('stoqs-background-ajax-loader-pulse ');
+            $('#time-parameter-flot').addClass('stoqs-background-ajax-loader-pulse ');
+            $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader-pp ');
+            $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader-3d ');
+            $('#geo-3dplot').addClass('stoqs-background-ajax-loader-3d-topright ');
+            $('#metadata-ajaxtime').css( { 'color': 'grey' } );
+            $('#metadata-loading').html(" loading...");
+        }
+
+        function resetWaitIndicators() {
             $('#time-depth-flot').removeClass('stoqs-background-ajax-loader-pulse ');
             $('#time-parameter-flot').removeClass('stoqs-background-ajax-loader-pulse ');
             $('#parameter-parameter-2dplot').removeClass('stoqs-background-ajax-loader-pp ');
@@ -4110,10 +4120,10 @@
 
             var endAjax = new Date().getTime();
             var nsecs = (endAjax - startAjax) / 1000.0;
-            if (! $.isEmptyObject(data) ) {
-                if ( ! $.isEmptyObject(data['counts']) ) {
+            if (! $.isEmptyObject($('body').data()) ) {
+                if ( ! $.isEmptyObject($('body').data()['counts']) ) {
                     if ( ! $('#getactualcount').is(':checked') ) {
-                        $('#metadata-count').html("about " + data.counts.approximate_count_localized + " data values - ");
+                        $('#metadata-count').html("about " + $('body').data()['counts'].approximate_count_localized + " data values - ");
                     }
                     else {
                         $('#metadata-count').html(data.counts.actual_count_localized + " data values - ");
@@ -4513,13 +4523,7 @@
         $.when($.ajax({
             type : 'GET',
             beforeSend: function() {
-                $('#time-depth-flot').addClass('stoqs-background-ajax-loader-pulse ');
-                $('#time-parameter-flot').addClass('stoqs-background-ajax-loader-pulse ');
-                $('#parameter-parameter-2dplot').addClass('stoqs-background-ajax-loader-pp ');
-                $('#parameter-parameter-3dplot').addClass('stoqs-background-ajax-loader-3d ');
-                $('#geo-3dplot').addClass('stoqs-background-ajax-loader-3d-topright ');
-                $('#metadata-ajaxtime').css( { 'color': 'grey' } );
-                $('#metadata-loading').html(" loading...");
+                startWaitIndicators();
             },
             url : summaryQuery + '?' + qstring,
             error: function(jqXHR, textStatus, errorThrown) {
@@ -4554,7 +4558,11 @@
                     // Perform saved clicks embedded in $.url().param('permalink_id')
                     load_permalink();
                 }
-                resetWaitIndicators(data);
+
+                // Register handler that waits for all (including permalink) requests to finish
+                $(document).ajaxStop(function (data) {
+                   resetWaitIndicators();
+                })
 
                 // For Development - turn on Platform plot controls
                 //$('.platform-plot-instruction').show()
@@ -4848,8 +4856,8 @@
             }
         }
     }
-    
-    
+
+
     $(function () { 
         // Initialize the accordian fields.
         $(".collapse").collapse(); // Collapse all the accordian fields, click the Spatial and Temporal ones below
