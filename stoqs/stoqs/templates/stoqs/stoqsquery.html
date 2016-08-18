@@ -1589,7 +1589,7 @@
                 var st_text_comm = "% Copy and paste into a Matlab session where stoqstoolbox build 2013-01-08 or\n";
                 st_text_comm = st_text_comm + "% later has been installed from https://code.google.com/p/stoqs/downloads\n\n";
                 st_text = st_text_comm;
-                st_text = st_text + "campaign = '{{http_site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}';\n";
+                st_text = st_text + "campaign = '{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}';\n";
                 $.each(req_params, function(k, v) {
                     if (typeof params[v] != "undefined") {
                         if (v.match(/depth$/)) {
