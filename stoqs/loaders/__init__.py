@@ -523,12 +523,19 @@ class STOQS_Loader(object):
                 ' '.join(self.include_names))
         self.logger.info("comment = " + comment)
 
-        # Create Platform 
+        # Need to create Campaign and ActivityType before creating Activity
+        self.createCampaign()
+        if self.activitytypeName is not None:
+            self.activityType, created = m.ActivityType.objects.using(self.dbAlias
+                                        ).get_or_create(name = self.activitytypeName)
+
+        # Get or create Activity based on unique identifiers
         self.activity, created = m.Activity.objects.using(self.dbAlias).get_or_create(    
                                         name = self.activityName, 
                                         platform = self.platform,
-                                        startdate = self.startDatetime,
-                                        enddate = self.endDatetime)
+                                        campaign = self.campaign,
+                                        activitytype = self.activityType,
+                                        startdate = self.startDatetime)
 
         if created:
             self.logger.info("Created activity %s in database %s with startDate=%s, endDate = %s",
@@ -536,20 +543,10 @@ class STOQS_Loader(object):
         else:
             self.logger.info("Retrieved activity %s from database %s", self.activityName, self.dbAlias)
 
-        # Get or create activityType 
-        if self.activitytypeName is not None:
-            activityType,created = m.ActivityType.objects.using(self.dbAlias
-                    ).get_or_create(name = self.activitytypeName)
-            self.activityType = activityType
+        # Update Activity with attributes that may change, e.g.  with --append option
+        m.Activity.objects.using(self.dbAlias).filter(
+                    id=self.activity.id).update(enddate = self.endDatetime)
     
-            if self.activityType is not None:
-                self.activity.activitytype = self.activityType
-    
-        self.createCampaign()
-        self.activity.campaign = self.campaign
-    
-        self.activity.save(using=self.dbAlias)
-
     def addResources(self):
         '''
         Add Resources for this activity, namely the NC_GLOBAL attribute names and values,
