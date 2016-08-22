@@ -140,7 +140,7 @@ class CANONLoader(LoadScript):
                 # Return datetime of last timevalue - if data are loaded from multiple 
                 # activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                            activity__name=aName).aggregate(
+                                            activity__name__contains=f).aggregate(
                                             Max('timevalue'))['timevalue__max']
 
             try:
@@ -168,7 +168,7 @@ class CANONLoader(LoadScript):
                 # Return datetime of last timevalue - if data are loaded from multiple 
                 # activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                            activity__name=aName).aggregate(
+                                            activity__name__contains=f).aggregate(
                                             Max('timevalue'))['timevalue__max']
 
             try:
@@ -196,7 +196,7 @@ class CANONLoader(LoadScript):
                 # Return datetime of last timevalue - if data are loaded from multiple 
                 # activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                            activity__name=aName).aggregate(
+                                            activity__name__contains=f).aggregate(
                                             Max('timevalue'))['timevalue__max']
 
             try:
@@ -296,7 +296,7 @@ class CANONLoader(LoadScript):
                 # Return datetime of last timevalue - if data are loaded from multiple 
                 # activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                    activity__name=aName).aggregate(
+                                                    activity__name__contains=f).aggregate(
                                                     Max('timevalue'))['timevalue__max']
 
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
@@ -318,7 +318,7 @@ class CANONLoader(LoadScript):
                 # Return datetime of last timevalue - if data are loaded from multiple
                 # activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                    activity__name=aName).aggregate(
+                                                    activity__name__contains=f).aggregate(
                                                     Max('timevalue'))['timevalue__max']
 
             try:
@@ -337,10 +337,19 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.nps34_files], self.nps34_files):
             url = self.nps34_base + f
+
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue in the database
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
+                                                    activity__name__contains=f).aggregate(
+                                                    Max('timevalue'))['timevalue__max']
+
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'NPS_Glider_34', self.colors['nps34'], 'glider', 'Glider Mission', 
                                         self.nps34_parms, self.dbAlias, stride, self.nps34_startDatetime, 
-                                        self.nps34_endDatetime, grdTerrain=self.grdTerrain)
+                                        self.nps34_endDatetime, grdTerrain=self.grdTerrain,
+                                        dataStartDatetime=dataStartDatetime)
 
     def load_glider_ctd(self, stride=None):
         '''
@@ -731,7 +740,7 @@ class CANONLoader(LoadScript):
                 # Return datetime of last timevalue - if data are loaded from multiple 
                 # activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                activity__name=aName).aggregate(
+                                                activity__name__contains=f).aggregate(
                                                 Max('timevalue'))['timevalue__max']
                 if dataStartDatetime:
                     # Subract an hour to fill in missing_values at end from previous load
