@@ -89,6 +89,9 @@ urlpatterns = patterns('',
     url(pre + 'generate_permalink/', 'stoqs.views.permalinks.generate_permalink', {}, name='generate_permalink'),
     url(pre + 'permalink/(?P<pid>[^/]*)/', 'stoqs.views.permalinks.load_permalink', {}, name='load_permalink'),
 
+    # View to dynamically generate images and html image map of colormaps to choose from
+    url('^[^/]+/generate_colormaps/', 'stoqs.views.colormaps.generate_colormaps', {}, name='generate_colormaps'),
+
     # Feed data for parameterinfo-popup
     url(pre + 'parameterinfo/(?P<pid>[^/]*)/', 'stoqs.views.parameterinfo.parameterinfo', {}, name='parameterinfo'),
 
