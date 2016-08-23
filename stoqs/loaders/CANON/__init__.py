@@ -278,10 +278,21 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.l_662_files], self.l_662_files):
             url = self.l_662_base + f
+
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue - if data are loaded from multiple
+                # activities return the earliest last datetime value
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
+                                                    activity__name__contains=f).aggregate(
+                                                    Max('timevalue'))['timevalue__max']
+
+
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'SPRAY_L66_Glider', self.colors['l_662'], 'glider', 'Glider Mission', 
                                        self.l_662_parms, self.dbAlias, stride, self.l_662_startDatetime, 
-                                       self.l_662_endDatetime, grdTerrain=self.grdTerrain)
+                                       self.l_662_endDatetime, grdTerrain=self.grdTerrain,
+                                       dataStartDatetime=dataStartDatetime)
 
     def load_NPS29(self, stride=None):
         '''
@@ -537,9 +548,18 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.oa1_files], self.oa1_files):
             url = os.path.join(self.oa1_base, f)
+        
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue in the database
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
+                                                    activity__name__contains=f).aggregate(
+                                                    Max('timevalue'))['timevalue__max']
+
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment',
-                                        self.oa1_parms, self.dbAlias, stride, self.oa1_startDatetime, self.oa1_endDatetime)
+                                        self.oa1_parms, self.dbAlias, stride, self.oa1_startDatetime, self.oa1_endDatetime,
+                                        dataStartDatetime=dataStartDatetime)
 
     def load_oa2(self, stride=None):
         '''
@@ -548,9 +568,17 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.oa2_files], self.oa2_files):
             url = os.path.join(self.oa2_base, f)
+            dataStartDatetime = None
+            if self.args.append:
+                # Return datetime of last timevalue in the database
+                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
+                                                    activity__name__contains=f).aggregate(
+                                                    Max('timevalue'))['timevalue__max']
+
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment',
-                                        self.oa2_parms, self.dbAlias, stride, self.oa2_startDatetime, self.oa2_endDatetime)
+                                        self.oa2_parms, self.dbAlias, stride, self.oa2_startDatetime, self.oa2_endDatetime,
+                                        dataStartDatetime=dataStartDatetime)
 
 
     def loadOA1pco2(self, stride=None):
