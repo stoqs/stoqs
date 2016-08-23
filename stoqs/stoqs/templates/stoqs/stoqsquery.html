@@ -165,6 +165,21 @@
     </div>
   </div>
 
+  <div id="colormap-popup" class="modal hide fade in" style="display:none;width:1000px;">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">×</a>
+        <h3>Click on new colormap to use</h3>
+    </div>
+    <div class="modal-body">
+        <h4>Color maps</h4>
+        <div id="colormap-choices" style="display:none">
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+  </div>
+
   <div class="container-fluid">
 
     <div class="row-fluid">
@@ -850,8 +865,11 @@
                                                 <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
-                                            <div class="span7" id="sectioncolorbar">
-                                                <span style="float:right;"><img src="" /></span>
+                                            <div class="span7">
+                                                <span style="float:right;">
+                                                    <a data-toggle="modal" href="#colormap-popup" data-action="{% url 'stoqs:generate_colormaps' %}">
+                                                        <img id="sectioncolorbarimg" src="" /></a>
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -2286,7 +2304,7 @@
             $('#showsensortrackstext').text('');
             $('#showsensortracks').attr('disabled', true);
             $('#showgeox3dmeasurementtext').text('');
-            $('#sectioncolorbar > span > img').removeAttr('src');
+            $('#sectioncolorbarimg').removeAttr('src');
             $('#temporalparameterstrideinfo').text('');
             rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'sampledurationsdepthtime']);
         }
@@ -4274,7 +4292,7 @@
                                 $.plot($("#time-depth-flot"), flotdata, options);
                             });
                             // Show colorbar
-                            $('#sectioncolorbar > span > img').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
+                            $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
                             $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
@@ -4283,7 +4301,7 @@
                         else {
                             $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
                             $('#temporalparameterplotinfo').css( { 'color': 'red' } );
-                            $('#sectioncolorbar > span > img').removeAttr('src');
+                            $('#sectioncolorbarimg').removeAttr('src');
                         }
                     }
                     else {
