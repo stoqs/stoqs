@@ -531,7 +531,7 @@ class STOQS_Loader(object):
 
         # Get or create Activity based on unique identifiers
         self.activity, created = m.Activity.objects.using(self.dbAlias).get_or_create(    
-                                        name = self.activityName, 
+                                        name__contains = self.activityName,
                                         platform = self.platform,
                                         campaign = self.campaign,
                                         activitytype = self.activityType,
