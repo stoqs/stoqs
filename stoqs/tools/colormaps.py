@@ -18,7 +18,7 @@ except AttributeError:
     pass
 
 from django.conf import settings
-from utils.Viz.KML import readCLT
+from utils.Viz.plotting import readCLT
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
