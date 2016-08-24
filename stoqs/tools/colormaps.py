@@ -43,6 +43,15 @@ cmaps = [('Uniform',
                              'nipy_spectral', 'jet', 'jetplus', 'rainbow',
                              'gist_rainbow', 'hsv', 'flag', 'prism'])]
 
+# Add reverse colormaps to the cmaps list
+cmaps_with_r = []
+for cmap_category, cmap_list in cmaps:
+    cmap_list.extend(['{}_r'.format(c) for c in cmap_list])
+    cmaps_with_r.append((cmap_category, cmap_list))
+
+jetplus_clt = readCLT(os.path.join(str(settings.ROOT_DIR.path('static')), 
+                                   'colormaps', 'jetplus.txt'))
+
 def _plot_color_bar(cmap):
     '''Make an image file for each colormap
     '''
@@ -52,8 +61,10 @@ def _plot_color_bar(cmap):
     cb_fig = plt.figure(figsize=(2.56, 0.15))
     cb_ax = cb_fig.add_axes([0., 0., 1., 1.])
     if cmap == 'jetplus':
-        clt = readCLT(os.path.join(str(settings.ROOT_DIR.path('static')), 'colormaps', 'jetplus.txt'))
-        cm_jetplus = colors.ListedColormap(np.array(clt))
+        cm_jetplus = colors.ListedColormap(np.array(jetplus_clt))
+        cb_ax.imshow(gradient, aspect='auto', cmap=cm_jetplus)
+    elif cmap == 'jetplus_r':
+        cm_jetplus = colors.ListedColormap(np.array(jetplus_clt)[::-1])
         cb_ax.imshow(gradient, aspect='auto', cmap=cm_jetplus)
     else:
         cb_ax.imshow(gradient, aspect='auto', cmap=plt.get_cmap(cmap))
@@ -67,7 +78,7 @@ def generate_colormaps():
     '''Build images as in http://matplotlib.org/examples/color/colormaps_reference.html
     '''
     print('Making colormap images:')
-    for cmap_category, cmap_list in cmaps:
+    for cmap_category, cmap_list in cmaps_with_r:
         print('\t{}:'.format(cmap_category))
         for cmap in cmap_list:
             print('\t\t{}'.format(cmap))
