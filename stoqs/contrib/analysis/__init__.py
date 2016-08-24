@@ -160,7 +160,7 @@ class BiPlot(object):
 
         pq.buildPQuerySet(*args, **kwargs)
 
-        pp = ParameterParameter(request, {'x': px, 'y': py}, None, pq, {})
+        pp = ParameterParameter(kwargs, request, {'x': px, 'y': py}, None, pq, {})
         pp.logger.setLevel(logging.ERROR)
         if self.args.verbose > 2:
             pp.logger.setLevel(logging.DEBUG)
