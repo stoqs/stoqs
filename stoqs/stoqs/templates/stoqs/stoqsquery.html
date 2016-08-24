@@ -2147,6 +2147,11 @@
         rebuildFilters(['measuredparameterx3d']);
     });
 
+    $('input[name="colormap_choice"]').on('click', function (event) {
+        // Don't need to get everything from queryData, only the response with the PNG image
+        rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
+    });
+
     $('#showplatforms').on('click', function (event) {
         if ( $('#showplatforms').is(':checked') ) {
             // Need time series data to redraw with crosshairs, so get everything
@@ -3543,6 +3548,9 @@
                     qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
                 }
             }
+        }
+        if ($('input:radio[name=colormap_choice]:checked').val()) {
+            qstring = qstring + '&cm=' + $('input:radio[name=colormap_choice]:checked').val();
         }
 
         if ($('#showgeox3dmeasurement').is(':checked') || $('#showplatforms').is(':checked')) {
