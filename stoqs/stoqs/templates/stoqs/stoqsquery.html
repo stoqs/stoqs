@@ -911,7 +911,13 @@
                                                 <label for="{{cm}}">{{cm}}</label>
                                             </td>
                                             <td style="border-top:0px;"><label for="{{cm}}"><img src="{{STATIC_URL}}images/colormaps/{{cm}}.png"></label></td>
-                                        </label></tr>
+
+                                            <td style="white-space:nowrap;border-top:0px;">
+                                                <input type="radio" name="colormap_choice" value="{{cm}}_r" id="{{cm}}_r" style="float:left;clear:none;display:block;margin-right:5px;"/>
+                                                <label for="{{cm}}_r">{{cm}}_r</label>
+                                            </td>
+                                            <td style="border-top:0px;"><label for="{{cm}}_r"><img src="{{STATIC_URL}}images/colormaps/{{cm}}_r.png"></label></td>
+                                        </tr>
                                     {% endfor %}            
                                     </table>
                                     </fieldset>
