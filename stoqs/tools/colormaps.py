@@ -46,8 +46,10 @@ cmaps = [('Uniform',
 # Add reverse colormaps to the cmaps list
 cmaps_with_r = []
 for cmap_category, cmap_list in cmaps:
-    cmap_list.extend(['{}_r'.format(c) for c in cmap_list])
-    cmaps_with_r.append((cmap_category, cmap_list))
+    # Use list() to make copy of cmap_list
+    cmap_list_r = list(cmap_list)
+    cmap_list_r.extend(['{}_r'.format(c) for c in cmap_list])
+    cmaps_with_r.append((cmap_category, cmap_list_r))
 
 jetplus_clt = readCLT(os.path.join(str(settings.ROOT_DIR.path('static')), 
                                    'colormaps', 'jetplus.txt'))
