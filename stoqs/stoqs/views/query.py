@@ -12,6 +12,7 @@ View functions to supoprt the main query web page
 @license: GPL
 '''
 
+from colormaps import cmaps
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
@@ -273,6 +274,7 @@ def queryUI(request):
             ]
     config_settings = {'site_uri': request.build_absolute_uri('/')[:-1],
                        'formats': formats,
+                       'colormaps': cmaps,
                        'mapserver_host': settings.MAPSERVER_HOST,
                        'mappath': request.session['mappath'],
                        'home_page_link': settings.HOME_PAGE_LINK,
