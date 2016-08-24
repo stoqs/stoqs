@@ -122,8 +122,32 @@ def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientat
     else:
         raise Exception('orientation must be either horizontal or vertical')
 
+class BaseParameter(object):
+    
+    def set_colormap(self):
+        '''Assign colormap as passed in from UI request
+        '''
+        jetplus_clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
+        if self.kwargs.get('cm'):
+            self.cm_name = self.kwargs.get('cm')[0]
+            if self.cm_name == 'jetplus':
+                self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
+                self.clt = jetplus_clt
+            elif self.cm_name == 'jetplus_r':
+                self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt)[::-1])
+                self.clt = jetplus_clt[::-1]
+            else:
+                self.cm = plt.get_cmap(self.cm_name)
+                # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
+                self.clt = [self.cm(i) for i in range(256)]
+        else:
+            # Default colormap - the legacy jetplus
+            self.cm_name = 'jetplus'
+            self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
+            self.clt = jetplus_clt
 
-class MeasuredParameter(object):
+
+class MeasuredParameter(BaseParameter):
     '''
     Use matploptib to create nice looking contour plots
     '''
@@ -145,8 +169,7 @@ class MeasuredParameter(object):
         self.parameterGroups = parameterGroups
 
         self.scale_factor = None
-        self.clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
-        self.cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
+        self.set_colormap()
 
         # - Use a new imageID for each new image
         self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -357,7 +380,7 @@ class MeasuredParameter(object):
         Return RGB color value for data_value given member's color lookup table and cmin, cmax lookup table limits
         '''
         if not clt:
-            clt = self.cm_jetplus
+            clt = self.cm
         indx = int(round((float(datavalue) - cmin) * ((len(clt.colors) - 1) / float(cmax - cmin))))
         if indx < 0:
             indx=0
@@ -516,11 +539,11 @@ class MeasuredParameter(object):
                 ax.set_ylim(dmax, dmin)
                 ax.get_xaxis().set_ticks([])
                 if contourFlag:
-                    ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=self.cm_jetplus, extend='both')
+                    ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=self.cm, extend='both')
                     ax.scatter(self.x, self.y, marker='.', s=2, c='k', lw = 0)
                 else:
                     self.logger.debug('parm_info = %s', parm_info)
-                    ax.scatter(self.x, self.y, c=self.z, s=coloredDotSize, cmap=self.cm_jetplus, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+                    ax.scatter(self.x, self.y, c=self.z, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2])
                     # Draw any spanned data, e.g. NetTows
                     for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
                         try:
@@ -555,7 +578,7 @@ class MeasuredParameter(object):
                 return None, None, 'Could not plot the data'
 
             try:
-                makeColorBar(self.request, self.colorbarPngFileFullPath, parm_info, self.cm_jetplus)
+                makeColorBar(self.request, self.colorbarPngFileFullPath, parm_info, self.cm)
             except Exception as e:
                 self.logger.exception('%s', e)
                 return None, None, 'Could not plot the colormap'
@@ -644,7 +667,7 @@ class MeasuredParameter(object):
                 indices = indices + '-1 ' 
 
             try:
-                makeColorBar(self.request, self.colorbarPngFileFullPath, self.parameterMinMax, self.cm_jetplus)
+                makeColorBar(self.request, self.colorbarPngFileFullPath, self.parameterMinMax, self.cm)
             except Exception as e:
                 self.logger.exception('Could not plot the colormap')
                 x3dResults = 'Could not plot the colormap'
@@ -951,22 +974,23 @@ class PPDatabaseException(Exception):
         self.sql = sql
 
 
-class ParameterParameter(object):
+class ParameterParameter(BaseParameter):
     '''
     Use matploplib to create nice looking property-property plots
     '''
     logger = logging.getLogger(__name__)
-    def __init__(self, request, pDict, mpq, pq, pMinMax):
+    def __init__(self, kwargs, request, pDict, mpq, pq, pMinMax):
         '''
         Save parameters that can be used by the different plotting methods here
         @pMinMax is like: (pID, pMin, pMax)
         '''
+        self.kwargs = kwargs
         self.request = request
         self.pDict = pDict
         self.mpq = mpq
         self.pq = pq
         self.pMinMax = pMinMax
-        self.clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
+        self.set_colormap()
         self.depth = []
         self.x_id = []
         self.y_id = []
@@ -1188,16 +1212,14 @@ class ParameterParameter(object):
                 ax.set_xlim(self.pMinMax['x'][1], self.pMinMax['x'][2])
                 ax.set_ylim(self.pMinMax['y'][1], self.pMinMax['y'][2])
 
-            self.clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
-            cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
             if self.c:
                 self.logger.debug('self.pMinMax = %s', self.pMinMax)
                 self.logger.debug('Making colored scatter plot of %d points', len(self.x))
-                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=cm_jetplus, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
+                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=self.cm, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
                 # Add colorbar to the image
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
                 norm = mpl.colors.Normalize(vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip=False)
-                cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=cm_jetplus,
+                cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=self.cm,
                                                 norm=norm,
                                                 ticks=list(np.linspace(self.pMinMax['c'][1], self.pMinMax['c'][2], num=4)),
                                                 orientation='horizontal')
@@ -1272,7 +1294,7 @@ class ParameterParameter(object):
                 if self.sx and self.sy:
                     if self.c:
                         try:
-                            ax.scatter(self.sx, self.sy, marker='o', c=self.c, s=25, cmap=cm_jetplus, 
+                            ax.scatter(self.sx, self.sy, marker='o', c=self.c, s=25, cmap=self.cm, 
                                        vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
                         except ValueError as e:
                             # Likely because a Measured Parameter has been selected for color and len(self.c) != len(self.sx)
@@ -1395,11 +1417,10 @@ class ParameterParameter(object):
                         cp.standard_name = self.pDict['c']
                         cp.units = _getCoordUnits(self.pDict['c'])
                     try:
-                        cm_jetplus = mpl.colors.ListedColormap(np.array(self.clt))
                         imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
                         colorbarPngFile = '%s_%s_%s_%s_3dcolorbar_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['z'], self.pDict['c'], imageID )
                         colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
-                        makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], cm_jetplus)
+                        makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], self.cm)
 
                     except Exception:
                         self.logger.exception('Could not plot the colormap')
