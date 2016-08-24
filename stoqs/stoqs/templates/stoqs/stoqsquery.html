@@ -1471,8 +1471,13 @@
                         //sensortrackskml.attribution = '<img src="{{MEDIA_URL}}sections/' + data['parameterplatformdatavaluepng'][1] + '" />';
                         // Dynamically set url for sensor tracks display in openlayers
                         //sensortrackskml.loaded = false;
+                        var cm = 'jetplus';
+                        if ( ! $.isEmptyObject($('input:radio[name=colormap_choice]:checked').val()) ) {
+                            var cm = $('input:radio[name=colormap_choice]:checked').val();
+                        }
                         strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('body').data()['parameterminmax']['plot'][1] + 
-                                                                           '&cmax=' + $('body').data()['parameterminmax']['plot'][2] + '&stride=' + strideVal;
+                                                                           '&cmax=' + $('body').data()['parameterminmax']['plot'][2] + '&stride=' + strideVal +
+                                                                           '&cm=' + cm;
                         sensortrackskml.refresh({url: strided_kmlurl});
                     }
                 }).
