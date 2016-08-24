@@ -165,21 +165,6 @@
     </div>
   </div>
 
-  <div id="colormap-popup" class="modal hide fade in" style="display:none;width:1000px;">
-    <div class="modal-header">
-        <a class="close" data-dismiss="modal">×</a>
-        <h3>Click on new colormap to use</h3>
-    </div>
-    <div class="modal-body">
-        <h4>Color maps</h4>
-        <div id="colormap-choices" style="display:none">
-        </div>
-    </div>
-    <div class="modal-footer">
-        <a href="#" class="btn" data-dismiss="modal">Close</a>
-    </div>
-  </div>
-
   <div class="container-fluid">
 
     <div class="row-fluid">
@@ -865,12 +850,9 @@
                                                 <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
-                                            <div class="span7">
-                                                <span style="float:right;">
-                                                    <a data-toggle="modal" href="#colormap-popup" data-action="{% url 'stoqs:generate_colormaps' %}">
-                                                        <img id="sectioncolorbarimg" src="" /></a>
-                                                </span>
-                                            </div>
+                                            <div class="span7"><span style="float:right;">
+                                                <a id="colormap" class="accordion-toggle" data-toggle="collapse" href="#collapseColormap"><img id="sectioncolorbarimg" src="" /></a>
+                                            </span></div>
                                         </div>
                                     </div>
                                 </div>
@@ -892,6 +874,55 @@
                         </div><!-- accordion-inner -->
                     </div>
                 </div><!-- accordian-group -->
+
+
+                <div class="accordian-group" style="display:none;">
+                    <!--<div class="accordian-group">-->
+                    <div class="accordian-heading">
+                        <h3><a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">
+                         Colormaps</a>
+                        </h3>
+                    </div>
+                    <div id="collapseColormap" class="accordion-body collapse in">
+                        <div class="accordion-inner">
+
+                            <ul class="nav nav-tabs">
+                                {% for category in colormaps %}
+                                    {% if category.0 == "Uniform" %}
+                                        <li class="active"><a href="#{{category.0}}" data-toggle="tab">{{category.0}}</a></li>
+                                    {% else %}
+                                        <li><a href="#{{category.0}}" data-toggle="tab">{{category.0}}</a></li>
+                                    {% endif %}
+                                {% endfor %}            
+                            </ul>
+                            <div class="tab-content">
+                                {% for category in colormaps %}
+                                    {% if category.0 == "Uniform" %}
+                                        <div class="tab-pane active" id="{{category.0}}">
+                                    {% else %}
+                                        <div class="tab-pane" id="{{category.0}}">
+                                    {% endif %}
+                                    <fieldset>
+                                    <table class="table table-condensed">
+                                    {% for cm in category.1 %}
+                                        <tr style="white-space:nowrap;">
+                                            <td style="white-space:nowrap;border-top:0px;">
+                                                <input type="radio" name="colormap_choice" value="{{cm}}" id="{{cm}}" style="float:left;clear:none;display:block;margin-right:5px;"/>
+                                                <label for="{{cm}}">{{cm}}</label>
+                                            </td>
+                                            <td style="border-top:0px;"><label for="{{cm}}"><img src="{{STATIC_URL}}images/colormaps/{{cm}}.png"></label></td>
+                                        </label></tr>
+                                    {% endfor %}            
+                                    </table>
+                                    </fieldset>
+                                    </div>
+                                {% endfor %}            
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
 
 
                 <div class="accordian-group" style="display:none">
@@ -2255,6 +2286,17 @@
         }
     });
 
+    $('#colormap').on('click', function(e) {
+        // Togggle show/hide the Colormaps accordion section
+        var $elem = $('#colormap-anchor').parent().parent().parent();
+        if ( $elem.css('display') == 'none' ) {
+            $('#colormap-anchor').parent().parent().parent().show();
+        }
+        else {
+            $('#colormap-anchor').parent().parent().parent().hide();
+        }
+        return true;
+    });
 
     $('#mp-cmin').on('keypress', function (event, previousText) {
         setTimeout(updateKMLcmincmax('mp'));
@@ -5195,7 +5237,6 @@
                 }
             }
         });
-        
     });
 
     --></script>
