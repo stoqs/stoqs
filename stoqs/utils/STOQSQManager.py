@@ -1364,7 +1364,7 @@ class STOQSQManager(object):
                 logger.debug('pMinMax = %s', pMinMax)
                 if not pMinMax['x'] or not pMinMax['y']:
                     return '', 'Selected x and y axis parameters are not in filtered selection.'
-                self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
+                self.pp = ParameterParameter(self.kwargs, self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
                 try:
                     ppPngFile, infoText, sql = self.pp.make2DPlot()
                 except PPDatabaseException as e:
@@ -1400,7 +1400,7 @@ class STOQSQManager(object):
                     return '', 'Selected x, y, z, c Parameters not in filtered selection.'
 
                 logger.debug('Instantiating Viz.PropertyPropertyPlots for X3D............................................')
-                self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
+                self.pp = ParameterParameter(self.kwargs, self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
                 try:
                     x3dDict = self.pp.makeX3D()
                 except DatabaseError as e:
