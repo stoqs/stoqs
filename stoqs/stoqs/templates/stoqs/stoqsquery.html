@@ -520,7 +520,7 @@
                                         <input type="checkbox" id="pp-linear-regression" class="pp-options" checked="checked"> Linear regression
                                         <input type="checkbox" id="pp-free-range" class="pp-options" > Free range
                                         <input type="checkbox" id="pp-sample-locations" class="pp-options" checked="checked"> Samples
-                                        <img src="" />
+                                        <a id="pp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap"><img src="" /></a>
                                         <pre class="prettyprint"></pre>
                                     </div>
                                 </div>
@@ -851,7 +851,7 @@
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
                                             <div class="span7"><span style="float:right;">
-                                                <a id="colormap" class="accordion-toggle" data-toggle="collapse" href="#collapseColormap"><img id="sectioncolorbarimg" src="" /></a>
+                                                <a id="mp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap"><img id="sectioncolorbarimg" src="" /></a>
                                             </span></div>
                                         </div>
                                     </div>
@@ -2153,9 +2153,8 @@
         rebuildFilters(['measuredparameterx3d']);
     });
 
-    $('input[name="colormap_choice"]').on('click', function (event) {
-        // Don't need to get everything from queryData, only the response with the PNG image
-        rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
+    $('input[name="colormap_choice"]').on('change', function (event) {
+        rebuildFilters();
     });
 
     $('#showplatforms').on('click', function (event) {
@@ -2297,7 +2296,7 @@
         }
     });
 
-    $('#colormap').on('click', function(e) {
+    $('.colormaps-toggle').on('click', function(e) {
         // Togggle show/hide the Colormaps accordion section
         var $elem = $('#colormap-anchor').parent().parent().parent();
         if ( $elem.css('display') == 'none' ) {
@@ -2372,7 +2371,7 @@
             $("input:radio[name='parameters_y'][value='']").prop('checked', true)
             $("input:radio[name='parameters_z'][value='']").prop('checked', true)
             $("input:radio[name='parameters_c'][value='']").prop('checked', true)
-            $('#parameter-parameter-2dplot > img').removeAttr('src');
+            $('#parameter-parameter-2dplot > a > img').removeAttr('src');
             $('#parameter-parameter-2dplot > pre').html('');
             //$('#pp2d').html('');
             //$('#pp3d').html('');
@@ -4426,7 +4425,7 @@
                         $('#parameter-parameter-sql').html(data[key][2]);
                     }
                     if (data[key][0]) {
-                        $('#parameter-parameter-2dplot > img').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key][0]);
+                        $('#parameter-parameter-2dplot > a > img').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key][0]);
 
                         if ( ! $('#collapseParameterParameter').hasClass('in') ) {
                             $('#parameter-parameter-anchor').click();
