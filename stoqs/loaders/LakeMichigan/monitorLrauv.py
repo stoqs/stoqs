@@ -317,11 +317,6 @@ if __name__ == '__main__':
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(args.database).filter(activity__name__contains=core_aName).aggregate(Max('timevalue'))['timevalue__max']
 
-            if dataStartDatetime:
-                # Override the activity name with what's in the database. Arbitrarily pick the first one.
-                ip = InstantPoint.objects.using(args.database).filter(activity__name__contains=core_aName)
-                aName = ip[0].activity.name
-
             try:
                 if not args.debug:
                     logger.info("Instantiating Lrauv_Loader for url = %s", url_src)
