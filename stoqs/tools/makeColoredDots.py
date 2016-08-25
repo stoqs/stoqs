@@ -1,29 +1,39 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
-__author__    = 'Mike McCann'
-__copyright__ = '2013'
-__license__   = 'GPL v3'
-__contact__   = 'mccann at mbari.org'
-
-__doc__ = '''
+'''
 Generate individual bitmap images that are colored according to a color map.
 To be used to build .png files for use in building KML files so that colored 
 IconStyles are not needed. This will allow openlayers to render the colored
 dots.
-
-@undocumented: __doc__ parser
-@status: production
-@license: GPL
 '''
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # settings.py is one dir up
-import settings
-from utils.KML import readCLT
 
-def savePPM(r, g, b, dir):
+# Insert Django App directory (parent of config) into python path 
+sys.path.insert(0, os.path.abspath(os.path.join(
+                            os.path.dirname(__file__), "../")))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+# django >=1.7
+try:
+    import django
+    django.setup()
+except AttributeError:
+    pass
+
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+import numpy as np
+from colormaps import cmaps
+from django.conf import settings
+from utils.Viz.plotting import readCLT
+
+colordots_dir = os.path.join(str(settings.ROOT_DIR.path('static')), 'images', 'colordots')
+jetplus_clt = readCLT(os.path.join(str(settings.ROOT_DIR.path('static')),
+                                   'colormaps', 'jetplus.txt'))
+
+def savePPM(r, g, b):
     '''
     Write ASCII netPPM file with 0-1 values for @r, @g, @b.  Files will
     be named with the hex values of abgr, the KML ordering of components.
@@ -34,25 +44,43 @@ def savePPM(r, g, b, dir):
 
     ge_color = "ff%02x%02x%02x" % ((round(b * 255), round(g * 255), round(r * 255)))
     im_color = "%02x%02x%02x" % ((round(r * 255), round(g * 255), round(b * 255)))
-    fileName = os.path.join(dir, ge_color + '.png')
-    ##print 'Creating fileName = %s' % fileName
-
-    # ImageMagick to create dot similar to http://maps.google.com/mapfiles/kml/shapes/dot.png, but with color
-    cmd = '''convert -size 64x64 xc:none -fill '#%s' -draw 'circle 31.5,31.5 31.5,21' %s''' % (im_color, fileName)
-    print cmd
-    os.system(cmd)
+    file_name = os.path.join(colordots_dir, ge_color + '.png')
+    ##print('Creating file_name = {}'.format(file_name))
+    if os.path.exists(file_name):
+        print('.', end='')
+    else:
+        # ImageMagick to create dot similar to http://maps.google.com/mapfiles/kml/shapes/dot.png, but with color
+        cmd = '''convert -size 64x64 xc:none -fill '#%s' -draw 'circle 31.5,31.5 31.5,21' %s''' % (im_color, file_name)
+        ##print(cmd)
+        os.system(cmd)
+        print('X', end='')
 
 def processColorMap(colormapFileName='jetplus.txt'):
-    '''
-    Read in colormap values and write ppm files
+    '''Read in colormap values and write ppm files
     '''
 
-    dir = os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus_dots')
-    for c in readCLT(os.path.join(settings.STATIC_ROOT, 'colormaps', colormapFileName)):
-        savePPM(c[0], c[1], c[2], dir)
+    if cmap == 'jetplus':
+        cm = colors.ListedColormap(np.array(jetplus_clt))
+    elif cmap == 'jetplus_r':
+        cm  = colors.ListedColormap(np.array(jetplus_clt)[::-1])
+    else:
+        cm = plt.get_cmap(cmap)
+
+    for i in range(cm.N):
+        c = cm(i)
+        savePPM(c[0], c[1], c[2])
 
 if __name__ == '__main__':
+    '''Create colored dot for each color in each color map
+    '''
+    print('Making colored dots:')
+    for cmap_category, cmap_list in cmaps:
+        print('  {}:'.format(cmap_category))
+        for cmap in cmap_list:
+            print('    {}:'.format(cmap), end='')
+            processColorMap(cmap)
+            print('')
 
-    processColorMap()
-    print "Now commit and pus the changes in mercurial and run:\nmanage.py collectstatic"
+
+    print("Now add/commit the changes to git and run:\nmanage.py collectstatic")
     
