@@ -137,23 +137,25 @@ class BaseParameter(object):
         '''Assign colormap as passed in from UI request
         '''
         jetplus_clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
-        if self.request.GET.get('cm'):
-            self.cm_name = self.request.GET.get('cm')
-            if self.cm_name == 'jetplus':
-                self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
-                self.clt = jetplus_clt
-            elif self.cm_name == 'jetplus_r':
-                self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt)[::-1])
-                self.clt = jetplus_clt[::-1]
-            else:
-                self.cm = plt.get_cmap(self.cm_name)
-                # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
+
+        # Default colormap - the legacy jetplus
+        self.cm_name = 'jetplus'
+        self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
+        self.clt = jetplus_clt
+
+        if hasattr(self.request, 'GET'):
+            if self.request.GET.get('cm'):
+                self.cm_name = self.request.GET.get('cm')
+                if self.cm_name == 'jetplus':
+                    self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
+                    self.clt = jetplus_clt
+                elif self.cm_name == 'jetplus_r':
+                    self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt)[::-1])
+                    self.clt = jetplus_clt[::-1]
+                else:
+                    self.cm = plt.get_cmap(self.cm_name)
+                    # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
                 self.clt = [self.cm(i) for i in range(256)]
-        else:
-            # Default colormap - the legacy jetplus
-            self.cm_name = 'jetplus'
-            self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
-            self.clt = jetplus_clt
 
 
 class MeasuredParameter(BaseParameter):
