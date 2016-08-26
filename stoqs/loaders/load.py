@@ -380,7 +380,7 @@ local   all             all                                     peer
             except DatabaseCreationError as e:
                 self.logger.warn(e)
                 self.logger.warn('Use the --clobber option, or fix the problem indicated.')
-                raise
+                raise Exception('Maybe use the --clobber option to recreate the database...')
 
             call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
             call_command('migrate', settings='config.settings.local', noinput=True, database=db)
