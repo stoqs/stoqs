@@ -325,7 +325,6 @@ class Base_Loader(STOQS_Loader):
             featureType = self.ds.attributes['NC_GLOBAL']['featureType']
         else:
             # Accept earlier versions of the concept of this attribute that may be in legacy data sets
-            import pdb; pdb.set_trace()
             if 'cdm_data_type' in nc_global_keys:
                 featureType = self.ds.attributes['NC_GLOBAL']['cdm_data_type']
             elif 'thredds_data_type' in nc_global_keys:
