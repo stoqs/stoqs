@@ -335,6 +335,8 @@ class Base_Loader(STOQS_Loader):
                 featureType = self.ds.attributes['NC_GLOBAL']['CF_featureType']
             elif 'CF:featureType' in nc_global_keys:    # Seen in lrauv/*/realtime/sbdlogs files
                 featureType = self.ds.attributes['NC_GLOBAL']['CF:featureType']
+            elif 'featureType' in nc_global_keys:       # Seen in roms.nc file from JPL
+                featureType = self.ds.attributes['NC_GLOBAL']['featureType']
             else:
                 featureType = ''
 
