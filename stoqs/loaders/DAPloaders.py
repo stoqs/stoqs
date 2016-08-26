@@ -299,6 +299,23 @@ class Base_Loader(STOQS_Loader):
         else:
             return fv
 
+    def getActivityName(self):
+        '''Return actual Activity name that will be in the database accounting
+        for permutations of startDatetime and stride values per NetCDF file name.
+        '''
+        # Modify Activity name if temporal subset extracted from NetCDF file
+        newName = self.activityName
+        if self.requested_startDatetime and self.requested_endDatetime:
+            if '(stride' in self.activityName:
+                first_part = self.activityName[:self.activityName.find('(stride')]
+                last_part = self.activityName[self.activityName.find('(stride'):]
+            else:
+                first_part = self.activityName
+                last_part = ''
+            newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
+
+        return newName
+
     def getFeatureType(self):
         '''
         Return string of featureType from table at http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.6/ch09.html.
@@ -1257,19 +1274,8 @@ class Base_Loader(STOQS_Loader):
 
             logger.debug("Updating its comment with newComment = %s", newComment)
 
-            # Modify Activity name if temporal subset extracted from NetCDF file
-            newName = self.activityName
-            if self.requested_startDatetime and self.requested_endDatetime:
-                if '(stride' in self.activityName:
-                    first_part = self.activityName[:self.activityName.find('(stride')]
-                    last_part = self.activityName[self.activityName.find('(stride'):]
-                else:
-                    first_part = self.activityName
-                    last_part = ''
-                newName = '{} starting at {} {}'.format(first_part.strip(), self.requested_startDatetime, last_part)
-
             num_updated = m.Activity.objects.using(self.dbAlias).filter(id=self.activity.id).update(
-                            name=newName,
+                            name=self.getActivityName(),
                             comment=newComment,
                             maptrack=path,
                             mappoint=stationPoint,
