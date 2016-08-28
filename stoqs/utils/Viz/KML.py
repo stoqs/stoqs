@@ -350,7 +350,7 @@ class KML(BaseParameter):
 </Icon>
 </IconStyle>
 </Style>
-''' % (ge_color, ge_color, os.path.join(baseURL, 'colormaps', 'jetplus_dots', ge_color))
+''' % (ge_color, ge_color, os.path.join(baseURL, 'images', 'colordots', ge_color))
 
             styleKml += style
 
