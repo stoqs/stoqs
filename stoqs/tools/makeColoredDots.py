@@ -50,7 +50,8 @@ def savePPM(r, g, b):
         print('.', end='')
     else:
         # ImageMagick to create dot similar to http://maps.google.com/mapfiles/kml/shapes/dot.png, but with color
-        cmd = '''convert -size 64x64 xc:none -fill '#%s' -draw 'circle 31.5,31.5 31.5,21' %s''' % (im_color, file_name)
+        ##cmd = '''convert -size 64x64 xc:none -fill '#%s' -draw 'circle 31.5,31.5 31.5,21' %s''' % (im_color, file_name)
+        cmd = '''convert -size 8x8 xc:none -fill '#%s' -draw 'circle 3.5,3.5 3.5,0' %s''' % (im_color, file_name)
         ##print(cmd)
         os.system(cmd)
         print('X', end='')
