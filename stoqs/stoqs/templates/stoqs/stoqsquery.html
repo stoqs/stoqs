@@ -729,7 +729,7 @@
                                         <span id="sp-kml-parameter"></span>
                                         <form style="text-align: center;" class="form-inline">
                                             <input id="sp-cmin" type="text" class="stoqs-color-limit-input" style="text-align:right;" title="Initial min value is 2.5 percentile" />
-                                            <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" alt="jetplus" />
+                                            <img id="sp-kmlcolorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" alt="KML colormap" />
                                             <input id="sp-cmax" type="text" class="stoqs-color-limit-input" title="Initial max value is 97.5 percentile" />
                                         </form>
                                         </div>
@@ -790,7 +790,7 @@
                                         <span id="mp-kml-parameter"></span>
                                         <form style="text-align: center;" class="form-inline">
                                             <input id="mp-cmin" type="text" class="stoqs-color-limit-input" style="text-align:right;" title="Initial min value is 2.5 percentile" />
-                                            <img style="vertical-align:middle;" src="{{STATIC_URL}}images/jetplus_bar.png" title="jetplus.pal" alt="jetplus" />
+                                            <img id="mp-kmlcolorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" alt="KML colormap" />
                                             <input id="mp-cmax" type="text" class="stoqs-color-limit-input" title="Initial max value is 97.5 percentile" />
                                         </form>
                                         </div>
@@ -2158,7 +2158,10 @@
         rebuildFilters(['measuredparameterx3d']);
     });
 
-    $('input[name="colormap_choice"]').on('change', function (event) {
+$('input[name="colormap_choice"]').on('change', function (event) {
+        var cm = $('input:radio[name=colormap_choice]:checked').val();
+        $('#sp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + cm + '.png');
+        $('#mp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + cm + '.png');
         rebuildFilters();
     });
 
