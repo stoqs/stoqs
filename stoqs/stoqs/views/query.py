@@ -12,6 +12,7 @@ View functions to supoprt the main query web page
 @license: GPL
 '''
 
+from tools.colormaps import cmaps
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
@@ -71,6 +72,7 @@ query_parms = {
                    'showgeox3dsample': 'showgeox3dsample',                                 # Flag value from checkbox
                    'showplatforms': 'showplatforms',                    # Flag value from checkbox
                    'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
+                   'cm': 'cm',                              # Value from colormap picker
 
                    'only': 'only',                          # List of options to update - when only a partial response is needed
                    'except': 'except',                      # List of options not to update - when all but listed items are needed
@@ -273,6 +275,7 @@ def queryUI(request):
             ]
     config_settings = {'site_uri': request.build_absolute_uri('/')[:-1],
                        'formats': formats,
+                       'colormaps': cmaps,
                        'mapserver_host': settings.MAPSERVER_HOST,
                        'mappath': request.session['mappath'],
                        'home_page_link': settings.HOME_PAGE_LINK,

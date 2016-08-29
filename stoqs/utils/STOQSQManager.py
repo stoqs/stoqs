@@ -744,6 +744,7 @@ class STOQSQManager(object):
 
         for plats in self.getPlatforms().values():
             for p in plats:
+                ##logger.debug(p)
                 plq = Q(platform__name = p[0])
                 if self.kwargs.get('activitynames'):
                     plq = plq & Q(name__in=self.kwargs.get('activitynames'))
@@ -778,6 +779,7 @@ class STOQSQManager(object):
                                                     maxtime=Max('instantpoint__timevalue')).select_related().values( 'name',
                                                     'simpledepthtime__nominallocation__depth', 'mintime', 'maxtime').order_by(
                                                     'simpledepthtime__nominallocation__depth').distinct()
+                    # This can be an expensive check as qs_tsp will be instantiated if it's a valid QuerySet
                     if not qs_tsp:
                         qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ)).select_related().values( 
                                                 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
@@ -1364,7 +1366,7 @@ class STOQSQManager(object):
                 logger.debug('pMinMax = %s', pMinMax)
                 if not pMinMax['x'] or not pMinMax['y']:
                     return '', 'Selected x and y axis parameters are not in filtered selection.'
-                self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
+                self.pp = ParameterParameter(self.kwargs, self.request, {'x': px, 'y': py, 'c': pc}, self.mpq, self.pq, pMinMax)
                 try:
                     ppPngFile, infoText, sql = self.pp.make2DPlot()
                 except PPDatabaseException as e:
@@ -1400,7 +1402,7 @@ class STOQSQManager(object):
                     return '', 'Selected x, y, z, c Parameters not in filtered selection.'
 
                 logger.debug('Instantiating Viz.PropertyPropertyPlots for X3D............................................')
-                self.pp = ParameterParameter(self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
+                self.pp = ParameterParameter(self.kwargs, self.request, {'x': px, 'y': py, 'z': pz, 'c': pc}, self.mpq, self.pq, pMinMax)
                 try:
                     x3dDict = self.pp.makeX3D()
                 except DatabaseError as e:

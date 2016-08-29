@@ -2,6 +2,7 @@ import os
 import time
 import numpy
 import logging
+from plotting import BaseParameter
 from stoqs import models as m
 from django.conf import settings
 from django.db import DataError
@@ -15,21 +16,7 @@ class InvalidLimits(Exception):
     pass
 
 
-def readCLT(fileName):
-    '''
-    Read the color lookup table from disk and return a python list of rgb tuples.
-    '''
-
-    cltList = []
-    for rgb in open(fileName, 'r'):
-        ##logger.debug("rgb = %s", rgb)
-        (r, g, b) = rgb.strip().split()
-        cltList.append([float(r), float(g), float(b)])
-
-    return cltList
-
-
-class KML(object):
+class KML(BaseParameter):
     '''
     Manage the construcion of KML files from stoqs.  Several options may be set on initialization and
     clients can get KML output with the kmlResponse() method.
@@ -44,6 +31,7 @@ class KML(object):
         self.qs_mp = qs_mp
         self.qparams = qparams
         self.stoqs_object_name = stoqs_object_name
+        self.set_colormap()
 
         ##logger.debug('request = %s', request)
         ##logger.debug('kwargs = %s', kwargs)
@@ -164,7 +152,6 @@ class KML(object):
         #
         # Define the color lookup table and the color limits from 2.5 and 97.5 percentiles for each variable
         #
-        clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
         climHash = {}
         for p in m.Parameter.objects.using(dbAlias).all().values_list('name'):
             pn = p[0]
@@ -194,7 +181,7 @@ class KML(object):
         ##logger.debug('clim = %s', clim)
     
         for k in dataHash.keys():
-            (pointStyleKML, pointKMLHash[k]) = self._buildKMLpoints(dataHash[k], clt, clim)
+            (pointStyleKML, pointKMLHash[k]) = self._buildKMLpoints(dataHash[k], self.clt, clim)
             if self.withLineStringsFlag:
                 (lineStyleKML, lineKMLHash[k]) = self._buildKMLlines(dataHash[k])
             else:
@@ -363,7 +350,7 @@ class KML(object):
 </Icon>
 </IconStyle>
 </Style>
-''' % (ge_color, ge_color, os.path.join(baseURL, 'colormaps', 'jetplus_dots', ge_color))
+''' % (ge_color, ge_color, os.path.join(baseURL, 'images', 'colordots', ge_color))
 
             styleKml += style
 
