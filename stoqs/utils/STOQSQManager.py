@@ -744,6 +744,7 @@ class STOQSQManager(object):
 
         for plats in self.getPlatforms().values():
             for p in plats:
+                ##logger.debug(p)
                 plq = Q(platform__name = p[0])
                 if self.kwargs.get('activitynames'):
                     plq = plq & Q(name__in=self.kwargs.get('activitynames'))
@@ -778,6 +779,7 @@ class STOQSQManager(object):
                                                     maxtime=Max('instantpoint__timevalue')).select_related().values( 'name',
                                                     'simpledepthtime__nominallocation__depth', 'mintime', 'maxtime').order_by(
                                                     'simpledepthtime__nominallocation__depth').distinct()
+                    # This can be an expensive check as qs_tsp will be instantiated if it's a valid QuerySet
                     if not qs_tsp:
                         qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ)).select_related().values( 
                                                 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
