@@ -277,7 +277,9 @@
                                                                 </label>
                                                             </span>
                                                         </form>
-                                                        <div id="geo3d-colorbar"></div>
+                                                        <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
+                                                            <div id="geo3d-colorbar"></div>
+                                                        </a>
                                                         <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
                                                             <div class="span1" style="padding:0px;margin-left:5px;"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
                                                             <div class="span9" style="margin:0px;margin-top:3px;"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
@@ -535,7 +537,9 @@
                                                 <p><a id="pp_x3d-reset-view" class="btn btn-mini" onClick="$('#pp_x3d')[0].runtime.resetView();return false;"><i class="icon-home"></i> Reset view</a></p>
                                             </div>
                                             <div class="span7">
-                                                <img src="" />
+                                                <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
+                                                    <img src="" />
+                                                </a>
                                             </div>
                                         </div>
                                         <div style="height:100%;">
@@ -4481,10 +4485,10 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                         $('#x3d-zmax').attr('string', data[key]['z'][2]);
                         $('#x3d-zname').attr('string', data[key]['z'][3]);
                         if (data[key]['colorbar']) {
-                            $('#parameter-parameter-3dplot > div > div > img').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key]['colorbar']);
+                            $('#parameter-parameter-3dplot > div > div > a > img').attr('src', '{{MEDIA_URL}}parameterparameter/' + data[key]['colorbar']);
                         }
                         else {
-                            $('#parameter-parameter-3dplot > div > div > img').removeAttr('src');
+                            $('#parameter-parameter-3dplot > div > div > a > img').removeAttr('src');
                         }
                         //$('#pp_x3d').css( {
                         //        'background-image': 'url({{MEDIA_URL}}parameterparameter/' + data[key]['colorbar'] + ')', 
