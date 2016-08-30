@@ -133,22 +133,12 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + f
-            dataStartDatetime = None
-            startDatetime = self.tethys_startDatetime 
-            endDatetime = self.tethys_endDatetime 
-            if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple 
-                # activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                            activity__name__contains=f).aggregate(
-                                            Max('timevalue'))['timevalue__max']
-
             try:
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           pName, self.colors['tethys'], 'auv', 'AUV mission',
                                           self.tethys_parms, self.dbAlias, stride, 
-                                          grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
-                                          endDatetime=endDatetime, startDatetime=startDatetime)
+                                          grdTerrain=self.grdTerrain, command_line_args=self.args,
+                                          endDatetime=self.tethys_endDatetime, startDatetime=self.tethys_startDatetime)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -161,23 +151,13 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
             url = self.daphne_base + f
-            dataStartDatetime = None
-            startDatetime = self.daphne_startDatetime 
-            endDatetime = self.daphne_endDatetime 
-            if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple 
-                # activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                            activity__name__contains=f).aggregate(
-                                            Max('timevalue'))['timevalue__max']
-
             try:
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           'Daphne', self.colors['daphne'], 'auv', 'AUV mission',
                                           self.daphne_parms, self.dbAlias, stride, 
-                                          grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime, 
-                                          endDatetime=endDatetime, startDatetime=startDatetime)
+                                          grdTerrain=self.grdTerrain, command_line_args=self.args,
+                                          endDatetime=self.daphne_endDatetime, startDatetime=self.daphne_startDatetime)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -189,23 +169,13 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.makai_files], self.makai_files):
             url = self.makai_base + f
-            dataStartDatetime = None
-            startDatetime = self.makai_startDatetime 
-            endDatetime = self.makai_endDatetime 
-            if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple 
-                # activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                            activity__name__contains=f).aggregate(
-                                            Max('timevalue'))['timevalue__max']
-
             try:
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           'Makai', self.colors['makai'], 'auv', 'AUV mission',
                                           self.makai_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, 
-                                          dataStartDatetime=dataStartDatetime,
-                                          endDatetime=endDatetime, startDatetime=startDatetime)
+                                          command_line_args=self.args,
+                                          endDatetime=self.makai_endDatetime, startDatetime=self.makai_startDatetime)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -278,21 +248,11 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.l_662_files], self.l_662_files):
             url = self.l_662_base + f
-
-            dataStartDatetime = None
-            if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple
-                # activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                    activity__name__contains=f).aggregate(
-                                                    Max('timevalue'))['timevalue__max']
-
-
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'SPRAY_L66_Glider', self.colors['l_662'], 'glider', 'Glider Mission', 
                                        self.l_662_parms, self.dbAlias, stride, self.l_662_startDatetime, 
                                        self.l_662_endDatetime, grdTerrain=self.grdTerrain,
-                                       dataStartDatetime=dataStartDatetime)
+                                       command_line_args=self.args)
 
     def load_NPS29(self, stride=None):
         '''
@@ -301,20 +261,11 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.nps29_files], self.nps29_files):
             url = self.nps29_base + f
-
-            dataStartDatetime = None
-            if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple 
-                # activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                    activity__name__contains=f).aggregate(
-                                                    Max('timevalue'))['timevalue__max']
-
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'NPS_Glider_29', self.colors['nps29'], 'glider', 'Glider Mission', 
                                         self.nps29_parms, self.dbAlias, stride, self.nps29_startDatetime, 
                                         self.nps29_endDatetime, grdTerrain=self.grdTerrain, 
-                                        dataStartDatetime=dataStartDatetime)
+                                        command_line_args=self.args)
 
     def load_SG621(self, stride=None):
         '''
@@ -323,21 +274,12 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.sg621_files], self.sg621_files):
             url = self.sg621_base + f
-
-            dataStartDatetime = None
-            if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple
-                # activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                    activity__name__contains=f).aggregate(
-                                                    Max('timevalue'))['timevalue__max']
-
             try:
                 DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
                                        'SG_Glider_621', self.colors['sg621'], 'glider', 'Glider Mission',
                                         self.sg621_parms, self.dbAlias, stride, self.sg621_startDatetime,
                                         self.sg621_endDatetime, grdTerrain=self.grdTerrain,
-                                        dataStartDatetime=dataStartDatetime)
+                                        command_line_args=self.args)
             except DAPloaders.OpendapError as e:
                 self.logger.warn(str(e))
 
@@ -348,19 +290,11 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.nps34_files], self.nps34_files):
             url = self.nps34_base + f
-
-            dataStartDatetime = None
-            if self.args.append:
-                # Return datetime of last timevalue in the database
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                    activity__name__contains=f).aggregate(
-                                                    Max('timevalue'))['timevalue__max']
-
             DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        'NPS_Glider_34', self.colors['nps34'], 'glider', 'Glider Mission', 
                                         self.nps34_parms, self.dbAlias, stride, self.nps34_startDatetime, 
                                         self.nps34_endDatetime, grdTerrain=self.grdTerrain,
-                                        dataStartDatetime=dataStartDatetime)
+                                        command_line_args=self.args)
 
     def load_glider_ctd(self, stride=None):
         '''
@@ -548,18 +482,10 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.oa1_files], self.oa1_files):
             url = os.path.join(self.oa1_base, f)
-        
-            dataStartDatetime = None
-            if self.args.append:
-                # Return datetime of last timevalue in the database
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                    activity__name__contains=f).aggregate(
-                                                    Max('timevalue'))['timevalue__max']
-
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         'OA1_Mooring', self.colors['oa'], 'mooring', 'Mooring Deployment',
                                         self.oa1_parms, self.dbAlias, stride, self.oa1_startDatetime, self.oa1_endDatetime,
-                                        dataStartDatetime=dataStartDatetime)
+                                        command_line_args=self.args)
 
     def load_oa2(self, stride=None):
         '''
@@ -568,17 +494,10 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.oa2_files], self.oa2_files):
             url = os.path.join(self.oa2_base, f)
-            dataStartDatetime = None
-            if self.args.append:
-                # Return datetime of last timevalue in the database
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                    activity__name__contains=f).aggregate(
-                                                    Max('timevalue'))['timevalue__max']
-
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         'OA2_Mooring', self.colors['oa2'], 'mooring', 'Mooring Deployment',
                                         self.oa2_parms, self.dbAlias, stride, self.oa2_startDatetime, self.oa2_endDatetime,
-                                        dataStartDatetime=dataStartDatetime)
+                                        command_line_args=self.args)
 
 
     def loadOA1pco2(self, stride=None):
@@ -762,22 +681,11 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.m1_files], self.m1_files):
             url = os.path.join(self.m1_base, f)
-            
-            dataStartDatetime = None
-            if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple 
-                # activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                                activity__name__contains=f).aggregate(
-                                                Max('timevalue'))['timevalue__max']
-                if dataStartDatetime:
-                    # Subract an hour to fill in missing_values at end from previous load
-                    dataStartDatetime = dataStartDatetime - timedelta(seconds=3600)
-
             DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
                                         platformName, self.colors['m1'], 'mooring', 'Mooring Deployment', 
                                         self.m1_parms, self.dbAlias, stride, self.m1_startDatetime, 
-                                        self.m1_endDatetime, dataStartDatetime)
+                                        self.m1_endDatetime, command_line_args=self.args, 
+                                        backfill_timedelta=timedelta(seconds=3600))
     
         # For timeseriesProfile data we need to pass the nominaldepth of the plaform
         # so that the model is put at the correct depth in the Spatial -> 3D view.
