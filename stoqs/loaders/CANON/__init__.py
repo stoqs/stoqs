@@ -40,6 +40,8 @@ from argparse import Namespace
 from nettow import NetTow
 from planktonpump import PlanktonPump
 import logging
+import matplotlib as mpl
+mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 import numpy as np
