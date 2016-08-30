@@ -859,7 +859,9 @@
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
                                             <div class="span7"><span style="float:right;">
-                                                <a id="mp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap"><img id="sectioncolorbarimg" src="" /></a>
+                                                <a id="mp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
+                                                    <img id="sectioncolorbarimg" src="" />
+                                                </a>
                                             </span></div>
                                         </div>
                                     </div>
@@ -2323,6 +2325,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
         var $elem = $('#colormap-anchor').parent().parent().parent();
         if ( $elem.css('display') == 'none' ) {
             $('#colormap-anchor').parent().parent().parent().show();
+            $('#sectioncolorbarimg').attr('title', ' ').tooltip('fixTitle').tooltip('show');;
         }
         else {
             $('#colormap-anchor').parent().parent().parent().hide();
@@ -4370,6 +4373,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                             });
                             // Show colorbar
                             $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
+                            $('#sectioncolorbarimg').attr('title', 'Click to select different colormap').tooltip('fixTitle').tooltip('hide');;
                             $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
