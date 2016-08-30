@@ -59,6 +59,26 @@ cl.tdsBase = 'http://odss.mbari.org/thredds/'
 cl.dodsBase = cl.tdsBase + 'dodsC/'
 
 #####################################################################
+# ROMS simulated platforms
+#####################################################################
+# Create the load_roms_...() methods
+for name in ['load_{}'.format(s) for s in cl.roms_platforms]:
+    _method = cl.make_load_roms_method(name)
+    setattr(CANONLoader, name, _method)
+
+cl.roms_sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/ROMS/'
+cl.roms_sg621_files = ['roms_sg621_{:04d}.nc'.format(i) for i in range(247,400)]
+cl.roms_sg621_parms = ['roms_temperature', 'roms_salinity', 'roms_spice']
+cl.roms_sg621_start_datetime = startdate
+cl.roms_sg621_end_datetime = enddate
+
+cl.roms_spray_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/ROMS/'
+cl.roms_spray_files = ['roms_spray_{:04d}.nc'.format(i) for i in range(313,400)]
+cl.roms_spray_parms = ['roms_temperature', 'roms_salinity', 'roms_spice']
+cl.roms_spray_start_datetime = startdate
+cl.roms_spray_end_datetime = enddate
+
+#####################################################################
 #  DORADO 
 #####################################################################
 # special location for dorado data
@@ -385,6 +405,8 @@ cl.process_command_line()
 
 if cl.args.test:
 
+    cl.load_roms_spray(stride=10)
+    cl.load_roms_sg621(stride=10)
     cl.loadL_662(stride=100) 
     ##cl.load_NPS29(stride=10)
     cl.load_NPS34(stride=10)
@@ -415,6 +437,8 @@ if cl.args.test:
 
 elif cl.args.optimal_stride:
 
+    cl.load_roms_spray(stride=2)
+    cl.load_roms_sg621(stride=2)
     cl.loadL_662(stride=2) 
     ##cl.load_NPS29(stride=2)
     cl.load_NPS34(stride=2) 
@@ -432,6 +456,8 @@ elif cl.args.optimal_stride:
 else:
     cl.stride = cl.args.stride    
 
+    cl.load_roms_spray()
+    cl.load_roms_sg621()
     cl.loadL_662() 
     ##cl.load_NPS29()  ##not in this campaign
     cl.load_SG621(stride=2) ## KISS glider

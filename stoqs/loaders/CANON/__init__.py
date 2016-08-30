@@ -40,6 +40,9 @@ from argparse import Namespace
 from nettow import NetTow
 from planktonpump import PlanktonPump
 import logging
+import matplotlib.pyplot as plt
+from matplotlib.colors import rgb2hex
+import numpy as np
 
 def getStrideText(stride):
     '''
@@ -108,6 +111,13 @@ class CANONLoader(LoadScript):
                 'wg_tex':       '9626ff',
                 'wg_Tiny':      '960000',
              }
+
+    # Colors for roms_* "platforms"
+    roms_platforms = ('roms_spray', 'roms_sg621')
+    num_roms = len(roms_platforms)
+    oranges = plt.cm.Oranges
+    for b, c in zip(roms_platforms, oranges(np.arange(0, oranges.N, oranges.N/num_roms))):
+        colors[b] = rgb2hex(c)[1:]
 
     def loadDorado(self, stride=None):
         '''
@@ -875,6 +885,44 @@ class CANONLoader(LoadScript):
             sl.logger.setLevel(logging.DEBUG)
         sl.tdsBase= self.tdsBase
         sl.process_btl_files(self.rcpctd_files)
+
+    # Dynamic method creation for any number of 'roms' platforms
+    @staticmethod
+    def make_load_roms_method(name):
+        def _generic_load_roms(self, stride=None):
+            # Generalize attribute value lookup
+            plt_name = '_'.join(name.split('_')[1:])
+            base = getattr(self, plt_name + '_base')
+            files = getattr(self, plt_name + '_files')
+            parms = getattr(self, plt_name + '_parms')
+            start_datetime = getattr(self, plt_name + '_start_datetime')
+            end_datetime = getattr(self, plt_name + '_end_datetime')
+
+            stride = stride or self.stride
+            for (aName, f) in zip([ a + getStrideText(stride) for a in files], files):
+                url = os.path.join(base, f)
+                try:
+                    loader = DAPloaders.Trajectory_Loader(url = url,
+                                        campaignName = self.campaignName,
+                                        campaignDescription = self.campaignDescription,
+                                        dbAlias = self.dbAlias,
+                                        activityName = aName,
+                                        activitytypeName = 'Simulated Glider/AUV Deployment',
+                                        platformName = plt_name,
+                                        platformColor = self.colors[plt_name],
+                                        platformTypeName = 'simulated_trajectory',
+                                        stride = stride,
+                                        startDatetime = start_datetime,
+                                        endDatetime = end_datetime,
+                                        dataStartDatetime = None)
+                except DAPloaders.OpendapError:
+                    self.logger.info("Cannot open %s" % url)
+                else:
+                    loader.include_names = parms
+                    loader.auxCoords = {}
+                    loader.process_data()
+
+        return _generic_load_roms
 
     def loadSubSamples(self):
         '''
