@@ -1177,10 +1177,16 @@ class STOQS_Loader(object):
                     units='kg m-3',
                     name='sigmat',
             )
-            p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                    long_name='Spiciness',
-                    name='spice',
-            )
+            if 'spice' in self.ds.keys():
+                p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
+                        long_name='Spiciness',
+                        name='stoqs_spice',
+                )
+            else:
+                p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
+                        long_name='Spiciness',
+                        name='spice',
+                )
             # Update with descriptions, being kind to legacy databases
             p_sigmat.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
                                     " sea_water_temperature and sea_water_salinity, and pressure converted from depth"

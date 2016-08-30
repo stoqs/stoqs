@@ -13,5 +13,6 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, host: 8000, guest: 8000
   config.vm.network :forwarded_port, host: 8080, guest: 80
   config.ssh.forward_x11 = true
+  config.ssh.insert_key = false
   config.vm.provision "shell", path: "provision.sh"
 end
