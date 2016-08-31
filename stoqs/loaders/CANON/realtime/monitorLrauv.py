@@ -12,7 +12,7 @@ import os
 import sys
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))           # settings.py is two dirs up
-
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../CANON/toNetCDF/"))            # for lrauvNc4ToNetcdf
 
 import DAPloaders
 from CANON import CANONLoader
@@ -315,11 +315,6 @@ if __name__ == '__main__':
                 # Return datetime of last timevalue - if data are loaded from multiple activities return the earliest last datetime value
                 dataStartDatetime = InstantPoint.objects.using(args.database).filter(activity__name__contains=core_aName).aggregate(Max('timevalue'))['timevalue__max']
 
-            if dataStartDatetime:
-                # Override the activity name with what's in the database. Arbitrarily pick the first one.
-                ip = InstantPoint.objects.using(args.database).filter(activity__name__contains=core_aName)
-                aName = ip[0].activity.name
-
             try:
                 if not args.debug:
                     logger.info("Instantiating Lrauv_Loader for url = %s", url_src)
@@ -339,7 +334,8 @@ if __name__ == '__main__':
                                                       endDatetime = endDatetime,
                                                       contourUrl = args.contourUrl,
                                                       auxCoords = coord,
-                                                      timezone = 'America/Los_Angeles')
+                                                      timezone = 'America/Los_Angeles',
+                                                      command_line_args = args)
 
                 endDatetimeUTC = pytz.utc.localize(endDatetime)
                 endDatetimeLocal = endDatetimeUTC.astimezone(pytz.timezone('America/Los_Angeles'))

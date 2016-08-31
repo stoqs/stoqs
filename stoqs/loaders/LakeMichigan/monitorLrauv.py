@@ -336,7 +336,8 @@ if __name__ == '__main__':
                                                       endDatetime = endDatetime,
                                                       contourUrl = args.contourUrl,
                                                       auxCoords = coord,
-                                                      timezone = 'America/New_York')
+                                                      timezone = 'America/New_York',
+                                                      command_line_args = args)
 
                 endDatetimeUTC = pytz.utc.localize(endDatetime)
                 endDatetimeLocal = endDatetimeUTC.astimezone(pytz.timezone('America/New_York'))

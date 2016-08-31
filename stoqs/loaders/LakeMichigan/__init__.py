@@ -77,18 +77,12 @@ class LakeMILoader(LoadScript):
             dataStartDatetime = None
             startDatetime = self.tethys_startDatetime
             endDatetime = self.tethys_endDatetime
-            if self.args.append:
-                # Return datetime of last timevalue - if data are loaded from multiple
-                # activities return the earliest last datetime value
-                dataStartDatetime = InstantPoint.objects.using(self.dbAlias).filter(
-                                            activity__name=aName).aggregate(
-                                            Max('timevalue'))['timevalue__max']
 
             try:
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
                                           pName, self.colors['tethys'], 'auv', 'AUV mission',
                                           self.tethys_parms, self.dbAlias, stride,
-                                          grdTerrain=self.grdTerrain, dataStartDatetime=dataStartDatetime,
+                                          grdTerrain=self.grdTerrain, command_line_args=self.args, 
                                           endDatetime=endDatetime, startDatetime=startDatetime, timezone='America/New_York')
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
