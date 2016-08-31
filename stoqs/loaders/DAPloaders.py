@@ -29,11 +29,13 @@ MBARI Dec 29, 2011
 import os
 import re
 import sys
+from argparse import Namespace
 from django.contrib.gis.geos import LineString, Point
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))  # config is one dir up
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 from django.conf import settings
 
+from django.db.models import Max
 from django.db.utils import IntegrityError, DatabaseError
 from django.db import transaction
 from jdcal import gcal2jd, jd2gcal
@@ -122,7 +124,7 @@ class Base_Loader(STOQS_Loader):
     def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
-                grdTerrain=None ):
+                grdTerrain=None, appendFlag=False, backfill_timedelta=None ):
         '''
         Given a URL open the url and store the dataset as an attribute of the object,
         then build a set of standard names using the dataset.
@@ -148,6 +150,12 @@ class Base_Loader(STOQS_Loader):
         @param endDatetime: A Python datetime.dateime object specifying the end date time of data to load
         @param dataStartDatetime: A Python datetime.dateime object specifying the start date time of data 
                                   to append to an existing Activity
+        @param appendFlag: If true then a dataStartDatetime value will be set by looking up the last
+                           timevalue in the database for the Activity returned by getActivityName().
+                           A True value will override the passed parameter dataStartDatetime.
+        @param backfill_timedelta: Some appendFlag datastreams may have missing data data records at
+                                   end of previous loads, e.g. M1. Set this to a datetime.timedelta
+                                   to backfill those records.
         @param auxCoords: a dictionary of coordinate standard_names (time, latitude, longitude, depth) 
                           pointing to exact names of those coordinates. Used for variables missing the 
                           coordinates attribute.
@@ -169,6 +177,8 @@ class Base_Loader(STOQS_Loader):
         self.auxCoords = auxCoords
         self.stride = stride
         self.grdTerrain = grdTerrain
+        self.appendFlag = appendFlag
+        self.backfill_timedelta = backfill_timedelta
 
         self.url = url
         self.varsLoaded = []
@@ -1152,6 +1162,13 @@ class Base_Loader(STOQS_Loader):
             for key in self.include_names:
                 parmCount[key] = 0
 
+            if self.appendFlag:
+                self.dataStartDatetime = (m.InstantPoint.objects.using(self.dbAlias)
+                                            .filter(activity__name=self.getActivityName())
+                                            .aggregate(Max('timevalue'))['timevalue__max'])
+                if hasattr(self, 'backfill_timedelta'):
+                    if self.backfill_timedelta:
+                        self.dataStartDatetime = self.dataStartDatetime - self.backfill_timedelta
             if generator:
                 logger.info('Using data generator passed into process_data')
                 data_generator = generator()
@@ -1758,13 +1775,19 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
                    stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
-                   dataStartDatetime=None, contourUrl=None, auxCoords=None, timezone='America/Los_Angeles'):
+                   dataStartDatetime=None, contourUrl=None, auxCoords=None, timezone='America/Los_Angeles',
+                   command_line_args=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
     logger.debug("Instantiating Lrauv_Loader for url = %s", url)
+    appendFlag = False
+    if isinstance(command_line_args, Namespace):
+        if command_line_args.append:
+            appendFlag = True
+
     loader = Lrauv_Loader(
             url = url,
             campaignName = cName,
@@ -1782,7 +1805,8 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
             grdTerrain = grdTerrain,
             contourUrl = contourUrl,
             auxCoords = auxCoords,
-            timezone = timezone)
+            timezone = timezone,
+            appendFlag = appendFlag)
 
     if parmList:
         loader.include_names = []
@@ -1813,13 +1837,18 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
 
 def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
                     dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None, 
-                    dataStartDatetime=None, plotTimeSeriesDepth=None):
+                    dataStartDatetime=None, plotTimeSeriesDepth=None, command_line_args=None):
     '''
     Run the DAPloader for Spray Glider trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
     logger.debug("Instantiating Glider_Loader for url = %s", url)
+    appendFlag = False
+    if isinstance(command_line_args, Namespace):
+        if command_line_args.append:
+            appendFlag = True
+
     loader = Glider_Loader(
             url = url,
             campaignName = cName,
@@ -1834,7 +1863,8 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             startDatetime = startDatetime,
             endDatetime = endDatetime,
             dataStartDatetime = dataStartDatetime,
-            grdTerrain = grdTerrain)
+            grdTerrain = grdTerrain,
+            appendFlag = appendFlag)
 
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
@@ -1923,13 +1953,19 @@ def runTimeSeriesLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
 
 def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
-                     dbAlias, stride, startDatetime=None, endDatetime=None, dataStartDatetime=None):
+                     dbAlias, stride, startDatetime=None, endDatetime=None, dataStartDatetime=None,
+                     command_line_args=None, backfill_timedelta=None):
     '''
     Run the DAPloader for OceanSites formatted Mooring Station data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
     that loads the data.  Following the load important updates are made to the database.
     '''
     logger.debug("Instantiating Mooring_Loader for url = %s", url)
+    appendFlag = False
+    if isinstance(command_line_args, Namespace):
+        if command_line_args.append:
+            appendFlag = True
+
     loader = Mooring_Loader(
             url = url,
             campaignName = cName,
@@ -1943,7 +1979,9 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
             stride = stride,
             startDatetime = startDatetime,
             dataStartDatetime = dataStartDatetime,
-            endDatetime = endDatetime)
+            endDatetime = endDatetime,
+            appendFlag = appendFlag,
+            backfill_timedelta = backfill_timedelta)
 
     if parmList:
         logger.debug("Setting include_names to %s", parmList)
