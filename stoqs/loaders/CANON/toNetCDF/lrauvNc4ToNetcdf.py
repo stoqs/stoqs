@@ -17,7 +17,8 @@ trajectory.
 @license: GPL
 '''
 
-import matplotlib
+import matplotlib as mpl
+mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import matplotlib.pyplot as plt
 import sys
 import os
