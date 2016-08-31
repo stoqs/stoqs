@@ -147,7 +147,7 @@ class InterpolatorWriter(BaseWriter):
             esec_list = v.index.values.astype(float)/1E9
             # trajectory dataset, time is the only netCDF dimension
             self.ncFile.createDimension(key, len(esec_list))
-            rc = self.ncFile.createVariable(key, 'float64', (key,))
+            rc = self.ncFile.createVariable(key, 'float32', (key,))
             rc.standard_name = 'time' 
             rc.units = 'seconds since 1970-01-01'
             # Used in global metadata
@@ -158,7 +158,7 @@ class InterpolatorWriter(BaseWriter):
         elif key.find('latitude') != -1:
             # Record Variables - coordinates for trajectory - save in the instance and use for metadata generation
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],))
+            rc = self.ncFile.createVariable(key, 'float32', (c['time'],))
             rc.long_name = 'LATITUDE'
             rc.standard_name = 'latitude' 
             rc.units = 'degree_north'
@@ -170,7 +170,7 @@ class InterpolatorWriter(BaseWriter):
 
         elif key.find('longitude') != -1:
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],))
+            rc = self.ncFile.createVariable(key, 'float32', (c['time'],))
             rc.long_name = 'LONGITUDE'
             rc.standard_name = 'longitude'
             rc.units = 'degree_east'
@@ -182,7 +182,7 @@ class InterpolatorWriter(BaseWriter):
 
         elif key.find('depth') != -1:
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],))
+            rc = self.ncFile.createVariable(key, 'float32', (c['time'],))
             rc.long_name = 'DEPTH'
             rc.standard_name = 'depth' 
             rc.units = 'm'
@@ -195,7 +195,7 @@ class InterpolatorWriter(BaseWriter):
         else:
             a = self.all_attrib[key]
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float64', (c['time'],))
+            rc = self.ncFile.createVariable(key, 'float32', (c['time'],))
             if 'long_name' in a:
                 rc.long_name = a['long_name']
             if 'standard_name' in a:
