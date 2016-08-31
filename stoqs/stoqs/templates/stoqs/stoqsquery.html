@@ -3395,8 +3395,9 @@ $('input[name="colormap_choice"]').on('change', function (event) {
     }
 
     function updateTemporal() {
-        var ds = new Date($('body').data()['start-ems']);
-        var de = new Date($('body').data()['end-ems']);
+        // Set start and end dates from actual axis limits
+        var ds = new Date(timedepthplot.getXAxes()[0].datamin);
+        var de = new Date(timedepthplot.getXAxes()[0].datamax);
         $('body').data()['start-time'] = getUTCDateString(ds); 
         $('body').data()['end-time'] = getUTCDateString(de);
 
@@ -4715,8 +4716,8 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                             $('body').data()['start-depth'] = timedepthplot.getYAxes()[0].datamin;
                             $('body').data()['end-depth'] = timedepthplot.getYAxes()[0].datamax;
                         }
-                        updateTemporal();
                     }
+                    updateTemporal();
                 },
                 dataType: "json"
             })
