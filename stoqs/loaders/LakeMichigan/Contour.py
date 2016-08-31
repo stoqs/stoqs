@@ -46,7 +46,7 @@ from matplotlib import dates
 from mpl_toolkits.axes_grid1.inset_locator import BboxPatch, BboxConnectorPatch
 
 # Set up global variables for logging output to STDOUT
-logger = logging.getLogger('monitorTethysHotSpotLogger')
+logger = logging.getLogger('monitorLrauvLakeMichiganLogger')
 fh = logging.StreamHandler()
 f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
 fh.setFormatter(f)

@@ -34,7 +34,7 @@ from slacker import Slacker
 from django.db.models import Max
 
 # Set up global variables for logging output to STDOUT
-logger = logging.getLogger('monitorLrauvLogger')
+logger = logging.getLogger('monitorLrauvLakeMichiganLogger')
 fh = logging.StreamHandler()
 f = logging.Formatter("%(levelname)s %(asctime)sZ %(filename)s %(funcName)s():%(lineno)d %(message)s")
 fh.setFormatter(f)
