@@ -1280,6 +1280,7 @@
     var hasTimeSeriesProfile;
     var hasTrajectoryProfile;
     var clearingTemporalFlag = false;
+    var updateFromZoomFlag = false;
     var PIXELS_WIDE = 800;                              // Approximate width of $("#time-depth-flot")
     var timeAxis;
     var sliderLimits;
@@ -2045,7 +2046,12 @@
             params['parametertab'] = 1;
             params['secondsperpixel'] = ($('body').data()['end-ems'] - $('body').data()['start-ems']) / PIXELS_WIDE / 1000.0;
         }
-
+        if (updateFromZoomFlag) {
+            params['updatefromzoom'] = 1;
+        }
+        else {
+            params['updatefromzoom'] = 0;
+        }
         // Add activitynames to the query string only when the Metadata -> NetCDF tab is opened
         if ( $('input:checkbox[name=activity_select_cb]').is(':checked') ) {
             if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
@@ -2109,8 +2115,10 @@
             $('body').data()['end-depth'] = zoom_sdt[3];
             simpledepthtime_options_zoom = zoom_sdt[4];
 
-            // Clear zoom_parametertime_stack but not zoom_simpledepthtime_stack
-            // as the former starts empty on init and the latter is pushed on init
+            // Reset zoom_simpledepthtime_stack to first element and clear zoom_parametertime_stack
+            // (as the latter starts empty on init and the former is pushed on init)
+            zoom_simpledepthtime_stack = [];
+            zoom_simpledepthtime_stack.push(zoom_sdt);
             zoom_parametertime_stack = [];
             parametertime_options_zoom = parametertime_options;
 
@@ -2129,13 +2137,14 @@
                     items = ['parameters', 'platforms', 'simpledepthtime', 'sampledepthtime', 'sampledurationsdepthtime'];
                 }
             }
-            updateTemporal();
+            updateFromZoomFlag = false;
             rebuildFilters(items);
         }
     });
 
     $(document).on('click', ".stoqs-toggle", function (event) {
         toggleField(this);
+        updateFromZoomFlag = false;
         rebuildFilters();
     });
 
@@ -3394,10 +3403,27 @@ $('input[name="colormap_choice"]').on('change', function (event) {
         $("#" + parameter_idsafe + "-histogram-flot").trigger('plotloaded');
     }
 
-    function updateTemporal() {
-        // Set start and end dates from actual axis limits
-        var ds = new Date(timedepthplot.getXAxes()[0].datamin);
-        var de = new Date(timedepthplot.getXAxes()[0].datamax);
+    function updateTemporal(fromPlot) {
+        var ds;
+        var de;
+        if (fromPlot) {
+            // Set start and end dates from actual axis limits
+            if ( $('#temporal-depth-li').hasClass('active') ) {
+                ds = new Date(timedepthplot.getXAxes()[0].datamin);
+                de = new Date(timedepthplot.getXAxes()[0].datamax);
+            }
+            if ( $('#temporal-parameter-li').hasClass('active') ) {
+                ds = new Date(timeparameterplot.getXAxes()[0].datamin);
+                de = new Date(timeparameterplot.getXAxes()[0].datamax);
+            }
+            updateFromZoomFlag = false;
+        }
+        else {
+            ds = new Date($('body').data()['start-ems']);
+            de = new Date($('body').data()['end-ems']);
+            updateFromZoomFlag = true;
+        }
+
         $('body').data()['start-time'] = getUTCDateString(ds); 
         $('body').data()['end-time'] = getUTCDateString(de);
 
@@ -3434,7 +3460,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
         $('#zoomed-button').addClass('btn-primary');
         //$('#zoomed-button').attr('title', 'Click to unzoom to original extent. Right-click on plot to unzoom to last zoom level.').tooltip('fixTitle').tooltip('hide');
 
-        updateTemporal();
+        updateTemporal(false);
         rebuildFilters();
         $('#time-depth-instr').html('Click and drag to zoom, right-click to un-zoom');
 
@@ -3461,11 +3487,11 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                 $('body').data()['start-depth'] = zoom_sdt[2];
                 $('body').data()['end-depth'] = zoom_sdt[3];
                 simpledepthtime_options_zoom = zoom_sdt[4];
-            
-                updateTemporal();
+
+                updateTemporal(false);
                 rebuildFilters();
             } 
-            if (zoom_simpledepthtime_stack.length == 1 ) {
+            else {
                 $('#time-depth-instr').html('Click and drag to zoom');
                 // zoom_parametertime_stack gets a push on a tab click, unzoom if length is 0 or 1
                 if (!$('#zoomed-button').hasClass('disabled') && zoom_parametertime_stack.length <= 1) {
@@ -3489,10 +3515,10 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                 $('body').data()['end-ems'] = zoom_pt[1];
                 parametertime_options_zoom = zoom_pt[4];
 
-                updateTemporal();
+                updateTemporal(false);
                 rebuildFilters();
             }
-            if (zoom_parametertime_stack.length == 1 ) {
+            else {
                 $('#time-parameter-instr').html('Click and drag to zoom');
                 if (!$('#zoomed-button').hasClass('disabled') && zoom_simpledepthtime_stack.length == 1) {
                     $('#zoomed-button').click();
@@ -3522,7 +3548,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                                         $('body').data()['start-depth'], $('body').data()['end-depth'],
                                         parametertime_options_zoom ]);
 
-        updateTemporal();
+        updateTemporal(false);
         if ($('#showplatforms').is(':checked')) {
             rebuildFilters(['parametertime', 'parameterparameterpng', 'parameterparameterx3d', 'measuredparameterx3d', 'platformanimation']);
         }
@@ -4658,10 +4684,15 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                     // Perform saved clicks embedded in $.url().param('permalink_id')
                     load_permalink();
                 }
+                else {
+                    if ( data.updatefromzoom == 0 && zoom_simpledepthtime_stack.length == 1 ) {
+                        updateTemporal(true);
+                    }
+                }
 
                 // Register handler that waits for all (including permalink) requests to finish
                 $(document).ajaxStop(function (data) {
-                   resetWaitIndicators();
+                    resetWaitIndicators();
                 })
 
                 // For Development - turn on Platform plot controls
@@ -4716,8 +4747,8 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                             $('body').data()['start-depth'] = timedepthplot.getYAxes()[0].datamin;
                             $('body').data()['end-depth'] = timedepthplot.getYAxes()[0].datamax;
                         }
+                        updateTemporal(false);
                     }
-                    updateTemporal();
                 },
                 dataType: "json"
             })

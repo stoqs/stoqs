@@ -67,7 +67,7 @@ for name in ['load_{}'.format(s) for s in cl.roms_platforms]:
     setattr(CANONLoader, name, _method)
 
 cl.roms_sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/ROMS/'
-cl.roms_sg621_files = ['roms_sg621_{:04d}.nc'.format(i) for i in range(247,400)]
+cl.roms_sg621_files = ['roms_sg621_{:04d}.nc'.format(i) for i in range(248,400)]
 cl.roms_sg621_parms = ['roms_temperature', 'roms_salinity', 'roms_spice']
 cl.roms_sg621_start_datetime = startdate
 cl.roms_sg621_end_datetime = enddate
@@ -206,7 +206,7 @@ cl.nps29_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
 cl.sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Gliders/Seaglider/'
-cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,113)] 
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,279)] 
 cl.sg621_parms = ['temperature', 'salinity']
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
@@ -246,8 +246,8 @@ cl.nps34_endDatetime = enddate
 
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
-cl.wg_Tiny_files = [ 
-                     'wgTiny/20160315/SV3_20160315.nc' ## no data in this file for the time period of this campaign,
+cl.wg_Tiny_files = [
+                     'wgTiny/20160830/realTime/20160830.nc' ## deploy Aug 30 2016
                    ]
 
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
@@ -464,8 +464,8 @@ else:
     cl.load_NPS34()
     ##cl.load_UCSC294() 
     ##cl.load_UCSC260()
-    #cl.load_wg_Tiny()
-    cl.loadM1()
+    cl.load_wg_Tiny() # deployed Aug 30 2016
+    cl.loadM1() # Mooring turn Aug 30 2016
     cl.load_oa1()
     #cl.load_oa2()
     #cl.loadDorado()

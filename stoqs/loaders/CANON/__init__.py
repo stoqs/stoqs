@@ -295,7 +295,7 @@ class CANONLoader(LoadScript):
                                         self.sg621_parms, self.dbAlias, stride, self.sg621_startDatetime,
                                         self.sg621_endDatetime, grdTerrain=self.grdTerrain,
                                         command_line_args=self.args)
-            except DAPloaders.OpendapError as e:
+            except (DAPloaders.OpendapError, DAPloaders.NoValidData) as e:
                 self.logger.warn(str(e))
 
     def load_NPS34(self, stride=None):
