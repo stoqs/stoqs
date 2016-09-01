@@ -73,6 +73,7 @@ query_parms = {
                    'showplatforms': 'showplatforms',                    # Flag value from checkbox
                    'showdataas': 'showdataas',              # Value from radio button, either 'contour' or 'scatter'
                    'cm': 'cm',                              # Value from colormap picker
+                   'updatefromzoom': 'updatefromzoom',      # To inform how to updateTemporal()
 
                    'only': 'only',                          # List of options to update - when only a partial response is needed
                    'except': 'except',                      # List of options not to update - when all but listed items are needed
