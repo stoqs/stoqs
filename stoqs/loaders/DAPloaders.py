@@ -1166,7 +1166,7 @@ class Base_Loader(STOQS_Loader):
                 self.dataStartDatetime = (m.InstantPoint.objects.using(self.dbAlias)
                                             .filter(activity__name=self.getActivityName())
                                             .aggregate(Max('timevalue'))['timevalue__max'])
-                if hasattr(self, 'backfill_timedelta'):
+                if hasattr(self, 'backfill_timedelta') and self.dataStartDatetime:
                     if self.backfill_timedelta:
                         self.dataStartDatetime = self.dataStartDatetime - self.backfill_timedelta
             if generator:
