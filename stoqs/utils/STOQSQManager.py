@@ -104,6 +104,7 @@ class STOQSQManager(object):
             'x3dplaybacks': self.getX3DPlaybacks,
             'resources': self.getResources,
             'attributes': self.getAttributes,
+            'updatefromzoom': self.getUpdateFromZoom,
         }
         
     def buildQuerySets(self, *args):
@@ -249,6 +250,12 @@ class STOQSQManager(object):
     #
     # Methods that generate summary data, based on the current query criteria
     #
+    def getUpdateFromZoom(self):
+        if self.request.GET.get('updatefromzoom', '0') == '1':
+            return 1
+        else:
+            return 0
+
     def getActivityNames(self):
         '''Return list of activities that have been selected in UI's Metadata -> NetCDF section
         '''
