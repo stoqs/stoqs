@@ -74,16 +74,15 @@ class LakeMILoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + f
-            dataStartDatetime = None
-            startDatetime = self.tethys_startDatetime
-            endDatetime = self.tethys_endDatetime
+            # shorten the activity names
+            aName = aName.rsplit('/', 1)[-1]
 
             try:
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
                                           pName, self.colors['tethys'], 'auv', 'AUV mission',
                                           self.tethys_parms, self.dbAlias, stride,
                                           grdTerrain=self.grdTerrain, command_line_args=self.args, 
-                                          endDatetime=endDatetime, startDatetime=startDatetime, timezone='America/New_York')
+                                          timezone='America/New_York')
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 

@@ -145,12 +145,13 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.tethys_files], self.tethys_files):
             url = self.tethys_base + f
+            # shorten the activity names
+            aName = aName.rsplit('/', 1)[-1]
             try:
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           pName, self.colors['tethys'], 'auv', 'AUV mission',
                                           self.tethys_parms, self.dbAlias, stride, 
-                                          grdTerrain=self.grdTerrain, command_line_args=self.args,
-                                          endDatetime=self.tethys_endDatetime, startDatetime=self.tethys_startDatetime)
+                                          grdTerrain=self.grdTerrain, command_line_args=self.args)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -163,13 +164,14 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
             url = self.daphne_base + f
+            # shorten the activity names
+            aName = aName.rsplit('/', 1)[-1]
             try:
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           'Daphne', self.colors['daphne'], 'auv', 'AUV mission',
                                           self.daphne_parms, self.dbAlias, stride, 
-                                          grdTerrain=self.grdTerrain, command_line_args=self.args,
-                                          endDatetime=self.daphne_endDatetime, startDatetime=self.daphne_startDatetime)
+                                          grdTerrain=self.grdTerrain, command_line_args=self.args)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -181,13 +183,14 @@ class CANONLoader(LoadScript):
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.makai_files], self.makai_files):
             url = self.makai_base + f
+            # shorten the activity names
+            aName = aName.rsplit('/', 1)[-1]
             try:
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           'Makai', self.colors['makai'], 'auv', 'AUV mission',
                                           self.makai_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, 
-                                          command_line_args=self.args,
-                                          endDatetime=self.makai_endDatetime, startDatetime=self.makai_startDatetime)
+                                          command_line_args=self.args)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
