@@ -71,8 +71,7 @@ committed:
     git push origin
 
 After this you can use the GitHub web interface to visualize differences between your 
-fork and upstream and submit a Pull Request (Note: A `git pull upstream master` is the 
-same as the first 2 commands above).
+fork and upstream and submit a Pull Request.
 
 If a lot of changes have happened upstream and you have local commits that you have 
 not made public you may want to do a `rebase` instead of `merge`.  A `rebase` will 
