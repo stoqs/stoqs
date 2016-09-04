@@ -24,6 +24,7 @@ installing all the required software.
 
 4. Rename the existing `origin` remote to `upstream`:
 
+        cd ~/dev/stoqsgit
         git remote rename origin upstream
 
 5. Assign `origin` remote to your forked repository:
