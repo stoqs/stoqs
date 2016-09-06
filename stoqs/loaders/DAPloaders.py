@@ -590,7 +590,7 @@ class Base_Loader(STOQS_Loader):
         # For python slicing add 1 to the end index
         logger.debug('tIndx = %s', tIndx)
         try:
-            indices = (tIndx[0] + 1, tIndx[-1] + 1)
+            indices = (tIndx[0], tIndx[-1] + 1)
         except IndexError:
             raise NoValidData('Could not get first and last indexes from tIndex = %s. Skipping.' % (tIndx))
         logger.debug('Start and end indices are: %s', indices)
