@@ -73,7 +73,7 @@ then
     curl -sS https://bootstrap.pypa.io/get-pip.py | sudo /usr/local/bin/python2.7 - > /dev/null
     /usr/local/bin/pip install virtualenv
 
-    yum -y install rabbitmq-server scipy mod_wsgi memcached python-memcached
+    yum -y install deltarpm rabbitmq-server scipy mod_wsgi memcached python-memcached
     yum -y install graphviz-devel graphviz-python ImageMagick postgis2_94
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
     yum -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
