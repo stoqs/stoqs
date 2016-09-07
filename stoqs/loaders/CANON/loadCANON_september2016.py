@@ -206,7 +206,7 @@ cl.nps29_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
 cl.sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Gliders/Seaglider/'
-cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,279)] 
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,328)] 
 cl.sg621_parms = ['temperature', 'salinity']
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
@@ -353,9 +353,9 @@ cl.oa1_endDatetime = enddate
 
 # Mooring 0A2
 # note the new location. Location and data by deployment, instead of by campaign
-cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/' ## ended at end of May 2016
+cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201505/' 
 cl.oa2_files = [
-               'OA2_201505.nc'
+               'realTime/OA2_201505.nc'
                ]
 cl.oa2_parms = [
                'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
@@ -467,7 +467,7 @@ else:
     cl.load_wg_Tiny() # deployed Aug 30 2016
     cl.loadM1() # Mooring turn Aug 30 2016
     cl.load_oa1()
-    #cl.load_oa2()
+    cl.load_oa2()
     #cl.loadDorado()
     #cl.loadDaphne()
     #cl.loadTethys()
