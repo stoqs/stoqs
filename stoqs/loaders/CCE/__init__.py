@@ -22,6 +22,8 @@ try:
 except AttributeError:
     pass
 
+import matplotlib as mpl
+mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import DAPloaders
 from loaders import LoadScript
 from DAPloaders import Mooring_Loader
