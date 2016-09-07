@@ -573,13 +573,13 @@ class Base_Loader(STOQS_Loader):
             s = to_udunits(self.dataStartDatetime, timeAxisUnits)
             logger.debug("For dataStartDatetime = %s, the udnits value is %f", self.dataStartDatetime, s)
 
-        if self.endDatetime:
+        if self.requested_endDatetime:
             # endDatetime may be None, in which case just read until the end
             e = to_udunits(self.endDatetime, timeAxisUnits)
             logger.debug("For endDatetime = %s, the udnits value is %f", self.endDatetime, e)
         else:
             e = timeAxis[-1]
-            logger.info("endDatetime not given, using the last value of timeAxis = %f", e)
+            logger.debug("requested_endDatetime not given, using the last value of timeAxis = %f", e)
 
         tf = (s <= timeAxis) & (timeAxis <= e)
         logger.debug('tf = %s', tf)
