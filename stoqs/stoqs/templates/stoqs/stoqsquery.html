@@ -904,7 +904,7 @@
                         <h3><div class="row-fluid">
                                 <div class="span2"><a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">Colormaps</a></div>
                                 <div class="span10">
-                                <form style="text-align:center; margin:0px;" class="form-inline">
+                                <form style="text-align:center; margin:0px;" class="form-inline" onsubmit="return false;">
                                     <input id="cm-cmin" type="text" class="stoqs-color-limit-input cm-activate" style="text-align:right;" title="Initial min value is 2.5 percentile" />
                                     <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" />
                                     <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
@@ -923,6 +923,7 @@
                                     </div>
 
                                     <button id="apply-color-limit-button" class="btn btn-mini disabled">Redraw</button>
+                                    <button id="reset-color-limit-button" class="btn btn-mini disabled">Reset</button>
                                 </form>
                                 </div>
                             </div>
@@ -2231,6 +2232,10 @@
         $('#mp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + cm + '.png');
         $('#cm-colorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + cm + '.png');
         rebuildFilters();
+    });
+
+    $('#apply-color-limit-button').click(function () {
+        rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'parameterparameterpng', 'parameterparameterx3d']);
     });
 
     $('#showplatforms').on('click', function (event) {
@@ -3657,6 +3662,8 @@
         if ($('input:radio[name=colormap_choice]:checked').val()) {
             qstring = qstring + '&cm=' + $('input:radio[name=colormap_choice]:checked').val();
         }
+        qstring = qstring + '&cmin=' + $('#cm-cmin').val();
+        qstring = qstring + '&cmax=' + $('#cm-cmax').val();
 
         if ($('#showgeox3dmeasurement').is(':checked') || $('#showplatforms').is(':checked')) {
             if ($('#showgeox3dmeasurement').is(':checked')) {
