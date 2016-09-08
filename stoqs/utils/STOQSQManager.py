@@ -574,8 +574,9 @@ class STOQSQManager(object):
                 # Timeseries and timeseriesProfile data for a single platform
                 # (even if composed of multiple Activities) must have single
                 # unique horizontal position.
-                geom_list = self.qs.filter(platform__name=platformName).values_list(
-                        'nominallocation__geom', flat=True).distinct()
+                geom_list = filter(None, self.qs.filter(platform__name=platformName)
+                                         .values_list('nominallocation__geom', flat=True)
+                                         .distinct())
                 try:
                     geom = geom_list[0]
                 except IndexError:
@@ -634,12 +635,14 @@ class STOQSQManager(object):
             color=row['platform__color']
             platformType = row['platform__platformtype__name']
             if name is not None and id is not None:
-                # Get the featureType from the Resource
+                # Get the featureType(s) from the Resource
                 fts = models.ActivityResource.objects.using(self.dbname).filter(resource__name='featureType', 
                                activity__platform__name=name).values_list('resource__value', flat=True).distinct()
+                # Make all lower case
+                fts = {ft.lower() for ft in fts}
                 try:
-                    featureType = fts[0]
-                except IndexError:
+                    featureType = fts.pop()
+                except TypeError:
                     logger.warn('No featureType returned for platform name = %s.  Setting it to "trajectory".', name)
                     featureType = 'trajectory'
                 if len(fts) > 1:
