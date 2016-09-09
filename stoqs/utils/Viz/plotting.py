@@ -3,6 +3,7 @@ Module with various functions to supprt data visualization.  These can be quite 
 with all of the Matplotlib customization required for nice looking graphics.
 '''
 
+import cmocean
 import os
 import tempfile
 # Setup Matplotlib for running on the server
@@ -157,8 +158,13 @@ class BaseParameter(object):
                     self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt)[::-1])
                     self.clt = self.jetplus_clt[::-1]
                 else:
-                    self.cm = plt.get_cmap(self.cm_name)
-                    # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
+                    try:
+                        self.cm = plt.get_cmap(self.cm_name)
+                    except ValueError:
+                        # Likely a cmocean colormap
+                        self.cm = getattr(cmocean.cm, self.cm_name)
+
+                # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
                 self.clt = [self.cm(i) for i in range(256)]
             if self.request.GET.get('num_colors'):
                 self.num_colors = self.request.GET.get('num_colors')
