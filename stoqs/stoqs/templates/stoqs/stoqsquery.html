@@ -925,7 +925,7 @@
                                     </select>
                                 </div>
                                 <button id="apply-color-limit-button" class="btn btn-mini disabled">Redraw</button>
-                                <button id="reset-color-limit-button" class="btn btn-mini disabled">Reset</button>
+                                <button id="reset-color-limit-button" class="btn btn-mini disabled" title="Use 2.5 and 97.5 percentiles">Reset</button>
                             </td>
                         </tr></table>
                     </div>
@@ -2255,15 +2255,19 @@
     });
 
     $('#apply-color-limit-button').click(function () {
-        rebuildFilters();
+        if ( $('#apply-color-limit-button').hasClass('btn-primary') ) {
+            rebuildFilters();
+        }
     });
 
     $('#reset-color-limit-button').click(function () {
-        $('#cm-cmin').val($('body').data()['parameterminmax'].plot[1]);
-        $('#cm-cmax').val($('body').data()['parameterminmax'].plot[2]);
-        $('#reset-color-limit-button').addClass('disabled');
-        $('#reset-color-limit-button').removeClass('btn-primary');
-        rebuildFilters();
+        if ( $('#reset-color-limit-button').hasClass('btn-primary') ) {
+            $('#cm-cmin').val($('body').data()['parameterminmax'].plot[1]);
+            $('#cm-cmax').val($('body').data()['parameterminmax'].plot[2]);
+            $('#reset-color-limit-button').addClass('disabled');
+            $('#reset-color-limit-button').removeClass('btn-primary');
+            rebuildFilters();
+        }
     });
 
     $('#showplatforms').on('click', function (event) {
