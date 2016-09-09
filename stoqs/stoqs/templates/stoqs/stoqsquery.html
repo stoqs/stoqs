@@ -71,6 +71,7 @@
             height: 10px;
             line-height: 15px;
             font-size: 13px;
+            margin-bottom: 0px;
         }
         .fail-text { 
             color: red;
@@ -901,33 +902,33 @@
                 <div class="accordian-group" style="display:none;">
                     <!--<div class="accordian-group">-->
                     <div class="accordian-heading">
-                        <h3><div class="row-fluid">
-                                <div class="span2"><a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">Colormaps</a></div>
-                                <div class="span10">
-                                <form style="text-align:center; margin:0px;" class="form-inline" onsubmit="return false;">
-                                    <input id="cm-cmin" type="text" class="stoqs-color-limit-input cm-activate" style="text-align:right;" title="Initial min value is 2.5 percentile" />
-                                    <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" />
-                                    <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
-                                    <div class="input-group"> 
-                                        <span class="input-group-addon stoqs-color-limit-input" style="font-weight:normal;"> Colors: </span>
-                                        <select id="num-colors" class="selectpicker form-control cm-activate" style="height:20px; width:50px;" title="Number of colors for colormap">
-                                            <option>256</option>
-                                            <option>128</option>
-                                            <option>64</option>
-                                            <option>32</option>
-                                            <option>16</option>
-                                            <option>8</option>
-                                            <option>4</option>
-                                            <option>2</option>
-                                        </select>
-                                    </div>
-
-                                    <button id="apply-color-limit-button" class="btn btn-mini disabled">Redraw</button>
-                                    <button id="reset-color-limit-button" class="btn btn-mini disabled">Reset</button>
-                                </form>
+                        <table><tr style="white-space:nowrap;">
+                            <td><h3>
+                            <a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">Colormaps</a>
+                            </h3></td><td>
+                                <input id="cm-cmin" type="text" class="stoqs-color-limit-input cm-activate" style="text-align:right;" title="Initial min value is 2.5 percentile" />
+                            </td><td>
+                                <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" />
+                            </td><td>
+                                <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
+                            </td><td>
+                                <div class="input-group"> 
+                                    <span class="input-group-addon stoqs-color-limit-input" style="font-weight:normal;"> Colors: </span>
+                                    <select id="num-colors" class="selectpicker form-control cm-activate" style="height:20px;width:50px;margin-bottom:0px;" title="Number of colors">
+                                        <option>256</option>
+                                        <option>128</option>
+                                        <option>64</option>
+                                        <option>32</option>
+                                        <option>16</option>
+                                        <option>8</option>
+                                        <option>4</option>
+                                        <option>2</option>
+                                    </select>
                                 </div>
-                            </div>
-                        </h3>
+                                <button id="apply-color-limit-button" class="btn btn-mini disabled">Redraw</button>
+                                <button id="reset-color-limit-button" class="btn btn-mini disabled">Reset</button>
+                            </td>
+                        </tr></table>
                     </div>
                     <div id="collapseColormap" class="accordion-body collapse in">
                         <div class="accordion-inner">
@@ -1658,9 +1659,19 @@
         } 
         mp_param = getMPparms(group, params);
 
-        if ( ! $.isEmptyObject(data.parameterminmax.plot) ) {
-            $('#cm-cmin').val(data.parameterminmax.plot[1]);
-            $('#cm-cmax').val(data.parameterminmax.plot[2]);
+        if ( ! $.isEmptyObject(data.parameterminmax) ) {
+            if ( ! $.isEmptyObject(data.parameterminmax.cmincmax) ) {
+                $('#cm-cmin').val(data.parameterminmax.cmincmax[1]);
+                $('#cm-cmax').val(data.parameterminmax.cmincmax[2]);
+                $('#reset-color-limit-button').removeClass('disabled');
+                $('#reset-color-limit-button').addClass('btn-primary');
+            }
+            else if ( ! $.isEmptyObject(data.parameterminmax.plot) ) {
+                $('#cm-cmin').val(data.parameterminmax.plot[1]);
+                $('#cm-cmax').val(data.parameterminmax.plot[2]);
+                $('#reset-color-limit-button').addClass('disabled');
+                $('#reset-color-limit-button').removeClass('btn-primary');
+            }
             $('#apply-color-limit-button').addClass('disabled');
             $('#apply-color-limit-button').removeClass('btn-primary');
         }
@@ -2235,7 +2246,15 @@
     });
 
     $('#apply-color-limit-button').click(function () {
-        rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax', 'parameterparameterpng', 'parameterparameterx3d']);
+        rebuildFilters();
+    });
+
+    $('#reset-color-limit-button').click(function () {
+        $('#cm-cmin').val($('body').data()['parameterminmax'][1]);
+        $('#cm-cmax').val($('body').data()['parameterminmax'][2]);
+        $('#reset-color-limit-button').addClass('disabled');
+        $('#reset-color-limit-button').removeClass('btn-primary');
+        rebuildFilters();
     });
 
     $('#showplatforms').on('click', function (event) {
@@ -2379,7 +2398,7 @@
 
     $('.colormaps-toggle').on('click', function(e) {
         // Togggle show/hide the Colormaps accordion section
-        var $elem = $('#colormap-anchor').parent().parent().parent().parent().parent();
+        var $elem = $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent();
         if ( $elem.css('display') == 'none' ) {
             $elem.show();
             $('#sectioncolorbarimg').attr('title', ' ').tooltip('fixTitle').tooltip('show');;
@@ -2393,6 +2412,8 @@
     $('.cm-activate').on('keypress change', function (event, previousText) {
         $('#apply-color-limit-button').removeClass('disabled');
         $('#apply-color-limit-button').addClass('btn-primary');
+        $('#reset-color-limit-button').removeClass('disabled');
+        $('#reset-color-limit-button').addClass('btn-primary');
     });
 
     $('#mp-cmin').on('keypress', function (event, previousText) {
