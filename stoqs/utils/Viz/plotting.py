@@ -134,15 +134,15 @@ def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientat
 class BaseParameter(object):
 
     def __init__(self):
-        jetplus_clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
+        self.jetplus_clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
 
         # Default colormap - the legacy jetplus
         self.cm_name = 'jetplus'
         self.num_colors = 256
         self.cmin = None
         self.cmax = None
-        self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
-        self.clt = jetplus_clt
+        self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt))
+        self.clt = self.jetplus_clt
     
     def set_colormap(self):
         '''Assign colormap as passed in from UI request
@@ -151,11 +151,11 @@ class BaseParameter(object):
             if self.request.GET.get('cm'):
                 self.cm_name = self.request.GET.get('cm')
                 if self.cm_name == 'jetplus':
-                    self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
-                    self.clt = jetplus_clt
+                    self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt))
+                    self.clt = self.jetplus_clt
                 elif self.cm_name == 'jetplus_r':
-                    self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt)[::-1])
-                    self.clt = jetplus_clt[::-1]
+                    self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt)[::-1])
+                    self.clt = self.jetplus_clt[::-1]
                 else:
                     self.cm = plt.get_cmap(self.cm_name)
                     # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
