@@ -27,6 +27,8 @@ class KML(BaseParameter):
             @withTimeStamps: True
             @withLineStrings: True
         '''
+        super(self.__class__, self).__init__()
+
         self.request = request
         self.qs_mp = qs_mp
         self.qparams = qparams
@@ -134,7 +136,7 @@ class KML(BaseParameter):
         logger.debug(descr)
         try:
             kml = self.makeKML(self.request.META['dbAlias'], dataHash, pName, folderName, descr, 
-                    self.request.GET.get('cmin', None), self.request.GET.get('cmax', None))
+                    self.cmin, self.cmax)
         except InvalidLimits as e:
             logger.exception(e)
             return response
