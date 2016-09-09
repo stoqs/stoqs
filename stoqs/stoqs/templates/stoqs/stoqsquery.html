@@ -903,7 +903,7 @@
                     <!--<div class="accordian-group">-->
                     <div class="accordian-heading">
                         <table><tr style="white-space:nowrap;">
-                            <td><h3>
+                            <td style="width:30%;"><h3>
                             <a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">Colormaps</a>
                             </h3></td><td>
                                 <input id="cm-cmin" type="text" class="stoqs-color-limit-input cm-activate" style="text-align:right;" title="Initial min value is 2.5 percentile" />
@@ -911,7 +911,6 @@
                                 <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" />
                             </td><td>
                                 <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
-                            </td><td>
                                 <div class="input-group"> 
                                     <span class="input-group-addon stoqs-color-limit-input" style="font-weight:normal;"> Colors: </span>
                                     <select id="num-colors" class="selectpicker form-control cm-activate" style="height:20px;width:50px;margin-bottom:0px;" title="Number of colors">
@@ -1529,8 +1528,8 @@
                         if ( ! $.isEmptyObject($('input:radio[name=colormap_choice]:checked').val()) ) {
                             var cm = $('input:radio[name=colormap_choice]:checked').val();
                         }
-                        strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('body').data()['parameterminmax']['plot'][1] + 
-                                                                           '&cmax=' + $('body').data()['parameterminmax']['plot'][2] + '&stride=' + strideVal +
+                        strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('#cm-cmin').val() + 
+                                                                           '&cmax=' + $('#cm-cmax').val() + '&stride=' + strideVal +
                                                                            '&cm=' + cm;
                         sensortrackskml.refresh({url: strided_kmlurl});
                     }
@@ -1659,23 +1658,6 @@
         } 
         mp_param = getMPparms(group, params);
 
-        if ( ! $.isEmptyObject(data.parameterminmax) ) {
-            if ( ! $.isEmptyObject(data.parameterminmax.cmincmax) ) {
-                $('#cm-cmin').val(data.parameterminmax.cmincmax[1]);
-                $('#cm-cmax').val(data.parameterminmax.cmincmax[2]);
-                $('#reset-color-limit-button').removeClass('disabled');
-                $('#reset-color-limit-button').addClass('btn-primary');
-            }
-            else if ( ! $.isEmptyObject(data.parameterminmax.plot) ) {
-                $('#cm-cmin').val(data.parameterminmax.plot[1]);
-                $('#cm-cmax').val(data.parameterminmax.plot[2]);
-                $('#reset-color-limit-button').addClass('disabled');
-                $('#reset-color-limit-button').removeClass('btn-primary');
-            }
-            $('#apply-color-limit-button').addClass('disabled');
-            $('#apply-color-limit-button').removeClass('btn-primary');
-        }
-
         var formats=[{% for format in formats %}'{{format.0}}'{% if not forloop.last %},{% endif %}{%endfor%}]
         // Iterate over the formats and update the fields/buttons to use the new URL's to get the data.
         $.each(formats, function (index, value) {
@@ -1784,6 +1766,33 @@
                 $('#'+group+'-'+value+'-link').attr('href',url);
             }
         });
+    }
+
+    function setColorLimits(data) {
+        if ( ! $.isEmptyObject(data.parameterminmax) ) {
+            if ( ! $.isEmptyObject(data.parameterminmax.plot) ) {
+                // Normal, initial color limits set to 2.5 & 97.5 percentiles
+                $('#cm-cmin').val(data.parameterminmax.plot[1]);
+                $('#cm-cmax').val(data.parameterminmax.plot[2]);
+                $('#reset-color-limit-button').addClass('disabled');
+                $('#reset-color-limit-button').removeClass('btn-primary');
+            }
+            if ( ! $.isEmptyObject(data.parameterminmax.cmincmax) ) {
+                if ( $.isEmptyObject($('body').data()['parameterminmax'].cmincmax) ||
+                     data.parameterminmax.cmincmax[0] == $('body').data()['parameterminmax'].cmincmax[0] ) {
+                    // Use UI entered values if same parameter as before
+                    $('#cm-cmin').val(data.parameterminmax.cmincmax[1]);
+                    $('#cm-cmax').val(data.parameterminmax.cmincmax[2]);
+                    if ( data.parameterminmax.cmincmax[1] != $('body').data()['parameterminmax'].plot[1] ||
+                         data.parameterminmax.cmincmax[2] != $('body').data()['parameterminmax'].plot[2] ) {
+                        $('#reset-color-limit-button').removeClass('disabled');
+                        $('#reset-color-limit-button').addClass('btn-primary');
+                    }
+                }
+            }
+            $('#apply-color-limit-button').addClass('disabled');
+            $('#apply-color-limit-button').removeClass('btn-primary');
+        }
     }
 
     function toggleField(element) {
@@ -2250,8 +2259,8 @@
     });
 
     $('#reset-color-limit-button').click(function () {
-        $('#cm-cmin').val($('body').data()['parameterminmax'][1]);
-        $('#cm-cmax').val($('body').data()['parameterminmax'][2]);
+        $('#cm-cmin').val($('body').data()['parameterminmax'].plot[1]);
+        $('#cm-cmax').val($('body').data()['parameterminmax'].plot[2]);
         $('#reset-color-limit-button').addClass('disabled');
         $('#reset-color-limit-button').removeClass('btn-primary');
         rebuildFilters();
@@ -3683,8 +3692,16 @@
         if ($('input:radio[name=colormap_choice]:checked').val()) {
             qstring = qstring + '&cm=' + $('input:radio[name=colormap_choice]:checked').val();
         }
-        qstring = qstring + '&cmin=' + $('#cm-cmin').val();
-        qstring = qstring + '&cmax=' + $('#cm-cmax').val();
+
+        if ( ! $.isEmptyObject($('body').data()['parameterminmax']) ) {
+            if ( ! $.isEmptyObject($('input:radio[name=parameters_plot]:checked').val()) ) {
+                if ( $('input:radio[name=parameters_plot]:checked').val() == $('body').data()['parameterminmax'].plot[0] ) {
+                    // Use UI entered colormap limits if parameter is the same
+                    qstring = qstring + '&cmin=' + $('#cm-cmin').val();
+                    qstring = qstring + '&cmax=' + $('#cm-cmax').val();
+                }
+            }
+        }
 
         if ($('#showgeox3dmeasurement').is(':checked') || $('#showplatforms').is(':checked')) {
             if ($('#showgeox3dmeasurement').is(':checked')) {
@@ -4476,7 +4493,7 @@
                             });
                             // Show colorbar
                             $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
-                            $('#sectioncolorbarimg').attr('title', 'Click to select different colormap').tooltip('fixTitle').tooltip('hide');;
+                            $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');;
                             $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
@@ -4735,6 +4752,7 @@
             success: function (data) {
                 setDataAccess('mp', data);
                 setDataAccess('sp', data);
+                setColorLimits(data);
                 saveBodyData(data);
                 if (init) {
                     save_zoom_from_permalink();
