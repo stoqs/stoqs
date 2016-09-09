@@ -934,7 +934,7 @@
 
                             <ul class="nav nav-tabs">
                                 {% for category in colormaps %}
-                                    {% if category.0 == "Uniform" %}
+                                    {% if category.0 == "Ocean" %}
                                         <li class="active"><a href="#{{category.0}}" data-toggle="tab">{{category.0}}</a></li>
                                     {% else %}
                                         <li><a href="#{{category.0}}" data-toggle="tab">{{category.0}}</a></li>
@@ -943,7 +943,7 @@
                             </ul>
                             <div class="tab-content">
                                 {% for category in colormaps %}
-                                    {% if category.0 == "Uniform" %}
+                                    {% if category.0 == "Ocean" %}
                                         <div class="tab-pane active" id="{{category.0}}">
                                     {% else %}
                                         <div class="tab-pane" id="{{category.0}}">
