@@ -555,7 +555,13 @@ class STOQSQManager(object):
         if not da_results:
             da_results = plot_results
 
-        return {'plot': plot_results, 'dataaccess': da_results}
+        cmincmax = []
+        if self.request.GET.get('cmin') and self.request.GET.get('cmax'):
+            cmincmax = [plot_results[0],
+                        float(self.request.GET.get('cmin')), 
+                        float(self.request.GET.get('cmax'))]
+
+        return {'plot': plot_results, 'dataaccess': da_results, 'cmincmax': cmincmax}
 
     def _getPlatformModel(self, platformName):
         '''Return Platform X3D model information. Designed for stationary
