@@ -132,17 +132,21 @@ def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientat
         raise Exception('orientation must be either horizontal or vertical')
 
 class BaseParameter(object):
-    
-    def set_colormap(self):
-        '''Assign colormap as passed in from UI request
-        '''
+
+    def __init__(self):
         jetplus_clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
 
         # Default colormap - the legacy jetplus
         self.cm_name = 'jetplus'
+        self.num_colors = 256
+        self.cmin = None
+        self.cmax = None
         self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
         self.clt = jetplus_clt
-
+    
+    def set_colormap(self):
+        '''Assign colormap as passed in from UI request
+        '''
         if hasattr(self.request, 'GET'):
             if self.request.GET.get('cm'):
                 self.cm_name = self.request.GET.get('cm')
@@ -156,7 +160,14 @@ class BaseParameter(object):
                     self.cm = plt.get_cmap(self.cm_name)
                     # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
                 self.clt = [self.cm(i) for i in range(256)]
+            if self.request.GET.get('num_colors'):
+                self.num_colors = self.request.GET.get('num_colors')
+            if self.request.GET.get('cmin'):
+                self.cmin = float(self.request.GET.get('cmin'))
+            if self.request.GET.get('cmax'):
+                self.cmax = float(self.request.GET.get('cmax'))
 
+        self.cm.N = min(self.num_colors, self.cm.N)
 
 class MeasuredParameter(BaseParameter):
     '''
@@ -168,19 +179,27 @@ class MeasuredParameter(BaseParameter):
         Save parameters that can be used by the different product generation methods here
         parameterMinMax is like: (pName, pMin, pMax)
         '''
+        super(self.__class__, self).__init__()
+
         self.kwargs = kwargs
         self.request = request
         self.qs = qs
         # Calling routine passes different qs_mp when order or no parameter in filter is needed
         self.qs_mp = qs_mp
+
         self.parameterMinMax = parameterMinMax
+        self.set_colormap()
+        if self.cmin:
+            self.parameterMinMax[1] = self.cmin
+        if self.cmax:
+            self.parameterMinMax[2] = self.cmax
+
         self.sampleQS = sampleQS
         self.platformName = platformName
         self.parameterID = parameterID
         self.parameterGroups = parameterGroups
 
         self.scale_factor = None
-        self.set_colormap()
 
         # - Use a new imageID for each new image
         self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -995,13 +1014,21 @@ class ParameterParameter(BaseParameter):
         Save parameters that can be used by the different plotting methods here
         @pMinMax is like: (pID, pMin, pMax)
         '''
+        super(self.__class__, self).__init__()
+
         self.kwargs = kwargs
         self.request = request
         self.pDict = pDict
         self.mpq = mpq
         self.pq = pq
+
         self.pMinMax = pMinMax
         self.set_colormap()
+        if self.cmin:
+            self.pMinMax['c'][1] = self.cmin
+        if self.cmax:
+            self.pMinMax['c'][2] = self.cmax
+
         self.depth = []
         self.x_id = []
         self.y_id = []
