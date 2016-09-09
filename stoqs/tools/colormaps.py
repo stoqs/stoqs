@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
 
-cmaps = [('ocean',          cmocean.cm.cmapnames),
+cmaps = [('Ocean',          cmocean.cm.cmapnames),
          ('Uniform',
                             ['viridis', 'inferno', 'plasma', 'magma']),
          ('Sequential',     ['Blues', 'BuGn', 'BuPu',
@@ -71,7 +71,7 @@ def _plot_color_bar(category, cmap):
         cm_jetplus = colors.ListedColormap(np.array(jetplus_clt)[::-1])
         cb_ax.imshow(gradient, aspect='auto', cmap=cm_jetplus)
     else:
-        if category == 'ocean':
+        if category == 'Ocean':
             cb_ax.imshow(gradient, aspect='auto', cmap=getattr(cmocean.cm, cmap))
         else:
             cb_ax.imshow(gradient, aspect='auto', cmap=plt.get_cmap(cmap))

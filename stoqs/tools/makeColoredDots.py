@@ -66,7 +66,7 @@ def processColorMap(category, cmap):
     elif cmap == 'jetplus_r':
         cm  = colors.ListedColormap(np.array(jetplus_clt)[::-1])
     else:
-        if category == 'ocean':
+        if category == 'Ocean':
             cm = getattr(cmocean.cm, cmap)
         else:
             cm = plt.get_cmap(cmap)
