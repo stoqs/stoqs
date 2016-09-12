@@ -73,7 +73,7 @@ cl.roms_sg621_start_datetime = startdate
 cl.roms_sg621_end_datetime = enddate
 
 cl.roms_spray_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/ROMS/'
-cl.roms_spray_files = ['roms_spray_{:04d}.nc'.format(i) for i in range(313,400)]
+cl.roms_spray_files = ['roms_spray_{:04d}.nc'.format(i) for i in range(313,450)]
 cl.roms_spray_parms = ['roms_temperature', 'roms_salinity', 'roms_spice', 'roms_spice', 'temperature', 'salinity', 'spice']
 cl.roms_spray_start_datetime = startdate
 cl.roms_spray_end_datetime = enddate
@@ -321,10 +321,13 @@ cl.rcpctd_files = [
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 # M1 had a turnaround on July 29, 2015
 # http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201507/OS_M1_20150729hourly_CMSTV.nc
-cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
-cl.m1_files = [
-                'OS_M1_20150729hourly_CMSTV.nc'
-              ]
+#cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
+#cl.m1_files = [
+#                'OS_M1_20150729hourly_CMSTV.nc'
+#              ]
+# mooring turn August 29 2016
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201608/'
+cl.m1_files = ['OS_M1_20160829hourly_CMSTV.nc'] 
 cl.m1_parms = [
                 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
                 'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
