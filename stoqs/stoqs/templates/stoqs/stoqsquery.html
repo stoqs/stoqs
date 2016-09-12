@@ -865,15 +865,15 @@
                                     <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
                                         <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
-                                            <div class="span5" id="contour-scatter-buttons" style="display:none;">
+                                            <div class="span5" id="contour-scatter-buttons" style="visibility:hidden;">
                                                 <span id="temporalparameterplotinfo">&nbsp;</span>
                                                 <br>
                                                 <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
                                             <div class="span7"><span style="float:right;">
-                                                <a id="mp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
-                                                    <img id="sectioncolorbarimg" src="" />
+                                                <a id="mp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse">
+                                                    <img id="sectioncolorbarimg" src="{{STATIC_URL}}images/dummy_colorbar.png" />
                                                 </a>
                                             </span></div>
                                         </div>
@@ -2410,16 +2410,22 @@
     });
 
     $('.colormaps-toggle').on('click', function(e) {
-        // Togggle show/hide the Colormaps accordion section
-        var $elem = $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent();
-        if ( $elem.css('display') == 'none' ) {
-            $elem.show();
-            $('#sectioncolorbarimg').attr('title', ' ').tooltip('fixTitle').tooltip('show');;
+        var attr = $('#sectioncolorbarimg').attr('href');
+        if ( $.isEmptyObject(attr) ) {
+            return false;
         }
         else {
-            $elem.hide();
+            // Togggle show/hide the Colormaps accordion section
+            var $elem = $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent();
+            if ( $elem.css('display') == 'none' ) {
+                $elem.show();
+                $('#sectioncolorbarimg').attr('title', ' ').tooltip('fixTitle').tooltip('show');;
+            }
+            else {
+                $elem.hide();
+            }
+            return true;
         }
-        return true;
     });
 
     $('.cm-activate').on('keypress change', function (event, previousText) {
@@ -2458,7 +2464,7 @@
             if ( $('button.btn-primary.stoqs-toggle.platform').length != 1 ) {
                 //alert('WARNING: Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.');
             }
-            $('#contour-scatter-buttons').show();
+            $('#contour-scatter-buttons').css({'visibility': 'visible'});
             $('#sensor-tracks-checkbox').show();
             $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                          $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
@@ -2470,14 +2476,15 @@
         }
         else {
             // Remove sensortracks and image from Flot plot
-            $('#contour-scatter-buttons').hide();
+            $('#contour-scatter-buttons').css({'visibility': 'hidden'});
             $('#sensor-tracks-checkbox').hide();
             $('#temporalparameterplotinfo').data('info', '');
             $('#temporalparameterplotinfo').text('');
             $('#showsensortrackstext').text('');
             $('#showsensortracks').attr('disabled', true);
             $('#showgeox3dmeasurementtext').text('');
-            $('#sectioncolorbarimg').removeAttr('src');
+            $('#sectioncolorbarimg').attr('src', '{{STATIC_URL}}images/dummy_colorbar.png');
+            $('#sectioncolorbarimg').removeAttr('href');
             $('#temporalparameterstrideinfo').text('');
             rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'sampledurationsdepthtime']);
         }
@@ -4497,6 +4504,7 @@
                             });
                             // Show colorbar
                             $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
+                            $('#sectioncolorbarimg').attr('href', '#collapseColormap');
                             $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');;
                             $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
@@ -4506,7 +4514,8 @@
                         else {
                             $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
                             $('#temporalparameterplotinfo').css( { 'color': 'red' } );
-                            $('#sectioncolorbarimg').removeAttr('src');
+                            $('#sectioncolorbarimg').attr('src', '{{STATIC_URL}}images/dummy_colorbar.png');
+                            $('#sectioncolorbarimg').removeAttr('href');
                         }
                     }
                     else {
