@@ -4251,7 +4251,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                         $('#metadata-count').html("about " + $('body').data()['counts'].approximate_count_localized + " data values - ");
                     }
                     else {
-                        $('#metadata-count').html(data.counts.actual_count_localized + " data values - ");
+                        $('#metadata-count').html($('body').data()['counts'].actual_count_localized + " data values - ");
                     }
                 }
             }
