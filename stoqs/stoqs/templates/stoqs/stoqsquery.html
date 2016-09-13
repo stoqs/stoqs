@@ -913,7 +913,7 @@
                                 <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
                                 <div class="input-group"> 
                                     <span class="input-group-addon stoqs-color-limit-input" style="font-weight:normal;"> Colors: </span>
-                                    <select id="num-colors" class="selectpicker form-control cm-activate" style="height:20px;width:50px;margin-bottom:0px;" title="Number of colors">
+                                    <select id="num_colors" class="selectpicker form-control cm-activate" style="height:20px;width:50px;margin-bottom:0px;" title="Number of colors">
                                         <option>256</option>
                                         <option>128</option>
                                         <option>64</option>
@@ -1530,7 +1530,7 @@
                         }
                         strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('#cm-cmin').val() + 
                                                                            '&cmax=' + $('#cm-cmax').val() + '&stride=' + strideVal +
-                                                                           '&cm=' + cm;
+                                                                           '&cm=' + cm + '&num_colors=' + $('#num_colors').val();
                         sensortrackskml.refresh({url: strided_kmlurl});
                     }
                 }).
@@ -3710,6 +3710,7 @@
                     // Use UI entered colormap limits if parameter is the same
                     qstring = qstring + '&cmin=' + $('#cm-cmin').val();
                     qstring = qstring + '&cmax=' + $('#cm-cmax').val();
+                    qstring = qstring + '&num_colors=' + $('#num_colors').val();
                 }
             }
         }
