@@ -166,11 +166,11 @@ class BaseParameter(object):
 
                 # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
                 self.clt = [self.cm(i) for i in range(256)]
-            if self.request.GET.get('num_colors'):
+            if self.request.GET.get('num_colors') is not None:
                 self.num_colors = self.request.GET.get('num_colors')
-            if self.request.GET.get('cmin'):
+            if self.request.GET.get('cmin') is not None:
                 self.cmin = float(self.request.GET.get('cmin'))
-            if self.request.GET.get('cmax'):
+            if self.request.GET.get('cmax') is not None:
                 self.cmax = float(self.request.GET.get('cmax'))
 
         self.cm.N = min(self.num_colors, self.cm.N)
@@ -195,9 +195,9 @@ class MeasuredParameter(BaseParameter):
 
         self.parameterMinMax = parameterMinMax
         self.set_colormap()
-        if self.cmin:
+        if self.cmin is not None:
             self.parameterMinMax[1] = self.cmin
-        if self.cmax:
+        if self.cmax is not None:
             self.parameterMinMax[2] = self.cmax
 
         self.sampleQS = sampleQS
@@ -1030,9 +1030,9 @@ class ParameterParameter(BaseParameter):
 
         self.pMinMax = pMinMax
         self.set_colormap()
-        if self.cmin:
+        if self.cmin is not None:
             self.pMinMax['c'][1] = self.cmin
-        if self.cmax:
+        if self.cmax is not None:
             self.pMinMax['c'][2] = self.cmax
 
         self.depth = []
