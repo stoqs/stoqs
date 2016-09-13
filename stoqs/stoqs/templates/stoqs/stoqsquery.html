@@ -925,7 +925,7 @@
                                     </select>
                                 </div>
                                 <button id="apply-color-limit-button" class="btn btn-mini disabled">Redraw</button>
-                                <button id="reset-color-limit-button" class="btn btn-mini disabled" title="Use 2.5 and 97.5 percentiles">Reset</button>
+                                <button id="reset-color-limit-button" class="btn btn-mini disabled" title="Use 2.5 and 97.5 percentiles & all colors">Reset</button>
                             </td>
                         </tr></table>
                     </div>
@@ -1784,7 +1784,8 @@
                     $('#cm-cmin').val(data.parameterminmax.cmincmax[1]);
                     $('#cm-cmax').val(data.parameterminmax.cmincmax[2]);
                     if ( data.parameterminmax.cmincmax[1] != $('body').data()['parameterminmax'].plot[1] ||
-                         data.parameterminmax.cmincmax[2] != $('body').data()['parameterminmax'].plot[2] ) {
+                            data.parameterminmax.cmincmax[2] != $('body').data()['parameterminmax'].plot[2] ||
+                            $('#num_colors').val() != 256 ) {
                         $('#reset-color-limit-button').removeClass('disabled');
                         $('#reset-color-limit-button').addClass('btn-primary');
                     }
@@ -2264,6 +2265,7 @@
         if ( $('#reset-color-limit-button').hasClass('btn-primary') ) {
             $('#cm-cmin').val($('body').data()['parameterminmax'].plot[1]);
             $('#cm-cmax').val($('body').data()['parameterminmax'].plot[2]);
+            $('#num_colors').val(256);
             $('#reset-color-limit-button').addClass('disabled');
             $('#reset-color-limit-button').removeClass('btn-primary');
             rebuildFilters();
@@ -2419,7 +2421,10 @@
             var $elem = $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent();
             if ( $elem.css('display') == 'none' ) {
                 $elem.show();
-                $('#sectioncolorbarimg').attr('title', ' ').tooltip('fixTitle').tooltip('show');;
+                $('#sectioncolorbarimg').attr('title', ' ').tooltip('fixTitle').tooltip('show');
+                if ( ! $('#collapseColormap').hasClass('in') ) {
+                    $('#colormap-anchor').click();
+                }
             }
             else {
                 $elem.hide();
