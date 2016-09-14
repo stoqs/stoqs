@@ -27,6 +27,8 @@ class KML(BaseParameter):
             @withTimeStamps: True
             @withLineStrings: True
         '''
+        super(self.__class__, self).__init__()
+
         self.request = request
         self.qs_mp = qs_mp
         self.qparams = qparams
@@ -134,7 +136,7 @@ class KML(BaseParameter):
         logger.debug(descr)
         try:
             kml = self.makeKML(self.request.META['dbAlias'], dataHash, pName, folderName, descr, 
-                    self.request.GET.get('cmin', None), self.request.GET.get('cmax', None))
+                    self.cmin, self.cmax)
         except InvalidLimits as e:
             logger.exception(e)
             return response
@@ -334,6 +336,11 @@ class KML(BaseParameter):
             baseURL = settings.STATIC_URL
 
         styleKml = ''
+        # Reduce color lookup table by striding to get the number of colors
+        stride = int(len(clt) / float(self.num_colors - 1))
+        if stride < 1:
+            stride = 1
+        clt = clt[::stride]
         for c in clt:
             ge_color = "ff%02x%02x%02x" % ((round(c[2] * 255), round(c[1] * 255), round(c[0] * 255)))
             if _debug:
@@ -375,6 +382,7 @@ class KML(BaseParameter):
 
             try:
                 clt_index = int(round((float(datavalue) - clim[0]) * ((len(clt) - 1) / float(numpy.diff(clim)))))
+                clt_index = int(self.num_colors * float(clt_index) / len(clt))
             except ZeroDivisionError:
                 raise InvalidLimits('cmin and cmax are the same value')
             except ValueError:

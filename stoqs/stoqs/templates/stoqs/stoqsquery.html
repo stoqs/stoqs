@@ -67,14 +67,27 @@
             background-color: transparent; 
         }
         .stoqs-color-limit-input {
-            width: 60px;
-            height:15px;
+            width: 40px;
+            height: 10px;
+            line-height: 15px;
+            font-size: 13px;
+            margin-bottom: 0px;
         }
         .fail-text { 
             color: red;
         };
         x3d { margin-right:10px; margin-bottom:10px; }
         .webfont {font-family:'Orbitron';}
+        .input-group {
+            display: inline-table;
+            vertical-align: middle;
+            padding-bottom: 3px;
+            .input-group-addon,
+            .input-group-btn,
+            .form-control {
+                width: auto !important;
+            }
+        }
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.icon-large.min.css" rel="stylesheet">
@@ -852,15 +865,15 @@
                                     <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
                                         <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
-                                            <div class="span5" id="contour-scatter-buttons" style="display:none;">
+                                            <div class="span5" id="contour-scatter-buttons" style="visibility:hidden;">
                                                 <span id="temporalparameterplotinfo">&nbsp;</span>
                                                 <br>
                                                 <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
                                             <div class="span7"><span style="float:right;">
-                                                <a id="mp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
-                                                    <img id="sectioncolorbarimg" src="" />
+                                                <a id="mp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse">
+                                                    <img id="sectioncolorbarimg" src="{{STATIC_URL}}images/dummy_colorbar.png" />
                                                 </a>
                                             </span></div>
                                         </div>
@@ -889,16 +902,39 @@
                 <div class="accordian-group" style="display:none;">
                     <!--<div class="accordian-group">-->
                     <div class="accordian-heading">
-                        <h3><a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">
-                         Colormaps</a>
-                        </h3>
+                        <table><tr style="white-space:nowrap;">
+                            <td style="width:30%;"><h3>
+                            <a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">Colormaps</a>
+                            </h3></td><td>
+                                <input id="cm-cmin" type="text" class="stoqs-color-limit-input cm-activate" style="text-align:right;" title="Initial min value is 2.5 percentile" />
+                            </td><td>
+                                <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" />
+                            </td><td>
+                                <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
+                                <div class="input-group"> 
+                                    <span class="input-group-addon stoqs-color-limit-input" style="font-weight:normal;"> Colors: </span>
+                                    <select id="num_colors" class="selectpicker form-control cm-activate" style="height:20px;width:50px;margin-bottom:0px;" title="Number of colors">
+                                        <option>256</option>
+                                        <option>128</option>
+                                        <option>64</option>
+                                        <option>32</option>
+                                        <option>16</option>
+                                        <option>8</option>
+                                        <option>4</option>
+                                        <option>2</option>
+                                    </select>
+                                </div>
+                                <button id="apply-color-limit-button" class="btn btn-mini disabled">Redraw</button>
+                                <button id="reset-color-limit-button" class="btn btn-mini disabled" title="Use 2.5 and 97.5 percentiles & all colors">Reset</button>
+                            </td>
+                        </tr></table>
                     </div>
                     <div id="collapseColormap" class="accordion-body collapse in">
                         <div class="accordion-inner">
 
                             <ul class="nav nav-tabs">
                                 {% for category in colormaps %}
-                                    {% if category.0 == "Uniform" %}
+                                    {% if category.0 == "Ocean" %}
                                         <li class="active"><a href="#{{category.0}}" data-toggle="tab">{{category.0}}</a></li>
                                     {% else %}
                                         <li><a href="#{{category.0}}" data-toggle="tab">{{category.0}}</a></li>
@@ -907,7 +943,7 @@
                             </ul>
                             <div class="tab-content">
                                 {% for category in colormaps %}
-                                    {% if category.0 == "Uniform" %}
+                                    {% if category.0 == "Ocean" %}
                                         <div class="tab-pane active" id="{{category.0}}">
                                     {% else %}
                                         <div class="tab-pane" id="{{category.0}}">
@@ -1437,6 +1473,7 @@
         if ($('#' + group + '-cmin').val() && $('#' + group + '-cmax').val()) {
             cmincmax = 'cmin=' + $('#' + group + '-cmin').val() + '&cmax=' + $('#' + group + '-cmax').val();
             cmincmax += '&cm=' + cm;
+            cmincmax += '&num_colors=' + $('#num_colors').val();
         }
         if ($('body').data()[group + '_kmlurl'] && typeof cmincmax != 'undefined') {
             $('#' + group + '-kml-field').text($('body').data()[group + '_kmlurl'] + cmincmax);
@@ -1492,9 +1529,9 @@
                         if ( ! $.isEmptyObject($('input:radio[name=colormap_choice]:checked').val()) ) {
                             var cm = $('input:radio[name=colormap_choice]:checked').val();
                         }
-                        strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('body').data()['parameterminmax']['plot'][1] + 
-                                                                           '&cmax=' + $('body').data()['parameterminmax']['plot'][2] + '&stride=' + strideVal +
-                                                                           '&cm=' + cm;
+                        strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('#cm-cmin').val() + 
+                                                                           '&cmax=' + $('#cm-cmax').val() + '&stride=' + strideVal +
+                                                                           '&cm=' + cm + '&num_colors=' + $('#num_colors').val();
                         sensortrackskml.refresh({url: strided_kmlurl});
                     }
                 }).
@@ -1730,6 +1767,34 @@
                 $('#'+group+'-'+value+'-link').attr('href',url);
             }
         });
+    }
+
+    function setColorLimits(data) {
+        if ( ! $.isEmptyObject(data.parameterminmax) ) {
+            if ( ! $.isEmptyObject(data.parameterminmax.plot) ) {
+                // Normal, initial color limits set to 2.5 & 97.5 percentiles
+                $('#cm-cmin').val(data.parameterminmax.plot[1]);
+                $('#cm-cmax').val(data.parameterminmax.plot[2]);
+                $('#reset-color-limit-button').addClass('disabled');
+                $('#reset-color-limit-button').removeClass('btn-primary');
+            }
+            if ( ! $.isEmptyObject(data.parameterminmax.cmincmax) ) {
+                if ( $.isEmptyObject($('body').data()['parameterminmax'].cmincmax) ||
+                     data.parameterminmax.cmincmax[0] == $('body').data()['parameterminmax'].cmincmax[0] ) {
+                    // Use UI entered values if same parameter as before
+                    $('#cm-cmin').val(data.parameterminmax.cmincmax[1]);
+                    $('#cm-cmax').val(data.parameterminmax.cmincmax[2]);
+                    if ( data.parameterminmax.cmincmax[1] != $('body').data()['parameterminmax'].plot[1] ||
+                            data.parameterminmax.cmincmax[2] != $('body').data()['parameterminmax'].plot[2] ||
+                            $('#num_colors').val() != 256 ) {
+                        $('#reset-color-limit-button').removeClass('disabled');
+                        $('#reset-color-limit-button').addClass('btn-primary');
+                    }
+                }
+            }
+            $('#apply-color-limit-button').addClass('disabled');
+            $('#apply-color-limit-button').removeClass('btn-primary');
+        }
     }
 
     function toggleField(element) {
@@ -2183,11 +2248,29 @@
         rebuildFilters(['measuredparameterx3d']);
     });
 
-$('input[name="colormap_choice"]').on('change', function (event) {
+    $('input[name="colormap_choice"]').on('change', function (event) {
         var cm = $('input:radio[name=colormap_choice]:checked').val();
         $('#sp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + cm + '.png');
         $('#mp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + cm + '.png');
+        $('#cm-colorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + cm + '.png');
         rebuildFilters();
+    });
+
+    $('#apply-color-limit-button').click(function () {
+        if ( $('#apply-color-limit-button').hasClass('btn-primary') ) {
+            rebuildFilters();
+        }
+    });
+
+    $('#reset-color-limit-button').click(function () {
+        if ( $('#reset-color-limit-button').hasClass('btn-primary') ) {
+            $('#cm-cmin').val($('body').data()['parameterminmax'].plot[1]);
+            $('#cm-cmax').val($('body').data()['parameterminmax'].plot[2]);
+            $('#num_colors').val(256);
+            $('#reset-color-limit-button').addClass('disabled');
+            $('#reset-color-limit-button').removeClass('btn-primary');
+            rebuildFilters();
+        }
     });
 
     $('#showplatforms').on('click', function (event) {
@@ -2330,16 +2413,32 @@ $('input[name="colormap_choice"]').on('change', function (event) {
     });
 
     $('.colormaps-toggle').on('click', function(e) {
-        // Togggle show/hide the Colormaps accordion section
-        var $elem = $('#colormap-anchor').parent().parent().parent();
-        if ( $elem.css('display') == 'none' ) {
-            $('#colormap-anchor').parent().parent().parent().show();
-            $('#sectioncolorbarimg').attr('title', ' ').tooltip('fixTitle').tooltip('show');;
+        var attr = $('#sectioncolorbarimg').attr('href');
+        if ( $.isEmptyObject(attr) ) {
+            return false;
         }
         else {
-            $('#colormap-anchor').parent().parent().parent().hide();
+            // Togggle show/hide the Colormaps accordion section
+            var $elem = $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent();
+            if ( $elem.css('display') == 'none' ) {
+                $elem.show();
+                $('#sectioncolorbarimg').attr('title', ' ').tooltip('fixTitle').tooltip('show');
+                if ( ! $('#collapseColormap').hasClass('in') ) {
+                    $('#colormap-anchor').click();
+                }
+            }
+            else {
+                $elem.hide();
+            }
+            return true;
         }
-        return true;
+    });
+
+    $('.cm-activate').on('keypress change', function (event, previousText) {
+        $('#apply-color-limit-button').removeClass('disabled');
+        $('#apply-color-limit-button').addClass('btn-primary');
+        $('#reset-color-limit-button').removeClass('disabled');
+        $('#reset-color-limit-button').addClass('btn-primary');
     });
 
     $('#mp-cmin').on('keypress', function (event, previousText) {
@@ -2371,7 +2470,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
             if ( $('button.btn-primary.stoqs-toggle.platform').length != 1 ) {
                 //alert('WARNING: Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.');
             }
-            $('#contour-scatter-buttons').show();
+            $('#contour-scatter-buttons').css({'visibility': 'visible'});
             $('#sensor-tracks-checkbox').show();
             $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                          $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
@@ -2383,14 +2482,15 @@ $('input[name="colormap_choice"]').on('change', function (event) {
         }
         else {
             // Remove sensortracks and image from Flot plot
-            $('#contour-scatter-buttons').hide();
+            $('#contour-scatter-buttons').css({'visibility': 'hidden'});
             $('#sensor-tracks-checkbox').hide();
             $('#temporalparameterplotinfo').data('info', '');
             $('#temporalparameterplotinfo').text('');
             $('#showsensortrackstext').text('');
             $('#showsensortracks').attr('disabled', true);
             $('#showgeox3dmeasurementtext').text('');
-            $('#sectioncolorbarimg').removeAttr('src');
+            $('#sectioncolorbarimg').attr('src', '{{STATIC_URL}}images/dummy_colorbar.png');
+            $('#sectioncolorbarimg').removeAttr('href');
             $('#temporalparameterstrideinfo').text('');
             rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'sampledurationsdepthtime']);
         }
@@ -3610,6 +3710,17 @@ $('input[name="colormap_choice"]').on('change', function (event) {
             qstring = qstring + '&cm=' + $('input:radio[name=colormap_choice]:checked').val();
         }
 
+        if ( ! $.isEmptyObject($('body').data()['parameterminmax']) ) {
+            if ( ! $.isEmptyObject($('input:radio[name=parameters_plot]:checked').val()) ) {
+                if ( $('input:radio[name=parameters_plot]:checked').val() == $('body').data()['parameterminmax'].plot[0] ) {
+                    // Use UI entered colormap limits if parameter is the same
+                    qstring = qstring + '&cmin=' + $('#cm-cmin').val();
+                    qstring = qstring + '&cmax=' + $('#cm-cmax').val();
+                    qstring = qstring + '&num_colors=' + $('#num_colors').val();
+                }
+            }
+        }
+
         if ($('#showgeox3dmeasurement').is(':checked') || $('#showplatforms').is(':checked')) {
             if ($('#showgeox3dmeasurement').is(':checked')) {
                 qstring += '&showgeox3dmeasurement=1';
@@ -4400,7 +4511,8 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                             });
                             // Show colorbar
                             $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
-                            $('#sectioncolorbarimg').attr('title', 'Click to select different colormap').tooltip('fixTitle').tooltip('hide');;
+                            $('#sectioncolorbarimg').attr('href', '#collapseColormap');
+                            $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');;
                             $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
@@ -4409,7 +4521,8 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                         else {
                             $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
                             $('#temporalparameterplotinfo').css( { 'color': 'red' } );
-                            $('#sectioncolorbarimg').removeAttr('src');
+                            $('#sectioncolorbarimg').attr('src', '{{STATIC_URL}}images/dummy_colorbar.png');
+                            $('#sectioncolorbarimg').removeAttr('href');
                         }
                     }
                     else {
@@ -4659,6 +4772,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
             success: function (data) {
                 setDataAccess('mp', data);
                 setDataAccess('sp', data);
+                setColorLimits(data);
                 saveBodyData(data);
                 if (init) {
                     save_zoom_from_permalink();
