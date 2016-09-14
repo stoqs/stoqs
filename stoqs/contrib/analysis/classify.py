@@ -23,7 +23,8 @@ try:
 except AttributeError:
     pass
 
-
+import matplotlib as mpl
+mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import matplotlib.pyplot as plt
 import numpy as np
 import warnings
