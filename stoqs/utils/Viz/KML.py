@@ -338,6 +338,8 @@ class KML(BaseParameter):
         styleKml = ''
         # Reduce color lookup table by striding to get the number of colors
         stride = int(len(clt) / float(self.num_colors - 1))
+        if stride < 1:
+            stride = 1
         clt = clt[::stride]
         for c in clt:
             ge_color = "ff%02x%02x%02x" % ((round(c[2] * 255), round(c[1] * 255), round(c[0] * 255)))
