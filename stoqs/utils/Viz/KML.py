@@ -336,6 +336,9 @@ class KML(BaseParameter):
             baseURL = settings.STATIC_URL
 
         styleKml = ''
+        # Reduce color lookup table by striding to get the number of colors
+        stride = int(len(clt) / float(self.num_colors - 1))
+        clt = clt[::stride]
         for c in clt:
             ge_color = "ff%02x%02x%02x" % ((round(c[2] * 255), round(c[1] * 255), round(c[0] * 255)))
             if _debug:
@@ -377,6 +380,7 @@ class KML(BaseParameter):
 
             try:
                 clt_index = int(round((float(datavalue) - clim[0]) * ((len(clt) - 1) / float(numpy.diff(clim)))))
+                clt_index = int(self.num_colors * float(clt_index) / len(clt))
             except ZeroDivisionError:
                 raise InvalidLimits('cmin and cmax are the same value')
             except ValueError:
