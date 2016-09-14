@@ -1298,8 +1298,9 @@
     var request=''
     var map = null; 
     var parametervalues={};     
-    var permalink_bypass=false;
     var client_side_permalink = true;
+    var permalink_bypass=false;
+    var rebuild_from_permalink = false;
     var polyLayer = new OpenLayers.Layer.Vector( " Selection polygon", {visibility: false} );
     var timedepthplot;
     var timeparameterplot;
@@ -2128,6 +2129,19 @@
             }
         }
 
+        // Colormap stuff
+        if ( rebuild_from_permalink ) {
+            if ( ! $.isEmptyObject($('#cm-cmin').val()) ) {
+                params['cmin'] = $('#cm-cmin').val();
+            }
+            if ( ! $.isEmptyObject($('#cm-cmax').val()) ) {
+                params['cmax'] = $('#cm-cmax').val();
+            }
+            if ( ! $.isEmptyObject($('#num_colors').val()) ) {
+                params['num_colors'] = $('#num_colors').val();
+            }
+        }
+
         // Since the old link (if there was one) for the permalink is no longer valid, hide it
         $('#permalink-box').hide();
         
@@ -2579,7 +2593,7 @@
 
     $("#parameter-values-anchor").click(function() {
         //if ( $("#parameter-values-anchor").hasClass('in') ) {
-            // Force load of some histograms when this accordian is opened
+            // Force load of some histograms when this accordion is opened
             $('#showstandardnameparametervalues').attr({checked: true});
             $('#histogram-instruction').html('<em>Click and drag on plots to select parameter ranges</em>');
             rebuildFilters(['activityparameterhistograms']);
@@ -4885,10 +4899,13 @@
     }
 
     // Collect all the parameters on the page so we can generate our permalink.
-    function collect_parameters() {
-        params={'platform_clicks': [],
+    function collect_parameters_for_permalink() {
+        var pl_params={'platform_clicks': [],
                 'clicks': [],
-                'accordian': [],
+                'texts': [],
+                'selects': [],
+                'accordion_opened': [],
+                'accordion_shown': [],
                 'tabs': []}
         // Need to do the right column stuff before the left column stuff, since
         // checkboxes might appear depending on selections on the right.
@@ -4898,24 +4915,32 @@
             // Grab all the checked radio buttons on the page and save their information.
             $('input:checked[type="radio"]', divcol).each(function(key, item) {
                 var data='input[type="radio"][name="'+ item.name +'"][value="'+ item.value +'"]';
-                params['clicks'].push(data);
+                pl_params['clicks'].push(data);
             });
             // Grab all the checked checkboxes from Temporal->Parameter 
             $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
                 var data='input[type="checkbox"][name="'+ item.name +'"][value="'+ item.value +'"]';
-                params['clicks'].push(data);
+                pl_params['clicks'].push(data);
             });
             // Grab all the buttons that are selected, using their values.
             $('button.btn-primary.stoqs-toggle', divcol).each(function(key, item) {
                 var id=$(item).closest('[id]')[0].id
                 var data='#' +id +' button.stoqs-toggle:contains("'+$(item).text()+'")'
                 if ( $(item).hasClass('platform') ) {
-                    params['platform_clicks'].push(data);
+                    pl_params['platform_clicks'].push(data);
                 }
                 else {
-                    params['clicks'].push(data);
+                    pl_params['clicks'].push(data);
                 }
             });
+            // Grab the colormap settings; and any future text & select values
+            $('input[type="text"]', divcol).each(function(key, item) {
+                pl_params['texts'].push(['#' + item.id, item.value]);
+            });
+            $('select', divcol).each(function(key, item) {
+                pl_params['selects'].push(['#' + item.id, item.value]);
+            });
+
             // Grab all the checkboxes, note that openlayers seems to have ID's with
             // spaces in them, so we cannot use the '#' to locate those, need to use the
             // attribute selector instead.
@@ -4932,54 +4957,60 @@
                     alert('Unable to get unique path for input field, skipping from permalink!');
                 }
                 if (data != '') {
-                    params['clicks'].push(data);
+                    pl_params['clicks'].push(data);
                 }
             });
 
-            // Grab the state of all the accordians on the page and store them
+            // Add name of opened accordions to 'accordion_opened' list
             $('.accordion-body.in', divcol).each(function (key, item) {
-                params['accordian'].push(item.id);
+                pl_params['accordion_opened'].push(item.id);
             });
+
+            // Add optionally 'shown' accordions to 'accordion_shown' list - special for Colormaps
+            var $elem = $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent();
+            if ( $elem.css('display') != 'none' ) {
+                pl_params['accordion_shown'].push('colormap-anchor');
+            }
         });
         
         $('.nav-tabs').each(function (pos, item) {
             $elements=$('li', item);
             $.each($('li', item), function (pos2, item2) {
                 if ($(item2).hasClass('active')) {
-                    params['tabs'].push(['#' + item.id, pos2]);
+                    pl_params['tabs'].push(['#' + item.id, pos2]);
                 }
             });
         });
         // Grab the data so we can reset the time/depth plot and temporal values.
-        params['start-ems'] = $('body').data()['start-ems'];
-        params['end-ems'] = $('body').data()['end-ems'];
-        params['start-depth'] = $('body').data()['start-depth'];
-        params['end-depth'] = $('body').data()['end-depth'];
+        pl_params['start-ems'] = $('body').data()['start-ems'];
+        pl_params['end-ems'] = $('body').data()['end-ems'];
+        pl_params['start-depth'] = $('body').data()['start-depth'];
+        pl_params['end-depth'] = $('body').data()['end-depth'];
 
         // Grab the center of the map so we can restore the center and lon/lat data.
-        params['map-center']={ 'lonlat': map.getCenter(), 
+        pl_params['map-center']={ 'lonlat': map.getCenter(), 
                                 'zoom': map.getZoom() };
-        params['map-layers']=[];
+        pl_params['map-layers']=[];
         $.each(map.layers, function (pos, layer) { 
             if (layer.visibility) { 
-                params['map-layers'].push(layer.name); 
+                pl_params['map-layers'].push(layer.name); 
             }
         });
        
         if ( $('#parametervalues-data').val() ) { 
             // Grab any parametervalues selections that have been put into the hidden element
-            params['histograms'] = $('#parametervalues-data').val();
+            pl_params['histograms'] = $('#parametervalues-data').val();
             $.each(JSON.parse($('#parametervalues-data').val()), function(parameter, data) {
                 if (typeof data.xmin != 'undefined' && typeof data.xmax != 'undefined') {
-                    params[parameter + '_MIN'] = data.xmin.toPrecision(4);
-                    params[parameter + '_MAX'] = data.xmax.toPrecision(4);
+                    pl_params[parameter + '_MIN'] = data.xmin.toPrecision(4);
+                    pl_params[parameter + '_MAX'] = data.xmax.toPrecision(4);
                 }
             });
         }
 
-        return JSON.stringify(params);
+        return JSON.stringify(pl_params);
         
-    }
+    } // function collect_parameters_for_permalink()
 
     function save_zoom_from_permalink() {
         // Set Temporal/Depth zoom for handler that calls ZoomIn() on Temporal tab click event
@@ -5000,7 +5031,7 @@
         }
     }
 
-    function reset_parameters(parameters) {
+    function reset_parameters_from_permalink(parameters) {
         permalink_bypass = true;
 
         // Uncheck the zoom update, since that'll mess up our resetting the map
@@ -5013,6 +5044,19 @@
         $.each(parameters['platform_clicks'], function (pos, item) {
             $(item).click();
         });
+
+        // Colormap stuff
+        if ( $.inArray('colormap-anchor', parameters['accordion_shown']) > -1 ) {
+            $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent().show();
+        }
+        $.each(parameters['texts'], function (pos, item) {
+            $(item[0]).val(item[1]);
+        });
+        $.each(parameters['selects'], function (pos, item) {
+            $(item[0]).val(item[1]);
+        });
+
+        // All clicks
         $.each(parameters['clicks'], function (pos, item) {
             $(item).click();
         });
@@ -5035,7 +5079,7 @@
                         }
                     });
                     break;
-                case 'accordian':
+                case 'accordion_opened':
                     $('.accordion-body').each(function (pos, item) {
                         if ($.inArray(item.id, value) > -1) {
                             $(item).addClass('in').height('auto');
@@ -5060,9 +5104,11 @@
                     }
             }
         });
-        
-        permalink_bypass=false;
+
+        permalink_bypass=false;        
+        rebuild_from_permalink = true; 
         rebuildFilters();
+        rebuild_from_permalink = false; 
 
         // Redraw selections on the histograms - do this after calling rebuildFilters()
         if ( ! $.isEmptyObject(parametervalues) ) {
@@ -5083,7 +5129,7 @@
             if (permalink_id.length > 32) {
                 try {
                     var parameters=JSON.parse(LZString.decompressFromBase64(permalink_id));
-                    reset_parameters(parameters);
+                    reset_parameters_from_permalink(parameters);
                 } catch (err) {
                     alert('Permalink loading failed: ' + err + ' (Perhaps the permalink_id value is invalid?)');
                 }
@@ -5093,7 +5139,7 @@
                 console.log(url);
                 $.get(url).
                 done(function (parameters, response, jqXHR) {
-                    reset_parameters(parameters);
+                    reset_parameters_from_permalink(parameters);
                 }).
                 fail(function (data, response, jqXHR) {
                     alert('Failed to load the specified permalink: ' + jqXHR);
@@ -5104,8 +5150,8 @@
 
 
     $(function () { 
-        // Initialize the accordian fields.
-        $(".collapse").collapse(); // Collapse all the accordian fields, click the Spatial and Temporal ones below
+        // Initialize the accordion fields.
+        $(".collapse").collapse(); // Collapse all the accordion fields, click the Spatial and Temporal ones below
         
         // Add this behavior to all text fields, so when someone clicks on a field it highlights 
         // all the data so it's easy to copy to the clipboard.
@@ -5408,13 +5454,13 @@
                     (client_side_permalink)) {
                     var $url=$.url();
                     var params=$url.param();
-                    params['permalink_id']=LZString.compressToBase64(collect_parameters());
+                    params['permalink_id']=LZString.compressToBase64(collect_parameters_for_permalink());
                     var url=$url.attr('source').split('?')[0]+'?'+$.param(params)
                     $el.val(url);
                     $('#permalink-box').show();
 
                 } else {
-                    $.post(url, {'parameters': collect_parameters() })
+                    $.post(url, {'parameters': collect_parameters_for_permalink() })
                     .done(function (data, response, jqXHR) {
                         $el.val(data);
                         $('#permalink-box').show();
