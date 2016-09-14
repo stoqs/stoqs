@@ -1473,6 +1473,7 @@
         if ($('#' + group + '-cmin').val() && $('#' + group + '-cmax').val()) {
             cmincmax = 'cmin=' + $('#' + group + '-cmin').val() + '&cmax=' + $('#' + group + '-cmax').val();
             cmincmax += '&cm=' + cm;
+            cmincmax += '&num_colors=' + $('#num_colors').val();
         }
         if ($('body').data()[group + '_kmlurl'] && typeof cmincmax != 'undefined') {
             $('#' + group + '-kml-field').text($('body').data()[group + '_kmlurl'] + cmincmax);
