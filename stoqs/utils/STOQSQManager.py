@@ -648,7 +648,7 @@ class STOQSQManager(object):
                 fts = {ft.lower() for ft in fts}
                 try:
                     featureType = fts.pop()
-                except TypeError:
+                except KeyError:
                     logger.warn('No featureType returned for platform name = %s.  Setting it to "trajectory".', name)
                     featureType = 'trajectory'
                 if len(fts) > 1:
