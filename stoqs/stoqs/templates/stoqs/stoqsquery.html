@@ -4914,14 +4914,29 @@
         $.each(columns, function(pos, divcol) {
             // Grab all the checked radio buttons on the page and save their information.
             $('input:checked[type="radio"]', divcol).each(function(key, item) {
-                var data='input[type="radio"][name="'+ item.name +'"][value="'+ item.value +'"]';
-                pl_params['clicks'].push(data);
+                if ( ! $.isEmptyObject(item.name) ) {
+                    pl_params['clicks'].push('input[type="radio"][name="'+ item.name +'"][value="'+ item.value +'"]');
+                }
             });
-            // Grab all the checked checkboxes from Temporal->Parameter 
+            // Grab all the checked checkboxes
             $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
-                var data='input[type="checkbox"][name="'+ item.name +'"][value="'+ item.value +'"]';
-                pl_params['clicks'].push(data);
+                if ( ! $.isEmptyObject(item.id) && item.id != '' ) {
+                    if ( $(item).parent().css('display') != 'none' ) {
+                        pl_params['clicks'].push('input[type="checkbox"][id="' + item.id + '"]'); 
+                    }
+                } 
+                else if ( ! $.isEmptyObject(item.name) && item.name != '' ) {
+                    if (item.name == 'activity_select_cb') {
+                        if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
+                            pl_params['clicks'].push('input[type="checkbox"][name="'+ item.name +'"][value="'+ item.value +'"]');
+                        }
+                    }
+                    else {
+                        pl_params['clicks'].push('input[type="checkbox"][name="'+ item.name +'"][value="'+ item.value +'"]');
+                    }
+                }
             });
+
             // Grab all the buttons that are selected, using their values.
             $('button.btn-primary.stoqs-toggle', divcol).each(function(key, item) {
                 var id=$(item).closest('[id]')[0].id
@@ -4933,32 +4948,13 @@
                     pl_params['clicks'].push(data);
                 }
             });
+
             // Grab the colormap settings; and any future text & select values
             $('input[type="text"]', divcol).each(function(key, item) {
                 pl_params['texts'].push(['#' + item.id, item.value]);
             });
             $('select', divcol).each(function(key, item) {
                 pl_params['selects'].push(['#' + item.id, item.value]);
-            });
-
-            // Grab all the checkboxes, note that openlayers seems to have ID's with
-            // spaces in them, so we cannot use the '#' to locate those, need to use the
-            // attribute selector instead.
-            
-            $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
-                var data=''
-                if (typeof item.id !== 'undefined' &&
-                    $(item).parent().css('display') != 'none') {
-                    data='input[type="checkbox"][id="' + item.id + '"]'; 
-                } else if ((typeof item.name !== 'undefined') && 
-                           (typeof item.value !== 'undefined')) {
-                    data='input[type="checkbox"][name="'+item.name+'"][value="'+item.value+'"]';
-                } else {
-                    alert('Unable to get unique path for input field, skipping from permalink!');
-                }
-                if (data != '') {
-                    pl_params['clicks'].push(data);
-                }
             });
 
             // Add name of opened accordions to 'accordion_opened' list
