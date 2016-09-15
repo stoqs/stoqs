@@ -89,6 +89,7 @@ query_parms = {
                    'ppsl': 'ppsl',                          # Parameter-Parameter sample locations flag
                    'mplabels': 'mplabels',                  # MeasuredParameter labels from Attributes selections
                    'activitynames': 'activitynames',        # Activities (NetCDF files) selected for plotting
+                   'full_screen': 'full_screen',            # For making higher resolution graphics
 }
 
 def _buildMapFile(request, qm, options):

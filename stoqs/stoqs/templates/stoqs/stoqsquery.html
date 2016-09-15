@@ -2704,6 +2704,7 @@
                                              'resize': '',
                                              'overflow': '' } );
             $(this).html('<i class="icon-resize-full" title="Full Screen"></i>');
+            PIXELS_WIDE = 800;
         } else {
             if ($('.stoqs-zoom-width').hasClass('span6')) {
                 $('.stoqs-zoom-width').removeClass('span6');
@@ -2719,6 +2720,7 @@
             $('#time-parameter-plot').css( { 'resize': 'vertical',
                                              'overflow': 'auto' } );
             $(this).html('<i class="icon-resize-small" title="Not Full Screen"></i>');
+            PIXELS_WIDE = 1600;
         }
         rcZoomed = ! rcZoomed;
     });
@@ -3757,6 +3759,10 @@
         }
         if ($('#pp-sample-locations').is(':checked')) {
             qstring = qstring + '&ppsl=1';
+        }
+
+        if ($('.stoqs-zoom-width').hasClass('span12')) {
+            qstring = qstring + '&full_screen=1';
         }
 
         if ( ! $('#showallparametervalues').is(':checked')) {

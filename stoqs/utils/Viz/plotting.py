@@ -585,11 +585,17 @@ class MeasuredParameter(BaseParameter):
                 coloredDotSize = 20
 
             parm_info = self.parameterMinMax
+            full_screen = False
+            if self.request.GET.get('full_screen'):
+                full_screen = True
             try:
                 # Make the plot
                 # contour the gridded data, plotting dots at the nonuniform data points.
                 # See http://scipy.org/Cookbook/Matplotlib/Django
-                fig = plt.figure(figsize=(6,3))
+                if full_screen:
+                    fig = plt.figure(figsize=(12,6))
+                else:
+                    fig = plt.figure(figsize=(6,3))
                 ax = fig.add_axes((0,0,1,1))
                 if self.scale_factor:
                     ax.set_xlim(tmin / self.scale_factor, tmax / self.scale_factor)
@@ -633,7 +639,10 @@ class MeasuredParameter(BaseParameter):
                         ax.plot(xs, ys, c='k', lw=2)
                         ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10)
 
-                fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
+                if full_screen:
+                    fig.savefig(sectionPngFileFullPath, dpi=240, transparent=True)
+                else:
+                    fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
             except Exception as e:
                 self.logger.exception('Could not plot the data')
