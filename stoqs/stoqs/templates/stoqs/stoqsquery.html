@@ -3114,6 +3114,7 @@
                     $('input:checkbox[name=mp_all_parameters_plot_cb]').prop('checked',true).triggerHandler('click');
                 }
             }
+            $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent().hide();
             rebuildFilters(['parametertime', 'platformanimation', 'measuredparameterx3d']);
         }
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
