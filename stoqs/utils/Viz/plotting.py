@@ -1065,10 +1065,12 @@ class ParameterParameter(BaseParameter):
 
         self.pMinMax = pMinMax
         self.set_colormap()
-        if self.cmin is not None:
-            self.pMinMax['c'][1] = self.cmin
-        if self.cmax is not None:
-            self.pMinMax['c'][2] = self.cmax
+        if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
+            # Set from UI values only if pc is the same as the Plot Data Parameter
+            if self.cmin is not None:
+                self.pMinMax['c'][1] = self.cmin
+            if self.cmax is not None:
+                self.pMinMax['c'][2] = self.cmax
 
         self.depth = []
         self.x_id = []
