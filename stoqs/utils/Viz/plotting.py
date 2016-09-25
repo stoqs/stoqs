@@ -1071,12 +1071,16 @@ class ParameterParameter(BaseParameter):
 
         self.pMinMax = pMinMax
         self.set_colormap()
-        if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
-            # Set from UI values only if pc is the same as the Plot Data Parameter
-            if self.cmin is not None:
-                self.pMinMax['c'][1] = self.cmin
-            if self.cmax is not None:
-                self.pMinMax['c'][2] = self.cmax
+        try:
+            if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
+                # Set from UI values only if pc is the same as the Plot Data Parameter
+                if self.cmin is not None:
+                    self.pMinMax['c'][1] = self.cmin
+                if self.cmax is not None:
+                    self.pMinMax['c'][2] = self.cmax
+        except IndexError:
+            # Likely no color parameter selected
+            pass
 
         self.depth = []
         self.x_id = []
@@ -1302,10 +1306,13 @@ class ParameterParameter(BaseParameter):
             if self.c:
                 self.logger.debug('self.pMinMax = %s', self.pMinMax)
                 self.logger.debug('Making colored scatter plot of %d points', len(self.x))
-                if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
-                    self.set_ticks_bounds_norm(self.pMinMax['c'])
-                else:
-                    self.set_ticks_bounds_norm(self.pMinMax['c'], use_ui_cmincmax=False, use_ui_num_colors=False)
+                self.set_ticks_bounds_norm(self.pMinMax['c'], use_ui_cmincmax=False, use_ui_num_colors=False)
+                try:
+                    if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
+                        self.set_ticks_bounds_norm(self.pMinMax['c'])
+                except IndexError:
+                    # Likely no color parameter selected
+                    pass
 
                 ax.scatter(self.x, self.y, c=self.c, s=10, cmap=self.cm, lw=0, vmin=self.pMinMax['c'][1], 
                            vmax=self.pMinMax['c'][2], clip_on=False, norm=self.norm)
