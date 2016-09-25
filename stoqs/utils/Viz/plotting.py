@@ -109,22 +109,28 @@ class BaseParameter(object):
             if self.request.GET.get('cmax') is not None:
                 self.cmax = float(self.request.GET.get('cmax'))
 
-    def set_ticks_bounds_norm(self, parm_info):
+    def set_ticks_bounds_norm(self, parm_info, use_ui_cmincmax=True, use_ui_num_colors=True):
         '''Common parameters for colormap, scatter and countour plotting
         '''
         c_min, c_max = parm_info[1:]
-        if self.cmin is not None:
-            c_min = self.cmin
-        if self.cmax is not None:
-            c_max = self.cmax
+        if use_ui_cmincmax:
+            if self.cmin is not None:
+                c_min = self.cmin
+            if self.cmax is not None:
+                c_max = self.cmax
+
+        if use_ui_num_colors:
+            num_colors = self.num_colors
+        else:
+            num_colors = 256
 
         self.ticks = round_to_n(list(np.linspace(c_min, c_max, num=6)), 4)
-        self.bounds = np.linspace(c_min, c_max, self.num_colors + 1)
+        self.bounds = np.linspace(c_min, c_max, num_colors + 1)
         self.norm = mpl.colors.BoundaryNorm(self.bounds, self.cm.N)
 
-        if self.num_colors == 8:
+        if num_colors == 8:
             self.ticks = self.bounds[::2]
-        if self.num_colors < 8:
+        if num_colors < 8:
             self.ticks = self.bounds
 
     def makeColorBar(self, colorbarPngFileFullPath, parm_info, orientation='horizontal'):
@@ -1065,10 +1071,16 @@ class ParameterParameter(BaseParameter):
 
         self.pMinMax = pMinMax
         self.set_colormap()
-        if self.cmin is not None:
-            self.pMinMax['c'][1] = self.cmin
-        if self.cmax is not None:
-            self.pMinMax['c'][2] = self.cmax
+        try:
+            if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
+                # Set from UI values only if pc is the same as the Plot Data Parameter
+                if self.cmin is not None:
+                    self.pMinMax['c'][1] = self.cmin
+                if self.cmax is not None:
+                    self.pMinMax['c'][2] = self.cmax
+        except IndexError:
+            # Likely no color parameter selected
+            pass
 
         self.depth = []
         self.x_id = []
@@ -1294,13 +1306,22 @@ class ParameterParameter(BaseParameter):
             if self.c:
                 self.logger.debug('self.pMinMax = %s', self.pMinMax)
                 self.logger.debug('Making colored scatter plot of %d points', len(self.x))
-                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=self.cm, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
+                self.set_ticks_bounds_norm(self.pMinMax['c'], use_ui_cmincmax=False, use_ui_num_colors=False)
+                try:
+                    if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
+                        self.set_ticks_bounds_norm(self.pMinMax['c'])
+                except IndexError:
+                    # Likely no color parameter selected
+                    pass
+
+                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=self.cm, lw=0, vmin=self.pMinMax['c'][1], 
+                           vmax=self.pMinMax['c'][2], clip_on=False, norm=self.norm)
                 # Add colorbar to the image
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
-                norm = mpl.colors.Normalize(vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip=False)
                 cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=self.cm,
-                                                norm=norm,
-                                                ticks=list(np.linspace(self.pMinMax['c'][1], self.pMinMax['c'][2], num=4)),
+                                                norm=self.norm,
+                                                ticks=self.ticks,
+                                                boundaries=self.bounds,
                                                 orientation='horizontal')
                 try:
                     cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
