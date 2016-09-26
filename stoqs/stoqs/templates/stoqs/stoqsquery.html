@@ -911,6 +911,8 @@
                                 <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" />
                             </td><td>
                                 <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
+                                <label class="stoqs-color-limit-input" for="cmincmax_lock" style="display:inline;"> Lock: </label>
+                                <input type="checkbox" id="cmincmax_lock"/> 
                                 <div class="input-group"> 
                                     <span class="input-group-addon stoqs-color-limit-input" style="font-weight:normal;"> Colors: </span>
                                     <select id="num_colors" class="selectpicker form-control cm-activate" style="height:20px;width:50px;margin-bottom:0px;" title="Number of colors">
@@ -2455,6 +2457,17 @@
         $('#reset-color-limit-button').addClass('btn-primary');
     });
 
+    $('#cmincmax_lock').on('change', function (event) {
+        if ( $(this).is(':checked') ) {
+            $('#cm-cmin').attr("disabled", true);
+            $('#cm-cmax').attr("disabled", true);
+        }
+        else {
+            $('#cm-cmin').removeAttr('disabled');
+            $('#cm-cmax').removeAttr('disabled');
+        }
+    });
+
     $('#mp-cmin').on('keypress', function (event, previousText) {
         setTimeout(updateKMLcmincmax('mp'));
     });
@@ -3726,11 +3739,15 @@
         if ($('input:radio[name=colormap_choice]:checked').val()) {
             qstring = qstring + '&cm=' + $('input:radio[name=colormap_choice]:checked').val();
         }
+        if ($('#cmincmax_lock').is(':checked')) {
+            qstring = qstring + '&cmincmax_lock=1';
+        }
 
         if ( ! $.isEmptyObject($('body').data()['parameterminmax']) ) {
             if ( ! $.isEmptyObject($('input:radio[name=parameters_plot]:checked').val()) ) {
-                if ( $('input:radio[name=parameters_plot]:checked').val() == $('body').data()['parameterminmax'].plot[0] ) {
-                    // Use UI entered colormap limits if parameter is the same
+                if ( $('input:radio[name=parameters_plot]:checked').val() == $('body').data()['parameterminmax'].plot[0] ||
+                     $('#cmincmax_lock').is(':checked') ) {
+                    // Use UI entered colormap limits if parameter is the same, or if Lock: is checked
                     qstring = qstring + '&cmin=' + $('#cm-cmin').val();
                     qstring = qstring + '&cmax=' + $('#cm-cmax').val();
                     qstring = qstring + '&num_colors=' + $('#num_colors').val();

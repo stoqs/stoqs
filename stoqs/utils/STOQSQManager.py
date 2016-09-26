@@ -560,6 +560,8 @@ class STOQSQManager(object):
             cmincmax = [plot_results[0],
                         float(self.request.GET.get('cmin')), 
                         float(self.request.GET.get('cmax'))]
+            if self.request.GET.get('cmincmax_lock') == '1':
+                plot_results = cmincmax
 
         return {'plot': plot_results, 'dataaccess': da_results, 'cmincmax': cmincmax}
 
