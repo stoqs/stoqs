@@ -1178,13 +1178,13 @@ class STOQS_Loader(object):
             )
             if 'spice' in self.include_names:
                 p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                        long_name='Spiciness',
                         name='stoqs_spice',
+                        defaults={'long_name': 'Spiciness'}
                 )
             else:
                 p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                        long_name='Spiciness',
                         name='spice',
+                        defaults={'long_name': 'Spiciness'}
                 )
             # Update with descriptions, being kind to legacy databases
             p_sigmat.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
