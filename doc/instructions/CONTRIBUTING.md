@@ -67,6 +67,7 @@ You should periodically pull changes to your workspace from the upstream remote.
 commands will synchronize your fork with upstream, including any local changes you have
 committed:
 
+    git checkout master
     git pull upstream master
     git push origin
 
