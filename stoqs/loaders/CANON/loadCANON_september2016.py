@@ -88,6 +88,7 @@ cl.dorado_files = [
                    'Dorado389_2016_161_00_161_00_decim.nc', 
                    'Dorado389_2016_179_01_179_01_decim.nc',
                    'Dorado389_2016_181_00_181_00_decim.nc',
+                   'Dorado389_2016_270_00_270_00_decim.nc',
                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
@@ -472,7 +473,7 @@ else:
     cl.loadM1() # Mooring turn Aug 30 2016
     cl.load_oa1()
     cl.load_oa2()
-    #cl.loadDorado()
+    cl.loadDorado()
     #cl.loadDaphne()
     #cl.loadTethys()
     #cl.loadMakai()
