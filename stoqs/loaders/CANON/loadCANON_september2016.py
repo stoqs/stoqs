@@ -88,6 +88,7 @@ cl.dorado_files = [
                    'Dorado389_2016_161_00_161_00_decim.nc', 
                    'Dorado389_2016_179_01_179_01_decim.nc',
                    'Dorado389_2016_181_00_181_00_decim.nc',
+                   'Dorado389_2016_270_00_270_00_decim.nc',
                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
@@ -192,7 +193,8 @@ cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 # cl.l_662_files = [ 'OS_Glider_L_662_20151124_TS.nc' ]  ## this file was current Jan 1 2016 to about March 3 2016.
 # cl.l_662_files = [ 'OS_Glider_L_662_20160310_TS.nc' ]  ## changed to this file about March 3, 2016
 #cl.l_662_files = [ 'OS_Glider_L_662_20160628_TS.nc' ]  ## changed to this file about June 28, 2016. End Aug 10 2016.
-cl.l_662_files = [ 'OS_Glider_L_662_20160817_TS.nc' ]  ## deployed after servicing Aug 17 2016
+#cl.l_662_files = [ 'OS_Glider_L_662_20160817_TS.nc' ]  ## deployed after servicing Aug 17 2016
+cl.l_662_files = [ 'OS_Glider_L_662_20160913_TS.nc' ] ## deployed new glider Sept 13 2016
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
@@ -461,7 +463,7 @@ else:
 
     cl.load_roms_spray()
     cl.load_roms_sg621()
-    cl.loadL_662() 
+    cl.loadL_662()     ## L_662 turned Sept 13 2016. New glider hardware. 
     ##cl.load_NPS29()  ##not in this campaign
     cl.load_SG621(stride=2) ## KISS glider
     cl.load_NPS34()
@@ -471,7 +473,7 @@ else:
     cl.loadM1() # Mooring turn Aug 30 2016
     cl.load_oa1()
     cl.load_oa2()
-    #cl.loadDorado()
+    cl.loadDorado()
     #cl.loadDaphne()
     #cl.loadTethys()
     #cl.loadMakai()
