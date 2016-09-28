@@ -192,8 +192,10 @@ cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 # cl.l_662_files = [ 'OS_Glider_L_662_20151124_TS.nc' ]  ## this file was current Jan 1 2016 to about March 3 2016.
 # cl.l_662_files = [ 'OS_Glider_L_662_20160310_TS.nc' ]  ## changed to this file about March 3, 2016
 #cl.l_662_files = [ 'OS_Glider_L_662_20160628_TS.nc' ]  ## changed to this file about June 28, 2016. End Aug 10 2016.
-cl.l_662_files = [ 'OS_Glider_L_662_20160817_TS.nc' ]  ## deployed after servicing Aug 17 2016
-cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
+#cl.l_662_files = [ 'OS_Glider_L_662_20160817_TS.nc' ]  ## deployed after servicing Aug 17 2016
+cl.l_662_files = [ 'OS_Glider_L_662_20160913_TS.nc' ] ## deployed new glider Sept 13 2016
+#cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
+cl.l_662_parms = ['TEMP', 'PSAL']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
