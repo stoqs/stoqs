@@ -1145,8 +1145,7 @@ class STOQS_Loader(object):
         For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
         compute sigma-t and add it as a parameter
         '''                 
-        @transaction.atomic(using=self.dbAlias)
-        def _innerAddSigmaT(self, parameterCounts, activity):
+        def _innerAddSigmaTandSpice(self, parameterCounts, activity):
             # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
             ms = m.Measurement.objects.using(self.dbAlias)
             if activity:
@@ -1177,15 +1176,15 @@ class STOQS_Loader(object):
                     units='kg m-3',
                     name='sigmat',
             )
-            if 'spice' in self.ds.keys():
+            if 'spice' in self.include_names:
                 p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                        long_name='Spiciness',
                         name='stoqs_spice',
+                        defaults={'long_name': 'Spiciness'}
                 )
             else:
                 p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                        long_name='Spiciness',
                         name='spice',
+                        defaults={'long_name': 'Spiciness'}
                 )
             # Update with descriptions, being kind to legacy databases
             p_sigmat.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
@@ -1202,14 +1201,15 @@ class STOQS_Loader(object):
             self.assignParameterGroup({p_sigmat: ms.count()}, groupName=MEASUREDINSITU)
             self.assignParameterGroup({p_spice: ms.count()}, groupName=MEASUREDINSITU)
 
-            # Loop through all Measurements, compute Sigma-T, and add to the Measurement
-            for me in ms:
+            # Loop through all Measurements, compute Sigma-T & Spice, and add to the Measurement
+            for me in ms.distinct():
                 try:
-                    t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                            parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
-                    s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                            parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
-                except DatabaseError as e:
+                    with transaction.atomic():
+                        t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                                parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
+                        s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                                parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
+                except IntegrityError as e:
                     self.logger.warn(e)
 
                 sigmat = sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0
@@ -1218,16 +1218,15 @@ class STOQS_Loader(object):
                 mp_sigmat = m.MeasuredParameter(datavalue=sigmat, measurement=me, parameter=p_sigmat)
                 mp_spice = m.MeasuredParameter(datavalue=spice, measurement=me, parameter=p_spice)
                 try:
-                    mp_sigmat.save(using=self.dbAlias)
-                    mp_spice.save(using=self.dbAlias)
+                    with transaction.atomic():
+                        mp_sigmat.save(using=self.dbAlias)
+                        mp_spice.save(using=self.dbAlias)
                 except IntegrityError as e:
-                    self.logger.warn(e)
-                except DatabaseError as e:
                     self.logger.warn(e)
 
             return parameterCounts
 
-        return _innerAddSigmaT(self, parameterCounts, activity)
+        return _innerAddSigmaTandSpice(self, parameterCounts, activity)
 
     def addAltitude(self, parameterCounts, activity=None):
         ''' 

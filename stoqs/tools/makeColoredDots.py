@@ -22,6 +22,7 @@ try:
 except AttributeError:
     pass
 
+import cmocean
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
@@ -56,7 +57,7 @@ def savePPM(r, g, b):
         os.system(cmd)
         print('X', end='')
 
-def processColorMap(colormapFileName='jetplus.txt'):
+def processColorMap(category, cmap):
     '''Read in colormap values and write ppm files
     '''
 
@@ -65,7 +66,10 @@ def processColorMap(colormapFileName='jetplus.txt'):
     elif cmap == 'jetplus_r':
         cm  = colors.ListedColormap(np.array(jetplus_clt)[::-1])
     else:
-        cm = plt.get_cmap(cmap)
+        if category == 'Ocean':
+            cm = getattr(cmocean.cm, cmap)
+        else:
+            cm = plt.get_cmap(cmap)
 
     for i in range(cm.N):
         c = cm(i)
@@ -79,7 +83,7 @@ if __name__ == '__main__':
         print('  {}:'.format(cmap_category))
         for cmap in cmap_list:
             print('    {}:'.format(cmap), end='')
-            processColorMap(cmap)
+            processColorMap(cmap_category, cmap)
             print('')
 
 

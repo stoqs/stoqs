@@ -5,7 +5,7 @@ You are encouraged to contribute to STOQS!
 
 You can learn how from this *free* series [How to Contribute to an Open Source Project on GitHub](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github).
 
-Basic Unix, Python (server-side), JavaScipt (client-side), and Shell programming skills 
+Basic Unix, Python (server-side), JavaScript (client-side), and Shell programming skills 
 are required to effectively contribute to STOQS.  There are great resources for learning these 
 skills at https://software-carpentry.org.  The good news is that Unix system administration 
 skills are no longer required as `vagrant up --provider virtualbox` takes care of 
@@ -67,6 +67,7 @@ You should periodically pull changes to your workspace from the upstream remote.
 commands will synchronize your fork with upstream, including any local changes you have
 committed:
 
+    git checkout master
     git pull upstream master
     git push origin
 

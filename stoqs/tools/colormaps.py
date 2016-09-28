@@ -19,11 +19,13 @@ except AttributeError:
 
 from django.conf import settings
 from utils.Viz.plotting import readCLT
+import cmocean
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
 
-cmaps = [('Uniform',
+cmaps = [('Ocean',          cmocean.cm.cmapnames),
+         ('Uniform',
                             ['viridis', 'inferno', 'plasma', 'magma']),
          ('Sequential',     ['Blues', 'BuGn', 'BuPu',
                              'GnBu', 'Greens', 'Greys', 'Oranges', 'OrRd',
@@ -54,7 +56,7 @@ for cmap_category, cmap_list in cmaps:
 jetplus_clt = readCLT(os.path.join(str(settings.ROOT_DIR.path('static')), 
                                    'colormaps', 'jetplus.txt'))
 
-def _plot_color_bar(cmap):
+def _plot_color_bar(category, cmap):
     '''Make an image file for each colormap
     '''
     gradient = np.linspace(0, 1, 256)
@@ -69,7 +71,10 @@ def _plot_color_bar(cmap):
         cm_jetplus = colors.ListedColormap(np.array(jetplus_clt)[::-1])
         cb_ax.imshow(gradient, aspect='auto', cmap=cm_jetplus)
     else:
-        cb_ax.imshow(gradient, aspect='auto', cmap=plt.get_cmap(cmap))
+        if category == 'Ocean':
+            cb_ax.imshow(gradient, aspect='auto', cmap=getattr(cmocean.cm, cmap))
+        else:
+            cb_ax.imshow(gradient, aspect='auto', cmap=plt.get_cmap(cmap))
 
     cb_ax.set_axis_off()
     file_name = os.path.join(str(settings.ROOT_DIR.path('static')), 'images', 'colormaps', cmap)
@@ -84,7 +89,7 @@ def generate_colormaps():
         print('\t{}:'.format(cmap_category))
         for cmap in cmap_list:
             print('\t\t{}'.format(cmap))
-            _plot_color_bar(cmap)
+            _plot_color_bar(cmap_category, cmap)
 
         
 if __name__ == '__main__':
