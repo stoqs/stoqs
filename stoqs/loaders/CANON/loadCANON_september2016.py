@@ -469,7 +469,7 @@ else:
     cl.loadM1() # Mooring turn Aug 30 2016
     cl.load_oa1()
     cl.load_oa2()
-    #cl.loadDorado()
+    cl.loadDorado()
     #cl.loadDaphne()
     #cl.loadTethys()
     #cl.loadMakai()
