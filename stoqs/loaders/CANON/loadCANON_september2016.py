@@ -324,12 +324,18 @@ cl.rcpctd_files = [
 #                'OS_M1_20150729hourly_CMSTV.nc'
 #              ]
 # mooring turn August 29 2016
-cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201608/'
-cl.m1_files = ['OS_M1_20160829hourly_CMSTV.nc'] 
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
+cl.m1_files = [ 
+                '201507/OS_M1_20150729hourly_CMSTV.nc',
+                '201507/m1_hs2_20150730.nc',
+                '201608/OS_M1_20160829hourly_CMSTV.nc',
+                '201608/m1_hs2_20160829.nc',
+                ] 
 cl.m1_parms = [
                 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
                 'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
+                'bb470', 'bb676', 'fl676'
               ]
 
 cl.m1_startDatetime = startdate
