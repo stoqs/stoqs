@@ -84,10 +84,7 @@ cl.roms_spray_end_datetime = enddate
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2016/netcdf/'
 cl.dorado_files = [
-                   'Dorado389_2016_090_01_090_01_decim.nc',
-                   'Dorado389_2016_161_00_161_00_decim.nc', 
-                   'Dorado389_2016_179_01_179_01_decim.nc',
-                   'Dorado389_2016_181_00_181_00_decim.nc',
+                   'Dorado389_2016_270_00_270_00_decim.nc',
                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
@@ -191,8 +188,9 @@ for p in platforms:
 cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 # cl.l_662_files = [ 'OS_Glider_L_662_20151124_TS.nc' ]  ## this file was current Jan 1 2016 to about March 3 2016.
 # cl.l_662_files = [ 'OS_Glider_L_662_20160310_TS.nc' ]  ## changed to this file about March 3, 2016
-#cl.l_662_files = [ 'OS_Glider_L_662_20160628_TS.nc' ]  ## changed to this file about June 28, 2016. End Aug 10 2016.
-cl.l_662_files = [ 'OS_Glider_L_662_20160817_TS.nc' ]  ## deployed after servicing Aug 17 2016
+# cl.l_662_files = [ 'OS_Glider_L_662_20160628_TS.nc' ]  ## changed to this file about June 28, 2016. End Aug 10 2016.
+cl.l_662_files = [ 'OS_Glider_L_662_20160817_TS.nc',   ## deployed after servicing Aug 17 2016
+                   'OS_Glider_L_662_20160913_TS.nc' ]  ## deployed new glider Sept 13 2016
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
