@@ -48,6 +48,11 @@ parms_sci="{
         }"
 
 parms_eng="{
+            \"PNI_TCM\": [
+            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\" },
+            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\" },
+            { \"name\": \"platform_yaw_angle\", \"rename\":\"yaw\" }
+            ],
             \"ElevatorServo\": [
             { \"name\": \"platform_elevator_angle\", \"rename\":\"control_inputs_elevator_angle\" }
             ],
