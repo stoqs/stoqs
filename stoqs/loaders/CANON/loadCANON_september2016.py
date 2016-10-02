@@ -91,9 +91,13 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'roll', 'pitch', 'yaw']
 
 #####################################################################
-#  LRAUV
+#  LRAUV - Avoid the Lake Michigan tethys missions in August
 #####################################################################
-def find_urls(base, search_str):
+lrauv_startdates = { 'tethys': datetime.datetime(2016, 8, 30),
+                     'makai': startdate }
+lrauv_enddates = { 'tethys': enddate,
+                   'makai': enddate }
+def find_urls(plat, base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
     print "Crawling: %s" % url
@@ -120,7 +124,7 @@ def find_urls(base, search_str):
                 dir_end =  datetime.datetime.strptime(dts[1], '%Y%m%d')
 
                 # if within a valid range, grab the valid urls
-                if dir_start >= startdate and dir_end <= enddate:
+                if dir_start >= lrauv_startdates[plat] and dir_end <= lrauv_enddates[plat]:
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
@@ -143,7 +147,7 @@ def find_urls(base, search_str):
 # the binned files before this will work
 
 # Get directory list from thredds server
-platforms = ['daphne', 'makai']
+platforms = ['tethys', 'makai']
 
 for p in platforms:
     base =  'http://elvis64.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
@@ -164,9 +168,9 @@ for p in platforms:
                                 'pose_latitude_DeadReckonUsingMultipleVelocitySources',
                                 'pose_depth_DeadReckonUsingMultipleVelocitySources'])
     try:
-        #urls_eng = find_urls(base, '.*2S_eng.nc$')
-        urls_sci = find_urls(base, '.*10S_sci.nc$')
-        urls = urls_sci # + urls_eng
+        urls_eng = find_urls(p, base, '.*2S_eng.nc$')
+        urls_sci = find_urls(p, base, '.*10S_sci.nc$')
+        urls = urls_sci + urls_eng
         files = []
         if len(urls) > 0 :
             for url in sorted(urls):
@@ -426,8 +430,8 @@ if cl.args.test:
 
     cl.loadDorado(stride=10)
     #cl.loadDaphne(stride=100)
-    #cl.loadTethys(stride=100)
-    #cl.loadMakai(stride=100)
+    cl.loadTethys(stride=100)
+    cl.loadMakai(stride=100)
 
     #cl.loadRCuctd(stride=10)
     #cl.loadRCpctd(stride=10)
