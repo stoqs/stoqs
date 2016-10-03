@@ -215,7 +215,7 @@ class InterpolatorWriter(BaseWriter):
                 rc.units = units
 
             if key.find('pitch') != -1 or key.find('roll') != -1 or key.find('yaw') != -1 or key.find('angle') != -1 or key.find('rate') != -1:
-                if rc.units.find('rad/s'):
+                if 'rad/s' in rc.units:
                     rc.units = 'degree/s'
                 else:
                     rc.units = 'degree'
@@ -526,6 +526,13 @@ class InterpolatorWriter(BaseWriter):
 
                         for name in subgroup.variables[var].ncattrs():
                             attr[name] = getattr(subgroup.variables[var],name)
+
+                        # Potential override of attributes from json data
+                        for name in ('units', 'standard_name'):
+                            try:
+                                attr[name] = p[name]
+                            except KeyError:
+                                continue
 
                         self.all_attrib[key] = attr
 

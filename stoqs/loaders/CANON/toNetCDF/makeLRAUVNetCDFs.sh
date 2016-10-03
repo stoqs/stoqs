@@ -49,9 +49,9 @@ parms_sci="{
 
 parms_eng="{
             \"PNI_TCM\": [
-            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\" },
-            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\" },
-            { \"name\": \"platform_yaw_angle\", \"rename\":\"yaw\" }
+            { \"name\": \"platform_roll_angle\", \"rename\":\"roll\", \"units\":\"degree\" },
+            { \"name\": \"platform_pitch_angle\", \"rename\":\"pitch\", \"units\":\"degree\" },
+            { \"name\": \"platform_orientation\", \"rename\":\"yaw\", \"units\":\"degree\", \"standard_name\": \"platform_yaw_angle\" }
             ],
             \"ElevatorServo\": [
             { \"name\": \"platform_elevator_angle\", \"rename\":\"control_inputs_elevator_angle\" }
