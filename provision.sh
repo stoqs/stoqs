@@ -51,7 +51,7 @@ then
     fi
     wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
     rpm -Uvh remi-release-7*.rpm epel-release-7*.rpm
-    curl -sS -O http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
+    curl -L -sS -O http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
     rpm -ivh pgdg*
     yum -y install postgresql94-server
     yum -y groupinstall "PostgreSQL Database Server 9.4 PGDG"
