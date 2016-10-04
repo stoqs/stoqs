@@ -194,6 +194,8 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_makai.x3d', pName)
+
     def loadMartin(self, stride=None):
         '''
         Martin specific load functions
