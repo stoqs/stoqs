@@ -154,19 +154,9 @@ for p in platforms:
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
-    setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'
-                                'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
-                                'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
-                                'health_platform_battery_charge', 'health_platform_average_voltage',
-                                'health_platform_average_current','fix_latitude', 'fix_longitude',
-                                'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
-                                'pose_longitude_DeadReckonUsingSpeedCalculator',
-                                'pose_latitude_DeadReckonUsingSpeedCalculator',
-                                'pose_depth_DeadReckonUsingSpeedCalculator',
-                                'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
-                                'pose_longitude_DeadReckonUsingMultipleVelocitySources',
-                                'pose_latitude_DeadReckonUsingMultipleVelocitySources',
-                                'pose_depth_DeadReckonUsingMultipleVelocitySources'])
+    setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
+                                'yaw', 'pitch', 'roll', 
+                                ])
     try:
         urls_eng = find_urls(p, base, '.*2S_eng.nc$')
         urls_sci = find_urls(p, base, '.*10S_sci.nc$')
@@ -430,8 +420,8 @@ if cl.args.test:
 
     cl.loadDorado(stride=10)
     #cl.loadDaphne(stride=100)
-    cl.loadTethys(stride=100)
-    cl.loadMakai(stride=100)
+    cl.loadTethys(stride=10)
+    cl.loadMakai(stride=10)
 
     #cl.loadRCuctd(stride=10)
     #cl.loadRCpctd(stride=10)
