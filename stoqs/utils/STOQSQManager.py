@@ -1231,7 +1231,12 @@ class STOQSQManager(object):
                 else:
                     label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
 
-                rec = {'label': label, 'data': [[s_ems, '%.2f' % s[7]], [e_ems, '%.2f' % s[6]]]}
+                try:
+                    rec = {'label': label, 'data': [[s_ems, '%.2f' % s[7]], [e_ems, '%.2f' % s[6]]]}
+                except TypeError:
+                    # Likely s[6] and s[7] are None
+                    continue
+
                 sample_durations.append(rec)
 
         return(sample_durations)
