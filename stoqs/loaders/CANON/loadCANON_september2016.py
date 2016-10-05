@@ -257,19 +257,22 @@ cl.wg_Tiny_endDatetime = enddate
 ##cl.wg_oa_endDatetime = enddate
 
 ######################################################################
-#  WESTERN FLYER: not in this cruise
+#  WESTERN FLYER: Sep 17  - Oct 1
 ######################################################################
 # UCTD
-cl.wfuctd_base = cl.dodsBase + 'CANON/2015_May/Platforms/Ships/Western_Flyer/uctd/'
+cl.wfuctd_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Ships/Western_Flyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
- 
+                    'canon16m{:02d}.nc'.format(i) for i in range(1,15),
+                    'wfiv{:02d}.nc'.format(i) for i in range(1,4)
                   ]
 
 # PCTD
-cl.wfpctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Western_Flyer/pctd/'
+cl.wfpctd_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [
+                    'canon16c{:02d}.nc'.format(i) for i in range(1,69),
+                    'wfiv{:02d}.nc'.format(i) for i in range(1,34)
                   ]
 
 ######################################################################
@@ -475,8 +478,8 @@ else:
     #cl.loadMakai()
     #cl.loadRCuctd()
     #cl.loadRCpctd() 
-    #cl.loadWFuctd()   
-    #cl.loadWFpctd()
+    cl.loadWFuctd()   
+    cl.loadWFpctd()
 
     #cl.loadSubSamples()
 
