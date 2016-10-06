@@ -182,8 +182,8 @@ for p in platforms:
 cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 # cl.l_662_files = [ 'OS_Glider_L_662_20151124_TS.nc' ]  ## this file was current Jan 1 2016 to about March 3 2016.
 # cl.l_662_files = [ 'OS_Glider_L_662_20160310_TS.nc' ]  ## changed to this file about March 3, 2016
-# cl.l_662_files = [ 'OS_Glider_L_662_20160628_TS.nc' ]  ## changed to this file about June 28, 2016. End Aug 10 2016.
-cl.l_662_files = [ 'OS_Glider_L_662_20160817_TS.nc',   ## deployed after servicing Aug 17 2016
+cl.l_662_files = [ 'OS_Glider_L_662_20160628_TS.nc',   ## changed to this file about June 28, 2016. End Aug 10 2016.
+                   'OS_Glider_L_662_20160817_TS.nc',   ## deployed after servicing Aug 17 2016
                    'OS_Glider_L_662_20160913_TS.nc' ]  ## deployed new glider Sept 13 2016
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
@@ -198,7 +198,7 @@ cl.nps29_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
 cl.sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Gliders/Seaglider/'
-cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,328)] 
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,421)] ## index needs to be 1 higher than terminal file name
 cl.sg621_parms = ['temperature', 'salinity']
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
@@ -264,7 +264,7 @@ cl.wfuctd_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Ships/Western_Flyer/uct
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
                     'canon16m{:02d}.nc'.format(i) for i in range(1,15),
-                    'wfiv{:02d}.nc'.format(i) for i in range(1,4)
+                    'wfiv16m{:02d}.nc'.format(i) for i in range(1,9)
                   ]
 
 # PCTD
@@ -272,7 +272,7 @@ cl.wfpctd_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Ships/Western_Flyer/pct
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [
                     'canon16c{:02d}.nc'.format(i) for i in range(1,69),
-                    'wfiv{:02d}.nc'.format(i) for i in range(1,34)
+                    'wfiv16c{:02d}.nc'.format(i) for i in range(1,34)
                   ]
 
 ######################################################################
@@ -487,5 +487,4 @@ else:
 cl.addTerrainResources()
 
 print "All Done."
-# test push to see if my commits are clean
  
