@@ -120,6 +120,9 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
 export LD_LIBRARY_PATH
 EOT
 cd ../..
+touch /tmp/mapserver_stoqshg.log
+chown apache.apache /tmp/mapserver_stoqshg.log
+sudo chmod go+w /tmp/mapserver_stoqshg.log
 
 # Required to install the netCDF4 python module
 echo "Need to sudo to install hdf5 packages..."
