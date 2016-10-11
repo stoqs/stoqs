@@ -16,6 +16,7 @@ import sys
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
 from CANON import CANONLoader
+from datetime import datetime
 
 # Assign input data sources
 cl = CANONLoader('stoqs_september2010', 'CANON - September 2010',
@@ -42,19 +43,39 @@ cl.dorado_files = [ 'Dorado389_2010_257_01_258_04_decim.nc',
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
                     'sepCountList', 'mepCountList',
+                    'roll', 'pitch', 'yaw',
                   ]
+
+cl.m1_startDatetime = datetime(2010, 9, 8)
+cl.m1_endDatetime = datetime(2010, 9, 21)
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/200910/'
+cl.m1_files = [ 
+                'OS_M1_20091020hourly_CMSTV.nc',
+                'm1_hs2_20091020.nc',
+                ] 
+cl.m1_parms = [
+                'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
+                'bb470', 'bb676', 'fl676'
+              ]
+
 
 # Execute the load
 cl.process_command_line()
 
 if cl.args.test:
     cl.loadDorado(stride=100)
+    cl.loadM1(stride=10)
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
+    cl.loadM1(stride=2)
 
 else:
-    cl.loadDorado(stride=cl.args.stride)
+    cl.stride = cl.args.stride 
+    cl.loadDorado()
+    cl.loadM1()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
