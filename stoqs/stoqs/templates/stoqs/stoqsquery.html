@@ -257,6 +257,7 @@
                                                         <em>Navigation speed: +/-</em><br>
                                                         <em>Reset viewpoint: R</em><br>
                                                         </ul>
+                                                        Cardboard: <a id="geo-cardboard-button" class="btn btn-mini cardboard-button">Enter VR</a>
                                                         Experimental: <a id="geo-rift-button" class="btn btn-mini rift-button">Enter VR</a>
                                                     </div>
                                             </div>
@@ -313,6 +314,119 @@
                                         </div> <!-- limit-div-width -->
                                         </div> <!-- geo-3dplot-control -->
                                         <div style="height:100%;">
+
+
+
+<!-- Elements for Google Cardboard -->
+    <X3D id="spatial-3d-x3d-cardboard" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)"> 
+      <scene>
+        <Environment frustumCulling="false"></Environment>
+        <navigationInfo></navigationInfo>
+        <Viewpoint id="mp-x3d-viewpoint1" def="vp" onviewpointChanged="setScale(event)"></Viewpoint>
+        <!-- Test GeoViewpoint for Monterey Bay area, user must page-down to bind to it -->
+        <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0">
+        </GeoViewpoint>
+        <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
+        <Group id='spatial-3d-root' render='true'>
+          <Group id='spatial-3d-scene' def="spatial-3d-scene">
+            <GeoOriginTransform containerField='children'>
+              <Group id="mp-x3d-terrain">
+              </Group>
+            </GeoOriginTransform>
+            <Group id="platform-animations"></Group>
+            <Group id="platform-models"></Group>
+          </Group>
+        </Group>
+        <group id="spatial-3d-left" DEF='left' render="false">
+          <shape>
+            <appearance>
+             <renderedTexture id="rtLeft" stereoMode="LEFT_EYE" update='ALWAYS'
+                                     dimensions='640 800 4' repeatS='false' repeatT='false'>
+                        <!--<viewpoint USE='vp' containerField='viewpoint'></viewpoint>-->
+                        <geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>
+                        <background USE='bgnd' containerField='background'></background>
+                        <!--group USE='left' containerField="excludeNodes"></group-->
+                        <group USE='spatial-3d-scene' containerField="scene"></group>
+                    </renderedTexture>
+              <composedShader>
+                <field name='tex' type='SFInt32' value='0'></field>
+                <field name='leftEye' type='SFFloat' value='1'></field>
+                <shaderPart type='VERTEX'>
+                  attribute vec3 position;
+                  attribute vec2 texcoord;
+
+                  uniform mat4 modelViewProjectionMatrix;
+                  varying vec2 fragTexCoord;
+
+                  void main()
+                  {
+                  vec2 pos = sign(position.xy);
+                  fragTexCoord = texcoord;
+
+                  gl_Position = vec4((pos.x/2.0)-0.5, pos.y, 0.0, 1.0);
+                  //    gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0);
+
+                  //gl_Position = vec4(pos.xy / 4.0 + vec2(-0.75,0.75), 0.0, 1.0);
+                  }
+                </shaderPart>
+                <shaderPart DEF="frag" type='FRAGMENT'>
+                  #ifdef GL_ES
+                  precision highp float;
+                  #endif
+
+                  uniform sampler2D tex;
+                  uniform float leftEye;
+                  varying vec2 fragTexCoord;
+
+                  void main()
+                  {
+
+                  gl_FragColor = texture2D(tex, fragTexCoord);
+                  }
+                </shaderPart>
+              </composedShader>
+            </appearance>
+            <plane solid="false"></plane>
+          </shape>
+        </group>
+        <group id="spatial-3d-right" DEF='right' render="false">
+          <shape>
+            <appearance>
+              <renderedTexture interpupillaryDistance="0.03" id="rtRight" stereoMode="RIGHT_EYE" update='ALWAYS'
+                               dimensions='960 1080 4' repeatS='false' repeatT='false'>
+                <viewpoint USE='vp' containerField='viewpoint'></viewpoint>
+                <background USE='bgnd' containerField='background'></background>
+                <group USE='spatial-3d-scene' containerField="scene"></group>
+              </renderedTexture>
+              <composedShader>
+                <field name='tex' type='SFInt32' value='0'></field>
+                <field name='leftEye' type='SFFloat' value='0'></field>
+                <shaderPart type='VERTEX'>
+                  attribute vec3 position;
+                  attribute vec2 texcoord;
+
+                  uniform mat4 modelViewProjectionMatrix;
+                  varying vec2 fragTexCoord;
+
+                  void main()
+                  {
+                  vec2 pos = sign(position.xy);
+                  fragTexCoord = texcoord;
+
+                  gl_Position = vec4((pos.x + 1.0) / 2.0, pos.y, 0.0, 1.0);
+                  }
+                </shaderPart>
+                <shaderPart USE="frag" type='FRAGMENT'>
+                </shaderPart>
+              </composedShader>
+            </appearance>
+            <plane solid="false"></plane>
+          </shape>
+        </group>
+        </scene>
+      </x3d>
+    <!-- End of Cardboard Elements -->
+
                                         <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)"> 
                                             <Scene>
                                                 <Environment frustumCulling="false"></Environment>
@@ -332,6 +446,7 @@
                                                         <Group id="platform-models"></Group>
                                                     </Group>
                                                 </Group>
+
 
         <!-- Elements for Rift - Orientations routed to GeoViewpoint, so must page down to that Viewpoint -->
         <group id='spatial-3d-left' DEF='left' render='false'>
@@ -399,7 +514,9 @@
                                     gl_FragColor = vec4(col, 1.0);
                                 }
                                 //gl_FragColor = texture2D(tex, fragTexCoord);
-                            }
+                           
+                             }
+
                         </shaderPart>
                     </composedShader>
 
@@ -1297,6 +1414,7 @@
     var lcZoomed = false;
     var rcZoomed = false;
     var rifted = false;
+    var cardboard = false;
     var request=''
     var map = null; 
     var parametervalues={};     
@@ -2738,6 +2856,86 @@
         rcZoomed = ! rcZoomed;
     });
 
+
+function enable_cardboard(){
+  var runtime = null;
+  var rtLeft, rtRight;
+  var lastW, lastH;
+  var degreeToRadiansFactor = Math.PI / 180;
+
+  x3dom.fields.Quaternion.prototype.setFromEulerYXZ = function (alpha, beta, gamma) {
+
+    var c1 = Math.cos( alpha / 2 );
+    var c2 = Math.cos( beta / 2 );
+    var c3 = Math.cos( gamma / 2 );
+    var s1 = Math.sin( alpha / 2 );
+    var s2 = Math.sin( beta / 2 );
+    var s3 = Math.sin( gamma / 2 );
+
+    this.x = s1 * c2 * c3 + c1 * s2 * s3;
+    this.y = c1 * s2 * c3 - s1 * c2 * s3;
+    this.z = c1 * c2 * s3 - s1 * s2 * c3;
+    this.w = c1 * c2 * c3 + s1 * s2 * s3;
+  }
+
+  var MYAPP={"deviceOrientation":null, "screenOrientation":null};
+  onDeviceOrientationChangeEvent = (function(rawEvtData) {
+    this.deviceOrientation = rawEvtData;
+  }).bind(MYAPP);
+
+  window.addEventListener('deviceorientation', onDeviceOrientationChangeEvent, false);
+
+  function deg2rad(deg){return deg * degreeToRadiansFactor;}
+
+    document.onload = function () {
+
+    runtime = $('spatial-3d-x3d-cardboard').runtime;
+    rtLeft = document.getElementById('rtLeft');
+    rtRight =document.getElementById('rtRight');
+   //rtLeft._x3domNode.lensCenter = 0;
+   //rtRight._x3domNode.lensCenter = 0;
+
+    lastW = +runtime.widthh();
+    lastH = +runtime.widtht();
+
+    var hw = Math.round(lastW / 2);
+    rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
+    rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
+
+    var element = document.getElementById("spatial-3d-x3d-cardboard");
+    MYAPP.viewpoint = document.getElementById('mp-x3d-viewpoint1');
+
+    element.runtime.exitFrame = function() {
+      // check if screensize changed
+      var w = +runtime.getWidth();
+      var h = +runtime.getHeight();
+      if (w != lastW || h != lastH)
+      {
+        var half = Math.round(w / 2);
+        rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
+        rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
+        lastW = w;
+        lastH = h;
+      }
+      //handle device orientation change
+      if(!MYAPP.deviceOrientation)
+        return;
+      var q0 = x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(0,0,1),-deg2rad(window.orientation)); // phone rotation offset
+      var q = new x3dom.fields.Quaternion();
+      q.setFromEulerYXZ(deg2rad(MYAPP.deviceOrientation.beta), deg2rad(MYAPP.deviceOrientation.alpha), -deg2rad(MYAPP.deviceOrientation.gamma));
+
+      var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
+
+      q = q.multiply(q1);
+      q = q.multiply(q0);
+
+      var aa = q.toAxisAngle();
+
+      MYAPP.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+    };
+  }
+}
+
     function enable_vr() {
         // Follows example from http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-webvr-2.html
 
@@ -3045,6 +3243,34 @@
     }
 
 
+    $(".cardboard-button").click(function(element) {
+        if(cardboard){
+            $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
+            $('#spatial-3d-x3d-cardboard #spatial-3d-left').attr('render', 'false');
+            $('#spatial-3d-x3d-cardboard #spatial-3d-right').attr('render','false');
+
+            $(this).html('Enter VR');
+           // element.runtime.exitFrame = function() {}
+     }
+        else {
+        
+            $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
+            $('#spatial-3d-x3d-cardboard #spatial-3d-left').attr('render', 'true');
+            $('#spatial-3d-x3d-cardboard #spatial-3d-right').attr('render', 'true');
+  
+
+            $(this).html('Leave VR');
+            enable_cardboard();
+             var canvas = document.getElementsByTagName("canvas")[0];
+                if (canvas.webkitRequestFullscreen) {
+                    canvas.webkitRequestFullscreen({ vrDisplay: vrHMD });
+                } else if (canvas.mozRequestFullScreen) {
+                    canvas.mozRequestFullScreen({ vrDisplay: vrHMD });
+                }
+        }
+        cardboard =! cardboard;
+     });
+     
     $(".rift-button").click(function(element) {
         
         var vrHMD = null, vrSensor = null;
