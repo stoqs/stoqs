@@ -2844,7 +2844,7 @@
     });
 
 
-function enable_cardboard(){
+
   var runtime = null;
   var rtLeft, rtRight;
   var lastW, lastH;
@@ -2876,14 +2876,14 @@ function enable_cardboard(){
 
     document.onload = function () {
 
-    runtime = $('spatial-3d-x3d-cardboard').runtime;
+    runtime = $('#spatial-3d-x3d-cardboard')[0].runtime;
     rtLeft = document.getElementById('rtLeft');
     rtRight =document.getElementById('rtRight');
    //rtLeft._x3domNode.lensCenter = 0;
    //rtRight._x3domNode.lensCenter = 0;
 
-    lastW = +runtime.widthh();
-    lastH = +runtime.widtht();
+    lastW = +runtime.getWidth();
+    lastH = +runtime.getWidth();
 
     var hw = Math.round(lastW / 2);
     rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
@@ -2921,7 +2921,6 @@ function enable_cardboard(){
       MYAPP.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
     };
   }
-}
 
     function enable_vr() {
         // Follows example from http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-webvr-2.html
