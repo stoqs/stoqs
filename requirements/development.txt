@@ -1,7 +1,7 @@
 -r base.txt
 
 alabaster==0.7.9
-amqp==2.1.0
+amqp==2.1.1
 amqplib==1.0.2
 anyjson==0.3.3
 Babel==2.3.4
@@ -12,7 +12,7 @@ celery==3.1.24
 certifi==2016.9.26
 cookiecutter==1.4.0
 coverage==4.2
-Cython==0.24.1
+Cython==0.25.1
 docutils==0.12
 ephem==3.7.6.0
 GDAL==2.1.0
@@ -28,11 +28,11 @@ Pygments==2.1.3
 pygraphviz==1.3.1
 pymssql==2.1.3
 pyparsing==2.1.10
-python-coveralls==2.8.0
+python-coveralls==2.9.0
 requests==2.11.1
 scipy==0.18.1
 scikit-learn==0.18
 Shapely==1.5.17
 snowballstemmer==1.2.1
-thredds-crawler==1.5.1
+thredds-crawler==1.5.2
 tornado==4.4.2
