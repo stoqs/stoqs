@@ -2878,10 +2878,10 @@
     this.w = c1 * c2 * c3 + s1 * s2 * s3;
   }
 
-  var MYAPP={"deviceOrientation":null, "screenOrientation":null};
+  var   CARDOBARD ={"deviceOrientation":null, "screenOrientation":null};
   onDeviceOrientationChangeEvent = (function(rawEvtData) {
     this.deviceOrientation = rawEvtData;
-  }).bind(MYAPP);
+  }).bind(CARDBOARD);
 
   window.addEventListener('deviceorientation', onDeviceOrientationChangeEvent, false);
 
@@ -2903,7 +2903,7 @@
     rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
 
     var element = document.getElementById("spatial-3d-x3d-cardboard");
-    MYAPP.viewpoint = document.getElementById('mp-x3d-viewpoint1');
+    CARDBOARD.viewpoint = document.getElementById('mp-x3d-viewpoint1');
 
     element.runtime.exitFrame = function() {
       // check if screensize changed
@@ -2918,20 +2918,20 @@
         lastH = h;
       }
       //handle device orientation change
-      if(!MYAPP.deviceOrientation)
+      if(!CARDBOARD.deviceOrientation)
         return;
       var q0 = x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(0,0,1),-deg2rad(window.orientation)); // phone rotation offset
       var q = new x3dom.fields.Quaternion();
-      q.setFromEulerYXZ(deg2rad(MYAPP.deviceOrientation.beta), deg2rad(MYAPP.deviceOrientation.alpha), -deg2rad(MYAPP.deviceOrientation.gamma));
+      q.setFromEulerYXZ(deg2rad(CARDBOARD.deviceOrientation.beta), deg2rad(CARDBOARD.deviceOrientation.alpha), -deg2rad( CARDOBARD.deviceOrientation.gamma));
 
       var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
 
       q = q.multiply(q1);
-      q = q.multiply(q0);
+     // q = q.multiply(q0);
 
       var aa = q.toAxisAngle();
 
-      MYAPP.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+       CARDBOARD.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
     };
   }
 
