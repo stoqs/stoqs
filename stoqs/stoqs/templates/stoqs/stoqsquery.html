@@ -2878,7 +2878,7 @@
     this.w = c1 * c2 * c3 + s1 * s2 * s3;
   }
 
-  var   CARDOBARD ={"deviceOrientation":null, "screenOrientation":null};
+  var   CARDBOARD ={"deviceOrientation":null, "screenOrientation":null};
   onDeviceOrientationChangeEvent = (function(rawEvtData) {
     this.deviceOrientation = rawEvtData;
   }).bind(CARDBOARD);
@@ -2922,7 +2922,7 @@
         return;
       var q0 = x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(0,0,1),-deg2rad(window.orientation)); // phone rotation offset
       var q = new x3dom.fields.Quaternion();
-      q.setFromEulerYXZ(deg2rad(CARDBOARD.deviceOrientation.beta), deg2rad(CARDBOARD.deviceOrientation.alpha), -deg2rad( CARDOBARD.deviceOrientation.gamma));
+      q.setFromEulerYXZ(deg2rad(CARDBOARD.deviceOrientation.beta), deg2rad(CARDBOARD.deviceOrientation.alpha), -deg2rad( CARDBOARD.deviceOrientation.gamma));
 
       var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
 
