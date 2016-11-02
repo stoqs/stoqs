@@ -33,6 +33,7 @@ cl = CANONLoader('stoqs_september2010', 'CANON - September 2010',
                     grdTerrain = os.path.join(parentDir, 'Monterey25.grd')
                 )
 
+# AUV
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2010/netcdf/'
 cl.dorado_files = [ 'Dorado389_2010_257_01_258_04_decim.nc',
                     'Dorado389_2010_258_05_258_08_decim.nc',
@@ -45,7 +46,7 @@ cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'sepCountList', 'mepCountList',
                     'roll', 'pitch', 'yaw',
                   ]
-
+# Moorings
 cl.m1_startDatetime = datetime(2010, 9, 8)
 cl.m1_endDatetime = datetime(2010, 9, 21)
 cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/200910/'
@@ -60,6 +61,20 @@ cl.m1_parms = [
                 'bb470', 'bb676', 'fl676'
               ]
 
+cl.m2_startDatetime = datetime(2010, 9, 8)
+cl.m2_endDatetime = datetime(2010, 9, 21)
+cl.m2_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m2/201004/'
+cl.m2_files = [ 
+                'OS_M2_20100402hourly_CMSTV.nc',
+                'm2_hs2_20100402.nc',
+                ] 
+
+cl.m2_parms = [ # No ADCP data from M2 in September 2010
+                'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
+                'bb470', 'bb676', 'fl676'
+              ]
+
 
 # Execute the load
 cl.process_command_line()
@@ -67,15 +82,18 @@ cl.process_command_line()
 if cl.args.test:
     cl.loadDorado(stride=100)
     cl.loadM1(stride=10)
+    cl.loadM2(stride=10)
 
 elif cl.args.optimal_stride:
     cl.loadDorado(stride=2)
     cl.loadM1(stride=2)
+    cl.loadM2(stride=2)
 
 else:
     cl.stride = cl.args.stride 
     cl.loadDorado()
     cl.loadM1()
+    cl.loadM2()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()

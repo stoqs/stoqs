@@ -68,6 +68,7 @@ class CANONLoader(LoadScript):
                 'nps_g29':      '80cdc1',
                 'l_662':        '35978f',
                 'm1':           '35f78f',
+                'm2':           '35f780',
                 'martin':       '01665e',
                 'flyer':        '11665e',
                 'espdrift':     '21665e',
@@ -85,6 +86,7 @@ class CANONLoader(LoadScript):
                 'nps34':        '36d40f',
                 'sg621':        '5b9131',
                 'm1':           'bd2026',
+                'm2':           'bd2020',
                 'oa':           '0f9cd4',
                 'oa2':          '2d2426',
                 'hehape':       'bd2026',
@@ -709,6 +711,29 @@ class CANONLoader(LoadScript):
         try:
             self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName, nominaldepth=self.m1_nominaldepth)
+        except AttributeError:
+            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+                                      platformName)
+
+    def loadM2(self, stride=None):
+        '''
+        Mooring M2 specific load functions
+        '''
+        platformName = 'M2_Mooring'
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.m2_files], self.m2_files):
+            url = os.path.join(self.m2_base, f)
+            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName, 
+                                        platformName, self.colors['m2'], 'mooring', 'Mooring Deployment', 
+                                        self.m2_parms, self.dbAlias, stride, self.m2_startDatetime, 
+                                        self.m2_endDatetime, command_line_args=self.args, 
+                                        backfill_timedelta=timedelta(seconds=3600))
+    
+        # For timeseriesProfile data we need to pass the nominaldepth of the plaform
+        # so that the model is put at the correct depth in the Spatial -> 3D view.
+        try:
+            self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
+                                      platformName, nominaldepth=self.m2_nominaldepth)
         except AttributeError:
             self.addPlatformResources('http://stoqs.mbari.org/x3d/m1_assembly/m1_assembly_scene.x3d', 
                                       platformName)
