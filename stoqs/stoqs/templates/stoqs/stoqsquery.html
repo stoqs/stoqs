@@ -1414,7 +1414,7 @@
     var lcZoomed = false;
     var rcZoomed = false;
     var rifted = false;
-    var cardboard = false;
+    var cardboarded = false;
     var request=''
     var map = null; 
     var parametervalues={};     
@@ -3249,7 +3249,6 @@
             $('#spatial-3d-x3d-cardboard #spatial-3d-right').attr('render','false');
 
             $(this).html('Enter VR');
-           // element.runtime.exitFrame = function() {}
      }
         else {
         
@@ -3259,14 +3258,15 @@
   
 
             $(this).html('Leave VR');
-             var canvas = document.getElementsByTagName("canvas")[0];
+            var canvas = document.getElementsByTagName("canvas")[0];
                 if (canvas.webkitRequestFullscreen) {
                     canvas.webkitRequestFullscreen({ vrDisplay: vrHMD });
-                } else if (canvas.mozRequestFullScreen) {
+                } 
+                else if (canvas.mozRequestFullScreen) {
                     canvas.mozRequestFullScreen({ vrDisplay: vrHMD });
                 }
         }
-        cardboard =! cardboard;
+        cardboarded =! cardboarded;
      });
      
     $(".rift-button").click(function(element) {
