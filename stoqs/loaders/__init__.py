@@ -409,14 +409,16 @@ class STOQS_Loader(object):
             self.logger.debug("Retrieved platformType.name %s from database %s", platformType.name, self.dbAlias)
 
 
-        # Create Platform 
-        platform, created = m.Platform.objects.using(self.dbAlias).get_or_create( name=platformName, 
-                                                                                        color=self.platformColor, 
-                                                                                        platformtype=platformType)
+        # Create Platform, allowing color to be updated by later load, eliminating potential duplicate names
+        platform, created = m.Platform.objects.using(self.dbAlias).get_or_create(name=platformName, 
+                                                                                 platformtype=platformType)
         if created:
             self.logger.info("Created platform %s in database %s", platformName, self.dbAlias)
         else:
             self.logger.info("Retrieved platform %s from database %s", platformName, self.dbAlias)
+
+        platform.color = self.platformColor
+        platform.save(using=self.dbAlias)
 
         return platform
 
