@@ -49,7 +49,7 @@ class CCELoader(LoadScript):
     colors = {}
 
     # Colors for BEDs 
-    num_beds = 9
+    num_beds = 10
     beds_names = [('bed{:02d}').format(n) for n in range(num_beds+1)]
     reds = plt.cm.Reds
     for b, c in zip(beds_names, reds(np.arange(0, reds.N, reds.N/num_beds))):
