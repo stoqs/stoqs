@@ -257,8 +257,7 @@
                                                         <em>Navigation speed: +/-</em><br>
                                                         <em>Reset viewpoint: R</em><br>
                                                         </ul>
-                                                        Cardboard: <a id="geo-cardboard-button" class="btn btn-mini cardboard-button">Enter VR</a>
-                                                        Experimental: <a id="geo-rift-button" class="btn btn-mini rift-button">Enter VR</a>
+                                                        Experimental:<a id="geo-cardboard-button" class="btn btn-mini cardboard-button">Enter Cardboard</a> <a id="geo-rift-button" class="btn btn-mini rift-button">Enter Rift</a>
                                                     </div>
                                             </div>
                                             <div id="collapseContols3D" class="accordion-body in">
@@ -2901,8 +2900,8 @@
     rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
 
     var element = document.getElementById("spatial-3d-x3d-cardboard");
-    CARDBOARD.viewpoint = document.getElementById('mp-x3d-viewpoint1');
-
+    CARDBOARD.viewpoint = document.getElementById('mp-x3d-geoviewpoint1');
+    CARDBOARD.viewpoint.setAttribute('set_bind','true');
     element.runtime.exitFrame = function() {
       // check if screensize changed
       var w = +runtime.getWidth();
@@ -3245,16 +3244,17 @@
             $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-x3d-cardboard #spatial-3d-left').attr('render', 'false');
             $('#spatial-3d-x3d-cardboard #spatial-3d-right').attr('render','false');
-            $(this).html('Enter VR');
+            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 1000');
+            $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
+            $(this).html('Enter Cardboard');
      }
         else {
-            $('#mp-x3d-geoviewpoint1').attr('bind','true');
             $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 100');
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-x3d-cardboard #spatial-3d-left').attr('render', 'true');
             $('#spatial-3d-x3d-cardboard #spatial-3d-right').attr('render', 'true');
-            $(this).html('Leave VR');
+            $(this).html('Leave Cardboard');
             var canvas = document.getElementsByTagName("canvas")[0];
                 if (canvas.webkitRequestFullscreen) {
                     canvas.webkitRequestFullscreen({ vrDisplay: vrHMD });
@@ -3271,7 +3271,7 @@
         var vrHMD = null, vrSensor = null;
 
 
-        if ( rifted || cardboarded ) {
+        if ( rifted) {
             $('#spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-left').attr('render', 'false');
             $('#spatial-3d-right').attr('render', 'false');
@@ -3288,7 +3288,7 @@
             $('#collapseSpatial > div').css( { 'padding-top': '9px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '15px' } );
             $('#geo-3dplot').css( { 'background-color': '' } );
-            $(this).html('Enter VR');
+            $(this).html('Enter Rift');
             runtime.exitFrame = function() {}
         }
         else {
@@ -3310,7 +3310,7 @@
             $('#collapseSpatial > div').css( { 'padding-top': '0px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '0px' } );
             $('#geo-3dplot').css( { 'background-color': '#2f2f2f' } );
-            $(this).html('Leave VR');
+            $(this).html('Leave Rift');
             enable_vr();
             if(vrHMD) {
                 var canvas = document.getElementsByTagName("canvas")[0];
