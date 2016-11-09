@@ -313,9 +313,6 @@
                                         </div> <!-- limit-div-width -->
                                         </div> <!-- geo-3dplot-control -->
                                         <div style="height:100%;">
-
-
-
 <!-- Elements for Google Cardboard -->
     <X3D id="spatial-3d-x3d-cardboard" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)"> 
       <scene>
@@ -444,7 +441,6 @@
                                                     </Group>
                                                 </Group>
 
-
         <!-- Elements for Rift - Orientations routed to GeoViewpoint, so must page down to that Viewpoint -->
         <group id='spatial-3d-left' DEF='left' render='false'>
             <shape>
@@ -511,9 +507,7 @@
                                     gl_FragColor = vec4(col, 1.0);
                                 }
                                 //gl_FragColor = texture2D(tex, fragTexCoord);
-                           
                              }
-
                         </shaderPart>
                     </composedShader>
 
@@ -2853,8 +2847,6 @@
         rcZoomed = ! rcZoomed;
     });
 
-
-
   var runtime = null;
   var rtLeft, rtRight;
   var lastW, lastH;
@@ -3247,31 +3239,30 @@
             $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 1000');
             $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
             $(this).html('Enter Cardboard');
-     }
+     	}
         else {
-            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 100');
-            $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
-            $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
+	    $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-x3d-cardboard #spatial-3d-left').attr('render', 'true');
             $('#spatial-3d-x3d-cardboard #spatial-3d-right').attr('render', 'true');
+            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 100');
+            $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             $(this).html('Leave Cardboard');
             var canvas = document.getElementsByTagName("canvas")[0];
-                if (canvas.webkitRequestFullscreen) {
-                    canvas.webkitRequestFullscreen({ vrDisplay: vrHMD });
-                } 
-                else if (canvas.mozRequestFullScreen) {
-                    canvas.mozRequestFullScreen({ vrDisplay: vrHMD });
-                }
+            if (canvas.webkitRequestFullscreen) {
+                canvas.webkitRequestFullscreen({ vrDisplay: vrHMD });
+            } 
+            else if (canvas.mozRequestFullScreen) {
+                canvas.mozRequestFullScreen({ vrDisplay: vrHMD });
+            }
         }
         cardboarded =! cardboarded;
      });
-     
     $(".rift-button").click(function(element) {
         
         var vrHMD = null, vrSensor = null;
 
 
-        if ( rifted) {
+        if ( rifted ) {
             $('#spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-left').attr('render', 'false');
             $('#spatial-3d-right').attr('render', 'false');
