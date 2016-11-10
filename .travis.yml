@@ -16,6 +16,7 @@ before_install:
   - conda update --yes conda
 env:
   - DJANGO=1.8
+  - TERM=xterm
 install:
   - conda install --yes python=2.7 hdf5 netcdf4 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
   # Coverage packages are on my binstar channel
