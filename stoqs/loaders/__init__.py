@@ -25,6 +25,7 @@ from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 import time
 import re
+import subprocess
 import math
 import numpy as np
 from coards import to_udunits
@@ -58,6 +59,11 @@ if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
 missing_value = 1e-34
+
+def cmd_exists(cmd):
+    return subprocess.call("type " + cmd, shell=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+    
 
 class SkipRecord(Exception):
     pass
@@ -1246,8 +1252,7 @@ class STOQS_Loader(object):
                     xmin, xmax = fh.variables['x_range'][:]
                     ymin, ymax = fh.variables['y_range'][:]
                 except IOError as e:
-                    self.logger.warn(e)
-                    raise FileNotFound('Unable to apply bathymetry to the data. Make sure file %s is present.', self.grdTerrain)
+                    self.logger.error('Cannot add altitude. Make sure file %s is present.', self.grdTerrain)
                 except KeyError as e:
                     try:
                         # New GMT format
@@ -1290,7 +1295,12 @@ class STOQS_Loader(object):
 
             # Requires GMT (yum install GMT)
             bdepthFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_BDepth', suffix='.txt').name
-            cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+            if cmd_exists('grdtrack'):
+                cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+            else:
+                # Assume we have GMT Version 5 installed
+                cmd = "gmt grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+
             self.logger.info('Executing %s' % cmd)
             os.system(cmd)
             if self.totalRecords > 1e6:
