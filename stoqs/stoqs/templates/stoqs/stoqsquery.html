@@ -2846,7 +2846,7 @@
         }
         rcZoomed = ! rcZoomed;
     });
-
+function enable_cardboard(){
   var runtime = null;
   var rtLeft, rtRight;
   var lastW, lastH;
@@ -2876,54 +2876,51 @@
 
   function deg2rad(deg){return deg * degreeToRadiansFactor;}
 
-    document.onload = function () {
+  runtime = $('#spatial-3d-x3d-cardboard')[0].runtime;
+  rtLeft = document.getElementById('rtLeft');
+  rtRight =document.getElementById('rtRight');
+  //rtLeft._x3domNode.lensCenter = 0;
+  //rtRight._x3domNode.lensCenter = 0;
 
-    runtime = $('#spatial-3d-x3d-cardboard')[0].runtime;
-    rtLeft = document.getElementById('rtLeft');
-    rtRight =document.getElementById('rtRight');
-   //rtLeft._x3domNode.lensCenter = 0;
-   //rtRight._x3domNode.lensCenter = 0;
+  lastW = +runtime.getWidth();
+  lastH = +runtime.getWidth();
 
-    lastW = +runtime.getWidth();
-    lastH = +runtime.getWidth();
+  var hw = Math.round(lastW / 2);
+  rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
+  rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
 
-    var hw = Math.round(lastW / 2);
-    rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
-    rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
+  var element = document.getElementById("spatial-3d-x3d-cardboard");
+  CARDBOARD.viewpoint = document.getElementById('mp-x3d-geoviewpoint1');
+  CARDBOARD.viewpoint.setAttribute('set_bind','true');
+  element.runtime.exitFrame = function() {
+    // check if screensize changed
+    var w = +runtime.getWidth();
+    var h = +runtime.getHeight();
+    if (w != lastW || h != lastH)
+    {
+      var half = Math.round(w / 2);
+      rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
+      rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
+      lastW = w;
+      lastH = h;
+    }
+    //handle device orientation change
+    if(!CARDBOARD.deviceOrientation)
+      return;
+    var q0 = x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(0,0,1),-deg2rad(window.orientation)); // phone rotation offset
+    var q = new x3dom.fields.Quaternion();
+    q.setFromEulerYXZ(deg2rad(CARDBOARD.deviceOrientation.beta), deg2rad(CARDBOARD.deviceOrientation.alpha), -deg2rad( CARDBOARD.deviceOrientation.gamma));
 
-    var element = document.getElementById("spatial-3d-x3d-cardboard");
-    CARDBOARD.viewpoint = document.getElementById('mp-x3d-geoviewpoint1');
-    CARDBOARD.viewpoint.setAttribute('set_bind','true');
-    element.runtime.exitFrame = function() {
-      // check if screensize changed
-      var w = +runtime.getWidth();
-      var h = +runtime.getHeight();
-      if (w != lastW || h != lastH)
-      {
-        var half = Math.round(w / 2);
-        rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
-        rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
-        lastW = w;
-        lastH = h;
-      }
-      //handle device orientation change
-      if(!CARDBOARD.deviceOrientation)
-        return;
-      var q0 = x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(0,0,1),-deg2rad(window.orientation)); // phone rotation offset
-      var q = new x3dom.fields.Quaternion();
-      q.setFromEulerYXZ(deg2rad(CARDBOARD.deviceOrientation.beta), deg2rad(CARDBOARD.deviceOrientation.alpha), -deg2rad( CARDBOARD.deviceOrientation.gamma));
+    var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
 
-      var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
+    q = q.multiply(q1);
+    // q = q.multiply(q0);
 
-      q = q.multiply(q1);
-      // q = q.multiply(q0);
+    var aa = q.toAxisAngle();
 
-      var aa = q.toAxisAngle();
-
-      CARDBOARD.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
-    };
-  }
-
+    CARDBOARD.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+  };
+}
     function enable_vr() {
         // Follows example from http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-webvr-2.html
 
@@ -3241,12 +3238,13 @@
             $(this).html('Enter Cardboard');
      	}
         else {
-	    $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
+	        $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-x3d-cardboard #spatial-3d-left').attr('render', 'true');
             $('#spatial-3d-x3d-cardboard #spatial-3d-right').attr('render', 'true');
             $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 100');
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             $(this).html('Leave Cardboard');
+            enable_cardboard();
             var canvas = document.getElementsByTagName("canvas")[0];
             if (canvas.webkitRequestFullscreen) {
                 canvas.webkitRequestFullscreen({ vrDisplay: vrHMD });
