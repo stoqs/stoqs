@@ -73,6 +73,12 @@ then
     curl -sS https://bootstrap.pypa.io/get-pip.py | sudo /usr/local/bin/python2.7 - > /dev/null
     /usr/local/bin/pip install virtualenv
 
+    echo Put geckodriver in /usr/local/bin
+    pushd /usr/local/bin
+    wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz 
+    tar xvzf geckodriver-v0.11.1-linux64.tar.gz
+    popd
+
     yum -y install deltarpm rabbitmq-server scipy mod_wsgi memcached python-memcached
     yum -y install graphviz-devel graphviz-python ImageMagick postgis2_94
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
