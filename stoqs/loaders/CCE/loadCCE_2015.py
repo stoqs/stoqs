@@ -55,7 +55,8 @@ cl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
 # See BEDs/BEDs/Visualization/py/makeBEDNetCDF_CCE.sh
 
 cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT', 'P', 'P_ADJUSTED',
-                'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY', 'BED_DEPTH']
+                'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY', 'BED_DEPTH',
+                'DIST_TOPO']
 
 # Several BED files: 30200078 to 3020080
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
@@ -80,11 +81,12 @@ cl.bed_files = [
                 'BED06/MBCCE_BED06_20160222_Event20160901/netcdf/60200130_trajectory.nc',
                 'BED09/MBCCE_BED09_20160408_Event20160901/netcdf/90100096_trajectory.nc',
                 'BED10/MBCCE_BED10_20160408_Event20160901/netcdf/A0100096_trajectory.nc',
+                'BED00/Simulated/netcdf/BED00_SIM_rolling_trajectory.nc',
                ]
 cl.bed_platforms = ['BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05', 'BED03', 'BED04',
-                    'BED06', 'BED06', 'BED06', 'BED09', 'BED10', ]
+                    'BED06', 'BED06', 'BED06', 'BED09', 'BED10', 'BED00', ]
 cl.bed_depths = [388, 201, 521, 289.3, 413, 420, 430, 433, 308, 294,
-                 392, 405, 405, 198, 275, ]
+                 392, 405, 405, 198, 275, 145, ]
 cl.bed_framegrabs = [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3874/00_21_23_28.html',
@@ -101,6 +103,7 @@ cl.bed_framegrabs = [
                 '',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2016/vnta3922/02_55_51_27.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2016/vnta3921/02_05_37_16.html',
+                '',
                     ]
 
 # CCE BIN data
