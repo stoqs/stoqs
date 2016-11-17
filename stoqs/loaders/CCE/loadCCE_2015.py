@@ -56,7 +56,7 @@ cl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
 
 cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT', 'P', 'P_ADJUSTED',
                 'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY', 'BED_DEPTH',
-                'DIST_TOPO']
+                'DIST_TOPO', 'TUMBLE_RATE', 'TUMBLE_COUNT', 'TUMBLE_DIST', 'ROT_PLUS_TUMBLE_DIST']
 
 # Several BED files: 30200078 to 3020080
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
@@ -186,116 +186,69 @@ cl.ccems5_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_
 # Execute the load for trajectory representation
 cl.process_command_line()
 
-if cl.args.test:
+def load_cce_moorings(low_res_stride=20, high_res_stride=1,
+                      bin_low_res_stride=300, bin_high_res_stride=1):
     # MS1: Low-res
     cl.ccems1_start_datetime = datetime(2016, 1, 15)
     cl.ccems1_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems1(stride=200)
+    cl.load_ccems1(stride=low_res_stride)
 
     # High-res
     cl.ccems1_start_datetime = datetime(2016, 1, 15, 19, 0)
     cl.ccems1_end_datetime = datetime(2016, 1, 16, 0, 30)
-    cl.load_ccems1(stride=10)
+    cl.load_ccems1(stride=high_res_stride)
 
     # MS2: Low-res
     cl.ccems2_start_datetime = datetime(2016, 1, 15)
     cl.ccems2_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems2(stride=200)
+    cl.load_ccems2(stride=low_res_stride)
 
     # High-res
     cl.ccems2_start_datetime = datetime(2016, 1, 15, 21, 0)
     cl.ccems2_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems2(stride=10)
+    cl.load_ccems2(stride=high_res_stride)
 
     # MS3: Low-res
     cl.ccems3_start_datetime = datetime(2016, 1, 15)
     cl.ccems3_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems3(stride=200)
+    cl.load_ccems3(stride=low_res_stride)
 
     # High-res
     cl.ccems3_start_datetime = datetime(2016, 1, 15, 21, 0)
     cl.ccems3_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems3(stride=10)
+    cl.load_ccems3(stride=high_res_stride)
 
     # MS5: Low-res
     cl.ccems5_start_datetime = datetime(2016, 1, 15)
     cl.ccems5_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems5(stride=200)
+    cl.load_ccems5(stride=low_res_stride)
 
     # High-res
     cl.ccems5_start_datetime = datetime(2016, 1, 15, 21, 0)
     cl.ccems5_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems5(stride=10)
+    cl.load_ccems5(stride=high_res_stride)
 
     # BIN: Low-res (10 minute) five day period
     cl.ccebin_startDatetime = datetime(2016, 1, 13)
     cl.ccebin_endDatetime = datetime(2016, 1, 18)
-    cl.loadCCEBIN(stride=300)
+    cl.loadCCEBIN(stride=bin_low_res_stride)
 
     # High-res (2 second) 1-hour period
     cl.ccebin_startDatetime = datetime(2016, 1, 15, 23, 30)
     cl.ccebin_endDatetime = datetime(2016, 1, 16, 0, 30)
-    cl.loadCCEBIN(stride=1)
+    cl.loadCCEBIN(stride=bin_high_res_stride)
 
+if cl.args.test:
+    load_cce_moorings(low_res_stride=300, high_res_stride=10, bin_low_res_stride=300, bin_high_res_stride=10)
     cl.loadBEDS(stride=5, featureType='trajectory')
 
 elif cl.args.optimal_stride:
-    ##cl.loadCCEBIN(stride=1)
+    load_cce_moorings(low_res_stride=300, high_res_stride=10, bin_low_res_stride=300, bin_high_res_stride=10)
     cl.loadBEDS(stride=1, featureType='trajectory')
 
 else:
     cl.stride = cl.args.stride
-
-    # MS1: Low-res (10 minute) three day period
-    cl.ccems1_start_datetime = datetime(2016, 1, 15)
-    cl.ccems1_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems1(stride=20)
-
-    # High-res (30 second) ~1-hour period - until data end when MS1 broke loose
-    cl.ccems1_start_datetime = datetime(2016, 1, 15, 19, 0)
-    cl.ccems1_end_datetime = datetime(2016, 1, 16, 0, 30)
-    cl.load_ccems1(stride=1)
-
-    # MS2: Low-res (10 minute) three day period
-    cl.ccems2_start_datetime = datetime(2016, 1, 15)
-    cl.ccems2_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems2(stride=20)
-
-    # High-res (30 second) 5-hour period
-    cl.ccems2_start_datetime = datetime(2016, 1, 15, 21, 0)
-    cl.ccems2_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems2(stride=1)
-
-    # MS3: Low-res (10 minute) three day period
-    cl.ccems3_start_datetime = datetime(2016, 1, 15)
-    cl.ccems3_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems3(stride=20)
-
-    # High-res (30 second) 5-hour period
-    cl.ccems3_start_datetime = datetime(2016, 1, 15, 21, 0)
-    cl.ccems3_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems3(stride=1)
-
-    # MS5: Low-res
-    cl.ccems5_start_datetime = datetime(2016, 1, 15)
-    cl.ccems5_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems5(stride=20)
-
-    # High-res
-    cl.ccems5_start_datetime = datetime(2016, 1, 15, 21, 0)
-    cl.ccems5_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems5(stride=1)
-
-    # Low-res (10 minute) three day period
-    cl.ccebin_startDatetime = datetime(2016, 1, 13)
-    cl.ccebin_endDatetime = datetime(2016, 1, 18)
-    cl.loadCCEBIN(stride=300)
-
-    # High-res (2 second) 1-hour period
-    cl.ccebin_startDatetime = datetime(2016, 1, 15, 23, 30)
-    cl.ccebin_endDatetime = datetime(2016, 1, 16, 0, 30)
-    cl.loadCCEBIN()
-
+    load_cce_moorings()
     cl.loadBEDS(featureType='trajectory')
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
