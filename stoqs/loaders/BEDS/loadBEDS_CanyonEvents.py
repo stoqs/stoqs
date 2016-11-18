@@ -25,9 +25,9 @@ project_dir = os.path.dirname(__file__)
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # settings.py is one dir up
 
-from BEDS import BEDSLoader
+from CCE import CCELoader
 
-bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
+cl = CCELoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                                 description = 'Benthic Event Detector data for significant events in Monterey Canyon',
                                 x3dTerrains = { 
                                     'http://stoqs.mbari.org/terrain/MontereyCanyonBeds_1m+5m_1x_src/MontereyCanyonBeds_1m+5m_1x_src_scene.x3d': {
@@ -46,42 +46,41 @@ bl = BEDSLoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                )
 
 # Base OPeNDAP server
-bl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/beds/CanyonEvents/20130601/BED1/netcdf/'
+cl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/beds/CanyonEvents/20130601/BED1/netcdf/'
 # Copied from ProjectLibrary to Hyrax server on elvis with:
 #   rsync -r /mbari/ProjectLibrary/901006.BEDS/BEDS.Data/CanyonEvents /var/www/dods_html/data/beds
 
-##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT', 'PRESS', 'BED_DEPTH']   # For timeSeries
-##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'MX', 'MY', 'MZ', 'ROT']
-##bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT', 'ROTRATE']
-bl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROTRATE', 'ROTCOUNT', 'P']
+cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT', 'P', 'P_ADJUSTED',
+                'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY', 'BED_DEPTH',
+                'DIST_TOPO', 'TUMBLE_RATE', 'TUMBLE_COUNT', 'TUMBLE_DIST', 'ROT_PLUS_TUMBLE_DIST']
 
-bl.bed_files = ['BED01_1_June_2013.nc',
+cl.bed_files = ['BED01_1_June_2013.nc',
 ##                'bed03/30100046_partial_decimated10.nc',
                ]
-bl.bed_platforms = [ 'BED01',
+cl.bed_platforms = [ 'BED01',
 ##                     'BED03',
                    ]
 
-bl.bed_depths = [ 303,
+cl.bed_depths = [ 303,
 ##
                 ]
-bl.bed_framegrabs = [ 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2013/vnta3702/01_27_35_21.html' ]
+cl.bed_framegrabs = [ 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2013/vnta3702/01_27_35_21.html' ]
 
 # Execute the load
-bl.process_command_line()
+cl.process_command_line()
 
-if bl.args.test:
-    bl.loadBEDS(stride=10, featureType='trajectory')
+if cl.args.test:
+    cl.loadBEDS(stride=10, featureType='trajectory')
 
-elif bl.args.optimal_stride:
-    bl.loadBEDS(stride=1, featureType='trajectory')
+elif cl.args.optimal_stride:
+    cl.loadBEDS(stride=1, featureType='trajectory')
 
 else:
-    bl.stride = bl.args.stride
-    bl.loadBEDS(featureType='trajectory')
+    cl.stride = cl.args.stride
+    cl.loadBEDS(featureType='trajectory')
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
-bl.addTerrainResources()
+cl.addTerrainResources()
 
 print "All Done."
 
