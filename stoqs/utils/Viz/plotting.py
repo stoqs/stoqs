@@ -455,7 +455,7 @@ class MeasuredParameter(BaseParameter):
         return clt.colors[indx]
 
 
-    def renderDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=True):
+    def renderDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False):
         '''
         Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
         3 tuple of (sectionPngFile, colorbarPngFile, errorMessage)
@@ -543,7 +543,6 @@ class MeasuredParameter(BaseParameter):
             except ZeroDivisionError as e:
                 self.logger.warn(e)
                 self.logger.debug('Not setting self.scale_factor.  Scatter plots will still work.')
-                contourFlag = False
             else:                
                 self.logger.debug('self.scale_factor = %f', self.scale_factor)
                 xi = xi / self.scale_factor
@@ -557,15 +556,10 @@ class MeasuredParameter(BaseParameter):
             if not self.x and not self.y and not self.z:
                 self.loadData()
 
-            self.logger.debug('self.kwargs = %s', self.kwargs)
-            if 'parametervalues' in self.kwargs:
-                if self.kwargs['parametervalues']:
-                    contourFlag = False
-          
             if 'showdataas' in self.kwargs:
                 if self.kwargs['showdataas']:
-                    if self.kwargs['showdataas'][0] == 'scatter':
-                        contourFlag = False
+                    if self.kwargs['showdataas'][0] == 'contour':
+                        contourFlag = True
           
             self.logger.debug('Number of x, y, z data values retrieved from database = %d', len(self.z)) 
             if len(self.z) == 0:
