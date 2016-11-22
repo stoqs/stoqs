@@ -35,7 +35,8 @@ class BrowserTestCase(TestCase):
     '''Use selenium to test things in the browser'''
 
     def setUp(self):
-        self.browser = webdriver.Firefox()
+        profile = webdriver.FirefoxProfile()
+        self.browser = webdriver.Firefox(profile)
         self.browser.set_window_size(1200, 768)
         self.browser.set_window_position(300, 0)
         self.browser.implicitly_wait(10)
