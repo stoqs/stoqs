@@ -2914,7 +2914,7 @@ function enable_cardboard(){
     var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
 
     q = q.multiply(q1);
-    // q = q.multiply(q0);
+    q = q.multiply(q0);
 
     var aa = q.toAxisAngle();
 
