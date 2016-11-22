@@ -257,7 +257,7 @@
                                                         <em>Navigation speed: +/-</em><br>
                                                         <em>Reset viewpoint: R</em><br>
                                                         </ul>
-                                                        Experimental:<a id="geo-cardboard-button" class="btn btn-mini cardboard-button">Enter Cardboard</a> <a id="geo-rift-button" class="btn btn-mini rift-button">Enter Rift</a>
+                                                        Experimental:<a id="geo-zoom-lc-button" class="btn btn-mini zoom-lc-button  cardboard-button">Enter Cardboard</a> <a id="geo-rift-button" class="btn btn-mini rift-button">Enter Rift</a>
                                                     </div>
                                             </div>
                                             <div id="collapseContols3D" class="accordion-body in">
@@ -3246,13 +3246,7 @@ function enable_cardboard(){
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             $(this).html('Leave Cardboard');
             enable_cardboard();
-            var canvas = document.getElementsByTagName("canvas")[0];
-            if (canvas.webkitRequestFullscreen) {
-                canvas.webkitRequestFullscreen({ vrDisplay: vrHMD });
-            } 
-            else if (canvas.mozRequestFullScreen) {
-                canvas.mozRequestFullScreen({ vrDisplay: vrHMD });
-            }
+            $(".container-fluid,.accordion-inner").css("padding","0px");
         }
         cardboarded =! cardboarded;
      });
