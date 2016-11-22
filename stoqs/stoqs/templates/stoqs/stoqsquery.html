@@ -3237,10 +3237,8 @@ function enable_cardboard(){
             $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
             $(this).html('Enter Cardboard');
             $('#mp-x3d-geoviewpoint1').attr("set_bind", "false");
-            // Remove padding for full VR experience
-+           $('#left-column').parent().parent().css( { 'padding': '0px' } );
-+           $('#accordion1').css( { 'padding': '0px' } );
-+           $('#collapseSpatial > div').css( { 'padding': '0px' } );
+            $(".accordion-inner").css("padding","9px 15px");
+            $(".container-fluid").css("padding","0px 20px");            
      	}
         else {
 	    $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
@@ -3250,7 +3248,10 @@ function enable_cardboard(){
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             $(this).html('Leave Cardboard');
             enable_cardboard();
-            $(".container-fluid,.accordion-inner").css("padding","0px");
+            // Remove padding for full VR experience
+            $('#left-column').parent().parent().css( { 'padding': '0px' } );
+            $('#accordion1').css( { 'padding': '0px' } );
+            $('#collapseSpatial > div').css( { 'padding': '0px' } );
         }
         cardboarded =! cardboarded;
      });
