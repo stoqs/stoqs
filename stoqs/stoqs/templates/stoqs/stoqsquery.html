@@ -2737,7 +2737,7 @@
     });
     
     
-    $(".zoom-lc-button").click(function(element) {
+    $(".zoom-lc-button, .cardboard-button").click(function(element) {
         if (lcZoomed) {
             if ($('.stoqs-zoom-width').hasClass('span12')) {
                 $('.stoqs-zoom-width').removeClass('span12');
@@ -2761,7 +2761,7 @@
                                                         'position': ''
                                                       } );
             }
-            if (this.id == 'geo-zoom-lc-button') {
+            if (this.id == 'geo-zoom-lc-button' || this.id == 'geo-cardboard-button') {
                 $('#parameter-parameter-group').children().show();
                 $('#spatial-anchor').parent().show();
                 $('#spatialTabs').show();
@@ -2794,7 +2794,7 @@
                                                         'position': 'fixed'
                                                       });
             }
-            if (this.id == 'geo-zoom-lc-button') {
+            if (this.id == 'geo-zoom-lc-button' || this.id == 'geo-cardboard-button') {
                 $('#parameter-parameter-group').children().hide();
                 $('#spatial-anchor').parent().hide();
                 $('#spatialTabs').hide();
@@ -3237,8 +3237,11 @@ function enable_cardboard(){
             $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
             $(this).html('Enter Cardboard');
             $('#mp-x3d-geoviewpoint1').attr("set_bind", "false");
-            $(".accordion-inner").css("padding","9px 15px");
-            $(".container-fluid").css("padding","0px 20px");            
+            $('#spatial-3d-x3d-cardboard')[0].runtime.exitFrame = function() {}
+            // Reset padding to its initial padding
+            $('#left-column').parent().parent().css( { 'padding': '0px 20px' } );
+            $('#accordion1').css( { 'padding': '19px' } );
+            $('#collapseSpatial > div').css( { 'padding': '9px 15px' } ); 
      	}
         else {
 	    $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
