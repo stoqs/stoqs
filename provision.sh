@@ -31,7 +31,7 @@ fi
 cd /home/$USER
 mkdir Downloads && cd Downloads
 
-# OS specific provisioning
+# Initial package installs needed for building packages from source
 # TODO: Add stanza for other OSes, e.g. 'ubuntu'
 if [ $OS = 'centos7' ]
 then
@@ -53,12 +53,10 @@ then
     rpm -Uvh remi-release-7*.rpm epel-release-7*.rpm
     curl -L -sS -O http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
     rpm -ivh pgdg*
-    yum -y install postgresql94-server
-    yum -y groupinstall "PostgreSQL Database Server 9.4 PGDG"
+    yum groupinstall -y development
 
     echo Install Python 2.7 and its support tools pip and virtalenv
-    yum groupinstall -y development
-    yum install -y zlib-devel openssl-devel sqlite-devel bzip2-devel xz-libs firefox
+    yum install -y zlib-devel openssl-devel sqlite-devel bzip2-devel xz-libs
     wget -q -N http://www.python.org/ftp/python/2.7.9/Python-2.7.9.tar.xz
     xz -d -c Python-2.7.9.tar.xz | tar -xvf -
     cd Python-2.7.9
@@ -73,6 +71,44 @@ then
     curl -sS https://bootstrap.pypa.io/get-pip.py | sudo /usr/local/bin/python2.7 - > /dev/null
     /usr/local/bin/pip install virtualenv
 
+    echo Install package prerequisites for NetCDF4
+    yum -y install curl-devel hdf5 hdf5-devel
+fi
+
+echo Build and install geos
+cat ' /usr/local/lib' >> /etc/ld.so.conf
+wget -q -N http://download.osgeo.org/geos/geos-3.6.0.tar.bz2
+tar -xjf geos-3.6.0.tar.bz2
+cd geos-3.6.0
+./configure
+make -j 2 && make install
+ldconfig
+cd ..
+
+echo Build and install NetCDF4
+wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.4.1.tar.gz
+tar -xzf netcdf-4.4.1.tar.gz
+cd netcdf-4.4.1
+./configure --enable-hl --enable-shared
+make -j 2 && sudo make install
+cd ..
+
+echo Build and install gdal
+wget -q -N http://download.osgeo.org/gdal/2.1.2/gdal-2.1.2.tar.gz        
+tar xzf gdal-2.1.2.tar.gz
+cd gdal-2.1.2
+export PATH=$(pwd):$PATH
+./configure
+gmake -j 2 && gmake install
+cp apps/gdal-config /usr/local/bin
+cd ..
+
+# TODO: Add stanza for other OSes, e.g. 'ubuntu'
+if [ $OS = 'centos7' ]
+then
+    yum -y install postgresql94-server
+    yum -y groupinstall "PostgreSQL Database Server 9.4 PGDG"
+
     echo Put geckodriver in /usr/local/bin
     pushd /usr/local/bin
     wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz 
@@ -82,31 +118,33 @@ then
     yum -y install deltarpm rabbitmq-server scipy mod_wsgi memcached python-memcached
     yum -y install graphviz-devel graphviz-python ImageMagick postgis2_94
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
-    yum -y install proj-nad proj-epsg curl-devel libxml2-devel libxslt-devel pam-devel readline-devel
-    yum -y install python-psycopg2 libpqxx-devel geos geos-devel hdf hdf-devel freetds-devel postgresql-devel
-    yum -y install gdal gdal-python gdal-devel mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
-    yum -y install scipy blas blas-devel lapack lapack-devel GMT lvm2
+    yum -y install proj-nad proj-epsg libxml2-devel libxslt-devel pam-devel readline-devel
+    yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel
+    yum -y install gdal-python mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
+    yum -y install scipy blas blas-devel lapack lapack-devel lvm2 firefox
     yum -y groups install "GNOME Desktop"
 fi
 
-# Commands that work on any *nix
+# Configure and make (using 2 cpus) additional packages
 
 echo Download and install CMake
-wget -q -N http://www.cmake.org/files/v2.8/cmake-2.8.3.tar.gz
-tar xzf cmake-2.8.3.tar.gz
-cd cmake-2.8.3
+wget -q -N http://www.cmake.org/files/v2.8/cmake-2.8.12.2.tar.gz
+tar xzf cmake-2.8.12.2.tar.gz
+cd cmake-2.8.12.2
 ./configure --prefix=/opt/cmake
-gmake && gmake install
+gmake -j 2 && gmake install
 cd ..
 
-echo Build and install gdal
-wget -q -N http://download.osgeo.org/gdal/2.1.0/gdal-2.1.0.tar.gz        
-tar xzf gdal-2.1.0.tar.gz
-cd gdal-2.1.0
-export PATH=$(pwd):$PATH
-./configure --with-python
-gmake && gmake install
-cd ..
+echo Build and install GMT
+wget -q -N ftp://ftp.iris.washington.edu/pub/gmt/gmt-5.3.1-src.tar.gz
+tar xzf gmt-5.3.1-src.tar.gz
+cd gmt-5.3.1
+cp cmake/ConfigUserTemplate.cmake cmake/ConfigUser.cmake
+mkdir build
+cd build
+/opt/cmake/bin/cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+make -j 2 && make install
+cd ../..
 
 echo Build and install Mapserver
 wget -q -N http://download.osgeo.org/mapserver/mapserver-6.4.1.tar.gz
@@ -115,9 +153,8 @@ cd mapserver-6.4.1
 mkdir build
 cd build
 /opt/cmake/bin/cmake .. -DWITH_FRIBIDI=0 -DWITH_CAIRO=0 -DWITH_FCGI=0 -DCMAKE_PREFIX_PATH="/usr/local;/usr/pgsql-9.4"
-make && make install
+make -j 2 && make install
 cp /usr/local/bin/mapserv /var/www/cgi-bin
-echo "/etc/ld.so.conf.d/mapserver.conf" > /etc/ld.so.conf.d/mapserver.conf
 ldconfig
 cp /etc/sysconfig/httpd /etc/sysconfig/httpd.bak
 cat <<EOT >> /etc/sysconfig/httpd
@@ -130,29 +167,15 @@ touch /tmp/mapserver_stoqshg.log
 chown apache.apache /tmp/mapserver_stoqshg.log
 sudo chmod go+w /tmp/mapserver_stoqshg.log
 
-# Required to install the netCDF4 python module
-echo "Need to sudo to install hdf5 packages..."
-sudo yum -y install hdf5 hdf5-devel
-if [ $? -ne 0 ] ; then
-    echo "Exiting $0"
-    exit 1
-fi
-
-# Required to install the netCDF4 python module
-wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.3.3.tar.gz
-tar -xzf netcdf-4.3.3.tar.gz
-cd netcdf-4.3.3
-./configure --enable-hl --enable-shared
-make; sudo make install
-cd ..
 
 # Required for plotting basemap in LRAUV plots
+echo Build and install Basemap
 wget 'http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz'
 tar -xzf basemap-1.0.7.tar.gz
 cd basemap-1.0.7/geos-3.3.3
 export GEOS_DIR=/usr/local
-./configure --prefix=/usr/local
-make; sudo make install
+./configure --prefix=$GEOS_DIR
+make && sudo make install
 cd ..
 python setup.py install
 cd ..
@@ -223,9 +246,9 @@ cat <<EOT > .vimrc
 EOT
 
 echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git... 
-echo "(See CONTRIBUTING.md for how to clone from your fork so that you can share your contributions.)"
+echo ">>> See CONTRIBUTING.md for how to configure your development system so that you can contribute to STOQS"
 mkdir dev && cd dev
-git clone https://github.com/stoqs/stoqs.git stoqsgit
+git clone --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
 export PATH="/usr/local/bin:$PATH"
 virtualenv venv-stoqs
