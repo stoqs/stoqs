@@ -230,7 +230,7 @@ cd stoqsgit
 export PATH="/usr/local/bin:$PATH"
 virtualenv venv-stoqs
 
-echo Installing Pyhton modules for a development system
+echo Installing Python modules for a development system
 source venv-stoqs/bin/activate
 ./setup.sh
 
