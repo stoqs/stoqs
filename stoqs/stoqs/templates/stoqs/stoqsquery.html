@@ -257,7 +257,7 @@
                                                         <em>Navigation speed: +/-</em><br>
                                                         <em>Reset viewpoint: R</em><br>
                                                         </ul>
-                                                        Experimental:<a id="geo-cardboard-button" class="btn btn-mini cardboard-button">Enter Cardboard</a> <a id="geo-rift-button" class="btn btn-mini rift-button">Enter Rift</a>
+                                                        Experimental:<a id="geo-cardboard-button" class="btn btn-mini zoom-lc-button  cardboard-button">Enter Cardboard</a> <a id="geo-rift-button" class="btn btn-mini rift-button">Enter Rift</a>
                                                     </div>
                                             </div>
                                             <div id="collapseContols3D" class="accordion-body in">
@@ -314,7 +314,7 @@
                                         </div> <!-- geo-3dplot-control -->
                                         <div style="height:100%;">
 <!-- Elements for Google Cardboard -->
-    <X3D id="spatial-3d-x3d-cardboard" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)"> 
+    <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)"> 
       <scene>
         <Environment frustumCulling="false"></Environment>
         <navigationInfo></navigationInfo>
@@ -420,164 +420,6 @@
         </scene>
       </X3D>
     <!-- End of Cardboard Elements -->
-
-                                        <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)"> 
-                                            <Scene>
-                                                <Environment frustumCulling="false"></Environment>
-                                                <NavigationInfo></NavigationInfo>
-                                                <Viewpoint id="mp-x3d-viewpoint1" def="vp" onviewpointChanged="setScale(event)"></Viewpoint>
-                                                <!-- Test GeoViewpoint for Monterey Bay area, user must page-down to bind to it -->
-                                                <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0">
-                                                </GeoViewpoint>
-                                                <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
-                                                <Group id='spatial-3d-root' render='true'>
-                                                    <Group id='spatial-3d-scene' def="spatial-3d-scene">
-                                                        <GeoOriginTransform containerField='children'>
-                                                            <Group id="mp-x3d-terrain">
-                                                            </Group>
-                                                        </GeoOriginTransform>
-                                                        <Group id="platform-animations"></Group>
-                                                        <Group id="platform-models"></Group>
-                                                    </Group>
-                                                </Group>
-
-        <!-- Elements for Rift - Orientations routed to GeoViewpoint, so must page down to that Viewpoint -->
-        <group id='spatial-3d-left' DEF='left' render='false'>
-            <shape>
-                <appearance>
-                    <renderedTexture id="rtLeft" stereoMode="LEFT_EYE" update='ALWAYS'
-                                     dimensions='640 800 4' repeatS='false' repeatT='false'>
-                        <!--<viewpoint USE='vp' containerField='viewpoint'></viewpoint>-->
-                        <geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>
-                        <background USE='bgnd' containerField='background'></background>
-                        <!--group USE='left' containerField="excludeNodes"></group-->
-                        <group USE='spatial-3d-scene' containerField="scene"></group>
-                    </renderedTexture>
-
-                    <composedShader>
-                        <field name='tex' type='SFInt32' value='0'></field>
-                        <field name='leftEye' type='SFFloat' value='1'></field>
-                        <shaderPart type='VERTEX'>
-                            attribute vec3 position;
-                            attribute vec2 texcoord;
-
-                            uniform mat4 modelViewProjectionMatrix;
-                            varying vec2 fragTexCoord;
-
-                            void main()
-                            {
-                                vec2 pos = sign(position.xy);
-                                fragTexCoord = texcoord;
-
-                                gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0);
-                                //gl_Position = vec4(pos.xy / 4.0 + vec2(-0.75,0.75), 0.0, 1.0);
-                            }
-                        </shaderPart>
-                        <shaderPart DEF="frag" type='FRAGMENT'>
-                            #ifdef GL_ES
-                            precision highp float;
-                            #endif
-
-                            uniform sampler2D tex;
-                            uniform float leftEye;
-                            varying vec2 fragTexCoord;
-
-                            void main()
-                            {
-                                float distortionScale = 0.7; //0.685;
-                                //float distortionK[4] = float[](1.0, 0.22, 0.24, 0.0);
-                                vec2 lensCenter = vec2(0.151976495726, 0.0);
-                                if (leftEye == 0.0) {
-                                    lensCenter.x *= -1.0;
-                                }
-
-                                vec2 theta = (fragTexCoord * 2.0) - 1.0;
-                                float rSq = theta.x * theta.x + theta.y * theta.y;
-                                vec2 rvec = theta * (1.0 + 0.22 * rSq + 0.24 * rSq * rSq); //+ 0.0 * rSq * rSq * rSq);
-                                vec2 texCoord = (distortionScale*rvec+(1.0-distortionScale)*lensCenter + 1.0) / 2.0;
-
-                                if (any(notEqual(clamp(texCoord, vec2(0.0, 0.0), vec2(1.0, 1.0)) - texCoord,
-                                                       vec2(0.0, 0.0)))) {
-                                    //if (leftEye == 0.0) gl_FragColor = vec4(1.0,1.0,0.0,1.0);
-                                    //else gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-                                    discard;
-                                }
-                                else {
-                                    vec3 col = texture2D(tex, texCoord).rgb;
-                                    gl_FragColor = vec4(col, 1.0);
-                                }
-                                //gl_FragColor = texture2D(tex, fragTexCoord);
-                            }
-                        </shaderPart>
-                    </composedShader>
-
-                </appearance>
-                <plane solid="false"></plane>
-            </shape>
-        </group>
-
-        <group id='spatial-3d-right' DEF='right' render='false'>
-            <shape>
-                <appearance>
-                    <renderedTexture id="rtRight" stereoMode="RIGHT_EYE" update='ALWAYS'
-                                     dimensions='640 800 4' repeatS='false' repeatT='false'>
-                        <!--<viewpoint USE='vp' containerField='viewpoint'></viewpoint>-->
-                        <geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>
-                        <background USE='bgnd' containerField='background'></background>
-                        <group USE='spatial-3d-scene' containerField="scene"></group>
-                    </renderedTexture>
-                    <composedShader>
-                        <field name='tex' type='SFInt32' value='0'></field>
-                        <field name='leftEye' type='SFFloat' value='0'></field>
-                        <shaderPart type='VERTEX'>
-                            attribute vec3 position;
-                            attribute vec2 texcoord;
-
-                            uniform mat4 modelViewProjectionMatrix;
-                            varying vec2 fragTexCoord;
-
-                            void main()
-                            {
-                                vec2 pos = sign(position.xy);
-                                fragTexCoord = texcoord;
-
-                                gl_Position = vec4((pos.x + 1.0) / 2.0, pos.y, 0.0, 1.0);
-                            }
-                        </shaderPart>
-                        <shaderPart USE="frag" type='FRAGMENT'>
-                        </shaderPart>
-                    </composedShader>
-                </appearance>
-                <plane solid="false"></plane>
-            </shape>
-        </group>
-
-                <!-- Elements for Leap Motion -->
-                <transform id="handtrafo1" translation="3.8 1.00905 -5.97228">
-                    <transform id="handtrafo" scale="0.0015 0.0015 0.0015" translation="0.1 -0.3 -0.5">
-                        <transform id="hand">
-                            <transform>
-                                <transform>
-                                    <transform>
-                                        <transform scale="40 10 40" center="0 0 -2">
-                                            <shape>
-                                                <appearance>
-                                                    <material diffuseColor="0.603 0.894 0.909"></material>
-                                                </appearance>
-                                                <box></box>
-                                            </shape>
-                                        </transform>
-                                    </transform>
-                                </transform>
-                            </transform>
-
-                            <transform id="bones"></transform>
-                        </transform>
-                    </transform>
-                </transform>
-
-                                            </Scene>
-                                        </X3D>
                                         </div>
                                     </div>
                                 </div>
@@ -2737,7 +2579,7 @@
     });
     
     
-    $(".zoom-lc-button").click(function(element) {
+    $(".zoom-lc-button, .cardboard-button").click(function(element) {
         if (lcZoomed) {
             if ($('.stoqs-zoom-width').hasClass('span12')) {
                 $('.stoqs-zoom-width').removeClass('span12');
@@ -2761,7 +2603,7 @@
                                                         'position': ''
                                                       } );
             }
-            if (this.id == 'geo-zoom-lc-button') {
+            if (this.id == 'geo-zoom-lc-button' || this.id == 'geo-cardboard-button') {
                 $('#parameter-parameter-group').children().show();
                 $('#spatial-anchor').parent().show();
                 $('#spatialTabs').show();
@@ -2794,7 +2636,7 @@
                                                         'position': 'fixed'
                                                       });
             }
-            if (this.id == 'geo-zoom-lc-button') {
+            if (this.id == 'geo-zoom-lc-button' || this.id == 'geo-cardboard-button') {
                 $('#parameter-parameter-group').children().hide();
                 $('#spatial-anchor').parent().hide();
                 $('#spatialTabs').hide();
@@ -2846,7 +2688,7 @@
         }
         rcZoomed = ! rcZoomed;
     });
-
+function enable_cardboard(){
   var runtime = null;
   var rtLeft, rtRight;
   var lastW, lastH;
@@ -2876,54 +2718,51 @@
 
   function deg2rad(deg){return deg * degreeToRadiansFactor;}
 
-    document.onload = function () {
+  runtime = $('#spatial-3d-x3d')[0].runtime;
+  rtLeft = document.getElementById('rtLeft');
+  rtRight =document.getElementById('rtRight');
+  //rtLeft._x3domNode.lensCenter = 0;
+  //rtRight._x3domNode.lensCenter = 0;
 
-    runtime = $('#spatial-3d-x3d-cardboard')[0].runtime;
-    rtLeft = document.getElementById('rtLeft');
-    rtRight =document.getElementById('rtRight');
-   //rtLeft._x3domNode.lensCenter = 0;
-   //rtRight._x3domNode.lensCenter = 0;
+  lastW = +runtime.getWidth();
+  lastH = +runtime.getWidth();
 
-    lastW = +runtime.getWidth();
-    lastH = +runtime.getWidth();
+  var hw = Math.round(lastW / 2);
+  rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
+  rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
 
-    var hw = Math.round(lastW / 2);
-    rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
-    rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
+  var element = document.getElementById("spatial-3d-x3d");
+  CARDBOARD.viewpoint = document.getElementById('mp-x3d-geoviewpoint1');
+  CARDBOARD.viewpoint.setAttribute('set_bind','true');
+  element.runtime.exitFrame = function() {
+    // check if screensize changed
+    var w = +runtime.getWidth();
+    var h = +runtime.getHeight();
+    if (w != lastW || h != lastH)
+    {
+      var half = Math.round(w / 2);
+      rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
+      rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
+      lastW = w;
+      lastH = h;
+    }
+    //handle device orientation change
+    if(!CARDBOARD.deviceOrientation)
+      return;
+    var q0 = x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(0,0,1),-deg2rad(window.orientation)); // phone rotation offset
+    var q = new x3dom.fields.Quaternion();
+    q.setFromEulerYXZ(deg2rad(CARDBOARD.deviceOrientation.beta), deg2rad(CARDBOARD.deviceOrientation.alpha), -deg2rad( CARDBOARD.deviceOrientation.gamma));
 
-    var element = document.getElementById("spatial-3d-x3d-cardboard");
-    CARDBOARD.viewpoint = document.getElementById('mp-x3d-geoviewpoint1');
-    CARDBOARD.viewpoint.setAttribute('set_bind','true');
-    element.runtime.exitFrame = function() {
-      // check if screensize changed
-      var w = +runtime.getWidth();
-      var h = +runtime.getHeight();
-      if (w != lastW || h != lastH)
-      {
-        var half = Math.round(w / 2);
-        rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
-        rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
-        lastW = w;
-        lastH = h;
-      }
-      //handle device orientation change
-      if(!CARDBOARD.deviceOrientation)
-        return;
-      var q0 = x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(0,0,1),-deg2rad(window.orientation)); // phone rotation offset
-      var q = new x3dom.fields.Quaternion();
-      q.setFromEulerYXZ(deg2rad(CARDBOARD.deviceOrientation.beta), deg2rad(CARDBOARD.deviceOrientation.alpha), -deg2rad( CARDBOARD.deviceOrientation.gamma));
+    var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
 
-      var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
+    q = q.multiply(q1);
+    q = q.multiply(q0);
 
-      q = q.multiply(q1);
-      // q = q.multiply(q0);
+    var aa = q.toAxisAngle();
 
-      var aa = q.toAxisAngle();
-
-      CARDBOARD.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
-    };
-  }
-
+    CARDBOARD.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+  };
+}
     function enable_vr() {
         // Follows example from http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-webvr-2.html
 
@@ -3233,27 +3072,31 @@
 
     $(".cardboard-button").click(function(element) {
         if(cardboarded){
-            $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
-            $('#spatial-3d-x3d-cardboard #spatial-3d-left').attr('render', 'false');
-            $('#spatial-3d-x3d-cardboard #spatial-3d-right').attr('render','false');
+            $('#spatial-3d-x3d #spatial-3d-root').attr('render', 'true');
+            $('#spatial-3d-x3d #spatial-3d-left').attr('render', 'false');
+            $('#spatial-3d-x3d #spatial-3d-right').attr('render','false');
             $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 1000');
             $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
             $(this).html('Enter Cardboard');
+            $('#mp-x3d-geoviewpoint1').attr("set_bind", "false");
+            $('#spatial-3d-x3d')[0].runtime.exitFrame = function() {}
+            // Reset padding to its initial padding
+            $('#left-column').parent().parent().css( { 'padding': '0px 20px' } );
+            $('#accordion1').css( { 'padding': '19px' } );
+            $('#collapseSpatial > div').css( { 'padding': '9px 15px' } ); 
      	}
         else {
-	    $('#spatial-3d-x3d-cardboard #spatial-3d-root').attr('render', 'true');
-            $('#spatial-3d-x3d-cardboard #spatial-3d-left').attr('render', 'true');
-            $('#spatial-3d-x3d-cardboard #spatial-3d-right').attr('render', 'true');
+	    $('#spatial-3d-x3d #spatial-3d-root').attr('render', 'true');
+            $('#spatial-3d-x3d #spatial-3d-left').attr('render', 'true');
+            $('#spatial-3d-x3d #spatial-3d-right').attr('render', 'true');
             $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 100');
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             $(this).html('Leave Cardboard');
-            var canvas = document.getElementsByTagName("canvas")[0];
-            if (canvas.webkitRequestFullscreen) {
-                canvas.webkitRequestFullscreen({ vrDisplay: vrHMD });
-            } 
-            else if (canvas.mozRequestFullScreen) {
-                canvas.mozRequestFullScreen({ vrDisplay: vrHMD });
-            }
+            enable_cardboard();
+            // Remove padding for full VR experience
+            $('#left-column').parent().parent().css( { 'padding': '0px' } );
+            $('#accordion1').css( { 'padding': '0px' } );
+            $('#collapseSpatial > div').css( { 'padding': '0px' } );
         }
         cardboarded =! cardboarded;
      });
