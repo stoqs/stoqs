@@ -53,7 +53,7 @@ then
     rpm -Uvh remi-release-7*.rpm epel-release-7*.rpm
     curl -L -sS -O http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
     rpm -ivh pgdg*
-    yum groupinstall -y development
+    yum groupinstall -y "Development Tools"
 
     echo Install Python 2.7 and its support tools pip and virtalenv
     yum install -y zlib-devel openssl-devel sqlite-devel bzip2-devel xz-libs
