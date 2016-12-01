@@ -7,6 +7,9 @@ Vagrant.configure("2") do |config|
     v.customize ["modifyvm", :id, "--cpus", "2"]
     v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+    v.customize ["modifyvm", :id, "--ioapic", "on"]
+    v.customize ["modifyvm", :id, "--vram", "16"]
+    v.customize ["modifyvm", :id, "--accelerate3d", "on"]
   end
   config.vm.box = "puppetlabs/centos-7.0-64-puppet"
   config.ssh.forward_agent = true

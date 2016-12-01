@@ -20,6 +20,7 @@ commands:
 
     curl "https://raw.githubusercontent.com/stoqs/stoqs/master/Vagrantfile" -o Vagrantfile
     curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
+    vagrant plugin install vagrant-vbguest
     vagrant up --provider virtualbox
 
 The `vagrant up` command takes a few hours to provision and setup a complete CentOS 7 
