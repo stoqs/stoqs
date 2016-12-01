@@ -302,7 +302,7 @@ chown -R $USER /home/$USER
 
 echo Provisioning and setup have finished. 
 echo Default database loading and STOQS software tests should be run with:
-echo (These commands are also found in ~/dev/stoqsgit/README.md)
+echo "(These commands are also found in ~/dev/stoqsgit/README.md)"
 echo ---------------------------------------------------------------------
 echo vagrant ssh -- -X
 echo "cd ~/dev/stoqsgit && source venv-stoqs/bin/activate"
