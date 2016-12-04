@@ -1473,6 +1473,10 @@ table .span12 {
 .icon-resize-small {
   background-position: -384px -96px;
 }
+.icon-cardboard-full{
+  background-position: -478px 2px;
+  width: 20px;
+}
 .icon-plus {
   background-position: -408px -96px;
 }
