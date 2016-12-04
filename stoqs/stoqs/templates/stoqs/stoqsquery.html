@@ -238,7 +238,7 @@
                                                     <h2>
                                                         <a id="controls-3d" class="accordion-toggle btn-mini" data-toggle="collapse" href="#collapseContols3D" title="Show/Hide Controls" style="padding:0px;color:black;display:inline;"><i class="icon-th-list"></i></a>
                                                         <a id="nav-instr-3d" class="accordion-toggle btn-mini" data-toggle="collapse" href="#navInstr3D" title="Show cheat sheet" style="padding:0px;color:black;display:inline;"><i class="icon-info-sign"></i></a>
-                                                        <a id="geo-cardboard-button" class="btn-mini zoom-lc-button cardboard-icon" style="padding:0px;"><i class="icon-cardboard-full" title="Cardboard"></i></a>
+                                                        <a id="geo-cardboard-button" class="btn-mini zoom-lc-button cardboard-button" style="padding:0px;"><i class="icon-cardboard-full" title="Cardboard"></i></a>
                                                         <a id="geo-zoom-lc-button" class="btn-mini zoom-lc-button" style="padding:0px;"><i class="icon-resize-full" title="Full Screen"></i></a>
                                                     </h2>
                                                     </div>
@@ -258,7 +258,9 @@
                                                         <em>Navigation speed: +/-</em><br>
                                                         <em>Reset viewpoint: R</em><br>
                                                         </ul>
-                                                        Experimental:<a id="geo-cardboard-button" class="btn btn-mini zoom-lc-button  cardboard-button">Enter Cardboard</a> <a id="geo-rift-button" class="btn btn-mini rift-button">Enter Rift</a>
+                                                        The <i class="icon-cardboard-full"></i> button is known to work on iPhone and Android with Firefox.
+                                                        <br>
+                                                        Experimental: <a id="geo-rift-button" class="btn btn-mini rift-button">Enter Rift</a>
                                                     </div>
                                             </div>
                                             <div id="collapseContols3D" class="accordion-body in">
@@ -3071,17 +3073,12 @@ function enable_cardboard(){
     }
 
 
-    $(".cardboard-button,.cardboard-icon").click(function(element) {
+    $(".cardboard-button").click(function(element) {
         if(cardboarded){
             $('#spatial-3d-x3d #spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-x3d #spatial-3d-left').attr('render', 'false');
             $('#spatial-3d-x3d #spatial-3d-right').attr('render','false');
-            if((!$(this).hasClass("cardboard-icon"))){
-                $(this).html('Enter Cardboard');
-            }
-            else {
-                $(this).html('<i class="icon-cardboard-full" title="Full Screen"></i>');
-            }
+            $(this).html('<i class="icon-cardboard-full" title="Cardboard"></i>');
             $('#mp-x3d-geoviewpoint1').attr("set_bind", "false");
             $('#spatial-3d-x3d')[0].runtime.exitFrame = function() {}
             // Reset padding to its initial padding
@@ -3095,12 +3092,7 @@ function enable_cardboard(){
             $('#spatial-3d-x3d #spatial-3d-right').attr('render', 'true');
             $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' ' + $('body').data()['extent'][3]);
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
-            if((!$(this).hasClass("cardboard-icon"))){   
-                $(this).html('Leave Cardboard');
-            }
-            else {
-                $(this).html('<i class="icon-cardboard-full" title="Full Screen"></i>');
-            }
+            $(this).html('<i class="icon-cardboard-full" title="Normal"></i>');
             // Collapse any opened 3D control panels
             if ( $('#collapseContols3D').hasClass('in') ) {
                 $('#controls-3d').click();
