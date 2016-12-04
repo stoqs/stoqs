@@ -2001,9 +2001,11 @@ class STOQSQManager(object):
             except:
                 logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
 
-            # Compute midpoint of extent for use in GeoViewpoint for Oculus Rift viewpoint setting
+            # Compute midpoint of extent for use in GeoViewpoint for Virtual Reality (WebVR) viewpoint setting
             lon_midpoint = (extent[0][0] + extent[1][0]) / 2.0
             lat_midpoint = (extent[0][1] + extent[1][1]) / 2.0
+            qs = self.qs.aggregate(Max('maxdepth'), Min('mindepth'))
+            depth_midpoint = (qs['mindepth__min'] + qs['maxdepth__max']) / 2.0
 
             try:
                 extent.transform(outputSRID)
@@ -2012,5 +2014,5 @@ class STOQSQManager(object):
         
             logger.debug('Returning from getExtent() with extent = %s', extent)
 
-        return (extent, lon_midpoint, lat_midpoint)
+        return (extent, lon_midpoint, lat_midpoint, depth_midpoint)
 
