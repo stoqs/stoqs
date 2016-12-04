@@ -3076,8 +3076,6 @@ function enable_cardboard(){
             $('#spatial-3d-x3d #spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-x3d #spatial-3d-left').attr('render', 'false');
             $('#spatial-3d-x3d #spatial-3d-right').attr('render','false');
-            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 1000');
-            $('#mp-x3d-geoviewpoint1').attr('orientation', '1 0 0 -1.57');
             if((!$(this).hasClass("cardboard-icon"))){
                 $(this).html('Enter Cardboard');
             }
@@ -3095,7 +3093,7 @@ function enable_cardboard(){
 	    $('#spatial-3d-x3d #spatial-3d-root').attr('render', 'true');
             $('#spatial-3d-x3d #spatial-3d-left').attr('render', 'true');
             $('#spatial-3d-x3d #spatial-3d-right').attr('render', 'true');
-            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' 100');
+            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' ' + $('body').data()['extent'][3]);
             $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
             if((!$(this).hasClass("cardboard-icon"))){   
                 $(this).html('Leave Cardboard');
