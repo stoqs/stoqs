@@ -322,8 +322,8 @@
         <Environment frustumCulling="false"></Environment>
         <navigationInfo></navigationInfo>
         <Viewpoint id="mp-x3d-viewpoint1" def="vp" onviewpointChanged="setScale(event)"></Viewpoint>
-        <!-- Test GeoViewpoint for Monterey Bay area, user must page-down to bind to it -->
-        <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0">
+        <!-- Test GeoViewpoint for Monterey Bay area, user must page-down or enter Cardboard to bind to it -->
+        <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0" onviewpointChanged="setScale(event)">
         </GeoViewpoint>
         <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
         <Group id='spatial-3d-root' render='true'>
