@@ -2006,6 +2006,8 @@ class STOQSQManager(object):
             lat_midpoint = (extent[0][1] + extent[1][1]) / 2.0
             qs = self.qs.aggregate(Max('maxdepth'), Min('mindepth'))
             depth_midpoint = (qs['mindepth__min'] + qs['maxdepth__max']) / 2.0
+            if np.isnan(depth_midpoint):
+                depth_midpoint = 0.0
 
             try:
                 extent.transform(outputSRID)
