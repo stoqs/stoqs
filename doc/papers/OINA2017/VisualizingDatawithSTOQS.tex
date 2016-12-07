@@ -1,0 +1,815 @@
+
+%% bare_conf.tex
+%% V1.3
+%% 2007/01/11
+%% by Michael Shell
+%% See:
+%% http://www.michaelshell.org/
+%% for current contact information.
+%%
+%% This is a skeleton file demonstrating the use of IEEEtran.cls
+%% (requires IEEEtran.cls version 1.7 or later) with an IEEE conference paper.
+%%
+%% Support sites:
+%% http://www.michaelshell.org/tex/ieeetran/
+%% http://www.ctan.org/tex-archive/macros/latex/contrib/IEEEtran/
+%% and
+%% http://www.ieee.org/
+
+%%*************************************************************************
+%% Legal Notice:
+%% This code is offered as-is without any warranty either expressed or
+%% implied; without even the implied warranty of MERCHANTABILITY or
+%% FITNESS FOR A PARTICULAR PURPOSE! 
+%% User assumes all risk.
+%% In no event shall IEEE or any contributor to this code be liable for
+%% any damages or losses, including, but not limited to, incidental,
+%% consequential, or any other damages, resulting from the use or misuse
+%% of any information contained here.
+%%
+%% All comments are the opinions of their respective authors and are not
+%% necessarily endorsed by the IEEE.
+%%
+%% This work is distributed under the LaTeX Project Public License (LPPL)
+%% ( http://www.latex-project.org/ ) version 1.3, and may be freely used,
+%% distributed and modified. A copy of the LPPL, version 1.3, is included
+%% in the base LaTeX documentation of all distributions of LaTeX released
+%% 2003/12/01 or later.
+%% Retain all contribution notices and credits.
+%% ** Modified files should be clearly indicated as such, including  **
+%% ** renaming them and changing author support contact information. **
+%%
+%% File list of work: IEEEtran.cls, IEEEtran_HOWTO.pdf, bare_adv.tex,
+%%                    bare_conf.tex, bare_jrnl.tex, bare_jrnl_compsoc.tex
+%%*************************************************************************
+
+% *** Authors should verify (and, if needed, correct) their LaTeX system  ***
+% *** with the testflow diagnostic prior to trusting their LaTeX platform ***
+% *** with production work. IEEE's font choices can trigger bugs that do  ***
+% *** not appear when using other class files.                            ***
+% The testflow support page is at:
+% http://www.michaelshell.org/tex/testflow/
+
+
+
+% Note that the a4paper option is mainly intended so that authors in
+% countries using A4 can easily print to A4 and see how their papers will
+% look in print - the typesetting of the document will not typically be
+% affected with changes in paper size (but the bottom and side margins will).
+% Use the testflow package mentioned above to verify correct handling of
+% both paper sizes by the user's LaTeX system.
+%
+% Also note that the "draftcls" or "draftclsnofoot", not "draft", option
+% should be used if it is desired that the figures are to be displayed in
+% draft mode.
+%
+\documentclass[conference]{IEEEtran}
+% Add the compsoc option for Computer Society conferences.
+%
+% If IEEEtran.cls has not been installed into the LaTeX system files,
+% manually specify the path to it like:
+% \documentclass[conference]{../sty/IEEEtran}
+
+
+
+
+
+% Some very useful LaTeX packages include:
+% (uncomment the ones you want to load)
+
+
+% *** MISC UTILITY PACKAGES ***
+%
+%\usepackage{ifpdf}
+% Heiko Oberdiek's ifpdf.sty is very useful if you need conditional
+% compilation based on whether the output is pdf or dvi.
+% usage:
+% \ifpdf
+%   % pdf code
+% \else
+%   % dvi code
+% \fi
+% The latest version of ifpdf.sty can be obtained from:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/oberdiek/
+% Also, note that IEEEtran.cls V1.7 and later provides a builtin
+% \ifCLASSINFOpdf conditional that works the same way.
+% When switching from latex to pdflatex and vice-versa, the compiler may
+% have to be run twice to clear warning/error messages.
+
+
+
+
+
+
+% *** CITATION PACKAGES ***
+%
+%\usepackage{cite}
+% cite.sty was written by Donald Arseneau
+% V1.6 and later of IEEEtran pre-defines the format of the cite.sty package
+% \cite{} output to follow that of IEEE. Loading the cite package will
+% result in citation numbers being automatically sorted and properly
+% "compressed/ranged". e.g., [1], [9], [2], [7], [5], [6] without using
+% cite.sty will become [1], [2], [5]--[7], [9] using cite.sty. cite.sty's
+% \cite will automatically add leading space, if needed. Use cite.sty's
+% noadjust option (cite.sty V3.8 and later) if you want to turn this off.
+% cite.sty is already installed on most LaTeX systems. Be sure and use
+% version 4.0 (2003-05-27) and later if using hyperref.sty. cite.sty does
+% not currently provide for hyperlinked citations.
+% The latest version can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/cite/
+% The documentation is contained in the cite.sty file itself.
+
+
+
+
+
+
+% *** GRAPHICS RELATED PACKAGES ***
+%
+\ifCLASSINFOpdf
+  \usepackage[pdftex]{graphicx}
+  % declare the path(s) where your graphic files are
+  % \graphicspath{{../pdf/}{../jpeg/}}
+  % and their extensions so you won't have to specify these with
+  % every instance of \includegraphics
+  \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+\else
+  % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
+  % will default to the driver specified in the system graphics.cfg if no
+  % driver is specified.
+  \usepackage[dvips]{graphicx}
+  % declare the path(s) where your graphic files are
+  \graphicspath{{../eps/}}
+  % and their extensions so you won't have to specify these with
+  % every instance of \includegraphics
+  \DeclareGraphicsExtensions{.eps}
+\fi
+% graphicx was written by David Carlisle and Sebastian Rahtz. It is
+% required if you want graphics, photos, etc. graphicx.sty is already
+% installed on most LaTeX systems. The latest version and documentation can
+% be obtained at: 
+% http://www.ctan.org/tex-archive/macros/latex/required/graphics/
+% Another good source of documentation is "Using Imported Graphics in
+% LaTeX2e" by Keith Reckdahl which can be found as epslatex.ps or
+% epslatex.pdf at: http://www.ctan.org/tex-archive/info/
+%
+% latex, and pdflatex in dvi mode, support graphics in encapsulated
+% postscript (.eps) format. pdflatex in pdf mode supports graphics
+% in .pdf, .jpeg, .png and .mps (metapost) formats. Users should ensure
+% that all non-photo figures use a vector format (.eps, .pdf, .mps) and
+% not a bitmapped formats (.jpeg, .png). IEEE frowns on bitmapped formats
+% which can result in "jaggedy"/blurry rendering of lines and letters as
+% well as large increases in file sizes.
+%
+% You can find documentation about the pdfTeX application at:
+% http://www.tug.org/applications/pdftex
+
+
+
+
+
+% *** MATH PACKAGES ***
+%
+%\usepackage[cmex10]{amsmath}
+% A popular package from the American Mathematical Society that provides
+% many useful and powerful commands for dealing with mathematics. If using
+% it, be sure to load this package with the cmex10 option to ensure that
+% only type 1 fonts will utilized at all point sizes. Without this option,
+% it is possible that some math symbols, particularly those within
+% footnotes, will be rendered in bitmap form which will result in a
+% document that can not be IEEE Xplore compliant!
+%
+% Also, note that the amsmath package sets \interdisplaylinepenalty to 10000
+% thus preventing page breaks from occurring within multiline equations. Use:
+%\interdisplaylinepenalty=2500
+% after loading amsmath to restore such page breaks as IEEEtran.cls normally
+% does. amsmath.sty is already installed on most LaTeX systems. The latest
+% version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/required/amslatex/math/
+
+
+
+
+
+% *** SPECIALIZED LIST PACKAGES ***
+%
+%\usepackage{algorithmic}
+% algorithmic.sty was written by Peter Williams and Rogerio Brito.
+% This package provides an algorithmic environment fo describing algorithms.
+% You can use the algorithmic environment in-text or within a figure
+% environment to provide for a floating algorithm. Do NOT use the algorithm
+% floating environment provided by algorithm.sty (by the same authors) or
+% algorithm2e.sty (by Christophe Fiorio) as IEEE does not use dedicated
+% algorithm float types and packages that provide these will not provide
+% correct IEEE style captions. The latest version and documentation of
+% algorithmic.sty can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/algorithms/
+% There is also a support site at:
+% http://algorithms.berlios.de/index.html
+% Also of interest may be the (relatively newer and more customizable)
+% algorithmicx.sty package by Szasz Janos:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/algorithmicx/
+
+
+
+
+% *** ALIGNMENT PACKAGES ***
+%
+%\usepackage{array}
+% Frank Mittelbach's and David Carlisle's array.sty patches and improves
+% the standard LaTeX2e array and tabular environments to provide better
+% appearance and additional user controls. As the default LaTeX2e table
+% generation code is lacking to the point of almost being broken with
+% respect to the quality of the end results, all users are strongly
+% advised to use an enhanced (at the very least that provided by array.sty)
+% set of table tools. array.sty is already installed on most systems. The
+% latest version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/required/tools/
+
+
+%\usepackage{mdwmath}
+%\usepackage{mdwtab}
+% Also highly recommended is Mark Wooding's extremely powerful MDW tools,
+% especially mdwmath.sty and mdwtab.sty which are used to format equations
+% and tables, respectively. The MDWtools set is already installed on most
+% LaTeX systems. The lastest version and documentation is available at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/mdwtools/
+
+
+% IEEEtran contains the IEEEeqnarray family of commands that can be used to
+% generate multiline equations as well as matrices, tables, etc., of high
+% quality.
+
+
+%\usepackage{eqparbox}
+% Also of notable interest is Scott Pakin's eqparbox package for creating
+% (automatically sized) equal width boxes - aka "natural width parboxes".
+% Available at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/eqparbox/
+
+
+
+
+
+% *** SUBFIGURE PACKAGES ***
+%\usepackage[tight,footnotesize]{subfigure}
+% subfigure.sty was written by Steven Douglas Cochran. This package makes it
+% easy to put subfigures in your figures. e.g., "Figure 1a and 1b". For IEEE
+% work, it is a good idea to load it with the tight package option to reduce
+% the amount of white space around the subfigures. subfigure.sty is already
+% installed on most LaTeX systems. The latest version and documentation can
+% be obtained at:
+% http://www.ctan.org/tex-archive/obsolete/macros/latex/contrib/subfigure/
+% subfigure.sty has been superceeded by subfig.sty.
+
+
+
+%\usepackage[caption=false]{caption}
+%\usepackage[font=footnotesize]{subfig}
+% subfig.sty, also written by Steven Douglas Cochran, is the modern
+% replacement for subfigure.sty. However, subfig.sty requires and
+% automatically loads Axel Sommerfeldt's caption.sty which will override
+% IEEEtran.cls handling of captions and this will result in nonIEEE style
+% figure/table captions. To prevent this problem, be sure and preload
+% caption.sty with its "caption=false" package option. This is will preserve
+% IEEEtran.cls handing of captions. Version 1.3 (2005/06/28) and later 
+% (recommended due to many improvements over 1.2) of subfig.sty supports
+% the caption=false option directly:
+%\usepackage[caption=false,font=footnotesize]{subfig}
+%
+% The latest version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/subfig/
+% The latest version and documentation of caption.sty can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/caption/
+
+
+
+
+% *** FLOAT PACKAGES ***
+%
+%\usepackage{fixltx2e}
+% fixltx2e, the successor to the earlier fix2col.sty, was written by
+% Frank Mittelbach and David Carlisle. This package corrects a few problems
+% in the LaTeX2e kernel, the most notable of which is that in current
+% LaTeX2e releases, the ordering of single and double column floats is not
+% guaranteed to be preserved. Thus, an unpatched LaTeX2e can allow a
+% single column figure to be placed prior to an earlier double column
+% figure. The latest version and documentation can be found at:
+% http://www.ctan.org/tex-archive/macros/latex/base/
+
+
+
+%\usepackage{stfloats}
+% stfloats.sty was written by Sigitas Tolusis. This package gives LaTeX2e
+% the ability to do double column floats at the bottom of the page as well
+% as the top. (e.g., "\begin{figure*}[!b]" is not normally possible in
+% LaTeX2e). It also provides a command:
+%\fnbelowfloat
+% to enable the placement of footnotes below bottom floats (the standard
+% LaTeX2e kernel puts them above bottom floats). This is an invasive package
+% which rewrites many portions of the LaTeX2e float routines. It may not work
+% with other packages that modify the LaTeX2e float routines. The latest
+% version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/sttools/
+% Documentation is contained in the stfloats.sty comments as well as in the
+% presfull.pdf file. Do not use the stfloats baselinefloat ability as IEEE
+% does not allow \baselineskip to stretch. Authors submitting work to the
+% IEEE should note that IEEE rarely uses double column equations and
+% that authors should try to avoid such use. Do not be tempted to use the
+% cuted.sty or midfloat.sty packages (also by Sigitas Tolusis) as IEEE does
+% not format its papers in such ways.
+
+
+
+
+
+% *** PDF, URL AND HYPERLINK PACKAGES ***
+%
+%\usepackage{url}
+% url.sty was written by Donald Arseneau. It provides better support for
+% handling and breaking URLs. url.sty is already installed on most LaTeX
+% systems. The latest version can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/misc/
+% Read the url.sty source comments for usage information. Basically,
+% \url{my_url_here}.
+
+
+
+
+
+% *** Do not adjust lengths that control margins, column widths, etc. ***
+% *** Do not use packages that alter fonts (such as pslatex).         ***
+% There should be no need to do such things with IEEEtran.cls V1.6 and later.
+% (Unless specifically asked to do so by the journal or conference you plan
+% to submit to, of course. )
+
+
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+
+\usepackage[section]{placeins}
+\usepackage{upquote}
+
+
+\begin{document}
+%
+% paper title
+% can use linebreaks \\ within to get better formatting as desired
+\title{Visualizing Data with STOQS, the Spatial Temporal Oceanographic Query System}
+
+
+% author names and affiliations
+% use a multiple column layout for up to three different
+% affiliations
+\author{\IEEEauthorblockN{Mike McCann}
+\IEEEauthorblockA{Monterey Bay Aquarium Research Institute \\
+Moss Landing, CA USA\\
+mccann@mbari.org}
+}
+
+% conference papers do not typically use \thanks and this command
+% is locked out in conference mode. If really needed, such as for
+% the acknowledgment of grants, issue a \IEEEoverridecommandlockouts
+% after \documentclass
+
+% for over three affiliations, or if they all won't fit within the width
+% of the page, use this alternative format:
+% 
+%\author{\IEEEauthorblockN{Michael Shell\IEEEauthorrefmark{1},
+%Homer Simpson\IEEEauthorrefmark{2},
+%James Kirk\IEEEauthorrefmark{3}, 
+%Montgomery Scott\IEEEauthorrefmark{3} and
+%Eldon Tyrell\IEEEauthorrefmark{4}}
+%\IEEEauthorblockA{\IEEEauthorrefmark{1}School of Electrical and Computer Engineering\\
+%Georgia Institute of Technology,
+%Atlanta, Georgia 30332--0250\\ Email: see http://www.michaelshell.org/contact.html}
+%\IEEEauthorblockA{\IEEEauthorrefmark{2}Twentieth Century Fox, Springfield, USA\\
+%Email: homer@thesimpsons.com}
+%\IEEEauthorblockA{\IEEEauthorrefmark{3}Starfleet Academy, San Francisco, California 96678-2391\\
+%Telephone: (800) 555--1212, Fax: (888) 555--1212}
+%\IEEEauthorblockA{\IEEEauthorrefmark{4}Tyrell Inc., 123 Replicant Street, Los Angeles, California 90210--4321}}
+
+
+
+
+% use for special paper notices
+%\IEEEspecialpapernotice{(Invited Paper)}
+
+
+
+
+% make the title area
+\maketitle
+
+
+\begin{abstract}
+%\boldmath
+
+With the ability to collect more data from increasingly more sophisticated robotic platforms, 
+the problem of analyzing these data becomes increasing difficult. The Monterey Bay Aquarium 
+Research Institute (MBARI) designed the open source Spatial Temporal Oceanographic Query 
+System (STOQS) to create new capabilities for scientists to gain insight from data collected 
+by oceanographic platforms. STOQS uses a geospatial database and a web-based user interface (UI) 
+to allow scientists to explore large collections of data. The UI is optimized to provide a 
+quick overview of data in spatial and temporal dimensions, as well as in parameter and 
+platform space. A user may zoom into a feature of interest and select it, initiating a 
+filter operation updating the UI with an overview of all the data in the new filtered 
+selection. When details are desired, radio buttons and check boxes can be selected to 
+generate a number of different types of visualizations. These include color-filled temporal 
+section plots, parameter-parameter plots, and both 2D and 3D spatial visualizations.
+  
+
+\end{abstract}
+% IEEEtran.cls defaults to using nonbold math in the Abstract.
+% This preserves the distinction between vectors and scalars. However,
+% if the conference you are submitting to favors bold math in the abstract,
+% then you can use LaTeX's standard command \boldmath at the very start
+% of the abstract to achieve this. Many IEEE journals/conferences frown on
+% math in the abstract anyway.
+
+% no keywords
+
+
+
+
+% For peer review papers, you can put extra information on the cover
+% page as needed:
+% \ifCLASSOPTIONpeerreview
+% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
+% \fi
+%
+% For peerreview papers, this IEEEtran command inserts a page break and
+% creates the second title. It will be ignored for other modes.
+\IEEEpeerreviewmaketitle
+
+
+\section{Overview}
+
+The Monterey Bay Aquarium Research Institute (MBARI) designed the Spatial Temporal Oceanographic 
+Query System (STOQS) \cite{7054414} to create new capabilities for scientists to gain 
+insight from their data. STOQS employs open standards and is a 100\% free and open 
+source project. It includes a web-based graphical user interface where the X3D graphics 
+standard \cite{x3d07} has been integrated to enable immersive 3D exploration of geospatial data.
+
+MBARI has used STOQS over the last six years to manage and visualize data collected 
+during measurement campaigns where scientific goals have centered on improving 
+our understanding of biological and canyon dynamics processes. Fig.~\ref{fig:MUSE_illus_pp} 
+is an artist's rendering showing the kinds of platforms and geographic extent for one one 
+these campaigns.  The data consist primarily of measurements 
+collected by moving platforms. The platforms have accurate clocks, Global Positioning 
+Sensors and underwater inertial navigation sensors, and one or more instruments that measure 
+parameters such as temperature, salinity, oxygen, nitrate, chlorophyll fluorescence, 
+optical backscatter, particle sizes, and vehical engineering data. Some platforms also collect
+water samples for later laboratory analysis, whose data are also loaded into STOQS. 
+
+The STOQS software is provided for free to the oceanographic community. It's site on
+GitHub \cite{STOQS} includes simple instructions for building your own server that
+you can use to serve your own data.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=3.3in]{../AUV2014/MUSE_illus_pp.jpg}
+\caption{Illustration of an upper water column oceanographic measurement campaign in Monterey Bay, California. 
+Data from ships, moorings, gliders, AUVs, ROVs, and benthic instruments are handled by STOQS.}
+\label{fig:MUSE_illus_pp}
+\end{figure}
+
+\section{STOQS System Architecture}
+
+\subsection{Web stack}
+
+STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django 
+running on a server and client-side technology (HTML5, CSS, jQuery, OpenLayers, 
+X3DOM, Bootstrap) running in a modern web browser (Fig.~\ref{fig:STOQSArch}). 
+The web application provides faceted search capabilities allowing a user to quickly 
+drill into data of interest. The X3DOM JavaScript library provides interactive i
+3D views of the data in browsers that support WebGL.  
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=3.3in]{../AUV2014/stoqs_arch_simple.png}
+\caption{Open source components of the server and the web-based client. Programatic access to 
+STOQS data is provided through the Python GeoDjango Object Relational Mapping framework 
+and through direct SQL to the PostgreSQL database.}
+\label{fig:STOQSArch}
+\end{figure}
+
+\subsection{CF-NetCDF}
+
+Standards are important for the durability of data archived from oceanographic measurement programs. 
+These data are unique and costly to collect. One of the standards used within 
+the oceanographic community is NetCDF \cite{Rew1990}, a binary data format used 
+commonly for gridded numerical model output and remote sensing data. Because of its 
+20-plus year history of use, its flexibility, and its recent adoption as an 
+Open Geospatial Consortium (OGC) standard, NetCDF is used to archive MBARI's 
+\textit{in situ} measurement data.
+
+Measurement trajectory data are
+structured in NetCDF files with one coordinate dimension: time. 
+The only index to the data stored in the trajectory format time. 
+There is no efficient arbitrary spatial-temporal retrieval of 
+data directly from this kind of NetCDF file. For example, 
+if an application program needs to extract just the upper 5 meter temperatures from 
+a glider data file --- where the glider samples the water column in a sawtooth 
+depth pattern from 0 to 500 meters depth --- it would have to read all 
+the data from the file and then perform extract the data less than 5 meters in RAM. 
+This is a very 
+inefficient and memory intensive way to access data. This problem is commonly
+encountered by users when they start working with larger collections of data 
+using commonly available Matlab routines. One solution is to store 
+the data in a geospatial relational database where any field, such as depth 
+and geographic location, can be indexed for efficient access.
+STOQS is built 
+upon relational database technology and uses the open source PostgreSQL 
+database along with the PostGIS extension. This allows arbitrarily large collections
+of data to be efficeintly accessed for all sorts of data analysis and visualization
+purposes.
+
+\subsection{Database Design}
+An ideal relational database design must consider many aspects of the scientific 
+workflow: data ingestion, efficient storage, uniform search and access 
+\cite{Bechini:2013:MSS:2425433.2425647}. Design of the STOQS database schema primarily 
+focused on solving the problem of efficient access to \textbf{trajectory} data. 
+However, care was taken to ensure that other discrete sampling geometry feature types 
+\cite{DSG} that are common in oceanography would be supported by the schema.  Other 
+feature types common in MBARI's campaigns are \textbf{timeseries} and \textbf{timeseriesProfile} 
+which are produced by mooring deployments with instruments at single and multiple depths. 
+A fourth feature type, \textbf{trajectoryProfile}, is produced by profiling instruments 
+aboard a moving platform; examples include shipboard ADCP and AUV multibeam water column 
+measurements. The STOQS schema efficiently handles all of these data feature types.
+
+Review of existing practices \cite{Wright}, \cite{MODB} informed the proper layout 
+of the tables, fields and relationships.  Key elements of the STOQS data storage model 
+are shown in Fig.~\ref{fig:stoqs_simple_model}. There are 29 other tables in the model 
+that hold metatadata, statistics, and simplified representations which are used by 
+the user interface to speed data visualization and access. The complete data model 
+is available on the project's code repository \cite{STOQS}. 
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[scale=0.5]{../AUV2014/stoqs_simple_model.png}
+\caption{Key elements of the STOQS database schema where spatial, temporal, and data 
+values are stored. The database is normalized for efficient storage of data such 
+that data are not repeated in any of the tables. Temporal and spatial data are stored 
+separately in the InstantPoint and Measurement/Sample tables. For trajectory and 
+timeseries data there is a one-to-one relationship for records in InstantPoint and 
+Measurement/Sample. For timeseriesProfile and trajecotryProfile feature type data 
+there are multiple Measurement/Sample records for each InstantPoint record. 
+Parameter names are stored as records in the Parameter table allowing for new 
+parameters without schema modification.}
+\label{fig:stoqs_simple_model}
+\end{figure*}
+
+\subsection{Metadata}
+
+Metadata and its management are key to the success of any data management system. 
+STOQS approches this issue by relying on the community adopted conventions for 
+embedding metadata in the NetCDF files. Important conventions include Climate and 
+Forecast \cite{CF}, those from the Argo and OceanSITES communities \cite{Pouliquen2006} 
+and the Attribute Conventions for Dataset Discovery \cite{ACDD}. Tools upstream 
+of STOQS help ensure proper setting of metadata values; for example, OPeNDAP data 
+servers include tools that verify against the ISO 19115 Metadata Standard for 
+Geographic Data. Regardless of the content of the metadata contained in the NetCDF 
+files all of it will be loaded into STOQS. Global attributes and values are stored 
+as Resources and attached to the Activity record. Variable attributes that are not 
+fields of the Parameter table are also stored as Resources, but are attached to the 
+Parameter record. Resource entries are used throughout the STOQS data model to store 
+information that cannot be assigned to other parts of the data model.
+
+Another important aspect of metadata is that the barrier for loading and using data in 
+STOQS is low, meaning that a minimum amount of metadata is required to properly 
+identify the spatial and temporal coordinates, but no requirement is placed on 
+consistent naming of variables. For example, the property "sea water temperature" may 
+have names like TEMP, temperature, or water\_temp. All of these data can be loaded and 
+visualized in the User Interface. Users familiar with the platforms understand the names 
+given. The writer of the NetCDF file must pick appropriate names that will be understood 
+by users. If the writer knows that a variable is a defined standard parameter then an 
+attribute of "standard\_name" can be assigned with a value from the CF Standard Name 
+table \cite{CFSN}. This standard\_name is presented in the User Interface and can be 
+used to select similar data from multiple platforms.
+
+\section{Visualization}
+
+\subsection{User Interface}
+
+The STOQS User Interface (UI) displays a map of vehicle tracks and a time series of 
+vehicle depth profiles (Fig.~\ref{fig:OverviewFirst}). The bold blue letter text items are each sections that may be expanded revealing lists of items that may be selected for filtering, data selection, and plotting. If a platform is selected for filtering then only the information from that platform is shown in the other sections of the interface. Any selection initiates an instant update of the other items that may be selected. With this faceted search capability the user can quickly narrow a selection for data of interest. For instance in Fig.~\ref{fig:STOQSscreencapture} the platform "daphne"  and a time range of about a day have been selected. The interface is reactive to browser screen size and behaves appropriately when viewed on tablets and smart phones. As with the database schema the design of the UI was guided by earlier efforts, in particular the MOQuA tool \cite{godin05}.
+
+Within the web application, data are retrieved directly from the database via XHR (XMLHttpRequest) requests, delivering data in JSON (JavaScript Object Notation) data structures. Client-side JavaScript code then formats these data as needed for display in the web page. Any DOM (Document Object Model) element, such as a button or checkbox label can be updated with data from the database. In fact, requested data can update any DOM element, including elements in the 2D Temporal Flot plot and in X3D scene graphs placed anywhere in the web page.
+
+The overall design approach follows the so-called Shneiderman's mantra: "Overview first, zoom and filter, then details-on-demand" \cite{Whitney:2012:DIN:2597850}. This is in contrast to other data portal web sites which often present the user with empty text boxes, leaving unfamiliar users at a loss regarding what to enter. The STOQS UI adheres to 9 of the 12 elements of interactive dynamics described by Heer and Shneiderman \cite{Heer:2012:IDV:2133416.2146416}.
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{OverviewFirst.png}
+\caption{STOQS User Interface. On initial load of a campaign database the user is presented 
+with an overview of the data when, where, and what platforms measured what Parameters. The 
+Platform and Measured Parameter accordian sections are initially closed; opening them 
+reveals selctors for filtering and plotting.}
+\label{fig:OverviewFirst.png}
+\end{figure*}
+
+\subsection{Spatial}
+
+\subsubsection{2D}
+The default spatial view in the STOQS UI is a 2D OpenLayers generated map. It shows simplified vehicle tracks over the selected basemap. The ESRI Ocean basemap is default, but users can also select Open Street Maps and GEBCO \& NOAA Tiles, which is a local tile set for use aboard research vessels that do not have Internet connectivity. The track lines are generated on the server with a dynamically generated mapserver configuration file. Mapserver queries the database and builds image tiles which are then transmitted to the client using the OGC Web Map Service (WMS) protocol. As some campaigns contain dozens of tracks, this approach performs better than individual transmission of vector data to the OpenLayers client code. Because WMS is a well established standard, the server and client components - developed by different organizations - are able to work together using agreed upon request and response messages. If a user selects a Measured Parameter for plotting, a checkbox appears under the map for presentation of sensor data as colored tracks on the map. These data are retrieved from the server with an XHR request and then delivered to OpenLayers as a vector layer in KML format. Performance degrades with more than about 300 points, therefore server-side code subsamples large responses in order to maintain application responsiveness.
+
+\subsubsection{3D}
+Next to the Map tab in the Spatial section is a 3D tab. This 3D tab appears only for databases in which a terrain model has been loaded. A Python dictionary specifies the needed parameters for the STOQS UI to display a 3D terrain "basemap" (Fig.~\ref{fig:x3dTerrains}). Logic in the client code maps the position, orientation, and centerOfRotation values to the corresponding DOM elements in the scene graph. (The next section describes ways to construct X3D terrain models.)
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1.0\linewidth]{../AUV2014/x3dTerrains.png}
+\caption{Dictionary of terrain information loaded into STOQS.}
+\label{fig:x3dTerrains}
+\end{figure}
+
+Selected Measured Parameter data are delivered to the Spatial 3D display when a radio button in the Plot Data column is selected and the checkbox in the 3D panel is checked. The update of the 3D data uses the same AJAX (asynchronous JavaScript and XML - though the payload is JSON, not XML) process as the other parts of the UI:
+
+\begin{enumerate}
+\item HTML contains X3D scene graph elements for the web page: Fig.~\ref{fig:Spatial3D_DOM}
+\item Data are received by the browser from an XHR request in JSON format: Fig.~\ref{fig:JSONData}
+\item jQuery JavaScript code takes the values from the JSON and writes them to the scene graph elements: Fig.~\ref{fig:jQueryDOMUpdateGeo}
+\end{enumerate}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=3.3in]{../AUV2014/Spatial3D_DOM.png}
+\caption{X3D scene graph within the HTML before being updated.}
+\label{fig:Spatial3D_DOM}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=3.3in]{../AUV2014/JSONData.png}
+\caption{Measured Parameter X3D data in JSON format returned by XHR request.}
+\label{fig:JSONData}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=3.3in]{../AUV2014/jQueryDOMUpdateGeo.png}
+\caption{JQuery JavaScript code that updates the X3D DOM elements.}
+\label{fig:jQueryDOMUpdateGeo}
+\end{figure}
+
+Updates are triggered by any selections in the UI that would result in different data being displayed. An example would be selecting a smaller depth-time region in the Temporal section. Sensor data are represented in X3D as an IndexedLineSet built out of geocoordinate points, which in this case are latitude, longitude, and depth relative to the WGS84 ellipsoid, the default geosystem. X3D Geospatial performs the conversion of geodetic coordinates to geocentric coordinates which is the native coordinate system used by X3D Geospatial. Extending STOQS capabilities to visualize numerical model and remote sensing data in the 3D view is possible, but can be made easier by development of new protocols for 3D web services \cite{McCann:2014:IXG:2628588.2628609}.
+
+\subsection{Terrain Rendering}
+
+As explored by \cite{yoo09}, the Earth's terrain can be represented using GeoElevationGrid nodes. High resolution terrain can be structured in a nested quad-tree tile set using GeoLOD nodes. For representing data for the entire globe, a multi-resolution approach such as this is common. In fact, popular globe viewers such as Google Earth use this approach with sophisticated techniques to decide which tiles to load and unload depending on the user's viewpoint and motion through global space. These techniques improve performance, are often proprietary, and can help distinguish a product within the marketplace. Similar techniques have not yet found their way into open source implementations of X3D Geospatial. However, small regions of the Earth can be represented in a single tile with enough horizontal resolution to be useful. MBARI's oceanographic campaigns are typically constrained to small geographic regions such as Monterey Bay and San Pedro Bay. For these regions a 50 meter gridded terrain model represented as a single GeoElevationGrid has less than a million vertices, which is effectively  rendered by today's 3D graphics hardware.
+
+In 2013 Limper \textit{et al.} \cite{Limper:2013:FDW:2466533.2466536} introduced Progressively Ordered Primitive (POP) buffers in X3DOM. Large POP geometry meshes (up to 1.5 million faces) are rendered with very good performance on today's computers with X3DOM. Advantages of representing bathymetric data in meshes are addressed by \cite{Becker:2005:NPN:1650409.1650513}. Meshes, in contrast to regular grids, are able to use fewer larger triangles for flat and smooth portions of terrain and more smaller triangles for more rugged terrain. Besides providing more accurate representations of bathymetry, meshes can also represent overhangs and caves, whereas GeoElevationGrids cannot. The workflow for creating the x3dterrain files using open source tools GMT \cite{GMT} and Meshlab \cite{Meshlab} is similar to that used in \cite{Silvestre}:
+
+\begin{itemize}
+\item Use GMT to create a point cloud in geocentric coordinates with 10x vertical exaggeration:
+\begin{verbatim}
+gmt grd2xyz Monterey25.grd \
+  --D_FORMAT=%f | sed '/NaN/d' | \
+  awk '{print $1, $2, 10 * $3}' | \ 
+  mapproject -E --D_FORMAT=%f > \
+  Monterey25_10x.asc
+\end{verbatim}
+\item Process interactively in Meslab:
+\begin{itemize}
+\item Load .asc file
+\item Filter operations
+\begin{itemize}
+\item Point Sets - Compute normals for point sets
+\item Surface Reconstruction: Poisson (Octree Depth: 12, Solver Divide: 10)
+\item Remeshing, Simplification and Reconstruction - Quadric Edge Collapse Decimation:
+\begin{itemize}
+\item Target number of faces: 1,500,000
+\item Preserve Normal
+\item Preseve Topology
+\item Optimal Position of Simplified Vertices
+\item Planar Simplification
+\item Post-simplification cleaning
+\end{itemize}
+\end{itemize}
+\item Cleanup (with plenty of intermediate saves)
+\item Filter - SmoothingÉ - Laplacian smooth (surface preserve)
+\item Export mesh to .ply
+\end{itemize}
+\item Build X3D files with InstantReality aopt tool:
+\begin{verbatim}
+aopt -i Monterey25_10x-smooth.ply \
+  -F Scene -b Monterey25_10x-opt.x3db
+aopt -i Monterey25_10x-opt.x3db \
+  -f PrimitiveSet:creaseAngle:4 -V \
+  -K "binGeo/:ib" \
+  -N Monterey25_10x.html
+\end{verbatim}
+\end{itemize}
+
+These operations result in a static web page where the results can be tested for fidelity and performance. In order for the terrain model to be included in the STOQS UI, the Scene elements are extracted from the HTML into a separate scene X3D file, which is the URL in Fig.~\ref{fig:x3dTerrains}. Fig.~\ref{fig:Monterey25_lrauvs} shows the terrain built with the above steps along with the chlorophyll measurements from month-long deployments of 2 AUVs in Monterey Bay.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=3.3in]{../AUV2014/Monterey25_lrauvs.png}
+\caption{POP Geometry of 25m resolution Monterey Bay terrain with AUV measured chlorophyll data rendered by X3DOM in STOQS.}
+\label{fig:Monterey25_lrauvs}
+\end{figure}
+
+
+\subsection{Temporal}
+
+\subsubsection{Depth}
+The default temporal display is the Depth tab where the vertical axis of the plot is depth. A depth versus time plot is appropriate for trajectory and timeseriesProfile data. The plotting space is interpreted as a depth section through time or distance. Any X/Y rectangle of the Temporal Depth plot may be selected by a mouse click and drag operation. All elements of the UI are updated with data from the Time/Depth region selected. This operation works in both overview and plot data modes -- when data are plotted this is useful for zooming in on features of interest and observing environmental conditions around water sample collection events.
+
+\subsubsection{Parameter}
+The other display of temporal data is where the vertical axis is the value of parameter(s). This presents time series data recorded by stationary platforms. A time range is selectable with a mouse click and drag operation. This feature is effective for data exploration as stationary platforms are able to detect temporal events such as a rise in chlorophyll or drop in salinity. Selecting such an event also shows mobile platform data (in the Depth tab) measured at the same time. By viewing data in the Spatial section researchers are able to gain a greater understanding of the spatial extent of such events.
+
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{Trajectory.png}
+\caption{STOQS User Interface. Trajectory feature type.}
+\label{fig:Trajectory}
+\end{figure*}
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{Timeseries.png}
+\caption{STOQS User Interface. Timeseries feature type.}
+\label{fig:Timeseries}
+\end{figure*}
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{TimeseriesProfile.png}
+\caption{STOQS User Interface. -20 and 20 cm/s are set along with the cmocean 'balance' colormap.}
+\label{fig:Timeseries}
+\end{figure*}
+
+\section{Using STOQS}
+
+\subsection{Operation}
+
+
+A typical workflow for is:
+\begin{enumerate}
+\item Install the STOQS software on a Linux server
+\item Vehicles conduct their missions, collecting data
+\item Create NetCDF files of the instrument data
+\item Construct and execute a STOQS load script
+\item Access and visualize data using the STOQS UI
+\end{enumerate}
+
+
+
+
+\section{Conclusion}
+In summary, STOQS provides an invaluable interface for the visualization and analysis of oceanographic and biological data, often as it is being collected by diverse sampling platforms.  The utility of STOQS has been proven both in the field, to monitor and ensure successful operations, as well as post-operationally, to assess and analyze multidisciplinary data sets occurring across broad spatial and temporal scales. MBARI will continue to expand its capabilities and we invite others to join the STOQS development and user communities.
+
+
+
+
+% conference papers do not normally have an appendix
+
+
+% use section* for acknowledgement
+\section*{Acknowledgements}
+
+Appreciation is given to the numerous people involved in the development, deployment, recovery, operation and data handling for all of the platforms whose data are presented here. Development of STOQS is supported by the David and Lucile Packard Foundation at the Monterey Bay Aquarium Research Institute.
+
+
+
+
+% trigger a \newpage just before the given reference
+% number - used to balance the columns on the last page
+% adjust value as needed - may need to be readjusted if
+% the document is modified later
+%\IEEEtriggeratref{8}
+% The "triggered" command can be changed if desired:
+%\IEEEtriggercmd{\enlargethispage{-5in}}
+
+% references section
+
+% can use a bibliography generated by BibTeX as a .bbl file
+% BibTeX documentation can be easily obtained at:
+% http://www.ctan.org/tex-archive/biblio/bibtex/contrib/doc/
+% The IEEEtran BibTeX style support page is at:
+% http://www.michaelshell.org/tex/ieeetran/bibtex/
+\bibliographystyle{IEEEtran}
+% argument is your BibTeX string definitions and bibliography database(s)
+\bibliography{IEEEabrv,VisualizingDatawithSTOQS}
+%
+% <OR> manually copy in the resultant .bbl file
+% set second argument of \begin to the number of references
+% (used to reserve space for the reference number labels box)
+%%\begin{thebibliography}{1}
+%%
+%%\bibitem{IEEEhowto:kopka}
+%%H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
+%%  0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
+%%\end{thebibliography}
+
+
+
+
+% that's all folks
+\end{document}
+
+

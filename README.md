@@ -23,9 +23,9 @@ commands:
     vagrant plugin install vagrant-vbguest
     vagrant up --provider virtualbox
 
-The `vagrant up` command takes a few hours to provision and setup a complete CentOS 7 
-STOQS server that also includes all the data science tools bundled in packages such as
-Anaconda.  All connections to this virtual machine are 
+The `vagrant up` command takes an hour or so to provision and setup a complete CentOS 7 
+STOQS server that also includes MB-System, InstantReality, and all the Python data science 
+tools bundled in packages such as Anaconda.  All connections to this virtual machine are 
 performed from the the directory you installed it in; you must cd to it (e.g. `cd
 ~/Vagrants/stoqsvm`) before logging in with the `vagrant ssh -- -X` command.  After 
 installation finishes log into your new virtual machine and test it:
@@ -57,7 +57,7 @@ a good place to ask questions and engage in discussion with the STOQS user and d
 
 Supported by the David and Lucile Packard Foundation, STOQS undergoes continual development
 to help support the mission of the Monterey Bay Aquarium Research Institue.  If you have your
-own server you will occaisionally want to get new features with:
+own server you will occasionally want to get new features with:
 
     git pull
     ./setup.sh
