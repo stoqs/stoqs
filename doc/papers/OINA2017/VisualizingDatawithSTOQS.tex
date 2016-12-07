@@ -409,7 +409,15 @@ mccann@mbari.org}
 With the ability to collect more data from increasingly more sophisticated robotic platforms, 
 the problem of analyzing these data becomes increasing difficult. The Monterey Bay Aquarium 
 Research Institute (MBARI) designed the open source Spatial Temporal Oceanographic Query 
-System (STOQS) to create new capabilities for scientists to gain insight from data collected by oceanographic platforms. STOQS uses a geospatial database and a web-based user interface (UI) to allow scientists to explore large collections of data. The UI is optimized to provide a quick overview of data in spatial and temporal dimensions, as well as in parameter and platform space. A user may zoom into a feature of interest and select it, initiating a filter operation updating the UI with an overview of all the data in the new filtered selection. When details are desired, radio buttons and check boxes can be selected to generate a number of different types of visualizations. These include color-filled temporal section plots, parameter-parameter plots, and both 2D and 3D spatial visualizations.
+System (STOQS) to create new capabilities for scientists to gain insight from data collected 
+by oceanographic platforms. STOQS uses a geospatial database and a web-based user interface (UI) 
+to allow scientists to explore large collections of data. The UI is optimized to provide a 
+quick overview of data in spatial and temporal dimensions, as well as in parameter and 
+platform space. A user may zoom into a feature of interest and select it, initiating a 
+filter operation updating the UI with an overview of all the data in the new filtered 
+selection. When details are desired, radio buttons and check boxes can be selected to 
+generate a number of different types of visualizations. These include color-filled temporal 
+section plots, parameter-parameter plots, and both 2D and 3D spatial visualizations.
   
 
 \end{abstract}
@@ -455,7 +463,19 @@ parameters such as temperature, salinity, oxygen, nitrate, chlorophyll fluoresce
 optical backscatter, particle sizes, and vehical engineering data. Some platforms also collect
 water samples for later laboratory analysis, whose data are also loaded into STOQS. 
 
-\section{STOQS Architecture}
+The STOQS software is provided for free to the oceanographic community. It's site on
+GitHub \cite{STOQS} includes simple instructions for building your own server that
+you can use to serve your own data.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=3.3in]{../AUV2014/MUSE_illus_pp.jpg}
+\caption{Illustration of an upper water column oceanographic measurement campaign in Monterey Bay, California. 
+Data from ships, moorings, gliders, AUVs, ROVs, and benthic instruments are handled by STOQS.}
+\label{fig:MUSE_illus_pp}
+\end{figure}
+
+\section{STOQS System Architecture}
 
 \subsection{Web stack}
 
@@ -466,6 +486,15 @@ The web application provides faceted search capabilities allowing a user to quic
 drill into data of interest. The X3DOM JavaScript library provides interactive i
 3D views of the data in browsers that support WebGL.  
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=3.3in]{../AUV2014/stoqs_arch_simple.png}
+\caption{Open source components of the server and the web-based client. Programatic access to 
+STOQS data is provided through the Python GeoDjango Object Relational Mapping framework 
+and through direct SQL to the PostgreSQL database.}
+\label{fig:STOQSArch}
+\end{figure}
+
 \subsection{CF-NetCDF}
 
 Standards are important for the durability of data archived from oceanographic measurement programs. 
@@ -475,15 +504,6 @@ commonly for gridded numerical model output and remote sensing data. Because of 
 20-plus year history of use, its flexibility, and its recent adoption as an 
 Open Geospatial Consortium (OGC) standard, NetCDF is used to archive MBARI's 
 \textit{in situ} measurement data.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=3.3in]{../AUV2014/MUSE_illus_pp.jpg}
-\caption{Illustration of an upper water column oceanographic measurement campaign in Monterey Bay, California. 
-Data from ships, moorings, gliders, AUVs, ROVs, and benthic instruments are handled by STOQS.}
-\label{fig:MUSE_illus_pp}
-\end{figure}
-
 
 Measurement trajectory data are
 structured in NetCDF files with one coordinate dimension: time. 
@@ -506,44 +526,75 @@ database along with the PostGIS extension. This allows arbitrarily large collect
 of data to be efficeintly accessed for all sorts of data analysis and visualization
 purposes.
 
-
-
-\subsection{Architecture}
-
-STOQS consists of a PostgreSQL + PostGIS database, Mapserver, and Python-Django running on a server and client-side technology (jQuery, OpenLayers, X3DOM, Twitter Bootstrap) running in a modern web browser (Fig.~\ref{fig:STOQSArch}) . The web application provides faceted search capabilities allowing a user to quickly drill into data of interest. Data selection can be constrained by spatial, temporal, and depth selections as well as by parameter values and platform names. The web application layer also provides a REST (Representational State Transfer) Application Programming Interface allowing tools such as Python, Matlab, and Google Earth to retrieve data directly from the database. The X3DOM JavaScript library provides interactive 3D views of the data in browsers that support WebGL.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=3.3in]{../AUV2014/stoqs_arch_simple.png}
-\caption{Open source components of the server and the web-based client. Programatic access to STOQS data is provided through the Python GeoDjango Object Relational Mapping framework and through direct SQL to the PostgreSQL database.}
-\label{fig:STOQSArch}
-\end{figure}
-
 \subsection{Database Design}
-A proper relational database design must consider many aspects of the scientific workflow: data ingestion, efficient storage, uniform search and access \cite{Bechini:2013:MSS:2425433.2425647}. Design of the STOQS database schema primarily focused on solving the problem of efficient access to \textbf{trajectory} data. However, care was taken to ensure that other discrete sampling geometry feature types \cite{DSG} that are common in oceanography would be supported by the schema.  Other feature types common in MBARI's campaigns are \textbf{timeseries} and \textbf{timeseriesProfile} which are produced by mooring deployments with instruments at single and multiple depths. 
-A fourth feature type, \textbf{trajectoryProfile}, is produced by profiling instruments aboard a moving platform; examples include shipboard ADCP and AUV multibeam water column measurements. The STOQS schema is compatible with all of these data feature types.
+An ideal relational database design must consider many aspects of the scientific 
+workflow: data ingestion, efficient storage, uniform search and access 
+\cite{Bechini:2013:MSS:2425433.2425647}. Design of the STOQS database schema primarily 
+focused on solving the problem of efficient access to \textbf{trajectory} data. 
+However, care was taken to ensure that other discrete sampling geometry feature types 
+\cite{DSG} that are common in oceanography would be supported by the schema.  Other 
+feature types common in MBARI's campaigns are \textbf{timeseries} and \textbf{timeseriesProfile} 
+which are produced by mooring deployments with instruments at single and multiple depths. 
+A fourth feature type, \textbf{trajectoryProfile}, is produced by profiling instruments 
+aboard a moving platform; examples include shipboard ADCP and AUV multibeam water column 
+measurements. The STOQS schema efficiently handles all of these data feature types.
 
-Review of existing practices \cite{Wright}, \cite{MODB} informed the proper layout of the tables, fields and relationships.  Key elements of the STOQS data storage model are shown in Fig.~\ref{fig:stoqs_simple_model}. There are 29 other tables in the model that hold metatadata, statistics, and simplified representations which are used by the user interface to implement data visualization and access. The complete data model is available on the project's code repository \cite{STOQS}. 
+Review of existing practices \cite{Wright}, \cite{MODB} informed the proper layout 
+of the tables, fields and relationships.  Key elements of the STOQS data storage model 
+are shown in Fig.~\ref{fig:stoqs_simple_model}. There are 29 other tables in the model 
+that hold metatadata, statistics, and simplified representations which are used by 
+the user interface to speed data visualization and access. The complete data model 
+is available on the project's code repository \cite{STOQS}. 
 
 \begin{figure*}[htbp]
 \centering
 \includegraphics[scale=0.5]{../AUV2014/stoqs_simple_model.png}
-\caption{Key elements of the STOQS database schema where spatial, temporal, and data values are stored. The database is normalized for efficient storage of data such that data are not repeated in any of the tables. Temporal and spatial data are stored separately in the InstantPoint and Measurement/Sample tables. For trajectory and timeseries data there is a one-to-one relationship for records in InstantPoint and Measurement/Sample. For timeseriesProfile and trajecotryProfile feature type data there are multiple Measurement/Sample records for each InstantPoint record. Parameter names are stored as records in the Parameter table allowing for new parameters without schema modification.}
+\caption{Key elements of the STOQS database schema where spatial, temporal, and data 
+values are stored. The database is normalized for efficient storage of data such 
+that data are not repeated in any of the tables. Temporal and spatial data are stored 
+separately in the InstantPoint and Measurement/Sample tables. For trajectory and 
+timeseries data there is a one-to-one relationship for records in InstantPoint and 
+Measurement/Sample. For timeseriesProfile and trajecotryProfile feature type data 
+there are multiple Measurement/Sample records for each InstantPoint record. 
+Parameter names are stored as records in the Parameter table allowing for new 
+parameters without schema modification.}
 \label{fig:stoqs_simple_model}
 \end{figure*}
 
 \subsection{Metadata}
 
-Metadata and its management are key to the success of any data management system. STOQS approches this issue by relying on the community adopted conventions for embedding metadata in the NetCDF files. Important conventions include Climate and Forecast \cite{CF}, those from the Argo and OceanSITES communities \cite{Pouliquen2006} and the Attribute Conventions for Dataset Discovery \cite{ACDD}. Tools upstream of STOQS help ensure proper setting of metadata values; for example, OPeNDAP data servers include tools that verify against the ISO 19115 Metadata Standard for Geographic Data. Regardless of the content of the metadata contained in the NetCDF files all of it will be loaded into STOQS. Global attributes and values are stored as Resources and attached to the Activity record. Variable attributes that are not fields of the Parameter table are also stored as Resources, but are attached to the Parameter record. Resource entries are used throughout the STOQS data model to store information that cannot be assigned to other parts of the data model.
+Metadata and its management are key to the success of any data management system. 
+STOQS approches this issue by relying on the community adopted conventions for 
+embedding metadata in the NetCDF files. Important conventions include Climate and 
+Forecast \cite{CF}, those from the Argo and OceanSITES communities \cite{Pouliquen2006} 
+and the Attribute Conventions for Dataset Discovery \cite{ACDD}. Tools upstream 
+of STOQS help ensure proper setting of metadata values; for example, OPeNDAP data 
+servers include tools that verify against the ISO 19115 Metadata Standard for 
+Geographic Data. Regardless of the content of the metadata contained in the NetCDF 
+files all of it will be loaded into STOQS. Global attributes and values are stored 
+as Resources and attached to the Activity record. Variable attributes that are not 
+fields of the Parameter table are also stored as Resources, but are attached to the 
+Parameter record. Resource entries are used throughout the STOQS data model to store 
+information that cannot be assigned to other parts of the data model.
 
-Another important aspect of metadata is that the barrier for loading and using data in STOQS is low, meaning that a minimum amount of metadata is required to properly identify the spatial and temporal coordinates, but no requirement is placed on consistent naming of variables. For example, the property "sea water temperature" may have names like TEMP, temperature, or water\_temp. All of these data can be loaded and visualized in the User Interface. Users familiar with the platforms understand the names given. The writer of the NetCDF file must pick appropriate names that will be understood by users. If the writer knows that a variable is a defined standard parameter then an attribute of "standard\_name" can be assigned with a value from the CF Standard Name table \cite{CFSN}. This standard\_name is presented in the User Interface and can be used to select similar data from multiple platforms.
-
+Another important aspect of metadata is that the barrier for loading and using data in 
+STOQS is low, meaning that a minimum amount of metadata is required to properly 
+identify the spatial and temporal coordinates, but no requirement is placed on 
+consistent naming of variables. For example, the property "sea water temperature" may 
+have names like TEMP, temperature, or water\_temp. All of these data can be loaded and 
+visualized in the User Interface. Users familiar with the platforms understand the names 
+given. The writer of the NetCDF file must pick appropriate names that will be understood 
+by users. If the writer knows that a variable is a defined standard parameter then an 
+attribute of "standard\_name" can be assigned with a value from the CF Standard Name 
+table \cite{CFSN}. This standard\_name is presented in the User Interface and can be 
+used to select similar data from multiple platforms.
 
 \section{Visualization}
 
 \subsection{User Interface}
 
-The STOQS User Interface (UI) displays a map of vehicle tracks and a time series of vehicle depth profiles (Fig.~\ref{fig:STOQSscreencapture}). The bold blue letter text items are each sections that may be expanded revealing lists of items that may be selected for filtering, data selection, and plotting. If a platform is selected for filtering then only the information from that platform is shown in the other sections of the interface. Any selection initiates an instant update of the other items that may be selected. With this faceted search capability the user can quickly narrow a selection for data of interest. For instance in Fig.~\ref{fig:STOQSscreencapture} the platform "daphne"  and a time range of about a day have been selected. The interface is reactive to browser screen size and behaves appropriately when viewed on tablets and smart phones. As with the database schema the design of the UI was guided by earlier efforts, in particular the MOQuA tool \cite{godin05}.
+The STOQS User Interface (UI) displays a map of vehicle tracks and a time series of 
+vehicle depth profiles (Fig.~\ref{fig:OverviewFirst}). The bold blue letter text items are each sections that may be expanded revealing lists of items that may be selected for filtering, data selection, and plotting. If a platform is selected for filtering then only the information from that platform is shown in the other sections of the interface. Any selection initiates an instant update of the other items that may be selected. With this faceted search capability the user can quickly narrow a selection for data of interest. For instance in Fig.~\ref{fig:STOQSscreencapture} the platform "daphne"  and a time range of about a day have been selected. The interface is reactive to browser screen size and behaves appropriately when viewed on tablets and smart phones. As with the database schema the design of the UI was guided by earlier efforts, in particular the MOQuA tool \cite{godin05}.
 
 Within the web application, data are retrieved directly from the database via XHR (XMLHttpRequest) requests, delivering data in JSON (JavaScript Object Notation) data structures. Client-side JavaScript code then formats these data as needed for display in the web page. Any DOM (Document Object Model) element, such as a button or checkbox label can be updated with data from the database. In fact, requested data can update any DOM element, including elements in the 2D Temporal Flot plot and in X3D scene graphs placed anywhere in the web page.
 
@@ -551,9 +602,12 @@ The overall design approach follows the so-called Shneiderman's mantra: "Overvie
 
 \begin{figure*}[htbp]
 \centering
-\includegraphics[width=0.9\linewidth]{../AUV2014/STOQSscreencapture.png}
-\caption{STOQS User Interface. Parameter chlorophyll is selected showing an overview of when, where, and what platforms measured it.}
-\label{fig:STOQSscreencapture}
+\includegraphics[width=0.9\linewidth]{OverviewFirst.png}
+\caption{STOQS User Interface. On initial load of a campaign database the user is presented 
+with an overview of the data when, where, and what platforms measured what Parameters. The 
+Platform and Measured Parameter accordian sections are initially closed; opening them 
+reveals selctors for filtering and plotting.}
+\label{fig:OverviewFirst.png}
 \end{figure*}
 
 \subsection{Spatial}
@@ -670,16 +724,23 @@ The other display of temporal data is where the vertical axis is the value of pa
 
 \begin{figure*}[htbp]
 \centering
-\includegraphics[width=0.9\linewidth]{Timeseries.png}
-\caption{STOQS User Interface. Timeseries feature type.}
-\label{fig:Timeseries_feature}
+\includegraphics[width=0.9\linewidth]{Trajectory.png}
+\caption{STOQS User Interface. Trajectory feature type.}
+\label{fig:Trajectory}
 \end{figure*}
 
 \begin{figure*}[htbp]
 \centering
-\includegraphics[width=0.9\linewidth]{Parameter_ADCP.png}
+\includegraphics[width=0.9\linewidth]{Timeseries.png}
+\caption{STOQS User Interface. Timeseries feature type.}
+\label{fig:Timeseries}
+\end{figure*}
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{TimeseriesProfile.png}
 \caption{STOQS User Interface. -20 and 20 cm/s are set along with the cmocean 'balance' colormap.}
-\label{fig:Parameter_ADCP}
+\label{fig:Timeseries}
 \end{figure*}
 
 \section{Using STOQS}
