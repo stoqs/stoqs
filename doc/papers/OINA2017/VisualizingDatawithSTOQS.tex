@@ -483,7 +483,7 @@ STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django
 running on a server and client-side technology (HTML5, CSS, jQuery, OpenLayers, 
 X3DOM, Bootstrap) running in a modern web browser (Fig.~\ref{fig:STOQSArch}). 
 The web application provides faceted search capabilities allowing a user to quickly 
-drill into data of interest. The X3DOM JavaScript library provides interactive i
+drill into data of interest. The X3DOM JavaScript library provides interactive 
 3D views of the data in browsers that support WebGL.  
 
 \begin{figure}[htbp]
@@ -589,9 +589,9 @@ attribute of "standard\_name" can be assigned with a value from the CF Standard 
 table \cite{CFSN}. This standard\_name is presented in the User Interface and can be 
 used to select similar data from multiple platforms.
 
-\section{Visualization}
+\section{Using STOQS UI for Data Exploration}
 
-\subsection{User Interface}
+\subsection{STOQS User Interface}
 
 The STOQS User Interface (UI) displays a map of vehicle tracks and a time series of 
 vehicle depth profiles (Fig.~\ref{fig:OverviewFirst}). The bold blue letter text 
@@ -675,6 +675,8 @@ collection events.
 \subsubsection{Parameter}
 The other display of temporal data is where the vertical axis is the value of 
 parameter(s). This presents time series data recorded by stationary platforms. 
+(Trajectory data may also be displayed in the Parameter tab if a nominal
+depth value is provided when the data are loaded into a STOQS database.)
 A time range is selectable with a mouse click and drag operation. This 
 feature is effective for data exploration as stationary platforms are able 
 to detect temporal events such as a rise in chlorophyll or drop in salinity. 
@@ -682,6 +684,40 @@ Selecting such an event also shows mobile platform data (in the Depth tab)
 measured at the same time. By viewing data in the Spatial section 
 researchers are able to gain a greater understanding of the spatial 
 extent of such events.
+
+\subsection{Parameter Values}
+
+The UI has a Parameter Values section that display histograms of the data values
+of the Parameters in the selection (Fig.~\ref{fig:ParameterValues}). These have value 
+in showing the distribution
+of data, but they are also selectors for data. The user may click and drag over
+a range of data values and that constraint will be added to the selction criteria
+for data displayed in other sections of the UI. One way this is used is for 
+selecting a trajectory data parameter, such as chlorophyll, along a particular 
+isopycnal and displaying it on the map (Fig.~\ref{fig:Isopycnal}).
+
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{ParameterValues.png}
+\caption{Parameter Values section expanded with the Temporal section collapsed 
+showing histograms of data for a campaign conducted in.}
+\label{fig:ParameterValues}
+\end{figure*}
+
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{Isopycnal.png}
+\caption{Chlorophyll fluoresence measurement selected for plotting on isopycnal level between 25.0 and 25.25.}
+\label{fig:Isopycnal}
+\end{figure*}
+
+
+
+\section{Example Visualizations}
+
+Here are some screen shots demomstrating ways in which data can be explored in using the STOQS UI.
 
 \begin{figure*}[htbp]
 \centering
@@ -704,35 +740,36 @@ extent of such events.
 \label{fig:Timeseries}
 \end{figure*}
 
-\begin{figure*}[htbp]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\linewidth]{Cardboard.png}
 \caption{STOQS User Interface. Cardboard viewing from an iPhone.}
 \label{fig:Cardboard}
-\end{figure*}
+\end{figure}
 
-\section{Using STOQS}
-\section{Using STOQS}
+\subsection{Beyond the STOQS User Interface}
 
-\subsection{Operation}
+There are many data analysis and visualization tasks that are difficult to
+accomplish in a web application. For these cases users of STOQS are advised to 
+use the same Python Django interface to the database that the STOQS User
+Interface uses. Sometimes these may be long-running analyses that cross
+multiple campaigns or for conducting queries that have not been implemented
+in the User Interface, such as one based on geospatial constraints.
 
-
-A typical workflow for is:
-\begin{enumerate}
-\item Install the STOQS software on a Linux server
-\item Vehicles conduct their missions, collecting data
-\item Create NetCDF files of the instrument data
-\item Construct and execute a STOQS load script
-\item Access and visualize data using the STOQS UI
-\end{enumerate}
-
-
-
+Several examples of Python scripts that have been written to analyze and
+visualize data are in the stoqs/contrib/analysis directory. Project Jupyter 
+offers a more visual and interactive way to write Python code and interact
+with data. Several examples of Jupyter Notebooks accessing and visualizing
+data from STQOS are provided in the stoqs/contrib/notebooks directory.
 
 \section{Conclusion}
-In summary, STOQS provides an invaluable interface for the visualization and analysis of oceanographic and biological data, often as it is being collected by diverse sampling platforms.  The utility of STOQS has been proven both in the field, to monitor and ensure successful operations, as well as post-operationally, to assess and analyze multidisciplinary data sets occurring across broad spatial and temporal scales. MBARI will continue to expand its capabilities and we invite others to join the STOQS development and user communities.
-
-
+In summary, STOQS provides a powerful interface for the visualization and 
+analysis of oceanographic and biological data, often as it is being collected 
+by diverse sampling platforms.  The utility of STOQS has been proven both in 
+the field, to monitor and ensure successful operations, as well as 
+post-operationally, to assess and analyze multidisciplinary data sets 
+occurring across broad spatial and temporal scales. MBARI will continue to 
+expand its capabilities and we invite others to join the STOQS development and user communities.
 
 
 % conference papers do not normally have an appendix
@@ -741,7 +778,10 @@ In summary, STOQS provides an invaluable interface for the visualization and ana
 % use section* for acknowledgement
 \section*{Acknowledgements}
 
-Appreciation is given to the numerous people involved in the development, deployment, recovery, operation and data handling for all of the platforms whose data are presented here. Development of STOQS is supported by the David and Lucile Packard Foundation at the Monterey Bay Aquarium Research Institute.
+Appreciation is given to the numerous people involved in the development, 
+deployment, recovery, operation and data handling for all of the platforms 
+whose data are presented here. Development of STOQS is supported by the 
+David and Lucile Packard Foundation at the Monterey Bay Aquarium Research Institute.
 
 
 
