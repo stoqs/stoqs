@@ -594,65 +594,49 @@ used to select similar data from multiple platforms.
 \subsection{User Interface}
 
 The STOQS User Interface (UI) displays a map of vehicle tracks and a time series of 
-vehicle depth profiles (Fig.~\ref{fig:OverviewFirst}). The bold blue letter text items are each sections that may be expanded revealing lists of items that may be selected for filtering, data selection, and plotting. If a platform is selected for filtering then only the information from that platform is shown in the other sections of the interface. Any selection initiates an instant update of the other items that may be selected. With this faceted search capability the user can quickly narrow a selection for data of interest. For instance in Fig.~\ref{fig:STOQSscreencapture} the platform "daphne"  and a time range of about a day have been selected. The interface is reactive to browser screen size and behaves appropriately when viewed on tablets and smart phones. As with the database schema the design of the UI was guided by earlier efforts, in particular the MOQuA tool \cite{godin05}.
+vehicle depth profiles (Fig.~\ref{fig:OverviewFirst}). The bold blue letter text 
+items are each sections that may be expanded revealing lists of items that may be 
+selected for filtering, data selection, and plotting. If a platform is selected for 
+filtering then only the information from that platform is shown in the other sections 
+of the interface. Any selection initiates an instant update of the other items that 
+may be selected. With this faceted search capability the user can quickly narrow a 
+selection for data of interest. 
 
-Within the web application, data are retrieved directly from the database via XHR (XMLHttpRequest) requests, delivering data in JSON (JavaScript Object Notation) data structures. Client-side JavaScript code then formats these data as needed for display in the web page. Any DOM (Document Object Model) element, such as a button or checkbox label can be updated with data from the database. In fact, requested data can update any DOM element, including elements in the 2D Temporal Flot plot and in X3D scene graphs placed anywhere in the web page.
-
-The overall design approach follows the so-called Shneiderman's mantra: "Overview first, zoom and filter, then details-on-demand" \cite{Whitney:2012:DIN:2597850}. This is in contrast to other data portal web sites which often present the user with empty text boxes, leaving unfamiliar users at a loss regarding what to enter. The STOQS UI adheres to 9 of the 12 elements of interactive dynamics described by Heer and Shneiderman \cite{Heer:2012:IDV:2133416.2146416}.
+The overall design approach follows the so-called Shneiderman's mantra: "Overview first, 
+zoom and filter, then details-on-demand" \cite{Whitney:2012:DIN:2597850}. This contrasts 
+with many other data portal web sites which often present the user with empty text boxes, 
+leaving unfamiliar users at a loss regarding what to enter. The STOQS UI adheres to 9 
+of the 12 elements of interactive dynamics described by Heer and Shneiderman 
+\cite{Heer:2012:IDV:2133416.2146416}.
 
 \begin{figure*}[htbp]
 \centering
 \includegraphics[width=0.9\linewidth]{OverviewFirst.png}
 \caption{STOQS User Interface. On initial load of a campaign database the user is presented 
-with an overview of the data when, where, and what platforms measured what Parameters. The 
-Platform and Measured Parameter accordian sections are initially closed; opening them 
-reveals selctors for filtering and plotting.}
+with an overview of what platforms measured what parameters and graphical views showing 
+a  map of the measurement locations (Spatial) and a chart of the time and depth extent (Temporal).
+The ``Platform`` and ``Measured Parameter`` sections are initially closed; opening them 
+reveals selectors for filtering and plotting.}
 \label{fig:OverviewFirst.png}
 \end{figure*}
 
 \subsection{Spatial}
 
 \subsubsection{2D}
-The default spatial view in the STOQS UI is a 2D OpenLayers generated map. It shows simplified vehicle tracks over the selected basemap. The ESRI Ocean basemap is default, but users can also select Open Street Maps and GEBCO \& NOAA Tiles, which is a local tile set for use aboard research vessels that do not have Internet connectivity. The track lines are generated on the server with a dynamically generated mapserver configuration file. Mapserver queries the database and builds image tiles which are then transmitted to the client using the OGC Web Map Service (WMS) protocol. As some campaigns contain dozens of tracks, this approach performs better than individual transmission of vector data to the OpenLayers client code. Because WMS is a well established standard, the server and client components - developed by different organizations - are able to work together using agreed upon request and response messages. If a user selects a Measured Parameter for plotting, a checkbox appears under the map for presentation of sensor data as colored tracks on the map. These data are retrieved from the server with an XHR request and then delivered to OpenLayers as a vector layer in KML format. Performance degrades with more than about 300 points, therefore server-side code subsamples large responses in order to maintain application responsiveness.
+The default spatial view in the STOQS UI is a 2D OpenLayers generated map. It shows 
+simplified vehicle tracks over the selected basemap. A menu, the plus symbol
+in the upper right, permits the selection of different basemaps and the turning
+on different layers. Any new selection of data will trigger an update
+of the map, zooming to the extent of the data. If the user has selected a Parameter for plotting
+then she may also check a box below the map to plot the data on the map as well.
 
 \subsubsection{3D}
-Next to the Map tab in the Spatial section is a 3D tab. This 3D tab appears only for databases in which a terrain model has been loaded. A Python dictionary specifies the needed parameters for the STOQS UI to display a 3D terrain "basemap" (Fig.~\ref{fig:x3dTerrains}). Logic in the client code maps the position, orientation, and centerOfRotation values to the corresponding DOM elements in the scene graph. (The next section describes ways to construct X3D terrain models.)
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=1.0\linewidth]{../AUV2014/x3dTerrains.png}
-\caption{Dictionary of terrain information loaded into STOQS.}
-\label{fig:x3dTerrains}
-\end{figure}
-
-Selected Measured Parameter data are delivered to the Spatial 3D display when a radio button in the Plot Data column is selected and the checkbox in the 3D panel is checked. The update of the 3D data uses the same AJAX (asynchronous JavaScript and XML - though the payload is JSON, not XML) process as the other parts of the UI:
-
-\begin{enumerate}
-\item HTML contains X3D scene graph elements for the web page: Fig.~\ref{fig:Spatial3D_DOM}
-\item Data are received by the browser from an XHR request in JSON format: Fig.~\ref{fig:JSONData}
-\item jQuery JavaScript code takes the values from the JSON and writes them to the scene graph elements: Fig.~\ref{fig:jQueryDOMUpdateGeo}
-\end{enumerate}
-
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=3.3in]{../AUV2014/Spatial3D_DOM.png}
-\caption{X3D scene graph within the HTML before being updated.}
-\label{fig:Spatial3D_DOM}
-\end{figure}
-
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=3.3in]{../AUV2014/JSONData.png}
-\caption{Measured Parameter X3D data in JSON format returned by XHR request.}
-\label{fig:JSONData}
-\end{figure}
-
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=3.3in]{../AUV2014/jQueryDOMUpdateGeo.png}
-\caption{JQuery JavaScript code that updates the X3D DOM elements.}
-\label{fig:jQueryDOMUpdateGeo}
-\end{figure}
+Next to the Map tab in the Spatial section is a 3D tab. This 3D tab appears 
+only for databases in which a terrain model has been loaded.  Selected Measured 
+Parameter data are delivered to the Spatial 3D display and represented with the same
+colormap as used in the Temporal -> Depth window.
+radio button in the Plot Data column is selected and the checkbox in the 3D panel 
+is checked.
 
 Updates are triggered by any selections in the UI that would result in different data being displayed. An example would be selecting a smaller depth-time region in the Temporal section. Sensor data are represented in X3D as an IndexedLineSet built out of geocoordinate points, which in this case are latitude, longitude, and depth relative to the WGS84 ellipsoid, the default geosystem. X3D Geospatial performs the conversion of geodetic coordinates to geocentric coordinates which is the native coordinate system used by X3D Geospatial. Extending STOQS capabilities to visualize numerical model and remote sensing data in the 3D view is possible, but can be made easier by development of new protocols for 3D web services \cite{McCann:2014:IXG:2628588.2628609}.
 
