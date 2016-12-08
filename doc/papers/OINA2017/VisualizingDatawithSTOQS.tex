@@ -119,7 +119,7 @@
 % http://www.ctan.org/tex-archive/macros/latex/contrib/cite/
 % The documentation is contained in the cite.sty file itself.
 
-
+\usepackage{hyperref}
 
 
 
@@ -546,9 +546,9 @@ that hold metatadata, statistics, and simplified representations which are used 
 the user interface to speed data visualization and access. The complete data model 
 is available on the project's code repository \cite{STOQS}. 
 
-\begin{figure*}[htbp]
+\begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.5]{../AUV2014/stoqs_simple_model.png}
+\includegraphics[width=1\linewidth]{../AUV2014/stoqs_simple_model.png}
 \caption{Key elements of the STOQS database schema where spatial, temporal, and data 
 values are stored. The database is normalized for efficient storage of data such 
 that data are not repeated in any of the tables. Temporal and spatial data are stored 
@@ -559,7 +559,7 @@ there are multiple Measurement/Sample records for each InstantPoint record.
 Parameter names are stored as records in the Parameter table allowing for new 
 parameters without schema modification.}
 \label{fig:stoqs_simple_model}
-\end{figure*}
+\end{figure}
 
 \subsection{Metadata}
 
@@ -602,6 +602,18 @@ of the interface. Any selection initiates an instant update of the other items t
 may be selected. With this faceted search capability the user can quickly narrow a 
 selection for data of interest. 
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1.0\linewidth]{OverviewFirst.png}
+\caption{STOQS User Interface. On initial load of the campaign at URL 
+\url{http://stoqs.mbari.org:8000/stoqs_simz_oct2014} the user is presented 
+with an overview of what platforms measured what parameters and graphical views showing 
+a  map of the measurement locations (Spatial) and a chart of the time and depth extent (Temporal).
+The ``Platform`` and ``Measured Parameter`` sections are initially closed; opening them 
+reveals selectors for filtering and plotting.}
+\label{fig:OverviewFirst}
+\end{figure}
+
 The overall design approach follows the so-called Shneiderman's mantra: "Overview first, 
 zoom and filter, then details-on-demand" \cite{Whitney:2012:DIN:2597850}. This contrasts 
 with many other data portal web sites which often present the user with empty text boxes, 
@@ -609,16 +621,6 @@ leaving unfamiliar users at a loss regarding what to enter. The STOQS UI adheres
 of the 12 elements of interactive dynamics described by Heer and Shneiderman 
 \cite{Heer:2012:IDV:2133416.2146416}.
 
-\begin{figure*}[htbp]
-\centering
-\includegraphics[width=0.9\linewidth]{OverviewFirst.png}
-\caption{STOQS User Interface. On initial load of a campaign database the user is presented 
-with an overview of what platforms measured what parameters and graphical views showing 
-a  map of the measurement locations (Spatial) and a chart of the time and depth extent (Temporal).
-The ``Platform`` and ``Measured Parameter`` sections are initially closed; opening them 
-reveals selectors for filtering and plotting.}
-\label{fig:OverviewFirst.png}
-\end{figure*}
 
 \subsection{Spatial}
 
@@ -640,10 +642,19 @@ models for display in the scene.
 Parameter data are delivered to the Spatial 3D display and represented with the same
 colormap as used in the Temporal-Depth window.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1.0\linewidth]{Spatial_3D.png}
+\caption{Viewing nitrate data measured by Dorado in the 3D view of the STOQS UI.
+Using the mouse a user can freely navigate the scene to explore the data from 
+whatever angle is desired.}
+\label{fig:Spatial_3D}
+\end{figure}
+
 3D graphics in STOQS is made possible by the X3DOM Javascript library \cite{Behr:2010:SAH:1836049.1836077} 
-which implements much of the X3D standard \cite{x3d07}. The declarative approach of X3D
-enables rich graphics and interactivity that can be implemented
-by a non-graphics programming experts. Furthermore, X3D's Geospatial component
+which implements much of the X3D Standard \cite{x3d07}. The declarative approach of X3D
+enables non-graphics programming experts to build rich graphics and interactivity 
+using rudimentary web development tools -- basically a text editor. Furthermore, X3D's Geospatial component
 \cite{Plesch:2015:XGC:2775292.2775315}
 makes it easy to represent all manner geographical data in customized fashions. 
 A particular need for upper water column oceanographic data visualization is to
@@ -653,10 +664,16 @@ Other popular 3D Geospatial data visualization tools, such as Google Earth
 and Cesium, do not provide these capabilities.
 
 A feature implemented in December 2016 is a ``Google Cardboard'' viewing mode
-~\ref{fig:Cardboard} where the 3D scene can be viewed on a smart phone to give a rudimentary Virtual 
+(Fig.~\ref{fig:Cardboard}) where the 3D scene can be viewed on a smart phone providing a Virtual 
 Reality experience. Exploring ways to gain insight from data by creating new
 3D and VR viewing experiences is an exciting area for future innovation.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1\linewidth]{Cardboard.png}
+\caption{STOQS User Interface. Cardboard viewing from an iPhone.}
+\label{fig:Cardboard}
+\end{figure}
 
 \subsection{Temporal}
 
@@ -697,55 +714,62 @@ selecting a trajectory data parameter, such as chlorophyll, along a particular
 isopycnal and displaying it on the map (Fig.~\ref{fig:Isopycnal}).
 
 
-\begin{figure*}[htbp]
+\begin{figure}[htbp]
 \centering
-\includegraphics[width=0.9\linewidth]{ParameterValues.png}
-\caption{Parameter Values section expanded with the Temporal section collapsed 
-showing histograms of data for a campaign conducted in.}
+\includegraphics[width=1\linewidth]{ParameterValues.png}
+\caption{Campaign database at URL \url{http://stoqs.mbari.org:8000/stoqs_canon_april2014}. 
+Parameter Values section expanded with the Temporal section collapsed 
+showing histograms plots.}
 \label{fig:ParameterValues}
-\end{figure*}
+\end{figure}
 
+
+\section{Example Visualizations}
+
+Here are some screen shots demomstrating ways in which data can be explored in using the STOQS UI.
+Trajectory data shown in Fig.~\ref{fig:Trajectory}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1\linewidth]{Trajectory.png}
+\caption{Trajectory data visualization from campaign at URL \url{http://stoqs.mbari.org:8000/stoqs_simz_aug2013}.
+Salinity from Dorado AUV is shown along with Net Tows and underway tracks from the R/V Rachel Carson.
+A specific visualization such as this can be shared with others using the ``Share this view'' link at the
+top of the UI. To see these data in your browser visit this shortened version of that link: \url{http://j.mp/2ggZ3nO}.}
+\label{fig:Trajectory}
+\end{figure}
+
+Timeseries data shown in Fig.~\ref{fig:Timeseries}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1\linewidth]{Timeseries.png}
+\caption{Timeseries data visualization from campaign at URL \url{http://stoqs.mbari.org:8000/stoqs_canon_may2015}.
+Measurements of chlorophyll from two stations along the California coast over a period of a week.
+The shortened ``Share this view'' link is: \url{http://j.mp/2h1KfIX}.}
+\label{fig:Timeseries}
+\end{figure}
+
+TimeseriesProfile data shown in Fig.~\ref{fig:TimeseriesProfile}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1\linewidth]{TimeseriesProfile.png}
+\caption{STOQS User Interface. -20 and 20 cm/s are set along with the cmocean 'balance' colormap.}
+\label{fig:TimeseriesProfile}
+\end{figure}
+
+More involved data selection in Fig.~\ref{fig:Isopycnal}
 
 \begin{figure*}[htbp]
 \centering
-\includegraphics[width=0.9\linewidth]{Isopycnal.png}
+\includegraphics[width=0.8\linewidth]{Isopycnal.png}
 \caption{Chlorophyll fluoresence measurement selected for plotting on isopycnal level between 25.0 and 25.25.}
 \label{fig:Isopycnal}
 \end{figure*}
 
 
 
-\section{Example Visualizations}
-
-Here are some screen shots demomstrating ways in which data can be explored in using the STOQS UI.
-
-\begin{figure*}[htbp]
-\centering
-\includegraphics[width=0.9\linewidth]{Trajectory.png}
-\caption{STOQS User Interface. Trajectory feature type.}
-\label{fig:Trajectory}
-\end{figure*}
-
-\begin{figure*}[htbp]
-\centering
-\includegraphics[width=0.9\linewidth]{Timeseries.png}
-\caption{STOQS User Interface. Timeseries feature type.}
-\label{fig:Timeseries}
-\end{figure*}
-
-\begin{figure*}[htbp]
-\centering
-\includegraphics[width=0.9\linewidth]{TimeseriesProfile.png}
-\caption{STOQS User Interface. -20 and 20 cm/s are set along with the cmocean 'balance' colormap.}
-\label{fig:Timeseries}
-\end{figure*}
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.9\linewidth]{Cardboard.png}
-\caption{STOQS User Interface. Cardboard viewing from an iPhone.}
-\label{fig:Cardboard}
-\end{figure}
 
 \subsection{Beyond the STOQS User Interface}
 
