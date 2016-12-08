@@ -632,79 +632,56 @@ then she may also check a box below the map to plot the data on the map as well.
 
 \subsubsection{3D}
 Next to the Map tab in the Spatial section is a 3D tab. This 3D tab appears 
-only for databases in which a terrain model has been loaded.  Selected Measured 
+only for databases in which terrain model have been specified in the load process. 
+The Data section of
+the overlay in the 3D scene allows addition of representations of Measurements,
+Samples, and Platforms. The Terrain section permits selection of the terrain
+models for display in the scene.
 Parameter data are delivered to the Spatial 3D display and represented with the same
-colormap as used in the Temporal -> Depth window.
-radio button in the Plot Data column is selected and the checkbox in the 3D panel 
-is checked.
+colormap as used in the Temporal-Depth window.
 
-Updates are triggered by any selections in the UI that would result in different data being displayed. An example would be selecting a smaller depth-time region in the Temporal section. Sensor data are represented in X3D as an IndexedLineSet built out of geocoordinate points, which in this case are latitude, longitude, and depth relative to the WGS84 ellipsoid, the default geosystem. X3D Geospatial performs the conversion of geodetic coordinates to geocentric coordinates which is the native coordinate system used by X3D Geospatial. Extending STOQS capabilities to visualize numerical model and remote sensing data in the 3D view is possible, but can be made easier by development of new protocols for 3D web services \cite{McCann:2014:IXG:2628588.2628609}.
+3D graphics in STOQS is made possible by the X3DOM Javascript library \cite{Behr:2010:SAH:1836049.1836077} 
+which implements much of the X3D standard \cite{x3d07}. The declarative approach of X3D
+enables rich graphics and interactivity that can be implemented
+by a non-graphics programming experts. Furthermore, X3D's Geospatial component
+\cite{Plesch:2015:XGC:2775292.2775315}
+makes it easy to represent all manner geographical data in customized fashions. 
+A particular need for upper water column oceanographic data visualization is to
+vertically exaggerate the vertical dimension by a factor of 10 or more and to
+represent data with negative elevations with respect to the Earth's surface.
+Other popular 3D Geospatial data visualization tools, such as Google Earth 
+and Cesium, do not provide these capabilities.
 
-\subsection{Terrain Rendering}
-
-As explored by \cite{yoo09}, the Earth's terrain can be represented using GeoElevationGrid nodes. High resolution terrain can be structured in a nested quad-tree tile set using GeoLOD nodes. For representing data for the entire globe, a multi-resolution approach such as this is common. In fact, popular globe viewers such as Google Earth use this approach with sophisticated techniques to decide which tiles to load and unload depending on the user's viewpoint and motion through global space. These techniques improve performance, are often proprietary, and can help distinguish a product within the marketplace. Similar techniques have not yet found their way into open source implementations of X3D Geospatial. However, small regions of the Earth can be represented in a single tile with enough horizontal resolution to be useful. MBARI's oceanographic campaigns are typically constrained to small geographic regions such as Monterey Bay and San Pedro Bay. For these regions a 50 meter gridded terrain model represented as a single GeoElevationGrid has less than a million vertices, which is effectively  rendered by today's 3D graphics hardware.
-
-In 2013 Limper \textit{et al.} \cite{Limper:2013:FDW:2466533.2466536} introduced Progressively Ordered Primitive (POP) buffers in X3DOM. Large POP geometry meshes (up to 1.5 million faces) are rendered with very good performance on today's computers with X3DOM. Advantages of representing bathymetric data in meshes are addressed by \cite{Becker:2005:NPN:1650409.1650513}. Meshes, in contrast to regular grids, are able to use fewer larger triangles for flat and smooth portions of terrain and more smaller triangles for more rugged terrain. Besides providing more accurate representations of bathymetry, meshes can also represent overhangs and caves, whereas GeoElevationGrids cannot. The workflow for creating the x3dterrain files using open source tools GMT \cite{GMT} and Meshlab \cite{Meshlab} is similar to that used in \cite{Silvestre}:
-
-\begin{itemize}
-\item Use GMT to create a point cloud in geocentric coordinates with 10x vertical exaggeration:
-\begin{verbatim}
-gmt grd2xyz Monterey25.grd \
-  --D_FORMAT=%f | sed '/NaN/d' | \
-  awk '{print $1, $2, 10 * $3}' | \ 
-  mapproject -E --D_FORMAT=%f > \
-  Monterey25_10x.asc
-\end{verbatim}
-\item Process interactively in Meslab:
-\begin{itemize}
-\item Load .asc file
-\item Filter operations
-\begin{itemize}
-\item Point Sets - Compute normals for point sets
-\item Surface Reconstruction: Poisson (Octree Depth: 12, Solver Divide: 10)
-\item Remeshing, Simplification and Reconstruction - Quadric Edge Collapse Decimation:
-\begin{itemize}
-\item Target number of faces: 1,500,000
-\item Preserve Normal
-\item Preseve Topology
-\item Optimal Position of Simplified Vertices
-\item Planar Simplification
-\item Post-simplification cleaning
-\end{itemize}
-\end{itemize}
-\item Cleanup (with plenty of intermediate saves)
-\item Filter - SmoothingÉ - Laplacian smooth (surface preserve)
-\item Export mesh to .ply
-\end{itemize}
-\item Build X3D files with InstantReality aopt tool:
-\begin{verbatim}
-aopt -i Monterey25_10x-smooth.ply \
-  -F Scene -b Monterey25_10x-opt.x3db
-aopt -i Monterey25_10x-opt.x3db \
-  -f PrimitiveSet:creaseAngle:4 -V \
-  -K "binGeo/:ib" \
-  -N Monterey25_10x.html
-\end{verbatim}
-\end{itemize}
-
-These operations result in a static web page where the results can be tested for fidelity and performance. In order for the terrain model to be included in the STOQS UI, the Scene elements are extracted from the HTML into a separate scene X3D file, which is the URL in Fig.~\ref{fig:x3dTerrains}. Fig.~\ref{fig:Monterey25_lrauvs} shows the terrain built with the above steps along with the chlorophyll measurements from month-long deployments of 2 AUVs in Monterey Bay.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=3.3in]{../AUV2014/Monterey25_lrauvs.png}
-\caption{POP Geometry of 25m resolution Monterey Bay terrain with AUV measured chlorophyll data rendered by X3DOM in STOQS.}
-\label{fig:Monterey25_lrauvs}
-\end{figure}
+A feature implemented in December 2016 is a ``Google Cardboard'' viewing mode
+~\ref{fig:Cardboard} where the 3D scene can be viewed on a smart phone to give a rudimentary Virtual 
+Reality experience. Exploring ways to gain insight from data by creating new
+3D and VR viewing experiences is an exciting area for future innovation.
 
 
 \subsection{Temporal}
 
 \subsubsection{Depth}
-The default temporal display is the Depth tab where the vertical axis of the plot is depth. A depth versus time plot is appropriate for trajectory and timeseriesProfile data. The plotting space is interpreted as a depth section through time or distance. Any X/Y rectangle of the Temporal Depth plot may be selected by a mouse click and drag operation. All elements of the UI are updated with data from the Time/Depth region selected. This operation works in both overview and plot data modes -- when data are plotted this is useful for zooming in on features of interest and observing environmental conditions around water sample collection events.
+The default temporal display is the Depth tab where the vertical axis of the plot 
+is depth. A depth versus time plot is appropriate for \textbf{trajectory} and 
+\textbf{timeseriesProfile} data. The plotting space is interpreted as a 
+depth section through time or distance. Any X/Y rectangle of the Temporal 
+Depth plot may be selected by a mouse click and drag operation. 
+All elements of the UI are updated with data from the Time/Depth region 
+selected. This operation works in both overview and plot data 
+modes -- when data are plotted this is useful for zooming in on features 
+of interest and observing environmental conditions around water sample 
+collection events.
 
 \subsubsection{Parameter}
-The other display of temporal data is where the vertical axis is the value of parameter(s). This presents time series data recorded by stationary platforms. A time range is selectable with a mouse click and drag operation. This feature is effective for data exploration as stationary platforms are able to detect temporal events such as a rise in chlorophyll or drop in salinity. Selecting such an event also shows mobile platform data (in the Depth tab) measured at the same time. By viewing data in the Spatial section researchers are able to gain a greater understanding of the spatial extent of such events.
-
+The other display of temporal data is where the vertical axis is the value of 
+parameter(s). This presents time series data recorded by stationary platforms. 
+A time range is selectable with a mouse click and drag operation. This 
+feature is effective for data exploration as stationary platforms are able 
+to detect temporal events such as a rise in chlorophyll or drop in salinity. 
+Selecting such an event also shows mobile platform data (in the Depth tab) 
+measured at the same time. By viewing data in the Spatial section 
+researchers are able to gain a greater understanding of the spatial 
+extent of such events.
 
 \begin{figure*}[htbp]
 \centering
@@ -727,6 +704,14 @@ The other display of temporal data is where the vertical axis is the value of pa
 \label{fig:Timeseries}
 \end{figure*}
 
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=0.9\linewidth]{Cardboard.png}
+\caption{STOQS User Interface. Cardboard viewing from an iPhone.}
+\label{fig:Cardboard}
+\end{figure*}
+
+\section{Using STOQS}
 \section{Using STOQS}
 
 \subsection{Operation}
