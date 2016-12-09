@@ -356,7 +356,7 @@
 %
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
-\title{Visualizing Data with STOQS, the Spatial Temporal Oceanographic Query System}
+\title{Visualizing Data with STOQS, the \\Spatial Temporal Oceanographic Query System}
 
 
 % author names and affiliations
@@ -740,8 +740,13 @@ URL shortening services that are available on the Internet.
 To demonstrate ways that the STOQS UI 
 can be used some screen shots are shown the major types of data.
 
-Fig.~\ref{fig:Trajectory} is a visualization of \textbf{trajectory} salinity from AUV
-Dorado shown along with Net Tows and underway tracks from the R/V Rachel Carson.
+Fig.~\ref{fig:Trajectory} demonstrates visualizing \textbf{trajectory} data. Salinity from AUV
+Dorado is selected for plotting with data locations for the R/V \textit{Rachel Carson} and the vertical net tows it collected.
+Tracks and traces are shown on the map and in the Temporal Depth plot. The circles indicate 
+locations where Dorado Gulper water samples wer taken and the black lines represent the vertical net tows.
+Salinity from Dorado is plotted using the Haline color map from \cite{cmocean}. A frontal feature is clearly seen in 
+the salinity data; having all of this information displayed together helps the biologist 
+interpret analysis of the water sample data.
 
 \begin{figure}[htbp]
 \centering
@@ -756,7 +761,7 @@ top of the UI. To see these data in your browser visit this shortened version of
 Fig.~\ref{fig:Timeseries} demonstrates that multiple parameters from multiple \textbf{timeseries} stations
 (in this case moorings) can be plotted in the Temporal Parameter window. If additional Parameters
 are checked for plotting in the Measured Parameters section their data will be added to the plot.
-If data have different units additional axes will be added to the plot.
+If data have different units additional vertical axes will be added to the plot.
 
 \begin{figure}[htbp]
 \centering
@@ -768,8 +773,11 @@ The shortened ``Share this view'' link is: \url{http://j.mp/2h1KfIX}.}
 \end{figure}
 
 Fig.~\ref{fig:TimeseriesProfile} is a plot of \textbf{timeseriesProfile} data (hourly northward sea water velocity)
-from a mooring in Monterey Bay. The ``balance'' color map from the Ocean \cite{cmocean} tab in the Colormaps section.
-
+from the M1 mooring in Monterey Bay. The ``balance'' color map from \cite{cmocean} is used along with 
+color limits of -20 and 20 cm/s. Starting with the ``share this view'' URL \url{http://j.mp/2gq66cp} a scientist
+can use the mooring data to help interpret data from the other platforms. For example, one can then open the
+Platforms section and click the Dorado and RachelCarson buttons to plot the locations of their data and
+visualize it in relation to the Mooring ADCP data.
 
 \begin{figure}[htbp]
 \centering
@@ -779,12 +787,20 @@ limits of -20 and 20 cm/s have been chosen to best represent these data. The Sha
 \label{fig:TimeseriesProfile}
 \end{figure}
 
-More involved data selection in Fig.~\ref{fig:Isopycnal}
+To demonstrate a more involved data visualization, data from the week-long
+campaign conducted in San Pedro Bay in April of 2014 
+(\url{http://stoqs.mbari.org:8000/stoqs_canon_april2014}) is used.
+Fig.~\ref{fig:Isopycnal} shows chlorophyll fluoresence (\texttt{fl700\_uncorr}) from 9 Dorado missions 
+plotted between density levels 25.0 and 25.25. A Parameter-Parameter plot is also generated
+by checking the ``Show Parameter-Parameter'' checkbox in the Measured Parameters section
+and selecting salinity and temperature for the X and Y values. Because these Parameters
+have standard names of \texttt{sea\_water\_salinity} and \texttt{sea\_water\_temperature} the STOQS
+UI recognizes it as a standard T-S plot and draws the Sigma-T curves.
 
 \begin{figure*}[htbp]
 \centering
-\includegraphics[width=0.8\linewidth]{Isopycnal.png}
-\caption{Chlorophyll fluoresence measurement from from a week-long set of missions by AUV Dorado selected for plotting on isopycnal level between 25.0 and 25.25.}
+\includegraphics[width=1\linewidth]{Isopycnal.png}
+\caption{Chlorophyll fluoresence measurement from a week-long set of missions by AUV Dorado selected for plotting between isopycnal values of 25.0 and 25.25.}
 \label{fig:Isopycnal}
 \end{figure*}
 
