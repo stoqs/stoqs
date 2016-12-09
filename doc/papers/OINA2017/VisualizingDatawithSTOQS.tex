@@ -454,18 +454,18 @@ standard \cite{x3d07} has been integrated to enable immersive 3D exploration of 
 
 MBARI has used STOQS over the last six years to manage and visualize data collected 
 during measurement campaigns where scientific goals have centered on improving 
-our understanding of biological and canyon dynamics processes. Fig.~\ref{fig:MUSE_illus_pp} 
+our understanding of biological and geological processes. Fig.~\ref{fig:MUSE_illus_pp} 
 is an artist's rendering showing the kinds of platforms and geographic extent for one one 
 these campaigns.  The data consist primarily of measurements 
 collected by moving platforms, but also measurements from stationary platforms. 
 The platforms typically have accurate clocks, Global Positioning 
-Sensors and underwater inertial navigation sensors, and one or more instruments that measure 
+Sensors, underwater inertial navigation sensors, and one or more instruments that measure 
 parameters such as temperature, salinity, oxygen, nitrate, chlorophyll fluorescence, 
 optical backscatter, particle sizes, and vehical engineering data. Some platforms also collect
 water samples for later laboratory analysis, whose data are also loaded into STOQS. 
 
-The STOQS software is provided for free to the oceanographic community. It's site on
-GitHub \cite{stoqs_github} includes simple instructions for building your own server that
+The STOQS software is provided for free to the oceanographic community. Its site on
+GitHub \cite{stoqs_github} provides simple instructions for building your own server that
 you can use to serve your own data.
 
 \begin{figure}[htbp]
@@ -503,25 +503,27 @@ These data are unique and costly to collect. One of the standards used within
 the oceanographic community is NetCDF \cite{Rew1990}, a binary data format used 
 commonly for gridded numerical model output and remote sensing data. Because of its 
 20-plus year history of use, its flexibility, and its recent adoption as an 
-Open Geospatial Consortium (OGC) CF-NetCDF standard and Discrete Sampling Geometries
+Open Geospatial Consortium (OGC) standard, CF-NetCDF and Discrete Sampling Geometries
 \cite{DSG} are used to archive MBARI's 
 \textit{in situ} measurement data.
 
+\subsection{Rationale for using a relational database}
+
 Measurement trajectory data are
-structured in NetCDF files with one coordinate dimension: time. 
-The only index to the data stored in the trajectory format time. 
+structured in NetCDF files with one coordinate dimension: \texttt{time}. 
+  The only index to the data stored in the trajectory format is \texttt{time}. 
 Accessing spatial subsets of of these kind of NetCDF files
 inefficient.  For example, 
 if an application program needs to extract just the upper 5 meter temperatures from 
 a glider data file --- where the glider samples the water column in a sawtooth 
 depth pattern from 0 to 500 meters depth --- it would have to read all 
 the data from the file and then select the data less than 5 meters using the program's 
-Random Access Memory Space.
+Random Access Memory.
 This is a very 
 inefficient and memory intensive way to access data; we would rather have the data selection
 and subsetting happen on reading the data from disk. This problem is commonly
 encountered by users when they start working with large collections of data 
-using commonly available Matlab and Python routines -- they run out of memory. 
+using commonly available Matlab and Python routines -- they quickly run out of memory. 
 STOQS solves this problem by storing the 
 data in a geospatial relational database where any field, such as depth 
 and geographic location, can be indexed for efficient access --
@@ -530,7 +532,9 @@ database along with the PostGIS extension is used. This allows arbitrarily large
 of data to be efficeintly accessed for all sorts of data analysis and visualization
 purposes.
 
-These CF-NetCDF files are then loaded into a STOQS database using and Extract Translate
+\subsection{OPeNDAP}
+
+These CF-NetCDF files are loaded into a STOQS database using and Extract Translate
 Load process that depends on the files being served by an OPeNDAP server \cite{Cornillon03opendap:accessing}.
 Requiring the data to be served by an OPeNDAP server before loading into STOQS has two positive outcomes:
 1) OPeNDAP supports indexed access to NeTCDF data with a network protocol, and 2) Provenance tracking
