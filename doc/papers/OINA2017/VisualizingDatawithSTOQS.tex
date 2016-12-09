@@ -457,7 +457,8 @@ during measurement campaigns where scientific goals have centered on improving
 our understanding of biological and canyon dynamics processes. Fig.~\ref{fig:MUSE_illus_pp} 
 is an artist's rendering showing the kinds of platforms and geographic extent for one one 
 these campaigns.  The data consist primarily of measurements 
-collected by moving platforms. The platforms have accurate clocks, Global Positioning 
+collected by moving platforms, but also measurements from stationary platforms. 
+The platforms typically have accurate clocks, Global Positioning 
 Sensors and underwater inertial navigation sensors, and one or more instruments that measure 
 parameters such as temperature, salinity, oxygen, nitrate, chlorophyll fluorescence, 
 optical backscatter, particle sizes, and vehical engineering data. Some platforms also collect
@@ -480,7 +481,7 @@ Data from ships, moorings, gliders, AUVs, ROVs, and benthic instruments are hand
 \subsection{Web stack}
 
 STOQS consists of a PostgreSQL/PostGIS database, Mapserver, and Python-Django 
-running on a server and client-side technology (HTML5, CSS, jQuery, OpenLayers, 
+running on a server and client-side technology (HTML5, CSS, jQuery, OpenLayers, Flot,
 X3DOM, Bootstrap) running in a modern web browser (Fig.~\ref{fig:STOQSArch}). 
 The web application provides faceted search capabilities allowing a user to quickly 
 drill into data of interest. The X3DOM JavaScript library provides interactive 
@@ -495,43 +496,52 @@ and through direct SQL to the PostgreSQL database.}
 \label{fig:STOQSArch}
 \end{figure}
 
-\subsection{CF-NetCDF}
+\subsection{CF-NetCDF and OPeNDAP}
 
 Standards are important for the durability of data archived from oceanographic measurement programs. 
 These data are unique and costly to collect. One of the standards used within 
 the oceanographic community is NetCDF \cite{Rew1990}, a binary data format used 
 commonly for gridded numerical model output and remote sensing data. Because of its 
 20-plus year history of use, its flexibility, and its recent adoption as an 
-Open Geospatial Consortium (OGC) standard, NetCDF is used to archive MBARI's 
+Open Geospatial Consortium (OGC) CF-NetCDF standard and Discrete Sampling Geometries
+\cite{DSG} are used to archive MBARI's 
 \textit{in situ} measurement data.
 
 Measurement trajectory data are
 structured in NetCDF files with one coordinate dimension: time. 
 The only index to the data stored in the trajectory format time. 
-There is no efficient arbitrary spatial-temporal retrieval of 
-data directly from this kind of NetCDF file. For example, 
+Accessing spatial subsets of of these kind of NetCDF files
+inefficient.  For example, 
 if an application program needs to extract just the upper 5 meter temperatures from 
 a glider data file --- where the glider samples the water column in a sawtooth 
 depth pattern from 0 to 500 meters depth --- it would have to read all 
-the data from the file and then perform extract the data less than 5 meters in RAM. 
+the data from the file and then select the data less than 5 meters using the program's 
+Random Access Memory Space.
 This is a very 
-inefficient and memory intensive way to access data. This problem is commonly
-encountered by users when they start working with larger collections of data 
-using commonly available Matlab routines. One solution is to store 
-the data in a geospatial relational database where any field, such as depth 
-and geographic location, can be indexed for efficient access.
-STOQS is built 
-upon relational database technology and uses the open source PostgreSQL 
-database along with the PostGIS extension. This allows arbitrarily large collections
+inefficient and memory intensive way to access data; we would rather have the data selection
+and subsetting happen on reading the data from disk. This problem is commonly
+encountered by users when they start working with large collections of data 
+using commonly available Matlab and Python routines -- they run out of memory. 
+STOQS solves this problem by storing the 
+data in a geospatial relational database where any field, such as depth 
+and geographic location, can be indexed for efficient access --
+The open source PostgreSQL 
+database along with the PostGIS extension is used. This allows arbitrarily large collections
 of data to be efficeintly accessed for all sorts of data analysis and visualization
 purposes.
+
+These CF-NetCDF files are then loaded into a STOQS database using and Extract Translate
+Load process that depends on the files being served by an OPeNDAP server \cite{Cornillon03opendap:accessing}.
+Requiring the data to be served by an OPeNDAP server before loading into STOQS has two positive outcomes:
+1) OPeNDAP supports indexed access to NeTCDF data with a network protocol, and 2) Provenance tracking
+is supported as the STOQS user is able to access the original source of the data.
 
 \subsection{Database Design}
 An ideal relational database design must consider many aspects of the scientific 
 workflow: data ingestion, efficient storage, uniform search and access 
 \cite{Bechini:2013:MSS:2425433.2425647}. Design of the STOQS database schema primarily 
 focused on solving the problem of efficient access to \textbf{trajectory} data. 
-However, care was taken to ensure that other discrete sampling geometry feature types 
+However, care was taken to ensure that other Discrete Sampling Geometry feature types 
 \cite{DSG} that are common in oceanography would be supported by the schema.  Other 
 feature types common in MBARI's campaigns are \textbf{timeseries} and \textbf{timeseriesProfile} 
 which are produced by mooring deployments with instruments at single and multiple depths. 
@@ -596,7 +606,8 @@ used to select similar data from multiple platforms.
 
 The STOQS User Interface (UI) displays a map of vehicle tracks and a time series of 
 vehicle depth profiles (Fig.~\ref{fig:OverviewFirst}). The bold blue letter text 
-items are each sections that may be expanded revealing lists of items that may be 
+items are each sections that may be expanded revealing more detail. 
+The sections in the right column contain lists of items that may be 
 selected for filtering, data selection, and plotting. If a platform is selected for 
 filtering then only the information from that platform is shown in the other sections 
 of the interface. Any selection initiates an instant update of the other items that 
@@ -617,8 +628,8 @@ reveals selectors for filtering and plotting.}
 
 The overall design approach follows the so-called Shneiderman's mantra: "Overview first, 
 zoom and filter, then details-on-demand" \cite{Whitney:2012:DIN:2597850}. This contrasts 
-with many other data portal web sites which often present the user with empty text boxes, 
-leaving unfamiliar users at a loss regarding what to enter. The STOQS UI adheres to 9 
+with many other oceanographic data portal web sites which often present the user with empty text boxes, 
+leaving unfamiliar users at a loss with what to enter. The STOQS UI adheres to 9 
 of the 12 elements of interactive dynamics described by Heer and Shneiderman 
 \cite{Heer:2012:IDV:2133416.2146416}.
 
@@ -628,22 +639,21 @@ of the 12 elements of interactive dynamics described by Heer and Shneiderman
 \subsubsection{2D}
 The default spatial view in the STOQS UI is a 2D OpenLayers generated map. It shows 
 simplified vehicle tracks over the selected basemap. A menu, the plus symbol
-in the upper right, permits the selection of different basemaps and the turning
-on different layers. Any new selection of data will trigger an update
+in the upper right, permits the selection of different basemaps and 
+layers. Any new selection of data will trigger an update
 of the map, zooming to the extent of the data. If the user has selected a Parameter for plotting
 then she may also check a box below the map to plot the data on the map as well.
 
 \subsubsection{3D}
-Next to the Map tab in the Spatial section is a 3D tab. This 3D tab appears 
-only for databases in which terrain model have been specified in the load process. 
+Next to the Map tab in the Spatial section is the 3D tab. It appears 
+only for databases in which terrain model(s) have been specified in the data load process. 
 The Data section of
 the overlay in the 3D scene allows addition of representations of Measurements,
 Samples, and Platforms. The Terrain section permits selection of the terrain
 models for display in the scene. Fig.~\ref{fig:Spatial_3D} shows nitrate data 
 measured by Dorado over the northern part of Monterey Bay. 
 Parameter data are delivered to the Spatial 3D display and represented with the same
-colormap as used in the Temporal-Depth window. Different color maps and color limit
-values are selected by clicking the color bar in any of the windows.
+colormap as used in the Temporal-Depth window.
 
 \begin{figure}[htbp]
 \centering
@@ -674,7 +684,8 @@ Reality experience. Exploring ways to gain insight from data by creating new
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=1\linewidth]{Cardboard.png}
-\caption{STOQS User Interface. Cardboard viewing from an iPhone.}
+\caption{Googl Cardboard viewing mode screen shot from a smart phone. 
+Users can have a Virtual Reality experience of data in STOQS.}
 \label{fig:Cardboard}
 \end{figure}
 
@@ -684,27 +695,27 @@ Reality experience. Exploring ways to gain insight from data by creating new
 The default temporal display is the Depth tab where the vertical axis of the plot 
 is depth. A depth versus time plot is appropriate for \textbf{trajectory} and 
 \textbf{timeseriesProfile} data. The plotting space is interpreted as a 
-depth section through time. Any X/Y rectangle of the Temporal 
-Depth plot may be selected by a mouse click and drag operation. 
+depth section through time. Any X/Y rectangle of the Temporal-Depth 
+plot may be selected by a mouse click and drag operation. 
 When this is done all other elements of the UI are updated with data 
 from the new Time/Depth region.
 
-Data may be plotted in the Temporal Depth window by selecting a radio button
+Data may be plotted in the Temporal-Depth window by selecting a radio button
 in the Plot Data column of the Measured Parameters or Sampled Parameters sections.
 By default color limits are set to the 2.5 and 97.5 percentials of the data distribution,
-which gives good results if there are outlier data values. Other limits and
+which gives good results even if there are outlier data values. Other limits and
 color maps may be chosen by clicking on the color bar which exposes a Colormaps section in the UI.
 
 \subsubsection{Parameter}
 The other tab for display of temporal data is where the vertical axes are the Parameter data values
 This presents time series data recorded by stationary platforms
 (trajectory data may also be displayed in the Parameter tab if a nominal
-depth value is provided when the data are loaded into a STOQS database).
+depth value is provided when the data are loaded).
 A time range is selectable with a mouse click and drag operation. This 
 feature is effective for data exploration as stationary platforms are able 
 to detect temporal events such as a rise in chlorophyll or drop in salinity. 
 Selecting such an event also shows mobile platform data (in the Depth tab) 
-measured at the same time. By viewing data in the Spatial section 
+measured at the same time. By viewing selected data in the Spatial section 
 researchers are able to gain a greater understanding of the spatial 
 extent of such events.
 
@@ -734,16 +745,16 @@ MBARI's public STOQS server at \url{http://stoqs.mbari.org:8000} host a few doze
 campaigns that are available for exploration. Once a particular visualization is
 created in the UI it can be shared by clicking on the ``Share this view'' link
 at the top of the window. A unique URL will be generated that can be share via 
-email or other messaging too. The URLs are long so sometimes it's handy to use
+email or other messaging tool. The URLs are long so sometimes it's handy to use
 URL shortening services that are available on the Internet.
 
 To demonstrate ways that the STOQS UI 
-can be used some screen shots are shown the major types of data.
+can be used some screen shots are shown.
 
 Fig.~\ref{fig:Trajectory} demonstrates visualizing \textbf{trajectory} data. Salinity from AUV
 Dorado is selected for plotting with data locations for the R/V \textit{Rachel Carson} and the vertical net tows it collected.
-Tracks and traces are shown on the map and in the Temporal Depth plot. The circles indicate 
-locations where Dorado Gulper water samples wer taken and the black lines represent the vertical net tows.
+Tracks and traces are shown on the map and in the Temporal-Depth plot. The circles indicate 
+locations where Dorado Gulper water samples were taken and the black lines represent the vertical net tows.
 Salinity from Dorado is plotted using the Haline color map from \cite{cmocean}. A frontal feature is clearly seen in 
 the salinity data; having all of this information displayed together helps the biologist 
 interpret analysis of the water sample data.
@@ -759,9 +770,10 @@ top of the UI. To see these data in your browser visit this shortened version of
 \end{figure}
 
 Fig.~\ref{fig:Timeseries} demonstrates that multiple parameters from multiple \textbf{timeseries} stations
-(in this case moorings) can be plotted in the Temporal Parameter window. If additional Parameters
+(in this case moorings) can be plotted together in the Temporal Parameter window. If additional Parameters
 are checked for plotting in the Measured Parameters section their data will be added to the plot.
 If data have different units additional vertical axes will be added to the plot.
+To better visualize long time series the Full Screen button button above the plot may be clicked.
 
 \begin{figure}[htbp]
 \centering
@@ -775,7 +787,7 @@ The shortened ``Share this view'' link is: \url{http://j.mp/2h1KfIX}.}
 Fig.~\ref{fig:TimeseriesProfile} is a plot of \textbf{timeseriesProfile} data (hourly northward sea water velocity)
 from the M1 mooring in Monterey Bay. The ``balance'' color map from \cite{cmocean} is used along with 
 color limits of -20 and 20 cm/s. Starting with the ``share this view'' URL \url{http://j.mp/2gq66cp} a scientist
-can use the mooring data to help interpret data from the other platforms. For example, one can then open the
+can use the mooring data to help interpret data from the other platforms. For example, one can open the
 Platforms section and click the Dorado and RachelCarson buttons to plot the locations of their data and
 visualize it in relation to the Mooring ADCP data.
 
@@ -787,7 +799,7 @@ limits of -20 and 20 cm/s have been chosen to best represent these data. The Sha
 \label{fig:TimeseriesProfile}
 \end{figure}
 
-To demonstrate a more involved data visualization, data from the week-long
+To demonstrate a more involved data visualization that is possible in the UI, data from the week-long
 campaign conducted in San Pedro Bay in April of 2014 
 (\url{http://stoqs.mbari.org:8000/stoqs_canon_april2014}) is used.
 Fig.~\ref{fig:Isopycnal} shows chlorophyll fluoresence (\texttt{fl700\_uncorr}) from 9 Dorado missions 
@@ -796,6 +808,8 @@ by checking the ``Show Parameter-Parameter'' checkbox in the Measured Parameters
 and selecting salinity and temperature for the X and Y values. Because these Parameters
 have standard names of \texttt{sea\_water\_salinity} and \texttt{sea\_water\_temperature} the STOQS
 UI recognizes it as a standard T-S plot and draws the Sigma-T curves.
+These sort of visualizations help scientists understand biologically important processes
+on neutral density surfaces in the ocean.
 
 \begin{figure*}[htbp]
 \centering
@@ -811,29 +825,32 @@ UI recognizes it as a standard T-S plot and draws the Sigma-T curves.
 
 There are many data analysis and visualization tasks that are difficult to
 accomplish in a web application. For these cases users of STOQS are advised to 
-use the same Python Django interface to the database that the STOQS User
-Interface uses. Sometimes these may be long-running analyses that cross
+use the same Python Django interface to the database that the UI
+uses. Sometimes these may be long-running analyses that cross
 multiple campaigns or for conducting queries that have not been implemented
-in the User Interface, such as one based on geospatial constraints.
+in the UI.
 
 Several examples of Python scripts that have been written to analyze and
 visualize data are in the stoqs/contrib/analysis directory. Project Jupyter 
 offers a more visual and interactive way to write Python code and interact
 with data. Several examples of Jupyter Notebooks accessing and visualizing
 data from STQOS are provided in the stoqs/contrib/notebooks directory.
+For example, one Notebook demonstrates performing queries with geospatial
+constraints and another demontstrates analyzing spectral Laser Optical
+Plankton Counter data from an AUV.
 
 \section{Conclusion}
-The STOQS User Interface is a useful tool for exploring and visualization 
-collections  of oceanographic measurement data.  
-The utility of STOQS has been proven both in 
+The STOQS User Interface is a useful tool for exploring and visualizing 
+large collections  of oceanographic measurement data.  
+The utility of STOQS has been proven at MBARI both in 
 the field, to monitor and ensure successful operations, as well as 
-post-operationally for analysis of multidisciplinary data sets.
+post-campaign for analysis of multidisciplinary data sets.
 Instructions for users to build their own development server are provided
-on the STOQS GitHub page \cite{stoqs_github}. Advances in virtualization and scripted system
-provisioning enables one to spin up a complete STOQS data server in about 
-an hour. Though MBARI plans to continue developing STOQS to meet its needs, we
+on the STOQS GitHub page \cite{stoqs_github}. One may provision a 
+complete STOQS data server in about an hour and then start loading their
+own data. MBARI plans to continue to enhance STOQS to meet its needs and we
 invite others to join the STOQS development and user communities so that it
-can meet the needs of others throughout the oceanographic community.
+can meet the needs of of the wider oceanographic community.
 
 
 % conference papers do not normally have an appendix
