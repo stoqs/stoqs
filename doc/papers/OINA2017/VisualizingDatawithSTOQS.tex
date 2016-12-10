@@ -455,7 +455,7 @@ standard \cite{x3d07} has been integrated to enable immersive 3D exploration of 
 MBARI has used STOQS over the last six years to manage and visualize data collected 
 during measurement campaigns where scientific goals have centered on improving 
 our understanding of biological and geological processes. Fig.~\ref{fig:MUSE_illus_pp} 
-is an artist's rendering showing the kinds of platforms and geographic extent for one one 
+is an artist's rendering showing the kinds of platforms and geographic extent for one of
 these campaigns.  The data consist primarily of measurements 
 collected by moving platforms, but also measurements from stationary platforms. 
 The platforms typically have accurate clocks, Global Positioning 
@@ -507,13 +507,13 @@ Open Geospatial Consortium (OGC) standard, CF-NetCDF and Discrete Sampling Geome
 \cite{DSG} are used to archive MBARI's 
 \textit{in situ} measurement data.
 
-\subsection{Rationale for using a relational database}
+\subsection{Relational database rationale}
 
 Measurement trajectory data are
 structured in NetCDF files with one coordinate dimension: \texttt{time}. 
   The only index to the data stored in the trajectory format is \texttt{time}. 
 Accessing spatial subsets of of these kind of NetCDF files
-inefficient.  For example, 
+is inefficient.  For example, 
 if an application program needs to extract just the upper 5 meter temperatures from 
 a glider data file --- where the glider samples the water column in a sawtooth 
 pattern from 0 to 500 meters depth --- it would have to read all 
@@ -537,12 +537,12 @@ NetCDF files generated from a campaign are loaded into a STOQS database followin
 Load process that depends on the files being served by an OPeNDAP server \cite{Cornillon03opendap:accessing}.
 Requiring the data to be served by OPeNDAP before loading into STOQS
 supports good data management practice. Knowing the source of data in a data visualization 
-system and being able to discover the processing steps all the back to the original source
+system and being able to discover the processing steps all the way back to the original source
 of data is important for being able to trust the output of the system. The STOQS User Interface
 provides a Metadata section where OPeNDAP Data Access Form links are provided for the sources 
 of data that are being viewed.
 
-\subsection{Database Design}
+\subsection{Database design}
 An ideal relational database design must consider many aspects of the scientific 
 workflow: data ingestion, efficient storage, uniform search and access 
 \cite{Bechini:2013:MSS:2425433.2425647}. Design of the STOQS database schema primarily 
@@ -581,7 +581,7 @@ parameters without schema modification.}
 \subsection{Metadata}
 
 Metadata and its management are key to the success of any data management system. 
-STOQS approches this issue by relying on the community adopted conventions for 
+STOQS approaches this issue by relying on the community adopted conventions for 
 embedding metadata in the NetCDF files. Important conventions include Climate and 
 Forecast \cite{CF}, those from the Argo and OceanSITES communities \cite{Pouliquen2006} 
 and the Attribute Conventions for Dataset Discovery \cite{ACDD}. Tools upstream 
@@ -681,7 +681,7 @@ which implements much of the X3D Standard \cite{x3d07}. The declarative approach
 enables non-graphics programming experts to build rich graphics and interactivity 
 using rudimentary web development tools -- basically a text editor. Furthermore, X3D's Geospatial component
 \cite{Plesch:2015:XGC:2775292.2775315}
-makes it easy to represent all manner geographical data in customized fashions. 
+makes it easy to represent all manner of geographical data in customized fashions. 
 A particular need for upper water column oceanographic data visualization is to
 vertically exaggerate the vertical dimension by a factor of 10 or more and to
 represent data with negative elevations with respect to the Earth's surface.
@@ -714,12 +714,12 @@ from the new Time/Depth region.
 
 Data may be plotted in the Temporal-Depth window by selecting a radio button
 in the Plot Data column of the Measured Parameters or Sampled Parameters sections.
-Initial color limits are set to the 2.5 and 97.5 percentials of the data distribution,
+Initial color limits are set to the 2.5 and 97.5 percentiles of the data distribution,
 which gives good results even if there are outlier data values. Other limits and
 color maps may be chosen by clicking on the color bar which exposes a Colormaps section in the UI.
 
 \subsubsection{Parameter}
-The other way to display temporal data is in te Parameter tab.
+The other way to display temporal data is in the Parameter tab.
 This presents time series data recorded by stationary platforms
 (trajectory data may also be displayed in the Parameter tab if a nominal
 depth value is provided when the data are loaded).
@@ -737,7 +737,7 @@ The UI has a Parameter Values section that displays histograms of the data value
 of the Parameters in the selection (Fig.~\ref{fig:ParameterValues}). 
 Distribution of data from each platform are shown in these plots, 
 but the plots are also selectors for data. The user may click and drag over
-a range of data values in the histogram and that constraint will be added to the selction criteria
+a range of data values in the histogram and that constraint will be added to the selection criteria
 for data displayed in other sections of the UI. One way this is used is to visualize
 data on density surfaces as is shown in Fig.~\ref{fig:Isopycnal}.
 
@@ -851,7 +851,7 @@ offers a more visual and interactive way to write Python code and interact
 with data. Several examples of Jupyter Notebooks that access and visualize
 data from STQOS are provided in the stoqs/contrib/notebooks directory.
 For example, one Notebook demonstrates performing queries with geospatial
-constraints and another demontstrates analyzing Laser Optical
+constraints and another demonstrates analyzing Laser Optical
 Plankton Counter size class data from the Dorado AUV.
 
 \section{Conclusion}
@@ -865,7 +865,7 @@ on the STOQS GitHub page \cite{stoqs_github}. One may provision a
 complete STOQS data server in about an hour and then start loading their
 own data. MBARI plans to continue to enhance STOQS to meet its needs and we
 invite others to join the STOQS development and user communities so that it
-can meet the needs of of the wider oceanographic community.
+can meet the needs of the wider oceanographic community.
 
 
 % conference papers do not normally have an appendix
