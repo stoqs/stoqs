@@ -28,5 +28,12 @@ In the paper's directory build the bibliography and the paper:
     pdflatex VisualizingDatawithSTOQS.tex 
     bibtex VisualizingDatawithSTOQS.bib && pdflatex VisualizingDatawithSTOQS.tex
    
-Examine the resulting .pdf file
+Examine the resulting .pdf file using gs(1) on your VM, or copy it to /vagrant and
+view it with your host OS's PDF viewer. For quick cycles on editing execute this
+command and leave the MacOS Preview app opened on the file ~/Downloads/VisualizingDatawithSTOQS.pdf:
+
+    pdflatex VisualizingDatawithSTOQS.tex && bibtex VisualizingDatawithSTOQS.bib && pdflatex VisualizingDatawithSTOQS.tex && cp VisualizingDatawithSTOQS.pdf /mnt/hgfs/<user>/Downloads
+
+If errors happen in the latex processing you may need to `rm *.aux` to clear them up.
+
  
