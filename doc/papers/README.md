@@ -34,7 +34,7 @@ bibtex VisualizingDatawithSTOQS && pdflatex VisualizingDatawithSTOQS.tex
    
 Examine the resulting .pdf file using gs(1) on Linux, or copy it to /vagrant and
 view it with your host OS's PDF viewer. For quick cycles on editing execute this
-command and leave the MacOS Preview app opened on the file 
+command and leave the MacOS Preview app (or other PDF viewer) opened on the file 
 ~/Vagrants/stoqsvm/VisualizingDatawithSTOQS.pdf:
 
     pdflatex VisualizingDatawithSTOQS.tex && bibtex VisualizingDatawithSTOQS && pdflatex VisualizingDatawithSTOQS.tex && cp VisualizingDatawithSTOQS.pdf /vagrant
