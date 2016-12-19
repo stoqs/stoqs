@@ -8,11 +8,10 @@ Starting with a standard STOQS installation, install with:
 sudo yum install texlive texlive-placeins texlive-upquote
 cd ~/Downloads
 wget http://mirrors.ctan.org/macros/latex/contrib/IEEEtran.zip
-unzip IEEEtran.zip
 ```
 
 Locate where texlive got installed on your system, set the `TEXLIVE_HOME` environment
-variable to that directory and finish the IEEEtran install, e.g.:
+variable to that directory, and finish the IEEEtran install, e.g.:
 
 ```bash
 export TEXLIVE_HOME=/usr/share/texlive/texmf-dist
@@ -26,19 +25,19 @@ sudo texhash
 In the paper's directory build the bibliography and the paper, e.g.:
 
 ```bash
-cd OINA2017
+cd ~/dev/stoqsgit/doc/papers/OINA2017
 export BIBINPUTS=$TEXLIVE_HOME/tex/latex/IEEEtran/bibtex
 export BSTINPUTS=$TEXLIVE_HOME/tex/latex/IEEEtran/bibtex
 pdflatex VisualizingDatawithSTOQS.tex 
-bibtex VisualizingDatawithSTOQS.bib && pdflatex VisualizingDatawithSTOQS.tex
+bibtex VisualizingDatawithSTOQS && pdflatex VisualizingDatawithSTOQS.tex
 ```
    
 Examine the resulting .pdf file using gs(1) on Linux, or copy it to /vagrant and
 view it with your host OS's PDF viewer. For quick cycles on editing execute this
-command and leave the MacOS Preview app opened on the file ~/Downloads/VisualizingDatawithSTOQS.pdf:
+command and leave the MacOS Preview app opened on the file 
+~/Vagrants/stoqsvm/VisualizingDatawithSTOQS.pdf:
 
-    pdflatex VisualizingDatawithSTOQS.tex && bibtex VisualizingDatawithSTOQS.bib && pdflatex VisualizingDatawithSTOQS.tex && cp VisualizingDatawithSTOQS.pdf /mnt/hgfs/$USER/Downloads
+    pdflatex VisualizingDatawithSTOQS.tex && bibtex VisualizingDatawithSTOQS && pdflatex VisualizingDatawithSTOQS.tex && cp VisualizingDatawithSTOQS.pdf /vagrant
 
 If errors happen in the latex processing you may need to `rm *.aux` to clear them up.
 
- 
