@@ -780,9 +780,10 @@ class STOQS_Loader(object):
         for v in self.include_names:
             self.logger.debug("v = %s", v)
             try:
-                vVals = self.ds[v][:]           # Case sensitive
-                self.logger.debug(len(vVals))
-                allNaNFlag[v] = np.isnan(vVals).all()
+                try:
+                    allNaNFlag[v] = np.isnan(self.ds[v][:]).all()
+                except TypeError:
+                    allNaNFlag[v] = np.isnan(self.ds[v].array).all()
                 if not allNaNFlag[v]:
                     anyValidData = True
             except KeyError:
