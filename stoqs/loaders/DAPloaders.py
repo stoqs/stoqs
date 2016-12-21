@@ -309,6 +309,17 @@ class Base_Loader(STOQS_Loader):
         else:
             return fv
 
+    def get_shape_length(self, pname):
+        '''Works for both pydap 3.1.1 and 3.2.0
+        '''
+        try:
+            shape_length = len(self.ds[pname].shape)
+        except AttributeError:
+            # Likely using pydap 3.2+
+            shape_length = len(self.ds[pname].array.shape)
+
+        return shape_length
+
     def getActivityName(self):
         '''Return actual Activity name that will be in the database accounting
         for permutations of startDatetime and stride values per NetCDF file name.
@@ -618,8 +629,16 @@ class Base_Loader(STOQS_Loader):
                 continue
             try:
                 if self.getFeatureType() == 'trajectory':
-                    trajSingleParameterCount = np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],))
-                count += (np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],)) / self.stride)
+                    try:
+                        trajSingleParameterCount = np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],))
+                    except AttributeError:
+                        # Likely using pydap 3.2+
+                        trajSingleParameterCount = np.prod(self.ds[name].array.shape[1:] + (np.diff(tIndx)[0],))
+                try:
+                    count += (np.prod(self.ds[name].shape[1:] + (np.diff(tIndx)[0],)) / self.stride)
+                except AttributeError:
+                    # Likely using pydap 3.2+
+                    count += (np.prod(self.ds[name].array.shape[1:] + (np.diff(tIndx)[0],)) / self.stride)
             except KeyError as e:
                 if self.getFeatureType() == 'trajectory':
                     # Assume that it's a derived variable and add same count as 
@@ -710,22 +729,23 @@ class Base_Loader(STOQS_Loader):
 
                 nomDepths, nomLats, nomLons = self.getNominalLocation()             # Possible to have both precise and nominal locations with this approach
 
-                if len(self.ds[pname].shape) == 4:
+                shape_length = self.get_shape_length(pname)
+                if shape_length == 4:
                     logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', pname)
                     # Assumes COARDS coordinate ordering
                     latitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                     longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
-                elif len(self.ds[pname].shape) == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper():
+                elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper():
                     # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
                     latitudes[pname] = float(self.ds[self.ds[pname].keys()[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                     longitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                     depths[pname] = nomDepths[pname]
-                elif len(self.ds[pname].shape) == 2:
+                elif shape_length == 2:
                     logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
                                 ' dimensions. Using nominal location read from auxially coordinates', pname)
                     longitudes[pname] = nomLons[pname]
                     latitudes[pname] = nomLats[pname]
-                elif len(self.ds[pname].shape) == 1:
+                elif shape_length == 1:
                     logger.info('%s has shape of 1, assuming no latitude, longitude, and'
                                 ' depth singletime dimensions. Using nominal location read'
                                 ' from auxially coordinates', pname)
@@ -733,12 +753,12 @@ class Base_Loader(STOQS_Loader):
                     latitudes[pname] = nomLats[pname]
                     depths[pname] = nomDepths[pname]
                 else:
-                    raise Exception('{} has shape of {}. Can handle only shapes of 2, and 4'.format(pname, len(self.ds[pname].shape)))
+                    raise Exception('{} has shape of {}. Can handle only shapes of 2, and 4'.format(pname, shape_length))
                     
             else:
                 logger.warn('Variable %s is not of type pydap.model.GridType', pname)
                 logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.'
-                            ' It has a shape length of %d.', pname, len(self.ds[pname].shape))
+                            ' It has a shape length of %d.', pname, shape_length)
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
         for pname in data.keys():
@@ -794,8 +814,9 @@ class Base_Loader(STOQS_Loader):
                 continue
             # Peek at the shape and pull apart the data from its grid coordinates 
             # Only single trajectories are allowed
-            logger.info('Reading data from %s: %s %s %s', self.url, pname, self.ds[pname].shape, type(self.ds[pname]))
-            if len(self.ds[pname].shape) == 1 and isinstance(self.ds[pname], pydap.model.BaseType):
+            shape_length = self.get_shape_length(pname)
+            logger.info('Reading data from %s: %s %s %s', self.url, pname, shape_length, type(self.ds[pname]))
+            if shape_length == 1 and isinstance(self.ds[pname], pydap.model.BaseType):
                 # Legacy Dorado data need to be processed as BaseType; Example data:
                 #   dsdorado = open_url('http://odss.mbari.org/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_256_00_256_00_decim.nc')
                 #   dsdorado['temperature'].shape = (12288,)
@@ -842,7 +863,7 @@ class Base_Loader(STOQS_Loader):
                 if self.ds[ac[pname]['time']].units == 'seconds since 1970-01-01T00:00:00Z':
                     timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards doesn't like ISO format
 
-            elif len(self.ds[pname].shape) == 1 and isinstance(self.ds[pname], pydap.model.GridType):
+            elif shape_length == 1 and isinstance(self.ds[pname], pydap.model.GridType):
                 # LRAUV data need to be processed as GridType
                 ac[pname] = self.getAuxCoordinates(pname)
                 tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
@@ -871,7 +892,7 @@ class Base_Loader(STOQS_Loader):
                 longitudes[pname] = self.ds[ac[pname]['longitude']][ac[pname]['longitude']][tIndx[0]:tIndx[-1]:self.stride]
                 timeUnits[pname] = self.ds[ac[pname]['time']].units.lower()
 
-            elif len(self.ds[pname].shape) == 2 and isinstance(self.ds[pname], pydap.model.GridType):
+            elif shape_length == 2 and isinstance(self.ds[pname], pydap.model.GridType):
                 # Customized for accepting LOPC data from Dorado - has only time coordinate
                 # LOPC data has only time therefore we look up the closest Instantpoint and 
                 # assign it's corresponding Measurement from other already loaded Dorado data.
@@ -921,7 +942,7 @@ class Base_Loader(STOQS_Loader):
                 logger.warn('Variable %s is not of type pydap.model.GridType with a '
                             'shape length of 1 or 2 (for LOPC/LISST-100 data).  It '
                             'is type %s with shape length = %d.', 
-                            pname, type(self.ds[pname]), len(self.ds[pname].shape))
+                            pname, type(self.ds[pname]), shape_length)
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
         for pname in data.keys():
@@ -1002,8 +1023,9 @@ class Base_Loader(STOQS_Loader):
 
                 _, nomLats, nomLons = self.getNominalLocation()                  # Possible to have both precise and nominal locations with this approach
 
+                shape_length = self.get_shape_length(pname) 
                 # TODO: Handle real CF-1.6 trajectoryProfile data
-                if len(self.ds[pname].shape) == 5:
+                if shape_length == 5:
                     logger.info('%s has shape of 5, assuming ADCP data from IMOS singleton dimensions are used for nominal latitude and longitude', pname)
                     # Use DEPTH and values of bin depths for nominal depths & make Integer - overriding what self.getNominalLocation() returns
                     nomDepths[pname] = [int(float(self.ds['DEPTH'][0]) - float(h)) for h in self.ds['HEIGHT_ABOVE_SENSOR'][:]]
@@ -1020,12 +1042,12 @@ class Base_Loader(STOQS_Loader):
                     latitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                     longitudes[pname] = float(self.ds[self.ds[pname].keys()[5]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                 else:
-                    raise Exception('%s has shape of %d. Can handle only shapes of 2, 4, and 5.', pname, len(self.ds[pname].shape))
+                    raise Exception('%s has shape of %d. Can handle only shapes of 2, 4, and 5.', pname, shape_length)
                     
             else:
                 logger.warn('Variable %s is not of type pydap.model.GridType', pname)
                 logger.warn('Variable %s is not of type pydap.model.GridType with a shape length of 4.'
-                            ' It has a shape length of %d.', pname, len(self.ds[pname].shape))
+                            ' It has a shape length of %d.', pname, shape_length)
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
         for pname in data.keys():
@@ -1359,14 +1381,14 @@ class Dorado_Loader(Trajectory_Loader):
     MBARI Dorado data as read from the production archive.  This class includes overriden methods
     to load quick-look plot and other Resources into the STOQS database.
     '''
-    chl = pydap.model.BaseType('nameless')
+    chl = pydap.model.BaseType()
     chl.attributes = {
             'standard_name': 'mass_concentration_of_chlorophyll_in_sea_water',
             'long_name': 'Chlorophyll',
             'units': 'ug/l',
             'name': 'mass_concentration_of_chlorophyll_in_sea_water',
     }
-    dens = pydap.model.BaseType('nameless')
+    dens = pydap.model.BaseType()
     dens.attributes = {
             'standard_name': 'sea_water_sigma_t',
             'long_name': 'Sigma-T',
