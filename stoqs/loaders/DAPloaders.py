@@ -1359,14 +1359,14 @@ class Dorado_Loader(Trajectory_Loader):
     MBARI Dorado data as read from the production archive.  This class includes overriden methods
     to load quick-look plot and other Resources into the STOQS database.
     '''
-    chl = pydap.model.BaseType()
+    chl = pydap.model.BaseType('nameless')
     chl.attributes = {
             'standard_name': 'mass_concentration_of_chlorophyll_in_sea_water',
             'long_name': 'Chlorophyll',
             'units': 'ug/l',
             'name': 'mass_concentration_of_chlorophyll_in_sea_water',
     }
-    dens = pydap.model.BaseType()
+    dens = pydap.model.BaseType('nameless')
     dens.attributes = {
             'standard_name': 'sea_water_sigma_t',
             'long_name': 'Sigma-T',
