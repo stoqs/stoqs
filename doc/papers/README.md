@@ -5,7 +5,7 @@ To build PDFs of the papers in the subdirectories you'll need LaTeX and IEEEtran
 Starting with a standard STOQS installation, install with:
 
 ```bash
-sudo yum install texlive texlive-placeins texlive-upquote
+sudo yum -y install texlive texlive-placeins texlive-upquote
 cd ~/Downloads
 wget http://mirrors.ctan.org/macros/latex/contrib/IEEEtran.zip
 ```
