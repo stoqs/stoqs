@@ -46,7 +46,7 @@ cl = CCELoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                )
 
 # Base OPeNDAP server
-cl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/beds/CanyonEvents/20130601/BED1/netcdf/'
+cl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/beds/CanyonEvents/'
 # Copied from ProjectLibrary to Hyrax server on elvis with:
 #   rsync -r /mbari/ProjectLibrary/901006.BEDS/BEDS.Data/CanyonEvents /var/www/dods_html/data/beds
 
@@ -54,17 +54,35 @@ cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT'
                 'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY', 'BED_DEPTH',
                 'DIST_TOPO', 'TUMBLE_RATE', 'TUMBLE_COUNT', 'TUMBLE_DIST', 'ROT_PLUS_TUMBLE_DIST']
 
-cl.bed_files = ['BED01_1_June_2013.nc',
-##                'bed03/30100046_partial_decimated10.nc',
+cl.bed_files = [
+                '20130601/BED1/netcdf/BED01_1_June_2013.nc',
+                '20140218/BED3/netcdf/30100046_trajectory.nc',
+                '20140218/BED3/netcdf/30100048.nc',
+                '20140218/BED3/netcdf/30100049_trajectory.nc',
+                '20140330/BED3/netcdf/30100518_trajectory.nc',
                ]
-cl.bed_platforms = [ 'BED01',
-##                     'BED03',
+cl.bed_platforms = [ 
+                     'BED01',
+                     'BED03',
+                     'BED03',
+                     'BED03',
+                     'BED03',
                    ]
 
-cl.bed_depths = [ 303,
-##
+cl.bed_depths = [ 
+                  303,
+                  427,
+                  566,
+                  566,
+                  480,
                 ]
-cl.bed_framegrabs = [ 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2013/vnta3702/01_27_35_21.html' ]
+cl.bed_framegrabs = [ 
+                      'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2013/vnta3702/01_27_35_21.html',
+                      '',
+                      '',
+                      '',
+                      '',
+                      ]
 
 # Execute the load
 cl.process_command_line()
