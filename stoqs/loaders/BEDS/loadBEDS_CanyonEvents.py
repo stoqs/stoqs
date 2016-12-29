@@ -71,10 +71,10 @@ cl.bed_platforms = [
 
 cl.bed_depths = [ 
                   303,
-                  427,
-                  566,
-                  566,
-                  480,
+                  295,
+                  388,
+                  388,
+                  331,
                 ]
 cl.bed_framegrabs = [ 
                       'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2013/vnta3702/01_27_35_21.html',
