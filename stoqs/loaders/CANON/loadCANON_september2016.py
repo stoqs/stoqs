@@ -68,13 +68,13 @@ for name in ['load_{}'.format(s) for s in cl.roms_platforms]:
 
 cl.roms_sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/ROMS/'
 cl.roms_sg621_files = ['roms_sg621_{:04d}.nc'.format(i) for i in range(248,400)]
-cl.roms_sg621_parms = ['roms_temperature', 'roms_salinity', 'roms_spice', 'roms_spice', 'temperature', 'salinity', 'spice']
+cl.roms_sg621_parms = ['roms_temperature', 'roms_salinity', 'roms_spice', 'temperature', 'salinity', 'spice']
 cl.roms_sg621_start_datetime = startdate
 cl.roms_sg621_end_datetime = enddate
 
 cl.roms_spray_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/ROMS/'
-cl.roms_spray_files = ['roms_spray_{:04d}.nc'.format(i) for i in range(313,400)]
-cl.roms_spray_parms = ['roms_temperature', 'roms_salinity', 'roms_spice', 'roms_spice', 'temperature', 'salinity', 'spice']
+cl.roms_spray_files = ['roms_spray_{:04d}.nc'.format(i) for i in range(313,450)]
+cl.roms_spray_parms = ['roms_temperature', 'roms_salinity', 'roms_spice', 'temperature', 'salinity', 'spice']
 cl.roms_spray_start_datetime = startdate
 cl.roms_spray_end_datetime = enddate
 
@@ -84,19 +84,20 @@ cl.roms_spray_end_datetime = enddate
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2016/netcdf/'
 cl.dorado_files = [
-                   'Dorado389_2016_090_01_090_01_decim.nc',
-                   'Dorado389_2016_161_00_161_00_decim.nc', 
-                   'Dorado389_2016_179_01_179_01_decim.nc',
-                   'Dorado389_2016_181_00_181_00_decim.nc',
+                   'Dorado389_2016_270_00_270_00_decim.nc',
                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume', 'rhodamine',
                     'roll', 'pitch', 'yaw']
 
 #####################################################################
-#  LRAUV
+#  LRAUV - Avoid the Lake Michigan tethys missions in August
 #####################################################################
-def find_urls(base, search_str):
+lrauv_startdates = { 'tethys': datetime.datetime(2016, 8, 30),
+                     'makai': startdate }
+lrauv_enddates = { 'tethys': enddate,
+                   'makai': enddate }
+def find_urls(plat, base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
     print "Crawling: %s" % url
@@ -123,7 +124,7 @@ def find_urls(base, search_str):
                 dir_end =  datetime.datetime.strptime(dts[1], '%Y%m%d')
 
                 # if within a valid range, grab the valid urls
-                if dir_start >= startdate and dir_end <= enddate:
+                if dir_start >= lrauv_startdates[plat] and dir_end <= lrauv_enddates[plat]:
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
@@ -146,30 +147,20 @@ def find_urls(base, search_str):
 # the binned files before this will work
 
 # Get directory list from thredds server
-platforms = ['daphne', 'makai']
+platforms = ['tethys', 'makai']
 
 for p in platforms:
     base =  'http://elvis64.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
-    setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'
-                                'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
-                                'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
-                                'health_platform_battery_charge', 'health_platform_average_voltage',
-                                'health_platform_average_current','fix_latitude', 'fix_longitude',
-                                'fix_residual_percent_distance_traveled_DeadReckonUsingSpeedCalculator',
-                                'pose_longitude_DeadReckonUsingSpeedCalculator',
-                                'pose_latitude_DeadReckonUsingSpeedCalculator',
-                                'pose_depth_DeadReckonUsingSpeedCalculator',
-                                'fix_residual_percent_distance_traveled_DeadReckonUsingMultipleVelocitySources',
-                                'pose_longitude_DeadReckonUsingMultipleVelocitySources',
-                                'pose_latitude_DeadReckonUsingMultipleVelocitySources',
-                                'pose_depth_DeadReckonUsingMultipleVelocitySources'])
+    setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
+                                'yaw', 'pitch', 'roll', 
+                                ])
     try:
-        #urls_eng = find_urls(base, '.*2S_eng.nc$')
-        urls_sci = find_urls(base, '.*10S_sci.nc$')
-        urls = urls_sci # + urls_eng
+        urls_eng = find_urls(p, base, '.*2S_eng.nc$')
+        urls_sci = find_urls(p, base, '.*10S_sci.nc$')
+        urls = urls_sci + urls_eng
         files = []
         if len(urls) > 0 :
             for url in sorted(urls):
@@ -191,8 +182,9 @@ for p in platforms:
 cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 # cl.l_662_files = [ 'OS_Glider_L_662_20151124_TS.nc' ]  ## this file was current Jan 1 2016 to about March 3 2016.
 # cl.l_662_files = [ 'OS_Glider_L_662_20160310_TS.nc' ]  ## changed to this file about March 3, 2016
-#cl.l_662_files = [ 'OS_Glider_L_662_20160628_TS.nc' ]  ## changed to this file about June 28, 2016. End Aug 10 2016.
-cl.l_662_files = [ 'OS_Glider_L_662_20160817_TS.nc' ]  ## deployed after servicing Aug 17 2016
+cl.l_662_files = [ 'OS_Glider_L_662_20160628_TS.nc',   ## changed to this file about June 28, 2016. End Aug 10 2016.
+                   'OS_Glider_L_662_20160817_TS.nc',   ## deployed after servicing Aug 17 2016
+                   'OS_Glider_L_662_20160913_TS.nc' ]  ## deployed new glider Sept 13 2016
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
@@ -206,7 +198,7 @@ cl.nps29_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
 cl.sg621_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Gliders/Seaglider/'
-cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,328)] 
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,421)] ## index needs to be 1 higher than terminal file name
 cl.sg621_parms = ['temperature', 'salinity']
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
@@ -265,19 +257,22 @@ cl.wg_Tiny_endDatetime = enddate
 ##cl.wg_oa_endDatetime = enddate
 
 ######################################################################
-#  WESTERN FLYER: not in this cruise
+#  WESTERN FLYER: Sep 17  - Oct 1
 ######################################################################
 # UCTD
-cl.wfuctd_base = cl.dodsBase + 'CANON/2015_May/Platforms/Ships/Western_Flyer/uctd/'
+cl.wfuctd_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Ships/Western_Flyer/uctd/'
 cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.wfuctd_files = [
- 
+                    'canon16m{:02d}.nc'.format(i) for i in range(1,15),
+                    'wfiv16m{:02d}.nc'.format(i) for i in range(1,9)
                   ]
 
 # PCTD
-cl.wfpctd_base = cl.dodsBase + 'CANON/2014_Sep/Platforms/Ships/Western_Flyer/pctd/'
+cl.wfpctd_base = cl.dodsBase + 'CANON/2016_Sep/Platforms/Ships/Western_Flyer/pctd/'
 cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl' , 'oxygen']
 cl.wfpctd_files = [
+                    'canon16c{:02d}.nc'.format(i) for i in range(1,69),
+                    'wfiv16c{:02d}.nc'.format(i) for i in range(1,34)
                   ]
 
 ######################################################################
@@ -321,14 +316,23 @@ cl.rcpctd_files = [
 # Mooring M1 Combined file produced by DPforSSDS processing - for just the duration of the campaign
 # M1 had a turnaround on July 29, 2015
 # http://dods.mbari.org/opendap/hyrax/data/ssdsdata/deployments/m1/201507/OS_M1_20150729hourly_CMSTV.nc
-cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
-cl.m1_files = [
-                'OS_M1_20150729hourly_CMSTV.nc'
-              ]
+#cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/201507/'
+#cl.m1_files = [
+#                'OS_M1_20150729hourly_CMSTV.nc'
+#              ]
+# mooring turn August 29 2016
+cl.m1_base = 'http://dods.mbari.org/opendap/data/ssdsdata/deployments/m1/'
+cl.m1_files = [ 
+                '201507/OS_M1_20150729hourly_CMSTV.nc',
+                '201507/m1_hs2_20150730.nc',
+                '201608/OS_M1_20160829hourly_CMSTV.nc',
+                '201608/m1_hs2_20160829.nc',
+                ] 
 cl.m1_parms = [
                 'eastward_sea_water_velocity_HR', 'northward_sea_water_velocity_HR',
                 'SEA_WATER_SALINITY_HR', 'SEA_WATER_TEMPERATURE_HR', 'SW_FLUX_HR', 'AIR_TEMPERATURE_HR',
-                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR'
+                'EASTWARD_WIND_HR', 'NORTHWARD_WIND_HR', 'WIND_SPEED_HR',
+                'bb470', 'bb676', 'fl676'
               ]
 
 cl.m1_startDatetime = startdate
@@ -419,8 +423,8 @@ if cl.args.test:
 
     cl.loadDorado(stride=10)
     #cl.loadDaphne(stride=100)
-    #cl.loadTethys(stride=100)
-    #cl.loadMakai(stride=100)
+    cl.loadTethys(stride=10)
+    cl.loadMakai(stride=10)
 
     #cl.loadRCuctd(stride=10)
     #cl.loadRCpctd(stride=10)
@@ -468,14 +472,14 @@ else:
     cl.loadM1() # Mooring turn Aug 30 2016
     cl.load_oa1()
     cl.load_oa2()
-    #cl.loadDorado()
+    cl.loadDorado()
     #cl.loadDaphne()
     #cl.loadTethys()
     #cl.loadMakai()
     #cl.loadRCuctd()
     #cl.loadRCpctd() 
-    #cl.loadWFuctd()   
-    #cl.loadWFpctd()
+    cl.loadWFuctd()   
+    cl.loadWFpctd()
 
     #cl.loadSubSamples()
 
@@ -483,5 +487,4 @@ else:
 cl.addTerrainResources()
 
 print "All Done."
-
  

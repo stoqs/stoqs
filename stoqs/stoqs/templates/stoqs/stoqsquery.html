@@ -67,14 +67,27 @@
             background-color: transparent; 
         }
         .stoqs-color-limit-input {
-            width: 60px;
-            height:15px;
+            width: 40px;
+            height: 10px;
+            line-height: 15px;
+            font-size: 13px;
+            margin-bottom: 0px;
         }
         .fail-text { 
             color: red;
         };
         x3d { margin-right:10px; margin-bottom:10px; }
         .webfont {font-family:'Orbitron';}
+        .input-group {
+            display: inline-table;
+            vertical-align: middle;
+            padding-bottom: 3px;
+            .input-group-addon,
+            .input-group-btn,
+            .form-control {
+                width: auto !important;
+            }
+        }
     </style>
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
     <link href="{{STATIC_URL}}bootstrap/css/bootstrap.icon-large.min.css" rel="stylesheet">
@@ -225,6 +238,7 @@
                                                     <h2>
                                                         <a id="controls-3d" class="accordion-toggle btn-mini" data-toggle="collapse" href="#collapseContols3D" title="Show/Hide Controls" style="padding:0px;color:black;display:inline;"><i class="icon-th-list"></i></a>
                                                         <a id="nav-instr-3d" class="accordion-toggle btn-mini" data-toggle="collapse" href="#navInstr3D" title="Show cheat sheet" style="padding:0px;color:black;display:inline;"><i class="icon-info-sign"></i></a>
+                                                        <a id="geo-cardboard-button" class="btn-mini zoom-lc-button cardboard-button" style="padding:0px;"><i class="icon-cardboard-full" title="Cardboard"></i></a>
                                                         <a id="geo-zoom-lc-button" class="btn-mini zoom-lc-button" style="padding:0px;"><i class="icon-resize-full" title="Full Screen"></i></a>
                                                     </h2>
                                                     </div>
@@ -244,7 +258,9 @@
                                                         <em>Navigation speed: +/-</em><br>
                                                         <em>Reset viewpoint: R</em><br>
                                                         </ul>
-                                                        Experimental: <a id="geo-rift-button" class="btn btn-mini rift-button">Enter VR</a>
+                                                        The <i class="icon-cardboard-full"></i> button is known to work on iPhone and Android with Firefox.
+                                                        <br>
+                                                        Experimental: <a id="geo-rift-button" class="btn btn-mini rift-button">Enter Rift</a>
                                                     </div>
                                             </div>
                                             <div id="collapseContols3D" class="accordion-body in">
@@ -300,163 +316,113 @@
                                         </div> <!-- limit-div-width -->
                                         </div> <!-- geo-3dplot-control -->
                                         <div style="height:100%;">
-                                        <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)"> 
-                                            <Scene>
-                                                <Environment frustumCulling="false"></Environment>
-                                                <NavigationInfo></NavigationInfo>
-                                                <Viewpoint id="mp-x3d-viewpoint1" def="vp" onviewpointChanged="setScale(event)"></Viewpoint>
-                                                <!-- Test GeoViewpoint for Monterey Bay area, user must page-down to bind to it -->
-                                                <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0">
-                                                </GeoViewpoint>
-                                                <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
-                                                <Group id='spatial-3d-root' render='true'>
-                                                    <Group id='spatial-3d-scene' def="spatial-3d-scene">
-                                                        <GeoOriginTransform containerField='children'>
-                                                            <Group id="mp-x3d-terrain">
-                                                            </Group>
-                                                        </GeoOriginTransform>
-                                                        <Group id="platform-animations"></Group>
-                                                        <Group id="platform-models"></Group>
-                                                    </Group>
-                                                </Group>
-
-        <!-- Elements for Rift - Orientations routed to GeoViewpoint, so must page down to that Viewpoint -->
-        <group id='spatial-3d-left' DEF='left' render='false'>
-            <shape>
-                <appearance>
-                    <renderedTexture id="rtLeft" stereoMode="LEFT_EYE" update='ALWAYS'
-                                     dimensions='640 800 4' repeatS='false' repeatT='false'>
+<!-- Elements for Google Cardboard -->
+    <X3D id="spatial-3d-x3d" style="width:100%;height:100%;margin:0px auto;display:block;border:none;" ondownloadsfinished="downloadsFinished(event)"> 
+      <scene>
+        <Environment frustumCulling="false"></Environment>
+        <navigationInfo></navigationInfo>
+        <Viewpoint id="mp-x3d-viewpoint1" def="vp" onviewpointChanged="setScale(event)"></Viewpoint>
+        <!-- Test GeoViewpoint for Monterey Bay area, user must page-down or enter Cardboard to bind to it -->
+        <GeoViewpoint id="mp-x3d-geoviewpoint1" def="gvp" position="36.8 -122.1 100000" orientation="1 0 0 -1.57" centerofrotation="36.8 -122.1 0" onviewpointChanged="setScale(event)">
+        </GeoViewpoint>
+        <Background DEF='bgnd' skyColor=".9608 .9608 .9608"></Background>
+        <Group id='spatial-3d-root' render='true'>
+          <Group id='spatial-3d-scene' def="spatial-3d-scene">
+            <GeoOriginTransform containerField='children'>
+              <Group id="mp-x3d-terrain">
+              </Group>
+            </GeoOriginTransform>
+            <Group id="platform-animations"></Group>
+            <Group id="platform-models"></Group>
+          </Group>
+        </Group>
+        <group id="spatial-3d-left" DEF='left' render="false">
+          <shape>
+            <appearance>
+             <renderedTexture id="rtLeft" stereoMode="LEFT_EYE" update='ALWAYS' dimensions='960 1080 4' repeatS='false' repeatT='false'>
                         <!--<viewpoint USE='vp' containerField='viewpoint'></viewpoint>-->
                         <geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>
                         <background USE='bgnd' containerField='background'></background>
                         <!--group USE='left' containerField="excludeNodes"></group-->
                         <group USE='spatial-3d-scene' containerField="scene"></group>
                     </renderedTexture>
+              <composedShader>
+                <field name='tex' type='SFInt32' value='0'></field>
+                <field name='leftEye' type='SFFloat' value='1'></field>
+                <shaderPart type='VERTEX'>
+                  attribute vec3 position;
+                  attribute vec2 texcoord;
 
-                    <composedShader>
-                        <field name='tex' type='SFInt32' value='0'></field>
-                        <field name='leftEye' type='SFFloat' value='1'></field>
-                        <shaderPart type='VERTEX'>
-                            attribute vec3 position;
-                            attribute vec2 texcoord;
+                  uniform mat4 modelViewProjectionMatrix;
+                  varying vec2 fragTexCoord;
 
-                            uniform mat4 modelViewProjectionMatrix;
-                            varying vec2 fragTexCoord;
+                  void main()
+                  {
+                  vec2 pos = sign(position.xy);
+                  fragTexCoord = texcoord;
 
-                            void main()
-                            {
-                                vec2 pos = sign(position.xy);
-                                fragTexCoord = texcoord;
+                  gl_Position = vec4((pos.x/2.0)-0.5, pos.y, 0.0, 1.0);
+                  //    gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0);
 
-                                gl_Position = vec4((pos.x - 1.0) / 2.0, pos.y, 0.0, 1.0);
-                                //gl_Position = vec4(pos.xy / 4.0 + vec2(-0.75,0.75), 0.0, 1.0);
-                            }
-                        </shaderPart>
-                        <shaderPart DEF="frag" type='FRAGMENT'>
-                            #ifdef GL_ES
-                            precision highp float;
-                            #endif
+                  //gl_Position = vec4(pos.xy / 4.0 + vec2(-0.75,0.75), 0.0, 1.0);
+                  }
+                </shaderPart>
+                <shaderPart DEF="frag" type='FRAGMENT'>
+                  #ifdef GL_ES
+                  precision highp float;
+                  #endif
 
-                            uniform sampler2D tex;
-                            uniform float leftEye;
-                            varying vec2 fragTexCoord;
+                  uniform sampler2D tex;
+                  uniform float leftEye;
+                  varying vec2 fragTexCoord;
 
-                            void main()
-                            {
-                                float distortionScale = 0.7; //0.685;
-                                //float distortionK[4] = float[](1.0, 0.22, 0.24, 0.0);
-                                vec2 lensCenter = vec2(0.151976495726, 0.0);
-                                if (leftEye == 0.0) {
-                                    lensCenter.x *= -1.0;
-                                }
+                  void main()
+                  {
 
-                                vec2 theta = (fragTexCoord * 2.0) - 1.0;
-                                float rSq = theta.x * theta.x + theta.y * theta.y;
-                                vec2 rvec = theta * (1.0 + 0.22 * rSq + 0.24 * rSq * rSq); //+ 0.0 * rSq * rSq * rSq);
-                                vec2 texCoord = (distortionScale*rvec+(1.0-distortionScale)*lensCenter + 1.0) / 2.0;
-
-                                if (any(notEqual(clamp(texCoord, vec2(0.0, 0.0), vec2(1.0, 1.0)) - texCoord,
-                                                       vec2(0.0, 0.0)))) {
-                                    //if (leftEye == 0.0) gl_FragColor = vec4(1.0,1.0,0.0,1.0);
-                                    //else gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-                                    discard;
-                                }
-                                else {
-                                    vec3 col = texture2D(tex, texCoord).rgb;
-                                    gl_FragColor = vec4(col, 1.0);
-                                }
-                                //gl_FragColor = texture2D(tex, fragTexCoord);
-                            }
-                        </shaderPart>
-                    </composedShader>
-
-                </appearance>
-                <plane solid="false"></plane>
-            </shape>
+                  gl_FragColor = texture2D(tex, fragTexCoord);
+                  }
+                </shaderPart>
+              </composedShader>
+            </appearance>
+            <plane solid="false"></plane>
+          </shape>
         </group>
+        <group id="spatial-3d-right" DEF='right' render="false">
+          <shape>
+            <appearance>
+              <renderedTexture id="rtRight" stereoMode="RIGHT_EYE" update='ALWAYS' dimensions='960 1080 4' repeatS='false' repeatT='false'>
+                <geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>
+                <background USE='bgnd' containerField='background'></background>
+                <group USE='spatial-3d-scene' containerField="scene"></group>
+              </renderedTexture>
+              <composedShader>
+                <field name='tex' type='SFInt32' value='0'></field>
+                <field name='rightEye' type='SFFloat' value='0'></field>
+                <shaderPart type='VERTEX'>
+                  attribute vec3 position;
+                  attribute vec2 texcoord;
 
-        <group id='spatial-3d-right' DEF='right' render='false'>
-            <shape>
-                <appearance>
-                    <renderedTexture id="rtRight" stereoMode="RIGHT_EYE" update='ALWAYS'
-                                     dimensions='640 800 4' repeatS='false' repeatT='false'>
-                        <!--<viewpoint USE='vp' containerField='viewpoint'></viewpoint>-->
-                        <geoviewpoint USE='gvp' containerField='GeoViewpoint'></geoviewpoint>
-                        <background USE='bgnd' containerField='background'></background>
-                        <group USE='spatial-3d-scene' containerField="scene"></group>
-                    </renderedTexture>
-                    <composedShader>
-                        <field name='tex' type='SFInt32' value='0'></field>
-                        <field name='leftEye' type='SFFloat' value='0'></field>
-                        <shaderPart type='VERTEX'>
-                            attribute vec3 position;
-                            attribute vec2 texcoord;
+                  uniform mat4 modelViewProjectionMatrix;
+                  varying vec2 fragTexCoord;
 
-                            uniform mat4 modelViewProjectionMatrix;
-                            varying vec2 fragTexCoord;
+                  void main()
+                  {
+                  vec2 pos = sign(position.xy);
+                  fragTexCoord = texcoord;
 
-                            void main()
-                            {
-                                vec2 pos = sign(position.xy);
-                                fragTexCoord = texcoord;
-
-                                gl_Position = vec4((pos.x + 1.0) / 2.0, pos.y, 0.0, 1.0);
-                            }
-                        </shaderPart>
-                        <shaderPart USE="frag" type='FRAGMENT'>
-                        </shaderPart>
-                    </composedShader>
-                </appearance>
-                <plane solid="false"></plane>
-            </shape>
+                  gl_Position = vec4((pos.x + 1.0) / 2.0, pos.y, 0.0, 1.0);
+                  }
+                </shaderPart>
+                <shaderPart USE="frag" type='FRAGMENT'>
+                </shaderPart>
+              </composedShader>
+            </appearance>
+            <plane solid="false"></plane>
+          </shape>
         </group>
-
-                <!-- Elements for Leap Motion -->
-                <transform id="handtrafo1" translation="3.8 1.00905 -5.97228">
-                    <transform id="handtrafo" scale="0.0015 0.0015 0.0015" translation="0.1 -0.3 -0.5">
-                        <transform id="hand">
-                            <transform>
-                                <transform>
-                                    <transform>
-                                        <transform scale="40 10 40" center="0 0 -2">
-                                            <shape>
-                                                <appearance>
-                                                    <material diffuseColor="0.603 0.894 0.909"></material>
-                                                </appearance>
-                                                <box></box>
-                                            </shape>
-                                        </transform>
-                                    </transform>
-                                </transform>
-                            </transform>
-
-                            <transform id="bones"></transform>
-                        </transform>
-                    </transform>
-                </transform>
-
-                                            </Scene>
-                                        </X3D>
+        </scene>
+      </X3D>
+    <!-- End of Cardboard Elements -->
                                         </div>
                                     </div>
                                 </div>
@@ -852,15 +818,15 @@
                                     <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
                                         <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
-                                            <div class="span5" id="contour-scatter-buttons" style="display:none;">
+                                            <div class="span5" id="contour-scatter-buttons" style="visibility:hidden;">
                                                 <span id="temporalparameterplotinfo">&nbsp;</span>
                                                 <br>
                                                 <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
                                             </div>
                                             <div class="span7"><span style="float:right;">
-                                                <a id="mp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
-                                                    <img id="sectioncolorbarimg" src="" />
+                                                <a id="mp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse">
+                                                    <img id="sectioncolorbarimg" src="{{STATIC_URL}}images/dummy_colorbar.png" />
                                                 </a>
                                             </span></div>
                                         </div>
@@ -889,16 +855,41 @@
                 <div class="accordian-group" style="display:none;">
                     <!--<div class="accordian-group">-->
                     <div class="accordian-heading">
-                        <h3><a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">
-                         Colormaps</a>
-                        </h3>
+                        <table><tr style="white-space:nowrap;">
+                            <td style="width:30%;"><h3>
+                            <a id="colormap-anchor" class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseColormap">Colormaps</a>
+                            </h3></td><td>
+                                <input id="cm-cmin" type="text" class="stoqs-color-limit-input cm-activate" style="text-align:right;" title="Initial min value is 2.5 percentile" />
+                            </td><td>
+                                <img id="cm-colorbarimg" style="vertical-align:middle;" src="{{STATIC_URL}}images/colormaps/jetplus.png" />
+                            </td><td>
+                                <input id="cm-cmax" type="text" class="stoqs-color-limit-input cm-activate" title="Initial max value is 97.5 percentile" />
+                                <label class="stoqs-color-limit-input" for="cmincmax_lock" style="display:inline;"> Lock: </label>
+                                <input type="checkbox" id="cmincmax_lock"/> 
+                                <div class="input-group"> 
+                                    <span class="input-group-addon stoqs-color-limit-input" style="font-weight:normal;"> Colors: </span>
+                                    <select id="num_colors" class="selectpicker form-control cm-activate" style="height:20px;width:50px;margin-bottom:0px;" title="Number of colors">
+                                        <option>256</option>
+                                        <option>128</option>
+                                        <option>64</option>
+                                        <option>32</option>
+                                        <option>16</option>
+                                        <option>8</option>
+                                        <option>4</option>
+                                        <option>2</option>
+                                    </select>
+                                </div>
+                                <button id="apply-color-limit-button" class="btn btn-mini disabled">Redraw</button>
+                                <button id="reset-color-limit-button" class="btn btn-mini disabled" title="Use 2.5 and 97.5 percentiles & all colors">Reset</button>
+                            </td>
+                        </tr></table>
                     </div>
                     <div id="collapseColormap" class="accordion-body collapse in">
                         <div class="accordion-inner">
 
                             <ul class="nav nav-tabs">
                                 {% for category in colormaps %}
-                                    {% if category.0 == "Uniform" %}
+                                    {% if category.0 == "Ocean" %}
                                         <li class="active"><a href="#{{category.0}}" data-toggle="tab">{{category.0}}</a></li>
                                     {% else %}
                                         <li><a href="#{{category.0}}" data-toggle="tab">{{category.0}}</a></li>
@@ -907,7 +898,7 @@
                             </ul>
                             <div class="tab-content">
                                 {% for category in colormaps %}
-                                    {% if category.0 == "Uniform" %}
+                                    {% if category.0 == "Ocean" %}
                                         <div class="tab-pane active" id="{{category.0}}">
                                     {% else %}
                                         <div class="tab-pane" id="{{category.0}}">
@@ -1259,11 +1250,13 @@
     var lcZoomed = false;
     var rcZoomed = false;
     var rifted = false;
+    var cardboarded = false;
     var request=''
     var map = null; 
     var parametervalues={};     
-    var permalink_bypass=false;
     var client_side_permalink = true;
+    var permalink_bypass=false;
+    var rebuild_from_permalink = false;
     var polyLayer = new OpenLayers.Layer.Vector( " Selection polygon", {visibility: false} );
     var timedepthplot;
     var timeparameterplot;
@@ -1437,6 +1430,7 @@
         if ($('#' + group + '-cmin').val() && $('#' + group + '-cmax').val()) {
             cmincmax = 'cmin=' + $('#' + group + '-cmin').val() + '&cmax=' + $('#' + group + '-cmax').val();
             cmincmax += '&cm=' + cm;
+            cmincmax += '&num_colors=' + $('#num_colors').val();
         }
         if ($('body').data()[group + '_kmlurl'] && typeof cmincmax != 'undefined') {
             $('#' + group + '-kml-field').text($('body').data()[group + '_kmlurl'] + cmincmax);
@@ -1492,9 +1486,9 @@
                         if ( ! $.isEmptyObject($('input:radio[name=colormap_choice]:checked').val()) ) {
                             var cm = $('input:radio[name=colormap_choice]:checked').val();
                         }
-                        strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('body').data()['parameterminmax']['plot'][1] + 
-                                                                           '&cmax=' + $('body').data()['parameterminmax']['plot'][2] + '&stride=' + strideVal +
-                                                                           '&cm=' + cm;
+                        strided_kmlurl = orig_kmlurl.replace('.kml', '.kmln') + '&cmin=' + $('#cm-cmin').val() + 
+                                                                           '&cmax=' + $('#cm-cmax').val() + '&stride=' + strideVal +
+                                                                           '&cm=' + cm + '&num_colors=' + $('#num_colors').val();
                         sensortrackskml.refresh({url: strided_kmlurl});
                     }
                 }).
@@ -1730,6 +1724,34 @@
                 $('#'+group+'-'+value+'-link').attr('href',url);
             }
         });
+    }
+
+    function setColorLimits(data) {
+        if ( ! $.isEmptyObject(data.parameterminmax) ) {
+            if ( ! $.isEmptyObject(data.parameterminmax.plot) ) {
+                // Normal, initial color limits set to 2.5 & 97.5 percentiles
+                $('#cm-cmin').val(data.parameterminmax.plot[1]);
+                $('#cm-cmax').val(data.parameterminmax.plot[2]);
+                $('#reset-color-limit-button').addClass('disabled');
+                $('#reset-color-limit-button').removeClass('btn-primary');
+            }
+            if ( ! $.isEmptyObject(data.parameterminmax.cmincmax) ) {
+                if ( $.isEmptyObject($('body').data()['parameterminmax'].cmincmax) ||
+                     data.parameterminmax.cmincmax[0] == $('body').data()['parameterminmax'].cmincmax[0] ) {
+                    // Use UI entered values if same parameter as before
+                    $('#cm-cmin').val(data.parameterminmax.cmincmax[1]);
+                    $('#cm-cmax').val(data.parameterminmax.cmincmax[2]);
+                    if ( data.parameterminmax.cmincmax[1] != $('body').data()['parameterminmax'].plot[1] ||
+                            data.parameterminmax.cmincmax[2] != $('body').data()['parameterminmax'].plot[2] ||
+                            $('#num_colors').val() != 256 ) {
+                        $('#reset-color-limit-button').removeClass('disabled');
+                        $('#reset-color-limit-button').addClass('btn-primary');
+                    }
+                }
+            }
+            $('#apply-color-limit-button').addClass('disabled');
+            $('#apply-color-limit-button').removeClass('btn-primary');
+        }
     }
 
     function toggleField(element) {
@@ -2063,6 +2085,19 @@
             }
         }
 
+        // Colormap stuff
+        if ( rebuild_from_permalink ) {
+            if ( ! $.isEmptyObject($('#cm-cmin').val()) ) {
+                params['cmin'] = $('#cm-cmin').val();
+            }
+            if ( ! $.isEmptyObject($('#cm-cmax').val()) ) {
+                params['cmax'] = $('#cm-cmax').val();
+            }
+            if ( ! $.isEmptyObject($('#num_colors').val()) ) {
+                params['num_colors'] = $('#num_colors').val();
+            }
+        }
+
         // Since the old link (if there was one) for the permalink is no longer valid, hide it
         $('#permalink-box').hide();
         
@@ -2183,11 +2218,29 @@
         rebuildFilters(['measuredparameterx3d']);
     });
 
-$('input[name="colormap_choice"]').on('change', function (event) {
+    $('input[name="colormap_choice"]').on('change', function (event) {
         var cm = $('input:radio[name=colormap_choice]:checked').val();
         $('#sp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + cm + '.png');
         $('#mp-kmlcolorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + cm + '.png');
+        $('#cm-colorbarimg').attr('src', '{{STATIC_URL}}images/colormaps/' + cm + '.png');
         rebuildFilters();
+    });
+
+    $('#apply-color-limit-button').click(function () {
+        if ( $('#apply-color-limit-button').hasClass('btn-primary') ) {
+            rebuildFilters();
+        }
+    });
+
+    $('#reset-color-limit-button').click(function () {
+        if ( $('#reset-color-limit-button').hasClass('btn-primary') ) {
+            $('#cm-cmin').val($('body').data()['parameterminmax'].plot[1]);
+            $('#cm-cmax').val($('body').data()['parameterminmax'].plot[2]);
+            $('#num_colors').val(256);
+            $('#reset-color-limit-button').addClass('disabled');
+            $('#reset-color-limit-button').removeClass('btn-primary');
+            rebuildFilters();
+        }
     });
 
     $('#showplatforms').on('click', function (event) {
@@ -2330,16 +2383,43 @@ $('input[name="colormap_choice"]').on('change', function (event) {
     });
 
     $('.colormaps-toggle').on('click', function(e) {
-        // Togggle show/hide the Colormaps accordion section
-        var $elem = $('#colormap-anchor').parent().parent().parent();
-        if ( $elem.css('display') == 'none' ) {
-            $('#colormap-anchor').parent().parent().parent().show();
-            $('#sectioncolorbarimg').attr('title', ' ').tooltip('fixTitle').tooltip('show');;
+        var attr = $('#sectioncolorbarimg').attr('href');
+        if ( $.isEmptyObject(attr) ) {
+            return false;
         }
         else {
-            $('#colormap-anchor').parent().parent().parent().hide();
+            // Togggle show/hide the Colormaps accordion section
+            var $elem = $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent();
+            if ( $elem.css('display') == 'none' ) {
+                $elem.show();
+                $('#sectioncolorbarimg').attr('title', ' ').tooltip('fixTitle').tooltip('show');
+                if ( ! $('#collapseColormap').hasClass('in') ) {
+                    $('#colormap-anchor').click();
+                }
+            }
+            else {
+                $elem.hide();
+            }
+            return true;
         }
-        return true;
+    });
+
+    $('.cm-activate').on('keypress change', function (event, previousText) {
+        $('#apply-color-limit-button').removeClass('disabled');
+        $('#apply-color-limit-button').addClass('btn-primary');
+        $('#reset-color-limit-button').removeClass('disabled');
+        $('#reset-color-limit-button').addClass('btn-primary');
+    });
+
+    $('#cmincmax_lock').on('change', function (event) {
+        if ( $(this).is(':checked') ) {
+            $('#cm-cmin').attr("disabled", true);
+            $('#cm-cmax').attr("disabled", true);
+        }
+        else {
+            $('#cm-cmin').removeAttr('disabled');
+            $('#cm-cmax').removeAttr('disabled');
+        }
     });
 
     $('#mp-cmin').on('keypress', function (event, previousText) {
@@ -2371,7 +2451,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
             if ( $('button.btn-primary.stoqs-toggle.platform').length != 1 ) {
                 //alert('WARNING: Platforms ' + $('body').data()['parameterplatforms'][e.target.value] + ' measured this Parameter.');
             }
-            $('#contour-scatter-buttons').show();
+            $('#contour-scatter-buttons').css({'visibility': 'visible'});
             $('#sensor-tracks-checkbox').show();
             $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                          $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
@@ -2383,14 +2463,15 @@ $('input[name="colormap_choice"]').on('change', function (event) {
         }
         else {
             // Remove sensortracks and image from Flot plot
-            $('#contour-scatter-buttons').hide();
+            $('#contour-scatter-buttons').css({'visibility': 'hidden'});
             $('#sensor-tracks-checkbox').hide();
             $('#temporalparameterplotinfo').data('info', '');
             $('#temporalparameterplotinfo').text('');
             $('#showsensortrackstext').text('');
             $('#showsensortracks').attr('disabled', true);
             $('#showgeox3dmeasurementtext').text('');
-            $('#sectioncolorbarimg').removeAttr('src');
+            $('#sectioncolorbarimg').attr('src', '{{STATIC_URL}}images/dummy_colorbar.png');
+            $('#sectioncolorbarimg').removeAttr('href');
             $('#temporalparameterstrideinfo').text('');
             rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'sampledurationsdepthtime']);
         }
@@ -2479,7 +2560,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
 
     $("#parameter-values-anchor").click(function() {
         //if ( $("#parameter-values-anchor").hasClass('in') ) {
-            // Force load of some histograms when this accordian is opened
+            // Force load of some histograms when this accordion is opened
             $('#showstandardnameparametervalues').attr({checked: true});
             $('#histogram-instruction').html('<em>Click and drag on plots to select parameter ranges</em>');
             rebuildFilters(['activityparameterhistograms']);
@@ -2501,7 +2582,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
     });
     
     
-    $(".zoom-lc-button").click(function(element) {
+    $(".zoom-lc-button, .cardboard-button").click(function(element) {
         if (lcZoomed) {
             if ($('.stoqs-zoom-width').hasClass('span12')) {
                 $('.stoqs-zoom-width').removeClass('span12');
@@ -2525,7 +2606,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                                                         'position': ''
                                                       } );
             }
-            if (this.id == 'geo-zoom-lc-button') {
+            if (this.id == 'geo-zoom-lc-button' || this.id == 'geo-cardboard-button') {
                 $('#parameter-parameter-group').children().show();
                 $('#spatial-anchor').parent().show();
                 $('#spatialTabs').show();
@@ -2558,7 +2639,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                                                         'position': 'fixed'
                                                       });
             }
-            if (this.id == 'geo-zoom-lc-button') {
+            if (this.id == 'geo-zoom-lc-button' || this.id == 'geo-cardboard-button') {
                 $('#parameter-parameter-group').children().hide();
                 $('#spatial-anchor').parent().hide();
                 $('#spatialTabs').hide();
@@ -2590,6 +2671,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                                              'resize': '',
                                              'overflow': '' } );
             $(this).html('<i class="icon-resize-full" title="Full Screen"></i>');
+            PIXELS_WIDE = 800;
         } else {
             if ($('.stoqs-zoom-width').hasClass('span6')) {
                 $('.stoqs-zoom-width').removeClass('span6');
@@ -2605,10 +2687,85 @@ $('input[name="colormap_choice"]').on('change', function (event) {
             $('#time-parameter-plot').css( { 'resize': 'vertical',
                                              'overflow': 'auto' } );
             $(this).html('<i class="icon-resize-small" title="Not Full Screen"></i>');
+            PIXELS_WIDE = 1600;
         }
         rcZoomed = ! rcZoomed;
     });
+function enable_cardboard(){
+  var runtime = null;
+  var rtLeft, rtRight;
+  var lastW, lastH;
+  var degreeToRadiansFactor = Math.PI / 180;
 
+  x3dom.fields.Quaternion.prototype.setFromEulerYXZ = function (alpha, beta, gamma) {
+
+    var c1 = Math.cos( alpha / 2 );
+    var c2 = Math.cos( beta / 2 );
+    var c3 = Math.cos( gamma / 2 );
+    var s1 = Math.sin( alpha / 2 );
+    var s2 = Math.sin( beta / 2 );
+    var s3 = Math.sin( gamma / 2 );
+
+    this.x = s1 * c2 * c3 + c1 * s2 * s3;
+    this.y = c1 * s2 * c3 - s1 * c2 * s3;
+    this.z = c1 * c2 * s3 - s1 * s2 * c3;
+    this.w = c1 * c2 * c3 + s1 * s2 * s3;
+  }
+
+  var CARDBOARD ={"deviceOrientation":null, "screenOrientation":null};
+  onDeviceOrientationChangeEvent = (function(rawEvtData) {
+    this.deviceOrientation = rawEvtData;
+  }).bind(CARDBOARD);
+
+  window.addEventListener('deviceorientation', onDeviceOrientationChangeEvent, false);
+
+  function deg2rad(deg){return deg * degreeToRadiansFactor;}
+
+  runtime = $('#spatial-3d-x3d')[0].runtime;
+  rtLeft = document.getElementById('rtLeft');
+  rtRight =document.getElementById('rtRight');
+  //rtLeft._x3domNode.lensCenter = 0;
+  //rtRight._x3domNode.lensCenter = 0;
+
+  lastW = +runtime.getWidth();
+  lastH = +runtime.getWidth();
+
+  var hw = Math.round(lastW / 2);
+  rtLeft.setAttribute('dimensions',  hw + ' ' + lastH + ' 4');
+  rtRight.setAttribute('dimensions', hw + ' ' + lastH + ' 4');
+
+  var element = document.getElementById("spatial-3d-x3d");
+  CARDBOARD.viewpoint = document.getElementById('mp-x3d-geoviewpoint1');
+  CARDBOARD.viewpoint.setAttribute('set_bind','true');
+  element.runtime.exitFrame = function() {
+    // check if screensize changed
+    var w = +runtime.getWidth();
+    var h = +runtime.getHeight();
+    if (w != lastW || h != lastH)
+    {
+      var half = Math.round(w / 2);
+      rtLeft.setAttribute('dimensions',  half + ' ' + h + ' 4');
+      rtRight.setAttribute('dimensions', half + ' ' + h + ' 4');
+      lastW = w;
+      lastH = h;
+    }
+    //handle device orientation change
+    if(!CARDBOARD.deviceOrientation)
+      return;
+    var q0 = x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(0,0,1),-deg2rad(window.orientation)); // phone rotation offset
+    var q = new x3dom.fields.Quaternion();
+    q.setFromEulerYXZ(deg2rad(CARDBOARD.deviceOrientation.beta), deg2rad(CARDBOARD.deviceOrientation.alpha), -deg2rad( CARDBOARD.deviceOrientation.gamma));
+
+    var q1 = new x3dom.fields.Quaternion.axisAngle(new x3dom.fields.SFVec3f(1,0,0),-Math.PI/2); // device orientation points upwards. rotate down to camera orientation
+
+    q = q.multiply(q1);
+    q = q.multiply(q0);
+
+    var aa = q.toAxisAngle();
+
+    CARDBOARD.viewpoint.setAttribute("orientation", aa[0].x + " " + aa[0].y + " " + aa[0].z + " " + aa[1]);
+  };
+}
     function enable_vr() {
         // Follows example from http://examples.x3dom.org/Demos/ClassroomVR/classroom-rift-webvr-2.html
 
@@ -2916,6 +3073,41 @@ $('input[name="colormap_choice"]').on('change', function (event) {
     }
 
 
+    $(".cardboard-button").click(function(element) {
+        if(cardboarded){
+            $('#spatial-3d-x3d #spatial-3d-root').attr('render', 'true');
+            $('#spatial-3d-x3d #spatial-3d-left').attr('render', 'false');
+            $('#spatial-3d-x3d #spatial-3d-right').attr('render','false');
+            $(this).html('<i class="icon-cardboard-full" title="Cardboard"></i>');
+            $('#mp-x3d-geoviewpoint1').attr("set_bind", "false");
+            $('#spatial-3d-x3d')[0].runtime.exitFrame = function() {}
+            // Reset padding to its initial padding
+            $('#left-column').parent().parent().css( { 'padding': '0px 20px' } );
+            $('#accordion1').css( { 'padding': '19px' } );
+            $('#collapseSpatial > div').css( { 'padding': '9px 15px' } ); 
+     	}
+        else {
+	    $('#spatial-3d-x3d #spatial-3d-root').attr('render', 'true');
+            $('#spatial-3d-x3d #spatial-3d-left').attr('render', 'true');
+            $('#spatial-3d-x3d #spatial-3d-right').attr('render', 'true');
+            $('#mp-x3d-geoviewpoint1').attr('position', $('body').data()['extent'][2] + ' ' + $('body').data()['extent'][1] + ' ' + $('body').data()['extent'][3]);
+            $('#mp-x3d-geoviewpoint1').attr('orientation', '0 0 1 0');
+            $(this).html('<i class="icon-cardboard-full" title="Normal"></i>');
+            // Collapse any opened 3D control panels
+            if ( $('#collapseContols3D').hasClass('in') ) {
+                $('#controls-3d').click();
+            }
+            if ( $('#navInstr3D').hasClass('in') ) {
+                $('#nav-instr-3d').click();
+            }
+            enable_cardboard();
+            // Remove padding for full VR experience
+            $('#left-column').parent().parent().css( { 'padding': '0px' } );
+            $('#accordion1').css( { 'padding': '0px' } );
+            $('#collapseSpatial > div').css( { 'padding': '0px' } );
+        }
+        cardboarded =! cardboarded;
+     });
     $(".rift-button").click(function(element) {
         
         var vrHMD = null, vrSensor = null;
@@ -2938,7 +3130,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
             $('#collapseSpatial > div').css( { 'padding-top': '9px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '15px' } );
             $('#geo-3dplot').css( { 'background-color': '' } );
-            $(this).html('Enter VR');
+            $(this).html('Enter Rift');
             runtime.exitFrame = function() {}
         }
         else {
@@ -2960,7 +3152,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
             $('#collapseSpatial > div').css( { 'padding-top': '0px' } );
             $('#collapseSpatial > div').css( { 'padding-left': '0px' } );
             $('#geo-3dplot').css( { 'background-color': '#2f2f2f' } );
-            $(this).html('Leave VR');
+            $(this).html('Leave Rift');
             enable_vr();
             if(vrHMD) {
                 var canvas = document.getElementsByTagName("canvas")[0];
@@ -2998,6 +3190,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                     $('input:checkbox[name=mp_all_parameters_plot_cb]').prop('checked',true).triggerHandler('click');
                 }
             }
+            $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent().hide();
             rebuildFilters(['parametertime', 'platformanimation', 'measuredparameterx3d']);
         }
         else if ( event.delegateTarget.id == 'temporal-depth-li' ) {
@@ -3609,6 +3802,21 @@ $('input[name="colormap_choice"]').on('change', function (event) {
         if ($('input:radio[name=colormap_choice]:checked').val()) {
             qstring = qstring + '&cm=' + $('input:radio[name=colormap_choice]:checked').val();
         }
+        if ($('#cmincmax_lock').is(':checked')) {
+            qstring = qstring + '&cmincmax_lock=1';
+        }
+
+        if ( ! $.isEmptyObject($('body').data()['parameterminmax']) ) {
+            if ( ! $.isEmptyObject($('input:radio[name=parameters_plot]:checked').val()) ) {
+                if ( $('input:radio[name=parameters_plot]:checked').val() == $('body').data()['parameterminmax'].plot[0] ||
+                     $('#cmincmax_lock').is(':checked') ) {
+                    // Use UI entered colormap limits if parameter is the same, or if Lock: is checked
+                    qstring = qstring + '&cmin=' + $('#cm-cmin').val();
+                    qstring = qstring + '&cmax=' + $('#cm-cmax').val();
+                    qstring = qstring + '&num_colors=' + $('#num_colors').val();
+                }
+            }
+        }
 
         if ($('#showgeox3dmeasurement').is(':checked') || $('#showplatforms').is(':checked')) {
             if ($('#showgeox3dmeasurement').is(':checked')) {
@@ -3632,6 +3840,10 @@ $('input[name="colormap_choice"]').on('change', function (event) {
         }
         if ($('#pp-sample-locations').is(':checked')) {
             qstring = qstring + '&ppsl=1';
+        }
+
+        if ($('.stoqs-zoom-width').hasClass('span12')) {
+            qstring = qstring + '&full_screen=1';
         }
 
         if ( ! $('#showallparametervalues').is(':checked')) {
@@ -4251,7 +4463,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                         $('#metadata-count').html("about " + $('body').data()['counts'].approximate_count_localized + " data values - ");
                     }
                     else {
-                        $('#metadata-count').html(data.counts.actual_count_localized + " data values - ");
+                        $('#metadata-count').html($('body').data()['counts'].actual_count_localized + " data values - ");
                     }
                 }
             }
@@ -4400,7 +4612,8 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                             });
                             // Show colorbar
                             $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
-                            $('#sectioncolorbarimg').attr('title', 'Click to select different colormap').tooltip('fixTitle').tooltip('hide');;
+                            $('#sectioncolorbarimg').attr('href', '#collapseColormap');
+                            $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');;
                             $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
@@ -4409,7 +4622,8 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                         else {
                             $('#temporalparameterplotinfo').text(data['parameterplatformdatavaluepng'][2]);
                             $('#temporalparameterplotinfo').css( { 'color': 'red' } );
-                            $('#sectioncolorbarimg').removeAttr('src');
+                            $('#sectioncolorbarimg').attr('src', '{{STATIC_URL}}images/dummy_colorbar.png');
+                            $('#sectioncolorbarimg').removeAttr('href');
                         }
                     }
                     else {
@@ -4653,12 +4867,13 @@ $('input[name="colormap_choice"]').on('change', function (event) {
             },
             url : summaryQuery + '?' + qstring,
             error: function(jqXHR, textStatus, errorThrown) {
-                alert(textStatus);
+            alert('Error reading from ' + summaryQuery + '?' + qstring + ':\n\n' + errorThrown);
                 resetWaitIndicators();
             },
             success: function (data) {
                 setDataAccess('mp', data);
                 setDataAccess('sp', data);
+                setColorLimits(data);
                 saveBodyData(data);
                 if (init) {
                     save_zoom_from_permalink();
@@ -4771,10 +4986,13 @@ $('input[name="colormap_choice"]').on('change', function (event) {
     }
 
     // Collect all the parameters on the page so we can generate our permalink.
-    function collect_parameters() {
-        params={'platform_clicks': [],
+    function collect_parameters_for_permalink() {
+        var pl_params={'platform_clicks': [],
                 'clicks': [],
-                'accordian': [],
+                'texts': [],
+                'selects': [],
+                'accordion_opened': [],
+                'accordion_shown': [],
                 'tabs': []}
         // Need to do the right column stuff before the left column stuff, since
         // checkboxes might appear depending on selections on the right.
@@ -4783,89 +5001,99 @@ $('input[name="colormap_choice"]').on('change', function (event) {
         $.each(columns, function(pos, divcol) {
             // Grab all the checked radio buttons on the page and save their information.
             $('input:checked[type="radio"]', divcol).each(function(key, item) {
-                var data='input[type="radio"][name="'+ item.name +'"][value="'+ item.value +'"]';
-                params['clicks'].push(data);
+                if ( ! $.isEmptyObject(item.name) ) {
+                    pl_params['clicks'].push('input[type="radio"][name="'+ item.name +'"][value="'+ item.value +'"]');
+                }
             });
-            // Grab all the checked checkboxes from Temporal->Parameter 
+            // Grab all the checked checkboxes
             $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
-                var data='input[type="checkbox"][name="'+ item.name +'"][value="'+ item.value +'"]';
-                params['clicks'].push(data);
+                if ( ! $.isEmptyObject(item.id) && item.id != '' ) {
+                    if ( $(item).parent().css('display') != 'none' ) {
+                        pl_params['clicks'].push('input[type="checkbox"][id="' + item.id + '"]'); 
+                    }
+                } 
+                else if ( ! $.isEmptyObject(item.name) && item.name != '' ) {
+                    if (item.name == 'activity_select_cb') {
+                        if ( $('#collapseMetadata').hasClass('in') && $('#metadata-netcdf-li').hasClass('active') ) {
+                            pl_params['clicks'].push('input[type="checkbox"][name="'+ item.name +'"][value="'+ item.value +'"]');
+                        }
+                    }
+                    else {
+                        pl_params['clicks'].push('input[type="checkbox"][name="'+ item.name +'"][value="'+ item.value +'"]');
+                    }
+                }
             });
+
             // Grab all the buttons that are selected, using their values.
             $('button.btn-primary.stoqs-toggle', divcol).each(function(key, item) {
                 var id=$(item).closest('[id]')[0].id
                 var data='#' +id +' button.stoqs-toggle:contains("'+$(item).text()+'")'
                 if ( $(item).hasClass('platform') ) {
-                    params['platform_clicks'].push(data);
+                    pl_params['platform_clicks'].push(data);
                 }
                 else {
-                    params['clicks'].push(data);
-                }
-            });
-            // Grab all the checkboxes, note that openlayers seems to have ID's with
-            // spaces in them, so we cannot use the '#' to locate those, need to use the
-            // attribute selector instead.
-            
-            $('input:checked[type="checkbox"]', divcol).each(function(key, item) {
-                var data=''
-                if (typeof item.id !== 'undefined' &&
-                    $(item).parent().css('display') != 'none') {
-                    data='input[type="checkbox"][id="' + item.id + '"]'; 
-                } else if ((typeof item.name !== 'undefined') && 
-                           (typeof item.value !== 'undefined')) {
-                    data='input[type="checkbox"][name="'+item.name+'"][value="'+item.value+'"]';
-                } else {
-                    alert('Unable to get unique path for input field, skipping from permalink!');
-                }
-                if (data != '') {
-                    params['clicks'].push(data);
+                    pl_params['clicks'].push(data);
                 }
             });
 
-            // Grab the state of all the accordians on the page and store them
-            $('.accordion-body.in', divcol).each(function (key, item) {
-                params['accordian'].push(item.id);
+            // Grab the colormap settings; and any future text & select values
+            $('input[type="text"]', divcol).each(function(key, item) {
+                pl_params['texts'].push(['#' + item.id, item.value]);
             });
+            $('select', divcol).each(function(key, item) {
+                pl_params['selects'].push(['#' + item.id, item.value]);
+            });
+
+            // Add name of opened accordions to 'accordion_opened' list
+            $('.accordion-body.in', divcol).each(function (key, item) {
+                pl_params['accordion_opened'].push(item.id);
+            });
+
+            // Add optionally 'shown' accordions to 'accordion_shown' list - special for Colormaps
+            var $elem = $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent();
+            if ( $elem.css('display') != 'none' ) {
+                pl_params['accordion_shown'].push('colormap-anchor');
+            }
         });
         
         $('.nav-tabs').each(function (pos, item) {
             $elements=$('li', item);
             $.each($('li', item), function (pos2, item2) {
                 if ($(item2).hasClass('active')) {
-                    params['tabs'].push(['#' + item.id, pos2]);
+                    pl_params['tabs'].push(['#' + item.id, pos2]);
                 }
             });
         });
         // Grab the data so we can reset the time/depth plot and temporal values.
-        params['start-ems'] = $('body').data()['start-ems'];
-        params['end-ems'] = $('body').data()['end-ems'];
-        params['start-depth'] = $('body').data()['start-depth'];
-        params['end-depth'] = $('body').data()['end-depth'];
+        pl_params['start-ems'] = $('body').data()['start-ems'];
+        pl_params['end-ems'] = $('body').data()['end-ems'];
+        pl_params['start-depth'] = $('body').data()['start-depth'];
+        pl_params['end-depth'] = $('body').data()['end-depth'];
 
         // Grab the center of the map so we can restore the center and lon/lat data.
-        params['map-center']={ 'lonlat': map.getCenter(), 
+        pl_params['map-center']={ 'lonlat': map.getCenter(), 
                                 'zoom': map.getZoom() };
-        params['map-layers']=[];
+        pl_params['map-layers']=[];
         $.each(map.layers, function (pos, layer) { 
             if (layer.visibility) { 
-                params['map-layers'].push(layer.name); 
+                pl_params['map-layers'].push(layer.name); 
             }
         });
        
         if ( $('#parametervalues-data').val() ) { 
             // Grab any parametervalues selections that have been put into the hidden element
-            params['histograms'] = $('#parametervalues-data').val();
+            pl_params['histograms'] = $('#parametervalues-data').val();
             $.each(JSON.parse($('#parametervalues-data').val()), function(parameter, data) {
                 if (typeof data.xmin != 'undefined' && typeof data.xmax != 'undefined') {
-                    params[parameter + '_MIN'] = data.xmin.toPrecision(4);
-                    params[parameter + '_MAX'] = data.xmax.toPrecision(4);
+                    pl_params[parameter + '_MIN'] = data.xmin.toPrecision(4);
+                    pl_params[parameter + '_MAX'] = data.xmax.toPrecision(4);
                 }
             });
         }
 
-        return JSON.stringify(params);
+        return JSON.stringify(pl_params);
         
-    }
+    } // function collect_parameters_for_permalink()
 
     function save_zoom_from_permalink() {
         // Set Temporal/Depth zoom for handler that calls ZoomIn() on Temporal tab click event
@@ -4886,7 +5114,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
         }
     }
 
-    function reset_parameters(parameters) {
+    function reset_parameters_from_permalink(parameters) {
         permalink_bypass = true;
 
         // Uncheck the zoom update, since that'll mess up our resetting the map
@@ -4899,6 +5127,19 @@ $('input[name="colormap_choice"]').on('change', function (event) {
         $.each(parameters['platform_clicks'], function (pos, item) {
             $(item).click();
         });
+
+        // Colormap stuff
+        if ( $.inArray('colormap-anchor', parameters['accordion_shown']) > -1 ) {
+            $('#colormap-anchor').parent().parent().parent().parent().parent().parent().parent().show();
+        }
+        $.each(parameters['texts'], function (pos, item) {
+            $(item[0]).val(item[1]);
+        });
+        $.each(parameters['selects'], function (pos, item) {
+            $(item[0]).val(item[1]);
+        });
+
+        // All clicks
         $.each(parameters['clicks'], function (pos, item) {
             $(item).click();
         });
@@ -4921,7 +5162,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                         }
                     });
                     break;
-                case 'accordian':
+                case 'accordion_opened':
                     $('.accordion-body').each(function (pos, item) {
                         if ($.inArray(item.id, value) > -1) {
                             $(item).addClass('in').height('auto');
@@ -4946,9 +5187,11 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                     }
             }
         });
-        
-        permalink_bypass=false;
+
+        permalink_bypass=false;        
+        rebuild_from_permalink = true; 
         rebuildFilters();
+        rebuild_from_permalink = false; 
 
         // Redraw selections on the histograms - do this after calling rebuildFilters()
         if ( ! $.isEmptyObject(parametervalues) ) {
@@ -4969,7 +5212,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
             if (permalink_id.length > 32) {
                 try {
                     var parameters=JSON.parse(LZString.decompressFromBase64(permalink_id));
-                    reset_parameters(parameters);
+                    reset_parameters_from_permalink(parameters);
                 } catch (err) {
                     alert('Permalink loading failed: ' + err + ' (Perhaps the permalink_id value is invalid?)');
                 }
@@ -4979,7 +5222,7 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                 console.log(url);
                 $.get(url).
                 done(function (parameters, response, jqXHR) {
-                    reset_parameters(parameters);
+                    reset_parameters_from_permalink(parameters);
                 }).
                 fail(function (data, response, jqXHR) {
                     alert('Failed to load the specified permalink: ' + jqXHR);
@@ -4990,8 +5233,8 @@ $('input[name="colormap_choice"]').on('change', function (event) {
 
 
     $(function () { 
-        // Initialize the accordian fields.
-        $(".collapse").collapse(); // Collapse all the accordian fields, click the Spatial and Temporal ones below
+        // Initialize the accordion fields.
+        $(".collapse").collapse(); // Collapse all the accordion fields, click the Spatial and Temporal ones below
         
         // Add this behavior to all text fields, so when someone clicks on a field it highlights 
         // all the data so it's easy to copy to the clipboard.
@@ -5294,13 +5537,13 @@ $('input[name="colormap_choice"]').on('change', function (event) {
                     (client_side_permalink)) {
                     var $url=$.url();
                     var params=$url.param();
-                    params['permalink_id']=LZString.compressToBase64(collect_parameters());
+                    params['permalink_id']=LZString.compressToBase64(collect_parameters_for_permalink());
                     var url=$url.attr('source').split('?')[0]+'?'+$.param(params)
                     $el.val(url);
                     $('#permalink-box').show();
 
                 } else {
-                    $.post(url, {'parameters': collect_parameters() })
+                    $.post(url, {'parameters': collect_parameters_for_permalink() })
                     .done(function (data, response, jqXHR) {
                         $el.val(data);
                         $('#permalink-box').show();

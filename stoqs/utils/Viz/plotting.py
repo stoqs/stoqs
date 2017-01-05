@@ -9,6 +9,7 @@ import tempfile
 os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 import matplotlib as mpl
 mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
+import cmocean
 import math
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
@@ -67,95 +68,141 @@ def readCLT(fileName):
 
     return cltList
 
-def makeColorBar(request, colorbarPngFileFullPath, parm_info, colormap, orientation='horizontal'):
-    '''
-    Utility function used by classes in this module to create a colorbar image accessible at @colorbarPngFileFullPath.
-    The @requst object is needed to use the database alias.
-    @parm_info is a 3 element list/tuple: (parameterId, minValue, maxValue).
-    @colormap is a color the color lookup table.
-    If @orientation is 'vertical' create a vertically oriented image, otherwise horizontal.
-    '''
-
-    if parm_info[1] == parm_info[2]:
-        raise Exception(('Parameter has same min and max value: {}').format(parm_info))
-
-    if orientation == 'horizontal':
-        cb_fig = plt.figure(figsize=(5, 0.8))
-        cb_ax = cb_fig.add_axes([0.1, 0.8, 0.8, 0.2])
-        norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
-        ticks=round_to_n(list(np.linspace(parm_info[1], parm_info[2], num=4)), 4)
-        cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
-                                        norm=norm,
-                                        ticks=ticks,
-                                        orientation='horizontal')
-        cb.ax.set_xticklabels(ticks)
-        try:
-            cp = models.Parameter.objects.using(request.META['dbAlias']).get(id=int(parm_info[0]))
-        except ValueError:
-            # Likely a coordinate variable
-            cp = models.Parameter
-            cp.name = parm_info[0]
-            cp.standard_name = parm_info[0]
-            cp.units = _getCoordUnits(parm_info[0])
-
-        cb.set_label('%s (%s)' % (cp.name, cp.units))
-        cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
-        plt.close()
-
-    elif orientation == 'vertical':
-        cb_fig = plt.figure(figsize=(0.6, 4))
-        cb_ax = cb_fig.add_axes([0.1, 0.1, 0.15, 0.8])
-        norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
-        cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
-                                        norm=norm,
-                                        ticks=list(np.linspace(parm_info[1], parm_info[2], num=4)),
-                                        orientation='vertical')
-        cb.ax.set_yticklabels([str(parm_info[1]), str(parm_info[2])])
-        logger.debug('Getting units for parm_info[0] = %s', parm_info[0])
-        try:
-            cp = models.Parameter.objects.using(request.META['dbAlias']).get(id=int(parm_info[0]))
-        except ValueError:
-            # Likely a coordinate variable
-            cp = models.Parameter
-            cp.name = parm_info[0]
-            cp.standard_name = parm_info[0]
-            cp.units = _getCoordUnits(parm_info[0])
-
-        cb.set_label('%s (%s)' % (cp.name, cp.units), fontsize=10)
-        for label in cb.ax.get_yticklabels():
-            label.set_fontsize(10)
-            label.set_rotation('vertical')
-        cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
-        plt.close()
-
-    else:
-        raise Exception('orientation must be either horizontal or vertical')
-
 class BaseParameter(object):
+
+    def __init__(self):
+        self.jetplus_clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
+
+        # Default colormap - the legacy jetplus
+        self.cm_name = 'jetplus'
+        self.num_colors = 256
+        self.cmin = None
+        self.cmax = None
+        self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt))
+        self.clt = self.jetplus_clt
     
     def set_colormap(self):
         '''Assign colormap as passed in from UI request
         '''
-        jetplus_clt = readCLT(os.path.join(settings.STATICFILES_DIRS[0], 'colormaps', 'jetplus.txt'))
-
-        # Default colormap - the legacy jetplus
-        self.cm_name = 'jetplus'
-        self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
-        self.clt = jetplus_clt
-
         if hasattr(self.request, 'GET'):
             if self.request.GET.get('cm'):
                 self.cm_name = self.request.GET.get('cm')
                 if self.cm_name == 'jetplus':
-                    self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt))
-                    self.clt = jetplus_clt
+                    self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt))
+                    self.clt = self.jetplus_clt
                 elif self.cm_name == 'jetplus_r':
-                    self.cm = mpl.colors.ListedColormap(np.array(jetplus_clt)[::-1])
-                    self.clt = jetplus_clt[::-1]
+                    self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt)[::-1])
+                    self.clt = self.jetplus_clt[::-1]
                 else:
-                    self.cm = plt.get_cmap(self.cm_name)
-                    # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
+                    try:
+                        self.cm = plt.get_cmap(self.cm_name)
+                    except ValueError:
+                        # Likely a cmocean colormap
+                        self.cm = getattr(cmocean.cm, self.cm_name)
+
+                # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
                 self.clt = [self.cm(i) for i in range(256)]
+            if self.request.GET.get('num_colors') is not None:
+                self.num_colors = int(self.request.GET.get('num_colors'))
+            if self.request.GET.get('cmin') is not None:
+                self.cmin = float(self.request.GET.get('cmin'))
+            if self.request.GET.get('cmax') is not None:
+                self.cmax = float(self.request.GET.get('cmax'))
+
+    def set_ticks_bounds_norm(self, parm_info, use_ui_cmincmax=True, use_ui_num_colors=True):
+        '''Common parameters for colormap, scatter and countour plotting
+        '''
+        c_min, c_max = parm_info[1:]
+        if use_ui_cmincmax:
+            if self.cmin is not None:
+                c_min = self.cmin
+            if self.cmax is not None:
+                c_max = self.cmax
+
+        if use_ui_num_colors:
+            num_colors = self.num_colors
+        else:
+            num_colors = 256
+
+        self.ticks = round_to_n(list(np.linspace(c_min, c_max, num=6)), 4)
+        self.bounds = np.linspace(c_min, c_max, num_colors + 1)
+        self.norm = mpl.colors.BoundaryNorm(self.bounds, self.cm.N)
+
+        if num_colors == 8:
+            self.ticks = self.bounds[::2]
+        if num_colors < 8:
+            self.ticks = self.bounds
+
+    def makeColorBar(self, colorbarPngFileFullPath, parm_info, orientation='horizontal'):
+        '''
+        Utility function used by classes in this module to create a colorbar image accessible at @colorbarPngFileFullPath.
+        The @requst object is needed to use the database alias.
+        @parm_info is a 3 element list/tuple: (parameterId, minValue, maxValue).
+        @colormap is a color the color lookup table.
+        If @orientation is 'vertical' create a vertically oriented image, otherwise horizontal.
+        '''
+
+        if parm_info[1] == parm_info[2]:
+            raise Exception(('Parameter has same min and max value: {}').format(parm_info))
+
+        drawedges = False
+        if self.num_colors <= 16:
+            drawedges = True
+
+        if orientation == 'horizontal':
+            cb_fig = plt.figure(figsize=(5, 0.8))
+            cb_ax = cb_fig.add_axes([0.1, 0.8, 0.8, 0.2])
+            self.set_ticks_bounds_norm(parm_info)
+            cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=self.cm,
+                                            norm=self.norm,
+                                            ticks=self.ticks,
+                                            boundaries=self.bounds,
+                                            ##extend='both',
+                                            ##extendfrac='auto',
+                                            drawedges=drawedges,
+                                            orientation='horizontal')
+            try:
+                cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(parm_info[0]))
+            except ValueError:
+                # Likely a coordinate variable
+                cp = models.Parameter
+                cp.name = parm_info[0]
+                cp.standard_name = parm_info[0]
+                cp.units = _getCoordUnits(parm_info[0])
+
+            cb.set_label('%s (%s)' % (cp.name, cp.units))
+            cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
+            plt.close()
+
+        elif orientation == 'vertical':
+            # TODO: Harmonize with horizontal version if this is to be used
+            cb_fig = plt.figure(figsize=(0.6, 4))
+            cb_ax = cb_fig.add_axes([0.1, 0.1, 0.15, 0.8])
+            norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
+            cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
+                                            norm=norm,
+                                            ticks=list(np.linspace(parm_info[1], parm_info[2], num=4)),
+                                            orientation='vertical')
+            cb.ax.set_yticklabels([str(parm_info[1]), str(parm_info[2])])
+            logger.debug('Getting units for parm_info[0] = %s', parm_info[0])
+            try:
+                cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(parm_info[0]))
+            except ValueError:
+                # Likely a coordinate variable
+                cp = models.Parameter
+                cp.name = parm_info[0]
+                cp.standard_name = parm_info[0]
+                cp.units = _getCoordUnits(parm_info[0])
+
+            cb.set_label('%s (%s)' % (cp.name, cp.units), fontsize=10)
+            for label in cb.ax.get_yticklabels():
+                label.set_fontsize(10)
+                label.set_rotation('vertical')
+            cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
+            plt.close()
+
+        else:
+            raise Exception('orientation must be either horizontal or vertical')
 
 
 class MeasuredParameter(BaseParameter):
@@ -168,19 +215,27 @@ class MeasuredParameter(BaseParameter):
         Save parameters that can be used by the different product generation methods here
         parameterMinMax is like: (pName, pMin, pMax)
         '''
+        super(self.__class__, self).__init__()
+
         self.kwargs = kwargs
         self.request = request
         self.qs = qs
         # Calling routine passes different qs_mp when order or no parameter in filter is needed
         self.qs_mp = qs_mp
+
         self.parameterMinMax = parameterMinMax
+        self.set_colormap()
+        if self.cmin is not None:
+            self.parameterMinMax[1] = self.cmin
+        if self.cmax is not None:
+            self.parameterMinMax[2] = self.cmax
+
         self.sampleQS = sampleQS
         self.platformName = platformName
         self.parameterID = parameterID
         self.parameterGroups = parameterGroups
 
         self.scale_factor = None
-        self.set_colormap()
 
         # - Use a new imageID for each new image
         self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -400,7 +455,7 @@ class MeasuredParameter(BaseParameter):
         return clt.colors[indx]
 
 
-    def renderDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, nlevels=255, contourFlag=True):
+    def renderDatavaluesForFlot(self, tgrid_max=1000, dgrid_max=100, dinc=0.5, contourFlag=False):
         '''
         Produce a .png image without axes suitable for overlay on a Flot graphic. Return a
         3 tuple of (sectionPngFile, colorbarPngFile, errorMessage)
@@ -409,7 +464,6 @@ class MeasuredParameter(BaseParameter):
         tgrid_max = 1000            # Reasonable maximum width for time-depth-flot plot is about 1000 pixels
         dgrid_max = 100             # Height of time-depth-flot plot area is 335 pixels
         dinc = 0.5                  # Average vertical resolution of AUV Dorado
-        nlevels = 255               # Number of color filled contour levels
         '''
 
         # Use session ID so that different users don't stomp on each other with their section plots
@@ -489,7 +543,6 @@ class MeasuredParameter(BaseParameter):
             except ZeroDivisionError as e:
                 self.logger.warn(e)
                 self.logger.debug('Not setting self.scale_factor.  Scatter plots will still work.')
-                contourFlag = False
             else:                
                 self.logger.debug('self.scale_factor = %f', self.scale_factor)
                 xi = xi / self.scale_factor
@@ -503,15 +556,10 @@ class MeasuredParameter(BaseParameter):
             if not self.x and not self.y and not self.z:
                 self.loadData()
 
-            self.logger.debug('self.kwargs = %s', self.kwargs)
-            if 'parametervalues' in self.kwargs:
-                if self.kwargs['parametervalues']:
-                    contourFlag = False
-          
             if 'showdataas' in self.kwargs:
                 if self.kwargs['showdataas']:
-                    if self.kwargs['showdataas'][0] == 'scatter':
-                        contourFlag = False
+                    if self.kwargs['showdataas'][0] == 'contour':
+                        contourFlag = True
           
             self.logger.debug('Number of x, y, z data values retrieved from database = %d', len(self.z)) 
             if len(self.z) == 0:
@@ -537,11 +585,17 @@ class MeasuredParameter(BaseParameter):
                 coloredDotSize = 20
 
             parm_info = self.parameterMinMax
+            full_screen = False
+            if self.request.GET.get('full_screen'):
+                full_screen = True
             try:
                 # Make the plot
                 # contour the gridded data, plotting dots at the nonuniform data points.
                 # See http://scipy.org/Cookbook/Matplotlib/Django
-                fig = plt.figure(figsize=(6,3))
+                if full_screen:
+                    fig = plt.figure(figsize=(12,6))
+                else:
+                    fig = plt.figure(figsize=(6,3))
                 ax = fig.add_axes((0,0,1,1))
                 if self.scale_factor:
                     ax.set_xlim(tmin / self.scale_factor, tmax / self.scale_factor)
@@ -549,12 +603,15 @@ class MeasuredParameter(BaseParameter):
                     ax.set_xlim(tmin, tmax)
                 ax.set_ylim(dmax, dmin)
                 ax.get_xaxis().set_ticks([])
+                self.set_ticks_bounds_norm(parm_info)
                 if contourFlag:
-                    ax.contourf(xi, yi, zi, levels=np.linspace(parm_info[1], parm_info[2], nlevels), cmap=self.cm, extend='both')
+                    ax.contourf(xi, yi, zi, cmap=self.cm, norm=self.norm, extend='both',
+                            levels=np.linspace(parm_info[1], parm_info[2], self.num_colors+1))
                     ax.scatter(self.x, self.y, marker='.', s=2, c='k', lw = 0)
                 else:
                     self.logger.debug('parm_info = %s', parm_info)
-                    ax.scatter(self.x, self.y, c=self.z, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2])
+                    ax.scatter(self.x, self.y, c=self.z, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
+                               norm=self.norm)
                     # Draw any spanned data, e.g. NetTows
                     for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
                         try:
@@ -582,14 +639,17 @@ class MeasuredParameter(BaseParameter):
                         ax.plot(xs, ys, c='k', lw=2)
                         ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10)
 
-                fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
+                if full_screen:
+                    fig.savefig(sectionPngFileFullPath, dpi=240, transparent=True)
+                else:
+                    fig.savefig(sectionPngFileFullPath, dpi=120, transparent=True)
                 plt.close()
             except Exception as e:
                 self.logger.exception('Could not plot the data')
                 return None, None, 'Could not plot the data'
 
             try:
-                makeColorBar(self.request, self.colorbarPngFileFullPath, parm_info, self.cm)
+                self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
             except Exception as e:
                 self.logger.exception('%s', e)
                 return None, None, 'Could not plot the colormap'
@@ -678,7 +738,7 @@ class MeasuredParameter(BaseParameter):
                 indices = indices + '-1 ' 
 
             try:
-                makeColorBar(self.request, self.colorbarPngFileFullPath, self.parameterMinMax, self.cm)
+                self.makeColorBar(self.colorbarPngFileFullPath, self.parameterMinMax)
             except Exception as e:
                 self.logger.exception('Could not plot the colormap')
                 x3dResults = 'Could not plot the colormap'
@@ -995,13 +1055,27 @@ class ParameterParameter(BaseParameter):
         Save parameters that can be used by the different plotting methods here
         @pMinMax is like: (pID, pMin, pMax)
         '''
+        super(self.__class__, self).__init__()
+
         self.kwargs = kwargs
         self.request = request
         self.pDict = pDict
         self.mpq = mpq
         self.pq = pq
+
         self.pMinMax = pMinMax
         self.set_colormap()
+        try:
+            if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
+                # Set from UI values only if pc is the same as the Plot Data Parameter
+                if self.cmin is not None:
+                    self.pMinMax['c'][1] = self.cmin
+                if self.cmax is not None:
+                    self.pMinMax['c'][2] = self.cmax
+        except IndexError:
+            # Likely no color parameter selected
+            pass
+
         self.depth = []
         self.x_id = []
         self.y_id = []
@@ -1226,13 +1300,22 @@ class ParameterParameter(BaseParameter):
             if self.c:
                 self.logger.debug('self.pMinMax = %s', self.pMinMax)
                 self.logger.debug('Making colored scatter plot of %d points', len(self.x))
-                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=self.cm, lw=0, vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
+                self.set_ticks_bounds_norm(self.pMinMax['c'], use_ui_cmincmax=False, use_ui_num_colors=False)
+                try:
+                    if self.kwargs['parameterparameter'][3] == self.kwargs['parameterplot'][0]:
+                        self.set_ticks_bounds_norm(self.pMinMax['c'])
+                except IndexError:
+                    # Likely no color parameter selected
+                    pass
+
+                ax.scatter(self.x, self.y, c=self.c, s=10, cmap=self.cm, lw=0, vmin=self.pMinMax['c'][1], 
+                           vmax=self.pMinMax['c'][2], clip_on=False, norm=self.norm)
                 # Add colorbar to the image
                 cb_ax = fig.add_axes([0.2, 0.98, 0.6, 0.02]) 
-                norm = mpl.colors.Normalize(vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip=False)
                 cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=self.cm,
-                                                norm=norm,
-                                                ticks=list(np.linspace(self.pMinMax['c'][1], self.pMinMax['c'][2], num=4)),
+                                                norm=self.norm,
+                                                ticks=self.ticks,
+                                                boundaries=self.bounds,
                                                 orientation='horizontal')
                 try:
                     cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(self.pDict['c']))
@@ -1431,7 +1514,7 @@ class ParameterParameter(BaseParameter):
                         imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
                         colorbarPngFile = '%s_%s_%s_%s_3dcolorbar_%s.png' % (self.pDict['x'], self.pDict['y'], self.pDict['z'], self.pDict['c'], imageID )
                         colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'parameterparameter', colorbarPngFile)
-                        makeColorBar(self.request, colorbarPngFileFullPath, self.pMinMax['c'], self.cm)
+                        self.makeColorBar(colorbarPngFileFullPath, self.pMinMax['c'])
 
                     except Exception:
                         self.logger.exception('Could not plot the colormap')

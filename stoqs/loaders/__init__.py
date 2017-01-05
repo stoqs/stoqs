@@ -25,6 +25,7 @@ from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 import time
 import re
+import subprocess
 import math
 import numpy as np
 from coards import to_udunits
@@ -58,6 +59,11 @@ if settings.DEBUG:
     BaseDatabaseWrapper.make_debug_cursor = lambda self, cursor: CursorWrapper(cursor, self)
 
 missing_value = 1e-34
+
+def cmd_exists(cmd):
+    return subprocess.call("type " + cmd, shell=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+    
 
 class SkipRecord(Exception):
     pass
@@ -409,14 +415,16 @@ class STOQS_Loader(object):
             self.logger.debug("Retrieved platformType.name %s from database %s", platformType.name, self.dbAlias)
 
 
-        # Create Platform 
-        platform, created = m.Platform.objects.using(self.dbAlias).get_or_create( name=platformName, 
-                                                                                        color=self.platformColor, 
-                                                                                        platformtype=platformType)
+        # Create Platform, allowing color to be updated by later load, eliminating potential duplicate names
+        platform, created = m.Platform.objects.using(self.dbAlias).get_or_create(name=platformName, 
+                                                                                 platformtype=platformType)
         if created:
             self.logger.info("Created platform %s in database %s", platformName, self.dbAlias)
         else:
             self.logger.info("Retrieved platform %s from database %s", platformName, self.dbAlias)
+
+        platform.color = self.platformColor
+        platform.save(using=self.dbAlias)
 
         return platform
 
@@ -772,9 +780,10 @@ class STOQS_Loader(object):
         for v in self.include_names:
             self.logger.debug("v = %s", v)
             try:
-                vVals = self.ds[v][:]           # Case sensitive
-                self.logger.debug(len(vVals))
-                allNaNFlag[v] = np.isnan(vVals).all()
+                try:
+                    allNaNFlag[v] = np.isnan(self.ds[v][:]).all()
+                except TypeError:
+                    allNaNFlag[v] = np.isnan(self.ds[v].array).all()
                 if not allNaNFlag[v]:
                     anyValidData = True
             except KeyError:
@@ -1145,8 +1154,7 @@ class STOQS_Loader(object):
         For all measurements that have standard_name parameters of (sea_water_salinity or sea_water_practical_salinity) and sea_water_temperature 
         compute sigma-t and add it as a parameter
         '''                 
-        @transaction.atomic(using=self.dbAlias)
-        def _innerAddSigmaT(self, parameterCounts, activity):
+        def _innerAddSigmaTandSpice(self, parameterCounts, activity):
             # Find all measurements with 'sea_water_temperature' and ('sea_water_salinity' or 'sea_water_practical_salinity')
             ms = m.Measurement.objects.using(self.dbAlias)
             if activity:
@@ -1177,15 +1185,15 @@ class STOQS_Loader(object):
                     units='kg m-3',
                     name='sigmat',
             )
-            if 'spice' in self.ds.keys():
+            if 'spice' in self.include_names:
                 p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                        long_name='Spiciness',
                         name='stoqs_spice',
+                        defaults={'long_name': 'Spiciness'}
                 )
             else:
                 p_spice, _ = m.Parameter.objects.using(self.dbAlias).get_or_create( 
-                        long_name='Spiciness',
                         name='spice',
+                        defaults={'long_name': 'Spiciness'}
                 )
             # Update with descriptions, being kind to legacy databases
             p_sigmat.description = ("Calculated in STOQS loader from Measured Parameters having standard_names"
@@ -1202,14 +1210,15 @@ class STOQS_Loader(object):
             self.assignParameterGroup({p_sigmat: ms.count()}, groupName=MEASUREDINSITU)
             self.assignParameterGroup({p_spice: ms.count()}, groupName=MEASUREDINSITU)
 
-            # Loop through all Measurements, compute Sigma-T, and add to the Measurement
-            for me in ms:
+            # Loop through all Measurements, compute Sigma-T & Spice, and add to the Measurement
+            for me in ms.distinct():
                 try:
-                    t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                            parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
-                    s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
-                            parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
-                except DatabaseError as e:
+                    with transaction.atomic():
+                        t = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                                parameter__standard_name='sea_water_temperature').values_list('datavalue')[0][0]
+                        s = m.MeasuredParameter.objects.using(self.dbAlias).filter(measurement=me, 
+                                parameter__standard_name=salinity_standard_name).values_list('datavalue')[0][0]
+                except IntegrityError as e:
                     self.logger.warn(e)
 
                 sigmat = sw.pden(s, t, sw.pres(me.depth, me.geom.y)) - 1000.0
@@ -1218,16 +1227,15 @@ class STOQS_Loader(object):
                 mp_sigmat = m.MeasuredParameter(datavalue=sigmat, measurement=me, parameter=p_sigmat)
                 mp_spice = m.MeasuredParameter(datavalue=spice, measurement=me, parameter=p_spice)
                 try:
-                    mp_sigmat.save(using=self.dbAlias)
-                    mp_spice.save(using=self.dbAlias)
+                    with transaction.atomic():
+                        mp_sigmat.save(using=self.dbAlias)
+                        mp_spice.save(using=self.dbAlias)
                 except IntegrityError as e:
-                    self.logger.warn(e)
-                except DatabaseError as e:
                     self.logger.warn(e)
 
             return parameterCounts
 
-        return _innerAddSigmaT(self, parameterCounts, activity)
+        return _innerAddSigmaTandSpice(self, parameterCounts, activity)
 
     def addAltitude(self, parameterCounts, activity=None):
         ''' 
@@ -1245,8 +1253,7 @@ class STOQS_Loader(object):
                     xmin, xmax = fh.variables['x_range'][:]
                     ymin, ymax = fh.variables['y_range'][:]
                 except IOError as e:
-                    self.logger.warn(e)
-                    raise FileNotFound('Unable to apply bathymetry to the data. Make sure file %s is present.', self.grdTerrain)
+                    self.logger.error('Cannot add altitude. Make sure file %s is present.', self.grdTerrain)
                 except KeyError as e:
                     try:
                         # New GMT format
@@ -1289,7 +1296,12 @@ class STOQS_Loader(object):
 
             # Requires GMT (yum install GMT)
             bdepthFileName = NamedTemporaryFile(dir='/dev/shm', prefix='STOQS_BDepth', suffix='.txt').name
-            cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+            if cmd_exists('grdtrack'):
+                cmd = "grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+            else:
+                # Assume we have GMT Version 5 installed
+                cmd = "gmt grdtrack %s -V -G%s > %s" % (xyFileName, self.grdTerrain, bdepthFileName)
+
             self.logger.info('Executing %s' % cmd)
             os.system(cmd)
             if self.totalRecords > 1e6:

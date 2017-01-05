@@ -5,7 +5,7 @@ You are encouraged to contribute to STOQS!
 
 You can learn how from this *free* series [How to Contribute to an Open Source Project on GitHub](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github).
 
-Basic Unix, Python (server-side), JavaScipt (client-side), and Shell programming skills 
+Basic Unix, Python (server-side), JavaScript (client-side), and Shell programming skills 
 are required to effectively contribute to STOQS.  There are great resources for learning these 
 skills at https://software-carpentry.org.  The good news is that Unix system administration 
 skills are no longer required as `vagrant up --provider virtualbox` takes care of 
@@ -51,7 +51,11 @@ installing all the required software.
 
 4. Before pushing the commits of your new feature please run `./test.sh` to make sure 
    the test coverage has not decreased.  Another way to state this is: Be sure to write 
-   a test for your new feature in stoqs/stoqs/tests.
+   a test for your new feature in stoqs/stoqs/tests. To run an individual test use a
+   DATABASE_URL setting that allows you to delete and create databases, e.g.:
+
+        export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
+        stoqs/manage.py test stoqs.tests.unit_tests.SummaryDataTestCase.test_parameterparameterplot1 --settings=config.settings.local
 
 5. Push the new branch to your fork on GitHub:
 
@@ -67,6 +71,7 @@ You should periodically pull changes to your workspace from the upstream remote.
 commands will synchronize your fork with upstream, including any local changes you have
 committed:
 
+    git checkout master
     git pull upstream master
     git push origin
 

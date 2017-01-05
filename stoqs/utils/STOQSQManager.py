@@ -555,7 +555,15 @@ class STOQSQManager(object):
         if not da_results:
             da_results = plot_results
 
-        return {'plot': plot_results, 'dataaccess': da_results}
+        cmincmax = []
+        if self.request.GET.get('cmin') and self.request.GET.get('cmax'):
+            cmincmax = [plot_results[0],
+                        float(self.request.GET.get('cmin')), 
+                        float(self.request.GET.get('cmax'))]
+            if self.request.GET.get('cmincmax_lock') == '1':
+                plot_results = cmincmax
+
+        return {'plot': plot_results, 'dataaccess': da_results, 'cmincmax': cmincmax}
 
     def _getPlatformModel(self, platformName):
         '''Return Platform X3D model information. Designed for stationary
@@ -574,8 +582,9 @@ class STOQSQManager(object):
                 # Timeseries and timeseriesProfile data for a single platform
                 # (even if composed of multiple Activities) must have single
                 # unique horizontal position.
-                geom_list = self.qs.filter(platform__name=platformName).values_list(
-                        'nominallocation__geom', flat=True).distinct()
+                geom_list = filter(None, self.qs.filter(platform__name=platformName)
+                                         .values_list('nominallocation__geom', flat=True)
+                                         .distinct())
                 try:
                     geom = geom_list[0]
                 except IndexError:
@@ -634,12 +643,14 @@ class STOQSQManager(object):
             color=row['platform__color']
             platformType = row['platform__platformtype__name']
             if name is not None and id is not None:
-                # Get the featureType from the Resource
+                # Get the featureType(s) from the Resource
                 fts = models.ActivityResource.objects.using(self.dbname).filter(resource__name='featureType', 
                                activity__platform__name=name).values_list('resource__value', flat=True).distinct()
+                # Make all lower case
+                fts = {ft.lower() for ft in fts}
                 try:
-                    featureType = fts[0]
-                except IndexError:
+                    featureType = fts.pop()
+                except KeyError:
                     logger.warn('No featureType returned for platform name = %s.  Setting it to "trajectory".', name)
                     featureType = 'trajectory'
                 if len(fts) > 1:
@@ -1220,7 +1231,12 @@ class STOQSQManager(object):
                 else:
                     label = '%s %s' % (s[2], s[3],)                                 # Show entire Activity name & sample name
 
-                rec = {'label': label, 'data': [[s_ems, '%.2f' % s[7]], [e_ems, '%.2f' % s[6]]]}
+                try:
+                    rec = {'label': label, 'data': [[s_ems, '%.2f' % s[7]], [e_ems, '%.2f' % s[6]]]}
+                except TypeError:
+                    # Likely s[6] and s[7] are None
+                    continue
+
                 sample_durations.append(rec)
 
         return(sample_durations)
@@ -1985,9 +2001,13 @@ class STOQSQManager(object):
             except:
                 logger.exception('Could not get extent for geomstr = %s, srid = %d', geomstr, srid)
 
-            # Compute midpoint of extent for use in GeoViewpoint for Oculus Rift viewpoint setting
+            # Compute midpoint of extent for use in GeoViewpoint for Virtual Reality (WebVR) viewpoint setting
             lon_midpoint = (extent[0][0] + extent[1][0]) / 2.0
             lat_midpoint = (extent[0][1] + extent[1][1]) / 2.0
+            qs = self.qs.aggregate(Max('maxdepth'), Min('mindepth'))
+            depth_midpoint = (qs['mindepth__min'] + qs['maxdepth__max']) / 2.0
+            if np.isnan(depth_midpoint):
+                depth_midpoint = 0.0
 
             try:
                 extent.transform(outputSRID)
@@ -1996,5 +2016,5 @@ class STOQSQManager(object):
         
             logger.debug('Returning from getExtent() with extent = %s', extent)
 
-        return (extent, lon_midpoint, lat_midpoint)
+        return (extent, lon_midpoint, lat_midpoint, depth_midpoint)
 

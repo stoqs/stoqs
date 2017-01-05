@@ -89,6 +89,8 @@ query_parms = {
                    'ppsl': 'ppsl',                          # Parameter-Parameter sample locations flag
                    'mplabels': 'mplabels',                  # MeasuredParameter labels from Attributes selections
                    'activitynames': 'activitynames',        # Activities (NetCDF files) selected for plotting
+                   'full_screen': 'full_screen',            # For making higher resolution graphics
+                   'cmincmax_lock': 'cmincmax_lock',        # Preserve colormap min and max values from the UI
 }
 
 def _buildMapFile(request, qm, options):
