@@ -51,7 +51,12 @@ then
     fi
     wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
     rpm -Uvh remi-release-7*.rpm epel-release-7*.rpm
-    curl -L -sS -O http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm > /dev/null
+    wget -q -N http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-3.noarch.rpm
+    if [ $? -ne 0 ] ; then
+        echo "*** Provisioning for STOQS failed. RPM for specified PostgreSQL not found. ***"
+        echo "Check http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/ and update provision.sh."
+        exit 1
+    fi
     rpm -ivh pgdg*
     yum groupinstall -y "Development Tools"
 
