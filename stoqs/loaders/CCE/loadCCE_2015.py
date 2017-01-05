@@ -49,7 +49,7 @@ cl = CCELoader('stoqs_cce2015', 'Coordinated Canyon Experiment',
                )
 
 # Base OPeNDAP server
-cl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
+cl.bed_base = 'http://dodstemp.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
 
 # Copied from ProjectLibrary to BEDs SVN working dir for netCDF conversion, and then copied to elvis.
 # See BEDs/BEDs/Visualization/py/makeBEDNetCDF_CCE.sh
@@ -110,7 +110,7 @@ cl.bed_framegrabs = [
 cl.ccebin_startDatetime = datetime(2016, 1, 15)
 cl.ccebin_endDatetime = datetime(2016, 1, 18)
 cl.ccebin_nominaldepth = 1836
-cl.ccebin_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Processed/BIN/20151013/netcdf/'
+cl.ccebin_base = 'http://dodstemp.shore.mbari.org/opendap/data/CCE_Processed/BIN/20151013/netcdf/'
 cl.ccebin_files = [
                     'MBCCE_BIN_CTD_20151013_timecorrected.nc',
                     'MBCCE_BIN_OXY_20151013_timecorrected.nc',
@@ -122,19 +122,19 @@ cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'opt
 
 # MS1 ADCP data
 cl.ccems1_nominal_depth = 225
-cl.ccems1_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS1/20151006/ADCP300/'
+cl.ccems1_base = 'http://dodstemp.shore.mbari.org/opendap/data/CCE_Archive/MS1/20151006/ADCP300/'
 cl.ccems1_files = [ 'MBCCE_MS1_ADCP300_20151006.nc' ]
 cl.ccems1_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
 # MS2 ADCP data
 cl.ccems2_nominal_depth = 462
-cl.ccems2_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS2/20151005/ADCP300/'
+cl.ccems2_base = 'http://dodstemp.shore.mbari.org/opendap/data/CCE_Archive/MS2/20151005/ADCP300/'
 cl.ccems2_files = [ 'MBCCE_MS2_ADCP300_20151005.nc' ]
 cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
 # MS3 ADCP data
 cl.ccems3_nominal_depth = 764
-cl.ccems3_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS3/20151005/ADCP300/'
+cl.ccems3_base = 'http://dodstemp.shore.mbari.org/opendap/data/CCE_Archive/MS3/20151005/ADCP300/'
 cl.ccems3_files = [ 'MBCCE_MS3_ADCP300_20151005.nc' ]
 cl.ccems3_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
@@ -142,12 +142,12 @@ cl.ccems3_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_
 
 # MS5 ADCP data
 cl.ccems5_nominal_depth = 1315
-cl.ccems5_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS5/20151020/ADCP300/'
+cl.ccems5_base = 'http://dodstemp.shore.mbari.org/opendap/data/CCE_Archive/MS5/20151020/ADCP300/'
 cl.ccems5_files = [ 'MBCCE_MS5_ADCP300_20151020.nc' ]
 cl.ccems5_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
 ##cl.ccems4_nominal_depth = 462
-##cl.ccems4_base = 'http://elvis64.shore.mbari.org/opendap/data/CCE_Archive/MS4...'
+##cl.ccems4_base = 'http://dodstemp.shore.mbari.org/opendap/data/CCE_Archive/MS4...'
 ##cl.ccems4_files = [ '' ]
 ##cl.ccems4_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', ]
 ##cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']

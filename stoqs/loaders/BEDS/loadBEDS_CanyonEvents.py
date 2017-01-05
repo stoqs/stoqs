@@ -46,7 +46,7 @@ cl = CCELoader('stoqs_beds_canyon_events', 'BEDS - Canyon Events',
                )
 
 # Base OPeNDAP server
-cl.bed_base = 'http://elvis64.shore.mbari.org/opendap/data/beds/CanyonEvents/'
+cl.bed_base = 'http://dodstemp.shore.mbari.org/opendap/data/beds/CanyonEvents/'
 # Copied from ProjectLibrary to Hyrax server on elvis with:
 #   rsync -r /mbari/ProjectLibrary/901006.BEDS/BEDS.Data/CanyonEvents /var/www/dods_html/data/beds
 
