@@ -56,3 +56,4 @@ Sphinx==1.5.1
 sphinx-rtd-theme==0.1.9
 sqlparse==0.2.2
 thredds-crawler==1.5.1
+slacker==0.7.3
