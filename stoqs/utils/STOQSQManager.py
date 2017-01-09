@@ -1151,7 +1151,7 @@ class STOQSQManager(object):
                                         activityparameter__activity__platform__name=platform[0],
                                         ).count()
                 counts += timeSeriesParmCount + trajectoryParmCount
-                if counts:
+                if counts and self.kwargs.get('parametertimeplotid'):
                     if 'parametertime' in self.kwargs['only'] or self.kwargs['parametertab']:
                         # Initialize structure organized by units for parameters left in the selection 
                         logger.debug('Calling self._collectParameters() with platform = %s', platform)
