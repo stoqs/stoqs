@@ -205,13 +205,6 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                 logger.debug(response.content)
                 self.assertEqual(response.content, '50', 'Response should be "50" for %s' % req)
 
-    def test_query_jsonencoded(self):
-        req = reverse('stoqs:stoqs-query-results', kwargs={'fmt': 'json',
-                                                     'dbAlias': 'default'})
-        response = self.client.get(req)
-        json.loads(response.content) # Verify we don't get an exception when we load the data.
-        self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
-
     def test_query_summary(self):
         req = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
         response = self.client.get(req)
