@@ -1102,20 +1102,8 @@ class Base_Loader(STOQS_Loader):
 
                     try:
                         value = float(value)
-                        if value > 1e34 and value != self.get_FillValue(key):
-                            # Workaround for IOOS glider data
-                            if abs(value - self.get_FillValue(key)) < 1e24:
-                                # Equal to 10 digits
-                                continue
-                            elif abs(value - self.getmissing_value(key)) < 1e24:
-                                # Equal to 10 digits
-                                continue
-                            else:
-                                logger.warn('data value = %s: > 1e34, but not close '
-                                             'to _FillValue or missing_value.', value)
-                                continue
-
-                        if value == self.getmissing_value(key) or value == self.get_FillValue(key) or value == 'null' or np.isnan(value):
+                        if (np.isclose(value, self.getmissing_value(key)) or np.isclose(value, self.get_FillValue(key)) 
+                                or value == 'null' or np.isnan(value)):
                             # value is basically absent
                             continue
                         try:
