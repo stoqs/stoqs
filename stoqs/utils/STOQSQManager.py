@@ -71,6 +71,7 @@ class STOQSQManager(object):
         self.pp = None
         self._actual_count = None
         self.initialQuery = True
+        self.platformTypeHash = {}
 
         # monkey patch sql/query.py to make it use our database for sql generation
         query.DEFAULT_DB_ALIAS = dbname
@@ -632,10 +633,12 @@ class STOQSQManager(object):
         We assume here that the name is unique and is also used for the id - this is enforced on 
         data load.  Organize the platforms into a dictionary keyed by platformType.
         '''
+        if self.platformTypeHash:
+            return self.platformTypeHash
+
         # Use queryset that does not filter out platforms - so that Platform buttons work in the UI
         qs = self.qs_platform.values('platform__uuid', 'platform__name', 'platform__color', 
                                      'platform__platformtype__name').distinct().order_by('platform__name')
-        results = []
         platformTypeHash = {}
         for row in qs:
             name=row['platform__name']
@@ -677,6 +680,7 @@ class STOQSQManager(object):
                             platformTypeHash[platformType] = []
                             platformTypeHash[platformType].append((name, id, color, featureType, ))
 
+        self.platformTypeHash = platformTypeHash
         return platformTypeHash
     
     def getTime(self):
@@ -775,6 +779,7 @@ class STOQSQManager(object):
                                         'name').order_by('simpledepthtime__epochmilliseconds')
                     # Add to sdt hash date-time series organized by activity__name key within a platform__name key
                     # This will let flot plot the series with gaps between the surveys -- not connected
+                    logger.debug('Filling sdt[] for ' + p[0] + '...')
                     for s in qs_traj:
                         try:
                             ##logger.debug('s[2] = %s', s[2])
@@ -786,6 +791,7 @@ class STOQSQManager(object):
                                 sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value, even if it is 0.0
                         except TypeError:
                             continue                                                # Likely "float argument required, not NoneType"
+                    logger.debug('Done filling sdt[].')
 
                 elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
                     iptvq = Q()
@@ -1128,19 +1134,22 @@ class STOQSQManager(object):
                         continue
                 timeSeriesParmCount = 0
                 trajectoryParmCount = 0
+                logger.debug('Doing cheap query for ' + platform[0] + '...')
                 if platform[3].lower() == 'timeseriesprofile' or platform[3].lower() == 'timeseries':
                     # Do cheap query to count the number of timeseriesprofile or timeseries parameters
-                    timeSeriesParmCount = models.Parameter.objects.using(self.dbname).filter(
+                    timeSeriesParmCount = models.Parameter.objects.using(self.dbname).filter( 
                                         activityparameter__activity__activityresource__resource__name__iexact='featureType',
-                                        activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower()
-                                        ).distinct().count()
+                                        activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower(),
+                                        activityparameter__activity__platform__name=platform[0],
+                                        ).count()
                 elif platform[3].lower() == 'trajectory':
                     # Count trajectory Parameters for which timeSeries plotting has been requested
                     trajectoryParmCount = models.Parameter.objects.using(self.dbname).filter(
                                         activityparameter__activity__activityresource__resource__name__iexact='featureType',
                                         activityparameter__activity__activityresource__resource__value__iexact=platform[3].lower(),
                                         parameterresource__resource__name__iexact='plotTimeSeriesDepth',
-                                        ).distinct().count()
+                                        activityparameter__activity__platform__name=platform[0],
+                                        ).count()
                 counts += timeSeriesParmCount + trajectoryParmCount
                 if counts:
                     if 'parametertime' in self.kwargs['only'] or self.kwargs['parametertab']:
@@ -1148,6 +1157,7 @@ class STOQSQManager(object):
                         logger.debug('Calling self._collectParameters() with platform = %s', platform)
                         pa_units, is_standard_name, ndCounts, pt, colors, strides = self._collectParameters(platform, pt, 
                                                                     pa_units, is_standard_name, ndCounts, strides, colors)
+                logger.debug('Done, counts = {}'.format(counts))
   
         if pa_units: 
             # The base MeasuredParameter query set for existing UI selections
