@@ -267,7 +267,11 @@ class LoadScript(object):
 
         self.logger.info('Adding to ResourceType: %s', resourceType)
         self.logger.debug('Looking in database %s for Platform name = %s', self.dbAlias, pName)
-        platform = m.Platform.objects.using(self.dbAlias).get(name=pName)
+        try:
+            platform = m.Platform.objects.using(self.dbAlias).get(name=pName)
+        except ObjectDoesNotExist:
+            self.logger.warn("Platform {} not found. Can't add Resources.".format(pName))
+            return
         
         r, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                 uristring=x3dmodelurl, name=X3D_MODEL, value=value, resourcetype=resourceType)
