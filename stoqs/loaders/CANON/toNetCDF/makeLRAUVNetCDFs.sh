@@ -10,22 +10,27 @@ fi
 cd "$STOQS_HOME/venv-stoqs/bin"
 source activate
 cd "$STOQS_HOME/stoqs/loaders/CANON/toNetCDF"
-start_datetime='20160101T000000'
-end_datetime='20161231T000000'
+start_datetime='20170101T000000'
+end_datetime='20171231T000000'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 dir='/mbari/LRAUV'
-logdir='missionlogs/2016'
-search="${logdir}/.*nc4$"
+year='2017'
 declare -a platforms=("tethys" "makai" "daphne")
 
-while getopts "s:e:" opt; do
+while getopts "s:e:y:" opt; do
     case "$opt" in
     s)  start_datetime="$OPTARG"
         ;;
     e)  end_datetime="$OPTARG"
         ;;
+    y)  year="$OPTARG"
+        ;;
     esac
 done
+
+logdir="missionlogs/${year}"
+search="${logdir}/.*nc4$"
+
 parms_sci="{
             \"CTD_NeilBrown\": [
             { \"name\":\"sea_water_salinity\" , \"rename\":\"salinity\" },
