@@ -203,10 +203,6 @@ def process_command_line():
     return args
 
 if __name__ == '__main__':
-    colors = {  'tethys':       'fed976',
-                'daphne':       'feb24c',
-                'makai':        'feb2fc'}
-  
     args = process_command_line() 
 
     if args.interpolate and len(args.outDir) < 1 :
@@ -324,7 +320,7 @@ if __name__ == '__main__':
                                                       aTypeName = 'LRAUV mission',
                                                       pName = platformName,
                                                       pTypeName = 'auv',
-                                                      pColor = colors[platformName],
+                                                      pColor = cl.colors[platformName],
                                                       url = url_src,
                                                       parmList = parm_list,
                                                       dbAlias = args.database,
