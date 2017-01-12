@@ -43,14 +43,10 @@ then
     echo Add epel, remi, and postgres repositories
     yum makecache fast
     yum -y install wget git
-    wget -q -N http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-8.noarch.rpm
-    if [ $? -ne 0 ] ; then
-        echo "*** Provisioning for STOQS failed. RPM for current epel-release not found. ***"
-        echo "Check http://dl.fedoraproject.org/pub/epel/7/x86_64/e/ and update provision.sh."
-        exit 1
-    fi
+    yum -y install epel-release
+    yum repolist
     wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
-    rpm -Uvh remi-release-7*.rpm epel-release-7*.rpm
+    rpm -Uvh remi-release-7*.rpm
     wget -q -N http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-3.noarch.rpm
     if [ $? -ne 0 ] ; then
         echo "*** Provisioning for STOQS failed. RPM for specified PostgreSQL not found. ***"
