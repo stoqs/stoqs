@@ -766,7 +766,7 @@ class STOQSQManager(object):
 
         for plats in self.getPlatforms().values():
             for p in plats:
-                ##logger.debug(p)
+                logger.debug('Platform name: ' + p[0])
                 plq = Q(platform__name = p[0])
                 if self.kwargs.get('activitynames'):
                     plq = plq & Q(name__in=self.kwargs.get('activitynames'))
@@ -779,7 +779,7 @@ class STOQSQManager(object):
                                         'name').order_by('simpledepthtime__epochmilliseconds')
                     # Add to sdt hash date-time series organized by activity__name key within a platform__name key
                     # This will let flot plot the series with gaps between the surveys -- not connected
-                    logger.debug('Filling sdt[] for ' + p[0] + '...')
+                    logger.debug('-trajectory, filling sdt[]')
                     for s in qs_traj:
                         try:
                             ##logger.debug('s[2] = %s', s[2])
@@ -791,25 +791,28 @@ class STOQSQManager(object):
                                 sdt[p[0]][s[2]].append( [s[0], '%.2f' % s[1]] )     # Append first value, even if it is 0.0
                         except TypeError:
                             continue                                                # Likely "float argument required, not NoneType"
-                    logger.debug('Done filling sdt[].')
+                    logger.debug(' Done filling sdt[].')
 
                 elif p[3].lower() == 'timeseries' or p[3].lower() == 'timeseriesprofile':
                     iptvq = Q()
                     qs_tsp = None
+                    logger.debug('-timeseries or timeseriesprofile')
                     if 'time' in self.kwargs:
                         if self.kwargs['time'][0] is not None and self.kwargs['time'][1] is not None:
                             iptvq = Q(instantpoint__timevalue__gte = self.kwargs['time'][0]) & Q(instantpoint__timevalue__lte = self.kwargs['time'][1])
-                            qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ) & iptvq).annotate(mintime=Min('instantpoint__timevalue'), 
-                                                    maxtime=Max('instantpoint__timevalue')).select_related().values( 'name',
-                                                    'simpledepthtime__nominallocation__depth', 'mintime', 'maxtime').order_by(
-                                                    'simpledepthtime__nominallocation__depth').distinct()
+                            logger.debug(' building qs_tsp with time and depth constraints')
+                            qs_tsp = self.qs.filter(plq).select_related().values(
+                                    'name', 'simpledepthtime__nominallocation__depth').order_by(
+                                    'simpledepthtime__nominallocation__depth').distinct()
                     # This can be an expensive check as qs_tsp will be instantiated if it's a valid QuerySet
                     if not qs_tsp:
+                        logger.debug(' building qs_tsp')
                         qs_tsp = self.qs.filter(plq & (timeSeriesQ | timeSeriesProfileQ)).select_related().values( 
                                                 'simpledepthtime__epochmilliseconds', 'simpledepthtime__depth', 'name',
                                                 'simpledepthtime__nominallocation__depth').order_by('simpledepthtime__epochmilliseconds').distinct()
 
                     # Add to sdt hash date-time series organized by activity__name_nominallocation__depth key within a platform__name key
+                    logger.debug(' filling sdt[]')
                     for sd in qs_tsp:
                         ##logger.debug('sd = %s', sd)
                         an_nd = '%s_%s' % (sd['name'], sd['simpledepthtime__nominallocation__depth'])
@@ -826,8 +829,7 @@ class STOQSQManager(object):
                                 continue                                                 # Likely "float argument required, not NoneType"
     
                         else:
-                            s_ems = int(1000 * to_udunits(sd['mintime'], 'seconds since 1970-01-01'))
-                            e_ems = int(1000 * to_udunits(sd['maxtime'], 'seconds since 1970-01-01'))
+                            s_ems, e_ems = self.getTime()
                             try:
                                 sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
                                 sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
@@ -838,6 +840,7 @@ class STOQSQManager(object):
                                     sdt[p[0]][an_nd].append( [e_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
                             except TypeError:
                                 continue                                                 # Likely "float argument required, not NoneType"
+                    logger.debug(' Done filling sdt[].')
 
                 elif p[3].lower() == 'trajectoryprofile':
                     iptvq = Q()
