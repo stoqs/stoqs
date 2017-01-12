@@ -14,8 +14,10 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))           # settings.py is two dirs up
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../"))           # DAPLoaders
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../CANON/toNetCDF/"))  # for lrauvNc4ToNetcdf
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../CANON/"))  # for CANONLoader
 
 
+from CANON import CANONLoader
 import DAPloaders
 import logging
 import lrauvNc4ToNetcdf
@@ -205,10 +207,6 @@ def process_command_line():
     return args
 
 if __name__ == '__main__':
-    colors = {  'tethys':       'fed976',
-                'daphne':       'feb24c',
-                'makai':        'feb2fc'}
-  
     args = process_command_line() 
 
     if args.interpolate and len(args.outDir) < 1 :
@@ -247,6 +245,8 @@ if __name__ == '__main__':
         end = dt
     else:
         end = None
+
+    cl = CANONLoader(args.database, args.campaign)
 
     if args.post:
         token = os.environ['SLACKTOKEN']
@@ -326,7 +326,7 @@ if __name__ == '__main__':
                                                       aTypeName = 'LRAUV mission',
                                                       pName = platformName,
                                                       pTypeName = 'auv',
-                                                      pColor = colors[platformName],
+                                                      pColor = cl.colors[platformName],
                                                       url = url_src,
                                                       parmList = parm_list,
                                                       dbAlias = args.database,
