@@ -44,6 +44,7 @@ then
     yum makecache fast
     yum -y install wget git
     yum -y install epel-release
+    yum -y update epel-release
     yum repolist
     wget -q -N http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
     rpm -Uvh remi-release-7*.rpm
