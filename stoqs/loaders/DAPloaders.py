@@ -1102,9 +1102,13 @@ class Base_Loader(STOQS_Loader):
 
                     try:
                         value = float(value)
-                        if (np.isclose(value, self.getmissing_value(key)) or np.isclose(value, self.get_FillValue(key)) 
-                                or value == 'null' or np.isnan(value)):
-                            # value is basically absent
+                        if self.getmissing_value(key):
+                            if np.isclose(value, self.getmissing_value(key)):
+                                continue
+                        if self.get_FillValue(key):
+                            if np.isclose(value, self.get_FillValue(key)):
+                                continue
+                        if value == 'null' or np.isnan(value):
                             continue
                         try:
                             if math.isnan(value): # not a number for a math type
