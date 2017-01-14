@@ -966,18 +966,35 @@ class STOQSQManager(object):
 
         return (pa_units, is_standard_name, ndCounts, pt, colors, strides)
 
-    def _getParameterTimeFromMP(self, qs_mp, pt, pa_units, a, p, is_standard_name, stride):
+    def _get_activity_nominaldepths(self, p):
+        '''Return hash of starting depths for parameter keyed by activity
+        '''
+        plotTimeSeriesActivityDepths = {}
+
+        # See if timeSeries plotting is requested for trajectory data, e.g. BEDS
+        pr_qs = models.ParameterResource.objects.using(self.dbname).filter(parameter__name=p, 
+                                resource__name='plotTimeSeriesDepth')
+        if not pr_qs:
+            # See if there is one for standard_name
+            pr_qs = models.ParameterResource.objects.using(self.dbname).filter(parameter__standard_name=p, 
+                                    resource__name='plotTimeSeriesDepth')
+        try:
+            for pr in pr_qs:
+                act = models.ActivityResource.objects.using(self.dbname).get(resource=pr.resource,
+                                    resource__name='plotTimeSeriesDepth').activity
+                plotTimeSeriesActivityDepths[act] = pr.resource.value
+        except ObjectDoesNotExist:
+            # Likely database loaded before plotTimeSeriesDepth was added to ActivityResource, quietly use first value
+            for act in self.qs:
+                plotTimeSeriesActivityDepths[act] = pr_qs[0].resource.value
+
+        return plotTimeSeriesActivityDepths
+
+
+    def _getParameterTimeFromMP(self, qs_mp, pt, pa_units, a, p, is_standard_name, stride, a_nds):
         '''
         Return hash of time series measuredparameter data with specified stride
         '''
-        # See if timeSeries plotting is requested for trajectory data, e.g. BEDS
-        plotTimeSeriesDepth = models.ParameterResource.objects.using(self.dbname).filter(parameter__name=p, 
-                                resource__name='plotTimeSeriesDepth').values_list('resource__value')
-        if not plotTimeSeriesDepth:
-            # See if there is one for standard_name
-            plotTimeSeriesDepth = models.ParameterResource.objects.using(self.dbname).filter(parameter__standard_name=p, 
-                                    resource__name='plotTimeSeriesDepth').values_list('resource__value')
-
         # Order by nominal depth first so that strided access collects data correctly from each depth
         pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')[::stride]
         logger.debug('Adding time series of parameter = %s in key = %s', p, pa_units[p])
@@ -989,8 +1006,8 @@ class STOQSQManager(object):
             ems = int(1000 * to_udunits(tv, 'seconds since 1970-01-01'))
             nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
                                                 # mooring microcat actual depths are put into mp['measurement__depth']
-            if plotTimeSeriesDepth:
-                an_nd = "%s - %s starting @ %s m" % (p, a.name, plotTimeSeriesDepth[0][0],)
+            if a_nds:
+                an_nd = "%s - %s starting @ %s m" % (p, a.name, a_nds[a],)
             else:
                 an_nd = "%s - %s @ %s" % (p, a.name, nd,)
     
@@ -1088,6 +1105,7 @@ class STOQSQManager(object):
             # Select each time series by Activity and test against secondsperpixel for deciding on min & max or stride selection
             if not ndCounts[p]:
                 ndCounts[p] = 1         # Trajectories with plotTimeSeriesDepth will not have a nominal depth, set to 1 for calculation below
+            a_nds = self._get_activity_nominaldepths(p)
             for a in qs_awp.distinct('name'):
                 qs_mp_a = qs_mp.filter(measurement__instantpoint__activity__name=a.name)
                 ad = (a.enddate-a.startdate)
@@ -1103,7 +1121,7 @@ class STOQSQManager(object):
                     logger.debug('Getting timeseries from MeasuredParameter table with stride = %s', stride)
                     strides[p][a.name] = stride
                     logger.debug('Adding timeseries for p = %s, a = %s', p, a)
-                    pt = self._getParameterTimeFromMP(qs_mp_a, pt, pa_units, a, p, is_standard_name, stride)
+                    pt = self._getParameterTimeFromMP(qs_mp_a, pt, pa_units, a, p, is_standard_name, stride, a_nds)
                 else:
                     # Construct just two points for this activity-parameter using the min & max from the AP table
                     pt = self._getParameterTimeFromAP(pt, pa_units, a, p)
