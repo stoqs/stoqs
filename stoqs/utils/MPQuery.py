@@ -40,7 +40,7 @@ import sqlparse
 
 logger = logging.getLogger(__name__)
 
-ITER_HARD_LIMIT = 100000
+ITER_HARD_LIMIT = 1000000
 
 class MPQuerySet(object):
     '''
