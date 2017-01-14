@@ -632,10 +632,18 @@ class STOQS_Loader(object):
                         uiResType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name='ui_instruction')
                         resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                                               name='plotTimeSeriesDepth', value=self.plotTimeSeriesDepth[v], resourcetype=uiResType)
-                        ar, _ = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
+                    except ParameterNotFound as e:
+                        self.logger.warn('Could not get_or_create uiResType or resource for v = %s: %s', v, e)
+                    try:
+                        m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                         parameter=self.getParameterByName(v), resource=resource)
                     except ParameterNotFound as e:
-                        self.logger.warn('Could not add plotTimeSeriesDepth Resource for v = %s: %s', v, e)
+                        self.logger.warn('Could not add plotTimeSeriesDepth ParameterResource for v = %s: %s', v, e)
+                    try:
+                        m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                                        activity=self.activity, resource=resource)
+                    except ParameterNotFound as e:
+                        self.logger.warn('Could not add plotTimeSeriesDepth PlatformResource for v = %s: %s', v, e)
             except AttributeError as e:
                     self.logger.warn('Could not add plotTimeSeriesDepth Resource for v = %s: %s', v, e)
         
