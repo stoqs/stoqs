@@ -980,9 +980,14 @@ class STOQSQManager(object):
                                     resource__name='plotTimeSeriesDepth')
         try:
             for pr in pr_qs:
-                act = models.ActivityResource.objects.using(self.dbname).get(resource=pr.resource,
-                                    resource__name='plotTimeSeriesDepth').activity
-                plotTimeSeriesActivityDepths[act] = pr.resource.value
+                logger.debug('pr.parameter.name, pr.resource.value = {}, {}'.format(pr.parameter.name, pr.resource.value))
+                ars = models.ActivityResource.objects.using(self.dbname).filter(
+                                resource=pr.resource, resource__name='plotTimeSeriesDepth')
+                # Resource with same value will be one record that may be reused by different 
+                # Activities/Platforms, just blindly fill hash keyed by Activity
+                for ar in ars:
+                    logger.debug('ar.activity.name = {}'.format(ar.activity.name))
+                    plotTimeSeriesActivityDepths[ar.activity] = pr.resource.value
         except ObjectDoesNotExist:
             # Likely database loaded before plotTimeSeriesDepth was added to ActivityResource, quietly use first value
             for act in self.qs:
