@@ -467,7 +467,7 @@ def showActivityResource(request, fmt='html'):
     query_set = stoqs_object.objects.all()
 
     o = BaseOutputer(request, fmt, query_set, stoqs_object)
-    o.fields = ['id', 'uuid', 'activity__name', 'resource__name', 'resource__value', 'resource__uristring']
+    o.fields = ['id', 'uuid', 'activity__id', 'resource__id', 'activity__name', 'resource__name', 'resource__value', 'resource__uristring']
     return o.process_request()
 
 def showActivityParameter(request, fmt='html'):
