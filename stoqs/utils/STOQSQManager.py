@@ -1012,7 +1012,11 @@ class STOQSQManager(object):
             nd = mp['measurement__depth']       # Will need to switch to mp['measurement__mominallocation__depth'] when
                                                 # mooring microcat actual depths are put into mp['measurement__depth']
             if a_nds:
-                an_nd = "%s - %s starting @ %s m" % (p, a.name, a_nds[a],)
+                try:
+                    an_nd = "%s - %s starting @ %s m" % (p, a.name, a_nds[a],)
+                except KeyError:
+                    # Likely data from a load before plotTimeSeriesDepth was added to ActivityResource
+                    an_nd = "%s - %s starting @ ? m" % (p, a.name)
             else:
                 an_nd = "%s - %s @ %s" % (p, a.name, nd,)
     
