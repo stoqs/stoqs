@@ -116,6 +116,7 @@ def find_urls(base, search_str):
 # Get directory list from thredds server
 platforms = ['tethys']
 
+# '''
 for p in platforms:
     base =  'http://dodstemp.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
@@ -150,6 +151,47 @@ for p in platforms:
 
     except FileNotFound:
         continue
+# '''
+######################################################################
+#  GLIDERS
+######################################################################
+# Glider data files from CeNCOOS thredds server
+# L_662
+cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662_files = [ 'OS_Glider_L_662_20161214_TS.nc' ] ## deployed new glider December 14 2016
+cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
+cl.l_662_startDatetime = startdate
+cl.l_662_endDatetime = enddate
+
+######################################################################
+# Wavegliders
+######################################################################
+# WG Tex - All instruments combined into one file - one time coordinate
+##cl.wg_tex_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_Tex/final/'
+##cl.wg_tex_files = [ 'WG_Tex_all_final.nc' ]
+##cl.wg_tex_parms = [ 'wind_dir', 'wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'density', 'bb_470', 'bb_650', 'chl' ]
+##cl.wg_tex_startDatetime = startdate
+##cl.wg_tex_endDatetime = enddate
+
+# WG Tiny - All instruments combined into one file - one time coordinate
+cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
+cl.wg_Tiny_files = [
+                     'wgTiny/20161212/realTime/20161212.nc' ## deploy December 12 2016
+                   ]
+
+cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
+                    'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
+cl.wg_Tiny_depths = [ 0 ]
+cl.wg_Tiny_startDatetime = startdate
+cl.wg_Tiny_endDatetime = enddate
+
+# WG OA - All instruments combined into one file - one time coordinate
+##cl.wg_oa_base = cl.dodsBase + 'CANON/2015_OffSeason/Platforms/Waveglider/wgOA/'
+##cl.wg_oa_files = [ 'Sept_2013_OAWaveglider_final.nc' ]
+##cl.wg_oa_parms = [ 'distance', 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'O2_conc',
+##                   'O2_sat', 'beta_470', 'bb_470', 'beta_700', 'bb_700', 'chl', 'pCO2_water', 'pCO2_air', 'pH' ]
+##cl.wg_oa_startDatetime = startdate
+##cl.wg_oa_endDatetime = enddate
 
 ######################################################################
 #  MOORINGS
@@ -167,6 +209,35 @@ cl.m1_parms = [
 cl.m1_startDatetime = startdate
 cl.m1_endDatetime = enddate
 
+# Mooring 0A1
+#cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/201401/'
+#cl.oa1_files = [
+#               'OA1_201401.nc'
+#               ]
+cl.oa1_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA1/201607/realTime/'
+cl.oa1_files = [
+               'OA1_201607.nc'  ## new deployment
+               ]
+cl.oa1_parms = [
+               'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
+               'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
+               ]
+cl.oa1_startDatetime = startdate
+cl.oa1_endDatetime = enddate
+
+# Mooring 0A2
+cl.oa2_base = 'http://dods.mbari.org/opendap/data/oa_moorings/deployment_data/OA2/201609/'
+cl.oa2_files = [
+               'realTime/OA2_201609.nc'
+               ]
+cl.oa2_parms = [
+               'wind_dir', 'avg_wind_spd', 'atm_press', 'air_temp', 'water_temp',
+               'sal', 'O2_conc', 'chl', 'pCO2_water', 'pCO2_air', 'pH',
+               ]
+cl.oa2_startDatetime = startdate
+cl.oa2_endDatetime = enddate
+
+
 # Execute the load
 cl.process_command_line()
 
@@ -174,15 +245,47 @@ if cl.args.test:
 
     cl.loadM1(stride=100)
     cl.loadTethys(stride=100)
+    cl.loadL_662(stride=100)
+
+elif cl.args.optimal_stride:
+
+    cl.loadL_662(stride=2)
+    ##cl.load_NPS29(stride=2)
+    #cl.load_NPS34(stride=2)
+    #cl.load_wg_Tiny(stride=2)
+    #cl.loadM1(stride=1)
+    ##cl.loadDorado(stride=2)
+    #cl.loadRCuctd(stride=2)
+    #cl.loadRCpctd(stride=2)
+
+    cl.loadSubSamples()
+
 
 else:
-
+    cl.stride = cl.args.stride
     cl.loadM1()
     cl.loadTethys()
+
+    cl.loadL_662()
+    ##cl.load_NPS29()
+    ##cl.load_NPS34()
+    ##cl.load_UCSC294()
+    ##cl.load_UCSC260()
+    cl.load_wg_Tiny()
+    cl.load_oa1()
+    cl.load_oa2()
+    #cl.loadDorado()
+    ##cl.loadDaphne()
+    #cl.loadMakai()
+    #cl.loadRCuctd()
+    #cl.loadRCpctd()
+    ##cl.loadWFuctd()
+    ##cl.loadWFpctd()
+
+    #cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
 print "All Done."
-
 
