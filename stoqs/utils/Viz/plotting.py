@@ -839,6 +839,11 @@ class PlatformAnimation(object):
         self.pitch_by_plat = {}
         self.yaw_by_plat = {}
 
+        # Platform model must be oriented with nose to -Z (north) and up to +Y
+        self.xRotFmt = '1 0 0 {:.6f} '    # pitch
+        self.yRotFmt = '0 -1 0 {:.6f} '   # yaw
+        self.zRotFmt = '0 0 -1 {:.6f} '   # roll
+
     def getX3DPlatformModel(self, pName):
         # Expect only one X3DPLATFORMMODEL per platform (hence .get())
         return models.PlatformResource.objects.using(self.request.META['dbAlias']
@@ -915,32 +920,32 @@ class PlatformAnimation(object):
                         start=datetime.utcfromtimestamp(self.time_by_plat[p.name][0]/1000.0),
                         end=datetime.utcfromtimestamp(self.time_by_plat[p.name][-1]/1000.0)
             )
-        # Find earliest platform animation
+        # Find earliest platform animation, time and latest time
         min_start_time = datetime.utcnow()
+        max_end_time = datetime.utcfromtimestamp(0)
         for p, r in time_ranges.iteritems():
             if r.start < min_start_time:
                 min_start_time = r.start
+                st_ems = int((time.mktime(min_start_time.timetuple()) + 
+                                min_start_time.microsecond / 1.e6) * 1000.0)
                 earliest_platform = p
+            if r.end > max_end_time:
+                max_end_time = r.end
+                et_ems = int((time.mktime(max_end_time.timetuple()) + 
+                                max_end_time.microsecond / 1.e6) * 1000.0)
 
         # Build X3D and assemble
         for p, r in time_ranges.iteritems():
             if force_overlap:
                 # Compare earliest platform animation with all the rest, build x3d for only overlapping
                 if self.overlap_time(time_ranges[earliest_platform], r) > 0:
-                    x3d_dict[p.name] = self._animationX3D_for_platform(p, vert_ex, geoOrigin, scale)
+                    x3d_dict[p.name] = self._animationX3D_for_platform(p, vert_ex, geoOrigin, scale, st_ems, et_ems)
                     assembled_times.extend(self.time_by_plat[p.name])
                     assembled_platforms.append(p)
             else:
-                x3d_dict[p.name] = self._animationX3D_for_platform(p, vert_ex, geoOrigin, scale)
+                x3d_dict[p.name] = self._animationX3D_for_platform(p, vert_ex, geoOrigin, scale, st_ems, et_ems)
                 assembled_times.extend(self.time_by_plat[p.name])
                 assembled_platforms.append(p)
-
-        # Find the latest time from the assembled platform animations
-        max_end_time = datetime.utcfromtimestamp(0)
-        for p, r in time_ranges.iteritems():
-            if p.name in x3d_dict.keys():
-                if r.end > max_end_time:
-                    max_end_time = r.end
 
         cycInt = (max_end_time -  min_start_time).total_seconds() / speedup
         all_x3d = self.global_template.format(cycInt=cycInt)
@@ -948,8 +953,7 @@ class PlatformAnimation(object):
                                set(p.name for p in assembled_platforms))
 
         # Create equal interval times that fill in gaps in assembled_times, setting time step from earliest_platform
-        equal_times = np.arange(int((time.mktime(min_start_time.timetuple()) + min_start_time.microsecond / 1.e6) * 1000.0),
-                                int((time.mktime(max_end_time.timetuple()) + max_end_time.microsecond / 1.e6) * 1000.0),
+        equal_times = np.arange(st_ems, et_ems,
                                 self.time_by_plat[earliest_platform.name][2] - self.time_by_plat[earliest_platform.name][1])
 
         return self.x3d_info(x3d=x3d_dict, all_x3d=all_x3d, platforms=assembled_platforms,
@@ -968,13 +972,21 @@ class PlatformAnimation(object):
 
             return math.atan2(y * ve, x)
 
-    def _animationX3D_for_platform(self, platform, vert_ex, geoOrigin, scale):
+    def _append_animation_values(self, st_ems, et_ems, pName, lat, lon, depth, t, vert_ex, pitch, yaw, roll):
+        '''Append formatted values to X3D text items
+        '''
+        self.points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
+        self.keys += '%.4f ' % ((t - st_ems) / float(et_ems - st_ems))
+
+        # Apply vertical exaggeration to pitch angle
+        self.xRotValues += self.xRotFmt.format(self._pitch_with_ve(pitch, vert_ex))
+        self.yRotValues += self.yRotFmt.format(yaw)
+        self.zRotValues += self.zRotFmt.format(roll)
+
+    def _animationX3D_for_platform(self, platform, vert_ex, geoOrigin, scale, st_ems, et_ems):
+                                    
         '''Build X3D text for a platform's animation
         '''
-        points = ''
-        indices = ''
-        index = 0
-        keys = ''
         geoorigin_use = ''
         if geoOrigin:
             # Count on JavaScript code to add <GeoOrgin DEF="GO" ... > to the scene
@@ -982,39 +994,47 @@ class PlatformAnimation(object):
 
         pName = platform.name
         pColor = ' '.join(str(c) for c in hex2color('#' + platform.color))
-        for lon, lat, depth, t in izip(self.lon_by_plat[pName], self.lat_by_plat[pName], 
-                                       self.depth_by_plat[pName], self.time_by_plat[pName]):
-            points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
-            keys += '%.4f ' % ((t - self.time_by_plat[pName][0]) / float(
-                    self.time_by_plat[pName][-1] - self.time_by_plat[pName][0]))
-            indices = indices + '%i ' % index
-            index = index + 1
 
-        # Platform model must be oriented with nose to -Z (north) and up to +Y
-        xRotFmt = '1 0 0 {:.6f}'    # pitch
-        yRotFmt = '0 -1 0 {:.6f}'   # yaw
-        zRotFmt = '0 0 -1 {:.6f}'   # roll
+        self.points = ''
+        self.keys = ''
+        self.xRotValues = ''
+        self.yRotValues = ''
+        self.zRotValues = ''
 
-        # Apply vertical exaggeration to pitch angle
-        xRotValues = ' '.join([xRotFmt.format(self._pitch_with_ve(p, vert_ex))
-                                for p in self.pitch_by_plat.get(pName, [])])
-        yRotValues = ' '.join([yRotFmt.format(np.pi * y / 180.)
-                                for y in self.yaw_by_plat.get(pName, [])])
-        zRotValues = ' '.join([zRotFmt.format(np.pi * r / 180.)
-                                for r in self.roll_by_plat.get(pName, [])])
+        if self.time_by_plat[pName][0] > st_ems:
+            # Pad with stationary pose of first position if platform not the earliest
+            for t in (st_ems, self.time_by_plat[pName][0]):
+                self._append_animation_values(st_ems, et_ems, pName,
+                                                self.lat_by_plat[pName][0], 
+                                                self.lon_by_plat[pName][0],
+                                                self.depth_by_plat[pName][0], t, vert_ex,
+                                                self.pitch_by_plat[pName][0],
+                                                self.yaw_by_plat[pName][0],
+                                                self.roll_by_plat[pName][0] )
 
-        if xRotValues and yRotValues and zRotValues:
+        for lon, lat, depth, t, pitch, yaw, roll in izip(
+                                                self.lon_by_plat[pName], 
+                                                self.lat_by_plat[pName], 
+                                                self.depth_by_plat[pName],
+                                                self.time_by_plat[pName],
+                                                self.pitch_by_plat[pName],
+                                                self.yaw_by_plat[pName],
+                                                self.roll_by_plat[pName]):
+            self._append_animation_values(st_ems, et_ems, pName, lat, lon, depth, t, vert_ex,
+                                          pitch, yaw, roll)
+
+        if self.xRotValues and self.yRotValues and self.zRotValues:
             x3d = self.position_orientation_template.format(pName=pName,
                     plat_scale=self.getX3DPlatformModelScale(pName),
-                    pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
-                    posValues=points, oKeys=keys[:-1], xRotValues=xRotValues, 
-                    yRotValues=yRotValues, zRotValues=zRotValues, scale=scale,
+                    pURL=self.getX3DPlatformModel(pName), pKeys=self.keys[:-1], 
+                    posValues=self.points, oKeys=self.keys[:-1], xRotValues=self.xRotValues, 
+                    yRotValues=self.yRotValues, zRotValues=self.zRotValues, scale=scale,
                     geoOriginStr=geoorigin_use, pColor=pColor)
         else:
             x3d = self.position_template.format(pName=pName, 
                     plat_scale=self.getX3DPlatformModelScale(pName),
-                    pURL=self.getX3DPlatformModel(pName), pKeys=keys[:-1], 
-                    posValues=points, scale=scale, geoOriginStr=geoorigin_use)
+                    pURL=self.getX3DPlatformModel(pName), pKeys=self.keys[:-1], 
+                    posValues=self.points, scale=scale, geoOriginStr=geoorigin_use)
 
         return x3d
 
