@@ -46,12 +46,24 @@ if [ -f "$REQ" ]; then
     fi
 fi
 
+# Required for plotting basemap in LRAUV plots
+cd Downloads
+echo Build and install Basemap
+wget 'http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz'
+tar -xzf basemap-1.0.7.tar.gz
+cd basemap-1.0.7
+export GEOS_DIR=/usr/local
+python setup.py install
+cd ..
+
 # NCAR's natgrid needed for contour plotting
-cd /tmp
 wget http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/natgrid-0.2/natgrid-0.2.1.tar.gz
 tar -xzf natgrid-0.2.1.tar.gz
 cd natgrid-0.2.1
 python setup.py install
+cd ..
+cd ..
+
 popd
 
 echo "$0 finished."
