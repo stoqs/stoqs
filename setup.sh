@@ -47,7 +47,7 @@ if [ -f "$REQ" ]; then
 fi
 
 # Required for plotting basemap in LRAUV plots
-cd Downloads
+cd /tmp
 echo Build and install Basemap
 wget 'http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz'
 tar -xzf basemap-1.0.7.tar.gz
