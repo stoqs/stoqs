@@ -186,12 +186,13 @@ cat <<EOT > DATA/Model_atlas_v1
 EOT
 popd
 
-echo Build and install MB-System
+echo Build and install MB-System, setting overcommit_memory to wizardry mode
 wget -q -N ftp://ftp.ldeo.columbia.edu/pub/MB-System/mbsystem-5.5.2284.tar.gz
 tar -xzf mbsystem-5.5.2284.tar.gz
 cd mbsystem-5.5.2284/
 ./configure --with-otps-dir=/usr/local/OTPS2
 make -j 2 && make install
+echo 1 > /proc/sys/vm/overcommit_memory
 cd ..
 
 echo Build and install Mapserver
