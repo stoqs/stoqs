@@ -217,16 +217,6 @@ touch /tmp/mapserver_stoqshg.log
 chown apache.apache /tmp/mapserver_stoqshg.log
 sudo chmod go+w /tmp/mapserver_stoqshg.log
 
-
-# Required for plotting basemap in LRAUV plots
-echo Build and install Basemap
-wget 'http://sourceforge.net/projects/matplotlib/files/matplotlib-toolkits/basemap-1.0.7/basemap-1.0.7.tar.gz'
-tar -xzf basemap-1.0.7.tar.gz
-cd basemap-1.0.7
-export GEOS_DIR=/usr/local
-python setup.py install
-cd ..
-
 echo Build database for locate command
 updatedb
 
