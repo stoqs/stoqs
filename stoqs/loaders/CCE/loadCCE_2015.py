@@ -56,7 +56,8 @@ cl.bed_base = 'http://dodstemp.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
 
 cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT', 'P', 'P_ADJUSTED',
                 'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY', 'BED_DEPTH',
-                'DIST_TOPO', 'TUMBLE_RATE', 'TUMBLE_COUNT', 'TUMBLE_DIST', 'ROT_PLUS_TUMBLE_DIST']
+                'DIST_TOPO', 'TUMBLE_RATE', 'TUMBLE_COUNT', 'TUMBLE_DIST', 'ROT_PLUS_TUMBLE_DIST',
+                'TIDE']
 
 # Several BED files: 30200078 to 3020080
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
@@ -82,12 +83,14 @@ cl.bed_files = [
                 'BED09/MBCCE_BED09_20160408_Event20160901/netcdf/90100096_trajectory.nc',
                 'BED10/MBCCE_BED10_20160408_Event20160901/netcdf/A0100096_trajectory.nc',
                 'BED00/Simulated/netcdf/BED00_SIM_rolling_trajectory.nc',
-               ] + [
+                ] + [
                 'BED09/MBCCE_BED09_20160408_Event20161124/netcdf/901001{}_trajectory.nc'.format(n) for n in range(56, 66)
-               ] + [
+                ] + [
                 'BED03/MBCCE_BED03_20161005_Event20161124/netcdf/30400015_trajectory.nc',
                 'BED10/MBCCE_BED10_20160408_Event20161124/netcdf/A0100154_trajectory.nc',
-               ]
+                ] + [
+                'BED09/MBCCE_BED09_20160408_Watch/netcdf/9010000{}.nc'.format(n) for n in range(4, 8)
+                ] 
 cl.bed_platforms = [
                 'BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05', 'BED03', 'BED04',
                 'BED06', 'BED06', 'BED06', 'BED09', 'BED10', 'BED00', 
@@ -95,6 +98,8 @@ cl.bed_platforms = [
                 'BED09' for n in range(56, 66)
                    ] + [
                 'BED03', 'BED10'
+                   ] + [
+                'BED09' for n in range(4, 8)
                    ]
 cl.bed_depths = [
                 388, 201, 521, 289.3, 413, 420, 430, 433, 308, 294,
@@ -103,21 +108,16 @@ cl.bed_depths = [
                 208, 226, 257, 287, 310, 314, 327, 347, 347, 351
                 ] + [
                 288, 327
+                ] + [
+                202 for n in range(4, 8)
                 ]
 cl.bed_framegrabs = [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3874/00_21_23_28.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3870/00_15_38_23.html',
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
+                '', '', '', '', '', '',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3872/00_17_50_24.html',
-                '',
-                '',
-                '',
+                '', '', '',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2016/vnta3922/02_55_51_27.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2016/vnta3921/02_05_37_16.html',
                 '',
@@ -125,6 +125,8 @@ cl.bed_framegrabs = [
                 '' for n in range(56, 66)
                     ] + [
                 '', ''
+                    ] + [
+                '' for n in range(4, 8)
                     ]
 
 # CCE BIN data
