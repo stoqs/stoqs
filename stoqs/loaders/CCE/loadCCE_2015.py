@@ -90,17 +90,26 @@ cl.bed_files = [
                 'BED10/MBCCE_BED10_20160408_Event20161124/netcdf/A0100154_trajectory.nc',
                 ] + [
                 'BED09/MBCCE_BED09_20160408_Watch/netcdf/9010000{}.nc'.format(n) for n in range(4, 8)
-                ] 
+                ] + [
+                'BED09/MBCCE_BED09_20160408_Event20170109/netcdf/90100{}_trajectory.nc'.format(n) for n in range(196, 202)
+                ] + [
+                'BED11/MBCCE_BED11_20161010_Event20170109/netcdf/B0100026_trajectory.nc',
+                'BED11/MBCCE_BED11_20161010_Event20170109/netcdf/B0100028_trajectory.nc',
+                ]
 cl.bed_platforms = [
                 'BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05', 'BED03', 'BED04',
                 'BED06', 'BED06', 'BED06', 'BED09', 'BED10', 'BED00', 
-                   ] + [
+                ] + [
                 'BED09' for n in range(56, 66)
-                   ] + [
+                ] + [
                 'BED03', 'BED10'
-                   ] + [
+                ] + [
                 'BED09' for n in range(4, 8)
-                   ]
+                ] + [
+                'BED09' for n in range(196, 202)
+                ] + [
+                'BED11', 'BED11'
+                ]
 cl.bed_depths = [
                 388, 201, 521, 289.3, 413, 420, 430, 433, 308, 294,
                 392, 405, 405, 198, 275, 145, 
@@ -110,6 +119,10 @@ cl.bed_depths = [
                 288, 327
                 ] + [
                 202 for n in range(4, 8)
+                ] + [
+                349, 398, 398, 357, 344, 302
+                ] + [
+                332, 331
                 ]
 cl.bed_framegrabs = [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html',
@@ -121,13 +134,17 @@ cl.bed_framegrabs = [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2016/vnta3922/02_55_51_27.html',
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2016/vnta3921/02_05_37_16.html',
                 '',
-                    ] + [
+                ] + [
                 '' for n in range(56, 66)
-                    ] + [
+                ] + [
                 '', ''
-                    ] + [
+                ] + [
                 '' for n in range(4, 8)
-                    ]
+                ] + [
+                '' for n in range(196, 202)
+                ] + [
+                '', ''
+                ]
 
 # CCE BIN data
 cl.ccebin_startDatetime = datetime(2016, 1, 15)
