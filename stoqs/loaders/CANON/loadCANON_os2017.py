@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-__author__ = 'Mike McCann,Duane Edgington,Reiko Michisaki'
-__copyright__ = '2015'
+__author__ = 'Mike McCann,Duane Edgington,Reiko Michisaki,Danelle Cline'
+__copyright__ = '2017'
 __license__ = 'GPL v3'
 __contact__ = 'duane at mbari.org'
 
@@ -116,7 +116,7 @@ def find_urls(base, search_str):
 # Get directory list from thredds server
 platforms = ['tethys']
 
-# '''
+
 for p in platforms:
     base =  'http://dodstemp.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
@@ -151,7 +151,7 @@ for p in platforms:
 
     except FileNotFound:
         continue
-# '''
+
 ######################################################################
 #  GLIDERS
 ######################################################################
@@ -237,6 +237,48 @@ cl.oa2_parms = [
 cl.oa2_startDatetime = startdate
 cl.oa2_endDatetime = enddate
 
+######################################################################
+#  RACHEL CARSON: Jan 2017 --
+######################################################################
+# UCTD
+cl.rcuctd_base = cl.dodsBase + 'CANON/2017_OffSeason/Platforms/Ships/Rachel_Carson/uctd/'
+cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
+cl.rcuctd_files = [
+                  '00917plm01.nc',
+                  ]
+
+# PCTD
+cl.rcpctd_base = cl.dodsBase + 'CANON/2017_OffSeason/Platforms/Ships/Rachel_Carson/pctd/'
+cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
+cl.rcpctd_files = [
+                  '00917c01.nc', '00917c02.nc', '00917c03.nc',
+                  ]
+
+
+#BOG_Data/CANON_OS2017/bctd/00917
+
+###################################################################################################
+# SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/
+#                                   18815 and 21515
+#   copied to local BOG_Data/CANON_OS2105 dir
+###################################################################################################
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2017/bctd/00917/')
+cl.subsample_csv_files = [
+   #'STOQS_00917_ALTIMETER.csv', #'STOQS_00917_COND2.csv',
+   'STOQS_00917_OXY_PS.csv',
+  #'STOQS_00917_POT_TMP2.csv',  'STOQS_00917_TEMP2.csv',
+  'STOQS_00917_CARBON_GFF.csv', #'STOQS_00917_CONDUCT.csv', #'STOQS_00917_PAR4PI.csv',
+  #'STOQS_00917_POT_TMP.csv',   'STOQS_00917_TMP.csv',
+  'STOQS_00917_CHL_1U.csv',    'STOQS_00917_FLUOR.csv', #'STOQS_00917_PARCOS.csv',
+  #'STOQS_00917_SAL2.csv',      'STOQS_00917_TRANSBEAM.csv',
+  'STOQS_00917_CHL_5U.csv', 'STOQS_00917_NH4.csv', 'STOQS_00917_PHAEO_1U.csv',
+  #'STOQS_00917_SAL.csv',    'STOQS_00917_TRANSMISS.csv',
+  'STOQS_00917_CHLA.csv', 'STOQS_00917_O2.csv', 'STOQS_00917_PHAEO_5U.csv',
+  #'STOQS_00917_SIG_T.csv',
+  'STOQS_00917_CHL_GFF.csv', #'STOQS_00917_OXY_ML.csv',
+  'STOQS_00917_PHAEO_GFF.csv',  #'STOQS_00917_TCO2.csv',
+
+                         ]
 
 # Execute the load
 cl.process_command_line()
@@ -252,20 +294,22 @@ elif cl.args.optimal_stride:
     cl.loadL_662(stride=2)
     ##cl.load_NPS29(stride=2)
     #cl.load_NPS34(stride=2)
-    #cl.load_wg_Tiny(stride=2)
-    #cl.loadM1(stride=1)
+    cl.load_wg_Tiny(stride=2)
+    cl.load_oa1(stride=2)
+    cl.load_oa2(stride=2)
+    cl.loadM1(stride=2)
     ##cl.loadDorado(stride=2)
-    #cl.loadRCuctd(stride=2)
-    #cl.loadRCpctd(stride=2)
+    cl.loadRCuctd(stride=2)
+    cl.loadRCpctd(stride=2)
 
     cl.loadSubSamples()
 
 
 else:
     cl.stride = cl.args.stride
+
     cl.loadM1()
     cl.loadTethys()
-
     cl.loadL_662()
     ##cl.load_NPS29()
     ##cl.load_NPS34()
@@ -276,16 +320,17 @@ else:
     cl.load_oa2()
     #cl.loadDorado()
     ##cl.loadDaphne()
-    #cl.loadMakai()
-    #cl.loadRCuctd()
-    #cl.loadRCpctd()
+    ##cl.loadMakai()
+    cl.loadRCuctd()
+    cl.loadRCpctd()
     ##cl.loadWFuctd()
     ##cl.loadWFpctd()
 
-    #cl.loadSubSamples()
+    cl.loadSubSamples()
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()
 
 print "All Done."
+
 
