@@ -8,7 +8,7 @@ Spatial Temporal Oceanographic Query System
 [![DOI](https://zenodo.org/badge/20654/stoqs/stoqs.svg)](https://zenodo.org/badge/latestdoi/20654/stoqs/stoqs)
 
 STOQS is a geospatial database and web application designed to give oceanographers
-efficient integrated acccess to *in situ* measurement and *ex situ* sample data.
+efficient integrated access to *in situ* measurement and *ex situ* sample data.
 See http://www.stoqs.org.
 
 #### Getting started with a STOQS development system 
@@ -18,10 +18,12 @@ First, install [Vagrant](https://www.vagrantup.com/) and and [VirtualBox](https:
 home directory such as `Vagrants/stoqsvm`, open a command prompt window, cd to that folder, and enter these 
 commands:
 
-    curl "https://raw.githubusercontent.com/stoqs/stoqs/master/Vagrantfile" -o Vagrantfile
-    curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
-    vagrant plugin install vagrant-vbguest
-    vagrant up --provider virtualbox
+```bash
+curl "https://raw.githubusercontent.com/stoqs/stoqs/master/Vagrantfile" -o Vagrantfile
+curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
+vagrant plugin install vagrant-vbguest
+vagrant up --provider virtualbox
+```
 
 The `vagrant up` command takes an hour or so to provision and setup a complete CentOS 7 
 STOQS server that also includes MB-System, InstantReality, and all the Python data science 
@@ -30,17 +32,21 @@ performed from the the directory you installed it in; you must cd to it (e.g. `c
 ~/Vagrants/stoqsvm`) before logging in with the `vagrant ssh -- -X` command.  After 
 installation finishes log into your new virtual machine and test it:
 
-    vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
-    cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
-    export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
-    ./test.sh CHANGEME
+```bash
+vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
+cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
+export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+./test.sh CHANGEME
+```
 
 In another terminal window start the development server (after a `cd ~/Vagrants/stoqsvm`):
 
-    vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
-    cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
-    export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
-    stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
+```bash
+vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt
+cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
+export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
+```
 
 Visit your server's STOQS User Interface using your host computer's browser:
 
@@ -59,8 +65,10 @@ Supported by the David and Lucile Packard Foundation, STOQS undergoes continual 
 to help support the mission of the Monterey Bay Aquarium Research Institue.  If you have your
 own server you will occasionally want to get new features with:
 
-    git pull
-    ./setup.sh
+```bash
+git pull
+./setup.sh
+```
 
 If you use STOQS for your research please cite this publication:
 
