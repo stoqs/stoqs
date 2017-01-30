@@ -8,7 +8,7 @@ Spatial Temporal Oceanographic Query System
 [![DOI](https://zenodo.org/badge/20654/stoqs/stoqs.svg)](https://zenodo.org/badge/latestdoi/20654/stoqs/stoqs)
 
 STOQS is a geospatial database and web application designed to give oceanographers
-efficient integrated acccess to *in situ* measurement and *ex situ* sample data.
+efficient integrated access to *in situ* measurement and *ex situ* sample data.
 See http://www.stoqs.org.
 
 #### Getting started with a STOQS development system 
