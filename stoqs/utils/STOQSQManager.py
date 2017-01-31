@@ -476,7 +476,7 @@ class STOQSQManager(object):
             except ValueError as e:
                 if pid in ('longitude', 'latitude'):
                     # Get limits from Activity maptrack for which we have our getExtent() method
-                    extent, lon_mid, lat_mid = self.getExtent(outputSRID=4326)
+                    extent, lon_mid, lat_mid, _ = self.getExtent(outputSRID=4326)
                     if pid == 'longitude':
                         plot_results = ['longitude', round_to_n(extent[0][0], 4), round_to_n(extent[1][0],4)]
                     if pid == 'latitude':
