@@ -118,8 +118,8 @@ platforms = ['tethys']
 
 
 for p in platforms:
-    base =  'http://dodstemp.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
-    dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
+    base =  'http://dodstemp.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2017/'
+    dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2017/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
     setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'
