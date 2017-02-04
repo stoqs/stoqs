@@ -56,7 +56,7 @@ cl.bed_base = 'http://dodstemp.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
 
 cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT', 'P', 'P_ADJUSTED',
                 'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY', 'BED_DEPTH_CSI',
-                'DIST_TOPO', 'TUMBLE_RATE', 'TUMBLE_COUNT', 'TIDE']
+                'BED_DEPTH', 'DIST_TOPO', 'TUMBLE_RATE', 'TUMBLE_COUNT', 'TIDE']
 
 # Several BED files: 30200078 to 3020080
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
@@ -66,7 +66,7 @@ cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT'
 
 # Just the event files for the CCE
 cl.bed_files = [
-                'BED05/MBCCE_BED05_20151027_Event20151201/netcdf/50200024_decimated_trajectory.nc',
+                'BED05/MBCCE_BED05_20151027_Event20151201/netcdf/50200024_trajectory.nc',
                 'BED03/20151001_20160115/netcdf/30200078_trajectory.nc',
                 'BED06/20151001_20160115/netcdf/60100068_trajectory.nc',
                 'BED03/MBCCE_BED03_20160212_Event20160217/netcdf/30300004_trajectory.nc',
