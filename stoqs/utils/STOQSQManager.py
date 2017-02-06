@@ -426,7 +426,8 @@ class STOQSQManager(object):
                                 parameter__id=id, resource__name='comment').values(
                                 'resource__value')
             if comment_q:
-                comment = comment_q[0].get('resource__value', '')
+                for cq in comment_q:
+                    comment += "{}. ".format(cq.get('resource__value', ''))
 
             description = row.get('description', '')
             if not description:
