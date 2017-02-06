@@ -427,6 +427,7 @@ class STOQSQManager(object):
                                 'resource__value')
             if comment_q:
                 for cq in comment_q:
+                    # Concatenate unique resource__values - all are shown in UI
                     comment += "{}. ".format(cq.get('resource__value', ''))
 
             description = row.get('description', '')
