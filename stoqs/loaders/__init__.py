@@ -612,8 +612,10 @@ class STOQS_Loader(object):
                     self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
                     resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                                           name=rn, value=value, resourcetype=resourceType)
-                    ar, _ = m.ParameterResource.objects.using(self.dbAlias).get_or_create(
+                    m.ParameterResource.objects.using(self.dbAlias).get_or_create(
                                     parameter=self.getParameterByName(v), resource=resource)
+                    m.ActivityResource.objects.using(self.dbAlias).get_or_create(
+                                    activity=self.activity, resource=resource)
                     
             except KeyError as e:
                 # Just skip derived parameters that may have been added for a sub-classed Loader

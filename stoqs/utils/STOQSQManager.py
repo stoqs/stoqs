@@ -426,7 +426,9 @@ class STOQSQManager(object):
                                 parameter__id=id, resource__name='comment').values(
                                 'resource__value')
             if comment_q:
-                comment = comment_q[0].get('resource__value', '')
+                for cq in comment_q:
+                    # Concatenate unique resource__values - all are shown in UI
+                    comment += "{}. ".format(cq.get('resource__value', ''))
 
             description = row.get('description', '')
             if not description:
@@ -476,7 +478,7 @@ class STOQSQManager(object):
             except ValueError as e:
                 if pid in ('longitude', 'latitude'):
                     # Get limits from Activity maptrack for which we have our getExtent() method
-                    extent, lon_mid, lat_mid = self.getExtent(outputSRID=4326)
+                    extent, lon_mid, lat_mid, _ = self.getExtent(outputSRID=4326)
                     if pid == 'longitude':
                         plot_results = ['longitude', round_to_n(extent[0][0], 4), round_to_n(extent[1][0],4)]
                     if pid == 'latitude':
@@ -1013,12 +1015,12 @@ class STOQSQManager(object):
                                                 # mooring microcat actual depths are put into mp['measurement__depth']
             if a_nds:
                 try:
-                    an_nd = "%s - %s starting @ %s m" % (p, a.name, a_nds[a],)
+                    an_nd = "%s - %s - %s starting @ %s m" % (pa_units[p], p, a.name, a_nds[a],)
                 except KeyError:
                     # Likely data from a load before plotTimeSeriesDepth was added to ActivityResource
-                    an_nd = "%s - %s starting @ ? m" % (p, a.name)
+                    an_nd = "%s - %s - %s starting @ ? m" % (pa_units[p], p, a.name)
             else:
-                an_nd = "%s - %s @ %s" % (p, a.name, nd,)
+                an_nd = "%s - %s - %s @ %s" % (pa_units[p], p, a.name, nd,)
     
             try:
                 pt[pa_units[p]][an_nd].append((ems, mp['datavalue']))

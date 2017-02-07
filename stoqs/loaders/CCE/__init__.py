@@ -10,6 +10,7 @@ MBARI 26 April 2016
 
 import os
 import sys
+import webob
 
 # Insert Django App directory (parent of config) into python path 
 sys.path.insert(0, os.path.abspath(os.path.join(
@@ -95,7 +96,7 @@ class CCELoader(LoadScript):
                                                    'deployment', self.bed_parms, self.dbAlias, stride)
                 self.addPlatformResources('http://stoqs.mbari.org/x3d/beds/beds_housing_with_axes_src_scene.x3d',
                                           pName, scalefactor=10)
-            except (DAPloaders.OpendapError, DAPloaders.InvalidSliceRequest):
+            except (DAPloaders.OpendapError, DAPloaders.InvalidSliceRequest, webob.exc.HTTPError):
                 pass
 
     def loadCCEBIN(self, stride=None):
