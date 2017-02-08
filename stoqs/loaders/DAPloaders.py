@@ -1777,8 +1777,10 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
         lopc_loader.include_names = ['sepCountList', 'mepCountList']
 
         # These get added to ignored_names on previous .process_data(), remove them
-        lopc_loader.ignored_names.remove('sepCountList')
-        lopc_loader.ignored_names.remove('mepCountList')
+        if 'sepCountList' in lopc_loader.ignored_names:
+            lopc_loader.ignored_names.remove('sepCountList')
+        if 'mepCountList' in lopc_loader.ignored_names:
+            lopc_loader.ignored_names.remove('mepCountList')
 
         lopc_loader.associatedActivityName = loader.activityName
 
