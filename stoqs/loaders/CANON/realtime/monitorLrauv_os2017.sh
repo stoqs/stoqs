@@ -11,7 +11,7 @@ database='stoqs_os2017'
 urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/sbdlogs/2017/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$" "/realtime/cell-logs/.*Normal.nc4$")
 
-declare -a platforms=("tethys")
+declare -a platforms=("tethys" "aku" "ahi" "opah" )
 
 pos=$(( ${#searchstr[*]} - 1 ))
 last=${searchstr[$pos]}

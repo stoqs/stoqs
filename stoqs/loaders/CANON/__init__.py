@@ -78,6 +78,9 @@ class CANONLoader(LoadScript):
                 'tethys':       'fed976',
                 'daphne':       'feb24c',
                 'makai':        'feb34c',
+                'aku':          '4d4dff',
+                'ahi':          '339cff',
+                'opah':         '005cb3',
                 'fulmar':       'fd8d3c',
                 'waveglider':   'fc4e2a',
                 'nps_g29':      'e31a1c',
@@ -182,6 +185,7 @@ class CANONLoader(LoadScript):
         '''
         Makai specific load functions
         '''
+        pName = 'makai'
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.makai_files], self.makai_files):
             url = self.makai_base + f
@@ -197,6 +201,61 @@ class CANONLoader(LoadScript):
                 self.logger.info("No valid data in %s" % url)
 
         self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_makai.x3d', pName)
+
+    def loadAku(self, stride=None):
+        '''
+        Aku specific load functions
+        '''
+        pName = 'aku'
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.aku_files], self.aku_files):
+            url = self.aku_base + f
+            # shorten the activity names
+            aName = aName.rsplit('/', 1)[-1]
+            try:
+                # Set stride to 1 for telemetered data
+                DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
+                                          'Aku', self.colors['aku'], 'auv', 'AUV mission',
+                                          self.aku_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                          command_line_args=self.args)
+            except DAPloaders.NoValidData:
+                self.logger.info("No valid data in %s" % url)
+
+    def loadAhi(self, stride=None):
+      '''
+      Ahi specific load functions
+      '''
+      stride = stride or self.stride
+      for (aName, f) in zip([a + getStrideText(stride) for a in self.ahi_files], self.ahi_files):
+        url = self.ahi_base + f
+        # shorten the activity names
+        aName = aName.rsplit('/', 1)[-1]
+        try:
+          # Set stride to 1 for telemetered data
+          DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
+                                    'Ahi', self.colors['ahi'], 'auv', 'AUV mission',
+                                    self.ahi_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                    command_line_args=self.args)
+        except DAPloaders.NoValidData:
+          self.logger.info("No valid data in %s" % url)
+
+      def loadOpah(self, stride=None):
+        '''
+         Opah specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([a + getStrideText(stride) for a in self.opah_files], self.opah_files):
+          url = self.opah_base + f
+          # shorten the activity names
+          aName = aName.rsplit('/', 1)[-1]
+          try:
+            # Set stride to 1 for telemetered data
+            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
+                                      'Opah', self.colors['opah'], 'auv', 'AUV mission',
+                                      self.opah_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                      command_line_args=self.args)
+          except DAPloaders.NoValidData:
+            self.logger.info("No valid data in %s" % url)
 
     def loadMartin(self, stride=None):
         '''
