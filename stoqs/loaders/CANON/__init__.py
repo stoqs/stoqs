@@ -78,7 +78,7 @@ class CANONLoader(LoadScript):
                 'tethys':       'fed976',
                 'daphne':       'feb24c',
                 'makai':        'feb34c',
-                'aku':          'b3daff',
+                'aku':          '4d4dff',
                 'ahi':          '339cff',
                 'opah':         '005cb3',
                 'fulmar':       'fd8d3c',
