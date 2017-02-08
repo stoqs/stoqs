@@ -310,6 +310,9 @@ else:
 
     cl.loadM1()
     cl.loadTethys()
+    cl.loadAku()
+    cl.loadAhi()
+    cl.loadOpah()
     cl.loadL_662()
     ##cl.load_NPS29()
     ##cl.load_NPS34()
