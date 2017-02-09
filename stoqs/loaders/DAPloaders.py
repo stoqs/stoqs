@@ -1705,7 +1705,8 @@ def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, a
     loader.process_data()
     logger.debug("Loaded Activity with name = %s", aName)
 
-def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, stride, grdTerrain=None):
+def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
+                    dbAlias, stride, grdTerrain=None, plotTimeSeriesDepth=None):
     '''
     Run the DAPloader for Dorado AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1733,6 +1734,10 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     loader.auxCoords = {}
     for v in loader.include_names:
         loader.auxCoords[v] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
+    if plotTimeSeriesDepth is not None:
+        # Useful in some situations to have simple time series display of Dorado data
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
 
     try:
         loader.process_data()
@@ -1770,6 +1775,13 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
             return
 
         lopc_loader.include_names = ['sepCountList', 'mepCountList']
+
+        # These get added to ignored_names on previous .process_data(), remove them
+        if 'sepCountList' in lopc_loader.ignored_names:
+            lopc_loader.ignored_names.remove('sepCountList')
+        if 'mepCountList' in lopc_loader.ignored_names:
+            lopc_loader.ignored_names.remove('mepCountList')
+
         lopc_loader.associatedActivityName = loader.activityName
 
         # Auxillary coordinates are the same for all include_names
