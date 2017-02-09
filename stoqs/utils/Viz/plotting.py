@@ -871,9 +871,9 @@ class PlatformAnimation(object):
         # separately controlled by ROUTEs, interpolators, and JavaScript
         pqs = self.qs_mp.filter(measurement__instantpoint__activity__platform=platform)
 
-        # Must filter on one Parameter, otherwise we get multiple measurement values
-        one_parameter_name = pqs[0]['parameter__name']
-        for mp in pqs.filter(parameter__name=one_parameter_name):
+        # Must filter on one Parameter, otherwise we get multiple measurement values, 
+        # choose 'yaw' - this means that a platform must have yaw (heading) to be visualized
+        for mp in pqs.filter(parameter__standard_name='platform_yaw_angle'):
             self.lon_by_plat.setdefault(platform.name, []).append(mp['measurement__geom'].x)
             self.lat_by_plat.setdefault(platform.name, []).append(mp['measurement__geom'].y)
             self.depth_by_plat.setdefault(platform.name, []).append(mp['measurement__depth'])
@@ -960,6 +960,11 @@ class PlatformAnimation(object):
                              times=equal_times, limits=(0, len(equal_times)),
                              platforms_not_shown=platforms_not_shown)
 
+    def _deg2rad(self, angle):
+        '''Given an angle in degrees return angle in radians
+        '''
+        return np.pi * angle / 180.0
+
     def _pitch_with_ve(self, angle, ve):
         '''Given an angle in degrees return pitch angle in radians properly
         adjusted for vertical exaggeration'''
@@ -980,8 +985,8 @@ class PlatformAnimation(object):
 
         # Apply vertical exaggeration to pitch angle
         self.xRotValues += self.xRotFmt.format(self._pitch_with_ve(pitch, vert_ex))
-        self.yRotValues += self.yRotFmt.format(yaw)
-        self.zRotValues += self.zRotFmt.format(roll)
+        self.yRotValues += self.yRotFmt.format(self._deg2rad(yaw))
+        self.zRotValues += self.zRotFmt.format(self._deg2rad(roll))
 
     def _animationX3D_for_platform(self, platform, vert_ex, geoOrigin, scale, st_ems, et_ems):
                                     
