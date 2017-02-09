@@ -790,8 +790,8 @@ class PlatformAnimation(object):
                         </Shape>
                     </Billboard>
                 </Transform>
-                <Transform id="{pName}_XROT" DEF="{pName}_XROT">
-                    <Transform id="{pName}_YROT" DEF="{pName}_YROT">
+                <Transform id="{pName}_YROT" DEF="{pName}_YROT">
+                    <Transform id="{pName}_XROT" DEF="{pName}_XROT">
                         <Transform id="{pName}_ZROT" DEF="{pName}_ZROT">
                             <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
                                 <Inline url="{pURL}"></Inline>
