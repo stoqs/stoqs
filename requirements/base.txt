@@ -21,6 +21,7 @@ django-model-utils==2.6
 django-picklefield==0.3.2
 django-secure==1.0.1
 djangorestframework==3.5.3
+euclid==0.1
 GitPython==2.1.1
 httplib2==0.9.2
 importlib==1.0.4
