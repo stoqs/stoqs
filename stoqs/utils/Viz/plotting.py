@@ -19,7 +19,6 @@ from collections import namedtuple
 from django.conf import settings
 from django.db import connections, DatabaseError, transaction
 from datetime import datetime
-from euclid import Quaternion
 from stoqs import models
 from utils.utils import pearsonr, round_to_n, EPOCH_STRING
 from loaders.SampleLoaders import SAMPLED, NETTOW, VERTICALNETTOW
@@ -791,9 +790,13 @@ class PlatformAnimation(object):
                         </Shape>
                     </Billboard>
                 </Transform>
-                <Transform id="{pName}_AAROT" DEF="{pName}_AAROT">
-                    <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
-                        <Inline url="{pURL}"></Inline>
+                <Transform id="{pName}_YROT" DEF="{pName}_YROT">
+                    <Transform id="{pName}_XROT" DEF="{pName}_XROT">
+                        <Transform id="{pName}_ZROT" DEF="{pName}_ZROT">
+                            <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
+                                <Inline url="{pURL}"></Inline>
+                            </Transform>
+                        </Transform>
                     </Transform>
                 </Transform>
             </Transform>
@@ -801,15 +804,21 @@ class PlatformAnimation(object):
 
         <!-- 6 DOF data coded here as position and orientation interpolators -->
         <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}">{geoOriginStr}</GeoPositionInterpolator>
-        <OrientationInterpolator DEF="{pName}_AA_OI" key="{oKeys}" keyValue="{aaRotValues}"></OrientationInterpolator>
+        <OrientationInterpolator DEF="{pName}_X_OI" key="{oKeys}" keyValue="{xRotValues}"></OrientationInterpolator>
+        <OrientationInterpolator DEF="{pName}_Y_OI" key="{oKeys}" keyValue="{yRotValues}"></OrientationInterpolator>
+        <OrientationInterpolator DEF="{pName}_Z_OI" key="{oKeys}" keyValue="{zRotValues}"></OrientationInterpolator>
         
         <!-- Wire up the connections between the nodes to animate the motion of the Shape -->       
         <ROUTE fromField="geovalue_changed" fromNode="{pName}_POS_INTERP" toField="geoCoords" toNode="{pName}_LOCATION"></ROUTE>
 
-        <ROUTE fromField="value_changed" fromNode="{pName}_AA_OI" toField="rotation" toNode="{pName}_AAROT"></ROUTE>
+        <ROUTE fromField="value_changed" fromNode="{pName}_X_OI" toField="rotation" toNode="{pName}_XROT"></ROUTE>
+        <ROUTE fromField="value_changed" fromNode="{pName}_Y_OI" toField="rotation" toNode="{pName}_YROT"></ROUTE>
+        <ROUTE fromField="value_changed" fromNode="{pName}_Z_OI" toField="rotation" toNode="{pName}_ZROT"></ROUTE>
 
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_POS_INTERP"></ROUTE>
-        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_AA_OI"></ROUTE>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_X_OI"></ROUTE>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Y_OI"></ROUTE>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Z_OI"></ROUTE>
     '''
     global_template = '<TimeSensor id="PLATFORMS_TS" DEF="TS" cycleInterval="{cycInt}" loop="true" enabled="false" onoutputchange="setSlider(event)"></TimeSensor>'
     x3d_info = namedtuple('x3d_info', ['x3d', 'all_x3d', 'platforms', 'times', 'limits', 'platforms_not_shown'])
@@ -831,7 +840,9 @@ class PlatformAnimation(object):
         self.yaw_by_plat = {}
 
         # Platform model must be oriented with nose to -Z (north) and up to +Y
-        self.aaRotFmt = '{:.6f} {:.6f} {:.6f} {:.6f} '   # axis-angle
+        self.xRotFmt = '1 0 0 {:.6f} '    # pitch
+        self.yRotFmt = '0 -1 0 {:.6f} '   # yaw
+        self.zRotFmt = '0 0 -1 {:.6f} '   # roll
 
     def getX3DPlatformModel(self, pName):
         # Expect only one X3DPLATFORMMODEL per platform (hence .get())
@@ -972,13 +983,10 @@ class PlatformAnimation(object):
         self.points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
         self.keys += '%.4f ' % ((t - st_ems) / float(et_ems - st_ems))
 
-        # Convert euler angles to a single axis-angle representation of rotation
-        # with vertical exaggeration applied to pitch angle
-        q = Quaternion.new_rotate_euler(self._deg2rad(yaw), 
-                                        self._deg2rad(roll),
-                                        self._pitch_with_ve(pitch, vert_ex)) 
-        aa = q.get_angle_axis()
-        self.aaRotValues += self.aaRotFmt.format(aa[1].x, aa[1].y, aa[1].z, aa[0])
+        # Apply vertical exaggeration to pitch angle
+        self.xRotValues += self.xRotFmt.format(self._pitch_with_ve(pitch, vert_ex))
+        self.yRotValues += self.yRotFmt.format(self._deg2rad(yaw))
+        self.zRotValues += self.zRotFmt.format(self._deg2rad(roll))
 
     def _animationX3D_for_platform(self, platform, vert_ex, geoOrigin, scale, st_ems, et_ems):
                                     
@@ -994,7 +1002,9 @@ class PlatformAnimation(object):
 
         self.points = ''
         self.keys = ''
-        self.aaRotValues = ''
+        self.xRotValues = ''
+        self.yRotValues = ''
+        self.zRotValues = ''
 
         if self.time_by_plat[pName][0] > st_ems:
             # Pad with stationary pose of first position if platform not the earliest
@@ -1018,12 +1028,12 @@ class PlatformAnimation(object):
             self._append_animation_values(st_ems, et_ems, pName, lat, lon, depth, t, vert_ex,
                                           pitch, yaw, roll)
 
-        if self.aaRotValues:
+        if self.xRotValues and self.yRotValues and self.zRotValues:
             x3d = self.position_orientation_template.format(pName=pName,
                     plat_scale=self.getX3DPlatformModelScale(pName),
                     pURL=self.getX3DPlatformModel(pName), pKeys=self.keys[:-1], 
-                    posValues=self.points, oKeys=self.keys[:-1], 
-                    aaRotValues=self.aaRotValues, scale=scale,
+                    posValues=self.points, oKeys=self.keys[:-1], xRotValues=self.xRotValues, 
+                    yRotValues=self.yRotValues, zRotValues=self.zRotValues, scale=scale,
                     geoOriginStr=geoorigin_use, pColor=pColor)
         else:
             x3d = self.position_template.format(pName=pName, 
