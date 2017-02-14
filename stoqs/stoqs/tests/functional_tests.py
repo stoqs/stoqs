@@ -28,11 +28,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
 class BrowserTestCase(TestCase):
-    '''Use selenium to test things in the browser'''
+    '''Use selenium to test things in the browser
+    '''
+    # Note that the test runner sets DEBUG to False: 
+    # https://docs.djangoproject.com/en/1.8/topics/testing/advanced/#django.test.runner.DiscoverRunner.setup_test_environment
 
     def setUp(self):
         profile = webdriver.FirefoxProfile()
@@ -72,15 +76,13 @@ class BrowserTestCase(TestCase):
         getattr(self, func_name)()
 
         share_view = self.browser.find_element_by_id('permalink')
-        share_view.click()
+        self._wait_until_visible_then_click(share_view)
         permalink = self.browser.find_element_by_id('permalink-box'
                              ).find_element_by_name('permalink')
         self._wait_until_visible_then_click(permalink)
         permalink_url = permalink.get_attribute('value')
 
-        # Restart browser and load permalink
-        self.tearDown()
-        self.setUp()
+        # Load permalink
         self.browser.get(permalink_url)
         self.assertEquals('', self._mapserver_loading_panel_test())
 
@@ -124,10 +126,14 @@ class BrowserTestCase(TestCase):
         self.browser.get('http://localhost:8000/default/query/')
         # Test Temporal->Parameter for timeseries plots
         parameter_tab = self.browser.find_element_by_id('temporal-parameter-li')
+        # Wait one second before clicking parameter_tab
+        time.sleep(1)
         self._wait_until_visible_then_click(parameter_tab)
         si = self.browser.find_element_by_id('stride-info')
         self._wait_until_visible_then_click(si)
         assert 'bb470' in si.text
+        djtb = self.browser.find_element_by_id('djHideToolBarButton')
+        djtb.click()
 
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
