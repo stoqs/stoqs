@@ -174,6 +174,5 @@ class BrowserTestCase(TestCase):
         djtb = self.browser.find_element_by_id('djHideToolBarButton')
         self._wait_until_visible_then_click(djtb)
 
-        import pdb; pdb.set_trace()
         # TODO: Add tests for contour line plot
 
