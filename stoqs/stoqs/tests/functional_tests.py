@@ -24,8 +24,10 @@ from django.test import TestCase
 from django.conf import settings
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from stoqs.models import Parameter
 
 import logging
 import time
@@ -37,6 +39,11 @@ class BrowserTestCase(TestCase):
     '''
     # Note that the test runner sets DEBUG to False: 
     # https://docs.djangoproject.com/en/1.8/topics/testing/advanced/#django.test.runner.DiscoverRunner.setup_test_environment
+
+    # Specifying fixtures will copy the default database to a test database allowing for simple stoqs.models
+    # object retrieval.  Note that self.browser gets pages from the original default database, not the copy.
+    fixtures = ['stoqs_test_data.json']
+    multi_db = False
 
     def setUp(self):
         profile = webdriver.FirefoxProfile()
@@ -145,4 +152,28 @@ class BrowserTestCase(TestCase):
         si = self.browser.find_element_by_id('stride-info')
         self._wait_until_visible_then_click(si)
         assert 'bb470' in si.text
+
+    def test_contour_plots(self):
+        self.browser.get('http://localhost:8000/default/query/')
+
+        # Open Measured Parameters section
+        mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(mp_section)
+
+        # Expand Temporal window
+        expand_temporal = self.browser.find_element_by_id('td-zoom-rc-button')
+        self._wait_until_visible_then_click(expand_temporal)
+
+        # Make contour color plot of M1 northward_sea_water_velocity
+        northward_sea_water_velocity_HR_id = Parameter.objects.get(name='northward_sea_water_velocity_HR').id
+        parameter_plot_radio_button = self.browser.find_element(By.XPATH,
+            "//input[@name='parameters_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
+        parameter_plot_radio_button.click()
+        contour_button = self.browser.find_element(By.XPATH, "//input[@name='showdataas' and @value='contour']")
+        self._wait_until_visible_then_click(contour_button)
+        djtb = self.browser.find_element_by_id('djHideToolBarButton')
+        self._wait_until_visible_then_click(djtb)
+
+        import pdb; pdb.set_trace()
+        # TODO: Add tests for contour line plot
 
