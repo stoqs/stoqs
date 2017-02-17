@@ -1544,6 +1544,10 @@ class STOQSQManager(object):
                 for platform in platforms_to_animate:
                     if 'BED' in platform.name.upper():
                         speedup = 1
+                # Override speedup if provided by request from UI
+                if self.kwargs.get('speedup'):
+                    speedup = float(self.kwargs.get('speedup')[0])
+
                 # Default vertical exaggeration is 10x and default geoorigin is empty string
                 orientDict = mppa.platformAnimationDataValuesForX3D(
                                 float(self.request.GET.get('ve', 10)), 
