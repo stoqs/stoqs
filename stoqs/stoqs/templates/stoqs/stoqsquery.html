@@ -73,6 +73,14 @@
             font-size: 13px;
             margin-bottom: 0px;
         }
+        .stoqs-speedup-input {
+            width: 20px;
+            height: 8px;
+            line-height: 12px;
+            font-size: 13px;
+            margin-bottom: 4px;
+            text-align: right;
+        }
         .fail-text { 
             color: red;
         };
@@ -299,7 +307,11 @@
                                                         <div id="spatial-3d-x3d-pp-slider" class="row-fluid" style="display:none;">
                                                             <div class="span1" style="padding:0px;margin-left:5px;"><i id="spatial-3d-x3d-pause-play" class="icon-play"></i></div>
                                                             <div class="span9" style="margin:0px;margin-top:3px;"><input id="spatial-3d-x3d-slider" type="range" min="0" max="1" step="0.001" value="0" style="height:1px;width:100%;"></div>
-                                                            <div class="span2"><span id="spatial-3d-x3d-speedup"></span></div>
+                                                            <div class="span2">
+                                                                <span id="spatial-3d-x3d-speedup" style="display:none;">
+                                                                    Speed: <input id="speedup-value" class="stoqs-speedup-input" type="text"/>x
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                         <div><span id="spatial-3d-x3d-message"></span></div>
                                                     </div>
@@ -2098,6 +2110,10 @@
             }
         }
 
+        if ( $('#speedup-value').val() ) {
+            params['speedup'] = $('#speedup-value').val();
+        }
+
         // Since the old link (if there was one) for the permalink is no longer valid, hide it
         $('#permalink-box').hide();
         
@@ -2379,6 +2395,13 @@
             $.each($('body').data()['platformAnimation'], function (index, platform) {
                 $('#' + platform + '_SCALE > transform > inline')[0].setAttribute('render', false);
             });
+        }
+    });
+
+    $('#speedup-value').on('keypress', function (e) {
+        if (e.which == 13) {
+            // Enter key pressed
+            rebuildFilters(['platformanimation']);
         }
     });
 
@@ -4834,7 +4857,8 @@ function enable_cardboard(){
                         updateTranslateRotate($(this).val());
                     });
                     $('#spatial-3d-x3d-pp-slider').show();
-                    $('#spatial-3d-x3d-speedup').html('Speedup: ' + data[key].speedup + 'x');
+                    $('#spatial-3d-x3d-speedup').show()
+                    $('#speedup-value').val(data[key].speedup);
                     $('#spatial-3d-x3d-pause-play').click();
                     if ($('#spatial-3d-x3d-pause-play').hasClass('icon-play')) {
                         $('#spatial-3d-x3d-pause-play').click();
