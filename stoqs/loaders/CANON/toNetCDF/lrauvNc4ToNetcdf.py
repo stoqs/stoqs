@@ -145,7 +145,7 @@ class InterpolatorWriter(BaseWriter):
 
         if key.find('time') != -1:
             # convert time to epoch seconds
-            esec_list = v.index.values.astype(float)/1E9
+            esec_list = v.index.values.astype(datetime)/1E9
             # trajectory dataset, time is the only netCDF dimension
             self.ncFile.createDimension(key, len(esec_list))
             rc = self.ncFile.createVariable(key, 'float32', (key,))
@@ -306,7 +306,7 @@ class InterpolatorWriter(BaseWriter):
 
             # add in time coordinate separately
             v_time = all_ts[key].index
-            esec_list = v_time.values.astype(float)/1E9
+            esec_list = v_time.values.astype(datetime)/1E9
             self.all_sub_ts[key + '_time'] = pd.Series(esec_list,index=v_time)
 
         # TODO: add try catch block on this
@@ -315,7 +315,7 @@ class InterpolatorWriter(BaseWriter):
 
         # store time using interpolation parameter
         v_time = all_ts[interp_key].index
-        esec_list = v_time.values.astype(float)/1E9
+        esec_list = v_time.values.astype(datetime)/1E9
         self.all_sub_ts['time'] = pd.Series(esec_list,index=v_time)
 
         # interpolate all parameters and coordinates
@@ -631,7 +631,7 @@ class InterpolatorWriter(BaseWriter):
         ts = t.index.values
 
         # convert time to epoch seconds
-        esec_list = t.resample(resampleFreq).index.values.astype(float)/1E9
+        esec_list = t.resample(resampleFreq).index.values.astype(datetime)/1E9
 
         for key, value in all_ts.items():
             if not value.empty :
