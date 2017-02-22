@@ -150,7 +150,7 @@ class InterpolatorWriter(BaseWriter):
             self.ncFile.createDimension(key, len(esec_list))
             rc = self.ncFile.createVariable(key, 'float32', (key,))
             rc.standard_name = 'time' 
-            rc.units = 'seconds since 1970-01-01'
+            rc.units = 'seconds since 1970-01-01 00:00:00'
             # Used in global metadata
             if key == 'time':
                 self.time = rc
