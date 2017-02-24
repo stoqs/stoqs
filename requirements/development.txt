@@ -8,7 +8,6 @@ Babel==2.3.4
 backports.ssl-match-hostname==3.5.0.1
 billiard==3.5.0.2
 binaryornot==0.4.0
-celery==4.0.2
 certifi==2017.1.23
 cookiecutter==1.5.1
 coverage==4.3.2
