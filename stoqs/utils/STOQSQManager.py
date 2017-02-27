@@ -1006,7 +1006,7 @@ class STOQSQManager(object):
         pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')[::stride]
         logger.debug('Adding time series of parameter = %s in key = %s', p, pa_units[p])
         for mp in pt_qs_mp:
-            if not mp['datavalue']:
+            if mp['datavalue'] is None:
                 continue
 
             tv = mp['measurement__instantpoint__timevalue']
