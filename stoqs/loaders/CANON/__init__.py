@@ -222,6 +222,8 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_aku.x3d', pName)
+
     def loadAhi(self, stride=None):
       '''
       Ahi specific load functions
