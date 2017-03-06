@@ -591,7 +591,7 @@ class Contour(object):
                     z_stride = z[0:sz:stride]
                     lon_stride = lon[0:sz:stride]
                     lat_stride = lat[0:sz:stride]
-                    mp.scatter(lon_stride,lat_stride,c=z_stride,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
+                    mp.scatter(lon_stride,lat_stride,c=z_stride,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,label=self.plotDotParmName,zorder=2)
                     if stride > 1:
                         ax.text(0.70,0.1, ('%s (every %d points)' % (self.plotDotParmName, stride)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
@@ -600,7 +600,7 @@ class Contour(object):
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
 
                 else:
-                    mp.scatter(lon,lat,c=z,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
+                    mp.scatter(lon,lat,c=z,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,label=self.plotDotParmName,zorder=2)
                     ax.text(0.70,0.1, ('%s (every point)' % (self.plotDotParmName)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
 

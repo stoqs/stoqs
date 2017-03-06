@@ -225,12 +225,26 @@ if __name__ == '__main__':
     d = re.match(r'.*tethys*',args.inUrl)
     if d:
         platformName = 'tethys'
+
     d = re.match(r'.*daphne*',args.inUrl)
     if d:
         platformName = 'daphne'
+
     d = re.match(r'.*makai*',args.inUrl)
     if d:
         platformName = 'makai'
+
+    d = re.match(r'.*aku*',args.inUrl)
+    if d:
+        platformName = 'aku'
+
+    d = re.match(r'.*opah*',args.inUrl)
+    if d:
+        platformName = 'opah'
+
+    d = re.match(r'.*ahi*',args.inUrl)
+    if d:
+        platformName = 'ahi'
 
     # Get directory list from sites
     s = args.inUrl.rsplit('/',1)

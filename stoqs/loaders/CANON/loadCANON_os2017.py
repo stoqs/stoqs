@@ -114,7 +114,7 @@ def find_urls(base, search_str):
 # the binned files before this will work
 
 # Get directory list from thredds server
-platforms = ['tethys']
+platforms = ['tethys', 'aku', 'makai', 'ahi', 'opah', 'daphne']
 
 
 for p in platforms:
@@ -122,7 +122,7 @@ for p in platforms:
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2017/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
-    setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'
+    setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
                                 'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
                                 'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
                                 'health_platform_battery_charge', 'health_platform_average_voltage',
@@ -136,9 +136,9 @@ for p in platforms:
                                 'pose_latitude_DeadReckonUsingMultipleVelocitySources',
                                 'pose_depth_DeadReckonUsingMultipleVelocitySources'])
     try:
-        #urls_eng = find_urls(base, '.*2S_eng.nc$')
+        urls_eng = find_urls(base, '.*2S_eng.nc$')
         urls_sci = find_urls(base, '.*10S_sci.nc$')
-        urls = urls_sci # + urls_eng
+        urls = urls_sci + urls_eng
         files = []
         if len(urls) > 0 :
             for url in sorted(urls):

@@ -33,7 +33,7 @@ import time
 import datetime as dt
 from time import mktime
 from CANON.toNetCDF import BaseWriter
-from pupynere import netcdf_file
+from netCDF4 import Dataset
 import pydap.client
 import numpy
 import DAPloaders
@@ -66,7 +66,7 @@ class InterpolatorWriter(BaseWriter):
 
         # Create the NetCDF file
         self.logger.debug("Creating netCDF file %s", out_file)
-        self.ncFile = netcdf_file(out_file, 'w')
+        self.ncFile = Dataset(out_file, 'w')
 
         # If specified on command line override the default generic title with what is specified
         self.ncFile.title = 'LRAUV interpolated data'
@@ -83,7 +83,7 @@ class InterpolatorWriter(BaseWriter):
                 if not ts.empty:
                     self.logger.debug("Adding in record variable %s", key)
                     v = self.initRecordVariable(key)
-                    v[:] = self.all_sub_ts[key]
+                    v[:] = self.all_sub_ts[key].values
             else:
                 ts_key.append(key)
 
@@ -95,7 +95,7 @@ class InterpolatorWriter(BaseWriter):
                 try:
                     logging.debug("Adding in record variable %s", key)
                     v = self.initRecordVariable(key)
-                    v[:] = self.all_sub_ts[key]
+                    v[:] = self.all_sub_ts[key].values
                 except Exception, e:
                     self.logger.error(e)
                     continue
@@ -145,10 +145,10 @@ class InterpolatorWriter(BaseWriter):
 
         if key.find('time') != -1:
             # convert time to epoch seconds
-            esec_list = v.index.values.astype(datetime)/1E9
+            esec_list = v.index.values.astype(dt.datetime)/1E9
             # trajectory dataset, time is the only netCDF dimension
             self.ncFile.createDimension(key, len(esec_list))
-            rc = self.ncFile.createVariable(key, 'float32', (key,))
+            rc = self.ncFile.createVariable(key, 'float64', (key,), fill_value='NaN')
             rc.standard_name = 'time' 
             rc.units = 'seconds since 1970-01-01 00:00:00'
             # Used in global metadata
@@ -159,11 +159,11 @@ class InterpolatorWriter(BaseWriter):
         elif key.find('latitude') != -1:
             # Record Variables - coordinates for trajectory - save in the instance and use for metadata generation
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float32', (c['time'],))
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value='NaN')
             rc.long_name = 'LATITUDE'
             rc.standard_name = 'latitude' 
             rc.units = 'degree_north'
-            rc[:] = self.all_sub_ts[key]
+            rc[:] = self.all_sub_ts[key].values
             # Used in global metadata
             if key == 'latitude':
                 self.latitude = rc
@@ -171,11 +171,11 @@ class InterpolatorWriter(BaseWriter):
 
         elif key.find('longitude') != -1:
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float32', (c['time'],))
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value='NaN')
             rc.long_name = 'LONGITUDE'
             rc.standard_name = 'longitude'
             rc.units = 'degree_east'
-            rc[:] = self.all_sub_ts[key]
+            rc[:] = self.all_sub_ts[key].values
             # Used in global metadata
             if key == 'longitude':
                 self.longitude = rc
@@ -183,11 +183,11 @@ class InterpolatorWriter(BaseWriter):
 
         elif key.find('depth') != -1:
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float32', (c['time'],))
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value='NaN')
             rc.long_name = 'DEPTH'
             rc.standard_name = 'depth' 
             rc.units = 'm'
-            rc[:] = self.all_sub_ts[key]
+            rc[:] = self.all_sub_ts[key].values
             # Used in global metadata
             if key == 'depth':
                 self.depth = rc
@@ -196,7 +196,8 @@ class InterpolatorWriter(BaseWriter):
         else:
             a = self.all_attrib[key]
             c = self.all_coord[key]
-            rc = self.ncFile.createVariable(key, 'float32', (c['time'],))
+            rc = self.ncFile.createVariable(key, 'float64', (c['time'],), fill_value='NaN')
+
             if 'long_name' in a:
                 rc.long_name = a['long_name']
             if 'standard_name' in a:
@@ -306,7 +307,7 @@ class InterpolatorWriter(BaseWriter):
 
             # add in time coordinate separately
             v_time = all_ts[key].index
-            esec_list = v_time.values.astype(datetime)/1E9
+            esec_list = v_time.values.astype(dt.datetime)/1E9
             self.all_sub_ts[key + '_time'] = pd.Series(esec_list,index=v_time)
 
         # TODO: add try catch block on this
@@ -315,7 +316,7 @@ class InterpolatorWriter(BaseWriter):
 
         # store time using interpolation parameter
         v_time = all_ts[interp_key].index
-        esec_list = v_time.values.astype(datetime)/1E9
+        esec_list = v_time.values.astype(dt.datetime)/1E9
         self.all_sub_ts['time'] = pd.Series(esec_list,index=v_time)
 
         # interpolate all parameters and coordinates
@@ -425,7 +426,7 @@ class InterpolatorWriter(BaseWriter):
                         self.all_attrib[key] = attr
 
                         # resample using the mean
-                        ts_resample = ts.resample(resampleFreq, how='mean')[:]
+                        ts_resample = ts.resample(resampleFreq).mean()[:]
                         self.all_sub_ts[key] = ts_resample
                         self.all_coord[key] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
 
@@ -487,7 +488,7 @@ class InterpolatorWriter(BaseWriter):
         t = pd.Series(index = coord_ts['time'].index)
 
         # resample
-        t_resample = t.resample(resampleFreq)[:]
+        t_resample = t.resample(resampleFreq).asfreq()[:]
 
         for group in self.df.groups:
             g = None
@@ -497,7 +498,6 @@ class InterpolatorWriter(BaseWriter):
                 g = group
             else:
                 continue
-
 
             times = []
             subgroup = None
@@ -537,7 +537,7 @@ class InterpolatorWriter(BaseWriter):
                         self.all_attrib[key] = attr
 
                         # resample using the mean then interpolate on to the time dimension
-                        ts_resample = ts.resample(resampleFreq, how='mean')[:]
+                        ts_resample = ts.resample(resampleFreq).mean()[:]
                         i = self.interpolate(ts_resample, t_resample.index)
 
                         if key.find('pitch') != -1 or key.find('roll') != -1 or key.find('yaw') != -1 or key.find('angle') != -1 or key.find('rate') != -1:
@@ -631,7 +631,7 @@ class InterpolatorWriter(BaseWriter):
         ts = t.index.values
 
         # convert time to epoch seconds
-        esec_list = t.resample(resampleFreq).index.values.astype(datetime)/1E9
+        esec_list = t.resample(resampleFreq).index.values.astype(dt.datetime)/1E9
 
         for key, value in all_ts.items():
             if not value.empty :
