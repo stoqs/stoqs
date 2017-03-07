@@ -10,7 +10,7 @@ import os
 import time
 from collections import namedtuple
 from datetime import datetime
-from itertools import izip
+from itertools import izip, izip_longest
 from loaders import X3DPLATFORMMODEL, X3D_MODEL, X3D_MODEL_SCALEFACTOR
 from matplotlib.colors import hex2color
 from stoqs import models
@@ -38,6 +38,60 @@ class PlatformAnimation(object):
         <ROUTE fromField="geovalue_changed" fromNode="{pName}_POS_INTERP" toField="geoCoords" toNode="{pName}_LOCATION"></ROUTE>       
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_POS_INTERP"></ROUTE>      
     '''
+    position_orientation_template_aa = '''
+        <GeoLocation id="{pName}_LOCATION" DEF="{pName}_LOCATION">
+            {geoOriginStr}
+            <Transform id="{pName}_SCALE" DEF="{pName}_SCALE" scale="{scale} {scale} {scale}">
+                <!-- Cylinder height = 0.410 in axes_enu.x3d, scale to make length = 10 m -->
+                <Transform scale="24.390244 24.390244 24.390244">
+                    <Inline url="http://stoqs.mbari.org/x3d/beds/axes_enu.x3d" nameSpaceName="{pName}_axesENU"></Inline>
+                </Transform>
+                <Transform scale="3 3 3" translation="0 1 0">
+                    <Billboard axisOfRotation="0,0,0">
+                        <Shape>
+                            <Appearance>
+                                <Material ambientIntensity="1" diffuseColor="{pColor}"></Material>
+                            </Appearance>
+                            <Text string="{pName}">
+                            </Text>
+                        </Shape>
+                    </Billboard>
+                </Transform>
+                <Transform id="{pName}_AAROT" DEF="{pName}_AAROT">
+                    <Transform scale="{plat_scale} {plat_scale} {plat_scale}">
+                        <Inline url="{pURL}"></Inline>
+                    </Transform>
+                </Transform>
+                <Transform>
+                    <Shape> 
+                        <IndexedLineSet coordIndex="0 1">
+                            <Color color='1 0 0 1 0 0'></Color>
+                            <Coordinate id="{pName}_A_C" DEF="{pName}_A_C"></Coordinate>
+                        </IndexedLineSet> 
+                    </Shape> 
+                </Transform>
+            </Transform>
+        </GeoLocation>
+
+        <!-- 6 DOF data coded here as position and orientation interpolators -->
+        <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}">{geoOriginStr}</GeoPositionInterpolator>
+        <OrientationInterpolator DEF="{pName}_AA_OI" key="{oKeys}" keyValue="{aaRotValues}"></OrientationInterpolator>
+        
+        <!-- Wire up the connections between the nodes to animate the motion of the Shape -->       
+        <ROUTE fromField="geovalue_changed" fromNode="{pName}_POS_INTERP" toField="geoCoords" toNode="{pName}_LOCATION"></ROUTE>
+
+        <ROUTE fromField="value_changed" fromNode="{pName}_AA_OI" toField="rotation" toNode="{pName}_AAROT"></ROUTE>
+
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_POS_INTERP"></ROUTE>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_AA_OI"></ROUTE>
+
+        <!-- Axis of rotation -->
+        <CoordinateInterpolator DEF="{pName}_A_CI" key="{pKeys}" keyValue="{axisValues}"></CoordinateInterpolator>
+        <ROUTE fromField="value_changed" fromNode="{pName}_A_CI" toField="point" toNode="{pName}_A_C"></ROUTE>
+        <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_A_CI"></ROUTE>
+
+    '''
+
     position_orientation_template = '''
         <GeoLocation id="{pName}_LOCATION" DEF="{pName}_LOCATION">
             {geoOriginStr}
@@ -68,7 +122,6 @@ class PlatformAnimation(object):
                 </Transform>
             </Transform>
         </GeoLocation>
-
         <!-- 6 DOF data coded here as position and orientation interpolators -->
         <GeoPositionInterpolator DEF="{pName}_POS_INTERP" key="{pKeys}" keyValue="{posValues}">{geoOriginStr}</GeoPositionInterpolator>
         <OrientationInterpolator DEF="{pName}_X_OI" key="{oKeys}" keyValue="{xRotValues}"></OrientationInterpolator>
@@ -77,18 +130,18 @@ class PlatformAnimation(object):
         
         <!-- Wire up the connections between the nodes to animate the motion of the Shape -->       
         <ROUTE fromField="geovalue_changed" fromNode="{pName}_POS_INTERP" toField="geoCoords" toNode="{pName}_LOCATION"></ROUTE>
-
         <ROUTE fromField="value_changed" fromNode="{pName}_X_OI" toField="rotation" toNode="{pName}_XROT"></ROUTE>
         <ROUTE fromField="value_changed" fromNode="{pName}_Y_OI" toField="rotation" toNode="{pName}_YROT"></ROUTE>
         <ROUTE fromField="value_changed" fromNode="{pName}_Z_OI" toField="rotation" toNode="{pName}_ZROT"></ROUTE>
-
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_POS_INTERP"></ROUTE>
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_X_OI"></ROUTE>
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Y_OI"></ROUTE>
         <ROUTE fromField="fraction_changed" fromNode="TS" toField="set_fraction" toNode="{pName}_Z_OI"></ROUTE>
     '''
+
     global_template = '<TimeSensor id="PLATFORMS_TS" DEF="TS" cycleInterval="{cycInt}" loop="true" enabled="false" onoutputchange="setSlider(event)"></TimeSensor>'
-    x3d_info = namedtuple('x3d_info', ['x3d', 'all_x3d', 'platforms', 'times', 'limits', 'platforms_not_shown'])
+    x3d_info = namedtuple('x3d_info', ['x3d', 'all_x3d', 'platforms', 'times', 'limits', 
+                                       'platforms_not_shown', 'message'])
 
     def __init__(self, platforms, kwargs, request, qs, qs_mp):
         self.platforms = platforms
@@ -106,10 +159,25 @@ class PlatformAnimation(object):
         self.pitch_by_plat = {}
         self.yaw_by_plat = {}
 
+        self.rot_x_by_plat = {}
+        self.rot_y_by_plat = {}
+        self.rot_z_by_plat = {}
+
+        self.axis_x_by_plat = {}
+        self.axis_y_by_plat = {}
+        self.axis_z_by_plat = {}
+        self.angle_by_plat = {}
+
+        self.af = 15        # Axis factor - to make the line an appropriate length
+
         # Platform model must be oriented with nose to -Z (north) and up to +Y
         self.xRotFmt = '1 0 0 {:.6f} '    # pitch
         self.yRotFmt = '0 -1 0 {:.6f} '   # yaw
         self.zRotFmt = '0 0 -1 {:.6f} '   # roll
+        self.aaRotFmt = '{:.6f} {:.6f} {:.6f} {:.6f} '   # angle_axis
+
+        # Axis of rotation coords (2 points of MFVec3f)
+        self.axisValuesFmt = '{:.6f} {:.6f} {:.6f} {:.6f} {:.6f} {:.6f} '
 
     def getX3DPlatformModel(self, pName):
         # Expect only one X3DPLATFORMMODEL per platform (hence .get())
@@ -158,6 +226,38 @@ class PlatformAnimation(object):
         for mp in pqs.filter(parameter__standard_name='platform_yaw_angle'):
             self.yaw_by_plat.setdefault(platform.name, []).append(mp['datavalue'])
 
+        for mp in pqs.filter(parameter__name='ROT_X'):
+            self.rot_x_by_plat.setdefault(platform.name, []).append(mp['datavalue'])
+        for mp in pqs.filter(parameter__name='ROT_Y'):
+            self.rot_y_by_plat.setdefault(platform.name, []).append(mp['datavalue'])
+        for mp in pqs.filter(parameter__name='ROT_Z'):
+            self.rot_z_by_plat.setdefault(platform.name, []).append(mp['datavalue'])
+
+        if platform.name not in self.axis_x_by_plat:
+            self.axis_x_by_plat[platform.name] = []
+        if platform.name not in self.axis_y_by_plat:
+            self.axis_y_by_plat[platform.name] = []
+        if platform.name not in self.axis_z_by_plat:
+            self.axis_z_by_plat[platform.name] = []
+        if platform.name not in self.angle_by_plat:
+            self.angle_by_plat[platform.name] = []
+
+        for mp in pqs.filter(parameter__name='AXIS_X'):
+            self.axis_x_by_plat[platform.name].append(mp['datavalue'])
+        for mp in pqs.filter(parameter__name='AXIS_Y'):
+            self.axis_y_by_plat[platform.name].append(mp['datavalue'])
+        for mp in pqs.filter(parameter__name='AXIS_Z'):
+            self.axis_z_by_plat[platform.name].append(mp['datavalue'])
+        for mp in pqs.filter(parameter__name='ANGLE'):
+            self.angle_by_plat[platform.name].append(mp['datavalue'])
+
+    def compute_rot_axis(self):
+        '''If platform has roll, pitch, and yaw convert those data to a quaternion
+        from which we can divide successive quats to get the successive rotation
+        angle differences for getting their angle_axis values.
+        '''
+
+    
     def overlap_time(self, r1, r2):
         '''Return timedelta of overlap between the arguments. Positive return value
         has time overlap, negative value means there is no overlap.
@@ -179,14 +279,20 @@ class PlatformAnimation(object):
         time_ranges = {}
         assembled_times = []
         assembled_platforms = []
+        error_msg = ''
 
         Range = namedtuple('Range', ['start', 'end'])
         for p in platforms:
             self.loadData(p)
-            time_ranges[p] = Range(
-                        start=datetime.utcfromtimestamp(self.time_by_plat[p.name][0]/1000.0),
-                        end=datetime.utcfromtimestamp(self.time_by_plat[p.name][-1]/1000.0)
-            )
+            try:
+                time_ranges[p] = Range(
+                            start=datetime.utcfromtimestamp(self.time_by_plat[p.name][0]/1000.0),
+                            end=datetime.utcfromtimestamp(self.time_by_plat[p.name][-1]/1000.0)
+                )
+            except KeyError:
+                error_msg = "Cannot animate {}. Make sure it has standard_name of 'platform_yaw_angle'".format(p)
+                self.logger.warn(error_msg)
+
         # Find earliest platform animation, time and latest time
         min_start_time = datetime.utcnow()
         max_end_time = datetime.utcfromtimestamp(0)
@@ -220,12 +326,14 @@ class PlatformAnimation(object):
                                set(p.name for p in assembled_platforms))
 
         # Create equal interval times that fill in gaps in assembled_times, setting time step from earliest_platform
-        equal_times = np.arange(st_ems, et_ems,
-                                self.time_by_plat[earliest_platform.name][2] - self.time_by_plat[earliest_platform.name][1])
+        equal_times = []
+        if self.time_by_plat:
+            equal_times = np.arange(st_ems, et_ems,
+                          self.time_by_plat[earliest_platform.name][2] - self.time_by_plat[earliest_platform.name][1])
 
         return self.x3d_info(x3d=x3d_dict, all_x3d=all_x3d, platforms=assembled_platforms,
                              times=equal_times, limits=(0, len(equal_times)),
-                             platforms_not_shown=platforms_not_shown)
+                             platforms_not_shown=platforms_not_shown, message=error_msg)
 
     def _deg2rad(self, angle):
         '''Given an angle in degrees return angle in radians
@@ -244,19 +352,82 @@ class PlatformAnimation(object):
 
             return math.atan2(y * ve, x)
 
-    def _append_animation_values(self, st_ems, et_ems, pName, lat, lon, depth, t, vert_ex, pitch, yaw, roll):
-        '''Append formatted values to X3D text items
+    def _append_animation_values(self, st_ems, et_ems, pName, lat, lon, depth, t, vert_ex, pitch, yaw, roll,
+                                 axis_x, axis_y, axis_z, angle):
+        '''Append formatted values to X3D text items. Give preference to angle_axis axis_x, axis_y, axis_z, angle)
+        over roll, pitch, and yaw. This is identified by axis_x, axis_y, axis_z, and angle being not None.
         '''
         self.points += '%.6f %.6f %.1f ' % (lat, lon, -depth * vert_ex)
         self.keys += '%.4f ' % ((t - st_ems) / float(et_ems - st_ems))
 
-        # Apply vertical exaggeration to pitch angle
-        self.xRotValues += self.xRotFmt.format(self._pitch_with_ve(pitch, vert_ex))
-        self.yRotValues += self.yRotFmt.format(self._deg2rad(yaw))
-        self.zRotValues += self.zRotFmt.format(self._deg2rad(roll))
+        if axis_x is not None and axis_y is not None and axis_z is not None and angle is not None:
+            if vert_ex != 1:
+                self.logger.warn('angle_axis orientation does not allow for vertical exaggeration')
+            self.aaRotValues += self.aaRotFmt.format(axis_x, axis_y, axis_z, angle)
+        else:
+            # Apply vertical exaggeration to pitch angle
+            self.xRotValues += self.xRotFmt.format(self._pitch_with_ve(pitch, vert_ex))
+            self.yRotValues += self.yRotFmt.format(self._deg2rad(yaw))
+            self.zRotValues += self.zRotFmt.format(self._deg2rad(roll))
+
+    def _fill_values(self, st_ems, et_ems, pName, vert_ex, pad_beginning=False):
+        '''Fill values for animating orientation and optionally the axis of rotation
+        '''
+        if pad_beginning:
+            for t in (st_ems, self.time_by_plat[pName][0]):
+                lon = self.lon_by_plat[pName][0] 
+                lat = self.lat_by_plat[pName][0] 
+                depth = self.depth_by_plat[pName][0]
+                pitch = self.pitch_by_plat[pName][0]
+                yaw = self.yaw_by_plat[pName][0]
+                roll = self.roll_by_plat[pName][0]
+                axis_x = self.axis_x_by_plat[pName][0]
+                axis_y = self.axis_y_by_plat[pName][0]
+                axis_z = self.axis_z_by_plat[pName][0]
+                angle = self.angle_by_plat[pName][0]
+
+                self._append_animation_values(st_ems, et_ems, pName, lat, lon, depth, t, vert_ex,
+                                              pitch, yaw, roll, axis_x, axis_y, axis_z, angle)
+
+        else:
+            for (lon, lat, depth, t, pitch, yaw, roll, 
+                 axis_x, axis_y, axis_z, angle) in izip_longest(
+                                                    self.lon_by_plat[pName], 
+                                                    self.lat_by_plat[pName], 
+                                                    self.depth_by_plat[pName],
+                                                    self.time_by_plat[pName],
+                                                    self.pitch_by_plat[pName],
+                                                    self.yaw_by_plat[pName],
+                                                    self.roll_by_plat[pName],
+                                                    self.axis_x_by_plat[pName],
+                                                    self.axis_y_by_plat[pName],
+                                                    self.axis_z_by_plat[pName],
+                                                    self.angle_by_plat[pName],
+                                                    fillvalue=None):
+
+                self._append_animation_values(st_ems, et_ems, pName, lat, lon, depth, t, vert_ex,
+                                              pitch, yaw, roll, axis_x, axis_y, axis_z, angle)
+
+        try:
+            # Make negative direction of axis half the length of the positive end
+            if pad_beginning:
+                for t in (st_ems, self.time_by_plat[pName][0]):
+                    a_x = self.af * self.rot_x_by_plat[pName][0]
+                    a_y = self.af * self.rot_y_by_plat[pName][0]
+                    a_z = self.af * self.rot_z_by_plat[pName][0]
+                    self.axisValues += self.axisValuesFmt.format(-.5 * a_x, -.5 * a_y, -.5 * a_z, a_x, a_y, a_z)
+            else:
+                for a_x, a_y, a_z in izip(self.rot_x_by_plat[pName], self.rot_y_by_plat[pName], 
+                                          self.rot_z_by_plat[pName]):
+                    a_x *= self.af
+                    a_y *= self.af
+                    a_z *= self.af
+                    self.axisValues += self.axisValuesFmt.format(-.5 * a_x, -.5 * a_y, -.5 * a_z, a_x, a_y, a_z)
+        except KeyError:
+            # Likely no AXIS_* variables for this platform
+            pass
 
     def _animationX3D_for_platform(self, platform, vert_ex, geoOrigin, scale, st_ems, et_ems):
-                                    
         '''Build X3D text for a platform's animation
         '''
         geoorigin_use = ''
@@ -272,36 +443,30 @@ class PlatformAnimation(object):
         self.xRotValues = ''
         self.yRotValues = ''
         self.zRotValues = ''
+        self.aaRotValues = ''
+
+        self.axisValues = ''
 
         if self.time_by_plat[pName][0] > st_ems:
             # Pad with stationary pose of first position if platform not the earliest
-            for t in (st_ems, self.time_by_plat[pName][0]):
-                self._append_animation_values(st_ems, et_ems, pName,
-                                                self.lat_by_plat[pName][0], 
-                                                self.lon_by_plat[pName][0],
-                                                self.depth_by_plat[pName][0], t, vert_ex,
-                                                self.pitch_by_plat[pName][0],
-                                                self.yaw_by_plat[pName][0],
-                                                self.roll_by_plat[pName][0] )
+            self._fill_values(st_ems, et_ems, pName, vert_ex, pad_beginning=True)
 
-        for lon, lat, depth, t, pitch, yaw, roll in izip(
-                                                self.lon_by_plat[pName], 
-                                                self.lat_by_plat[pName], 
-                                                self.depth_by_plat[pName],
-                                                self.time_by_plat[pName],
-                                                self.pitch_by_plat[pName],
-                                                self.yaw_by_plat[pName],
-                                                self.roll_by_plat[pName]):
-            self._append_animation_values(st_ems, et_ems, pName, lat, lon, depth, t, vert_ex,
-                                          pitch, yaw, roll)
+        self._fill_values(st_ems, et_ems, pName, vert_ex)
 
-        if self.xRotValues and self.yRotValues and self.zRotValues:
+        if self.aaRotValues:
+            x3d = self.position_orientation_template_aa.format(pName=pName,
+                    plat_scale=self.getX3DPlatformModelScale(pName),
+                    pURL=self.getX3DPlatformModel(pName), pKeys=self.keys[:-1], 
+                    posValues=self.points, oKeys=self.keys[:-1], aaRotValues=self.aaRotValues, 
+                    axisValues=self.axisValues, pColor=pColor, scale=scale,
+                    geoOriginStr=geoorigin_use)
+        elif self.xRotValues and self.yRotValues and self.zRotValues:
             x3d = self.position_orientation_template.format(pName=pName,
                     plat_scale=self.getX3DPlatformModelScale(pName),
                     pURL=self.getX3DPlatformModel(pName), pKeys=self.keys[:-1], 
                     posValues=self.points, oKeys=self.keys[:-1], xRotValues=self.xRotValues, 
-                    yRotValues=self.yRotValues, zRotValues=self.zRotValues, scale=scale,
-                    geoOriginStr=geoorigin_use, pColor=pColor)
+                    yRotValues=self.yRotValues, zRotValues=self.zRotValues, pColor=pColor,
+                    scale=scale, geoOriginStr=geoorigin_use)
         else:
             x3d = self.position_template.format(pName=pName, 
                     plat_scale=self.getX3DPlatformModelScale(pName),
@@ -315,7 +480,7 @@ class PlatformAnimation(object):
         '''Public method called by STOQSQManager.py
         '''
         info = self.x3d_info(x3d='', all_x3d='', times=(), platforms=(), limits=(), 
-                             platforms_not_shown=())
+                             platforms_not_shown=(), message='')
         try:
             info = self._assemble_platforms(self.platforms, vert_ex, geoOrigin, scale,
                                            speedup, force_overlap)
@@ -328,5 +493,5 @@ class PlatformAnimation(object):
                                            len(info.times), PA_MAX_POINTS)}
         else:
             return {'x3d': info.x3d, 'all': info.all_x3d, 'limits': info.limits, 'time': info.times, 
-                    'platforms_not_shown': info.platforms_not_shown, 'speedup': speedup, 'scale': scale}
-
+                    'platforms_not_shown': info.platforms_not_shown, 'speedup': speedup, 'scale': scale,
+                    'message': info.message}

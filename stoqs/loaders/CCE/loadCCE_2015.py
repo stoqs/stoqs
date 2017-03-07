@@ -56,7 +56,8 @@ cl.bed_base = 'http://dodstemp.shore.mbari.org/opendap/data/CCE_Processed/BEDs/'
 
 cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT', 'P', 'P_ADJUSTED',
                 'P_RATE', 'P_SPLINE', 'P_SPLINE_RATE', 'ROT_DIST', 'IMPLIED_VELOCITY', 'BED_DEPTH_CSI',
-                'BED_DEPTH', 'BED_DEPTH_LI', 'DIST_TOPO', 'TUMBLE_RATE', 'TUMBLE_COUNT', 'TIDE']
+                'BED_DEPTH', 'BED_DEPTH_LI', 'DIST_TOPO', 'TUMBLE_RATE', 'TUMBLE_COUNT', 'TIDE',
+                'ROT_X', 'ROT_Y', 'ROT_Z', 'AXIS_X', 'AXIS_Y', 'AXIS_Z', 'ANGLE']
 
 # Several BED files: 30200078 to 3020080
 # bed_files, bed_platforms, bed_depths must have same number of items; they are zipped together in the load
@@ -93,6 +94,7 @@ cl.bed_files = [
                 'BED09/MBCCE_BED09_20160408_Event20170109/netcdf/90100196_trajectory.nc',
                 'BED11/MBCCE_BED11_20161010_Event20170109/netcdf/B0100026_trajectory.nc',
                 'BED11/MBCCE_BED11_20161010_Event20170109/netcdf/B0100028_trajectory.nc',
+                'BED00/Simulated/netcdf/BED00_cycle_rot_axes_200_202_trajectory.nc',
                 ]
 cl.bed_platforms = [
                 'BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05', 'BED03', 'BED04',
