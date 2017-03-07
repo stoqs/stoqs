@@ -203,13 +203,16 @@ def process_command_line():
     return args
 
 # Checks if file was created within the last delay in minutes; return True if so
-def check_file(delay, filename):
-    if not os.path.isfile(filename):
+def check_file(delay, old_filename, new_filename):
+    if not os.path.isfile(old_filename):
         return False
 
-    mod_time = datetime.fromtimestamp(os.stat(filename).st_mtime)
-    now = datetime.today()
+    mod_time = datetime.fromtimestamp(os.stat(old_filename).st_mtime)
+    if os.path.isfile(new_filename):
+      if os.stat(old_filename).st_size == os.stat(new_filename).st_size:
+        return False
 
+    now = datetime.today()
     if now - mod_time > delay:
         return False
     else:
@@ -448,13 +451,13 @@ if __name__ == '__main__':
             if not outFileLatest.startswith('/tmp'):
                 # copy to the atlas share that will get cataloged in ODSS
                 delay = timedelta(minutes=5)
-                if check_file(delay, outFileLatest):
+                if check_file(delay, outFileLatest, outFileLatestProduct):
                     cmd = r'cp %s %s' %(outFileLatest, outFileLatestProduct)
                     logger.debug('%s', cmd)
                     os.system(cmd)
 
                 # copy to the atlas share that will get cataloged in ODSS
-                if check_file(delay, outFileLatestAnim):
+                if check_file(delay, outFileLatestAnim, outFileLatestProductAnim):
                     cmd = r'cp %s %s' %(outFileLatestAnim, outFileLatestProductAnim)
                     logger.debug('%s', cmd)
                     os.system(cmd)
