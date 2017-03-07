@@ -4815,7 +4815,7 @@ function enable_cardboard(){
                 }
             }
             else if (key == 'platformanimation') {
-                if (data[key]['x3d']) {
+                if ( ! $.isEmptyObject(data[key]['x3d']) ) {
                     var x3dText = '';
                     $('body').data()['platformAnimation'] = [];
                     $.each(data[key]['x3d'], function (plat, x3d) {
