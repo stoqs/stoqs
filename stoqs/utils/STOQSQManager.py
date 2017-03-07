@@ -669,7 +669,12 @@ class STOQSQManager(object):
                         platformTypeHash[platformType].append((name, id, color, featureType, ))
                 else:
                     x3dModel, x, y, z = self._getPlatformModel(name) 
-                    if x3dModel:
+                    # Do not add stationary model for BEDs that have rotation data
+                    platforms_rotations = {ar.activity.platform for ar in models.ActivityResource.objects.using(
+                                           self.dbname).filter(activity__activityparameter__parameter__name='AXIS_X', 
+                                           activity__platform__name=name)}
+                   
+                    if x3dModel and not platforms_rotations:
                         try:
                             platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
                         except KeyError:
@@ -1538,7 +1543,7 @@ class STOQSQManager(object):
             # This is a weak test (for just 'AXIS_X'), but with also weak consequences, maybe an error
             # reported to the UI if the other required Parameters are not present
             platforms_rotations = {ar.activity.platform for ar in models.ActivityResource.objects.using(
-                    self.dbname).filter(activity__activityparameter__parameter__name='AXIS_X'),
+                    self.dbname).filter(activity__activityparameter__parameter__name='AXIS_X',
                         activity__platform__in=[a.platform for a in self.qs])}
 
             platforms_to_animate = platformsHavingModels & (platforms_trajectories | platforms_rotations)
