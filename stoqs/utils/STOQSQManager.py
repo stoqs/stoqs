@@ -1534,7 +1534,14 @@ class STOQSQManager(object):
             platforms_trajectories = {ar.activity.platform for ar in models.ActivityResource.objects.using(
                     self.dbname).filter(resource__name='featureType', resource__value='trajectory', 
                     activity__platform__in=[a.platform for a in self.qs])}
-            platforms_to_animate = platformsHavingModels & platforms_trajectories
+            # For detecting non-trajectory BEDS that have rotation data (ANGLE, AXIS_X, AXIS_Y, AXIS_Z)
+            # This is a weak test (for just 'AXIS_X'), but with also weak consequences, maybe an error
+            # reported to the UI if the other required Parameters are not present
+            platforms_rotations = {ar.activity.platform for ar in models.ActivityResource.objects.using(
+                    self.dbname).filter(activity__activityparameter__parameter__name='AXIS_X'),
+                        activity__platform__in=[a.platform for a in self.qs])}
+
+            platforms_to_animate = platformsHavingModels & (platforms_trajectories | platforms_rotations)
             if platforms_to_animate:
                 # Use qs_mp_no_parm QuerySet as it contains roll, pitch, and yaw values
                 mppa = PlatformAnimation(platforms_to_animate, self.kwargs, 
