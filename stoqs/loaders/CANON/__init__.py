@@ -161,7 +161,8 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName)
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_tethys.x3d', pName,
+                                  scalefactor=2)
 
     def loadDaphne(self, stride=None):
         '''
@@ -181,6 +182,8 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_daphne.x3d', pName,
+                                  scalefactor=2)
 
     def loadMakai(self, stride=None):
         '''
@@ -201,7 +204,8 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_makai.x3d', pName)
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_makai.x3d', pName,
+                                  scalefactor=2)
 
     def loadAku(self, stride=None):
         '''
@@ -222,7 +226,8 @@ class CANONLoader(LoadScript):
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_aku.x3d', pName)
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_aku.x3d', pName,
+                                  scalefactor=2)
 
     def loadAhi(self, stride=None):
       '''
