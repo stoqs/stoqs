@@ -4827,6 +4827,7 @@ function enable_cardboard(){
                 else {
                     if ( ! $.isEmptyObject(data[key]['message']) ) {
                         alert(data[key]['message']);
+                        return;
                     }
                 }
                 // Redraw the time series so that we have the crosshair option added and can call lockCrosshair()
