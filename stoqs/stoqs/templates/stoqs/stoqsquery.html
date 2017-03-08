@@ -299,6 +299,10 @@
                                                                     <input type="checkbox" id="showgeox3denuaxes" checked />
                                                                     <span id="showplatformstext">ENU Axes</span>
                                                                 </label>
+                                                                <label class="checkbox" style="display:none;">
+                                                                    <input type="checkbox" id="showgeox3drotaxis" checked />
+                                                                    <span id="showplatformstext">ROT Axis</span>
+                                                                </label>
                                                             </span>
                                                         </form>
                                                         <a class="accordion-toggle colormaps-toggle" data-toggle="collapse" href="#collapseColormap">
@@ -2266,6 +2270,7 @@
             addStationaryPlatformModels();
             $('#showgeox3dlabels').parent().show();
             $('#showgeox3denuaxes').parent().show();
+            $('#showgeox3drotaxis').parent().show();
             $('#showplatforms').parent().parent().css( {'padding': '3px',
                                                         'background-color': 'lightgray'});
         }
@@ -2278,6 +2283,7 @@
             $('body').data()['platformAnimation'] = [];
             $('#showgeox3dlabels').parent().hide();
             $('#showgeox3denuaxes').parent().hide();
+            $('#showgeox3drotaxis').parent().hide();
             $('#showplatforms').parent().parent().removeAttr('style');
         }
     });
@@ -2394,6 +2400,20 @@
         else {
             $.each($('body').data()['platformAnimation'], function (index, platform) {
                 $('#' + platform + '_SCALE > transform > inline')[0].setAttribute('render', false);
+            });
+        }
+    });
+
+    $('#showgeox3drotaxis').on('click', function (e) {
+        // turn off and on axis or rotation indicator shape > indexedlineset
+        if ( $('#showgeox3drotaxis').is(':checked') ) {
+            $.each($('body').data()['platformAnimation'], function (index, platform) {
+                $('#' + platform + '_SCALE > transform > shape')[0].setAttribute('render', true);
+            });
+        }
+        else {
+            $.each($('body').data()['platformAnimation'], function (index, platform) {
+                $('#' + platform + '_SCALE > transform > shape')[0].setAttribute('render', false);
             });
         }
     });
