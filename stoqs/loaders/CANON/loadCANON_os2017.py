@@ -42,8 +42,14 @@ cl = CANONLoader('stoqs_os2017', 'CANON - Off Season 2017',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                      'VerticalExaggeration': '10',
-                     'speed': '0.1',
-                   }
+                   },
+                   'http://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
+                     'name': 'Monterey25_1x',
+                     'position': '-32985.28634 88026.90417 22334.02600',
+                     'orientation': '-0.99875 -0.04772 0.01482 1.31683',
+                     'centerOfRotation': '-20564.015827789044 -1956.065669754069 14112.954469753739',
+                     'VerticalExaggeration': '1',
+                   },
                  },
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
