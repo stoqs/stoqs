@@ -4272,7 +4272,9 @@ function enable_cardboard(){
                         $('#mp-x3d-terrain').append('<Inline id="terrain-' + tname + '"></Inline>');
                         $('#terrain-' + tname).attr('url', terrain);
                     });
-                    $('#terrain3D-choices').append(' * radio button selects viewpoint for the terrain');
+                    $('#terrain3D-choices').append('<label class="checkbox" style="padding:0px;">' +
+                                            '<input type="checkbox" style="margin:3px;" name="use_viewpoint"' + 
+                                            ' value="' + terrain + '" checked />Use viewpoint for selected terrain</label>');
                     $('#spatial-3d-li').show();
 
                     // Register listeners for terrain selections
@@ -4289,12 +4291,14 @@ function enable_cardboard(){
                     });
                     $('input[name="terrain_view"]').on('click', function (event) {
                         var item = $('body').data()['terrains'][event.delegateTarget.value];
-                        $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', item.speed);
-                        $('#mp-x3d-viewpoint1').attr('centerOfRotation', item.centerOfRotation);
-                        $('#mp-x3d-viewpoint1').attr('position', item.position);
-                        $('#mp-x3d-viewpoint1').attr('orientation', item.orientation);
-                        $('#mp-x3d-viewpoint1').attr('zNear', item.zNear);
-                        $('#mp-x3d-viewpoint1').attr('zFar', item.zFar);
+                        if ( $('input[name="use_viewpoint"]').is(':checked') ) {
+                            $('#spatial-3d-x3d > Scene > NavigationInfo').attr('speed', item.speed);
+                            $('#mp-x3d-viewpoint1').attr('centerOfRotation', item.centerOfRotation);
+                            $('#mp-x3d-viewpoint1').attr('position', item.position);
+                            $('#mp-x3d-viewpoint1').attr('orientation', item.orientation);
+                            $('#mp-x3d-viewpoint1').attr('zNear', item.zNear);
+                            $('#mp-x3d-viewpoint1').attr('zFar', item.zFar);
+                        }
                         if ( ! $.isEmptyObject(item.geoOrigin) ) { 
                             var geoOrigin_def = '<GeoOrigin def="GO" geoSystem=\'"GD" "WE"\' geoCoords="' + item.geoOrigin + '" ';
                             geoOrigin_def += ' rotateYUp="true" elevationScaling="true"></GeoOrigin>' ;
@@ -4308,7 +4312,10 @@ function enable_cardboard(){
                         }
                         if ( ! $.isEmptyObject(item.VerticalExaggeration) ) {
                             $('#x3d-ve').text('Vertical Exaggeration: ' + item.VerticalExaggeration + 'x');
-                            $('body').data()['ve'] = item.VerticalExaggeration;
+                            if ( $('body').data()['ve'] != item.VerticalExaggeration ) {
+                                $('body').data()['ve'] = item.VerticalExaggeration;
+                                rebuildFilters(['measuredparameterx3d', 'platformanimation']);
+                            }
                         }
                     });
 
