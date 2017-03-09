@@ -157,7 +157,8 @@ class CANONLoader(LoadScript):
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           pName, self.colors['tethys'], 'auv', 'AUV mission',
                                           self.tethys_parms, self.dbAlias, stride, 
-                                          grdTerrain=self.grdTerrain, command_line_args=self.args)
+                                          grdTerrain=self.grdTerrain, command_line_args=self.args,
+                                          plotTimeSeriesDepth=0.0)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -178,7 +179,8 @@ class CANONLoader(LoadScript):
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           'Daphne', self.colors['daphne'], 'auv', 'AUV mission',
                                           self.daphne_parms, self.dbAlias, stride, 
-                                          grdTerrain=self.grdTerrain, command_line_args=self.args)
+                                          grdTerrain=self.grdTerrain, command_line_args=self.args,
+                                          plotTimeSeriesDepth=0.0)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -200,7 +202,7 @@ class CANONLoader(LoadScript):
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
                                           'Makai', self.colors['makai'], 'auv', 'AUV mission',
                                           self.makai_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, 
-                                          command_line_args=self.args)
+                                          command_line_args=self.args, plotTimeSeriesDepth=0.0)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -222,7 +224,7 @@ class CANONLoader(LoadScript):
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
                                           'Aku', self.colors['aku'], 'auv', 'AUV mission',
                                           self.aku_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                          command_line_args=self.args)
+                                          command_line_args=self.args, plotTimeSeriesDepth=0.0)
             except DAPloaders.NoValidData:
                 self.logger.info("No valid data in %s" % url)
 
@@ -243,9 +245,12 @@ class CANONLoader(LoadScript):
           DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
                                     'Ahi', self.colors['ahi'], 'auv', 'AUV mission',
                                     self.ahi_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                    command_line_args=self.args)
+                                    command_line_args=self.args, plotTimeSeriesDepth=0.0)
         except DAPloaders.NoValidData:
           self.logger.info("No valid data in %s" % url)
+
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_ahi.x3d', pName,
+                                  scalefactor=2)
 
       def loadOpah(self, stride=None):
         '''
@@ -261,9 +266,12 @@ class CANONLoader(LoadScript):
             DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
                                       'Opah', self.colors['opah'], 'auv', 'AUV mission',
                                       self.opah_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                      command_line_args=self.args)
+                                      command_line_args=self.args, plotTimeSeriesDepth=0.0)
           except DAPloaders.NoValidData:
             self.logger.info("No valid data in %s" % url)
+
+        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_opah.x3d', pName,
+                                  scalefactor=2)
 
     def loadMartin(self, stride=None):
         '''
