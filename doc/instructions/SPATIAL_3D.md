@@ -97,7 +97,7 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
 
     - Add `'SRC/'` to the url path for the `.src` files.
 
-    - Change aopt's <material> node from:
+    - Change aopt's `<material>` node from:
         ```
         <material diffuseColor='0.6 0.6 0.6' specularColor='0.6 0.6 0.6'></material>
         ```
@@ -108,7 +108,7 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
 
     Copy `Monterey25_10x_src.html` to `Monterey25_10x_src_scene.x3d` and edit:
 
-    - Remove surrounding elements from the <scene> tags
+    - Remove surrounding elements from the `<scene>` tags
     - Edit in the FQDN for the urls so that Django will load it.
-    - Remove <viewpoint> node that aopt added
+    - Remove '<viewpoint>` node that aopt added, if `-V` option was used
 
