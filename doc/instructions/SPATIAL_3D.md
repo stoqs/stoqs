@@ -110,5 +110,5 @@ Instructions for creating terrain files for 3D spatial data visualization in STO
 
     - Remove surrounding elements from the `<scene>` tags
     - Edit in the FQDN for the urls so that Django will load it.
-    - Remove '<viewpoint>` node that aopt added, if `-V` option was used
+    - Remove `<viewpoint>` node that aopt added, if `-V` option was used
 
