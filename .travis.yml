@@ -1,6 +1,6 @@
 language: python
 python:
-  - "2.7"
+  - "3.6"
 addons:
   postgresql: "9.4"
 services:
@@ -18,7 +18,7 @@ before_install:
 env:
   - DJANGO=1.8
 install:
-  - conda install --yes python=2.7 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
+  - conda install --yes python=3.6 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
   # Coverage packages are on my binstar channel
   - conda install --yes -c dan_blanchard python-coveralls nose-cov
   - pip install --upgrade pip
