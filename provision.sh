@@ -57,21 +57,21 @@ then
     rpm -ivh pgdg*
     yum groupinstall -y "Development Tools"
 
-    echo Install Python 2.7 and its support tools pip and virtalenv
+    echo Install Python 3.6 and pip3
     yum install -y zlib-devel openssl-devel sqlite-devel bzip2-devel xz-libs
-    wget -q -N http://www.python.org/ftp/python/2.7.9/Python-2.7.9.tar.xz
-    xz -d -c Python-2.7.9.tar.xz | tar -xvf -
-    cd Python-2.7.9
+    wget -q -N https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tar.xz
+    xz -d -c Python-3.6.0.tar.xz | tar -xvf -
+    cd Python-3.6.0
     ./configure
     make && make altinstall
     cd ..
-    wget -q --no-check-certificate -N https://pypi.python.org/packages/source/s/setuptools/setuptools-1.4.2.tar.gz
-    tar -xvf setuptools-1.4.2.tar.gz
-    cd setuptools-1.4.2
-    /usr/local/bin/python2.7 setup.py install
-    cd ..
-    curl -sS https://bootstrap.pypa.io/get-pip.py | sudo /usr/local/bin/python2.7 - > /dev/null
-    /usr/local/bin/pip install virtualenv
+    ##wget -q --no-check-certificate -N https://pypi.python.org/packages/source/s/setuptools/setuptools-1.4.2.tar.gz
+    ##tar -xvf setuptools-1.4.2.tar.gz
+    ##cd setuptools-1.4.2
+    ##/usr/local/bin/python2.7 setup.py install
+    ##cd ..
+    ##curl -sS https://bootstrap.pypa.io/get-pip.py | sudo /usr/local/bin/python2.7 - > /dev/null
+    ##/usr/local/bin/pip install virtualenv
 
     echo Install package prerequisites for NetCDF4
     yum -y install curl-devel hdf5 hdf5-devel
@@ -288,7 +288,7 @@ mkdir dev && cd dev
 git clone --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
 export PATH="/usr/local/bin:$PATH"
-virtualenv venv-stoqs
+python3.6 -m venv venv-stoqs
 
 echo Installing Python modules for a development system
 source venv-stoqs/bin/activate
