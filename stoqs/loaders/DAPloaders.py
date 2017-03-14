@@ -1143,7 +1143,7 @@ class Base_Loader(STOQS_Loader):
                             parameterCount[self.getParameterByName(key)] = 0
 
                 except ParameterNotFound:
-                    print "Unable to locate parameter for %s, skipping" % (key,)
+                    logger.warn("Unable to locate parameter for %s, skipping", key)
 
                 if self.loaded:
                     if (self.loaded % 500) == 0:
