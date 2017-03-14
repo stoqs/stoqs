@@ -59,9 +59,9 @@ then
 
     echo Install Python 3.6 and pip3
     yum install -y zlib-devel openssl-devel sqlite-devel bzip2-devel xz-libs
-    wget -q -N https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tar.xz
-    xz -d -c Python-3.6.0.tar.xz | tar -xvf -
-    cd Python-3.6.0
+    wget -q -N https://www.python.org/ftp/python/3.6.1/Python-3.6.1rc1.tar.xz
+    xz -d -c Python-3.6.1rc1.tar.xz | tar -xvf -
+    cd Python-3.6.1rc1
     ./configure
     make && make altinstall
     cd ..
