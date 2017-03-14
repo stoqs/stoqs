@@ -19,8 +19,6 @@ env:
   - DJANGO=1.8
 install:
   - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose python-dateutil pandas statsmodels
-  # Coverage packages are on my binstar channel
-  - conda install --yes -c dan_blanchard python-coveralls nose-cov
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
 before_script:
