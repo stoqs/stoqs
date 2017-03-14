@@ -145,7 +145,7 @@ class BaseOutputer(object):
         '''
         pmin = {}
         pmax = {}
-        for key, _ in self.request.GET.iteritems():
+        for key, _ in self.request.GET.items():
             if key.endswith('_MIN'):        
                 name = key.split('_MIN')[0]
                 try:
@@ -160,7 +160,7 @@ class BaseOutputer(object):
                     logger.exception('Could not get max parameter value even though ' + key + ' ends with _MAX')
 
         pvDicts = []
-        for name in set(pmin.keys() + pmax.keys()):         # set() uniquifies the keys from each dictionary
+        for name in set(list(pmin.keys()) + list(pmax.keys())):         # set() uniquifies the keys from each dictionary
             if name in mod.Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
                 try:
                     pn = pmin[name]
