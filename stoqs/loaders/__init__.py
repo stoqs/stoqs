@@ -31,13 +31,13 @@ import numpy as np
 from coards import to_udunits
 import seawater.eos80 as sw
 import csv
-import urllib2
+import requests
+from contextlib import closing
 import logging
 from utils.utils import percentile, median, mode, simplify_points, spiciness
 from tempfile import NamedTemporaryFile
 import pprint
 from netCDF4 import Dataset
-import httplib
 
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -380,22 +380,18 @@ class STOQS_Loader(object):
             raise Exception('Platform name = "%s" is not allowed.  Name can contain only letters, numbers, "_", and "-"' % name)
 
         self.logger.debug("Opening %s to read platform names for matching to the MBARI tracking database", paURL)
-        try:
-            tpHandle = csv.DictReader(urllib2.urlopen(paURL))
-        except urllib2.URLError as e:
-            self.logger.warn('Could not open %s', paURL)
-            self.logger.warn(e)
 
         platformName = ''
-        try:
-            for rec in tpHandle:
-                ##print "rec = %s" % rec
-                if rec['PlatformName'].lower() == name.lower():
-                    platformName = rec['PlatformName']
-                    tdb_platformTypeName = rec['PlatformType']
-                    break
-        except httplib.IncompleteRead as e:
-            self.logger.warn(e)
+        with closing(requests.get(paURL, stream=True)) as r:
+            if r.status_code == 200:
+                r_decoded = (line.decode('utf-8') for line in r.iter_lines())
+                tpHandle = csv.DictReader(r_decoded)
+                for rec in tpHandle:
+                    ##self.logger.info("rec = %s" % rec)
+                    if rec['PlatformName'].lower() == name.lower():
+                        platformName = rec['PlatformName']
+                        tdb_platformTypeName = rec['PlatformType']
+                        break
 
         if not platformName:
             platformName = name
@@ -690,9 +686,8 @@ class STOQS_Loader(object):
         try:
             self.parameter_dict[name].save(using=self.dbAlias)
         except Exception as e:
-            print e
-            print name
-            pprint.pprint( self.parameter_dict[name])
+            self.logger.warn('name = %s: %s', name, str(e))
+            pprint.pprint(self.parameter_dict[name])
 
         return self.parameter_dict[name]
 
