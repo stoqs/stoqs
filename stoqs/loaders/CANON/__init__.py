@@ -1090,7 +1090,7 @@ class CANONLoader(LoadScript):
         try:
             pp.load_samples()
         except IOError as e:
-            self.logger.error(e)
+            self.logger.error(str(e))
 
     def loadAll(self, stride=None):
         '''
@@ -1107,8 +1107,8 @@ class CANONLoader(LoadScript):
                 try:
                     getattr(self, loader)()
                 except AttributeError as e:
-                    print e
-                    print "WARNING: No data from %s for dbAlias = %s, campaignName = %s" % (loader, self.dbAlias, self.campaignName)
+                    self.logger.warn("WARNING: No data from %s for dbAlias = %s, campaignName = %s", loader, self.dbAlias, self.campaignName)
+                    self.logger.error(str(e))
                     pass
 
 if __name__ == '__main__':
