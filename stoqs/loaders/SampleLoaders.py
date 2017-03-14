@@ -24,7 +24,7 @@ from loaders import STOQS_Loader, SkipRecord
 from datetime import datetime, timedelta
 from pydap.model import BaseType
 import csv
-import urllib2
+from urllib.request import urlopen, HTTPError
 import logging
 from glob import glob
 from tempfile import NamedTemporaryFile
@@ -133,9 +133,9 @@ def load_gulps(activityName, auv_file, dbAlias):
     gulperUrl = baseUrl + yyyy + '/odv/' + survey + '_Gulper.txt'
 
     try:
-        reader = csv.DictReader(urllib2.urlopen(gulperUrl), dialect='excel-tab')
+        reader = csv.DictReader(urlopen(gulperUrl), dialect='excel-tab')
         logger.debug('Reading gulps from %s', gulperUrl)
-    except urllib2.HTTPError:
+    except HTTPError:
         logger.warn('Failed to find odv-formatted Gulper file: %s.  Skipping GulperLoad.', gulperUrl)
         return
 
@@ -343,22 +343,22 @@ class SeabirdLoader(STOQS_Loader):
                 m = re.match('.+(Sbeox0PS)(Sbeox0Mm)', line.strip())
                 if m:
                     line = re.sub('(?<=)(Sbeox0PS)(Sbeox0Mm)(?=)', lambda m: "%s %s" % (m.group(1), m.group(2)), line)
-                    if _debug: print 'Fixed header: line = ', line
+                    if _debug: logger.debug('Fixed header: line = %s', line)
                 if line.strip() == 'Position        Time':
                     # Append 2nd line of header to first line & write to tmpFile
-                    if _debug: print 'Writing ' + lastLine + line
+                    if _debug: logger.debug('Writing ' + lastLine + line)
                     tmpFH.write(lastLine + line + '\n')
                 m = re.match('\d\d:\d\d:\d\d', line.strip())
                 if m:
                     # Append Time string to last line & write to tmpFile
-                    if _debug: print 'm.group(0) = ', m.group(0)
-                    if _debug: print 'Writing ' + lastLine + m.group(0) + '\n'
+                    if _debug: logger.debug('m.group(0) = %s', m.group(0))
+                    if _debug: logger.debug('Writing ' + lastLine + m.group(0) + '\n')
                     tmpFH.write(lastLine + ' ' + m.group(0) + '\n')
                 m = re.match('.+[A-Z][a-z][a-z] \d\d \d\d\d\d', line.strip())
                 if m:
                     # Replace spaces with dashes in the date field
                     line = re.sub('(?<= )([A-Z][a-z][a-z]) (\d\d) (\d\d\d\d)(?= )', lambda m: "%s-%s-%s" % (m.group(1), m.group(2), m.group(3)), line)
-                    if _debug: print 'Spaces to dashes: line = ', line
+                    if _debug: logger.debug('Spaces to dashes: line = %s', line)
 
                 lastLine = line.rstrip()      # Save line without terminating linefeed
 
@@ -475,7 +475,7 @@ class SeabirdLoader(STOQS_Loader):
             # Read files from the network - use BeautifulSoup to parse TDS's html response
             webBtlDir = self.tdsBase + 'catalog/' + self.pctdDir + 'catalog.html'
             logger.debug('Opening url to %s', webBtlDir)
-            soup = BeautifulSoup(urllib2.urlopen(webBtlDir).read())
+            soup = BeautifulSoup(urlopen(webBtlDir).read())
             linkList = soup.find_all('a')
             linkList.sort(reverse=True)
             for link in linkList:
@@ -493,7 +493,7 @@ class SeabirdLoader(STOQS_Loader):
     
                     self.activityName = bfile.split('/')[-1].split('.')[-2] 
                     year, lat, lon = get_year_lat_lon(hdrUrl = hdrUrl)
-                    btlFH = urllib2.urlopen(btlUrl).read().splitlines()
+                    btlFH = urlopen(btlUrl).read().splitlines()
                     try:
                         self.process_btl_file(btlFH, year, lat, lon)
                     except SingleActivityNotFound:
