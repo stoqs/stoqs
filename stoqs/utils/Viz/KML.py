@@ -208,7 +208,7 @@ class KML(BaseParameter):
         #
         # See that the platforms are alphabetized in the KML.  (The point and line KMLHashes will have the same keys.)
         #
-        platList = pointKMLHash.keys()
+        platList = list(pointKMLHash.keys())
         platList.sort()
         for plat in platList:
             kml += '''<Folder>
