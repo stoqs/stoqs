@@ -25,6 +25,8 @@ from datetime import datetime, timedelta
 from pydap.model import BaseType
 import csv
 from urllib.request import urlopen, HTTPError
+import requests
+from contextlib import closing
 import logging
 from glob import glob
 from tempfile import NamedTemporaryFile
@@ -132,41 +134,41 @@ def load_gulps(activityName, auv_file, dbAlias):
     # E.g.: http://dods.mbari.org/data/auvctd/surveys/2010/odv/Dorado389_2010_300_00_300_00_Gulper.txt
     gulperUrl = baseUrl + yyyy + '/odv/' + survey + '_Gulper.txt'
 
-    try:
-        reader = csv.DictReader(urlopen(gulperUrl), dialect='excel-tab')
-        logger.debug('Reading gulps from %s', gulperUrl)
-    except HTTPError:
-        logger.warn('Failed to find odv-formatted Gulper file: %s.  Skipping GulperLoad.', gulperUrl)
-        return
-
     # Get or create SampleType for Gulper
     (gulper_type, created) = SampleType.objects.using(dbAlias).get_or_create(name=GULPER)
     logger.debug('sampletype %s, created = %s', gulper_type, created)
-    for row in reader:
-        # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
-        try:
-            timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
-        except TypeError as e:
-            logger.error('%s.  Skipping this Sample - you may want to fix the input file', e)
-            continue
-        try:
-            ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
-            point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
-            stuple = Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
-                                                                depth = row[r'DEPTH [m]'],
-                                                                geom = point,
-                                                                instantpoint = ip,
-                                                                sampletype = gulper_type,
-                                                                volume = 1800
-                                                              )
-            rtuple = Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
-                                                                  value = seconds_diff
-                                                                )
+    with closing(requests.get(gulperUrl, stream=True)) as r:
+        if r.status_code != 200:
+            logger.error('Cannot read %s, r.status_code = %s', gulperUrl, r.status_code)
+            return
 
-            # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
-            logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
-        except ClosestTimeNotFoundException:
-            logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
+        r_decoded = (line.decode('utf-8') for line in r.iter_lines())
+        reader = csv.DictReader(r_decoded, dialect='excel-tab')
+        for row in reader:
+            # Need to subtract 1 day from odv file as 1.0 == midnight on 1 January
+            try:
+                timevalue = datetime(int(yyyy), 1, 1) + timedelta(days = (float(row[r'YearDay [day]']) - 1))
+            except TypeError as e:
+                logger.error('%s.  Skipping this Sample - you may want to fix the input file', e)
+                continue
+            try:
+                ip, seconds_diff = get_closest_instantpoint(activityName, timevalue, dbAlias)
+                point = 'POINT(%s %s)' % (repr(float(row[r'Lon (degrees_east)']) - 360.0), row[r'Lat (degrees_north)'])
+                stuple = Sample.objects.using(dbAlias).get_or_create( name = row[r'Bottle Number [count]'],
+                                                                    depth = row[r'DEPTH [m]'],
+                                                                    geom = point,
+                                                                    instantpoint = ip,
+                                                                    sampletype = gulper_type,
+                                                                    volume = 1800
+                                                                  )
+                rtuple = Resource.objects.using(dbAlias).get_or_create( name = 'Seconds away from InstantPoint',
+                                                                      value = seconds_diff
+                                                                    )
+
+                # 2nd item of tuples will be True or False dependending on whether the object was created or gotten
+                logger.info('Loaded Sample %s with Resource: %s', stuple, rtuple)
+            except ClosestTimeNotFoundException:
+                logger.warn('ClosestTimeNotFoundException: A match for %s not found for %s', timevalue, activity)
 
 
 class SeabirdLoader(STOQS_Loader):
