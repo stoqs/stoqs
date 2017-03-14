@@ -75,7 +75,7 @@ MIDDLEWARE_CLASSES = (
 # MIGRATIONS CONFIGURATION
 # ------------------------------------------------------------------------------
 MIGRATION_MODULES = {
-    'sites': 'stoqs.contrib.sites.migrations'
+    ##'sites': 'stoqs.contrib.sites.migrations'
 }
 
 # DEBUG
