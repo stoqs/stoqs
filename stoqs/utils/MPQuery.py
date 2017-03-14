@@ -25,10 +25,10 @@ from django.contrib.gis.db.models.query import GeoQuerySet
 from django.db import DatabaseError
 from datetime import datetime
 from stoqs.models import MeasuredParameter, Parameter, SampledParameter, ParameterGroupParameter, MeasuredParameterResource
-from utils import postgresifySQL, getGet_Actual_Count, getParameterGroups
+from .utils import postgresifySQL, getGet_Actual_Count, getParameterGroups
 from loaders import MEASUREDINSITU
 from loaders.SampleLoaders import SAMPLED
-from PQuery import PQuery
+from .PQuery import PQuery
 import logging
 import pprint
 import re
@@ -188,7 +188,7 @@ class MPQuerySet(object):
         Boiler plate copied from http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  
         Is used for slicing data, e.g. for subsampling data for sensortracks
         '''
-        if not isinstance(k, (slice, int, long)):
+        if not isinstance(k, (slice, int)):
             raise TypeError
         assert ((not isinstance(k, slice) and (k >= 0))
                 or (isinstance(k, slice) and (k.start is None or k.start >= 0)
@@ -405,7 +405,7 @@ class SPQuerySet(object):
         Boiler plate copied from http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  
         Is used for slicing data, e.g. for subsampling data for sensortracks
         '''
-        if not isinstance(k, (slice, int, long)):
+        if not isinstance(k, (slice, int)):
             raise TypeError
         assert ((not isinstance(k, slice) and (k >= 0))
                 or (isinstance(k, slice) and (k.start is None or k.start >= 0)
@@ -580,27 +580,27 @@ class MPQuery(object):
                     qparams['sample__instantpoint__pk__isnull'] = False
 
         else: 
-            if self.kwargs.has_key('measuredparametersgroup'):
+            if 'measuredparametersgroup' in self.kwargs:
                 if self.kwargs['measuredparametersgroup']:
                     qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
-            if self.kwargs.has_key('parameterstandardname'):
+            if 'parameterstandardname' in self.kwargs:
                 if self.kwargs['parameterstandardname']:
                     qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
             
-            if self.kwargs.has_key('platforms'):
+            if 'platforms' in self.kwargs:
                 if self.kwargs['platforms']:
                     qparams['measurement__instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
-            if self.kwargs.has_key('time'):
+            if 'time' in self.kwargs:
                 if self.kwargs['time'][0] is not None:
                     qparams['measurement__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
                 if self.kwargs['time'][1] is not None:
                     qparams['measurement__instantpoint__timevalue__lte'] = self.kwargs['time'][1]
-            if self.kwargs.has_key('depth'):
+            if 'depth' in self.kwargs:
                 if self.kwargs['depth'][0] is not None:
                     qparams['measurement__depth__gte'] = self.kwargs['depth'][0]
                 if self.kwargs['depth'][1] is not None:
                     qparams['measurement__depth__lte'] = self.kwargs['depth'][1]
-            if self.kwargs.has_key('activitynames'):
+            if 'activitynames' in self.kwargs:
                 if self.kwargs['activitynames']:
                     qparams['measurement__instantpoint__activity__name__in'] = self.kwargs['activitynames']
 
@@ -611,7 +611,7 @@ class MPQuery(object):
 
             if getGet_Actual_Count(self.kwargs):
                 # Make sure that we have at least time so that the instantpoint table is included
-                if not qparams.has_key('measurement__instantpoint__timevalue__gte'):
+                if 'measurement__instantpoint__timevalue__gte' not in qparams:
                     qparams['measurement__instantpoint__pk__isnull'] = False
 
         logger.debug('qparams = %s', pprint.pformat(qparams))
@@ -651,7 +651,7 @@ class MPQuery(object):
             qs_mp = qs_mp.filter(parameter__id=int(self.parameterID))
 
         # Wrap MPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
-        if self.kwargs.has_key('parametervalues'):
+        if 'parametervalues' in self.kwargs:
             if self.kwargs['parametervalues']:
                 # Start with fresh qs_mp without .values()
                 qs_mp = MeasuredParameter.objects.using(self.request.META['dbAlias']).select_related(
@@ -714,7 +714,7 @@ class MPQuery(object):
             qs_sp = qs_sp.order_by('sample__instantpoint__activity__name', 'sample__instantpoint__timevalue')
 
         # Wrap SPQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
-        if self.kwargs.has_key('parametervalues'):
+        if 'parametervalues' in self.kwargs:
             if self.kwargs['parametervalues']:
                 # A depth of 4 is needed in order to see Platform
                 qs_sp = SampledParameter.objects.using(self.request.META['dbAlias']).select_related(

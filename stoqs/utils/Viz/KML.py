@@ -2,7 +2,7 @@ import os
 import time
 import numpy
 import logging
-from plotting import BaseParameter
+from .plotting import BaseParameter
 from stoqs import models as m
 from django.conf import settings
 from django.db import DataError

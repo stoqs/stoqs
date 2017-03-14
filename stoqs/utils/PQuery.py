@@ -19,7 +19,7 @@ from django.contrib.gis.db.models.query import GeoQuerySet
 from django.db import DatabaseError
 from datetime import datetime
 from stoqs.models import MeasuredParameter, Parameter, ParameterGroupParameter, MeasuredParameterResource
-from utils import postgresifySQL, getGet_Actual_Count, EPOCH_STRING
+from .utils import postgresifySQL, getGet_Actual_Count, EPOCH_STRING
 from loaders.SampleLoaders import SAMPLED
 from loaders import MEASUREDINSITU
 import logging
@@ -329,25 +329,25 @@ class PQuery(object):
         '''
         qparams = {}
 
-        if self.kwargs.has_key('measuredparametersgroup'):
+        if 'measuredparametersgroup' in self.kwargs:
             if self.kwargs['measuredparametersgroup']:
                 qparams['parameter__name__in'] = self.kwargs['measuredparametersgroup']
-        if self.kwargs.has_key('sampledparametersgroup'):
+        if 'sampledparametersgroup' in self.kwargs:
             if self.kwargs['sampledparametersgroup']:
                 qparams['parameter__name__in'] = self.kwargs['sampledparametersgroup']
-        if self.kwargs.has_key('parameterstandardname'):
+        if 'parameterstandardname' in self.kwargs:
             if self.kwargs['parameterstandardname']:
                 qparams['parameter__standard_name__in'] = self.kwargs['parameterstandardname']
         
-        if self.kwargs.has_key('platforms'):
+        if 'platforms' in self.kwargs:
             if self.kwargs['platforms']:
                 qparams['measurement__instantpoint__activity__platform__name__in'] = self.kwargs['platforms']
-        if self.kwargs.has_key('time'):
+        if 'time' in self.kwargs:
             if self.kwargs['time'][0] is not None:
                 qparams['measurement__instantpoint__timevalue__gte'] = self.kwargs['time'][0]
             if self.kwargs['time'][1] is not None:
                 qparams['measurement__instantpoint__timevalue__lte'] = self.kwargs['time'][1]
-        if self.kwargs.has_key('depth'):
+        if 'depth' in self.kwargs:
             if self.kwargs['depth'][0] is not None:
                 qparams['measurement__depth__gte'] = self.kwargs['depth'][0]
             if self.kwargs['depth'][1] is not None:
@@ -360,7 +360,7 @@ class PQuery(object):
 
         if getGet_Actual_Count(self.kwargs):
             # Make sure that we have at least time so that the instantpoint table is included
-            if not qparams.has_key('measurement__instantpoint__timevalue__gte'):
+            if 'measurement__instantpoint__timevalue__gte' not in qparams:
                 qparams['measurement__instantpoint__pk__isnull'] = False
 
         self.logger.debug('qparams = %s', pprint.pformat(qparams))
@@ -382,7 +382,7 @@ class PQuery(object):
 
         # Wrap PQuerySet around either RawQuerySet or GeoQuerySet to control the __iter__() items for lat/lon etc.
         qs_mpq = PQuerySet(None, values_list, qs_mp=qs_mp)
-        if self.kwargs.has_key('parametervalues'):
+        if 'parametervalues' in self.kwargs:
             if self.kwargs['parametervalues'] != [{}]:
                 # A depth of 4 is needed in order to see Platform
                 qs_mp = MeasuredParameter.objects.using(
@@ -462,7 +462,7 @@ class PQuery(object):
             #            INNER JOIN stoqs_parameter p1 
             #            ON mp1.parameter_id = p1.id
 
-            for k,v in pminmax.iteritems():
+            for k,v in pminmax.items():
                 if k in Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
                     p = re.compile("[';]")
                     if p.search(v[0]) or p.search(v[1]):
@@ -509,7 +509,7 @@ class PQuery(object):
         containsSampleFlag = False
         containsMeasuredFlag = False
         for axis in select_order:
-            if pDict.has_key(axis):
+            if axis in pDict:
                 if pDict[axis]:
                     try:
                         if self.isParameterMeasured(int(pDict[axis])):
@@ -688,7 +688,7 @@ For sampledparameter to sampledparamter query an example is:
         # Construct SELECT strings, must be in proper order, include depth for possible sigma-t calculation
         xyzc_items = ''
         for axis in select_order:
-            if pDict.has_key(axis):
+            if axis in pDict:
                 if pDict[axis]:
                     try:
                         if self.isParameterMeasured(int(pDict[axis])):
@@ -737,7 +737,7 @@ For sampledparameter to sampledparamter query an example is:
         # Construct INNER JOINS and WHERE sql for Sampled and Measured Parameter selections
         # Use aliases for joins on each axis
         where_sql = '' 
-        for axis, pid in pDict.iteritems():
+        for axis, pid in pDict.items():
             if pid:
                 self.logger.debug('axis, pid = %s, %s', axis, pid)
                 add_to_from += '\n'
