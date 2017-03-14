@@ -223,9 +223,9 @@ class LoadScript(object):
         self.logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
         campaign = m.Campaign.objects.using(self.dbAlias).get(name=self.campaignName)
         
-        for url, viewpoint in self.x3dTerrains.iteritems():
+        for url, viewpoint in self.x3dTerrains.items():
             self.logger.debug('url = %s, viewpoint = %s', url, viewpoint)
-            for name, value in viewpoint.iteritems():
+            for name, value in viewpoint.items():
                 resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                               uristring=url, name=name, value=value, resourcetype=resourceType)
                 m.CampaignResource.objects.using(self.dbAlias).get_or_create(
@@ -489,14 +489,14 @@ class STOQS_Loader(object):
                             self.logger.error('Exception %s', e)
                             raise Exception('''Failed to add parameter for %s
                                 %s\nEither add parameter manually, or add to ignored_names''' % (key,
-                                '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
+                                '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.items()])))
                         
                     except Exception as e:
                         self.logger.error('%s', e)
                         transaction.savepoint_rollback(sid,using=self.dbAlias)
                         raise Exception('''Failed to add parameter for %s
                             %s\nEither add parameter manually, or add to ignored_names''' % (key,
-                            '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
+                            '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.items()])))
                     self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
 
         return innerAddParameters(self, parmDict)
@@ -573,7 +573,7 @@ class STOQS_Loader(object):
         self.logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
         if 'NC_GLOBAL' in self.ds.attributes:
             resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'nc_global')
-            for rn, value in self.ds.attributes['NC_GLOBAL'].iteritems():
+            for rn, value in self.ds.attributes['NC_GLOBAL'].items():
                 self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
                 resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                             name=rn, value=value, resourcetype=resourceType)
@@ -604,7 +604,7 @@ class STOQS_Loader(object):
         for v in self.include_names + ['altitude']:
             self.logger.info('v = %s', v)
             try:
-                for rn, value in self.ds[v].attributes.iteritems():
+                for rn, value in self.ds[v].attributes.items():
                     self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
                     resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                                           name=rn, value=value, resourcetype=resourceType)
