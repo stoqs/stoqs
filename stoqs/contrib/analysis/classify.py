@@ -31,7 +31,6 @@ import warnings
 from datetime import datetime
 from django.db.models import Q
 from django.db.utils import IntegrityError
-from utils.utils import round_to_n
 from textwrap import wrap
 from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource, ResourceResource
 from utils.STOQSQManager import LABEL, DESCRIPTION, COMMANDLINE
@@ -74,7 +73,7 @@ class Classifier(BiPlot):
         '''
         acts = Activity.objects.using(self.args.database).filter(instantpoint__measurement__measuredparameter__id__in=(mpx,mpy)).distinct()
         if not acts:
-            print "acts = %s" % acts
+            print("acts = %s" % acts)
             raise Exception('Not exactly 1 activity returned with SQL = \n%s' % str(acts.query))
         else:
             return acts[0]
@@ -108,12 +107,12 @@ class Classifier(BiPlot):
             ResourceResource.objects.using(self.args.database).get_or_create(fromresource=r, toresource=clResource)
 
         except IntegrityError as e:
-            print e
-            print "Ignoring"
+            print(str(e))
+            print("Ignoring")
 
         # Associate MeasuredParameters with Resource
         if self.args.verbose:
-            print "  Saving %d values of '%s' with type '%s'" % (len(x_ids), label, typeName)
+            print("  Saving %d values of '%s' with type '%s'" % (len(x_ids), label, typeName))
         for x_id,y_id in zip(x_ids, y_ids):
             a = self.getActivity(x_id, y_id)
             mp_x = MeasuredParameter.objects.using(self.args.database).get(pk=x_id)
@@ -138,7 +137,7 @@ class Classifier(BiPlot):
             mprs = mprs.filter(resource__name=LABEL, resource__value=label)
 
         if self.args.verbose > 1:
-            print "  Removing MeasuredParameterResources with type = '%s' and label = %s" % (labeledGroupName, label)
+            print("  Removing MeasuredParameterResources with type = '%s' and label = %s" % (labeledGroupName, label))
 
         rs = []
         for mpr in mprs:
@@ -153,14 +152,14 @@ class Classifier(BiPlot):
                                                  (Q(toresource__name=COMMANDLINE) & Q(toresource__value=commandline)) ) )
                                         
             if self.args.verbose > 1:
-                print "  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description)
+                print("  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description))
 
             for rr in rrs:
                 rr.delete(using=self.args.database)
 
         else:
             if self.args.verbose > 1:
-                print "  Removing Resources associated with labeledGroupName = %s'" % labeledGroupName
+                print("  Removing Resources associated with labeledGroupName = %s'" % labeledGroupName)
 
             for r in set(rs):
                 r.delete(using=self.args.database)
@@ -178,16 +177,16 @@ class Classifier(BiPlot):
             # Multiple discriminators are possible...
             pvDict = {self.args.discriminator: (dmin, dmax)}
             if self.args.verbose:
-                print "Making label '%s' with discriminator %s" % (label, pvDict)
+                print("Making label '%s' with discriminator %s" % (label, pvDict))
 
             try:
                 x_ids, y_ids, _, _, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0], 
                                                         self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
-            except NoPPDataException, e:
-                print e
+            except NoPPDataException as e:
+                print(str(e))
 
             if self.args.verbose:
-                print "  (%d, %d) MeasuredParameters returned from database %s" % (len(x_ids), len(y_ids), self.args.database)
+                print("  (%d, %d) MeasuredParameters returned from database %s" % (len(x_ids), len(y_ids), self.args.database))
 
             description = 'Using Platform %s, Parameter %s from %s to %s' % (self.args.platform, pvDict, self.args.start, self.args.end)
 
@@ -215,7 +214,7 @@ class Classifier(BiPlot):
                         ).values_list('measuredparameter__datavalue', flat=True)
             count = mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]).count()
             if self.args.verbose:
-                print 'count = {} for label = {}'.format(count, label)
+                print('count = {} for label = {}'.format(count, label))
             if count == 0:
                 warnings.warn('count = 0 for label = {}'.format(label))
             f0 = np.append(f0, mprs.filter(measuredparameter__parameter__name=self.args.inputs[0]))
@@ -264,7 +263,7 @@ class Classifier(BiPlot):
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
         if self.args.verbose:
-            print "  score = %f" % score
+            print("  score = %f" % score)
 
         self._saveModel(labeledGroupName, clf)
 
@@ -283,8 +282,8 @@ class Classifier(BiPlot):
             rr.save(using=self.args.database)
 
             if self.args.verbose:
-                print 'Saved fitted model to the database with name = %s' %self.args.modelBaseName
-                print 'Retrieve with "clf = pickle.loads(r.value.decode("base64").decode("zip"))"'
+                print('Saved fitted model to the database with name = %s' % self.args.modelBaseName)
+                print('Retrieve with "clf = pickle.loads(r.value.decode("base64").decode("zip"))"')
 
     def getFileName(self, figCount):
         '''
@@ -313,7 +312,7 @@ class Classifier(BiPlot):
 
         fileName = self.getFileName(figCount)
         if self.args.verbose:
-            print '  Saving file', fileName
+            print('  Saving file', fileName)
         fig.savefig(fileName)
 
     def process_command_line(self):
