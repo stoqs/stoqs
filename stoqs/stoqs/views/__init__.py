@@ -85,7 +85,7 @@ class BaseOutputer(object):
 
         fh = open(self.html_tmpl_path, 'w')
         for line in response:
-            fh.write(line)
+            fh.write(str(line))
         fh.close()
 
     def getFields(self):
@@ -289,7 +289,7 @@ class BaseOutputer(object):
                                                 context_instance = RequestContext(self.request))
             fh = open(self.html_tmpl_path, 'w')
             for line in response:
-                fh.write(line)
+                fh.write(str(line))
             fh.close()
             return render_to_response(self.html_tmpl_path, {'list': self.qs})
 
