@@ -1801,7 +1801,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
                    stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
                    dataStartDatetime=None, contourUrl=None, auxCoords=None, timezone='America/Los_Angeles',
-                   command_line_args=None):
+                   command_line_args=None, plotTimeSeriesDepth=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1850,6 +1850,10 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
         else:
             for p in loader.include_names:
                 loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
+    if plotTimeSeriesDepth is not None:
+        # Useful to plot as time series engineering data for LRAUVs
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
 
     try:
         loader.process_data()
