@@ -198,35 +198,35 @@ local   all             all                                     peer
 
         # That the user really wants to reload all production databases
         if self.args.clobber and not self.args.test:
-            print("On the server running on port =", settings.DATABASES['default']['PORT'])
+            print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to drop all database(s) in the list below and reload them:")
-            print(('{:30s} {:>15s}').format('Database', 'Last Load time'))
-            print(('{:30s} {:>15s}').format('-'*25, '-'*15))
-            for db,load_command in campaigns.campaigns.items():
+            print((('{:30s} {:>15s}').format('Database', 'Last Load time')))
+            print((('{:30s} {:>15s}').format('-'*25, '-'*15)))
+            for db,load_command in list(campaigns.campaigns.items()):
                 if self.args.db:
                     if db not in self.args.db:
                         continue
 
                 script = os.path.join(app_dir, 'loaders', load_command)
                 try:
-                    print(('{:30s} {:>15s}').format(db, (
+                    print((('{:30s} {:>15s}').format(db, (
                             tail(self._log_file(script, db, load_command), 3)
                             .split('\n')[0]
-                            .split('\t')[1])))
+                            .split('\t')[1]))))
                 except IndexError:
                     pass
 
-            ans = input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
+            ans = eval(input('\nAre you sure you want to drop these database(s) and reload them? [y/N] '))
             if ans.lower() != 'y':
                 print('Exiting')
                 sys.exit()
 
         # That user wants to load all the production databases (no command line arguments)
         if not sys.argv[1:]:
-            print("On the server running on port =", settings.DATABASES['default']['PORT'])
+            print(("On the server running on port =", settings.DATABASES['default']['PORT']))
             print("You are about to load all these databases:")
-            print(' '.join(list(campaigns.campaigns.keys())))
-            ans = input('\nAre you sure you want load all these databases? [y/N] ')
+            print((' '.join(list(campaigns.campaigns.keys()))))
+            ans = eval(input('\nAre you sure you want load all these databases? [y/N] '))
             if ans.lower() != 'y':
                 print('Exiting')
                 sys.exit()
@@ -264,7 +264,7 @@ local   all             all                                     peer
                     raise
 
         self.logger.info('Database %s', db)
-        for name,value in self._provenance_dict(db, load_command, log_file).items():
+        for name,value in list(self._provenance_dict(db, load_command, log_file).items()):
             r, _ = Resource.objects.using(db).get_or_create(
                             uristring='', name=name, value=value, resourcetype=rt)
             CampaignResource.objects.using(db).get_or_create(
@@ -273,7 +273,7 @@ local   all             all                                     peer
 
     def updateprovenance(self):
         campaigns = importlib.import_module(self.args.campaigns)
-        for db,load_command in campaigns.campaigns.items():
+        for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
                     continue
@@ -295,7 +295,7 @@ local   all             all                                     peer
 
     def grant_everyone_select(self):
         campaigns = importlib.import_module(self.args.campaigns)
-        for db,load_command in campaigns.campaigns.items():
+        for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
                     continue
@@ -318,7 +318,7 @@ local   all             all                                     peer
         self.logger.info('Removing test databases from sever running on port %s', 
                 settings.DATABASES['default']['PORT'])
         campaigns = importlib.import_module(self.args.campaigns)
-        for db,load_command in campaigns.campaigns.items():
+        for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
                     continue
@@ -340,7 +340,7 @@ local   all             all                                     peer
     def list(self):
         stoqs_campaigns = []
         campaigns = importlib.import_module(self.args.campaigns)
-        for db,load_command in campaigns.campaigns.items():
+        for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
                     continue
@@ -353,12 +353,12 @@ local   all             all                                     peer
 
             stoqs_campaigns.append(db)
 
-        print('\n'.join(stoqs_campaigns))
-        print('export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"')
+        print(('\n'.join(stoqs_campaigns)))
+        print(('export STOQS_CAMPAIGNS="' + ','.join(stoqs_campaigns) + '"'))
 
     def load(self):
         campaigns = importlib.import_module(self.args.campaigns)
-        for db,load_command in campaigns.campaigns.items():
+        for db,load_command in list(campaigns.campaigns.items()):
             if self.args.db:
                 if db not in self.args.db:
                     continue

@@ -21,7 +21,7 @@ def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pColor, p
     if fileList: 
         for (aName, f) in zip([ a + ' (stride=%d)' % stride for a in files], fileList):
             url = baseUrl + f
-            print("loadMissions(): Calling runLoader() with parmList = %s" % parmList)
+            print(("loadMissions(): Calling runLoader() with parmList = %s" % parmList))
             DAPloaders.runTrajectoryLoader(url, campaignName, c_desc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbName, stride)
     elif activityName:
         url = baseUrl
