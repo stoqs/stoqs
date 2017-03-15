@@ -32,7 +32,7 @@ import csv
 import time
 from glob import glob
 import coards
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from datetime import datetime, timedelta
 import numpy as np
 from pupynere import netcdf_file
@@ -65,20 +65,20 @@ class ParserWriter(BaseWriter):
         for file in fileList:
             if not file.endswith('.asc'):
                 continue
-            print "file = %s" % file
+            print("file = %s" % file)
             if file == './pctd/c0912c01.asc':
                 # Special fix for first cast on September 2012 CANON cruise
-                print "Converting %s up to down" % file
+                print("Converting %s up to down" % file)
                 file = convert_up_to_down(file)
 
             try:
                 year, lat, lon = get_year_lat_lon(file)
             except HdrFileNotFound as e:
-                print e
-                print "Please make sure that the archive is consistent with naming of .asc, .btl, and .hdr files"
+                print(e)
+                print("Please make sure that the archive is consistent with naming of .asc, .btl, and .hdr files")
                 continue
             except PositionNotFound as e:
-                print e
+                print(e)
                 continue
 
             # Initialize member lists for each file processed
@@ -269,7 +269,7 @@ class ParserWriter(BaseWriter):
         self.add_global_metadata()
 
         self.ncFile.close()
-        print 'Wrote ' + outFile
+        print('Wrote ' + outFile)
 
         # End write_pctd()
 
@@ -279,6 +279,6 @@ if __name__ == '__main__':
     pw = ParserWriter()
     pw.process_command_line()
     pw.process_asc_files()
-    print 'Done.'
+    print('Done.')
 
 

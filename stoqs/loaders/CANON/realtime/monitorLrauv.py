@@ -23,7 +23,7 @@ import re
 import pydap
 import pytz
 
-from Contour import Contour
+from .Contour import Contour
 from thredds_crawler.crawl import Crawl
 from coards import from_udunits
 from stoqs.models import InstantPoint
@@ -57,7 +57,7 @@ def abbreviate(parms):
     abbrev = ''
     for p in parms:
         found = False
-        for key,value in pdict.iteritems():
+        for key,value in pdict.items():
             if p.find(key) != -1:
                 abbrev = abbrev + '_' + value
                 found = True

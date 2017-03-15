@@ -15,7 +15,7 @@ os.environ['DJANGO_SETTINGS_MODULE']='config.settings.local'
 import DAPloaders
 import logging
 from datetime import datetime, timedelta
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import time
 import csv
 import re
@@ -42,7 +42,7 @@ def getLogSetStartAndEnd(url):
     folderStart = None
     folderEnd = None
 
-    for line in urllib2.urlopen(url).read().split('\n'):
+    for line in urllib.request.urlopen(url).read().split('\n'):
         ##logger.debug("line = %s" % line)
         d = re.match('.+var startTime=([\.\d]+)', line) # Get time of last data for this mission
         if d:
@@ -74,7 +74,7 @@ def getNewTethysDatetime(startFolder = None):
     logger.info("Scanning log sets and index.html start and end times in %s", url)
     if startFolder:
         logger.info("Starting at startFolder = %s", startFolder)
-    for line in urllib2.urlopen(url).read().split('\n'):
+    for line in urllib.request.urlopen(url).read().split('\n'):
         # href="20110526T151722/"
         logger.debug("line = %s", line)
         f = re.match('.+href="(\d+T\d+)', line)
@@ -99,7 +99,7 @@ def getNewTethysDatetime(startFolder = None):
             else:
                 previousFolderName = f.group(1)
                 logger.debug("Folder %s contains data that have already been loaded in %s", f.group(1), stoqsDB)
-                for line in urllib2.urlopen(url + f.group(1)).read().split('\n'):
+                for line in urllib.request.urlopen(url + f.group(1)).read().split('\n'):
                     ##logger.debug("line = %s", line)
                     d = re.match('.+var endTime=([\.\d]+)', line)   # Get time of last data for this mission
                     if d:
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         # Loop until we run out of new Tethys data from aosn
         
         try:
-            lastTethysEs = float(csv.DictReader(urllib2.urlopen(url)).next()['epochSeconds'])
+            lastTethysEs = float(csv.DictReader(urllib.request.urlopen(url)).next()['epochSeconds'])
         except StopIteration:
             lastTethysEs = 0.0
         lastTethysDatetime = datetime.utcfromtimestamp(lastTethysEs)
@@ -154,7 +154,7 @@ if __name__ == '__main__':
             logger.info("No new Tethys data.  Exiting.")
             sys.exit(1)
 
-        raw_input("Pause")
+        input("Pause")
 
         logger.info("Received new Tethys data ending at %s in folder %s", folderEnd, folderName)
         newTethysURL = 'http://beach.mbari.org:8080/thredds/dodsC/lrauv/tethys/%s/shore.nc' % folderName

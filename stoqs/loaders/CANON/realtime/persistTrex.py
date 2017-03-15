@@ -7,7 +7,7 @@ import amqplib.client_0_8 as amqp
 from optparse import OptionParser
 import signal
 import traceback
-import trex_sensor_pb2
+from . import trex_sensor_pb2
 import pyproj
 import logging
 #TODO: Rework if needed for django >= 1.8
@@ -75,31 +75,31 @@ class Consumer(object):
 
     def persistMessage(self, message):
         '''Callback function for AMQP message.  Assume that we are processing Frederic's trex sensor messages.'''
-        print 'persistMessage(): Received SensorMessage object: ' 
+        print('persistMessage(): Received SensorMessage object: ') 
         sm = trex_sensor_pb2.SensorMessage()
-        print "persistMessage(): Length of message.body = %i" % len(message.body)
+        print("persistMessage(): Length of message.body = %i" % len(message.body))
         sm.ParseFromString(message.body)
         i = 0
         measVars = ['temperature', 'salinity', 'nitrate', 'gulper_id']
         for s in sm.sample:
             i += 1
-            print 20*'-'
-            print "%d. %s" % (i, s)
+            print(20*'-')
+            print("%d. %s" % (i, s))
             # Assume that every sample has utime, easting, northing, and depth (not every sample has all of the state variables)
             for mv in measVars:
                 if s.HasField(mv):
                     logger.debug("utime = %d", s.utime)
                     dt = datetime.datetime.fromtimestamp(s.utime)
-                    print "dt = %s" % dt
+                    print("dt = %s" % dt)
                     logger.debug("easting = %f", s.easting)
                     logger.debug("northing = %f", s.northing)
                     (lon, lat) = self.utmProj(s.easting, s.northing, inverse = True)
-                    print "lat = %f" % lat
-                    print "lon = %f" % lon
+                    print("lat = %f" % lat)
+                    print("lon = %f" % lon)
 
-                    print "depth = %f" % s.depth
+                    print("depth = %f" % s.depth)
                     value = s.__getattribute__(mv)
-                    print "%s = %f" % (mv, value)
+                    print("%s = %f" % (mv, value))
         
                     if mv == 'gulper_id':
                         logger.info('>>> gulper_id = %s', value)
@@ -107,15 +107,15 @@ class Consumer(object):
                     else:
                         try:
                             self.persistMeasurement(dt, s.depth, lat, lon, mv, value)
-                        except Exception, e:
+                        except Exception as e:
                             logger.error("ERROR: *** Could not persist this measurement.  Is something wrong with PostgreSQL?  See details below. ***\n")
                             logger.error(e)
                             traceback.print_exc(file = sys.stdout)
                             ##sys.exit(-1)
-                            print "Continuing on with processing messages..."
+                            print("Continuing on with processing messages...")
 
 
-                print ''
+                print('')
 
             # As a test email extrapolated position to driftertrack - this will obscure sensortrack data visualization
             ##(lon, lat) = self.utmProj(s.easting, s.northing, inverse = True)
@@ -128,7 +128,7 @@ class Consumer(object):
         try:
             self.updateMaptrack()
             self.updateSimpleDepthTime()
-        except Exception, e:
+        except Exception as e:
             logger.error("ERROR: *** Could not update MapTrack or SimpleDepthTime.  Is something wrong with PostgreSQL?  See details below. ***\n")
             logger.error(e)
             traceback.print_exc(file = sys.stdout)
@@ -140,11 +140,11 @@ class Consumer(object):
 
         try:
             parm, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(name = var)
-        except Exception, e:
-            print "ERROR: *** Could not get_or_create name = '%s'.  See details below. ***\n" % var
-            print e
+        except Exception as e:
+            print("ERROR: *** Could not get_or_create name = '%s'.  See details below. ***\n" % var)
+            print(e)
             traceback.print_exc(file = sys.stdout)
-            print "Continuing on with processing messages..."
+            print("Continuing on with processing messages...")
             ##sys.exit(-1)
 
         meas = self.createMeasurement(dt, depth, lat, lon)
@@ -157,7 +157,7 @@ class Consumer(object):
             logger.error("WARNING: Probably a duplicate measurement that could not be added to the DB.  Skipping it.\n")
             logger.error(e)
         else:
-            print "saved %s = %f at %s, %f, %f, %f" % (parm, value, dt, depth, lat, lon)
+            print("saved %s = %f at %s, %f, %f, %f" % (parm, value, dt, depth, lat, lon))
 
         return 
 
@@ -167,7 +167,7 @@ class Consumer(object):
         sample = self.createSample(dt, depth, lat, lon, value)
 
         if sample:
-            print "saved sample = %s of var = %s" % (sample, var)
+            print("saved sample = %s of var = %s" % (sample, var))
 
         return 
 
@@ -242,7 +242,7 @@ class Consumer(object):
         linestringPoints = [q.geom for q in qs]
         if len(linestringPoints) < 2:
             return
-        print "linestringPoints = %s" % linestringPoints
+        print("linestringPoints = %s" % linestringPoints)
         path = LineString(linestringPoints).simplify(tolerance=.001)
 
         num_updated = m.Activity.objects.using(self.dbAlias).filter(id = self.activity.id).update(
@@ -251,7 +251,7 @@ class Consumer(object):
                         maxdepth = 100,
                         loaded_date = datetime.datetime.utcnow())
 
-        print "Updated %d Activity" % num_updated
+        print("Updated %d Activity" % num_updated)
 
     def updateSimpleDepthTime(self):
         '''
@@ -270,7 +270,7 @@ class Consumer(object):
     def signalHandler(self, signum, frame):
         '''Throw exceptoin so as to gracefully close the channel if the process is killed.'''
         error = "Signal %d received while at %s in %s line %s" % (signum, frame.f_code.co_name, frame.f_code.co_filename, frame.f_lineno,)
-        print error
+        print(error)
         raise InterruptedBySignal(error)
 
 
@@ -313,21 +313,21 @@ class Consumer(object):
         signal.signal(signal.SIGTERM, self.signalHandler)
     
         if self.exchange_type != 'fanout':
-            print "Bound to routing key = %s in exchange '%s'." % (self.routing_key, self.exchange_name)
+            print("Bound to routing key = %s in exchange '%s'." % (self.routing_key, self.exchange_name))
         else:
-            print "Queue name %s configured in fanout exchange exchange %s." % (self.queue_name, self.exchange_name)
+            print("Queue name %s configured in fanout exchange exchange %s." % (self.queue_name, self.exchange_name))
     
-        print "Waiting for messages (Ctrl-C or send SIGTERM to cancel)..."
+        print("Waiting for messages (Ctrl-C or send SIGTERM to cancel)...")
         try:
             while True:
                 self.channel.wait()            
 
         except KeyboardInterrupt:
-            print "Received KeyboardInterrupt Exception"
+            print("Received KeyboardInterrupt Exception")
             self.channel.basic_cancel(consumer_tag)
 
         except InterruptedBySignal:
-            print "Received InterruptedBySignal Exception"
+            print("Received InterruptedBySignal Exception")
             self.channel.basic_cancel(consumer_tag)
            
         # Close the channel
@@ -335,7 +335,7 @@ class Consumer(object):
 
         # Close our connection
         self.connection.close()
-        print "RabbitMQ connection closed."
+        print("RabbitMQ connection closed.")
 
 
 def deleteTestMessages(activityName, activityType, dbAlias):
@@ -347,11 +347,11 @@ def deleteTestMessages(activityName, activityType, dbAlias):
                         measurement__instantpoint__activity__activitytype__name = activityType)
 
     if activity:
-        ans = raw_input("Going to delete Activity %s and all %i measurements from it, O.K.? [N/y] " % (activity, qs.count()))
+        ans = input("Going to delete Activity %s and all %i measurements from it, O.K.? [N/y] " % (activity, qs.count()))
 
         if ans.upper() == 'Y':
             activity.delete(using=dbAlias)
-            print "Activity deleted."
+            print("Activity deleted.")
 
 
 

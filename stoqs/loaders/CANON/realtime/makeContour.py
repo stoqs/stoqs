@@ -8,9 +8,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../toNetCDF"))      
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../"))           # settings.py is two dirs up
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "./"))
 import pytz
-import Contour
+from . import Contour
 
-from Contour import Contour 
+from .Contour import Contour 
 from datetime import datetime, timedelta
 
 class makeContour(object):

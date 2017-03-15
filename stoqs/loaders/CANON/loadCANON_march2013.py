@@ -412,4 +412,4 @@ else:
 
 # Add any X3D Terrain information specified in the constructor to the database
 cl.addTerrainResources()
-print "All done."
+print("All done.")

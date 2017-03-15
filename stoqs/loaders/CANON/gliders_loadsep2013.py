@@ -50,7 +50,7 @@ t=time.strptime(st,"%Y-%m-%d %H:%M")
 startdate=t[:6]
 t =time.strptime("2013-10-31 10:37", "%Y-%m-%d %H:%M")
 enddate=t[:6]
-print startdate, enddate
+print(startdate, enddate)
 # SPRAY glider - for just the duration of the campaign
 cl.l_662_base = 'http://www.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = ['OS_Glider_L_662_20130711_TS.nc']

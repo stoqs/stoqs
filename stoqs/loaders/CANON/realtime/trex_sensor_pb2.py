@@ -7,7 +7,7 @@ from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 
-import trex_pb2
+from . import trex_pb2
 
 DESCRIPTOR = descriptor.FileDescriptor(
   name='trex_sensor.proto',
@@ -210,17 +210,13 @@ _SENSORMESSAGE.fields_by_name['gps_fix'].message_type = _SENSORMESSAGE_GPSERROR
 _SENSORMESSAGE.fields_by_name['observations'].message_type = trex_pb2._PREDICATE
 DESCRIPTOR.message_types_by_name['SensorMessage'] = _SENSORMESSAGE
 
-class SensorMessage(message.Message):
-  __metaclass__ = reflection.GeneratedProtocolMessageType
-  
-  class Sample(message.Message):
-    __metaclass__ = reflection.GeneratedProtocolMessageType
+class SensorMessage(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
+  class Sample(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
     DESCRIPTOR = _SENSORMESSAGE_SAMPLE
     
     # @@protoc_insertion_point(class_scope:org.mbari.trex.SensorMessage.Sample)
   
-  class GpsError(message.Message):
-    __metaclass__ = reflection.GeneratedProtocolMessageType
+  class GpsError(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
     DESCRIPTOR = _SENSORMESSAGE_GPSERROR
     
     # @@protoc_insertion_point(class_scope:org.mbari.trex.SensorMessage.GpsError)

@@ -95,7 +95,7 @@ class ParserWriter(BaseWriter):
                 do_list.append(r[' Dissolved Oxygen(mL/L)'])
                 last_esec = esec
             else:
-                print 'Skipping esec = %d' % esec
+                print('Skipping esec = %d' % esec)
 
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
@@ -184,14 +184,14 @@ class ParserWriter(BaseWriter):
                 for v in pco2_vars:
                     ncVar = v.replace(' ', '_', 42)
                     try:
-                        exec "%s_list.append(r[' %s'])" % (ncVar, v, )
+                        exec("%s_list.append(r[' %s'])" % (ncVar, v, ))
                     except NameError:
-                        exec '%s_list = []' % ncVar
-                        exec "%s_list.append(r[' %s'])" % (ncVar, v, )
+                        exec('%s_list = []' % ncVar)
+                        exec("%s_list.append(r[' %s'])" % (ncVar, v, ))
 
                 last_esec = esec
             else:
-                print 'Skipping esec = %d' % esec
+                print('Skipping esec = %d' % esec)
 
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
@@ -212,20 +212,20 @@ class ParserWriter(BaseWriter):
             # Only Latitude, Longitude, Depth, and Time variables are upper case to match other Glider data
             if v in ('Latitude', 'Longitude'):
                 # Name the coordinate variable all upper case
-                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (v.lower(), v.upper(), )
-                exec "self.%s.long_name = '%s'" % (v.lower(), v.lower(), )
-                exec "self.%s.standard_name = '%s'" % (v.lower(), v.lower(), )
+                exec("self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (v.lower(), v.upper(), ))
+                exec("self.%s.long_name = '%s'" % (v.lower(), v.lower(), ))
+                exec("self.%s.standard_name = '%s'" % (v.lower(), v.lower(), ))
                 if v == 'Latitude':
-                    exec "self.%s.units = 'degrees_north'" % v.lower()
+                    exec("self.%s.units = 'degrees_north'" % v.lower())
                 if v == 'Longitude':
-                    exec "self.%s.units = 'degrees_east'" % v.lower()
+                    exec("self.%s.units = 'degrees_east'" % v.lower())
                     
             else:
-                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar, )
-                exec "self.%s.coordinates = 'TIME LATITUDE LONGITUDE DEPTH'" % ncVar.lower()
-                exec "self.%s.long_name = '%s'" % (ncVar.lower(), v, )
+                exec("self.%s = self.ncFile.createVariable('%s', 'float64', ('TIME',))" % (ncVar.lower(), ncVar, ))
+                exec("self.%s.coordinates = 'TIME LATITUDE LONGITUDE DEPTH'" % ncVar.lower())
+                exec("self.%s.long_name = '%s'" % (ncVar.lower(), v, ))
 
-            exec "self.%s[:] = %s_list" % (ncVar.lower(), ncVar, )
+            exec("self.%s[:] = %s_list" % (ncVar.lower(), ncVar, ))
 
         # Fudge up a depth variable with a value of zero
         self.depth = self.ncFile.createVariable('DEPTH', 'float64', ('TIME',))
@@ -251,9 +251,9 @@ if __name__ == '__main__':
 
     ctd = ParserWriter(parentDir=dataDir)
     ctd.write_gpctd()
-    print "Wrote %s" % ctd.outFile
+    print("Wrote %s" % ctd.outFile)
 
     pco2 = ParserWriter(parentDir=dataDir)
     pco2.write_pco2()
-    print "Wrote %s" % pco2.outFile
+    print("Wrote %s" % pco2.outFile)
 
