@@ -110,8 +110,8 @@ class BrowserTestCase(TestCase):
                                     'platforms-anchor')
             self._wait_until_visible_then_click(platforms_anchor)
         except NoSuchElementException as e:
-            print e
-            print "Is the development server running?"
+            print(str(e))
+            print("Is the development server running?")
             return
 
         # Finds <tr> for 'dorado' then gets the button for clicking
