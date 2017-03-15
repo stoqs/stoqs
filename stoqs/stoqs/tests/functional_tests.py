@@ -179,3 +179,90 @@ class BrowserTestCase(TestCase):
         parameter_contour_plot_radio_button.click()
 
         self.assertEquals('', self._mapserver_loading_panel_test)
+
+    def test_plot_count_without_platform(self):
+
+        self.browser.get('http://localhost:8000/default/query/')
+
+        # Open Measured Parameter section
+        mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(mp_section)
+
+        # Get the table that contains the table
+        tb_section = self.browser.find_element_by_id('measuredparameter-table')
+        
+        # check to see whether it contains any rows
+        if len(tb_section.find_elements_by_css('tr')) > 1: 
+            trlist = list()
+            for tr in tb_section.find_elements_by_css('tr'): 
+                if 'display' not in tr and 'none' not in tr:
+                    trlist.append(tr)
+
+        # by default, only 21, including the first one
+        assert len(trlist) == 21
+
+    def test_plot_count_with_dorado_platform(self): 
+        
+        self.browser.get('http://localhost:8000/default/query/')
+        
+        # Open Measured Parameter section
+        mp_section = self.browswer.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(mp_section)
+        
+        # Open Platform Name section
+        p_section = self.browser.find_element_by_id('platforms-anchor')
+        self._wait_until_visible_then_click(mp_section)
+
+        # Finds <tr> for 'dorado' then gets the button for clicking
+        dorado_button = self.browser.find_element_by_id('dorado'
+                            ).find_element_by_tag_name('button')
+        self._wait_until_visible_then_click(dorado_button)
+
+        # Data should have changed, so we now we collect it
+
+        tb_section = self.browser.find_element_by_id('measuredparameter-table')
+
+         # check to see whether it contains any rows
+        if len(tb_section.find_elements_by_css('tr')) > 1: 
+            trlist = list()
+            for tr in tb_section.find_elements_by_css('tr'): 
+                if 'display' not in tr and 'none' not in tr:
+                    trlist.append(tr)
+
+        # by default, only 16, including the first one
+        assert len(trlist) == 16
+
+    def test_plot_with_M1_Mooring_platform(self):
+        self.browser.get('http://localhost:8000/default/query/')
+        
+        # Open Measured Parameter section
+        mp_section = self.browswer.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(mp_section)
+        
+        # Open Platform Name section
+        p_section = self.browser.find_element_by_id('platforms-anchor')
+        self._wait_until_visible_then_click(mp_section)
+
+        # Finds <tr> for 'dorado' then gets the button for clicking
+        dorado_button = self.browser.find_element_by_id('M1_Mooring'
+                            ).find_element_by_tag_name('button')
+        self._wait_until_visible_then_click(dorado_button)
+
+        # Data should have changed, so we now we collect it
+
+        tb_section = self.browser.find_element_by_id('measuredparameter-table')
+
+         # check to see whether it contains any rows
+        if len(tb_section.find_elements_by_css('tr')) > 1: 
+            trlist = list()
+            for tr in tb_section.find_elements_by_css('tr'): 
+                if 'display' not in tr and 'none' not in tr:
+                    trlist.append(tr)
+
+        # by default, only 5, including the first one
+        assert len(trlist) == 5
+
+
+
+
+
