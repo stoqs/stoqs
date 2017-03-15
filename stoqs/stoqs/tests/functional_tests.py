@@ -138,7 +138,7 @@ class BrowserTestCase(TestCase):
         self._wait_until_visible_then_click(parameter_tab)
         si = self.browser.find_element_by_id('stride-info')
         self._wait_until_visible_then_click(si)
-        assert 'bb470' in si.text
+        assert 'every single point' in si.text
         djtb = self.browser.find_element_by_id('djHideToolBarButton')
         djtb.click()
 
@@ -151,7 +151,7 @@ class BrowserTestCase(TestCase):
         self._test_share_view('test_m1_timeseries')
         si = self.browser.find_element_by_id('stride-info')
         self._wait_until_visible_then_click(si)
-        assert 'bb470' in si.text
+        assert 'every single point' in si.text
 
     def test_contour_plots(self):
         self.browser.get('http://localhost:8000/default/query/')
