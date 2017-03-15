@@ -95,7 +95,7 @@ class ParserWriter(BaseWriter):
                 do_list.append(r[' Dissolved Oxygen(mL/L)'])
                 last_esec = esec
             else:
-                print('Skipping esec = %d' % esec)
+                print(('Skipping esec = %d' % esec))
 
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
@@ -191,7 +191,7 @@ class ParserWriter(BaseWriter):
 
                 last_esec = esec
             else:
-                print('Skipping esec = %d' % esec)
+                print(('Skipping esec = %d' % esec))
 
         # Create the NetCDF file
         self.ncFile = netcdf_file(outFile, 'w')
@@ -251,9 +251,9 @@ if __name__ == '__main__':
 
     ctd = ParserWriter(parentDir=dataDir)
     ctd.write_gpctd()
-    print("Wrote %s" % ctd.outFile)
+    print(("Wrote %s" % ctd.outFile))
 
     pco2 = ParserWriter(parentDir=dataDir)
     pco2.write_pco2()
-    print("Wrote %s" % pco2.outFile)
+    print(("Wrote %s" % pco2.outFile))
 

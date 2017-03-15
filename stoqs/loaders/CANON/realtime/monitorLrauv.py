@@ -57,7 +57,7 @@ def abbreviate(parms):
     abbrev = ''
     for p in parms:
         found = False
-        for key,value in pdict.items():
+        for key,value in list(pdict.items()):
             if p.find(key) != -1:
                 abbrev = abbrev + '_' + value
                 found = True

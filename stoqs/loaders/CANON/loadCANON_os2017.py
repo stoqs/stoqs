@@ -70,7 +70,7 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 def find_urls(base, search_str):
     INV_NS = "http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
     url = os.path.join(base, 'catalog.xml')
-    print("Crawling: %s" % url)
+    print(("Crawling: %s" % url))
     skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$" ]
     u = urllib.parse.urlsplit(url)
     name, ext = os.path.splitext(u.path)
@@ -96,18 +96,18 @@ def find_urls(base, search_str):
                 # if within a valid range, grab the valid urls
                 if dir_start >= startdate and dir_end <= enddate:
 
-                    print('Found mission directory ' + dts[0])
-                    print('Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end))
+                    print(('Found mission directory ' + dts[0]))
+                    print(('Searching if within range %s and %s  %s %s' % (startdate, enddate, dir_start, dir_end)))
                     catalog = ref.attrib['{http://www.w3.org/1999/xlink}href']
                     c = Crawl(os.path.join(base, catalog), select=[search_str], skip=skips)
                     d = [s.get("url") for d in c.datasets for s in d.services if s.get("service").lower() == "opendap"]
                     for url in d:
                         urls.append(url)
             except Exception as ex:
-                print("Error reading mission directory name %s" % ex)
+                print(("Error reading mission directory name %s" % ex))
 
     except BaseException:
-        print("Skipping %s (error parsing the XML)" % url)
+        print(("Skipping %s (error parsing the XML)" % url))
 
     if not urls:
         raise FileNotFound('No urls matching "{}" found in {}'.format(search_str, os.path.join(base, 'catalog.html')))

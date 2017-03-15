@@ -94,23 +94,23 @@ class Consumer(object):
         measVars = ['temperature', 'salinity', 'nitrate', 'gulper_id']
         for s in sm.sample:
             i += 1
-            print(20*'-')
-            print("%d. %s" % (i, s))
+            print((20*'-'))
+            print(("%d. %s" % (i, s)))
             # Assume that every sample has utime, easting, northing, and depth (not every sample has all of the state variables)
             for mv in measVars:
                 if s.HasField(mv):
                     logger.debug("utime = %d", s.utime)
                     dt = datetime.datetime.fromtimestamp(s.utime)
-                    print("dt = %s" % dt)
+                    print(("dt = %s" % dt))
                     logger.debug("easting = %f", s.easting)
                     logger.debug("northing = %f", s.northing)
                     (lon, lat) = self.utmProj(s.easting, s.northing, inverse = True)
-                    print("lat = %f" % lat)
-                    print("lon = %f" % lon)
+                    print(("lat = %f" % lat))
+                    print(("lon = %f" % lon))
 
-                    print("depth = %f" % s.depth)
+                    print(("depth = %f" % s.depth))
                     value = s.__getattribute__(mv)
-                    print("%s = %f" % (mv, value))
+                    print(("%s = %f" % (mv, value)))
         
                     if mv == 'gulper_id':
                         logger.info('>>> gulper_id = %s', value)
@@ -160,7 +160,7 @@ class Consumer(object):
         try:
             parm, _ = m.Parameter.objects.using(self.dbAlias).get_or_create(name = var)
         except Exception as e:
-            print("ERROR: *** Could not get_or_create name = '%s'.  See details below. ***\n" % var)
+            print(("ERROR: *** Could not get_or_create name = '%s'.  See details below. ***\n" % var))
             print(e)
             traceback.print_exc(file = sys.stdout)
             print("Continuing on with processing messages...")
@@ -176,7 +176,7 @@ class Consumer(object):
             logger.error("WARNING: Probably a duplicate measurement that could not be added to the DB.  Skipping it.\n")
             logger.error(e)
         else:
-            print("saved %s = %f at %s, %f, %f, %f" % (parm, value, dt, depth, lat, lon))
+            print(("saved %s = %f at %s, %f, %f, %f" % (parm, value, dt, depth, lat, lon)))
 
         return 
 
@@ -186,7 +186,7 @@ class Consumer(object):
         sample = self.createSample(dt, depth, lat, lon, value)
 
         if sample:
-            print("saved sample = %s of var = %s" % (sample, var))
+            print(("saved sample = %s of var = %s" % (sample, var)))
 
         return 
 
@@ -262,7 +262,7 @@ class Consumer(object):
         linestringPoints = [q.geom for q in qs]
         if len(linestringPoints) < 2:
             return
-        print("linestringPoints = %s" % linestringPoints)
+        print(("linestringPoints = %s" % linestringPoints))
         path = LineString(linestringPoints).simplify(tolerance=.001)
 
         num_updated = m.Activity.objects.using(self.dbAlias).filter(id = self.activity.id).update(
@@ -271,7 +271,7 @@ class Consumer(object):
                         maxdepth = 100,
                         loaded_date = datetime.datetime.utcnow())
 
-        print("Updated %d Activity" % num_updated)
+        print(("Updated %d Activity" % num_updated))
 
     def updateSimpleDepthTime(self):
         '''
@@ -409,9 +409,9 @@ class Consumer(object):
         signal.signal(signal.SIGTERM, self.signalHandler)
     
         if self.exchange_type != 'fanout':
-            print("Bound to routing key = %s in exchange '%s'." % (self.routing_key, self.exchange_name))
+            print(("Bound to routing key = %s in exchange '%s'." % (self.routing_key, self.exchange_name)))
         else:
-            print("Queue name %s configured in fanout exchange exchange %s." % (self.queue_name, self.exchange_name))
+            print(("Queue name %s configured in fanout exchange exchange %s." % (self.queue_name, self.exchange_name)))
     
         print("Waiting for messages (Ctrl-C or send SIGTERM to cancel)...")
         try:
@@ -443,7 +443,7 @@ def deleteTestMessages(activityName, activityType, dbAlias):
                         measurement__instantpoint__activity__activitytype__name = activityType)
 
     if activity:
-        ans = input("Going to delete Activity %s and all %i measurements from it, O.K.? [N/y] " % (activity, qs.count()))
+        ans = eval(input("Going to delete Activity %s and all %i measurements from it, O.K.? [N/y] " % (activity, qs.count())))
 
         if ans.upper() == 'Y':
             activity.delete()

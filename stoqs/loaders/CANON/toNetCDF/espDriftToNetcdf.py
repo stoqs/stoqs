@@ -75,7 +75,7 @@ class ParserWriter(BaseWriter):
             la.append(float(r['latitude']))
             lo.append(float(r['longitude']))
 
-        print("Read in %d ESP GPS records" % len(es))
+        print(("Read in %d ESP GPS records" % len(es)))
 
         # Create lookup to get lat & lon given any epoch second, accurate to integer seconds
         # Reverse the order for the numpy lat & lon arrays
@@ -292,8 +292,8 @@ if __name__ == '__main__':
 
     pw = ParserWriter(parentDir=dataDir)
     pw.write_ctd()
-    print("Wrote %s" % pw.outFile)
+    print(("Wrote %s" % pw.outFile))
 
     pw.write_isus()
-    print("Wrote %s" % pw.outFile)
+    print(("Wrote %s" % pw.outFile))
 

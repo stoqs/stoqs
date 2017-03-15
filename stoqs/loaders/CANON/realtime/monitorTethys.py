@@ -154,7 +154,7 @@ if __name__ == '__main__':
             logger.info("No new Tethys data.  Exiting.")
             sys.exit(1)
 
-        input("Pause")
+        eval(input("Pause"))
 
         logger.info("Received new Tethys data ending at %s in folder %s", folderEnd, folderName)
         newTethysURL = 'http://beach.mbari.org:8080/thredds/dodsC/lrauv/tethys/%s/shore.nc' % folderName

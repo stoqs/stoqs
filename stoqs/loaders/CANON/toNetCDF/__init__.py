@@ -134,5 +134,5 @@ if __name__ == '__main__':
 
     bw = BaseWriter()
     bw.process_command_line()
-    print(bw.args)
+    print((bw.args))
 
