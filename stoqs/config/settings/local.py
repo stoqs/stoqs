@@ -74,7 +74,7 @@ HOME_PAGE_ALT = env('HOME_PAGE_LOGO', default='MBARI')
 # which can be a symbolic link to a file configured for a specific installation.
 try:
     from campaigns import campaigns
-    for campaign in campaigns.keys():
+    for campaign in list(campaigns.keys()):
         DATABASES[campaign] = DATABASES.get('default').copy()
         DATABASES[campaign]['NAME'] = campaign
 except Exception:
