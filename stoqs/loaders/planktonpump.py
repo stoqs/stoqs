@@ -112,7 +112,7 @@ class PlanktonPump():
         samples = self._niskin_samples( a_name, v)
         self.logger.info('Bottle depths for cast %s, %s: %s', a_name, v['Relative Depth'], 
                           [float(d) for d in samples.values_list('depth', flat=True)])
-        depth = samples.aggregate(Avg('depth')).values()[0]
+        depth = list(samples.aggregate(Avg('depth')).values())[0]
         self.logger.info('Average depth = %s', depth)
 
         return depth
@@ -121,7 +121,7 @@ class PlanktonPump():
         '''Return ISO-8601 datetime string of last bottle trip at this pumping event
         '''
         samples = self._niskin_samples( a_name, v)
-        last_bottle_dt = samples.aggregate(Max('instantpoint__timevalue')).values()[0]
+        last_bottle_dt = list(samples.aggregate(Max('instantpoint__timevalue')).values())[0]
         self.logger.info('Last bottle time = %s', last_bottle_dt)
 
         return last_bottle_dt.strftime('%Y-%m-%dT%H:%M:%S')
@@ -152,7 +152,7 @@ class PlanktonPump():
         self.logger.info('Joining subsample information with bottle data from the'
                          ' database using duration = %d', self.args.duration)
         new_hash = OrderedDict()
-        for (a_name, rdepth), samples in sm_hash.iteritems():
+        for (a_name, rdepth), samples in sm_hash.items():
             for sample in samples:
                 key = (a_name, rdepth)
                 try:
@@ -183,11 +183,11 @@ class PlanktonPump():
 
         with open(self.args.csv_file, 'w') as f:
             f.write('Cast,RelativeDepth,')
-            f.write(','.join(s.itervalues().next().keys()))
+            f.write(','.join(iter(s.values()).next().keys()))
             f.write('\n')
-            for k,v in s.iteritems():
+            for k,v in s.items():
                 f.write(','.join(k) + ',')
-                f.write(','.join([str(dv) for dv in v.values()]))
+                f.write(','.join([str(dv) for dv in list(v.values())]))
                 f.write('\n')
 
     def _get_plankton_pump_platform(self, cast_platform):

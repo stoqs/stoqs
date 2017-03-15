@@ -86,7 +86,7 @@ class NetTow():
         '''
         self.logger.info('Joining subsample information with cast data from the database using subtractMinutes = %d', self.args.subtractMinutes)
         new_hash = OrderedDict()
-        for a_name,v in sm_hash.iteritems():
+        for a_name,v in sm_hash.items():
             try:
                 a = Activity.objects.using(self.args.database).get(name__contains=a_name)
                 v['longitude'] = a.mappoint.x
@@ -128,11 +128,11 @@ class NetTow():
 
         with open(self.args.csvFile, 'w') as f:
             f.write('Cast,')
-            f.write(','.join(s.itervalues().next().keys()))
+            f.write(','.join(iter(s.values()).next().keys()))
             f.write('\n')
-            for k,v in s.iteritems():
+            for k,v in s.items():
                 f.write('%s,' % k)
-                f.write(','.join([str(dv) for dv in v.values()]))
+                f.write(','.join([str(dv) for dv in list(v.values())]))
                 f.write('\n')
 
     def _get_net_tow_platform(self, cast_platform):
