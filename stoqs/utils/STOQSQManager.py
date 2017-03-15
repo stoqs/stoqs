@@ -23,14 +23,14 @@ from django.http import HttpResponse
 from stoqs import models
 from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL
 from loaders.SampleLoaders import SAMPLED, NETTOW, PLANKTONPUMP
-from utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
-from utils import (getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, 
+from .utils import round_to_n, postgresifySQL, EPOCH_STRING, EPOCH_DATETIME
+from .utils import (getGet_Actual_Count, getShow_Sigmat_Parameter_Values, getShow_StandardName_Parameter_Values, 
                    getShow_All_Parameter_Values, getShow_Parameter_Platform_Data)
-from utils import simplify_points, getParameterGroups
-from geo import GPS
-from MPQuery import MPQuery
-from PQuery import PQuery
-from Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformAnimation
+from .utils import simplify_points, getParameterGroups
+from .geo import GPS
+from .MPQuery import MPQuery
+from .PQuery import PQuery
+from .Viz import MeasuredParameter, ParameterParameter, PPDatabaseException, PlatformAnimation
 from coards import to_udunits
 from datetime import datetime
 from django.contrib.gis import gdal
@@ -144,7 +144,7 @@ class STOQSQManager(object):
         and the calls to this method meet the requirements stated above.
         '''
         fromTable = 'Activity'              # Default is Activity
-        if self.kwargs.has_key('fromTable'):
+        if 'fromTable' in self.kwargs:
             fromTable = self.kwargs['fromTable']
 
         if 'qs' in args:
@@ -173,7 +173,7 @@ class STOQSQManager(object):
         self.args = args
 
         # Determine if this is the intial query and set a flag
-        for k, v in self.kwargs.iteritems():
+        for k, v in self.kwargs.items():
             # Test keys that can affect the MeasuredParameter count
             if  k == 'depth' or k == 'time':
                 if v[0] is not None or v[1] is not None:
@@ -186,7 +186,7 @@ class STOQSQManager(object):
         logger.debug('self.initialQuery = %s', self.initialQuery)
 
         # Check to see if there is a "builder" for a Q object using the given parameters and build up the filter from the Q objects
-        for k, v in self.kwargs.iteritems():
+        for k, v in self.kwargs.items():
             if not v:
                 continue
             if k == 'fromTable':
@@ -229,7 +229,7 @@ class STOQSQManager(object):
         '''
         
         results = {}
-        for k, v in self.options_functions.iteritems():
+        for k, v in self.options_functions.items():
             logger.debug('k, v = %s, %s', k, v)
             if self.kwargs['only'] != []:
                 if k not in self.kwargs['only']:
@@ -510,7 +510,7 @@ class STOQSQManager(object):
                 except TypeError as e:
                     logger.exception(e)
 
-        if self.kwargs.has_key('measuredparametersgroup'):
+        if 'measuredparametersgroup' in self.kwargs:
             if len(self.kwargs['measuredparametersgroup']) == 1:
                 mpname = self.kwargs['measuredparametersgroup'][0]
                 try:
@@ -525,7 +525,7 @@ class STOQSQManager(object):
                 except TypeError as e:
                     logger.exception(e)
 
-        if self.kwargs.has_key('sampledparametersgroup'):
+        if 'sampledparametersgroup' in self.kwargs:
             if len(self.kwargs['sampledparametersgroup']) == 1:
                 spid = self.kwargs['sampledparametersgroup'][0]
                 try:
@@ -540,7 +540,7 @@ class STOQSQManager(object):
                 except TypeError as e:
                     logger.exception(e)
 
-        if self.kwargs.has_key('parameterstandardname'):
+        if 'parameterstandardname' in self.kwargs:
             if len(self.kwargs['parameterstandardname']) == 1:
                 sname = self.kwargs['parameterstandardname'][0]
                 try:
@@ -585,9 +585,9 @@ class STOQSQManager(object):
                 # Timeseries and timeseriesProfile data for a single platform
                 # (even if composed of multiple Activities) must have single
                 # unique horizontal position.
-                geom_list = filter(None, self.qs.filter(platform__name=platformName)
+                geom_list = list(filter(None, self.qs.filter(platform__name=platformName)
                                          .values_list('nominallocation__geom', flat=True)
-                                         .distinct())
+                                         .distinct()))
                 try:
                     geom = geom_list[0]
                 except IndexError:
@@ -1084,7 +1084,7 @@ class STOQSQManager(object):
         units = {}
 
         # Build units hash of parameter names for labeling axes in flot
-        for p,u in pa_units.iteritems():
+        for p,u in pa_units.items():
             logger.debug('is_standard_name = %s.  p, u = %s, %s', is_standard_name, p, u)
             if not self._parameterInSelection(p, is_standard_name):
                 logger.debug('Parameter is not in selection')
@@ -1339,7 +1339,7 @@ class STOQSQManager(object):
                     ##logger.debug('pa.name = %s, aname = %s', pa.name, aph['activityparameter__activity__name'])
 
             # Unwind the platformList to get activities by platform name
-            for an, pnList in platformList.iteritems():
+            for an, pnList in platformList.items():
                 ##logger.debug('an = %s, pnList = %s', an, pnList)
                 for pn in pnList:
                     try:
@@ -1418,7 +1418,7 @@ class STOQSQManager(object):
         If at least the X and Y radio buttons are checked produce a scatter plot for delivery back to the client
         '''
         plotResults = None
-        if (self.kwargs.has_key('parameterparameter')):
+        if 'parameterparameter' in self.kwargs:
             px = self.kwargs['parameterparameter'][0]
             py = self.kwargs['parameterparameter'][1]
             pc = self.kwargs['parameterparameter'][3]
@@ -1451,7 +1451,7 @@ class STOQSQManager(object):
         If at least the X, Y, and Z radio buttons are checked produce an X3D response for delivery back to the client
         '''
         x3dDict = None
-        if (self.kwargs.has_key('parameterparameter')):
+        if 'parameterparameter' in self.kwargs:
             px = self.kwargs['parameterparameter'][0]
             py = self.kwargs['parameterparameter'][1]
             pz = self.kwargs['parameterparameter'][2]

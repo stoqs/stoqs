@@ -32,7 +32,7 @@ class UUIDField(models.CharField) :
         if add:
             value=getattr(model_instance,self.attname)
             if not value:
-                value = unicode(uuid.uuid4()).replace('-','')
+                value = str(uuid.uuid4()).replace('-','')
             setattr(model_instance, self.attname, value)
             return value
         else:

@@ -119,7 +119,7 @@ class BiPlot(object):
         sql = sql_template.format(pxname=xParm, pyname=yParm, platform_clause=platformSQL,
                                     time_clause=timeSQL, depth_clause=depthSQL, day_night_clause=dnSQL)
         if self.args.verbose > 1:
-            print "sql =", sql
+            print("sql =", sql)
 
         x = [] 
         y = []

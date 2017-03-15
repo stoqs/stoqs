@@ -53,7 +53,7 @@ def getGet_Actual_Count(kwargs):
     return state of Get Actual Count checkbox from query UI
     '''
     get_actual_count_state = False
-    if kwargs.has_key('get_actual_count'):
+    if 'get_actual_count' in kwargs:
         if kwargs['get_actual_count']:
             get_actual_count_state = True
 
@@ -64,7 +64,7 @@ def getShow_Sigmat_Parameter_Values(kwargs):
     return state of showsigmatparametervalues checkbox from query UI
     '''
     show_sigmat_parameter_values_state = False
-    if kwargs.has_key('showsigmatparametervalues'):
+    if 'showsigmatparametervalues' in kwargs:
         if kwargs['showsigmatparametervalues']:
             show_sigmat_parameter_values_state = True
 
@@ -75,7 +75,7 @@ def getShow_StandardName_Parameter_Values(kwargs):
     return state of showstandardnameparametervalues checkbox from query UI
     '''
     show_standardname_parameter_values_state = False
-    if kwargs.has_key('showstandardnameparametervalues'):
+    if 'showstandardnameparametervalues' in kwargs:
         if kwargs['showstandardnameparametervalues']:
             show_standardname_parameter_values_state = True
 
@@ -86,7 +86,7 @@ def getShow_All_Parameter_Values(kwargs):
     return state of showallparametervalues checkbox from query UI
     '''
     show_all_parameter_values_state = False
-    if kwargs.has_key('showallparametervalues'):
+    if 'showallparametervalues' in kwargs:
         if kwargs['showallparametervalues']:
             show_all_parameter_values_state = True
 
@@ -97,7 +97,7 @@ def getShow_Parameter_Platform_Data(kwargs):
     return state of Show data checkbox from query UI
     '''
     show_parameter_platform_data_state = False
-    if kwargs.has_key('showparameterplatformdata'):
+    if 'showparameterplatformdata' in kwargs:
         if kwargs['showparameterplatformdata']:
             show_parameter_platform_data_state = True
 
@@ -260,13 +260,12 @@ def pearsonr(x, y):
     http://shop.oreilly.com/product/9780596529321.do
     '''
     # Assume len(x) == len(y)
-    from itertools import imap
     n = len(x)
     sum_x = float(sum(x))
     sum_y = float(sum(y))
     sum_x_sq = sum(map(lambda x: pow(x, 2), x))
     sum_y_sq = sum(map(lambda x: pow(x, 2), y))
-    psum = sum(imap(lambda x, y: x * y, x, y))
+    psum = sum(map(lambda x, y: x * y, x, y))
     num = psum - (sum_x * sum_y/n)
     den = pow((sum_x_sq - pow(sum_x, 2) / n) * (sum_y_sq - pow(sum_y, 2) / n), 0.5)
     if den == 0: return 0

@@ -26,7 +26,6 @@ from loaders import MEASUREDINSITU, X3DPLATFORMMODEL, X3D_MODEL, X3D_MODEL_SCALE
 import seawater.eos80 as sw
 import numpy as np
 from numpy import polyfit
-from itertools import izip
 import logging
 import string
 import random
@@ -624,13 +623,13 @@ class MeasuredParameter(BaseParameter):
                     # Sample markers for everything but Net Tows
                     xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_name=NETTOW)
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10)
-                    for x,y,sn in izip(xsamp, ysamp, sname):
+                    for x,y,sn in zip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
                     # Annotate NetTow Samples at Sample record location - points
                     xsamp, ysamp, sname = self._get_samples_for_markers(act_name=NETTOW)
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10)
-                    for x,y,sn in izip(xsamp, ysamp, sname):
+                    for x,y,sn in zip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
                     # Sample markers for Vertical Net Tows (put circle at surface) - lines
@@ -680,7 +679,7 @@ class MeasuredParameter(BaseParameter):
             index = 0
             for act in self.value_by_act.keys():
                 self.logger.debug('Reading data from act = %s', act)
-                for lon,lat,depth,value in izip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
+                for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
                     try:
                         cindx = int(round((value - float(self.parameterMinMax[1])) * (len(self.clt) - 1) / 
@@ -708,7 +707,7 @@ class MeasuredParameter(BaseParameter):
             # Make pairs of points for spanned NetTow-like data
             for act in self.value_by_act_span.keys():
                 self.logger.debug('Reading data from act = %s', act)
-                for lons, lats, depths, value in izip(self.lon_by_act_span[act], 
+                for lons, lats, depths, value in zip(self.lon_by_act_span[act], 
                                                       self.lat_by_act_span[act], 
                                                       self.depth_by_act_span[act], 
                                                       self.value_by_act_span[act]):
@@ -1115,7 +1114,7 @@ class ParameterParameter(BaseParameter):
             try:
                 self.logger.debug('Saving to file ppPngFileFullPath = %s', ppPngFileFullPath)
                 fig.savefig(ppPngFileFullPath, dpi=120, transparent=True)
-            except Exception, e:
+            except Exception as e:
                 infoText = 'Parameter-Parameter: ' + str(e)
                 self.logger.exception('Cannot make 2D parameterparameter plot: %s', e)
                 plt.close()
@@ -1164,7 +1163,7 @@ class ParameterParameter(BaseParameter):
 
                 points = ''
                 colors = ''
-                for x,y,z in izip(self.x, self.y, self.z):
+                for x,y,z in zip(self.x, self.y, self.z):
                     # Scale to 10000 on each axis, bounded by min/max values - must be 10000 as X3D in stoqs/templates/stoqsquery.html is hard-coded with 10000
                     # This gives us enough resolution for modern displays and eliminates decimal point characters
                     xs = 10000 * (x - float(self.pMinMax['x'][1])) / (float(self.pMinMax['x'][2]) - float(self.pMinMax['x'][1])) 

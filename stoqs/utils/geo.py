@@ -325,8 +325,8 @@ if __name__ == "__main__":
     lla = (34. + 0/60. + 0.00174/3600.,
         -117. - 20./60. - 0.84965/3600.,
         251.702)
-    print "lla: ", lla
+    print("lla: ", lla)
     ecef = gps.lla2ecef(lla)
-    print "ecef: ", ecef
-    print "lla: ", gps.ecef2lla(ecef)
+    print("ecef: ", ecef)
+    print("lla: ", gps.ecef2lla(ecef))
 

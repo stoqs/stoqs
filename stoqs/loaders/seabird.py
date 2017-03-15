@@ -27,7 +27,7 @@ MBARI 23 October 2012
 
 import os
 import sys
-import urllib2
+from urllib.request import urlopen
 
 class HdrFileNotFound(Exception):
     pass
@@ -44,7 +44,7 @@ def get_year_lat_lon(*args, **kwargs):
     Returns (year, lat, lon) tuple
     '''
     try:
-        FH = urllib2.urlopen(kwargs['hdrUrl'])
+        FH = urlopen(kwargs['hdrUrl'])
     except KeyError:
         hdrFile = '.'.join(args[0].split('.')[:-1]) + '.hdr'
         if os.path.exists(hdrFile):
@@ -112,5 +112,5 @@ if __name__ == '__main__':
     # Tests
     yr,la,lo = get_year_lat_lon(hdrUrl= 'http://odss.mbari.org/thredds/fileServer/CANON_september2012/wf/pctd/c0912c53.hdr')
     if yr != 2012 or la != 36.3916667 or lo != -122.6896667:
-        print "*** ERRROR.  The test of get_year_lat_lon should return (2012, 36.3916667, -122.6896667) ***"
-    print yr, la, lo
+        print("*** ERRROR.  The test of get_year_lat_lon should return (2012, 36.3916667, -122.6896667) ***")
+    print(yr, la, lo)

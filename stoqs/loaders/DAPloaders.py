@@ -233,14 +233,14 @@ class Base_Loader(STOQS_Loader):
         startDatetime = datetime.utcnow()
         endDatetime = datetime(1,1,1)
 
-        for v, dt in minDT.iteritems():
+        for v, dt in minDT.items():
             try:
                 if dt < startDatetime:
                     startDatetime = dt
             except NameError:
                 startDatetime = dt
                 
-        for v, dt in maxDT.iteritems():
+        for v, dt in maxDT.items():
             try:
                 if dt > endDatetime:
                     endDatetime = dt
@@ -427,7 +427,7 @@ class Base_Loader(STOQS_Loader):
             logger.warn('Variable %s is missing coordinates attribute', variable)
             if self.auxCoords[variable]:
                 # Try getting it from overridden values provided
-                for coordSN, coord in self.auxCoords[variable].iteritems():
+                for coordSN, coord in self.auxCoords[variable].items():
                     try:
                         coordDict[coordSN] = coord
                     except KeyError as e:
@@ -1083,7 +1083,7 @@ class Base_Loader(STOQS_Loader):
         @transaction.atomic(using=self.dbAlias)
         def _innerInsertRow(self, parmCount, parameterCount, measurement, row):
             # TODO: Refactor to simplify. McCabe MC0001 pylint complexity warning issued.
-            for key,value in row.iteritems():
+            for key,value in row.items():
                 # value may be single-valued or an array
                 try:
                     logger.debug('Checking for %s in self.include_names', key)
@@ -1143,13 +1143,13 @@ class Base_Loader(STOQS_Loader):
                             parameterCount[self.getParameterByName(key)] = 0
 
                 except ParameterNotFound:
-                    print "Unable to locate parameter for %s, skipping" % (key,)
+                    logger.warn("Unable to locate parameter for %s, skipping", key)
 
                 if self.loaded:
                     if (self.loaded % 500) == 0:
                         logger.info("%s: %d of about %d records loaded.", self.url.split('/')[-1], self.loaded, self.totalRecords)
 
-            # End for key,value in row.iteritems():
+            # End for key,value in row.items():
 
         return _innerInsertRow(self, parmCount, parameterCount, measurement, row)
 

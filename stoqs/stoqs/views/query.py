@@ -30,7 +30,7 @@ import csv
 
 
 import logging 
-from wms import ActivityView
+from .wms import ActivityView
 from tempfile import NamedTemporaryFile
 from utils.MPQuery import MPQuerySet
 
@@ -174,7 +174,7 @@ def queryData(request, fmt=None):
     '''
     response = HttpResponse()
     params = {}
-    for key, value in query_parms.iteritems():
+    for key, value in query_parms.items():
         if type(value) in (list, tuple):
             params[key] = [request.GET.get(p, None) for p in value]
         else:
@@ -182,7 +182,7 @@ def queryData(request, fmt=None):
 
     # Look for any parameter _MIN & _MAX input from the UI.  After retrieving the above query_parms the
     # only thing left in the request QueryDict should be the parameter _MIN _MAX selections.
-    for key, value in request.GET.iteritems():
+    for key, value in request.GET.items():
         if key.endswith('_MIN'):                    # Just test for _MIN; UI will always provide _MIN & _MAX
             name = key.split('_MIN')[0]
             try:
@@ -204,9 +204,7 @@ def queryData(request, fmt=None):
         logger.error(e)
         return HttpResponseBadRequest('Bad request: ' + str(e))
     try:
-        options = json.dumps(qm.generateOptions(),
-                                   cls=encoders.STOQSJSONEncoder)
-                                   # use_decimal=True) # After json v2.1.0 this can be used instead of the custom encoder class.
+        options = json.dumps(qm.generateOptions(), cls=encoders.STOQSJSONEncoder)
     except ConnectionDoesNotExist as e:
         logger.warn(e)
         return HttpResponseNotFound('The database alias <b>%s</b> does not exist on this server.' % dbAlias)
@@ -232,7 +230,7 @@ def queryMap(request):
     '''
     response = HttpResponse()
     params = {}
-    for key, value in query_parms.iteritems():
+    for key, value in query_parms.items():
         if type(value) in (list, tuple):
             params[key] = [request.GET.get(p, None) for p in value]
         else:

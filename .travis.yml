@@ -1,26 +1,25 @@
 language: python
 python:
-  - "2.7"
+  - "3.6"
 addons:
   postgresql: "9.4"
 services:
   - rabbitmq 
 before_install: 
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda2/bin:$PATH
-  - export HDF5_DIR=/home/travis/miniconda2/
-  - export NETCDF4_DIR=/home/travis/miniconda2/
+  - export PATH=/home/travis/miniconda3/bin:$PATH
+  - export HDF5_DIR=/home/travis/miniconda3/
+  - export NETCDF4_DIR=/home/travis/miniconda3/
   - export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgfortran.so.3
   - export TERM=xterm
   - conda update --yes conda
 env:
   - DJANGO=1.8
 install:
-  - conda install --yes python=2.7 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose dateutil pandas statsmodels
-  # Coverage packages are on my binstar channel
-  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+  - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose python-dateutil pandas statsmodels
+  - conda install --yes -c omnia python-coveralls=2.9.0
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
 before_script:

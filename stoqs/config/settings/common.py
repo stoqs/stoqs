@@ -75,7 +75,7 @@ MIDDLEWARE_CLASSES = (
 # MIGRATIONS CONFIGURATION
 # ------------------------------------------------------------------------------
 MIGRATION_MODULES = {
-    'sites': 'stoqs.contrib.sites.migrations'
+    ##'sites': 'stoqs.contrib.sites.migrations'
 }
 
 # DEBUG
@@ -89,8 +89,8 @@ DEBUG = env.bool("DJANGO_DEBUG", default=False)
 default_allowed_hosts = ['localhost', '127.0.0.1', '[::1]']
 try:
     import netifaces as ni
-    ni.ifaddresses('eth0')
-    default_allowed_hosts.append(ni.ifaddresses('eth0')[2][0]['addr'])
+    ##ni.ifaddresses('eth0')
+    ##default_allowed_hosts.append(ni.ifaddresses('eth0')[2][0]['addr'])
 except ImportError:
     # Likely because 'netifaces' has not been installed
     pass

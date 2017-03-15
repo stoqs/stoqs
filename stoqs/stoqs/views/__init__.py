@@ -85,7 +85,7 @@ class BaseOutputer(object):
 
         fh = open(self.html_tmpl_path, 'w')
         for line in response:
-            fh.write(line)
+            fh.write(line.decode("utf-8"))
         fh.close()
 
     def getFields(self):
@@ -145,7 +145,7 @@ class BaseOutputer(object):
         '''
         pmin = {}
         pmax = {}
-        for key, _ in self.request.GET.iteritems():
+        for key, _ in self.request.GET.items():
             if key.endswith('_MIN'):        
                 name = key.split('_MIN')[0]
                 try:
@@ -160,7 +160,7 @@ class BaseOutputer(object):
                     logger.exception('Could not get max parameter value even though ' + key + ' ends with _MAX')
 
         pvDicts = []
-        for name in set(pmin.keys() + pmax.keys()):         # set() uniquifies the keys from each dictionary
+        for name in set(list(pmin.keys()) + list(pmax.keys())):         # set() uniquifies the keys from each dictionary
             if name in mod.Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
                 try:
                     pn = pmin[name]
@@ -289,7 +289,7 @@ class BaseOutputer(object):
                                                 context_instance = RequestContext(self.request))
             fh = open(self.html_tmpl_path, 'w')
             for line in response:
-                fh.write(line)
+                fh.write(line.decode("utf-8"))
             fh.close()
             return render_to_response(self.html_tmpl_path, {'list': self.qs})
 

@@ -1,10 +1,10 @@
 Spatial Temporal Oceanographic Query System
 -------------------------------------------
 
-[![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs)
-[![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=master&service=github)](https://coveralls.io/github/stoqs/stoqs?branch=master)
-[![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=master)](https://requires.io/github/stoqs/stoqs/requirements/?branch=master)
-[![Code Health](https://landscape.io/github/stoqs/stoqs/master/landscape.svg?style=flat)](https://landscape.io/github/stoqs/stoqs/master)
+[![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs/branches)
+[![Coverage Status](https://coveralls.io/repos/stoqs/stoqs/badge.svg?branch=python3&service=github)](https://coveralls.io/github/stoqs/stoqs?branch=python3)
+[![Requirements Status](https://requires.io/github/stoqs/stoqs/requirements.svg?branch=python3)](https://requires.io/github/stoqs/stoqs/requirements/?branch=python3)
+[![Code Health](https://landscape.io/github/stoqs/stoqs/python3/landscape.svg?style=flat)](https://landscape.io/github/stoqs/stoqs/python3)
 [![DOI](https://zenodo.org/badge/20654/stoqs/stoqs.svg)](https://zenodo.org/badge/latestdoi/20654/stoqs/stoqs)
 
 STOQS is a geospatial database and web application designed to give oceanographers
@@ -20,8 +20,8 @@ home directory such as `Vagrants/stoqsvm`, open a command prompt window, cd to t
 commands:
 
 ```bash
-curl "https://raw.githubusercontent.com/stoqs/stoqs/master/Vagrantfile" -o Vagrantfile
-curl "https://raw.githubusercontent.com/stoqs/stoqs/master/provision.sh" -o provision.sh
+curl "https://raw.githubusercontent.com/stoqs/stoqs/python3/Vagrantfile" -o Vagrantfile
+curl "https://raw.githubusercontent.com/stoqs/stoqs/python3/provision.sh" -o provision.sh
 vagrant plugin install vagrant-vbguest
 vagrant up --provider virtualbox
 ```

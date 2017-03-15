@@ -163,7 +163,7 @@ def showCampaigns(request,format=None):
     # Create a hash keyed by startdate of the dbAliases and campaigns so that we display a time sorted list of campaigns
     timeSortHash = {}
     dummyTime = datetime(1970,1,1)
-    for k in cHash.iterkeys():
+    for k in cHash.keys():
         logger.debug('k = %s', k)
         for c,r in zip(cHash[k], rHash[k]):
             logger.debug('c.name = %s', c.name)
@@ -182,9 +182,9 @@ def showCampaigns(request,format=None):
 
     # Build list of hashes to pass to the campaigns.html template
     camList = []
-    for d in sorted(timeSortHash.iterkeys(), reverse=True):
+    for d in sorted(timeSortHash.keys(), reverse=True):
         logger.debug("d = %s, timeSortHash[d] = %s", d, timeSortHash[d])
-        for k,(c, r) in timeSortHash[d].iteritems():
+        for k,(c, r) in timeSortHash[d].items():
             logger.debug(k)
             logger.debug(c)
             description = ''

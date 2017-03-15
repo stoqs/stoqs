@@ -171,7 +171,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                         'cmin': 11.5,
                         'cmax': 14.1 }
             qstring = ''
-            for k,v in params.iteritems():
+            for k,v in params.items():
                 qstring = qstring + k + '=' + str(v) + '&'
 
             req = base + '?' + qstring
@@ -180,7 +180,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
             if fmt == '.count':
                 logger.debug(response.content)
-                self.assertEqual(response.content, '50', 'Response should be "50" for %s' % req)
+                self.assertEqual(response.content, b'50', 'Response should be "50" for %s' % req)
     
    
     def test_measuredparameter_with_parametervalues(self):
@@ -194,7 +194,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                         'sea_water_sigma_t_MIN': 25.0,
                         'sea_water_sigma_t_MAX': 25.33 }
             qstring = ''
-            for k,v in params.iteritems():
+            for k,v in params.items():
                 qstring = qstring + k + '=' + str(v) + '&'
 
             req = base + '?' + qstring
@@ -203,7 +203,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
             if fmt == '.count':
                 logger.debug(response.content)
-                self.assertEqual(response.content, '50', 'Response should be "50" for %s' % req)
+                self.assertEqual(response.content, b'50', 'Response should be "50" for %s' % req)
 
     def test_query_summary(self):
         req = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
@@ -228,7 +228,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
         # Number of Dorado MeasuredParameters will be on a line in the content
         loadedText = 'Loaded variables'
-        self.assertTrue(response.content.find(loadedText) != -1, 
+        self.assertTrue(str(response.content).find(loadedText) != -1, 
                 'Should find "%s" in string at %s, instead got: %s' % (
                     loadedText, req, response.content))
         

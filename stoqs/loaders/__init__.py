@@ -31,13 +31,13 @@ import numpy as np
 from coards import to_udunits
 import seawater.eos80 as sw
 import csv
-import urllib2
+import requests
+from contextlib import closing
 import logging
 from utils.utils import percentile, median, mode, simplify_points, spiciness
 from tempfile import NamedTemporaryFile
 import pprint
 from netCDF4 import Dataset
-import httplib
 
 
 # When settings.DEBUG is True Django will fill up a hash with stats on every insert done to the database.
@@ -223,9 +223,9 @@ class LoadScript(object):
         self.logger.debug('Looking in database %s for Campaign name = %s', self.dbAlias, self.campaignName)
         campaign = m.Campaign.objects.using(self.dbAlias).get(name=self.campaignName)
         
-        for url, viewpoint in self.x3dTerrains.iteritems():
+        for url, viewpoint in self.x3dTerrains.items():
             self.logger.debug('url = %s, viewpoint = %s', url, viewpoint)
-            for name, value in viewpoint.iteritems():
+            for name, value in viewpoint.items():
                 resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                               uristring=url, name=name, value=value, resourcetype=resourceType)
                 m.CampaignResource.objects.using(self.dbAlias).get_or_create(
@@ -380,22 +380,18 @@ class STOQS_Loader(object):
             raise Exception('Platform name = "%s" is not allowed.  Name can contain only letters, numbers, "_", and "-"' % name)
 
         self.logger.debug("Opening %s to read platform names for matching to the MBARI tracking database", paURL)
-        try:
-            tpHandle = csv.DictReader(urllib2.urlopen(paURL))
-        except urllib2.URLError as e:
-            self.logger.warn('Could not open %s', paURL)
-            self.logger.warn(e)
 
         platformName = ''
-        try:
-            for rec in tpHandle:
-                ##print "rec = %s" % rec
-                if rec['PlatformName'].lower() == name.lower():
-                    platformName = rec['PlatformName']
-                    tdb_platformTypeName = rec['PlatformType']
-                    break
-        except httplib.IncompleteRead as e:
-            self.logger.warn(e)
+        with closing(requests.get(paURL, stream=True)) as r:
+            if r.status_code == 200:
+                r_decoded = (line.decode('utf-8') for line in r.iter_lines())
+                tpHandle = csv.DictReader(r_decoded)
+                for rec in tpHandle:
+                    ##self.logger.info("rec = %s" % rec)
+                    if rec['PlatformName'].lower() == name.lower():
+                        platformName = rec['PlatformName']
+                        tdb_platformTypeName = rec['PlatformType']
+                        break
 
         if not platformName:
             platformName = name
@@ -493,14 +489,14 @@ class STOQS_Loader(object):
                             self.logger.error('Exception %s', e)
                             raise Exception('''Failed to add parameter for %s
                                 %s\nEither add parameter manually, or add to ignored_names''' % (key,
-                                '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
+                                '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.items()])))
                         
                     except Exception as e:
                         self.logger.error('%s', e)
                         transaction.savepoint_rollback(sid,using=self.dbAlias)
                         raise Exception('''Failed to add parameter for %s
                             %s\nEither add parameter manually, or add to ignored_names''' % (key,
-                            '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.iteritems()])))
+                            '\n'.join(['%s=%s' % (k1,v1) for k1,v1 in parms.items()])))
                     self.logger.debug("Added parameter %s from data set to database %s", key, self.dbAlias)
 
         return innerAddParameters(self, parmDict)
@@ -577,7 +573,7 @@ class STOQS_Loader(object):
         self.logger.debug("ds.attributes.keys() = %s", self.ds.attributes.keys() )
         if 'NC_GLOBAL' in self.ds.attributes:
             resourceType, _ = m.ResourceType.objects.using(self.dbAlias).get_or_create(name = 'nc_global')
-            for rn, value in self.ds.attributes['NC_GLOBAL'].iteritems():
+            for rn, value in self.ds.attributes['NC_GLOBAL'].items():
                 self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
                 resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                             name=rn, value=value, resourcetype=resourceType)
@@ -608,7 +604,7 @@ class STOQS_Loader(object):
         for v in self.include_names + ['altitude']:
             self.logger.info('v = %s', v)
             try:
-                for rn, value in self.ds[v].attributes.iteritems():
+                for rn, value in self.ds[v].attributes.items():
                     self.logger.debug("Getting or Creating Resource with name = %s, value = %s", rn, value )
                     resource, _ = m.Resource.objects.using(self.dbAlias).get_or_create(
                                           name=rn, value=value, resourcetype=resourceType)
@@ -690,9 +686,8 @@ class STOQS_Loader(object):
         try:
             self.parameter_dict[name].save(using=self.dbAlias)
         except Exception as e:
-            print e
-            print name
-            pprint.pprint( self.parameter_dict[name])
+            self.logger.warn('name = %s: %s', name, str(e))
+            pprint.pprint(self.parameter_dict[name])
 
         return self.parameter_dict[name]
 
