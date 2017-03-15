@@ -13,7 +13,7 @@ for year in range(2010, 2011):
 ##print "dl.ignored_names = %s" % str(dl.ignored_names)
 for url in urllist:
     survey_name=url.rsplit('/')[-1].rsplit('_',2)[0]
-    print("Importing survey %s from url = %s" % (survey_name, url))
+    print(("Importing survey %s from url = %s" % (survey_name, url)))
     bl=dl.Base_Loader(survey_name, 
                        platform=m.Platform.objects.get(code='gulper'),
                        url=url,

@@ -152,7 +152,7 @@ class PlanktonPump():
         self.logger.info('Joining subsample information with bottle data from the'
                          ' database using duration = %d', self.args.duration)
         new_hash = OrderedDict()
-        for (a_name, rdepth), samples in sm_hash.items():
+        for (a_name, rdepth), samples in list(sm_hash.items()):
             for sample in samples:
                 key = (a_name, rdepth)
                 try:
@@ -183,9 +183,9 @@ class PlanktonPump():
 
         with open(self.args.csv_file, 'w') as f:
             f.write('Cast,RelativeDepth,')
-            f.write(','.join(iter(s.values()).next().keys()))
+            f.write(','.join(list(iter(list(s.values())).next().keys())))
             f.write('\n')
-            for k,v in s.items():
+            for k,v in list(s.items()):
                 f.write(','.join(k) + ',')
                 f.write(','.join([str(dv) for dv in list(v.values())]))
                 f.write('\n')
