@@ -274,7 +274,7 @@ class MeasuredParameter(BaseParameter):
             self.z.append(mp['datavalue'])
             self.value_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(float(mp['datavalue']))
 
-            if 'sample__geom' in mp.keys():
+            if 'sample__geom' in list(mp.keys()):
                 self.lon.append(mp['sample__geom'].x)
                 self.lon_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(mp['sample__geom'].x)
                 self.lat.append(mp['sample__geom'].y)
@@ -303,7 +303,7 @@ class MeasuredParameter(BaseParameter):
                 self.zspan.append(float(mp['datavalue']))
                 self.value_by_act_span.setdefault(mp['sample__instantpoint__activity__name'], []).append(float(mp['datavalue']))
 
-                if 'sample__geom' in mp.keys():
+                if 'sample__geom' in list(mp.keys()):
                     # Implemented for VERTICALNETTOW data where start and end geom are identical
                     self.lonspan.append((mp['sample__geom'].x, mp['sample__geom'].x))
                     self.lon_by_act_span.setdefault(mp['sample__instantpoint__activity__name'], []).append(
@@ -325,7 +325,7 @@ class MeasuredParameter(BaseParameter):
             self.z.append(mp['datavalue'])
             self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
         
-            if 'measurement__geom' in mp.keys():
+            if 'measurement__geom' in list(mp.keys()):
                 self.lon.append(mp['measurement__geom'].x)
                 self.lon_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].x)
                 self.lat.append(mp['measurement__geom'].y)
@@ -677,7 +677,7 @@ class MeasuredParameter(BaseParameter):
             colors = ''
             indices = ''
             index = 0
-            for act in self.value_by_act.keys():
+            for act in list(self.value_by_act.keys()):
                 self.logger.debug('Reading data from act = %s', act)
                 for lon,lat,depth,value in zip(self.lon_by_act[act], self.lat_by_act[act], self.depth_by_act[act], self.value_by_act[act]):
                     points = points + '%.5f %.5f %.1f ' % (lat, lon, -depth * vert_ex)
@@ -705,7 +705,7 @@ class MeasuredParameter(BaseParameter):
                 indices = indices + '-1 ' 
 
             # Make pairs of points for spanned NetTow-like data
-            for act in self.value_by_act_span.keys():
+            for act in list(self.value_by_act_span.keys()):
                 self.logger.debug('Reading data from act = %s', act)
                 for lons, lats, depths, value in zip(self.lon_by_act_span[act], 
                                                       self.lat_by_act_span[act], 

@@ -296,7 +296,7 @@ class PlatformAnimation(object):
         # Find earliest platform animation, time and latest time
         min_start_time = datetime.utcnow()
         max_end_time = datetime.utcfromtimestamp(0)
-        for p, r in time_ranges.items():
+        for p, r in list(time_ranges.items()):
             if r.start < min_start_time:
                 min_start_time = r.start
                 st_ems = int((time.mktime(min_start_time.timetuple()) + 
@@ -308,7 +308,7 @@ class PlatformAnimation(object):
                                 max_end_time.microsecond / 1.e6) * 1000.0)
 
         # Build X3D and assemble
-        for p, r in time_ranges.items():
+        for p, r in list(time_ranges.items()):
             if force_overlap:
                 # Compare earliest platform animation with all the rest, build x3d for only overlapping
                 if self.overlap_time(time_ranges[earliest_platform], r) > 0:
