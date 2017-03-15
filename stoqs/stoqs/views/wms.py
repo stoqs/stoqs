@@ -124,8 +124,8 @@ class ActivityView(object):
             fh = open(self.mappath, 'w')
                 
         for line in response:
-            ##logger.debug(line)
-            fh.write(line) 
+            ##logger.info(line.decode("utf-8"))
+            fh.write(line.decode("utf-8"))
 
     def getColorOfItem(self, item):
         '''Return color given name of item.  Returns value saved in class dictionary otherwise create new random color, save, and return it. 
