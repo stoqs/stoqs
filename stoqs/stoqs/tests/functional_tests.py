@@ -177,5 +177,3 @@ class BrowserTestCase(TestCase):
         parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_contour_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
         parameter_contour_plot_radio_button.click()
-
-        self.assertEquals('', self._mapserver_loading_panel_test)
