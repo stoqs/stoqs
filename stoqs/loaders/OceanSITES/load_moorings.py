@@ -83,5 +83,5 @@ else:
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 osl.addTerrainResources()
 
-print "All Done."
+print("All Done.")
 
