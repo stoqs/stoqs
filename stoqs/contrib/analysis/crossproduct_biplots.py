@@ -68,7 +68,7 @@ class CrossProductBiPlot(BiPlot):
             fig.text(0.5, 0.975, self.args.title, horizontalalignment='center', verticalalignment='top')
 
         fileName = self.getFileName(figCount)
-        print 'Saving file', fileName
+        print('Saving file', fileName)
         fig.savefig(fileName)
 
     def makeCrossProductBiPlots(self):
@@ -87,24 +87,24 @@ class CrossProductBiPlot(BiPlot):
         axisNum = 1
         figCount = 1
         newFigFlag = True
-        xpList = xParmsHash.keys()
+        xpList = list(xParmsHash.keys())
         xpList.sort(key=lambda p: p.name.lower())
         for xP in xpList:
             xPlats = xParmsHash[xP]
-            if self.args.verbose: print xP.name
-            ypList = allParmsHash.keys()
+            if self.args.verbose: print(xP.name)
+            ypList = list(allParmsHash.keys())
             ypList.sort(key=lambda p: p.name.lower())
             for yP in ypList:
                 yPlats = allParmsHash[yP]
                 commonPlatforms = xPlats.intersection(yPlats)
                 if xP.name == yP.name or set((xP.name, yP.name)) in setList or not commonPlatforms:
                     continue
-                if self.args.verbose: print '\t%s' % yP.name
+                if self.args.verbose: print('\t%s' % yP.name)
 
                 try:
                     x, y, points = self._getPPData(None, None, None, xP.name, yP.name)
-                except NoPPDataException, e:
-                    if self.args.verbose: print e
+                except NoPPDataException as e:
+                    if self.args.verbose: print(e)
                     continue
 
                 # Assess the correlation
@@ -154,7 +154,7 @@ class CrossProductBiPlot(BiPlot):
         # Save last set of subplots
         self.saveFigure(fig, figCount)
 
-        print 'Done.'
+        print('Done.')
 
     def process_command_line(self):
         '''
