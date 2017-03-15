@@ -180,7 +180,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
             if fmt == '.count':
                 logger.debug(response.content)
-                self.assertEqual(response.content, '50', 'Response should be "50" for %s' % req)
+                self.assertEqual(response.content, b'50', 'Response should be "50" for %s' % req)
     
    
     def test_measuredparameter_with_parametervalues(self):
@@ -203,7 +203,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
             self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
             if fmt == '.count':
                 logger.debug(response.content)
-                self.assertEqual(response.content, '50', 'Response should be "50" for %s' % req)
+                self.assertEqual(response.content, b'50', 'Response should be "50" for %s' % req)
 
     def test_query_summary(self):
         req = reverse('stoqs:stoqs-query-summary', kwargs={'dbAlias': 'default'})
