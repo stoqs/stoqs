@@ -9,7 +9,7 @@ Mike McCann
 MBARI 17 March 2012
 '''
 
-from __future__ import unicode_literals
+
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.utils.encoding import python_2_unicode_compatible

@@ -171,7 +171,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                         'cmin': 11.5,
                         'cmax': 14.1 }
             qstring = ''
-            for k,v in params.items():
+            for k,v in list(params.items()):
                 qstring = qstring + k + '=' + str(v) + '&'
 
             req = base + '?' + qstring
@@ -194,7 +194,7 @@ class BaseAndMeasurementViewsTestCase(TestCase):
                         'sea_water_sigma_t_MIN': 25.0,
                         'sea_water_sigma_t_MAX': 25.33 }
             qstring = ''
-            for k,v in params.items():
+            for k,v in list(params.items()):
                 qstring = qstring + k + '=' + str(v) + '&'
 
             req = base + '?' + qstring

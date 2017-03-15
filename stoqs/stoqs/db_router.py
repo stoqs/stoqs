@@ -19,7 +19,7 @@ class RouterMiddleware(object):
         logger.debug(pargs)
         logger.debug("kwargs =")
         logger.debug(kwargs)
-        logger.debug("request.session.keys() = %s", request.session.keys())
+        logger.debug("request.session.keys() = %s", list(request.session.keys()))
         if 'dbAlias' in kwargs:
             # Add a thread local variable, and remove the dbAlias, since it's handled by the middleware.
             _thread_local_vars.dbAlias = kwargs.pop('dbAlias')
