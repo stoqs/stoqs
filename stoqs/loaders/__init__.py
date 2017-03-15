@@ -716,7 +716,7 @@ class STOQS_Loader(object):
         if lat < -90 or lat > 90:
             raise SkipRecord('Bad lat: %s (latitude must be between %s and %s)' % (lat, -90, 90))
         if lon < -720 or lon > 720:
-            raise SkipRecord('Bad lon: %s (longitude must be between %s and %s)' % (long, -720, 720))
+            raise SkipRecord('Bad lon: %s (longitude must be between %s and %s)' % (lon, -720, 720))
 
         ip, _ = m.InstantPoint.objects.using(self.dbAlias).get_or_create(activity=self.activity, timevalue=mtime)
 
@@ -743,8 +743,8 @@ class STOQS_Loader(object):
             sys.exit(-1)
         except Exception as e:
             self.logger.error('Exception %s', e)
-            self.logger.error("Cannot save measurement mtime = %s, long = %s, lat = %s,"
-                              " depth = %s", mtime, repr(long), repr(lat), repr(depth))
+            self.logger.error("Cannot save measurement mtime = %s, lon = %s, lat = %s,"
+                              " depth = %s", mtime, repr(lon), repr(lat), repr(depth))
             raise SkipRecord
 
         return measurement
