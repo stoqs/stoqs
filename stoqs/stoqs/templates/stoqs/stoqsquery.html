@@ -4870,7 +4870,9 @@ function enable_cardboard(){
                     // Apply state of other Platforms sub-checkboxes for rendering or not
                     show_geox3dlabels($('#showgeox3dlabels').is(':checked'));
                     show_geox3denuaxes($('#showgeox3denuaxes').is(':checked'));
-                    show_geox3drotaxis($('#showgeox3drotaxis').is(':checked'));
+                    if (has_rotaxes) {
+                        show_geox3drotaxis($('#showgeox3drotaxis').is(':checked'));
+                    }
                 }
                 else {
                     if ( ! $.isEmptyObject(data[key]['message']) ) {
