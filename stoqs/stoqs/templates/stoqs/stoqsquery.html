@@ -2160,6 +2160,28 @@
         }
     }
 
+    function show_geox3dlabels(show_hide_flag) {
+        $.each($('body').data()['platformAnimation'], function (index, platform) {
+            $('#' + platform + '_SCALE > transform > billboard')[0].setAttribute('render', show_hide_flag);
+            $.each($('#' + platform + '_SCALE > transform > inline > transform > billboard'), function (index, axislabel) {
+                axislabel.setAttribute('render', show_hide_flag);
+            });
+        });
+    }
+
+    function show_geox3denuaxes(show_hide_flag) {
+        $.each($('body').data()['platformAnimation'], function (index, platform) {
+            $('#' + platform + '_SCALE > transform > inline')[0].setAttribute('render', show_hide_flag);
+        });
+    }
+
+    function show_geox3drotaxis(show_hide_flag) {
+        $.each($('body').data()['platformAnimation'], function (index, platform) {
+            $('#' + platform + '_SCALE > transform > shape')[0].setAttribute('render', show_hide_flag);
+        });
+    }
+
+
     // Special handling for unzooming (Clear Selection) the time-depth-plot and time-parameter-plot
     $("#zoomed-button").click(function() {
         if ( $('.btn-primary', $('#time-depth-plot').length) ) {
@@ -2270,7 +2292,6 @@
             addStationaryPlatformModels();
             $('#showgeox3dlabels').parent().show();
             $('#showgeox3denuaxes').parent().show();
-            $('#showgeox3drotaxis').parent().show();
             $('#showplatforms').parent().parent().css( {'padding': '3px',
                                                         'background-color': 'lightgray'});
         }
@@ -2283,7 +2304,6 @@
             $('body').data()['platformAnimation'] = [];
             $('#showgeox3dlabels').parent().hide();
             $('#showgeox3denuaxes').parent().hide();
-            $('#showgeox3drotaxis').parent().hide();
             $('#showplatforms').parent().parent().removeAttr('style');
         }
     });
@@ -2373,48 +2393,30 @@
     $('#showgeox3dlabels').on('click', function (e) {
         // Turn off and on all text labels to make BEDs animation less 'busy'
         if ( $('#showgeox3dlabels').is(':checked') ) {
-            $.each($('body').data()['platformAnimation'], function (index, platform) {
-                $('#' + platform + '_SCALE > transform > billboard')[0].setAttribute('render', true);
-                $.each($('#' + platform + '_SCALE > transform > inline > transform > billboard'), function (index, axislabel) {
-                    axislabel.setAttribute('render', true);
-                });
-            });
+            show_geox3dlabels(true);
         }
         else {
-            $.each($('body').data()['platformAnimation'], function (index, platform) {
-                $('#' + platform + '_SCALE > transform > billboard')[0].setAttribute('render', false);
-                $.each($('#' + platform + '_SCALE > transform > inline > transform > billboard'), function (index, axislabel) {
-                    axislabel.setAttribute('render', false);
-                });
-            });
+            show_geox3dlabels(false);
         }
     });
 
     $('#showgeox3denuaxes').on('click', function (e) {
         // turn off and on all East North Up orientation axes
         if ( $('#showgeox3denuaxes').is(':checked') ) {
-            $.each($('body').data()['platformAnimation'], function (index, platform) {
-                $('#' + platform + '_SCALE > transform > inline')[0].setAttribute('render', true);
-            });
+            show_geox3denuaxes(true);
         }
         else {
-            $.each($('body').data()['platformAnimation'], function (index, platform) {
-                $('#' + platform + '_SCALE > transform > inline')[0].setAttribute('render', false);
-            });
+            show_geox3denuaxes(false);
         }
     });
 
     $('#showgeox3drotaxis').on('click', function (e) {
         // turn off and on axis or rotation indicator shape > indexedlineset
         if ( $('#showgeox3drotaxis').is(':checked') ) {
-            $.each($('body').data()['platformAnimation'], function (index, platform) {
-                $('#' + platform + '_SCALE > transform > shape')[0].setAttribute('render', true);
-            });
+            show_geox3drotaxis(true);
         }
         else {
-            $.each($('body').data()['platformAnimation'], function (index, platform) {
-                $('#' + platform + '_SCALE > transform > shape')[0].setAttribute('render', false);
-            });
+            show_geox3drotaxis(false);
         }
     });
 
@@ -4850,6 +4852,25 @@ function enable_cardboard(){
                         x3dText += x3d;
                     });
                     $('#platform-animations').html(data[key]['all'] + x3dText);
+
+                    // Check for any platforms that have Shape IndexedLineSets so as to show ROT Axis check box
+                    var has_rotaxes = false;
+                    $.each($('body').data()['platformAnimation'], function (index, platform) {
+                        if ( ! $.isEmptyObject($('#' + platform + '_SCALE > transform > shape')[0]) ) {
+                            has_rotaxes = true;
+                        }
+                    });
+                    if (has_rotaxes) {
+                        $('#showgeox3drotaxis').parent().show();
+                    }
+                    else {
+                        $('#showgeox3drotaxis').parent().hide();
+                    }
+
+                    // Apply state of other Platforms sub-checkboxes for rendering or not
+                    show_geox3dlabels($('#showgeox3dlabels').is(':checked'));
+                    show_geox3denuaxes($('#showgeox3denuaxes').is(':checked'));
+                    show_geox3drotaxis($('#showgeox3drotaxis').is(':checked'));
                 }
                 else {
                     if ( ! $.isEmptyObject(data[key]['message']) ) {
