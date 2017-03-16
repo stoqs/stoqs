@@ -263,8 +263,8 @@ def pearsonr(x, y):
     n = len(x)
     sum_x = float(sum(x))
     sum_y = float(sum(y))
-    sum_x_sq = sum(map(lambda x: pow(x, 2), x))
-    sum_y_sq = sum(map(lambda x: pow(x, 2), y))
+    sum_x_sq = sum([pow(x, 2) for x in x])
+    sum_y_sq = sum([pow(x, 2) for x in y])
     psum = sum(map(lambda x, y: x * y, x, y))
     num = psum - (sum_x * sum_y/n)
     den = pow((sum_x_sq - pow(sum_x, 2) / n) * (sum_y_sq - pow(sum_y, 2) / n), 0.5)
@@ -426,7 +426,7 @@ def haversine(lon1, lat1, lon2, lat2):
     on the earth (specified in decimal degrees)
     """
     # convert decimal degrees to radians 
-    lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
+    lon1, lat1, lon2, lat2 = list(map(math.radians, [lon1, lat1, lon2, lat2]))
 
     # haversine formula 
     dlon = lon2 - lon1 

@@ -46,7 +46,7 @@ from django.contrib.gis.geos import fromstr, Point, LineString
 import time
 import numpy
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import logging
 from glob import glob
 from tempfile import NamedTemporaryFile
@@ -189,9 +189,9 @@ class HABLoader(STOQS_Loader):
                 self.mindepth = depth
             if depth > self.maxdepth:
                 self.maxdepth = depth
-        except SkipRecord, e:
+        except SkipRecord as e:
             logger.info(e)
-        except Exception, e:
+        except Exception as e:
             logger.error(e)
             sys.exit(-1)
         else:
@@ -210,7 +210,7 @@ class HABLoader(STOQS_Loader):
             except ParameterNotFound:
                 logger.error("Unable to locate parameter for %s, skipping", pn)
                 continue
-            except Exception, e:
+            except Exception as e:
                 logger.error('Exception %s. Skipping this record.', e)
                 logger.error("Bad value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
                 continue
@@ -218,7 +218,7 @@ class HABLoader(STOQS_Loader):
                 self.loaded += 1
                 logger.info("Inserted value (id=%(id)s) for %(pn)s = %(value)s", {'pn': pn, 'value': value, 'id': mp.pk})
                 self.parmCount[pn] += 1
-                if self.parameterCount.has_key(self.getParameterByName(pn)):
+                if self.getParameterByName(pn) in self.parameterCount:
                     self.parameterCount[self.getParameterByName(pn)] += 1
                 else:
                     self.parameterCount[self.getParameterByName(pn)] = 0
@@ -381,7 +381,7 @@ class HABLoader(STOQS_Loader):
         for line in fh:
             # Skip all lines that don't begin with '"' nor ' ' then open that with csv.DictReader
             if not line.startswith('"') and not line.startswith(' '):
-                titles = reader.next()
+                titles = next(reader)
                 reader = csv.DictReader(fh, titles)
                 for r in reader:
                     year = int(r['year'])
@@ -397,7 +397,7 @@ class HABLoader(STOQS_Loader):
                     secs = int(time.split(':')[2])
 
                     parmNameValues = []
-                    for name in self.ds.keys():                  
+                    for name in list(self.ds.keys()):                  
                         if name.startswith('Chlorophyll'):
                             parmNameValues.append((name, 1e-5*float(r[name])))
                         else:
@@ -500,7 +500,7 @@ if __name__ == '__main__':
     platformName = 'Pier'
     platformColor = '11665e'
     platformTypeName = 'pier'
-    start = datetime(2011, 01, 01)
+    start = datetime(2011, 0o1, 0o1)
     end = datetime(2012,12,31)
     
     sl = HABLoader(activityName, platformName,  dbAlias, campaignName, activitytypeName,platformColor, platformTypeName, start, end)

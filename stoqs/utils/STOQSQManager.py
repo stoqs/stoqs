@@ -173,7 +173,7 @@ class STOQSQManager(object):
         self.args = args
 
         # Determine if this is the intial query and set a flag
-        for k, v in self.kwargs.items():
+        for k, v in list(self.kwargs.items()):
             # Test keys that can affect the MeasuredParameter count
             if  k == 'depth' or k == 'time':
                 if v[0] is not None or v[1] is not None:
@@ -186,7 +186,7 @@ class STOQSQManager(object):
         logger.debug('self.initialQuery = %s', self.initialQuery)
 
         # Check to see if there is a "builder" for a Q object using the given parameters and build up the filter from the Q objects
-        for k, v in self.kwargs.items():
+        for k, v in list(self.kwargs.items()):
             if not v:
                 continue
             if k == 'fromTable':
@@ -229,7 +229,7 @@ class STOQSQManager(object):
         '''
         
         results = {}
-        for k, v in self.options_functions.items():
+        for k, v in list(self.options_functions.items()):
             logger.debug('k, v = %s, %s', k, v)
             if self.kwargs['only'] != []:
                 if k not in self.kwargs['only']:
@@ -585,9 +585,9 @@ class STOQSQManager(object):
                 # Timeseries and timeseriesProfile data for a single platform
                 # (even if composed of multiple Activities) must have single
                 # unique horizontal position.
-                geom_list = list(filter(None, self.qs.filter(platform__name=platformName)
+                geom_list = list([_f for _f in self.qs.filter(platform__name=platformName)
                                          .values_list('nominallocation__geom', flat=True)
-                                         .distinct()))
+                                         .distinct() if _f])
                 try:
                     geom = geom_list[0]
                 except IndexError:
@@ -771,7 +771,7 @@ class STOQSQManager(object):
         timeSeriesProfileQ = self._timeSeriesProfileQ()
         trajectoryProfileQ = self._trajectoryProfileQ()
 
-        for plats in self.getPlatforms().values():
+        for plats in list(self.getPlatforms().values()):
             for p in plats:
                 logger.debug('Platform name: ' + p[0])
                 plq = Q(platform__name = p[0])
@@ -895,7 +895,7 @@ class STOQSQManager(object):
 
         trajectoryQ = self._trajectoryQ()
 
-        for plats in self.getPlatforms().values():
+        for plats in list(self.getPlatforms().values()):
             for p in plats:
                 plq = Q(platform__name = p[0])
                 sbdt[p[0]] = {}
@@ -967,7 +967,7 @@ class STOQSQManager(object):
                 strides[parameter.name] = {}
 
             # Initialize pt dictionary of dictionaries with its keys
-            if unit not in pt.keys():
+            if unit not in list(pt.keys()):
                 logger.debug('Initializing pt[%s] = {}', unit)
                 pt[unit] = {}
 
@@ -1084,7 +1084,7 @@ class STOQSQManager(object):
         units = {}
 
         # Build units hash of parameter names for labeling axes in flot
-        for p,u in pa_units.items():
+        for p,u in list(pa_units.items()):
             logger.debug('is_standard_name = %s.  p, u = %s, %s', is_standard_name, p, u)
             if not self._parameterInSelection(p, is_standard_name):
                 logger.debug('Parameter is not in selection')
@@ -1163,7 +1163,7 @@ class STOQSQManager(object):
         counts = 0
 
         # Look for platforms that have featureTypes ammenable for Parameter time series visualization
-        for plats in self.getPlatforms().values():
+        for plats in list(self.getPlatforms().values()):
             for platform in plats:
                 if self.kwargs.get('platforms'):
                     # getPlatforms() includes all Platforms, skip over ones not in the selection
@@ -1205,9 +1205,9 @@ class STOQSQManager(object):
             # Perform more expensive query: start with qs_mp_no_parm version of the MeasuredParameter query set
             pt_qs_mp = self.mpq.qs_mp_no_parm
             
-            logger.debug('Before self._buildParameterTime: pt = %s', pt.keys()) 
+            logger.debug('Before self._buildParameterTime: pt = %s', list(pt.keys())) 
             pt, units, strides = self._buildParameterTime(pa_units, is_standard_name, ndCounts, pt, strides, pt_qs_mp)
-            logger.debug('After self._buildParameterTime: pt = %s', pt.keys()) 
+            logger.debug('After self._buildParameterTime: pt = %s', list(pt.keys())) 
 
         return({'pt': pt, 'units': units, 'counts': counts, 'colors': colors, 'strides': strides})
 
@@ -1339,7 +1339,7 @@ class STOQSQManager(object):
                     ##logger.debug('pa.name = %s, aname = %s', pa.name, aph['activityparameter__activity__name'])
 
             # Unwind the platformList to get activities by platform name
-            for an, pnList in platformList.items():
+            for an, pnList in list(platformList.items()):
                 ##logger.debug('an = %s, pnList = %s', an, pnList)
                 for pn in pnList:
                     try:
@@ -1350,7 +1350,7 @@ class STOQSQManager(object):
 
             # Build the final data structure organized by platform -> activity
             plHash = {}
-            for plat in activityList.keys():
+            for plat in list(activityList.keys()):
                 ##logger.debug('plat = %s', plat)
                 for an in activityList[plat]:
                     try:
@@ -1366,7 +1366,7 @@ class STOQSQManager(object):
 
         # Make RGBA colors from the hex colors - needed for opacity in flot bars
         rgbas = {}
-        for plats in self.getPlatforms().values():
+        for plats in list(self.getPlatforms().values()):
             for p in plats:
                 r,g,b = (p[2][:2], p[2][2:4], p[2][4:])
                 rgbas[p[0]] = 'rgba(%d, %d, %d, 0.4)' % (int(r,16), int(g,16), int(b,16))

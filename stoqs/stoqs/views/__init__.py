@@ -145,7 +145,7 @@ class BaseOutputer(object):
         '''
         pmin = {}
         pmax = {}
-        for key, _ in self.request.GET.items():
+        for key, _ in list(self.request.GET.items()):
             if key.endswith('_MIN'):        
                 name = key.split('_MIN')[0]
                 try:

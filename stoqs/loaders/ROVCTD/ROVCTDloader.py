@@ -50,7 +50,7 @@ from decimal import Decimal
 import math, numpy
 from coards import to_udunits, from_udunits, ParserError
 import csv
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import logging
 import socket
 import seawater.eos80 as sw
@@ -252,7 +252,7 @@ class ROVCTD_Loader(Base_Loader):
         url = 'http://coredata.shore.mbari.org/rovctd/diveinfo/rovdiveinfoservlet?platform=%s&dive=%d' % (self.platformName, self.diveNumber)
         ##url = 'http://134.89.10.17:8081/rovdiveinfoservlet?platform=%s&dive=%d' % (self.platformName, self.diveNumber)
         
-        for r in csv.DictReader(urllib2.urlopen(url)):
+        for r in csv.DictReader(urllib.request.urlopen(url)):
             sdt = datetime.strptime(r['divestartdtg'], '%Y-%m-%dT%H:%M:%SZ')
             edt = datetime.strptime(r['diveenddtg'], '%Y-%m-%dT%H:%M:%SZ')
             start = time.mktime(sdt.timetuple())
@@ -327,7 +327,7 @@ ORDER BY divenumber''' % (self.platformName, self.diveNumber)
         self.lines = ''
         try:
             logger.info('Reading lines from %s', self.url)
-            response = urllib2.urlopen(self.url)
+            response = urllib.request.urlopen(self.url)
             self.lines = response.read().replace('\r', '')
         except KeyboardInterrupt as e:
             logger.error('Interrupted when trying to read lines from %s', self.url)
@@ -371,7 +371,7 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
             ##self.url = 'http://coredata.shore.mbari.org/rovctd/data/rovctddataservlet?'
             self.url = 'http://134.89.10.17:8081/rovctddataservlet?'
             self.url += 'platform=%s&dive=%d&domain=epochsecs' % (self.platformName, self.diveNumber)
-            for i,v in enumerate(['elon', 'elat', 'd', 'rlon', 'rlat'] + self.vDict.keys()):
+            for i,v in enumerate(['elon', 'elat', 'd', 'rlon', 'rlat'] + list(self.vDict.keys())):
                 self.url += '&r%d=%s' % (i + 1, v)
 
             records = self._nodeServletLines()
@@ -396,7 +396,7 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
                     # Some flag values are not set - assume that it would be the default value: 2
                     logger.debug('latlonflag flag is NoneType value in row %d for %s' % (i, self.activityName))
 
-                for v in self.vDict.keys():
+                for v in list(self.vDict.keys()):
                     values = {}
                     if v not in self.include_names:
                         continue
@@ -471,14 +471,14 @@ ORDER BY epochsecs''' % {'rovDataView': self.rovDataView, 'rov': self.platformNa
                 logger.error('lines = \n%s', self.lines)
             logger.exception(e)
 
-        self.count = np.sum(self.vSeen.values())
+        self.count = np.sum(list(self.vSeen.values()))
 
     def _genROVCTD(self):
         '''
         Generator of ROVCTD trajectory data. The data values are a function of time and position as returned
         by the web service. Yield values by Parameter.
         '''
-        for p,d in self.valuesByParm.iteritems():
+        for p,d in list(self.valuesByParm.items()):
             for values in d:
                 yield values
 
@@ -627,7 +627,7 @@ if __name__ == '__main__':
     elif args.rov and args.start and args.end:
         processDiveRange(args)
     else:
-        print 'Need a list of dives or a range of dives.'
+        print('Need a list of dives or a range of dives.')
 
     ls = LoadScript(args.database, args.campaignName, args.campaignDescription,
                     x3dTerrains = {
@@ -645,5 +645,5 @@ if __name__ == '__main__':
     # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
     ls.addTerrainResources()
 
-    print "All Done."
+    print("All Done.")
 

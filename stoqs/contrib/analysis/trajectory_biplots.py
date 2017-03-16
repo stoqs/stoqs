@@ -68,9 +68,9 @@ class PlatformsBiPlot(BiPlot):
         '''
         Make subplot of depth time series for all the platforms and highlight the time range
         '''
-        for pl, ats in platformDTHash.iteritems():
+        for pl, ats in list(platformDTHash.items()):
             color = self._getColor(pl)
-            for _, ts in ats.iteritems():
+            for _, ts in list(ats.items()):
                 datetimeList = []
                 depths = []
                 for ems, d in ts:
@@ -90,7 +90,7 @@ class PlatformsBiPlot(BiPlot):
 
         if swrTS:
             # Plot short wave radiometer data
-            if self.args.verbose: print 'Plotting swrTS...'
+            if self.args.verbose: print('Plotting swrTS...')
             ax2 = ax1.twinx()
             ax2.plot_date(matplotlib.dates.date2num(swrTS[0]), swrTS[1], '-', c='black', alpha=0.5)
             ax2.set_ylabel('SWR (W/m^2)')
@@ -111,8 +111,8 @@ class PlatformsBiPlot(BiPlot):
         ##m.wmsimage('http://www.gebco.net/data_and_products/gebco_web_services/web_map_service/mapserv?', layers=['GEBCO_08_Grid'])    # Works, but coarse
         m.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
  
-        for pl, LS in platformLineStringHash.iteritems():
-            x,y = zip(*LS)
+        for pl, LS in list(platformLineStringHash.items()):
+            x,y = list(zip(*LS))
             m.plot(x, y, '-', c=self._getColor(pl), linewidth=3)
 
         if self.args.mapLabels:
@@ -208,9 +208,9 @@ class PlatformsBiPlot(BiPlot):
         platformDTHash = self._getplatformDTHash()
         try:
             swrTS = self._getTimeSeriesData(allActivityStartTime, allActivityEndTime, parameterStandardName='surface_downwelling_shortwave_flux_in_air')
-        except NoTSDataException, e:
+        except NoTSDataException as e:
             swrTS = None
-            print "WARNING:", e
+            print("WARNING:", e)
 
         # Loop through sections of the data with temporal query constraints based on the window and step command line parameters
         while endTime <= allActivityEndTime:
@@ -229,11 +229,11 @@ class PlatformsBiPlot(BiPlot):
             platformLineStringHash = {}
             for i, (pl, xP, yP) in enumerate(zip(self.args.platform, self.args.xParm, self.args.yParm)):
                 try: 
-                    if self.args.verbose: print 'Calling self._getMeasuredPPData...'
+                    if self.args.verbose: print('Calling self._getMeasuredPPData...')
                     x, y, points = self._getMeasuredPPData(startTime, endTime, pl, xP, yP)
                     platformLineStringHash[pl] = LineString(points).simplify(tolerance=.001)
-                except NoPPDataException, e:
-                    if self.args.verbose: print e
+                except NoPPDataException as e:
+                    if self.args.verbose: print(e)
                     x, y = ([], [])
 
                 if len(self.args.platform) == 1:
@@ -249,7 +249,7 @@ class PlatformsBiPlot(BiPlot):
             # Plot spatial
             ax = plt.Subplot(fig, map_gs[:])
             fig.add_subplot(ax, aspect='equal')
-            if self.args.verbose: print 'Calling self.spatialSubPlot()...'
+            if self.args.verbose: print('Calling self.spatialSubPlot()...')
             self.spatialSubPlot(platformLineStringHash, ax, allExtent)
            
             startTime = startTime + timeStep
@@ -259,17 +259,17 @@ class PlatformsBiPlot(BiPlot):
             plt.figtext(0.0, 0.0, provStr, size=7, horizontalalignment='left', verticalalignment='bottom')
 
             fileName, wcName = self.getFilename(startTime)
-            print 'Saving to file', fileName
+            print('Saving to file', fileName)
             fig.savefig(fileName)
             plt.clf()
             plt.close()
             ##raw_input('P')
 
-        print 'Done.'
-        print 'Make an animated gif with: convert -delay 10 {wcName}.png {baseName}.gif'.format(wcName=wcName, baseName='_'.join(fileName.split('_')[:-1]))
-        print 'Make an MPEG 4 with: ffmpeg -r 10 -i {baseName}.gif -vcodec mpeg4 -qscale 1 -y {baseName}.mp4'.format(
-                baseName='_'.join(fileName.split('_')[:-1]))
-        print 'On a Mac open the .mp4 file in QuickTime Player and export the file for "iPad, iPhone & Apple TV" (.m4v format) for best portability.'
+        print('Done.')
+        print('Make an animated gif with: convert -delay 10 {wcName}.png {baseName}.gif'.format(wcName=wcName, baseName='_'.join(fileName.split('_')[:-1])))
+        print('Make an MPEG 4 with: ffmpeg -r 10 -i {baseName}.gif -vcodec mpeg4 -qscale 1 -y {baseName}.mp4'.format(
+                baseName='_'.join(fileName.split('_')[:-1])))
+        print('On a Mac open the .mp4 file in QuickTime Player and export the file for "iPad, iPhone & Apple TV" (.m4v format) for best portability.')
 
     def process_command_line(self):
         '''

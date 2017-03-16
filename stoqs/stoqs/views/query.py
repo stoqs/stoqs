@@ -99,7 +99,7 @@ def _buildMapFile(request, qm, options):
         return
 
     # 'mappath' should be in the session from the call to queryUI() set it here in case it's not set by queryUI() 
-    if request.session.has_key('mappath'):
+    if 'mappath' in request.session:
         logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
     else:
         request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
@@ -114,7 +114,7 @@ def _buildMapFile(request, qm, options):
     item_list = []      # Replicates queryset from an Activity query (needs name & id) with added geo_query & color attrbutes
 
     trajectory_union_layer_string = ''
-    for plats in json.loads(options)['platforms'].values():
+    for plats in list(json.loads(options)['platforms'].values()):
         for p in plats:
             # TODO: Test whether it's a point or track for trajectoryprofile data
             if p[3].lower() != 'trajectory':
@@ -130,7 +130,7 @@ def _buildMapFile(request, qm, options):
             item_list.append(item)
 
     station_union_layer_string = ''
-    for plats in json.loads(options)['platforms'].values():
+    for plats in list(json.loads(options)['platforms'].values()):
         for p in plats:
             # First trajectoryprofile dataset is IMOS-EAC in which the trajectory is just variation in depth, so plot as a station
             # TODO: Test whether it's a point or track for trajectoryprofile data
@@ -174,7 +174,7 @@ def queryData(request, fmt=None):
     '''
     response = HttpResponse()
     params = {}
-    for key, value in query_parms.items():
+    for key, value in list(query_parms.items()):
         if type(value) in (list, tuple):
             params[key] = [request.GET.get(p, None) for p in value]
         else:
@@ -182,7 +182,7 @@ def queryData(request, fmt=None):
 
     # Look for any parameter _MIN & _MAX input from the UI.  After retrieving the above query_parms the
     # only thing left in the request QueryDict should be the parameter _MIN _MAX selections.
-    for key, value in request.GET.items():
+    for key, value in list(request.GET.items()):
         if key.endswith('_MIN'):                    # Just test for _MIN; UI will always provide _MIN & _MAX
             name = key.split('_MIN')[0]
             try:
@@ -230,7 +230,7 @@ def queryMap(request):
     '''
     response = HttpResponse()
     params = {}
-    for key, value in query_parms.items():
+    for key, value in list(query_parms.items()):
         if type(value) in (list, tuple):
             params[key] = [request.GET.get(p, None) for p in value]
         else:
@@ -260,7 +260,7 @@ def queryUI(request):
     '''
 
     ##request.session.flush()
-    if request.session.has_key('mappath'):
+    if 'mappath' in request.session:
         logger.debug("Reusing request.session['mappath'] = %s", request.session['mappath'])
     else:
         request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name

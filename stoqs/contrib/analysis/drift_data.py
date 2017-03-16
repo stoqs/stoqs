@@ -34,7 +34,7 @@ sys.path.insert(0, project_dir)
 import csv
 import time
 import pyproj
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -61,8 +61,8 @@ class Drift():
         for url in self.args.trackData:
             # Careful - trackingdb returns the records in reverse time order
             if self.args.verbose:
-                print 'Opening', url
-            for r in csv.DictReader(urllib2.urlopen(url)):
+                print('Opening', url)
+            for r in csv.DictReader(urllib.request.urlopen(url)):
                 # Use logic to skip inserting values if one or the other or both start and end are specified
                 if self.startDatetime:
                     if datetime.utcfromtimestamp(float(r['epochSeconds'])) < self.startDatetime:
@@ -148,8 +148,8 @@ class Drift():
         for url in self.args.stoqsData:
             # Careful - trackingdb returns the records in reverse time order
             if self.args.verbose:
-                print 'Opening', url
-            for r in csv.DictReader(urllib2.urlopen(url.replace(' ', '%20'))):
+                print('Opening', url)
+            for r in csv.DictReader(urllib.request.urlopen(url.replace(' ', '%20'))):
                 # Use logic to skip inserting values if one or the other or both start and end are specified
                 dt = datetime.strptime(r['measurement__instantpoint__timevalue'], '%Y-%m-%d %H:%M:%S')
                 if self.startDatetime:
@@ -160,7 +160,7 @@ class Drift():
                         continue
         
                 if self.args.verbose > 1:
-                    print r
+                    print(r)
 
                 apQS = ActivityParameter.objects.using(self.args.database).filter(
                             activity__name=r['measurement__instantpoint__activity__name'],
@@ -200,7 +200,7 @@ class Drift():
             latMin = 90
             latMax = -90
             for drift in (self.trackDrift, self.adcpDrift, self.stoqsDrift):
-                for k,v in drift.iteritems():
+                for k,v in list(drift.items()):
                     if np.min(v['lon']) < lonMin:
                         lonMin = np.min(v['lon'])
                     if np.max(v['lon']) > lonMax:
@@ -232,11 +232,11 @@ class Drift():
         if not forGeotiff:
             m.arcgisimage(server='http://services.arcgisonline.com/ArcGIS', service='Ocean_Basemap')
 
-        for depth, drift in self.adcpDrift.iteritems():
+        for depth, drift in list(self.adcpDrift.items()):
             m.plot(drift['lon'], drift['lat'], '-', c='black', linewidth=1)
             plt.text(drift['lon'][-1], drift['lat'][-1], '%i m' % depth, size='small')
 
-        for platform, drift in self.trackDrift.iteritems():
+        for platform, drift in list(self.trackDrift.items()):
             # Ad hoc coloring of platforms...
             if platform.startswith('stella'):
                 color = 'yellow'
@@ -255,7 +255,7 @@ class Drift():
         STATIC_ROOT = '/var/www/html/stoqs/static'      # Warning: Hard-coded
         clt = readCLT(os.path.join(STATIC_ROOT, 'colormaps', 'jetplus.txt'))
         cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
-        for key, drift in self.stoqsDrift.iteritems():
+        for key, drift in list(self.stoqsDrift.items()):
             min, max = key.split(',')[2:4]
             ax.scatter(drift['lon'], drift['lat'], c=drift['datavalue'], s=coloredDotSize, cmap=cm_jetplus, lw=0, vmin=min, vmax=max)
             label = '%s from %s' % tuple(key.split(',')[:2])
@@ -272,7 +272,7 @@ class Drift():
             except AttributeError:
                 pass
             fig.savefig(fileName)
-            print 'Wrote file', self.args.pngFileName
+            print('Wrote file', self.args.pngFileName)
         else:
             plt.axis('off')
             try:
@@ -302,10 +302,10 @@ class Drift():
 
         cmd = 'gdal_translate %s %s -a_ullr %s %s %s %s' % (self.args.geotiffFileName + '.png', 
                                                             self.args.geotiffFileName, e[0], e[3], e[2], e[1])
-        print "Executing:\n", cmd
+        print("Executing:\n", cmd)
         os.system(cmd)
         os.remove(self.args.geotiffFileName + '.png')
-        print 'Wrote file', self.args.geotiffFileName
+        print('Wrote file', self.args.geotiffFileName)
 
     def createKML(self):
         '''Reuse STOQS utils/Viz code to build some simple KML. Use 'position' for Parameter Name.
@@ -320,19 +320,19 @@ class Drift():
         # Put data into form that KML() expects - use different datavalues (-1, 1) to color the platforms
         dataHash = defaultdict(lambda: [])  
         colors = {}
-        values = np.linspace(-1, 1, len(self.trackDrift.keys()))
+        values = np.linspace(-1, 1, len(list(self.trackDrift.keys())))
         for i, k in enumerate(self.trackDrift.keys()):
             colors[k] = values[i]
 
-        for platform, drift in self.trackDrift.iteritems():
+        for platform, drift in list(self.trackDrift.items()):
             for es, lo, la in zip(drift['es'], drift['lon'], drift['lat']):
                 dataHash[platform].append([datetime.utcfromtimestamp(es), lo, la, 0.0, 'position', colors[platform], platform])
 
-        for depth, drift in self.adcpDrift.iteritems():
+        for depth, drift in list(self.adcpDrift.items()):
             for es, lo, la in zip(drift['es'], drift['lon'], drift['lat']):
                 dataHash[depth].append([datetime.utcfromtimestamp(es), lo, la, float(depth), 'position', 0.0, 'adcp'])
 
-        for key, drift in self.stoqsDrift.iteritems():
+        for key, drift in list(self.stoqsDrift.items()):
             parm, plat = key.split(',')[:2]
             for es, lo, la, de, dv in zip(drift['es'], drift['lon'], drift['lat'], drift['depth'], drift['datavalue']):
                 dataHash[parm].append([datetime.utcfromtimestamp(es), lo, la, de, parm, dv, plat])
@@ -347,7 +347,7 @@ class Drift():
         fh = open(self.args.kmlFileName, 'w')
         fh.write(kml)
         fh.close()
-        print 'Wrote file', self.args.kmlFileName
+        print('Wrote file', self.args.kmlFileName)
 
     def process_command_line(self):
         '''The argparse library is included in Python 2.7 and is an added package for STOQS.

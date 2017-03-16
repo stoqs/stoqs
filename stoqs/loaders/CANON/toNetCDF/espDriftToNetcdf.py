@@ -33,7 +33,7 @@ import sys
 import csv
 import time
 import coards
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import datetime
 import numpy as np
 from pupynere import netcdf_file
@@ -70,12 +70,12 @@ class ParserWriter(BaseWriter):
         la = []
         lo = []
         # Careful - trackingdb returns the records in reverse time order
-        for r in csv.DictReader(urllib2.urlopen(url)):
+        for r in csv.DictReader(urllib.request.urlopen(url)):
             es.append(int(round(float(r['epochSeconds']))))
             la.append(float(r['latitude']))
             lo.append(float(r['longitude']))
 
-        print "Read in %d ESP GPS records" % len(es)
+        print(("Read in %d ESP GPS records" % len(es)))
 
         # Create lookup to get lat & lon given any epoch second, accurate to integer seconds
         # Reverse the order for the numpy lat & lon arrays
@@ -226,10 +226,10 @@ class ParserWriter(BaseWriter):
             for v in isus_vars:
                 ncVar = v.replace(' ', '_', 42)
                 try:
-                    exec "%s_list.append(r['%s'])" % (ncVar, v, )
+                    exec("%s_list.append(r['%s'])" % (ncVar, v, ))
                 except NameError:
-                    exec '%s_list = []' % ncVar
-                    exec "%s_list.append(r['%s'])" % (ncVar, v, )
+                    exec('%s_list = []' % ncVar)
+                    exec("%s_list.append(r['%s'])" % (ncVar, v, ))
 
             lastEs = es
 
@@ -268,12 +268,12 @@ class ParserWriter(BaseWriter):
             ncVar = v.replace(' ', '_', 42)
             # Only Latitude, Longitude, Depth, and Time variables are upper case to match other Glider data
             if v == 'Latitude' or v == 'Longitude':
-                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('time',))" % (ncVar.lower(), ncVar.upper(), )
+                exec("self.%s = self.ncFile.createVariable('%s', 'float64', ('time',))" % (ncVar.lower(), ncVar.upper(), ))
             else:
-                exec "self.%s = self.ncFile.createVariable('%s', 'float64', ('time',))" % (ncVar.lower(), ncVar, )
-            exec "self.%s.coordinates = 'time depth latitude longitude'" % ncVar.lower()
-            exec "self.%s.long_name = '%s'" % (ncVar.lower(), v, )
-            exec "self.%s[:] = %s_list" % (ncVar.lower(), ncVar, )
+                exec("self.%s = self.ncFile.createVariable('%s', 'float64', ('time',))" % (ncVar.lower(), ncVar, ))
+            exec("self.%s.coordinates = 'time depth latitude longitude'" % ncVar.lower())
+            exec("self.%s.long_name = '%s'" % (ncVar.lower(), v, ))
+            exec("self.%s[:] = %s_list" % (ncVar.lower(), ncVar, ))
 
         self.add_global_metadata()
 
@@ -292,8 +292,8 @@ if __name__ == '__main__':
 
     pw = ParserWriter(parentDir=dataDir)
     pw.write_ctd()
-    print "Wrote %s" % pw.outFile
+    print(("Wrote %s" % pw.outFile))
 
     pw.write_isus()
-    print "Wrote %s" % pw.outFile
+    print(("Wrote %s" % pw.outFile))
 

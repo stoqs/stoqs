@@ -182,7 +182,7 @@ class KML(BaseParameter):
                 clim = (-1, 1)
         ##logger.debug('clim = %s', clim)
     
-        for k in dataHash.keys():
+        for k in list(dataHash.keys()):
             (pointStyleKML, pointKMLHash[k]) = self._buildKMLpoints(dataHash[k], self.clt, clim)
             if self.withLineStringsFlag:
                 (lineStyleKML, lineKMLHash[k]) = self._buildKMLlines(dataHash[k])

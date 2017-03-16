@@ -91,7 +91,7 @@ class BrowserTestCase(TestCase):
 
         # Load permalink
         self.browser.get(permalink_url)
-        self.assertEquals('', self._mapserver_loading_panel_test())
+        self.assertEqual('', self._mapserver_loading_panel_test())
 
     def test_campaign_page(self):
         self.browser.get('http://localhost:8000/')
@@ -100,7 +100,7 @@ class BrowserTestCase(TestCase):
     def test_query_page(self):
         self.browser.get('http://localhost:8000/default/query/')
         self.assertIn('default', self.browser.title)
-        self.assertEquals('', self._mapserver_loading_panel_test())
+        self.assertEqual('', self._mapserver_loading_panel_test())
 
     def test_dorado_trajectory(self):
         self.browser.get('http://localhost:8000/default/query/')
@@ -120,7 +120,7 @@ class BrowserTestCase(TestCase):
         self._wait_until_visible_then_click(dorado_button)
 
         # Test that Mapserver returns images
-        self.assertEquals('', self._mapserver_loading_panel_test())
+        self.assertEqual('', self._mapserver_loading_panel_test())
 
         # Test Spatial 3D
         spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
@@ -138,7 +138,7 @@ class BrowserTestCase(TestCase):
         self._wait_until_visible_then_click(parameter_tab)
         si = self.browser.find_element_by_id('stride-info')
         self._wait_until_visible_then_click(si)
-        assert 'bb470' in si.text
+        assert 'every single point' in si.text
         djtb = self.browser.find_element_by_id('djHideToolBarButton')
         djtb.click()
 
@@ -151,7 +151,7 @@ class BrowserTestCase(TestCase):
         self._test_share_view('test_m1_timeseries')
         si = self.browser.find_element_by_id('stride-info')
         self._wait_until_visible_then_click(si)
-        assert 'bb470' in si.text
+        assert 'every single point' in si.text
 
     def test_contour_plots(self):
         self.browser.get('http://localhost:8000/default/query/')

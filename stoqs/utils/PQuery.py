@@ -167,7 +167,7 @@ class PQuerySet(object):
         Boiler plate copied from http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  Does not seem to be used
         by Django templates and other uses of this class, which seem to mainly use __iter__().
         '''
-        if not isinstance(k, (slice, int, long)):
+        if not isinstance(k, (slice, int)):
             raise TypeError
         assert ((not isinstance(k, slice) and (k >= 0))
                 or (isinstance(k, slice) and (k.start is None or k.start >= 0)
@@ -462,7 +462,7 @@ class PQuery(object):
             #            INNER JOIN stoqs_parameter p1 
             #            ON mp1.parameter_id = p1.id
 
-            for k,v in pminmax.items():
+            for k,v in list(pminmax.items()):
                 if k in Parameter.objects.using(self.request.META['dbAlias']).values_list('name', flat=True):
                     p = re.compile("[';]")
                     if p.search(v[0]) or p.search(v[1]):
@@ -737,7 +737,7 @@ For sampledparameter to sampledparamter query an example is:
         # Construct INNER JOINS and WHERE sql for Sampled and Measured Parameter selections
         # Use aliases for joins on each axis
         where_sql = '' 
-        for axis, pid in pDict.items():
+        for axis, pid in list(pDict.items()):
             if pid:
                 self.logger.debug('axis, pid = %s, %s', axis, pid)
                 add_to_from += '\n'

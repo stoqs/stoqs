@@ -233,14 +233,14 @@ class Base_Loader(STOQS_Loader):
         startDatetime = datetime.utcnow()
         endDatetime = datetime(1,1,1)
 
-        for v, dt in minDT.items():
+        for v, dt in list(minDT.items()):
             try:
                 if dt < startDatetime:
                     startDatetime = dt
             except NameError:
                 startDatetime = dt
                 
-        for v, dt in maxDT.items():
+        for v, dt in list(maxDT.items()):
             try:
                 if dt > endDatetime:
                     endDatetime = dt
@@ -427,7 +427,7 @@ class Base_Loader(STOQS_Loader):
             logger.warn('Variable %s is missing coordinates attribute', variable)
             if self.auxCoords[variable]:
                 # Try getting it from overridden values provided
-                for coordSN, coord in self.auxCoords[variable].items():
+                for coordSN, coord in list(self.auxCoords[variable].items()):
                     try:
                         coordDict[coordSN] = coord
                     except KeyError as e:
@@ -670,7 +670,7 @@ class Base_Loader(STOQS_Loader):
                 # E.g. for http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74040, 11, 1, 1) 
                 #       or http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74850, 1, 1, 1)
                 try:
-                    tIndx = self.getTimeBegEndIndices(self.ds[self.ds[pname].keys()[1]])
+                    tIndx = self.getTimeBegEndIndices(self.ds[list(self.ds[pname].keys())[1]])
                 except KeyError as e:
                     logger.warn("%s: Skipping", e)
                     continue
@@ -699,10 +699,10 @@ class Base_Loader(STOQS_Loader):
                 data[pname] = iter(v)      # Iterator on time axis delivering all z values in an array with .next()
 
                 # CF (nee COARDS) has tzyx coordinate ordering, time is at index [1] and depth is at [2]
-                times[pname] = self.ds[self.ds[pname].keys()[1]][tIndx[0]:tIndx[-1]:self.stride]
-                depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
+                times[pname] = self.ds[list(self.ds[pname].keys())[1]][tIndx[0]:tIndx[-1]:self.stride]
+                depths[pname] = self.ds[list(self.ds[pname].keys())[2]][:]                # TODO lookup more precise depth from conversion from pressure
 
-                timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
+                timeUnits[pname] = self.ds[list(self.ds[pname].keys())[1]].units.lower()
                 if timeUnits[pname] == 'true julian day':
                     # Create COARDS time from EPIC data
                     time2s = self.ds['time2']['time2'][tIndx[0]:tIndx[-1]:self.stride]
@@ -716,7 +716,7 @@ class Base_Loader(STOQS_Loader):
                     times[pname] = epoch_secs
 
                 timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
-                if self.ds[self.ds[pname].keys()[1]].units == 'seconds since 1970-01-01T00:00:00Z':
+                if self.ds[list(self.ds[pname].keys())[1]].units == 'seconds since 1970-01-01T00:00:00Z':
                     timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards 1.0.4 and earlier doesn't like ISO format
 
                 nomDepths, nomLats, nomLons = self.getNominalLocation()             # Possible to have both precise and nominal locations with this approach
@@ -725,12 +725,12 @@ class Base_Loader(STOQS_Loader):
                 if shape_length == 4:
                     logger.info('%s has shape of 4, assume that singleton dimensions are used for nominal latitude and longitude', pname)
                     # Assumes COARDS coordinate ordering
-                    latitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
-                    longitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                    latitudes[pname] = float(self.ds[list(self.ds[pname].keys())[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                    longitudes[pname] = float(self.ds[list(self.ds[pname].keys())[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                 elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper():
                     # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
-                    latitudes[pname] = float(self.ds[self.ds[pname].keys()[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
-                    longitudes[pname] = float(self.ds[self.ds[pname].keys()[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                    latitudes[pname] = float(self.ds[list(self.ds[pname].keys())[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                    longitudes[pname] = float(self.ds[list(self.ds[pname].keys())[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                     depths[pname] = nomDepths[pname]
                 elif shape_length == 2:
                     logger.info('%s has shape of 2, assuming no latitude and longitude singletime'
@@ -753,7 +753,7 @@ class Base_Loader(STOQS_Loader):
                             ' It has a shape length of %d.', pname, shape_length)
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
-        for pname in data.keys():
+        for pname in list(data.keys()):
             logger.info('Delivering rows of data for %s', pname)
             l = 0
             for depthArray in data[pname]:
@@ -801,7 +801,7 @@ class Base_Loader(STOQS_Loader):
         # Read the data from the OPeNDAP url into arrays keyed on parameter name - these arrays may take a bit of memory 
         # The reads here take advantage of OPeNDAP access mechanisms to efficiently transfer data across the network
         for pname in self.include_names:
-            if pname not in self.ds.keys():
+            if pname not in list(self.ds.keys()):
                 logger.warn('include_name %s not in dataset %s', pname, self.url)
                 continue
             # Peek at the shape and pull apart the data from its grid coordinates 
@@ -942,7 +942,7 @@ class Base_Loader(STOQS_Loader):
                             pname, type(self.ds[pname]), shape_length)
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
-        for pname in data.keys():
+        for pname in list(data.keys()):
             logger.debug('Delivering rows of data for %s', pname)
             l = 0
             values = {}
@@ -986,7 +986,7 @@ class Base_Loader(STOQS_Loader):
                 # On tzyx grid - default for all OS formatted station data COARDS coordinate ordering conventions
                 # E.g. for http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74040, 11, 1, 1) 
                 #       or http://elvis.shore.mbari.org/thredds/dodsC/agg/OS_MBARI-M1_R_TS, shape = (74850, 1, 1, 1)
-                tIndx = self.getTimeBegEndIndices(self.ds[self.ds[pname].keys()[1]])
+                tIndx = self.getTimeBegEndIndices(self.ds[list(self.ds[pname].keys())[1]])
                 try:
                     # Subselect along the time axis, get all z values
                     logger.info("From: %s", self.url)
@@ -1010,12 +1010,12 @@ class Base_Loader(STOQS_Loader):
                 data[pname] = iter(v)      # Iterator on time axis delivering all z values in an array with .next()
 
                 # CF (nee COARDS) has tzyx coordinate ordering
-                times[pname] = self.ds[self.ds[pname].keys()[1]][tIndx[0]:tIndx[-1]:self.stride]
-                depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
+                times[pname] = self.ds[list(self.ds[pname].keys())[1]][tIndx[0]:tIndx[-1]:self.stride]
+                depths[pname] = self.ds[list(self.ds[pname].keys())[2]][:]                # TODO lookup more precise depth from conversion from pressure
 
-                timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
+                timeUnits[pname] = self.ds[list(self.ds[pname].keys())[1]].units.lower()
                 timeUnits[pname] = timeUnits[pname].replace('utc', 'UTC')           # coards requires UTC in uppercase
-                if self.ds[self.ds[pname].keys()[1]].units == 'seconds since 1970-01-01T00:00:00Z':
+                if self.ds[list(self.ds[pname].keys())[1]].units == 'seconds since 1970-01-01T00:00:00Z':
                     timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards 1.0.4 and earlier doesn't like ISO format
 
                 _, nomLats, nomLons = self.getNominalLocation()                  # Possible to have both precise and nominal locations with this approach
@@ -1036,8 +1036,8 @@ class Base_Loader(STOQS_Loader):
                     self.timeDepthProfiles = self.adcpDepths[pname]
 
                     # Assumes COARDS coordinate ordering
-                    latitudes[pname] = float(self.ds[self.ds[pname].keys()[4]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
-                    longitudes[pname] = float(self.ds[self.ds[pname].keys()[5]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
+                    latitudes[pname] = float(self.ds[list(self.ds[pname].keys())[4]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
+                    longitudes[pname] = float(self.ds[list(self.ds[pname].keys())[5]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
                 else:
                     raise Exception('%s has shape of %d. Can handle only shapes of 2, 4, and 5.', pname, shape_length)
                     
@@ -1047,7 +1047,7 @@ class Base_Loader(STOQS_Loader):
                             ' It has a shape length of %d.', pname, shape_length)
 
         # Deliver the data harmonized as rows as an iterator so that they are fed as needed to the database
-        for pname in data.keys():
+        for pname in list(data.keys()):
             logger.info('Delivering rows of data for %s', pname)
             l = 0
             for depthArray in data[pname]:
@@ -1083,7 +1083,7 @@ class Base_Loader(STOQS_Loader):
         @transaction.atomic(using=self.dbAlias)
         def _innerInsertRow(self, parmCount, parameterCount, measurement, row):
             # TODO: Refactor to simplify. McCabe MC0001 pylint complexity warning issued.
-            for key,value in row.items():
+            for key,value in list(row.items()):
                 # value may be single-valued or an array
                 try:
                     logger.debug('Checking for %s in self.include_names', key)
@@ -1290,7 +1290,7 @@ class Base_Loader(STOQS_Loader):
                 varList = ', '.join(self.varsLoaded)
             except AttributeError:
                 # ROVCTDloader creates self.vSeen dictionary with counts of each parameter
-                varList = ', '.join(self.vSeen.keys())
+                varList = ', '.join(list(self.vSeen.keys()))
 
             # Construct a meaningful comment that looks good in the UI Metadata->NetCDF area
             fmt_comment = 'Loaded variables {} from {}'
@@ -1402,7 +1402,7 @@ class Dorado_Loader(Trajectory_Loader):
         '''
         self.addParameters(self.parmDict)
         logger.debug('Appending to self.varsLoaded = %s', self.varsLoaded)
-        for k in self.parmDict.keys():
+        for k in list(self.parmDict.keys()):
             self.varsLoaded.append(k)       # Make sure to add the derived parameters to the list that gets put in the comment
 
         return super(Dorado_Loader, self).initDB()

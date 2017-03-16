@@ -113,4 +113,4 @@ if __name__ == '__main__':
     yr,la,lo = get_year_lat_lon(hdrUrl= 'http://odss.mbari.org/thredds/fileServer/CANON_september2012/wf/pctd/c0912c53.hdr')
     if yr != 2012 or la != 36.3916667 or lo != -122.6896667:
         print("*** ERRROR.  The test of get_year_lat_lon should return (2012, 36.3916667, -122.6896667) ***")
-    print(yr, la, lo)
+    print((yr, la, lo))

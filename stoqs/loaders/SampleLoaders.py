@@ -402,7 +402,7 @@ class SeabirdLoader(STOQS_Loader):
 
         parmDict = self.buildParmDict()
         logger.debug('Calling addParameters for parmDict = %s', parmDict)
-        self.include_names = parmDict.keys()
+        self.include_names = list(parmDict.keys())
         self.addParameters(parmDict)
 
         for r in csv.DictReader(open(tmpFile), delimiter=' ', skipinitialspace=True):
@@ -414,7 +414,7 @@ class SeabirdLoader(STOQS_Loader):
             logger.debug('r = %s', r)
             # Load data 
             parmNameValues = []
-            for name in parmDict.keys():
+            for name in list(parmDict.keys()):
                 logger.debug('name = %s, parmDict[name].attributes = %s', name, parmDict[name].attributes)
                 try:
                     parmNameValues.append((name, float(r[parmDict[name].attributes['colname']])))

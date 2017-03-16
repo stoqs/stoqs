@@ -235,7 +235,7 @@ class Classifier(BiPlot):
         X = StandardScaler().fit_transform(X)
 
         if X.any() and y.any():
-            for name, clf in self.classifiers.iteritems():
+            for name, clf in list(self.classifiers.items()):
                 scores = cross_val_score(clf, X, y, cv=5)
                 print("%-18s accuracy: %0.2f (+/- %0.2f)" % (name, scores.mean(), scores.std() * 2))
         else:
@@ -362,7 +362,7 @@ class Classifier(BiPlot):
         parser.add_argument('--maxes', action='store', help='List of labels to create separated by spaces', nargs='*')
         parser.add_argument('--test_size', action='store', help='Proportion of discriminated sample to save as Test set', default=0.4, type=float)
         parser.add_argument('--train_size', action='store', help='Proportion of discriminated sample to save as Train set', default=0.4, type=float)
-        parser.add_argument('--classifier', choices=self.classifiers.keys(), help='Specify classifier to use with --createClassifier option')
+        parser.add_argument('--classifier', choices=list(self.classifiers.keys()), help='Specify classifier to use with --createClassifier option')
         parser.add_argument('--modelBaseName', action='store', help='Base name of the model to store in the database')
         parser.add_argument('--classes', action='store', help='Labels to load from the database for --doModelsScore and --createClassifier', nargs='*')
 

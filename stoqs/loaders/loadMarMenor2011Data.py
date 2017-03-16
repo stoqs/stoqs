@@ -10,7 +10,7 @@ MBARI 9 November 2011
 
 import os
 import sys
-import DAPloaders
+from . import DAPloaders
 
 parentDir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parentDir)  # So that CANON is found
@@ -21,13 +21,13 @@ def loadMissions(baseUrl, fileList, activityName, campaignName, pName, pColor, p
     if fileList: 
         for (aName, f) in zip([ a + ' (stride=%d)' % stride for a in files], fileList):
             url = baseUrl + f
-            print "loadMissions(): Calling runLoader() with parmList = %s" % parmList
+            print(("loadMissions(): Calling runLoader() with parmList = %s" % parmList))
             DAPloaders.runTrajectoryLoader(url, campaignName, c_desc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbName, stride)
     elif activityName:
         url = baseUrl
         DAPloaders.runTrajectoryLoader(url, campaignName, c_desc, activityName, pName, pColor, pTypeName, aTypeName, parmList, dbName, stride)
     else:
-        print "loadMissions(): Must specify either a fileList or an activityName"
+        print("loadMissions(): Must specify either a fileList or an activityName")
 
 
 if __name__ == '__main__':

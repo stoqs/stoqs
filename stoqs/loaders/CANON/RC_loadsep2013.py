@@ -32,7 +32,7 @@ from CANON import CANONLoader
 # building input data sources object
 from socket import gethostname
 hostname=gethostname()
-print hostname
+print(hostname)
 if hostname=='odss-test.shore.mbari.org':
     cl = CANONLoader('stoqs_september2011', 'CANON - September 2011')
 else:

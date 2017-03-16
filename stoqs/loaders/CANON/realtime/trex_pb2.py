@@ -60,7 +60,7 @@ _PREDICATE_VARIABLE = descriptor.Descriptor(
     descriptor.FieldDescriptor(
       name='name', full_name='org.mbari.trex.Predicate.Variable.name', index=0,
       number=1, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      has_default_value=False, default_value=str("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -108,14 +108,14 @@ _PREDICATE = descriptor.Descriptor(
     descriptor.FieldDescriptor(
       name='object', full_name='org.mbari.trex.Predicate.object', index=0,
       number=1, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      has_default_value=False, default_value=str("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     descriptor.FieldDescriptor(
       name='predicate', full_name='org.mbari.trex.Predicate.predicate', index=1,
       number=2, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      has_default_value=False, default_value=str("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -152,17 +152,13 @@ _PREDICATE_VARIABLE.containing_type = _PREDICATE;
 _PREDICATE.fields_by_name['attributes'].message_type = _PREDICATE_VARIABLE
 DESCRIPTOR.message_types_by_name['Predicate'] = _PREDICATE
 
-class Predicate(message.Message):
-  __metaclass__ = reflection.GeneratedProtocolMessageType
-  
-  class FloatDomain(message.Message):
-    __metaclass__ = reflection.GeneratedProtocolMessageType
+class Predicate(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
+  class FloatDomain(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
     DESCRIPTOR = _PREDICATE_FLOATDOMAIN
     
     # @@protoc_insertion_point(class_scope:org.mbari.trex.Predicate.FloatDomain)
   
-  class Variable(message.Message):
-    __metaclass__ = reflection.GeneratedProtocolMessageType
+  class Variable(message.Message, metaclass=reflection.GeneratedProtocolMessageType):
     DESCRIPTOR = _PREDICATE_VARIABLE
     
     # @@protoc_insertion_point(class_scope:org.mbari.trex.Predicate.Variable)

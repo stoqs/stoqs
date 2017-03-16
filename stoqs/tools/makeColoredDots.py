@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 
 '''
 Generate individual bitmap images that are colored according to a color map.
@@ -73,7 +73,7 @@ def processColorMap(category, cmap):
 
     for i in range(cm.N):
         c = cm(i)
-        savePPM(c[0], c[1], c[2])
+        savePPM(float(c[0]), float(c[1]), float(c[2]))
 
 if __name__ == '__main__':
     '''Create colored dot for each color in each color map
