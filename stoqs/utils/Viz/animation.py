@@ -195,6 +195,12 @@ class PlatformAnimation(object):
                 ).resource.value)
         except models.PlatformResource.DoesNotExist:
             factor = 1.0
+        except models.PlatformResource.MultipleObjectsReturned:
+            factor = 1.0
+            error_msg = ("Platform {} has more than one Resource named {}."
+                         " Setting to default factor of {:.1f}'").format(
+                                 pName, X3D_MODEL_SCALEFACTOR, factor)
+            self.logger.warn(error_msg)
 
         return factor
 
