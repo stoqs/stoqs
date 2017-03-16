@@ -2270,7 +2270,6 @@
             addStationaryPlatformModels();
             $('#showgeox3dlabels').parent().show();
             $('#showgeox3denuaxes').parent().show();
-            $('#showgeox3drotaxis').parent().show();
             $('#showplatforms').parent().parent().css( {'padding': '3px',
                                                         'background-color': 'lightgray'});
         }
@@ -2283,7 +2282,6 @@
             $('body').data()['platformAnimation'] = [];
             $('#showgeox3dlabels').parent().hide();
             $('#showgeox3denuaxes').parent().hide();
-            $('#showgeox3drotaxis').parent().hide();
             $('#showplatforms').parent().parent().removeAttr('style');
         }
     });
@@ -4850,6 +4848,20 @@ function enable_cardboard(){
                         x3dText += x3d;
                     });
                     $('#platform-animations').html(data[key]['all'] + x3dText);
+
+                    // Check for any platforms that have Shape IndexedLineSets so as to show ROT Axis check box
+                    var has_rotaxes = false;
+                    $.each($('body').data()['platformAnimation'], function (index, platform) {
+                        if ( ! $.isEmptyObject($('#' + platform + '_SCALE > transform > shape')[0]) ) {
+                            has_rotaxes = true;
+                        }
+                    });
+                    if (has_rotaxes) {
+                        $('#showgeox3drotaxis').parent().show();
+                    }
+                    else {
+                        $('#showgeox3drotaxis').parent().hide();
+                    }
                 }
                 else {
                     if ( ! $.isEmptyObject(data[key]['message']) ) {
