@@ -256,13 +256,13 @@ su - postgres -c "/usr/pgsql-9.6/bin/pg_ctl -D /var/lib/pgsql/9.6/data -l logfil
 echo Create postgis database and restart postgresql-9.6
 su - postgres -c "createdb postgis"
 su - postgres -c "createlang plpgsql postgis"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.1/postgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.1/spatial_ref_sys.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.1/postgis_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.1/rtpostgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.1/raster_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.1/topology.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.1/topology_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/postgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/spatial_ref_sys.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/postgis_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/rtpostgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/raster_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/topology.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.6/share/contrib/postgis-2.3/topology_comments.sql"
 su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\""
 su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
@@ -285,9 +285,8 @@ EOT
 echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git... 
 echo ">>> See CONTRIBUTING.md for how to configure your development system so that you can contribute to STOQS"
 mkdir dev && cd dev
-git clone --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
+git clone -b python3 --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
-git checkout python3
 export PATH="/usr/local/bin:$PATH"
 python3.6 -m venv venv-stoqs
 
