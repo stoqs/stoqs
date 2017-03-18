@@ -287,6 +287,7 @@ echo ">>> See CONTRIBUTING.md for how to configure your development system so th
 mkdir dev && cd dev
 git clone --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
+git checkout python3
 export PATH="/usr/local/bin:$PATH"
 python3.6 -m venv venv-stoqs
 
