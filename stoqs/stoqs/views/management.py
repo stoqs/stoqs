@@ -22,7 +22,7 @@ MBARI Jan 9, 2012
 @license: __license__
 '''
 
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.conf import settings
 from django.db import DatabaseError
@@ -45,7 +45,7 @@ def deleteActivity(request, activityId):
     '''
     
     tasks.delete_activity.delay(request.META['dbAlias'], activityId)
-    return render_to_response('deletion.html', {'dbAlias': request.META['dbAlias'], 'activityId': activityId})
+    return render(request, 'deletion.html', context={'dbAlias': request.META['dbAlias'], 'activityId': activityId})
     
     
 class Act():
@@ -108,7 +108,7 @@ def showDatabase(request):
 
     pList = mod.Parameter.objects.all().order_by('name')    
 
-    return render_to_response('management.html', 
+    return render(request, 'management.html', context=
                 {'dbAlias': request.META['dbAlias'], 
                  'actList': actList,
                  'pList': pList,
@@ -212,7 +212,7 @@ def showCampaigns(request,format=None):
     elif format == 'count':
         return HttpResponse(len(camList), mimetype='text/plain')
     else:
-        return render_to_response('campaigns.html', {'cList': camList }, context_instance=RequestContext(request)) 
+        return render(request, 'campaigns.html', context={'cList': camList }, context_instance=RequestContext(request)) 
 
 def showActivitiesMBARICustom(request):
     '''Present list of Activities in the database.  Unlike showDatabase(), show show the Activities and their
@@ -293,10 +293,7 @@ def showActivitiesMBARICustom(request):
 
         actList.append(act)
 
-    return render_to_response('activities.html', 
-                {'aList': actList, 'dbAlias': request.META['dbAlias']},
-                context_instance=RequestContext(request)
-                ) 
+    return render(request, 'activities.html', context={'aList': actList, 'dbAlias': request.META['dbAlias']})
     
     # End showActivities()
 
