@@ -16,7 +16,7 @@ before_install:
   - export TERM=xterm
   - conda update --yes conda
 env:
-  - DJANGO=1.8
+  - DJANGO=1.10
 install:
   - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose python-dateutil pandas statsmodels
   - conda install --yes -c omnia python-coveralls=2.9.0
