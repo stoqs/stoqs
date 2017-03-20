@@ -20,7 +20,7 @@ a Sample or a Measurement.
 @license: GPL
 '''
 from django.conf import settings
-from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, ValuesQuerySet
+from django.db.models.query import REPR_OUTPUT_SIZE, RawQuerySet, QuerySet
 from django.contrib.gis.db.models.query import GeoQuerySet
 from django.db import DatabaseError
 from datetime import datetime
@@ -326,8 +326,8 @@ class SPQuerySet(object):
         logger.debug('self.query = %s', self.query)
         logger.debug('type(self.sp_query) = %s', type(self.sp_query))
 
-        if isinstance(self.sp_query, ValuesQuerySet):
-            logger.debug('self.sp_query is ValuesQuerySet')
+        if isinstance(self.sp_query, QuerySet):
+            logger.debug('self.sp_query is QuerySet')
         if isinstance(self.sp_query, GeoQuerySet):
             logger.debug('self.sp_query is GeoQuerySet')
         if isinstance(self.sp_query, RawQuerySet):
