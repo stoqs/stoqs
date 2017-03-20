@@ -13,7 +13,7 @@ View functions to supoprt the main query web page
 '''
 
 from tools.colormaps import cmaps
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
 from django.conf import settings
@@ -289,5 +289,5 @@ def queryUI(request):
     except AttributeError:
         pass
 
-    return render_to_response('stoqsquery.html', config_settings,
-                              context_instance=RequestContext(request))
+    return render(request, 'stoqsquery.html', context=config_settings)
+
