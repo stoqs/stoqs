@@ -2,7 +2,7 @@
 
 
 from django.conf import settings
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
@@ -10,7 +10,7 @@ from django.views.generic import TemplateView
 from django.contrib import admin
 admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = [
     ##url(r'^$',  # noqa
     ##    TemplateView.as_view(template_name='pages/home.html'),
     ##    name="home"),
@@ -31,11 +31,11 @@ urlpatterns = patterns('',
     # Your stuff: custom urls go here
     url(r'', include('stoqs.urls', namespace='stoqs')),
 
-) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # See http://django-debug-toolbar.readthedocs.io/en/1.0/installation.html#explicit-setup
 if settings.DEBUG:
     import debug_toolbar
-    urlpatterns += patterns('',
+    urlpatterns += [
         url(r'^__debug__/', include(debug_toolbar.urls)),
-    )
+    ]
