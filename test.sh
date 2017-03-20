@@ -21,7 +21,7 @@ then
 fi
 psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
 psql -c "DROP DATABASE stoqs;" -U postgres
-psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;" -U postgres
+psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
 if [ $? != 0 ]
 then
     echo "Cannot create default database stoqs; refer to above message."

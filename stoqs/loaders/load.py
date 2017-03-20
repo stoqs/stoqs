@@ -60,7 +60,7 @@ class Loader(object):
         '''
 
         commands = ' && '.join((
-            'psql -p {port} -c \"CREATE DATABASE {db} owner=stoqsadm template=template_postgis;\" -U postgres',
+            'psql -p {port} -c \"CREATE DATABASE {db} owner=stoqsadm;\" -U postgres',
             'psql -p {port} -c \"ALTER DATABASE {db} set timezone=\'GMT\';\" -U postgres',
             'psql -p {port} -c \"GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;\" -d {db} -U postgres'))
 
