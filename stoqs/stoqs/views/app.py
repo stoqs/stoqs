@@ -19,7 +19,7 @@ from stoqs.views import BaseOutputer, EmptyQuerySetException
 import stoqs.models as mod
 ##import matplotlib.pyplot as plt
 import logging 
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.views.decorators.cache import cache_page
 
@@ -208,7 +208,7 @@ def showQuickLookPlots(request):
     except:
         pass
 
-    return render_to_response('quicklookplots.html', {'activity': activityName, 'images': ra.qs}, context_instance=RequestContext(request))
+    return render(request, 'quicklookplots.html', context={'activity': activityName, 'images': ra.qs})
 
 def showSampleDT(request, fmt='json'):
     stoqs_object = mod.Sample

@@ -212,7 +212,7 @@ def showCampaigns(request,format=None):
     elif format == 'count':
         return HttpResponse(len(camList), mimetype='text/plain')
     else:
-        return render(request, 'campaigns.html', context={'cList': camList }, context_instance=RequestContext(request)) 
+        return render(request, 'campaigns.html', context={'cList': camList })
 
 def showActivitiesMBARICustom(request):
     '''Present list of Activities in the database.  Unlike showDatabase(), show show the Activities and their
