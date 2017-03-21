@@ -14,13 +14,12 @@ before_install:
   - export PATH=/home/travis/miniconda3/bin:$PATH
   - export HDF5_DIR=/home/travis/miniconda3/
   - export NETCDF4_DIR=/home/travis/miniconda3/
-  - export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgfortran.so.3
   - export TERM=xterm
   - conda update --yes conda
 env:
   - DJANGO=1.10
 install:
-  - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose python-dateutil pandas statsmodels
+  - conda install --yes --verbose python=3.6 hdf4 hdf5 netcdf4 atlas numpy scipy matplotlib nose python-dateutil pandas statsmodels libgfortran
   - conda install --yes -c omnia python-coveralls=2.9.0
   - pip install --upgrade pip
   - pip install -r requirements/travis-ci.txt
