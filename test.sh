@@ -73,6 +73,7 @@ pid=$!
 echo "Functional tests with development server running as pid = $pid ..."
 DATABASE_URL=postgis://127.0.0.1:5432/stoqs bash -c "./manage.py test \
     stoqs.tests.functional_tests --settings=config.settings.ci"
+functional_tests_status=$?
 ps -ef | grep $pid
 echo "Trying to kill with TERM signal..."
 /usr/bin/kill -s TERM $pid
@@ -83,5 +84,5 @@ tools/removeTmpFiles.sh > /dev/null 2>&1
 # Report results of unit and functional tests
 coverage report -m
 cd ..
-exit $unit_tests_status
+exit $(($unit_tests_status + $functional_tests_status))
 
