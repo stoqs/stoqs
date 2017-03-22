@@ -20,7 +20,7 @@ then
     exit -1
 fi
 psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
-psql -c "DROP DATABASE stoqs;" -U postgres
+psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
 psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
 psql -c "CREATE EXTENSION postgis;" -d stoqs -U postgres
 psql -c "CREATE EXTENSION postgis_topology;" -d stoqs -U postgres
