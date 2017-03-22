@@ -16,6 +16,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, Max, Min, Sum, Avg
 from django.db.models.sql import query
+from django.contrib.gis.db.models import Extent, Union
 from django.contrib.gis.geos import fromstr, MultiPoint
 from django.db.utils import DatabaseError
 from django.core.exceptions import ObjectDoesNotExist
@@ -2003,7 +2004,8 @@ class STOQSQManager(object):
         extentList = [] 
         for geom_field in (('maptrack', 'mappoint', 'plannedtrack')):
             try:
-                extentList.append(self.qs.extent(field_name=geom_field))
+                qs_ext = self.qs.aggregate(Extent(geom_field))
+                extentList.append(qs_ext[geom_field + '__extent'])
             except DatabaseError:
                 logger.warn('Database %s does not have field %s', self.dbname, geom_field)
             except TypeError:

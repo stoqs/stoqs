@@ -680,7 +680,7 @@
                             <ul id="sp-dataaccessdownloadtabs" class="nav nav-tabs">
                                 <li class="active"><a href="#table" data-toggle="tab">Table</a></li>
                                 {% for format in formats %}
-                                    {% if format.0 = 'sql' %}
+                                    {% if format.0 == 'sql' %}
                                         <li id="spsql" class="sql-tab"><a href="#sp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% else %}
                                         <li><a href="#sp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
@@ -699,7 +699,7 @@
                                     </table>
                                 </div>
                                 {% for format in formats %}
-                                    {% if format.0 = 'kml' %}
+                                    {% if format.0 == 'kml' %}
                                 <div class="tab-pane active" id="sp-{{format.0}}">
                                     {% else %}
                                 <div class="tab-pane" id="sp-{{format.0}}">
@@ -710,7 +710,7 @@
                                             <th style="vertical-align:text-top;"><span>&nbsp;{{format.1}}</span></th>
                                         </tr>
                                     </table>
-                                    {% if format.0 = 'kml' %}
+                                    {% if format.0 == 'kml' %}
                                         <div style="text-align: center;">
                                         <span id="sp-kml-parameter"></span>
                                         <form style="text-align: center;" class="form-inline">
@@ -723,7 +723,7 @@
                                         </div>
                                         <pre id="sp-{{format.0}}-field"></pre>
                                     {% else %}
-                                        {% if format.0 = 'sql' %}
+                                        {% if format.0 == 'sql' %}
                                             <pre id="sp-{{format.0}}-field" style="font-size:xx-small;"></pre>
                                         {% else %}
                                             <pre id="sp-{{format.0}}-field"></pre>
@@ -749,10 +749,10 @@
 
                             <ul id="mp-dataaccessdownloadtabs" class="nav nav-tabs">
                                 {% for format in formats %}
-                                    {% if format.0 = 'kml' %}
+                                    {% if format.0 == 'kml' %}
                                         <li class="active"><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                     {% else %}
-                                        {% if format.0 = 'sql' %}
+                                        {% if format.0 == 'sql' %}
                                             <li id="mpsql" class="sql-tab"><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
                                         {% else %}
                                             <li><a href="#mp-{{format.0}}" data-toggle="tab">{{format.0}}</a></li>
@@ -762,7 +762,7 @@
                             </ul>
                             <div class="tab-content">
                                 {% for format in formats %}
-                                    {% if format.0 = 'kml' %}
+                                    {% if format.0 == 'kml' %}
                                         <div class="tab-pane active" id="mp-{{format.0}}">
                                     {% else %}
                                         <div class="tab-pane" id="mp-{{format.0}}">
@@ -773,7 +773,7 @@
                                             <th style="vertical-align:text-top;"><span>&nbsp;{{format.1}}</span></th>
                                         </tr>
                                     </table>
-                                    {% if format.0 = 'kml' %}
+                                    {% if format.0 == 'kml' %}
                                         <div style="text-align: center;">
                                         <span id="mp-kml-parameter"></span>
                                         <form style="text-align: center;" class="form-inline">
@@ -786,7 +786,7 @@
                                         </div>
                                         <pre id="mp-{{format.0}}-field"></pre>
                                     {% else %}
-                                        {% if format.0 = 'sql' %}
+                                        {% if format.0 == 'sql' %}
                                             <pre id="mp-{{format.0}}-field" style="font-size:xx-small;"></pre>
                                         {% else %}
                                             <pre id="mp-{{format.0}}-field"></pre>
@@ -1462,8 +1462,8 @@
         if ( $('#showsensortracks').is(':checked') && $('input:radio[name=parameters_plot]').is(':checked') ) {
             if ( $('input:radio[name=parameters_plot]:checked').val() ) {
                 // Generate KML url for the parameters_plot radio button selection - this is separate from the filtered selection for Measurement Data Access
-                var base_url_mp = '{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias fmt='.kml'%}';
-                var base_url_sp = '{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias fmt='.kml'%}';
+                var base_url_mp = "{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias fmt='.kml'%}";
+                var base_url_sp = "{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias fmt='.kml'%}";
                 var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
                 if (param != '') {
                     param = '?' + param;
@@ -1619,13 +1619,13 @@
         var base_url;
         if ( group == 'mp' ) {
             group_name = 'measured';
-            base_url = '{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias fmt='.'%}';
+            base_url = "{{site_uri}}{% url 'stoqs:show-measuredparmeter' dbAlias=request.META.dbAlias fmt='.'%}";
         }
         else if ( group == 'sp' ) {
             group_name = 'sampled';
-            base_url = '{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias fmt='.'%}';
+            base_url = "{{site_uri}}{% url 'stoqs:show-sampledparmeter' dbAlias=request.META.dbAlias fmt='.'%}";
         }
-        var query_url = '{{site_uri}}{% url 'stoqs:stoqs-query-ui' dbAlias=request.META.dbAlias %}';
+        var query_url = "{{site_uri}}{% url 'stoqs:stoqs-query-ui' dbAlias=request.META.dbAlias %}";
         var param=($.param($.map(params, function(v, k) { return ($.type(v) == "array") ? $.map(v, function(v) { return {name: k, value: v} }) : {name: k, value: v} })))
         if (param != '') {
             param = '?' + param;
@@ -3415,7 +3415,7 @@ function enable_cardboard(){
 
     function showSampleData(label) {
             //http://172.16.130.129:8000/stoqs_october2010/sample.json?instantpoint__activity__name__contains=Dorado389_2010_278_01_278_01&name=4.0
-            var sample_url = '{{site_uri}}{% url 'stoqs:show-sample-datatable' dbAlias=request.META.dbAlias fmt=".json" %}';
+            var sample_url = "{{site_uri}}{% url 'stoqs:show-sample-datatable' dbAlias=request.META.dbAlias fmt='.json' %}";
             sample_url = sample_url + '?instantpoint__activity__name__contains=' + label.split(' ')[0] + '&name=' + label.split(' ')[1];
             console.log('sample_url = ' + sample_url);
 
@@ -3441,8 +3441,8 @@ function enable_cardboard(){
 
     function showQuickLooks(label) {
             // http://172.16.130.135:8000/stoqs_may2012/resourceactivity.json?resourcetype__name=quick_look&activityresource__activity__name__contains=Dorado389_2012_150_00_150_00_decim
-            //var quicklook_url = '{{site_uri}}{% url 'stoqs:show-resourceactivity' dbAlias=request.META.dbAlias fmt=".json" %}?resourcetype__name=quick_look&';
-            var quicklook_url = '{{site_uri}}{% url 'stoqs:show-quicklookplots' dbAlias=request.META.dbAlias %}?';
+            //var quicklook_url = "{{site_uri}}{% url 'stoqs:show-resourceactivity' dbAlias=request.META.dbAlias fmt='.json' %}?resourcetype__name=quick_look&";
+            var quicklook_url = "{{site_uri}}{% url 'stoqs:show-quicklookplots' dbAlias=request.META.dbAlias %}?";
             quicklook_url = quicklook_url + 'activityresource__activity__name__contains=' + label.split(' ')[0];
             //var nwin = window.open(quicklook_url, '', 'height=800,width=1000');
             //if (window.focus) {
@@ -5269,7 +5269,7 @@ function enable_cardboard(){
                     alert('Permalink loading failed: ' + err + ' (Perhaps the permalink_id value is invalid?)');
                 }
             } else {
-                var url='{% url 'stoqs:load_permalink' dbAlias=request.META.dbAlias pid='REPLACE' %}';
+                var url="{% url 'stoqs:load_permalink' dbAlias=request.META.dbAlias pid='REPLACE' %}";
                 url=url.replace('REPLACE', permalink_id);
                 console.log(url);
                 $.get(url).
@@ -5429,7 +5429,7 @@ function enable_cardboard(){
             projection: map.displayProjection,
             strategies: [new OpenLayers.Strategy.BBOX()],
             protocol: new OpenLayers.Protocol.WFS({
-                url: '{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}wfs',
+                url: "{{site_uri}}{% url 'stoqs:base-campaign' dbAlias=request.META.dbAlias %}wfs",
                 headers: {'X-CSRFToken': csrf_token},
                 featureType: 'Sample'
             }),

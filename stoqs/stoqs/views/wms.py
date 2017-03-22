@@ -12,7 +12,7 @@ Support Classes and methods for mapserver mapfile generation for stoqs views.
 @license: GPL
 '''
 
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.conf import settings 
 from django.http import HttpResponse
@@ -101,7 +101,7 @@ class ActivityView(object):
 
         ##import pprint
         ##logger.debug(pprint.pformat(settings.DATABASES[self.request.META['dbAlias']]))
-        response = render_to_response(template, {'mapserver_host': settings.MAPSERVER_HOST,
+        response = render(self.request, template, context={'mapserver_host': settings.MAPSERVER_HOST,
                             'list': self.itemList,
                             'trajectory_union_layer_string': self.trajectory_union_layer_string,
                             'station_union_layer_string': self.station_union_layer_string,
@@ -112,8 +112,7 @@ class ActivityView(object):
                             'dbconn': settings.DATABASES[self.request.META['dbAlias']],
                             'mappath': self.mappath,
                             'imagepath': settings.MAPFILE_DIR,
-                            'STATIC_ROOT': settings.STATIC_ROOT},
-                            context_instance = RequestContext(self.request))
+                            'STATIC_ROOT': settings.STATIC_ROOT})
 
         try:
             fh = open(self.mappath, 'w')    
@@ -171,11 +170,11 @@ class ActivityView(object):
 
         logger.debug("Building web page from pointing to mapserver at %s", settings.MAPSERVER_HOST)
     
-        return render_to_response(webPageTemplate, {'mapserver_host': settings.MAPSERVER_HOST, 
+        return render(self.request, webPageTemplate, context=
+                                   {'mapserver_host': settings.MAPSERVER_HOST, 
                                     'list': self.itemList,
                                     'dbAlias': self.request.META['dbAlias'],
-                                    'mappath': self.mappath},
-                            context_instance=RequestContext(self.request))
+                                    'mappath': self.mappath})
 
 # Addressed pylint issues in December 2015, but realized that the functions
 # below never got fully implemented and are candidates for removal.
