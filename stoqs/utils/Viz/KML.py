@@ -342,7 +342,6 @@ class KML(BaseParameter):
         if stride < 1:
             stride = 1
         self.clt = [ (float(c[0]), float(c[1]), float(c[2])) for c in self.clt[::stride] ]
-        import pdb; pdb.set_trace()
         for c in self.clt:
             ge_color = "ff%02x%02x%02x" % ((round(c[2] * 255), round(c[1] * 255), round(c[0] * 255)))
             if _debug:
