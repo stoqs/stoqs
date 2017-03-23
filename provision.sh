@@ -57,21 +57,10 @@ then
     rpm -ivh pgdg*
     yum groupinstall -y "Development Tools"
 
-    echo Install Python 3.6 and pip3
-    yum install -y zlib-devel openssl-devel sqlite-devel bzip2-devel xz-libs
-    wget -q -N https://www.python.org/ftp/python/3.6.1/Python-3.6.1rc1.tar.xz
-    xz -d -c Python-3.6.1rc1.tar.xz | tar -xvf -
-    cd Python-3.6.1rc1
-    ./configure
-    make && make altinstall
-    cd ..
-    ##wget -q --no-check-certificate -N https://pypi.python.org/packages/source/s/setuptools/setuptools-1.4.2.tar.gz
-    ##tar -xvf setuptools-1.4.2.tar.gz
-    ##cd setuptools-1.4.2
-    ##/usr/local/bin/python2.7 setup.py install
-    ##cd ..
-    ##curl -sS https://bootstrap.pypa.io/get-pip.py | sudo /usr/local/bin/python2.7 - > /dev/null
-    ##/usr/local/bin/pip install virtualenv
+    echo Install Python 3.6
+    yum install -y zlib-devel openssl-devel sqlite-devel bzip2-devel xz-libs readline-devel
+    yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+    yum install -y python36u python36u-pip python36u-devel
 
     echo Install package prerequisites for NetCDF4
     yum -y install curl-devel hdf5 hdf5-devel
@@ -126,7 +115,7 @@ then
     yum -y install deltarpm rabbitmq-server scipy mod_wsgi memcached python-memcached
     yum -y install graphviz-devel graphviz-python ImageMagick postgis2_96
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
-    yum -y install proj-nad proj-epsg libxml2-devel libxslt-devel pam-devel readline-devel
+    yum -y install proj-nad proj-epsg libxml2-devel libxslt-devel pam-devel
     yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel
     yum -y install gdal-python mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
     yum -y install scipy blas blas-devel lapack lapack-devel lvm2 firefox

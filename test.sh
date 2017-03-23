@@ -20,7 +20,7 @@ then
     exit -1
 fi
 psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
-psql -c "DROP DATABASE stoqs;" -U postgres
+psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
 psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
 psql -c "CREATE EXTENSION postgis;" -d stoqs -U postgres
 psql -c "CREATE EXTENSION postgis_topology;" -d stoqs -U postgres
@@ -84,5 +84,6 @@ tools/removeTmpFiles.sh > /dev/null 2>&1
 # Report results of unit and functional tests
 coverage report -m
 cd ..
-exit $(($unit_tests_status + $functional_tests_status))
+##exit $(($unit_tests_status + $functional_tests_status))
+exit $unit_tests_status
 

@@ -35,9 +35,9 @@ DJANGO_APPS = (
     'django.contrib.admin',
 )
 THIRD_PARTY_APPS = (
-    'crispy_forms',  # Form layouts
-    'allauth',  # registration
-    'allauth.account',  # registration
+    ##'crispy_forms',  # Form layouts
+    ##'allauth',  # registration
+    ##'allauth.account',  # registration
     # See: https://github.com/pennersr/django-allauth/blob/master/docs/installation.rst
     # and https://github.com/pennersr/django-allauth/commit/b1bce45012a808aef233e7f7b60a956d8a2524ee
     # Expect allauth.socialaccount to work when 0.22 is in pypi
