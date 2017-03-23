@@ -31,7 +31,7 @@ python-coveralls==2.9.0
 requests==2.13.0
 scipy==0.19.0
 scikit-learn==0.18.1
-Shapely==1.5.17.post1
+Shapely==1.5.17
 snowballstemmer==1.2.1
 thredds-crawler==1.5.3
 tornado==4.4.2

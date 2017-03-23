@@ -46,11 +46,7 @@ class BrowserTestCase(TestCase):
     multi_db = False
 
     def setUp(self):
-        profile = webdriver.FirefoxProfile()
-        self.browser = webdriver.Firefox(profile)
-        self.browser.set_window_size(1200, 768)
-        self.browser.set_window_position(300, 0)
-        self.browser.implicitly_wait(10)
+        self.browser = webdriver.Firefox()
 
     def tearDown(self):
         self.browser.quit()
@@ -144,7 +140,6 @@ class BrowserTestCase(TestCase):
 
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
-        self.browser.implicitly_wait(10)
         assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
 
     def test_share_view_timeseries(self):

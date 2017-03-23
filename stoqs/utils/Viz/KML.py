@@ -183,7 +183,7 @@ class KML(BaseParameter):
         ##logger.debug('clim = %s', clim)
     
         for k in list(dataHash.keys()):
-            (pointStyleKML, pointKMLHash[k]) = self._buildKMLpoints(dataHash[k], self.clt, clim)
+            (pointStyleKML, pointKMLHash[k]) = self._buildKMLpoints(dataHash[k], clim)
             if self.withLineStringsFlag:
                 (lineStyleKML, lineKMLHash[k]) = self._buildKMLlines(dataHash[k])
             else:
@@ -311,12 +311,13 @@ class KML(BaseParameter):
 
         return (styleKml, lineKml)
 
-    def _buildKMLpoints(self, data, clt, clim):
+    def _buildKMLpoints(self, data, clim):
         '''
         Build KML Placemarks of all the point data in `list` and use colored styles 
         the same way as is done in the auvctd dorado science data processing.
         `data` are the results of a query, say from xySlice()
-        `clt` is a Color Lookup Table equivalent to a jetplus clt as used in Matlab
+        `self.clt` is a Color Lookup Table equivalent to a jetplus clt as used in Matlab,
+        it is assigned in the base class BaseParameter.
         `clim` is a 2 element list equivalent to clim in Matlab
 
         Return strings of style and point KML that can be included in a master KML file.
@@ -337,11 +338,11 @@ class KML(BaseParameter):
 
         styleKml = ''
         # Reduce color lookup table by striding to get the number of colors
-        stride = int(len(clt) / float(self.num_colors - 1))
+        stride = int(len(self.clt) / float(self.num_colors - 1))
         if stride < 1:
             stride = 1
-        clt = clt[::stride]
-        for c in clt:
+        self.clt = [ (float(c[0]), float(c[1]), float(c[2])) for c in self.clt[::stride] ]
+        for c in self.clt:
             ge_color = "ff%02x%02x%02x" % ((round(c[2] * 255), round(c[1] * 255), round(c[0] * 255)))
             if _debug:
                 logger.debug("c = %s", c)
@@ -381,8 +382,8 @@ class KML(BaseParameter):
                 logger.debug("clim = %s", clim)
 
             try:
-                clt_index = int(round((float(datavalue) - clim[0]) * ((len(clt) - 1) / float(numpy.diff(clim)))))
-                clt_index = int(self.num_colors * float(clt_index) / len(clt))
+                clt_index = int(round((float(datavalue) - clim[0]) * ((len(self.clt) - 1) / float(numpy.diff(clim)))))
+                clt_index = int(self.num_colors * float(clt_index) / len(self.clt))
             except ZeroDivisionError:
                 raise InvalidLimits('cmin and cmax are the same value')
             except ValueError:
@@ -391,11 +392,11 @@ class KML(BaseParameter):
 
             if clt_index < 0:
                 clt_index = 0;
-            if clt_index > (len(clt) - 1):
-                clt_index = int(len(clt) - 1);
+            if clt_index > (len(self.clt) - 1):
+                clt_index = int(len(self.clt) - 1);
             if _debug:
                 logger.debug("clt_index = %d", clt_index)
-            ge_color_val = "ff%02x%02x%02x" % ((round(clt[clt_index][2] * 255), round(clt[clt_index][1] * 255), round(clt[clt_index][0] * 255)))
+            ge_color_val = "ff%02x%02x%02x" % ((round(self.clt[clt_index][2] * 255), round(self.clt[clt_index][1] * 255), round(self.clt[clt_index][0] * 255)))
 
             if self.withTimeStampsFlag:
                 placemark = """
@@ -427,7 +428,7 @@ class KML(BaseParameter):
 
         return (styleKml, pointKml)
 
-    def _buildKMLlabels(self, plat, data, clt, clim):
+    def _buildKMLlabels(self, plat, data, clim):
         '''
         Build KML Placemarks of the last point of the data and give it a label
 
