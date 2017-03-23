@@ -84,5 +84,6 @@ tools/removeTmpFiles.sh > /dev/null 2>&1
 # Report results of unit and functional tests
 coverage report -m
 cd ..
-exit $(($unit_tests_status + $functional_tests_status))
+##exit $(($unit_tests_status + $functional_tests_status))
+exit $unit_tests_status
 
