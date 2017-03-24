@@ -74,6 +74,14 @@ class BrowserTestCase(TestCase):
 
         element.click()
 
+    def _wait_until_id_is_visible(self, id_string):
+        delay = 2
+        try:
+            element_present = EC.presence_of_element_located((By.ID, id_string))
+            WebDriverWait(self.browser, delay).until(element_present)
+        except TimeoutException:
+            print(f"TimeoutException: Waited {delay} seconds for '{id_string}' element id to appear")
+
     def _test_share_view(self, func_name):
         # Generic for any func_name that creates a view to share
         getattr(self, func_name)()
@@ -123,6 +131,7 @@ class BrowserTestCase(TestCase):
         self._wait_until_visible_then_click(spatial_3d_anchor)
         showplatforms = self.browser.find_element_by_id('showplatforms')
         self._wait_until_visible_then_click(showplatforms)
+        self._wait_until_id_is_visible('dorado_LOCATION')
         assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
 
     def test_m1_timeseries(self):
@@ -140,6 +149,7 @@ class BrowserTestCase(TestCase):
 
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
+        self._wait_until_id_is_visible('dorado_LOCATION')
         assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
 
     def test_share_view_timeseries(self):
