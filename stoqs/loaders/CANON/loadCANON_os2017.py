@@ -281,23 +281,25 @@ cl.rcpctd_files = [
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/
 #   copied to local BOG_Data/CANON_OS2107 dir
 ###################################################################################################
-cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2017/bctd/00917/')
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2017/bctd/')
 cl.subsample_csv_files = [
-   #'STOQS_00917_ALTIMETER.csv', #'STOQS_00917_COND2.csv',
    'STOQS_00917_OXY_PS.csv',
-  #'STOQS_00917_POT_TMP2.csv',  'STOQS_00917_TEMP2.csv',
-  'STOQS_00917_CARBON_GFF.csv', #'STOQS_00917_CONDUCT.csv', #'STOQS_00917_PAR4PI.csv',
-  #'STOQS_00917_POT_TMP.csv',   'STOQS_00917_TMP.csv',
-  'STOQS_00917_CHL_1U.csv',    'STOQS_00917_FLUOR.csv', #'STOQS_00917_PARCOS.csv',
-  #'STOQS_00917_SAL2.csv',      'STOQS_00917_TRANSBEAM.csv',
-  'STOQS_00917_CHL_5U.csv', 'STOQS_00917_NH4.csv', 'STOQS_00917_PHAEO_1U.csv',
-  #'STOQS_00917_SAL.csv',    'STOQS_00917_TRANSMISS.csv',
-  'STOQS_00917_CHLA.csv', 'STOQS_00917_O2.csv', 'STOQS_00917_PHAEO_5U.csv',
-  #'STOQS_00917_SIG_T.csv',
-  'STOQS_00917_CHL_GFF.csv', #'STOQS_00917_OXY_ML.csv',
-  'STOQS_00917_PHAEO_GFF.csv',  #'STOQS_00917_TCO2.csv',
+   'STOQS_00917_CARBON_GFF.csv', 
+   'STOQS_00917_CHL_1U.csv',    'STOQS_00917_FLUOR.csv',
+   'STOQS_00917_CHL_5U.csv', 'STOQS_00917_NH4.csv', 'STOQS_00917_PHAEO_1U.csv',
+   'STOQS_00917_CHLA.csv', 'STOQS_00917_O2.csv', 'STOQS_00917_PHAEO_5U.csv',
+   'STOQS_00917_CHL_GFF.csv',
+   'STOQS_00917_PHAEO_GFF.csv', 
 
-                         ]
+   'STOQS_03917_OXY_PS.csv',
+   'STOQS_03917_CARBON_GFF.csv',
+   'STOQS_03917_CHL_1U.csv',    'STOQS_03917_FLUOR.csv',
+   'STOQS_03917_CHL_5U.csv', 'STOQS_03917_NH4.csv', 'STOQS_03917_PHAEO_1U.csv',
+   'STOQS_03917_CHLA.csv', 'STOQS_03917_O2.csv', 'STOQS_03917_PHAEO_5U.csv',
+   'STOQS_03917_CHL_GFF.csv',
+   'STOQS_03917_PHAEO_GFF.csv',
+
+                       ]
 
 # Execute the load
 cl.process_command_line()
