@@ -95,6 +95,15 @@ cl.bed_files = [
                 'BED11/MBCCE_BED11_20161010_Event20170109/netcdf/B0100026_trajectory.nc',
                 'BED11/MBCCE_BED11_20161010_Event20170109/netcdf/B0100028_trajectory.nc',
                 'BED00/Simulated/netcdf/BED00_cycle_rot_axes_200_202_trajectory.nc',
+                'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200014_trajectory.nc',
+                'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200016_trajectory.nc',
+                'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200019_trajectory.nc',
+                'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200020_trajectory.nc',
+                'BED08/MBCCE_BED08_20161005_Event20170109/netcdf/80200034_trajectory.nc',
+                'BED08/MBCCE_BED08_20161005_Event20170109/netcdf/80200039_trajectory.nc',
+                'BED08/MBCCE_BED08_20161005_Event20170203/netcdf/80200046_trajectory.nc',
+                'BED08/MBCCE_BED08_20161005_Event20170218/netcdf/80200050_trajectory.nc',
+                'BED08/MBCCE_BED08_20161005_Event20170218/netcdf/80200052_trajectory.nc',
                 ]
 cl.bed_platforms = [
                 'BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05', 'BED03', 'BED04',
@@ -107,6 +116,8 @@ cl.bed_platforms = [
                 'BED09' for n in range(4, 8)
                 ] + [
                 'BED09', 'BED11', 'BED11'
+                ] + [
+                'BED08' for n in range(1, 10)
                 ]
 cl.bed_depths = [
                 388, 201, 521, 289.3, 413, 420, 430, 433, 308, 294,
@@ -118,7 +129,8 @@ cl.bed_depths = [
                 ] + [
                 202 for n in range(4, 8)
                 ] + [
-                349, 332, 331
+                349, 332, 331,
+                203, 210, 221, 222, 229, 283, 290, 293, 300,
                 ]
 cl.bed_framegrabs = [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html',
@@ -138,6 +150,8 @@ cl.bed_framegrabs = [
                 '' for n in range(4, 8)
                 ] + [
                 '', '', ''
+                ] + [
+                'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2016/vnta3969/00_26_09_00.html' for n in range(9)
                 ]
 
 # CCE BIN data

@@ -126,7 +126,7 @@ class CANONLoader(LoadScript):
     for b, c in zip(roms_platforms, oranges(np.arange(0, oranges.N, oranges.N/num_roms))):
         colors[b] = rgb2hex(c)[1:]
 
-    def loadDorado(self, stride=None, plotTimeSeriesDepth=None):
+    def loadDorado(self, stride=None):
         '''
         Dorado specific load functions
         '''
@@ -137,7 +137,7 @@ class CANONLoader(LoadScript):
             DAPloaders.runDoradoLoader(url, self.campaignName, self.campaignDescription, aName, 
                                        pName, self.colors['dorado'], 'auv', 'AUV mission', 
                                        self.dorado_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                       plotTimeSeriesDepth=plotTimeSeriesDepth)
+                                       plotTimeSeriesDepth=0.0)
             load_gulps(aName, f, self.dbAlias)
 
         self.addPlatformResources('http://stoqs.mbari.org/x3d/dorado/simpleDorado389.x3d', pName,

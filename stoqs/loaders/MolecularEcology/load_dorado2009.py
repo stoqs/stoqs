@@ -91,7 +91,7 @@ cl.m1met_endDatetime = datetime.datetime(2009, 12, 31)
 cl.process_command_line()
 
 if cl.args.test:
-    cl.loadDorado(stride=100, plotTimeSeriesDepth=0.0)
+    cl.loadDorado(stride=100)
     ##cl.loadM1ts(stride=10)
     ##cl.loadM1met(stride=10)
 
@@ -101,7 +101,7 @@ elif cl.args.optimal_stride:
     cl.loadM1met(stride=1)
 
 else:
-    cl.loadDorado(stride=cl.args.stride, plotTimeSeriesDepth=0.0)
+    cl.loadDorado(stride=cl.args.stride)
     ##cl.loadM1ts(stride=cl.args.stride)
     ##cl.loadM1met(stride=cl.args.stride)
 
