@@ -228,9 +228,19 @@ class BrowserTestCase(TestCase):
             for tr in tb_section.find_elements_by_css('tr'): 
                 if 'display' not in tr and 'none' not in tr:
                     trlist.append(tr)
+            
+            parameter_plot_counter = 0; 
+            parameter_contour_counter = 0;
+            # After getting our rows, now count the number of "Plot Data" radio buttons and "Contour Data" radio buttons
+            for row in trlist: 
+                if 'parameter-plot-radio' in row:
+                    parameter_plot_counter += 1
+    
+                if 'parameter-contour-plot-radio' in row: 
+                    parameter_contour_counter += 1
 
-        # by default, only 16, including the first one
-        assert len(trlist) == 16
+        # count to make sure that they are both equal
+        assert parameter_plot_counter == parameter_contour_counter
 
     def test_plot_with_M1_Mooring_platform(self):
         self.browser.get('http://localhost:8000/default/query/')
