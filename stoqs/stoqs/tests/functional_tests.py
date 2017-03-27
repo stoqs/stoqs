@@ -158,7 +158,7 @@ class BrowserTestCase(TestCase):
 
         # Open Measured Parameters section
         mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
-        self._wait_until_visible_then_click(mp_section)
+        self._wait_until_visible_then_click(mp_section)        
 
         # Expand Temporal window
         expand_temporal = self.browser.find_element_by_id('td-zoom-rc-button')
@@ -174,5 +174,7 @@ class BrowserTestCase(TestCase):
         djtb = self.browser.find_element_by_id('djHideToolBarButton')
         self._wait_until_visible_then_click(djtb)
 
-        # TODO: Add tests for contour line plot
+        #try w/ breakpoint
+        import pdb; pdb.set_trace()
 
+        # TODO: Add tests for contour line plot
