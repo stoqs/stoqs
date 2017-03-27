@@ -80,7 +80,7 @@ coverage run -a --source=utils,stoqs manage.py test stoqs.tests.functional_tests
 functional_tests_status=$?
 
 # Report results of unit and functional tests
-coverage report -m
+coverage report -m --omit utils/geo.py,utils/utils.py
 tools/removeTmpFiles.sh > /dev/null 2>&1
 cd ..
 
