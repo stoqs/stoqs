@@ -83,10 +83,10 @@ class ActivityView(object):
         '''
         filename, ext = os.path.splitext(template)
         if 'mappath' in self.request.session:
-            logger.info("Reusing request.session['mappath'] = %s", self.request.session['mappath'])
+            logger.debug("Reusing request.session['mappath'] = %s", self.request.session['mappath'])
         else:
             self.request.session['mappath'] =  tempfile.NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=filename + '_' , suffix=ext).name
-            logger.info("Setting new request.session['mappath'] = %s", self.request.session['mappath'])
+            logger.debug("Setting new request.session['mappath'] = %s", self.request.session['mappath'])
 
         # mapserver_host: Hostname where 'http://<mapserver_host>/cgi-bin/mapserv?file=<mappath>' works
         # With Apache RewriteBase rule this pattern also works for cleaner URLs:
@@ -109,7 +109,7 @@ class ActivityView(object):
                             'map_debug_level': self.map_debug_level,
                             'layer_debug_level': self.layer_debug_level,
                             'copyright_string': 'MBARI %d' % datetime.today().year,
-                            'dbconn': settings.DATABASES[self.request.META['dbAlias']],
+                            'dbconn': settings.MAPSERVER_DATABASES[self.request.META['dbAlias']],
                             'mappath': self.mappath,
                             'imagepath': settings.MAPFILE_DIR,
                             'STATIC_ROOT': settings.STATIC_ROOT})

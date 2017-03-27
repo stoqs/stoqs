@@ -509,6 +509,7 @@ class STOQSQManager(object):
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
                         plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError as e:
+                    logger.error('Cannot get min and max for parameterID = %s', parameterID)
                     logger.exception(e)
 
         if 'measuredparametersgroup' in self.kwargs:
