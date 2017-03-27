@@ -109,7 +109,7 @@ class ActivityView(object):
                             'map_debug_level': self.map_debug_level,
                             'layer_debug_level': self.layer_debug_level,
                             'copyright_string': 'MBARI %d' % datetime.today().year,
-                            'dbconn': settings.DATABASES[self.request.META['dbAlias']],
+                            'dbconn': settings.MAPSERVER_DATABASES[self.request.META['dbAlias']],
                             'mappath': self.mappath,
                             'imagepath': settings.MAPFILE_DIR,
                             'STATIC_ROOT': settings.STATIC_ROOT})

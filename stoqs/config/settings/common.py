@@ -129,12 +129,24 @@ DATABASES = {
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+# Functional tests require a separate MAPSERVER_DATABASE_URL setting
+MAPSERVER_DATABASE_URL = env('MAPSERVER_DATABASE_URL', default=env('DATABASE_URL'))
+if MAPSERVER_DATABASE_URL == env('DATABASE_URL'):
+    MAPSERVER_DATABASES = DATABASES.copy()
+else:
+    MAPSERVER_DATABASES = {
+        'default': env.db("MAPSERVER_DATABASE_URL")
+    }
+    MAPSERVER_DATABASES['default']['ATOMIC_REQUESTS'] = True
+    
 # For running additional databases append entries from STOQS_CAMPAIGNS environment
 # Example: export STOQS_CAMPAIGNS='stoqs_beds_canyon_events_t,stoqs_os2015_t'
 for campaign in env.list('STOQS_CAMPAIGNS', default=[]):
     DATABASES[campaign] = DATABASES.get('default').copy()
     DATABASES[campaign]['NAME'] = campaign
-
+    MAPSERVER_DATABASES[campaign] = MAPSERVER_DATABASES.get('default').copy()
+    MAPSERVER_DATABASES[campaign]['NAME'] = campaign
+    
 # GENERAL CONFIGURATION
 # ------------------------------------------------------------------------------
 # Local time zone for this installation. Choices can be found here:
