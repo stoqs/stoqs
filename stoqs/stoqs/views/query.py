@@ -100,10 +100,10 @@ def _buildMapFile(request, qm, options):
 
     # 'mappath' should be in the session from the call to queryUI() set it here in case it's not set by queryUI() 
     if 'mappath' in request.session:
-        logger.info("Reusing request.session['mappath'] = %s", request.session['mappath'])
+        logger.debug("Reusing request.session['mappath'] = %s", request.session['mappath'])
     else:
         request.session['mappath'] = NamedTemporaryFile(dir=settings.MAPFILE_DIR, prefix=__name__, suffix='.map').name
-        logger.info("Setting new request.session['mappath'] = %s", request.session['mappath'])
+        logger.debug("Setting new request.session['mappath'] = %s", request.session['mappath'])
 
     # A rudimentary class of items for passing a list of them to the activity.map template
     class Item(object):
