@@ -308,9 +308,9 @@ class STOQS_Loader(object):
     include_names=[] # names to include, if set it is used in conjunction with ignored_names
     # Note: if a name is both in include_names and ignored_names it is ignored.
     ignored_names=[]  # Should be defined for each child class
-    global_ignored_names = ['longitude','latitude', 'time', 'Time',
+    global_ignored_names = ('longitude','latitude', 'time', 'Time',
                 'LONGITUDE','LATITUDE','TIME', 'NominalDepth', 'esecs', 'Longitude', 'Latitude',
-                'DEPTH','depth'] # A list of parameters that should not be imported as parameters
+                'DEPTH','depth') # A list (tuple) of parameters that should not be imported as parameters
     global_dbAlias = ''
 
     logger = logging.getLogger('__main__')
@@ -620,10 +620,12 @@ class STOQS_Loader(object):
             except KeyError as e:
                 # Just skip derived parameters that may have been added for a sub-classed Loader
                 if v != 'altitude':
-                    self.logger.warn('include_name %s is not in %s; assuming it is derived and skipping', v, self.url)
+                    self.logger.warn('include_name %s is not in %s - skipping', v, self.url)
             except AttributeError as e:
                 # Just skip over loaders that don't have the plotTimeSeriesDepth attribute
                 self.logger.warn('%s for include_name %s in %s. Skipping', e, v, self.url)
+            except ParameterNotFound as e:
+                self.logger.warn('Could not get Parameter for v = %s: %s', v, e)
 
         self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
         for v in self.include_names + ['altitude']:
@@ -691,7 +693,6 @@ class STOQS_Loader(object):
             print e
             print name
             pprint.pprint( self.parameter_dict[name])
-
 
         return self.parameter_dict[name]
 

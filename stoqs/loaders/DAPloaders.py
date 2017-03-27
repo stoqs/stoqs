@@ -113,14 +113,6 @@ class Base_Loader(STOQS_Loader):
     as done by the monitorLrauv.py script in the realtime folder.  This
     use has not been fully tested.
     '''
-    parameter_dict={} # used to cache parameter objects 
-    standard_names = {} # should be defined for each child class
-    include_names=[] # names to include, if set it is used in conjunction with ignored_names
-    # Note: if a name is both in include_names and ignored_names it is ignored.
-    ignored_names=[]  # Should be defined for each child class
-    global_ignored_names = ['longitude','latitude', 'time', 'Time',
-                'LONGITUDE','LATITUDE','TIME', 'NominalDepth', 'esecs', 'Longitude', 'Latitude',
-                'DEPTH','depth'] # A list of parameters that should not be imported as parameters
     def __init__(self, activityName, platformName, url, dbAlias='default', campaignName=None, campaignDescription=None,
                 activitytypeName=None, platformColor=None, platformTypeName=None, 
                 startDatetime=None, endDatetime=None, dataStartDatetime=None, auxCoords=None, stride=1,
@@ -193,7 +185,7 @@ class Base_Loader(STOQS_Loader):
             logger.error('Failed in attempt to open_url("%s")', url)
             raise
 
-        self.ignored_names += self.global_ignored_names # add global ignored names to platform specific ignored names.
+        self.ignored_names = list(self.global_ignored_names)    # Start with copy of list of global ignored names
         self.build_standard_names()
 
     def _getStartAndEndTimeFromDS(self):
@@ -642,7 +634,7 @@ class Base_Loader(STOQS_Loader):
             except KeyError as e:
                 if self.getFeatureType() == 'trajectory':
                     # Assume that it's a derived variable and add same count as 
-                    logger.warn("%s: Assuming it's a derived parameter", e)
+                    logger.debug("%s: Assuming it's a derived parameter", e)
                     numDerived += 1
                     
         logger.debug('Adding %d derived parameters of length %d to the count', numDerived, trajSingleParameterCount / self.stride)
@@ -1096,8 +1088,10 @@ class Base_Loader(STOQS_Loader):
                 try:
                     logger.debug('Checking for %s in self.include_names', key)
                     if len(self.include_names) and key not in self.include_names:
+                        logger.debug('%s is not in self.include_names', key)
                         continue
                     elif key in self.ignored_names:
+                        logger.debug('%s is in self.ignored_names', key)
                         continue
 
                     # Mooring tstring/adcp and Dorado LOPC data: value will be an array.
@@ -1343,7 +1337,6 @@ class Base_Loader(STOQS_Loader):
             elif self.getFeatureType().lower() == 'trajectoryprofile':
                 self.insertSimpleDepthTimeSeriesByNominalDepth(trajectoryProfileDepths=self.timeDepthProfiles)
             logger.info("Data load complete, %d records loaded.", self.loaded)
-
 
             return self.loaded, path, parmCount
 
@@ -1697,6 +1690,7 @@ def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, a
 
     logger.debug("Setting include_names to %s", parmList)
     loader.include_names = parmList
+    logger.debug("loader.ignored_names = %s", loader.ignored_names)
 
     if plotTimeSeriesDepth:
         # Used first for BEDS where we want both trajectory and timeSeries plots - assumes starting depth of BED
@@ -1807,7 +1801,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
                    stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
                    dataStartDatetime=None, contourUrl=None, auxCoords=None, timezone='America/Los_Angeles',
-                   command_line_args=None):
+                   command_line_args=None, plotTimeSeriesDepth=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1856,6 +1850,10 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
         else:
             for p in loader.include_names:
                 loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
+    if plotTimeSeriesDepth is not None:
+        # Useful to plot as time series engineering data for LRAUVs
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
 
     try:
         loader.process_data()

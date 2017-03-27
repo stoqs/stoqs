@@ -42,8 +42,14 @@ cl = CANONLoader('stoqs_os2017', 'CANON - Off Season 2017',
                      'orientation': '0.89575 -0.31076 -0.31791 1.63772',
                      'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
                      'VerticalExaggeration': '10',
-                     'speed': '0.1',
-                   }
+                   },
+                   'http://stoqs.mbari.org/x3d/Monterey25_1x/Monterey25_1x_src_scene.x3d': {
+                     'name': 'Monterey25_1x',
+                     'position': '-2822317.31255 -4438600.53640 3786150.85474',
+                     'orientation': '0.89575 -0.31076 -0.31791 1.63772',
+                     'centerOfRotation': '-2711557.9403829873 -4331414.329506527 3801353.4691465236',
+                     'VerticalExaggeration': '1',
+                   },
                  },
                  grdTerrain=os.path.join(parentDir, 'Monterey25.grd')
                  )
@@ -57,6 +63,20 @@ enddate = datetime.datetime(2017, 12, 31)  # Fixed end. Extend "offseason" to en
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
 cl.dodsBase = cl.tdsBase + 'dodsC/'
+
+
+#####################################################################
+#  DORADO 
+#####################################################################
+# special location for dorado data
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/'
+cl.dorado_files = [
+                   'Dorado389_2017_044_00_044_00_decim.nc',
+                   'Dorado389_2017_068_00_068_00_decim.nc',
+                                   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                    'fl700_uncorr', 'salinity', 'biolume',
+                    'roll', 'pitch', 'yaw']
 
 #####################################################################
 #  LRAUV
@@ -114,7 +134,7 @@ def find_urls(base, search_str):
 # the binned files before this will work
 
 # Get directory list from thredds server
-platforms = ['tethys']
+platforms = ['tethys', 'aku', 'makai', 'ahi', 'opah', 'daphne']
 
 
 for p in platforms:
@@ -122,7 +142,7 @@ for p in platforms:
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2017/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
-    setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR'
+    setattr(cl, p + '_parms' , ['temperature', 'salinity', 'chlorophyll', 'nitrate', 'oxygen','bbp470', 'bbp650','PAR',
                                 'yaw', 'pitch', 'roll', 'control_inputs_rudder_angle', 'control_inputs_mass_position',
                                 'control_inputs_buoyancy_position', 'control_inputs_propeller_rotation_rate',
                                 'health_platform_battery_charge', 'health_platform_average_voltage',
@@ -136,9 +156,9 @@ for p in platforms:
                                 'pose_latitude_DeadReckonUsingMultipleVelocitySources',
                                 'pose_depth_DeadReckonUsingMultipleVelocitySources'])
     try:
-        #urls_eng = find_urls(base, '.*2S_eng.nc$')
+        urls_eng = find_urls(base, '.*2S_eng.nc$')
         urls_sci = find_urls(base, '.*10S_sci.nc$')
-        urls = urls_sci # + urls_eng
+        urls = urls_sci + urls_eng
         files = []
         if len(urls) > 0 :
             for url in sorted(urls):
@@ -237,6 +257,7 @@ cl.oa2_parms = [
 cl.oa2_startDatetime = startdate
 cl.oa2_endDatetime = enddate
 
+
 ######################################################################
 #  RACHEL CARSON: Jan 2017 --
 ######################################################################
@@ -245,6 +266,7 @@ cl.rcuctd_base = cl.dodsBase + 'CANON/2017_OffSeason/Platforms/Ships/Rachel_Cars
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [
                   '00917plm01.nc',
+                  '03917plm01.nc',
                   ]
 
 # PCTD
@@ -252,33 +274,32 @@ cl.rcpctd_base = cl.dodsBase + 'CANON/2017_OffSeason/Platforms/Ships/Rachel_Cars
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [
                   '00917c01.nc', '00917c02.nc', '00917c03.nc',
+                  '03917c01.nc', '03917c02.nc', '03917c03.nc',
                   ]
-
-
-#BOG_Data/CANON_OS2017/bctd/00917
 
 ###################################################################################################
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/
-#                                   18815 and 21515
-#   copied to local BOG_Data/CANON_OS2105 dir
+#   copied to local BOG_Data/CANON_OS2107 dir
 ###################################################################################################
-cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2017/bctd/00917/')
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2017/bctd/')
 cl.subsample_csv_files = [
-   #'STOQS_00917_ALTIMETER.csv', #'STOQS_00917_COND2.csv',
    'STOQS_00917_OXY_PS.csv',
-  #'STOQS_00917_POT_TMP2.csv',  'STOQS_00917_TEMP2.csv',
-  'STOQS_00917_CARBON_GFF.csv', #'STOQS_00917_CONDUCT.csv', #'STOQS_00917_PAR4PI.csv',
-  #'STOQS_00917_POT_TMP.csv',   'STOQS_00917_TMP.csv',
-  'STOQS_00917_CHL_1U.csv',    'STOQS_00917_FLUOR.csv', #'STOQS_00917_PARCOS.csv',
-  #'STOQS_00917_SAL2.csv',      'STOQS_00917_TRANSBEAM.csv',
-  'STOQS_00917_CHL_5U.csv', 'STOQS_00917_NH4.csv', 'STOQS_00917_PHAEO_1U.csv',
-  #'STOQS_00917_SAL.csv',    'STOQS_00917_TRANSMISS.csv',
-  'STOQS_00917_CHLA.csv', 'STOQS_00917_O2.csv', 'STOQS_00917_PHAEO_5U.csv',
-  #'STOQS_00917_SIG_T.csv',
-  'STOQS_00917_CHL_GFF.csv', #'STOQS_00917_OXY_ML.csv',
-  'STOQS_00917_PHAEO_GFF.csv',  #'STOQS_00917_TCO2.csv',
+   'STOQS_00917_CARBON_GFF.csv', 
+   'STOQS_00917_CHL_1U.csv',    'STOQS_00917_FLUOR.csv',
+   'STOQS_00917_CHL_5U.csv', 'STOQS_00917_NH4.csv', 'STOQS_00917_PHAEO_1U.csv',
+   'STOQS_00917_CHLA.csv', 'STOQS_00917_O2.csv', 'STOQS_00917_PHAEO_5U.csv',
+   'STOQS_00917_CHL_GFF.csv',
+   'STOQS_00917_PHAEO_GFF.csv', 
 
-                         ]
+   'STOQS_03917_OXY_PS.csv',
+   'STOQS_03917_CARBON_GFF.csv',
+   'STOQS_03917_CHL_1U.csv',    'STOQS_03917_FLUOR.csv',
+   'STOQS_03917_CHL_5U.csv', 'STOQS_03917_NH4.csv', 'STOQS_03917_PHAEO_1U.csv',
+   'STOQS_03917_CHLA.csv', 'STOQS_03917_O2.csv', 'STOQS_03917_PHAEO_5U.csv',
+   'STOQS_03917_CHL_GFF.csv',
+   'STOQS_03917_PHAEO_GFF.csv',
+
+                       ]
 
 # Execute the load
 cl.process_command_line()
@@ -321,7 +342,7 @@ else:
     cl.load_wg_Tiny()
     cl.load_oa1()
     cl.load_oa2()
-    #cl.loadDorado()
+    cl.loadDorado()
     ##cl.loadDaphne()
     ##cl.loadMakai()
     cl.loadRCuctd()
