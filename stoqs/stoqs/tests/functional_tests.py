@@ -30,6 +30,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from stoqs.models import Parameter
 
 import logging
+import os
 import time
 
 logger = logging.getLogger(__name__)
@@ -98,16 +99,16 @@ class BrowserTestCase(StaticLiveServerTestCase):
         self.assertEqual('', self._mapserver_loading_panel_test())
 
     def test_campaign_page(self):
-        self.browser.get('http://localhost:8000/')
+        self.browser.get(self.live_server_url)
         self.assertIn('Campaign List', self.browser.title)
 
     def test_query_page(self):
-        self.browser.get('http://localhost:8000/default/query/')
+        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         self.assertIn('default', self.browser.title)
         self.assertEqual('', self._mapserver_loading_panel_test())
 
     def test_dorado_trajectory(self):
-        self.browser.get('http://localhost:8000/default/query/')
+        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         try:
             # Click on Platforms to expand
             platforms_anchor = self.browser.find_element_by_id(
@@ -147,7 +148,7 @@ class BrowserTestCase(StaticLiveServerTestCase):
         assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
 
     def test_m1_timeseries(self):
-        self.browser.get('http://localhost:8000/default/query/')
+        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         # Test Temporal->Parameter for timeseries plots
         parameter_tab = self.browser.find_element_by_id('temporal-parameter-li')
         # Wait one second before clicking parameter_tab
@@ -171,7 +172,7 @@ class BrowserTestCase(StaticLiveServerTestCase):
         assert 'every single point' in si.text
 
     def test_contour_plots(self):
-        self.browser.get('http://localhost:8000/default/query/')
+        self.browser.get(os.path.join(self.live_server_url, 'default/query'))
 
         # Open Measured Parameters section
         mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
