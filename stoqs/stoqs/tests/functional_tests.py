@@ -20,7 +20,7 @@ Mike McCann
 @license: __license__
 '''
 
-from django.test import TestCase
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.conf import settings
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
@@ -34,7 +34,7 @@ import time
 
 logger = logging.getLogger(__name__)
 
-class BrowserTestCase(TestCase):
+class BrowserTestCase(StaticLiveServerTestCase):
     '''Use selenium to test things in the browser
     '''
     # Note that the test runner sets DEBUG to False: 
