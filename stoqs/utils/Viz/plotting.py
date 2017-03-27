@@ -162,7 +162,7 @@ class BaseParameter(object):
                                             orientation='horizontal')
             try:
                 cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(parm_info[0]))
-            except ValueError:
+            except (ValueError, models.Parameter.DoesNotExist):
                 # Likely a coordinate variable
                 cp = models.Parameter
                 cp.name = parm_info[0]
