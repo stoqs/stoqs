@@ -68,30 +68,23 @@ fi
 
 # Run tests using the continuous integration (ci) setting
 # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL
+export DATABASE_URL=postgis://127.0.0.1:5432/stoqs
 echo "Unit tests..."
-DATABASE_URL=postgis://127.0.0.1:5432/stoqs bash -c "coverage run -a --source=utils,stoqs \
-    manage.py test stoqs.tests.unit_tests --settings=config.settings.ci"
+coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
 
-# Run the development server in the background for the functional tests with full DATABASE_URL
-# so that mapserver can connect to the database
-coverage run -a --source=utils,stoqs manage.py runserver --noreload \
-    --settings=config.settings.ci > /tmp/functional_tests_server.log 2>&1 &
-pid=$!
-echo "Functional tests with development server running as pid = $pid ..."
-DATABASE_URL=postgis://127.0.0.1:5432/stoqs bash -c "./manage.py test \
-    stoqs.tests.functional_tests --settings=config.settings.ci"
+# MAPSERVER_DATABASE_URL needs to postgres role for proper mapfile CONNECTION settings
+export MAPSERVER_DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
+echo "Functional tests..."
+coverage run -a --source=utils,stoqs manage.py test stoqs.tests.functional_tests --settings=config.settings.ci
 functional_tests_status=$?
-ps -ef | grep $pid
-echo "Trying to kill with TERM signal..."
-/usr/bin/kill -s TERM $pid
-ps -ef | grep $pid
-##cat /tmp/functional_tests_server.log
-tools/removeTmpFiles.sh > /dev/null 2>&1
 
 # Report results of unit and functional tests
 coverage report -m
+tools/removeTmpFiles.sh > /dev/null 2>&1
 cd ..
+
+# Return code used by Travis-CI 
 ##exit $(($unit_tests_status + $functional_tests_status))
 exit $unit_tests_status
 
