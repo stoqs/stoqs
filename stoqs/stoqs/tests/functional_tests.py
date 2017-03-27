@@ -83,6 +83,14 @@ class BrowserTestCase(StaticLiveServerTestCase):
         except TimeoutException:
             print(f"TimeoutException: Waited {delay} seconds for '{id_string}' element id to appear")
 
+    def _wait_until_src_is_visible(self, src_string):
+        delay = 2
+        try:
+            element_present = EC.presence_of_element_located((By.XPATH, f"//img[contains(@src,'{src_string}')]"))
+            WebDriverWait(self.browser, delay).until(element_present)
+        except TimeoutException:
+            print(f"TimeoutException: Waited {delay} seconds for <img src='{src_string}'... to appear")
+
     def _test_share_view(self, func_name):
         # Generic for any func_name that creates a view to share
         getattr(self, func_name)()
@@ -187,10 +195,9 @@ class BrowserTestCase(StaticLiveServerTestCase):
         parameter_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
         parameter_plot_radio_button.click()
+        self._wait_until_src_is_visible('M1_Mooring_colorbar')
         contour_button = self.browser.find_element(By.XPATH, "//input[@name='showdataas' and @value='contour']")
         self._wait_until_visible_then_click(contour_button)
-        djtb = self.browser.find_element_by_id('djHideToolBarButton')
-        self._wait_until_visible_then_click(djtb)
 
         # TODO: Add tests for contour line plot
 
