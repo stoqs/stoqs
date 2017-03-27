@@ -8,6 +8,7 @@ import math
 import numpy as np
 import os
 import time
+import traceback
 from collections import namedtuple
 from datetime import datetime
 from itertools import izip, izip_longest
@@ -195,6 +196,12 @@ class PlatformAnimation(object):
                 ).resource.value)
         except models.PlatformResource.DoesNotExist:
             factor = 1.0
+        except models.PlatformResource.MultipleObjectsReturned:
+            factor = 1.0
+            error_msg = ("Platform {} has more than one Resource named {}."
+                         " Setting to default factor of {:.1f}'").format(
+                                 pName, X3D_MODEL_SCALEFACTOR, factor)
+            self.logger.warn(error_msg)
 
         return factor
 
@@ -338,7 +345,13 @@ class PlatformAnimation(object):
     def _deg2rad(self, angle):
         '''Given an angle in degrees return angle in radians
         '''
-        return np.pi * angle / 180.0
+        try:
+            return np.pi * angle / 180.0
+        except TypeError:
+            axis = [el for el in  traceback.format_stack() if '_deg2rad' in el
+                    ][0].split('_deg2rad(')[1].split(')')[0]
+            self.logger.warn("Bad %s angle: %s", axis, angle)
+            return 0.0
 
     def _pitch_with_ve(self, angle, ve):
         '''Given an angle in degrees return pitch angle in radians properly
