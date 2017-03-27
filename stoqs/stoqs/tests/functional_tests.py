@@ -126,9 +126,21 @@ class BrowserTestCase(TestCase):
         # Test that Mapserver returns images
         self.assertEqual('', self._mapserver_loading_panel_test())
 
-        # Test Spatial 3D
+        # Test Spatial 3D - provides test coverage in utils/Viz
         spatial_3d_anchor = self.browser.find_element_by_id('spatial-3d-anchor')
         self._wait_until_visible_then_click(spatial_3d_anchor)
+        # - Measurement data
+        measuredparameters_anchor = self.browser.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(measuredparameters_anchor)
+        altitude_id = Parameter.objects.get(name='altitude').id
+        altitude_plot_button = self.browser.find_element(By.XPATH,
+                "//input[@name='parameters_plot' and @value='{}']".format(altitude_id))
+        self._wait_until_visible_then_click(altitude_plot_button)
+        showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
+        self._wait_until_visible_then_click(showgeox3dmeasurement)
+        self._wait_until_id_is_visible('mp-x3d-track')
+        assert 'shape' == self.browser.find_element_by_id('mp-x3d-track').tag_name
+        # - Platform animation
         showplatforms = self.browser.find_element_by_id('showplatforms')
         self._wait_until_visible_then_click(showplatforms)
         self._wait_until_id_is_visible('dorado_LOCATION')
