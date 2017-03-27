@@ -19,47 +19,55 @@ then
     echo "that test_ databases don't get created for all the campaigns there."
     exit -1
 fi
-psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
-psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
-psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
-psql -c "CREATE EXTENSION postgis;" -d stoqs -U postgres
-psql -c "CREATE EXTENSION postgis_topology;" -d stoqs -U postgres
-if [ $? != 0 ]
-then
-    echo "Cannot create default database stoqs; refer to above message."
-    exit -1
-fi
-psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
 
-# DATABASE_URL environment variable must be set outside of this script
-stoqs/manage.py makemigrations stoqs --settings=config.settings.ci --noinput
-stoqs/manage.py migrate --settings=config.settings.ci --noinput --database=default
-if [ $? != 0 ]
-then
-    echo "Cannot migrate default database; refer to above error message."
-    exit -1
-fi
-psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
-
-# Assume starting in project home (stoqsgit) directory, get bathymetry, and load data
+# Assume starting in project home (stoqsgit) directory
 cd stoqs
-wget -q -N -O loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
-coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadTestData.py
-if [ $? != 0 ]
-then
-    echo "loaders/loadTestData.py failed to load initial database; exiting test.sh."
-    exit -1
+
+if [ ${2:-load} == 'load' ]
+    then
+    psql -c "CREATE USER stoqsadm WITH PASSWORD '$1';" -U postgres
+    psql -c "DROP DATABASE IF EXISTS stoqs;" -U postgres
+    psql -c "CREATE DATABASE stoqs owner=stoqsadm;" -U postgres
+    psql -c "CREATE EXTENSION postgis;" -d stoqs -U postgres
+    psql -c "CREATE EXTENSION postgis_topology;" -d stoqs -U postgres
+    if [ $? != 0 ]
+    then
+        echo "Cannot create default database stoqs; refer to above message."
+        exit -1
+    fi
+    psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';" -U postgres
+
+    # DATABASE_URL environment variable must be set outside of this script
+    ./manage.py makemigrations stoqs --settings=config.settings.ci --noinput
+    ./manage.py migrate --settings=config.settings.ci --noinput --database=default
+    if [ $? != 0 ]
+    then
+        echo "Cannot migrate default database; refer to above error message."
+        exit -1
+    fi
+    psql -c "GRANT ALL ON ALL TABLES IN SCHEMA public TO stoqsadm;" -U postgres -d stoqs
+
+    # Get bathymetry and load data from MBARI data servers
+    wget -q -N -O loaders/Monterey25.grd http://stoqs.mbari.org/terrain/Monterey25.grd
+    coverage run --include="loaders/__in*,loaders/DAP*,loaders/Samp*" loaders/loadTestData.py
+    if [ $? != 0 ]
+    then
+        echo "loaders/loadTestData.py failed to load initial database; exiting test.sh."
+        exit -1
+    fi
+
+    # Label some data in the test database
+    coverage run -a --include="contrib/analysis/classify.py" contrib/analysis/classify.py \
+      --createLabels --groupName Plankton --database default  --platform dorado \
+      --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment \
+      --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 -v
+
+    # Create database fixture
+    ./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_test_data.json
 fi
 
-# Label some data in the test database
-coverage run -a --include="contrib/analysis/classify.py" contrib/analysis/classify.py \
-  --createLabels --groupName Plankton --database default  --platform dorado \
-  --inputs bbp700 fl700_uncorr --discriminator salinity --labels diatom dino1 dino2 sediment \
-  --mins 33.33 33.65 33.70 33.75 --maxes 33.65 33.70 33.75 33.93 -v
-
-# Create database fixture and run tests using the continuous integration (ci) setting
+# Run tests using the continuous integration (ci) setting
 # Need to create and drop test_ databases using shell account, hence reassign DATABASE_URL
-./manage.py dumpdata --settings=config.settings.ci stoqs > stoqs/fixtures/stoqs_test_data.json
 echo "Unit tests..."
 DATABASE_URL=postgis://127.0.0.1:5432/stoqs bash -c "coverage run -a --source=utils,stoqs \
     manage.py test stoqs.tests.unit_tests --settings=config.settings.ci"

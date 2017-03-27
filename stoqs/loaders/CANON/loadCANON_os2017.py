@@ -64,6 +64,20 @@ enddate = datetime.datetime(2017, 12, 31)  # Fixed end. Extend "offseason" to en
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
 cl.dodsBase = cl.tdsBase + 'dodsC/'
 
+
+#####################################################################
+#  DORADO 
+#####################################################################
+# special location for dorado data
+cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/'
+cl.dorado_files = [
+                   'Dorado389_2017_044_00_044_00_decim.nc',
+                   'Dorado389_2017_068_00_068_00_decim.nc',
+                                   ]
+cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
+                    'fl700_uncorr', 'salinity', 'biolume',
+                    'roll', 'pitch', 'yaw']
+
 #####################################################################
 #  LRAUV
 #####################################################################
@@ -243,6 +257,7 @@ cl.oa2_parms = [
 cl.oa2_startDatetime = startdate
 cl.oa2_endDatetime = enddate
 
+
 ######################################################################
 #  RACHEL CARSON: Jan 2017 --
 ######################################################################
@@ -251,6 +266,7 @@ cl.rcuctd_base = cl.dodsBase + 'CANON/2017_OffSeason/Platforms/Ships/Rachel_Cars
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [
                   '00917plm01.nc',
+                  '03917plm01.nc',
                   ]
 
 # PCTD
@@ -258,33 +274,32 @@ cl.rcpctd_base = cl.dodsBase + 'CANON/2017_OffSeason/Platforms/Ships/Rachel_Cars
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [
                   '00917c01.nc', '00917c02.nc', '00917c03.nc',
+                  '03917c01.nc', '03917c02.nc', '03917c03.nc',
                   ]
-
-
-#BOG_Data/CANON_OS2017/bctd/00917
 
 ###################################################################################################
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/
-#                                   18815 and 21515
-#   copied to local BOG_Data/CANON_OS2105 dir
+#   copied to local BOG_Data/CANON_OS2107 dir
 ###################################################################################################
-cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2017/bctd/00917/')
+cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2017/bctd/')
 cl.subsample_csv_files = [
-   #'STOQS_00917_ALTIMETER.csv', #'STOQS_00917_COND2.csv',
    'STOQS_00917_OXY_PS.csv',
-  #'STOQS_00917_POT_TMP2.csv',  'STOQS_00917_TEMP2.csv',
-  'STOQS_00917_CARBON_GFF.csv', #'STOQS_00917_CONDUCT.csv', #'STOQS_00917_PAR4PI.csv',
-  #'STOQS_00917_POT_TMP.csv',   'STOQS_00917_TMP.csv',
-  'STOQS_00917_CHL_1U.csv',    'STOQS_00917_FLUOR.csv', #'STOQS_00917_PARCOS.csv',
-  #'STOQS_00917_SAL2.csv',      'STOQS_00917_TRANSBEAM.csv',
-  'STOQS_00917_CHL_5U.csv', 'STOQS_00917_NH4.csv', 'STOQS_00917_PHAEO_1U.csv',
-  #'STOQS_00917_SAL.csv',    'STOQS_00917_TRANSMISS.csv',
-  'STOQS_00917_CHLA.csv', 'STOQS_00917_O2.csv', 'STOQS_00917_PHAEO_5U.csv',
-  #'STOQS_00917_SIG_T.csv',
-  'STOQS_00917_CHL_GFF.csv', #'STOQS_00917_OXY_ML.csv',
-  'STOQS_00917_PHAEO_GFF.csv',  #'STOQS_00917_TCO2.csv',
+   'STOQS_00917_CARBON_GFF.csv', 
+   'STOQS_00917_CHL_1U.csv',    'STOQS_00917_FLUOR.csv',
+   'STOQS_00917_CHL_5U.csv', 'STOQS_00917_NH4.csv', 'STOQS_00917_PHAEO_1U.csv',
+   'STOQS_00917_CHLA.csv', 'STOQS_00917_O2.csv', 'STOQS_00917_PHAEO_5U.csv',
+   'STOQS_00917_CHL_GFF.csv',
+   'STOQS_00917_PHAEO_GFF.csv', 
 
-                         ]
+   'STOQS_03917_OXY_PS.csv',
+   'STOQS_03917_CARBON_GFF.csv',
+   'STOQS_03917_CHL_1U.csv',    'STOQS_03917_FLUOR.csv',
+   'STOQS_03917_CHL_5U.csv', 'STOQS_03917_NH4.csv', 'STOQS_03917_PHAEO_1U.csv',
+   'STOQS_03917_CHLA.csv', 'STOQS_03917_O2.csv', 'STOQS_03917_PHAEO_5U.csv',
+   'STOQS_03917_CHL_GFF.csv',
+   'STOQS_03917_PHAEO_GFF.csv',
+
+                       ]
 
 # Execute the load
 cl.process_command_line()
@@ -327,7 +342,7 @@ else:
     cl.load_wg_Tiny()
     cl.load_oa1()
     cl.load_oa2()
-    #cl.loadDorado()
+    cl.loadDorado()
     ##cl.loadDaphne()
     ##cl.loadMakai()
     cl.loadRCuctd()
