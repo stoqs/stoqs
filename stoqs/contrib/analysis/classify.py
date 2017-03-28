@@ -122,7 +122,7 @@ class Classifier(BiPlot):
             MeasuredParameterResource.objects.using(self.args.database).get_or_create(
                                 activity=a, measuredparameter=mp_y, resource=r)
 
-    def removeLabels(self, labeledGroupName, label=None, description=None, commandline=None):
+    def removeLabels(self, labeledGroupName, label=None, description=None, commandline=None): # pragma: no cover
         '''
         Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Labeled Plankton').  
         Restrict deletion to the other passed in options, if specified: label is like 'diatom', description is like 
@@ -196,7 +196,7 @@ class Classifier(BiPlot):
             self.saveLabelSet(commandlineResource, label, x_ids, y_ids, description, labeledGroupName, 
                                     'Labeled with %s as discriminator' % self.args.discriminator)
 
-    def loadLabeledData(self, labeledGroupName, classes):
+    def loadLabeledData(self, labeledGroupName, classes): # pragma: no cover
         '''
         Retrieve from the database to set of Labeled data and return the standard X, and y arrays that the scikit-learn package uses
         '''
@@ -241,7 +241,7 @@ class Classifier(BiPlot):
         else:
             raise Exception('No data returned for labeledGroupName = %s' % labeledGroupName)
 
-    def createClassifier(self, labeledGroupName):
+    def createClassifier(self, labeledGroupName): # pragma: no cover
         '''
         Query the database for labeled training data, fit a model to it, and save the pickled 
         model back to the database.  Follow the pattern in the example at 
