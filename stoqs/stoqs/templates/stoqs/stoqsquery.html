@@ -976,12 +976,13 @@
                                         <th style="text-align:center;display:none;" class="pp-header">Y</th>
                                         <th style="text-align:center;display:none;" class="pp-header">Z</th>
                                         <th style="text-align:center;display:none;" class="pp-header">C</th>
+               <!--PLOT DATA BUTTONS-->
                                         <th style="text-align:center;">Plot Data</th>
                                         <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
                                     </tr>
-                                </thead>                             
+                                </thead> 
                                 <tbody>
                                     <tr>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
@@ -989,12 +990,12 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;">
-                                            <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
-                                            <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall_parametertime" style="display:none;"/>
+                                          <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
+                                          <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall_parametertime" style="display:none;"/>
                                         </td>
-                                        <td colspan="3" class="all-plot-instruction">Clear Selection</td>
+                                         <td colspan="3" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
-                                    <tr class="sp-pp-coordinates" style="display:none;">
+                                     <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
@@ -1062,7 +1063,9 @@
                                         <th style="text-align:center;display:none;" class="pp-header">Y</th>
                                         <th style="text-align:center;display:none;" class="pp-header">Z</th>
                                         <th style="text-align:center;display:none;" class="pp-header">C</th>
+                                        <th style="text-align:center;">Contour Data</th>
                                         <th style="text-align:center;">Plot Data</th>
+                                        <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
@@ -1075,26 +1078,33 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;">
-                                            <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
-                                            <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall_parametertime" style="display:none;"/>
+                                            <!-- CONTOUR PLOT CLEAR SELECTION -->
+                                            <input type="radio" name="parameters_contour_plot" value="" class="parameter-contour-plot-radio" />
+                                            <input type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />                
                                         </td>
-                                        <td colspan="3" class="all-plot-instruction">Clear Selection</td>
+                                        
+                                        <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall_parametertime" style="display:none;"/>
+                                        <td colspan="2" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
+
+
+
                                     <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
-                                        <td colspan="3">Longitude</td>
+                                        <td colspan="1">Longitude</td>
                                     </tr>
+
                                     <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="latitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
-                                        <td colspan="3">Latitude</td>
+                                        <td colspan="1">Latitude</td>
                                     </tr>
                                     <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="depth" class="parameter-radio" /></td>
@@ -1102,7 +1112,7 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="depth" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
-                                        <td colspan="3">Depth</td>
+                                        <td colspan="1">Depth</td>
                                     </tr>
                                     <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="time" class="parameter-radio" /></td>
@@ -1110,7 +1120,7 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="time" class="parameter-radio" /></td>
                                         <td style="text-align:center;">&nbsp;</td>
-                                        <td colspan="3">Time</td>
+                                        <td colspan="1">Time</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -4198,10 +4208,18 @@ function enable_cardboard(){
                             '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
+
+//CONTOUR BUTTONS ADDED
+
+                            '<td style="text-align:center;">' +
+                                '<input type="radio" name="parameters_contour_plot" value="' + value[2] + '" class="parameter-contour-plot-radio" />' +
+                            '</td>' +
+//
                             '<td style="text-align:center;">' +
                                 '<input type="radio" name="parameters_plot" value="' + value[2] + '" class="parameter-plot-radio" />' +
                                 '<input type="checkbox" name="parameters_plot_cb" value="' + value[2] + '" class="parameter-plot-checkbox" style="display:none;"/>' +
-                            '</td>' +
+                            '</td>'+
+
                             '<td style="width:1%">' +
                                 '<span title="' + value[4] + '. ' + value[1] + '. ' + value[5] + '. ' + value[6] + '" class="p-info">' +
                                     '<i class="icon-info-sign"></i>' +
