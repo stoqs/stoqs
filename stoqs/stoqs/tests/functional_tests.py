@@ -77,21 +77,24 @@ class BrowserTestCase(StaticLiveServerTestCase):
     def _wait_until_id_is_visible(self, id_string, delay=2):
         try:
             element_present = EC.presence_of_element_located((By.ID, id_string))
-            WebDriverWait(self.browser, delay).until(element_present)
+            element = WebDriverWait(self.browser, delay).until(element_present)
+            return element
         except TimeoutException:
             print(f"TimeoutException: Waited {delay} seconds for '{id_string}' element id to appear")
 
     def _wait_until_src_is_visible(self, src_string, delay=2):
         try:
             element_present = EC.presence_of_element_located((By.XPATH, f"//img[contains(@src,'{src_string}')]"))
-            WebDriverWait(self.browser, delay).until(element_present)
+            element = WebDriverWait(self.browser, delay).until(element_present)
+            return element
         except TimeoutException:
             print(f"TimeoutException: Waited {delay} seconds for <img src='{src_string}'... to appear")
 
     def _wait_until_text_is_visible(self, text_string, delay=2):
         try:
             element_present = EC.presence_of_element_located((By.XPATH, f"//div[contains(text(),'{text_string}')]"))
-            WebDriverWait(self.browser, delay).until(element_present)
+            element = WebDriverWait(self.browser, delay).until(element_present)
+            return element
         except TimeoutException:
             print(f"TimeoutException: Waited {delay} seconds for text '{text_string}'... to appear")
 
@@ -150,11 +153,17 @@ class BrowserTestCase(StaticLiveServerTestCase):
                 "//input[@name='parameters_plot' and @value='{}']".format(altitude_id))
         self._wait_until_visible_then_click(altitude_plot_button)
         self._wait_until_src_is_visible('dorado_colorbar')
+        # - Colormap
+        colorbar = self.browser.find_element_by_id('mp-colormap')
+        self._wait_until_visible_then_click(colorbar)
+        colormap = self._wait_until_src_is_visible('deep.png')
+        self._wait_until_visible_then_click(colormap)
+        # - 3D measuement data
         showgeox3dmeasurement = self.browser.find_element_by_id('showgeox3dmeasurement')
         self._wait_until_visible_then_click(showgeox3dmeasurement)
         self._wait_until_id_is_visible('mp-x3d-track')
         assert 'shape' == self.browser.find_element_by_id('mp-x3d-track').tag_name
-        # - Platform animation
+        # - 3D Platform animation
         showplatforms = self.browser.find_element_by_id('showplatforms')
         self._wait_until_visible_then_click(showplatforms)
         self._wait_until_id_is_visible('dorado_LOCATION', delay=4)
