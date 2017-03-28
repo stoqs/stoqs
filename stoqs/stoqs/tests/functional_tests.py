@@ -122,7 +122,7 @@ class BrowserTestCase(StaticLiveServerTestCase):
         self.assertIn('default', self.browser.title)
         self.assertEqual('', self._mapserver_loading_panel_test())
 
-    def test_dorado_trajectory(self):
+    def _test_dorado_trajectory(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         try:
             # Click on Platforms to expand
@@ -169,7 +169,7 @@ class BrowserTestCase(StaticLiveServerTestCase):
         self._wait_until_id_is_visible('dorado_LOCATION', delay=4)
         assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
 
-    def test_m1_timeseries(self):
+    def _test_m1_timeseries(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         # Test Temporal->Parameter for timeseries plots
         self._wait_until_id_is_visible('temporal-parameter-li')
@@ -180,12 +180,12 @@ class BrowserTestCase(StaticLiveServerTestCase):
         assert 'every single point' in si.text
 
     def test_share_view_trajectory(self):
-        self._test_share_view('test_dorado_trajectory')
+        self._test_share_view('_test_dorado_trajectory')
         self._wait_until_id_is_visible('dorado_LOCATION', delay=12)
         assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
 
     def test_share_view_timeseries(self):
-        self._test_share_view('test_m1_timeseries')
+        self._test_share_view('_test_m1_timeseries')
         self._wait_until_text_is_visible('every single point', delay=12)
         si = self.browser.find_element_by_id('stride-info')
         assert 'every single point' in si.text
