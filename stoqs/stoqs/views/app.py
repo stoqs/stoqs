@@ -129,7 +129,7 @@ class ActivityParameterHistogram(BaseOutputer):
     '''
     fields = [ 'binlo', 'binhi', 'bincount', 'activityparameter__parameter__name', 'activityparameter__activity__name']
 
-    def process_request(self):
+    def process_request(self): # pragma: no cover
         fields = self.getFields()
         self.assign_qs()
         self.responses.append('.png')
@@ -195,7 +195,7 @@ def showResourceActivity(request, fmt='json'):
     ra = ResourceActivity(request, fmt, query_set, stoqs_object)
     return ra.process_request()
 
-def showQuickLookPlots(request):
+def showQuickLookPlots(request): # pragma: no cover
     stoqs_object = mod.Resource
     query_set = stoqs_object.objects.filter(resourcetype__name='quick_look').order_by('name')
 
