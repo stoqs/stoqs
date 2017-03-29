@@ -669,7 +669,12 @@ class STOQSQManager(object):
                         platformTypeHash[platformType].append((name, id, color, featureType, ))
                 else:
                     x3dModel, x, y, z = self._getPlatformModel(name) 
-                    if x3dModel:
+                    # Do not add stationary model for BEDs that have rotation data
+                    platforms_rotations = {ar.activity.platform for ar in models.ActivityResource.objects.using(
+                                           self.dbname).filter(activity__activityparameter__parameter__name='AXIS_X', 
+                                           activity__platform__name=name)}
+                   
+                    if x3dModel and not platforms_rotations:
                         try:
                             platformTypeHash[platformType].append((name, id, color, featureType, x3dModel, x, y, z))
                         except KeyError:
@@ -1006,7 +1011,7 @@ class STOQSQManager(object):
         pt_qs_mp = qs_mp.order_by('measurement__nominallocation__depth', 'measurement__instantpoint__timevalue')[::stride]
         logger.debug('Adding time series of parameter = %s in key = %s', p, pa_units[p])
         for mp in pt_qs_mp:
-            if not mp['datavalue']:
+            if mp['datavalue'] is None:
                 continue
 
             tv = mp['measurement__instantpoint__timevalue']
@@ -1534,7 +1539,14 @@ class STOQSQManager(object):
             platforms_trajectories = {ar.activity.platform for ar in models.ActivityResource.objects.using(
                     self.dbname).filter(resource__name='featureType', resource__value='trajectory', 
                     activity__platform__in=[a.platform for a in self.qs])}
-            platforms_to_animate = platformsHavingModels & platforms_trajectories
+            # For detecting non-trajectory BEDS that have rotation data (ANGLE, AXIS_X, AXIS_Y, AXIS_Z)
+            # This is a weak test (for just 'AXIS_X'), but with also weak consequences, maybe an error
+            # reported to the UI if the other required Parameters are not present
+            platforms_rotations = {ar.activity.platform for ar in models.ActivityResource.objects.using(
+                    self.dbname).filter(activity__activityparameter__parameter__name='AXIS_X',
+                        activity__platform__in=[a.platform for a in self.qs])}
+
+            platforms_to_animate = platformsHavingModels & (platforms_trajectories | platforms_rotations)
             if platforms_to_animate:
                 # Use qs_mp_no_parm QuerySet as it contains roll, pitch, and yaw values
                 mppa = PlatformAnimation(platforms_to_animate, self.kwargs, 
@@ -1544,6 +1556,10 @@ class STOQSQManager(object):
                 for platform in platforms_to_animate:
                     if 'BED' in platform.name.upper():
                         speedup = 1
+                # Override speedup if provided by request from UI
+                if self.kwargs.get('speedup'):
+                    speedup = float(self.kwargs.get('speedup')[0])
+
                 # Default vertical exaggeration is 10x and default geoorigin is empty string
                 orientDict = mppa.platformAnimationDataValuesForX3D(
                                 float(self.request.GET.get('ve', 10)), 

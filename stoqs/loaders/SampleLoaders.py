@@ -223,25 +223,25 @@ class SeabirdLoader(STOQS_Loader):
 
         parmDict = {}
 
-        pr = BaseType()
+        pr = BaseType('nameless')
         pr.attributes = {'colname': 'PrDM', 'units': 'm' , 'long_name': 'DEPTH', 'standard_name': 'depth'}
 
-        temp = BaseType()
+        temp = BaseType('nameless')
         temp.attributes = {'colname': 'T190C', 'units': 'ITS-90, deg C', 'long_name': 'temperature', 'standard_name': 'sea_water_temperature'}
 
-        sal = BaseType()
+        sal = BaseType('nameless')
         sal.attributes = {'colname': 'Sal00', 'units': '1' , 'long_name': 'salinity', 'standard_name': 'sea_water_salinity'} 
 
-        xmiss = BaseType()
+        xmiss = BaseType('nameless')
         xmiss.attributes = {'colname': 'Xmiss', 'units': '%', 'long_name': 'Beam Transmission, Chelsea/Seatech'}
 
-        ecofl = BaseType()
+        ecofl = BaseType('nameless')
         ecofl.attributes = {'colname': 'FlECO-AFL', 'units': 'mg/m^3', 'long_name': 'Fluorescence, WET Labs ECO-AFL/FL'}
 
-        wetstar = BaseType()
+        wetstar = BaseType('nameless')
         wetstar.attributes = {'colname': 'WetStar', 'units': 'mg/m^3', 'long_name': 'Fluorescence, WET Labs WETstar'}
 
-        oxygen = BaseType()
+        oxygen = BaseType('nameless')
         oxygen.attributes = {'colname': 'Sbeox0ML/L', 'units': 'ml/l', 'long_name': 'Oxygen, SBE 43'}
 
         # The colname attribute must be the keys that DictReader returns - the keys of this dictionary will be the Parameter names in stoqs

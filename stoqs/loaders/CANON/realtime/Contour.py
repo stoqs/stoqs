@@ -455,7 +455,7 @@ class Contour(object):
                     self.shadeNight(ax1_plot,sorted(x),rangey[0], rangey[1])
 
                 logger.debug('plotting colorbars')
-                if plot_scatter:
+                if plot_scatter or plot_scatter_contour:
                     cbFormatter = FormatStrFormatter('%.2f')
                     cb = plt.colorbar(cs0, cax=ax0_colorbar, ticks=[min(rangez), max(rangez)], format=cbFormatter, orientation='vertical')
                     cb.set_label(units,fontsize=8)#,labelpad=5)
@@ -591,7 +591,7 @@ class Contour(object):
                     z_stride = z[0:sz:stride]
                     lon_stride = lon[0:sz:stride]
                     lat_stride = lat[0:sz:stride]
-                    mp.scatter(lon_stride,lat_stride,c=z_stride,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
+                    mp.scatter(lon_stride,lat_stride,c=z_stride,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,label=self.plotDotParmName,zorder=2)
                     if stride > 1:
                         ax.text(0.70,0.1, ('%s (every %d points)' % (self.plotDotParmName, stride)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
@@ -600,7 +600,7 @@ class Contour(object):
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
 
                 else:
-                    mp.scatter(lon,lat,c=z,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,zorder=2)
+                    mp.scatter(lon,lat,c=z,marker='.',lw=0,alpha=1.0,cmap=self.cm_jetplus,label=self.plotDotParmName,zorder=2)
                     ax.text(0.70,0.1, ('%s (every point)' % (self.plotDotParmName)), verticalalignment='bottom',
                              horizontalalignment='center',transform=ax.transAxes,color='black',fontsize=8)
 
@@ -650,6 +650,9 @@ class Contour(object):
 
     def gridData(self, x, y, z, xi, yi):
         try:
+            logger.debug('Gridding')
+            if (len(z) == 0):
+                raise('No data returned to grid')
             logger.debug('Gridding')
             zi = griddata((x, y), np.array(z), (xi[None,:], yi[:,None]), method='nearest')
             logger.debug('Done gridding')
@@ -786,6 +789,11 @@ class Contour(object):
 
         except Exception,e:
             logger.error(e)
+            try:
+                logger.debug('Plotting the data')
+                cs = ax.scatter(x,y,c=z,s=20,marker='.',vmin=zmin,vmax=zmax,lw=0,alpha=1.0,cmap=self.cm_jetplus)
+            except Exception,e:
+                logger.error(e)
 
         return cs, zi
 
@@ -889,7 +897,7 @@ class Contour(object):
                 while end_datetime <= data_end :
                     data_end_local = end_datetime.astimezone(pytz.timezone('America/Los_Angeles'))
                     data_start_local = start_datetime.astimezone(pytz.timezone('America/Los_Angeles'))
-                    logger.debug('Plotting data')
+                    logger.debug('Plotting data for animation')
 
                     self.subtitle1 = '%s  to  %s PDT' % (data_start_local.strftime('%Y-%m-%d %H:%M'), data_end_local.strftime('%Y-%m-%d %H:%M'))
                     self.subtitle2 = '%s  to  %s UTC' % (start_datetime.strftime('%Y-%m-%d %H:%M'), end_datetime.strftime('%Y-%m-%d %H:%M'))
@@ -898,14 +906,19 @@ class Contour(object):
                     start_datetime = end_datetime - overlap_window
                     end_datetime = start_datetime + zoom_window
 
+                if not os.listdir(self.dirpath):
+                   raise Exception('No plots generated')
+
                 cmd = "convert -loop 1 -delay 250 %s/frame*.png %s" % (self.dirpath,self.outFilename)
                 logger.debug(cmd)
                 os.system(cmd)
-                shutil.rmtree(self.dirpath)
 
             except Exception, e:
                 logger.error(e)
 
+            finally:
+                print 'Done!'
+                shutil.rmtree(self.dirpath)
         else :
             try:
                 if self.data is not None:

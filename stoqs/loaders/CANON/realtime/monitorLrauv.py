@@ -202,6 +202,22 @@ def process_command_line():
     args = parser.parse_args()    
     return args
 
+# Checks if file was created within the last delay in minutes; return True if so
+def check_file(delay, old_filename, new_filename):
+    if not os.path.isfile(old_filename):
+        return False
+
+    mod_time = datetime.fromtimestamp(os.stat(old_filename).st_mtime)
+    if os.path.isfile(new_filename):
+      if os.stat(old_filename).st_size == os.stat(new_filename).st_size:
+        return False
+
+    now = datetime.today()
+    if now - mod_time > delay:
+        return False
+    else:
+        return True 
+
 if __name__ == '__main__':
     args = process_command_line() 
 
@@ -408,7 +424,7 @@ if __name__ == '__main__':
             except Exception as e:
                 logger.warn(e)
                 continue
-
+    
 
     # update last 24 hr plot when requested
     if args.latest24hr:
@@ -423,7 +439,7 @@ if __name__ == '__main__':
             outFileLatestProduct = args.productDir + '/' + platformName  + '_log_last24hr.png'
             outFileLatestAnim = args.contourDir + '/' + platformName  + '_24h_latest_anim.gif'
             outFileLatestProductAnim = args.productDir + '/' + platformName  + '_log_last24hr_anim.gif'
-
+ 
             c = Contour(nowStartDateTimeUTC24hr, nowEndDateTimeUTC24hr, args.database, [platformName], args.plotgroup, 
                         title, outFileLatest, args.autoscale, args.plotDotParmName, args.booleanPlotGroup)
             c.run()
@@ -434,14 +450,17 @@ if __name__ == '__main__':
 
             if not outFileLatest.startswith('/tmp'):
                 # copy to the atlas share that will get cataloged in ODSS
-                cmd = r'cp %s %s' %(outFileLatest, outFileLatestProduct)
-                logger.debug('%s', cmd)
-                os.system(cmd)
+                delay = timedelta(minutes=5)
+                if check_file(delay, outFileLatest, outFileLatestProduct):
+                    cmd = r'cp %s %s' %(outFileLatest, outFileLatestProduct)
+                    logger.debug('%s', cmd)
+                    os.system(cmd)
 
                 # copy to the atlas share that will get cataloged in ODSS
-                cmd = r'cp %s %s' %(outFileLatestAnim, outFileLatestProductAnim)
-                logger.debug('%s', cmd)
-                os.system(cmd)
+                if check_file(delay, outFileLatestAnim, outFileLatestProductAnim):
+                    cmd = r'cp %s %s' %(outFileLatestAnim, outFileLatestProductAnim)
+                    logger.debug('%s', cmd)
+                    os.system(cmd)
 
         except Exception as e:
             logger.warn(e)

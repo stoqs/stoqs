@@ -83,6 +83,20 @@ MIGRATION_MODULES = {
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#debug
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 
+# ALLOWED_HOSTS
+# ------------------------------------------------------------------------------
+# See: https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
+default_allowed_hosts = ['localhost', '127.0.0.1', '[::1]']
+try:
+    import netifaces as ni
+    ni.ifaddresses('eth0')
+    default_allowed_hosts.append(ni.ifaddresses('eth0')[2][0]['addr'])
+except ImportError:
+    # Likely because 'netifaces' has not been installed
+    pass
+
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=default_allowed_hosts)
+
 # FIXTURE CONFIGURATION
 # ------------------------------------------------------------------------------
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-FIXTURE_DIRS
