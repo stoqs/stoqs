@@ -178,8 +178,6 @@ class BrowserTestCase(TestCase):
             "//input[@name='parameters_contour_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
         parameter_contour_plot_radio_button.click()
 
-        self.assertEquals('', self._mapserver_loading_panel_test)
-
     def test_plot_count_without_platform(self):
 
         self.browser.get('http://localhost:8000/default/query/')
