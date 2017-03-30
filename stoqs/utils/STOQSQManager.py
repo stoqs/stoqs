@@ -837,7 +837,7 @@ class STOQSQManager(object):
                             except TypeError:
                                 continue                                                 # Likely "float argument required, not NoneType"
     
-                        else:
+                        else: # pragma: no cover
                             s_ems, e_ems = self.getTime()
                             try:
                                 sdt[p[0]][an_nd].append( [s_ems, '%.2f' % sd['simpledepthtime__nominallocation__depth']] )
@@ -851,7 +851,7 @@ class STOQSQManager(object):
                                 continue                                                 # Likely "float argument required, not NoneType"
                     logger.debug(' Done filling sdt[].')
 
-                elif p[3].lower() == 'trajectoryprofile':
+                elif p[3].lower() == 'trajectoryprofile': # pragma: no cover
                     iptvq = Q()
                     qs_tp = None
                     if 'time' in self.kwargs:

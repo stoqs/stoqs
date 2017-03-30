@@ -173,35 +173,8 @@ class BaseParameter(object):
             cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
             plt.close()
 
-        elif orientation == 'vertical':
-            # TODO: Harmonize with horizontal version if this is to be used
-            cb_fig = plt.figure(figsize=(0.6, 4))
-            cb_ax = cb_fig.add_axes([0.1, 0.1, 0.15, 0.8])
-            norm = mpl.colors.Normalize(vmin=parm_info[1], vmax=parm_info[2], clip=False)
-            cb = mpl.colorbar.ColorbarBase( cb_ax, cmap=colormap,
-                                            norm=norm,
-                                            ticks=list(np.linspace(parm_info[1], parm_info[2], num=4)),
-                                            orientation='vertical')
-            cb.ax.set_yticklabels([str(parm_info[1]), str(parm_info[2])])
-            logger.debug('Getting units for parm_info[0] = %s', parm_info[0])
-            try:
-                cp = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=int(parm_info[0]))
-            except ValueError:
-                # Likely a coordinate variable
-                cp = models.Parameter
-                cp.name = parm_info[0]
-                cp.standard_name = parm_info[0]
-                cp.units = _getCoordUnits(parm_info[0])
-
-            cb.set_label('%s (%s)' % (cp.name, cp.units), fontsize=10)
-            for label in cb.ax.get_yticklabels():
-                label.set_fontsize(10)
-                label.set_rotation('vertical')
-            cb_fig.savefig(colorbarPngFileFullPath, dpi=120, transparent=True)
-            plt.close()
-
         else:
-            raise Exception('orientation must be either horizontal or vertical')
+            raise Exception("Only 'horizontal' orientation is supported")
 
 
 class MeasuredParameter(BaseParameter):

@@ -217,7 +217,7 @@ class Base_Loader(STOQS_Loader):
                         minDT[v] = from_udunits(self.ds[ac['time']][0][0], 'seconds since 1970-01-01 00:00:00')
                         maxDT[v] = from_udunits(self.ds[ac['time']][-1][0], 'seconds since 1970-01-01 00:00:00')
                     
-            elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile':
+            elif self.getFeatureType() == 'timeseries' or self.getFeatureType() == 'timeseriesprofile': # pragma: no cover
                 logger.debug('Getting timeseries start time for v = %s', v)
                 minDT[v] = from_udunits(self.ds[v][ac['time']][0][0], self.ds[ac['time']].attributes['units'])
                 maxDT[v] = from_udunits(self.ds[v][ac['time']][-1][0], self.ds[ac['time']].attributes['units'])
@@ -346,7 +346,7 @@ class Base_Loader(STOQS_Loader):
             conventions = self.ds.attributes['NC_GLOBAL']['Conventions'].lower()
         elif 'Convention' in nc_global_keys:
             conventions = self.ds.attributes['NC_GLOBAL']['Convention'].lower()
-        elif 'conventions' in nc_global_keys:
+        elif 'conventions' in nc_global_keys: # pragma: no cover
             conventions = self.ds.attributes['NC_GLOBAL']['conventions'].lower()
         else:
             conventions = ''
@@ -447,7 +447,7 @@ class Base_Loader(STOQS_Loader):
 
         logger.debug('coordDict = %s', coordDict)
 
-        if not coordDict:
+        if not coordDict: # pragma: no cover
             if self.auxCoords:
                 if variable in self.auxCoords:
                     # Simply return self.auxCoords if specified in the constructor
@@ -521,7 +521,7 @@ class Base_Loader(STOQS_Loader):
         Return beginning and ending indices for the corresponding time axis indices
         '''
         try:
-            if 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper():
+            if 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper(): # pragma: no cover
                 # True Julian dates are at noon, so take int() to match EPIC's time axis values and to satisfy:
                 #   datum: Time (UTC) in True Julian Days: 2440000 = 0000 h on May 23, 1968
                 #   NOTE: Decimal Julian day [days] = time [days] + ( time2 [msec] / 86400000 [msec/day] )
@@ -703,7 +703,7 @@ class Base_Loader(STOQS_Loader):
                 depths[pname] = self.ds[list(self.ds[pname].keys())[2]][:]                # TODO lookup more precise depth from conversion from pressure
 
                 timeUnits[pname] = self.ds[list(self.ds[pname].keys())[1]].units.lower()
-                if timeUnits[pname] == 'true julian day':
+                if timeUnits[pname] == 'true julian day': # pragma: no cover
                     # Create COARDS time from EPIC data
                     time2s = self.ds['time2']['time2'][tIndx[0]:tIndx[-1]:self.stride]
                     timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'
@@ -727,7 +727,7 @@ class Base_Loader(STOQS_Loader):
                     # Assumes COARDS coordinate ordering
                     latitudes[pname] = float(self.ds[list(self.ds[pname].keys())[3]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                     longitudes[pname] = float(self.ds[list(self.ds[pname].keys())[4]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
-                elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper():
+                elif shape_length == 3 and 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper(): # pragma: no cover
                     # Special fix for USGS EPIC ADCP variables missing depth coordinate, but having nominal sensor depth metadata
                     latitudes[pname] = float(self.ds[list(self.ds[pname].keys())[2]][0])      # TODO lookup more precise gps lat via coordinates pointing to a vector
                     longitudes[pname] = float(self.ds[list(self.ds[pname].keys())[3]][0])     # TODO lookup more precise gps lon via coordinates pointing to a vector
@@ -808,7 +808,7 @@ class Base_Loader(STOQS_Loader):
             # Only single trajectories are allowed
             shape_length = self.get_shape_length(pname)
             logger.info('Reading data from %s: %s %s %s', self.url, pname, shape_length, type(self.ds[pname]))
-            if shape_length == 1 and isinstance(self.ds[pname], pydap.model.BaseType):
+            if shape_length == 1 and isinstance(self.ds[pname], pydap.model.BaseType): # pragma: no cover
                 # Legacy Dorado data need to be processed as BaseType; Example data:
                 #   dsdorado = open_url('http://odss.mbari.org/thredds/dodsC/CANON_september2012/dorado/Dorado389_2012_256_00_256_00_decim.nc')
                 #   dsdorado['temperature'].shape = (12288,)
@@ -1175,7 +1175,7 @@ class Base_Loader(STOQS_Loader):
             for key in self.include_names:
                 parmCount[key] = 0
 
-            if self.appendFlag:
+            if self.appendFlag: # pragma: no cover
                 self.dataStartDatetime = (m.InstantPoint.objects.using(self.dbAlias)
                                             .filter(activity__name=self.getActivityName())
                                             .aggregate(Max('timevalue'))['timevalue__max'])
@@ -1501,7 +1501,7 @@ class Lrauv_Loader(Trajectory_Loader):
         In addition to the NC_GLOBAL attributes that are added in the base class also add the quick-look plots that are on the dods server.
         '''
 
-        if self.contourUrl and self.timezone:
+        if self.contourUrl and self.timezone: # pragma: no cover
             # Replace netCDF file with png extension
             outurl = re.sub('\.nc$','.png', self.url)
 
@@ -1602,7 +1602,7 @@ class BED_Trajectory_Loader(Trajectory_Loader):
         self.framegrab = framegrab
         super(BED_Trajectory_Loader, self).__init__(*args, **kwargs)
 
-    def addResources(self):
+    def addResources(self): # pragma: no cover
         '''
         In addition to the NC_GLOBAL attributes that are added in the base class also add the frame grab URL
         '''
@@ -1664,7 +1664,7 @@ def runTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTyp
 
 def runBEDTrajectoryLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName,
                            parmList, dbAlias, stride, plotTimeSeriesDepth=None,
-                           grdTerrain=None, framegrab=None):
+                           grdTerrain=None, framegrab=None): # pragma: no cover
     '''
     Run the DAPloader for Benthic Event Detector trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1801,7 +1801,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
                    stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
                    dataStartDatetime=None, contourUrl=None, auxCoords=None, timezone='America/Los_Angeles',
-                   command_line_args=None, plotTimeSeriesDepth=None):
+                   command_line_args=None, plotTimeSeriesDepth=None): # pragma: no cover
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1866,7 +1866,7 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
 
 def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, 
                     dbAlias, stride, startDatetime=None, endDatetime=None, grdTerrain=None, 
-                    dataStartDatetime=None, plotTimeSeriesDepth=None, command_line_args=None):
+                    dataStartDatetime=None, plotTimeSeriesDepth=None, command_line_args=None): # pragma: no cover
     '''
     Run the DAPloader for Spray Glider trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -2034,11 +2034,11 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
         for v in loader.include_names:
             if v in ['bb470', 'bb676', 'fl676']:
                 loader.auxCoords[v] = {'time': 'esecs', 'latitude': 'Latitude', 'longitude': 'Longitude', 'depth': 'NominalDepth'}
-    elif url.find('OA') != -1:
+    elif url.find('OA') != -1: # pragma: no cover
         # Special for OA moorings: only 'time' is lower case
         for v in loader.include_names:
             loader.auxCoords[v] = {'time': 'time', 'latitude': 'LATITUDE', 'longitude': 'LONGITUDE', 'depth': 'DEPTH'}
-    elif url.find('ccebin') != -1:
+    elif url.find('ccebin') != -1: # pragma: no cover
         # Special for CCEBIN mooring
         if 'adcp' in url:
             for v in loader.include_names:
@@ -2046,7 +2046,7 @@ def runMooringLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNa
         else:
             for v in loader.include_names:
                 loader.auxCoords[v] = {'time': 'esecs', 'latitude': 'Latitude', 'longitude': 'Longitude', 'depth': 'NominalDepth'}
-    elif url.find('CCE_BIN') != -1:
+    elif url.find('CCE_BIN') != -1: # pragma: no cover
         # CCE_BIN file variables have coordinate attributes, no need to override
         loader.auxCoords = []
     else:

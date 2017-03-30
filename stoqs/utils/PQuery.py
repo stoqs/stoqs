@@ -79,7 +79,7 @@ class PQuerySet(object):
             else:
                 self.mp_query = MeasuredParameter.objects.raw(query)
  
-    def __iter__(self):
+    def __iter__(self): # pragma: no cover
         '''
         Main way to access data that is used by interators in templates, etc.
         Simulate behavior of regular GeoQuerySets.  Modify & format output as needed.
@@ -162,7 +162,7 @@ class PQuerySet(object):
             data[-1] = "...(remaining elements truncated)..."
         return repr(data)
  
-    def __getitem__(self, k):
+    def __getitem__(self, k): # pragma: no cover
         '''
         Boiler plate copied from http://ramenlabs.com/2010/12/08/how-to-quack-like-a-queryset/.  Does not seem to be used
         by Django templates and other uses of this class, which seem to mainly use __iter__().
@@ -484,7 +484,7 @@ class PQuery(object):
                             where_sql += "(mp" + str(i) + ".datavalue < " + str(v[1]) + ") AND "
                         where_sql += "(mp" + str(i) + ".parameter_id = p" + str(i) + ".id) AND "
 
-                    elif self.isParameterSampled(k):
+                    elif self.isParameterSampled(k): # pragma: no cover
                         from_sql += 'INNER JOIN stoqs_sample s' + str(i) + ' '
                         from_sql += 'on s' + str(i) + '.instantpoint_id = stoqs_instantpoint.id '
                         from_sql += 'INNER JOIN stoqs_sampledparameter sp' + str(i) + ' '
