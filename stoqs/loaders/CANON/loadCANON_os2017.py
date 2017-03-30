@@ -178,7 +178,9 @@ for p in platforms:
 # Glider data files from CeNCOOS thredds server
 # L_662
 cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
-cl.l_662_files = [ 'OS_Glider_L_662_20161214_TS.nc' ] ## deployed new glider December 14 2016
+cl.l_662_files = [
+                   'OS_Glider_L_662_20161214_TS.nc',
+                   'OS_Glider_L_662_20170328_TS.nc'  ] 
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
