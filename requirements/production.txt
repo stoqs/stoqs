@@ -7,4 +7,4 @@ pandas==0.19.2
 pymssql==2.1.3
 requests==2.13.0
 thredds-crawler==1.5.3
-uWSGI==2.0.14
+uWSGI==2.0.15
