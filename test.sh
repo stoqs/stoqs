@@ -9,7 +9,7 @@
 if [ -z $1 ]
 then
     echo "Please provide the password for the local PostgreSQL stoqsadm account."
-    echo "Usage: $0 <stoqsadm_db_password>"
+    echo "Usage: $0 stoqsadm_db_password [skip_load]"
     exit -1
 fi
 if [ -L stoqs/campaigns.py ]
