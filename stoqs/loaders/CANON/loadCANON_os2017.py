@@ -198,8 +198,9 @@ cl.l_662_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                     'wgTiny/20161212/realTime/20161212.nc', ## deploy December 12 2016
-                     'wgTiny/20170109/realTime/20170109.nc'
+                     'wgTiny/20161212/realTime/20161212.nc', 
+                     'wgTiny/20170109/realTime/20170109.nc',
+                     'wgTiny/20170307/realTime/20170307.nc',
                    ]
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
                     'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
