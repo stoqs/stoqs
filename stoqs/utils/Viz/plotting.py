@@ -595,21 +595,21 @@ class MeasuredParameter(BaseParameter):
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
                     # Sample markers for everything but Net Tows
                     xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_name=NETTOW)
-                    ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10)
-                    for x,y,sn in zip(xsamp, ysamp, sname):
+                    ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
+                    for x,y,sn in izip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
                     # Annotate NetTow Samples at Sample record location - points
                     xsamp, ysamp, sname = self._get_samples_for_markers(act_name=NETTOW)
-                    ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10)
-                    for x,y,sn in zip(xsamp, ysamp, sname):
+                    ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
+                    for x,y,sn in izip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
                     # Sample markers for Vertical Net Tows (put circle at surface) - lines
                     xspan, yspan, sname = self._get_samples_for_markers(act_name=VERTICALNETTOW, spanned=True)
                     for xs,ys in zip(xspan, yspan):
                         ax.plot(xs, ys, c='k', lw=2)
-                        ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10)
+                        ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
 
                 if full_screen:
                     fig.savefig(sectionPngFileFullPath, dpi=240, transparent=True)
@@ -1074,12 +1074,12 @@ class ParameterParameter(BaseParameter):
                     if self.c:
                         try:
                             ax.scatter(self.sx, self.sy, marker='o', c=self.c, s=25, cmap=self.cm, 
-                                       vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False)
+                                       vmin=self.pMinMax['c'][1], vmax=self.pMinMax['c'][2], clip_on=False, edgecolors='k')
                         except ValueError as e:
                             # Likely because a Measured Parameter has been selected for color and len(self.c) != len(self.sx)
-                            ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False)
+                            ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False, edgecolors='k')
                     else:
-                        ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False)
+                        ax.scatter(self.sx, self.sy, marker='o', c='w', s=25, zorder=10, clip_on=False, edgecolors='k')
                     for i, txt in enumerate(self.sample_names):
                         ax.annotate(txt, xy=(self.sx[i], self.sy[i]), xytext=(3.0, 3.0), textcoords='offset points')
             
