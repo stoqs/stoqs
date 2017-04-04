@@ -900,11 +900,15 @@ class Base_Loader(STOQS_Loader):
                     logger.info("Using constraints: ds['%s']['%s'][%d:%d:%d]", pname, pname, tIndx[0], tIndx[-1], self.stride)
                     v = self.ds[pname][pname][tIndx[0]:tIndx[-1]:self.stride]
                 except ValueError as err:
-                    logger.error('\nGot error "%s" reading data from URL: %s.\n'
-                                 'If it is: "string size must be a multiple of element size"'
-                                 ' and the URL is a TDS aggregation then the cache files must'
-                                 ' be removed and the tomcat hosting TDS restarted.', err, self.url)
-                    sys.exit(1)
+                    if self.stride > tIndx[-1] - tIndx[0]:
+                        logger.error('Stride value is too high for this dataset. Not loading any of its data.')
+                        continue
+                    else:
+                        logger.error('\nGot error "%s" reading data from URL: %s.\n'
+                                     'If it is: "string size must be a multiple of element size"'
+                                     ' and the URL is a TDS aggregation then the cache files must'
+                                     ' be removed and the tomcat hosting TDS restarted.', err, self.url)
+                        sys.exit(1)
                 except pydap.exceptions.ServerError as e:
                     logger.error('%s', e)
                     continue
