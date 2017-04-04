@@ -596,13 +596,13 @@ class MeasuredParameter(BaseParameter):
                     # Sample markers for everything but Net Tows
                     xsamp, ysamp, sname = self._get_samples_for_markers(exclude_act_name=NETTOW)
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
-                    for x,y,sn in izip(xsamp, ysamp, sname):
+                    for x,y,sn in zip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
                     # Annotate NetTow Samples at Sample record location - points
                     xsamp, ysamp, sname = self._get_samples_for_markers(act_name=NETTOW)
                     ax.scatter(xsamp, np.float64(ysamp), marker='o', c='w', s=15, zorder=10, edgecolors='k')
-                    for x,y,sn in izip(xsamp, ysamp, sname):
+                    for x,y,sn in zip(xsamp, ysamp, sname):
                         plt.annotate(sn, xy=(x,y), xytext=(5,-5), textcoords = 'offset points', fontsize=7)
 
                     # Sample markers for Vertical Net Tows (put circle at surface) - lines
