@@ -77,6 +77,8 @@ try:
     for campaign in list(campaigns.keys()):
         DATABASES[campaign] = DATABASES.get('default').copy()
         DATABASES[campaign]['NAME'] = campaign
+        MAPSERVER_DATABASES[campaign] = MAPSERVER_DATABASES.get('default').copy()
+        MAPSERVER_DATABASES[campaign]['NAME'] = campaign
 except Exception:
     pass
 
