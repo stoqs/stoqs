@@ -54,6 +54,7 @@ def get_year_lat_lon(*args, **kwargs):
 
     for line in FH:
         ##print line
+        line = line.decode('utf-8')
         if line.find('NMEA Latitude') != -1:
             latD = int(line.split(' ')[4])
             latM = float(line.split(' ')[5])
