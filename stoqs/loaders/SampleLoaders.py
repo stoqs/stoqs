@@ -477,7 +477,7 @@ class SeabirdLoader(STOQS_Loader):
             # Read files from the network - use BeautifulSoup to parse TDS's html response
             webBtlDir = self.tdsBase + 'catalog/' + self.pctdDir + 'catalog.html'
             logger.debug('Opening url to %s', webBtlDir)
-            soup = BeautifulSoup(urlopen(webBtlDir).read())
+            soup = BeautifulSoup(urlopen(webBtlDir).read(), 'lxml')
             linkList = soup.find_all('a')
             linkList.sort(reverse=True)
             for link in linkList:
