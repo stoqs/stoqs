@@ -341,6 +341,7 @@ class SeabirdLoader(STOQS_Loader):
         for line in fh:
             # Write to tempfile all lines that don't begin with '*' nor '#' then open that with csv.DictReader
             # Concatenate broken lines that begin with 'Position...' and with HH:MM:SS, remove (avg|sdev)
+            line = line.decode('latin-1')
             if not line.startswith('#') and not line.startswith('*'):
                 m = re.match('.+(Sbeox0PS)(Sbeox0Mm)', line.strip())
                 if m:
@@ -479,7 +480,7 @@ class SeabirdLoader(STOQS_Loader):
             logger.debug('Opening url to %s', webBtlDir)
             soup = BeautifulSoup(urlopen(webBtlDir).read(), 'lxml')
             linkList = soup.find_all('a')
-            linkList.sort(reverse=True)
+            sorted(linkList, key=lambda elem: elem.text)
             for link in linkList:
                 bfile = link.get('href')
                 if bfile.endswith('.btl'):
