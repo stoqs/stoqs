@@ -1,0 +1,3 @@
+# Unzip before running explore_BIOM_data_for_SIMZ Jupyter Notebook:
+
+unzip *.gz
