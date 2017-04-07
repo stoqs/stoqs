@@ -31,7 +31,7 @@ ordereddict==1.1
 Paste==2.0.3
 PasteDeploy==1.5.2
 PasteScript==2.0.2
-Pillow==4.0.0
+Pillow==4.1.0
 psycopg2==2.7.1
 pupynere==1.0.15
 Pydap==3.2.1
@@ -44,7 +44,7 @@ pyzmq==16.0.2
 readline==6.2.4.1
 requests-oauthlib==0.8.0
 seawater==3.3.4
-selenium==3.3.2
+selenium==3.3.3
 simplejson==3.10.0
 six==1.10.0
 slacker==0.9.42
