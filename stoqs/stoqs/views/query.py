@@ -67,6 +67,8 @@ query_parms = {
 
                    'parameterplot': ('parameterplotid',                                     # Plot radio button selection
                                      'platformplotname'),                                   # - client knows platform name
+                   'parametercontourplot': ('parameterplotid',                              # Plot contour radio button selection 
+                                             'platformplotname') 
                    'parametertimeplotid': 'parametertimeplotid',                            # Plot checkbox id values
                    'showgeox3dmeasurement': 'showgeox3dmeasurement',                          # Flag value from checkbox
                    'showgeox3dsample': 'showgeox3dsample',                                 # Flag value from checkbox
