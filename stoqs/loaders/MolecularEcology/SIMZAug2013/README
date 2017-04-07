@@ -13,6 +13,13 @@ gunzip *.csv.gz
 ../../planktonpump.py --database stoqs_simz_aug2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv --csv_file 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
 
 
+# Clean up directory after data load so that 'git status' is clean
+
+rm *ParentSamples.csv
+gzip *.csv
+
+(May need to 'git checkout ...' the .gz files for full cleanup.)
+
 --
 Mike McCann
 7 April 2017
