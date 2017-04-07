@@ -1,0 +1,18 @@
+This directory contains laboratory analysis data for a STOQS campaign.
+The data are in version control to serve as an example for how STOQS can
+handle these kind of data.
+
+# Unzip the gzipped files:
+
+gunzip *.csv.gz
+
+
+# Create the Parent Sample data files before running the loadSIMZ_aug2013.py load script:
+
+../../nettow.py --database stoqs_simz_aug2013 --subsampleFile 2013_SIMZ_TowNets_STOQS.csv --csvFile 2013_SIMZ_TowNet_ParentSamples.csv -v
+../../planktonpump.py --database stoqs_simz_aug2013 --subsampleFile SIMZ_2013_PPump_STOQS_tidy_v2.csv --csv_file 2013_SIMZ_PlanktonPump_ParentSamples.csv -v
+
+
+--
+Mike McCann
+7 April 2017
