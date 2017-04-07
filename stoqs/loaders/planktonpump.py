@@ -328,7 +328,7 @@ class PlanktonPump():
         parser.add_argument('-l', '--load_file', action='store', 
                             help='Load parent Sample data into database')
 
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, 
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, default=0,
                             help='Turn on verbose output. Higher number = more output.', const=1)
     
         self.args = parser.parse_args()
