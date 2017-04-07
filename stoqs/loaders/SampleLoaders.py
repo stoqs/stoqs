@@ -661,7 +661,7 @@ class SubSamplesLoader(STOQS_Loader):
         p = None
         loadedParentSamples = []
         parameterCount = {}
-        for r in csv.DictReader(open(fileName)):
+        for r in csv.DictReader(open(fileName, encoding='latin-1')):
             logger.debug(r)
             aName = r['Cruise']
 
