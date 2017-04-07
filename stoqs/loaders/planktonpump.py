@@ -183,7 +183,7 @@ class PlanktonPump():
 
         with open(self.args.csv_file, 'w') as f:
             f.write('Cast,RelativeDepth,')
-            f.write(','.join(list(iter(list(s.values())).next().keys())))
+            f.write(','.join(list(next(iter(list(s.values()))).keys())))
             f.write('\n')
             for k,v in list(s.items()):
                 f.write(','.join(k) + ',')
