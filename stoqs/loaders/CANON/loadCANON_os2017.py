@@ -32,7 +32,7 @@ sys.path.insert(0, parentDir)  # So that CANON is found
 from CANON import CANONLoader
 from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
-from thredds_crawler.etree import etree
+from lxml import etree
 
 cl = CANONLoader('stoqs_os2017', 'CANON - Off Season 2017',
                  description='CANON Off Season 2017 Experiment in Monterey Bay',
