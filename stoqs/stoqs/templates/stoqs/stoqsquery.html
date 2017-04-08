@@ -2015,7 +2015,7 @@
         }
 
         params['mplabels']=[]
-        $('tr',$('#amp')).each(function (index, element) {
+        $('tr', '.stoqs-attributes').each(function (index, element) {
             if ($('.btn-primary', $(element)).length) {
                 params['mplabels'].push(element.id);
             }

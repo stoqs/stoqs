@@ -38,14 +38,14 @@ from utils.STOQSQManager import LABEL, DESCRIPTION, COMMANDLINE
 from contrib.analysis import BiPlot, NoPPDataException
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.cross_validation import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
-from sklearn.lda import LDA
-from sklearn.qda import QDA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis as QDA
 import pickle
 
 LABELED = 'Labeled'
@@ -367,7 +367,7 @@ class Classifier(BiPlot):
         parser.add_argument('--classes', action='store', help='Labels to load from the database for --doModelsScore and --createClassifier', nargs='*')
 
         parser.add_argument('--clobber', action='store_true', help='Remove existing MeasuredParameterResource records before adding new classification')
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)

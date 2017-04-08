@@ -273,14 +273,14 @@ class HABLoader(STOQS_Loader):
         Iterate through lines of iterator to csv file and pull out data for loading into STOQS
         '''
         ds = {}
-        DA = BaseType()
+        DA = BaseType('nameless')
         DA.attributes = {'units': 'ng ml-1 ' , 
                          'long_name': 'Domoic Acid', 
                          'standard_name': 'domoic_acid',
                          'type': 'float', 
                          'description': 'Domoic acid' ,
                          'origin': 'www.sccoos.org' }
-        PD = BaseType()
+        PD = BaseType('nameless')
         PD.attributes = {'units': 'cells l-1', 
                          'long_name': 'Pseudo-nitzschia delicatissima group', 
                          'standard_name': 'pseudo_nitzschia_delicatissima', 
@@ -289,7 +289,7 @@ class HABLoader(STOQS_Loader):
                          'description': 'Pseudo-nitzschia delicatissima group (cells/L)' ,
                          'origin': 'www.sccoos.org' 
                          } 
-        PA = BaseType()
+        PA = BaseType('nameless')
         PA.attributes = {'units': 'cells l-1', 
                          'long_name': 'Pseudo-nitzschia seriata group', 
                          'standard_name': 'pseudo_nitzschia_seriata', 
@@ -298,7 +298,7 @@ class HABLoader(STOQS_Loader):
                          'description': 'Pseudo-nitzschia seriata group (cells/L)' ,
                          'origin': 'www.sccoos.org' 
                          }
-        alexandrium = BaseType()
+        alexandrium = BaseType('nameless')
         alexandrium.attributes = {'units': 'cells l-1', 
                          'long_name': 'Alexandrium', 
                          'standard_name': 'alexandrium', 
@@ -307,7 +307,7 @@ class HABLoader(STOQS_Loader):
                          'description': 'Alexandrium spp. (cells/L)' ,
                          'origin': 'www.sccoos.org' 
                          }
-        phosphate = BaseType()
+        phosphate = BaseType('nameless')
         phosphate.attributes = {'units': 'm-3 mol l-1', 
                          'long_name': 'Phosphate', 
                          'standard_name': 'phosphate_dissolved_in_seawater', 
@@ -316,7 +316,7 @@ class HABLoader(STOQS_Loader):
                          'description': 'Phosphate (uM)' ,
                          'origin': 'www.sccoos.org' 
                          }
-        ammonia = BaseType()
+        ammonia = BaseType('nameless')
         ammonia.attributes = {'units': 'm-3 mol l-1', 
                          'long_name': 'Ammonia', 
                          'standard_name': 'ammonia_dissolved_in_seawater', 
@@ -325,7 +325,7 @@ class HABLoader(STOQS_Loader):
                          'description': 'Ammonia (uM)' ,
                          'origin': 'www.sccoos.org' 
                          }
-        silicate = BaseType()
+        silicate = BaseType('nameless')
         silicate.attributes = {'units': 'm-3 mol l-1', 
                          'long_name': 'Silicate', 
                          'standard_name': 'silicate_dissolved_in_seawater', 
@@ -334,7 +334,7 @@ class HABLoader(STOQS_Loader):
                          'description': 'Silicate (uM)' ,
                          'origin': 'www.sccoos.org' 
                          }
-        chlorophyll = BaseType()
+        chlorophyll = BaseType('nameless')
         chlorophyll.attributes = {'units': 'kg m-3', 
                          'long_name': 'Chlorophyll', 
                          'standard_name': 'mass_concentration_of_chlorophyll_in_sea_water', 
@@ -344,7 +344,7 @@ class HABLoader(STOQS_Loader):
                          'origin': 'www.sccoos.org' 
                          }
 
-        prorocentrum = BaseType()
+        prorocentrum = BaseType('nameless')
         prorocentrum.attributes = {'units': 'cells l-1', 
                          'long_name': 'Prorocentrum', 
                          'standard_name': 'mass_concentration_of_prorocentrum_in_sea_water', 

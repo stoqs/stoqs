@@ -157,73 +157,73 @@ class ROVCTD_Loader(Base_Loader):
     def makeParmDict(self):
         '''Make a pydap-type parameter dictionary for passing into self.addParameters()
         '''
-        p = pydap.model.BaseType()
+        p = pydap.model.BaseType('nameless')
         p.attributes = {    'standard_name':    'sea_water_pressure',
                             'long_name':        'Pressure',
                             'units':            'decibars',
                             'name':             'PRES',
                        }
 
-        t = pydap.model.BaseType()
+        t = pydap.model.BaseType('nameless')
         t.attributes = {    'standard_name':    'sea_water_temperature',
                             'long_name':        'Temperature',
                             'units':            'Celsius',
                             'name':             'TEMP',
                        }
 
-        s = pydap.model.BaseType()
+        s = pydap.model.BaseType('nameless')
         s.attributes = {    'standard_name':    'sea_water_salinity',
                             'long_name':        'Salinity',
                             'units':            '',
                             'name':             'PSAL',
                        }
 
-        o2 = pydap.model.BaseType()
+        o2 = pydap.model.BaseType('nameless')
         o2.attributes = { 
                             'long_name':        'Oxygen',
                             'units':            'ml/l',
                             'name':             'DOXY',
                        }
 
-        o2alt = pydap.model.BaseType()
+        o2alt = pydap.model.BaseType('nameless')
         o2alt.attributes = { 
                             'long_name':        'Oxygen',
                             'units':            'ml/l',
                             'name':             'DOXYALT',
                        }
 
-        light = pydap.model.BaseType()
+        light = pydap.model.BaseType('nameless')
         light.attributes = { 
                             'long_name':        'Transmissometer',
                             'units':            '%',
                             'name':             'LIGHT',
                        }
 
-        beac = pydap.model.BaseType()
+        beac = pydap.model.BaseType('nameless')
         beac.attributes = { 
                             'long_name':        'transmissometer beam attenuation coeff',
                             'name':             'BEAMC',
                        }
 
-        analog1 = pydap.model.BaseType()
+        analog1 = pydap.model.BaseType('nameless')
         analog1.attributes = { 
                             'long_name':        'A/D channel 1',
                             'units':            'volts',
                        }
 
-        analog2 = pydap.model.BaseType()
+        analog2 = pydap.model.BaseType('nameless')
         analog2.attributes = { 
                             'long_name':        'A/D channel 2',
                             'units':            'volts',
                        }
 
-        analog3 = pydap.model.BaseType()
+        analog3 = pydap.model.BaseType('nameless')
         analog3.attributes = { 
                             'long_name':        'A/D channel 3',
                             'units':            'volts',
                        }
 
-        analog4 = pydap.model.BaseType()
+        analog4 = pydap.model.BaseType('nameless')
         analog4.attributes = { 
                             'long_name':        'A/D channel 4',
                             'units':            'volts',

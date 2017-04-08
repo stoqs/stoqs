@@ -183,7 +183,7 @@ class PlanktonPump():
 
         with open(self.args.csv_file, 'w') as f:
             f.write('Cast,RelativeDepth,')
-            f.write(','.join(list(iter(list(s.values())).next().keys())))
+            f.write(','.join(list(next(iter(list(s.values()))).keys())))
             f.write('\n')
             for k,v in list(s.items()):
                 f.write(','.join(k) + ',')
@@ -328,7 +328,7 @@ class PlanktonPump():
         parser.add_argument('-l', '--load_file', action='store', 
                             help='Load parent Sample data into database')
 
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, 
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, default=0,
                             help='Turn on verbose output. Higher number = more output.', const=1)
     
         self.args = parser.parse_args()

@@ -33,10 +33,7 @@ from stoqs.models import ResourceType, Resource, Campaign, CampaignResource, Mea
                          SampledParameter, Activity, Parameter, Platform
 
 def tail(f, n):
-    process = subprocess.Popen(['tail', '-' + str(n), f], stdout=subprocess.PIPE)
-    lines, _ = process.communicate()
-    
-    return lines
+    return subprocess.getoutput(f"tail -{n} {f}")
 
 
 class DatabaseCreationError(Exception):
@@ -88,6 +85,17 @@ class Loader(object):
                     return
 
             raise DatabaseCreationError(('Failed to create {}').format(db))
+
+        # Create postgis extensions as superuser
+        create_ext = ('psql -p {port} -c \"CREATE EXTENSION postgis;\" -d {db} -U postgres && '
+                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
+        create_ext += ('psql -p {port} -c \"CREATE EXTENSION postgis_topology;\" -d {db} -U postgres'
+                    ).format(**{'port': settings.DATABASES[db]['PORT'], 'db': db})
+
+        self.logger.info('Creating postgis extensions for database %s', db)
+        self.logger.debug('create_ext = %s', create_ext)
+        ret = os.system(create_ext)
+        self.logger.debug('ret = %s', ret)
 
     def _provenance_dict(self, db, load_command, log_file):
         '''Return a dictionary of provenance Resource items. Special handling 
@@ -216,7 +224,7 @@ local   all             all                                     peer
                 except IndexError:
                     pass
 
-            ans = eval(input('\nAre you sure you want to drop these database(s) and reload them? [y/N] '))
+            ans = input('\nAre you sure you want to drop these database(s) and reload them? [y/N] ')
             if ans.lower() != 'y':
                 print('Exiting')
                 sys.exit()
@@ -491,7 +499,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
                                                                             ' loadlogs and update provenance information'))
         parser.add_argument('--grant_everyone_select', action='store_true', help='Grant everyone role select privileges on all relations')
 
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)

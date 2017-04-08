@@ -52,7 +52,7 @@ class NetTow():
         exception.
         '''
         cast_hash = defaultdict(lambda: [])
-        with open(self.args.subsampleFile) as f:
+        with open(self.args.subsampleFile, encoding='latin-1') as f:
             for r in csv.DictReader(f):
                 sm = OrderedDict()
                 sm['name'] = r.get('Name', '')
@@ -128,7 +128,7 @@ class NetTow():
 
         with open(self.args.csvFile, 'w') as f:
             f.write('Cast,')
-            f.write(','.join(list(iter(list(s.values())).next().keys())))
+            f.write(','.join(list(next(iter(list(s.values()))).keys())))
             f.write('\n')
             for k,v in list(s.items()):
                 f.write('%s,' % k)
@@ -269,7 +269,7 @@ class NetTow():
 
         parser.add_argument('-l', '--loadFile', action='store', help='Load parent Sample data into database')
 
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
