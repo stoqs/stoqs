@@ -380,6 +380,8 @@ else:
     cl.load_NPS34()
     cl.load_NPS34a()
     cl.load_slocum_nemesis()
+    cl.load_SG621(stride=2) ## KISS glider
+    cl.load_SG539(stride=2) ## KISS glider
     cl.load_wg_Tiny()
     cl.load_oa1()
     cl.load_oa2()
