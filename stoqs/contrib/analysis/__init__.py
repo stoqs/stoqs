@@ -19,6 +19,7 @@ django.setup()
 from collections import defaultdict
 from django.db import connections
 from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, MeasuredParameter, Parameter
+from django.contrib.gis.db.models import Extent
 from django.contrib.gis.geos import Point
 from django.db.models import Max, Min
 from django.http import HttpRequest
@@ -203,11 +204,11 @@ class BiPlot(object):
         self.activityStartTime = seaQS['startdate__min'] 
         self.activityEndTime = seaQS['enddate__max']
 
-        self.dataExtent = aQS.extent(field_name='maptrack')
+        self.dataExtent = aQS.aggregate(Extent('maptrack'))['maptrack__extent']
 
         # Expand the computed extent by extendDeg degrees
+        allExtent = self.dataExtent
         if self.args.extend:
-            allExtent = self.dataExtent
             extendDeg = self.args.extend
             allExtent = (allExtent[0] - extendDeg, allExtent[1] - extendDeg, allExtent[2] + extendDeg, allExtent[3] + extendDeg)
 
