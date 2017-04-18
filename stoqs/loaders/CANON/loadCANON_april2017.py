@@ -203,7 +203,7 @@ cl.sg539_endDatetime = enddate
 # SG_621 ## KISS glider from Caltech/JPL
 cl.sg621_base = cl.dodsBase + 'CANON/2017_APR/Platforms/Gliders/Seaglider/'
 cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,421)] ## index needs to be 1 higher than terminal file name
-cl.sg621_parms = ['temperature', 'salinity']
+cl.sg621_parms = ['temperature', 'salinity', 'aanderaa4330_dissolved_oxygen']
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
 
