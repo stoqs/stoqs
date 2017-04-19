@@ -1951,7 +1951,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     try:
         loader.process_data()
     except VariableMissingCoordinatesAttribute as e:
-        logger.error(str(e))
+        logger.exception(str(e))
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
