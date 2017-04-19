@@ -1385,6 +1385,8 @@ class STOQSQManager(object):
         # there's no need for this server code to check for just one platform in the selection.
         parameterID = None
         platformName = None
+        contourparameterID = None # parameter for Contour plots
+       
         logger.debug('self.kwargs = %s', self.kwargs)
         if 'parameterplot' in self.kwargs:
             if self.kwargs['parameterplot'][0]:
@@ -1396,7 +1398,17 @@ class STOQSQManager(object):
         if not parameterID or not platformName:
             # With Plot radio button, must have parameterID and platformName
             return None, None, 'Problem with getting parameter-plot-radio button info'
-
+        logger.debug('Instantiating Viz.MeasuredParameter...........................................')
+        # FOR CONTOUR
+        if 'parametercontourplot' in self.kwargs:
+            if self.kwargs['parametercontourplot'][0]:
+                contourparameterID = self.kwargs['contourparameterplot'][0]
+                parameter = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=contourparameterID)
+                contourparameterGroups = getParameterGroups(self.request.META['dbAlias'],parameter)
+            if self.kwargs['parametercontourplot'][1]:
+               # platformName = self.kwargs['parametercontourplot'][1]
+               print "parametercontourplot"     
+       
         logger.debug('Instantiating Viz.MeasuredParameter............................................')
         
         self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
@@ -1405,11 +1417,11 @@ class STOQSQManager(object):
             # The fourth item should be for SampledParameter if that is the group of the Parameter
             cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_sp_no_order,
                                     self.getParameterMinMax(pid=parameterID)['plot'], self.getSampleQS(), platformName, 
-                                    parameterID, parameterGroups)
+                                    parameterID, parameterGroups,contourparameterID, contourparameterGroups)
         else:
             cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order,
                                     self.getParameterMinMax(pid=parameterID)['plot'], self.getSampleQS(), platformName, 
-                                    parameterID, parameterGroups)
+                                    parameterID, parameterGroups,contourparameterID, contourparameterGroups)
 
         return cp.renderDatavaluesForFlot()
 
