@@ -194,16 +194,16 @@ cl.l_662a_startDatetime = startdate
 cl.l_662a_endDatetime = enddate
 
 # SG_539 ## KISS glider from Caltech/JPL
-cl.sg539_base = cl.dodsBase + 'CANON/2017_Apr/Platforms/Gliders/Seaglider/'
-cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(48,421)] ## index needs to be 1 higher than terminal file name
+cl.sg539_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG539/'
+cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,60)] ## index needs to be 1 higher than terminal file name
 cl.sg539_parms = ['temperature', 'salinity']
 cl.sg539_startDatetime = startdate
 cl.sg539_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
-cl.sg621_base = cl.dodsBase + 'CANON/2017_APR/Platforms/Gliders/Seaglider/'
-cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(48,421)] ## index needs to be 1 higher than terminal file name
-cl.sg621_parms = ['temperature', 'salinity', 'aanderaa4330_dissolved_oxygen']
+cl.sg621_base = cl.dodsBase + 'Activity/canon/2017_APR/Platforms/Gliders/SG621/'
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,60)] ## index needs to be 1 higher than terminal file name
+cl.sg621_parms = ['temperature', 'salinity'] # 'aanderaa4330_dissolved_oxygen' throws DAPloader KeyError
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
 
