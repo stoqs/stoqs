@@ -94,6 +94,9 @@ try:
 except ImportError:
     # Likely because 'netifaces' has not been installed
     pass
+except ValueError:
+    # Likely because 'eth0' is not a network interface on this system
+    pass
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=default_allowed_hosts)
 
