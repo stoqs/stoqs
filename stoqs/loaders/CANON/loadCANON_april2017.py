@@ -184,6 +184,48 @@ cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
 
+# Glider data files from CeNCOOS thredds server
+# L_662a updated parameter names in netCDF file
+cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662a_files = [
+                   'OS_Glider_L_662_20170328_TS.nc'  ]
+cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
+cl.l_662a_startDatetime = startdate
+cl.l_662a_endDatetime = enddate
+
+# SG_539 ## KISS glider from Caltech/JPL
+cl.sg539_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG539/'
+cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,60)] ## index needs to be 1 higher than terminal file name
+cl.sg539_parms = ['temperature', 'salinity']
+cl.sg539_startDatetime = startdate
+cl.sg539_endDatetime = enddate
+
+# SG_621 ## KISS glider from Caltech/JPL
+cl.sg621_base = cl.dodsBase + 'Activity/canon/2017_APR/Platforms/Gliders/SG621/'
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,60)] ## index needs to be 1 higher than terminal file name
+cl.sg621_parms = ['temperature', 'salinity'] # 'aanderaa4330_dissolved_oxygen' throws DAPloader KeyError
+cl.sg621_startDatetime = startdate
+cl.sg621_endDatetime = enddate
+
+
+# NPS_34a updated parameter names in netCDF file
+## The following loads decimated subset of data telemetered during deployment
+cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps34a_files = [ 'OS_Glider_NPS_G34_20170405_TS.nc' ]
+cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
+cl.nps34a_startDatetime = startdate
+cl.nps34a_endDatetime = enddate
+
+# Slocum Teledyne nemesis Glider
+## from ioos site
+cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
+cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
+## cl.slocum_nemesis_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/final/'
+## cl.slocum_nemesis_files = [ 'glider-nemesis_20130716T221027_rt0.nc' ]
+cl.slocum_nemesis_parms = [ 'temperature', 'salinity', 'u', 'v' ]
+cl.slocum_nemesis_startDatetime = startdate
+cl.slocum_nemesis_endDatetime = enddate
+
 ######################################################################
 # Wavegliders
 ######################################################################
@@ -334,7 +376,12 @@ else:
     cl.loadAhi()
     cl.loadOpah()
     cl.loadL_662()
+    cl.loadL_662a()
     cl.load_NPS34()
+    cl.load_NPS34a()
+    cl.load_slocum_nemesis()
+    cl.load_SG621(stride=2) ## KISS glider
+    cl.load_SG539(stride=2) ## KISS glider
     cl.load_wg_Tiny()
     cl.load_oa1()
     cl.load_oa2()
