@@ -424,8 +424,8 @@ class Base_Loader(STOQS_Loader):
                 except KeyError as e:
                     raise AuxCoordMissingStandardName(e)
         else:
-            logger.warn('Variable %s is missing coordinates attribute', variable)
-            if self.auxCoords[variable]:
+            logger.warn('Variable %s is missing coordinates attribute, checking if loader has specified it in auxCoords', variable)
+            if variable in self.auxCoords:
                 # Try getting it from overridden values provided
                 for coordSN, coord in self.auxCoords[variable].iteritems():
                     try:
@@ -433,7 +433,7 @@ class Base_Loader(STOQS_Loader):
                     except KeyError as e:
                         raise AuxCoordMissingStandardName(e)
             else:
-                raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
+                raise VariableMissingCoordinatesAttribute('%s not in auxCoords' % (variable,))
 
         # Check for all 4 coordinates needed for spatial-temporal location - if any are missing raise exception with suggestion
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
@@ -1951,7 +1951,7 @@ def runGliderLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
     try:
         loader.process_data()
     except VariableMissingCoordinatesAttribute as e:
-        logger.exception(str(e))
+        logger.error(str(e))
     else:    
         logger.debug("Loaded Activity with name = %s", aName)
 
