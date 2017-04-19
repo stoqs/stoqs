@@ -71,12 +71,12 @@ class BrowserTestCase(TestCase):
 
     def _wait_until_visible_then_click(self, element, scroll_up=True):
         # See: http://stackoverflow.com/questions/23857145/selenium-python-element-not-clickable
-        element = WebDriverWait(self.browser, 5, poll_frequency=.2).until(
-                        EC.visibility_of(element))
+        element = WebDriverWait(self.browser, 5, poll_frequency=.2).until(EC.visibility_of(element), "out of time")
         if scroll_up:
-            self.browser.execute_script("window.scrollTo(0, 0)")
+          self.browser.execute_script("window.scrollTo(0, 0)")
 
         element.click()
+        
 
     def _test_share_view(self, func_name):
         # Generic for any func_name that creates a view to share
@@ -92,6 +92,26 @@ class BrowserTestCase(TestCase):
         # Load permalink
         self.browser.get(permalink_url)
         self.assertEquals('', self._mapserver_loading_panel_test())
+
+    def _test_contour_plot_count(self): 
+
+        # Get the table that contains the table
+        tb_section = self.browser.find_element_by_id('measuredparameter-table')
+        parameter_contour_plot = 0  # radio button added to plot contour lines
+        parameter_plot = 0  # default radio button displayed
+
+        for row in tb_section.find_elements_by_css_selector('tbody tr'):
+          if not row.get_attribute('style'):    # filters out the rows that are actually being displayed
+            #print(row.find_element_by_class_name('parameter-contour-plot-radio'))
+            if None != row.find_elements_by_class_name('parameter-contour-plot-radio'): # count the number of elements being displayed for countour plot
+              parameter_contour_plot += 1
+            if None != row.find_elements_by_class_name('paramter-plot-radio'): 
+              parameter_plot += 1
+        # deduct 1 cause the code above counts the header row
+        parameter_contour_plot -= 1
+        parameter_plot -= 1
+        
+        self.assertEquals(parameter_contour_plot, parameter_plot)
 
     def test_campaign_page(self):
         self.browser.get('http://localhost:8000/')
@@ -185,41 +205,27 @@ class BrowserTestCase(TestCase):
         # Open Measured Parameter section
         mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
         self._wait_until_visible_then_click(mp_section)
-
-        # Get the table that contains the table
-        tb_section = self.browser.find_element_by_id('measuredparameter-table')
-        parameter_contour_plot = 0  # radio button added to plot contour lines
-        parameter_plot = 0  # default radio button displayed
-
-        for row in tb_section.find_elements_by_css_selector('tbody tr'):
-          if not row.get_attribute('style'):    # filters out the rows that are actually being displayed
-            if not row.find_elements_by_class_name('parameter-contour-plot-radio'): # count the number of elements being displayed for countour plot
-              parameter_contour_plot += 1
-            if not row.find_elements_by_class_name('paramter-plot-radio'): 
-              parameter_plot += 1
-        # deduct 1 cause the code above counts the header row
-        parameter_contour_plot -= 1
-        parameter_plot -= 1
         
-        assert parameter_contour_plot == parameter_plot
+        self._test_contour_plot_count() # created a function to test the contour plot count
 
-    #def test_plot_count_with_dorado_platform(self): 
-    #    
-    #    self.browser.get('http://localhost:8000/default/query/')
-    #    
-    #    # Open Measured Parameter section
-    #    mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
-    #    self._wait_until_visible_then_click(mp_section)
+
+    def test_plot_count_with_dorado_platform(self): 
         
-    #    # Open Platform Name section
-    #    p_section = self.browser.find_element_by_id('platforms-anchor')
-    #    self._wait_until_visible_then_click(mp_section)
+        self.browser.get('http://localhost:8000/default/query/')
+        
+        # Open Measured Parameter section
+        mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(mp_section)
+        
+        # Open Platform Name section
+        p_section = self.browser.find_element_by_id('platforms-anchor')
+        self._wait_until_visible_then_click(mp_section)
 
-    #    # Finds <tr> for 'dorado' then gets the button for clicking
-    #    dorado_button = self.browser.find_element_by_id('dorado'
-    #                        ).find_element_by_tag_name('button')
-    #    self._wait_until_visible_then_click(dorado_button)
-
+        # Finds <tr> for 'dorado' then gets the button for clicking
+        dorado_button = self.browser.find_element_by_id('dorado').find_element_by_tag_name('button')
+        self._wait_until_visible_then_click(dorado_button)
+        
+        self._test_contour_plot_count()
     #    # Data should have changed, so we now we collect it
 
     #    tb_section = self.browser.find_element_by_id('measuredparameter-table')
@@ -244,22 +250,23 @@ class BrowserTestCase(TestCase):
     #    # count to make sure that they are both equal
     #    assert parameter_plot_counter == parameter_contour_counter
 
-    #def test_plot_with_M1_Mooring_platform(self):
-    #    self.browser.get('http://localhost:8000/default/query/')
-    #    
-    #    # Open Measured Parameter section
-    #    mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
-    #    self._wait_until_visible_then_click(mp_section)
-    #    
-    #    # Open Platform Name section
-    #    p_section = self.browser.find_element_by_id('platforms-anchor')
-    #    self._wait_until_visible_then_click(mp_section)
+    def test_plot_with_M1_Mooring_platform(self):
+        self.browser.get('http://localhost:8000/default/query/')
+        
+        # Open Measured Parameter section
+        mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(mp_section)
+        
+        # Open Platform Name section
+        p_section = self.browser.find_element_by_id('platforms-anchor')
+        self._wait_until_visible_then_click(mp_section)
 
-    #    # Finds <tr> for 'dorado' then gets the button for clicking
-    #    dorado_button = self.browser.find_element_by_id('M1_Mooring'
-    #                        ).find_element_by_tag_name('button')
-    #    self._wait_until_visible_then_click(dorado_button)
+        # Finds <tr> for 'dorado' then gets the button for clicking
+        dorado_button = self.browser.find_element_by_id('M1_Mooring'
+                            ).find_element_by_tag_name('button')
+        self._wait_until_visible_then_click(dorado_button)
 
+        self._test_contour_plot_count()
     #    # Data should have changed, so we now we collect it
 
     #    tb_section = self.browser.find_element_by_id('measuredparameter-table')
