@@ -188,21 +188,20 @@ class BrowserTestCase(TestCase):
 
         # Get the table that contains the table
         tb_section = self.browser.find_element_by_id('measuredparameter-table')
+        parameter_contour_plot = 0  # radio button added to plot contour lines
+        parameter_plot = 0  # default radio button displayed
+
         for row in tb_section.find_elements_by_css_selector('tbody tr'):
-          #cell = row.find_elements_by_tag_name("td")[0]
           if not row.get_attribute('style'):    # filters out the rows that are actually being displayed
-            print(row.get_attribute("innerHTML"))
-
-
-        # check to see whether it contains any rows
-        #if len(tb_section.find_elements_by_css_selector('tr')) > 1: 
-        #    trlist = list()
-        #    for tr in tb_section.find_elements_by_css_selector('tr'): 
-        #        if 'display' not in tr and 'none' not in tr:
-        #            trlist.append(tr)
-
-        # by default, only 21, including the first one
-        #assert len(trlist) == 21
+            if not row.find_elements_by_class_name('parameter-contour-plot-radio'): # count the number of elements being displayed for countour plot
+              parameter_contour_plot += 1
+            if not row.find_elements_by_class_name('paramter-plot-radio'): 
+              parameter_plot += 1
+        # deduct 1 cause the code above counts the header row
+        parameter_contour_plot -= 1
+        parameter_plot -= 1
+        
+        assert parameter_contour_plot == parameter_plot
 
     #def test_plot_count_with_dorado_platform(self): 
     #    
