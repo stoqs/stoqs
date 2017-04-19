@@ -612,10 +612,13 @@ class Base_Loader(STOQS_Loader):
         numDerived = 0
         trajSingleParameterCount = 0
         for name in self.include_names:
+            logger.info('Counting valid data for parameter: %s', name)
             try:
                 tIndx = self.getTimeBegEndIndices(self.ds[self.getAuxCoordinates(name)['time']])
             except ParameterNotFound:
                 logger.warn('Ignoring parameter: %s', name)
+            except InvalidSliceRequest:
+                logger.warn('No valid data for parameter: %s', name)
             except KeyError as e:
                 logger.warn("%s: Skipping", e)
                 continue
