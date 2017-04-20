@@ -91,7 +91,7 @@ class CANONLoader(LoadScript):
                 'nps34':        '36d40f',
                 'nps34a':        '36d40f',
                 'sg539':        '5f9131',
-                'sg621':        '5b9131',
+                'sg621':        '507131',
                 'm1':           'bd2026',
                 'm2':           'bd2020',
                 'oa':           '0f9cd4',
