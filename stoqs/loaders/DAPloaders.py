@@ -433,13 +433,13 @@ class Base_Loader(STOQS_Loader):
                     except KeyError as e:
                         raise AuxCoordMissingStandardName(e)
             else:
-                raise VariableMissingCoordinatesAttribute('%s not in auxCoords' % (variable,))
+                logger.warn('%s not in auxCoords' % variable)
 
         # Check for all 4 coordinates needed for spatial-temporal location - if any are missing raise exception with suggestion
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
         logger.debug('coordDict = %s', coordDict)
         if set(coordDict.keys()) != reqCoords:
-            logger.warn('Required coordinate(s) %s missing. Consider overriding by setting an'
+            logger.warn('Required coordinate(s) %s missing in NetCDF file. Consider overriding by setting an'
                         ' auxCoords dictionary in your Loader.', 
                         list(reqCoords - set(coordDict.keys())))
             if not self.auxCoords:
