@@ -210,7 +210,7 @@ class MeasuredParameter(BaseParameter):
     Use matploptib to create nice looking contour plots
     '''
     logger = logging.getLogger(__name__)
-    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName, parameterID=None, parameterGroups=(MEASUREDINSITU)):
+    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName, parameterID=None, parameterGroups=(MEASUREDINSITU), contourParameterID=None, contourParameterGroups=(MEASUREDINSITU)):
         '''
         Save parameters that can be used by the different product generation methods here
         parameterMinMax is like: (pName, pMin, pMax)
@@ -234,7 +234,8 @@ class MeasuredParameter(BaseParameter):
         self.platformName = platformName
         self.parameterID = parameterID
         self.parameterGroups = parameterGroups
-
+        self.contourParameterID = contourParameterID
+        self.contourParameterGroups = contourParameterGroups
         self.scale_factor = None
 
         # - Use a new imageID for each new image
