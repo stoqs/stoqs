@@ -95,7 +95,7 @@ def getNcStartEnd(urlNcDap, timeAxisName):
 
     return startDatetime, endDatetime
 
-def processDecimated(pw, url, lastDatetime, start, end):
+def processDecimated(args, pw, url, lastDatetime, start, end):
     '''
     Process decimated LRAUV data
     '''
@@ -297,7 +297,8 @@ if __name__ == '__main__':
     files = s[1]
     url = s[0]
     logger.info("Crawling %s for %s files", url, files)
-    c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=False)
+    skips = Crawl.SKIPS + [".*Courier*", ".*Express*", ".*Normal*, '.*Priority*", ".*.cfg$", ".*.js$", ".*.kml$",  ".*.log$"]
+    c = Crawl(os.path.join(url, 'catalog.xml'), select=[files], debug=False, skip=skips)
 
     for d in c.datasets:
         logger.debug('Found %s', d.id)
@@ -316,7 +317,7 @@ if __name__ == '__main__':
     # Look in time order - oldest to newest
     for url in sorted(urls):
         try:
-            (url_i, startDatetime, endDatetime) = processDecimated(pw, url, lastDatetime, start, end)
+            (url_i, startDatetime, endDatetime) = processDecimated(args, pw, url, lastDatetime, start, end)
         except ServerError as e:
             logger.warn(e)
             continue
