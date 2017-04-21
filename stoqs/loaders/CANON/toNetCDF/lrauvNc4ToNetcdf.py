@@ -388,9 +388,10 @@ class InterpolatorWriter(BaseWriter):
             self.all_attrib[key] = self.df[key].attributes
             self.all_coord[key] = {'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
             parm_valid.append(key)
+            self.all_sub_ts[key] = ts
             self.logger.info('Found parameter ' + key)
-          except KeyError, e:
-            self.logger.info('Key error on parameter ' + key)
+          except Exception, e:
+            self.logger.error(e)
             continue
 
         # Create pandas time series for each parameter in each group and store attributes
@@ -409,7 +410,7 @@ class InterpolatorWriter(BaseWriter):
 
             try:
                 subgroup = self.df.groups[g]
-                pkeys = parm[g]
+                pkeys = group_parms[g]
 
             except Exception, e:
                 self.logger.error(e)
