@@ -71,9 +71,8 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/'
 cl.dorado_files = [
-#                   'Dorado389_2017_044_00_044_00_decim.nc',
-#                   'Dorado389_2017_068_00_068_00_decim.nc',
-                                   ]
+                   'Dorado389_2017_108_01_108_01_decim.nc',
+                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
                     'roll', 'pitch', 'yaw']
