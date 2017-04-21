@@ -424,8 +424,8 @@ class Base_Loader(STOQS_Loader):
                 except KeyError as e:
                     raise AuxCoordMissingStandardName(e)
         else:
-            logger.warn('Variable %s is missing coordinates attribute', variable)
-            if self.auxCoords[variable]:
+            logger.warn('Variable %s is missing coordinates attribute, checking if loader has specified it in auxCoords', variable)
+            if variable in self.auxCoords:
                 # Try getting it from overridden values provided
                 for coordSN, coord in self.auxCoords[variable].iteritems():
                     try:
@@ -433,13 +433,13 @@ class Base_Loader(STOQS_Loader):
                     except KeyError as e:
                         raise AuxCoordMissingStandardName(e)
             else:
-                raise VariableMissingCoordinatesAttribute('%s: %s missing coordinates attribute' % (self.url, variable,))
+                logger.warn('%s not in auxCoords' % variable)
 
         # Check for all 4 coordinates needed for spatial-temporal location - if any are missing raise exception with suggestion
         reqCoords = set(('time', 'latitude', 'longitude', 'depth'))
         logger.debug('coordDict = %s', coordDict)
         if set(coordDict.keys()) != reqCoords:
-            logger.warn('Required coordinate(s) %s missing. Consider overriding by setting an'
+            logger.warn('Required coordinate(s) %s missing in NetCDF file. Consider overriding by setting an'
                         ' auxCoords dictionary in your Loader.', 
                         list(reqCoords - set(coordDict.keys())))
             if not self.auxCoords:
@@ -612,10 +612,13 @@ class Base_Loader(STOQS_Loader):
         numDerived = 0
         trajSingleParameterCount = 0
         for name in self.include_names:
+            logger.info('Counting valid data for parameter: %s', name)
             try:
                 tIndx = self.getTimeBegEndIndices(self.ds[self.getAuxCoordinates(name)['time']])
             except ParameterNotFound:
                 logger.warn('Ignoring parameter: %s', name)
+            except InvalidSliceRequest:
+                logger.warn('No valid data for parameter: %s', name)
             except KeyError as e:
                 logger.warn("%s: Skipping", e)
                 continue
@@ -1801,7 +1804,7 @@ def runDoradoLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeNam
 def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName, parmList, dbAlias, 
                    stride=1, startDatetime=None, endDatetime=None, grdTerrain=None,
                    dataStartDatetime=None, contourUrl=None, auxCoords=None, timezone='America/Los_Angeles',
-                   command_line_args=None):
+                   command_line_args=None, plotTimeSeriesDepth=None):
     '''
     Run the DAPloader for Long Range AUVCTD trajectory data and update the Activity with 
     attributes resulting from the load into dbAlias. Designed to be called from script
@@ -1850,6 +1853,10 @@ def runLrauvLoader(url, cName, cDesc, aName, pName, pColor, pTypeName, aTypeName
         else:
             for p in loader.include_names:
                 loader.auxCoords[p] = {'time': 'time', 'latitude': 'latitude', 'longitude': 'longitude', 'depth': 'depth'}
+
+    if plotTimeSeriesDepth is not None:
+        # Useful to plot as time series engineering data for LRAUVs
+        loader.plotTimeSeriesDepth = dict.fromkeys(parmList + ['altitude'], plotTimeSeriesDepth)
 
     try:
         loader.process_data()

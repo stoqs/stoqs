@@ -6,10 +6,10 @@ __contact__ = 'duane at mbari.org'
 
 __doc__ = '''
 
-Master loader for all CANON off season activities in 2017
+Master loader for all KISS/CANON April season activities in 2017
 
 Mike McCann, Duane Edgington, Danelle Cline
-MBARI 4 January 2017
+MBARI 7 April 2017
 
 @var __date__: Date of last svn commit
 @undocumented: __doc__ parser
@@ -34,8 +34,8 @@ from loaders import FileNotFound
 from thredds_crawler.crawl import Crawl
 from thredds_crawler.etree import etree
 
-cl = CANONLoader('stoqs_os2017', 'CANON - Off Season 2017',
-                 description='CANON Off Season 2017 Experiment in Monterey Bay',
+cl = CANONLoader('stoqs_canon_april2017', 'KISS CANON Spring 2017',
+                 description='KISS CANON Spring 2017 Experiment in Monterey Bay',
                  x3dTerrains={
                    'http://dods.mbari.org/terrain/x3d/Monterey25_10x/Monterey25_10x_scene.x3d': {
                      'position': '-2822317.31255 -4438600.53640 3786150.85474',
@@ -57,8 +57,8 @@ cl = CANONLoader('stoqs_os2017', 'CANON - Off Season 2017',
 # Set start and end dates for all loads from sources that contain data
 # beyond the temporal bounds of the campaign
 #
-startdate = datetime.datetime(2017, 1, 1)  # Fixed start
-enddate = datetime.datetime(2017, 12, 31)  # Fixed end. Extend "offseason" to end of year
+startdate = datetime.datetime(2017, 4, 7)  # Fixed start
+enddate = datetime.datetime(2017, 5, 15)  # Fixed end. Extend "offseason" to end of year
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -71,9 +71,8 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 # special location for dorado data
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/'
 cl.dorado_files = [
-                   'Dorado389_2017_044_00_044_00_decim.nc',
-                   'Dorado389_2017_068_00_068_00_decim.nc',
-                                   ]
+                   'Dorado389_2017_108_01_108_01_decim.nc',
+                                    ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
                     'roll', 'pitch', 'yaw']
@@ -179,18 +178,162 @@ for p in platforms:
 # L_662
 cl.l_662_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
 cl.l_662_files = [
-                   'OS_Glider_L_662_20161214_TS.nc',
                    'OS_Glider_L_662_20170328_TS.nc'  ] 
 cl.l_662_parms = ['TEMP', 'PSAL', 'FLU2']
 cl.l_662_startDatetime = startdate
 cl.l_662_endDatetime = enddate
+
+# Glider data files from CeNCOOS thredds server
+# L_662a updated parameter names in netCDF file
+cl.l_662a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.l_662a_files = [
+                   'OS_Glider_L_662_20170328_TS.nc'  ]
+cl.l_662a_parms = ['temperature', 'salinity', 'fluorescence','oxygen']
+cl.l_662a_startDatetime = startdate
+cl.l_662a_endDatetime = enddate
+
+# SG_539 ## KISS glider from Caltech/JPL
+cl.sg539_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG539/'
+cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,60)] ## index needs to be 1 higher than terminal file name
+cl.sg539_parms = ['temperature', 'salinity']
+cl.sg539_startDatetime = startdate
+cl.sg539_endDatetime = enddate
+
+# SG_621 ## KISS glider from Caltech/JPL
+cl.sg621_base = cl.dodsBase + 'Activity/canon/2017_APR/Platforms/Gliders/SG621/'
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,60)] ## index needs to be 1 higher than terminal file name
+cl.sg621_parms = ['temperature', 'salinity'] # 'aanderaa4330_dissolved_oxygen' throws DAPloader KeyError
+cl.sg621_startDatetime = startdate
+cl.sg621_endDatetime = enddate
+
+
+# NPS_34a updated parameter names in netCDF file
+## The following loads decimated subset of data telemetered during deployment
+cl.nps34a_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/'
+cl.nps34a_files = [ 'OS_Glider_NPS_G34_20170405_TS.nc' ]
+cl.nps34a_parms = ['temperature', 'salinity','fluorescence']
+cl.nps34a_startDatetime = startdate
+cl.nps34a_endDatetime = enddate
+
+# Slocum Teledyne nemesis Glider
+## from ioos site
+cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
+cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
+## cl.slocum_nemesis_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/final/'
+## cl.slocum_nemesis_files = [ 'glider-nemesis_20130716T221027_rt0.nc' ]
+cl.slocum_nemesis_parms = [ 'temperature', 'salinity', 'u', 'v' ]
+cl.slocum_nemesis_startDatetime = startdate
+cl.slocum_nemesis_endDatetime = enddate
+
+
+# Slocum Teledyne nemesis Glider
+## from ioos site ## these files proved to be not compatible with python loader
+## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
+## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
+##   from cencoos directory, single non-aggregated files
+cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/'
+cl.slocum_nemesis_files = [ 
+    'nemesis_20170420T125233_rt0.nc',
+    'nemesis_20170420T081202_rt0.nc',
+    'nemesis_20170420T033108_rt0.nc',
+    'nemesis_20170419T225941_rt0.nc',
+    'nemesis_20170419T183219_rt0.nc',
+    'nemesis_20170419T125701_rt0.nc',
+    'nemesis_20170419T085215_rt0.nc',
+    'nemesis_20170419T042720_rt0.nc',
+    'nemesis_20170418T234312_rt0.nc',
+    'nemesis_20170418T221752_rt0.nc',
+    'nemesis_20170418T212940_rt0.nc',
+    'nemesis_20170418T210333_rt0.nc',
+    'nemesis_20170418T194024_rt0.nc',
+    'nemesis_20170418T185432_rt0.nc',
+    'nemesis_20170418T183124_rt0.nc',
+    'nemesis_20170418T172154_rt0.nc',
+    'nemesis_20170418T164352_rt0.nc',
+    'nemesis_20170418T162547_rt0.nc',
+    'nemesis_20170418T132214_rt0.nc',
+    'nemesis_20170418T101901_rt0.nc',
+    'nemesis_20170418T054425_rt0.nc',
+    'nemesis_20170418T041209_rt0.nc',
+    'nemesis_20170417T233719_rt0.nc',
+    'nemesis_20170417T215856_rt0.nc',
+    'nemesis_20170417T184524_rt0.nc',
+    'nemesis_20170417T162824_rt0.nc',
+    'nemesis_20170417T101213_rt0.nc',
+    'nemesis_20170417T075255_rt0.nc',
+    'nemesis_20170417T042017_rt0.nc',
+    'nemesis_20170417T030853_rt0.nc',
+    'nemesis_20170417T003843_rt0.nc',
+    'nemesis_20170416T221424_rt0.nc',
+    'nemesis_20170416T193428_rt0.nc',
+    'nemesis_20170416T170011_rt0.nc',
+    'nemesis_20170416T142835_rt0.nc',
+    'nemesis_20170416T074059_rt0.nc',
+    'nemesis_20170416T062946_rt0.nc',
+    'nemesis_20170415T234216_rt0.nc',
+    'nemesis_20170415T223406_rt0.nc',
+    'nemesis_20170415T181901_rt0.nc',
+    'nemesis_20170415T142326_rt0.nc',
+    'nemesis_20170414T211726_rt0.nc',
+    'nemesis_20170414T204237_rt0.nc',
+    'nemesis_20170414T200204_rt0.nc',
+    'nemesis_20170414T191127_rt0.nc',
+    'nemesis_20170414T183517_rt0.nc',
+    'nemesis_20170414T175658_rt0.nc',
+    'nemesis_20170414T170838_rt0.nc',
+    'nemesis_20170414T163826_rt0.nc',
+    'nemesis_20170414T160550_rt0.nc',
+    'nemesis_20170414T153128_rt0.nc',
+    'nemesis_20170414T144546_rt0.nc',
+    'nemesis_20170414T141553_rt0.nc',
+    'nemesis_20170414T134419_rt0.nc',
+    'nemesis_20170414T125048_rt0.nc',
+    'nemesis_20170414T121126_rt0.nc',
+    'nemesis_20170414T113140_rt0.nc',
+    'nemesis_20170414T104022_rt0.nc',
+    'nemesis_20170414T100220_rt0.nc',
+    'nemesis_20170414T092320_rt0.nc',
+    'nemesis_20170414T083639_rt0.nc',
+    'nemesis_20170414T080001_rt0.nc',
+    'nemesis_20170414T072333_rt0.nc',
+    'nemesis_20170414T060450_rt0.nc',
+    'nemesis_20170414T052723_rt0.nc',
+    'nemesis_20170414T045256_rt0.nc',
+    'nemesis_20170414T001407_rt0.nc',
+    'nemesis_20170413T224113_rt0.nc',
+    'nemesis_20170413T175449_rt0.nc',
+    'nemesis_20170413T161622_rt0.nc',
+    'nemesis_20170413T143646_rt0.nc',
+    'nemesis_20170413T130648_rt0.nc',
+    'nemesis_20170413T112821_rt0.nc',
+    'nemesis_20170413T095841_rt0.nc',
+    'nemesis_20170413T074545_rt0.nc',
+    'nemesis_20170413T055613_rt0.nc',
+    'nemesis_20170413T040950_rt0.nc',
+    'nemesis_20170413T021706_rt0.nc',
+    'nemesis_20170413T004402_rt0.nc',
+    'nemesis_20170412T234033_rt0.nc',
+    'nemesis_20170412T223941_rt0.nc',
+    'nemesis_20170412T221251_rt0.nc',
+    'nemesis_20170412T214343_rt0.nc',
+    'nemesis_20170412T212116_rt0.nc',
+    'nemesis_20170412T205615_rt0.nc',
+    'nemesis_20170412T203242_rt0.nc',
+    'nemesis_20170412T195346_rt0.nc',
+    'nemesis_20170412T192201_rt0.nc',
+    'nemesis_20170412T182659_rt0.nc',
+                          ]
+cl.slocum_nemesis_parms = [ 'temperature', 'salinity', 'u', 'v' ] #'oxygen', 'cdom', 'opbs', 'fluorescence' not populated
+cl.slocum_nemesis_startDatetime = startdate
+cl.slocum_nemesis_endDatetime = enddate
+
 
 ######################################################################
 # Wavegliders
 ######################################################################
 # WG Tex - All instruments combined into one file - one time coordinate
 ##cl.wg_tex_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/WG_Tex/final/'
-##cl.wg_tex_files = [ 'WG_Tex_all_final.nc' ]
+##cl.wg_tex_files = [ 'WG_Tex_all_final.nc' ] 
 ##cl.wg_tex_parms = [ 'wind_dir', 'wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal', 'density', 'bb_470', 'bb_650', 'chl' ]
 ##cl.wg_tex_startDatetime = startdate
 ##cl.wg_tex_endDatetime = enddate
@@ -198,9 +341,8 @@ cl.l_662_endDatetime = enddate
 # WG Tiny - All instruments combined into one file - one time coordinate
 cl.wg_Tiny_base = 'http://dods.mbari.org/opendap/data/waveglider/deployment_data/'
 cl.wg_Tiny_files = [
-                     'wgTiny/20161212/realTime/20161212.nc', 
-                     'wgTiny/20170109/realTime/20170109.nc',
                      'wgTiny/20170307/realTime/20170307.nc',
+                     'wgTiny/20170412/realTime/20170412.nc',
                    ]
 cl.wg_Tiny_parms = [ 'wind_dir', 'avg_wind_spd', 'max_wind_spd', 'atm_press', 'air_temp', 'water_temp', 'sal',  'bb_470', 'bb_650', 'chl',
                     'beta_470', 'beta_650', 'pCO2_water', 'pCO2_air', 'pH', 'O2_conc' ]
@@ -268,16 +410,16 @@ cl.oa2_endDatetime = enddate
 cl.rcuctd_base = cl.dodsBase + 'CANON/2017_OffSeason/Platforms/Ships/Rachel_Carson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [
-                  '00917plm01.nc',
-                  '03917plm01.nc',
+#                  '00917plm01.nc',
+#                  '03917plm01.nc',
                   ]
 
 # PCTD
 cl.rcpctd_base = cl.dodsBase + 'CANON/2017_OffSeason/Platforms/Ships/Rachel_Carson/pctd/'
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [
-                  '00917c01.nc', '00917c02.nc', '00917c03.nc',
-                  '03917c01.nc', '03917c02.nc', '03917c03.nc',
+#                  '00917c01.nc', '00917c02.nc', '00917c03.nc',
+#                  '03917c01.nc', '03917c02.nc', '03917c03.nc',
                   ]
 
 ###################################################################################################
@@ -328,7 +470,6 @@ elif cl.args.optimal_stride:
 
     cl.loadSubSamples()
 
-
 else:
     cl.stride = cl.args.stride
 
@@ -338,10 +479,12 @@ else:
     cl.loadAhi()
     cl.loadOpah()
     cl.loadL_662()
-    ##cl.load_NPS29()
-    ##cl.load_NPS34()
-    ##cl.load_UCSC294()
-    ##cl.load_UCSC260()
+    cl.loadL_662a()
+    cl.load_NPS34()
+    cl.load_NPS34a()
+    cl.load_slocum_nemesis()
+    cl.load_SG621(stride=2) ## KISS glider
+    cl.load_SG539(stride=2) ## KISS glider
     cl.load_wg_Tiny()
     cl.load_oa1()
     cl.load_oa2()
@@ -350,8 +493,8 @@ else:
     ##cl.loadMakai()
     cl.loadRCuctd()
     cl.loadRCpctd()
-    ##cl.loadWFuctd()
-    ##cl.loadWFpctd()
+    cl.loadWFuctd()
+    cl.loadWFpctd()
 
     cl.loadSubSamples()
 
@@ -359,5 +502,4 @@ else:
 cl.addTerrainResources()
 
 print "All Done."
-
 
