@@ -433,6 +433,7 @@ if __name__ == '__main__':
     # update last 24 hr plot when requested
     if args.latest24hr:
         try:
+            logger.info('Plotting latest 24 hours for platform %s ', platformName)
             # Plot the last 24 hours
             nowStart = datetime.utcnow() - timedelta(hours=24)
             nowEnd = datetime.utcnow()
