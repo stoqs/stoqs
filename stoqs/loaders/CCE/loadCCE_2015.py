@@ -104,6 +104,12 @@ cl.bed_files = [
                 'BED08/MBCCE_BED08_20161005_Event20170203/netcdf/80200046_trajectory.nc',
                 'BED08/MBCCE_BED08_20161005_Event20170218/netcdf/80200050_trajectory.nc',
                 'BED08/MBCCE_BED08_20161005_Event20170218/netcdf/80200052_trajectory.nc',
+                'BED11/MBCCE_BED11_20161010_Event20161124/netcdf/B0100012_trajectory.nc',
+                'BED06/MBCCE_BED06_20160222_Event20170109/netcdf/60200218_trajectory.nc',
+                'BED06/MBCCE_BED06_20160222_Event20170109/netcdf/60200219_trajectory.nc',
+                'BED03/MBCCE_BED03_20161005_Event20170203/netcdf/30400034_trajectory.nc',
+                'BED06/MBCCE_BED06_20160222_Event20170203/netcdf/60200236_trajectory.nc',
+                'BED06/MBCCE_BED06_20160222_Event20170218/netcdf/60200246_trajectory.nc',
                 ]
 cl.bed_platforms = [
                 'BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05', 'BED03', 'BED04',
@@ -118,6 +124,8 @@ cl.bed_platforms = [
                 'BED09', 'BED11', 'BED11'
                 ] + [
                 'BED08' for n in range(1, 10)
+                ] + [
+                'BED11', 'BED06', 'BED06', 'BED03', 'BED06', 'BED06',
                 ]
 cl.bed_depths = [
                 388, 201, 521, 289.3, 413, 420, 430, 433, 308, 294,
@@ -131,6 +139,7 @@ cl.bed_depths = [
                 ] + [
                 349, 332, 331,
                 203, 210, 221, 222, 229, 283, 290, 293, 300,
+                300, 415, 418, 330, 419, 416,
                 ]
 cl.bed_framegrabs = [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html',
@@ -152,6 +161,8 @@ cl.bed_framegrabs = [
                 '', '', ''
                 ] + [
                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2016/vnta3969/00_26_09_00.html' for n in range(9)
+                ] + [
+                '', '', '', '', '', '',
                 ]
 
 # CCE BIN data
