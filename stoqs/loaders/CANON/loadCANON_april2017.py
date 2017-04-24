@@ -194,14 +194,14 @@ cl.l_662a_endDatetime = enddate
 
 # SG_539 ## KISS glider from Caltech/JPL
 cl.sg539_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG539/'
-cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,60)] ## index needs to be 1 higher than terminal file name
+cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,84)] ## index needs to be 1 higher than terminal file name
 cl.sg539_parms = ['temperature', 'salinity']
 cl.sg539_startDatetime = startdate
 cl.sg539_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
-cl.sg621_base = cl.dodsBase + 'Activity/canon/2017_APR/Platforms/Gliders/SG621/'
-cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,60)] ## index needs to be 1 higher than terminal file name
+cl.sg621_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG621/'
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,78)] ## index needs to be 1 higher than terminal file name
 cl.sg621_parms = ['temperature', 'salinity'] # 'aanderaa4330_dissolved_oxygen' throws DAPloader KeyError
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
@@ -216,23 +216,18 @@ cl.nps34a_startDatetime = startdate
 cl.nps34a_endDatetime = enddate
 
 # Slocum Teledyne nemesis Glider
-## from ioos site
-cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
-cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
-## cl.slocum_nemesis_base = cl.dodsBase + 'CANON_september2013/Platforms/Gliders/Slocum_Teledyne/final/'
-## cl.slocum_nemesis_files = [ 'glider-nemesis_20130716T221027_rt0.nc' ]
-cl.slocum_nemesis_parms = [ 'temperature', 'salinity', 'u', 'v' ]
-cl.slocum_nemesis_startDatetime = startdate
-cl.slocum_nemesis_endDatetime = enddate
-
-
-# Slocum Teledyne nemesis Glider
 ## from ioos site ## these files proved to be not compatible with python loader
 ## cl.slocum_nemesis_base = 'https://data.ioos.us/gliders/thredds/dodsC/deployments/mbari/Nemesis-20170412T0000/'
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
 cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/'
 cl.slocum_nemesis_files = [ 
+    'nemesis_20170421T104922_rt0.nc',
+    'nemesis_20170421T084951_rt0.nc',
+    'nemesis_20170421T020423_rt0.nc',
+    'nemesis_20170421T000452_rt0.nc',
+    'nemesis_20170420T175634_rt0.nc',
+    'nemesis_20170420T163615_rt0.nc', 
     'nemesis_20170420T125233_rt0.nc',
     'nemesis_20170420T081202_rt0.nc',
     'nemesis_20170420T033108_rt0.nc',
@@ -454,6 +449,28 @@ if cl.args.test:
     cl.loadM1(stride=100)
     cl.loadTethys(stride=100)
     cl.loadL_662(stride=100)
+    cl.loadAhi(stride=100)
+    cl.loadAku(stride=100)
+    cl.loadOpah(stride=100)
+    cl.loadL_662(stride=100)
+    cl.loadL_662a(stride=100)
+    cl.load_NPS34(stride=100)
+    cl.load_NPS34a(stride=100)
+    cl.load_slocum_nemesis(stride=100)
+    cl.load_SG621(stride=100) ## KISS glider
+    cl.load_SG539(stride=100) ## KISS glider
+    cl.load_wg_Tiny(stride=100)
+    cl.load_oa1(stride=100)
+    cl.load_oa2(stride=100)
+    cl.loadDorado(stride=100)
+    ##cl.loadDaphne(stride=100)
+    ##cl.loadMakai(stride=100)
+    cl.loadRCuctd(stride=100)
+    cl.loadRCpctd(stride=100)
+    cl.loadWFuctd(stride=100)
+    cl.loadWFpctd(stride=100)
+
+    cl.loadSubSamples()
 
 elif cl.args.optimal_stride:
 
