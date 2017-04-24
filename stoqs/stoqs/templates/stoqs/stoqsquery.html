@@ -4231,6 +4231,8 @@ function enable_cardboard(){
                         // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
                         parameterButtonText = parameterButtonText +
                         '<tr style="display:none;">' +
+                            '<td colspan="1" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
+                            '<td style="border-color:transparent;"></td>' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color: transparent;">' +
                                 '<button class="btn btn-mini stoqs-toggle sampledparameterstandardname">'+ value[1] +'</button>' + 
                             '</td>' +
@@ -4297,6 +4299,7 @@ function enable_cardboard(){
                         parameterButtonText = parameterButtonText +
                         '<tr style="display:none;">' +
                             '<td colspan="1" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
+                            '<td style="border-color:transparent;"></td>' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color:transparent;text-align:center;">' +
                                 '<button class="btn btn-mini stoqs-toggle parameterstandardname" style="width:75%;">'+ value[1] +'</button>' + 
                             '</td>' +
