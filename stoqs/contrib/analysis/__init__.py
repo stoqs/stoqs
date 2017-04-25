@@ -142,12 +142,6 @@ class BiPlot(object):
         '''
         Get Parameter-Parameter data regardless if Parameters are 'Sampled' or 'Measured in situ'
         '''
-        # Set all encompassing start and end dates if None specified
-        if not startDatetime:
-            startDatetime = datetime(1900, 1, 1)
-        if not endDatetime:
-            endDatetime = datetime.utcnow()
-        
         # Use same query builder that the STOQS UI uses
         request = HttpRequest
         request.META = {'dbAlias': self.args.database}
@@ -157,12 +151,15 @@ class BiPlot(object):
             pq.logger.setLevel(logging.DEBUG)
 
         args = ()
-        kwargs = {  'time': (startDatetime.strftime('%Y-%m-%d %H:%M:%S'), endDatetime.strftime('%Y-%m-%d %H:%M:%S')),
-                    'platforms': (platform,),
-                    'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
+        kwargs = {  'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
                                             Parameter.objects.using(self.args.database).get(name=yParm).id ],
                     'parametervalues': [pvDict]
                  }
+
+        if startDatetime and endDatetime:
+            kwargs['time'] = (startDatetime.strftime('%Y-%m-%d %H:%M:%S'), endDatetime.strftime('%Y-%m-%d %H:%M:%S'))
+        if platform is not None:
+            kwargs['platforms'] = (platform,)
 
         px, py  = kwargs['parameterparameter']
 
