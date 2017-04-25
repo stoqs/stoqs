@@ -17,6 +17,7 @@ import django
 django.setup()
 
 from collections import defaultdict
+from datetime import datetime
 from django.db import connections
 from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, MeasuredParameter, Parameter
 from django.contrib.gis.db.models import Extent
@@ -141,6 +142,12 @@ class BiPlot(object):
         '''
         Get Parameter-Parameter data regardless if Parameters are 'Sampled' or 'Measured in situ'
         '''
+        # Set all encompassing start and end dates if None specified
+        if not startDatetime:
+            startDatetime = datetime(1900, 1, 1)
+        if not endDatetime:
+            endDatetime = datetime.utcnow()
+        
         # Use same query builder that the STOQS UI uses
         request = HttpRequest
         request.META = {'dbAlias': self.args.database}
@@ -208,13 +215,17 @@ class BiPlot(object):
 
         # Expand the computed extent by extendDeg degrees
         allExtent = self.dataExtent
-        if self.args.extend:
-            extendDeg = self.args.extend
-            allExtent = (allExtent[0] - extendDeg, allExtent[1] - extendDeg, allExtent[2] + extendDeg, allExtent[3] + extendDeg)
+        try:
+            if self.args.extend:
+                extendDeg = self.args.extend
+                allExtent = (allExtent[0] - extendDeg, allExtent[1] - extendDeg, allExtent[2] + extendDeg, allExtent[3] + extendDeg)
 
-        # Override with extent if specified on command line
-        if self.args.extent:
-            allExtent = [float(e) for e in self.args.extent]
+            # Override with extent if specified on command line
+            if self.args.extent:
+                allExtent = [float(e) for e in self.args.extent]
+        except AttributeError:
+            # Likely not specified on the command line, just ignore
+            pass
 
         return self.activityStartTime, self.activityEndTime, allExtent
 
