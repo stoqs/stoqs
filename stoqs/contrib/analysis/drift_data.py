@@ -27,9 +27,11 @@ MBARI 22 September 2014
 
 import os
 import sys
-os.environ['DJANGO_SETTINGS_MODULE']='settings'
 project_dir = os.path.join(os.path.dirname(__file__), "../../")         # settings.py is two dirs up
 sys.path.insert(0, project_dir)
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+import django
+django.setup()
 
 import csv
 import time
