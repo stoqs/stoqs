@@ -108,7 +108,12 @@ class CrossProductBiPlot(BiPlot):
                     continue
 
                 # Assess the correlation
-                m, b = polyfit(x, y, 1)
+                try:
+                    m, b = polyfit(x, y, 1)
+                except ValueError as e:
+                    if self.args.verbose: print(f"\tCan't polyfit {yP.name}: {str(e)}")
+                    continue
+
                 yfit = polyval([m, b], x)
                 r = np.corrcoef(x, y)[0,1]
                 r2 = r**2
