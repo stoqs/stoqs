@@ -561,5 +561,6 @@ class RegressionTestCase(TestCase):
         kml_data = response.content
         required_string = ('<coordinates>\n-121.934521, 36.868014,-29.8\n</coordinates>\n'
                            '</Point>\n</Placemark> \n<Placemark>\n<styleUrl>#ffd10000') 
-        self.assertTrue(required_string in response.content, 'required_string not found in response.content')
+        self.assertTrue(required_string in response.content.decode("utf-8"), 
+                        'required_string not found in response.content')
 
