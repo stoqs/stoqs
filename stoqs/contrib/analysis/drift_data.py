@@ -36,16 +36,19 @@ django.setup()
 import csv
 import time
 import pyproj
-import urllib.request, urllib.error, urllib.parse
+import requests
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pytz 
 from datetime import datetime
 from collections import defaultdict
+from contextlib import closing
+from django.conf import settings
 from stoqs.models import MeasuredParameter, NominalLocation, ActivityParameter
 from django.http import HttpRequest
-from utils.Viz.KML import KML, readCLT
+from utils.Viz.plotting import readCLT
+from utils.Viz.KML import KML
 from mpl_toolkits.basemap import Basemap
 
 
@@ -64,18 +67,25 @@ class Drift():
             # Careful - trackingdb returns the records in reverse time order
             if self.args.verbose:
                 print('Opening', url)
-            for r in csv.DictReader(urllib.request.urlopen(url)):
-                # Use logic to skip inserting values if one or the other or both start and end are specified
-                if self.startDatetime:
-                    if datetime.utcfromtimestamp(float(r['epochSeconds'])) < self.startDatetime:
-                        continue
-                if self.endDatetime:
-                    if datetime.utcfromtimestamp(float(r['epochSeconds'])) > self.endDatetime:
-                        continue
 
-                self.trackDrift[r['platformName']]['es'].insert(0, float(r['epochSeconds']))
-                self.trackDrift[r['platformName']]['lat'].insert(0, float(r['latitude']))
-                self.trackDrift[r['platformName']]['lon'].insert(0, float(r['longitude']))
+            with closing(requests.get(url, stream=True)) as resp:
+                if resp.status_code != 200:
+                    logger.error('Cannot read %s, resp.status_code = %s', url, resp.status_code)
+                    return
+
+                r_decoded = (line.decode('utf-8') for line in resp.iter_lines())
+                for r in csv.DictReader(r_decoded):
+                    # Use logic to skip inserting values if one or the other or both start and end are specified
+                    if self.startDatetime:
+                        if datetime.utcfromtimestamp(float(r['epochSeconds'])) < self.startDatetime:
+                            continue
+                    if self.endDatetime:
+                        if datetime.utcfromtimestamp(float(r['epochSeconds'])) > self.endDatetime:
+                            continue
+
+                    self.trackDrift[r['platformName']]['es'].insert(0, float(r['epochSeconds']))
+                    self.trackDrift[r['platformName']]['lat'].insert(0, float(r['latitude']))
+                    self.trackDrift[r['platformName']]['lon'].insert(0, float(r['longitude']))
 
     def computeADCPDrift(self):
         '''Read data from database and put computed progressive vectors into adcpDrift dictionary
@@ -151,33 +161,41 @@ class Drift():
             # Careful - trackingdb returns the records in reverse time order
             if self.args.verbose:
                 print('Opening', url)
-            for r in csv.DictReader(urllib.request.urlopen(url.replace(' ', '%20'))):
-                # Use logic to skip inserting values if one or the other or both start and end are specified
-                dt = datetime.strptime(r['measurement__instantpoint__timevalue'], '%Y-%m-%d %H:%M:%S')
-                if self.startDatetime:
-                    if dt < self.startDatetime:
-                        continue
-                if self.endDatetime:
-                    if dt > self.endDatetime:
-                        continue
-        
-                if self.args.verbose > 1:
-                    print(r)
 
-                apQS = ActivityParameter.objects.using(self.args.database).filter(
-                            activity__name=r['measurement__instantpoint__activity__name'],
-                            parameter__name=r['parameter__name']) 
+            with closing(requests.get(url.replace(' ', '%20'), stream=True)) as resp:
+                if resp.status_code != 200:
+                    logger.error('Cannot read %s, resp.status_code = %s', url, resp.status_code)
+                    return
 
-                # Mash together a key composed of parameter, platform, min, max for the Activity
-                key = "%s,%s,%f,%f" % ( r['parameter__name'], r['measurement__instantpoint__activity__platform__name'],
-                                        apQS[0].p025, apQS[0].p975 )
-                       
-                self.stoqsDrift[key]['es'].append(time.mktime(dt.timetuple()))
-                lon, lat = r['measurement__geom'].split('(')[-1].split(')')[0].split(' ')
-                self.stoqsDrift[key]['lat'].append(float(lat))
-                self.stoqsDrift[key]['lon'].append(float(lon))
-                self.stoqsDrift[key]['depth'].append(float(r['measurement__depth']))
-                self.stoqsDrift[key]['datavalue'].append(r['datavalue'])
+                r_decoded = (line.decode('utf-8') for line in resp.iter_lines())
+                for r in csv.DictReader(r_decoded):
+
+                    # Use logic to skip inserting values if one or the other or both start and end are specified
+                    dt = datetime.strptime(r['measurement__instantpoint__timevalue'], '%Y-%m-%d %H:%M:%S')
+                    if self.startDatetime:
+                        if dt < self.startDatetime:
+                            continue
+                    if self.endDatetime:
+                        if dt > self.endDatetime:
+                            continue
+            
+                    if self.args.verbose > 1:
+                        print(r)
+
+                    apQS = ActivityParameter.objects.using(self.args.database).filter(
+                                activity__name=r['measurement__instantpoint__activity__name'],
+                                parameter__name=r['parameter__name']) 
+
+                    # Mash together a key composed of parameter, platform, min, max for the Activity
+                    key = "%s,%s,%f,%f" % ( r['parameter__name'], r['measurement__instantpoint__activity__platform__name'],
+                                            apQS[0].p025, apQS[0].p975 )
+                           
+                    self.stoqsDrift[key]['es'].append(time.mktime(dt.timetuple()))
+                    lon, lat = r['measurement__geom'].split('(')[-1].split(')')[0].split(' ')
+                    self.stoqsDrift[key]['lat'].append(float(lat))
+                    self.stoqsDrift[key]['lon'].append(float(lon))
+                    self.stoqsDrift[key]['depth'].append(float(r['measurement__depth']))
+                    self.stoqsDrift[key]['datavalue'].append(r['datavalue'])
 
     def process(self):
         '''Read in data and build structures that we can generate products from
@@ -254,8 +272,7 @@ class Drift():
 
         # Plot each data point with it's own color based on the activity statistics from STOQS
         coloredDotSize = 30
-        STATIC_ROOT = '/var/www/html/stoqs/static'      # Warning: Hard-coded
-        clt = readCLT(os.path.join(STATIC_ROOT, 'colormaps', 'jetplus.txt'))
+        clt = readCLT(os.path.join(settings.ROOT_DIR('static'), 'colormaps', 'jetplus.txt'))
         cm_jetplus = matplotlib.colors.ListedColormap(np.array(clt))
         for key, drift in list(self.stoqsDrift.items()):
             min, max = key.split(',')[2:4]
