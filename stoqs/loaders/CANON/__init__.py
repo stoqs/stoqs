@@ -67,6 +67,7 @@ class CANONLoader(LoadScript):
                 'waveglider':   'c7eae5',
                 'nps_g29':      '80cdc1',
                 'l_662':        '35978f',
+                'l_662a':       '38978f',
                 'm1':           '35f78f',
                 'm2':           '35f780',
                 'martin':       '01665e',
@@ -85,9 +86,12 @@ class CANONLoader(LoadScript):
                 'waveglider':   'fc4e2a',
                 'nps_g29':      'e31a1c',
                 'l_662':        'bd0026',
+                'l_662a':       'bd008f',
                 'nps29':        '0b9131',
                 'nps34':        '36d40f',
-                'sg621':        '5b9131',
+                'nps34a':        '36d40f',
+                'sg539':        '5f9131',
+                'sg621':        '507131',
                 'm1':           'bd2026',
                 'm2':           'bd2020',
                 'oa':           '0f9cd4',
@@ -351,6 +355,19 @@ class CANONLoader(LoadScript):
                                        self.l_662_endDatetime, grdTerrain=self.grdTerrain,
                                        command_line_args=self.args)
 
+    def loadL_662a(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.l_662a_files], self.l_662a_files):
+            url = self.l_662a_base + f
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'SPRAY_L66a_Glider', self.colors['l_662a'], 'glider', 'Glider Mission',
+                                       self.l_662a_parms, self.dbAlias, stride, self.l_662a_startDatetime,
+                                       self.l_662a_endDatetime, grdTerrain=self.grdTerrain,
+                                       command_line_args=self.args)
+
     def load_NPS29(self, stride=None):
         '''
         Glider specific load functions
@@ -363,6 +380,22 @@ class CANONLoader(LoadScript):
                                         self.nps29_parms, self.dbAlias, stride, self.nps29_startDatetime, 
                                         self.nps29_endDatetime, grdTerrain=self.grdTerrain, 
                                         command_line_args=self.args)
+
+    def load_SG539(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.sg539_files], self.sg539_files):
+            url = self.sg539_base + f
+            try:
+                DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'SG_Glider_539', self.colors['sg539'], 'glider', 'Glider Mission',
+                                        self.sg539_parms, self.dbAlias, stride, self.sg539_startDatetime,
+                                        self.sg539_endDatetime, grdTerrain=self.grdTerrain,
+                                        command_line_args=self.args)
+            except (DAPloaders.OpendapError, DAPloaders.NoValidData) as e:
+                self.logger.warn(str(e))
 
     def load_SG621(self, stride=None):
         '''
@@ -392,6 +425,20 @@ class CANONLoader(LoadScript):
                                         self.nps34_parms, self.dbAlias, stride, self.nps34_startDatetime, 
                                         self.nps34_endDatetime, grdTerrain=self.grdTerrain,
                                         command_line_args=self.args)
+
+    def load_NPS34a(self, stride=None):
+        '''
+        Glider specific load functions
+        '''
+        stride = stride or self.stride
+        for (aName, f) in zip([ a + getStrideText(stride) for a in self.nps34a_files], self.nps34a_files):
+            url = self.nps34a_base + f
+            DAPloaders.runGliderLoader(url, self.campaignName, self.campaignDescription, aName,
+                                       'NPS_Glider_34', self.colors['nps34a'], 'glider', 'Glider Mission',
+                                        self.nps34a_parms, self.dbAlias, stride, self.nps34a_startDatetime,
+                                        self.nps34a_endDatetime, grdTerrain=self.grdTerrain,
+                                        command_line_args=self.args)
+
 
     def load_glider_ctd(self, stride=None):
         '''
