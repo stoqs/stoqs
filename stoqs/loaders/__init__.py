@@ -625,7 +625,7 @@ class STOQS_Loader(object):
 
         self.logger.info('Adding plotTimeSeriesDepth Resource for Parameters we want plotted in Parameter tab')
         for v in self.include_names + ['altitude']:
-            try:
+            if hasattr(self, 'plotTimeSeriesDepth'):
                 if self.plotTimeSeriesDepth.get(v, None) is not None:
                     self.logger.info('v = %s', v)
                     try:
@@ -644,8 +644,6 @@ class STOQS_Loader(object):
                                         activity=self.activity, resource=resource)
                     except ParameterNotFound as e:
                         self.logger.warn('Could not add plotTimeSeriesDepth PlatformResource for v = %s: %s', v, e)
-            except AttributeError as e:
-                    self.logger.warn('Could not add plotTimeSeriesDepth Resource for v = %s: %s', v, e)
         
     def getParameterByName(self, name):
         '''
@@ -888,19 +886,19 @@ class STOQS_Loader(object):
         for this activity.  Store the histogram in the associated table.
         '''                 
         if self.activity:
-            a = self.activity
+            act = self.activity
         else:
             raise Exception('Must have an activity defined in self.activity')
 
         try:
-            self.update_activityparameter_stats(self.dbAlias, a, parameterCounts, sampledFlag)
+            self.update_activityparameter_stats(self.dbAlias, act, parameterCounts, sampledFlag)
         except ValueError as e:
             self.logger.warn('%s. Likely a dataarray as from LOPC data', e)
         except IntegrityError as e:
             self.logger.warn('IntegrityError(%s): Cannot create ActivityParameter and '
-                             'updated statistics for Activity %s.', e, a)
+                             'updated statistics for Activity %s.', (e, act))
 
-        self.logger.info('Updated statistics for activity.name = %s', a.name)
+        self.logger.info('Updated statistics for activity.name = %s', act.name)
 
     def insertSimpleDepthTimeSeries(self, critSimpleDepthTime=10):
         '''

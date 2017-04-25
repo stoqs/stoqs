@@ -17,8 +17,10 @@ import django
 django.setup()
 
 from collections import defaultdict
+from datetime import datetime
 from django.db import connections
 from stoqs.models import Activity, ActivityParameter, ParameterResource, Platform, MeasuredParameter, Parameter
+from django.contrib.gis.db.models import Extent
 from django.contrib.gis.geos import Point
 from django.db.models import Max, Min
 from django.http import HttpRequest
@@ -149,12 +151,15 @@ class BiPlot(object):
             pq.logger.setLevel(logging.DEBUG)
 
         args = ()
-        kwargs = {  'time': (startDatetime.strftime('%Y-%m-%d %H:%M:%S'), endDatetime.strftime('%Y-%m-%d %H:%M:%S')),
-                    'platforms': (platform,),
-                    'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
+        kwargs = {  'parameterparameter': [ Parameter.objects.using(self.args.database).get(name=xParm).id,
                                             Parameter.objects.using(self.args.database).get(name=yParm).id ],
                     'parametervalues': [pvDict]
                  }
+
+        if startDatetime and endDatetime:
+            kwargs['time'] = (startDatetime.strftime('%Y-%m-%d %H:%M:%S'), endDatetime.strftime('%Y-%m-%d %H:%M:%S'))
+        if platform is not None:
+            kwargs['platforms'] = (platform,)
 
         px, py  = kwargs['parameterparameter']
 
@@ -203,17 +208,21 @@ class BiPlot(object):
         self.activityStartTime = seaQS['startdate__min'] 
         self.activityEndTime = seaQS['enddate__max']
 
-        self.dataExtent = aQS.extent(field_name='maptrack')
+        self.dataExtent = aQS.aggregate(Extent('maptrack'))['maptrack__extent']
 
         # Expand the computed extent by extendDeg degrees
-        if self.args.extend:
-            allExtent = self.dataExtent
-            extendDeg = self.args.extend
-            allExtent = (allExtent[0] - extendDeg, allExtent[1] - extendDeg, allExtent[2] + extendDeg, allExtent[3] + extendDeg)
+        allExtent = self.dataExtent
+        try:
+            if self.args.extend:
+                extendDeg = self.args.extend
+                allExtent = (allExtent[0] - extendDeg, allExtent[1] - extendDeg, allExtent[2] + extendDeg, allExtent[3] + extendDeg)
 
-        # Override with extent if specified on command line
-        if self.args.extent:
-            allExtent = [float(e) for e in self.args.extent]
+            # Override with extent if specified on command line
+            if self.args.extent:
+                allExtent = [float(e) for e in self.args.extent]
+        except AttributeError:
+            # Likely not specified on the command line, just ignore
+            pass
 
         return self.activityStartTime, self.activityEndTime, allExtent
 
