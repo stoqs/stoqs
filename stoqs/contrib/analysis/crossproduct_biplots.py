@@ -102,9 +102,9 @@ class CrossProductBiPlot(BiPlot):
                 if self.args.verbose: print('\t%s' % yP.name)
 
                 try:
-                    x, y, points = self._getPPData(None, None, None, xP.name, yP.name)
-                except NoPPDataException as e:
-                    if self.args.verbose: print(e)
+                    x, y, points = self._getPPData(None, None, None, xP.name, yP.name, {})
+                except (NoPPDataException, TypeError) as e:
+                    if self.args.verbose: print(f"\tCan't plot {yP.name}: {str(e)}")
                     continue
 
                 # Assess the correlation
@@ -189,7 +189,7 @@ class CrossProductBiPlot(BiPlot):
         parser.add_argument('--plotDir', action='store', help='Directory where to write the plot output', default='.')
         parser.add_argument('--plotPrefix', action='store', help='Prefix to use in naming plot files', default='')
         parser.add_argument('--title', action='store', help='Title to appear on top of plot')
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
