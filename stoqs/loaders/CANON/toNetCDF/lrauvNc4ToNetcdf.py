@@ -41,6 +41,14 @@ import logging
 import socket
 import json
 
+# Map common LRAUV variable names to CF standard names: http://cfconventions.org/standard-names.html
+sn_lookup = {
+             'bin_mean_temperature': 'sea_water_temperature',
+             'bin_mean_salinity': 'sea_water_salinity',
+             'bin_mean_chlorophyll': 'mass_concentration_of_chlorophyll_in_sea_water',
+            }
+
+
 class InterpolatorWriter(BaseWriter):
 
     logger = logging.getLogger('lrauvNc4ToNetcdf')
@@ -202,9 +210,9 @@ class InterpolatorWriter(BaseWriter):
                 rc.long_name = a['long_name']
             if 'standard_name' in a:
                 rc.standard_name = a['standard_name']
-            else:
+            elif key in sn_lookup.keys():
+                rc.standard_name = sn_lookup[key]
 
-                rc.standard_name = key
             rc.coordinates = ' '.join(c.values())
 
             if units is None:
