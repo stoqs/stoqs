@@ -118,7 +118,7 @@ def find_urls(base, search_str):
 platforms = ['tethys']
 
 for p in platforms:
-    base =  'http://dodstemp.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
+    base =  'http://dods.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2016/'
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2016/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
