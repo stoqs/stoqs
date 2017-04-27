@@ -619,6 +619,7 @@ class Base_Loader(STOQS_Loader):
                 logger.warn('Ignoring parameter: %s', name)
             except InvalidSliceRequest:
                 logger.warn('No valid data for parameter: %s', name)
+                continue
             except KeyError as e:
                 logger.warn("%s: Skipping", e)
                 continue
