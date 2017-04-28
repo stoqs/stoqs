@@ -516,7 +516,12 @@ class MPQuery(object):
             self.kwargs = kwargs
             if 'parameterplot' in self.kwargs:
                 if self.kwargs['parameterplot'][0]:
-                    self.parameterID = self.kwargs['parameterplot'][0]
+                    if 'parameterplot_id' in self.kwargs:
+                        if self.kwargs['parameterplot_id'] is not None:
+                            # Override UI selected parameterplot so as to resuse this code for parametercontourplot
+                            self.parameterID = self.kwargs['parameterplot_id']
+                    else:
+                        self.parameterID = self.kwargs['parameterplot'][0]
                     logger.debug('self.parameterID = %s', self.parameterID)
                     parameter = Parameter.objects.using(self.request.META['dbAlias']).get(id=self.parameterID)
                     parameterGroups = getParameterGroups(self.request.META['dbAlias'], parameter)
