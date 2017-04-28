@@ -1406,7 +1406,7 @@ class STOQSQManager(object):
                 parameter = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=contourparameterID)
                 contourparameterGroups = getParameterGroups(self.request.META['dbAlias'],parameter)
             if self.kwargs['parametercontourplot'][1]:
-                platformName = self.kwargs['parametercontourplot'][1]
+                contourplatformName = self.kwargs['parametercontourplot'][1]
         if not contourparameterID or not contourplatformName:
             return None, None, 'Problem with getting parameter-contour-plot-radio button info'            
        
