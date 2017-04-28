@@ -78,8 +78,12 @@ class BaseParameter(object):
         self.num_colors = 256
         self.cmin = None
         self.cmax = None
-        self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt))
-        self.clt = self.jetplus_clt
+        # Original jetplus.txt file has just 128 colors, duplicate adjancents to make 256 colors
+        self.jetplus_clt_256 = []
+        for c in self.jetplus_clt:
+            self.jetplus_clt_256.extend([c, c])
+        self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt_256))
+        self.clt = self.jetplus_clt_256
     
     def set_colormap(self):
         '''Assign colormap as passed in from UI request
@@ -88,11 +92,11 @@ class BaseParameter(object):
             if self.request.GET.get('cm'):
                 self.cm_name = self.request.GET.get('cm')
                 if self.cm_name == 'jetplus':
-                    self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt))
-                    self.clt = self.jetplus_clt
+                    self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt_256))
+                    self.clt = self.jetplus_clt_256
                 elif self.cm_name == 'jetplus_r':
-                    self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt)[::-1])
-                    self.clt = self.jetplus_clt[::-1]
+                    self.cm = mpl.colors.ListedColormap(np.array(self.jetplus_clt_256)[::-1])
+                    self.clt = self.jetplus_clt_256[::-1]
                 else:
                     try:
                         self.cm = plt.get_cmap(self.cm_name)
@@ -100,8 +104,9 @@ class BaseParameter(object):
                         # Likely a cmocean colormap
                         self.cm = getattr(cmocean.cm, self.cm_name)
 
-                # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
-                self.clt = [self.cm(i) for i in range(256)]
+                    # Iterating over cm items works for LinearSegmentedColormap and ListedColormap
+                    self.clt = [self.cm(i) for i in range(256)]
+
             if self.request.GET.get('num_colors') is not None:
                 self.num_colors = int(self.request.GET.get('num_colors'))
             if self.request.GET.get('cmin') is not None:

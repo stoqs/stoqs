@@ -41,6 +41,14 @@ import logging
 import socket
 import json
 
+# Map common LRAUV variable names to CF standard names: http://cfconventions.org/standard-names.html
+sn_lookup = {
+             'bin_mean_temperature': 'sea_water_temperature',
+             'bin_mean_salinity': 'sea_water_salinity',
+             'bin_mean_chlorophyll': 'mass_concentration_of_chlorophyll_in_sea_water',
+            }
+
+
 class InterpolatorWriter(BaseWriter):
 
     logger = logging.getLogger('lrauvNc4ToNetcdf')
@@ -202,9 +210,9 @@ class InterpolatorWriter(BaseWriter):
                 rc.long_name = a['long_name']
             if 'standard_name' in a:
                 rc.standard_name = a['standard_name']
-            else:
+            elif key in sn_lookup.keys():
+                rc.standard_name = sn_lookup[key]
 
-                rc.standard_name = key
             rc.coordinates = ' '.join(c.values())
 
             if units is None:
@@ -370,6 +378,145 @@ class InterpolatorWriter(BaseWriter):
         return all_ts
     # End createCoord
 
+    def processNc4FileDecimated(self, url, in_file, out_file, parms, group_parms, interp_key):
+        self.df = []
+        self.all_sub_ts = {}
+        self.all_coord = {}
+        self.all_attrib = {}
+        parm_valid = []
+        coord =  ['latitude','longitude','depth']
+
+        self.df = netCDF4.Dataset(in_file, mode='r')
+        coord_ts = self.createCoord(coord)
+
+        # Create pandas time series for each parameter and store attributes
+        for key in parms:
+          try:
+            ts = self.createSeriesPydap(key, key + '_time')
+            self.all_attrib[key] = self.df[key].attributes
+            self.all_coord[key] = {'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
+            parm_valid.append(key)
+            self.all_sub_ts[key] = ts
+            self.logger.info('Found parameter ' + key)
+          except Exception, e:
+            self.logger.error(e)
+            continue
+
+        # Create pandas time series for each parameter in each group and store attributes
+        for group in self.df.groups:
+            g = None
+            variables = None
+
+            if group in group_parms.keys():
+                g = group
+            else:
+                continue
+
+            times = []
+            subgroup = None
+            pkeys = None
+
+            try:
+                subgroup = self.df.groups[g]
+                pkeys = group_parms[g]
+
+            except Exception, e:
+                self.logger.error(e)
+                raise e
+
+            # Create pandas time series for each parameter and store attributes
+            if subgroup is not None and pkeys is not None:
+                for p in pkeys:
+                    try:
+                        key = p["rename"]
+                        var = p["name"]
+                        ts = self.createSeries(subgroup.variables, var, var+'_'+'time')
+                        attr = {}
+
+                        # don't store or try to interpolate empty time series
+                        if ts.size == 0:
+                            continue
+
+                        for name in subgroup.variables[var].ncattrs():
+                            attr[name] = getattr(subgroup.variables[var],name)
+
+                        # Potential override of attributes from json data
+                        for name in ('units', 'standard_name'):
+                            try:
+                                attr[name] = p[name]
+                            except KeyError:
+                                continue
+
+                        self.all_attrib[key] = attr
+
+                        if key.find('pitch') != -1 or key.find('roll') != -1 or key.find('yaw') != -1 or key.find('angle') != -1 or key.find('rate') != -1:
+                            ts = ts * 180.0 / numpy.pi
+
+                        # store for later processing into the netCDF
+                        self.all_sub_ts[key] = ts
+                        self.all_coord[key] = { 'time':'time', 'depth':'depth', 'latitude':'latitude', 'longitude':'longitude'}
+
+                        self.logger.info('Found in group ' + group + ' parameter ' + var + ' renaming to ' + key)
+                        parm_valid.append(key)
+                    except KeyError, e:
+                        self.logger.error(e)
+                        continue
+                    except Exception,e:
+                        self.logger.error(e)
+                        continue
+
+        # create independent lat/lon/depth profiles for each parameter
+        for key in parm_valid:
+            # Get independent parameter to interpolate on
+            t = pd.Series(index = self.all_sub_ts[key].index)
+            self.all_coord[key] = { 'time': key+'_time', 'depth': key+'_depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+
+            # interpolate each coordinate to the time of the parameter
+            # key looks like sea_water_temperature_depth, sea_water_temperature_lat, sea_water_temperature_lon, etc.
+            for c in coord:
+
+                # get coordinate
+                ts = coord_ts[c]
+
+                # and interpolate using parameter time
+                if not ts.empty:
+
+                    i = self.interpolate(ts, t.index)
+                    self.all_sub_ts[key + '_' + c] = i
+                    self.all_coord[key + '_' + c] = { 'time': key+'_time', 'depth': key+' _depth', 'latitude': key+'_latitude', 'longitude':key+'_longitude'}
+
+            # add in time coordinate separately
+            v_time = self.all_sub_ts[key].index
+            esec_list = v_time.values.astype(dt.datetime)/1E9
+            self.all_sub_ts[key + '_time'] = pd.Series(esec_list,index=v_time)
+
+        # Get independent parameter to interpolate on
+        t = pd.Series(index = self.all_sub_ts[interp_key].index)
+
+        # store time using interpolation parameter
+        v_time = self.all_sub_ts[interp_key].index
+        esec_list = v_time.values.astype(dt.datetime)/1E9
+        self.all_sub_ts['time'] = pd.Series(esec_list,index=v_time)
+
+        for key in coord:
+            value = coord_ts[key]
+            self.all_sub_ts[key] = value
+            if not value.empty :
+               i = self.interpolate(value, t.index)
+               self.all_sub_ts[key] = i
+            else:
+               self.all_sub_ts[key] = value
+
+            self.all_coord[key] = { 'time': 'time', 'depth': 'depth', 'latitude':'latitude', 'longitude':'longitude'}
+
+        self.logger.info("%s", self.all_sub_ts.keys())
+
+        # Write data to the file
+        self.write_netcdf(out_file, url)
+        self.logger.info('Wrote ' + out_file)
+
+        # End processSingleParm
+
     def processNc4File(self, in_file, out_file, parm, resampleFreq):
 
         all_ts = {}
@@ -395,7 +542,6 @@ class InterpolatorWriter(BaseWriter):
             pkeys = None
 
             # either a subgroup or a list of variables
-            # TODO: need a broader loop here
             try:
                 for key in subgroup:
                     subgroup = self.df.groups[g].group[key]
@@ -447,7 +593,6 @@ class InterpolatorWriter(BaseWriter):
                         self.logger.error(e)
                         continue
 
-        # TODO: add try catch block on this
         # Get time parameter and align other coordinates to this
         t = pd.Series(index = all_ts['time'].index)
 
@@ -483,7 +628,6 @@ class InterpolatorWriter(BaseWriter):
 
         coord_ts = self.createCoord(coord)
 
-        # TODO: add try catch block on this
         # Get time parameter and align everything to this
         t = pd.Series(index = coord_ts['time'].index)
 

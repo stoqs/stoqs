@@ -779,6 +779,10 @@ class STOQS_Loader(object):
         if row['longitude'] > 720 or row['longitude'] < -720:
             raise SkipRecord('Invalid longitude = %s' % row['longitude'])
 
+        # First seen in April 2017 Nemesis data
+        if row['depth'] == self.get_FillValue('depth'):
+            raise SkipRecord('depth == _FillValue (%s)' % row['depth'])
+
         return row
 
     def checkForValidData(self):

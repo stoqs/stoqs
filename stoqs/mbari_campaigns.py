@@ -59,4 +59,5 @@ campaigns = OrderedDict([
     ('stoqs_michigan2016',       'LakeMichigan/load_2016.py'),
     ('stoqs_canon_september2016',   'CANON/loadCANON_september2016.py'),
     ('stoqs_os2017',             'CANON/loadCANON_os2017.py'),
+    ('stoqs_canon_april2017',    'CANON/loadCANON_april2017.py'),      
 ])
