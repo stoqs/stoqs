@@ -1405,8 +1405,8 @@ class STOQSQManager(object):
         if 'parametercontourplot' in self.kwargs:
             if self.kwargs['parametercontourplot'][0]:
                 contourparameterID = self.kwargs['parametercontourplot'][0]
-                parameter = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=contourparameterID)
-                contourparameterGroups = getParameterGroups(self.request.META['dbAlias'],parameter)
+                contourparameter = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=contourparameterID)
+                contourparameterGroups = getParameterGroups(self.request.META['dbAlias'], contourparameter)
             if self.kwargs['parametercontourplot'][1]:
                 contourplatformName = self.kwargs['parametercontourplot'][1]
             self.kwargs['parameterplot_id'] = contourparameterID
