@@ -960,7 +960,7 @@
                             <input type="checkbox" id="show-parameter-parameter-sp-checkbox" /> Show Parameter-Parameter
                             <input type="checkbox" id="show-coordinates-sp-checkbox" /> Show coordinates
                             <input type="checkbox" id="show-filtered-sp-checkbox" /> Filtered out parameters
-                            <input type="checkbox" id="show-sp-standardnames" /> Standard Names
+                            <input type="checkbox" id="show-standardnames-sp-checkbox" /> Standard Names
                             <fieldset>
                             <table id="sampledparameter-table" class="table table-condensed">
                                 <thead>
@@ -2363,11 +2363,22 @@
 
     $('#show-standardnames-mp-checkbox').on('click', function (e) {
         if ( $('#show-standardnames-mp-checkbox').is(':checked') ) {
-            $('.parameterstandardname').parent().parent().show();
+            $('.mp-standardname-row-enabled').show();
             enableButton($('.parameterstandardname'));
         }
         else {
-            $('.parameterstandardname').parent().parent().hide();
+            $('.mp-standardname-row').hide();
+            disableButton($('.parameterstandardname'));
+        }
+    });
+
+    $('#show-standardnames-sp-checkbox').on('click', function (e) {
+        if ( $('#show-standardnames-sp-checkbox').is(':checked') ) {
+            $('.sp-standardname-row-enabled').show();
+            enableButton($('.parameterstandardname'));
+        }
+        else {
+            $('.sp-standardname-row').hide();
             disableButton($('.parameterstandardname'));
         }
     });
@@ -4160,8 +4171,9 @@ function enable_cardboard(){
                     if (value[1].length != 0) {
                         // Append '--' + value[0] + '-sn' to the id to distinguish them from parameter names that have the same standard_name
                         // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
+                        // Change colspan to 5 when Parameter-Parameter radio buttons are shown
                         parameterButtonText = parameterButtonText +
-                        '<tr style="display:none;">' +
+                        '<tr style="display:none;" class="sp-standardname-row sp-standardname-row-enabled">' +
                             '<td colspan="1" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
                             '<td style="border-color:transparent;"></td>' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color: transparent;">' +
@@ -4220,7 +4232,7 @@ function enable_cardboard(){
                         // A bit of a kludge, but should be robust as CF standard_names do not contain dashes
                         // Change colspan to 5 when Parameter-Parameter radio buttons are shown
                         parameterButtonText = parameterButtonText +
-                        '<tr style="display:none;">' +
+                        '<tr style="display:none;" class="mp-standardname-row mp-standardname-row-enabled">' +
                             '<td colspan="1" style="text-align:center;border-color:transparent;" class="sn-leader"></td>' +
                             '<td style="border-color:transparent;"></td>' +
                             '<td id="' + value[1] + '--' + value[0] + '-sn" style="border-color:transparent;text-align:center;">' +
@@ -4568,6 +4580,7 @@ function enable_cardboard(){
             }
             else if (key == 'sampledparametersgroup') {
                 var ids=[];
+                $('.sp-standardname-row').removeClass('sp-standardname-row-enabled'); // Use class to identify filtered standardnames
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid, convert int id to string
                     enableButton($('button', '#' + value[2]));                                                  // enable the button in the table row
@@ -4575,6 +4588,7 @@ function enable_cardboard(){
                     enableXYZColorPlot($('input:checkbox', $('button', '#' + value[2]).parent().parent()));     // enable the Plot checkbox in the row
                     enableParameterRow($('button', '#' + value[2]).parent().parent());                          // enable and show the whole row 
                     addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
+                    $('button', '#' + value[1] + '--' + value[0] + '-sn').parent().parent().addClass('sp-standardname-row-enabled');
                     ids.push(value[2].toString());
                 });
                 $('#sampledparameter-table > tbody > tr > td > button').each(function (index, elem) { 
@@ -4590,6 +4604,7 @@ function enable_cardboard(){
             }
             else if (key == 'measuredparametersgroup') {
                 var ids=[];
+                $('.mp-standardname-row').removeClass('mp-standardname-row-enabled');                                 // Use class to identify filtered standardnames
                 $.each(data[key], function (index, value) {
                     // Here we need to enable those that are still valid
                     enableButton($('button', '#' + value[0]));      // enable the name button in the table row
@@ -4597,6 +4612,7 @@ function enable_cardboard(){
                     enableXYZColorPlot($('input:checkbox', $('button', '#' + value[0]).parent().parent()));     // enable the Plot checkbox in the row
                     enableParameterRow($('button', '#' + value[0]).parent().parent());                          // enable and show the whole row 
                     addPlatformSymbols($('#' + value[0] + '_plats'), value[2]);                                 // show which platforms have this parameter
+                    $('button', '#' + value[1] + '--' + value[0] + '-sn').parent().parent().addClass('mp-standardname-row-enabled');
                     ids.push(value[0]);
                     if (value[1].length != 0 && $('#show-standardnames-mp-checkbox').is(':checked')) {
                         enableButton($('button', '#' + value[1] + '--' + value[0] + '-sn'));                                // Enable the standard_name button in the table row

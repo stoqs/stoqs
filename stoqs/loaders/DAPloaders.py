@@ -619,6 +619,7 @@ class Base_Loader(STOQS_Loader):
                 logger.warn('Ignoring parameter: %s', name)
             except InvalidSliceRequest:
                 logger.warn('No valid data for parameter: %s', name)
+                continue
             except KeyError as e:
                 logger.warn("%s: Skipping", e)
                 continue
@@ -819,7 +820,7 @@ class Base_Loader(STOQS_Loader):
                 try:
                     logger.debug("ac[pname]['time'] = %s", ac[pname]['time'])
                     tIndx = self.getTimeBegEndIndices(self.ds[ac[pname]['time']])
-                except NoValidData as e:
+                except (NoValidData, InvalidSliceRequest) as e:
                     logger.warn('Skipping this parameter. %s', e)
                     continue
                 try:
