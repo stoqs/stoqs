@@ -566,6 +566,9 @@ class MeasuredParameter(BaseParameter):
             cz = self.z
 
             if self.contourParameterID is not None:
+                self.x = []
+                self.y = []
+                self.z = []
                 self.loadData(self.contour_qs_mp)
                 # x, y, z values for contour line plot
                 clx = self.x
