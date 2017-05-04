@@ -121,7 +121,7 @@ def processDecimated(args, pw, url, lastDatetime, start, end):
     url_i = None
 
     if endDatetime > lastDatetime:
-        logger.debug('Calling pw.process with outFile_i = %s inFile = %s', outFile_i, inFile)
+        logger.debug('Calling pw.processNc4FileDecimated with outFile_i = %s inFile = %s', outFile_i, inFile)
         try:
             if not args.debug:
               pw.processNc4FileDecimated(url, inFile, outFile_i, args.parms, json.loads(args.groupparms), args.iparm)
@@ -317,7 +317,7 @@ if __name__ == '__main__':
     # Look in time order - oldest to newest
     for url in sorted(urls):
         try:
-            (url_i, startDatetime, endDatetime) = processDecimated(args, pw, url, lastDatetime, start, end)
+            (url_src, startDatetime, endDatetime) = processDecimated(args, pw, url, lastDatetime, start, end)
         except ServerError as e:
             logger.warn(e)
             continue
@@ -327,11 +327,7 @@ if __name__ == '__main__':
 
         lastDatetime = endDatetime
 
-        if url_i:
-            logger.info("Received new %s data ending at %s in %s", platformName, endDatetime, url_i)
-            # Use Hyrax server to workaround the caching that TDS does
-            url_src = url_i.replace('http://elvis.shore.mbari.org/thredds/dodsC/LRAUV', 'http://dods.mbari.org/opendap/data/lrauv')
-
+        if url_src:
             logger.info("Received new %s file ending at %s in %s", platformName, lastDatetime, url_src)
             aName = url_src.split('/')[-2] + '_' + url_src.split('/')[-1].split('.')[0]
             dataStartDatetime = None
