@@ -393,7 +393,10 @@ class InterpolatorWriter(BaseWriter):
         for key in parms:
           try:
             ts = self.createSeriesPydap(key, key + '_time')
-            self.all_attrib[key] = self.df[key].attributes
+            attr = {}
+            for name in self.df[key].ncattrs(): 
+                attr[name]=getattr(self.df[key],name)
+            self.all_attrib[key] = attr
             self.all_coord[key] = {'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
             parm_valid.append(key)
             self.all_sub_ts[key] = ts
@@ -422,7 +425,7 @@ class InterpolatorWriter(BaseWriter):
 
             except Exception, e:
                 self.logger.error(e)
-                raise e
+                continue
 
             # Create pandas time series for each parameter and store attributes
             if subgroup is not None and pkeys is not None:

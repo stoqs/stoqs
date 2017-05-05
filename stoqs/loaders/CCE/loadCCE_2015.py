@@ -174,10 +174,14 @@ cl.ccebin_files = [
                     'MBCCE_BIN_CTD_20151013_timecorrected.nc',
                     'MBCCE_BIN_OXY_20151013_timecorrected.nc',
                     'MBCCE_BIN_ECO_20151013_timecorrected.nc',
+                    'MBCCE_BIN_ADCP300_20151013.nc',
+                    'MBCCE_BIN_ADCP1200_20151013.nc',
+                    'MBCCE_BIN_ADCP1200_20151013.nc'
                   ]
 cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'optical_backscatter',
                     'oxygen', 'saturation', 'optode_temperature',
-                    'chlor', 'ntu1', 'ntu2' ]
+                    'chlor', 'ntu1', 'ntu2',
+                    'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
 # MS1 ADCP data
 cl.ccems1_nominal_depth = 225

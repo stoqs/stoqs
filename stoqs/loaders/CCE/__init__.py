@@ -119,24 +119,39 @@ class CCELoader(LoadScript):
                     # Subract an hour to fill in missing_values at end from previous load
                     dataStartDatetime = dataStartDatetime - timedelta(seconds=3600)
 
-            if 'adcp' in f:
+            loader = Mooring_Loader(url = url, 
+                                    campaignName = self.campaignName,
+                                    campaignDescription = self.campaignDescription,
+                                    dbAlias = self.dbAlias,
+                                    activityName = aName,
+                                    activitytypeName = 'Mooring Deployment',
+                                    platformName = platformName,
+                                    platformColor = self.colors[platformName.lower()],
+                                    platformTypeName = 'mooring',
+                                    stride = stride,
+                                    startDatetime = self.ccebin_startDatetime,
+                                    endDatetime = self.ccebin_endDatetime,
+                                    dataStartDatetime = dataStartDatetime)
+
+            loader.include_names = self.ccebin_parms
+            loader.auxCoords = {}
+            if 'adcp' in f.lower():
                 Mooring_Loader.getFeatureType = lambda self: 'timeseriesprofile'
+                for p in ['u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']:
+                    loader.auxCoords[p] = {'time': 'time', 'latitude': 'lat', 'longitude': 'lon', 'depth': 'depth'}
             else:
                 Mooring_Loader.getFeatureType = lambda self: 'timeseries'
 
-            DAPloaders.runMooringLoader(url, self.campaignName, self.campaignDescription, aName,
-                                        platformName, self.colors['ccebin'], 'mooring', 'Mooring Deployment',
-                                        self.ccebin_parms, self.dbAlias, stride, self.ccebin_startDatetime,
-                                        self.ccebin_endDatetime, dataStartDatetime)
+            loader.process_data()
 
-        # For timeseriesProfile data we need to pass the nominaldepth of the plaform
-        # so that the model is put at the correct depth in the Spatial -> 3D view.
-        try:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
-                                      platformName, nominaldepth=self.ccebin_nominaldepth)
-        except AttributeError:
-            self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
-                                      platformName)
+            # For timeseriesProfile data we need to pass the nominaldepth of the plaform
+            # so that the model is put at the correct depth in the Spatial -> 3D view.
+            try:
+                self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
+                                          platformName, nominaldepth=self.ccebin_nominaldepth)
+            except AttributeError:
+                self.addPlatformResources('http://stoqs.mbari.org/x3d/cce_bin_assem/cce_bin_assem_src_scene.x3d',
+                                          platformName)
 
 # Dynamic method creation for any number of 'ccems' moorings
 def make_load_ccems_method(name):
@@ -200,5 +215,3 @@ if __name__ == '__main__':
     cl.bed_files = ['BED00039.nc']
     cl.bed_parms = ['XA', 'YA', 'ZA', 'XR', 'YR', 'ZR', 'PRESS', 'BED_DEPTH']
     cl.loadBEDS()
-
-

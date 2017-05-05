@@ -795,14 +795,15 @@ class STOQS_Loader(object):
         self.logger.info("Checking for valid data from %s", self.url)
         self.logger.debug("include_names = %s", self.include_names)
         for v in self.include_names:
-            self.logger.debug("v = %s", v)
+            allNaNFlag[v] = True
+            self.logger.info("include_name: %s", v)
             try:
-                try:
-                    allNaNFlag[v] = np.isnan(self.ds[v][:]).all()
-                except TypeError:
-                    allNaNFlag[v] = np.isnan(self.ds[v].array).all()
-                if not allNaNFlag[v]:
-                    anyValidData = True
+                for value in self.ds[v].array[:].flatten():
+                    if not np.isnan(value).all():
+                        allNaNFlag[v] = False
+                        anyValidData = True
+                        break
+
             except KeyError:
                 self.logger.debug('Parameter %s not in %s. Skipping.', v, self.ds.keys())
                 if v.find('.') != -1:
