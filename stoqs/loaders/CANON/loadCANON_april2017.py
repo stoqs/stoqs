@@ -73,6 +73,7 @@ cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/
 cl.dorado_files = [
                    'Dorado389_2017_108_01_108_01_decim.nc',
                    'Dorado389_2017_121_00_121_00_decim.nc',    
+                   'Dorado389_2017_124_00_124_00_decim.nc',
                                     ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
@@ -195,14 +196,14 @@ cl.l_662a_endDatetime = enddate
 
 # SG_539 ## KISS glider from Caltech/JPL
 cl.sg539_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG539/'
-cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,216)] ## index needs to be 1 higher than terminal file name
+cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,227)] ## index needs to be 1 higher than terminal file name
 cl.sg539_parms = ['temperature', 'salinity']
 cl.sg539_startDatetime = startdate
 cl.sg539_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
 cl.sg621_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG621/'
-cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,212)] ## index needs to be 1 higher than terminal file name
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,223)] ## index needs to be 1 higher than terminal file name
 cl.sg621_parms = ['temperature', 'salinity'] # 'aanderaa4330_dissolved_oxygen' throws DAPloader KeyError
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
@@ -476,6 +477,8 @@ cl.wfuctd_files = [
                   'canon17sm1.nc', 
                   'canon17sm15.nc', 'canon17sm16.nc', 'canon17sm17.nc',
                   'canon17sm18.nc',
+                  'canon17sm19.nc', 'canon17sm20.nc', 'canon17sm21.nc',
+                  'canon17sm22.nc',
                   ]
 
 # PCTD
@@ -497,6 +500,9 @@ cl.wfpctd_files = [
                   'canon17sc14.nc',
                   'canon17sc15.nc', 'canon17sc16.nc', 'canon17sc17.nc',
                   'canon17sc18.nc', 'canon17sc19.nc', 'canon17sc20.nc',
+                  'canon17sc21.nc', 'canon17sc22.nc', 'canon17sc23.nc',
+                  'canon17sc24.nc', 'canon17sc25.nc', 'canon17sc26.nc',
+                  'canon17sc27.nc', 'canon17sc28.nc',
                   ]
                         
 ###################################################################################################
@@ -579,7 +585,7 @@ else:
     cl.load_oa1()
     cl.load_oa2()
     cl.loadDorado()
-    ##cl.loadDaphne()  ## not in this campaign
+    cl.loadDaphne()
     ##cl.loadMakai()  ## not in this campaign
     ##cl.loadRCuctd()  ## not in this campaign
     ##cl.loadRCpctd()  ## not in this campaign
