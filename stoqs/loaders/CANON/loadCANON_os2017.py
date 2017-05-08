@@ -138,7 +138,7 @@ platforms = ['tethys', 'aku', 'makai', 'ahi', 'opah', 'daphne']
 
 
 for p in platforms:
-    base =  'http://dodstemp.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2017/'
+    base =  'http://dods.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2017/'
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2017/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)

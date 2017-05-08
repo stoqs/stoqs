@@ -8,9 +8,9 @@ debug=''
 #debug='--debug'
 export SLACKTOKEN=${SLACKTOCKEN}
 database='stoqs_canon_april2017'
-urlbase='http://dods.mbari.org/thredds/catalog/LRAUV'
+urlbase='http://elvis.shore.mbari.org/thredds/catalog/LRAUV'
 declare -a searchstr=("/realtime/cell-logs/.*Normal.nc4$" "/realtime/sbdlogs/2017/.*shore.nc4$" "/realtime/cell-logs/.*Priority.nc4$")
-declare -a platforms=("tethys" "aku" "makai" "ahi" "opah")
+declare -a platforms=("tethys" "aku" "makai" "ahi" "opah" "daphne")
 
 pos=$(( ${#searchstr[*]} - 1 ))
 last=${searchstr[$pos]}
@@ -56,9 +56,9 @@ do
  	    -i /mbari/LRAUV/${platform}/${directory}/ \
  	    -o /mbari/LRAUV/${platform}/${directory}/ \
         -u ${urlbase}/${platform}/${search} -b ${database} -c 'KISS CANON Spring 2017 Experiment in Monterey Bay'  --append --autoscale \
-        --iparm bin_mean_chlorophyll\
+        --iparm bin_mean_chlorophyll \
 	--booleanPlotGroup front \
- 	--plotDotParmName vertical_temperature_homogeneity_index \
+ 	--plotDotParmName VTHI \
  	--parms \
         sea_water_salinity \
         sea_water_temperature \
