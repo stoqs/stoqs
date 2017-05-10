@@ -57,8 +57,8 @@ cl = CANONLoader('stoqs_canon_april2017', 'KISS CANON Spring 2017',
 # Set start and end dates for all loads from sources that contain data
 # beyond the temporal bounds of the campaign
 #
-startdate = datetime.datetime(2017, 4, 7)  # Fixed start
-enddate = datetime.datetime(2017, 5, 15)  # Fixed end. Extend "offseason" to end of year
+startdate = datetime.datetime(2017, 4, 7)  # Fixed start. April 7, 2017
+enddate = datetime.datetime(2017, 5, 15)  # Fixed end. May 15, 2017
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -196,14 +196,14 @@ cl.l_662a_endDatetime = enddate
 
 # SG_539 ## KISS glider from Caltech/JPL
 cl.sg539_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG539/'
-cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,227)] ## index needs to be 1 higher than terminal file name
+cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,291)] ## index needs to be 1 higher than terminal file name
 cl.sg539_parms = ['temperature', 'salinity']
 cl.sg539_startDatetime = startdate
 cl.sg539_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
 cl.sg621_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG621/'
-cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,223)] ## index needs to be 1 higher than terminal file name
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,291)] ## index needs to be 1 higher than terminal file name
 cl.sg621_parms = ['temperature', 'salinity'] # 'aanderaa4330_dissolved_oxygen' throws DAPloader KeyError
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
@@ -466,19 +466,20 @@ cl.wfuctd_files = [
                   'canon17sm04.nc',
                   'canon17sm05.nc',
                   'canon17sm06.nc',
-                  'canon17sm07.nc',                                                                                                         
-                  'canon17sm08.nc',                                                                                                          
-                  'canon17sm09.nc',                                                                                                        
-                  'canon17sm10.nc',                                                                                                         
-                  'canon17sm11.nc',                                                                                                           
-                  'canon17sm12.nc',                                                                                                           
-                  'canon17sm13.nc',                                                                                                       
-                  'canon17sm14.nc',                                                                                                       
+                  'canon17sm07.nc',                                                                             
+                  'canon17sm08.nc',                                                        
+                  'canon17sm09.nc',                                                  
+                  'canon17sm10.nc',                                                               
+                  'canon17sm11.nc',                                                                  
+                  'canon17sm12.nc',                                                                                        
+                  'canon17sm13.nc',                                         
+                  'canon17sm14.nc',                                                                    
                   'canon17sm1.nc', 
                   'canon17sm15.nc', 'canon17sm16.nc', 'canon17sm17.nc',
                   'canon17sm18.nc',
                   'canon17sm19.nc', 'canon17sm20.nc', 'canon17sm21.nc',
                   'canon17sm22.nc',
+                  'canon17sm23.nc', 'canon17sm24.nc', 'canon17sm25.nc',
                   ]
 
 # PCTD
@@ -487,7 +488,7 @@ cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.wfpctd_files = [
                   'canon17sc01.nc',  
                   'canon17sc03.nc',
-                  'canon17sc04.nc',                                                                                                         
+                  'canon17sc04.nc',                                                                      
                   'canon17sc05.nc',
                   'canon17sc06.nc',
                   'canon17sc07.nc',
@@ -503,6 +504,9 @@ cl.wfpctd_files = [
                   'canon17sc21.nc', 'canon17sc22.nc', 'canon17sc23.nc',
                   'canon17sc24.nc', 'canon17sc25.nc', 'canon17sc26.nc',
                   'canon17sc27.nc', 'canon17sc28.nc',
+                  'canon17sc29.nc', 'canon17sc30.nc', 'canon17sc31.nc', 'canon17sc32.nc',
+                  'canon17sc33.nc', 'canon17sc34.nc', 'canon17sc35.nc', 'canon17sc36.nc',
+                  'canon17sc37.nc', 'canon17sc38.nc', 
                   ]
                         
 ###################################################################################################
