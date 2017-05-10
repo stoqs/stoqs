@@ -798,7 +798,11 @@ class STOQS_Loader(object):
             allNaNFlag[v] = True
             self.logger.info("include_name: %s", v)
             try:
-                for value in self.ds[v].array[:].flatten():
+                try:
+                    values = self.ds[v].array[:].flatten()
+                except AttributeError:
+                    values = self.ds[v][:].flatten()
+                for value in values:
                     if not np.isnan(value).all():
                         allNaNFlag[v] = False
                         anyValidData = True
