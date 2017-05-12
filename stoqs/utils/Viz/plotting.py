@@ -274,19 +274,14 @@ class MeasuredParameter(BaseParameter):
         Fill up the x, y, and z member lists for measured (default) or sampled data values. 
         If spanned is True then fill xspan, yspan, and zspan member lists with NetTow like data.
         '''
-        #Creating list to store the x,y,z coordinates
-        x = []
-        y = []
-        z = []
-
         if sampled:
             if self.scale_factor:
-                x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+                self.x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()) / self.scale_factor)
             else:
-                x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()))
-            y.append(mp['sample__depth'])
+                self.x.append(time.mktime(mp['sample__instantpoint__timevalue'].timetuple()))
+            self.y.append(mp['sample__depth'])
             self.depth_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(float(mp['sample__depth']))
-            z.append(mp['datavalue'])
+            self.z.append(mp['datavalue'])
             self.value_by_act.setdefault(mp['sample__instantpoint__activity__name'], []).append(float(mp['datavalue']))
 
             if 'sample__geom' in mp.keys():
@@ -332,12 +327,12 @@ class MeasuredParameter(BaseParameter):
                 
         else:
             if self.scale_factor:
-                x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
+                self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()) / self.scale_factor)
             else:
-                x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
-            y.append(mp['measurement__depth'])
+                self.x.append(time.mktime(mp['measurement__instantpoint__timevalue'].timetuple()))
+            self.y.append(mp['measurement__depth'])
             self.depth_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__depth'])
-            z.append(mp['datavalue'])
+            self.z.append(mp['datavalue'])
             self.value_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['datavalue'])
         
             if 'measurement__geom' in mp.keys():
