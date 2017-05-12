@@ -565,29 +565,32 @@ class MeasuredParameter(BaseParameter):
             if not self.x and not self.y and not self.z:
                 self.loadData(self.qs_mp)
 
-            # x, y, z values for color plot (scatter or "contour")
-            cx = self.x
-            cy = self.y
-            cz = self.z
+            # Copy x, y, z values for color plot (scatter or "contour")
+            cx = list(self.x)
+            cy = list(self.y)
+            cz = list(self.z)
+            self.logger.debug('Number of cx, cy, cz data values retrieved from database = %d', len(cz)) 
 
+            clx = []
+            cly = []
+            clz = []
             if self.contourParameterID is not None:
                 self.x = []
                 self.y = []
                 self.z = []
                 self.loadData(self.contour_qs_mp)
-                # x, y, z values for contour line plot
-                clx = self.x
-                cly = self.y
-                clz = self.z
+                # Copy x, y, z values for contour line plot
+                clx = list(self.x)
+                cly = list(self.y)
+                clz = list(self.z)
+                self.logger.debug('Number of clx, cly, clz data values retrieved from database = %d', len(clz)) 
 
             if 'showdataas' in self.kwargs:
                 if self.kwargs['showdataas']:
                     if self.kwargs['showdataas'][0] == 'contour':
                         contourFlag = True
           
-            self.logger.debug('Number of cx, cy, cz data values retrieved from database = %d', len(cz)) 
-            self.logger.debug('Number of clx, cly, clz data values retrieved from database = %d', len(clz)) 
-            if len(cz) == 0 or len(clz) == 0:
+            if len(cz) == 0 and len(clz) == 0:
                 return None, None, 'No data returned from selection'
 
             if contourFlag:
