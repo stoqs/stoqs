@@ -12,6 +12,7 @@ mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import cmocean
 import math
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 from matplotlib.mlab import griddata
 from matplotlib.colors import hex2color
 from pylab import polyval
@@ -666,6 +667,12 @@ class MeasuredParameter(BaseParameter):
                     for xs,ys in zip(xspan, yspan):
                         ax.plot(xs, ys, c='k', lw=2)
                         ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
+
+                if self.contourParameterID is not None:
+                    rcParams['contour.negative_linestyle'] = 'solid'
+                    zi = griddata(clx, cly, clz, xi, yi, interp='nn')
+                    CS = ax.contour(xi, yi, zi, colors='white')
+                    ax.clabel(CS, fontsize=9, inline=1)
 
                 if full_screen:
                     fig.savefig(sectionPngFileFullPath, dpi=240, transparent=True)
