@@ -1388,6 +1388,8 @@ class STOQSQManager(object):
         platformName = None
         contourparameterID = None # parameter for Contour plots
         contourplatformName = None
+        parameterGroups = []
+        contourparameterGroups = []
         logger.debug('self.kwargs = %s', self.kwargs)
         if 'parameterplot' in self.kwargs:
             if self.kwargs['parameterplot'][0]:
@@ -1397,9 +1399,6 @@ class STOQSQManager(object):
             if self.kwargs['parameterplot'][1]:
                 platformName = self.kwargs['parameterplot'][1]
             self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
-        if not parameterID or not platformName:
-            # With Plot radio button, must have parameterID and platformName
-            return None, None, 'Problem with getting parameter-plot-radio button info'
       
         # FOR CONTOUR
         if 'parametercontourplot' in self.kwargs:
@@ -1411,9 +1410,12 @@ class STOQSQManager(object):
                 contourplatformName = self.kwargs['parametercontourplot'][1]
             self.kwargs['parameterplot_id'] = contourparameterID
             self.contour_mpq.buildMPQuerySet(*self.args, **self.kwargs)
-        if not contourparameterID or not contourplatformName:
-            return None, None, 'Problem with getting parameter-contour-plot-radio button info'            
-       
+      
+        if parameterID or platformName or contourparameterID or contourplatformName:
+            pass
+        else:
+            return
+
         logger.debug('Instantiating Viz.MeasuredParameter............................................')
 
         if SAMPLED in parameterGroups:
