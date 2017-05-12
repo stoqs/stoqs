@@ -475,6 +475,9 @@ class MeasuredParameter(BaseParameter):
         dinc = 0.5                  # Average vertical resolution of AUV Dorado
         '''
 
+        # Temporarily force error to test modified unit test 
+        return None, None, 'No data returned from selection'
+
         # Use session ID so that different users don't stomp on each other with their section plots
         # - This does not work for Firefox which just reads the previous image from its cache
         if 'sessionID' in self.request.session:
