@@ -3900,9 +3900,6 @@ function enable_cardboard(){
         if ( $('input:radio[name=parameters_contour_plot]').is(':checked')  ) {
             qstring = qstring + '&parametercontourplotid=' + $('input:radio[name=parameters_contour_plot]:checked').val();
             qstring = qstring + '&platformplotname=' + $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()];
-            if ($('input:radio[name=showdataas]:checked').val()) {                                               
-                qstring = qstring + '&showdataas=' + $('input:radio[name=showdataas]:checked').val();
-            }   
         }
 
         if ( $('input:checkbox[name=parameters_plot_cb]').is(':checked') ) {
