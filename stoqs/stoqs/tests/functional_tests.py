@@ -164,7 +164,7 @@ class BrowserTestCase(TestCase):
         expand_temporal = self.browser.find_element_by_id('td-zoom-rc-button')
         self._wait_until_visible_then_click(expand_temporal)
 
-        # Make contour color plot of M1 northward_sea_water_velocity
+        # Make contour color plot of M1 northward_sea_water_velocity and hide Django toolbar
         northward_sea_water_velocity_HR_id = Parameter.objects.get(name='northward_sea_water_velocity_HR').id
         parameter_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
@@ -174,8 +174,25 @@ class BrowserTestCase(TestCase):
         djtb = self.browser.find_element_by_id('djHideToolBarButton')
         self._wait_until_visible_then_click(djtb)
 
+        plotinfo_element = self.browser.find_element_by_id('temporalparameterplotinfo')
+        WebDriverWait(self.browser, 5, poll_frequency=.2).until( EC.visibility_of(plotinfo_element))
+        assert 'northward_sea_water_velocity_HR from M1_Mooring' == plotinfo_element.text
+
+        # Contour line of M1 northward_sea_water_velocity - same as color plot
         parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_contour_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
         parameter_contour_plot_radio_button.click()
 
-        self.assertEquals('', self._mapserver_loading_panel_test)
+        # Test that at least the color bar image appears
+        assert '_M1_Mooring_colorbar_' in self.browser.find_element_by_id('sectioncolorbarimg').get_property('src')
+
+        # Contour line of M1 SEA_WATER_SALINITY_HR_id - different from color plot
+        SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name='SEA_WATER_SALINITY_HR').id
+        parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
+            "//input[@name='parameters_contour_plot' and @value='{}']".format(SEA_WATER_SALINITY_HR_id))
+        parameter_contour_plot_radio_button.click()
+        self.browser.execute_script("window.scrollTo(0, 0)")
+
+        # Uncomment to visually inspect the plot for correctness
+        ##import pdb; pdb.set_trace()
+        
