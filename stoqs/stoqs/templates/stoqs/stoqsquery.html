@@ -2528,7 +2528,7 @@
 
             $('#contour-scatter-buttons').css({'visibility': 'visible'});
             $('#sensor-tracks-checkbox').show();
-            $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
+            $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
                                                          $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()]);
             $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
             $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
@@ -2559,7 +2559,7 @@
             }
             $('#contour-scatter-buttons').css({'visibility': 'visible'});
             $('#sensor-tracks-checkbox').show();
-            $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
+            $('#temporalparameterplotinfo').data('info', $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
                                                          $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
             $('#temporalparameterplotinfo').text('Plotting ' + $('#temporalparameterplotinfo').data()['info'] + '...');
             $('#showsensortrackstext').text($('#temporalparameterplotinfo').data()['info']);
@@ -4759,7 +4759,7 @@ function enable_cardboard(){
                             $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
                             $('#sectioncolorbarimg').attr('href', '#collapseColormap');
                             $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');;
-                            $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[5]).text() + ' from ' + 
+                            $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
                                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
                             $('#temporalparameterstrideinfo').text(data['parameterplatformdatavaluepng'][2]);
