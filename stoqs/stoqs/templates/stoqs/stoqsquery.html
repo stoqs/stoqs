@@ -966,8 +966,7 @@
                                 <thead>
                                     <tr>
                                         <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic;display:none;" class="pp-header">Parameter-Parameter</th>
-                                        <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
-                                        <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
+                                        <th colspan="2" style="text-align:center; text-decoration:underline; font-style:italic" class="pd-depth-header">Plot Data</th>
                                         <th colspan="2" style="text-align:center; text-decoration:underline; font-style:italic">Filter &amp; Select for data access</th>
                                         <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
                                     </tr>
@@ -976,28 +975,26 @@
                                         <th style="text-align:center;display:none;" class="pp-header">Y</th>
                                         <th style="text-align:center;display:none;" class="pp-header">Z</th>
                                         <th style="text-align:center;display:none;" class="pp-header">C</th>
-                                        <th style="text-align:center;">Contour Parameter</th>
-                                        <th style="text-align:center;">Color Plot</th>
+                                        <th style="text-align:center;" class="plot-data-lines">Lines</th>
+                                        <th style="text-align:center;" class="pd-depth-header-color">Color</th>
                                         <th style="text-align:center;"></th>                                      
                                         <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
                                     </tr>
                                 </thead> 
                                 <tbody>
-                                    <!--THESE ARE THE PLOT DATA RADIO BUTTONS -->
                                     <tr>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
+                                        <td style="text-align:center;" class="plot-data-lines">
+                                            <input colspan="5" type="radio" name="parameters_contour_plot" value="" class="parameter-contour-plot-radio" />
+                                        </td>
                                         <td style="text-align:center;">
-                                            <input colspan="5" style="margin-left:50px; margin-right:10px;" type="radio" name="parameters_contour_plot" value="" class="parameter-contour-plot-radio"/>
-                                            
-                                            <input colspan="5" style="margin-right:25px;" type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
-                                    
+                                            <input colspan="5" type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />
                                             <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall_parametertime" style="display:none;"/>
-                                              
-                                         </td>
+                                        </td>
                                         <td colspan="5" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
                                      <tr class="sp-pp-coordinates" style="display:none;">
@@ -1058,9 +1055,8 @@
                                 <thead>
                                     <tr>
                                         <th colspan="4" style="text-align:center; text-decoration:underline; font-style:italic;display:none;" class="pp-header">Parameter-Parameter</th>
-                                        <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
-                                        <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
-                                        <th colspan="2" style="text-align:center; text-decoration: underline; font-style:italic">Filter &amp; Select for data access</th>
+                                        <th colspan="2" style="text-align:center; text-decoration:underline; font-style:italic" class="pd-depth-header">Plot Data</th>
+                                        <th colspan="2" style="text-align:center; text-decoration:underline; font-style:italic">Filter &amp; Select for data access</th>
                                         <th colspan="1" style="text-align:center; text-decoration:underline; font-style:italic"></th>
                                     </tr>
                                     <tr>
@@ -1068,9 +1064,8 @@
                                         <th style="text-align:center;display:none;" class="pp-header">Y</th>
                                         <th style="text-align:center;display:none;" class="pp-header">Z</th>
                                         <th style="text-align:center;display:none;" class="pp-header">C</th>
-                                        <th style="text-align:center;">Contour Parameter</th>
-                                        <th style="text-align:center;">Color Plot</th>
-                                        <th style="text-align:center;"></th>
+                                        <th style="text-align:center;" class="plot-data-lines">Lines</th>
+                                        <th style="text-align:center;" class="pd-depth-header-color">Color</th>
                                         <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
                                         <th style="text-align:center;"></th>
@@ -1082,15 +1077,13 @@
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_c" value="" class="parameter-radio" /></td>
-                                        <td style="text-align:center;">
-                                            <!-- CONTOUR PLOT CLEAR SELECTION -->
-                                            <input colspan="5" style="margin-left:50px; margin-right:13px" type="radio" name="parameters_contour_plot" value="" class="parameter-contour-plot-radio" />
-                                            <!-- TO DO: Illiminate space between columns.--> 
-                                        
-                                            <input colspan="5" style="margin-right:25px;" type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />                
+                                        <td style="text-align:center;" class="plot-data-lines">
+                                            <input colspan="5" type="radio" name="parameters_contour_plot" value="" class="parameter-contour-plot-radio" />
                                         </td>
-                                        
-                                        <input type="checkbox" name="sp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall_parametertime" style="display:none;"/>
+                                        <td style="text-align:center;">
+                                            <input colspan="5" type="radio" name="parameters_plot" value="" class="parameter-plot-radio" />                
+                                            <input type="checkbox" name="mp_all_parameters_plot_cb" value="" class="parameter-plot-checkbox checkall_parametertime" style="display:none;"/>
+                                        </td>
                                         <td colspan="5" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
 
@@ -3287,6 +3280,9 @@ function enable_cardboard(){
             $('.parameter-plot-radio').hide();
             $('.parameter-contour-plot-radio').hide();
             $('.parameter-plot-checkbox').show();
+            $('.plot-data-lines').hide();
+            $('.pd-depth-header').attr('colspan', '1');
+            $('.pd-depth-header-color').hide();
             $('.all-plot-instruction').text('Check all');
             if ( ! $('input:checkbox[class=parameter-plot-checkbox]').is(':checked') ) {
                 if ( $('input:radio[name=parameters_plot]:checked').val() ) {
@@ -3304,6 +3300,9 @@ function enable_cardboard(){
             $('.parameter-plot-radio').show();
             $('.parameter-contour-plot-radio').show();
             $('.parameter-plot-checkbox').hide();
+            $('.plot-data-lines').show();
+            $('.pd-depth-header').attr('colspan', '2');
+            $('.pd-depth-header-color').show();
             $('.all-plot-instruction').text('Clear Selection');
             var ranges={xaxis: {  to: $('body').data()['end-ems'],
                                 from: $('body').data()['start-ems']},
@@ -4212,7 +4211,7 @@ function enable_cardboard(){
                             '<td style="text-align:center;display:none;">' +
                                 '<input type="radio" name="parameters_c" value="' + value[2] + '" class="parameter-radio" />' +
                             '</td>' +
-                            '<td style="text-align:center;">'+
+                            '<td style="text-align:center;" class="plot-data-lines">'+
                                 '<input type="radio" name="parameters_contour_plot" value=" ' + value[2] + '" class="parameter-contour-plot-radio" />' +
                             '</td>' + 
                             '<td style="text-align:center;">' +
@@ -4281,7 +4280,7 @@ function enable_cardboard(){
 
 //CONTOUR BUTTONS ADDED
 
-                            '<td style="text-align:center;">' +
+                            '<td style="text-align:center;" class="plot-data-lines">' +
                                 '<input type="radio" name="parameters_contour_plot" value="' + value[2] + '" class="parameter-contour-plot-radio" />' +
                             '</td>' +
 //
