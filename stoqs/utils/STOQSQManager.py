@@ -1527,7 +1527,7 @@ class STOQSQManager(object):
                         platformName = None
 
                     logger.debug('Getting data values in X3D for platformName = %s', platformName) 
-                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, 
+                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_sp_no_order,
                             self.getParameterMinMax()['plot'], self.getSampleQS(), 
                             platformName, parameterID, parameterGroups)
                     # Default vertical exaggeration is 10x
