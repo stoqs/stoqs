@@ -30,9 +30,23 @@ from selenium.webdriver.support import expected_conditions as EC
 from stoqs.models import Parameter
 
 import logging
+import re
 import time
 
 logger = logging.getLogger(__name__)
+
+class wait_for_text_to_match(object):
+    def __init__(self, locator, pattern):
+        self.locator = locator
+        self.pattern = re.compile(pattern)
+
+    def __call__(self, driver):
+        try:
+            element_text = EC._find_element(driver, self.locator).text
+            return self.pattern.search(element_text)
+        except StaleElementReferenceException:
+            return False
+
 
 class BrowserTestCase(TestCase):
     '''Use selenium to test things in the browser
@@ -48,8 +62,6 @@ class BrowserTestCase(TestCase):
     def setUp(self):
         profile = webdriver.FirefoxProfile()
         self.browser = webdriver.Firefox(profile)
-        self.browser.set_window_size(1200, 768)
-        self.browser.set_window_position(300, 0)
         self.browser.implicitly_wait(10)
 
     def tearDown(self):
@@ -77,6 +89,15 @@ class BrowserTestCase(TestCase):
             self.browser.execute_script("window.scrollTo(0, 0)")
 
         element.click()
+
+    def _wait_until_text_is_visible(self, element_id, expected_text, contains=False):
+
+        if contains:
+            WebDriverWait(self.browser, 5, poll_frequency=.2).until(
+                          wait_for_text_to_match((By.ID, element_id), expected_text))
+        else:
+            WebDriverWait(self.browser, 5, poll_frequency=.2).until(
+                          EC.text_to_be_present_in_element((By.ID, element_id), expected_text))
 
     def _test_share_view(self, func_name):
         # Generic for any func_name that creates a view to share
@@ -136,11 +157,11 @@ class BrowserTestCase(TestCase):
         # Wait one second before clicking parameter_tab
         time.sleep(1)
         self._wait_until_visible_then_click(parameter_tab)
-        si = self.browser.find_element_by_id('stride-info')
-        self._wait_until_visible_then_click(si)
-        assert 'bb470' in si.text
         djtb = self.browser.find_element_by_id('djHideToolBarButton')
         djtb.click()
+        expected_text = 'bbp420'
+        self._wait_until_text_is_visible('stride-info', expected_text, contains=True)
+        assert expected_text in self.browser.find_element_by_id('stride-info').text
 
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
@@ -149,9 +170,9 @@ class BrowserTestCase(TestCase):
 
     def test_share_view_timeseries(self):
         self._test_share_view('test_m1_timeseries')
-        si = self.browser.find_element_by_id('stride-info')
-        self._wait_until_visible_then_click(si)
-        assert 'bb470' in si.text
+        expected_text = 'bbp420'
+        self._wait_until_text_is_visible('stride-info', expected_text, contains=True)
+        assert expected_text in self.browser.find_element_by_id('stride-info').text
 
     def test_contour_plots(self):
         self.browser.get('http://localhost:8000/default/query/')
@@ -174,9 +195,9 @@ class BrowserTestCase(TestCase):
         djtb = self.browser.find_element_by_id('djHideToolBarButton')
         self._wait_until_visible_then_click(djtb)
 
-        plotinfo_element = self.browser.find_element_by_id('temporalparameterplotinfo')
-        WebDriverWait(self.browser, 5, poll_frequency=.2).until( EC.visibility_of(plotinfo_element))
-        assert 'northward_sea_water_velocity_HR from M1_Mooring' == plotinfo_element.text
+        expected_text = 'Color: northward_sea_water_velocity_HR from M1_Mooring'
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
+        assert expected_text == self.browser.find_element_by_id('temporalparameterplotinfo').text
 
         # Contour line of M1 northward_sea_water_velocity - same as color plot
         parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
