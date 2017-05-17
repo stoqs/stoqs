@@ -517,13 +517,14 @@ class MPQuery(object):
             if 'parameterplot' in self.kwargs:
                 if self.kwargs['parameterplot'][0]:
                     self.parameterID = self.kwargs['parameterplot'][0]
-                    if 'parameterplot_id' in self.kwargs:
-                        if self.kwargs['parameterplot_id'] is not None:
-                            # Override UI selected parameterplot so as to resuse this code for parametercontourplot
-                            self.parameterID = self.kwargs['parameterplot_id']
-                    logger.debug('self.parameterID = %s', self.parameterID)
-                    parameter = Parameter.objects.using(self.request.META['dbAlias']).get(id=self.parameterID)
-                    parameterGroups = getParameterGroups(self.request.META['dbAlias'], parameter)
+            if 'parameterplot_id' in self.kwargs:
+                if self.kwargs['parameterplot_id'] is not None:
+                    # Override UI selected parameterplot so as to resuse this code for parametercontourplot
+                    self.parameterID = self.kwargs['parameterplot_id']
+            if self.parameterID is not None:
+                logger.debug('self.parameterID = %s', self.parameterID)
+                parameter = Parameter.objects.using(self.request.META['dbAlias']).get(id=self.parameterID)
+                parameterGroups = getParameterGroups(self.request.META['dbAlias'], parameter)
 
             if SAMPLED in parameterGroups:
                 self.qs_sp = self.getSampledParametersQS()
