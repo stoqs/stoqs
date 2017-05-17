@@ -839,6 +839,8 @@
                                                 <br>
                                                 <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
                                                 <input type="radio" name="showdataas" value="scatter" checked /> scatter
+                                                <br>
+                                                <span id="temporalparameterplotinfo_lines">&nbsp;</span>
                                             </div>
                                             <div class="span7"><span style="float:right;">
                                                 <a id="mp-colormap" class="accordion-toggle colormaps-toggle" data-toggle="collapse">
@@ -997,7 +999,7 @@
                                         </td>
                                         <td colspan="5" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
-                                     <tr class="sp-pp-coordinates" style="display:none;">
+                                    <tr class="sp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_z" value="longitude" class="parameter-radio" /></td>
@@ -1086,9 +1088,6 @@
                                         </td>
                                         <td colspan="5" class="all-plot-instruction">Clear Selection</td>
                                     </tr>
-
-
-
                                     <tr class="mp-pp-coordinates" style="display:none;">
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_x" value="longitude" class="parameter-radio" /></td>
                                         <td style="text-align:center;display:none;"><input type="radio" name="parameters_y" value="longitude" class="parameter-radio" /></td>
@@ -4757,9 +4756,18 @@ function enable_cardboard(){
                             // Show colorbar
                             $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
                             $('#sectioncolorbarimg').attr('href', '#collapseColormap');
-                            $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');;
-                            $('#temporalparameterplotinfo').text($('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
-                                                                 $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()]);
+                            $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');
+                            // Construct text for Plot Data results - more verbose if Lines and Color selected
+                            var plot_data_color = 'Color: ' + $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
+                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
+                            
+                            var plot_data_lines;
+                            if ( $('input:radio[name=parameters_contour_plot]').is(':checked')  ) {
+                                plot_data_lines = 'Lines: ' + $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
+                                                  $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()];
+                            }
+                            $('#temporalparameterplotinfo').text(plot_data_color);
+                            $('#temporalparameterplotinfo_lines').text(plot_data_lines);
                             $('#temporalparameterplotinfo').css( { 'color': 'black' } );
                             $('#temporalparameterstrideinfo').text(data['parameterplatformdatavaluepng'][2]);
                         }
