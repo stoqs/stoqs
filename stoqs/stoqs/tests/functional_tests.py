@@ -195,7 +195,7 @@ class BrowserTestCase(TestCase):
         djtb = self.browser.find_element_by_id('djHideToolBarButton')
         self._wait_until_visible_then_click(djtb)
 
-        expected_text = 'northward_sea_water_velocity_HR from M1_Mooring'
+        expected_text = 'Color: northward_sea_water_velocity_HR from M1_Mooring'
         self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
         assert expected_text == self.browser.find_element_by_id('temporalparameterplotinfo').text
 
