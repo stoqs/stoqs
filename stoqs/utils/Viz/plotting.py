@@ -251,10 +251,16 @@ class MeasuredParameter(BaseParameter):
         self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
         if self.parameterID:
             self.colorbarPngFile = str(self.parameterID) + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
-        else:
+        elif self.kwargs['measuredparametersgroup']:
             self.colorbarPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
+        else:
+            # Likely contour line only plot being requested
+            self.colorbarPngFile = ''
 
-        self.colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', self.colorbarPngFile)
+        if self.colorbarPngFile:
+            self.colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', self.colorbarPngFile)
+        else:
+            self.colorbarPngFileFullPath = ''
         self.x = []
         self.y = []
         self.z = []
@@ -484,10 +490,13 @@ class MeasuredParameter(BaseParameter):
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
             self.request.session['sessionID'] = sessionID
 
-        if self.parameterID:
-            sectionPngFile = str(self.parameterID) + '_' + self.platformName + '_' + self.imageID + '.png'
-        else:
+        if self.parameterID or self.contourParameterID:
+            sectionPngFile = '{}_{}_{}_{}.png'.format(self.parameterID, self.contourParameterID, self.platformName, self.imageID)
+        elif self.kwargs['measuredparametersgroup']:
             sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
+        else:
+            # Return silently with no error message - simply can't make a plot without a Parameter
+            return None, None, None
 
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
         
@@ -514,7 +523,7 @@ class MeasuredParameter(BaseParameter):
             sdt_count = self.qs.filter(platform__name = self.platformName).values_list('simpledepthtime__depth').count()
             sdt_count = int(sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
             self.logger.debug('Half of sdt_count from query = %d', sdt_count)
-            if sdt_count > tgrid_max:
+            if sdt_count > tgrid_max or sdt_count == 0:
                 sdt_count = tgrid_max
 
             xi = np.linspace(tmin, tmax, sdt_count)
@@ -633,21 +642,22 @@ class MeasuredParameter(BaseParameter):
                 ax.set_ylim(dmax, dmin)
                 ax.get_xaxis().set_ticks([])
                 self.set_ticks_bounds_norm(parm_info)
-                if contourFlag:
-                    ax.contourf(xi, yi, zi, cmap=self.cm, norm=self.norm, extend='both',
-                            levels=np.linspace(parm_info[1], parm_info[2], self.num_colors+1))
-                    ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
-                else:
-                    self.logger.debug('parm_info = %s', parm_info)
-                    ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
-                               norm=self.norm)
-                    # Draw any spanned data, e.g. NetTows
-                    for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
-                        try:
-                            ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
-                        except ZeroDivisionError:
-                            # Likely all data is same value and color lookup table can't be computed
-                            return None, None, "Can't plot identical data values of %f" % z
+                if self.parameterID is not None:
+                    if contourFlag:
+                        ax.contourf(xi, yi, zi, cmap=self.cm, norm=self.norm, extend='both',
+                                levels=np.linspace(parm_info[1], parm_info[2], self.num_colors+1))
+                        ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
+                    else:
+                        self.logger.debug('parm_info = %s', parm_info)
+                        ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
+                                   norm=self.norm)
+                        # Draw any spanned data, e.g. NetTows
+                        for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
+                            try:
+                                ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
+                            except ZeroDivisionError:
+                                # Likely all data is same value and color lookup table can't be computed
+                                return None, None, "Can't plot identical data values of %f" % z
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
                     # Sample markers for everything but Net Tows
@@ -670,8 +680,8 @@ class MeasuredParameter(BaseParameter):
 
                 if self.contourParameterID is not None:
                     rcParams['contour.negative_linestyle'] = 'solid'
-                    zi = griddata(clx, cly, clz, xi, yi, interp='nn')
-                    CS = ax.contour(xi, yi, zi, colors='white')
+                    zli = griddata(clx, cly, clz, xi, yi, interp='nn')
+                    CS = ax.contour(xi, yi, zli, colors='white')
                     ax.clabel(CS, fontsize=9, inline=1)
 
                 if full_screen:
@@ -683,11 +693,12 @@ class MeasuredParameter(BaseParameter):
                 self.logger.exception('Could not plot the data')
                 return None, None, 'Could not plot the data'
 
-            try:
-                self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
-            except Exception as e:
-                self.logger.exception('%s', e)
-                return None, None, 'Could not plot the colormap'
+            if self.colorbarPngFileFullPath:
+                try:
+                    self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
+                except Exception as e:
+                    self.logger.exception('%s', e)
+                    return None, None, 'Could not plot the colormap'
 
             return sectionPngFile, self.colorbarPngFile, self.strideInfo
         else:
@@ -772,13 +783,14 @@ class MeasuredParameter(BaseParameter):
                 # End the IndexedLinestring with -1 so that end point does not connect to the beg point
                 indices = indices + '-1 ' 
 
-            try:
-                self.makeColorBar(self.colorbarPngFileFullPath, self.parameterMinMax)
-            except Exception as e:
-                self.logger.exception('Could not plot the colormap')
-                x3dResults = 'Could not plot the colormap'
-            else:
-                x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
+            if self.colorbarPngFileFullPath:
+                try:
+                    self.makeColorBar(self.colorbarPngFileFullPath, self.parameterMinMax)
+                except Exception as e:
+                    self.logger.exception('Could not plot the colormap')
+                    x3dResults = 'Could not plot the colormap'
+                else:
+                    x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
 
         except Exception as e:
             self.logger.exception('Could not create measuredparameterx3d: %s', e)
