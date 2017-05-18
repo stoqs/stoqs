@@ -679,7 +679,6 @@ class MeasuredParameter(BaseParameter):
                         ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
 
                 if self.contourParameterID is not None:
-                    rcParams['contour.negative_linestyle'] = 'solid'
                     zli = griddata(clx, cly, clz, xi, yi, interp='nn')
                     CS = ax.contour(xi, yi, zli, colors='white')
                     ax.clabel(CS, fontsize=9, inline=1)
