@@ -834,11 +834,13 @@
                                     <div id="time-depth-plot" style="height:400px" class="disabled row-fluid">
                                         <div id="time-depth-flot" style="width:100%;height:90%;" class="disabled"></div>
                                         <div class="row-fluid">
-                                            <div class="span5" id="contour-scatter-buttons" style="visibility:hidden;">
+                                            <div class="span5">
                                                 <span id="temporalparameterplotinfo">&nbsp;</span>
                                                 <br>
-                                                <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
-                                                <input type="radio" name="showdataas" value="scatter" checked /> scatter
+                                                <span id="contour-scatter-buttons" style="visibility:hidden;">
+                                                    <input type="radio" name="showdataas" value="contour" style="margin-left:1px;" /> contour
+                                                    <input type="radio" name="showdataas" value="scatter" checked /> scatter
+                                                </span>
                                                 <br>
                                                 <span id="temporalparameterplotinfo_lines">&nbsp;</span>
                                             </div>
@@ -2522,13 +2524,7 @@
             $('#showgeox3dmeasurementtext').text($('#temporalparameterplotinfo').data()['info']);
             rebuildFilters(['parameterplatformdatavaluepng', 'measuredparameterx3d', 'parameterminmax']);
         }
-        if ( $('input:radio[name=parameters_contour_plot]:checked').val() ) {
-            $('#temporalparameterplotinfo_lines').data('info', $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
-                                                         $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()]);
-            $('#temporalparameterplotinfo_lines').text('Plotting ' + $('#temporalparameterplotinfo_lines').data()['info'] + '...');
-            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
-        }
-        if ( ! $('input:radio[name=parameters_plot]:checked').val() && ! $('input:radio[name=parameters_contour_plot]:checked').val() ) {
+        else {
             // Remove sensortracks and image from Flot plot
             $('#contour-scatter-buttons').css({'visibility': 'hidden'});
             $('#sensor-tracks-checkbox').hide();
@@ -2540,6 +2536,14 @@
             $('#sectioncolorbarimg').attr('src', '{{STATIC_URL}}images/dummy_colorbar.png');
             $('#sectioncolorbarimg').removeAttr('href');
             $('#temporalparameterstrideinfo').text('');
+        }
+        if ( $('input:radio[name=parameters_contour_plot]:checked').val() ) {
+            $('#temporalparameterplotinfo_lines').data('info', $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
+                                                         $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()]);
+            $('#temporalparameterplotinfo_lines').text('Plotting ' + $('#temporalparameterplotinfo_lines').data()['info'] + '...');
+            rebuildFilters(['parameterplatformdatavaluepng', 'parameterminmax']);
+        }
+        if ( ! $('input:radio[name=parameters_plot]:checked').val() && ! $('input:radio[name=parameters_contour_plot]:checked').val() ) {
             rebuildFilters(['parameterminmax', 'simpledepthtime', 'simplebottomdepthtime', 'platforms', 'sampledepthtime', 'sampledurationsdepthtime']);
         }
     });
@@ -4723,18 +4727,25 @@ function enable_cardboard(){
                                 $.plot($("#time-depth-flot"), flotdata, options);
                             });
 
-                            // Show colorbar
-                            $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
-                            $('#sectioncolorbarimg').attr('href', '#collapseColormap');
-                            $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');
                             // Construct text for Plot Data results - more verbose if Lines and Color selected
-                            var plot_data_color = 'Color: ' + $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
+                            var plot_data_color, plot_data_lines;
+                            if ( $('input:radio[name=parameters_plot]:checked').val() ) {
+                                plot_data_color = 'Color: ' + $('button', $('input:radio[name=parameters_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
                                                   $('body').data()['parameterplatforms'][$('input:radio[name=parameters_plot]:checked').val()];
-                            
-                            var plot_data_lines;
-                            if ( $('input:radio[name=parameters_contour_plot]').is(':checked')  ) {
+                                // Show colorbar
+                                $('#sectioncolorbarimg').attr('src', '{{MEDIA_URL}}sections/' + data.parameterplatformdatavaluepng[1]);
+                                $('#sectioncolorbarimg').attr('href', '#collapseColormap');
+                                $('#sectioncolorbarimg').attr('title', 'Click to modify colormap').tooltip('fixTitle').tooltip('hide');
+                            }
+                            else {
+                                plot_data_color = '';
+                            }
+                            if ( $('input:radio[name=parameters_contour_plot]:checked').val() ) {
                                 plot_data_lines = 'Lines: ' + $('button', $('input:radio[name=parameters_contour_plot]:checked').parent().siblings()[6]).text() + ' from ' + 
                                                   $('body').data()['parameterplatforms'][$('input:radio[name=parameters_contour_plot]:checked').val()];
+                            }
+                            else {
+                                plot_data_lines = '';
                             }
                             $('#temporalparameterplotinfo').text(plot_data_color);
                             $('#temporalparameterplotinfo_lines').text(plot_data_lines);
