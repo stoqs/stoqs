@@ -212,8 +212,22 @@ class BrowserTestCase(TestCase):
         parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_contour_plot' and @value='{}']".format(SEA_WATER_SALINITY_HR_id))
         parameter_contour_plot_radio_button.click()
-        self.browser.execute_script("window.scrollTo(0, 0)")
+
+        expected_text = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
+        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text)
+        assert expected_text == self.browser.find_element_by_id('temporalparameterplotinfo_lines').text
+
+        # Clear the Color plot leaving just the Lines plot
+        clear_color_plot_radio_button = self.browser.find_element_by_id('mp_parameters_plot_clear')
+        clear_color_plot_radio_button.click()
+
+        expected_text = ''
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
+        self.assertEquals('Lines: SEA_WATER_SALINITY_HR from M1_Mooring', 
+                          self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
+        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
 
         # Uncomment to visually inspect the plot for correctness
+        ##self.browser.execute_script("window.scrollTo(0, 0)")
         ##import pdb; pdb.set_trace()
         
