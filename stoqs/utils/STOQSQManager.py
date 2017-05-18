@@ -1400,7 +1400,6 @@ class STOQSQManager(object):
                 platformName = self.kwargs['parameterplot'][1]
             self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
       
-        # FOR CONTOUR
         if 'parametercontourplot' in self.kwargs:
             if self.kwargs['parametercontourplot'][0]:
                 contourparameterID = self.kwargs['parametercontourplot'][0]
@@ -1416,16 +1415,18 @@ class STOQSQManager(object):
         else:
             return
 
-        logger.debug('Instantiating Viz.MeasuredParameter............................................')
+        min_max = self.getParameterMinMax(pid=parameterID)['plot']
+        if not parameterID and contourparameterID: 
+            min_max = self.getParameterMinMax(pid=contourparameterID)['plot']
 
         if SAMPLED in parameterGroups:
             # The fourth item should be for SampledParameter if that is the group of the Parameter
             cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_sp_no_order, self.contour_mpq.qs_sp_no_order,
-                                    self.getParameterMinMax(pid=parameterID)['plot'], self.getSampleQS(), platformName, 
+                                    min_max, self.getSampleQS(), platformName, 
                                     parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
         else:
             cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order, self.contour_mpq.qs_mp_no_order,
-                                    self.getParameterMinMax(pid=parameterID)['plot'], self.getSampleQS(), platformName, 
+                                    min_max, self.getSampleQS(), platformName, 
                                     parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
 
         return cp.renderDatavaluesForFlot()

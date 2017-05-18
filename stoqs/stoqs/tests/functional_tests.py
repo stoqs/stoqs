@@ -148,7 +148,7 @@ class BrowserTestCase(TestCase):
         self._wait_until_visible_then_click(spatial_3d_anchor)
         showplatforms = self.browser.find_element_by_id('showplatforms')
         self._wait_until_visible_then_click(showplatforms)
-        assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
+        self.assertEquals('geolocation', self.browser.find_element_by_id('dorado_LOCATION').tag_name)
 
     def test_m1_timeseries(self):
         self.browser.get('http://localhost:8000/default/query/')
@@ -161,18 +161,18 @@ class BrowserTestCase(TestCase):
         djtb.click()
         expected_text = 'bbp420'
         self._wait_until_text_is_visible('stride-info', expected_text, contains=True)
-        assert expected_text in self.browser.find_element_by_id('stride-info').text
+        self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
 
     def test_share_view_trajectory(self):
         self._test_share_view('test_dorado_trajectory')
         self.browser.implicitly_wait(10)
-        assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
+        self.assertEquals('geolocation', self.browser.find_element_by_id('dorado_LOCATION').tag_name)
 
     def test_share_view_timeseries(self):
         self._test_share_view('test_m1_timeseries')
         expected_text = 'bbp420'
         self._wait_until_text_is_visible('stride-info', expected_text, contains=True)
-        assert expected_text in self.browser.find_element_by_id('stride-info').text
+        self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
 
     def test_contour_plots(self):
         self.browser.get('http://localhost:8000/default/query/')
@@ -197,7 +197,7 @@ class BrowserTestCase(TestCase):
 
         expected_text = 'Color: northward_sea_water_velocity_HR from M1_Mooring'
         self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
-        assert expected_text == self.browser.find_element_by_id('temporalparameterplotinfo').text
+        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
 
         # Contour line of M1 northward_sea_water_velocity - same as color plot
         parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
@@ -205,15 +205,30 @@ class BrowserTestCase(TestCase):
         parameter_contour_plot_radio_button.click()
 
         # Test that at least the color bar image appears
-        assert '_M1_Mooring_colorbar_' in self.browser.find_element_by_id('sectioncolorbarimg').get_property('src')
+        self.assertIn('_M1_Mooring_colorbar_', self.browser.find_element_by_id('sectioncolorbarimg').get_property('src'))
 
         # Contour line of M1 SEA_WATER_SALINITY_HR_id - different from color plot
         SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name='SEA_WATER_SALINITY_HR').id
         parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_contour_plot' and @value='{}']".format(SEA_WATER_SALINITY_HR_id))
         parameter_contour_plot_radio_button.click()
-        self.browser.execute_script("window.scrollTo(0, 0)")
+
+        expected_text = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
+        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text)
+        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
+
+        # Clear the Color plot leaving just the Lines plot
+        clear_color_plot_radio_button = self.browser.find_element_by_id('mp_parameters_plot_clear')
+        clear_color_plot_radio_button.click()
+
+        expected_text_color = ''
+        expected_text_lines = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text_color)
+        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text_lines)
+        self.assertEquals(expected_text_color, self.browser.find_element_by_id('temporalparameterplotinfo').text)
+        self.assertEquals(expected_text_lines, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
 
         # Uncomment to visually inspect the plot for correctness
+        ##self.browser.execute_script("window.scrollTo(0, 0)")
         ##import pdb; pdb.set_trace()
         
