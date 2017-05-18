@@ -221,11 +221,12 @@ class BrowserTestCase(TestCase):
         clear_color_plot_radio_button = self.browser.find_element_by_id('mp_parameters_plot_clear')
         clear_color_plot_radio_button.click()
 
-        expected_text = ''
-        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
-        self.assertEquals('Lines: SEA_WATER_SALINITY_HR from M1_Mooring', 
-                          self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
-        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
+        expected_text_color = ''
+        expected_text_lines = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text_color)
+        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text_lines)
+        self.assertEquals(expected_text_color, self.browser.find_element_by_id('temporalparameterplotinfo').text)
+        self.assertEquals(expected_text_lines, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
 
         # Uncomment to visually inspect the plot for correctness
         ##self.browser.execute_script("window.scrollTo(0, 0)")
