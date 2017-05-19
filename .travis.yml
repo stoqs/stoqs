@@ -16,7 +16,7 @@ before_install:
   - export TERM=xterm
   - conda update --yes conda
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz
-  - tar -xzf geckodriver-v0.11.1-linux64.tar.gz
+  - tar -xzf geckodriver-v0.11.1-linux64.tar.gz --directory /home/travis/miniconda2/bin
 env:
   - DJANGO=1.8
 install:
