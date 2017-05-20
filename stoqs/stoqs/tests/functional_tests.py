@@ -258,5 +258,9 @@ class BugsFoundTestCase(BaseTestCase):
                             ).find_element_by_tag_name('button')
         self._wait_until_visible_then_click(dorado_button)
 
+        expected_text = 'Cannot plot Parameter'
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
+        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
+
         # Uncomment to visually inspect the plot for correctness
         ##import pdb; pdb.set_trace()
