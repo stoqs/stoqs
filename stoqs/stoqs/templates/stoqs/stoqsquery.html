@@ -4510,21 +4510,32 @@ function enable_cardboard(){
                     series.color;
                 });
                 if ( ! $.isEmptyObject(data.parametertime.strides) ) {
+                    // Sort by the Parameter names
+                    var k, parameters = [], ik, len;
+                    for (k in data.parametertime.strides) {
+                        if (data.parametertime.strides.hasOwnProperty(k)) {
+                            parameters.push(k);
+                        }
+                    }
+                    parameters.sort();
+                    len = parameters.length;
+
                     $('#stride-info').html('');
                     var i = 0;
                     var not_listed = 0;
-                    $.each(data.parametertime.strides, function(p, act_value) {
+                    for (ik = 0; ik < len; ik++) {
+                        act_value = data.parametertime.strides[parameters[ik]];
                         $.each(act_value, function(act, value) {
                             i = i + 1;
                             if (i <= 3) {
                                 ordinal = getValueOrdinal(value);
-                                $('#stride-info').append('<b>' + p + '</b>: every ' + ordinal + ' point from ' + act + '<br>');
+                                $('#stride-info').append('<b>' + parameters[ik] + '</b>: every ' + ordinal + ' point from ' + act + '<br>');
                             }
                             else {
                                 not_listed = not_listed + 1;
                             }
                         });
-                    });
+                    }
                     if (not_listed > 0) {
                         $('#stride-info').append('...<b>' + not_listed + '</b> more parameters not listed...<br>');
                     }
