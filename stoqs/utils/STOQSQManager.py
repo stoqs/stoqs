@@ -68,6 +68,7 @@ class STOQSQManager(object):
         self.kwargs = kwargs
         self.response = response
         self.mpq = MPQuery(request)
+        self.contour_mpq = MPQuery(request)
         self.pq = PQuery(request)
         self.pp = None
         self._actual_count = None
@@ -1387,6 +1388,10 @@ class STOQSQManager(object):
         # there's no need for this server code to check for just one platform in the selection.
         parameterID = None
         platformName = None
+        contourparameterID = None # parameter for Contour plots
+        contourplatformName = None
+        parameterGroups = []
+        contourparameterGroups = []
         logger.debug('self.kwargs = %s', self.kwargs)
         if 'parameterplot' in self.kwargs:
             if self.kwargs['parameterplot'][0]:
@@ -1395,23 +1400,36 @@ class STOQSQManager(object):
                 parameterGroups = getParameterGroups(self.request.META['dbAlias'], parameter)
             if self.kwargs['parameterplot'][1]:
                 platformName = self.kwargs['parameterplot'][1]
-        if not parameterID or not platformName:
-            # With Plot radio button, must have parameterID and platformName
-            return None, None, 'Problem with getting parameter-plot-radio button info'
+            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+      
+        if 'parametercontourplot' in self.kwargs:
+            if self.kwargs['parametercontourplot'][0]:
+                contourparameterID = self.kwargs['parametercontourplot'][0]
+                contourparameter = models.Parameter.objects.using(self.request.META['dbAlias']).get(id=contourparameterID)
+                contourparameterGroups = getParameterGroups(self.request.META['dbAlias'], contourparameter)
+            if self.kwargs['parametercontourplot'][1]:
+                contourplatformName = self.kwargs['parametercontourplot'][1]
+            self.kwargs['parameterplot_id'] = contourparameterID
+            self.contour_mpq.buildMPQuerySet(*self.args, **self.kwargs)
+      
+        if parameterID or platformName or contourparameterID or contourplatformName:
+            pass
+        else:
+            return
 
-        logger.debug('Instantiating Viz.MeasuredParameter............................................')
-        
-        self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+        min_max = self.getParameterMinMax(pid=parameterID)['plot']
+        if not parameterID and contourparameterID: 
+            min_max = self.getParameterMinMax(pid=contourparameterID)['plot']
 
         if SAMPLED in parameterGroups:
             # The fourth item should be for SampledParameter if that is the group of the Parameter
-            cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_sp_no_order,
-                                    self.getParameterMinMax(pid=parameterID)['plot'], self.getSampleQS(), platformName, 
-                                    parameterID, parameterGroups)
+            cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_sp_no_order, self.contour_mpq.qs_sp_no_order,
+                                    min_max, self.getSampleQS(), platformName, 
+                                    parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
         else:
-            cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order,
-                                    self.getParameterMinMax(pid=parameterID)['plot'], self.getSampleQS(), platformName, 
-                                    parameterID, parameterGroups)
+            cp = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp_no_order, self.contour_mpq.qs_mp_no_order,
+                                    min_max, self.getSampleQS(), platformName, 
+                                    parameterID, parameterGroups, contourplatformName, contourparameterID, contourparameterGroups)
 
         return cp.renderDatavaluesForFlot()
 
@@ -1512,7 +1530,7 @@ class STOQSQManager(object):
                         platformName = None
 
                     logger.debug('Getting data values in X3D for platformName = %s', platformName) 
-                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, 
+                    mpdv  = MeasuredParameter(self.kwargs, self.request, self.qs, self.mpq.qs_mp, self.contour_mpq.qs_sp_no_order,
                             self.getParameterMinMax()['plot'], self.getSampleQS(), 
                             platformName, parameterID, parameterGroups)
                     # Default vertical exaggeration is 10x
