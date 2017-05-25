@@ -57,8 +57,8 @@ cl = CANONLoader('stoqs_canon_april2017', 'KISS CANON Spring 2017',
 # Set start and end dates for all loads from sources that contain data
 # beyond the temporal bounds of the campaign
 #
-startdate = datetime.datetime(2017, 4, 7)  # Fixed start
-enddate = datetime.datetime(2017, 5, 15)  # Fixed end. Extend "offseason" to end of year
+startdate = datetime.datetime(2017, 4, 7)  # Fixed start. April 7, 2017
+enddate = datetime.datetime(2017, 5, 15)  # Fixed end. May 15, 2017
 
 # default location of thredds and dods data:
 cl.tdsBase = 'http://odss.mbari.org/thredds/'
@@ -72,6 +72,8 @@ cl.dodsBase = cl.tdsBase + 'dodsC/'
 cl.dorado_base = 'http://dods.mbari.org/opendap/data/auvctd/surveys/2017/netcdf/'
 cl.dorado_files = [
                    'Dorado389_2017_108_01_108_01_decim.nc',
+                   'Dorado389_2017_121_00_121_00_decim.nc',    
+                   'Dorado389_2017_124_00_124_00_decim.nc',
                                     ]
 cl.dorado_parms = [ 'temperature', 'oxygen', 'nitrate', 'bbp420', 'bbp700',
                     'fl700_uncorr', 'salinity', 'biolume',
@@ -137,7 +139,7 @@ platforms = ['tethys', 'aku', 'makai', 'ahi', 'opah', 'daphne']
 
 
 for p in platforms:
-    base =  'http://dodstemp.shore.mbari.org:8080/thredds/catalog/LRAUV/' + p + '/missionlogs/2017/'
+    base =  'http://dods.mbari.org/thredds/catalog/LRAUV/' + p + '/missionlogs/2017/'
     dods_base = 'http://dods.mbari.org/opendap/data/lrauv/' + p + '/missionlogs/2017/'
     setattr(cl, p + '_files', [])
     setattr(cl, p + '_base', dods_base)
@@ -194,14 +196,14 @@ cl.l_662a_endDatetime = enddate
 
 # SG_539 ## KISS glider from Caltech/JPL
 cl.sg539_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG539/'
-cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,84)] ## index needs to be 1 higher than terminal file name
+cl.sg539_files = ['p539{:04d}.nc'.format(i) for i in range(1,291)] ## index needs to be 1 higher than terminal file name
 cl.sg539_parms = ['temperature', 'salinity']
 cl.sg539_startDatetime = startdate
 cl.sg539_endDatetime = enddate
 
 # SG_621 ## KISS glider from Caltech/JPL
 cl.sg621_base = cl.dodsBase + 'Activity/canon/2017_Apr/Platforms/Gliders/SG621/'
-cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,78)] ## index needs to be 1 higher than terminal file name
+cl.sg621_files = ['p621{:04d}.nc'.format(i) for i in range(1,291)] ## index needs to be 1 higher than terminal file name
 cl.sg621_parms = ['temperature', 'salinity'] # 'aanderaa4330_dissolved_oxygen' throws DAPloader KeyError
 cl.sg621_startDatetime = startdate
 cl.sg621_endDatetime = enddate
@@ -221,7 +223,41 @@ cl.nps34a_endDatetime = enddate
 ## cl.slocum_nemesis_files = [ 'Nemesis-20170412T0000.nc3.nc' ]
 ##   from cencoos directory, single non-aggregated files
 cl.slocum_nemesis_base = 'http://legacy.cencoos.org/thredds/dodsC/gliders/Line66/Nemesis/'
-cl.slocum_nemesis_files = [ 
+cl.slocum_nemesis_files = [
+       'nemesis_20170426T233417_rt0.nc',
+       'nemesis_20170426T193433_rt0.nc',
+       'nemesis_20170426T175101_rt0.nc',
+       'nemesis_20170426T135031_rt0.nc', 
+       'nemesis_20170426T101456_rt0.nc',
+       'nemesis_20170426T065328_rt0.nc',
+       'nemesis_20170426T025437_rt0.nc',
+       'nemesis_20170425T225257_rt0.nc',
+       'nemesis_20170425T181501_rt0.nc',
+       'nemesis_20170425T155145_rt0.nc',
+       'nemesis_20170425T112030_rt0.nc', 
+       'nemesis_20170425T065720_rt0.nc',
+       'nemesis_20170425T023329_rt0.nc',
+       'nemesis_20170425T012718_rt0.nc',
+       'nemesis_20170424T183523_rt0.nc',
+       'nemesis_20170424T163853_rt0.nc',  
+       'nemesis_20170424T101051_rt0.nc',  
+       'nemesis_20170424T082924_rt0.nc',  
+       'nemesis_20170424T024219_rt0.nc',  
+        'nemesis_20170424T004146_rt0.nc',  
+        'nemesis_20170423T183602_rt0.nc',  
+        'nemesis_20170423T170338_rt0.nc',  
+        'nemesis_20170423T110527_rt0.nc',  
+        'nemesis_20170423T090902_rt0.nc',  
+        'nemesis_20170423T022952_rt0.nc',  
+        'nemesis_20170423T003332_rt0.nc',  
+        'nemesis_20170422T174553_rt0.nc',  
+        'nemesis_20170422T154625_rt0.nc',  
+        'nemesis_20170422T100914_rt0.nc',  
+        'nemesis_20170422T082446_rt0.nc',
+        'nemesis_20170422T023332_rt0.nc',
+        'nemesis_20170422T003714_rt0.nc',
+        'nemesis_20170421T191814_rt0.nc',
+        'nemesis_20170421T173951_rt0.nc',
     'nemesis_20170421T104922_rt0.nc',
     'nemesis_20170421T084951_rt0.nc',
     'nemesis_20170421T020423_rt0.nc',
@@ -402,7 +438,7 @@ cl.oa2_endDatetime = enddate
 #  RACHEL CARSON: Jan 2017 --
 ######################################################################
 # UCTD
-cl.rcuctd_base = cl.dodsBase + 'CANON/2017_OffSeason/Platforms/Ships/Rachel_Carson/uctd/'
+cl.rcuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/RachelCarson/uctd/'
 cl.rcuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
 cl.rcuctd_files = [
 #                  '00917plm01.nc',
@@ -410,35 +446,82 @@ cl.rcuctd_files = [
                   ]
 
 # PCTD
-cl.rcpctd_base = cl.dodsBase + 'CANON/2017_OffSeason/Platforms/Ships/Rachel_Carson/pctd/'
+cl.rcpctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/RachelCarson/pctd/'
 cl.rcpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
 cl.rcpctd_files = [
 #                  '00917c01.nc', '00917c02.nc', '00917c03.nc',
 #                  '03917c01.nc', '03917c02.nc', '03917c03.nc',
                   ]
 
+######################################################################
+#  WESTERN FLYER: Apr 2017 --
+######################################################################
+# UCTD
+cl.wfuctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/uctd/'
+cl.wfuctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'wetstar' ]
+cl.wfuctd_files = [
+                  'canon17sm01.nc',    
+                  'canon17sm02.nc',
+                  'canon17sm03.nc',
+                  'canon17sm04.nc',
+                  'canon17sm05.nc',
+                  'canon17sm06.nc',
+                  'canon17sm07.nc',                                                                             
+                  'canon17sm08.nc',                                                        
+                  'canon17sm09.nc',                                                  
+                  'canon17sm10.nc',                                                               
+                  'canon17sm11.nc',                                                                  
+                  'canon17sm12.nc',                                                                                        
+                  'canon17sm13.nc',                                         
+                  'canon17sm14.nc',                                                                    
+                  'canon17sm1.nc', 
+                  'canon17sm15.nc', 'canon17sm16.nc', 'canon17sm17.nc',
+                  'canon17sm18.nc',
+                  'canon17sm19.nc', 'canon17sm20.nc', 'canon17sm21.nc',
+                  'canon17sm22.nc',
+                  'canon17sm23.nc', 'canon17sm24.nc', 'canon17sm25.nc',
+                  ]
+
+# PCTD
+cl.wfpctd_base = cl.dodsBase + 'Other/routine/Platforms/Ships/WesternFlyer/pctd/'
+cl.wfpctd_parms = [ 'TEMP', 'PSAL', 'xmiss', 'ecofl', 'oxygen' ]
+cl.wfpctd_files = [
+                  'canon17sc01.nc',  
+                  'canon17sc03.nc',
+                  'canon17sc04.nc',                                                                      
+                  'canon17sc05.nc',
+                  'canon17sc06.nc',
+                  'canon17sc07.nc',
+                  'canon17sc08.nc',
+                  'canon17sc09.nc',
+                  'canon17sc10.nc',
+                  'canon17sc11.nc',
+                  'canon17sc12.nc',
+                  'canon17sc13.nc',
+                  'canon17sc14.nc',
+                  'canon17sc15.nc', 'canon17sc16.nc', 'canon17sc17.nc',
+                  'canon17sc18.nc', 'canon17sc19.nc', 'canon17sc20.nc',
+                  'canon17sc21.nc', 'canon17sc22.nc', 'canon17sc23.nc',
+                  'canon17sc24.nc', 'canon17sc25.nc', 'canon17sc26.nc',
+                  'canon17sc27.nc', 'canon17sc28.nc',
+                  'canon17sc29.nc', 'canon17sc30.nc', 'canon17sc31.nc', 'canon17sc32.nc',
+                  'canon17sc33.nc', 'canon17sc34.nc', 'canon17sc35.nc', 'canon17sc36.nc',
+                  'canon17sc37.nc', 'canon17sc38.nc', 
+                  ]
+                        
 ###################################################################################################
 # SubSample data files from /mbari/BOG_Archive/ReportsForSTOQS/
 #   copied to local BOG_Data/CANON_OS2107 dir
 ###################################################################################################
 cl.subsample_csv_base = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'BOG_Data/CANON_OS2017/bctd/')
 cl.subsample_csv_files = [
-   'STOQS_00917_OXY_PS.csv',
-   'STOQS_00917_CARBON_GFF.csv', 
-   'STOQS_00917_CHL_1U.csv',    'STOQS_00917_FLUOR.csv',
-   'STOQS_00917_CHL_5U.csv', 'STOQS_00917_NH4.csv', 'STOQS_00917_PHAEO_1U.csv',
-   'STOQS_00917_CHLA.csv', 'STOQS_00917_O2.csv', 'STOQS_00917_PHAEO_5U.csv',
-   'STOQS_00917_CHL_GFF.csv',
-   'STOQS_00917_PHAEO_GFF.csv', 
-
-   'STOQS_03917_OXY_PS.csv',
-   'STOQS_03917_CARBON_GFF.csv',
-   'STOQS_03917_CHL_1U.csv',    'STOQS_03917_FLUOR.csv',
-   'STOQS_03917_CHL_5U.csv', 'STOQS_03917_NH4.csv', 'STOQS_03917_PHAEO_1U.csv',
-   'STOQS_03917_CHLA.csv', 'STOQS_03917_O2.csv', 'STOQS_03917_PHAEO_5U.csv',
-   'STOQS_03917_CHL_GFF.csv',
-   'STOQS_03917_PHAEO_GFF.csv',
-
+##   'STOQS_00917_OXY_PS.csv',
+##   'STOQS_00917_CARBON_GFF.csv', 
+##   'STOQS_00917_CHL_1U.csv',    'STOQS_00917_FLUOR.csv',
+##   'STOQS_00917_CHL_5U.csv', 'STOQS_00917_NH4.csv', 'STOQS_00917_PHAEO_1U.csv',
+##   'STOQS_00917_CHLA.csv', 'STOQS_00917_O2.csv', 'STOQS_00917_PHAEO_5U.csv',
+##   'STOQS_00917_CHL_GFF.csv',
+##   'STOQS_00917_PHAEO_GFF.csv', 
                        ]
 
 # Execute the load
@@ -495,9 +578,9 @@ else:
     cl.loadAku()
     cl.loadAhi()
     cl.loadOpah()
-    cl.loadL_662()
+    ##cl.loadL_662()  ## not in this campaign
     cl.loadL_662a()
-    cl.load_NPS34()
+    ##cl.load_NPS34()  ## not in this campaign
     cl.load_NPS34a()
     cl.load_slocum_nemesis()
     cl.load_SG621(stride=2) ## KISS glider
@@ -506,14 +589,14 @@ else:
     cl.load_oa1()
     cl.load_oa2()
     cl.loadDorado()
-    ##cl.loadDaphne()
-    ##cl.loadMakai()
-    cl.loadRCuctd()
-    cl.loadRCpctd()
+    cl.loadDaphne()
+    ##cl.loadMakai()  ## not in this campaign
+    ##cl.loadRCuctd()  ## not in this campaign
+    ##cl.loadRCpctd()  ## not in this campaign
     cl.loadWFuctd()
     cl.loadWFpctd()
 
-    cl.loadSubSamples()
+    #cl.loadSubSamples() ## no subSamples yet...
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
 cl.addTerrainResources()

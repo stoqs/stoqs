@@ -31,13 +31,24 @@ from stoqs.models import Parameter
 
 import logging
 import os
+import re
 import time
 
 logger = logging.getLogger(__name__)
 
-class BrowserTestCase(StaticLiveServerTestCase):
-    '''Use selenium to test things in the browser
-    '''
+class wait_for_text_to_match(object):
+    def __init__(self, locator, pattern):
+        self.locator = locator
+        self.pattern = re.compile(pattern)
+
+    def __call__(self, driver):
+        try:
+            element_text = EC._find_element(driver, self.locator).text
+            return self.pattern.search(element_text)
+        except StaleElementReferenceException:
+            return False
+
+class BaseTestCase(StaticLiveServerTestCase):
     # Note that the test runner sets DEBUG to False: 
     # https://docs.djangoproject.com/en/1.8/topics/testing/advanced/#django.test.runner.DiscoverRunner.setup_test_environment
 
@@ -98,6 +109,15 @@ class BrowserTestCase(StaticLiveServerTestCase):
         except TimeoutException:
             print(f"TimeoutException: Waited {delay} seconds for text '{text_string}'... to appear")
 
+    def _wait_until_text_is_visible(self, element_id, expected_text, contains=False):
+
+        if contains:
+            WebDriverWait(self.browser, 5, poll_frequency=.2).until(
+                          wait_for_text_to_match((By.ID, element_id), expected_text))
+        else:
+            WebDriverWait(self.browser, 5, poll_frequency=.2).until(
+                          EC.text_to_be_present_in_element((By.ID, element_id), expected_text))
+
     def _test_share_view(self, func_name):
         # Generic for any func_name that creates a view to share
         getattr(self, func_name)()
@@ -113,6 +133,11 @@ class BrowserTestCase(StaticLiveServerTestCase):
         self.browser.get(permalink_url)
         self.assertEqual('', self._mapserver_loading_panel_test())
 
+
+class BrowserTestCase(BaseTestCase):
+    '''Use selenium to test standard things in the browser
+    '''
+
     def test_campaign_page(self):
         self.browser.get(self.live_server_url)
         self.assertIn('Campaign List', self.browser.title)
@@ -122,7 +147,7 @@ class BrowserTestCase(StaticLiveServerTestCase):
         self.assertIn('default', self.browser.title)
         self.assertEqual('', self._mapserver_loading_panel_test())
 
-    def _test_dorado_trajectory(self):
+    def test_dorado_trajectory(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         try:
             # Click on Platforms to expand
@@ -166,29 +191,30 @@ class BrowserTestCase(StaticLiveServerTestCase):
         # - 3D Platform animation
         showplatforms = self.browser.find_element_by_id('showplatforms')
         self._wait_until_visible_then_click(showplatforms)
-        self._wait_until_id_is_visible('dorado_LOCATION', delay=4)
-        assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
 
-    def _test_m1_timeseries(self):
+        self._wait_until_id_is_visible('dorado_LOCATION', delay=4)
+        self.assertEquals('geolocation', self.browser.find_element_by_id('dorado_LOCATION').tag_name)
+
+    def test_m1_timeseries(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
         # Test Temporal->Parameter for timeseries plots
         self._wait_until_id_is_visible('temporal-parameter-li')
         parameter_tab = self.browser.find_element_by_id('temporal-parameter-li')
         self._wait_until_visible_then_click(parameter_tab)
-        self._wait_until_text_is_visible('every single point', delay=12)
-        si = self.browser.find_element_by_id('stride-info')
-        assert 'every single point' in si.text
+        expected_text = 'bbp420'
+        self._wait_until_text_is_visible('stride-info', expected_text, contains=True)
+        self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
 
     def test_share_view_trajectory(self):
-        self._test_share_view('_test_dorado_trajectory')
-        self._wait_until_id_is_visible('dorado_LOCATION', delay=12)
-        assert 'geolocation' == self.browser.find_element_by_id('dorado_LOCATION').tag_name
+        self._test_share_view('test_dorado_trajectory')
+        self.browser.implicitly_wait(10)
+        self.assertEquals('geolocation', self.browser.find_element_by_id('dorado_LOCATION').tag_name)
 
     def test_share_view_timeseries(self):
-        self._test_share_view('_test_m1_timeseries')
-        self._wait_until_text_is_visible('every single point', delay=12)
-        si = self.browser.find_element_by_id('stride-info')
-        assert 'every single point' in si.text
+        self._test_share_view('test_m1_timeseries')
+        expected_text = 'bbp420'
+        self._wait_until_text_is_visible('stride-info', expected_text, contains=True)
+        self.assertIn(expected_text, self.browser.find_element_by_id('stride-info').text)
 
     def test_contour_plots(self):
         self.browser.get(os.path.join(self.live_server_url, 'default/query'))
@@ -201,7 +227,7 @@ class BrowserTestCase(StaticLiveServerTestCase):
         expand_temporal = self.browser.find_element_by_id('td-zoom-rc-button')
         self._wait_until_visible_then_click(expand_temporal)
 
-        # Make contour color plot of M1 northward_sea_water_velocity
+        # Make contour color plot of M1 northward_sea_water_velocity and hide Django toolbar
         northward_sea_water_velocity_HR_id = Parameter.objects.get(name='northward_sea_water_velocity_HR').id
         parameter_plot_radio_button = self.browser.find_element(By.XPATH,
             "//input[@name='parameters_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
@@ -210,5 +236,70 @@ class BrowserTestCase(StaticLiveServerTestCase):
         contour_button = self.browser.find_element(By.XPATH, "//input[@name='showdataas' and @value='contour']")
         self._wait_until_visible_then_click(contour_button)
 
-        # TODO: Add tests for contour line plot
+        expected_text = 'Color: northward_sea_water_velocity_HR from M1_Mooring'
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
+        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
 
+        # Contour line of M1 northward_sea_water_velocity - same as color plot
+        parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
+            "//input[@name='parameters_contour_plot' and @value='{}']".format(northward_sea_water_velocity_HR_id))
+        parameter_contour_plot_radio_button.click()
+
+        # Test that at least the color bar image appears
+        self.assertIn('_M1_Mooring_colorbar_', self.browser.find_element_by_id('sectioncolorbarimg').get_property('src'))
+
+        # Contour line of M1 SEA_WATER_SALINITY_HR_id - different from color plot
+        SEA_WATER_SALINITY_HR_id = Parameter.objects.get(name='SEA_WATER_SALINITY_HR').id
+        parameter_contour_plot_radio_button = self.browser.find_element(By.XPATH,
+            "//input[@name='parameters_contour_plot' and @value='{}']".format(SEA_WATER_SALINITY_HR_id))
+        parameter_contour_plot_radio_button.click()
+
+        expected_text = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
+        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text)
+        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
+
+        # Clear the Color plot leaving just the Lines plot
+        clear_color_plot_radio_button = self.browser.find_element_by_id('mp_parameters_plot_clear')
+        clear_color_plot_radio_button.click()
+
+        expected_text_color = ''
+        expected_text_lines = 'Lines: SEA_WATER_SALINITY_HR from M1_Mooring'
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text_color)
+        self._wait_until_text_is_visible('temporalparameterplotinfo_lines', expected_text_lines)
+        self.assertEquals(expected_text_color, self.browser.find_element_by_id('temporalparameterplotinfo').text)
+        self.assertEquals(expected_text_lines, self.browser.find_element_by_id('temporalparameterplotinfo_lines').text)
+
+        # Uncomment to visually inspect the plot for correctness
+        ##self.browser.execute_script("window.scrollTo(0, 0)")
+        ##import pdb; pdb.set_trace()
+
+
+class BugsFoundTestCase(BaseTestCase):
+    '''Test bugs that have been found
+    '''
+    fixtures = ['stoqs_test_data.json']
+    multi_db = False
+
+    def test_select_wrong_platform_after_plot(self):
+        self.browser.get('http://localhost:8000/default/query/')
+
+        # Open Measured Parameters section and plot Parameter bb470 from M1
+        mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(mp_section)
+        self.browser.find_element(By.XPATH,
+                "//input[@name='parameters_plot' and @value='{}']".format(
+                Parameter.objects.get(name='bb470').id)).click()
+
+        # Select 'dorado' Platform - bb470 will not be in the selection
+        platforms_anchor = self.browser.find_element_by_id('platforms-anchor')
+        self._wait_until_visible_then_click(platforms_anchor)
+        dorado_button = self.browser.find_element_by_id('dorado'
+                            ).find_element_by_tag_name('button')
+        self._wait_until_visible_then_click(dorado_button)
+
+        expected_text = 'Cannot plot Parameter'
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
+        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
+
+        # Uncomment to visually inspect the plot for correctness
+        ##import pdb; pdb.set_trace()

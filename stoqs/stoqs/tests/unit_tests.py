@@ -345,6 +345,8 @@ class SummaryDataTestCase(TestCase):
         response = self.client.get(req)
         data = json.loads(response.content) # Verify we don't get an exception when we load the data.
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
+        # Report error that would appear on the UI if plot generation failed
+        self.assertTrue(data.get('parameterplatformdatavaluepng')[0], data.get('parameterplatformdatavaluepng')[2])
         # Test that image file was created
         img_path = os.path.join(settings.MEDIA_ROOT, 'sections/', data.get('parameterplatformdatavaluepng')[0])
         self.assertTrue(os.path.isfile(img_path), 'File %s was not created' % img_path)
@@ -537,7 +539,7 @@ class SummaryDataTestCase(TestCase):
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
 
-class RegressionTestCase(TestCase):
+class BugsFoundTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
     multi_db = False
 

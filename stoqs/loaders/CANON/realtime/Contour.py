@@ -434,21 +434,33 @@ class Contour(object):
                     z.append(np.NaN)
 
                 if plot_scatter_contour:
-                    cs0, _ = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime,sdt_count)
+                    cs0, _, scale_factor = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime,sdt_count)
                     cs1 = self.createScatterPlot(title + pn,ax1_plot,x,y,z,rangey,rangez,start_datetime,end_datetime)
                 elif plot_step:
                     cs0 = self.createStepPlot(title + pn,title,ax0_plot,x,z,rangez,start_datetime,end_datetime)
                 elif plot_scatter:
                     cs0 = self.createScatterPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime)
                 else:
-                    cs0, _ = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime,sdt_count)
+                    cs0, _, scale_factor = self.createContourPlot(title + pn,ax0_plot,x,y,z,rangey,rangez,start_datetime,end_datetime,sdt_count)
 
                 if plot_scatter_contour:
                     ax1_plot.text(0.95,0.02, name, verticalalignment='bottom',
                                 horizontalalignment='right',transform=ax1_plot.transAxes,color='black',fontsize=8)
+                    # Don't show on the upper contour plot
+                    ax0_plot.xaxis.set_ticks([])
+                    # Rotate date labels and format bottom
+                    x_fmt = self.DateFormatter(1)
+                    ax1_plot.xaxis.set_major_formatter(x_fmt)
+                    for label in ax1_plot.xaxis.get_ticklabels():
+                        label.set_rotation(10)
                 else:
                     ax0_plot.text(0.95,0.02, name, verticalalignment='bottom',
                         horizontalalignment='right',transform=ax0_plot.transAxes,color='black',fontsize=8)
+                    # Rotate date labels and format bottom
+                    x_fmt = self.DateFormatter(1)
+                    ax0_plot.xaxis.set_major_formatter(x_fmt)
+                    for label in ax0_plot.xaxis.get_ticklabels():
+                        label.set_rotation(10)
 
                 self.shadeNight(ax0_plot,sorted(x),rangey[0], rangey[1])
                 if plot_scatter:
@@ -481,26 +493,6 @@ class Contour(object):
                         cb.ax.xaxis.set_ticks_position('top')
                         for t in cb.ax.yaxis.get_ticklabels():
                             t.set_fontsize(8)
-
-
-                # Rotate and show the date with date formatter in the last plot of all the groups
-                logger.debug('rotate and show date with date formatter')
-                if name is parm[-1] and group is self.plotGroupValid[-1]:
-                    x_fmt = self.DateFormatter(self.scale_factor)
-                    if plot_scatter:
-                        ax = ax1_plot
-                        # Don't show on the upper contour plot
-                        ax0_plot.xaxis.set_ticks([])
-                    else:
-                        ax = ax0_plot
-                    ax.xaxis.set_major_formatter(x_fmt)
-                    # Rotate date labels
-                    for label in ax.xaxis.get_ticklabels():
-                        label.set_rotation(10)
-                else:
-                    ax0_plot.xaxis.set_ticks([])
-                    if plot_scatter:  
-                        ax1_plot.xaxis.set_ticks([])
 
                 if plot_scatter:
                     j+=4
@@ -795,7 +787,7 @@ class Contour(object):
             except Exception as e:
                 logger.error(e)
 
-        return cs, zi
+        return cs, zi, scale_factor
 
     def createScatterPlot(self,title,ax,x,y,z,rangey,rangez,startTime,endTime):
         tmin = time.mktime(startTime.timetuple())

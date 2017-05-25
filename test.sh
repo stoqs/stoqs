@@ -73,7 +73,7 @@ echo "Unit tests..."
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.unit_tests --settings=config.settings.ci
 unit_tests_status=$?
 
-# MAPSERVER_DATABASE_URL needs to postgres role for proper mapfile CONNECTION settings
+# MAPSERVER_DATABASE_URL needs to use postgres role for proper mapfile CONNECTION settings
 export MAPSERVER_DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
 echo "Functional tests..."
 coverage run -a --source=utils,stoqs manage.py test stoqs.tests.functional_tests --settings=config.settings.ci

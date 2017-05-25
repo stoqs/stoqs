@@ -41,6 +41,14 @@ import logging
 import socket
 import json
 
+# Map common LRAUV variable names to CF standard names: http://cfconventions.org/standard-names.html
+sn_lookup = {
+             'bin_mean_temperature': 'sea_water_temperature',
+             'bin_mean_salinity': 'sea_water_salinity',
+             'bin_mean_chlorophyll': 'mass_concentration_of_chlorophyll_in_sea_water',
+            }
+
+
 class InterpolatorWriter(BaseWriter):
 
     logger = logging.getLogger('lrauvNc4ToNetcdf')
@@ -202,9 +210,11 @@ class InterpolatorWriter(BaseWriter):
                 rc.long_name = a['long_name']
             if 'standard_name' in a:
                 rc.standard_name = a['standard_name']
-            else:
+            elif key in sn_lookup.keys():
+                rc.standard_name = sn_lookup[key]
 
                 rc.standard_name = key
+
             rc.coordinates = ' '.join(list(c.values()))
 
             if units is None:
@@ -385,7 +395,10 @@ class InterpolatorWriter(BaseWriter):
         for key in parms:
           try:
             ts = self.createSeriesPydap(key, key + '_time')
-            self.all_attrib[key] = self.df[key].attributes
+            attr = {}
+            for name in self.df[key].ncattrs(): 
+                attr[name]=getattr(self.df[key],name)
+            self.all_attrib[key] = attr
             self.all_coord[key] = {'time': 'time', 'depth': 'depth', 'latitude': 'latitude', 'longitude': 'longitude'}
             parm_valid.append(key)
             self.all_sub_ts[key] = ts
@@ -414,7 +427,7 @@ class InterpolatorWriter(BaseWriter):
 
             except Exception, e:
                 self.logger.error(e)
-                raise e
+                continue
 
             # Create pandas time series for each parameter and store attributes
             if subgroup is not None and pkeys is not None:

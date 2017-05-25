@@ -213,8 +213,8 @@ echo Configure and start services
 /usr/pgsql-9.6/bin/postgresql96-setup initdb
 /usr/bin/systemctl enable postgresql-9.6
 /usr/bin/systemctl start postgresql-9.6
-/sbin/chkconfig rabbitmq-server on
-/sbin/service rabbitmq-server start
+/usr/bin/systemctl enable rabbitmq-server
+/usr/bin/systemctl start rabbitmq-server
 rabbitmqctl add_user stoqs stoqs
 rabbitmqctl add_vhost stoqs
 rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"

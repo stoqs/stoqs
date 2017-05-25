@@ -12,6 +12,7 @@ mpl.use('Agg')               # Force matplotlib to not use any Xwindows backend
 import cmocean
 import math
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 from matplotlib.mlab import griddata
 from matplotlib.colors import hex2color
 from pylab import polyval
@@ -187,7 +188,9 @@ class MeasuredParameter(BaseParameter):
     Use matploptib to create nice looking contour plots
     '''
     logger = logging.getLogger(__name__)
-    def __init__(self, kwargs, request, qs, qs_mp, parameterMinMax, sampleQS, platformName, parameterID=None, parameterGroups=(MEASUREDINSITU)):
+    def __init__(self, kwargs, request, qs, qs_mp, contour_qs_mp, parameterMinMax, sampleQS, 
+                 platformName, parameterID=None, parameterGroups=(MEASUREDINSITU), 
+                 contourPlatformName=None, contourParameterID=None, contourParameterGroups=(MEASUREDINSITU)):
         '''
         Save parameters that can be used by the different product generation methods here
         parameterMinMax is like: (pName, pMin, pMax)
@@ -199,6 +202,7 @@ class MeasuredParameter(BaseParameter):
         self.qs = qs
         # Calling routine passes different qs_mp when order or no parameter in filter is needed
         self.qs_mp = qs_mp
+        self.contour_qs_mp = contour_qs_mp
 
         self.parameterMinMax = parameterMinMax
         self.set_colormap()
@@ -211,17 +215,24 @@ class MeasuredParameter(BaseParameter):
         self.platformName = platformName
         self.parameterID = parameterID
         self.parameterGroups = parameterGroups
-
+        self.contourParameterID = contourParameterID
+        self.contourParameterGroups = contourParameterGroups
         self.scale_factor = None
 
         # - Use a new imageID for each new image
         self.imageID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
         if self.parameterID:
             self.colorbarPngFile = str(self.parameterID) + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
-        else:
+        elif self.kwargs['measuredparametersgroup']:
             self.colorbarPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_colorbar_' + self.imageID + '.png'
+        else:
+            # Likely contour line only plot being requested
+            self.colorbarPngFile = ''
 
-        self.colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', self.colorbarPngFile)
+        if self.colorbarPngFile:
+            self.colorbarPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', self.colorbarPngFile)
+        else:
+            self.colorbarPngFileFullPath = ''
         self.x = []
         self.y = []
         self.z = []
@@ -309,11 +320,11 @@ class MeasuredParameter(BaseParameter):
                 self.lat.append(mp['measurement__geom'].y)
                 self.lat_by_act.setdefault(mp['measurement__instantpoint__activity__name'], []).append(mp['measurement__geom'].y)
 
-    def loadData(self):
+    def loadData(self, qs_mp):
         '''
         Read the data from the database into member variables for use by the methods that output various products
         '''
-        self.logger.debug('type(self.qs_mp) = %s', type(self.qs_mp))
+        self.logger.debug('type(qs_mp) = %s', type(qs_mp))
 
         # Save to '_by_act' dictionaries so that X3D can end each IndexedLinestring with a '-1'
         self.depth_by_act = {}
@@ -326,34 +337,34 @@ class MeasuredParameter(BaseParameter):
         self.lon_by_act_span = {}
         self.lat_by_act_span = {}
 
-        stride = int(self.qs_mp.count() / MP_MAX_POINTS)
+        stride = int(qs_mp.count() / MP_MAX_POINTS)
         if stride < 1:
             stride = 1
         self.strideInfo = ''
         if stride != 1:
             self.strideInfo = 'stride = %d' % stride
 
-        self.logger.debug('self.qs_mp.query = %s', str(self.qs_mp.query))
+        self.logger.debug('qs_mp.query = %s', str(qs_mp.query))
         if SAMPLED in self.parameterGroups:
-            for i,mp in enumerate(self.qs_mp):
+            for i, mp in enumerate(qs_mp):
                 self._fillXYZ(mp, sampled=True)
                 if (i % 10) == 0:
                     self.logger.debug('Appended %i samples to self.x, self.y, and self.z', i)
 
             # Build span data members for VERTICALNETTOW activity types
             # TODO: Implement other types as they are needed
-            qs = self.qs_mp.filter(sample__instantpoint__activity__activitytype__name__contains=VERTICALNETTOW)
+            qs = qs_mp.filter(sample__instantpoint__activity__activitytype__name__contains=VERTICALNETTOW)
             for i,mp in enumerate(qs):
                 self._fillXYZ(mp, sampled=True, spanned=True, activitytype=VERTICALNETTOW)
                 if (i % 10) == 0:
                     self.logger.debug('Appended %i samples to self.xspan, self.yspan, and self.zspan', i)
         else:
             self.logger.debug('Reading data with a stride of %s', stride)
-            if self.qs_mp.isRawQuerySet:
+            if qs_mp.isRawQuerySet:
                 # RawQuerySet does not support normal slicing
                 i = 0
                 self.logger.debug('Slicing with mod division on a counter...')
-                for counter,mp in enumerate(self.qs_mp):
+                for counter, mp in enumerate(qs_mp):
                     if counter % stride == 0:
                         self._fillXYZ(mp)
                         i = i + 1
@@ -361,7 +372,7 @@ class MeasuredParameter(BaseParameter):
                             self.logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
             else:
                 self.logger.debug('Slicing Pythonicly...')
-                for i,mp in enumerate(self.qs_mp[::stride]):
+                for i, mp in enumerate(qs_mp[::stride]):
                     self._fillXYZ(mp)
                     if (i % 1000) == 0:
                         self.logger.debug('Appended %i measurements to self.x, self.y, and self.z', i)
@@ -451,10 +462,13 @@ class MeasuredParameter(BaseParameter):
             sessionID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(7))
             self.request.session['sessionID'] = sessionID
 
-        if self.parameterID:
-            sectionPngFile = str(self.parameterID) + '_' + self.platformName + '_' + self.imageID + '.png'
-        else:
+        if self.parameterID or self.contourParameterID:
+            sectionPngFile = '{}_{}_{}_{}.png'.format(self.parameterID, self.contourParameterID, self.platformName, self.imageID)
+        elif self.kwargs['measuredparametersgroup']:
             sectionPngFile = self.kwargs['measuredparametersgroup'][0] + '_' + self.platformName + '_' + self.imageID + '.png'
+        else:
+            # Return silently with no error message - simply can't make a plot without a Parameter
+            return None, None, None
 
         sectionPngFileFullPath = os.path.join(settings.MEDIA_ROOT, 'sections', sectionPngFile)
         
@@ -481,7 +495,7 @@ class MeasuredParameter(BaseParameter):
             sdt_count = self.qs.filter(platform__name = self.platformName).values_list('simpledepthtime__depth').count()
             sdt_count = int(sdt_count / 2)                 # 2 points define a line, take half the number of simpledepthtime points
             self.logger.debug('Half of sdt_count from query = %d', sdt_count)
-            if sdt_count > tgrid_max:
+            if sdt_count > tgrid_max or sdt_count == 0:
                 sdt_count = tgrid_max
 
             xi = np.linspace(tmin, tmax, sdt_count)
@@ -531,21 +545,40 @@ class MeasuredParameter(BaseParameter):
                 pass
 
             if not self.x and not self.y and not self.z:
-                self.loadData()
+                self.loadData(self.qs_mp)
+
+            # Copy x, y, z values for color plot (scatter or "contour")
+            cx = list(self.x)
+            cy = list(self.y)
+            cz = list(self.z)
+            self.logger.debug('Number of cx, cy, cz data values retrieved from database = %d', len(cz)) 
+
+            clx = []
+            cly = []
+            clz = []
+            if self.contourParameterID is not None:
+                self.x = []
+                self.y = []
+                self.z = []
+                self.loadData(self.contour_qs_mp)
+                # Copy x, y, z values for contour line plot
+                clx = list(self.x)
+                cly = list(self.y)
+                clz = list(self.z)
+                self.logger.debug('Number of clx, cly, clz data values retrieved from database = %d', len(clz)) 
 
             if 'showdataas' in self.kwargs:
                 if self.kwargs['showdataas']:
                     if self.kwargs['showdataas'][0] == 'contour':
                         contourFlag = True
           
-            self.logger.debug('Number of x, y, z data values retrieved from database = %d', len(self.z)) 
-            if len(self.z) == 0:
+            if len(cz) == 0 and len(clz) == 0:
                 return None, None, 'No data returned from selection'
 
             if contourFlag:
                 try:
                     self.logger.debug('Gridding data with sdt_count = %d, and y_count = %d', sdt_count, y_count)
-                    zi = griddata(self.x, self.y, self.z, xi, yi, interp='nn')
+                    zi = griddata(cx, cy, cz, xi, yi, interp='nn')
                 except KeyError as e:
                     self.logger.exception('Got KeyError. Could not grid the data')
                     return None, None, 'Got KeyError. Could not grid the data'
@@ -581,21 +614,22 @@ class MeasuredParameter(BaseParameter):
                 ax.set_ylim(dmax, dmin)
                 ax.get_xaxis().set_ticks([])
                 self.set_ticks_bounds_norm(parm_info)
-                if contourFlag:
-                    ax.contourf(xi, yi, zi, cmap=self.cm, norm=self.norm, extend='both',
-                            levels=np.linspace(parm_info[1], parm_info[2], self.num_colors+1))
-                    ax.scatter(self.x, self.y, marker='.', s=2, c='k', lw = 0)
-                else:
-                    self.logger.debug('parm_info = %s', parm_info)
-                    ax.scatter(self.x, self.y, c=self.z, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
-                               norm=self.norm)
-                    # Draw any spanned data, e.g. NetTows
-                    for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
-                        try:
-                            ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
-                        except ZeroDivisionError:
-                            # Likely all data is same value and color lookup table can't be computed
-                            return None, None, "Can't plot identical data values of %f" % z
+                if self.parameterID is not None:
+                    if contourFlag:
+                        ax.contourf(xi, yi, zi, cmap=self.cm, norm=self.norm, extend='both',
+                                levels=np.linspace(parm_info[1], parm_info[2], self.num_colors+1))
+                        ax.scatter(cx, cy, marker='.', s=2, c='k', lw = 0)
+                    else:
+                        self.logger.debug('parm_info = %s', parm_info)
+                        ax.scatter(cx, cy, c=cz, s=coloredDotSize, cmap=self.cm, lw=0, vmin=parm_info[1], vmax=parm_info[2],
+                                   norm=self.norm)
+                        # Draw any spanned data, e.g. NetTows
+                        for xs,ys,z in zip(self.xspan, self.yspan, self.zspan):
+                            try:
+                                ax.plot(xs, ys, c=self._get_color(z, parm_info[1], parm_info[2]), lw=3)
+                            except ZeroDivisionError:
+                                # Likely all data is same value and color lookup table can't be computed
+                                return None, None, "Can't plot identical data values of %f" % z
 
                 if self.sampleQS and SAMPLED not in self.parameterGroups:
                     # Sample markers for everything but Net Tows
@@ -616,6 +650,11 @@ class MeasuredParameter(BaseParameter):
                         ax.plot(xs, ys, c='k', lw=2)
                         ax.scatter([xs[1]], [0], marker='o', c='w', s=15, zorder=10, edgecolors='k')
 
+                if self.contourParameterID is not None:
+                    zli = griddata(clx, cly, clz, xi, yi, interp='nn')
+                    CS = ax.contour(xi, yi, zli, colors='white')
+                    ax.clabel(CS, fontsize=9, inline=1)
+
                 if full_screen:
                     fig.savefig(sectionPngFileFullPath, dpi=240, transparent=True)
                 else:
@@ -625,11 +664,12 @@ class MeasuredParameter(BaseParameter):
                 self.logger.exception('Could not plot the data')
                 return None, None, 'Could not plot the data'
 
-            try:
-                self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
-            except Exception as e:
-                self.logger.exception('%s', e)
-                return None, None, 'Could not plot the colormap'
+            if self.colorbarPngFileFullPath:
+                try:
+                    self.makeColorBar(self.colorbarPngFileFullPath, parm_info)
+                except Exception as e:
+                    self.logger.exception('%s', e)
+                    return None, None, 'Could not plot the colormap'
 
             return sectionPngFile, self.colorbarPngFile, self.strideInfo
         else:
@@ -649,7 +689,7 @@ class MeasuredParameter(BaseParameter):
 
         if not self.lon and not self.lat and not self.depth and not self.value:
             self.logger.debug('Calling self.loadData()...')
-            self.loadData()
+            self.loadData(self.qs_mp)
         try:
             points = ''
             colors = ''
@@ -714,13 +754,14 @@ class MeasuredParameter(BaseParameter):
                 # End the IndexedLinestring with -1 so that end point does not connect to the beg point
                 indices = indices + '-1 ' 
 
-            try:
-                self.makeColorBar(self.colorbarPngFileFullPath, self.parameterMinMax)
-            except Exception as e:
-                self.logger.exception('Could not plot the colormap')
-                x3dResults = 'Could not plot the colormap'
-            else:
-                x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
+            if self.colorbarPngFileFullPath:
+                try:
+                    self.makeColorBar(self.colorbarPngFileFullPath, self.parameterMinMax)
+                except Exception as e:
+                    self.logger.exception('Could not plot the colormap')
+                    x3dResults = 'Could not plot the colormap'
+                else:
+                    x3dResults = {'colors': colors.rstrip(), 'points': points.rstrip(), 'info': '', 'index': indices.rstrip(), 'colorbar': self.colorbarPngFile}
 
         except Exception as e:
             self.logger.exception('Could not create measuredparameterx3d: %s', e)
