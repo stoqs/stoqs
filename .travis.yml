@@ -16,8 +16,10 @@ before_install:
   - export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgfortran.so.3
   - export TERM=xterm
   - conda update --yes conda
+  - pushd /home/travis/miniconda2/bin
   - wget -q -N https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux64.tar.gz
-  - tar -xzf geckodriver-v0.11.1-linux64.tar.gz --directory /home/travis/miniconda2/bin
+  - tar -xzf geckodriver-v0.11.1-linux64.tar.gz
+  - popd
 env:
   - DJANGO=1.10
 install:
