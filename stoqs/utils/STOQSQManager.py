@@ -466,7 +466,7 @@ class STOQSQManager(object):
                     try:
                         plot_results = [pid, round_to_n(qs['p010__min'],4), round_to_n(qs['p990__max'],4)]
                     except TypeError:
-                        logger.exception('Failed to get plot_results for qs = %s', qs)
+                        logger.warn('Failed to get plot_results for qs = %s', qs)
                 else:
                     qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Avg('p025'), Avg('p975'), Avg('median'))
                     try:
@@ -476,7 +476,7 @@ class STOQSQManager(object):
                             qs = self.getActivityParametersQS().filter(parameter__id=pid).aggregate(Min('p025'), Max('p975'))
                             plot_results = [pid, round_to_n(qs['p025__min'],4), round_to_n(qs['p975__max'],4)]
                     except TypeError:
-                        logger.exception('Failed to get plot_results for qs = %s', qs)
+                        logger.warn('Failed to get plot_results for qs = %s', qs)
             except ValueError as e:
                 if pid in ('longitude', 'latitude'):
                     # Get limits from Activity maptrack for which we have our getExtent() method
@@ -510,8 +510,7 @@ class STOQSQManager(object):
                         qs = self.getActivityParametersQS().filter(parameter__id=parameterID).aggregate(Avg('p025'), Avg('p975'))
                         plot_results = [parameterID, round_to_n(qs['p025__avg'],4), round_to_n(qs['p975__avg'],4)]
                 except TypeError as e:
-                    logger.error('Cannot get min and max for parameterID = %s', parameterID)
-                    logger.exception(e)
+                    logger.warn(str(e))
 
         if 'measuredparametersgroup' in self.kwargs:
             if len(self.kwargs['measuredparametersgroup']) == 1:
@@ -563,11 +562,15 @@ class STOQSQManager(object):
 
         cmincmax = []
         if self.request.GET.get('cmin') and self.request.GET.get('cmax'):
-            cmincmax = [plot_results[0],
-                        float(self.request.GET.get('cmin')), 
-                        float(self.request.GET.get('cmax'))]
-            if self.request.GET.get('cmincmax_lock') == '1':
-                plot_results = cmincmax
+            if plot_results:
+                cmincmax = [plot_results[0],
+                            float(self.request.GET.get('cmin')), 
+                            float(self.request.GET.get('cmax'))]
+                if self.request.GET.get('cmincmax_lock') == '1':
+                    plot_results = cmincmax
+            else:
+                # Likely a selection from the UI that doesn't include the plot parameter
+                logger.warn('plot_results is empty')
 
         return {'plot': plot_results, 'dataaccess': da_results, 'cmincmax': cmincmax}
 
@@ -1420,6 +1423,9 @@ class STOQSQManager(object):
         min_max = self.getParameterMinMax(pid=parameterID)['plot']
         if not parameterID and contourparameterID: 
             min_max = self.getParameterMinMax(pid=contourparameterID)['plot']
+
+        if not min_max:
+            return None, None, 'Cannot plot Parameter'
 
         if SAMPLED in parameterGroups:
             # The fourth item should be for SampledParameter if that is the group of the Parameter

@@ -48,10 +48,7 @@ class wait_for_text_to_match(object):
         except StaleElementReferenceException:
             return False
 
-
-class BrowserTestCase(StaticLiveServerTestCase):
-    '''Use selenium to test things in the browser
-    '''
+class BaseTestCase(StaticLiveServerTestCase):
     # Note that the test runner sets DEBUG to False: 
     # https://docs.djangoproject.com/en/1.8/topics/testing/advanced/#django.test.runner.DiscoverRunner.setup_test_environment
 
@@ -135,6 +132,11 @@ class BrowserTestCase(StaticLiveServerTestCase):
         # Load permalink
         self.browser.get(permalink_url)
         self.assertEqual('', self._mapserver_loading_panel_test())
+
+
+class BrowserTestCase(BaseTestCase):
+    '''Use selenium to test standard things in the browser
+    '''
 
     def test_campaign_page(self):
         self.browser.get(self.live_server_url)
@@ -270,4 +272,34 @@ class BrowserTestCase(StaticLiveServerTestCase):
         # Uncomment to visually inspect the plot for correctness
         ##self.browser.execute_script("window.scrollTo(0, 0)")
         ##import pdb; pdb.set_trace()
-        
+
+
+class BugsFoundTestCase(BaseTestCase):
+    '''Test bugs that have been found
+    '''
+    fixtures = ['stoqs_test_data.json']
+    multi_db = False
+
+    def test_select_wrong_platform_after_plot(self):
+        self.browser.get('http://localhost:8000/default/query/')
+
+        # Open Measured Parameters section and plot Parameter bb470 from M1
+        mp_section = self.browser.find_element_by_id('measuredparameters-anchor')
+        self._wait_until_visible_then_click(mp_section)
+        self.browser.find_element(By.XPATH,
+                "//input[@name='parameters_plot' and @value='{}']".format(
+                Parameter.objects.get(name='bb470').id)).click()
+
+        # Select 'dorado' Platform - bb470 will not be in the selection
+        platforms_anchor = self.browser.find_element_by_id('platforms-anchor')
+        self._wait_until_visible_then_click(platforms_anchor)
+        dorado_button = self.browser.find_element_by_id('dorado'
+                            ).find_element_by_tag_name('button')
+        self._wait_until_visible_then_click(dorado_button)
+
+        expected_text = 'Cannot plot Parameter'
+        self._wait_until_text_is_visible('temporalparameterplotinfo', expected_text)
+        self.assertEquals(expected_text, self.browser.find_element_by_id('temporalparameterplotinfo').text)
+
+        # Uncomment to visually inspect the plot for correctness
+        ##import pdb; pdb.set_trace()
