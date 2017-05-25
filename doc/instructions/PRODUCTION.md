@@ -6,7 +6,7 @@ Platform as a Service (PaaS) provider, such as Heroku or AWS.  It follows
 [The Twelve-Factor App](http://12factor.net/) guidelines with deployment 
 settings placed in environment variables.  Unless otherwise noted all commands
 should be executed from a regular user account that you will use to manage
-the stoqs application, e.g. an account something like USER='stoqsadm'.
+the stoqs application, e.g. an account named 'stoqsadm'.
 
 ### Steps for hosting on your own server
 
@@ -24,8 +24,9 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         sudo /usr/bin/systemctl disable httpd
         sudo /usr/bin/systemctl stop httpd
 
-3. On your server install nginx and configure to start (configure nginx
-   by editing the /etc/nginx/conf.d/default.conf file after you install it):
+3. On your server install nginx and configure to start. Configure nginx
+   by editing the /etc/nginx/conf.d/default.conf file after you install it;
+   also edit /etc/nginx/nginx.conf to remove or comment out the server 80....):
 
         sudo yum -y install nginx
         sudo /usr/bin/systemctl enable nginx
@@ -33,8 +34,9 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
 
 4. Create a stoqs admin account with normal privileges and become that user:
 
-        sudo adduser stoqsadm
-        sudo -u stoqsadm -i
+        export USER=stoqsadm
+        sudo adduser $USER
+        sudo -u $USER -i
 
 5. Clone STOQS to a local writable (by a normal user, not root) directory on 
    your server. A good practice is to not push any changes from a production
@@ -42,7 +44,6 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
    server:
 
         export STOQS_HOME=/opt/stoqsgit
-        export USER=stoqsadm
         sudo mkdir $STOQS_HOME 
         sudo chown -R $USER $STOQS_HOME
         cd `dirname $STOQS_HOME`
@@ -63,7 +64,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
 
         sudo -u postgres -i
         export PATH=/usr/pgsql-9.6/bin:$PATH
-        psql -c "CREATE DATABASE stoqs owner=stoqsadm template=template_postgis;"
+        psql -c "CREATE DATABASE stoqs owner=$USER template=template_postgis;"
         psql -c "ALTER DATABASE stoqs SET TIMEZONE='GMT';"
 
 6. As regular 'stoqsadm' user initialize and load the default stoqs database (again,
@@ -82,9 +83,10 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
    this file; make sure they refer to paths on your servers.  Then create a
    symlink of it to the nginx config directory, e.g.:
 
-        cp $STOQS_HOME/stoqs/stoqs_nginx.conf $STOQS_HOME/stoqs/stoqs_nginx_<host>.conf
-        vi $STOQS_HOME/stoqs/stoqs_nginx_<host>.conf
-        sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx_<host>.conf /etc/nginx/conf.d
+        export HOST=<server_name>
+        cp $STOQS_HOME/stoqs/stoqs_nginx.conf $STOQS_HOME/stoqs/stoqs_nginx_$HOST.conf
+        vi $STOQS_HOME/stoqs/stoqs_nginx_$HOST.conf
+        sudo ln -s $STOQS_HOME/stoqs/stoqs_nginx_$HOST.conf /etc/nginx/conf.d
 
 8. Create the media and static web directories and copy the static files to the 
    production web server location. The $STATIC_ROOT directory must be writable 
@@ -108,22 +110,21 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         sudo chmod 733 $MEDIA_ROOT/sections
         sudo chmod 733 $MEDIA_ROOT/parameterparameter
 
-
 10. Copy the stoqs/wsgi.py file to one customized for your server (for example, to
     refer to a separate settings configuration file) and copy the stoqs/stoqs_uwsgi.ini
-    file to one for your host.  Edit the .ini file making the module point to wsgi_<host>:
+    file to one for your host.  Edit the .ini file making the module point to wsgi_$HOST:
 
-
-        cp $STOQS_HOME/stoqs/wsgi.py $STOQS_HOME/stoqs/wsgi_<host>.py
-        vi $STOQS_HOME/stoqs/wsgi_<host>.py 
-        cp $STOQS_HOME/stoqs/stoqs_uwsgi.ini $STOQS_HOME/stoqs/stoqs_uwsgi_<host>.ini
-        vi $STOQS_HOME/stoqs/stoqs_uwsgi_<host>.ini
+        cp $STOQS_HOME/stoqs/wsgi.py $STOQS_HOME/stoqs/wsgi_$HOST.py
+        vi $STOQS_HOME/stoqs/wsgi_$HOST.py 
+        cp $STOQS_HOME/stoqs/stoqs_uwsgi.ini $STOQS_HOME/stoqs/stoqs_uwsgi_$HOST.ini
+        vi $STOQS_HOME/stoqs/stoqs_uwsgi_$HOST.ini
 
 11. Start the stoqs uWSGI application, replacing `<dbuser>, <pw>, <host>, <port>, 
-    <mapserver_ip_address>`, and other values that are specific to your 
-    server, e.g.:
+    <server_name>, <mapserver_ip_address>`, and other values that are 
+    specific to your server, e.g.:
 
         export STOQS_HOME=/opt/stoqsgit
+        export HOST=<server_name>
         export STATIC_ROOT=/usr/share/nginx/html/static
         export MEDIA_ROOT=/usr/share/nginx/html/media
         export DATABASE_URL="postgis://<dbuser>:<pw>@<host>:<port>/stoqs"
@@ -131,7 +132,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         export STOQS_CAMPAIGNS="<comma_separated>,<databases>,<not_in_campaigns>"
         export SECRET_KEY="<random_sequence_of_impossible_to_guess_characters>"
         export GDAL_DATA=/usr/share/gdal
-        uwsgi --ini stoqs/stoqs_uwsgi_<host>.ini
+        uwsgi --ini stoqs/stoqs_uwsgi_$HOST.ini
 
 12. Test the STOQS user interface using the configuration of your nginx server:
 
@@ -145,7 +146,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
         sudo mkdir -p /etc/uwsgi/vassals
         sudo mkdir /var/log/uwsgi
         sudo chown $USER /var/log/uwsgi
-        sudo ln -s $STOQS_HOME/stoqs/stoqs_uwsgi_<host>.ini /etc/uwsgi/vassals
+        sudo ln -s $STOQS_HOME/stoqs/stoqs_uwsgi_$HOST.ini /etc/uwsgi/vassals
         /usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
 
 14. To configure uWSGI to start on system boot put the commands from step 11 into 
@@ -160,7 +161,7 @@ the stoqs application, e.g. an account something like USER='stoqsadm'.
 15. To restart a production uWSGI server running in emperor mode simply `touch`
     the file that is linked in the `/etc/uwsgi/vassals/` directory, e.g.:
 
-        touch $STOQS_HOME/stoqs/stoqs_uwsgi_<host>.ini
+        touch $STOQS_HOME/stoqs/stoqs_uwsgi_$HOST.ini
 
     A restart is needed to use updated software or configurations, for example
     following a `git pull` command.
