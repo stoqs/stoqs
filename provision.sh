@@ -124,7 +124,7 @@ then
     popd
 
     yum -y install deltarpm rabbitmq-server scipy mod_wsgi memcached python-memcached
-    yum -y install graphviz-devel graphviz-python ImageMagick postgis2_94
+    yum -y install graphviz-devel graphviz-python ImageMagick postgis22_94
     yum -y install freetype-devel libpng-devel giflib-devel libjpeg-devel gd-devel proj-devel
     yum -y install proj-nad proj-epsg libxml2-devel libxslt-devel pam-devel readline-devel
     yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel
@@ -256,13 +256,13 @@ su - postgres -c "/usr/pgsql-9.4/bin/pg_ctl -D /var/lib/pgsql/9.4/data -l logfil
 echo Create postgis database and restart postgresql-9.4
 su - postgres -c "createdb postgis"
 su - postgres -c "createlang plpgsql postgis"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/postgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/spatial_ref_sys.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/postgis_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/rtpostgis.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/raster_comments.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/topology.sql"
-su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.1/topology_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.2/postgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.2/spatial_ref_sys.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.2/postgis_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.2/rtpostgis.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.2/raster_comments.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.2/topology.sql"
+su - postgres -c "psql -d postgis -f /usr/pgsql-9.4/share/contrib/postgis-2.2/topology_comments.sql"
 su - postgres -c "psql -c \"CREATE DATABASE template_postgis WITH TEMPLATE postgis;\""
 su - postgres -c "psql -c \"CREATE USER vagrant LOGIN PASSWORD 'vagrant';\""
 su - postgres -c "psql -c \"ALTER ROLE vagrant SUPERUSER;\""
