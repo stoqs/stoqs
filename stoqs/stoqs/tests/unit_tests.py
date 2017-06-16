@@ -539,7 +539,7 @@ class SummaryDataTestCase(TestCase):
         self.assertEqual(response.status_code, 200, 'Status code should be 200 for %s' % req)
 
 
-class RegressionTestCase(TestCase):
+class BugsFoundTestCase(TestCase):
     fixtures = ['stoqs_test_data.json']
     multi_db = False
 
