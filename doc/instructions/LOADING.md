@@ -3,12 +3,15 @@ Instructions for loading your data in STOQS
 
 ### TL;DR; (Quick instructions for your Vagrant VM)
 
+Log into the virtual machine:
+
+    vagrant ssh -- -X
+    cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
+
 Use the `stoqs/loaders/load.py` script to create a database and load data for an existing campaign. First
 use it to list existing campaigns (after creating a `campaigns.py` symbolic link in
 the stoqs directory pointing to `mbari_campaigns.py`):
 
-    vagrant ssh -- -X
-    cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
     export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
     cd stoqs
     ln -s mbari_campaigns.py campaigns.py
