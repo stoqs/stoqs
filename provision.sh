@@ -273,7 +273,8 @@ EOT
 
 echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git... 
 echo ">>> See CONTRIBUTING.md for how to configure your development system so that you can contribute to STOQS"
-mkdir dev && cd dev
+mkdir /vagrant/dev
+cd /vagrant/dev
 git clone -b python3 --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
 export PATH="/usr/local/bin:$PATH"
@@ -288,10 +289,10 @@ chown -R $USER /home/$USER
 
 echo Provisioning and setup have finished. 
 echo Default database loading and STOQS software tests should be run with:
-echo "(These commands are also found in ~/dev/stoqsgit/README.md)"
+echo "(These commands are also found in /vagrant/dev/stoqsgit/README.md)"
 echo ---------------------------------------------------------------------
 echo vagrant ssh -- -X
-echo "cd ~/dev/stoqsgit && source venv-stoqs/bin/activate"
+echo "cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate"
 echo export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs
 echo ./test.sh CHANGEME
 
