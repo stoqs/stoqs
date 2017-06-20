@@ -8,6 +8,7 @@ MBARI Jan 3, 2012
 
 import logging
 import threading
+from django.db.utils import ConnectionDoesNotExist
 
 logger = logging.getLogger(__name__)
 _thread_local_vars = threading.local()
@@ -19,7 +20,14 @@ class RouterMiddleware(object):
         logger.debug(pargs)
         logger.debug("kwargs =")
         logger.debug(kwargs)
-        logger.debug("request.session.keys() = %s", request.session.keys())
+        try:
+            logger.debug("request.session.keys() = %s", request.session.keys())
+        except ConnectionDoesNotExist as e:
+            logger.error(str(e))
+            logger.info('If new campaign has been added to campaigns.py then'
+                        ' a restart of uwsgi may be needed on a production server.')
+            return view_func(request, *pargs, **kwargs)
+
         if 'dbAlias' in kwargs:
             # Add a thread local variable, and remove the dbAlias, since it's handled by the middleware.
             _thread_local_vars.dbAlias = kwargs.pop('dbAlias')
