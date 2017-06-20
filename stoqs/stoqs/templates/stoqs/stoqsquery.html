@@ -5034,7 +5034,7 @@ function enable_cardboard(){
             },
             url : summaryQuery + '?' + qstring,
             error: function(jqXHR, textStatus, errorThrown) {
-            alert('Error reading from ' + summaryQuery + '?' + qstring + ':\n\n' + errorThrown);
+                alert('Error reading from ' + summaryQuery + '?' + qstring + ':\n\n' + jqXHR.responseText);
                 resetWaitIndicators();
             },
             success: function (data) {

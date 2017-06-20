@@ -203,8 +203,11 @@ def queryData(request, fmt=None):
     try:
         qm.buildQuerySets()
     except ValidationError as e:
-        logger.error(e)
+        logger.error(str(e))
         return HttpResponseBadRequest('Bad request: ' + str(e))
+    except ConnectionDoesNotExist as e:
+        logger.error(str(e))
+        return HttpResponseBadRequest('Bad request: Database "' + request.META['dbAlias'] + '" Does Not Exist')
     try:
         options = json.dumps(qm.generateOptions(), cls=encoders.STOQSJSONEncoder)
     except ConnectionDoesNotExist as e:
