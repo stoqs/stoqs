@@ -10,29 +10,22 @@ Instructions for Setting up PyCharm to work in your VM
    it via the menu in Tools -> Vagrant.
 
 
-### Make sure sftpd-server is properly configured in your VM
-
-1. cd ~/Vagrants/stoqsvm_python3/ && vagrant ssh -- -X
-
-2. sudo vi /etc/ssh/sshd_config
-
-3. Change line from `Subsystem sftp /usr/lib/openssh/sftp-server` to `Subsystem sftp /usr/libexec/openssh/sftp-server`
-
-4. Restart sshd:
-
-        sudo /usr/bin/systemctl restart sshd
-
-
 ### Setting up PyCharm Project Interpretor and Project Structure (on MacOS)
 
-1. From PyCharm open Preferences -> Project: stoqsvm -> Project Interpreter:
+1. From PyCharmi, open Preferences -> Project: stoqsvm [1] -> Project Interpreter:
     * Click on the 3-dot icon to the right of the Project Interpreter selector
+    * Select 'Add Remote'
     * Check Vagrant
+    * Ensure that the Vagrant Instance Fold... is pointing to the correct path
     * Click on the 3-dot icon to the right of Python interpreter path text box, select 'Yes' to connect to remote host
-    * Navigate to '/home/vagrant/dev/stoqsgit/venv-stoqs/bin/python' and click OK
+    * Navigate to '/vagrant/dev/stoqsgit/venv-stoqs/bin/python' and click OK
     * Click OK on the Preferences dialog window
 
 2. Wait a few minutes for PyCharm to connect to your VM and build its project files (which are kept in the .idea directory)
 
-3. Find the STOQS project files in the Vagrant synced folder stoqsvm/dev/stoqsgit
+3. Find the STOQS project files in the Vagrant synced folder dev/stoqsgit
 
+4. You may now proceed using either PyCharm or the command line in the VM to work on the STOQS code base
+
+
+[1]: Your virtual machine directory may have a different name, e.g. 'stoqsvm_python3'
