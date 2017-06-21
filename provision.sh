@@ -118,7 +118,7 @@ then
     yum -y install proj-nad proj-epsg libxml2-devel libxslt-devel pam-devel
     yum -y install python-psycopg2 libpqxx-devel hdf hdf-devel freetds-devel postgresql-devel
     yum -y install gdal-python mapserver mapserver-python libxml2 libxml2-python python-lxml python-pip python-devel gcc mlocate
-    yum -y install scipy blas blas-devel lapack lapack-devel lvm2 firefox
+    yum -y install scipy blas blas-devel lapack lapack-devel lvm2 firefox cachefilesd
     yum -y groups install "GNOME Desktop"
     yum -y install fftw-devel motif-devel ghc-OpenGL-devel
     # For InstantReality's aopt command referenced in doc/instructions/SPATIAL_3d.md
@@ -176,7 +176,7 @@ cat <<EOT > DATA/Model_atlas_v1
 EOT
 popd
 
-echo Build and install MB-System, setting overcommit_memory to wizardry mode
+echo Build and install MB-System, set overcommit_memory to wizardry mode
 wget -q -N ftp://ftp.ldeo.columbia.edu/pub/MB-System/mbsystem-5.5.2284.tar.gz
 tar -xzf mbsystem-5.5.2284.tar.gz
 cd mbsystem-5.5.2284/
@@ -222,6 +222,8 @@ rabbitmqctl set_permissions -p stoqs stoqs ".*" ".*" ".*"
 /usr/bin/systemctl start httpd.service
 /usr/bin/systemctl enable memcached.service
 /usr/bin/systemctl start memcached.service
+/usr/bin/systemctl enable cachefilesd
+/usr/bin/systemctl start cachefilesd
 
 echo Modify pg_hba.conf
 mv -f /var/lib/pgsql/9.6/data/pg_hba.conf /var/lib/pgsql/9.6/data/pg_hba.conf.bak
@@ -281,6 +283,7 @@ mkdir /vagrant/dev
 cd /vagrant/dev
 git clone -b python3 --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
+git config core.preloadindex true
 export PATH="/usr/local/bin:$PATH"
 python3.6 -m venv venv-stoqs
 
