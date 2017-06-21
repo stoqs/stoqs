@@ -271,6 +271,10 @@ cat <<EOT > .vimrc
 :set shiftwidth=4
 EOT
 
+echo Configure and restart sshd for enabling PyCharm interpreter
+sed -i 's#/usr/lib/openssh/sftp-server#/usr/libexec/openssh/sftp-server#' /etc/ssh/sshd_config
+/usr/bin/systemctl restart sshd
+
 echo Cloning STOQS repo from https://github.com/stoqs/stoqs.git... 
 echo ">>> See CONTRIBUTING.md for how to configure your development system so that you can contribute to STOQS"
 mkdir /vagrant/dev

@@ -27,11 +27,12 @@ vagrant up --provider virtualbox
 ```
 
 The `vagrant up` command takes an hour or so to provision and setup a complete CentOS 7 
-STOQS server that also includes MB-System, InstantReality, and all the Python data science 
-tools bundled in packages such as Anaconda.  All connections to this virtual machine are 
+STOQS Virtual Machine that also includes MB-System, InstantReality, and all the Python data science 
+tools bundled in packages such as Anaconda.  You will be prompted for your admin password
+for configuring a shared folder from the VM.  All connections to this VM are 
 performed from the the directory you installed it in; you must cd to it (e.g. `cd
 ~/Vagrants/stoqsvm`) before logging in with the `vagrant ssh -- -X` command.  After 
-installation finishes log into your new virtual machine and test it:
+installation finishes log into your new VM and test it:
 
 ```bash
 vagrant ssh -- -X   # Wait for [vagrant@localhost ~]$ prompt

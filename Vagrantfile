@@ -17,5 +17,7 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, host: 8080, guest: 80
   config.ssh.forward_x11 = true
   config.ssh.insert_key = false
+  config.vm.network :private_network, ip: '192.168.50.50'
+  config.vm.synced_folder '.', '/vagrant', nfs: true
   config.vm.provision "shell", path: "provision.sh"
 end
