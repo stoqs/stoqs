@@ -44,7 +44,7 @@ project.  Depending on what you are working on here are the directories:
     Enter your virtualenv, set environment variable(s), and launch your development
     server in a shell window:
   
-        cd ~/dev/stoqsgit && source venv-stoqs/bin/activate
+        cd /vagrant/dev/stoqsgit && source venv-stoqs/bin/activate
         export DATABASE_URL=postgis://stoqsadm:CHANGEME@127.0.0.1:5432/stoqs 
         stoqs/manage.py runserver 0.0.0.0:8000 --settings=config.settings.local
 
