@@ -283,6 +283,7 @@ mkdir /vagrant/dev
 cd /vagrant/dev
 git clone -b python3 --depth=50 https://github.com/stoqs/stoqs.git stoqsgit
 cd stoqsgit
+git config core.preloadindex true
 export PATH="/usr/local/bin:$PATH"
 python3.6 -m venv venv-stoqs
 
