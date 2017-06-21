@@ -1,23 +1,9 @@
 #!/usr/bin/env python
-
-__author__ = "Mike McCann"
-__copyright__ = "Copyright 2013, MBARI"
-__license__ = "GPL"
-__maintainer__ = "Mike McCann"
-__email__ = "mccann at mbari.org"
-__status__ = "Development"
-__doc__ = '''
-
+'''
 Script to create biplots of a cross product of all Parameters in a database.
 
 Mike McCann
 MBARI 10 February 2014
-
-@var __date__: Date of last svn commit
-@undocumented: __doc__ parser
-@author: __author__
-@status: __status__
-@license: __license__
 '''
 
 import os
