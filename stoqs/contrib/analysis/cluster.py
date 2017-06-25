@@ -79,11 +79,11 @@ class Clusterer(BiPlot):
         '''
         Print scores for several different classifiers
         '''
-        X, y = self.loadLabeledData(labeledGroupName, classes=self.args.classes)
+        X, y = self.loadData()
         X = StandardScaler().fit_transform(X)
 
         if X.any() and y.any():
-            for name, clf in list(self.classifiers.items()):
+            for name, clf in list(self.clusterers.items()):
                 scores = cross_val_score(clf, X, y, cv=5)
                 print("%-18s accuracy: %0.2f (+/- %0.2f)" % (name, scores.mean(), scores.std() * 2))
         else:
@@ -100,13 +100,15 @@ class Clusterer(BiPlot):
         pvDict = {}
         try:
             X, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
-                                                    self.args.inputs[1], pvDict, returnIDs=False, sampleFlag=True)
+                                                    self.args.inputs[1], pvDict, returnIDs=False, sampleFlag=False)
         except NoPPDataException as e:
             print(str(e))
 
         return X, y
 
-    def createClassifier(self, labeledGroupName):  # pragma: no cover
+
+
+    def createClusterer(self):  # pragma: no cover
         '''
         Query the database for labeled training data, fit a model to it, and save the pickled
         model back to the database.  Follow the pattern in the example at
@@ -114,9 +116,9 @@ class Clusterer(BiPlot):
         and learn about Learning at https://www.youtube.com/watch?v=4ONBVNm3isI (see at time 2:33 and
         following - though the whole tutorial is worth watching).
         '''
-        clf = self.classifiers[self.args.classifier]
+        clf = self.clusterers[self.args.clusterer]
 
-        X, y = self.loadLabeledData(labeledGroupName, classes=self.args.classes)
+        X, y = self.loadData()
         X = StandardScaler().fit_transform(X)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size,
@@ -128,8 +130,6 @@ class Clusterer(BiPlot):
         score = clf.score(X_test, y_test)
         if self.args.verbose:
             print("  score = %f" % score)
-
-        self._saveModel(labeledGroupName, clf)
 
 
     def process_command_line(self):
@@ -168,9 +168,9 @@ class Clusterer(BiPlot):
 
 
         parser.add_argument('--createCluster', action='store_true',
-                            help='Fit a model to Labeled data with --classifier to labels in --labels and save in database as --modelBaseName')
+                            help='Fit a model to Labeled data with --clusterer')
         parser.add_argument('--doModelsScore', action='store_true',
-                            help='Print scores for fits of various models for --groupName')
+                            help='Print scores for fits of various models')
         parser.add_argument('--inputs', action='store',
                             help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format',
@@ -210,7 +210,7 @@ if __name__ == '__main__':
         c.doModelsScore(' '.join((LABELED, c.args.groupName)))
 
     elif c.args.createCluster:
-        c.createClassifier(' '.join((LABELED, c.args.groupName)))
+        c.createClusterer(' '.join((LABELED, c.args.groupName)))
 
     else:
         print("fix your inputs")
