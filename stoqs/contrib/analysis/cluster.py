@@ -100,7 +100,7 @@ class Clusterer(BiPlot):
         pvDict = {}
         try:
             X, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
-                                                    self.args.inputs[1], pvDict, returnIDs=False, sampleFlag=False)
+                                                    self.args.inputs[1], pvDict, returnIDs=False, sampleFlag=True)
         except NoPPDataException as e:
             print(str(e))
 
