@@ -49,7 +49,7 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import Birch
 from sklearn.cluster import MeanShift
-from sklearn.mixture import GMM
+from sklearn.mixture import GaussianMixture
 import pickle
 
 LABELED = 'Labeled'
@@ -69,7 +69,7 @@ class Clusterer(BiPlot):
                   'Hierarchical clustering': AgglomerativeClustering(),
                   'DBSCAN': DBSCAN(),
                   'Birch': Birch(),
-                  'Gaussian_Mixture_Model': GMM()
+                  'Gaussian_Mixture_Model': GaussianMixture()
                   }
 
 
