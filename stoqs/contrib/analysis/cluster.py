@@ -101,6 +101,8 @@ class Clusterer(BiPlot):
         try:
             X, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
                                                     self.args.inputs[1], pvDict, returnIDs=False, sampleFlag=False)
+
+
         except NoPPDataException as e:
             print(str(e))
 
@@ -121,6 +123,7 @@ class Clusterer(BiPlot):
         X, y = self.loadData()
         X = StandardScaler().fit_transform(X)
 
+
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size,
                                                             train_size=self.args.train_size)
 
@@ -130,6 +133,8 @@ class Clusterer(BiPlot):
         score = clf.score(X_test, y_test)
         if self.args.verbose:
             print("  score = %f" % score)
+
+
 
 
     def process_command_line(self):
