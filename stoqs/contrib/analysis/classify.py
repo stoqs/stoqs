@@ -256,38 +256,6 @@ class Classifier(BiPlot):
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size, train_size=self.args.train_size)
 
-        xx,yy = np.meshgrid(np.arrange(x_min, x_max, h), np.arrange(y_min, y_max, h))
-
-        import pdb
-        pdb.set_trace()
-        # TODO: Implement graphical evaluation as in http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html
-
-        #plotting
-        figure = plt.figure(figsize=(27,9))
-        i = 1
-
-        from matplotlib.colors import ListedColormap
-
-        #plot the dataset first
-        from matplotlib.colorbar import ListedColormap
-        cm = plt.cm.RdBu
-        cm_bright = ListedColormap(['FF0000','#0000FF'])
-        ax = plt.subplot(1, len(classifiers) + 1, i)
-        ax.set_title("Input data")
-        #plot the training points
-        ax.scatter(X_train[:,0], X_train[:,1], c=y_train, cmap=cm_bright)
-        #and testing points
-        ax.scatter(X_test[:,0], X_test[:,1], c=y_test, cmap=cm_bright, alpha=0.6)
-        ax.set_xlim(xx.min(),xx.max())
-        ax.set_ylim(yy.min(),yy.max())
-        ax.set_xticks(())
-        ax.set_yticks(())
-
-
-
-
-
-
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
         if self.args.verbose:
