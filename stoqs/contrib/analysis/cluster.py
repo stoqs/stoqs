@@ -106,7 +106,7 @@ class Clusterer(BiPlot):
 
 
 
-    def createClusterer(self):  # pragma: no cover
+    def createClusters(self):  # pragma: no cover
         '''
         Query the database for labeled training data, fit a model to it, and save the pickled
         model back to the database.  Follow the pattern in the example at
@@ -170,8 +170,8 @@ class Clusterer(BiPlot):
         ##parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
 
 
-        parser.add_argument('--createCluster', action='store_true',
-                            help='Fit a model to Labeled data with --clusterer')
+        parser.add_argument('--createClusters', action='store_true',
+                            help='Fit a model to data clusters')
         parser.add_argument('--doModelsScore', action='store_true',
                             help='Print scores for fits of various models')
         parser.add_argument('--inputs', action='store',
@@ -214,10 +214,10 @@ if __name__ == '__main__':
     elif c.args.doModelsScore:
         c.doModelsScore(' '.join((LABELED, c.args.groupName)))
 
-    elif c.args.createCluster:
-        c.createClusterer(' '.join((LABELED, c.args.groupName)))
+    elif c.args.createClusters:
+        c.createClusters(' '.join((LABELED, c.args.groupName)))
 
     else:
         print("fix your inputs")
 
-#c.createClusterer()
+#c.createClusters()
