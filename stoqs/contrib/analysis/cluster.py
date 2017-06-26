@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-"""
-A start based on the classify.py script.
 
-Script to execute steps in the classification of measurements.
+"""
+Complement to the classify.py script.
+
+Script to implement unsupervised machine learning on data.
 Involves clustering data using unsupervised machine learning.
 
 Rachel Kahn
@@ -31,6 +32,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import warnings
 from datetime import datetime
+from datetime import timedelta
 from django.db.models import Q
 from django.db.utils import IntegrityError
 from textwrap import wrap
@@ -73,10 +75,9 @@ class Clusterer(BiPlot):
 
     def doModelsScore(self, labeledGroupName):
         '''
-        Print scores for several different classifiers
+        Print scores for several different clusterers
         '''
         X, y = self.loadData()
-        X = StandardScaler().fit_transform(X)
 
         if X.any() and y.any():
             for name, clf in list(self.clusterers.items()):
@@ -88,7 +89,7 @@ class Clusterer(BiPlot):
 
     def loadData(self): # pragma: no cover
         '''
-        Retrieve from the database to set of Labeled data and return the standard X, and y arrays that the scikit-learn package uses
+        Retrieve data from the database and return the x, and y values (in list form) that the scikit-learn package uses
         '''
         sdt = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
         edt = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
@@ -108,11 +109,8 @@ class Clusterer(BiPlot):
 
     def createClusters(self):  # pragma: no cover
         '''
-        Query the database for labeled training data, fit a model to it, and save the pickled
-        model back to the database.  Follow the pattern in the example at
-        http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html
-        and learn about Learning at https://www.youtube.com/watch?v=4ONBVNm3isI (see at time 2:33 and
-        following - though the whole tutorial is worth watching).
+        Query the database for data , convert to the standard X and y arrays for
+        sci-kit learn, and identify clusters in the data.
         '''
 
         #clf = self.clusterers[self.args.clusterer]
@@ -134,7 +132,6 @@ class Clusterer(BiPlot):
         return X, y_clusters
 
 
-
     def process_command_line(self):
         '''
         The argparse library is included in Python 2.7 and is an added package for STOQS.
@@ -143,20 +140,10 @@ class Clusterer(BiPlot):
         from argparse import RawTextHelpFormatter
 
         examples = 'Example machine learning workflow:' + '\n\n'
-        examples += "Step 1: Create Labeled features in the database using salinity as a discriminator:\n"
-        examples += sys.argv[0] + (" --createLabels --groupName Plankton --database stoqs_september2013_t"
-                                   " --platform dorado --start 20130916T124035 --end 20130919T233905"
-                                   " --inputs bbp700 fl700_uncorr --discriminator salinity"
-                                   " --labels diatom dino1 dino2 sediment --mins 33.33 33.65 33.70 33.75"
-                                   " --maxes 33.65 33.70 33.75 33.93 --clobber -v\n\n")
-        examples += "Step 2: Evaluate classifiers using the labels created in Step 1\n"
-        examples += sys.argv[0] + (" --doModelsScore --groupName Plankton --database stoqs_september2013_t"
-                                   " --classes diatom sediment --inputs bbp700 fl700_uncorr\n\n")
-        examples += "Step 3: Create a prediction model using the labels created in Step 1\n"
-        examples += sys.argv[0] + (" --createClassifier --groupName Plankton --database stoqs_september2013_t"
-                                   " --classifier Nearest_Neighbors --classes diatom sediment"
-                                   " --modelBaseName Nearest_Neighbors_1\n\n")
-        examples += "Step 4: Use a model to classify new measurements\n"
+        examples += "Identify clusters in data:\n"
+        examples += sys.argv[0] + (" --createClusters --database stoqs_september2013"
+                                   " --platform Slocum_260 --start 20130923T124038 --end 20130923T150613"
+                                   " --inputs optical_backscatter700nm fluorescence -v\n\n")
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
 
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
@@ -184,6 +171,10 @@ class Clusterer(BiPlot):
                             help='Proportion of discriminated sample to save as Test set', default=0.4, type=float)
         parser.add_argument('--train_size', action='store',
                             help='Proportion of discriminated sample to save as Train set', default=0.4, type=float)
+        #parser.add_argument('--interval', action='store', help='Time interval for which clusterSeq() flips through the'
+                                                               #'data, in format "days=x,seconds=x,minutes=x,hours=x,'
+                                                               #'weeks=x" ',
+                            #default='days=0, seconds=0, minutes=0, hours=0, weeks=0') # default 10 minutes
         #parser.add_argument('--clusterer', choices=list(self.clusterers.keys()),
         #                    help='Specify classifier to use with --createClassifier option')
         #parser.add_argument('--n_clusters', action='store',
@@ -220,4 +211,3 @@ if __name__ == '__main__':
     else:
         print("fix your inputs")
 
-#c.createClusters()
