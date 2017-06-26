@@ -42,13 +42,13 @@ from contrib.analysis import BiPlot, NoPPDataException
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.cluster import KMeans
-from sklearn.cluster import AffinityPropagation
-from sklearn.cluster import SpectralClustering
-from sklearn.cluster import AgglomerativeClustering
+#from sklearn.cluster import KMeans
+#from sklearn.cluster import AffinityPropagation
+#from sklearn.cluster import SpectralClustering
+#from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
-from sklearn.cluster import Birch
-from sklearn.cluster import MeanShift
+#from sklearn.cluster import Birch
+#from sklearn.cluster import MeanShift
 from sklearn.mixture import GaussianMixture
 import pickle
 
@@ -62,15 +62,11 @@ class Clusterer(BiPlot):
     To hold methods and data to support clustering of measurements in a STOQS database.
     See http://scikit-learn.org/stable/modules/clustering.html#overview-of-clustering-methods
     '''
-    clusterers = {'K_Means': KMeans(),
-                  'Affinity_Propagation': AffinityPropagation(),
-                  'Mean_Shift': MeanShift(),
-                  'Spectral_clustering': SpectralClustering(),
-                  'Hierarchical clustering': AgglomerativeClustering(),
-                  'DBSCAN': DBSCAN(),
-                  'Birch': Birch(),
-                  'Gaussian_Mixture_Model': GaussianMixture()
-                  }
+    #clusterers = {'Hierarchical_Clustering': AgglomerativeClustering(),
+    #              'DBSCAN': DBSCAN(),
+    #              'Mean_Shift': MeanShift(),
+    #              'Birch': Birch()
+    #              }
 
 
 
@@ -99,14 +95,14 @@ class Clusterer(BiPlot):
 
         pvDict = {}
         try:
-            X, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
+            x, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
                                                     self.args.inputs[1], pvDict, returnIDs=False, sampleFlag=False)
 
 
         except NoPPDataException as e:
             print(str(e))
 
-        return X, y
+        return x, y
 
 
 
@@ -118,22 +114,24 @@ class Clusterer(BiPlot):
         and learn about Learning at https://www.youtube.com/watch?v=4ONBVNm3isI (see at time 2:33 and
         following - though the whole tutorial is worth watching).
         '''
-        clf = self.clusterers[self.args.clusterer]
 
-        X, y = self.loadData()
-        X = StandardScaler().fit_transform(X)
+        #clf = self.clusterers[self.args.clusterer]
+        clf = DBSCAN()
 
+        x, y = self.loadData()
+        x = np.array(x)
+        y = np.array(y)
+        X = np.column_stack((x,y))
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size,
-                                                            train_size=self.args.train_size)
+        clf.fit(X)
 
+        #score = clf.score(X)
+        #if self.args.verbose:
+        #    print("  score = %f" % score)
 
+        y_clusters = clf.labels_
 
-        clf.fit(X_train, y_train)
-        score = clf.score(X_test, y_test)
-        if self.args.verbose:
-            print("  score = %f" % score)
-
+        return X, y_clusters
 
 
 
@@ -186,8 +184,10 @@ class Clusterer(BiPlot):
                             help='Proportion of discriminated sample to save as Test set', default=0.4, type=float)
         parser.add_argument('--train_size', action='store',
                             help='Proportion of discriminated sample to save as Train set', default=0.4, type=float)
-        parser.add_argument('--clusterer', choices=list(self.clusterers.keys()),
-                            help='Specify classifier to use with --createClassifier option')
+        #parser.add_argument('--clusterer', choices=list(self.clusterers.keys()),
+        #                    help='Specify classifier to use with --createClassifier option')
+        #parser.add_argument('--n_clusters', action='store',
+        #                    help='Number of clusters desired', default=2)
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1, 2, 3], type=int,
                             help='Turn on verbose output. Higher number = more output.', const=1, default=0)
@@ -219,3 +219,5 @@ if __name__ == '__main__':
 
     else:
         print("fix your inputs")
+
+#c.createClusterer()
