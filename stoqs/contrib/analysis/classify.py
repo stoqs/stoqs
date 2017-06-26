@@ -256,6 +256,10 @@ class Classifier(BiPlot):
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.args.test_size, train_size=self.args.train_size)
 
+        import pdb
+        pdb.set_trace()
+        # TODO: Implement graphical evaluation as in http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html
+
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
         if self.args.verbose:
