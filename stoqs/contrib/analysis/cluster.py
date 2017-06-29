@@ -93,7 +93,7 @@ class Clusterer(BiPlot):
 
         return r
 
-    def saveClusters(self):
+    def saveClusters(self, labeledGroupName):
         '''
         Save the set of labels in MeasuredParameterResource. Accepts 2 input vectors. (TODO: generalize to N input vectors);
         description is used to describe the criteria for assigning this label. The typeName and typeDecription may be used to
@@ -111,18 +111,18 @@ class Clusterer(BiPlot):
                 label = letters[i]
 
             cluster = X[y_clusters == i]
+            cluster_ids = X_ids[y_clusters == i]
 
             try:
                 # Label
-                rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name='LABEL',
+                rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=labeledGroupName,
                                                                                 description='unsupervised classification')
-                #rt = ResourceType.objects.using(self.args.database).get(id=4) #temporary fix gives me a resource type
-                r, _ = Resource.objects.using(self.args.database).get_or_create(name=label, value=cluster, resourcetype=rt)
+                r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
 
                 # Label's description
-                rdt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
-                rd, _ = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=label,
-                                                                                 resourcetype=rdt)
+                #rdt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
+                #rd, _ = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=label,
+                #                                                                 resourcetype=rdt)
                 #rr = ResourceResource(fromresource=r, toresource=rd)
                 #rr.save(using=self.args.database)
                 # Associate with commandlineResource
@@ -135,7 +135,7 @@ class Clusterer(BiPlot):
             # Associate MeasuredParameters with Resource
             if self.args.verbose:
                 print("  Saving %d values in cluster '%s'" % (len(cluster), label))
-            for x_id, y_id in X_ids[y_clusters == i]:
+            for x_id, y_id in cluster_ids:
 
                 a = self.getActivity(x_id, y_id)
                 mp_x = MeasuredParameter.objects.using(self.args.database).get(id=x_id)
@@ -146,9 +146,37 @@ class Clusterer(BiPlot):
                     activity=a, measuredparameter=mp_y, resource=r)
 
 
+    def removeLabels(self, labeledGroupName):  # pragma: no cover
+        '''
+        Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Labeled Plankton').
+        Restrict deletion to the other passed in options, if specified: label is like 'diatom', description is like
+        'Using Platform dorado, Parameter {'salinity': ('33.65', '33.70')} from 20130916T124035 to 20130919T233905'
+        (commandline is too long to show in this doc string - see examples in usage note).  Note: Some metadatda
+        ResourceTypes will not be removed even though the Resources that use them will be removed.
+        '''
+        # Remove MeasuredParameter associations with Resource (Labeled data)
 
+        letters = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
+        for label in letters + ['OUTLIER']:
 
+            mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
+                resource__resourcetype__name=labeledGroupName
+                ).select_related('resource')
+
+            if self.args.verbose > 1:
+                print("  Removing MeasuredParameterResources with label = %s" % (label))
+
+            rs = []
+            for mpr in mprs:
+                rs.append(mpr.resource)
+                mpr.delete(using=self.args.database)
+
+            if self.args.verbose > 1:
+                print("  Removing Resources associated with label = %s'" % label)
+
+            for r in set(rs):
+                r.delete(using=self.args.database)
 
     def doModelsScore(self, labeledGroupName):
         '''
@@ -345,5 +373,6 @@ if __name__ == '__main__':
 #c.createClusters()
 #c.saveCommand()
 #c.clusterSeq()
-c.saveClusters()
+#c.saveClusters('Cluster label')
 #c.loadData()
+#c.removeLabels('Cluster label')
