@@ -70,6 +70,83 @@ class Clusterer(BiPlot):
     #              'Birch': Birch()
     #              }
 
+    def getActivity(self, mpx, mpy):
+        '''
+        Return activity object which MeasuredParameters mpx and mpy belong to
+        '''
+        acts = Activity.objects.using(self.args.database).filter(
+            instantpoint__measurement__measuredparameter__id__in=(mpx, mpy)).distinct()
+        if not acts:
+            print("acts = %s" % acts)
+            raise Exception('Not exactly 1 activity returned with SQL = \n%s' % str(acts.query))
+        else:
+            return acts[0]
+
+    def saveCommand(self):
+        '''
+        Save the command executed to a Resource and return it for the doXxxx() method to associate it with the resources it creates
+        '''
+
+        rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
+        r, _ = Resource.objects.using(self.args.database).get_or_create(name=COMMANDLINE, value=self.commandline,
+                                                                        resourcetype=rt)
+
+        return r
+
+    def saveClusters(self):
+        '''
+        Save the set of labels in MeasuredParameterResource. Accepts 2 input vectors. (TODO: generalize to N input vectors);
+        description is used to describe the criteria for assigning this label. The typeName and typeDecription may be used to
+        refer to the grouping, and associate via the grouping the other labels made in the heuristic applied.
+        '''
+        X, y_clusters, X_ids = c.createClusters()
+        clResource = c.saveCommand()
+
+        # assign each cluster a letter
+        for i in range(-1, max(y_clusters) + 1):
+            letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            if i == -1:
+                label = 'OUTLIER'
+            else:
+                label = letters[i]
+
+            cluster = X[y_clusters == i]
+
+            try:
+                # Label
+                rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name='LABEL',
+                                                                                description='unsupervised classification')
+                #rt = ResourceType.objects.using(self.args.database).get(id=4) #temporary fix gives me a resource type
+                r, _ = Resource.objects.using(self.args.database).get_or_create(name=label, value=cluster, resourcetype=rt)
+
+                # Label's description
+                rdt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
+                rd, _ = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=label,
+                                                                                 resourcetype=rdt)
+                #rr = ResourceResource(fromresource=r, toresource=rd)
+                #rr.save(using=self.args.database)
+                # Associate with commandlineResource
+                ResourceResource.objects.using(self.args.database).get_or_create(fromresource=r, toresource=clResource)
+
+            except IntegrityError as e:
+                print(str(e))
+                print("Ignoring")
+
+            # Associate MeasuredParameters with Resource
+            if self.args.verbose:
+                print("  Saving %d values in cluster '%s'" % (len(cluster), label))
+            for x_id, y_id in X_ids[y_clusters == i]:
+
+                a = self.getActivity(x_id, y_id)
+                mp_x = MeasuredParameter.objects.using(self.args.database).get(id=x_id)
+                mp_y = MeasuredParameter.objects.using(self.args.database).get(id=y_id)
+                MeasuredParameterResource.objects.using(self.args.database).get_or_create(
+                    activity=a, measuredparameter=mp_x, resource=r)
+                MeasuredParameterResource.objects.using(self.args.database).get_or_create(
+                    activity=a, measuredparameter=mp_y, resource=r)
+
+
+
 
 
 
@@ -96,14 +173,14 @@ class Clusterer(BiPlot):
 
         pvDict = {}
         try:
-            x, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
-                                                    self.args.inputs[1], pvDict, returnIDs=False, sampleFlag=False)
+            x_ids, y_ids, x, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
+                                                    self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
 
 
         except NoPPDataException as e:
             print(str(e))
 
-        return x, y
+        return x, y, x_ids, y_ids
 
 
 
@@ -116,10 +193,14 @@ class Clusterer(BiPlot):
         #clf = self.clusterers[self.args.clusterer]
         clf = DBSCAN()
 
-        x, y = self.loadData()
+        x, y, x_ids, y_ids = self.loadData()
         x = np.array(x)
         y = np.array(y)
         X = np.column_stack((x,y))
+
+        x_ids = np.array(x_ids)
+        y_ids = np.array(y_ids)
+        X_ids = np.column_stack((x_ids, y_ids))
 
         clf.fit(X)
 
@@ -129,7 +210,57 @@ class Clusterer(BiPlot):
 
         y_clusters = clf.labels_
 
-        return X, y_clusters
+        if max(y_clusters) >= 26:
+            print("Too many clusters, there probably aren't any significant patterns here.")
+        else:
+            return X, y_clusters, X_ids
+
+
+    def clusterSeq(self):
+        '''
+        Flip through the data at a specified time interval and identify clusters.
+        '''
+
+        #clf = self.clusterers[self.args.clusterer]
+        clf = DBSCAN()
+
+        kwargs = {}
+        kwargs[self.args.interval.split('=')[0]] = int(self.args.interval.split('=')[1])
+        interval = timedelta(**kwargs)
+        start = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+        end = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+
+        sdt = start
+        edt = start + interval
+
+        while edt <= end:
+            pvDict = {}
+            try:
+                x_ids, y_ids, x, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
+                                                        self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
+
+            except NoPPDataException as e:
+                print('Just so you know: '+str(e))
+                sdt = sdt + interval
+                edt = edt + interval
+                continue
+
+            x = np.array(x)
+            y = np.array(y)
+            X = np.column_stack((x,y))
+
+            x_ids = np.array(x_ids)
+            y_ids=np.array(y_ids)
+            X_ids = np.column_stack((x_ids,y_ids))
+
+            clf.fit(X)
+
+            y_clusters = clf.labels_
+
+            sdt = sdt + interval
+            edt = edt + interval
+
+        return X, y_clusters, X_ids
 
 
     def process_command_line(self):
@@ -171,10 +302,10 @@ class Clusterer(BiPlot):
                             help='Proportion of discriminated sample to save as Test set', default=0.4, type=float)
         parser.add_argument('--train_size', action='store',
                             help='Proportion of discriminated sample to save as Train set', default=0.4, type=float)
-        #parser.add_argument('--interval', action='store', help='Time interval for which clusterSeq() flips through the'
-                                                               #'data, in format "days=x,seconds=x,minutes=x,hours=x,'
-                                                               #'weeks=x" ',
-                            #default='days=0, seconds=0, minutes=0, hours=0, weeks=0') # default 10 minutes
+        parser.add_argument('--interval', action='store', help='Time interval for which clusterSeq() flips through the'
+                                                               'data, in format "days=x,seconds=x,minutes=x,hours=x,'
+                                                               'weeks=x" ', default='days=0, seconds=0, minutes=10, '
+                                                               'hours=0, weeks=0') # default 10 minutes
         #parser.add_argument('--clusterer', choices=list(self.clusterers.keys()),
         #                    help='Specify classifier to use with --createClassifier option')
         #parser.add_argument('--n_clusters', action='store',
@@ -211,3 +342,8 @@ if __name__ == '__main__':
     else:
         print("fix your inputs")
 
+#c.createClusters()
+#c.saveCommand()
+#c.clusterSeq()
+c.saveClusters()
+#c.loadData()
