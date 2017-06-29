@@ -156,27 +156,23 @@ class Clusterer(BiPlot):
         '''
         # Remove MeasuredParameter associations with Resource (Labeled data)
 
-        letters = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
+            resource__resourcetype__name=labeledGroupName
+            ).select_related('resource')
 
-        for label in letters + ['OUTLIER']:
+        if self.args.verbose > 1:
+            print("  Removing MeasuredParameterResources with labelGroupName = %s" % (labeledGroupName))
 
-            mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
-                resource__resourcetype__name=labeledGroupName
-                ).select_related('resource')
+        rs = []
+        for mpr in mprs:
+            rs.append(mpr.resource)
+            mpr.delete(using=self.args.database)
 
-            if self.args.verbose > 1:
-                print("  Removing MeasuredParameterResources with label = %s" % (label))
+        #if self.args.verbose > 1:
+        #    print("  Removing Resources associated with label = %s'" % label)
 
-            rs = []
-            for mpr in mprs:
-                rs.append(mpr.resource)
-                mpr.delete(using=self.args.database)
-
-            if self.args.verbose > 1:
-                print("  Removing Resources associated with label = %s'" % label)
-
-            for r in set(rs):
-                r.delete(using=self.args.database)
+        for r in set(rs):
+            r.delete(using=self.args.database)
 
     def doModelsScore(self, labeledGroupName):
         '''
@@ -375,4 +371,4 @@ if __name__ == '__main__':
 #c.clusterSeq()
 #c.saveClusters('Cluster label')
 #c.loadData()
-#c.removeLabels('Cluster label')
+c.removeLabels('Cluster label')
