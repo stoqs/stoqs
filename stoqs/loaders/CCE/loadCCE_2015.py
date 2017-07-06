@@ -96,9 +96,14 @@ cl.bed_files = [
                 'BED11/MBCCE_BED11_20161010_Event20170109/netcdf/B0100028_full_traj.nc',
                 'BED00/Simulated/netcdf/BED00_cycle_rot_axes_200_202_trajectory.nc',
                 'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200014_decim_traj.nc',
+                'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200014_full_traj.nc',
+                'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200015_full_traj.nc',
                 'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200016_decim_traj.nc',
+                'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200016_full_traj.nc',
+                'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200017_full_traj.nc',
                 'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200019_full_traj.nc',
                 'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200020_decim_traj.nc',
+                'BED08/MBCCE_BED08_20161005_Event20161124/netcdf/80200020_full_traj.nc',
                 'BED08/MBCCE_BED08_20161005_Event20170109/netcdf/80200034_decim_traj.nc',
                 'BED08/MBCCE_BED08_20161005_Event20170109/netcdf/80200039_full_traj.nc',
                 'BED08/MBCCE_BED08_20161005_Event20170203/netcdf/80200046_decim_traj.nc',
@@ -111,22 +116,7 @@ cl.bed_files = [
                 'BED06/MBCCE_BED06_20160222_Event20170203/netcdf/60200236_decim_traj.nc',
                 'BED06/MBCCE_BED06_20160222_Event20170218/netcdf/60200246_decim_traj.nc',
                 ]
-cl.bed_platforms = [
-                'BED05', 'BED03', 'BED06', 'BED03', 'BED05', 'BED05', 'BED05', 'BED05', 'BED03', 'BED04',
-                'BED06', 'BED06', 'BED06', 'BED09', 'BED10', 'BED00', 
-                ] + [
-                'BED09' for n in range(56, 66)
-                ] + [
-                'BED03', 'BED10'
-                ] + [
-                'BED09' for n in range(4, 8)
-                ] + [
-                'BED09', 'BED11', 'BED11'
-                ] + [
-                'BED08' for n in range(1, 10)
-                ] + [
-                'BED11', 'BED06', 'BED06', 'BED03', 'BED06', 'BED06',
-                ]
+cl.bed_platforms = [f.split('/')[0] for f in  cl.bed_files ]
 cl.bed_depths = [
                 388, 201, 521, 289.3, 413, 420, 430, 433, 308, 294,
                 392, 405, 405, 198, 275, 145, 
@@ -138,7 +128,7 @@ cl.bed_depths = [
                 202 for n in range(4, 8)
                 ] + [
                 349, 332, 331,
-                203, 210, 221, 222, 229, 283, 290, 293, 300,
+                203, 203, 210, 210, 210, 221, 221, 222, 229, 283, 290, 293, 300, 300,
                 300, 415, 418, 330, 419, 416,
                 ]
 cl.bed_framegrabs = [
