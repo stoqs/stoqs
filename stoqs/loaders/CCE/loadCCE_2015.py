@@ -67,9 +67,13 @@ cl.bed_parms = ['XA', 'YA', 'ZA', 'A', 'XR', 'YR', 'ZR', 'ROT_RATE', 'ROT_COUNT'
 ##cl.bed_depths = [201] * len(cl.bed_files)
 
 # Just the event files for the CCE
-cl.bed_files_framegrabs = [
+cl.bed_files_framegrabs_2015 = [
+                ('BED04/MBCCE_BED04_20151004_Event20151201/netcdf/40100037_full_traj.nc',
+                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3872/00_17_50_24.html'),
                 ('BED05/MBCCE_BED05_20151027_Event20151201/netcdf/50200024_decim_traj.nc',
                     'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3873/00_29_56_03.html'),
+                ]
+cl.bed_files_framegrabs_2016 = [
                 ('BED03/20151001_20160115/netcdf/30200078_full_traj.nc',
                     'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3874/00_21_23_28.html'),
                 ('BED06/20151001_20160115/netcdf/60100068_full_traj.nc',
@@ -86,8 +90,6 @@ cl.bed_files_framegrabs = [
                     ''),
                 ('BED03/MBCCE_BED03_20160212_Event20160306/netcdf/30300016_decim_traj.nc',
                     ''),
-                ('BED04/MBCCE_BED04_20151004_Event20151201/netcdf/40100037_full_traj.nc',
-                 'http://search.mbari.org/ARCHIVE/frameGrabs/Ventana/stills/2015/vnta3872/00_17_50_24.html'),
                 ('BED06/MBCCE_BED06_20160222_Event20160306/netcdf/60200011_decim_traj.nc',
                     ''),
                 ('BED06/MBCCE_BED06_20160222_Event20160306/netcdf/60200012_decim_traj.nc',
@@ -109,7 +111,8 @@ cl.bed_files_framegrabs = [
                     ''),
                 ('BED10/MBCCE_BED10_20160408_Event20161124/netcdf/A0100154_decim_traj.nc',
                     ''),
-                ] + [
+                ] 
+cl.bed_files_framegrabs_2017 = [
                 ('BED09/MBCCE_BED09_20160408_Watch/netcdf/9010000{}.nc'.format(n), '') for n in range(4, 8)
                 ] + [
                 ('BED09/MBCCE_BED09_20160408_Event20170109/netcdf/90100196_full_traj.nc',
@@ -161,6 +164,8 @@ cl.bed_files_framegrabs = [
                 ('BED06/MBCCE_BED06_20160222_Event20170218/netcdf/60200246_decim_traj.nc',
                     ''),
                 ]
+cl.bed_files_framegrabs = cl.bed_files_framegrabs_2015 + cl.bed_files_framegrabs_2016 + cl.bed_files_framegrabs_2017
+
 cl.bed_files = [ffg[0] for ffg in cl.bed_files_framegrabs]
 cl.bed_framegrabs = [ffg[1] for ffg in cl.bed_files_framegrabs]
 cl.bed_platforms = [f.split('/')[0] for f in  cl.bed_files ]
