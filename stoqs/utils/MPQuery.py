@@ -101,6 +101,7 @@ class MPQuerySet(object):
         self.dbAlias = dbAlias
         self.values_list = values_list
         self.ordering = ('id',)
+        self._count = None
 
     def __iter__(self):
         '''
@@ -199,18 +200,21 @@ class MPQuerySet(object):
             return self.mp_query[k]
 
     def count(self):
-        logger.debug('Counting records in self.mp_query which is of type = %s', type(self.mp_query))
         # self.mp_query should contain no 'ORDER BY' as ensured by the routine that calls .count()
+        if self._count is not None:
+            return self._count
+
         try:
-            c = self.mp_query.count()
-            logger.debug('c = %d as retreived from self.mp_query.count()', c)
+            logger.debug('Counting records in self.mp_query which is of type = %s', type(self.mp_query))
+            self._count = self.mp_query.count()
+            logger.debug('self._count = %d as retreived from self.mp_query.count()', self._count)
         except AttributeError:
             try:
-                c = sum(1 for mp in self.mp_query)
-                logger.debug('c = %d as retreived from sum(1 for mp in self.mp_query)', c)
+                self._count = sum(1 for mp in self.mp_query)
+                logger.debug('self._count = %d as retreived from sum(1 for mp in self.mp_query)', self._count)
             except DatabaseError:
                 return 0
-        return c
+        return self._count
  
     def all(self):
         return self._clone()
