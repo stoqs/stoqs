@@ -1358,9 +1358,8 @@
     }
 
     function downloadsFinished(event) {
-        // Trigger the viewpoint parameters setting, probably not needed
-        // to be in this event handler, but it's nice feedback.
-        if ($('body').data()['init']) {
+        // Trigger the viewpoint parameters setting after X3DOM finishes loading new content
+        if ( ! $('body').data()['init']) {
             $('input[name=terrain_view][value="' + $('body').data()['terrain_view'] + '"]').prop('checked', true).trigger("click");
         }
     }
@@ -4378,6 +4377,12 @@ function enable_cardboard(){
                                 $('body').data()['ve'] = item.VerticalExaggeration;
                                 rebuildFilters(['measuredparameterx3d', 'platformanimation']);
                             }
+                        }
+                    });
+                    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                        if ( $(e.target).attr("href") == '#geo3d' ) {
+                            // Trigger the viewpoint parameters setting on 'Spatial -> 3D' tab click
+                            $('input[name=terrain_view][value="' + $('body').data()['terrain_view'] + '"]').prop('checked', true).trigger("click");
                         }
                     });
 
