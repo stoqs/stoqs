@@ -1,7 +1,7 @@
 -r base.txt
 
 alabaster==0.7.10
-amqp==2.2.0
+amqp==2.2.1
 amqplib==1.0.2
 anyjson==0.3.3
 Babel==2.4.0
