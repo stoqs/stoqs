@@ -2229,8 +2229,24 @@
     });
 
     $(document).on('click', ".stoqs-toggle", function (event) {
-        toggleField(this);
+        var buttonClicked = this;
+        toggleField(buttonClicked);
         updateFromZoomFlag = false;
+        if ( $(buttonClicked).hasClass('parameterstandardname') ) {
+            var str = buttonClicked.textContent.toString();
+            $.each($('button:contains(' + str + ')'), function (index, button) {
+                if ($(button).hasClass('parameterstandardname')) {
+                    if ( ! buttonClicked.parentElement.isEqualNode(button.parentElement) ) {
+                         if ($(button).hasClass('btn-primary')) {
+                             $(button).removeClass('btn-primary');
+                         } else {
+                             $(button).addClass('btn-primary');
+                         }
+                    }
+                }
+            });
+        }
+
         rebuildFilters();
     });
 
