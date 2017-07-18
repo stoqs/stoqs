@@ -10,6 +10,7 @@ MBARI 26 January March 2016
 
 import os
 import sys
+from collections import namedtuple
 from datetime import datetime
 parent_dir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parent_dir)  # settings.py is one dir up
@@ -171,9 +172,17 @@ cl.bed_framegrabs = [ffg[1] for ffg in cl.bed_files_framegrabs]
 cl.bed_platforms = [f.split('/')[0] for f in  cl.bed_files ]
 cl.bed_depths = np.round(cl.get_start_bed_depths(), 1)
 
+# CCE event start and end times for loading mooring data
+Event = namedtuple('Event', ['start', 'end'])
+lores_event_times = [
+        Event(datetime(2016, 1, 15,  0,  0), datetime(2016, 1, 18,  0,  0))
+                     ]
+hires_event_times = [
+        Event(datetime(2016, 1, 15, 21,  0), datetime(2016, 1, 16,  2,  0))
+                     ]
+
+
 # CCE BIN data
-cl.ccebin_startDatetime = datetime(2016, 1, 15)
-cl.ccebin_endDatetime = datetime(2016, 1, 18)
 cl.ccebin_nominaldepth = 1836
 cl.ccebin_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/BIN/20151013/netcdf/'
 cl.ccebin_files = [
@@ -257,45 +266,17 @@ cl.process_command_line()
 
 def load_cce_moorings(low_res_stride=20, high_res_stride=1,
                       bin_low_res_stride=300, bin_high_res_stride=1):
-    # MS1: Low-res
-    cl.ccems1_start_datetime = datetime(2016, 1, 15)
-    cl.ccems1_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems1(stride=low_res_stride)
-
-    # High-res
-    cl.ccems1_start_datetime = datetime(2016, 1, 15, 19, 0)
-    cl.ccems1_end_datetime = datetime(2016, 1, 16, 0, 30)
-    cl.load_ccems1(stride=high_res_stride)
-
-    # MS2: Low-res
-    cl.ccems2_start_datetime = datetime(2016, 1, 15)
-    cl.ccems2_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems2(stride=low_res_stride)
-
-    # High-res
-    cl.ccems2_start_datetime = datetime(2016, 1, 15, 21, 0)
-    cl.ccems2_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems2(stride=high_res_stride)
-
-    # MS3: Low-res
-    cl.ccems3_start_datetime = datetime(2016, 1, 15)
-    cl.ccems3_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems3(stride=low_res_stride)
-
-    # High-res
-    cl.ccems3_start_datetime = datetime(2016, 1, 15, 21, 0)
-    cl.ccems3_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems3(stride=high_res_stride)
-
-    # MS5: Low-res
-    cl.ccems5_start_datetime = datetime(2016, 1, 15)
-    cl.ccems5_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems5(stride=low_res_stride)
-
-    # High-res
-    cl.ccems5_start_datetime = datetime(2016, 1, 15, 21, 0)
-    cl.ccems5_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems5(stride=high_res_stride)
+    # DRY: for all moorings load all lo res and hi res data that have a .._base attribute
+    for mooring in range(1,7):
+        if hasattr(cl, 'ccems{:d}_base'.format(mooring)):
+            for event in lores_event_times:
+                setattr(cl, 'ccems{:d}_start_datetime'.format(mooring), event.start)
+                setattr(cl, 'ccems{:d}_end_datetime'.format(mooring), event.end)
+                getattr(cl, 'load_ccems{:d}'.format(mooring))(stride=low_res_stride)
+            for event in hires_event_times:
+                setattr(cl, 'ccems{:d}_start_datetime'.format(mooring), event.start)
+                setattr(cl, 'ccems{:d}_end_datetime'.format(mooring), event.end)
+                getattr(cl, 'load_ccems{:d}'.format(mooring))(stride=high_res_stride)
 
     # BIN: Low-res (10 minute) five day period
     cl.ccebin_startDatetime = datetime(2016, 1, 13)
