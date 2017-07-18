@@ -659,6 +659,8 @@ class Base_Loader(STOQS_Loader):
         latitudes = {}
         longitudes = {}
         timeUnits = {} 
+        nomLats = {}
+        nomLons = {}
 
         # TODO: Refactor to simplify. McCabe MC0001 pylint complexity warning issued.
 
@@ -698,13 +700,23 @@ class Base_Loader(STOQS_Loader):
                     else:
                         logger.exception('%s', e)
                         sys.exit(-1)
-    
+   
+                if len(v.shape) == 1:
+                    logger.info("len(v.shape) = 1; likely EPIC timeseries data - reshaping to add a 'depth' dimension")
+                    v = v.reshape(v.shape[0], 1)
+
                 # The STOQS datavalue 
                 data[pname] = iter(v)      # Iterator on time axis delivering all z values in an array with .next()
 
                 # CF (nee COARDS) has tzyx coordinate ordering, time is at index [1] and depth is at [2]
                 times[pname] = self.ds[self.ds[pname].keys()[1]][tIndx[0]:tIndx[-1]:self.stride]
-                depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
+                try:
+                    depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
+                except IndexError:
+                    logger.warn('Depth coordinate not found at index [2]. Assigning nominal position from EPIC Convention global attributes.')
+                    depths[pname] = [self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']]
+                    nomLats[pname] = self.ds.attributes['NC_GLOBAL']['latitude']
+                    nomLons[pname] = self.ds.attributes['NC_GLOBAL']['longitude']
 
                 timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
                 if timeUnits[pname] == 'true julian day':
@@ -723,7 +735,11 @@ class Base_Loader(STOQS_Loader):
                 if self.ds[self.ds[pname].keys()[1]].units == 'seconds since 1970-01-01T00:00:00Z':
                     timeUnits[pname] = 'seconds since 1970-01-01 00:00:00'          # coards 1.0.4 and earlier doesn't like ISO format
 
-                nomDepths, nomLats, nomLons = self.getNominalLocation()             # Possible to have both precise and nominal locations with this approach
+                if depths and nomLats and nomLons:
+                    logger.info('Nominal position assigned from EPIC Convention global attributes')
+                    nomDepths = depths
+                else:
+                    nomDepths, nomLats, nomLons = self.getNominalLocation()         # Possible to have both precise and nominal locations with this approach
 
                 shape_length = self.get_shape_length(pname)
                 if shape_length == 4:
