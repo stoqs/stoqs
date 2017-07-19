@@ -1,4 +1,4 @@
-Spatial Temporal Oceanographic Query System
+![STOQS logo](https://raw.githubusercontent.com/MBARIMike/stoqs/master/stoqs/static/images/STOQS_logo_gray1_689.png) Spatial Temporal Oceanographic Query System
 -------------------------------------------
 
 [![Build Status](https://travis-ci.org/stoqs/stoqs.svg)](https://travis-ci.org/stoqs/stoqs)
