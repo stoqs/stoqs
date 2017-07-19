@@ -10,9 +10,11 @@ MBARI 26 January March 2016
 
 import os
 import sys
+from collections import namedtuple
 from datetime import datetime
 parent_dir = os.path.join(os.path.dirname(__file__), "../")
 sys.path.insert(0, parent_dir)  # settings.py is one dir up
+from DAPloaders import NoValidData
 import numpy as np
 
 from CCE import CCELoader
@@ -171,9 +173,19 @@ cl.bed_framegrabs = [ffg[1] for ffg in cl.bed_files_framegrabs]
 cl.bed_platforms = [f.split('/')[0] for f in  cl.bed_files ]
 cl.bed_depths = np.round(cl.get_start_bed_depths(), 1)
 
+# CCE event start and end times for loading mooring data
+Event = namedtuple('Event', ['start', 'end'])
+lores_event_times = [
+        Event(datetime(2016, 1, 15,  0,  0), datetime(2016, 1, 18,  0,  0)),
+        Event(datetime(2016, 3,  5,  0,  0), datetime(2016, 3,  8,  0,  0)),
+                     ]
+hires_event_times = [
+        Event(datetime(2016, 1, 15, 21,  0), datetime(2016, 1, 16,  2,  0)),
+        Event(datetime(2016, 3,  6,  0,  0), datetime(2016, 3,  7,  0,  0)),
+                     ]
+
+
 # CCE BIN data
-cl.ccebin_startDatetime = datetime(2016, 1, 15)
-cl.ccebin_endDatetime = datetime(2016, 1, 18)
 cl.ccebin_nominaldepth = 1836
 cl.ccebin_base = 'http://dods.mbari.org/opendap/data/CCE_Processed/BIN/20151013/netcdf/'
 cl.ccebin_files = [
@@ -191,35 +203,67 @@ cl.ccebin_parms = [ 'pressure', 'temperature', 'conductivity', 'turbidity', 'opt
 
 # MS1 ADCP data
 cl.ccems1_nominal_depth = 225
-cl.ccems1_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS1/20151006/ADCP300/'
-cl.ccems1_files = [ 'MBCCE_MS1_ADCP300_20151006.nc' ]
-cl.ccems1_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+cl.ccems1_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS1/'
+cl.ccems1_files = [ 
+                   '20151006/ADCP300/MBCCE_MS1_ADCP300_20151006.nc',
+                   '20151006/Aquadopp2000/MBCCE_MS1_Aquadopp2000_20151006.nc',
+                   '20151006/CTOBSTrans9m/MBCCE_MS1_CTOBSTrans9m_20151006.nc',
+                   '20151006/TD65m/MBCCE_MS1_TD65m_20151006.nc',
+                   '20151006/TU35m/MBCCE_MS1_TU35m_20151006.nc',
+                   '20151006/TU65m/MBCCE_MS1_TU65m_20151006.nc',
+                  ]
+cl.ccems1_parms = [ 
+                   'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217',
+                   'P_1', 'T_1211',
+                   'T_28', 'S_41', 'ST_70', 'tran_4010', 'ATTN_55', 'NEP_56', 'Trb_980',
+                  ]
 
 # MS2 ADCP data
 cl.ccems2_nominal_depth = 462
-cl.ccems2_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS2/20151005/ADCP300/'
-cl.ccems2_files = [ 'MBCCE_MS2_ADCP300_20151005.nc' ]
-cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+cl.ccems2_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS2/'
+cl.ccems2_files = [ 
+                   '20151005/ADCP300/MBCCE_MS2_ADCP300_20151005.nc',
+                   '20151005/CTD9m/MBCCE_MS2_CTD9m_20151005.nc',
+                   '20151005/TU9m/MBCCE_MS2_TU9m_20151005.nc',
+                  ]
+cl.ccems2_parms = [ 
+                   'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217',
+                   'D_3', 'P_1', 'T_28', 'S_41',
+                   'NEP_56', 'Trb_980',
+                  ]
 
-# MS3 ADCP data
+# MS3 ADCP and CTD data
 cl.ccems3_nominal_depth = 764
-cl.ccems3_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS3/20151005/ADCP300/'
-cl.ccems3_files = [ 'MBCCE_MS3_ADCP300_20151005.nc' ]
-cl.ccems3_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+cl.ccems3_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS3/'
+cl.ccems3_files = [ 
+                   '20151005/ADCP300/MBCCE_MS3_ADCP300_20151005.nc',
+                   '20151005/Aquadopp2000/MBCCE_MS3_Aquadopp2000_20151005.nc',
+                   '20151005/CT9m/MBCCE_MS3_CT9m_20151005.nc',
+                   '20151005/TU9m/MBCCE_MS3_TU9m_20151005.nc',
+                  ]
+cl.ccems3_parms = [ 
+                   'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217',
+                   'P_1', 'T_1211', 'NEP1_56',
+                   'T_28', 'S_41', 'ST_70',
+                   'tran_4010', 'ATTN_55',
+                  ]
 
-# MS4 ADCP - data files are corrupted
 
-# MS5 ADCP data
-cl.ccems5_nominal_depth = 1315
-cl.ccems5_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS5/20151020/ADCP300/'
-cl.ccems5_files = [ 'MBCCE_MS5_ADCP300_20151020.nc' ]
-cl.ccems5_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
-
+# MS4 ADCP - 20151005 data files are corrupted
 ##cl.ccems4_nominal_depth = 462
 ##cl.ccems4_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS4...'
 ##cl.ccems4_files = [ '' ]
 ##cl.ccems4_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', ]
-##cl.ccems2_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+##cl.ccems4_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
+
+
+# MS5 ADCP data
+cl.ccems5_nominal_depth = 1315
+cl.ccems5_base = 'http://dods.mbari.org/opendap/data/CCE_Archive/MS5/'
+cl.ccems5_files = [ 
+                   '20151020/ADCP300/MBCCE_MS5_ADCP300_20151020.nc',
+                  ]
+cl.ccems5_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_1216', 'Roll_1217']
 
 
 # Full-deployment files, exatracted from SSDS with stride of 60
@@ -255,69 +299,60 @@ cl.ccems5_parms = [ 'u_1205', 'v_1206', 'w_1204', 'AGC_1202', 'Hdg_1215', 'Ptch_
 # Execute the load for trajectory representation
 cl.process_command_line()
 
-def load_cce_moorings(low_res_stride=20, high_res_stride=1,
-                      bin_low_res_stride=300, bin_high_res_stride=1):
-    # MS1: Low-res
-    cl.ccems1_start_datetime = datetime(2016, 1, 15)
-    cl.ccems1_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems1(stride=low_res_stride)
+def load_cce_moorings(low_res_stride=20, high_res_stride=1):
+    # DRY: for all moorings load all lo res and hi res data that have a .._base attribute
+    for mooring in range(1,6):
+        if hasattr(cl, 'ccems{:d}_base'.format(mooring)):
+            for event in lores_event_times:
+                setattr(cl, 'ccems{:d}_start_datetime'.format(mooring), event.start)
+                setattr(cl, 'ccems{:d}_end_datetime'.format(mooring), event.end)
+                try:
+                    getattr(cl, 'load_ccems{:d}'.format(mooring))(stride=low_res_stride)
+                except NoValidData as e:
+                    print(str(e))
 
-    # High-res
-    cl.ccems1_start_datetime = datetime(2016, 1, 15, 19, 0)
-    cl.ccems1_end_datetime = datetime(2016, 1, 16, 0, 30)
-    cl.load_ccems1(stride=high_res_stride)
+            for event in hires_event_times:
+                setattr(cl, 'ccems{:d}_start_datetime'.format(mooring), event.start)
+                setattr(cl, 'ccems{:d}_end_datetime'.format(mooring), event.end)
+                try:
+                    getattr(cl, 'load_ccems{:d}'.format(mooring))(stride=high_res_stride)
+                except NoValidData as e:
+                    print(str(e))
 
-    # MS2: Low-res
-    cl.ccems2_start_datetime = datetime(2016, 1, 15)
-    cl.ccems2_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems2(stride=low_res_stride)
+def load_cce_bin(low_res_stride=300, high_res_stride=1):
+    # BIN: Low-res (10 minute) 
+    for event in lores_event_times:
+        setattr(cl, 'ccebin_start_datetime', event.start)
+        setattr(cl, 'ccebin_end_datetime', event.end)
+        try:
+            getattr(cl, 'loadCCEBIN')(stride=low_res_stride)
+        except NoValidData as e:
+            print(str(e))
 
-    # High-res
-    cl.ccems2_start_datetime = datetime(2016, 1, 15, 21, 0)
-    cl.ccems2_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems2(stride=high_res_stride)
+    # BIN: High-res (2 second)
+    for event in hires_event_times:
+        setattr(cl, 'ccebin_start_datetime', event.start)
+        setattr(cl, 'ccebin_end_datetime', event.end)
+        try:
+            getattr(cl, 'loadCCEBIN')(stride=high_res_stride)
+        except NoValidData as e:
+            print(str(e))
 
-    # MS3: Low-res
-    cl.ccems3_start_datetime = datetime(2016, 1, 15)
-    cl.ccems3_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems3(stride=low_res_stride)
-
-    # High-res
-    cl.ccems3_start_datetime = datetime(2016, 1, 15, 21, 0)
-    cl.ccems3_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems3(stride=high_res_stride)
-
-    # MS5: Low-res
-    cl.ccems5_start_datetime = datetime(2016, 1, 15)
-    cl.ccems5_end_datetime = datetime(2016, 1, 18)
-    cl.load_ccems5(stride=low_res_stride)
-
-    # High-res
-    cl.ccems5_start_datetime = datetime(2016, 1, 15, 21, 0)
-    cl.ccems5_end_datetime = datetime(2016, 1, 16, 2, 0)
-    cl.load_ccems5(stride=high_res_stride)
-
-    # BIN: Low-res (10 minute) five day period
-    cl.ccebin_startDatetime = datetime(2016, 1, 13)
-    cl.ccebin_endDatetime = datetime(2016, 1, 18)
-    cl.loadCCEBIN(stride=bin_low_res_stride)
-
-    # High-res (2 second) 1-hour period
-    cl.ccebin_startDatetime = datetime(2016, 1, 15, 23, 30)
-    cl.ccebin_endDatetime = datetime(2016, 1, 16, 0, 30)
-    cl.loadCCEBIN(stride=bin_high_res_stride)
 
 if cl.args.test:
-    load_cce_moorings(low_res_stride=300, high_res_stride=10, bin_low_res_stride=300, bin_high_res_stride=10)
+    load_cce_moorings(low_res_stride=1000, high_res_stride=100)
+    load_cce_bin(low_res_stride=1000, high_res_stride=100)
     cl.loadBEDS(stride=5, featureType='trajectory')
 
 elif cl.args.optimal_stride:
-    load_cce_moorings(low_res_stride=300, high_res_stride=10, bin_low_res_stride=300, bin_high_res_stride=10)
+    load_cce_moorings(low_res_stride=300, high_res_stride=10)
+    load_cce_bin(low_res_stride=300, high_res_stride=10)
     cl.loadBEDS(stride=1, featureType='trajectory')
 
 else:
     cl.stride = cl.args.stride
     load_cce_moorings()
+    load_cce_bin()
     cl.loadBEDS(featureType='trajectory')
 
 # Add any X3D Terrain information specified in the constructor to the database - must be done after a load is executed
