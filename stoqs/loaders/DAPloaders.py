@@ -478,7 +478,11 @@ class Base_Loader(STOQS_Loader):
             # depth may be single-valued or an array 
             if self.getFeatureType() == 'timeseries': 
                 logger.debug('Initializing depths list for timeseries, ac = %s', ac)
-                depths[v] = self.ds[v][ac['depth']][:][0]
+                try:
+                    depths[v] = self.ds[v][ac['depth']][:][0]
+                except KeyError:
+                    logger.warn('No depth coordinate found for %s.  Assuming EPIC scalar and assigning depth from first element', v)
+                    depths[v] = self.ds[ac['depth']][0]
             elif self.getFeatureType() == 'timeseriesprofile':
                 logger.debug('Initializing depths list for timeseriesprofile, ac = %s', ac) 
                 try:
@@ -520,46 +524,53 @@ class Base_Loader(STOQS_Loader):
         '''
         Return beginning and ending indices for the corresponding time axis indices
         '''
+        isEPIC = False
         try:
-            if 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper():
-                # True Julian dates are at noon, so take int() to match EPIC's time axis values and to satisfy:
-                #   datum: Time (UTC) in True Julian Days: 2440000 = 0000 h on May 23, 1968
-                #   NOTE: Decimal Julian day [days] = time [days] + ( time2 [msec] / 86400000 [msec/day] )
-                jbd = int(sum(gcal2jd(self.startDatetime.year, self.startDatetime.month, self.startDatetime.day)) + 0.5)
-                jed = int(sum(gcal2jd(self.endDatetime.year, self.endDatetime.month, self.endDatetime.day)) + 0.5)
-
-                t_indx = np.where((jbd <= timeAxis) & (timeAxis <= jed))[0]
-                if not t_indx.any():
-                    raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, 
-                                      self.startDatetime, self.endDatetime))
-
-                # Refine indicies with fractional portion of the day (ms since midnight) as represented in the time2 variable
-                bms = 0
-                if self.startDatetime.hour or self.startDatetime.minute or self.startDatetime.second:
-                    bms = self.startDatetime.hour * 3600000 + self.startDatetime.minute * 60000 + self.startDatetime.second * 1000
-                ems = 86400000
-                if self.endDatetime.hour or self.endDatetime.minute or self.endDatetime.second:
-                    ems = self.endDatetime.hour * 3600000 + self.endDatetime.minute * 60000 + self.endDatetime.second * 1000
-
-                # Tolerate datasets that begin or end inside the limits of self.startDatetime and self.endDatetime
-                beg_day_indices = np.where(jbd == timeAxis)[0]
-                t2_indx_beg = 0
-                if beg_day_indices.any():
-                    time2_axis_beg = self.ds['time2']['time2'][beg_day_indices[0]:beg_day_indices[-1]]
-                    t2_indx_beg = np.where(bms <= time2_axis_beg)[0][0]
-
-                end_day_indices = np.where(jed == timeAxis)[0]
-                t2_indx_end = 0
-                if end_day_indices.any():
-                    time2_axis_end = self.ds['time2']['time2'][end_day_indices[0]:end_day_indices[-1]]
-                    t2_indx_end = len(time2_axis_end) - np.where(ems >= time2_axis_end)[0][-1]
-
-                indices = t_indx[0] + t2_indx_beg, t_indx[-1] - t2_indx_end
-                return indices
-
+            isEPIC = 'EPIC' in self.ds.attributes['NC_GLOBAL']['Conventions'].upper()
         except KeyError:
-            # Likely no 'Conventions' key on 'NC_GLOBAL', assume not EPIC and continue
-            pass
+            # No 'Conventions' key on 'NC_GLOBAL', check another way, e.g.
+            # http://dods.mbari.org/opendap/data/CCE_Archive/MS1/20151006/CTOBSTrans9m/MBCCE_MS1_CTOBSTrans9m_20151006.nc
+            # does not have a Conventions global attribute, so also check for time, time2 and the units
+            isEPIC = 'time' in self.ds.keys() and 'time2' in self.ds.keys() and self.ds['time'].attributes['units'] == 'True Julian Day'
+            if isEPIC:
+                logger.warn("%s does not have 'Conventions', yet appears to be EPIC from its time/time2 variables", self.url)
+
+        if isEPIC:
+            # True Julian dates are at noon, so take int() to match EPIC's time axis values and to satisfy:
+            #   datum: Time (UTC) in True Julian Days: 2440000 = 0000 h on May 23, 1968
+            #   NOTE: Decimal Julian day [days] = time [days] + ( time2 [msec] / 86400000 [msec/day] )
+            jbd = int(sum(gcal2jd(self.startDatetime.year, self.startDatetime.month, self.startDatetime.day)) + 0.5)
+            jed = int(sum(gcal2jd(self.endDatetime.year, self.endDatetime.month, self.endDatetime.day)) + 0.5)
+
+            t_indx = np.where((jbd <= timeAxis) & (timeAxis <= jed))[0]
+            if not t_indx.any():
+                raise NoValidData('No data from %s for time values between %s and %s.  Skipping.' % (self.url, 
+                                  self.startDatetime, self.endDatetime))
+
+            # Refine indicies with fractional portion of the day (ms since midnight) as represented in the time2 variable
+            bms = 0
+            if self.startDatetime.hour or self.startDatetime.minute or self.startDatetime.second:
+                bms = self.startDatetime.hour * 3600000 + self.startDatetime.minute * 60000 + self.startDatetime.second * 1000
+            ems = 86400000
+            if self.endDatetime.hour or self.endDatetime.minute or self.endDatetime.second:
+                ems = self.endDatetime.hour * 3600000 + self.endDatetime.minute * 60000 + self.endDatetime.second * 1000
+
+            # Tolerate datasets that begin or end inside the limits of self.startDatetime and self.endDatetime
+            beg_day_indices = np.where(jbd == timeAxis)[0]
+            t2_indx_beg = 0
+            if beg_day_indices.any():
+                time2_axis_beg = self.ds['time2']['time2'][beg_day_indices[0]:beg_day_indices[-1]]
+                t2_indx_beg = np.where(bms <= time2_axis_beg)[0][0]
+
+            end_day_indices = np.where(jed == timeAxis)[0]
+            t2_indx_end = 0
+            if end_day_indices.any():
+                time2_axis_end = self.ds['time2']['time2'][end_day_indices[0]:end_day_indices[-1]]
+                t2_indx_end = len(time2_axis_end) - np.where(ems >= time2_axis_end)[0][-1]
+
+            indices = t_indx[0] + t2_indx_beg, t_indx[-1] - t2_indx_end
+            return indices
+
 
         timeAxisUnits =  timeAxis.units.lower()
         timeAxisUnits = timeAxisUnits.replace('utc', 'UTC')        # coards requires UTC to be upper case 
@@ -713,10 +724,16 @@ class Base_Loader(STOQS_Loader):
                 try:
                     depths[pname] = self.ds[self.ds[pname].keys()[2]][:]                # TODO lookup more precise depth from conversion from pressure
                 except IndexError:
-                    logger.warn('Depth coordinate not found at index [2]. Assigning nominal position from EPIC Convention global attributes.')
-                    depths[pname] = [self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']]
-                    nomLats[pname] = self.ds.attributes['NC_GLOBAL']['latitude']
-                    nomLons[pname] = self.ds.attributes['NC_GLOBAL']['longitude']
+                    logger.warn('Depth coordinate not found at index [2]. Looking for nominal position from EPIC Convention global attributes.')
+                    try:
+                        depths[pname] = [self.ds.attributes['NC_GLOBAL']['nominal_instrument_depth']]
+                        nomLats[pname] = self.ds.attributes['NC_GLOBAL']['latitude']
+                        nomLons[pname] = self.ds.attributes['NC_GLOBAL']['longitude']
+                    except KeyError:
+                        logger.warn('EPIC nominal position not found in global attributes. Assigning from variables.')
+                        depths[pname] = self.ds['depth'][0]
+                        nomLats[pname] = self.ds['lat'][0][0]
+                        nomLons[pname] = self.ds['lon'][0][0]
 
                 timeUnits[pname] = self.ds[self.ds[pname].keys()[1]].units.lower()
                 if timeUnits[pname] == 'true julian day':
