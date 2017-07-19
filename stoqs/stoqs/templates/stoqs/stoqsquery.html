@@ -112,7 +112,7 @@
     <![endif]-->
 
     <!-- The fav and touch icons -->
-    <link rel="shortcut icon" href="{{STATIC_URL}}media/favicon.ico">
+    <link rel="shortcut icon" href="{{STATIC_URL}}images/stoqs_favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-114-precomposed.png">
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-72-precomposed.png">
     <link rel="apple-touch-icon-precomposed" href="{{STATIC_URL}}bootstrap/ico/apple-touch-icon-57-precomposed.png">
@@ -153,12 +153,8 @@
               <li><a id="permalink" data-toggle="modal" href="#permalink-popup" data-action="{% url 'stoqs:generate_permalink' dbAlias=request.META.dbAlias %}">
                 <i class="icon-eye-open icon-white"></i> Share this view</a></li>
             </ul>
-            <ul class="nav">
-              <li>
-                <a href="https://github.com/stoqs/stoqs" target="_new">
-                <i class="icon-edit icon-white"></i> STOQS Software</a>
-              </li>
-            </ul>
+            <a class="brand" href="https://github.com/stoqs/stoqs" style="padding-top:6px;" target="_new" title="STOQS GitHub">
+            <img src="{{STATIC_URL}}images/STOQS_logo_gray1_24.png" alt="STOQS GitHub"></a>
             <!--
             <form action="">
                 <input type="text" placeholder="Search" />
