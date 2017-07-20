@@ -1402,7 +1402,8 @@ class STOQSQManager(object):
                 parameterGroups = getParameterGroups(self.request.META['dbAlias'], parameter)
             if self.kwargs['parameterplot'][1]:
                 platformName = self.kwargs['parameterplot'][1]
-            self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
+            if parameterID:
+                self.mpq.buildMPQuerySet(*self.args, **self.kwargs)
       
         if 'parametercontourplot' in self.kwargs:
             if self.kwargs['parametercontourplot'][0]:
@@ -1412,7 +1413,8 @@ class STOQSQManager(object):
             if self.kwargs['parametercontourplot'][1]:
                 contourplatformName = self.kwargs['parametercontourplot'][1]
             self.kwargs['parameterplot_id'] = contourparameterID
-            self.contour_mpq.buildMPQuerySet(*self.args, **self.kwargs)
+            if contourparameterID:
+                self.contour_mpq.buildMPQuerySet(*self.args, **self.kwargs)
       
         if parameterID or platformName or contourparameterID or contourplatformName:
             pass
