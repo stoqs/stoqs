@@ -144,8 +144,8 @@ class CCELoader(LoadScript):
                                     platformColor = self.colors[platformName.lower()],
                                     platformTypeName = 'mooring',
                                     stride = stride,
-                                    startDatetime = self.ccebin_startDatetime,
-                                    endDatetime = self.ccebin_endDatetime,
+                                    startDatetime = self.ccebin_start_datetime,
+                                    endDatetime = self.ccebin_end_datetime,
                                     dataStartDatetime = dataStartDatetime)
 
             loader.include_names = self.ccebin_parms
