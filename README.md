@@ -55,10 +55,16 @@ Visit your server's STOQS User Interface using your host computer's browser:
     http://localhost:8000
 
 More instructions are in the doc/instructions directory &mdash; see [LOADING](doc/instructions/LOADING.md) 
-for how to load your own data and [CONTRIBUTING](doc/instructions/CONTRIBUTING.md) for how to share your work.
-See example [Jupyter Notebooks](http://nbviewer.jupyter.org/github/stoqs/stoqs/blob/master/stoqs/contrib/notebooks)
- that demonstrate specific analyses and 
-visualizations that cannot be accomplished in the STOQS User Interface.
+for specifics on loading your own data. For example, you may create your own database of an archived MBARI campaign:
+
+    cd stoqs
+    ln -s mbari_campaigns.py campaigns.py
+    loaders/load.py --db stoqs_cce2015
+
+You are encouraged to contribute to the STOQS project! Please see [CONTRIBUTING](doc/instructions/CONTRIBUTING.md)
+for how to share your work.  Also, see example 
+[Jupyter Notebooks](http://nbviewer.jupyter.org/github/stoqs/stoqs/blob/master/stoqs/contrib/notebooks)
+that demonstrate specific analyses and visualizations that go beyond the capabilities of the STOQS User Interface.
 Visit the [STOQS Wiki pages](https://github.com/stoqs/stoqs/wiki) for updates and links to presentations.
 The [stoqs-discuss](https://groups.google.com/forum/#!forum/stoqs-discuss) list in Google Groups is also 
 a good place to ask questions and engage in discussion with the STOQS user and developer communities.
