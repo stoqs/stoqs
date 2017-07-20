@@ -256,7 +256,7 @@ class CANONLoader(LoadScript):
         self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_ahi.x3d', pName,
                                   scalefactor=2)
 
-      def loadOpah(self, stride=None):
+    def loadOpah(self, stride=None):
         '''
          Opah specific load functions
         '''
