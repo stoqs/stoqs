@@ -173,6 +173,7 @@ class CANONLoader(LoadScript):
         '''
         Daphne specific load functions
         '''
+        pName = 'daphne'
         stride = stride or self.stride
         for (aName, f) in zip([ a + getStrideText(stride) for a in self.daphne_files], self.daphne_files):
             url = self.daphne_base + f
@@ -181,7 +182,7 @@ class CANONLoader(LoadScript):
             try:
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                          'Daphne', self.colors['daphne'], 'auv', 'AUV mission',
+                                          pName, self.colors['daphne'], 'auv', 'AUV mission',
                                           self.daphne_parms, self.dbAlias, stride, 
                                           grdTerrain=self.grdTerrain, command_line_args=self.args,
                                           plotTimeSeriesDepth=0.0)
@@ -204,7 +205,7 @@ class CANONLoader(LoadScript):
             try:
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName, 
-                                          'Makai', self.colors['makai'], 'auv', 'AUV mission',
+                                          pName, self.colors['makai'], 'auv', 'AUV mission',
                                           self.makai_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain, 
                                           command_line_args=self.args, plotTimeSeriesDepth=0.0)
             except DAPloaders.NoValidData:
@@ -226,7 +227,7 @@ class CANONLoader(LoadScript):
             try:
                 # Set stride to 1 for telemetered data
                 DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
-                                          'Aku', self.colors['aku'], 'auv', 'AUV mission',
+                                          pName, self.colors['aku'], 'auv', 'AUV mission',
                                           self.aku_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                           command_line_args=self.args, plotTimeSeriesDepth=0.0)
             except DAPloaders.NoValidData:
@@ -236,30 +237,32 @@ class CANONLoader(LoadScript):
                                   scalefactor=2)
 
     def loadAhi(self, stride=None):
-      '''
-      Ahi specific load functions
-      '''
-      stride = stride or self.stride
-      for (aName, f) in zip([a + getStrideText(stride) for a in self.ahi_files], self.ahi_files):
-        url = self.ahi_base + f
-        # shorten the activity names
-        aName = aName.rsplit('/', 1)[-1]
-        try:
-          # Set stride to 1 for telemetered data
-          DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
-                                    'Ahi', self.colors['ahi'], 'auv', 'AUV mission',
-                                    self.ahi_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
-                                    command_line_args=self.args, plotTimeSeriesDepth=0.0)
-        except DAPloaders.NoValidData:
-          self.logger.info("No valid data in %s" % url)
+        '''
+        Ahi specific load functions
+        '''
+        pName = 'ahi'
+        stride = stride or self.stride
+        for (aName, f) in zip([a + getStrideText(stride) for a in self.ahi_files], self.ahi_files):
+          url = self.ahi_base + f
+          # shorten the activity names
+          aName = aName.rsplit('/', 1)[-1]
+          try:
+            # Set stride to 1 for telemetered data
+            DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
+                                      pName, self.colors['ahi'], 'auv', 'AUV mission',
+                                      self.ahi_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
+                                      command_line_args=self.args, plotTimeSeriesDepth=0.0)
+          except DAPloaders.NoValidData:
+            self.logger.info("No valid data in %s" % url)
 
-        self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_ahi.x3d', pName,
-                                  scalefactor=2)
+          self.addPlatformResources('http://stoqs.mbari.org/x3d/lrauv/lrauv_ahi.x3d', pName,
+                                    scalefactor=2)
 
     def loadOpah(self, stride=None):
         '''
          Opah specific load functions
         '''
+        pName = 'opah'
         stride = stride or self.stride
         for (aName, f) in zip([a + getStrideText(stride) for a in self.opah_files], self.opah_files):
           url = self.opah_base + f
@@ -268,7 +271,7 @@ class CANONLoader(LoadScript):
           try:
             # Set stride to 1 for telemetered data
             DAPloaders.runLrauvLoader(url, self.campaignName, self.campaignDescription, aName,
-                                      'Opah', self.colors['opah'], 'auv', 'AUV mission',
+                                      pName, self.colors['opah'], 'auv', 'AUV mission',
                                       self.opah_parms, self.dbAlias, stride, grdTerrain=self.grdTerrain,
                                       command_line_args=self.args, plotTimeSeriesDepth=0.0)
           except DAPloaders.NoValidData:
