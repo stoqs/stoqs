@@ -313,7 +313,7 @@ class PlatformsBiPlot(BiPlot):
         parser.add_argument('--extend', action='store', help='Extend the data extent for the map boundaries by this value in degrees', type=float)
         parser.add_argument('--extent', action='store', help='Space separated specific map boundary in degrees: ll_lon ll_lat ur_lon ur_lat', 
                 nargs=4, default=[])
-        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1)
+        parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
         self.args = parser.parse_args()
         self.commandline = ""
