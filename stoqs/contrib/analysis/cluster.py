@@ -146,6 +146,99 @@ class Clusterer(BiPlot):
                     activity=a, measuredparameter=mp_y, resource=r)
 
 
+    def saveClustersSeq(self, labeledGroupName):
+        '''
+        Save the set of labels in MeasuredParameterResource. Accepts 2 input vectors. (TODO: generalize to N input vectors);
+        description is used to describe the criteria for assigning this label. The typeName and typeDecription may be used to
+        refer to the grouping, and associate via the grouping the other labels made in the heuristic applied.
+        '''
+
+        clResource = c.saveCommand()
+        clf = DBSCAN()
+
+        kwargs = {}
+        kwargs[self.args.interval.split('=')[0]] = int(self.args.interval.split('=')[1])
+        interval = timedelta(**kwargs)
+        start = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
+        end = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
+
+        sdt = start
+        edt = start + interval
+        stepnumber = 0
+
+        while edt <= end:
+            pvDict = {}
+            try:
+                x_ids, y_ids, x, y, _ = self._getPPData(sdt, edt, self.args.platform, self.args.inputs[0],
+                                                        self.args.inputs[1], pvDict, returnIDs=True, sampleFlag=False)
+
+            except NoPPDataException as e:
+                print('Just so you know: '+str(e))
+                sdt = sdt + interval
+                edt = edt + interval
+                continue
+
+            x = np.array(x)
+            y = np.array(y)
+            X = np.column_stack((x,y))
+
+            x_ids = np.array(x_ids)
+            y_ids=np.array(y_ids)
+            X_ids = np.column_stack((x_ids,y_ids))
+
+            clf.fit(X)
+
+            y_clusters = clf.labels_
+
+            # assign each cluster a letter
+            for i in range(-1, max(y_clusters) + 1):
+                letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                if i == -1:
+                    label = 'OUTLIER'
+                else:
+                    label = letters[i]
+
+                cluster = X[y_clusters == i]
+                cluster_ids = X_ids[y_clusters == i]
+
+                try:
+                    # Label
+                    rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=(labeledGroupName + '_' + str(stepnumber)),
+                                                                                    description='unsupervised classification')
+                    r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
+
+                    # Label's description
+                    #rdt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
+                    #rd, _ = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=label,
+                    #                                                                 resourcetype=rdt)
+                    #rr = ResourceResource(fromresource=r, toresource=rd)
+                    #rr.save(using=self.args.database)
+                    # Associate with commandlineResource
+                    ResourceResource.objects.using(self.args.database).get_or_create(fromresource=r, toresource=clResource)
+
+                except IntegrityError as e:
+                    print(str(e))
+                    print("Ignoring")
+
+                # Associate MeasuredParameters with Resource
+                if self.args.verbose:
+                    print("  Saving %d values in cluster '%s'" % (len(cluster), label))
+                for x_id, y_id in cluster_ids:
+
+                    a = self.getActivity(x_id, y_id)
+                    mp_x = MeasuredParameter.objects.using(self.args.database).get(id=x_id)
+                    mp_y = MeasuredParameter.objects.using(self.args.database).get(id=y_id)
+                    MeasuredParameterResource.objects.using(self.args.database).get_or_create(
+                        activity=a, measuredparameter=mp_x, resource=r)
+                    MeasuredParameterResource.objects.using(self.args.database).get_or_create(
+                        activity=a, measuredparameter=mp_y, resource=r)
+
+            sdt = sdt + interval
+            edt = edt + interval
+            stepnumber = stepnumber + 1
+
+
+
     def removeLabels(self, labeledGroupName):  # pragma: no cover
         '''
         Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Labeled Plankton').
@@ -159,6 +252,8 @@ class Clusterer(BiPlot):
         mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
             resource__resourcetype__name=labeledGroupName
             ).select_related('resource')
+
+        #resourceType = ResourceType.objects.using(self.args.database).get(name=labeledGroupName)
 
         if self.args.verbose > 1:
             print("  Removing MeasuredParameterResources with labelGroupName = %s" % (labeledGroupName))
@@ -174,11 +269,59 @@ class Clusterer(BiPlot):
         for r in set(rs):
             r.delete(using=self.args.database)
 
+        #resourceType.delete(using=self.args.database)
+
+
+    def removeLabelsSeq(self, labeledGroupName):  # pragma: no cover
+        '''
+        Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Labeled Plankton').
+        Restrict deletion to the other passed in options, if specified: label is like 'diatom', description is like
+        'Using Platform dorado, Parameter {'salinity': ('33.65', '33.70')} from 20130916T124035 to 20130919T233905'
+        (commandline is too long to show in this doc string - see examples in usage note).  Note: Some metadatda
+        ResourceTypes will not be removed even though the Resources that use them will be removed.
+        '''
+        # Remove MeasuredParameter associations with Resource (Labeled data)
+
+        stepnumber = 0
+        steps = ResourceType.objects.using(self.args.database).filter(resource__resourcetype__name__contains=labeledGroupName).count()
+
+        for step in range(steps + 1):
+
+            try:
+                mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
+                    resource__resourcetype__name=(labeledGroupName + '_' + str(stepnumber))
+                    ).select_related('resource')
+
+                rt = ResourceType.objects.using(self.args.database).get(name=(labeledGroupName + '_' + str(stepnumber)))
+
+                if self.args.verbose > 1:
+                    print(("  Removing MeasuredParameterResources with labelGroupName = %s" + '_' + str(stepnumber)) % (labeledGroupName))
+
+                rs = []
+                for mpr in mprs:
+                    rs.append(mpr.resource)
+                    mpr.delete(using=self.args.database)
+
+                #if self.args.verbose > 1:
+                #    print("  Removing Resources associated with label = %s'" % label)
+
+                for r in set(rs):
+                    r.delete(using=self.args.database)
+
+                rt.delete(using=self.args.database)
+
+                stepnumber = stepnumber + 1
+
+            except:
+                stepnumber = stepnumber + 1
+
+
+    """
     def doModelsScore(self, labeledGroupName):
         '''
         Print scores for several different clusterers
         '''
-        X, y = self.loadData()
+        #X, y = self.loadData()
 
         if X.any() and y.any():
             for name, clf in list(self.clusterers.items()):
@@ -186,6 +329,7 @@ class Clusterer(BiPlot):
                 print("%-18s accuracy: %0.2f (+/- %0.2f)" % (name, scores.mean(), scores.std() * 2))
         else:
             raise Exception('No data returned for labeledGroupName = %s' % labeledGroupName)
+    """
 
 
     def loadData(self): # pragma: no cover
@@ -371,4 +515,6 @@ if __name__ == '__main__':
 #c.clusterSeq()
 #c.saveClusters('Cluster label')
 #c.loadData()
-c.removeLabels('Cluster label')
+#c.removeLabels('Cluster label')
+#c.saveClustersSeq('Cluster label')
+c.removeLabelsSeq('Cluster label')
