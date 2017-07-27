@@ -47,10 +47,10 @@ from sklearn.model_selection import train_test_split, cross_val_score
 #from sklearn.cluster import KMeans
 #from sklearn.cluster import AffinityPropagation
 #from sklearn.cluster import SpectralClustering
-#from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
-#from sklearn.cluster import Birch
-#from sklearn.cluster import MeanShift
+from sklearn.cluster import Birch
+from sklearn.cluster import MeanShift
 from sklearn.mixture import GaussianMixture
 import pickle
 
@@ -64,11 +64,11 @@ class Clusterer(BiPlot):
     To hold methods and data to support clustering of measurements in a STOQS database.
     See http://scikit-learn.org/stable/modules/clustering.html#overview-of-clustering-methods
     '''
-    #clusterers = {'Hierarchical_Clustering': AgglomerativeClustering(),
-    #              'DBSCAN': DBSCAN(),
-    #              'Mean_Shift': MeanShift(),
-    #              'Birch': Birch()
-    #              }
+    algorithms = {'Hierarchical_Clustering': AgglomerativeClustering(),
+                  'DBSCAN': DBSCAN(),
+                  'Mean_Shift': MeanShift(),
+                  'Birch': Birch()
+                  }
 
     def getActivity(self, mpx, mpy):
         '''
@@ -148,13 +148,14 @@ class Clusterer(BiPlot):
 
     def saveClustersSeq(self, labeledGroupName):
         '''
-        Save the set of labels in MeasuredParameterResource. Accepts 2 input vectors. (TODO: generalize to N input vectors);
-        description is used to describe the criteria for assigning this label. The typeName and typeDecription may be used to
-        refer to the grouping, and associate via the grouping the other labels made in the heuristic applied.
+        Save the set of labels in MeasuredParameterResource for each step as the method flips through the data in specified
+        time intervals. Accepts 2 input vectors. (TODO: generalize to N input vectors); description is used to describe
+        the criteria for assigning this label. The typeName and typeDecription may be used to refer to the grouping, and
+        associate via the grouping the other labels made in the heuristic applied.
         '''
 
         clResource = c.saveCommand()
-        clf = DBSCAN()
+        clf = self.algorithms[self.args.algorithm]
 
         kwargs = {}
         kwargs[self.args.interval.split('=')[0]] = int(self.args.interval.split('=')[1])
@@ -274,13 +275,12 @@ class Clusterer(BiPlot):
 
     def removeLabelsSeq(self, labeledGroupName):  # pragma: no cover
         '''
-        Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Labeled Plankton').
+        Delete sequentially labeled MeasuredParameterResources created by the saveClustersSeq method that have ResourceType.name=labeledGroupName (such as 'Labeled Plankton').
         Restrict deletion to the other passed in options, if specified: label is like 'diatom', description is like
         'Using Platform dorado, Parameter {'salinity': ('33.65', '33.70')} from 20130916T124035 to 20130919T233905'
         (commandline is too long to show in this doc string - see examples in usage note).  Note: Some metadatda
         ResourceTypes will not be removed even though the Resources that use them will be removed.
         '''
-        # Remove MeasuredParameter associations with Resource (Labeled data)
 
         stepnumber = 0
         steps = ResourceType.objects.using(self.args.database).filter(resource__resourcetype__name__contains=labeledGroupName).count()
@@ -316,22 +316,6 @@ class Clusterer(BiPlot):
                 stepnumber = stepnumber + 1
 
 
-    """
-    def doModelsScore(self, labeledGroupName):
-        '''
-        Print scores for several different clusterers
-        '''
-        #X, y = self.loadData()
-
-        if X.any() and y.any():
-            for name, clf in list(self.clusterers.items()):
-                scores = cross_val_score(clf, X, y, cv=5)
-                print("%-18s accuracy: %0.2f (+/- %0.2f)" % (name, scores.mean(), scores.std() * 2))
-        else:
-            raise Exception('No data returned for labeledGroupName = %s' % labeledGroupName)
-    """
-
-
     def loadData(self): # pragma: no cover
         '''
         Retrieve data from the database and return the x, and y values (in list form) that the scikit-learn package uses
@@ -358,8 +342,8 @@ class Clusterer(BiPlot):
         sci-kit learn, and identify clusters in the data.
         '''
 
-        #clf = self.clusterers[self.args.clusterer]
-        clf = DBSCAN()
+        clf = self.algorithms[self.args.algorithm]
+
 
         x, y, x_ids, y_ids = self.loadData()
         x = np.array(x)
@@ -389,8 +373,8 @@ class Clusterer(BiPlot):
         Flip through the data at a specified time interval and identify clusters.
         '''
 
-        #clf = self.clusterers[self.args.clusterer]
-        clf = DBSCAN()
+        clf = self.algorithms[self.args.algorithm]
+
 
         kwargs = {}
         kwargs[self.args.interval.split('=')[0]] = int(self.args.interval.split('=')[1])
@@ -458,8 +442,6 @@ class Clusterer(BiPlot):
 
         parser.add_argument('--createClusters', action='store_true',
                             help='Fit a model to data clusters')
-        parser.add_argument('--doModelsScore', action='store_true',
-                            help='Print scores for fits of various models')
         parser.add_argument('--inputs', action='store',
                             help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format',
@@ -474,8 +456,8 @@ class Clusterer(BiPlot):
                                                                'data, in format "days=x,seconds=x,minutes=x,hours=x,'
                                                                'weeks=x" ', default='days=0, seconds=0, minutes=10, '
                                                                'hours=0, weeks=0') # default 10 minutes
-        #parser.add_argument('--clusterer', choices=list(self.clusterers.keys()),
-        #                    help='Specify classifier to use with --createClassifier option')
+        parser.add_argument('--algorithm', choices=list(self.algorithms.keys()),
+                            help='Specify classifier to use with --createClassifier option')
         #parser.add_argument('--n_clusters', action='store',
         #                    help='Number of clusters desired', default=2)
 
@@ -485,13 +467,6 @@ class Clusterer(BiPlot):
         self.args = parser.parse_args()
         self.commandline = ' '.join(sys.argv)
 
-        # Conditional tests
-        if self.args.doModelsScore:
-            if not c.args.classes:
-                parser.error('--doModelsScore requires --classes')
-            if not c.args.inputs:
-                parser.error('--doModelsScore requires --inputs')
-
 
 if __name__ == '__main__':
 
@@ -500,9 +475,6 @@ if __name__ == '__main__':
 
     if c.args.platform and c.args.inputs:
         c.loadData()
-
-    elif c.args.doModelsScore:
-        c.doModelsScore(' '.join((LABELED, c.args.groupName)))
 
     elif c.args.createClusters:
         c.createClusters(' '.join((LABELED, c.args.groupName)))
@@ -517,4 +489,5 @@ if __name__ == '__main__':
 #c.loadData()
 #c.removeLabels('Cluster label')
 #c.saveClustersSeq('Cluster label')
-c.removeLabelsSeq('Cluster label')
+#c.removeLabelsSeq('Cluster label')
+#c.loadData()
