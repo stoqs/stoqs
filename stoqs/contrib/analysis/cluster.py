@@ -3,8 +3,7 @@
 """
 Complement to the classify.py script.
 
-Script to implement unsupervised machine learning on data.
-Involves clustering data using unsupervised machine learning.
+Script to implement unsupervised machine learning on data using clustering algorithms.
 
 Rachel Kahn
 MBARI July 2017
@@ -43,9 +42,8 @@ from utils.STOQSQManager import LABEL, DESCRIPTION, COMMANDLINE
 from contrib.analysis import BiPlot, NoPPDataException
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, cross_val_score
 #from sklearn.cluster import KMeans
-#from sklearn.cluster import AffinityPropagation
+#from sklearn.cluster import AffinityPropagationscore
 #from sklearn.cluster import SpectralClustering
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import DBSCAN
@@ -96,8 +94,8 @@ class Clusterer(BiPlot):
     def saveClusters(self, labeledGroupName):
         '''
         Save the set of labels in MeasuredParameterResource. Accepts 2 input vectors. (TODO: generalize to N input vectors);
-        description is used to describe the criteria for assigning this label. The typeName and typeDecription may be used to
-        refer to the grouping, and associate via the grouping the other labels made in the heuristic applied.
+        description is used to describe the criteria for assigning this label. The labeledGroupName may be used to
+        refer to the grouping, and the clusters are each labeled with a letter from A-Z.
         '''
         X, y_clusters, X_ids = c.createClusters()
         clResource = c.saveCommand()
@@ -119,13 +117,6 @@ class Clusterer(BiPlot):
                                                                                 description='unsupervised classification')
                 r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
 
-                # Label's description
-                #rdt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
-                #rd, _ = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=label,
-                #                                                                 resourcetype=rdt)
-                #rr = ResourceResource(fromresource=r, toresource=rd)
-                #rr.save(using=self.args.database)
-                # Associate with commandlineResource
                 ResourceResource.objects.using(self.args.database).get_or_create(fromresource=r, toresource=clResource)
 
             except IntegrityError as e:
@@ -148,10 +139,10 @@ class Clusterer(BiPlot):
 
     def saveClustersSeq(self, labeledGroupName):
         '''
-        Save the set of labels in MeasuredParameterResource for each step as the method flips through the data in specified
-        time intervals. Accepts 2 input vectors. (TODO: generalize to N input vectors); description is used to describe
-        the criteria for assigning this label. The typeName and typeDecription may be used to refer to the grouping, and
-        associate via the grouping the other labels made in the heuristic applied.
+        Save the set of labels in MeasuredParameterResource for each step as the method flips through the data in a specified
+        time interval. Accepts 2 input vectors. (TODO: generalize to N input vectors). The labeledGroupName may be used to refer to the grouping,
+        and is given a number (appended to the labeledGroupName for each time interval step. Within each grouping, each cluster is labeled with a
+        letter from A-Z.
         '''
 
         clResource = c.saveCommand()
@@ -208,13 +199,6 @@ class Clusterer(BiPlot):
                                                                                     description='unsupervised classification')
                     r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
 
-                    # Label's description
-                    #rdt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=LABEL, description='metadata')
-                    #rd, _ = Resource.objects.using(self.args.database).get_or_create(name=DESCRIPTION, value=label,
-                    #                                                                 resourcetype=rdt)
-                    #rr = ResourceResource(fromresource=r, toresource=rd)
-                    #rr.save(using=self.args.database)
-                    # Associate with commandlineResource
                     ResourceResource.objects.using(self.args.database).get_or_create(fromresource=r, toresource=clResource)
 
                 except IntegrityError as e:
@@ -242,19 +226,14 @@ class Clusterer(BiPlot):
 
     def removeLabels(self, labeledGroupName):  # pragma: no cover
         '''
-        Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Labeled Plankton').
-        Restrict deletion to the other passed in options, if specified: label is like 'diatom', description is like
-        'Using Platform dorado, Parameter {'salinity': ('33.65', '33.70')} from 20130916T124035 to 20130919T233905'
-        (commandline is too long to show in this doc string - see examples in usage note).  Note: Some metadatda
-        ResourceTypes will not be removed even though the Resources that use them will be removed.
+        Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Cluster label').
+        Note: Some metadatda ResourceTypes will not be removed even though the Resources that use them will be removed.
         '''
         # Remove MeasuredParameter associations with Resource (Labeled data)
 
         mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
             resource__resourcetype__name=labeledGroupName
             ).select_related('resource')
-
-        #resourceType = ResourceType.objects.using(self.args.database).get(name=labeledGroupName)
 
         if self.args.verbose > 1:
             print("  Removing MeasuredParameterResources with labelGroupName = %s" % (labeledGroupName))
@@ -264,22 +243,15 @@ class Clusterer(BiPlot):
             rs.append(mpr.resource)
             mpr.delete(using=self.args.database)
 
-        #if self.args.verbose > 1:
-        #    print("  Removing Resources associated with label = %s'" % label)
-
         for r in set(rs):
             r.delete(using=self.args.database)
 
-        #resourceType.delete(using=self.args.database)
 
 
     def removeLabelsSeq(self, labeledGroupName):  # pragma: no cover
         '''
-        Delete sequentially labeled MeasuredParameterResources created by the saveClustersSeq method that have ResourceType.name=labeledGroupName (such as 'Labeled Plankton').
-        Restrict deletion to the other passed in options, if specified: label is like 'diatom', description is like
-        'Using Platform dorado, Parameter {'salinity': ('33.65', '33.70')} from 20130916T124035 to 20130919T233905'
-        (commandline is too long to show in this doc string - see examples in usage note).  Note: Some metadatda
-        ResourceTypes will not be removed even though the Resources that use them will be removed.
+        Delete sequentially labeled MeasuredParameterResources created by the saveClustersSeq method that have ResourceType.name=labeledGroupName.
+        Note: Some metadatda ResourceTypes will not be removed even though the Resources that use them will be removed.
         '''
 
         stepnumber = 0
@@ -302,9 +274,6 @@ class Clusterer(BiPlot):
                     rs.append(mpr.resource)
                     mpr.delete(using=self.args.database)
 
-                #if self.args.verbose > 1:
-                #    print("  Removing Resources associated with label = %s'" % label)
-
                 for r in set(rs):
                     r.delete(using=self.args.database)
 
@@ -318,7 +287,7 @@ class Clusterer(BiPlot):
 
     def loadData(self): # pragma: no cover
         '''
-        Retrieve data from the database and return the x, and y values (in list form) that the scikit-learn package uses
+        Retrieve data from the database and return the x, and y values and IDs (in list form) that the scikit-learn package uses
         '''
         sdt = datetime.strptime(self.args.start, '%Y%m%dT%H%M%S')
         edt = datetime.strptime(self.args.end, '%Y%m%dT%H%M%S')
@@ -355,10 +324,6 @@ class Clusterer(BiPlot):
         X_ids = np.column_stack((x_ids, y_ids))
 
         clf.fit(X)
-
-        #score = clf.score(X)
-        #if self.args.verbose:
-        #    print("  score = %f" % score)
 
         y_clusters = clf.labels_
 
@@ -436,10 +401,6 @@ class Clusterer(BiPlot):
         parser.add_argument('-p', '--platform', action='store', help='STOQS Platform name for training data access')
         parser.add_argument('-d', '--database', action='store', help='Database alias', default='stoqs_september2013_o',
                             required=True)
-        ##parser.add_argument('--minDepth', action='store', help='Minimum depth for data queries', default=None, type=float)
-        ##parser.add_argument('--maxDepth', action='store', help='Maximum depth for data queries', default=None, type=float)
-
-
         parser.add_argument('--createClusters', action='store_true',
                             help='Fit a model to data clusters')
         parser.add_argument('--inputs', action='store',
@@ -458,9 +419,6 @@ class Clusterer(BiPlot):
                                                                'hours=0, weeks=0') # default 10 minutes
         parser.add_argument('--algorithm', choices=list(self.algorithms.keys()),
                             help='Specify classifier to use with --createClassifier option')
-        #parser.add_argument('--n_clusters', action='store',
-        #                    help='Number of clusters desired', default=2)
-
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1, 2, 3], type=int,
                             help='Turn on verbose output. Higher number = more output.', const=1, default=0)
 
@@ -481,13 +439,3 @@ if __name__ == '__main__':
 
     else:
         print("fix your inputs")
-
-#c.createClusters()
-#c.saveCommand()
-#c.clusterSeq()
-#c.saveClusters('Cluster label')
-#c.loadData()
-#c.removeLabels('Cluster label')
-#c.saveClustersSeq('Cluster label')
-#c.removeLabelsSeq('Cluster label')
-#c.loadData()
