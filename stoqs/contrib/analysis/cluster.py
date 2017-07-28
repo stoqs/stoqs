@@ -229,7 +229,6 @@ class Clusterer(BiPlot):
         Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Cluster label').
         Note: Some metadatda ResourceTypes will not be removed even though the Resources that use them will be removed.
         '''
-        # Remove MeasuredParameter associations with Resource (Labeled data)
 
         mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
             resource__resourcetype__name=labeledGroupName
