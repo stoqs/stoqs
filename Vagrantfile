@@ -3,7 +3,7 @@
 
 Vagrant.configure("2") do |config|
   config.vm.provider "virtualbox" do |v|
-    v.customize ["modifyvm", :id, "--memory", "2048"]
+    v.customize ["modifyvm", :id, "--memory", "3072"]
     v.customize ["modifyvm", :id, "--cpus", "2"]
     v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
@@ -11,7 +11,7 @@ Vagrant.configure("2") do |config|
     v.customize ["modifyvm", :id, "--vram", "16"]
     v.customize ["modifyvm", :id, "--accelerate3d", "on"]
   end
-  config.vm.box = "puppetlabs/centos-7.0-64-puppet"
+  config.vm.box = "bento/centos-7.2"
   config.ssh.forward_agent = true
   config.vm.network :forwarded_port, host: 8000, guest: 8000
   config.vm.network :forwarded_port, host: 8080, guest: 80
