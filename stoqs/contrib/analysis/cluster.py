@@ -38,7 +38,6 @@ from textwrap import wrap
 from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource, \
     ResourceResource
 from utils.STOQSQManager import LABEL, DESCRIPTION, COMMANDLINE
-
 from contrib.analysis import BiPlot, NoPPDataException
 
 from sklearn.preprocessing import StandardScaler
@@ -97,6 +96,7 @@ class Clusterer(BiPlot):
         description is used to describe the criteria for assigning this label. The labeledGroupName may be used to
         refer to the grouping, and the clusters are each labeled with a letter from A-Z.
         '''
+
         X, y_clusters, X_ids = c.createClusters()
         clResource = c.saveCommand()
 
@@ -229,6 +229,7 @@ class Clusterer(BiPlot):
         Delete labeled MeasuredParameterResources that have ResourceType.name=labeledGroupName (such as 'Cluster label').
         Note: Some metadatda ResourceTypes will not be removed even though the Resources that use them will be removed.
         '''
+
 
         mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
             resource__resourcetype__name=labeledGroupName
@@ -387,10 +388,16 @@ class Clusterer(BiPlot):
         from argparse import RawTextHelpFormatter
 
         examples = 'Example machine learning workflow:' + '\n\n'
-        examples += "Identify clusters in data:\n"
-        examples += sys.argv[0] + (" --createClusters --database stoqs_september2013"
+        examples += "Identify clusters in data and save to the database:\n"
+        examples += sys.argv[0] + (" --saveClusters --database stoqs_september2013"
                                    " --platform Slocum_260 --start 20130923T124038 --end 20130923T150613"
-                                   " --inputs optical_backscatter700nm fluorescence -v\n\n")
+                                   " --inputs optical_backscatter700nm fluorescence --algorithm DBSCAN "
+                                   "--labeledGroupName DBSCANclusters -v\n\n")
+        examples += "Remove labels from the database\n"
+        examples += sys.argv[0] + (" --removeLabels --database stoqs_september2013"
+                                   " --platform Slocum_260 --start 20130923T124038 --end 20130923T150613"
+                                   " --inputs optical_backscatter700nm fluorescence "
+                                   "--labeledGroupName DBSCANclusters -v\n\n")
         examples += '\nIf running from cde-package replace ".py" with ".py.cde" in the above list.'
 
         parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
@@ -400,24 +407,28 @@ class Clusterer(BiPlot):
         parser.add_argument('-p', '--platform', action='store', help='STOQS Platform name for training data access')
         parser.add_argument('-d', '--database', action='store', help='Database alias', default='stoqs_september2013_o',
                             required=True)
-        parser.add_argument('--createClusters', action='store_true',
-                            help='Fit a model to data clusters')
+        parser.add_argument('--createClusters', action='store_true', help='Identify clusters in data')
+        parser.add_argument('--clusterSeq', action='store_true', help='Flip through data at specified interval and identify data clusters')
+        parser.add_argument('--saveClusters', action='store_true', help='Identify clusters in data and save labels to database with --labeledGroupName option')
+        parser.add_argument('--saveClusersSeq', action='store_true', help='Flip through data at specified interval, identify data clusters,'
+                                                                          'and save labels to database with --labeledGroupName option')
+        parser.add_argument('--removeLabels', action='store_true', help='Remove Labels created by --createClusters with --groupName option')
+        parser.add_argument('--removeLabelsSeq', action='store_true', help='Remove Labels created by --createClustersSeq with --groupName option')
         parser.add_argument('--inputs', action='store',
                             help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format',
                             default='19000101T000000')
         parser.add_argument('--end', action='store', help='End time in YYYYMMDDTHHMMSS format',
                             default='22000101T000000')
-        parser.add_argument('--test_size', action='store',
-                            help='Proportion of discriminated sample to save as Test set', default=0.4, type=float)
-        parser.add_argument('--train_size', action='store',
-                            help='Proportion of discriminated sample to save as Train set', default=0.4, type=float)
         parser.add_argument('--interval', action='store', help='Time interval for which clusterSeq() flips through the'
-                                                               'data, in format "days=x,seconds=x,minutes=x,hours=x,'
-                                                               'weeks=x" ', default='days=0, seconds=0, minutes=10, '
+                                                               'data, in format "days=x, seconds=x, minutes=x, hours=x,'
+                                                               ' weeks=x" ', default='days=0, seconds=0, minutes=10, '
                                                                'hours=0, weeks=0') # default 10 minutes
         parser.add_argument('--algorithm', choices=list(self.algorithms.keys()),
-                            help='Specify classifier to use with --createClassifier option')
+                            help='Specify clustering algorithm to use with --createClusters, --clusterSeq, --saveClusters, '
+                                                                'or --saveClusterSeq option')
+        parser.add_argument('--labeledGroupName', action='store', help='Name used to refer to the grouping, such as '
+                                                                '"Cluster label" or "DBSCAN labels"')
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1, 2, 3], type=int,
                             help='Turn on verbose output. Higher number = more output.', const=1, default=0)
 
@@ -430,11 +441,23 @@ if __name__ == '__main__':
     c = Clusterer()
     c.process_command_line()
 
-    if c.args.platform and c.args.inputs:
-        c.loadData()
+    if c.args.createClusters:
+        c.createClusters()
 
-    elif c.args.createClusters:
-        c.createClusters(' '.join((LABELED, c.args.groupName)))
+    elif c.args.clusterSeq:
+        c.clusterSeq()
+
+    elif c.args.saveClusters:
+        c.saveClusters(' '.join((LABELED, c.args.labeledGroupName)))
+
+    elif c.args.saveClustersSeq:
+        c.saveClustersSeq(' '.join((LABELED, c.args.labeledGroupName)))
+
+    elif c.args.removeLabels:
+        c.removeLabels(' '.join((LABELED, c.args.labeledGroupName)))
+
+    elif c.args.removeLabelsSeq:
+        c.removeLabelsSeq(' '.join((LABELED, c.args.labeledGroupName)))
 
     else:
         print("fix your inputs")
