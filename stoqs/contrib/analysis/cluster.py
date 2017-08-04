@@ -240,35 +240,25 @@ class Clusterer(BiPlot):
         Delete sequentially labeled MeasuredParameterResources created by the saveClustersSeq method that have ResourceType.name=labeledGroupName.
         Note: Some metadatda ResourceTypes will not be removed even though the Resources that use them will be removed.
         '''
-        stepnumber = 0
-        steps = ResourceType.objects.using(self.args.database).filter(resource__resourcetype__name__contains=labeledGroupName).count()
+        mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
+            resource__resourcetype__name=labeledGroupName
+            ).select_related('resource')
 
-        for step in range(steps + 1):
+        import pdb; pdb.set_trace()
+        rt = ResourceType.objects.using(self.args.database).get(name=labeledGroupName)
 
-            try:
-                mprs = MeasuredParameterResource.objects.using(self.args.database).filter(
-                    resource__resourcetype__name=(labeledGroupName + '_' + str(stepnumber))
-                    ).select_related('resource')
+        if self.args.verbose > 1:
+            print("Removing MeasuredParameterResources with labelGroupName = %s" % (labeledGroupName,))
 
-                rt = ResourceType.objects.using(self.args.database).get(name=(labeledGroupName + '_' + str(stepnumber)))
+        rs = []
+        for mpr in mprs:
+            rs.append(mpr.resource)
+            mpr.delete(using=self.args.database)
 
-                if self.args.verbose > 1:
-                    print(("  Removing MeasuredParameterResources with labelGroupName = %s" + '_' + str(stepnumber)) % (labeledGroupName))
+        for r in set(rs):
+            r.delete(using=self.args.database)
 
-                rs = []
-                for mpr in mprs:
-                    rs.append(mpr.resource)
-                    mpr.delete(using=self.args.database)
-
-                for r in set(rs):
-                    r.delete(using=self.args.database)
-
-                rt.delete(using=self.args.database)
-
-                stepnumber = stepnumber + 1
-
-            except:
-                stepnumber = stepnumber + 1
+        rt.delete(using=self.args.database)
 
     def loadData(self, sdt, edt): # pragma: no cover
         '''
@@ -392,8 +382,8 @@ class Clusterer(BiPlot):
         parser.add_argument('--saveClusters', action='store_true', help='Identify clusters in data and save labels to database with --labeledGroupName option')
         parser.add_argument('--saveClustersSeq', action='store_true', help='Flip through data at specified interval, identify data clusters,'
                                                                           'and save labels to database with --labeledGroupName option')
-        parser.add_argument('--removeLabels', action='store_true', help='Remove Labels created by --createClusters with --groupName option')
-        parser.add_argument('--removeLabelsSeq', action='store_true', help='Remove Labels created by --createClustersSeq with --groupName option')
+        parser.add_argument('--removeLabels', action='store_true', help='Remove Labels created by --saveClusters with --labeledGroupName option')
+        parser.add_argument('--removeLabelsSeq', action='store_true', help='Remove Labels created by --saveClustersSeq with --labeledGroupName option')
         parser.add_argument('--inputs', action='store',
                             help='List of STOQS Parameter names to use as features, separated by spaces', nargs='*')
         parser.add_argument('--start', action='store', help='Start time in YYYYMMDDTHHMMSS format',
