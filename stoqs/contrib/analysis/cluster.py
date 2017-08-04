@@ -410,7 +410,7 @@ class Clusterer(BiPlot):
         parser.add_argument('--createClusters', action='store_true', help='Identify clusters in data')
         parser.add_argument('--clusterSeq', action='store_true', help='Flip through data at specified interval and identify data clusters')
         parser.add_argument('--saveClusters', action='store_true', help='Identify clusters in data and save labels to database with --labeledGroupName option')
-        parser.add_argument('--saveClusersSeq', action='store_true', help='Flip through data at specified interval, identify data clusters,'
+        parser.add_argument('--saveClustersSeq', action='store_true', help='Flip through data at specified interval, identify data clusters,'
                                                                           'and save labels to database with --labeledGroupName option')
         parser.add_argument('--removeLabels', action='store_true', help='Remove Labels created by --createClusters with --groupName option')
         parser.add_argument('--removeLabelsSeq', action='store_true', help='Remove Labels created by --createClustersSeq with --groupName option')
