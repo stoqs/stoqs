@@ -155,6 +155,8 @@ class Clusterer(BiPlot):
         stepnumber = 0
 
         while edt <= end:
+            if self.args.verbose > 0:
+                print(sdt)
             try:
                 x, y, x_ids, y_ids = self.loadData(sdt, edt)
             except NoPPDataException as e:
@@ -171,7 +173,14 @@ class Clusterer(BiPlot):
             y_ids=np.array(y_ids)
             X_ids = np.column_stack((x_ids,y_ids))
 
-            clf.fit(X)
+            try:
+                clf.fit(X)
+            except ValueError as e:
+                # Likely no clusters returned: Expected n_neighbors > 0. Got 0
+                print(str(e))
+                sdt = sdt + interval
+                edt = edt + interval
+                continue
 
             y_clusters = clf.labels_
 
