@@ -31,6 +31,7 @@ from DAPloaders import Mooring_Loader
 import matplotlib.pyplot as plt
 from matplotlib.colors import rgb2hex
 import numpy as np
+from pydap.client import open_url
 
 def getStrideText(stride):
     '''
@@ -68,6 +69,20 @@ class CCELoader(LoadScript):
     for b, c in zip(ms_names, oranges(np.arange(0, oranges.N, oranges.N/num_ms))):
         colors[b] = rgb2hex(c)[1:]
 
+    def get_start_bed_depths(self):
+        '''Return matching list of starting depths from NetCDF files in self.bed_files
+        '''
+        depths = []
+        for file in self.bed_files:
+            url = os.path.join(self.bed_base, file)
+            print('Getting start depth for {}'. format(url))
+            ds = open_url(url)
+            if ds.attributes['NC_GLOBAL']['featureType'].lower() == 'timeseries':
+                depths.append(ds['depth'][0][0])
+            else:
+                depths.append(ds['depth']['depth'][0][0])
+
+        return depths
 
     def loadBEDS(self, stride=None, featureType='trajectory'):
         '''
@@ -129,8 +144,8 @@ class CCELoader(LoadScript):
                                     platformColor = self.colors[platformName.lower()],
                                     platformTypeName = 'mooring',
                                     stride = stride,
-                                    startDatetime = self.ccebin_startDatetime,
-                                    endDatetime = self.ccebin_endDatetime,
+                                    startDatetime = self.ccebin_start_datetime,
+                                    endDatetime = self.ccebin_end_datetime,
                                     dataStartDatetime = dataStartDatetime)
 
             loader.include_names = self.ccebin_parms

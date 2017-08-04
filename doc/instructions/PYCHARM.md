@@ -12,7 +12,7 @@ Instructions for Setting up PyCharm to work in your VM
 
 ### Setting up PyCharm Project Interpretor and Project Structure (on MacOS)
 
-1. From PyCharmi, open Preferences -> Project: stoqsvm [1] -> Project Interpreter:
+1. From PyCharm, open Preferences -> Project: stoqsvm [1] -> Project Interpreter:
     * Click on the 3-dot icon to the right of the Project Interpreter selector
     * Select 'Add Remote'
     * Check Vagrant
@@ -23,9 +23,13 @@ Instructions for Setting up PyCharm to work in your VM
 
 2. Wait a few minutes for PyCharm to connect to your VM and build its project files (which are kept in the .idea directory)
 
-3. Find the STOQS project files in the Vagrant synced folder dev/stoqsgit
+3. From PyCharm, open Preferences -> Project: stoqsvm [1] -> Project Scructure:
+    * Navigate to dev/stoqsgit/stoqs and right-click on it
+    * Select 'Sources'
 
-4. You may now proceed using either PyCharm or the command line in the VM to work on the STOQS code base
+4. Find the STOQS project files in the Vagrant synced folder dev/stoqsgit
+
+5. You may now proceed using either PyCharm or the command line in the VM to work on the STOQS code base
 
 
 [1]: Your virtual machine directory may have a different name, e.g. 'stoqsvm_python3'

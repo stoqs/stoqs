@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 # Remove all temporary files produced by operating the STOQS UI
-
+#
+HOME=/vagrant
 PD=$HOME/dev/stoqsgit
 
 # Section and ParameterParameter plots

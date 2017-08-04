@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 Script to execute steps in the classification of measurements including:
 
 1. Labeling specific MeasuredParameters
@@ -7,7 +7,7 @@ Script to execute steps in the classification of measurements including:
 
 Mike McCann
 MBARI 16 June 2014
-'''
+"""
 
 import os
 import sys
@@ -29,10 +29,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import warnings
 from datetime import datetime
-from django.db.models import Q
 from django.db.utils import IntegrityError
 from textwrap import wrap
-from stoqs.models import Activity, ResourceType, Resource, Measurement, MeasuredParameter, MeasuredParameterResource, ResourceResource
+from stoqs.models import (Activity, ResourceType, Resource, Measurement, MeasuredParameter,
+                          MeasuredParameterResource, ResourceResource)
 from utils.STOQSQManager import LABEL, DESCRIPTION, COMMANDLINE
 
 from contrib.analysis import BiPlot, NoPPDataException
@@ -71,7 +71,8 @@ class Classifier(BiPlot):
         '''
         Return activity object which MeasuredParameters mpx and mpy belong to
         '''
-        acts = Activity.objects.using(self.args.database).filter(instantpoint__measurement__measuredparameter__id__in=(mpx,mpy)).distinct()
+        acts = Activity.objects.using(self.args.database).filter(
+            instantpoint__measurement__measuredparameter__id__in=(mpx,mpy)).distinct()
         if not acts:
             print("acts = %s" % acts)
             raise Exception('Not exactly 1 activity returned with SQL = \n%s' % str(acts.query))
@@ -147,9 +148,9 @@ class Classifier(BiPlot):
         # Remove Resource associations with Resource (label metadata), make rs list distinct with set() before iterating on the delete()
         if label and description and commandline:
             rrs = ResourceResource.objects.using(self.args.database).filter(
-                                                (Q(fromresource__name=LABEL) & Q(fromresource__value=label)) &
-                                                ((Q(toresource__name=DESCRIPTION) & Q(toresource__value=description)) |
-                                                 (Q(toresource__name=COMMANDLINE) & Q(toresource__value=commandline)) ) )
+                                                (QDA(fromresource__name=LABEL) & QDA(fromresource__value=label)) &
+                                                ((QDA(toresource__name=DESCRIPTION) & QDA(toresource__value=description)) |
+                                                 (QDA(toresource__name=COMMANDLINE) & QDA(toresource__value=commandline)) ) )
                                         
             if self.args.verbose > 1:
                 print("  Removing ResourceResources with fromresource__value = '%s' and toresource__value = '%s'" % (label, description))

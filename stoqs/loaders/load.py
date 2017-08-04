@@ -20,6 +20,8 @@ django.setup()
 import time
 import logging
 import datetime
+import fileinput
+import glob
 import importlib
 import platform
 import subprocess
@@ -164,6 +166,46 @@ class Loader(object):
                 'ROVCTD' in load_command or
                 load_command.endswith('.sh') or 
                 '&&' in load_command)
+
+    def _drop_indexes(self):
+        # As of 2017 the STOQS project does not commit migration files.
+        # If significant schema changes are made the SOP is to reload databases;
+        # this also helps ensure that the archived NetCDF files are still accessible.
+        # To try loading data with more efficiency in the database this method
+        # removes migrations and modifies the models.py file to remove indexes.
+        # The migration files need to be removed because of this Django patch:
+        # https://code.djangoproject.com/ticket/28052
+        migration_files = glob.glob(os.path.join(app_dir, 'stoqs/migrations', '00*.py'))
+        for m_f in migration_files:
+            if '0001_initial.py' not in m_f:
+                self.logger.info('Removing migration file: %s', m_f)
+                os.remove(m_f)
+
+        model_files = (os.path.join(app_dir, 'stoqs/migrations/0001_initial.py'),
+                       os.path.join(app_dir, 'stoqs/models.py'))
+        with fileinput.input(files=model_files, inplace=True, backup='.bak') as f:
+            for line in f:
+                if '_index=True' in line:
+                    print(line.replace('_index=True', '_index=False'), end='')
+                else:
+                    print(line, end='')
+
+    def _create_indexes(self):
+        # Add indexes back to models.py
+        ##migration_files = glob.glob(os.path.join(app_dir, 'stoqs/migrations', '00*.py'))
+        ##for m_f in migration_files:
+        ##    if '0001_initial.py' not in m_f:
+        ##        self.logger.info('Removing migration file: %s', m_f)
+        ##        os.remove(m_f)
+
+        model_file = os.path.join(app_dir, 'stoqs/models.py')
+        ##model_file = os.path.join(app_dir, 'stoqs/migrations/0001_initial.py')
+        with fileinput.input(files=(model_file,), inplace=True) as f:
+            for line in f:
+                if '_index=False' in line:
+                    print(line.replace('_index=False', '_index=True'), end='')
+                else:
+                    print(line, end='')
 
     def checks(self):
         # That stoqs/campaigns.py file can be loaded
@@ -390,7 +432,13 @@ local   all             all                                     peer
                 self.logger.warn('Use the --clobber option, or fix the problem indicated.')
                 raise Exception('Maybe use the --clobber option to recreate the database...')
 
-            call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
+
+            if self.args.drop_indexes:
+                self.logger.info('Dropping indexes...')
+                self._drop_indexes()
+            else:
+                call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
+
             call_command('migrate', settings='config.settings.local', noinput=True, database=db)
 
             # === Execute the load
@@ -420,6 +468,12 @@ fi''').format(**{'log':log_file, 'db': db, 'email': self.args.email})
 
             self.logger.info('Executing: %s', cmd)
             os.system(cmd)
+
+            if self.args.drop_indexes:
+                self.logger.info('Creating indexes...')
+                self._create_indexes()
+                call_command('makemigrations', 'stoqs', settings='config.settings.local', noinput=True)
+                call_command('migrate', settings='config.settings.local', noinput=True, database=db)
 
             # Record details of the database load to the database
             try:
@@ -498,6 +552,7 @@ To get any stdout/stderr output you must use -v, the default is no output.
         parser.add_argument('--updateprovenance', action='store_true', help=('Use after background jobs finish to copy'
                                                                             ' loadlogs and update provenance information'))
         parser.add_argument('--grant_everyone_select', action='store_true', help='Grant everyone role select privileges on all relations')
+        parser.add_argument('--drop_indexes', action='store_true', help='Before load drop indexes and create them following the load')
 
         parser.add_argument('-v', '--verbose', nargs='?', choices=[1,2,3], type=int, help='Turn on verbose output. Higher number = more output.', const=1, default=0)
     
