@@ -188,7 +188,7 @@ class Clusterer(BiPlot):
 
                 try:
                     # Label
-                    rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=(labeledGroupName + '_' + str(stepnumber)),
+                    rt, _ = ResourceType.objects.using(self.args.database).get_or_create(name=labeledGroupName,
                                                                                     description='unsupervised classification')
                     r, _ = Resource.objects.using(self.args.database).get_or_create(name=LABEL, value=label, resourcetype=rt)
 
