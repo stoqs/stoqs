@@ -244,7 +244,6 @@ class Clusterer(BiPlot):
             resource__resourcetype__name=labeledGroupName
             ).select_related('resource')
 
-        import pdb; pdb.set_trace()
         rt = ResourceType.objects.using(self.args.database).get(name=labeledGroupName)
 
         if self.args.verbose > 1:
