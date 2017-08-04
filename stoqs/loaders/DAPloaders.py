@@ -279,8 +279,11 @@ class Base_Loader(STOQS_Loader):
             logger.debug('Cannot get attribute missing_value for variable %s from url %s', var, self.url)
         except AttributeError as e:
             logger.debug(str(e))
-        else:
+        
+        if mv is float or mv is int:
             return mv
+        else:
+            return None
 
     def get_FillValue(self, var):
         '''
@@ -293,13 +296,19 @@ class Base_Loader(STOQS_Loader):
             try:
                 # Fred's L_662 and other glider data files have the 'FillValue' attribute, not '_FillValue'
                 fv = self.ds[var].attributes['FillValue']
-            except Exception:
-                logger.debug('Cannot get attribute FillValue for variable %s from url %s', var, self.url)
-            return None
+            except KeyError:
+                # http://odss.mbari.org/thredds/dodsC/CANON/2013_Sep/Platforms/AUVs/Daphne/NetCDF/Daphne_CANON_Fall2013.nc.html has 'fill_value'
+                try:
+                    fv = self.ds[var].attributes['fill_value']
+                except Exception:
+                    logger.debug('Cannot get attribute FillValue for variable %s from url %s', var, self.url)
         except AttributeError as e:
             logger.debug(str(e))
-        else:
+
+        if fv is float or fv is int:
             return fv
+        else:
+            return None
 
     def get_shape_length(self, pname):
         '''Works for both pydap 3.1.1 and 3.2.0
